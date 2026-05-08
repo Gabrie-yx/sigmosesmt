@@ -74,16 +74,20 @@ function EmployeesPage() {
   const rMap = new Map((roles ?? []).map((r: any) => [r.id, r.name]));
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="p-6 md:p-8 animate-fadeIn">
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Colaboradores</h1>
-          <p className="text-muted-foreground">Cadastro de colaboradores</p>
+          <h2 className="heading-display text-3xl md:text-4xl text-brand">Colaboradores</h2>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">
+            Cadastro de colaboradores
+          </p>
         </div>
         {isEditor && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Novo colaborador</Button>
+              <Button className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
+                <Plus className="h-4 w-4 mr-2" />Novo colaborador
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Novo colaborador</DialogTitle></DialogHeader>
@@ -128,34 +132,39 @@ function EmployeesPage() {
       </div>
 
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input className="pl-10" placeholder="Buscar por nome, CPF, matrícula…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <Input
+          className="pl-11 h-12 rounded-2xl border-slate-200 bg-white shadow-sm text-sm"
+          placeholder="Buscar por nome, CPF, matrícula…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Empresa</TableHead>
-              <TableHead>Cargo</TableHead>
-              <TableHead>CPF</TableHead>
-              <TableHead>Status</TableHead>
+            <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Nome</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Empresa</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Cargo</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">CPF</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Status</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Carregando…</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={6} className="text-center text-slate-400 py-10 text-xs font-bold uppercase tracking-widest">Carregando…</TableCell></TableRow>}
             {!isLoading && filtered.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Nenhum colaborador</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-slate-400 py-10 text-xs font-bold uppercase tracking-widest">Nenhum colaborador</TableCell></TableRow>
             )}
             {filtered.map((e: any) => (
-              <TableRow key={e.id}>
-                <TableCell className="font-medium">{e.nome}</TableCell>
+              <TableRow key={e.id} className="hover:bg-slate-50/60">
+                <TableCell className="font-black uppercase text-sm text-slate-900">{e.nome}</TableCell>
                 <TableCell>{cMap.get(e.company_id) ?? "—"}</TableCell>
                 <TableCell>{rMap.get(e.role_id) ?? "—"}</TableCell>
                 <TableCell>{e.cpf ?? "—"}</TableCell>
-                <TableCell><Badge variant={e.status === "ATIVO" ? "default" : "secondary"}>{e.status}</Badge></TableCell>
+                <TableCell><Badge variant={e.status === "ATIVO" ? "default" : "secondary"} className="text-[10px] font-black uppercase tracking-widest">{e.status}</Badge></TableCell>
                 <TableCell className="text-right">
                   <Button asChild size="sm" variant="ghost">
                     <Link to="/app/employees/$id" params={{ id: e.id }}>Abrir <ChevronRight className="h-4 w-4 ml-1" /></Link>

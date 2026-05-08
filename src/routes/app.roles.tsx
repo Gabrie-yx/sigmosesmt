@@ -75,16 +75,21 @@ function RolesPage() {
   }
 
   return (
-    <div className="p-6 md:p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6 md:p-8 animate-fadeIn">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Cargos / Riscos</h1>
-          <p className="text-muted-foreground">Funções de trabalho e requisitos NR</p>
+          <h2 className="heading-display text-3xl md:text-4xl text-brand">Cargos / Riscos</h2>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">
+            Funções de trabalho e requisitos NR
+          </p>
         </div>
         {isEditor && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setEditing({ ...empty }); setOpen(true); }}>
+              <Button
+                onClick={() => { setEditing({ ...empty }); setOpen(true); }}
+                className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg"
+              >
                 <Plus className="h-4 w-4 mr-2" />Novo cargo
               </Button>
             </DialogTrigger>
@@ -125,29 +130,29 @@ function RolesPage() {
         )}
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>ASO</TableHead>
-              <TableHead>Integração</TableHead>
-              <TableHead>NRs</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+            <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Nome</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">ASO</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Integração</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">NRs</TableHead>
+              <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-600">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Carregando…</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={5} className="text-center text-slate-400 py-10 text-xs font-bold uppercase tracking-widest">Carregando…</TableCell></TableRow>}
             {!isLoading && data?.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Nenhum cargo</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-slate-400 py-10 text-xs font-bold uppercase tracking-widest">Nenhum cargo</TableCell></TableRow>
             )}
             {data?.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell className="font-medium">{r.name}</TableCell>
+              <TableRow key={r.id} className="hover:bg-slate-50/60">
+                <TableCell className="font-black uppercase text-sm text-slate-900">{r.name}</TableCell>
                 <TableCell>{r.req_aso ? "Sim" : "Não"}</TableCell>
                 <TableCell>{r.req_integra ? "Sim" : "Não"}</TableCell>
                 <TableCell className="space-x-1">
-                  {(r.req_nrs ?? []).map((n: string) => <Badge key={n} variant="outline">{n}</Badge>)}
+                  {(r.req_nrs ?? []).map((n: string) => <Badge key={n} variant="outline" className="text-[10px] font-black uppercase tracking-widest">{n}</Badge>)}
                 </TableCell>
                 <TableCell className="text-right space-x-1">
                   {isEditor && (
