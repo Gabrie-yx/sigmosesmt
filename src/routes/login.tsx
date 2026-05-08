@@ -30,7 +30,7 @@ function LoginPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -39,14 +39,27 @@ function LoginPage() {
           },
         });
         if (error) throw error;
-        // Try to bootstrap first admin
-        if (data.user) {
-          await supabase.from("user_roles").insert({ user_id: data.user.id, role: "admin" });
+        // Tenta atribuir admin se for o primeiro usuário (RLS permite via policy bootstrap)
+        try {
+          const { data: signed } = await supabase.auth.signInWithPassword({ email, password });
+          if (signed.user) {
+            await supabase.from("user_roles").insert({ user_id: signed.user.id, role: "admin" });
+          }
+        } catch {
+          /* ignora — confirmação de email pode estar ativa */
         }
-        toast.success("Conta criada! Verifique seu email se necessário.");
+        toast.success("Conta criada! Se a confirmação de email estiver ativa, verifique sua caixa de entrada.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          if (error.message.toLowerCase().includes("email not confirmed")) {
+            throw new Error("Email não confirmado. Desative a confirmação de email no Supabase ou confirme pelo link enviado.");
+          }
+          if (error.message.toLowerCase().includes("invalid login")) {
+            throw new Error("Email ou senha incorretos.");
+          }
+          throw error;
+        }
         toast.success("Bem-vindo!");
       }
       nav({ to: "/app" });
