@@ -109,15 +109,21 @@ function PtesPage() {
   }
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="p-6 md:p-8 animate-fadeIn">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">PTEs</h1>
-          <p className="text-muted-foreground">Permissões de Trabalho Especial</p>
+          <h2 className="heading-display text-3xl md:text-4xl text-brand">PTEs</h2>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">
+            Permissões de Trabalho Especial
+          </p>
         </div>
         {isEditor && (
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Emitir PTE</Button></DialogTrigger>
+            <DialogTrigger asChild>
+              <Button className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
+                <Plus className="h-4 w-4 mr-2" />Emitir PTE
+              </Button>
+            </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Emitir PTE</DialogTitle></DialogHeader>
               <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="space-y-3">
@@ -154,19 +160,29 @@ function PtesPage() {
         )}
       </div>
 
-      <Card className="overflow-hidden">
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <Table>
-          <TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Data</TableHead><TableHead>Risco</TableHead><TableHead>Colaborador</TableHead><TableHead>Local</TableHead><TableHead>Status</TableHead><TableHead></TableHead></TableRow></TableHeader>
+          <TableHeader>
+            <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Número</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Data</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Risco</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Colaborador</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Local</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Status</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
           <TableBody>
-            {(ptes ?? []).length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Nenhuma PTE</TableCell></TableRow>}
+            {(ptes ?? []).length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-slate-400 py-10 text-xs font-bold uppercase tracking-widest">Nenhuma PTE</TableCell></TableRow>}
             {(ptes ?? []).map((p: any) => (
-              <TableRow key={p.id}>
+              <TableRow key={p.id} className="hover:bg-slate-50/60">
                 <TableCell className="font-mono text-xs font-semibold">{p.numero ?? "—"}</TableCell>
                 <TableCell>{formatDateBR(p.data)}</TableCell>
                 <TableCell>{p.risco ?? "—"}</TableCell>
                 <TableCell>{p.employee_name ?? "—"}</TableCell>
                 <TableCell>{p.local ?? "—"}</TableCell>
-                <TableCell><Badge variant={p.status === "ATIVA" ? "default" : "secondary"}>{p.status}</Badge></TableCell>
+                <TableCell><Badge variant={p.status === "ATIVA" ? "default" : "secondary"} className="text-[10px] font-black uppercase tracking-widest">{p.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button size="icon" variant="ghost" onClick={() => printPte(p)}><Printer className="h-4 w-4" /></Button>
                   {isEditor && p.status === "ATIVA" && (
@@ -178,7 +194,7 @@ function PtesPage() {
             ))}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     </div>
   );
 }
