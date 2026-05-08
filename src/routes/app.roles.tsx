@@ -1,17 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Briefcase, UserCog, ChevronRight, Plus, FileText, Award, ShieldCheck, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { NRS_LIST } from "@/lib/constants";
 
@@ -25,10 +18,9 @@ const empty: Partial<Role> = { name: "", req_aso: true, req_integra: true, req_n
 function RolesPage() {
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Partial<Role> | null>(null);
+  const [editing, setEditing] = useState<Partial<Role>>({ ...empty });
 
-  const { data, isLoading } = useQuery({
+  const { data: roles = [] } = useQuery({
     queryKey: ["roles"],
     queryFn: async () => {
       const { data, error } = await supabase.from("roles").select("*").order("name");
@@ -50,8 +42,8 @@ function RolesPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["roles"] });
-      setOpen(false); setEditing(null);
-      toast.success("Salvo");
+      toast.success("Diretrizes salvas");
+      setEditing({ ...empty });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -63,114 +55,224 @@ function RolesPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["roles"] });
-      toast.success("Excluído");
+      toast.success("Cargo excluído");
+      setEditing({ ...empty });
     },
     onError: (e: any) => toast.error(e.message),
   });
 
   function toggleNr(nr: string) {
-    const cur = editing?.req_nrs ?? [];
-    const next = cur.includes(nr) ? cur.filter((x) => x !== nr) : [...cur, nr];
-    setEditing({ ...editing!, req_nrs: next });
+    const cur = editing.req_nrs ?? [];
+    setEditing({ ...editing, req_nrs: cur.includes(nr) ? cur.filter((x) => x !== nr) : [...cur, nr] });
   }
 
+  const reqNRsSet = useMemo(() => new Set(editing.req_nrs ?? []), [editing.req_nrs]);
+
   return (
-    <div className="p-6 md:p-8 animate-fadeIn">
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <div>
-          <h2 className="heading-display text-3xl md:text-4xl text-brand">Cargos / Riscos</h2>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">
-            Funções de trabalho e requisitos NR
+    <div className="p-6 md:p-8 flex gap-6 h-full bg-[#f1f5f9] animate-fadeIn">
+      {/* LEFT: Cargos Catalogados */}
+      <div className="w-[380px] flex flex-col bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+          <h2 className="text-lg font-black text-[#0369a1] uppercase tracking-tighter mb-1 flex items-center gap-2">
+            <Briefcase className="h-5 w-5" /> Cargos Catalogados
+          </h2>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+            Selecione para editar a matriz de risco
           </p>
         </div>
-        {isEditor && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button
-                onClick={() => { setEditing({ ...empty }); setOpen(true); }}
-                className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg"
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
+          {roles.length === 0 && (
+            <div className="text-center text-slate-400 py-8 text-xs font-bold uppercase tracking-widest">
+              Nenhum cargo cadastrado
+            </div>
+          )}
+          {roles.map((r) => {
+            const isSel = editing.id === r.id;
+            return (
+              <div
+                key={r.id}
+                onClick={() => setEditing(r)}
+                className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between group ${
+                  isSel ? "border-[#0369a1] bg-sky-50" : "border-slate-100 bg-white hover:border-[#0369a1]"
+                }`}
               >
-                <Plus className="h-4 w-4 mr-2" />Novo cargo
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader><DialogTitle>{editing?.id ? "Editar" : "Novo"} cargo</DialogTitle></DialogHeader>
-              <form onSubmit={(e) => { e.preventDefault(); save.mutate(editing!); }} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Nome *</Label>
-                  <Input required value={editing?.name ?? ""} onChange={(e) => setEditing({ ...editing!, name: e.target.value })} />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="flex items-center justify-between rounded-md border p-3">
-                    <span className="text-sm font-medium">Exige ASO</span>
-                    <Switch checked={!!editing?.req_aso} onCheckedChange={(v) => setEditing({ ...editing!, req_aso: v })} />
-                  </label>
-                  <label className="flex items-center justify-between rounded-md border p-3">
-                    <span className="text-sm font-medium">Exige Integração</span>
-                    <Switch checked={!!editing?.req_integra} onCheckedChange={(v) => setEditing({ ...editing!, req_integra: v })} />
-                  </label>
-                </div>
-                <div className="space-y-2">
-                  <Label>NRs requeridas</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {NRS_LIST.map((nr) => (
-                      <label key={nr} className="flex items-center gap-2 rounded-md border p-2 cursor-pointer">
-                        <Checkbox checked={(editing?.req_nrs ?? []).includes(nr)} onCheckedChange={() => toggleNr(nr)} />
-                        <span className="text-xs font-semibold">{nr}</span>
-                      </label>
-                    ))}
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
+                    isSel ? "bg-[#0369a1] text-white" : "bg-slate-50 text-slate-400 group-hover:bg-[#0369a1] group-hover:text-white"
+                  }`}>
+                    <UserCog className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-[11px] font-black uppercase text-slate-800 leading-tight">{r.name}</h3>
+                    <div className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">
+                      Reqs: ASO/INT + {r.req_nrs.length} NRs
+                    </div>
                   </div>
                 </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={save.isPending}>Salvar</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                <ChevronRight className={`h-4 w-4 ${isSel ? "text-[#0369a1]" : "text-slate-300 group-hover:text-[#0369a1]"}`} />
+              </div>
+            );
+          })}
+        </div>
+        {isEditor && (
+          <div className="p-4 border-t border-slate-100 bg-slate-50">
+            <button
+              onClick={() => setEditing({ ...empty })}
+              className="w-full py-3 bg-white border border-dashed border-slate-300 text-slate-500 hover:text-[#0369a1] hover:border-[#0369a1] text-[10px] font-black rounded-xl uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+            >
+              <Plus className="h-3.5 w-3.5" /> Adicionar Cargo
+            </button>
+          </div>
         )}
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50 hover:bg-slate-50">
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Nome</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">ASO</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Integração</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">NRs</TableHead>
-              <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-600">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={5} className="text-center text-slate-400 py-10 text-xs font-bold uppercase tracking-widest">Carregando…</TableCell></TableRow>}
-            {!isLoading && data?.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-slate-400 py-10 text-xs font-bold uppercase tracking-widest">Nenhum cargo</TableCell></TableRow>
-            )}
-            {data?.map((r) => (
-              <TableRow key={r.id} className="hover:bg-slate-50/60">
-                <TableCell className="font-black uppercase text-sm text-slate-900">{r.name}</TableCell>
-                <TableCell>{r.req_aso ? "Sim" : "Não"}</TableCell>
-                <TableCell>{r.req_integra ? "Sim" : "Não"}</TableCell>
-                <TableCell className="space-x-1">
-                  {(r.req_nrs ?? []).map((n: string) => <Badge key={n} variant="outline" className="text-[10px] font-black uppercase tracking-widest">{n}</Badge>)}
-                </TableCell>
-                <TableCell className="text-right space-x-1">
-                  {isEditor && (
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing(r); setOpen(true); }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {isAdmin && (
-                    <Button size="icon" variant="ghost" onClick={() => { if (confirm("Excluir cargo?")) del.mutate(r.id); }}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      {/* RIGHT: Matriz de Requisitos */}
+      <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-200 p-8 flex flex-col overflow-y-auto custom-scrollbar">
+        <div className="mb-8 border-b border-slate-100 pb-4 flex justify-between items-center shrink-0">
+          <div>
+            <h3 className="text-2xl font-black uppercase text-slate-900 tracking-tighter">
+              Matriz de Requisitos (ISO 9001)
+            </h3>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
+              Configure as exigências de saúde e segurança para a função
+            </p>
+          </div>
+          <ShieldCheck className="h-10 w-10 text-emerald-500 opacity-20" />
+        </div>
+
+        <form
+          onSubmit={(e) => { e.preventDefault(); save.mutate(editing); }}
+          className="flex-1 flex flex-col"
+        >
+          <div className="mb-8 shrink-0">
+            <label className="block text-[10px] font-black text-[#0369a1] uppercase mb-2 tracking-widest">
+              Nomenclatura Oficial do Cargo
+            </label>
+            <input
+              type="text"
+              required
+              value={editing.name ?? ""}
+              onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+              placeholder="Digite o nome da Função Técnica..."
+              disabled={!isEditor}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-sm font-black uppercase text-slate-800 focus:border-[#0369a1] focus:ring-4 focus:ring-[#0369a1]/10 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal disabled:opacity-60"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 flex-1">
+            {/* REQUISITOS BASE */}
+            <div className="p-6 border border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col">
+              <div className="flex items-center gap-2 mb-6">
+                <FileText className="h-5 w-5 text-slate-400" />
+                <div className="text-[11px] font-black uppercase text-slate-800 tracking-widest">
+                  Requisitos Base (Integração)
+                </div>
+              </div>
+              <div className="space-y-6 bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex-1">
+                <ToggleRow
+                  label="Exige ASO Válido"
+                  checked={!!editing.req_aso}
+                  onChange={(v) => setEditing({ ...editing, req_aso: v })}
+                  disabled={!isEditor}
+                  divider
+                />
+                <ToggleRow
+                  label="Exige Integração de Segurança"
+                  checked={!!editing.req_integra}
+                  onChange={(v) => setEditing({ ...editing, req_integra: v })}
+                  disabled={!isEditor}
+                />
+              </div>
+            </div>
+
+            {/* NRS */}
+            <div className="p-6 border border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col">
+              <div className="flex items-center gap-2 mb-6">
+                <Award className="h-5 w-5 text-slate-400" />
+                <div className="text-[11px] font-black uppercase text-slate-800 tracking-widest">
+                  Normas Regulamentadoras (NRs)
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4 bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex-1 content-start">
+                {NRS_LIST.map((nr) => (
+                  <NRToggle
+                    key={nr}
+                    label={nr}
+                    checked={reqNRsSet.has(nr)}
+                    onChange={() => toggleNr(nr)}
+                    disabled={!isEditor}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {isEditor && (
+            <div className="pt-6 border-t border-slate-100 flex justify-between items-center shrink-0 gap-3">
+              {isAdmin && editing.id && (
+                <button
+                  type="button"
+                  onClick={() => { if (confirm("Excluir cargo?")) del.mutate(editing.id!); }}
+                  className="px-5 py-3 text-red-500 hover:bg-red-50 text-[11px] font-black rounded-xl uppercase tracking-widest transition-all flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" /> Excluir
+                </button>
+              )}
+              <Button
+                type="submit"
+                disabled={save.isPending}
+                className="ml-auto bg-[#0f172a] hover:bg-[#0369a1] text-white text-[11px] font-black rounded-xl uppercase tracking-widest shadow-xl px-10 py-4 h-auto flex items-center gap-2"
+              >
+                <Save className="h-4 w-4" /> Salvar Diretrizes do Cargo
+              </Button>
+            </div>
+          )}
+        </form>
       </div>
     </div>
+  );
+}
+
+function ToggleRow({
+  label, checked, onChange, disabled, divider,
+}: { label: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; divider?: boolean }) {
+  return (
+    <label className={`flex items-center justify-between cursor-pointer group ${divider ? "pb-4 border-b border-slate-50" : ""} ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}>
+      <span className="text-[11px] font-bold uppercase text-slate-600 group-hover:text-slate-900 transition-colors">{label}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className={`relative w-11 h-6 rounded-full transition-colors ${checked ? "bg-emerald-500" : "bg-slate-200"}`}
+      >
+        <span
+          className={`absolute top-[2px] left-[2px] bg-white border border-slate-300 rounded-full h-5 w-5 transition-transform ${checked ? "translate-x-5" : ""}`}
+        />
+      </button>
+    </label>
+  );
+}
+
+function NRToggle({
+  label, checked, onChange, disabled,
+}: { label: string; checked: boolean; onChange: () => void; disabled?: boolean }) {
+  return (
+    <label className={`flex items-center justify-between cursor-pointer group ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}>
+      <span className="text-[10px] font-bold uppercase text-slate-600 group-hover:text-[#0369a1] transition-colors">{label}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
+        onClick={onChange}
+        className={`relative w-8 h-4 rounded-full transition-colors ${checked ? "bg-[#0369a1]" : "bg-slate-200"}`}
+      >
+        <span
+          className={`absolute top-[2px] left-[2px] bg-white border border-slate-300 rounded-full h-3 w-3 transition-transform ${checked ? "translate-x-4" : ""}`}
+        />
+      </button>
+    </label>
   );
 }
