@@ -84,33 +84,42 @@ export type Database = {
       }
       employee_exams: {
         Row: {
+          anexo_path: string | null
           aptidao: string
           created_at: string
           data_realizacao: string
           data_vencimento: string
           employee_id: string
           id: string
+          natureza: string
           observacoes: string | null
+          periodicidade_meses: number
           tipo_exame: string
         }
         Insert: {
+          anexo_path?: string | null
           aptidao?: string
           created_at?: string
           data_realizacao: string
           data_vencimento: string
           employee_id: string
           id?: string
+          natureza?: string
           observacoes?: string | null
+          periodicidade_meses?: number
           tipo_exame: string
         }
         Update: {
+          anexo_path?: string | null
           aptidao?: string
           created_at?: string
           data_realizacao?: string
           data_vencimento?: string
           employee_id?: string
           id?: string
+          natureza?: string
           observacoes?: string | null
+          periodicidade_meses?: number
           tipo_exame?: string
         }
         Relationships: [
@@ -126,60 +135,96 @@ export type Database = {
       employees: {
         Row: {
           admissao: string | null
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
           cnh: string | null
+          cnpj: string | null
           company_id: string | null
           cpf: string | null
           created_at: string
           data_aso: string | null
           data_integracao: string | null
+          email: string | null
           endereco: string | null
+          foto_url: string | null
           id: string
           matricula: string | null
           nome: string
+          nome_contato: string | null
           nrs: Json
           rg: string | null
+          rg_orgao: string | null
           role_id: string | null
           status: string
+          tipo_cadastro: string
           titulo: string | null
+          uf: string | null
           updated_at: string
+          whatsapp: string | null
+          whatsapp_emergencia: string | null
         }
         Insert: {
           admissao?: string | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
           cnh?: string | null
+          cnpj?: string | null
           company_id?: string | null
           cpf?: string | null
           created_at?: string
           data_aso?: string | null
           data_integracao?: string | null
+          email?: string | null
           endereco?: string | null
+          foto_url?: string | null
           id?: string
           matricula?: string | null
           nome: string
+          nome_contato?: string | null
           nrs?: Json
           rg?: string | null
+          rg_orgao?: string | null
           role_id?: string | null
           status?: string
+          tipo_cadastro?: string
           titulo?: string | null
+          uf?: string | null
           updated_at?: string
+          whatsapp?: string | null
+          whatsapp_emergencia?: string | null
         }
         Update: {
           admissao?: string | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
           cnh?: string | null
+          cnpj?: string | null
           company_id?: string | null
           cpf?: string | null
           created_at?: string
           data_aso?: string | null
           data_integracao?: string | null
+          email?: string | null
           endereco?: string | null
+          foto_url?: string | null
           id?: string
           matricula?: string | null
           nome?: string
+          nome_contato?: string | null
           nrs?: Json
           rg?: string | null
+          rg_orgao?: string | null
           role_id?: string | null
           status?: string
+          tipo_cadastro?: string
           titulo?: string | null
+          uf?: string | null
           updated_at?: string
+          whatsapp?: string | null
+          whatsapp_emergencia?: string | null
         }
         Relationships: [
           {
@@ -273,32 +318,50 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
           dados: Json
           data: string
+          data_emissao: string
+          employee_id: string | null
+          employee_name: string | null
           id: string
+          local: string | null
           numero: string | null
           pdf_path: string | null
+          risco: string | null
+          status: string
         }
         Insert: {
           company_id?: string | null
           created_at?: string
-          created_by: string
+          created_by?: string | null
           dados?: Json
           data?: string
+          data_emissao?: string
+          employee_id?: string | null
+          employee_name?: string | null
           id?: string
+          local?: string | null
           numero?: string | null
           pdf_path?: string | null
+          risco?: string | null
+          status?: string
         }
         Update: {
           company_id?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           dados?: Json
           data?: string
+          data_emissao?: string
+          employee_id?: string | null
+          employee_name?: string | null
           id?: string
+          local?: string | null
           numero?: string | null
           pdf_path?: string | null
+          risco?: string | null
+          status?: string
         }
         Relationships: [
           {
