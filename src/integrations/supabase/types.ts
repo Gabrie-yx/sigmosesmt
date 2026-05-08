@@ -14,1220 +14,369 @@ export type Database = {
   }
   public: {
     Tables: {
-      areas: {
+      companies: {
         Row: {
-          base_risk_level: Database["public"]["Enums"]["risk_level"]
+          cnpj: string | null
           created_at: string
-          description: string | null
-          geometry_polygon: Json | null
+          email: string | null
+          encarregado1: string | null
+          encarregado2: string | null
           id: string
-          map_color: string | null
           name: string
-          organization_id: string
-          updated_at: string
-        }
-        Insert: {
-          base_risk_level?: Database["public"]["Enums"]["risk_level"]
-          created_at?: string
-          description?: string | null
-          geometry_polygon?: Json | null
-          id?: string
-          map_color?: string | null
-          name: string
-          organization_id: string
-          updated_at?: string
-        }
-        Update: {
-          base_risk_level?: Database["public"]["Enums"]["risk_level"]
-          created_at?: string
-          description?: string | null
-          geometry_polygon?: Json | null
-          id?: string
-          map_color?: string | null
-          name?: string
-          organization_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "areas_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      corrective_actions: {
-        Row: {
-          closed_at: string | null
-          closed_by: string | null
-          created_at: string
-          created_by: string
-          description: string
-          due_date: string
-          evidence_path: string | null
-          id: string
-          incident_id: string
-          organization_id: string
-          responsible_user_id: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          closed_at?: string | null
-          closed_by?: string | null
-          created_at?: string
-          created_by: string
-          description: string
-          due_date: string
-          evidence_path?: string | null
-          id?: string
-          incident_id: string
-          organization_id: string
-          responsible_user_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          closed_at?: string | null
-          closed_by?: string | null
-          created_at?: string
-          created_by?: string
-          description?: string
-          due_date?: string
-          evidence_path?: string | null
-          id?: string
-          incident_id?: string
-          organization_id?: string
-          responsible_user_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "corrective_actions_incident_id_fkey"
-            columns: ["incident_id"]
-            isOneToOne: false
-            referencedRelation: "incidents"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      incident_photos: {
-        Row: {
-          created_at: string
-          id: string
-          incident_id: string
-          storage_path: string
-          uploaded_by: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          incident_id: string
-          storage_path: string
-          uploaded_by: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          incident_id?: string
-          storage_path?: string
-          uploaded_by?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "incident_photos_incident_id_fkey"
-            columns: ["incident_id"]
-            isOneToOne: false
-            referencedRelation: "incidents"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      incident_timeline: {
-        Row: {
-          actor_id: string
-          created_at: string
-          event_type: string
-          id: string
-          incident_id: string
-          message: string | null
-        }
-        Insert: {
-          actor_id: string
-          created_at?: string
-          event_type: string
-          id?: string
-          incident_id: string
-          message?: string | null
-        }
-        Update: {
-          actor_id?: string
-          created_at?: string
-          event_type?: string
-          id?: string
-          incident_id?: string
-          message?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "incident_timeline_incident_id_fkey"
-            columns: ["incident_id"]
-            isOneToOne: false
-            referencedRelation: "incidents"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      incidents: {
-        Row: {
-          area_id: string | null
-          closed_at: string | null
-          created_at: string
-          description: string
-          id: string
-          immediate_actions: string | null
-          incident_type: Database["public"]["Enums"]["incident_type"]
-          occurred_at: string
-          organization_id: string
-          people_involved: string[] | null
-          reported_by: string
-          root_cause_data: Json | null
-          root_cause_method: string | null
-          root_cause_summary: string | null
-          severity: Database["public"]["Enums"]["risk_level"]
-          status: Database["public"]["Enums"]["incident_status"]
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          area_id?: string | null
-          closed_at?: string | null
-          created_at?: string
-          description: string
-          id?: string
-          immediate_actions?: string | null
-          incident_type: Database["public"]["Enums"]["incident_type"]
-          occurred_at?: string
-          organization_id: string
-          people_involved?: string[] | null
-          reported_by: string
-          root_cause_data?: Json | null
-          root_cause_method?: string | null
-          root_cause_summary?: string | null
-          severity: Database["public"]["Enums"]["risk_level"]
-          status?: Database["public"]["Enums"]["incident_status"]
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          area_id?: string | null
-          closed_at?: string | null
-          created_at?: string
-          description?: string
-          id?: string
-          immediate_actions?: string | null
-          incident_type?: Database["public"]["Enums"]["incident_type"]
-          occurred_at?: string
-          organization_id?: string
-          people_involved?: string[] | null
-          reported_by?: string
-          root_cause_data?: Json | null
-          root_cause_method?: string | null
-          root_cause_summary?: string | null
-          severity?: Database["public"]["Enums"]["risk_level"]
-          status?: Database["public"]["Enums"]["incident_status"]
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "incidents_area_id_fkey"
-            columns: ["area_id"]
-            isOneToOne: false
-            referencedRelation: "areas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "incidents_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      loto_records: {
-        Row: {
-          created_at: string
-          energy_point: string
-          energy_type: string
-          id: string
-          installed_at: string
-          installed_by: string
-          lock_number: string
-          notes: string | null
-          organization_id: string
-          permit_id: string
-          removed_at: string | null
-          removed_by: string | null
-          tag_number: string | null
-        }
-        Insert: {
-          created_at?: string
-          energy_point: string
-          energy_type: string
-          id?: string
-          installed_at?: string
-          installed_by: string
-          lock_number: string
-          notes?: string | null
-          organization_id: string
-          permit_id: string
-          removed_at?: string | null
-          removed_by?: string | null
-          tag_number?: string | null
-        }
-        Update: {
-          created_at?: string
-          energy_point?: string
-          energy_type?: string
-          id?: string
-          installed_at?: string
-          installed_by?: string
-          lock_number?: string
-          notes?: string | null
-          organization_id?: string
-          permit_id?: string
-          removed_at?: string | null
-          removed_by?: string | null
-          tag_number?: string | null
-        }
-        Relationships: []
-      }
-      map_backgrounds: {
-        Row: {
-          created_at: string
-          created_by: string
-          height: number
-          id: string
-          is_active: boolean
-          name: string
-          opacity: number
-          organization_id: string
-          storage_path: string
-          updated_at: string
-          width: number
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          height: number
-          id?: string
-          is_active?: boolean
-          name: string
-          opacity?: number
-          organization_id: string
-          storage_path: string
-          updated_at?: string
-          width: number
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          height?: number
-          id?: string
-          is_active?: boolean
-          name?: string
-          opacity?: number
-          organization_id?: string
-          storage_path?: string
-          updated_at?: string
-          width?: number
-        }
-        Relationships: []
-      }
-      map_features: {
-        Row: {
-          created_at: string
-          created_by: string
-          description: string | null
-          geometry: Json
-          id: string
-          kind: string
-          name: string
-          organization_id: string
-          style: Json
-          subtype: string
-          updated_at: string
-          z_index: number
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          description?: string | null
-          geometry: Json
-          id?: string
-          kind: string
-          name: string
-          organization_id: string
-          style?: Json
-          subtype: string
-          updated_at?: string
-          z_index?: number
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          description?: string | null
-          geometry?: Json
-          id?: string
-          kind?: string
-          name?: string
-          organization_id?: string
-          style?: Json
-          subtype?: string
-          updated_at?: string
-          z_index?: number
-        }
-        Relationships: []
-      }
-      notifications: {
-        Row: {
-          body: string | null
-          created_at: string
-          id: string
-          link: string | null
-          organization_id: string
-          read_at: string | null
-          title: string
           type: string
-          user_id: string
+          updated_at: string
         }
         Insert: {
-          body?: string | null
+          cnpj?: string | null
           created_at?: string
+          email?: string | null
+          encarregado1?: string | null
+          encarregado2?: string | null
           id?: string
-          link?: string | null
-          organization_id: string
-          read_at?: string | null
-          title: string
-          type: string
-          user_id: string
-        }
-        Update: {
-          body?: string | null
-          created_at?: string
-          id?: string
-          link?: string | null
-          organization_id?: string
-          read_at?: string | null
-          title?: string
+          name: string
           type?: string
-          user_id?: string
+          updated_at?: string
+        }
+        Update: {
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          encarregado1?: string | null
+          encarregado2?: string | null
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string
         }
         Relationships: []
       }
-      organization_invites: {
+      employee_docs: {
         Row: {
-          accepted_at: string | null
-          accepted_by: string | null
-          created_at: string
-          email: string
-          expires_at: string
+          employee_id: string
+          file_path: string
           id: string
-          invited_by: string
-          organization_id: string
-          role: Database["public"]["Enums"]["app_role"]
-          status: string
-          token: string
+          tipo: string
+          uploaded_at: string
         }
         Insert: {
-          accepted_at?: string | null
-          accepted_by?: string | null
-          created_at?: string
-          email: string
-          expires_at?: string
+          employee_id: string
+          file_path: string
           id?: string
-          invited_by: string
-          organization_id: string
-          role?: Database["public"]["Enums"]["app_role"]
-          status?: string
-          token?: string
+          tipo: string
+          uploaded_at?: string
         }
         Update: {
-          accepted_at?: string | null
-          accepted_by?: string | null
-          created_at?: string
-          email?: string
-          expires_at?: string
+          employee_id?: string
+          file_path?: string
           id?: string
-          invited_by?: string
-          organization_id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          status?: string
-          token?: string
-        }
-        Relationships: []
-      }
-      organization_members: {
-        Row: {
-          created_at: string
-          id: string
-          organization_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          organization_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          organization_id?: string
-          user_id?: string
+          tipo?: string
+          uploaded_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "organization_members_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "employee_docs_employee_id_fkey"
+            columns: ["employee_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
       }
-      organizations: {
+      employee_exams: {
         Row: {
+          aptidao: string
           created_at: string
+          data_realizacao: string
+          data_vencimento: string
+          employee_id: string
           id: string
-          logo_path: string | null
-          name: string
-          slug: string
+          observacoes: string | null
+          tipo_exame: string
+        }
+        Insert: {
+          aptidao?: string
+          created_at?: string
+          data_realizacao: string
+          data_vencimento: string
+          employee_id: string
+          id?: string
+          observacoes?: string | null
+          tipo_exame: string
+        }
+        Update: {
+          aptidao?: string
+          created_at?: string
+          data_realizacao?: string
+          data_vencimento?: string
+          employee_id?: string
+          id?: string
+          observacoes?: string | null
+          tipo_exame?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_exams_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          admissao: string | null
+          cnh: string | null
+          company_id: string | null
+          cpf: string | null
+          created_at: string
+          data_aso: string | null
+          data_integracao: string | null
+          endereco: string | null
+          id: string
+          matricula: string | null
+          nome: string
+          nrs: Json
+          rg: string | null
+          role_id: string | null
+          status: string
+          titulo: string | null
           updated_at: string
         }
         Insert: {
+          admissao?: string | null
+          cnh?: string | null
+          company_id?: string | null
+          cpf?: string | null
           created_at?: string
+          data_aso?: string | null
+          data_integracao?: string | null
+          endereco?: string | null
           id?: string
-          logo_path?: string | null
-          name: string
-          slug: string
+          matricula?: string | null
+          nome: string
+          nrs?: Json
+          rg?: string | null
+          role_id?: string | null
+          status?: string
+          titulo?: string | null
           updated_at?: string
         }
         Update: {
+          admissao?: string | null
+          cnh?: string | null
+          company_id?: string | null
+          cpf?: string | null
           created_at?: string
+          data_aso?: string | null
+          data_integracao?: string | null
+          endereco?: string | null
           id?: string
-          logo_path?: string | null
-          name?: string
-          slug?: string
+          matricula?: string | null
+          nome?: string
+          nrs?: Json
+          rg?: string | null
+          role_id?: string | null
+          status?: string
+          titulo?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "employees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      permit_approval_matrix: {
+      epi_deliveries: {
         Row: {
+          ca: string | null
           created_at: string
+          data_devolucao: string | null
+          data_entrega: string
+          employee_id: string
           id: string
-          organization_id: string
-          permit_type: Database["public"]["Enums"]["permit_type"]
-          required_role: Database["public"]["Enums"]["app_role"]
+          item: string
+          observacoes: string | null
+          qtd: number
+          tamanho: string | null
         }
         Insert: {
+          ca?: string | null
           created_at?: string
+          data_devolucao?: string | null
+          data_entrega?: string
+          employee_id: string
           id?: string
-          organization_id: string
-          permit_type: Database["public"]["Enums"]["permit_type"]
-          required_role: Database["public"]["Enums"]["app_role"]
+          item: string
+          observacoes?: string | null
+          qtd?: number
+          tamanho?: string | null
         }
         Update: {
+          ca?: string | null
           created_at?: string
+          data_devolucao?: string | null
+          data_entrega?: string
+          employee_id?: string
           id?: string
-          organization_id?: string
-          permit_type?: Database["public"]["Enums"]["permit_type"]
-          required_role?: Database["public"]["Enums"]["app_role"]
+          item?: string
+          observacoes?: string | null
+          qtd?: number
+          tamanho?: string | null
         }
-        Relationships: []
-      }
-      permit_confined_space_details: {
-        Row: {
-          atmospheric_test_at: string | null
-          atmospheric_test_by: string | null
-          co_ppm: number | null
-          communication_means: string | null
-          created_at: string
-          forced_ventilation: boolean
-          h2s_ppm: number | null
-          id: string
-          lel_percent: number | null
-          notes: string | null
-          o2_percent: number | null
-          organization_id: string
-          permit_id: string
-          rescue_plan: string | null
-          updated_at: string
-          watcher_name: string
-        }
-        Insert: {
-          atmospheric_test_at?: string | null
-          atmospheric_test_by?: string | null
-          co_ppm?: number | null
-          communication_means?: string | null
-          created_at?: string
-          forced_ventilation?: boolean
-          h2s_ppm?: number | null
-          id?: string
-          lel_percent?: number | null
-          notes?: string | null
-          o2_percent?: number | null
-          organization_id: string
-          permit_id: string
-          rescue_plan?: string | null
-          updated_at?: string
-          watcher_name?: string
-        }
-        Update: {
-          atmospheric_test_at?: string | null
-          atmospheric_test_by?: string | null
-          co_ppm?: number | null
-          communication_means?: string | null
-          created_at?: string
-          forced_ventilation?: boolean
-          h2s_ppm?: number | null
-          id?: string
-          lel_percent?: number | null
-          notes?: string | null
-          o2_percent?: number | null
-          organization_id?: string
-          permit_id?: string
-          rescue_plan?: string | null
-          updated_at?: string
-          watcher_name?: string
-        }
-        Relationships: []
-      }
-      permit_counters: {
-        Row: {
-          last_number: number
-          organization_id: string
-          year: number
-        }
-        Insert: {
-          last_number?: number
-          organization_id: string
-          year: number
-        }
-        Update: {
-          last_number?: number
-          organization_id?: string
-          year?: number
-        }
-        Relationships: []
-      }
-      permit_height_details: {
-        Row: {
-          anchor_point_description: string | null
-          created_at: string
-          height_meters: number | null
-          id: string
-          notes: string | null
-          nr35_training_expiry: string | null
-          nr35_training_valid: boolean
-          organization_id: string
-          permit_id: string
-          protection_type: string | null
-          rescue_equipment_present: boolean
-          updated_at: string
-          weather_condition: string | null
-        }
-        Insert: {
-          anchor_point_description?: string | null
-          created_at?: string
-          height_meters?: number | null
-          id?: string
-          notes?: string | null
-          nr35_training_expiry?: string | null
-          nr35_training_valid?: boolean
-          organization_id: string
-          permit_id: string
-          protection_type?: string | null
-          rescue_equipment_present?: boolean
-          updated_at?: string
-          weather_condition?: string | null
-        }
-        Update: {
-          anchor_point_description?: string | null
-          created_at?: string
-          height_meters?: number | null
-          id?: string
-          notes?: string | null
-          nr35_training_expiry?: string | null
-          nr35_training_valid?: boolean
-          organization_id?: string
-          permit_id?: string
-          protection_type?: string | null
-          rescue_equipment_present?: boolean
-          updated_at?: string
-          weather_condition?: string | null
-        }
-        Relationships: []
-      }
-      permit_hot_work_details: {
-        Row: {
-          area_isolated: boolean
-          created_at: string
-          fire_extinguisher_present: boolean
-          fire_watch_name: string | null
-          fire_watch_required: boolean
-          flammable_materials_removed: boolean
-          id: string
-          notes: string | null
-          organization_id: string
-          permit_id: string
-          updated_at: string
-        }
-        Insert: {
-          area_isolated?: boolean
-          created_at?: string
-          fire_extinguisher_present?: boolean
-          fire_watch_name?: string | null
-          fire_watch_required?: boolean
-          flammable_materials_removed?: boolean
-          id?: string
-          notes?: string | null
-          organization_id: string
-          permit_id: string
-          updated_at?: string
-        }
-        Update: {
-          area_isolated?: boolean
-          created_at?: string
-          fire_extinguisher_present?: boolean
-          fire_watch_name?: string | null
-          fire_watch_required?: boolean
-          flammable_materials_removed?: boolean
-          id?: string
-          notes?: string | null
-          organization_id?: string
-          permit_id?: string
-          updated_at?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "epi_deliveries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
-          avatar_path: string | null
+          avatar_url: string | null
           created_at: string
-          current_organization_id: string | null
           full_name: string | null
           id: string
-          locale: string
-          phone: string | null
-          timezone: string
           updated_at: string
         }
         Insert: {
-          avatar_path?: string | null
+          avatar_url?: string | null
           created_at?: string
-          current_organization_id?: string | null
           full_name?: string | null
           id: string
-          locale?: string
-          phone?: string | null
-          timezone?: string
           updated_at?: string
         }
         Update: {
-          avatar_path?: string | null
+          avatar_url?: string | null
           created_at?: string
-          current_organization_id?: string | null
           full_name?: string | null
           id?: string
-          locale?: string
-          phone?: string | null
-          timezone?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_current_organization_id_fkey"
-            columns: ["current_organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      risk_assessment_steps: {
+      ptes: {
         Row: {
-          apr_id: string
-          consequence: string | null
-          controls: string | null
-          created_at: string
-          id: string
-          residual_risk: Database["public"]["Enums"]["risk_level"]
-          responsible: string | null
-          risk: string
-          severity: Database["public"]["Enums"]["risk_level"]
-          step_description: string
-          step_order: number
-        }
-        Insert: {
-          apr_id: string
-          consequence?: string | null
-          controls?: string | null
-          created_at?: string
-          id?: string
-          residual_risk?: Database["public"]["Enums"]["risk_level"]
-          responsible?: string | null
-          risk: string
-          severity?: Database["public"]["Enums"]["risk_level"]
-          step_description: string
-          step_order?: number
-        }
-        Update: {
-          apr_id?: string
-          consequence?: string | null
-          controls?: string | null
-          created_at?: string
-          id?: string
-          residual_risk?: Database["public"]["Enums"]["risk_level"]
-          responsible?: string | null
-          risk?: string
-          severity?: Database["public"]["Enums"]["risk_level"]
-          step_description?: string
-          step_order?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "risk_assessment_steps_apr_id_fkey"
-            columns: ["apr_id"]
-            isOneToOne: false
-            referencedRelation: "risk_assessments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      risk_assessments: {
-        Row: {
-          activity: string
-          area_id: string | null
+          company_id: string | null
           created_at: string
           created_by: string
+          dados: Json
+          data: string
           id: string
-          notes: string | null
-          organization_id: string
-          project_phase: string | null
-          status: Database["public"]["Enums"]["apr_status"]
-          title: string
-          updated_at: string
-          vessel: string | null
+          numero: string | null
+          pdf_path: string | null
         }
         Insert: {
-          activity: string
-          area_id?: string | null
+          company_id?: string | null
           created_at?: string
           created_by: string
+          dados?: Json
+          data?: string
           id?: string
-          notes?: string | null
-          organization_id: string
-          project_phase?: string | null
-          status?: Database["public"]["Enums"]["apr_status"]
-          title: string
-          updated_at?: string
-          vessel?: string | null
+          numero?: string | null
+          pdf_path?: string | null
         }
         Update: {
-          activity?: string
-          area_id?: string | null
+          company_id?: string | null
           created_at?: string
           created_by?: string
+          dados?: Json
+          data?: string
           id?: string
-          notes?: string | null
-          organization_id?: string
-          project_phase?: string | null
-          status?: Database["public"]["Enums"]["apr_status"]
-          title?: string
-          updated_at?: string
-          vessel?: string | null
+          numero?: string | null
+          pdf_path?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "risk_assessments_area_id_fkey"
-            columns: ["area_id"]
+            foreignKeyName: "ptes_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "areas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "risk_assessments_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
       }
-      risk_library: {
+      roles: {
         Row: {
-          category: string
           created_at: string
-          default_consequence: string | null
-          default_controls: string | null
-          default_severity: Database["public"]["Enums"]["risk_level"]
           id: string
           name: string
-          organization_id: string | null
+          req_aso: boolean
+          req_integra: boolean
+          req_nrs: string[]
+          updated_at: string
         }
         Insert: {
-          category: string
           created_at?: string
-          default_consequence?: string | null
-          default_controls?: string | null
-          default_severity?: Database["public"]["Enums"]["risk_level"]
           id?: string
           name: string
-          organization_id?: string | null
+          req_aso?: boolean
+          req_integra?: boolean
+          req_nrs?: string[]
+          updated_at?: string
         }
         Update: {
-          category?: string
           created_at?: string
-          default_consequence?: string | null
-          default_controls?: string | null
-          default_severity?: Database["public"]["Enums"]["risk_level"]
           id?: string
           name?: string
-          organization_id?: string | null
+          req_aso?: boolean
+          req_integra?: boolean
+          req_nrs?: string[]
+          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "risk_library_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {
           created_at: string
           id: string
-          organization_id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          organization_id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
-          organization_id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_trainings: {
-        Row: {
-          certificate_number: string | null
-          created_at: string
-          created_by: string
-          expires_on: string
-          id: string
-          issued_on: string
-          notes: string | null
-          organization_id: string
-          training_code: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          certificate_number?: string | null
-          created_at?: string
-          created_by: string
-          expires_on: string
-          id?: string
-          issued_on: string
-          notes?: string | null
-          organization_id: string
-          training_code: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          certificate_number?: string | null
-          created_at?: string
-          created_by?: string
-          expires_on?: string
-          id?: string
-          issued_on?: string
-          notes?: string | null
-          organization_id?: string
-          training_code?: string
-          updated_at?: string
-          user_id?: string
-        }
         Relationships: []
-      }
-      work_permit_approvals: {
-        Row: {
-          actor_id: string
-          comment: string | null
-          created_at: string
-          from_status: Database["public"]["Enums"]["permit_status"] | null
-          id: string
-          permit_id: string
-          to_status: Database["public"]["Enums"]["permit_status"]
-        }
-        Insert: {
-          actor_id: string
-          comment?: string | null
-          created_at?: string
-          from_status?: Database["public"]["Enums"]["permit_status"] | null
-          id?: string
-          permit_id: string
-          to_status: Database["public"]["Enums"]["permit_status"]
-        }
-        Update: {
-          actor_id?: string
-          comment?: string | null
-          created_at?: string
-          from_status?: Database["public"]["Enums"]["permit_status"] | null
-          id?: string
-          permit_id?: string
-          to_status?: Database["public"]["Enums"]["permit_status"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "work_permit_approvals_permit_id_fkey"
-            columns: ["permit_id"]
-            isOneToOne: false
-            referencedRelation: "work_permits"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      work_permits: {
-        Row: {
-          additional_controls_justification: string | null
-          apr_id: string | null
-          area_id: string | null
-          completed_at: string | null
-          created_at: string
-          created_by: string
-          description: string | null
-          id: string
-          identified_risks: string[] | null
-          organization_id: string
-          permit_number: string | null
-          permit_type: Database["public"]["Enums"]["permit_type"]
-          pre_execution_checklist: Json | null
-          required_ppe: string[] | null
-          responsible_name: string | null
-          scheduled_end: string | null
-          scheduled_start: string | null
-          started_at: string | null
-          status: Database["public"]["Enums"]["permit_status"]
-          team_members: string[] | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          additional_controls_justification?: string | null
-          apr_id?: string | null
-          area_id?: string | null
-          completed_at?: string | null
-          created_at?: string
-          created_by: string
-          description?: string | null
-          id?: string
-          identified_risks?: string[] | null
-          organization_id: string
-          permit_number?: string | null
-          permit_type: Database["public"]["Enums"]["permit_type"]
-          pre_execution_checklist?: Json | null
-          required_ppe?: string[] | null
-          responsible_name?: string | null
-          scheduled_end?: string | null
-          scheduled_start?: string | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["permit_status"]
-          team_members?: string[] | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          additional_controls_justification?: string | null
-          apr_id?: string | null
-          area_id?: string | null
-          completed_at?: string | null
-          created_at?: string
-          created_by?: string
-          description?: string | null
-          id?: string
-          identified_risks?: string[] | null
-          organization_id?: string
-          permit_number?: string | null
-          permit_type?: Database["public"]["Enums"]["permit_type"]
-          pre_execution_checklist?: Json | null
-          required_ppe?: string[] | null
-          responsible_name?: string | null
-          scheduled_end?: string | null
-          scheduled_start?: string | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["permit_status"]
-          team_members?: string[] | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "work_permits_apr_id_fkey"
-            columns: ["apr_id"]
-            isOneToOne: false
-            referencedRelation: "risk_assessments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "work_permits_area_id_fkey"
-            columns: ["area_id"]
-            isOneToOne: false
-            referencedRelation: "areas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "work_permits_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      accept_invite: { Args: { _token: string }; Returns: string }
-      area_risk_snapshot: {
-        Args: { _org_id: string }
-        Returns: {
-          active_permits: number
-          area_id: string
-          confined_active: number
-          height_active: number
-          high_residual_aprs: number
-          high_severity_incidents_30d: number
-          hot_work_active: number
-          open_incidents_30d: number
-          upcoming_permits_24h: number
-        }[]
-      }
-      bootstrap_organization: {
-        Args: { _full_name?: string; _name: string; _slug: string }
-        Returns: string
-      }
-      can_edit_permit_details: {
-        Args: { _permit_id: string }
-        Returns: boolean
-      }
-      get_invite_info: {
-        Args: { _token: string }
-        Returns: {
-          email: string
-          expires_at: string
-          organization_id: string
-          organization_name: string
-          role: Database["public"]["Enums"]["app_role"]
-          status: string
-        }[]
-      }
-      has_any_role: {
-        Args: {
-          _org_id: string
-          _roles: Database["public"]["Enums"]["app_role"][]
-          _user_id: string
-        }
-        Returns: boolean
-      }
       has_role: {
         Args: {
-          _org_id: string
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
       }
-      is_org_member: {
-        Args: { _org_id: string; _user_id: string }
-        Returns: boolean
-      }
-      required_roles_for_permit: {
-        Args: {
-          _org_id: string
-          _type: Database["public"]["Enums"]["permit_type"]
-        }
-        Returns: Database["public"]["Enums"]["app_role"][]
-      }
-      required_trainings_for_permit: {
-        Args: { _type: Database["public"]["Enums"]["permit_type"] }
-        Returns: string[]
-      }
-      resend_invite: { Args: { _invite_id: string }; Returns: undefined }
-      revoke_invite: { Args: { _invite_id: string }; Returns: undefined }
-      update_member_role: {
-        Args: {
-          _new_role: Database["public"]["Enums"]["app_role"]
-          _org_id: string
-          _user_id: string
-        }
-        Returns: undefined
-      }
+      is_editor: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "engineer" | "supervisor" | "technician"
-      apr_status: "draft" | "active" | "archived"
-      incident_status:
-        | "open"
-        | "investigating"
-        | "corrective_actions"
-        | "closed"
-      incident_type: "accident" | "near_miss" | "deviation"
-      permit_status:
-        | "draft"
-        | "submitted"
-        | "under_review"
-        | "approved"
-        | "in_execution"
-        | "completed"
-        | "cancelled"
-        | "blocked"
-      permit_type:
-        | "hot_work"
-        | "confined_space"
-        | "working_at_height"
-        | "lifting"
-        | "simops"
-        | "other"
-      risk_level: "low" | "medium" | "high" | "critical"
+      app_role: "admin" | "tst" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1355,34 +504,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "engineer", "supervisor", "technician"],
-      apr_status: ["draft", "active", "archived"],
-      incident_status: [
-        "open",
-        "investigating",
-        "corrective_actions",
-        "closed",
-      ],
-      incident_type: ["accident", "near_miss", "deviation"],
-      permit_status: [
-        "draft",
-        "submitted",
-        "under_review",
-        "approved",
-        "in_execution",
-        "completed",
-        "cancelled",
-        "blocked",
-      ],
-      permit_type: [
-        "hot_work",
-        "confined_space",
-        "working_at_height",
-        "lifting",
-        "simops",
-        "other",
-      ],
-      risk_level: ["low", "medium", "high", "critical"],
+      app_role: ["admin", "tst", "viewer"],
     },
   },
 } as const
