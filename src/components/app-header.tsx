@@ -91,16 +91,18 @@ export function AppHeader() {
   );
 
   return (
-    <header className="bg-header sticky top-0 z-30 border-b border-white/10">
-      <div className="flex h-16 items-center justify-between px-4 md:px-8">
-        <Link to="/app" className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-brand-foreground font-black text-sm">
+    <header className="bg-header sticky top-0 z-30 shadow-md">
+      <div className="flex h-20 items-center justify-between px-4 md:px-8">
+        <Link to="/app" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-brand font-black text-base shadow-lg">
             EC
           </div>
           <div>
-            <div className="text-sm font-black uppercase tracking-tight text-header-foreground leading-none">EnviCorp</div>
-            <div className="text-[9px] font-bold uppercase tracking-widest text-header-foreground/60 mt-0.5">
-              Auditoria ISO 9001 — GSI
+            <h1 className="font-outfit text-xl font-black uppercase tracking-tighter leading-none text-header-foreground">
+              EnviCorp
+            </h1>
+            <div className="text-[9px] font-bold uppercase tracking-widest text-header-foreground/60 mt-1">
+              Auditoria ISO 9001 — Módulo GSI
             </div>
           </div>
         </Link>
