@@ -56,34 +56,34 @@ export function AppHeader() {
           <Link
             key={item.to}
             to={item.to}
-            className={`flex items-center gap-2 rounded-md px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
-              active ? "bg-brand text-brand-foreground" : "text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground"
+            className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
+              active ? "bg-brand text-brand-foreground shadow-md" : "text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground"
             }`}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-3.5 w-3.5" />
             {item.label}
           </Link>
         );
       })}
       <Link
         to="/app/ptes"
-        className={`flex items-center gap-2 rounded-md px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
+        className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
           isActive("/app/ptes")
-            ? "bg-orange-500 text-white shadow"
-            : "bg-orange-500/15 text-orange-200 hover:bg-orange-500/30"
+            ? "bg-orange-500 text-white shadow-md"
+            : "text-orange-200 hover:bg-white/10"
         }`}
       >
-        <FileSignature className="h-4 w-4" />
+        <FileSignature className="h-3.5 w-3.5" />
         Emitir PTE
       </Link>
       {isAdmin && (
         <Link
           to="/app/users"
-          className={`flex items-center gap-2 rounded-md px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
-            isActive("/app/users") ? "bg-brand text-brand-foreground" : "text-header-foreground/80 hover:bg-white/10"
+          className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
+            isActive("/app/users") ? "bg-brand text-brand-foreground shadow-md" : "text-header-foreground/80 hover:bg-white/10"
           }`}
         >
-          <ShieldCheck className="h-4 w-4" />
+          <ShieldCheck className="h-3.5 w-3.5" />
           Usuários
         </Link>
       )}
