@@ -84,16 +84,23 @@ function CompaniesPage() {
   function openEdit(c: Company) { setEditing(c); setOpen(true); }
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6 md:p-8 animate-fadeIn">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Empresas</h1>
-          <p className="text-muted-foreground">Gerencie as empresas cadastradas</p>
+          <h2 className="heading-display text-3xl md:text-4xl text-brand">Empresas</h2>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">
+            Cadastro de Contratantes / Terceirizadas / CLT
+          </p>
         </div>
         {isEditor && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nova empresa</Button>
+              <Button
+                onClick={openNew}
+                className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg"
+              >
+                <Plus className="h-4 w-4 mr-2" />Nova empresa
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{editing?.id ? "Editar" : "Nova"} empresa</DialogTitle></DialogHeader>
@@ -142,27 +149,27 @@ function CompaniesPage() {
         )}
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>CNPJ</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Encarregados</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+            <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Nome</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Tipo</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">CNPJ</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Email</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Encarregados</TableHead>
+              <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-600">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Carregando...</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={6} className="text-center text-slate-400 py-10 text-xs font-bold uppercase tracking-widest">Carregando...</TableCell></TableRow>}
             {!isLoading && companies?.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Nenhuma empresa cadastrada</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-slate-400 py-10 text-xs font-bold uppercase tracking-widest">Nenhuma empresa cadastrada</TableCell></TableRow>
             )}
             {companies?.map((c) => (
-              <TableRow key={c.id}>
-                <TableCell className="font-medium">{c.name}</TableCell>
-                <TableCell><Badge variant="secondary">{c.type}</Badge></TableCell>
+              <TableRow key={c.id} className="hover:bg-slate-50/60">
+                <TableCell className="font-black uppercase text-sm text-slate-900">{c.name}</TableCell>
+                <TableCell><Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest">{c.type}</Badge></TableCell>
                 <TableCell>{c.cnpj ?? "—"}</TableCell>
                 <TableCell>{c.email ?? "—"}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
