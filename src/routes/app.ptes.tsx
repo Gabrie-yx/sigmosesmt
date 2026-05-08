@@ -115,7 +115,7 @@ function PtesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* FORM */}
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
           <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-100 pb-4 flex items-center justify-between">
             <span className="flex items-center gap-2"><FileText className="h-5 w-5" />
               {editingId ? "Editar Permissão Especial" : "Nova Permissão Especial"}
@@ -178,7 +178,7 @@ function PtesPage() {
         </div>
 
         {/* HISTORY */}
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
           <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-100 pb-4 flex items-center gap-2">
             <Files className="h-5 w-5" /> Histórico de PTEs Emitidas
           </h3>

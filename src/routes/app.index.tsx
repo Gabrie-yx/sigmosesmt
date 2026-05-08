@@ -85,7 +85,7 @@ function TstPanel() {
       <h2 className="heading-display text-3xl md:text-4xl text-[#0369a1] mb-8">Painel do TST / GSI</h2>
 
       {/* OMNISEARCH */}
-      <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 mb-8 shrink-0">
+      <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 mb-8 shrink-0">
         <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
           <Search className="h-4 w-4" /> Busca Universal (Omnisearch)
         </h3>
@@ -120,7 +120,7 @@ function TstPanel() {
 
       {/* GRID: Pendências + Conformidade */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1 min-h-[400px]">
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 flex flex-col">
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 flex flex-col">
           <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
             <h3 className="text-sm font-black uppercase tracking-widest text-orange-600 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" /> Relatório de Vencimentos e Bloqueios
@@ -153,7 +153,7 @@ function TstPanel() {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
           <h3 className="text-sm font-black uppercase tracking-widest mb-6 border-b border-slate-100 pb-4 text-[#0369a1] flex items-center gap-2">
             <Building2 className="h-4 w-4" /> Conformidade por Empresa
           </h3>

@@ -3,17 +3,17 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LogOut, Download, Upload, ShieldCheck, Building2, Briefcase, Users, FileSignature, LayoutDashboard, Menu } from "lucide-react";
+import { LogOut, Download, Upload, Menu } from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const NAV = [
-  { to: "/app", label: "Painel TST", icon: LayoutDashboard, exact: true },
-  { to: "/app/companies", label: "Empresas", icon: Building2 },
-  { to: "/app/roles", label: "Cargos / Riscos", icon: Briefcase },
-  { to: "/app/employees", label: "Colaboradores", icon: Users },
+  { to: "/app", label: "Painel TST", exact: true },
+  { to: "/app/companies", label: "Empresas" },
+  { to: "/app/roles", label: "Cargos/Riscos" },
+  { to: "/app/employees", label: "Colaboradores" },
 ];
 
 export function AppHeader() {
@@ -50,40 +50,36 @@ export function AppHeader() {
   const NavLinks = () => (
     <>
       {NAV.map((item) => {
-        const Icon = item.icon;
         const active = isActive(item.to, item.exact);
         return (
           <Link
             key={item.to}
             to={item.to}
-            className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
-              active ? "bg-brand text-brand-foreground shadow-md" : "text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground"
+            className={`rounded-md px-4 py-2 text-sm font-semibold transition-all ${
+              active ? "bg-[#0369a1] text-white shadow-md" : "text-white/90 hover:bg-white/10 hover:text-white"
             }`}
           >
-            <Icon className="h-3.5 w-3.5" />
             {item.label}
           </Link>
         );
       })}
       <Link
         to="/app/ptes"
-        className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
+        className={`rounded-md px-4 py-2 text-sm font-semibold transition-all ${
           isActive("/app/ptes")
             ? "bg-orange-500 text-white shadow-md"
-            : "text-orange-200 hover:bg-white/10"
+            : "text-orange-300 hover:bg-white/10"
         }`}
       >
-        <FileSignature className="h-3.5 w-3.5" />
         Emitir PTE
       </Link>
       {isAdmin && (
         <Link
           to="/app/users"
-          className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
-            isActive("/app/users") ? "bg-brand text-brand-foreground shadow-md" : "text-header-foreground/80 hover:bg-white/10"
+          className={`rounded-md px-4 py-2 text-sm font-semibold transition-all ${
+            isActive("/app/users") ? "bg-[#0369a1] text-white shadow-md" : "text-white/90 hover:bg-white/10"
           }`}
         >
-          <ShieldCheck className="h-3.5 w-3.5" />
           Usuários
         </Link>
       )}
@@ -92,16 +88,14 @@ export function AppHeader() {
 
   return (
     <header className="bg-header sticky top-0 z-30 shadow-md">
-      <div className="flex h-20 items-center justify-between px-4 md:px-8">
-        <Link to="/app" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-brand font-black text-base shadow-lg">
-            EC
-          </div>
+      <div className="flex h-16 items-center justify-between px-4 md:px-8">
+        <Link to="/app" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <div className="flex h-10 w-10 items-center justify-center rounded bg-white/10 border border-white/20" />
           <div>
-            <h1 className="font-outfit text-xl font-black uppercase tracking-tighter leading-none text-header-foreground">
-              EnviCorp
+            <h1 className="text-lg font-black uppercase tracking-tight leading-none text-white">
+              ESTALEIRO DMN
             </h1>
-            <div className="text-[9px] font-bold uppercase tracking-widest text-header-foreground/60 mt-1">
+            <div className="text-[9px] font-bold uppercase tracking-widest text-white/60 mt-1">
               Auditoria ISO 9001 — Módulo GSI
             </div>
           </div>

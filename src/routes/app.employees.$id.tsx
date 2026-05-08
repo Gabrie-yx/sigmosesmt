@@ -64,7 +64,7 @@ function EmployeeDetail() {
         </Button>
       </div>
 
-      <Card className="p-6 flex flex-wrap items-center gap-6 rounded-3xl border-slate-200 shadow-sm">
+      <Card className="p-6 flex flex-wrap items-center gap-6 rounded-2xl border-slate-200 shadow-sm">
         <div className="flex-1 min-w-[240px]">
           <h1 className="heading-display text-3xl text-brand">{emp.nome}</h1>
           <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-1">
