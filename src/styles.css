@@ -95,6 +95,16 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  /* EnviCorp brand & status tokens */
+  --brand: oklch(0.52 0.14 240);
+  --brand-foreground: oklch(0.99 0 0);
+  --brand-soft: oklch(0.96 0.02 240);
+  --header: oklch(0.21 0.04 265);
+  --header-foreground: oklch(0.97 0 0);
+  --status-apto: oklch(0.7 0.17 152);
+  --status-alerta: oklch(0.78 0.16 75);
+  --status-bloqueado: oklch(0.62 0.22 27);
+  --status-inativo: oklch(0.7 0.02 260);
 }
 
 .dark {
@@ -141,4 +151,16 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+  .bg-brand { background-color: var(--brand); color: var(--brand-foreground); }
+  .text-brand { color: var(--brand); }
+  .border-brand { border-color: var(--brand); }
+  .bg-header { background-color: var(--header); color: var(--header-foreground); }
+  .text-header-foreground { color: var(--header-foreground); }
+  .bg-status-apto { background-color: var(--status-apto); }
+  .bg-status-alerta { background-color: var(--status-alerta); }
+  .bg-status-bloqueado { background-color: var(--status-bloqueado); }
+  .bg-status-inativo { background-color: var(--status-inativo); }
+  .text-status-apto { color: var(--status-apto); }
+  .text-status-alerta { color: var(--status-alerta); }
+  .text-status-bloqueado { color: var(--status-bloqueado); }
 }
