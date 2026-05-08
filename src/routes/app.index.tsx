@@ -79,45 +79,50 @@ function TstPanel() {
   }, [rows]);
 
   return (
-    <div className="p-6 md:p-8 space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Painel TST</h1>
-        <p className="text-muted-foreground text-sm">Visão de conformidade ISO 9001 — GSI</p>
-      </div>
+    <div className="p-6 md:p-8 space-y-6 animate-fadeIn">
+      <h2 className="heading-display text-3xl md:text-4xl text-brand">
+        Painel do TST / GSI
+      </h2>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Kpi label="Aptos" value={counts.APTO} icon={ShieldCheck} accent="bg-status-apto" />
         <Kpi label="Alerta" value={counts.ALERTA} icon={AlertTriangle} accent="bg-status-alerta" />
         <Kpi label="Bloqueados" value={counts.BLOQUEADO} icon={ShieldOff} accent="bg-status-bloqueado" />
         <Kpi label="Total" value={rows.length} icon={Users} accent="bg-brand" />
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nome, CPF, matrícula, empresa, função…"
-          className="pl-10"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+      <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200">
+        <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <Search className="h-4 w-4" /> Busca Universal (Omnisearch)
+        </h3>
+        <div className="relative">
+          <Input
+            placeholder="Digite Nome, CPF, matrícula, empresa ou função…"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-5 py-6 text-sm font-bold uppercase placeholder:normal-case placeholder:text-slate-400"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="divide-y">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="divide-y divide-slate-100">
           {filtered.length === 0 && (
-            <div className="p-8 text-center text-muted-foreground text-sm">Nenhum colaborador encontrado.</div>
+            <div className="p-10 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">
+              Nenhum colaborador encontrado.
+            </div>
           )}
           {filtered.map((r) => (
             <Link
               key={r.emp.id}
               to="/app/employees/$id"
               params={{ id: r.emp.id }}
-              className="flex items-center gap-4 px-4 py-3 hover:bg-muted/50 transition-colors"
+              className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 transition-colors"
             >
               <div className={`h-2.5 w-2.5 rounded-full ${r.status.colorClass} shrink-0`} />
               <div className="flex-1 min-w-0">
-                <div className="font-semibold truncate">{r.emp.nome}</div>
-                <div className="text-xs text-muted-foreground truncate">
+                <div className="font-black uppercase text-sm tracking-tight truncate text-slate-900">{r.emp.nome}</div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 truncate mt-0.5">
                   {r.company} · {r.roleName} · {r.emp.matricula ?? "sem matrícula"}
                 </div>
               </div>
@@ -128,25 +133,25 @@ function TstPanel() {
                   </Badge>
                 ))}
               </div>
-              <Badge className={`${r.status.colorClass} text-white border-0 shrink-0`}>{r.status.label}</Badge>
+              <Badge className={`${r.status.colorClass} text-white border-0 shrink-0 text-[10px] font-black uppercase tracking-widest`}>{r.status.label}</Badge>
             </Link>
           ))}
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
 
 function Kpi({ label, value, icon: Icon, accent }: { label: string; value: number; icon: any; accent: string }) {
   return (
-    <Card className="p-4 flex items-center gap-3">
-      <div className={`h-10 w-10 rounded-lg ${accent} text-white flex items-center justify-center`}>
-        <Icon className="h-5 w-5" />
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex items-center gap-4 hover:-translate-y-0.5 transition-transform">
+      <div className={`h-12 w-12 rounded-xl ${accent} text-white flex items-center justify-center shadow-md`}>
+        <Icon className="h-6 w-6" />
       </div>
       <div>
-        <div className="text-2xl font-bold leading-none">{value}</div>
-        <div className="text-xs text-muted-foreground mt-1">{label}</div>
+        <div className="text-3xl font-black font-outfit leading-none tracking-tighter">{value}</div>
+        <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">{label}</div>
       </div>
-    </Card>
+    </div>
   );
 }
