@@ -57,22 +57,24 @@ function EmployeeDetail() {
   if (!emp) return <div className="p-8 text-muted-foreground">Carregando…</div>;
 
   return (
-    <div className="p-6 md:p-8 space-y-6">
+    <div className="p-6 md:p-8 space-y-6 animate-fadeIn">
       <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="sm"><Link to="/app/employees"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link></Button>
+        <Button asChild variant="ghost" size="sm" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-brand">
+          <Link to="/app/employees"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
+        </Button>
       </div>
 
-      <Card className="p-6 flex flex-wrap items-center gap-6">
+      <Card className="p-6 flex flex-wrap items-center gap-6 rounded-3xl border-slate-200 shadow-sm">
         <div className="flex-1 min-w-[240px]">
-          <h1 className="text-2xl font-bold">{emp.nome}</h1>
-          <div className="text-sm text-muted-foreground mt-1">
+          <h1 className="heading-display text-3xl text-brand">{emp.nome}</h1>
+          <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-1">
             {emp.cpf ?? "—"} · {emp.matricula ?? "—"}
           </div>
         </div>
         {status && (
           <div className="flex items-center gap-2">
             <span className={`h-3 w-3 rounded-full ${status.colorClass}`} />
-            <Badge className={`${status.colorClass} text-white border-0`}>{status.label}</Badge>
+            <Badge className={`${status.colorClass} text-white border-0 text-[10px] font-black uppercase tracking-widest`}>{status.label}</Badge>
           </div>
         )}
       </Card>
