@@ -1,0 +1,2 @@
+UPDATE auth.users SET encrypted_password = crypt('Senha@123', gen_salt('bf')), email_confirmed_at = COALESCE(email_confirmed_at, now()) WHERE email = 'gabriel.a.almeida.br@gmail.com';
+INSERT INTO public.user_roles (user_id, role) SELECT id, 'admin'::app_role FROM auth.users WHERE email = 'gabriel.a.almeida.br@gmail.com' ON CONFLICT DO NOTHING;
