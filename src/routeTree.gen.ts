@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 
@@ -36,6 +37,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRolesRoute = AppRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEmployeesRoute = AppEmployeesRouteImport.update({
   id: '/employees',
   path: '/employees',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/employees': typeof AppEmployeesRoute
+  '/app/roles': typeof AppRolesRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/employees': typeof AppEmployeesRoute
+  '/app/roles': typeof AppRolesRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/employees': typeof AppEmployeesRoute
+  '/app/roles': typeof AppRolesRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -79,9 +88,16 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/companies'
     | '/app/employees'
+    | '/app/roles'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/app/companies' | '/app/employees' | '/app'
+  to:
+    | '/'
+    | '/login'
+    | '/app/companies'
+    | '/app/employees'
+    | '/app/roles'
+    | '/app'
   id:
     | '__root__'
     | '/'
@@ -89,6 +105,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/companies'
     | '/app/employees'
+    | '/app/roles'
     | '/app/'
   fileRoutesById: FileRoutesById
 }
@@ -128,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/roles': {
+      id: '/app/roles'
+      path: '/roles'
+      fullPath: '/app/roles'
+      preLoaderRoute: typeof AppRolesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/employees': {
       id: '/app/employees'
       path: '/employees'
@@ -148,12 +172,14 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppCompaniesRoute: typeof AppCompaniesRoute
   AppEmployeesRoute: typeof AppEmployeesRoute
+  AppRolesRoute: typeof AppRolesRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppCompaniesRoute: AppCompaniesRoute,
   AppEmployeesRoute: AppEmployeesRoute,
+  AppRolesRoute: AppRolesRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
@@ -167,3 +193,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
