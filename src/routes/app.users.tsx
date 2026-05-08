@@ -1,18 +1,14 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/users")({
-  beforeLoad: async () => {
-    const { data: s } = await supabase.auth.getSession();
-    if (!s.session) throw redirect({ to: "/login" });
-    const { data } = await supabase.from("user_roles").select("role").eq("user_id", s.session.user.id);
-    if (!data?.some((r) => r.role === "admin")) throw redirect({ to: "/app" });
-  },
   component: UsersPage,
 });
 
@@ -20,8 +16,18 @@ const ROLES = ["admin", "tst", "viewer"] as const;
 
 function UsersPage() {
   const qc = useQueryClient();
+  const { isAdmin, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !isAdmin) {
+      navigate({ to: "/app" });
+    }
+  }, [loading, isAdmin, navigate]);
+
   const { data, isLoading } = useQuery({
     queryKey: ["users-with-roles"],
+    enabled: isAdmin,
     queryFn: async () => {
       const [{ data: profiles }, { data: roles }] = await Promise.all([
         supabase.from("profiles").select("id, full_name"),
@@ -33,6 +39,12 @@ function UsersPage() {
       }));
     },
   });
+
+  if (loading || !isAdmin) {
+    return (
+      <div className="p-8 text-sm text-muted-foreground">Carregando…</div>
+    );
+  }
 
   const setRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
