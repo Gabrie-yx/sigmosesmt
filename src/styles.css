@@ -99,8 +99,9 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
-  /* EnviCorp brand & status tokens */
-  --brand: oklch(0.52 0.14 240);
+  /* EnviCorp brand & status tokens — #0369a1 / hover #075985 */
+  --brand: oklch(0.5 0.135 234);
+  --brand-dark: oklch(0.43 0.125 234);
   --brand-foreground: oklch(0.99 0 0);
   --brand-soft: oklch(0.96 0.02 240);
   --header: oklch(0.21 0.04 265);
