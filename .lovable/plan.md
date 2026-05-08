@@ -1,106 +1,155 @@
 
-## Visão geral
+# Recriação do sistema EnviCorp / Fardamento
 
-Vou recriar o app "EnviCorp – Gestão de Fardamentos e EPIs" como um SPA TanStack Start com banco real (Lovable Cloud / Supabase), autenticação por e-mail+senha e Google, e três níveis de acesso. Mantenho 100% das funcionalidades do original (que hoje vive em LocalStorage), trocando o armazenamento por tabelas com RLS.
+Recria o app vanilla original (Vite + localStorage) sobre o stack atual (TanStack Start + React + Supabase + shadcn), mantendo todas as funcionalidades e dados, mas com visual adaptado ao design system.
 
-## Funcionalidades (paridade com o original)
+## 1. Banco de dados (migration única)
 
-1. **Painel TST (Dashboard)**
-   - Busca universal (nome, CPF, função, empresa)
-   - Relatório de Vencimentos e Bloqueios (filtro por empresa)
-   - Conformidade % por empresa (barras de progresso)
+Estender o schema atual para cobrir todos os campos do sistema antigo.
 
-2. **Empresas** — CRUD (nome, tipo CLT/TERCEIRIZADO, CNPJ, encarregados, e-mail)
+**`employees`** — adicionar colunas:
+- `rg_orgao`, `cnpj`, `endereco`, `bairro`, `cidade`, `uf`, `cep`
+- `whatsapp`, `whatsapp_emergencia`, `nome_contato`, `email`
+- `tipo_cadastro` (`MEI` | `NAO_MEI`, default `NAO_MEI`)
+- `foto_url` (referência ao bucket `avatars`)
+- renomear/alias: usar `data_admissao` (manter `admissao` legado)
+- `data_integracao` (já existe via `nrs`? — adicionar coluna explícita)
 
-3. **Cargos / Riscos** — CRUD com requisitos (ASO, Integração, lista de NRs obrigatórias)
+**`employee_exams`** — adicionar:
+- `natureza` (Admissional, Periódico, etc.)
+- `periodicidade_meses` (int)
+- `anexo_path` (PDF no bucket `employee-docs`)
 
-4. **Colaboradores** — lista com badges de status (APTO/ALERTA/BLOQUEADO/INATIVO/AFASTADO) calculados automaticamente. Ficha em 5 abas:
-   - **Cadastro Base** (CPF, RG, CNH, matrícula, admissão, status, datas ASO/Integração)
-   - **Saúde (ASOs)** — registro de exames clínicos com aptidão e vencimento
-   - **Treinamentos (NRs)** — datas por NR, validade 1 ano
-   - **Pasta Digital** — upload de docs (RG, CPF, ASO, CNH, comprovante) → Supabase Storage
-   - **Controle de EPIs** — entregas, devoluções, tamanhos
+**`ptes`** — adicionar colunas:
+- `local`, `risco`, `status` (`ATIVA` | `ENCERRADA`, default `ATIVA`)
+- `employee_id`, `employee_name` (snapshot)
+- `data_emissao` (já existe `data`)
 
-5. **Emitir PTE** (Permissão de Trabalho/Entrada) — formulário + geração de PDF (html2pdf.js ou jsPDF)
+**`epi_deliveries`** — já está completo.
 
-6. **Backup** — Exportar/Importar JSON do banco do usuário (preserva o recurso original)
+**`employee_docs`** — já está completo (tipo + file_path).
 
-7. **Motor ISO 9001** — `calculateSafetyStatus()` portado: vencimentos de ASO, Integração, NRs por cargo, com estados Vencido / Vence em ≤30d / Inapto.
+**Storage buckets** — todos já existem (`avatars` público, `employee-docs` privado). Adicionar policies para upload/download via usuários autenticados editores.
 
-## Autenticação e papéis
+## 2. Camada de dados (React Query)
 
-- E-mail/senha + Google
-- Tabela `profiles` (id, full_name, avatar_url) criada por trigger no signup
-- Enum `app_role`: `admin`, `tst`, `viewer`
-- Tabela `user_roles` separada + função `has_role()` SECURITY DEFINER
-- Fluxo: primeiro usuário vira admin; admin atribui papéis na tela "Usuários"
-- Página `/reset-password` incluída
+`src/lib/db/` — hooks tipados para cada entidade:
+- `useCompanies`, `useSaveCompany`, `useDeleteCompany`
+- `useRoles`, `useSaveRole`, `useDeleteRole`
+- `useEmployees`, `useEmployee(id)`, `useSaveEmployee`, `useDeleteEmployee`
+- `useExams(empId)`, `useSaveExam`, `useDeleteExam`
+- `useDocs(empId)`, `useUploadDoc`, `useDeleteDoc`
+- `useEpis(empId)`, `useSaveEpi`, `useDeleteEpi`
+- `usePtes`, `useSavePte`, `useRevokePte`, `useDeletePte`
 
-Permissões:
-- `admin`: tudo + gerenciar usuários/papéis
-- `tst`: CRUD de empresas, cargos, colaboradores, emite PTE
-- `viewer`: somente leitura (Dashboard e fichas)
+## 3. Motor de Inteligência (ISO 9001)
 
-## Modelo de dados (Lovable Cloud)
+`src/lib/safety-engine.ts` — porta direta de `calculateSafetyStatus`:
 
-```text
-profiles(id PK→auth.users, full_name, avatar_url, created_at)
-user_roles(id, user_id→auth.users, role app_role, UNIQUE(user_id,role))
-companies(id, name, type, cnpj, encarregado1, encarregado2, email)
-roles(id, name, req_aso bool, req_integra bool, req_nrs text[])
-employees(id, company_id→companies, role_id→roles, nome, cpf, rg, cnh, titulo,
-          endereco, matricula, admissao date, status, data_aso date,
-          data_integracao date, nrs jsonb)
-employee_exams(id, employee_id, tipo_exame, data_realizacao, data_vencimento,
-               aptidao, observacoes)
-employee_docs(id, employee_id, tipo, file_path, uploaded_at)  -- Storage bucket "employee-docs"
-epi_deliveries(id, employee_id, item, tamanho, qtd, data_entrega, data_devolucao, ca)
-ptes(id, created_by, numero, data, empresa_id, dados jsonb, pdf_path)
-```
+- Entrada: employee + role + exames
+- Saída: `{ label: 'APTO' | 'ALERTA' | 'BLOQUEADO' | 'INATIVO' | 'AFASTADO', msgs[], acessoPermitido }`
+- Regras:
+  - INATIVO/AFASTADO bloqueia
+  - Exames mais recentes por tipo: aptidão NÃO → BLOQUEADO; vencido → BLOQUEADO; ≤30 dias → ALERTA
+  - ASO/Integração: 1 ano de validade
+  - NRs exigidas pela função: faltando → BLOQUEADO; vencendo → ALERTA
+  - Checagem cruzada: se há ASO Clínico válido no histórico de exames, ignora o campo legado `data_aso`
 
-Todas as tabelas com RLS:
-- SELECT: usuários autenticados
-- INSERT/UPDATE/DELETE: `has_role(uid,'admin') OR has_role(uid,'tst')`
-- `user_roles`: somente admin pode escrever
+## 4. Layout e navegação
 
-## Arquitetura técnica
+Substituir o atual `app.tsx` por header escuro + nav horizontal (mais próximo do original) com tokens do design system:
+- Header: `bg-sidebar`/`bg-secondary` (definir token), badge do usuário, role, logout
+- Itens: Painel TST · Empresas · Cargos/Riscos · Colaboradores · **Emitir PTE** (destaque)
+- Botões backup: Exportar / Importar JSON
+- Mobile: hambúrguer + sheet
+- Permissões aplicadas: viewer só lê, tst/admin editam, admin exclui
 
-- **Rotas** (TanStack Router, file-based, todas dentro de `_authenticated`):
-  - `/login`, `/reset-password` (públicas)
-  - `/_authenticated/index` → Dashboard
-  - `/_authenticated/empresas`
-  - `/_authenticated/cargos`
-  - `/_authenticated/colaboradores` (lista) e `/_authenticated/colaboradores/$id` (ficha com sub-abas via search params)
-  - `/_authenticated/pte` (emissão)
-  - `/_authenticated/usuarios` (admin)
-- **Dados**: TanStack Query + cliente Supabase do browser (RLS faz o controle); mutations com `useMutation` + `invalidateQueries`
-- **Validação**: Zod em todos os formulários
-- **PDF**: `jspdf` + `jspdf-autotable` (compatível com Worker SSR; html2pdf.js só roda no client e fica em componente `client-only`)
-- **Backup**: exportar/importar JSON via dump do `select *` em todas as tabelas (somente admin)
-- **Lógica `calculateSafetyStatus`**: portada para `src/lib/safety.ts` e usada em listas/dashboard
+## 5. Telas
 
-## Design
+### 5.1 `/app` — Painel TST
+- Omnisearch (nome, CPF, função, empresa) com resultados em tempo real
+- Card "Relatório de Vencimentos e Bloqueios" filtrável por empresa
+- Card "Conformidade por Empresa" (% APTO, barras coloridas)
+- Cards de KPI: total colaboradores, aptos, alertas, bloqueados
 
-- Tokens semânticos em `src/styles.css` (oklch): primary baseado no vermelho corporativo do original (#991b1b → oklch), secondary navy (#0f172a), accent âmbar (#f59e0b), além dos usuais
-- Componentes shadcn (Button, Card, Table, Tabs, Dialog, Form, Badge, Progress, Sheet, Sonner)
-- Ícones `lucide-react` substituindo Phosphor
-- Tipografia: mantenho Inter como sans (já comum) e adiciono Outfit para títulos (Google Fonts)
-- Layout: header escuro com nav + área de conteúdo cards arredondados, fiel ao espírito do original
+### 5.2 `/app/companies` — Empresas
+- Lista (esquerda) + detalhe/edição (direita)
+- Form: nome, tipo (CLT/Terceirizado/Contratante), CNPJ, encarregado1/2, e-mail
+- Lista de colaboradores da empresa selecionada com status calculado
+- Botão "Novo colaborador" levando ao cadastro com `companyId` pré-selecionado
+
+### 5.3 `/app/roles` — Cargos / Matriz de Riscos
+- Lista de cargos + editor lateral
+- Toggles: Exige ASO, Exige Integração
+- Grid de NRs (NR-05, 06, 10, 11, 12, 17, 20, 33, 34, 35) marcáveis
+- CRUD completo
+
+### 5.4 `/app/employees/$id` — Colaborador (RG digital)
+Tabs:
+- **PROFILE** — identificação, endereço, contato/emergência, vínculo, foto (upload p/ `avatars`), datas ASO/Integração, validações, badge de status
+- **NRS** — grid das NRs com data; destaque vermelho nas exigidas pela função; salvar em `employees.nrs` (jsonb) ou tabela dedicada
+- **DOCS** — upload de RG, CPF, comprovante de residência, MEI (condicional); badges Anexado/Pendente/Opcional; bucket `employee-docs`
+- **EPI** — formulário (descrição, CA, data, qtd) + histórico + impressão de ficha (HTML→PDF via `react-to-print` ou `html2pdf`)
+- **SAÚDE** — formulário de exame (tipo, natureza, realização, periodicidade, vencimento auto, aptidão, anexo PDF) + histórico ordenado com badges VÁLIDO/A VENCER/VENCIDO/INAPTO; botão visualizar PDF anexado
+
+Lista mestre `/app/employees` com filtro por empresa e busca.
+
+### 5.5 `/app/ptes` — Emissão de PTE
+- Form: local, classificação (Trabalho a Quente, Espaço Confinado NR-33, Altura NR-35, Eletricidade NR-10), seletor de executante (apenas APTOS habilitados, BLOQUEADOS aparecem desabilitados com 🚫)
+- Histórico lateral com cards (status ATIVA/ENCERRADA, editar, revogar, excluir)
+- Geração de PDF da PTE
+
+## 6. Seed inicial
+
+Migration de seed com:
+- 3 empresas: ESTALEIRO DMN (CLT), JC GALVÃO, NB CONSTRUÇÃO (Terceirizadas)
+- 18 cargos com matriz de NRs do original
+- ~80 colaboradores (listas DMN, JC, NB) com datas de ASO/Integração geradas
+
+Idempotente: só insere se as tabelas estiverem vazias.
+
+## 7. Backup JSON (import/export)
+
+Componente no header:
+- **Exportar**: baixa JSON com `{ companies, roles, employees, exams, docs (metadata), epis, ptes }`
+- **Importar**: aceita o JSON do sistema antigo (`dmn_erp_v25_fulldata`) e do novo; mapeia IDs antigos → uuid e faz upsert via Supabase. Confirmação dupla antes de sobrescrever.
+
+## 8. Permissões (já no schema)
+
+Usar `useAuth` existente para esconder/mostrar ações:
+- `viewer` — só leitura
+- `tst` — criar/editar tudo
+- `admin` — + excluir + página `/app/users`
+
+## 9. Tokens / visual
+
+Adicionar em `src/styles.css`:
+- `--brand` (azul `#0369a1`), `--brand-dark` (`#075985`)
+- `--header` escuro (`#0f172a`)
+- Status: `--status-apto`, `--status-alerta`, `--status-bloqueado`
+- Manter Inter via Google Fonts; usar shadcn Card/Table/Tabs/Dialog/Select para todo o conteúdo
+
+## Detalhes técnicos
+
+- Uploads: `supabase.storage.from('employee-docs').upload(...)` com path `${empId}/${tipo}-${timestamp}.ext`
+- PDFs gerados client-side com `html2pdf.js` (já é leve e funciona no browser)
+- Datas: utilitário `formatDateBR`, `daysUntil`, `addMonths`
+- Toda mutação usa `react-query` invalidando keys; `sonner` para toast
+- Rotas TanStack file-based: `app.companies.tsx`, `app.roles.tsx`, `app.employees.tsx`, `app.employees.$id.tsx`, `app.ptes.tsx`
 
 ## Ordem de implementação
 
-1. Ativar Lovable Cloud, migrações (enum, tabelas, RLS, trigger de profile, função `has_role`, bucket Storage)
-2. Auth: páginas login/signup/reset, layout `_authenticated`, contexto de auth
-3. Tokens de design + Header + shell
-4. CRUDs base: Empresas, Cargos, Usuários (admin)
-5. Colaboradores: lista com badges + ficha (abas Cadastro, Saúde, NRs, Pasta Digital, EPIs)
-6. Motor `calculateSafetyStatus` + Dashboard (busca, vencimentos, conformidade)
-7. PTE com geração de PDF
-8. Backup export/import JSON
-9. Seed opcional (botão "carregar dados de exemplo" reproduzindo as listas DMN/JC/NB do original)
+1. Migration (schema + storage policies)
+2. Engine de status + hooks de dados
+3. Layout/header com permissões
+4. Painel TST
+5. Empresas + Cargos
+6. Colaboradores (todas as 5 abas)
+7. PTE
+8. Backup JSON + Seed dos dados originais
 
-## Fora do escopo desta entrega
+## Fora de escopo (este plano)
 
-- Notificações por e-mail de vencimentos (pode entrar depois via cron + Edge functions)
-- App mobile/PWA offline
-- Importação direta do LocalStorage do app antigo (mas o "Importar JSON" cobre se você exportar de lá)
+- App mobile nativo
+- Notificações por e-mail de vencimento (pode entrar depois com edge function + cron)
+- Assinatura digital de PTE
