@@ -10,6 +10,7 @@ export function daysUntil(date: string | null | undefined): number | null {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const d = new Date(date.split("T")[0] + "T00:00:00");
+  if (isNaN(d.getTime())) return null;
   return Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
