@@ -159,7 +159,7 @@ function CompaniesPage() {
           saving={save.isPending}
         />
       ) : selected ? (
-        <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-200 p-8 flex flex-col overflow-hidden animate-fadeIn">
+        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col overflow-hidden animate-fadeIn">
           <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4 shrink-0">
             <div>
               <h3 className="text-2xl font-black uppercase text-[#0369a1] tracking-tighter">{selected.name}</h3>
@@ -261,7 +261,7 @@ function CompaniesPage() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-white rounded-3xl border border-slate-200 shadow-sm">
+        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-white rounded-2xl border border-slate-200 shadow-sm">
           <Users className="h-16 w-16 mb-4 opacity-40" />
           <p className="text-xs font-bold uppercase tracking-widest">Selecione uma empresa</p>
         </div>
@@ -280,7 +280,7 @@ function CompanyForm({
   saving: boolean;
 }) {
   return (
-    <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-200 p-8 overflow-y-auto custom-scrollbar animate-fadeIn relative">
+    <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-8 overflow-y-auto custom-scrollbar animate-fadeIn relative">
       <button onClick={onCancel} className="absolute top-8 right-8 text-slate-400 hover:text-red-500" aria-label="Cancelar">
         <X className="h-6 w-6" />
       </button>

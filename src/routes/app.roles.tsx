@@ -71,7 +71,7 @@ function RolesPage() {
   return (
     <div className="p-6 md:p-8 flex gap-6 h-full bg-[#f1f5f9] animate-fadeIn">
       {/* LEFT: Cargos Catalogados */}
-      <div className="w-[380px] flex flex-col bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
+      <div className="w-[380px] flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
         <div className="p-6 border-b border-slate-100 bg-slate-50/50">
           <h2 className="text-lg font-black text-[#0369a1] uppercase tracking-tighter mb-1 flex items-center gap-2">
             <Briefcase className="h-5 w-5" /> Cargos Catalogados
@@ -127,7 +127,7 @@ function RolesPage() {
       </div>
 
       {/* RIGHT: Matriz de Requisitos */}
-      <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-200 p-8 flex flex-col overflow-y-auto custom-scrollbar">
+      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col overflow-y-auto custom-scrollbar">
         <div className="mb-8 border-b border-slate-100 pb-4 flex justify-between items-center shrink-0">
           <div>
             <h3 className="text-2xl font-black uppercase text-slate-900 tracking-tighter">
