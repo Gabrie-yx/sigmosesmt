@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
+import { Route as AppPtesRouteImport } from './routes/app.ptes'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 
@@ -42,6 +43,11 @@ const AppRolesRoute = AppRolesRouteImport.update({
   path: '/roles',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPtesRoute = AppPtesRouteImport.update({
+  id: '/ptes',
+  path: '/ptes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEmployeesRoute = AppEmployeesRouteImport.update({
   id: '/employees',
   path: '/employees',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/employees': typeof AppEmployeesRoute
+  '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
   '/app/': typeof AppIndexRoute
 }
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/employees': typeof AppEmployeesRoute
+  '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
   '/app': typeof AppIndexRoute
 }
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/employees': typeof AppEmployeesRoute
+  '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
   '/app/': typeof AppIndexRoute
 }
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/companies'
     | '/app/employees'
+    | '/app/ptes'
     | '/app/roles'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/companies'
     | '/app/employees'
+    | '/app/ptes'
     | '/app/roles'
     | '/app'
   id:
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/companies'
     | '/app/employees'
+    | '/app/ptes'
     | '/app/roles'
     | '/app/'
   fileRoutesById: FileRoutesById
@@ -152,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRolesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/ptes': {
+      id: '/app/ptes'
+      path: '/ptes'
+      fullPath: '/app/ptes'
+      preLoaderRoute: typeof AppPtesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/employees': {
       id: '/app/employees'
       path: '/employees'
@@ -172,6 +191,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppCompaniesRoute: typeof AppCompaniesRoute
   AppEmployeesRoute: typeof AppEmployeesRoute
+  AppPtesRoute: typeof AppPtesRoute
   AppRolesRoute: typeof AppRolesRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -179,6 +199,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCompaniesRoute: AppCompaniesRoute,
   AppEmployeesRoute: AppEmployeesRoute,
+  AppPtesRoute: AppPtesRoute,
   AppRolesRoute: AppRolesRoute,
   AppIndexRoute: AppIndexRoute,
 }
