@@ -40,12 +40,6 @@ function UsersPage() {
     },
   });
 
-  if (loading || !isAdmin) {
-    return (
-      <div className="p-8 text-sm text-muted-foreground">Carregando…</div>
-    );
-  }
-
   const setRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
       await supabase.from("user_roles").delete().eq("user_id", userId);
@@ -55,6 +49,12 @@ function UsersPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["users-with-roles"] }); toast.success("Papel atualizado"); },
     onError: (e: any) => toast.error(e.message),
   });
+
+  if (loading || !isAdmin) {
+    return (
+      <div className="p-8 text-sm text-muted-foreground">Carregando…</div>
+    );
+  }
 
   return (
     <div className="p-8">
