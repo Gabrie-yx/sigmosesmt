@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
@@ -136,6 +136,7 @@ export function EmployeeDetailContent({ id, showHeader = true }: { id: string; s
 /* ============ PROFILE ============ */
 function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
   const [f, setF] = useState<any>(emp);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const save = useMutation({
     mutationFn: async () => {
       const { id: _id, created_at, updated_at, ...rest } = f;
@@ -154,8 +155,51 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
     onError: (e: any) => toast.error(e.message),
   });
 
+  async function handlePhotoUpload(file: File) {
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${emp.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const { error } = await supabase.from("employees").update({ foto_url: pub.publicUrl }).eq("id", emp.id);
+      if (error) throw error;
+      setF({ ...f, foto_url: pub.publicUrl });
+      qc.invalidateQueries({ queryKey: ["employee", emp.id] });
+      qc.invalidateQueries({ queryKey: ["employees"] });
+      toast.success("Foto atualizada");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
   return (
     <Card className="p-6 space-y-4">
+      <div className="flex items-center gap-4 pb-4 border-b">
+        <div className="relative h-24 w-24 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200 flex items-center justify-center">
+          {f.foto_url ? (
+            <img src={f.foto_url} alt={f.nome} className="h-full w-full object-cover" />
+          ) : (
+            <Camera className="h-8 w-8 text-slate-400" />
+          )}
+        </div>
+        {canEdit && (
+          <div className="space-y-2">
+            <Label className="text-xs">Foto do colaborador</Label>
+            <Input
+              type="file"
+              accept="image/*"
+              disabled={uploadingPhoto}
+              onChange={(e) => { const file = e.target.files?.[0]; if (file) handlePhotoUpload(file); }}
+            />
+            <p className="text-[10px] text-muted-foreground">JPG/PNG. Visível no crachá e na lista.</p>
+          </div>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field label="Nome *"><Input value={f.nome ?? ""} onChange={(e) => setF({ ...f, nome: e.target.value })} disabled={!canEdit} /></Field>
         <Field label="Status">
@@ -285,21 +329,86 @@ function NrsTab({ emp, role, canEdit, qc }: any) {
 
 /* ============ DOCS ============ */
 function DocsTab({ empId }: any) {
+  const qc = useQueryClient();
+  const { isEditor, isAdmin } = useAuth();
   const { data: docs } = useQuery({
     queryKey: ["docs", empId],
     queryFn: async () => (await supabase.from("employee_docs").select("*").eq("employee_id", empId)).data ?? [],
   });
+  const [tipo, setTipo] = useState("RG");
+  const [file, setFile] = useState<File | null>(null);
+
+  const upload = useMutation({
+    mutationFn: async () => {
+      if (!file) throw new Error("Selecione um arquivo");
+      const path = `${empId}/${Date.now()}_${file.name}`;
+      const { error: upErr } = await supabase.storage.from("employee-docs").upload(path, file, { upsert: false });
+      if (upErr) throw upErr;
+      const { error } = await supabase.from("employee_docs").insert({ employee_id: empId, tipo, file_path: path });
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["docs", empId] }); setFile(null); toast.success("Documento enviado"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (d: any) => {
+      await supabase.storage.from("employee-docs").remove([d.file_path]);
+      const { error } = await supabase.from("employee_docs").delete().eq("id", d.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["docs", empId] }); toast.success("Removido"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  async function openDoc(path: string) {
+    const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(path, 60);
+    if (error) { toast.error(error.message); return; }
+    window.open(data.signedUrl, "_blank");
+  }
+
+  const TIPOS_DOC = ["RG", "CPF", "CNH", "CTPS", "Título de Eleitor", "Comprovante Residência", "Certificado Reservista", "Foto 3x4", "Contrato", "Outro"];
+
   return (
-    <Card className="p-6">
-      <div className="text-sm text-muted-foreground mb-4">
-        Upload de documentos pessoais (RG, CPF, comprovantes). Anexos vão para o bucket privado <code>employee-docs</code>.
+    <Card className="p-6 space-y-4">
+      <div className="text-sm text-muted-foreground">
+        Documentos pessoais (RG, CPF, comprovantes). Bucket privado <code>employee-docs</code>.
       </div>
+      {isEditor && (
+        <form onSubmit={(e) => { e.preventDefault(); upload.mutate(); }} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end border-b pb-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Tipo</Label>
+            <Select value={tipo} onValueChange={setTipo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{TIPOS_DOC.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label className="text-xs">Arquivo (PDF/Imagem)</Label>
+            <Input type="file" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          </div>
+          <Button type="submit" className="md:col-span-3" disabled={upload.isPending || !file}>
+            <Upload className="h-4 w-4 mr-2" /> Enviar documento
+          </Button>
+        </form>
+      )}
       <Table>
-        <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Arquivo</TableHead><TableHead>Enviado em</TableHead></TableRow></TableHeader>
+        <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Arquivo</TableHead><TableHead>Enviado em</TableHead><TableHead></TableHead></TableRow></TableHeader>
         <TableBody>
-          {(docs ?? []).length === 0 && <TableRow><TableCell colSpan={3} className="text-muted-foreground text-center">Nenhum documento</TableCell></TableRow>}
+          {(docs ?? []).length === 0 && <TableRow><TableCell colSpan={4} className="text-muted-foreground text-center">Nenhum documento</TableCell></TableRow>}
           {(docs ?? []).map((d: any) => (
-            <TableRow key={d.id}><TableCell>{d.tipo}</TableCell><TableCell className="font-mono text-xs">{d.file_path}</TableCell><TableCell>{formatDateBR(d.uploaded_at)}</TableCell></TableRow>
+            <TableRow key={d.id}>
+              <TableCell className="font-medium">{d.tipo}</TableCell>
+              <TableCell>
+                <Button size="sm" variant="ghost" onClick={() => openDoc(d.file_path)}>
+                  <FileText className="h-4 w-4 mr-1" />Ver
+                </Button>
+              </TableCell>
+              <TableCell>{formatDateBR(d.uploaded_at)}</TableCell>
+              <TableCell className="text-right">
+                {isAdmin && <Button size="icon" variant="ghost" onClick={() => del.mutate(d)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+              </TableCell>
+            </TableRow>
           ))}
         </TableBody>
       </Table>
@@ -547,25 +656,43 @@ function HealthTab({ empId, exams, canEdit, canDelete, qc }: any) {
     data_realizacao: new Date().toISOString().slice(0, 10), data_vencimento: addMonthsToDate(new Date().toISOString().slice(0, 10), 12),
     aptidao: "SIM", observacoes: "",
   });
+  const [examFile, setExamFile] = useState<File | null>(null);
 
   const create = useMutation({
     mutationFn: async () => {
       const venc = f.data_vencimento || addMonthsToDate(f.data_realizacao, Number(f.periodicidade_meses) || 12);
+      let anexo_path: string | null = null;
+      if (examFile) {
+        const path = `${empId}/exames/${Date.now()}_${examFile.name}`;
+        const { error: upErr } = await supabase.storage.from("employee-docs").upload(path, examFile, { upsert: false });
+        if (upErr) throw upErr;
+        anexo_path = path;
+      }
       const { error } = await supabase.from("employee_exams").insert({
         employee_id: empId, tipo_exame: f.tipo_exame, natureza: f.natureza,
         periodicidade_meses: Number(f.periodicidade_meses) || 12,
         data_realizacao: f.data_realizacao, data_vencimento: venc,
-        aptidao: f.aptidao, observacoes: f.observacoes || null,
+        aptidao: f.aptidao, observacoes: f.observacoes || null, anexo_path,
       });
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["exams", empId] }); qc.invalidateQueries({ queryKey: ["employee", empId] }); toast.success("Exame registrado"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["exams", empId] }); qc.invalidateQueries({ queryKey: ["employee", empId] }); setExamFile(null); toast.success("Exame registrado"); },
     onError: (e: any) => toast.error(e.message),
   });
   const del = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("employee_exams").delete().eq("id", id); if (error) throw error; },
+    mutationFn: async (ex: any) => {
+      if (ex.anexo_path) await supabase.storage.from("employee-docs").remove([ex.anexo_path]);
+      const { error } = await supabase.from("employee_exams").delete().eq("id", ex.id);
+      if (error) throw error;
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["exams", empId] }); toast.success("Removido"); },
   });
+
+  async function openExam(path: string) {
+    const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(path, 60);
+    if (error) { toast.error(error.message); return; }
+    window.open(data.signedUrl, "_blank");
+  }
 
   return (
     <Card className="p-6 space-y-6">
@@ -595,14 +722,20 @@ function HealthTab({ empId, exams, canEdit, canDelete, qc }: any) {
           </Field>
           <Field label="Realização"><Input type="date" value={f.data_realizacao} onChange={(e) => setF({ ...f, data_realizacao: e.target.value, data_vencimento: addMonthsToDate(e.target.value, Number(f.periodicidade_meses) || 12) })} /></Field>
           <Field label="Vencimento"><Input type="date" value={f.data_vencimento} onChange={(e) => setF({ ...f, data_vencimento: e.target.value })} /></Field>
-          <Field label="Observações" className="col-span-2"><Input value={f.observacoes} onChange={(e) => setF({ ...f, observacoes: e.target.value })} /></Field>
+          <Field label="PDF do exame/ASO" className="col-span-2">
+            <div className="flex items-center gap-2">
+              <Input type="file" accept="application/pdf,image/*" onChange={(e) => setExamFile(e.target.files?.[0] ?? null)} />
+              {examFile && <Badge variant="outline" className="text-[10px]"><Upload className="h-3 w-3 mr-1" />{examFile.name}</Badge>}
+            </div>
+          </Field>
+          <Field label="Observações" className="col-span-2 md:col-span-4"><Input value={f.observacoes} onChange={(e) => setF({ ...f, observacoes: e.target.value })} /></Field>
           <Button type="submit" className="col-span-2 md:col-span-4" disabled={create.isPending}><Plus className="h-4 w-4 mr-2" />Registrar exame</Button>
         </form>
       )}
       <Table>
-        <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Natureza</TableHead><TableHead>Realização</TableHead><TableHead>Vencimento</TableHead><TableHead>Aptidão</TableHead><TableHead></TableHead></TableRow></TableHeader>
+        <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Natureza</TableHead><TableHead>Realização</TableHead><TableHead>Vencimento</TableHead><TableHead>Aptidão</TableHead><TableHead>PDF</TableHead><TableHead></TableHead></TableRow></TableHeader>
         <TableBody>
-          {exams.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Nenhum exame</TableCell></TableRow>}
+          {exams.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Nenhum exame</TableCell></TableRow>}
           {exams.map((ex: any) => (
             <TableRow key={ex.id}>
               <TableCell className="font-medium">{ex.tipo_exame}</TableCell>
@@ -610,8 +743,13 @@ function HealthTab({ empId, exams, canEdit, canDelete, qc }: any) {
               <TableCell>{formatDateBR(ex.data_realizacao)}</TableCell>
               <TableCell>{formatDateBR(ex.data_vencimento)}</TableCell>
               <TableCell><Badge variant={ex.aptidao === "SIM" ? "default" : "destructive"}>{ex.aptidao === "SIM" ? "APTO" : "INAPTO"}</Badge></TableCell>
+              <TableCell>
+                {ex.anexo_path ? (
+                  <Button size="sm" variant="ghost" onClick={() => openExam(ex.anexo_path)}><FileText className="h-4 w-4 mr-1" />Ver</Button>
+                ) : <span className="text-xs text-red-500 font-bold">Sem PDF</span>}
+              </TableCell>
               <TableCell className="text-right">
-                {canDelete && <Button size="icon" variant="ghost" onClick={() => del.mutate(ex.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                {canDelete && <Button size="icon" variant="ghost" onClick={() => del.mutate(ex)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
               </TableCell>
             </TableRow>
           ))}
