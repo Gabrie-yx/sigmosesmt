@@ -790,23 +790,70 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
   };
   const [f, setF] = useState<any>({ item: "", ca: "", tamanho: "", qtd: 1, data_entrega: new Date().toISOString().slice(0, 10) });
   const sizeOptions = SIZES_BY_ITEM[f.item] ?? null;
+  const MOTIVOS_DEV = ["Danificado", "Desgaste Natural", "Extravio", "Mal Uso", "Furto", "Uso Temporário"];
+  const [substitution, setSubstitution] = useState<{ prev: any; motivo: string; data: string; obs: string } | null>(null);
+
+  function resetForm() {
+    setF({ item: "", ca: "", tamanho: "", qtd: 1, data_entrega: new Date().toISOString().slice(0, 10) });
+  }
+
+  async function insertNewDelivery() {
+    const { error } = await supabase.from("epi_deliveries").insert({
+      employee_id: empId, item: f.item, ca: f.ca || null, tamanho: f.tamanho || null,
+      qtd: Number(f.qtd) || 1, data_entrega: f.data_entrega,
+    });
+    if (error) throw error;
+  }
+
   const create = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("epi_deliveries").insert({
-        employee_id: empId, item: f.item, ca: f.ca || null, tamanho: f.tamanho || null,
-        qtd: Number(f.qtd) || 1, data_entrega: f.data_entrega,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); setF({ item: "", ca: "", tamanho: "", qtd: 1, data_entrega: new Date().toISOString().slice(0, 10) }); toast.success("Entregue"); },
+    mutationFn: insertNewDelivery,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); resetForm(); toast.success("Entregue"); },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const substituteMut = useMutation({
+    mutationFn: async () => {
+      if (!substitution) return;
+      const obs = `Motivo: ${substitution.motivo}${substitution.obs ? ` — ${substitution.obs}` : ""}`;
+      // 1) close previous delivery
+      const { error: upErr } = await supabase
+        .from("epi_deliveries")
+        .update({ data_devolucao: substitution.data, observacoes: obs })
+        .eq("id", substitution.prev.id);
+      if (upErr) throw upErr;
+      // 2) insert new delivery
+      await insertNewDelivery();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["epis", empId] });
+      resetForm();
+      setSubstitution(null);
+      toast.success("Substituição registrada");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  function submitDelivery() {
+    if (!f.item) return;
+    const norm = (s: any) => String(s ?? "").trim().toLowerCase();
+    // Find an active (non-returned) prior delivery of the same item
+    const prev = (epis ?? []).find((e: any) => !e.data_devolucao && norm(e.item) === norm(f.item));
+    if (prev) {
+      setSubstitution({
+        prev,
+        motivo: "Desgaste Natural",
+        data: f.data_entrega,
+        obs: "",
+      });
+      return;
+    }
+    create.mutate();
+  }
   const del = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("epi_deliveries").delete().eq("id", id); if (error) throw error; },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); toast.success("Removido"); },
   });
 
-  const MOTIVOS_DEV = ["Danificado", "Desgaste Natural", "Extravio", "Mal Uso", "Furto", "Uso Temporário"];
   const [returning, setReturning] = useState<any | null>(null);
   const [retForm, setRetForm] = useState<{ motivo: string; data: string; obs: string }>({
     motivo: "Desgaste Natural",
