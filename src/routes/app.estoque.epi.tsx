@@ -198,6 +198,7 @@ function EstoqueEpiPage() {
       <Tabs defaultValue="inventario">
         <TabsList>
           <TabsTrigger value="inventario">Inventário</TabsTrigger>
+          <TabsTrigger value="colaborador">Consulta por Colaborador</TabsTrigger>
           <TabsTrigger value="historico">Histórico Geral</TabsTrigger>
         </TabsList>
 
@@ -219,6 +220,10 @@ function EstoqueEpiPage() {
 
         <TabsContent value="historico" className="mt-4">
           <HistoricoGeral epis={epis} />
+        </TabsContent>
+
+        <TabsContent value="colaborador" className="mt-4">
+          <ConsultaColaborador />
         </TabsContent>
       </Tabs>
     </div>
