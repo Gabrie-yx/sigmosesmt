@@ -34,11 +34,16 @@ const SESMT_ITEMS = [
 const SESMT_PATHS = SESMT_ITEMS.map((i) => i.to);
 
 const OTHER_MODULES = [
-  { key: "estoque", label: "Estoque", icon: Boxes },
   { key: "producao", label: "Produção", icon: Factory },
   { key: "manut-eletrica", label: "Manutenção Elétrica", icon: Zap },
   { key: "manut-mecanica", label: "Manutenção Mecânica", icon: Wrench },
   { key: "portaria", label: "Portaria", icon: DoorOpen },
+] as const;
+
+const ESTOQUE_SUBMENU = [
+  { key: "estoque-sesmt", label: "SESMT" },
+  { key: "estoque-eletrica", label: "Elétrica" },
+  { key: "estoque-mecanica", label: "Mecânica" },
 ] as const;
 
 export function AppHeader() {
@@ -113,6 +118,31 @@ export function AppHeader() {
       </div>
 
       {/* Outros módulos — placeholder, mostram "em breve" no hover */}
+      {/* Estoque — dropdown com submenus */}
+      <div className="group relative">
+        <button type="button" aria-haspopup="true" className={disabledCls}>
+          <Boxes className="h-4 w-4" /> Estoque
+          <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+        </button>
+        <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+          <div className="w-56 rounded-lg border border-slate-200 bg-white shadow-xl py-1">
+            <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-100">
+              Estoque
+            </div>
+            {ESTOQUE_SUBMENU.map((s) => (
+              <button
+                key={s.key}
+                onClick={() => toast.info(`Estoque · ${s.label}: módulo em desenvolvimento`)}
+                className="flex w-full items-center justify-between px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+              >
+                {s.label}
+                <Lock className="h-3 w-3 opacity-60" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {OTHER_MODULES.map((m) => (
         <div key={m.key} className="group relative">
           <button
@@ -155,6 +185,19 @@ export function AppHeader() {
       <div className="text-[10px] font-black uppercase tracking-widest text-white/60 px-2 mt-4 mb-1">
         Outros módulos
       </div>
+      <div className="px-2 mt-1 mb-1 flex items-center gap-2 text-sm font-bold text-white/70">
+        <Boxes className="h-4 w-4" /> Estoque
+      </div>
+      {ESTOQUE_SUBMENU.map((s) => (
+        <button
+          key={s.key}
+          onClick={() => toast.info(`Estoque · ${s.label}: módulo em desenvolvimento`)}
+          className="flex items-center gap-2 rounded-md px-6 py-2 text-sm font-semibold text-white/50 text-left"
+        >
+          {s.label}
+          <Lock className="h-3 w-3 ml-auto" />
+        </button>
+      ))}
       {OTHER_MODULES.map((m) => (
         <button
           key={m.key}
