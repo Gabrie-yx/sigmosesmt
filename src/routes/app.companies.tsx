@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   UserPlus, Pencil, Plus, X, ChevronRight, HardHat,
   HeartPulse, Award, FolderOpen, CheckCircle2, AlertTriangle, Users, User, UserCog,
-  Upload, Download, ArrowLeft,
+  Upload, Download, ArrowLeft, Building2, Briefcase, IdCard, Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmployeeDetailContent } from "./app.employees.$id";
@@ -156,25 +156,32 @@ function CompaniesPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 flex gap-6 h-full bg-[#f1f5f9] animate-fadeIn">
+    <div className="p-6 md:p-8 flex gap-6 h-full page-canvas animate-fadeIn">
       {/* LEFT: Company cards */}
       <div className="w-[360px] flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1 shrink-0">
         {selectedEmpId && selected ? (
           <>
-            <div
-              className="p-5 rounded-2xl shadow-sm border bg-[#0369a1] border-[#0369a1] text-white"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div className="text-[9px] font-black px-2 py-1 rounded inline-block text-white bg-white/20">{selected.type}</div>
+            <div className="relative p-5 rounded-2xl border border-white/10 text-white surface-elevated-dark overflow-hidden">
+              <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-12 -left-8 w-32 h-32 rounded-full bg-sky-300/20 blur-2xl pointer-events-none" />
+              <div className="relative flex justify-between items-start mb-2">
+                <div className="text-[9px] font-black px-2 py-1 rounded inline-flex items-center gap-1 text-white bg-white/15 backdrop-blur ring-1 ring-white/20">
+                  <Briefcase className="h-3 w-3" /> {selected.type}
+                </div>
                 <div className="text-[9px] font-black uppercase flex items-center gap-1 text-white/80">
                   <Users className="h-3 w-3" /> {compEmps.length} Vínculos
                 </div>
               </div>
-              <h3 className="text-lg font-black uppercase text-white">{selected.name}</h3>
-              <p className="text-[10px] font-bold uppercase mt-1 text-white/70">
-                CNPJ: {selected.cnpj || "Não informado"}
+              <div className="relative flex items-center gap-3">
+                <div className="floaty w-11 h-11 rounded-xl bg-white/15 ring-1 ring-white/25 flex items-center justify-center backdrop-blur shrink-0">
+                  <Building2 className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-lg font-black uppercase text-white leading-tight">{selected.name}</h3>
+              </div>
+              <p className="relative text-[10px] font-bold uppercase mt-2 text-white/70 flex items-center gap-1">
+                <IdCard className="h-3 w-3" /> CNPJ: {selected.cnpj || "Não informado"}
               </p>
-              <div className="mt-4 pt-4 border-t text-xs font-bold border-white/20 text-white/90">
+              <div className="relative mt-4 pt-4 border-t text-xs font-bold border-white/20 text-white/90">
                 <div className="flex items-center gap-2"><User className="h-3.5 w-3.5 text-white" /> {selected.encarregado1 ? `Empreiteiro: ${selected.encarregado1}` : "S/ Empreiteiro"}</div>
                 <div className="flex items-center gap-2 mt-1"><UserCog className="h-3.5 w-3.5 text-white" /> {selected.encarregado2 ? `Encarregado: ${selected.encarregado2}` : "S/ Encarregado"}</div>
               </div>
@@ -187,10 +194,10 @@ function CompaniesPage() {
                   <div
                     key={emp.id}
                     onClick={() => setSelectedEmpId(emp.id)}
-                    className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                    className={`p-3 rounded-xl border cursor-pointer hover-lift flex items-center justify-between ${
                       isSel
-                        ? "bg-[#0369a1] border-[#0369a1] text-white shadow-md"
-                        : "bg-white border-slate-200 hover:border-[#0369a1]"
+                        ? "surface-elevated-dark border-transparent text-white"
+                        : "surface-elevated border-slate-200/70 hover:border-[#0369a1]/40"
                     }`}
                   >
                     <div className="min-w-0">
@@ -201,7 +208,7 @@ function CompaniesPage() {
                         {role?.name || "Sem cargo"}
                       </div>
                     </div>
-                    <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${emp.status === "ATIVO" ? "bg-emerald-400" : "bg-red-400"}`} />
+                    <span className={`h-2.5 w-2.5 rounded-full shrink-0 ring-2 ring-white/60 ${emp.status === "ATIVO" ? "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]" : "bg-red-400 shadow-[0_0_10px_rgba(248,113,113,0.6)]"}`} />
                   </div>
                 );
               })}
@@ -210,14 +217,17 @@ function CompaniesPage() {
         ) : (
         <>
         <div className="flex items-center justify-between mb-1">
-          <h2 className="heading-display text-xl text-slate-900 font-black uppercase tracking-tight">
-            Empresas <span className="text-slate-400 font-bold">(Tabela Pai)</span>
+          <h2 className="heading-display text-xl text-slate-900 font-black uppercase tracking-tight flex items-center gap-2">
+            <span className="floaty inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-sky-700 text-white shadow-md">
+              <Building2 className="h-4 w-4" />
+            </span>
+            Empresas <span className="text-slate-400 font-bold text-sm">(Tabela Pai)</span>
           </h2>
           {isEditor && (
             <Button
               size="sm"
               onClick={startNew}
-              className="bg-[#0f172a] hover:bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-lg px-3 py-2 h-auto"
+              className="bg-[#0f172a] hover:bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-lg px-3 py-2 h-auto shadow-md hover:shadow-lg transition-shadow"
             >
               <Plus className="h-3.5 w-3.5 mr-1" /> Nova
             </Button>
@@ -234,21 +244,34 @@ function CompaniesPage() {
             <div
               key={c.id}
               onClick={() => { setSelectedId(c.id); setShowForm(false); setEditing(null); setSelectedEmpId(null); }}
-              className={`p-5 rounded-2xl shadow-sm border cursor-pointer transition-all ${
-                isSel ? "bg-[#0369a1] border-[#0369a1] text-white shadow-md" : "bg-white border-slate-200 hover:border-[#0369a1]"
+              className={`relative p-5 rounded-2xl border cursor-pointer hover-lift overflow-hidden ${
+                isSel ? "surface-elevated-dark border-transparent text-white" : "surface-elevated border-slate-200/70 hover:border-[#0369a1]/40"
               }`}
             >
-              <div className="flex justify-between items-start mb-2">
-                <div className={`text-[9px] font-black px-2 py-1 rounded inline-block ${isSel ? "text-white bg-white/20" : ts}`}>{c.type}</div>
+              {isSel && (
+                <>
+                  <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+                  <div className="absolute -bottom-12 -left-8 w-32 h-32 rounded-full bg-sky-300/20 blur-2xl pointer-events-none" />
+                </>
+              )}
+              <div className="relative flex justify-between items-start mb-2">
+                <div className={`text-[9px] font-black px-2 py-1 rounded inline-flex items-center gap-1 ${isSel ? "text-white bg-white/15 ring-1 ring-white/20 backdrop-blur" : ts}`}>
+                  <Briefcase className="h-3 w-3" /> {c.type}
+                </div>
                 <div className={`text-[9px] font-black uppercase flex items-center gap-1 ${isSel ? "text-white/80" : "text-slate-400"}`}>
                   <Users className="h-3 w-3" /> {empCount} Vínculos
                 </div>
               </div>
-              <h3 className={`text-lg font-black uppercase ${isSel ? "text-white" : "text-slate-800"}`}>{c.name}</h3>
-              <p className={`text-[10px] font-bold uppercase mt-1 ${isSel ? "text-white/70" : "text-slate-500"}`}>
-                CNPJ: {c.cnpj || "Não informado"} <span className="mx-1">|</span> ENTRADA: {entrada}
+              <div className="relative flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isSel ? "bg-white/15 ring-1 ring-white/25 backdrop-blur" : "bg-gradient-to-br from-sky-50 to-sky-100 ring-1 ring-sky-200/60"}`}>
+                  <Building2 className={`h-5 w-5 ${isSel ? "text-white" : "text-[#0369a1]"}`} />
+                </div>
+                <h3 className={`text-lg font-black uppercase leading-tight ${isSel ? "text-white" : "text-slate-800"}`}>{c.name}</h3>
+              </div>
+              <p className={`relative text-[10px] font-bold uppercase mt-2 flex items-center gap-1 ${isSel ? "text-white/70" : "text-slate-500"}`}>
+                <IdCard className="h-3 w-3" /> CNPJ: {c.cnpj || "Não informado"} <span className="mx-1">|</span> ENTRADA: {entrada}
               </p>
-              <div className={`mt-4 pt-4 border-t text-xs font-bold ${isSel ? "border-white/20 text-white/90" : "border-slate-100 text-slate-600"}`}>
+              <div className={`relative mt-4 pt-4 border-t text-xs font-bold ${isSel ? "border-white/20 text-white/90" : "border-slate-100 text-slate-600"}`}>
                 <div className="flex items-center gap-2"><User className={`h-3.5 w-3.5 ${isSel ? "text-white" : "text-[#0369a1]"}`} /> {c.encarregado1 ? `Empreiteiro: ${c.encarregado1}` : "S/ Empreiteiro"}</div>
                 <div className="flex items-center gap-2 mt-1"><UserCog className={`h-3.5 w-3.5 ${isSel ? "text-white" : "text-[#0369a1]"}`} /> {c.encarregado2 ? `Encarregado: ${c.encarregado2}` : "S/ Encarregado"}</div>
               </div>
@@ -261,7 +284,7 @@ function CompaniesPage() {
 
       {/* RIGHT */}
       {selectedEmpId && selected ? (
-        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 overflow-y-auto custom-scrollbar animate-fadeIn">
+        <div className="flex-1 surface-elevated rounded-2xl border border-slate-200/70 p-6 md:p-8 overflow-y-auto custom-scrollbar animate-fadeIn">
           <div className="flex items-center justify-between mb-4">
             <Button
               variant="ghost"
@@ -283,13 +306,18 @@ function CompaniesPage() {
           saving={save.isPending}
         />
       ) : selected ? (
-        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col overflow-hidden animate-fadeIn">
+        <div className="flex-1 surface-elevated rounded-2xl border border-slate-200/70 p-8 flex flex-col overflow-hidden animate-fadeIn">
           <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4 shrink-0">
-            <div>
-              <h3 className="text-2xl font-black uppercase text-[#0369a1] tracking-tighter">{selected.name}</h3>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
-                Quadro de Colaboradores Catalogados: {compEmps.length}
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="floaty w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500 to-sky-700 text-white flex items-center justify-center shadow-lg shadow-sky-500/30">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black uppercase text-[#0369a1] tracking-tighter">{selected.name}</h3>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1">
+                  <Shield className="h-3 w-3 text-[#0369a1]" /> Quadro de Colaboradores Catalogados: {compEmps.length}
+                </p>
+              </div>
             </div>
             <div className="flex gap-2">
               {isEditor && (
@@ -364,20 +392,25 @@ function CompaniesPage() {
               const badge = (ok: boolean) => ok ? "bg-emerald-500 text-white" : "bg-red-500 text-white";
 
               const stop = (e: React.MouseEvent) => e.stopPropagation();
-              const tabBtn = "px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm hover:opacity-90 transition-opacity";
+              const tabBtn = "chip-3d px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5";
               return (
                 <div
                   key={emp.id}
                   onClick={() => { setSelectedTab("profile"); setSelectedEmpId(emp.id); }}
-                  className={`p-4 rounded-xl border ${globalOK ? "border-slate-200 bg-slate-50" : "border-red-200 bg-red-50/30"} hover:border-[#0369a1] cursor-pointer transition-all flex items-center justify-between group`}
+                  className={`p-4 rounded-2xl border hover-lift cursor-pointer flex items-center justify-between group ${globalOK ? "border-slate-200/70 surface-elevated" : "border-red-200 bg-gradient-to-b from-red-50/60 to-white"}`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-lg font-black text-slate-300 group-hover:text-[#0369a1] overflow-hidden shrink-0">
-                      {emp.foto_url ? <img src={emp.foto_url} className="w-full h-full object-cover" alt="" /> : (emp.nome?.charAt(0) || "?")}
+                    <div className="avatar-ring shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg font-black text-slate-400 group-hover:text-[#0369a1] overflow-hidden">
+                        {emp.foto_url ? <img src={emp.foto_url} className="w-full h-full object-cover" alt="" /> : (emp.nome?.charAt(0) || "?")}
+                      </div>
                     </div>
                     <div>
                       <h4 className="text-[11px] font-black uppercase text-slate-900">{emp.nome || "— sem nome —"}</h4>
-                      <div className="text-[9px] font-bold text-slate-500 uppercase mt-0.5">MAT: {emp.matricula || "---"} | CPF: {emp.cpf || "---"}</div>
+                      <div className="text-[9px] font-bold text-slate-500 uppercase mt-0.5 flex items-center gap-1">
+                        <IdCard className="h-3 w-3 text-slate-400" />
+                        MAT: {emp.matricula || "---"} | CPF: {emp.cpf || "---"}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0" onClick={stop}>
@@ -390,10 +423,10 @@ function CompaniesPage() {
                     <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "docs" }} onClick={stop} title="Abrir aba Documentos" className={`${tabBtn} ${badge(docsOK)}`}>
                       <FolderOpen className="h-3.5 w-3.5" /> DOCS
                     </Link>
-                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "epi" }} onClick={stop} title="Abrir aba EPI" className="w-9 h-9 rounded-lg bg-slate-200 text-slate-500 flex items-center justify-center shadow-sm hover:bg-slate-300 transition-colors">
+                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "epi" }} onClick={stop} title="Abrir aba EPI" className="chip-3d w-9 h-9 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center">
                       <HardHat className="h-4 w-4" />
                     </Link>
-                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "profile" }} onClick={stop} title="Abrir auditoria do colaborador" className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase ${globalOK ? "bg-emerald-500" : "bg-red-500"} text-white tracking-widest flex items-center gap-1.5 shadow-md hover:opacity-90 transition-opacity`}>
+                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "profile" }} onClick={stop} title="Abrir auditoria do colaborador" className={`chip-3d px-4 py-2 rounded-lg text-[10px] font-black uppercase ${globalOK ? "bg-gradient-to-b from-emerald-400 to-emerald-600" : "bg-gradient-to-b from-red-400 to-red-600"} text-white tracking-widest flex items-center gap-1.5`}>
                       {globalOK ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
                       {globalOK ? "APTO" : "AUDITAR"}
                     </Link>
