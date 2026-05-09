@@ -182,9 +182,7 @@ function CompaniesPage() {
           return (
             <div
               key={c.id}
-              onClick={() => { setSelectedId(c.id); setShowForm(false); setEditing(null); }}
-              data-company-card
-              {...{}}
+              onClick={() => { setSelectedId(c.id); setShowForm(false); setEditing(null); setSelectedEmpId(null); }}
               className={`p-5 rounded-2xl shadow-sm border cursor-pointer transition-all ${
                 isSel ? "bg-[#0369a1] border-[#0369a1] text-white shadow-md" : "bg-white border-slate-200 hover:border-[#0369a1]"
               }`}
