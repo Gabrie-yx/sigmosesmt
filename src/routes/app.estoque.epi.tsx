@@ -45,6 +45,8 @@ import {
   Save,
   X,
   ShieldCheck,
+  Upload,
+  User,
 } from "lucide-react";
 
 export const Route = createFileRoute("/app/estoque/epi")({
@@ -105,7 +107,7 @@ function statusInfo(saldo: number, minimo: number) {
       label: "ESTOQUE CRÍTICO",
       cls: "bg-destructive text-destructive-foreground",
       icon: AlertTriangle,
-      cardCls: "border-destructive border-2 bg-destructive/5",
+      cardCls: "border-destructive border-2 bg-destructive/5 animate-pulse-critical",
     };
   if (saldo <= 10)
     return {
@@ -196,6 +198,7 @@ function EstoqueEpiPage() {
       <Tabs defaultValue="inventario">
         <TabsList>
           <TabsTrigger value="inventario">Inventário</TabsTrigger>
+          <TabsTrigger value="colaborador">Consulta por Colaborador</TabsTrigger>
           <TabsTrigger value="historico">Histórico Geral</TabsTrigger>
         </TabsList>
 
@@ -217,6 +220,10 @@ function EstoqueEpiPage() {
 
         <TabsContent value="historico" className="mt-4">
           <HistoricoGeral epis={epis} />
+        </TabsContent>
+
+        <TabsContent value="colaborador" className="mt-4">
+          <ConsultaColaborador />
         </TabsContent>
       </Tabs>
     </div>
@@ -600,6 +607,31 @@ function NewEpiDialog({ onCreated }: { onCreated: () => void }) {
   const [img, setImg] = useState("");
   const [fornecedor, setFornecedor] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleUpload(file: File) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem maior que 5MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("epis-fotos")
+        .upload(path, file, { cacheControl: "3600", upsert: false });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("epis-fotos").getPublicUrl(path);
+      setImg(data.publicUrl);
+      toast.success("Foto enviada");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro no upload");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function save() {
     if (!codigo.trim() || !nome.trim()) {
@@ -670,6 +702,25 @@ function NewEpiDialog({ onCreated }: { onCreated: () => void }) {
               <ImageIcon className="h-3.5 w-3.5" /> URL da imagem (opcional)
             </Label>
             <Input value={img} onChange={(e) => setImg(e.target.value)} placeholder="https://…" />
+            <div className="mt-2 flex items-center gap-2">
+              <label className="inline-flex items-center gap-2 text-xs cursor-pointer rounded-md border px-3 py-1.5 hover:bg-muted">
+                <Upload className="h-3.5 w-3.5" />
+                {uploading ? "Enviando…" : "Enviar foto do EPI"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleUpload(f);
+                  }}
+                />
+              </label>
+              {img && (
+                <img src={img} alt="preview" className="h-10 w-10 object-cover rounded border" />
+              )}
+            </div>
           </div>
         </div>
         <DialogFooter>
@@ -682,6 +733,194 @@ function NewEpiDialog({ onCreated }: { onCreated: () => void }) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ───────────────────────── Consulta por Colaborador (Dossiê) ─────────────────────────
+
+function ConsultaColaborador() {
+  const [cpfBusca, setCpfBusca] = useState("");
+  const cpfDigits = cpfBusca.replace(/\D/g, "");
+  const cpfValido = validaCpf(cpfBusca);
+
+  const { data = [], isLoading, refetch, isFetching } = useQuery({
+    queryKey: ["dossie_colaborador", cpfDigits],
+    enabled: cpfDigits.length === 11 && cpfValido,
+    queryFn: async () => {
+      const seisMesesAtras = new Date();
+      seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6);
+      const { data, error } = await (supabase as any)
+        .from("historico_entregas")
+        .select("*, estoque_epi(nome_material, codigo_material)")
+        .eq("cpf_colaborador", cpfDigits)
+        .gte("data_entrega", seisMesesAtras.toISOString())
+        .order("data_entrega", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Movimentacao[];
+    },
+  });
+
+  const nomeColaborador = data[0]?.nome_colaborador;
+  const totalEntregue = data
+    .filter((m) => m.tipo_movimentacao === "SAIDA_ENTREGA")
+    .reduce((s, m) => s + m.quantidade_entregue, 0);
+  const totalDevolvido = data
+    .filter((m) => m.tipo_movimentacao === "DEVOLUCAO")
+    .reduce((s, m) => s + m.quantidade_entregue, 0);
+
+  // Agrupa por EPI
+  const porEpi = useMemo(() => {
+    const map = new Map<string, { nome: string; codigo: string; entregue: number; devolvido: number; ultima: string }>();
+    for (const m of data) {
+      const k = m.epi_id;
+      const cur = map.get(k) ?? {
+        nome: m.estoque_epi?.nome_material ?? "—",
+        codigo: m.estoque_epi?.codigo_material ?? "",
+        entregue: 0,
+        devolvido: 0,
+        ultima: m.data_entrega,
+      };
+      if (m.tipo_movimentacao === "SAIDA_ENTREGA") cur.entregue += m.quantidade_entregue;
+      if (m.tipo_movimentacao === "DEVOLUCAO") cur.devolvido += m.quantidade_entregue;
+      if (new Date(m.data_entrega) > new Date(cur.ultima)) cur.ultima = m.data_entrega;
+      map.set(k, cur);
+    }
+    return Array.from(map.values()).sort((a, b) => b.entregue - a.entregue);
+  }, [data]);
+
+  return (
+    <Card className="p-4 space-y-4">
+      <div className="flex flex-wrap gap-2 items-end">
+        <div className="flex-1 min-w-[240px]">
+          <Label className="flex items-center gap-1">
+            <User className="h-3.5 w-3.5" /> CPF do colaborador
+          </Label>
+          <Input
+            value={cpfBusca}
+            onChange={(e) => setCpfBusca(maskCpf(e.target.value))}
+            placeholder="000.000.000-00"
+            inputMode="numeric"
+            maxLength={14}
+            className={cpfBusca && !cpfValido ? "border-destructive" : ""}
+          />
+          {cpfBusca && !cpfValido && (
+            <p className="text-[11px] text-destructive mt-1">CPF inválido</p>
+          )}
+        </div>
+        <Button onClick={() => refetch()} disabled={!cpfValido || isFetching}>
+          <Search className="h-4 w-4" /> {isFetching ? "Buscando…" : "Buscar"}
+        </Button>
+      </div>
+
+      {!cpfValido ? (
+        <div className="text-sm text-muted-foreground py-8 text-center">
+          Digite um CPF válido para gerar o dossiê dos últimos 6 meses.
+        </div>
+      ) : isLoading ? (
+        <div className="text-sm text-muted-foreground py-8 text-center">Carregando…</div>
+      ) : data.length === 0 ? (
+        <div className="text-sm text-muted-foreground py-8 text-center">
+          Nenhuma movimentação encontrada para este CPF nos últimos 6 meses.
+        </div>
+      ) : (
+        <>
+          <div className="rounded-md border bg-muted/30 p-3">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Colaborador
+            </div>
+            <div className="font-bold text-base">{nomeColaborador}</div>
+            <div className="text-xs text-muted-foreground font-mono">{maskCpf(cpfDigits)}</div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <Card className="p-2 text-center">
+              <div className="text-[10px] uppercase text-muted-foreground">Movimentações</div>
+              <div className="text-xl font-black">{data.length}</div>
+            </Card>
+            <Card className="p-2 text-center">
+              <div className="text-[10px] uppercase text-muted-foreground">Entregues</div>
+              <div className="text-xl font-black text-destructive">{totalEntregue}</div>
+            </Card>
+            <Card className="p-2 text-center">
+              <div className="text-[10px] uppercase text-muted-foreground">Devolvidos</div>
+              <div className="text-xl font-black text-amber-600">{totalDevolvido}</div>
+            </Card>
+          </div>
+
+          <div>
+            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              Resumo por EPI
+            </div>
+            <div className="border rounded-md overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <tr>
+                    <th className="text-left py-2 px-2">EPI</th>
+                    <th className="text-right py-2 px-2">Entregue</th>
+                    <th className="text-right py-2 px-2">Devolvido</th>
+                    <th className="text-left py-2 px-2">Última</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {porEpi.map((r, i) => (
+                    <tr key={i} className="border-t">
+                      <td className="py-2 px-2">
+                        {r.nome}{" "}
+                        <span className="text-[10px] text-muted-foreground">{r.codigo}</span>
+                      </td>
+                      <td className="py-2 px-2 text-right font-bold">{r.entregue}</td>
+                      <td className="py-2 px-2 text-right">{r.devolvido}</td>
+                      <td className="py-2 px-2 text-xs">
+                        {new Date(r.ultima).toLocaleDateString("pt-BR")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              Linha do tempo
+            </div>
+            <div className="border rounded-md max-h-[40vh] overflow-auto">
+              <table className="w-full text-sm">
+                <tbody>
+                  {data.map((h) => (
+                    <tr key={h.id} className="border-b hover:bg-muted/30">
+                      <td className="py-2 px-2 text-xs whitespace-nowrap">
+                        {new Date(h.data_entrega).toLocaleString("pt-BR")}
+                      </td>
+                      <td className="py-2 px-2">
+                        <Badge
+                          variant="outline"
+                          className={
+                            h.tipo_movimentacao === "SAIDA_ENTREGA"
+                              ? "border-destructive/40 text-destructive"
+                              : h.tipo_movimentacao === "DEVOLUCAO"
+                                ? "border-amber-500/40 text-amber-700"
+                                : "border-emerald-500/40 text-emerald-700"
+                          }
+                        >
+                          {TIPO_LABEL[h.tipo_movimentacao]}
+                        </Badge>
+                      </td>
+                      <td className="py-2 px-2">
+                        {h.estoque_epi?.nome_material ?? "—"}
+                      </td>
+                      <td className="py-2 px-2 text-right font-bold">
+                        {h.tipo_movimentacao === "SAIDA_ENTREGA" ? "−" : "+"}
+                        {h.quantidade_entregue}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+    </Card>
   );
 }
 
