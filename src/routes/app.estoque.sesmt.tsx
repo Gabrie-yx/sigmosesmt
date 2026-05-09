@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   HardHat, Search, Download, Upload, RotateCcw, Plus, History,
-  ArrowUp, ArrowDown, Trash2,
+  ArrowUp, ArrowDown, Trash2, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -296,6 +296,30 @@ function EstoqueSesmtPage() {
     toast.success("Painel restaurado");
   }
 
+  /* ---------- Cadastro de novo produto ---------- */
+  function addProduct(input: {
+    base: string;
+    umb: Product["umb"];
+    ca?: string;
+    variants: Array<{ label: string; estoqueInicial: number }>;
+  }) {
+    const id = `p-${Date.now()}`;
+    const novo: Product = {
+      id,
+      base: input.base.trim().toUpperCase(),
+      umb: input.umb,
+      ca: input.ca?.trim() || undefined,
+      variants: input.variants.map((v, i) => ({
+        id: `${id}-v${i + 1}`,
+        label: v.label.trim().toUpperCase() || "PADRÃO",
+        estoqueInicial: Number(v.estoqueInicial) || 0,
+        movements: [],
+      })),
+    };
+    setProducts((prev) => [novo, ...prev]);
+    toast.success(`Produto "${novo.base}" cadastrado`);
+  }
+
   /* ---------- Import ---------- */
   function handleImportClick() { fileRef.current?.click(); }
   async function onImportFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -399,6 +423,7 @@ function EstoqueSesmtPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={onImportFile} />
+          <NewProductDialog onCreate={addProduct} />
           <Button variant="outline" size="sm" onClick={handleImportClick}>
             <Upload className="h-4 w-4 mr-1.5" /> Importar planilha
           </Button>
