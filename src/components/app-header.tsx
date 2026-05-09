@@ -120,7 +120,7 @@ export function AppHeader() {
       {/* Outros módulos — placeholder, mostram "em breve" no hover */}
       {/* Estoque — dropdown com submenus */}
       <div className="group relative">
-        <button type="button" aria-haspopup="true" className={disabledCls}>
+        <button type="button" aria-haspopup="true" className={triggerCls(false)}>
           <Boxes className="h-4 w-4" /> Estoque
           <ChevronDown className="h-3.5 w-3.5 opacity-70" />
         </button>
