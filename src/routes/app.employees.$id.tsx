@@ -185,8 +185,22 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </div>
         <div className="flex-1 min-w-[240px]">
           <h1 className="heading-display text-3xl text-brand">{emp.nome}</h1>
-          <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-1">
-            {emp.cpf ?? "—"} · {emp.matricula ?? "—"}
+          <div className="mt-1 text-base font-bold tracking-wide text-slate-700">
+            CPF: <span className="font-mono">{emp.cpf ?? "—"}</span>
+            <span className="mx-2 text-slate-300">·</span>
+            <span className="text-[11px] uppercase tracking-widest text-slate-500">Matrícula {emp.matricula ?? "—"}</span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-slate-600">
+            <span className="inline-flex items-center gap-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Função:</span>
+              <span className="text-slate-800">{role?.name ?? "—"}</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Admissão:</span>
+              <span className="text-slate-800">
+                {emp.admissao ? new Date(emp.admissao + "T00:00:00").toLocaleDateString("pt-BR") : "—"}
+              </span>
+            </span>
           </div>
         </div>
         {status && (
