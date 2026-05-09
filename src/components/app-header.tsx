@@ -41,7 +41,7 @@ const OTHER_MODULES = [
 ] as const;
 
 const ESTOQUE_SUBMENU = [
-  { key: "estoque-sesmt", label: "SESMT" },
+  { key: "estoque-sesmt", label: "SESMT", to: "/app/estoque/sesmt" as const },
   { key: "estoque-eletrica", label: "Elétrica" },
   { key: "estoque-mecanica", label: "Mecânica" },
 ] as const;
@@ -130,14 +130,28 @@ export function AppHeader() {
               Estoque
             </div>
             {ESTOQUE_SUBMENU.map((s) => (
-              <button
-                key={s.key}
-                onClick={() => toast.info(`Estoque · ${s.label}: módulo em desenvolvimento`)}
-                className="flex w-full items-center justify-between px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-              >
-                {s.label}
-                <Lock className="h-3 w-3 opacity-60" />
-              </button>
+              "to" in s && s.to ? (
+                <Link
+                  key={s.key}
+                  to={s.to}
+                  className={`flex w-full items-center justify-between px-3 py-2 text-sm font-semibold transition-colors ${
+                    isActive(s.to)
+                      ? "bg-red-50 text-red-800"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  {s.label}
+                </Link>
+              ) : (
+                <button
+                  key={s.key}
+                  onClick={() => toast.info(`Estoque · ${s.label}: módulo em desenvolvimento`)}
+                  className="flex w-full items-center justify-between px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  {s.label}
+                  <Lock className="h-3 w-3 opacity-60" />
+                </button>
+              )
             ))}
           </div>
         </div>
@@ -189,14 +203,26 @@ export function AppHeader() {
         <Boxes className="h-4 w-4" /> Estoque
       </div>
       {ESTOQUE_SUBMENU.map((s) => (
-        <button
-          key={s.key}
-          onClick={() => toast.info(`Estoque · ${s.label}: módulo em desenvolvimento`)}
-          className="flex items-center gap-2 rounded-md px-6 py-2 text-sm font-semibold text-white/50 text-left"
-        >
-          {s.label}
-          <Lock className="h-3 w-3 ml-auto" />
-        </button>
+        "to" in s && s.to ? (
+          <Link
+            key={s.key}
+            to={s.to}
+            className={`flex items-center gap-2 rounded-md px-6 py-2 text-sm font-semibold text-left ${
+              isActive(s.to) ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10"
+            }`}
+          >
+            {s.label}
+          </Link>
+        ) : (
+          <button
+            key={s.key}
+            onClick={() => toast.info(`Estoque · ${s.label}: módulo em desenvolvimento`)}
+            className="flex items-center gap-2 rounded-md px-6 py-2 text-sm font-semibold text-white/50 text-left"
+          >
+            {s.label}
+            <Lock className="h-3 w-3 ml-auto" />
+          </button>
+        )
       ))}
       {OTHER_MODULES.map((m) => (
         <button
