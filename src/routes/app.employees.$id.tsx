@@ -307,6 +307,186 @@ function DocsTab({ empId }: any) {
   );
 }
 
+/* ============ VACCINES ============ */
+function VaccinesTab({ empId, vaccines, role, canEdit, canDelete, qc }: any) {
+  const [f, setF] = useState<any>({
+    tipo_vacina: VACINAS_LIST[0],
+    dose: "1ª dose",
+    data_aplicacao: new Date().toISOString().slice(0, 10),
+    data_proxima_dose: "",
+    lote: "",
+    fabricante: "",
+    observacoes: "",
+  });
+  const [file, setFile] = useState<File | null>(null);
+
+  const reqVacinas: string[] = role?.req_vacinas ?? [];
+  const riscoBio: boolean = !!role?.risco_biologico;
+
+  const create = useMutation({
+    mutationFn: async () => {
+      let anexo_path: string | null = null;
+      if (file) {
+        const path = `${empId}/${Date.now()}_${file.name}`;
+        const { error: upErr } = await supabase.storage.from("vaccination-cards").upload(path, file, { upsert: false });
+        if (upErr) throw upErr;
+        anexo_path = path;
+      }
+      const { error } = await supabase.from("employee_vaccinations").insert({
+        employee_id: empId,
+        tipo_vacina: f.tipo_vacina,
+        dose: f.dose || null,
+        data_aplicacao: f.data_aplicacao,
+        data_proxima_dose: f.data_proxima_dose || null,
+        lote: f.lote || null,
+        fabricante: f.fabricante || null,
+        observacoes: f.observacoes || null,
+        anexo_path,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["vaccines", empId] });
+      qc.invalidateQueries({ queryKey: ["employee", empId] });
+      setFile(null);
+      toast.success("Vacina registrada");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("employee_vaccinations").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["vaccines", empId] }); toast.success("Removida"); },
+  });
+
+  async function openCard(path: string) {
+    const { data, error } = await supabase.storage.from("vaccination-cards").createSignedUrl(path, 60);
+    if (error) { toast.error(error.message); return; }
+    window.open(data.signedUrl, "_blank");
+  }
+
+  // Status por vacina obrigatória
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const latestByType: Record<string, any> = {};
+  vaccines.forEach((v: any) => {
+    if (!latestByType[v.tipo_vacina] || new Date(v.data_aplicacao) > new Date(latestByType[v.tipo_vacina].data_aplicacao)) {
+      latestByType[v.tipo_vacina] = v;
+    }
+  });
+
+  return (
+    <Card className="p-6 space-y-6">
+      {riscoBio && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 flex gap-3 items-start">
+          <Syringe className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+          <div className="text-xs text-rose-900">
+            <div className="font-black uppercase tracking-widest mb-1">Função com Risco Biológico (PCMSO Rev.05)</div>
+            Esta função exige imunização ativa. Vacinas vencidas ou sem carteira anexada bloqueiam automaticamente o status do colaborador e a emissão de PTE para Limpeza de Tanque.
+          </div>
+        </div>
+      )}
+
+      {reqVacinas.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {reqVacinas.map((vac) => {
+            const v = latestByType[vac];
+            let cls = "border-red-300 bg-red-50";
+            let label = "Falta";
+            if (v) {
+              if (!v.anexo_path) { cls = "border-red-300 bg-red-50"; label = "Sem carteira"; }
+              else if (v.data_proxima_dose) {
+                const exp = new Date(v.data_proxima_dose + "T00:00:00");
+                if (exp < today) { cls = "border-red-300 bg-red-50"; label = "Vencida"; }
+                else { cls = "border-emerald-300 bg-emerald-50"; label = "Em dia"; }
+              } else { cls = "border-emerald-300 bg-emerald-50"; label = "Em dia"; }
+            }
+            return (
+              <div key={vac} className={`rounded-xl border p-3 ${cls}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-black uppercase tracking-widest text-slate-800">{vac}</span>
+                  <Badge className="text-[9px]">{label}</Badge>
+                </div>
+                {v && (
+                  <div className="text-[10px] text-slate-600 font-bold uppercase">
+                    Aplicada: {formatDateBR(v.data_aplicacao)}
+                    {v.data_proxima_dose && <> · Próx.: {formatDateBR(v.data_proxima_dose)}</>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {canEdit && (
+        <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="grid grid-cols-2 md:grid-cols-4 gap-3 items-end border-t pt-4">
+          <Field label="Vacina">
+            <Select value={f.tipo_vacina} onValueChange={(v) => setF({ ...f, tipo_vacina: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{VACINAS_LIST.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Dose">
+            <Select value={f.dose} onValueChange={(v) => setF({ ...f, dose: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1ª dose">1ª dose</SelectItem>
+                <SelectItem value="2ª dose">2ª dose</SelectItem>
+                <SelectItem value="3ª dose">3ª dose</SelectItem>
+                <SelectItem value="Reforço">Reforço</SelectItem>
+                <SelectItem value="Dose única">Dose única</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Aplicação"><Input type="date" required value={f.data_aplicacao} onChange={(e) => setF({ ...f, data_aplicacao: e.target.value })} /></Field>
+          <Field label="Próxima dose / Validade"><Input type="date" value={f.data_proxima_dose} onChange={(e) => setF({ ...f, data_proxima_dose: e.target.value })} /></Field>
+          <Field label="Lote"><Input value={f.lote} onChange={(e) => setF({ ...f, lote: e.target.value })} /></Field>
+          <Field label="Fabricante"><Input value={f.fabricante} onChange={(e) => setF({ ...f, fabricante: e.target.value })} /></Field>
+          <Field label="Carteira (PDF/Imagem)" className="col-span-2">
+            <div className="flex items-center gap-2">
+              <Input type="file" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+              {file && <Badge variant="outline" className="text-[10px]"><Upload className="h-3 w-3 mr-1" />{file.name}</Badge>}
+            </div>
+          </Field>
+          <Field label="Observações" className="col-span-2 md:col-span-4"><Input value={f.observacoes} onChange={(e) => setF({ ...f, observacoes: e.target.value })} /></Field>
+          <Button type="submit" className="col-span-2 md:col-span-4" disabled={create.isPending}>
+            <Plus className="h-4 w-4 mr-2" /> Registrar Vacina
+          </Button>
+        </form>
+      )}
+
+      <Table>
+        <TableHeader><TableRow><TableHead>Vacina</TableHead><TableHead>Dose</TableHead><TableHead>Aplicação</TableHead><TableHead>Próxima/Validade</TableHead><TableHead>Lote</TableHead><TableHead>Carteira</TableHead><TableHead></TableHead></TableRow></TableHeader>
+        <TableBody>
+          {vaccines.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Nenhuma vacina registrada</TableCell></TableRow>}
+          {vaccines.map((v: any) => (
+            <TableRow key={v.id}>
+              <TableCell className="font-medium">{v.tipo_vacina}</TableCell>
+              <TableCell>{v.dose ?? "—"}</TableCell>
+              <TableCell>{formatDateBR(v.data_aplicacao)}</TableCell>
+              <TableCell>{v.data_proxima_dose ? formatDateBR(v.data_proxima_dose) : "—"}</TableCell>
+              <TableCell>{v.lote ?? "—"}</TableCell>
+              <TableCell>
+                {v.anexo_path ? (
+                  <Button size="sm" variant="ghost" onClick={() => openCard(v.anexo_path)}>
+                    <FileText className="h-4 w-4 mr-1" /> Ver
+                  </Button>
+                ) : <span className="text-xs text-red-500 font-bold">Sem anexo</span>}
+              </TableCell>
+              <TableCell className="text-right">
+                {canDelete && <Button size="icon" variant="ghost" onClick={() => del.mutate(v.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
 /* ============ EPI ============ */
 function EpiTab({ empId, epis, canEdit, canDelete, qc }: any) {
   const [f, setF] = useState<any>({ item: "", ca: "", tamanho: "", qtd: 1, data_entrega: new Date().toISOString().slice(0, 10) });
