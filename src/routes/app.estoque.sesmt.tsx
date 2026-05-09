@@ -1,211 +1,321 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import * as XLSX from "xlsx";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { HardHat, Search, Download, RotateCcw, Plus } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import {
+  HardHat, Search, Download, Upload, RotateCcw, Plus, History,
+  ArrowUp, ArrowDown, Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
+import {
+  ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
+} from "recharts";
 
-type EpiRow = {
+/* ============================== Types ============================== */
+type Movement = {
   id: string;
-  arvAv: string;
-  material: string;
-  descricao: string;
-  umb: "UN" | "CX" | "PC" | "KG" | "M" | "GAL";
+  date: string; // ISO date (YYYY-MM-DD)
+  delta: number; // +entrada / -saida
+  tipo: "ENTRADA" | "SAIDA" | "AJUSTE";
+  obs?: string;
+};
+type Variant = {
+  id: string;
+  label: string;        // ex: "AZUL TAM. P", "TAM. 39", "VERDE"
   estoqueInicial: number;
-  entradas: number;
-  saidas: number;
+  movements: Movement[];
+};
+type Product = {
+  id: string;
+  base: string;         // ex: "CAMISA", "CAPACETE"
+  umb: "UN" | "CX" | "PC" | "KG" | "M" | "GAL";
   ca?: string;
+  variants: Variant[];
 };
 
-const SEED_RAW: Omit<EpiRow, "id" | "arvAv" | "material">[] = [
-  // CAMISA
-  { descricao: "CAMISA AZUL TAM. P", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  { descricao: "CAMISA AZUL TAM. M", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  { descricao: "CAMISA AZUL TAM. G", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  { descricao: "CAMISA AZUL TAM. GG", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  { descricao: "CAMISA CINZA TAM. M", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  // CALÇA
-  { descricao: "CALÇA AZUL TAM. P", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  { descricao: "CALÇA AZUL TAM. M", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  { descricao: "CALÇA AZUL TAM. GG", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  { descricao: "CALÇA AZUL TAM. EG", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  { descricao: "CALÇA CINZA TAM. P", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  { descricao: "CALÇA CINZA TAM. M", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  // MACACÃO
-  { descricao: "MACACÃO AZUL TAM. P", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "41609" },
-  { descricao: "MACACÃO AZUL TAM. M", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "41609" },
-  { descricao: "MACACÃO AZUL TAM. G", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "41609" },
-  { descricao: "MACACÃO CINZA TAM. P", umb: "UN", estoqueInicial: 2, entradas: 0, saidas: 0, ca: "41609" },
-  { descricao: "MACACÃO CINZA TAM. M", umb: "UN", estoqueInicial: 3, entradas: 0, saidas: 0, ca: "41609" },
-  // BOTA
-  { descricao: "BOTA TAM. 36", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "43164" },
-  { descricao: "BOTA TAM. 37", umb: "UN", estoqueInicial: 3, entradas: 0, saidas: 0, ca: "43164" },
-  { descricao: "BOTA TAM. 39", umb: "UN", estoqueInicial: 8, entradas: 0, saidas: 0, ca: "43164" },
-  { descricao: "BOTA TAM. 40", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "43164" },
-  { descricao: "BOTA TAM. 41", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "43164" },
-  { descricao: "BOTA TAM. 42", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "43164" },
-  { descricao: "BOTA TAM. 44", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "43164" },
-  // BOTA PVC
-  { descricao: "BOTA PVC CANO CURTO TAM. 42", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "37456" },
-  { descricao: "BOTA PVC CANO CURTO TAM. 44", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "37456" },
-  // CAPACETE
-  { descricao: "COLETE LARANJA", umb: "UN", estoqueInicial: 8, entradas: 0, saidas: 0 },
-  { descricao: "CAPACETE BRANCO", umb: "UN", estoqueInicial: 2, entradas: 0, saidas: 0, ca: "29792" },
-  { descricao: "CAPACETE VERDE", umb: "UN", estoqueInicial: 3, entradas: 0, saidas: 0, ca: "8304" },
-  { descricao: "CAPACETE VERMELHO", umb: "UN", estoqueInicial: 7, entradas: 0, saidas: 0, ca: "8304" },
-  // CARNEIRA
-  { descricao: "CARNEIRA CINZA", umb: "UN", estoqueInicial: 8, entradas: 0, saidas: 0 },
-  { descricao: "CARNEIRA 3M", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  { descricao: "CARNEIRA MSA", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "29638" },
-  { descricao: "VISEIRA", umb: "UN", estoqueInicial: 56, entradas: 0, saidas: 0 },
-  // BALACLAVA
-  { descricao: "BALACLAVA PRETA", umb: "UN", estoqueInicial: 15, entradas: 0, saidas: 0 },
-  { descricao: "BALACLAVA BRANCA", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  // RESPIRADOR
-  { descricao: "RESPIRADOR SEMIFACIAL", umb: "UN", estoqueInicial: 15, entradas: 0, saidas: 0 },
-  { descricao: "RETENTOR PARA FILTRO", umb: "CX", estoqueInicial: 5, entradas: 0, saidas: 0 },
-  { descricao: "FILTRO PARA PARTÍCULA", umb: "UN", estoqueInicial: 14, entradas: 0, saidas: 0 },
-  { descricao: "CARTUCHO PARA VAPORES", umb: "UN", estoqueInicial: 20, entradas: 0, saidas: 0 },
-  { descricao: "FILTRO PARA PARTÍCULA 3M", umb: "CX", estoqueInicial: 20, entradas: 0, saidas: 0 },
-  { descricao: "RESPIRADOR DESCARTÁVEL", umb: "UN", estoqueInicial: 43, entradas: 0, saidas: 0, ca: "44594" },
-  // ÓCULOS
-  { descricao: "ÓCULOS JAGUAR TRANSPARENTE", umb: "UN", estoqueInicial: 25, entradas: 0, saidas: 0, ca: "12572" },
-  { descricao: "ÓCULOS PRETO", umb: "UN", estoqueInicial: 19, entradas: 0, saidas: 0, ca: "27418" },
-  { descricao: "ÓCULOS AMARELO", umb: "UN", estoqueInicial: 12, entradas: 0, saidas: 0, ca: "12572" },
-  // LUVAS
-  { descricao: "LUVA VAQUETA PUNHO LONGO", umb: "UN", estoqueInicial: 192, entradas: 0, saidas: 0, ca: "253961" },
-  { descricao: "LUVA VAQUETA PUNHO CURTO", umb: "UN", estoqueInicial: 125, entradas: 0, saidas: 0, ca: "253961" },
-  { descricao: "LUVA DE RASPA VOLK", umb: "UN", estoqueInicial: 157, entradas: 0, saidas: 0, ca: "17158" },
-  { descricao: "LUVA DE RASPA DMN", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  { descricao: "LUVA BRANCA / ALGODÃO", umb: "UN", estoqueInicial: 118, entradas: 0, saidas: 0, ca: "30521" },
-  { descricao: "LUVA PRETA", umb: "UN", estoqueInicial: 202, entradas: 0, saidas: 0 },
-  // OUTROS
-  { descricao: "MACACÃO DE SEGURANÇA", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "36783" },
-  { descricao: "AVENTAL DE SOLDA", umb: "UN", estoqueInicial: 40, entradas: 0, saidas: 0, ca: "38716" },
-  { descricao: "PERNEIRA DE RASPA", umb: "UN", estoqueInicial: 58, entradas: 0, saidas: 0 },
-  { descricao: "PROTETOR SOLAR", umb: "UN", estoqueInicial: 6, entradas: 0, saidas: 0, ca: "4114" },
-  { descricao: "LENTE DE PROTEÇÃO ESCURA", umb: "UN", estoqueInicial: 347, entradas: 0, saidas: 0 },
-  { descricao: "LENTE DE PROTEÇÃO TRANSPARENTE", umb: "UN", estoqueInicial: 461, entradas: 0, saidas: 0 },
-  { descricao: "TALABARTE", umb: "UN", estoqueInicial: 4, entradas: 0, saidas: 0, ca: "35531" },
-  { descricao: "PROTETOR AURICULAR", umb: "UN", estoqueInicial: 168, entradas: 0, saidas: 0, ca: "5745" },
-  { descricao: "JUGULAR MSA", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
-  { descricao: "JUGULAR 3M", umb: "UN", estoqueInicial: 12, entradas: 0, saidas: 0 },
-  { descricao: "MANGOTE RASPA", umb: "UN", estoqueInicial: 98, entradas: 0, saidas: 0, ca: "39273" },
-];
-
-function buildSeed(): EpiRow[] {
-  return SEED_RAW.map((r, i) => ({
-    ...r,
-    id: `epi-${i + 1}`,
-    arvAv: "C030",
-    material: String(40000001 + i),
-  }));
-}
-
-const STORAGE_KEY = "estoque-epi-sesmt-v3";
+const STORAGE_KEY = "estoque-epi-sesmt-v4";
 
 export const Route = createFileRoute("/app/estoque/sesmt")({
   component: EstoqueSesmtPage,
 });
 
-function EstoqueSesmtPage() {
-  const [rows, setRows] = useState<EpiRow[]>(() => buildSeed());
-  const [query, setQuery] = useState("");
+/* ============================== Seed ============================== */
+const RAW_SEED: Array<{ descricao: string; umb: Product["umb"]; estoque: number; ca?: string }> = [
+  { descricao: "CAMISA AZUL TAM. P", umb: "UN", estoque: 0 },
+  { descricao: "CAMISA AZUL TAM. M", umb: "UN", estoque: 0 },
+  { descricao: "CAMISA AZUL TAM. G", umb: "UN", estoque: 0 },
+  { descricao: "CAMISA AZUL TAM. GG", umb: "UN", estoque: 0 },
+  { descricao: "CAMISA CINZA TAM. M", umb: "UN", estoque: 0 },
+  { descricao: "CALÇA AZUL TAM. P", umb: "UN", estoque: 0 },
+  { descricao: "CALÇA AZUL TAM. M", umb: "UN", estoque: 0 },
+  { descricao: "CALÇA AZUL TAM. GG", umb: "UN", estoque: 0 },
+  { descricao: "CALÇA AZUL TAM. EG", umb: "UN", estoque: 0 },
+  { descricao: "CALÇA CINZA TAM. P", umb: "UN", estoque: 0 },
+  { descricao: "CALÇA CINZA TAM. M", umb: "UN", estoque: 0 },
+  { descricao: "MACACÃO AZUL TAM. P", umb: "UN", estoque: 0, ca: "41609" },
+  { descricao: "MACACÃO AZUL TAM. M", umb: "UN", estoque: 0, ca: "41609" },
+  { descricao: "MACACÃO AZUL TAM. G", umb: "UN", estoque: 0, ca: "41609" },
+  { descricao: "MACACÃO CINZA TAM. P", umb: "UN", estoque: 2, ca: "41609" },
+  { descricao: "MACACÃO CINZA TAM. M", umb: "UN", estoque: 3, ca: "41609" },
+  { descricao: "BOTA TAM. 36", umb: "UN", estoque: 0, ca: "43164" },
+  { descricao: "BOTA TAM. 37", umb: "UN", estoque: 3, ca: "43164" },
+  { descricao: "BOTA TAM. 39", umb: "UN", estoque: 8, ca: "43164" },
+  { descricao: "BOTA TAM. 40", umb: "UN", estoque: 0, ca: "43164" },
+  { descricao: "BOTA TAM. 41", umb: "UN", estoque: 0, ca: "43164" },
+  { descricao: "BOTA TAM. 42", umb: "UN", estoque: 0, ca: "43164" },
+  { descricao: "BOTA TAM. 44", umb: "UN", estoque: 0, ca: "43164" },
+  { descricao: "BOTA PVC CANO CURTO TAM. 42", umb: "UN", estoque: 0, ca: "37456" },
+  { descricao: "BOTA PVC CANO CURTO TAM. 44", umb: "UN", estoque: 0, ca: "37456" },
+  { descricao: "COLETE LARANJA", umb: "UN", estoque: 8 },
+  { descricao: "CAPACETE BRANCO", umb: "UN", estoque: 2, ca: "29792" },
+  { descricao: "CAPACETE VERDE", umb: "UN", estoque: 3, ca: "8304" },
+  { descricao: "CAPACETE VERMELHO", umb: "UN", estoque: 7, ca: "8304" },
+  { descricao: "CARNEIRA CINZA", umb: "UN", estoque: 8 },
+  { descricao: "CARNEIRA 3M", umb: "UN", estoque: 0 },
+  { descricao: "CARNEIRA MSA", umb: "UN", estoque: 0, ca: "29638" },
+  { descricao: "VISEIRA PADRÃO", umb: "UN", estoque: 56 },
+  { descricao: "BALACLAVA PRETA", umb: "UN", estoque: 15 },
+  { descricao: "BALACLAVA BRANCA", umb: "UN", estoque: 0 },
+  { descricao: "RESPIRADOR SEMIFACIAL", umb: "UN", estoque: 15 },
+  { descricao: "RESPIRADOR DESCARTÁVEL", umb: "UN", estoque: 43, ca: "44594" },
+  { descricao: "FILTRO PARA PARTÍCULA", umb: "UN", estoque: 14 },
+  { descricao: "FILTRO PARA PARTÍCULA 3M", umb: "CX", estoque: 20 },
+  { descricao: "CARTUCHO PARA VAPORES", umb: "UN", estoque: 20 },
+  { descricao: "RETENTOR PARA FILTRO", umb: "CX", estoque: 5 },
+  { descricao: "ÓCULOS JAGUAR TRANSPARENTE", umb: "UN", estoque: 25, ca: "12572" },
+  { descricao: "ÓCULOS PRETO", umb: "UN", estoque: 19, ca: "27418" },
+  { descricao: "ÓCULOS AMARELO", umb: "UN", estoque: 12, ca: "12572" },
+  { descricao: "LUVA VAQUETA PUNHO LONGO", umb: "UN", estoque: 192, ca: "253961" },
+  { descricao: "LUVA VAQUETA PUNHO CURTO", umb: "UN", estoque: 125, ca: "253961" },
+  { descricao: "LUVA RASPA VOLK", umb: "UN", estoque: 157, ca: "17158" },
+  { descricao: "LUVA RASPA DMN", umb: "UN", estoque: 0 },
+  { descricao: "LUVA BRANCA ALGODÃO", umb: "UN", estoque: 118, ca: "30521" },
+  { descricao: "LUVA PRETA", umb: "UN", estoque: 202 },
+  { descricao: "AVENTAL DE SOLDA", umb: "UN", estoque: 40, ca: "38716" },
+  { descricao: "PERNEIRA RASPA", umb: "UN", estoque: 58 },
+  { descricao: "PROTETOR SOLAR", umb: "UN", estoque: 6, ca: "4114" },
+  { descricao: "LENTE PROTEÇÃO ESCURA", umb: "UN", estoque: 347 },
+  { descricao: "LENTE PROTEÇÃO TRANSPARENTE", umb: "UN", estoque: 461 },
+  { descricao: "TALABARTE PADRÃO", umb: "UN", estoque: 4, ca: "35531" },
+  { descricao: "PROTETOR AURICULAR", umb: "UN", estoque: 168, ca: "5745" },
+  { descricao: "JUGULAR MSA", umb: "UN", estoque: 0 },
+  { descricao: "JUGULAR 3M", umb: "UN", estoque: 12 },
+  { descricao: "MANGOTE RASPA", umb: "UN", estoque: 98, ca: "39273" },
+];
 
+/* split descrição em base (1ª palavra) + variação (resto, ou PADRÃO) */
+function splitDesc(desc: string): { base: string; variant: string } {
+  const parts = desc.trim().split(/\s+/);
+  const base = parts[0];
+  const variant = parts.slice(1).join(" ").trim() || "PADRÃO";
+  return { base, variant };
+}
+
+function buildSeed(): Product[] {
+  const map = new Map<string, Product>();
+  for (const r of RAW_SEED) {
+    const { base, variant } = splitDesc(r.descricao);
+    const key = base + "|" + r.umb;
+    let p = map.get(key);
+    if (!p) {
+      p = { id: `p-${map.size + 1}`, base, umb: r.umb, ca: r.ca, variants: [] };
+      map.set(key, p);
+    }
+    if (r.ca && !p.ca) p.ca = r.ca;
+    p.variants.push({
+      id: `${p.id}-v${p.variants.length + 1}`,
+      label: variant,
+      estoqueInicial: r.estoque,
+      movements: [],
+    });
+  }
+  return Array.from(map.values());
+}
+
+/* ============================== Helpers ============================== */
+function variantBalance(v: Variant): number {
+  return v.estoqueInicial + v.movements.reduce((s, m) => s + m.delta, 0);
+}
+function productBalance(p: Product): number {
+  return p.variants.reduce((s, v) => s + variantBalance(v), 0);
+}
+function fmt(n: number) {
+  return n.toLocaleString("pt-BR");
+}
+
+/* ============================== Page ============================== */
+function EstoqueSesmtPage() {
+  const [products, setProducts] = useState<Product[]>(() => buildSeed());
+  const [query, setQuery] = useState("");
+  const [selectedVariant, setSelectedVariant] = useState<Record<string, string>>({});
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // hydrate
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as EpiRow[];
-        if (Array.isArray(parsed) && parsed.length) setRows(parsed);
+        const parsed = JSON.parse(raw) as Product[];
+        if (Array.isArray(parsed) && parsed.length) setProducts(parsed);
       }
     } catch {}
   }, []);
-
+  // persist
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
-    } catch {}
-  }, [rows]);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(products)); } catch {}
+  }, [products]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(
-      (r) =>
-        r.descricao.toLowerCase().includes(q) ||
-        r.material.toLowerCase().includes(q) ||
-        (r.ca || "").toLowerCase().includes(q),
+    if (!q) return products;
+    return products.filter(
+      (p) =>
+        p.base.toLowerCase().includes(q) ||
+        (p.ca || "").toLowerCase().includes(q) ||
+        p.variants.some((v) => v.label.toLowerCase().includes(q)),
     );
-  }, [rows, query]);
+  }, [products, query]);
 
   const totals = useMemo(() => {
-    let inicial = 0, ent = 0, sai = 0, fin = 0;
-    rows.forEach((r) => {
-      inicial += r.estoqueInicial;
-      ent += r.entradas;
-      sai += r.saidas;
-      fin += r.estoqueInicial + r.entradas - r.saidas;
+    let totalSku = 0, totalEst = 0, totalEnt = 0, totalSai = 0;
+    products.forEach((p) => {
+      totalSku += p.variants.length;
+      p.variants.forEach((v) => {
+        totalEst += variantBalance(v);
+        v.movements.forEach((m) => {
+          if (m.delta > 0) totalEnt += m.delta;
+          else totalSai += -m.delta;
+        });
+      });
     });
-    return { inicial, ent, sai, fin, total: rows.length };
-  }, [rows]);
+    return { produtos: products.length, sku: totalSku, est: totalEst, ent: totalEnt, sai: totalSai };
+  }, [products]);
 
-  function update(id: string, patch: Partial<EpiRow>) {
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  function getVariant(p: Product): Variant {
+    const id = selectedVariant[p.id] ?? p.variants[0]?.id;
+    return p.variants.find((v) => v.id === id) ?? p.variants[0];
   }
 
-  function addRow() {
-    setRows((prev) => [
-      ...prev,
-      {
-        id: `epi-${Date.now()}`,
-        arvAv: "C030",
-        material: String(40000001 + prev.length),
-        descricao: "",
-        umb: "UN",
-        estoqueInicial: 0,
-        entradas: 0,
-        saidas: 0,
-      },
-    ]);
-  }
-
-  function exportCsv() {
-    const header = [
-      "ÁrAv", "Material", "Texto breve material", "UMB",
-      "Estoque inicial", "Totais qtds.entrada", "Totais qtds.saída", "Estoque final", "CA",
-    ];
-    const out = rows.map((r) => [
-      r.arvAv, r.material, r.descricao, r.umb,
-      String(r.estoqueInicial), String(r.entradas), String(r.saidas),
-      String(r.estoqueInicial + r.entradas - r.saidas), r.ca || "",
-    ]);
-    const csv = [header, ...out]
-      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(";"))
-      .join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `estoque-epi-sesmt-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Estoque exportado");
+  function addMovement(productId: string, variantId: string, delta: number, tipo: Movement["tipo"]) {
+    if (!delta) return;
+    setProducts((prev) => prev.map((p) => {
+      if (p.id !== productId) return p;
+      return {
+        ...p,
+        variants: p.variants.map((v) => v.id !== variantId ? v : {
+          ...v,
+          movements: [...v.movements, {
+            id: `m-${Date.now()}`,
+            date: new Date().toISOString().slice(0, 10),
+            delta, tipo,
+          }],
+        }),
+      };
+    }));
+    toast.success(`${tipo === "ENTRADA" ? "+" : ""}${delta} registrado`);
   }
 
   function resetData() {
-    if (!confirm("Restaurar estoque para os valores originais?")) return;
-    setRows(buildSeed());
-    toast.success("Estoque restaurado");
+    if (!confirm("Restaurar painel para os valores iniciais? Movimentações serão perdidas.")) return;
+    setProducts(buildSeed());
+    setSelectedVariant({});
+    toast.success("Painel restaurado");
+  }
+
+  /* ---------- Import ---------- */
+  function handleImportClick() { fileRef.current?.click(); }
+  async function onImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+      if (!rows.length) { toast.error("Planilha vazia"); return; }
+
+      // detecta colunas (case-insensitive)
+      const findKey = (row: any, opts: string[]) => {
+        const keys = Object.keys(row);
+        for (const o of opts) {
+          const k = keys.find((kk) => kk.toLowerCase().trim() === o.toLowerCase());
+          if (k) return k;
+        }
+        return null;
+      };
+      const sample = rows[0];
+      const kDesc = findKey(sample, ["descricao", "descrição", "produto", "texto breve material", "material"]);
+      const kUmb = findKey(sample, ["umb", "und", "unidade"]);
+      const kEst = findKey(sample, ["estoque", "estoque inicial", "estoque final", "qtd", "quantidade", "saldo"]);
+      const kCa = findKey(sample, ["ca", "c.a.", "ca nº"]);
+
+      if (!kDesc) { toast.error("Coluna de descrição/produto não encontrada"); return; }
+
+      const map = new Map<string, Product>();
+      let pid = 1;
+      for (const r of rows) {
+        const desc = String(r[kDesc] || "").trim();
+        if (!desc) continue;
+        const { base, variant } = splitDesc(desc);
+        const umb = (String(r[kUmb!] || "UN").toUpperCase() as Product["umb"]) || "UN";
+        const est = Number(r[kEst!] || 0) || 0;
+        const ca = kCa ? String(r[kCa] || "").trim() || undefined : undefined;
+        const key = base + "|" + umb;
+        let p = map.get(key);
+        if (!p) {
+          p = { id: `p-${pid++}`, base, umb, ca, variants: [] };
+          map.set(key, p);
+        }
+        if (ca && !p.ca) p.ca = ca;
+        p.variants.push({
+          id: `${p.id}-v${p.variants.length + 1}`,
+          label: variant,
+          estoqueInicial: est,
+          movements: [],
+        });
+      }
+      setProducts(Array.from(map.values()));
+      setSelectedVariant({});
+      toast.success(`${rows.length} linhas importadas`);
+    } catch (err: any) {
+      toast.error("Falha ao importar: " + (err?.message ?? "erro"));
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  /* ---------- Export ---------- */
+  function exportXlsx() {
+    const out: any[] = [];
+    products.forEach((p) => {
+      p.variants.forEach((v) => {
+        out.push({
+          Produto: p.base,
+          Variação: v.label,
+          UMB: p.umb,
+          CA: p.ca || "",
+          "Estoque inicial": v.estoqueInicial,
+          Entradas: v.movements.filter((m) => m.delta > 0).reduce((s, m) => s + m.delta, 0),
+          Saídas: v.movements.filter((m) => m.delta < 0).reduce((s, m) => s + -m.delta, 0),
+          "Estoque atual": variantBalance(v),
+        });
+      });
+    });
+    const ws = XLSX.utils.json_to_sheet(out);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Estoque EPI");
+    XLSX.writeFile(wb, `estoque-epi-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast.success("Exportado");
   }
 
   return (
@@ -220,34 +330,35 @@ function EstoqueSesmtPage() {
             Painel de EPI's
           </h1>
           <p className="text-sm text-muted-foreground">
-            Controle de Estoque — formato SAP (ÁrAv · Material · Estoque inicial · Entradas · Saídas · Estoque final).
+            Um produto por linha. Selecione a variação para ver estoque e histórico.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={onImportFile} />
+          <Button variant="outline" size="sm" onClick={handleImportClick}>
+            <Upload className="h-4 w-4 mr-1.5" /> Importar planilha
+          </Button>
           <Button variant="outline" size="sm" onClick={resetData}>
             <RotateCcw className="h-4 w-4 mr-1.5" /> Restaurar
           </Button>
-          <Button variant="outline" size="sm" onClick={addRow}>
-            <Plus className="h-4 w-4 mr-1.5" /> Novo material
-          </Button>
-          <Button size="sm" onClick={exportCsv}>
-            <Download className="h-4 w-4 mr-1.5" /> Exportar CSV
+          <Button size="sm" onClick={exportXlsx}>
+            <Download className="h-4 w-4 mr-1.5" /> Exportar XLSX
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Stat label="Materiais" value={totals.total} />
-        <Stat label="Estoque inicial" value={totals.inicial} />
+        <Stat label="Produtos" value={totals.produtos} />
+        <Stat label="Variações (SKU)" value={totals.sku} />
+        <Stat label="Estoque total" value={totals.est} tone="bold" />
         <Stat label="Entradas" value={totals.ent} tone="green" />
         <Stat label="Saídas" value={totals.sai} tone="red" />
-        <Stat label="Estoque final" value={totals.fin} tone="bold" />
       </div>
 
       <div className="relative max-w-md">
         <Search className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Buscar por descrição, material ou CA…"
+          placeholder="Buscar por produto, variação ou CA…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="pl-8"
@@ -256,64 +367,37 @@ function EstoqueSesmtPage() {
 
       <Card className="overflow-hidden">
         <CardContent className="p-0 overflow-x-auto">
-          <Table className="min-w-[1000px] text-[12px] font-mono">
+          <Table className="min-w-[1000px] text-sm">
             <TableHeader>
               <TableRow className="bg-slate-100 hover:bg-slate-100 border-b-2 border-slate-300">
-                <TableHead className="h-8 font-bold text-slate-700 w-[60px]">ÁrAv</TableHead>
-                <TableHead className="h-8 font-bold text-slate-700 w-[90px]">Material</TableHead>
-                <TableHead className="h-8 font-bold text-slate-700">Texto breve material</TableHead>
-                <TableHead className="h-8 font-bold text-slate-700 w-[60px]">UMB</TableHead>
-                <TableHead className="h-8 font-bold text-slate-700 text-right w-[110px]">Estoque inicial</TableHead>
-                <TableHead className="h-8 font-bold text-slate-700 text-right w-[120px]">Totais qtds.entrada</TableHead>
-                <TableHead className="h-8 font-bold text-slate-700 text-right w-[120px]">Totais qtds.saída</TableHead>
-                <TableHead className="h-8 font-bold text-slate-700 text-right w-[110px]">Estoque final</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700">Produto</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 w-[60px]">UMB</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 w-[90px]">CA</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 w-[260px]">Variação</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 text-right w-[110px]">Estoque</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 w-[260px]">Movimentar</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 w-[110px] text-center">Histórico</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((r) => {
-                const final = r.estoqueInicial + r.entradas - r.saidas;
+              {filtered.map((p) => {
+                const v = getVariant(p);
+                const bal = variantBalance(v);
                 return (
-                  <TableRow key={r.id} className="hover:bg-slate-50/60 border-b border-slate-200">
-                    <TableCell className="py-1 px-2 text-slate-700">{r.arvAv}</TableCell>
-                    <TableCell className="py-1 px-2 text-slate-700">{r.material}</TableCell>
-                    <TableCell className="py-1 px-2">
-                      <input
-                        value={r.descricao}
-                        onChange={(e) => update(r.id, { descricao: e.target.value })}
-                        className="w-full bg-transparent outline-none focus:bg-yellow-50 px-1"
-                      />
-                    </TableCell>
-                    <TableCell className="py-1 px-2 text-slate-700">{r.umb}</TableCell>
-                    <Numeric
-                      value={r.estoqueInicial}
-                      onChange={(v) => update(r.id, { estoqueInicial: v })}
-                      highlight={r.estoqueInicial > 0 ? "green" : undefined}
-                    />
-                    <Numeric
-                      value={r.entradas}
-                      onChange={(v) => update(r.id, { entradas: v })}
-                      highlight={r.entradas > 0 ? "green" : undefined}
-                    />
-                    <Numeric
-                      value={r.saidas}
-                      onChange={(v) => update(r.id, { saidas: v })}
-                      highlight={r.saidas > 0 ? "red" : undefined}
-                      suffix={r.saidas > 0 ? "-" : ""}
-                    />
-                    <TableCell
-                      className={`py-1 px-2 text-right font-semibold ${
-                        final > 0 ? "bg-emerald-50 text-emerald-900" : final < 0 ? "bg-red-100 text-red-900" : "text-slate-500"
-                      }`}
-                    >
-                      {formatNum(final, r.umb)}
-                    </TableCell>
-                  </TableRow>
+                  <ProductRow
+                    key={p.id}
+                    product={p}
+                    variant={v}
+                    bal={bal}
+                    onPickVariant={(vid) => setSelectedVariant((s) => ({ ...s, [p.id]: vid }))}
+                    onMove={(delta, tipo) => addMovement(p.id, v.id, delta, tipo)}
+                  />
                 );
               })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                    Nenhum material encontrado.
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    Nenhum produto encontrado.
                   </TableCell>
                 </TableRow>
               )}
@@ -325,65 +409,183 @@ function EstoqueSesmtPage() {
   );
 }
 
-function formatNum(n: number, umb: string) {
-  if (umb === "KG" || umb === "M" || umb === "GAL") {
-    return n.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-  }
-  return n.toLocaleString("pt-BR");
-}
-
-function Numeric({
-  value,
-  onChange,
-  highlight,
-  suffix,
+/* ============================== Row ============================== */
+function ProductRow({
+  product, variant, bal, onPickVariant, onMove,
 }: {
-  value: number;
-  onChange: (v: number) => void;
-  highlight?: "green" | "red";
-  suffix?: string;
+  product: Product;
+  variant: Variant;
+  bal: number;
+  onPickVariant: (id: string) => void;
+  onMove: (delta: number, tipo: Movement["tipo"]) => void;
 }) {
-  const cls =
-    highlight === "green"
-      ? "bg-emerald-100/70 text-emerald-900"
-      : highlight === "red"
-        ? "bg-red-100 text-red-900"
-        : "text-slate-500";
+  const [qty, setQty] = useState<number>(1);
+  const totalProduto = productBalance(product);
+
   return (
-    <TableCell className={`py-1 px-2 text-right ${cls}`}>
-      <div className="flex items-center justify-end gap-0.5">
-        <input
-          value={value}
-          onChange={(e) => {
-            const v = parseInt(e.target.value || "0", 10);
-            onChange(Math.max(0, Number.isFinite(v) ? v : 0));
-          }}
-          inputMode="numeric"
-          className="w-full bg-transparent outline-none text-right focus:bg-yellow-50 px-1"
-        />
-        {suffix && <span className="text-red-900">{suffix}</span>}
-      </div>
-    </TableCell>
+    <TableRow className="hover:bg-slate-50/60 border-b border-slate-200">
+      <TableCell className="py-2 font-bold">
+        <div className="flex flex-col">
+          <span>{product.base}</span>
+          <span className="text-[10px] text-muted-foreground font-normal">
+            Total produto: {fmt(totalProduto)}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell className="py-2 text-slate-700">{product.umb}</TableCell>
+      <TableCell className="py-2">
+        {product.ca ? <Badge variant="outline" className="font-mono">{product.ca}</Badge> : <span className="text-muted-foreground">—</span>}
+      </TableCell>
+      <TableCell className="py-2">
+        <Select value={variant.id} onValueChange={onPickVariant}>
+          <SelectTrigger className="h-9 w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {product.variants.map((v) => (
+              <SelectItem key={v.id} value={v.id}>
+                <span className="flex items-center justify-between gap-3 w-full">
+                  <span>{v.label}</span>
+                  <span className="text-xs text-muted-foreground">{fmt(variantBalance(v))}</span>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell className={`py-2 text-right font-black text-lg ${bal > 0 ? "text-emerald-700" : bal < 0 ? "text-red-700" : "text-slate-400"}`}>
+        {fmt(bal)}
+      </TableCell>
+      <TableCell className="py-2">
+        <div className="flex items-center gap-1">
+          <Input
+            type="number"
+            value={qty}
+            min={1}
+            onChange={(e) => setQty(Math.max(1, parseInt(e.target.value || "1", 10) || 1))}
+            className="h-9 w-20"
+          />
+          <Button size="sm" variant="outline" className="h-9 border-emerald-300 text-emerald-700 hover:bg-emerald-50" onClick={() => onMove(qty, "ENTRADA")}>
+            <ArrowUp className="h-4 w-4 mr-1" /> Entrada
+          </Button>
+          <Button size="sm" variant="outline" className="h-9 border-red-300 text-red-700 hover:bg-red-50" onClick={() => onMove(-qty, "SAIDA")}>
+            <ArrowDown className="h-4 w-4 mr-1" /> Saída
+          </Button>
+        </div>
+      </TableCell>
+      <TableCell className="py-2 text-center">
+        <HistoryDialog product={product} variant={variant} />
+      </TableCell>
+    </TableRow>
   );
 }
 
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone?: "green" | "red" | "bold";
-}) {
+/* ============================== History Dialog ============================== */
+function HistoryDialog({ product, variant }: { product: Product; variant: Variant }) {
+  const data = useMemo(() => {
+    // saldo acumulado por dia
+    const byDay = new Map<string, number>();
+    let acc = variant.estoqueInicial;
+    const sorted = [...variant.movements].sort((a, b) => a.date.localeCompare(b.date));
+    if (!sorted.length) {
+      const today = new Date().toISOString().slice(0, 10);
+      return [{ date: today, saldo: acc }];
+    }
+    // ponto inicial
+    const firstDay = sorted[0].date;
+    byDay.set(firstDay, acc);
+    for (const m of sorted) {
+      acc += m.delta;
+      byDay.set(m.date, acc);
+    }
+    return Array.from(byDay.entries()).map(([date, saldo]) => ({ date, saldo }));
+  }, [variant]);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <History className="h-4 w-4 mr-1" /> Ver
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>
+            {product.base} — <span className="text-muted-foreground font-normal">{variant.label}</span>
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-2 text-sm">
+            <div className="p-2 rounded border bg-slate-50">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Estoque inicial</div>
+              <div className="text-xl font-black">{fmt(variant.estoqueInicial)}</div>
+            </div>
+            <div className="p-2 rounded border bg-emerald-50">
+              <div className="text-[10px] uppercase tracking-wide text-emerald-800">Entradas</div>
+              <div className="text-xl font-black text-emerald-800">
+                {fmt(variant.movements.filter((m) => m.delta > 0).reduce((s, m) => s + m.delta, 0))}
+              </div>
+            </div>
+            <div className="p-2 rounded border bg-red-50">
+              <div className="text-[10px] uppercase tracking-wide text-red-800">Saídas</div>
+              <div className="text-xl font-black text-red-800">
+                {fmt(variant.movements.filter((m) => m.delta < 0).reduce((s, m) => s + -m.delta, 0))}
+              </div>
+            </div>
+          </div>
+          <div className="h-64 border rounded p-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" fontSize={11} />
+                <YAxis fontSize={11} />
+                <Tooltip />
+                <Line type="monotone" dataKey="saldo" stroke="#0f766e" strokeWidth={2} dot />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="max-h-60 overflow-y-auto border rounded">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead className="text-right">Qtd</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {variant.movements.length === 0 && (
+                  <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-4">Sem movimentações</TableCell></TableRow>
+                )}
+                {[...variant.movements].reverse().map((m) => (
+                  <TableRow key={m.id}>
+                    <TableCell>{m.date}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={m.delta > 0 ? "border-emerald-300 text-emerald-700" : "border-red-300 text-red-700"}>
+                        {m.tipo}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className={`text-right font-mono ${m.delta > 0 ? "text-emerald-700" : "text-red-700"}`}>
+                      {m.delta > 0 ? "+" : ""}{m.delta}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ============================== Stat ============================== */
+function Stat({ label, value, tone }: { label: string; value: number; tone?: "green" | "red" | "bold" }) {
   const cls =
-    tone === "green"
-      ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-      : tone === "red"
-        ? "bg-red-50 border-red-200 text-red-900"
-        : tone === "bold"
-          ? "bg-slate-900 border-slate-900 text-white"
-          : "bg-slate-50 border-slate-200 text-slate-800";
+    tone === "green" ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+    : tone === "red" ? "bg-red-50 border-red-200 text-red-900"
+    : tone === "bold" ? "bg-slate-900 border-slate-900 text-white"
+    : "bg-slate-50 border-slate-200 text-slate-800";
   return (
     <Card className={`border ${cls}`}>
       <CardContent className="p-3">
