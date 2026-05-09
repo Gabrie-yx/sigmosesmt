@@ -775,7 +775,7 @@ function VaccinesTab({ empId, vaccines, role, canEdit, canDelete, qc }: any) {
 }
 
 /* ============ EPI ============ */
-function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc }: any) {
+function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsOk, missingDocs }: any) {
   const EPI_ITEMS = [
     "TREINAMENTOS","AVENTAL DE RASPA","BALACLAVA","BOTA","CALÇA","CAMISA",
     "CAPACETE","LENTES DE SOLDA","LUVA","MANGOTE DE RASPA","MÁSCARA DE SOLDA",
@@ -805,6 +805,10 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc }: any
   });
 
   function gerarFicha() {
+    if (!docsOk) {
+      toast.error(`Documentação incompleta. Pendentes: ${(missingDocs ?? []).join(", ")}`);
+      return;
+    }
     const { url, fname } = openEpiFichaPdf({ emp, company, role, epis });
     openFileViewer({ url, name: fname, mime: "application/pdf" });
   }
@@ -824,7 +828,9 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc }: any
         </div>
         <Button
           onClick={gerarFicha}
-          className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs"
+          disabled={!docsOk}
+          title={!docsOk ? `Bloqueado: documentação incompleta (${(missingDocs ?? []).join(", ")})` : "Gerar Ficha de EPI"}
+          className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed"
           size="lg"
         >
           <Printer className="h-4 w-4 mr-2" /> Ficha em PDF
