@@ -671,3 +671,147 @@ function Stat({ label, value, tone }: { label: string; value: number; tone?: "gr
     </Card>
   );
 }
+
+/* ============================== Month Picker ============================== */
+const MESES_PT = [
+  "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
+];
+function MonthPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [yStr, mStr] = value.split("-");
+  const year = Number(yStr) || new Date().getFullYear();
+  const month = Number(mStr) || new Date().getMonth() + 1;
+  const thisYear = new Date().getFullYear();
+  const years = Array.from({ length: 8 }, (_, i) => thisYear - 5 + i);
+  return (
+    <div className="flex items-center gap-1">
+      <Select value={String(month)} onValueChange={(m) => onChange(`${year}-${String(Number(m)).padStart(2, "0")}`)}>
+        <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {MESES_PT.map((nm, i) => (
+            <SelectItem key={i + 1} value={String(i + 1)}>{nm}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={String(year)} onValueChange={(y) => onChange(`${y}-${String(month).padStart(2, "0")}`)}>
+        <SelectTrigger className="h-9 w-[100px]"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+/* ============================== Movement Dialog (multi-variação) ============================== */
+function MovementDialog({
+  product, tipo, onConfirm,
+}: {
+  product: Product;
+  tipo: "ENTRADA" | "SAIDA";
+  onConfirm: (date: string, entries: Array<{ variantId: string; qty: number }>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [qtys, setQtys] = useState<Record<string, number>>({});
+
+  function reset() {
+    setQtys({});
+    setDate(new Date().toISOString().slice(0, 10));
+  }
+
+  const total = Object.values(qtys).reduce((s, n) => s + (n || 0), 0);
+  const isEntrada = tipo === "ENTRADA";
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+      <DialogTrigger asChild>
+        <Button
+          size="sm"
+          variant="outline"
+          className={
+            "h-9 " +
+            (isEntrada
+              ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+              : "border-red-300 text-red-700 hover:bg-red-50")
+          }
+        >
+          {isEntrada ? <ArrowUp className="h-4 w-4 mr-1" /> : <ArrowDown className="h-4 w-4 mr-1" />}
+          {isEntrada ? "Entrada" : "Saída"}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>
+            {isEntrada ? "Entrada" : "Saída"} — {product.base}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Data
+            </label>
+            <Input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="h-9 w-[180px]"
+            />
+          </div>
+          <div className="rounded border divide-y">
+            <div className="grid grid-cols-[1fr_auto_120px] gap-3 px-3 py-2 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-600">
+              <div>Variação</div>
+              <div className="text-right">Saldo atual</div>
+              <div className="text-right">Quantidade</div>
+            </div>
+            {product.variants.map((v) => {
+              const bal = variantBalance(v);
+              return (
+                <div key={v.id} className="grid grid-cols-[1fr_auto_120px] gap-3 px-3 py-2 items-center">
+                  <div className="text-sm font-semibold">{v.label}</div>
+                  <div className={"text-right font-mono text-sm " + (bal > 0 ? "text-emerald-700" : bal < 0 ? "text-red-700" : "text-slate-400")}>
+                    {fmt(bal)}
+                  </div>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={qtys[v.id] ?? ""}
+                    placeholder="0"
+                    onChange={(e) => {
+                      const n = parseInt(e.target.value || "0", 10);
+                      setQtys((s) => ({ ...s, [v.id]: isNaN(n) || n < 0 ? 0 : n }));
+                    }}
+                    className="h-9 text-right"
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex items-center justify-between pt-1">
+            <div className="text-sm">
+              Total: <span className="font-black">{fmt(total)}</span>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button
+                size="sm"
+                className={isEntrada ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}
+                onClick={() => {
+                  const entries = Object.entries(qtys)
+                    .map(([variantId, qty]) => ({ variantId, qty: qty || 0 }))
+                    .filter((e) => e.qty > 0);
+                  if (!entries.length) { toast.error("Informe ao menos uma quantidade"); return; }
+                  onConfirm(date, entries);
+                  setOpen(false);
+                  reset();
+                }}
+              >
+                Confirmar {isEntrada ? "entrada" : "saída"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
