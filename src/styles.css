@@ -189,4 +189,59 @@
   .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
   .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  /* === Elegant elevation / floating utilities === */
+  .surface-elevated {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.9) inset,
+      0 1px 2px rgba(15,23,42,0.04),
+      0 8px 24px -12px rgba(15,23,42,0.12);
+  }
+  .surface-elevated-dark {
+    background: linear-gradient(160deg, #0369a1 0%, #075985 60%, #0c4a6e 100%);
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.18) inset,
+      0 10px 30px -12px rgba(3,105,161,0.55),
+      0 2px 6px rgba(15,23,42,0.18);
+  }
+  .hover-lift {
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.9) inset,
+      0 2px 4px rgba(15,23,42,0.06),
+      0 18px 40px -16px rgba(3,105,161,0.28);
+  }
+  .ring-soft { box-shadow: 0 0 0 1px rgba(15,23,42,0.04), 0 1px 2px rgba(15,23,42,0.04); }
+  .chip-3d {
+    background-image: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(0,0,0,0.06));
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.35) inset,
+      0 -1px 0 0 rgba(0,0,0,0.06) inset,
+      0 2px 4px rgba(15,23,42,0.12),
+      0 6px 14px -6px rgba(15,23,42,0.18);
+    transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
+  }
+  .chip-3d:hover { transform: translateY(-1px); filter: brightness(1.04); }
+  .chip-3d:active { transform: translateY(0); filter: brightness(0.98); }
+  .avatar-ring {
+    background: conic-gradient(from 220deg, #38bdf8, #0369a1, #0ea5e9, #38bdf8);
+    padding: 2px;
+    border-radius: 9999px;
+    box-shadow: 0 6px 16px -8px rgba(3,105,161,0.5);
+  }
+  .page-canvas {
+    background:
+      radial-gradient(1200px 600px at -10% -20%, rgba(56,189,248,0.10), transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, rgba(99,102,241,0.08), transparent 60%),
+      linear-gradient(180deg, #f1f5f9 0%, #eef2f7 100%);
+  }
+  @keyframes floaty {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-3px); }
+  }
+  .floaty { animation: floaty 4s ease-in-out infinite; }
 }
