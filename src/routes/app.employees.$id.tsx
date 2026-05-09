@@ -329,21 +329,86 @@ function NrsTab({ emp, role, canEdit, qc }: any) {
 
 /* ============ DOCS ============ */
 function DocsTab({ empId }: any) {
+  const qc = useQueryClient();
+  const { isEditor, isAdmin } = useAuth();
   const { data: docs } = useQuery({
     queryKey: ["docs", empId],
     queryFn: async () => (await supabase.from("employee_docs").select("*").eq("employee_id", empId)).data ?? [],
   });
+  const [tipo, setTipo] = useState("RG");
+  const [file, setFile] = useState<File | null>(null);
+
+  const upload = useMutation({
+    mutationFn: async () => {
+      if (!file) throw new Error("Selecione um arquivo");
+      const path = `${empId}/${Date.now()}_${file.name}`;
+      const { error: upErr } = await supabase.storage.from("employee-docs").upload(path, file, { upsert: false });
+      if (upErr) throw upErr;
+      const { error } = await supabase.from("employee_docs").insert({ employee_id: empId, tipo, file_path: path });
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["docs", empId] }); setFile(null); toast.success("Documento enviado"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (d: any) => {
+      await supabase.storage.from("employee-docs").remove([d.file_path]);
+      const { error } = await supabase.from("employee_docs").delete().eq("id", d.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["docs", empId] }); toast.success("Removido"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  async function openDoc(path: string) {
+    const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(path, 60);
+    if (error) { toast.error(error.message); return; }
+    window.open(data.signedUrl, "_blank");
+  }
+
+  const TIPOS_DOC = ["RG", "CPF", "CNH", "CTPS", "Título de Eleitor", "Comprovante Residência", "Certificado Reservista", "Foto 3x4", "Contrato", "Outro"];
+
   return (
-    <Card className="p-6">
-      <div className="text-sm text-muted-foreground mb-4">
-        Upload de documentos pessoais (RG, CPF, comprovantes). Anexos vão para o bucket privado <code>employee-docs</code>.
+    <Card className="p-6 space-y-4">
+      <div className="text-sm text-muted-foreground">
+        Documentos pessoais (RG, CPF, comprovantes). Bucket privado <code>employee-docs</code>.
       </div>
+      {isEditor && (
+        <form onSubmit={(e) => { e.preventDefault(); upload.mutate(); }} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end border-b pb-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Tipo</Label>
+            <Select value={tipo} onValueChange={setTipo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{TIPOS_DOC.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label className="text-xs">Arquivo (PDF/Imagem)</Label>
+            <Input type="file" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          </div>
+          <Button type="submit" className="md:col-span-3" disabled={upload.isPending || !file}>
+            <Upload className="h-4 w-4 mr-2" /> Enviar documento
+          </Button>
+        </form>
+      )}
       <Table>
-        <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Arquivo</TableHead><TableHead>Enviado em</TableHead></TableRow></TableHeader>
+        <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Arquivo</TableHead><TableHead>Enviado em</TableHead><TableHead></TableHead></TableRow></TableHeader>
         <TableBody>
-          {(docs ?? []).length === 0 && <TableRow><TableCell colSpan={3} className="text-muted-foreground text-center">Nenhum documento</TableCell></TableRow>}
+          {(docs ?? []).length === 0 && <TableRow><TableCell colSpan={4} className="text-muted-foreground text-center">Nenhum documento</TableCell></TableRow>}
           {(docs ?? []).map((d: any) => (
-            <TableRow key={d.id}><TableCell>{d.tipo}</TableCell><TableCell className="font-mono text-xs">{d.file_path}</TableCell><TableCell>{formatDateBR(d.uploaded_at)}</TableCell></TableRow>
+            <TableRow key={d.id}>
+              <TableCell className="font-medium">{d.tipo}</TableCell>
+              <TableCell>
+                <Button size="sm" variant="ghost" onClick={() => openDoc(d.file_path)}>
+                  <FileText className="h-4 w-4 mr-1" />Ver
+                </Button>
+              </TableCell>
+              <TableCell>{formatDateBR(d.uploaded_at)}</TableCell>
+              <TableCell className="text-right">
+                {isAdmin && <Button size="icon" variant="ghost" onClick={() => del.mutate(d)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+              </TableCell>
+            </TableRow>
           ))}
         </TableBody>
       </Table>
