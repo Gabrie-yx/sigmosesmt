@@ -123,7 +123,7 @@ export function buildEpiFichaPdf(opts: {
   const writeText = (txt: string, lh = 3.6, bg?: [number, number, number]) => {
     const lines = doc.splitTextToSize(txt, W - 2 * M - 4);
     const h = lines.length * lh + 1.5;
-    if (bg) { doc.setFillColor(...bg); doc.rect(M, y, W - 2 * M, h, "F"); }
+    if (bg) { doc.setFillColor(bg[0], bg[1], bg[2]); doc.rect(M, y, W - 2 * M, h, "F"); }
     doc.text(lines, M + 2, y + lh);
     y += h;
   };
