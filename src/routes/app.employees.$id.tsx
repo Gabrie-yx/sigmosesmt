@@ -1079,6 +1079,50 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Substitution Dialog (auto-prompted on new delivery of same item) */}
+      <Dialog open={!!substitution} onOpenChange={(o) => !o && setSubstitution(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Undo2 className="h-5 w-5 text-amber-600" />
+              Substituição de EPI
+            </DialogTitle>
+          </DialogHeader>
+          {substitution && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                Este colaborador já possui um <strong className="uppercase">{substitution.prev.item}</strong>
+                {substitution.prev.tamanho ? ` (${substitution.prev.tamanho})` : ""} ativo, entregue em <strong>{formatDateBR(substitution.prev.data_entrega)}</strong>.
+                <br />Informe o motivo da substituição. O item anterior será encerrado e o novo será registrado.
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Motivo da substituição</Label>
+                <Select value={substitution.motivo} onValueChange={(v) => setSubstitution({ ...substitution, motivo: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MOTIVOS_DEV.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Data da devolução do anterior</Label>
+                <Input type="date" value={substitution.data} onChange={(e) => setSubstitution({ ...substitution, data: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Observações (opcional)</Label>
+                <Textarea rows={3} value={substitution.obs} onChange={(e) => setSubstitution({ ...substitution, obs: e.target.value })} placeholder="Detalhes adicionais (ex: B.O. do furto, etc.)" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSubstitution(null)}>Cancelar</Button>
+            <Button onClick={() => substituteMut.mutate()} disabled={substituteMut.isPending || !substitution?.data || !substitution?.motivo} className="bg-amber-600 hover:bg-amber-700 text-white">
+              <Plus className="h-4 w-4 mr-2" /> Confirmar substituição e entregar novo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
