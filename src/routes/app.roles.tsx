@@ -27,7 +27,10 @@ function RolesPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from("roles").select("*").order("name");
       if (error) throw error;
-      return data as Role[];
+      return (data ?? []).map((r: any) => ({
+        ...r,
+        riscos: r.riscos && typeof r.riscos === "object" ? { ...emptyRiscos, ...r.riscos } : emptyRiscos,
+      })) as Role[];
     },
   });
 
