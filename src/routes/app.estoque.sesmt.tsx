@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   HardHat, Search, Download, Upload, RotateCcw, Plus, History,
-  ArrowUp, ArrowDown, Trash2,
+  ArrowUp, ArrowDown, Trash2, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -296,6 +296,30 @@ function EstoqueSesmtPage() {
     toast.success("Painel restaurado");
   }
 
+  /* ---------- Cadastro de novo produto ---------- */
+  function addProduct(input: {
+    base: string;
+    umb: Product["umb"];
+    ca?: string;
+    variants: Array<{ label: string; estoqueInicial: number }>;
+  }) {
+    const id = `p-${Date.now()}`;
+    const novo: Product = {
+      id,
+      base: input.base.trim().toUpperCase(),
+      umb: input.umb,
+      ca: input.ca?.trim() || undefined,
+      variants: input.variants.map((v, i) => ({
+        id: `${id}-v${i + 1}`,
+        label: v.label.trim().toUpperCase() || "PADRÃO",
+        estoqueInicial: Number(v.estoqueInicial) || 0,
+        movements: [],
+      })),
+    };
+    setProducts((prev) => [novo, ...prev]);
+    toast.success(`Produto "${novo.base}" cadastrado`);
+  }
+
   /* ---------- Import ---------- */
   function handleImportClick() { fileRef.current?.click(); }
   async function onImportFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -399,6 +423,7 @@ function EstoqueSesmtPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={onImportFile} />
+          <NewProductDialog onCreate={addProduct} />
           <Button variant="outline" size="sm" onClick={handleImportClick}>
             <Upload className="h-4 w-4 mr-1.5" /> Importar planilha
           </Button>
@@ -648,6 +673,198 @@ function HistoryDialog({ product, variant }: { product: Product; variant: Varian
                 ))}
               </TableBody>
             </Table>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ============================== Novo Produto Dialog ============================== */
+const SUGESTOES: Record<string, string[]> = {
+  Tamanhos: ["P", "M", "G", "GG", "EG"],
+  Numeração: ["36", "37", "38", "39", "40", "41", "42", "43", "44"],
+  Cores: ["AZUL", "CINZA", "PRETO", "BRANCO", "VERDE", "VERMELHO", "LARANJA", "AMARELO"],
+  Genérico: ["PADRÃO"],
+};
+const UMBS: Product["umb"][] = ["UN", "CX", "PC", "KG", "M", "GAL"];
+
+function NewProductDialog({
+  onCreate,
+}: {
+  onCreate: (input: {
+    base: string;
+    umb: Product["umb"];
+    ca?: string;
+    variants: Array<{ label: string; estoqueInicial: number }>;
+  }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [base, setBase] = useState("");
+  const [umb, setUmb] = useState<Product["umb"]>("UN");
+  const [ca, setCa] = useState("");
+  const [variants, setVariants] = useState<Array<{ label: string; estoqueInicial: number }>>([
+    { label: "PADRÃO", estoqueInicial: 0 },
+  ]);
+
+  function reset() {
+    setBase(""); setUmb("UN"); setCa("");
+    setVariants([{ label: "PADRÃO", estoqueInicial: 0 }]);
+  }
+
+  function addVariant(label = "") {
+    setVariants((prev) => [...prev, { label, estoqueInicial: 0 }]);
+  }
+  function addManyVariants(labels: string[]) {
+    setVariants((prev) => {
+      // remove placeholder vazio "PADRÃO" se ainda for o único e não houver nada digitado
+      const seed = prev.length === 1 && prev[0].label === "PADRÃO" && !prev[0].estoqueInicial ? [] : prev;
+      const existing = new Set(seed.map((v) => v.label.toUpperCase()));
+      const novos = labels
+        .filter((l) => !existing.has(l.toUpperCase()))
+        .map((l) => ({ label: l, estoqueInicial: 0 }));
+      return [...seed, ...novos];
+    });
+  }
+  function updateVariant(i: number, patch: Partial<{ label: string; estoqueInicial: number }>) {
+    setVariants((prev) => prev.map((v, idx) => (idx === i ? { ...v, ...patch } : v)));
+  }
+  function removeVariant(i: number) {
+    setVariants((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function submit() {
+    if (!base.trim()) { toast.error("Informe o nome do produto"); return; }
+    const cleaned = variants.filter((v) => v.label.trim());
+    if (!cleaned.length) { toast.error("Adicione ao menos uma variação"); return; }
+    onCreate({ base, umb, ca: ca || undefined, variants: cleaned });
+    setOpen(false);
+    reset();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="bg-red-700 hover:bg-red-800">
+          <Plus className="h-4 w-4 mr-1.5" /> Novo produto
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Cadastrar novo produto</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_120px_140px] gap-3">
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Nome do produto</label>
+              <Input
+                value={base}
+                onChange={(e) => setBase(e.target.value.toUpperCase())}
+                placeholder="Ex.: CAMISA, BOTA, CAPACETE"
+                className="h-9"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">UMB</label>
+              <Select value={umb} onValueChange={(v) => setUmb(v as Product["umb"])}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {UMBS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">CA (opcional)</label>
+              <Input
+                value={ca}
+                onChange={(e) => setCa(e.target.value.replace(/\D/g, ""))}
+                placeholder="Ex.: 41609"
+                className="h-9 font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="rounded border bg-slate-50/40 p-3 space-y-2">
+            <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              Sugestões rápidas — clique para adicionar variações
+            </div>
+            <div className="space-y-1.5">
+              {Object.entries(SUGESTOES).map(([grupo, opts]) => (
+                <div key={grupo} className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] font-semibold text-slate-500 w-20">{grupo}:</span>
+                  {opts.map((o) => (
+                    <button
+                      key={o}
+                      type="button"
+                      onClick={() => addManyVariants([grupo === "Tamanhos" || grupo === "Numeração" ? `TAM. ${o}` : o])}
+                      className="px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[11px] font-semibold text-slate-600 hover:bg-slate-100"
+                    >
+                      {o}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addManyVariants(opts.map((o) => grupo === "Tamanhos" || grupo === "Numeração" ? `TAM. ${o}` : o))}
+                    className="px-2 py-0.5 rounded-full border border-red-200 bg-red-50 text-[11px] font-bold text-red-700 hover:bg-red-100"
+                  >
+                    + todos
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Não achou a característica? Use o campo livre abaixo para criar qualquer variação (cor + tamanho, modelo, marca, etc.).
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                Variações do produto
+              </div>
+              <Button size="sm" variant="outline" onClick={() => addVariant("")}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar variação
+              </Button>
+            </div>
+            <div className="rounded border divide-y">
+              <div className="grid grid-cols-[1fr_140px_40px] gap-2 px-3 py-2 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-600">
+                <div>Característica / Variação</div>
+                <div className="text-right">Estoque inicial</div>
+                <div></div>
+              </div>
+              {variants.length === 0 && (
+                <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+                  Nenhuma variação. Use as sugestões acima ou adicione manualmente.
+                </div>
+              )}
+              {variants.map((v, i) => (
+                <div key={i} className="grid grid-cols-[1fr_140px_40px] gap-2 px-3 py-2 items-center">
+                  <Input
+                    value={v.label}
+                    onChange={(e) => updateVariant(i, { label: e.target.value.toUpperCase() })}
+                    placeholder="Ex.: AZUL TAM. P, MODELO X, MARCA 3M…"
+                    className="h-9"
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    value={v.estoqueInicial}
+                    onChange={(e) => updateVariant(i, { estoqueInicial: parseInt(e.target.value || "0", 10) || 0 })}
+                    className="h-9 text-right font-mono"
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => removeVariant(i)} className="h-8 w-8">
+                    <X className="h-4 w-4 text-slate-500" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button size="sm" className="bg-red-700 hover:bg-red-800" onClick={submit}>
+              Cadastrar produto
+            </Button>
           </div>
         </div>
       </DialogContent>
