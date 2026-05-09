@@ -29,7 +29,6 @@ const SESMT_ITEMS = [
   { to: "/app/employees", label: "Colaboradores" },
   { to: "/app/trainings", label: "Treinamentos" },
   { to: "/app/ptes", label: "Emitir PTE" },
-  { to: "/app/estoque/epi", label: "EPIs (Cards)" },
 ] as const;
 
 const SESMT_PATHS = SESMT_ITEMS.map((i) => i.to);
@@ -43,6 +42,7 @@ const OTHER_MODULES = [
 
 const ESTOQUE_SUBMENU = [
   { key: "estoque-sesmt", label: "SESMT", to: "/app/estoque/sesmt" as const },
+  { key: "estoque-sesmt-epi", label: "SESMT · EPIs (Cards)", to: "/app/estoque/epi" as const },
   { key: "estoque-eletrica", label: "Elétrica" },
   { key: "estoque-mecanica", label: "Mecânica" },
 ] as const;
