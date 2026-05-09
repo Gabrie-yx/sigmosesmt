@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { maskCPF } from "@/lib/masks";
 
 export const Route = createFileRoute("/app/employees/")({
   component: EmployeesPage,
@@ -94,7 +95,7 @@ function EmployeesPage() {
               <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); create.mutate(form); }}>
                 <div className="space-y-2"><Label>Nome *</Label><Input required value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2"><Label>CPF</Label><Input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>CPF</Label><Input inputMode="numeric" placeholder="000.000.000-00" value={form.cpf} onChange={(e) => setForm({ ...form, cpf: maskCPF(e.target.value) })} /></div>
                   <div className="space-y-2"><Label>Matrícula</Label><Input value={form.matricula} onChange={(e) => setForm({ ...form, matricula: e.target.value })} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
