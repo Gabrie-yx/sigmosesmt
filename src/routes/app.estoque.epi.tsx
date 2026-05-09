@@ -45,6 +45,8 @@ import {
   Save,
   X,
   ShieldCheck,
+  Upload,
+  User,
 } from "lucide-react";
 
 export const Route = createFileRoute("/app/estoque/epi")({
@@ -105,7 +107,7 @@ function statusInfo(saldo: number, minimo: number) {
       label: "ESTOQUE CRÍTICO",
       cls: "bg-destructive text-destructive-foreground",
       icon: AlertTriangle,
-      cardCls: "border-destructive border-2 bg-destructive/5",
+      cardCls: "border-destructive border-2 bg-destructive/5 animate-pulse-critical",
     };
   if (saldo <= 10)
     return {
