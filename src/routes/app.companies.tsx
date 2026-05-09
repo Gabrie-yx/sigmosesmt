@@ -384,8 +384,7 @@ function CompaniesPage() {
               }).length;
               const nrOK = reqNRs.length > 0 && nrsMissing === 0 && nrsExpired === 0;
 
-              const isMEI = emp.tipo_cadastro === "MEI";
-              const reqDocs = ["rg", "cpf", "address", ...(isMEI ? ["mei"] : [])];
+              const reqDocs = ["RG", "CPF", "Comprovante Residência", "Comprovante MEI", "Cartão de Vacina"];
               const docsOK = reqDocs.every((k) => empDocs.some((d: any) => d.tipo === k));
 
               const globalOK = asoOK && nrOK && docsOK;
