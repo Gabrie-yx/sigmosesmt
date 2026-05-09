@@ -256,6 +256,39 @@ function EstoqueSesmtPage() {
     toast.success(`${tipo === "ENTRADA" ? "+" : ""}${delta} registrado`);
   }
 
+  /** Aplica várias movimentações (uma por variação) de uma vez. */
+  function bulkMove(
+    productId: string,
+    tipo: "ENTRADA" | "SAIDA",
+    date: string,
+    entries: Array<{ variantId: string; qty: number }>,
+  ) {
+    const valid = entries.filter((e) => e.qty > 0);
+    if (!valid.length) { toast.error("Informe ao menos uma quantidade"); return; }
+    setProducts((prev) => prev.map((p) => {
+      if (p.id !== productId) return p;
+      return {
+        ...p,
+        variants: p.variants.map((v) => {
+          const e = valid.find((x) => x.variantId === v.id);
+          if (!e) return v;
+          const delta = tipo === "ENTRADA" ? e.qty : -e.qty;
+          return {
+            ...v,
+            movements: [...v.movements, {
+              id: `m-${Date.now()}-${v.id}`,
+              date,
+              delta,
+              tipo,
+            }],
+          };
+        }),
+      };
+    }));
+    const total = valid.reduce((s, e) => s + e.qty, 0);
+    toast.success(`${tipo === "ENTRADA" ? "Entrada" : "Saída"} de ${total} unidade(s) registrada`);
+  }
+
   function resetData() {
     if (!confirm("Restaurar painel para os valores iniciais? Movimentações serão perdidas.")) return;
     setProducts(buildSeed());
