@@ -433,12 +433,7 @@ function EstoqueSesmtPage() {
           <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
             Mês de referência
           </label>
-          <Input
-            type="month"
-            value={refMonth}
-            onChange={(e) => setRefMonth(e.target.value || currentMonth())}
-            className="h-9 w-[160px]"
-          />
+          <MonthPicker value={refMonth} onChange={setRefMonth} />
         </div>
       </div>
 
@@ -462,13 +457,13 @@ function EstoqueSesmtPage() {
               {filtered.map((p) => {
                 const v = getVariant(p);
                 return (
-                  <ProductRow
+                 <ProductRow
                     key={p.id}
                     product={p}
                     variant={v}
                     refMonth={refMonth}
                     onPickVariant={(vid) => setSelectedVariant((s) => ({ ...s, [p.id]: vid }))}
-                    onMove={(delta, tipo) => addMovement(p.id, v.id, delta, tipo)}
+                    onBulkMove={(tipo, date, entries) => bulkMove(p.id, tipo, date, entries)}
                   />
                 );
               })}
@@ -489,15 +484,14 @@ function EstoqueSesmtPage() {
 
 /* ============================== Row ============================== */
 function ProductRow({
-  product, variant, refMonth, onPickVariant, onMove,
+  product, variant, refMonth, onPickVariant, onBulkMove,
 }: {
   product: Product;
   variant: Variant;
   refMonth: string;
   onPickVariant: (id: string) => void;
-  onMove: (delta: number, tipo: Movement["tipo"]) => void;
+  onBulkMove: (tipo: "ENTRADA" | "SAIDA", date: string, entries: Array<{ variantId: string; qty: number }>) => void;
 }) {
-  const [qty, setQty] = useState<number>(1);
   const totalProduto = productBalance(product);
   const { start, end } = monthRange(refMonth);
   const period = variantPeriod(variant, start, end);
@@ -551,19 +545,8 @@ function ProductRow({
       </TableCell>
       <TableCell className="py-2">
         <div className="flex items-center gap-1">
-          <Input
-            type="number"
-            value={qty}
-            min={1}
-            onChange={(e) => setQty(Math.max(1, parseInt(e.target.value || "1", 10) || 1))}
-            className="h-9 w-20"
-          />
-          <Button size="sm" variant="outline" className="h-9 border-emerald-300 text-emerald-700 hover:bg-emerald-50" onClick={() => onMove(qty, "ENTRADA")}>
-            <ArrowUp className="h-4 w-4 mr-1" /> Entrada
-          </Button>
-          <Button size="sm" variant="outline" className="h-9 border-red-300 text-red-700 hover:bg-red-50" onClick={() => onMove(-qty, "SAIDA")}>
-            <ArrowDown className="h-4 w-4 mr-1" /> Saída
-          </Button>
+          <MovementDialog product={product} tipo="ENTRADA" onConfirm={(date, entries) => onBulkMove("ENTRADA", date, entries)} />
+          <MovementDialog product={product} tipo="SAIDA" onConfirm={(date, entries) => onBulkMove("SAIDA", date, entries)} />
         </div>
       </TableCell>
       <TableCell className="py-2 text-center">
