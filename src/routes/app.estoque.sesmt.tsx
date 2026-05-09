@@ -153,11 +153,42 @@ function fmt(n: number) {
   return n.toLocaleString("pt-BR");
 }
 
+/** Calcula estoque inicial / entradas / saídas / final de uma variante em um intervalo [startISO, endISO]. */
+function variantPeriod(v: Variant, startISO: string, endISO: string) {
+  let inicial = v.estoqueInicial;
+  let entradas = 0;
+  let saidas = 0;
+  for (const m of v.movements) {
+    if (m.date < startISO) {
+      inicial += m.delta;
+    } else if (m.date <= endISO) {
+      if (m.delta > 0) entradas += m.delta;
+      else saidas += -m.delta;
+    }
+  }
+  const final = inicial + entradas - saidas;
+  return { inicial, entradas, saidas, final };
+}
+
+/** Mês YYYY-MM -> [primeiro dia, último dia] em ISO YYYY-MM-DD. */
+function monthRange(month: string): { start: string; end: string } {
+  const [y, m] = month.split("-").map(Number);
+  const start = `${month}-01`;
+  const last = new Date(y, m, 0).getDate();
+  const end = `${month}-${String(last).padStart(2, "0")}`;
+  return { start, end };
+}
+function currentMonth(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 /* ============================== Page ============================== */
 function EstoqueSesmtPage() {
   const [products, setProducts] = useState<Product[]>(() => buildSeed());
   const [query, setQuery] = useState("");
   const [selectedVariant, setSelectedVariant] = useState<Record<string, string>>({});
+  const [refMonth, setRefMonth] = useState<string>(() => currentMonth());
   const fileRef = useRef<HTMLInputElement>(null);
 
   // hydrate
@@ -367,28 +398,29 @@ function EstoqueSesmtPage() {
 
       <Card className="overflow-hidden">
         <CardContent className="p-0 overflow-x-auto">
-          <Table className="min-w-[1000px] text-sm">
+          <Table className="min-w-[1200px] text-sm">
             <TableHeader>
               <TableRow className="bg-slate-100 hover:bg-slate-100 border-b-2 border-slate-300">
-                <TableHead className="h-9 font-bold text-slate-700">Produto</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 min-w-[340px]">Produto / Variações</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 w-[60px]">UMB</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 w-[90px]">CA</TableHead>
-                <TableHead className="h-9 font-bold text-slate-700 w-[260px]">Variação</TableHead>
-                <TableHead className="h-9 font-bold text-slate-700 text-right w-[110px]">Estoque</TableHead>
-                <TableHead className="h-9 font-bold text-slate-700 w-[260px]">Movimentar</TableHead>
-                <TableHead className="h-9 font-bold text-slate-700 w-[110px] text-center">Histórico</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 text-right w-[90px]">Est. inicial</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 text-right w-[80px]">Entradas</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 text-right w-[80px]">Saídas</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 text-right w-[100px]">Est. final</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 w-[240px]">Movimentar</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 w-[90px] text-center">Histórico</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((p) => {
                 const v = getVariant(p);
-                const bal = variantBalance(v);
                 return (
                   <ProductRow
                     key={p.id}
                     product={p}
                     variant={v}
-                    bal={bal}
+                    refMonth={refMonth}
                     onPickVariant={(vid) => setSelectedVariant((s) => ({ ...s, [p.id]: vid }))}
                     onMove={(delta, tipo) => addMovement(p.id, v.id, delta, tipo)}
                   />
@@ -396,7 +428,7 @@ function EstoqueSesmtPage() {
               })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     Nenhum produto encontrado.
                   </TableCell>
                 </TableRow>
@@ -411,50 +443,65 @@ function EstoqueSesmtPage() {
 
 /* ============================== Row ============================== */
 function ProductRow({
-  product, variant, bal, onPickVariant, onMove,
+  product, variant, refMonth, onPickVariant, onMove,
 }: {
   product: Product;
   variant: Variant;
-  bal: number;
+  refMonth: string;
   onPickVariant: (id: string) => void;
   onMove: (delta: number, tipo: Movement["tipo"]) => void;
 }) {
   const [qty, setQty] = useState<number>(1);
   const totalProduto = productBalance(product);
+  const { start, end } = monthRange(refMonth);
+  const period = variantPeriod(variant, start, end);
 
   return (
     <TableRow className="hover:bg-slate-50/60 border-b border-slate-200">
-      <TableCell className="py-2 font-bold">
-        <div className="flex flex-col">
-          <span>{product.base}</span>
-          <span className="text-[10px] text-muted-foreground font-normal">
-            Total produto: {fmt(totalProduto)}
-          </span>
+      <TableCell className="py-2 font-bold align-top">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-baseline gap-2">
+            <span>{product.base}</span>
+            <span className="text-[10px] text-muted-foreground font-normal">
+              Total: {fmt(totalProduto)}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {product.variants.map((vv) => {
+              const sel = vv.id === variant.id;
+              const b = variantBalance(vv);
+              return (
+                <button
+                  key={vv.id}
+                  type="button"
+                  onClick={() => onPickVariant(vv.id)}
+                  className={
+                    "px-2 py-0.5 rounded-full border text-[11px] font-semibold transition-colors " +
+                    (sel
+                      ? "bg-red-50 border-red-300 text-red-700"
+                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50")
+                  }
+                  title={`${vv.label} — saldo ${fmt(b)}`}
+                >
+                  {vv.label}
+                  <span className={"ml-1.5 font-mono " + (b > 0 ? "text-emerald-700" : b < 0 ? "text-red-700" : "text-slate-400")}>
+                    {fmt(b)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </TableCell>
       <TableCell className="py-2 text-slate-700">{product.umb}</TableCell>
       <TableCell className="py-2">
         {product.ca ? <Badge variant="outline" className="font-mono">{product.ca}</Badge> : <span className="text-muted-foreground">—</span>}
       </TableCell>
-      <TableCell className="py-2">
-        <Select value={variant.id} onValueChange={onPickVariant}>
-          <SelectTrigger className="h-9 w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {product.variants.map((v) => (
-              <SelectItem key={v.id} value={v.id}>
-                <span className="flex items-center justify-between gap-3 w-full">
-                  <span>{v.label}</span>
-                  <span className="text-xs text-muted-foreground">{fmt(variantBalance(v))}</span>
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </TableCell>
-      <TableCell className={`py-2 text-right font-black text-lg ${bal > 0 ? "text-emerald-700" : bal < 0 ? "text-red-700" : "text-slate-400"}`}>
-        {fmt(bal)}
+      <TableCell className="py-2 text-right font-mono">{fmt(period.inicial)}</TableCell>
+      <TableCell className="py-2 text-right font-mono text-emerald-700">{period.entradas ? `+${fmt(period.entradas)}` : "0"}</TableCell>
+      <TableCell className="py-2 text-right font-mono text-red-700">{period.saidas ? `-${fmt(period.saidas)}` : "0"}</TableCell>
+      <TableCell className={`py-2 text-right font-black text-base ${period.final > 0 ? "text-emerald-700" : period.final < 0 ? "text-red-700" : "text-slate-400"}`}>
+        {fmt(period.final)}
       </TableCell>
       <TableCell className="py-2">
         <div className="flex items-center gap-1">
