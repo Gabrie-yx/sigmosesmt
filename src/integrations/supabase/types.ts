@@ -421,6 +421,7 @@ export type Database = {
           req_exames: string[]
           req_integra: boolean
           req_nrs: string[]
+          riscos: Json
           updated_at: string
         }
         Insert: {
@@ -431,6 +432,7 @@ export type Database = {
           req_exames?: string[]
           req_integra?: boolean
           req_nrs?: string[]
+          riscos?: Json
           updated_at?: string
         }
         Update: {
@@ -441,6 +443,7 @@ export type Database = {
           req_exames?: string[]
           req_integra?: boolean
           req_nrs?: string[]
+          riscos?: Json
           updated_at?: string
         }
         Relationships: []
