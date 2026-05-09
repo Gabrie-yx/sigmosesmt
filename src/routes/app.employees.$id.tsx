@@ -223,12 +223,22 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
       )}
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="grid grid-cols-5 w-full">
-          <TabsTrigger value="profile">Perfil</TabsTrigger>
-          <TabsTrigger value="nrs">NRs</TabsTrigger>
-          <TabsTrigger value="docs">Docs</TabsTrigger>
-          <TabsTrigger value="epi">EPI</TabsTrigger>
-          <TabsTrigger value="health">Saúde</TabsTrigger>
+        <TabsList className="grid grid-cols-5 w-full h-auto p-1.5 bg-gradient-to-r from-red-50 via-white to-red-50 border border-red-200/60 rounded-xl shadow-sm gap-1">
+          {[
+            { v: "profile", l: "Perfil" },
+            { v: "nrs", l: "NRs" },
+            { v: "docs", l: "Docs" },
+            { v: "epi", l: "EPI" },
+            { v: "health", l: "Saúde" },
+          ].map((t) => (
+            <TabsTrigger
+              key={t.v}
+              value={t.v}
+              className="rounded-lg py-2.5 text-sm font-bold uppercase tracking-wider text-slate-600 transition-all hover:text-red-700 data-[state=active]:bg-gradient-to-br data-[state=active]:from-red-600 data-[state=active]:to-red-800 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-red-500/30"
+            >
+              {t.l}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="profile" className="mt-4">
