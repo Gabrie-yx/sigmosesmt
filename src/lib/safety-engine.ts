@@ -24,6 +24,7 @@ export interface EngineRole {
   req_aso: boolean;
   req_integra: boolean;
   req_nrs: string[];
+  req_exames?: string[];
 }
 
 export interface EngineExam {
@@ -31,6 +32,7 @@ export interface EngineExam {
   data_realizacao: string;
   data_vencimento: string;
   aptidao: string;
+  anexo_path?: string | null;
 }
 
 export function calculateSafetyStatus(
@@ -76,6 +78,27 @@ export function calculateSafetyStatus(
     } else if (d <= 30) {
       isYellow = true;
       msgs.push(`${short} Vence em ${d}d`);
+    }
+  });
+
+  // Required exams matrix (per role)
+  const reqExames = role.req_exames ?? [];
+  reqExames.forEach((tipo) => {
+    const ex = latest[tipo];
+    const short = tipo === "ASO Clínico" ? "ASO" : tipo.split(" ")[0];
+    if (!ex) {
+      isRed = true;
+      msgs.push(`Falta ${short}`);
+      return;
+    }
+    if (!ex.anexo_path) {
+      isRed = true;
+      msgs.push(`${short} sem PDF`);
+    }
+    const d = daysUntil(ex.data_vencimento);
+    if (d !== null && d < 0) {
+      isRed = true;
+      if (!msgs.includes(`${short} Vencido`)) msgs.push(`${short} Vencido`);
     }
   });
 

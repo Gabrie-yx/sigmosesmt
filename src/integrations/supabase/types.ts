@@ -418,6 +418,7 @@ export type Database = {
           id: string
           name: string
           req_aso: boolean
+          req_exames: string[]
           req_integra: boolean
           req_nrs: string[]
           updated_at: string
@@ -427,6 +428,7 @@ export type Database = {
           id?: string
           name: string
           req_aso?: boolean
+          req_exames?: string[]
           req_integra?: boolean
           req_nrs?: string[]
           updated_at?: string
@@ -436,6 +438,7 @@ export type Database = {
           id?: string
           name?: string
           req_aso?: boolean
+          req_exames?: string[]
           req_integra?: boolean
           req_nrs?: string[]
           updated_at?: string
