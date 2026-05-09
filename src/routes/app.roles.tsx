@@ -4,16 +4,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Briefcase, UserCog, ChevronRight, Plus, FileText, Award, ShieldCheck, Save, Trash2 } from "lucide-react";
+import { Briefcase, UserCog, ChevronRight, Plus, FileText, Award, ShieldCheck, Save, Trash2, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
-import { NRS_LIST } from "@/lib/constants";
+import { NRS_LIST, TIPOS_EXAME } from "@/lib/constants";
 
 export const Route = createFileRoute("/app/roles")({
   component: RolesPage,
 });
 
-type Role = { id: string; name: string; req_aso: boolean; req_integra: boolean; req_nrs: string[] };
-const empty: Partial<Role> = { name: "", req_aso: true, req_integra: true, req_nrs: [] };
+type Role = { id: string; name: string; req_aso: boolean; req_integra: boolean; req_nrs: string[]; req_exames: string[] };
+const empty: Partial<Role> = { name: "", req_aso: true, req_integra: true, req_nrs: [], req_exames: [] };
 
 function RolesPage() {
   const qc = useQueryClient();
@@ -31,7 +31,13 @@ function RolesPage() {
 
   const save = useMutation({
     mutationFn: async (v: Partial<Role>) => {
-      const payload = { name: v.name!, req_aso: !!v.req_aso, req_integra: !!v.req_integra, req_nrs: v.req_nrs ?? [] };
+      const payload = {
+        name: v.name!,
+        req_aso: !!v.req_aso,
+        req_integra: !!v.req_integra,
+        req_nrs: v.req_nrs ?? [],
+        req_exames: v.req_exames ?? [],
+      };
       if (v.id) {
         const { error } = await supabase.from("roles").update(payload).eq("id", v.id);
         if (error) throw error;
@@ -66,7 +72,13 @@ function RolesPage() {
     setEditing({ ...editing, req_nrs: cur.includes(nr) ? cur.filter((x) => x !== nr) : [...cur, nr] });
   }
 
+  function toggleExame(t: string) {
+    const cur = editing.req_exames ?? [];
+    setEditing({ ...editing, req_exames: cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t] });
+  }
+
   const reqNRsSet = useMemo(() => new Set(editing.req_nrs ?? []), [editing.req_nrs]);
+  const reqExamesSet = useMemo(() => new Set(editing.req_exames ?? []), [editing.req_exames]);
 
   return (
     <div className="p-6 md:p-8 flex gap-6 h-full bg-[#f1f5f9] animate-fadeIn">
@@ -200,6 +212,30 @@ function RolesPage() {
                     label={nr}
                     checked={reqNRsSet.has(nr)}
                     onChange={() => toggleNr(nr)}
+                    disabled={!isEditor}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* EXAMES OBRIGATÓRIOS */}
+            <div className="p-6 border border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col lg:col-span-2">
+              <div className="flex items-center gap-2 mb-6">
+                <Stethoscope className="h-5 w-5 text-slate-400" />
+                <div className="text-[11px] font-black uppercase text-slate-800 tracking-widest">
+                  Exames Médicos Obrigatórios (Saúde)
+                </div>
+                <span className="ml-auto text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                  Vencido ou sem PDF → Bloqueio GSI
+                </span>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex-1 content-start">
+                {TIPOS_EXAME.map((t) => (
+                  <NRToggle
+                    key={t}
+                    label={t}
+                    checked={reqExamesSet.has(t)}
+                    onChange={() => toggleExame(t)}
                     disabled={!isEditor}
                   />
                 ))}
