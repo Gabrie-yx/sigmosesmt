@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,10 +20,13 @@ import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, UFS, VACINAS_LIST } from "@/lib
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
+  validateSearch: (search: Record<string, unknown>) =>
+    z.object({ tab: z.string().optional() }).parse(search),
 });
 
 function EmployeeDetail() {
   const { id } = Route.useParams();
+  const { tab } = Route.useSearch();
   return (
     <div className="p-6 md:p-8 space-y-6 animate-fadeIn">
       <div className="flex items-center gap-3">
@@ -30,14 +34,17 @@ function EmployeeDetail() {
           <Link to="/app/employees"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
         </Button>
       </div>
-      <EmployeeDetailContent id={id} showHeader />
+      <EmployeeDetailContent id={id} showHeader initialTab={tab} />
     </div>
   );
 }
 
-export function EmployeeDetailContent({ id, showHeader = true }: { id: string; showHeader?: boolean }) {
+export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { id: string; showHeader?: boolean; initialTab?: string }) {
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
+  const VALID_TABS = ["profile","nrs","docs","epi","health"];
+  const [tab, setTab] = useState<string>(VALID_TABS.includes(initialTab ?? "") ? (initialTab as string) : "profile");
+  const [healthSub, setHealthSub] = useState<string>(initialTab === "vaccines" ? "vaccines" : "exams");
 
   const { data: emp } = useQuery({
     queryKey: ["employee", id],
@@ -100,14 +107,13 @@ export function EmployeeDetailContent({ id, showHeader = true }: { id: string; s
         </Card>
       )}
 
-      <Tabs defaultValue="profile">
-        <TabsList className="grid grid-cols-6 w-full">
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="grid grid-cols-5 w-full">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="nrs">NRs</TabsTrigger>
           <TabsTrigger value="docs">Docs</TabsTrigger>
           <TabsTrigger value="epi">EPI</TabsTrigger>
           <TabsTrigger value="health">Saúde</TabsTrigger>
-          <TabsTrigger value="vaccines">Vacinas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-4">
@@ -123,10 +129,18 @@ export function EmployeeDetailContent({ id, showHeader = true }: { id: string; s
           <EpiTab empId={id} epis={epis ?? []} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
         </TabsContent>
         <TabsContent value="health" className="mt-4">
-          <HealthTab empId={id} exams={exams ?? []} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
-        </TabsContent>
-        <TabsContent value="vaccines" className="mt-4">
-          <VaccinesTab empId={id} vaccines={vaccines ?? []} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+          <Tabs value={healthSub} onValueChange={setHealthSub}>
+            <TabsList className="grid grid-cols-2 w-full max-w-md">
+              <TabsTrigger value="exams">Exames / ASO</TabsTrigger>
+              <TabsTrigger value="vaccines">Vacinas</TabsTrigger>
+            </TabsList>
+            <TabsContent value="exams" className="mt-4">
+              <HealthTab empId={id} exams={exams ?? []} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+            </TabsContent>
+            <TabsContent value="vaccines" className="mt-4">
+              <VaccinesTab empId={id} vaccines={vaccines ?? []} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
     </div>
