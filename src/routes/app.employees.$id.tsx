@@ -656,25 +656,43 @@ function HealthTab({ empId, exams, canEdit, canDelete, qc }: any) {
     data_realizacao: new Date().toISOString().slice(0, 10), data_vencimento: addMonthsToDate(new Date().toISOString().slice(0, 10), 12),
     aptidao: "SIM", observacoes: "",
   });
+  const [examFile, setExamFile] = useState<File | null>(null);
 
   const create = useMutation({
     mutationFn: async () => {
       const venc = f.data_vencimento || addMonthsToDate(f.data_realizacao, Number(f.periodicidade_meses) || 12);
+      let anexo_path: string | null = null;
+      if (examFile) {
+        const path = `${empId}/exames/${Date.now()}_${examFile.name}`;
+        const { error: upErr } = await supabase.storage.from("employee-docs").upload(path, examFile, { upsert: false });
+        if (upErr) throw upErr;
+        anexo_path = path;
+      }
       const { error } = await supabase.from("employee_exams").insert({
         employee_id: empId, tipo_exame: f.tipo_exame, natureza: f.natureza,
         periodicidade_meses: Number(f.periodicidade_meses) || 12,
         data_realizacao: f.data_realizacao, data_vencimento: venc,
-        aptidao: f.aptidao, observacoes: f.observacoes || null,
+        aptidao: f.aptidao, observacoes: f.observacoes || null, anexo_path,
       });
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["exams", empId] }); qc.invalidateQueries({ queryKey: ["employee", empId] }); toast.success("Exame registrado"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["exams", empId] }); qc.invalidateQueries({ queryKey: ["employee", empId] }); setExamFile(null); toast.success("Exame registrado"); },
     onError: (e: any) => toast.error(e.message),
   });
   const del = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("employee_exams").delete().eq("id", id); if (error) throw error; },
+    mutationFn: async (ex: any) => {
+      if (ex.anexo_path) await supabase.storage.from("employee-docs").remove([ex.anexo_path]);
+      const { error } = await supabase.from("employee_exams").delete().eq("id", ex.id);
+      if (error) throw error;
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["exams", empId] }); toast.success("Removido"); },
   });
+
+  async function openExam(path: string) {
+    const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(path, 60);
+    if (error) { toast.error(error.message); return; }
+    window.open(data.signedUrl, "_blank");
+  }
 
   return (
     <Card className="p-6 space-y-6">
@@ -704,14 +722,20 @@ function HealthTab({ empId, exams, canEdit, canDelete, qc }: any) {
           </Field>
           <Field label="Realização"><Input type="date" value={f.data_realizacao} onChange={(e) => setF({ ...f, data_realizacao: e.target.value, data_vencimento: addMonthsToDate(e.target.value, Number(f.periodicidade_meses) || 12) })} /></Field>
           <Field label="Vencimento"><Input type="date" value={f.data_vencimento} onChange={(e) => setF({ ...f, data_vencimento: e.target.value })} /></Field>
-          <Field label="Observações" className="col-span-2"><Input value={f.observacoes} onChange={(e) => setF({ ...f, observacoes: e.target.value })} /></Field>
+          <Field label="PDF do exame/ASO" className="col-span-2">
+            <div className="flex items-center gap-2">
+              <Input type="file" accept="application/pdf,image/*" onChange={(e) => setExamFile(e.target.files?.[0] ?? null)} />
+              {examFile && <Badge variant="outline" className="text-[10px]"><Upload className="h-3 w-3 mr-1" />{examFile.name}</Badge>}
+            </div>
+          </Field>
+          <Field label="Observações" className="col-span-2 md:col-span-4"><Input value={f.observacoes} onChange={(e) => setF({ ...f, observacoes: e.target.value })} /></Field>
           <Button type="submit" className="col-span-2 md:col-span-4" disabled={create.isPending}><Plus className="h-4 w-4 mr-2" />Registrar exame</Button>
         </form>
       )}
       <Table>
-        <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Natureza</TableHead><TableHead>Realização</TableHead><TableHead>Vencimento</TableHead><TableHead>Aptidão</TableHead><TableHead></TableHead></TableRow></TableHeader>
+        <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Natureza</TableHead><TableHead>Realização</TableHead><TableHead>Vencimento</TableHead><TableHead>Aptidão</TableHead><TableHead>PDF</TableHead><TableHead></TableHead></TableRow></TableHeader>
         <TableBody>
-          {exams.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Nenhum exame</TableCell></TableRow>}
+          {exams.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Nenhum exame</TableCell></TableRow>}
           {exams.map((ex: any) => (
             <TableRow key={ex.id}>
               <TableCell className="font-medium">{ex.tipo_exame}</TableCell>
@@ -719,8 +743,13 @@ function HealthTab({ empId, exams, canEdit, canDelete, qc }: any) {
               <TableCell>{formatDateBR(ex.data_realizacao)}</TableCell>
               <TableCell>{formatDateBR(ex.data_vencimento)}</TableCell>
               <TableCell><Badge variant={ex.aptidao === "SIM" ? "default" : "destructive"}>{ex.aptidao === "SIM" ? "APTO" : "INAPTO"}</Badge></TableCell>
+              <TableCell>
+                {ex.anexo_path ? (
+                  <Button size="sm" variant="ghost" onClick={() => openExam(ex.anexo_path)}><FileText className="h-4 w-4 mr-1" />Ver</Button>
+                ) : <span className="text-xs text-red-500 font-bold">Sem PDF</span>}
+              </TableCell>
               <TableCell className="text-right">
-                {canDelete && <Button size="icon" variant="ghost" onClick={() => del.mutate(ex.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                {canDelete && <Button size="icon" variant="ghost" onClick={() => del.mutate(ex)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
               </TableCell>
             </TableRow>
           ))}
