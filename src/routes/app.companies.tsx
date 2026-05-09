@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   UserPlus, Pencil, Plus, X, ChevronRight, HardHat,
   HeartPulse, Award, FolderOpen, CheckCircle2, AlertTriangle, Users, User, UserCog,
-  Upload, Download,
+  Upload, Download, ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
+import { EmployeeDetailContent } from "./app.employees.$id";
 
 export const Route = createFileRoute("/app/companies")({
   component: CompaniesPage,
@@ -44,6 +45,7 @@ function CompaniesPage() {
   const { isEditor, isAdmin } = useAuth();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedEmpId, setSelectedEmpId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Partial<Company> | null>(null);
   const [showForm, setShowForm] = useState(true);
 
@@ -181,6 +183,8 @@ function CompaniesPage() {
             <div
               key={c.id}
               onClick={() => { setSelectedId(c.id); setShowForm(false); setEditing(null); }}
+              data-company-card
+              {...{}}
               className={`p-5 rounded-2xl shadow-sm border cursor-pointer transition-all ${
                 isSel ? "bg-[#0369a1] border-[#0369a1] text-white shadow-md" : "bg-white border-slate-200 hover:border-[#0369a1]"
               }`}
@@ -297,7 +301,7 @@ function CompaniesPage() {
               return (
                 <div
                   key={emp.id}
-                  onClick={() => navigate({ to: "/app/employees/$id", params: { id: emp.id } })}
+                  onClick={() => setSelectedEmpId(emp.id)}
                   className={`p-4 rounded-xl border ${globalOK ? "border-slate-200 bg-slate-50" : "border-red-200 bg-red-50/30"} hover:border-[#0369a1] cursor-pointer transition-all flex items-center justify-between group`}
                 >
                   <div className="flex items-center gap-4">
