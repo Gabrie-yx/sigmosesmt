@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   UserPlus, Pencil, Plus, X, ChevronRight, HardHat,
   HeartPulse, Award, FolderOpen, CheckCircle2, AlertTriangle, Users, User, UserCog,
+  Upload, Download,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -104,6 +105,48 @@ function CompaniesPage() {
   function startNew() { setEditing({ ...empty }); setShowForm(true); setSelectedId(null); }
   function startEdit() { if (selected) { setEditing({ ...selected }); setShowForm(true); } }
 
+  function exportCSV() {
+    if (!selected) return;
+    const rows = [["nome", "cpf", "matricula", "email", "whatsapp"]];
+    compEmps.forEach((e: any) => rows.push([e.nome ?? "", e.cpf ?? "", e.matricula ?? "", e.email ?? "", e.whatsapp ?? ""]));
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `colaboradores_${selected.name.replace(/\s+/g, "_")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importCSV(file: File) {
+    if (!selected) return;
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (!lines.length) return;
+    const header = lines[0].toLowerCase().split(/[,;\t]/).map((h) => h.trim().replace(/^"|"$/g, ""));
+    const idx = (k: string) => header.indexOf(k);
+    const iNome = idx("nome"); const iCpf = idx("cpf"); const iMat = idx("matricula");
+    const iEmail = idx("email"); const iWa = idx("whatsapp");
+    if (iNome < 0) { toast.error("CSV precisa ter coluna 'nome'"); return; }
+    const rows = lines.slice(1).map((line) => {
+      const cols = line.split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, ""));
+      return {
+        company_id: selected.id,
+        nome: cols[iNome] || "",
+        cpf: iCpf >= 0 ? cols[iCpf] || null : null,
+        matricula: iMat >= 0 ? cols[iMat] || null : null,
+        email: iEmail >= 0 ? cols[iEmail] || null : null,
+        whatsapp: iWa >= 0 ? cols[iWa] || null : null,
+      };
+    }).filter((r) => r.nome);
+    if (!rows.length) { toast.error("Nenhuma linha válida no CSV"); return; }
+    const { error } = await supabase.from("employees").insert(rows);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${rows.length} colaboradores importados`);
+    qc.invalidateQueries({ queryKey: ["employees-light"] });
+  }
+
   // Garante editing inicial para o formulário fixo
   if (showForm && !editing) {
     setEditing({ ...empty });
@@ -185,6 +228,24 @@ function CompaniesPage() {
                   <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Novo Colaborador
                 </Button>
               )}
+              {isEditor && (
+                <label className="inline-flex items-center gap-1.5 cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
+                  <Upload className="h-3.5 w-3.5" /> Importar CSV
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) importCSV(f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              )}
+              <Button onClick={exportCSV} className="bg-slate-700 hover:bg-slate-800 text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
+                <Download className="h-3.5 w-3.5 mr-1.5" /> Exportar CSV
+              </Button>
               {isEditor && (
                 <Button onClick={startEdit} className="bg-[#0f172a] hover:bg-[#0369a1] text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
                   <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar Empresa
