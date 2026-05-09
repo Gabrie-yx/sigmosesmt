@@ -389,7 +389,9 @@ function CompaniesPage() {
               const docsOK = reqDocs.every((k) => empDocs.some((d: any) => d.tipo === k));
 
               const globalOK = asoOK && nrOK && docsOK;
-              const badge = (ok: boolean) => ok ? "bg-emerald-500 text-white" : "bg-red-500 text-white";
+              const badge = (ok: boolean) => ok
+                ? "bg-gradient-to-b from-emerald-400 to-emerald-600 text-white"
+                : "bg-gradient-to-b from-red-400 to-red-600 text-white";
 
               const stop = (e: React.MouseEvent) => e.stopPropagation();
               const tabBtn = "chip-3d px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5";
