@@ -321,10 +321,11 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
             <SelectContent>{roles.map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="CPF"><Input inputMode="numeric" placeholder="000.000.000-00" value={f.cpf ?? ""} onChange={(e) => setF({ ...f, cpf: maskCPF(e.target.value) })} disabled={!canEdit} /></Field>
+        <Field label="CPF"><Input inputMode="numeric" maxLength={14} placeholder="000.000.000-00" value={maskCPF(f.cpf ?? "")} onChange={(e) => setF({ ...f, cpf: maskCPF(e.target.value) })} disabled={!canEdit} /></Field>
         <Field label="Matrícula"><Input value={f.matricula ?? ""} onChange={(e) => setF({ ...f, matricula: e.target.value })} disabled={!canEdit} /></Field>
-        <Field label="RG"><Input placeholder="0000000" value={f.rg ?? ""} onChange={(e) => setF({ ...f, rg: maskRG(e.target.value) })} disabled={!canEdit} /></Field>
+        <Field label="RG"><Input placeholder="0000000" maxLength={12} value={maskRG(f.rg ?? "")} onChange={(e) => setF({ ...f, rg: maskRG(e.target.value) })} disabled={!canEdit} /></Field>
         <Field label="Órgão Emissor"><Input value={f.rg_orgao ?? ""} onChange={(e) => setF({ ...f, rg_orgao: e.target.value })} disabled={!canEdit} /></Field>
+        <Field label="CNH"><Input inputMode="numeric" maxLength={11} placeholder="00000000000" value={(f.cnh ?? "").replace(/\D/g, "").slice(0, 11)} onChange={(e) => setF({ ...f, cnh: e.target.value.replace(/\D/g, "").slice(0, 11) })} disabled={!canEdit} /></Field>
         <Field label="Tipo cadastro">
           <Select value={f.tipo_cadastro} onValueChange={(v) => setF({ ...f, tipo_cadastro: v })} disabled={!canEdit}>
             <SelectTrigger><SelectValue /></SelectTrigger>
@@ -334,12 +335,41 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
             </SelectContent>
           </Select>
         </Field>
-        <Field label="CNPJ (MEI)"><Input inputMode="numeric" placeholder="00.000.000/0000-00" value={f.cnpj ?? ""} onChange={(e) => setF({ ...f, cnpj: maskCNPJ(e.target.value) })} disabled={!canEdit} /></Field>
+        <Field label="CNPJ (MEI)"><Input inputMode="numeric" maxLength={18} placeholder="00.000.000/0000-00" value={maskCNPJ(f.cnpj ?? "")} onChange={(e) => setF({ ...f, cnpj: maskCNPJ(e.target.value) })} disabled={!canEdit} /></Field>
         <Field label="Admissão"><Input type="date" value={f.admissao ?? ""} onChange={(e) => setF({ ...f, admissao: e.target.value || null })} disabled={!canEdit} /></Field>
         <Field label="Email"><Input type="email" value={f.email ?? ""} onChange={(e) => setF({ ...f, email: e.target.value })} disabled={!canEdit} /></Field>
-        <Field label="WhatsApp"><Input inputMode="tel" placeholder="(00) 00000-0000" value={f.whatsapp ?? ""} onChange={(e) => setF({ ...f, whatsapp: maskPhone(e.target.value) })} disabled={!canEdit} /></Field>
+        <Field label="WhatsApp"><Input inputMode="tel" maxLength={15} placeholder="(00) 00000-0000" value={maskPhone(f.whatsapp ?? "")} onChange={(e) => setF({ ...f, whatsapp: maskPhone(e.target.value) })} disabled={!canEdit} /></Field>
         <Field label="Contato Emergência"><Input value={f.nome_contato ?? ""} onChange={(e) => setF({ ...f, nome_contato: e.target.value })} disabled={!canEdit} /></Field>
-        <Field label="WhatsApp Emergência"><Input inputMode="tel" placeholder="(00) 00000-0000" value={f.whatsapp_emergencia ?? ""} onChange={(e) => setF({ ...f, whatsapp_emergencia: maskPhone(e.target.value) })} disabled={!canEdit} /></Field>
+        <Field label="WhatsApp Emergência"><Input inputMode="tel" maxLength={15} placeholder="(00) 00000-0000" value={maskPhone(f.whatsapp_emergencia ?? "")} onChange={(e) => setF({ ...f, whatsapp_emergencia: maskPhone(e.target.value) })} disabled={!canEdit} /></Field>
+        <Field label="CEP">
+          <Input
+            inputMode="numeric"
+            maxLength={9}
+            placeholder="00000-000"
+            value={maskCEP(f.cep ?? "")}
+            onChange={async (e) => {
+              const masked = maskCEP(e.target.value);
+              setF((prev: any) => ({ ...prev, cep: masked }));
+              const digits = masked.replace(/\D/g, "");
+              if (digits.length === 8) {
+                try {
+                  const r = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+                  const j = await r.json();
+                  if (!j?.erro) {
+                    setF((prev: any) => ({
+                      ...prev,
+                      endereco: prev.endereco || [j.logradouro, j.complemento].filter(Boolean).join(", "),
+                      bairro: j.bairro || prev.bairro,
+                      cidade: j.localidade || prev.cidade,
+                      uf: j.uf || prev.uf,
+                    }));
+                  }
+                } catch { /* ignore */ }
+              }
+            }}
+            disabled={!canEdit}
+          />
+        </Field>
         <Field label="Endereço" className="md:col-span-2"><Input value={f.endereco ?? ""} onChange={(e) => setF({ ...f, endereco: e.target.value })} disabled={!canEdit} /></Field>
         <Field label="Bairro">
           <Select value={f.bairro ?? ""} onValueChange={(v) => setF({ ...f, bairro: v })} disabled={!canEdit}>
@@ -356,7 +386,6 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
             <SelectContent>{UFS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="CEP"><Input inputMode="numeric" placeholder="00000-000" value={f.cep ?? ""} onChange={(e) => setF({ ...f, cep: maskCEP(e.target.value) })} disabled={!canEdit} /></Field>
       </div>
       <div className="flex justify-between pt-4 border-t">
         {canDelete ? (
