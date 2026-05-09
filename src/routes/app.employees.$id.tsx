@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText, Camera } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText, Camera, X, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
@@ -85,6 +85,46 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const canEditHeader = isEditor || isAdmin;
   const [uploadingHeaderPhoto, setUploadingHeaderPhoto] = useState(false);
 
+  const { data: docsList } = useQuery({
+    queryKey: ["docs", id],
+    queryFn: async () => (await supabase.from("employee_docs").select("tipo").eq("employee_id", id)).data ?? [],
+  });
+  const REQUIRED_DOCS = ["RG", "CPF", "Comprovante Residência", "Comprovante MEI", "Cartão de Vacina"];
+  const docsTipos = new Set((docsList ?? []).map((d: any) => d.tipo));
+  const missingDocs = REQUIRED_DOCS.filter((t) => !docsTipos.has(t));
+  const docsOk = missingDocs.length === 0;
+
+  function initialsOf(name?: string | null) {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  async function removeHeaderPhoto() {
+    if (!emp?.foto_url) return;
+    if (!confirm("Remover a foto do colaborador?")) return;
+    try {
+      try {
+        const url = new URL(emp.foto_url);
+        const marker = "/avatars/";
+        const idx = url.pathname.indexOf(marker);
+        if (idx >= 0) {
+          const path = decodeURIComponent(url.pathname.slice(idx + marker.length));
+          await supabase.storage.from("avatars").remove([path]);
+        }
+      } catch { /* ignore parse errors */ }
+      const { error } = await supabase.from("employees").update({ foto_url: null }).eq("id", emp.id);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["employee", emp.id] });
+      qc.invalidateQueries({ queryKey: ["employees"] });
+      toast.success("Foto removida");
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  }
+
   async function handleHeaderPhotoUpload(file: File) {
     if (!file || !emp) return;
     setUploadingHeaderPhoto(true);
@@ -112,22 +152,34 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
     <div className="space-y-6 animate-fadeIn">
       {showHeader && (
       <Card className="p-6 flex flex-wrap items-center gap-6 rounded-2xl border-slate-200 shadow-sm">
-        <label className={`relative h-20 w-20 shrink-0 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200 flex items-center justify-center ${canEditHeader ? "cursor-pointer hover:border-brand transition-colors" : ""}`}>
-          {emp.foto_url ? (
-            <img src={emp.foto_url} alt={emp.nome} className="h-full w-full object-cover" />
-          ) : (
-            <Camera className="h-7 w-7 text-slate-400" />
+        <div className="relative h-20 w-20 shrink-0">
+          <label className={`relative h-20 w-20 rounded-full overflow-hidden border-2 border-slate-200 flex items-center justify-center bg-gradient-to-br from-brand/80 to-brand text-white ${canEditHeader ? "cursor-pointer hover:border-brand transition-colors" : ""}`}>
+            {emp.foto_url ? (
+              <img src={emp.foto_url} alt={emp.nome} className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-xl font-black tracking-wider select-none">{initialsOf(emp.nome)}</span>
+            )}
+            {canEditHeader && (
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploadingHeaderPhoto}
+                onChange={(e) => { const file = e.target.files?.[0]; if (file) handleHeaderPhotoUpload(file); }}
+              />
+            )}
+          </label>
+          {canEditHeader && emp.foto_url && (
+            <button
+              type="button"
+              onClick={removeHeaderPhoto}
+              title="Remover foto"
+              className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-white border border-slate-200 shadow flex items-center justify-center text-slate-600 hover:text-destructive hover:border-destructive transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
           )}
-          {canEditHeader && (
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              disabled={uploadingHeaderPhoto}
-              onChange={(e) => { const file = e.target.files?.[0]; if (file) handleHeaderPhotoUpload(file); }}
-            />
-          )}
-        </label>
+        </div>
         <div className="flex-1 min-w-[240px]">
           <h1 className="heading-display text-3xl text-brand">{emp.nome}</h1>
           <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-1">
@@ -141,6 +193,23 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
         )}
       </Card>
+      )}
+
+      {!docsOk && (
+        <Card className="p-4 rounded-2xl border-2 border-amber-300 bg-amber-50 flex items-start gap-3">
+          <div className="h-9 w-9 shrink-0 rounded-full bg-amber-500 text-white flex items-center justify-center">
+            <AlertTriangle className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-black uppercase tracking-widest text-amber-700">Documentação incompleta</div>
+            <div className="text-xs text-amber-800 mt-0.5">
+              Pendências: <strong>{missingDocs.join(", ")}</strong>. A geração de relatórios e fichas está bloqueada até que todos os 5 documentos obrigatórios sejam enviados.
+            </div>
+          </div>
+          <Button size="sm" variant="outline" className="border-amber-400 text-amber-800 hover:bg-amber-100" onClick={() => setTab("docs")}>
+            Ir para Docs
+          </Button>
+        </Card>
       )}
 
       {status && status.msgs.length > 0 && (
@@ -170,7 +239,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           <DocsTab empId={id} />
         </TabsContent>
         <TabsContent value="epi" className="mt-4">
-          <EpiTab empId={id} epis={epis ?? []} emp={emp} company={(companies ?? []).find((c: any) => c.id === emp.company_id) ?? null} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+          <EpiTab empId={id} epis={epis ?? []} emp={emp} company={(companies ?? []).find((c: any) => c.id === emp.company_id) ?? null} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} docsOk={docsOk} missingDocs={missingDocs} />
         </TabsContent>
         <TabsContent value="health" className="mt-4">
           <Tabs value={healthSub} onValueChange={setHealthSub}>
@@ -706,7 +775,7 @@ function VaccinesTab({ empId, vaccines, role, canEdit, canDelete, qc }: any) {
 }
 
 /* ============ EPI ============ */
-function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc }: any) {
+function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsOk, missingDocs }: any) {
   const EPI_ITEMS = [
     "TREINAMENTOS","AVENTAL DE RASPA","BALACLAVA","BOTA","CALÇA","CAMISA",
     "CAPACETE","LENTES DE SOLDA","LUVA","MANGOTE DE RASPA","MÁSCARA DE SOLDA",
@@ -736,6 +805,10 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc }: any
   });
 
   function gerarFicha() {
+    if (!docsOk) {
+      toast.error(`Documentação incompleta. Pendentes: ${(missingDocs ?? []).join(", ")}`);
+      return;
+    }
     const { url, fname } = openEpiFichaPdf({ emp, company, role, epis });
     openFileViewer({ url, name: fname, mime: "application/pdf" });
   }
@@ -755,7 +828,9 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc }: any
         </div>
         <Button
           onClick={gerarFicha}
-          className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs"
+          disabled={!docsOk}
+          title={!docsOk ? `Bloqueado: documentação incompleta (${(missingDocs ?? []).join(", ")})` : "Gerar Ficha de EPI"}
+          className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed"
           size="lg"
         >
           <Printer className="h-4 w-4 mr-2" /> Ficha em PDF
