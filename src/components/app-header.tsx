@@ -40,7 +40,7 @@ const OTHER_MODULES = [
 ] as const;
 
 export function AppHeader() {
-  const { user, roles, isAdmin } = useAuth();
+  const { user, roles } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const fileRef = useRef<HTMLInputElement>(null);
