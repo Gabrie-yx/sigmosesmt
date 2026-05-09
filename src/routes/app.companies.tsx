@@ -36,7 +36,7 @@ const typeStyle: Record<string, string> = {
   CLT: "bg-emerald-100 text-emerald-700",
   TERCEIRIZADO: "bg-indigo-100 text-indigo-700",
   TERCEIRIZADA: "bg-indigo-100 text-indigo-700",
-  CONTRATANTE: "bg-sky-100 text-sky-700",
+  CONTRATANTE: "bg-red-100 text-red-700",
 };
 
 function CompaniesPage() {
@@ -163,7 +163,7 @@ function CompaniesPage() {
           <>
             <div className="relative p-5 rounded-2xl border border-white/10 text-white surface-elevated-dark overflow-hidden">
               <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-              <div className="absolute -bottom-12 -left-8 w-32 h-32 rounded-full bg-sky-300/20 blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-12 -left-8 w-32 h-32 rounded-full bg-red-300/20 blur-2xl pointer-events-none" />
               <div className="relative flex justify-between items-start mb-2">
                 <div className="text-[9px] font-black px-2 py-1 rounded inline-flex items-center gap-1 text-white bg-white/15 backdrop-blur ring-1 ring-white/20">
                   <Briefcase className="h-3 w-3" /> {selected.type}
@@ -197,7 +197,7 @@ function CompaniesPage() {
                     className={`p-3 rounded-xl border cursor-pointer hover-lift flex items-center justify-between ${
                       isSel
                         ? "surface-elevated-dark border-transparent text-white"
-                        : "surface-elevated border-slate-200/70 hover:border-[#0369a1]/40"
+                        : "surface-elevated border-slate-200/70 hover:border-[#991b1b]/40"
                     }`}
                   >
                     <div className="min-w-0">
@@ -218,7 +218,7 @@ function CompaniesPage() {
         <>
         <div className="flex items-center justify-between mb-1">
           <h2 className="heading-display text-xl text-slate-900 font-black uppercase tracking-tight flex items-center gap-2">
-            <span className="floaty inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-sky-700 text-white shadow-md">
+            <span className="floaty inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-700 text-white shadow-md">
               <Building2 className="h-4 w-4" />
             </span>
             Empresas <span className="text-slate-400 font-bold text-sm">(Tabela Pai)</span>
@@ -245,13 +245,13 @@ function CompaniesPage() {
               key={c.id}
               onClick={() => { setSelectedId(c.id); setShowForm(false); setEditing(null); setSelectedEmpId(null); }}
               className={`relative p-5 rounded-2xl border cursor-pointer hover-lift overflow-hidden ${
-                isSel ? "surface-elevated-dark border-transparent text-white" : "surface-elevated border-slate-200/70 hover:border-[#0369a1]/40"
+                isSel ? "surface-elevated-dark border-transparent text-white" : "surface-elevated border-slate-200/70 hover:border-[#991b1b]/40"
               }`}
             >
               {isSel && (
                 <>
                   <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-                  <div className="absolute -bottom-12 -left-8 w-32 h-32 rounded-full bg-sky-300/20 blur-2xl pointer-events-none" />
+                  <div className="absolute -bottom-12 -left-8 w-32 h-32 rounded-full bg-red-300/20 blur-2xl pointer-events-none" />
                 </>
               )}
               <div className="relative flex justify-between items-start mb-2">
@@ -263,8 +263,8 @@ function CompaniesPage() {
                 </div>
               </div>
               <div className="relative flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isSel ? "bg-white/15 ring-1 ring-white/25 backdrop-blur" : "bg-gradient-to-br from-sky-50 to-sky-100 ring-1 ring-sky-200/60"}`}>
-                  <Building2 className={`h-5 w-5 ${isSel ? "text-white" : "text-[#0369a1]"}`} />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isSel ? "bg-white/15 ring-1 ring-white/25 backdrop-blur" : "bg-gradient-to-br from-red-50 to-red-100 ring-1 ring-red-200/60"}`}>
+                  <Building2 className={`h-5 w-5 ${isSel ? "text-white" : "text-[#991b1b]"}`} />
                 </div>
                 <h3 className={`text-lg font-black uppercase leading-tight ${isSel ? "text-white" : "text-slate-800"}`}>{c.name}</h3>
               </div>
@@ -272,8 +272,8 @@ function CompaniesPage() {
                 <IdCard className="h-3 w-3" /> CNPJ: {c.cnpj || "Não informado"} <span className="mx-1">|</span> ENTRADA: {entrada}
               </p>
               <div className={`relative mt-4 pt-4 border-t text-xs font-bold ${isSel ? "border-white/20 text-white/90" : "border-slate-100 text-slate-600"}`}>
-                <div className="flex items-center gap-2"><User className={`h-3.5 w-3.5 ${isSel ? "text-white" : "text-[#0369a1]"}`} /> {c.encarregado1 ? `Empreiteiro: ${c.encarregado1}` : "S/ Empreiteiro"}</div>
-                <div className="flex items-center gap-2 mt-1"><UserCog className={`h-3.5 w-3.5 ${isSel ? "text-white" : "text-[#0369a1]"}`} /> {c.encarregado2 ? `Encarregado: ${c.encarregado2}` : "S/ Encarregado"}</div>
+                <div className="flex items-center gap-2"><User className={`h-3.5 w-3.5 ${isSel ? "text-white" : "text-[#991b1b]"}`} /> {c.encarregado1 ? `Empreiteiro: ${c.encarregado1}` : "S/ Empreiteiro"}</div>
+                <div className="flex items-center gap-2 mt-1"><UserCog className={`h-3.5 w-3.5 ${isSel ? "text-white" : "text-[#991b1b]"}`} /> {c.encarregado2 ? `Encarregado: ${c.encarregado2}` : "S/ Encarregado"}</div>
               </div>
             </div>
           );
@@ -290,7 +290,7 @@ function CompaniesPage() {
               variant="ghost"
               size="sm"
               onClick={() => setSelectedEmpId(null)}
-              className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-[#0369a1]"
+              className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-[#991b1b]"
             >
               <ArrowLeft className="h-4 w-4 mr-1" /> Voltar para {selected.name}
             </Button>
@@ -309,13 +309,13 @@ function CompaniesPage() {
         <div className="flex-1 surface-elevated rounded-2xl border border-slate-200/70 p-8 flex flex-col overflow-hidden animate-fadeIn">
           <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="floaty w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500 to-sky-700 text-white flex items-center justify-center shadow-lg shadow-sky-500/30">
+              <div className="floaty w-11 h-11 rounded-xl bg-gradient-to-br from-red-500 to-red-700 text-white flex items-center justify-center shadow-lg shadow-sky-500/30">
                 <Building2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-2xl font-black uppercase text-[#0369a1] tracking-tighter">{selected.name}</h3>
+                <h3 className="text-2xl font-black uppercase text-[#991b1b] tracking-tighter">{selected.name}</h3>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1">
-                  <Shield className="h-3 w-3 text-[#0369a1]" /> Quadro de Colaboradores Catalogados: {compEmps.length}
+                  <Shield className="h-3 w-3 text-[#991b1b]" /> Quadro de Colaboradores Catalogados: {compEmps.length}
                 </p>
               </div>
             </div>
@@ -344,7 +344,7 @@ function CompaniesPage() {
                 <Download className="h-3.5 w-3.5 mr-1.5" /> Exportar CSV
               </Button>
               {isEditor && (
-                <Button onClick={startEdit} className="bg-[#0f172a] hover:bg-[#0369a1] text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
+                <Button onClick={startEdit} className="bg-[#0f172a] hover:bg-[#991b1b] text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
                   <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar Empresa
                 </Button>
               )}
@@ -402,7 +402,7 @@ function CompaniesPage() {
                 >
                   <div className="flex items-center gap-4">
                     <div className="avatar-ring shrink-0">
-                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg font-black text-slate-400 group-hover:text-[#0369a1] overflow-hidden">
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg font-black text-slate-400 group-hover:text-[#991b1b] overflow-hidden">
                         {emp.foto_url ? <img src={emp.foto_url} className="w-full h-full object-cover" alt="" /> : (emp.nome?.charAt(0) || "?")}
                       </div>
                     </div>
@@ -431,7 +431,7 @@ function CompaniesPage() {
                       {globalOK ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
                       {globalOK ? "APTO" : "AUDITAR"}
                     </Link>
-                    <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-[#0369a1]" />
+                    <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-[#991b1b]" />
                   </div>
                 </div>
               );
@@ -464,7 +464,7 @@ function CompanyForm({
           <X className="h-6 w-6" />
         </button>
       )}
-      <h3 className="text-lg font-black uppercase text-[#0369a1] mb-6 border-b border-slate-100 pb-4">
+      <h3 className="text-lg font-black uppercase text-[#991b1b] mb-6 border-b border-slate-100 pb-4">
         {editing?.id ? "Editar Empresa" : "Cadastrar Nova Empresa"}
       </h3>
       <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
@@ -509,7 +509,7 @@ function CompanyForm({
             <Input value={editing?.encarregado2 ?? ""} onChange={(e) => setEditing({ ...editing, encarregado2: e.target.value })} className="bg-slate-50 mt-1" />
           </div>
         </div>
-        <Button type="submit" disabled={saving} className="mt-4 bg-[#0369a1] hover:bg-[#075985] text-white text-xs font-black uppercase tracking-widest px-8 py-4 h-auto rounded-xl shadow-lg">
+        <Button type="submit" disabled={saving} className="mt-4 bg-[#991b1b] hover:bg-[#7f1d1d] text-white text-xs font-black uppercase tracking-widest px-8 py-4 h-auto rounded-xl shadow-lg">
           Salvar Dados da Empresa
         </Button>
       </form>

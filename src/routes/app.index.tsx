@@ -88,7 +88,7 @@ function TstPanel() {
 
   return (
     <div className="p-6 md:p-8 animate-fadeIn h-full flex flex-col bg-[#f1f5f9] overflow-y-auto custom-scrollbar">
-      <h2 className="heading-display text-3xl md:text-4xl text-[#0369a1] mb-8">Painel do TST / GSI</h2>
+      <h2 className="heading-display text-3xl md:text-4xl text-[#991b1b] mb-8">Painel do TST / GSI</h2>
 
       {/* OMNISEARCH */}
       <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 mb-8 shrink-0">
@@ -100,7 +100,7 @@ function TstPanel() {
           placeholder="Digite Nome, CPF, Função Técnica ou Empresa..."
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-6 py-4 text-sm font-bold uppercase outline-none focus:ring-2 focus:border-[#0369a1] transition-all placeholder:text-slate-400 placeholder:normal-case"
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-6 py-4 text-sm font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b] transition-all placeholder:text-slate-400 placeholder:normal-case"
         />
         {search && (
           <div className="mt-4 space-y-2">
@@ -111,7 +111,7 @@ function TstPanel() {
                 key={r.emp.id}
                 to="/app/employees/$id"
                 params={{ id: r.emp.id }}
-                className="flex items-center justify-between p-3 border border-slate-100 rounded-xl bg-slate-50 hover:border-[#0369a1] transition-all"
+                className="flex items-center justify-between p-3 border border-slate-100 rounded-xl bg-slate-50 hover:border-[#991b1b] transition-all"
               >
                 <div>
                   <div className="text-xs font-black uppercase text-slate-900">{r.emp.nome}</div>
@@ -134,7 +134,7 @@ function TstPanel() {
             <select
               value={filterCompany}
               onChange={(e) => setFilterCompany(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase outline-none focus:ring-2 focus:border-[#0369a1] max-w-[200px] truncate"
+              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b] max-w-[200px] truncate"
             >
               <option value="ALL">Todas as Empresas</option>
               {(data?.companies ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -147,7 +147,7 @@ function TstPanel() {
               <div
                 key={p.emp.id}
                 onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
-                className="p-4 border border-slate-100 rounded-xl bg-slate-50 flex justify-between items-center cursor-pointer hover:border-[#0369a1] transition-all"
+                className="p-4 border border-slate-100 rounded-xl bg-slate-50 flex justify-between items-center cursor-pointer hover:border-[#991b1b] transition-all"
               >
                 <div>
                   <div className="text-xs font-black uppercase text-slate-900">{p.emp.nome}</div>
@@ -160,7 +160,7 @@ function TstPanel() {
         </div>
 
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
-          <h3 className="text-sm font-black uppercase tracking-widest mb-6 border-b border-slate-100 pb-4 text-[#0369a1] flex items-center gap-2">
+          <h3 className="text-sm font-black uppercase tracking-widest mb-6 border-b border-slate-100 pb-4 text-[#991b1b] flex items-center gap-2">
             <Building2 className="h-4 w-4" /> Conformidade por Empresa
           </h3>
           <div className="space-y-4">

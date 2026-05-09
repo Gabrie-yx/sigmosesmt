@@ -126,7 +126,7 @@ function AuditPage() {
   return (
     <div className="p-6 md:p-8 animate-fadeIn h-full overflow-y-auto custom-scrollbar bg-[#f1f5f9]">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="heading-display text-3xl md:text-4xl text-[#0369a1] flex items-center gap-3">
+        <h2 className="heading-display text-3xl md:text-4xl text-[#991b1b] flex items-center gap-3">
           <ShieldCheck className="h-8 w-8" /> Log de Auditoria
         </h2>
         <Button onClick={exportCsv} className="gap-2">
