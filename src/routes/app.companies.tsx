@@ -287,7 +287,7 @@ function CompanyForm({
 }: {
   editing: Partial<Company>;
   setEditing: (v: Partial<Company>) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
   onSubmit: () => void;
   saving: boolean;
 }) {
