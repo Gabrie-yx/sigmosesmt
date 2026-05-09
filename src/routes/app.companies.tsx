@@ -207,7 +207,21 @@ function CompaniesPage() {
       </div>
 
       {/* RIGHT */}
-      {showForm || (!selected && !showForm) ? (
+      {selectedEmpId && selected ? (
+        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 overflow-y-auto custom-scrollbar animate-fadeIn">
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedEmpId(null)}
+              className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-[#0369a1]"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" /> Voltar para {selected.name}
+            </Button>
+          </div>
+          <EmployeeDetailContent id={selectedEmpId} />
+        </div>
+      ) : showForm || (!selected && !showForm) ? (
         <CompanyForm
           editing={editing ?? { ...empty }}
           setEditing={setEditing}
