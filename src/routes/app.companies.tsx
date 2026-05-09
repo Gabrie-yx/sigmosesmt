@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmployeeDetailContent } from "./app.employees.$id";
+import { maskCNPJ } from "@/lib/masks";
 
 export const Route = createFileRoute("/app/companies")({
   component: CompaniesPage,
@@ -500,7 +501,7 @@ function CompanyForm({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className="text-[10px] font-black text-slate-500 uppercase">CNPJ</Label>
-            <Input value={editing?.cnpj ?? ""} onChange={(e) => setEditing({ ...editing, cnpj: e.target.value })} placeholder="00.000.000/0001-00" className="bg-slate-50 mt-1" />
+            <Input value={maskCNPJ(editing?.cnpj ?? "")} onChange={(e) => setEditing({ ...editing, cnpj: maskCNPJ(e.target.value) })} placeholder="00.000.000/0001-00" maxLength={18} inputMode="numeric" className="bg-slate-50 mt-1" />
           </div>
           <div>
             <Label className="text-[10px] font-black text-slate-500 uppercase">Data da Entrada</Label>
