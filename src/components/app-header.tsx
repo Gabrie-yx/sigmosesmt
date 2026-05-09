@@ -45,6 +45,7 @@ export function AppHeader() {
   const location = useLocation();
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   async function handleLogout() {
     await supabase.auth.signOut();
