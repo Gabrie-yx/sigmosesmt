@@ -1,0 +1,453 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { GraduationCap, Plus, Pencil, Trash2, Users, Paperclip, Download, X, FileText, Clock } from "lucide-react";
+import { toast } from "sonner";
+import { formatDateBR, daysUntil } from "@/lib/utils-date";
+
+export const Route = createFileRoute("/app/trainings")({
+  component: TrainingsPage,
+});
+
+const TIPOS = [
+  "Integração",
+  "NR-06 (EPI)",
+  "NR-10 (Elétrica)",
+  "NR-11 (Cargas)",
+  "NR-12 (Máquinas)",
+  "NR-18 (Construção)",
+  "NR-33 (Confinado)",
+  "NR-34 (Naval)",
+  "NR-35 (Altura)",
+  "Reciclagem",
+  "Outro",
+];
+
+const SITUACOES = ["APROVADO", "REPROVADO", "PRESENTE", "AUSENTE"] as const;
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+function addMonths(date: string, months: number) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().slice(0, 10);
+}
+
+function TrainingsPage() {
+  const qc = useQueryClient();
+  const { isEditor, isAdmin } = useAuth();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [openAttendees, setOpenAttendees] = useState<string | null>(null);
+  const [f, setF] = useState({
+    tipo: TIPOS[0],
+    titulo: "",
+    instrutor: "",
+    instituicao: "",
+    data_realizacao: today(),
+    carga_horaria_h: 8,
+    validade_meses: 12,
+    observacoes: "",
+  });
+  const [file, setFile] = useState<File | null>(null);
+
+  const { data: trainings = [] } = useQuery({
+    queryKey: ["trainings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("trainings").select("*").order("data_realizacao", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: attendeesCounts = {} } = useQuery({
+    queryKey: ["training-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("training_attendees").select("training_id");
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data ?? []).forEach((r: any) => { counts[r.training_id] = (counts[r.training_id] ?? 0) + 1; });
+      return counts;
+    },
+  });
+
+  const save = useMutation({
+    mutationFn: async () => {
+      let anexo_path: string | null = null;
+      if (file) {
+        const path = `${Date.now()}_${file.name.replace(/[^\w.-]/g, "_")}`;
+        const { error: upErr } = await supabase.storage.from("training-docs").upload(path, file);
+        if (upErr) throw upErr;
+        anexo_path = path;
+      }
+      const payload: any = {
+        tipo: f.tipo, titulo: f.titulo || null, instrutor: f.instrutor || null,
+        instituicao: f.instituicao || null, data_realizacao: f.data_realizacao,
+        carga_horaria_h: f.carga_horaria_h, validade_meses: f.validade_meses,
+        observacoes: f.observacoes || null,
+      };
+      if (anexo_path) payload.anexo_path = anexo_path;
+      if (editingId) {
+        const { error } = await supabase.from("trainings").update(payload).eq("id", editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("trainings").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["trainings"] });
+      toast.success(editingId ? "Treinamento atualizado" : "Treinamento cadastrado");
+      reset();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("trainings").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["trainings"] });
+      qc.invalidateQueries({ queryKey: ["training-counts"] });
+      toast.success("Treinamento removido");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  function reset() {
+    setEditingId(null);
+    setFile(null);
+    setF({
+      tipo: TIPOS[0], titulo: "", instrutor: "", instituicao: "",
+      data_realizacao: today(), carga_horaria_h: 8, validade_meses: 12, observacoes: "",
+    });
+  }
+
+  function startEdit(t: any) {
+    setEditingId(t.id);
+    setF({
+      tipo: t.tipo, titulo: t.titulo ?? "", instrutor: t.instrutor ?? "",
+      instituicao: t.instituicao ?? "", data_realizacao: t.data_realizacao,
+      carga_horaria_h: Number(t.carga_horaria_h), validade_meses: t.validade_meses,
+      observacoes: t.observacoes ?? "",
+    });
+    setFile(null);
+  }
+
+  async function downloadAnexo(path: string) {
+    const { data, error } = await supabase.storage.from("training-docs").createSignedUrl(path, 60);
+    if (error) return toast.error(error.message);
+    window.open(data.signedUrl, "_blank");
+  }
+
+  return (
+    <div className="p-6 md:p-8 animate-fadeIn h-full overflow-y-auto custom-scrollbar bg-[#f1f5f9]">
+      <h2 className="heading-display text-3xl md:text-4xl text-[#0369a1] mb-8 flex items-center gap-3">
+        <GraduationCap className="h-8 w-8" /> Treinamentos &amp; Integrações
+      </h2>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        {/* FORM */}
+        {isEditor && (
+          <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
+            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-100 pb-4 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                {editingId ? <Pencil className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                {editingId ? "Editar Treinamento" : "Novo Treinamento"}
+              </span>
+              {editingId && (
+                <button onClick={reset} className="text-[10px] bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg hover:bg-slate-200 uppercase font-black">
+                  Cancelar
+                </button>
+              )}
+            </h3>
+
+            <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-[10px] font-black text-slate-500 uppercase">Tipo</Label>
+                  <Select value={f.tipo} onValueChange={(v) => setF({ ...f, tipo: v })}>
+                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                    <SelectContent>{TIPOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-[10px] font-black text-slate-500 uppercase">Data de Realização</Label>
+                  <Input type="date" required value={f.data_realizacao} onChange={(e) => setF({ ...f, data_realizacao: e.target.value })} className="mt-2" />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-black text-slate-500 uppercase">Título / Turma</Label>
+                <Input value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} placeholder="Ex: NR-35 Turma 12/2026" className="mt-2" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-[10px] font-black text-slate-500 uppercase">Instrutor</Label>
+                  <Input value={f.instrutor} onChange={(e) => setF({ ...f, instrutor: e.target.value })} className="mt-2" />
+                </div>
+                <div>
+                  <Label className="text-[10px] font-black text-slate-500 uppercase">Instituição</Label>
+                  <Input value={f.instituicao} onChange={(e) => setF({ ...f, instituicao: e.target.value })} className="mt-2" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-[10px] font-black text-slate-500 uppercase">Carga Horária (h)</Label>
+                  <Input type="number" min={0} step={0.5} value={f.carga_horaria_h} onChange={(e) => setF({ ...f, carga_horaria_h: Number(e.target.value) })} className="mt-2" />
+                </div>
+                <div>
+                  <Label className="text-[10px] font-black text-slate-500 uppercase">Validade (meses)</Label>
+                  <Input type="number" min={1} value={f.validade_meses} onChange={(e) => setF({ ...f, validade_meses: Number(e.target.value) })} className="mt-2" />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-black text-slate-500 uppercase">Observações</Label>
+                <Textarea value={f.observacoes} onChange={(e) => setF({ ...f, observacoes: e.target.value })} className="mt-2" rows={2} />
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-black text-slate-500 uppercase">Certificado / Lista de Presença (PDF)</Label>
+                <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="mt-2" />
+              </div>
+
+              <Button type="submit" disabled={save.isPending} className="w-full bg-[#0369a1] hover:bg-[#075985] text-xs font-black uppercase tracking-widest h-auto py-4 rounded-xl">
+                {editingId ? "Salvar Alterações" : "Cadastrar Treinamento"}
+              </Button>
+            </form>
+          </div>
+        )}
+
+        {/* LIST */}
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
+          <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-100 pb-4 flex items-center gap-2">
+            <FileText className="h-5 w-5" /> Histórico ({trainings.length})
+          </h3>
+          <div className="space-y-3 max-h-[700px] overflow-y-auto custom-scrollbar pr-2">
+            {trainings.length === 0 && (
+              <div className="text-center text-slate-400 py-10 font-bold uppercase text-xs border border-dashed border-slate-200 rounded-2xl">
+                Nenhum treinamento cadastrado.
+              </div>
+            )}
+            {trainings.map((t: any) => (
+              <div key={t.id} className="p-4 border border-slate-200 rounded-xl bg-slate-50 hover:bg-white transition-colors">
+                <div className="flex justify-between items-start gap-2 mb-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-black uppercase text-[#0369a1] tracking-widest">{t.tipo}</div>
+                    <h4 className="text-sm font-black text-slate-800 truncate">{t.titulo || "—"}</h4>
+                  </div>
+                  <div className="flex gap-1">
+                    <button onClick={() => setOpenAttendees(t.id)} className="w-7 h-7 rounded bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors" title="Participantes">
+                      <Users className="h-3.5 w-3.5" />
+                    </button>
+                    {t.anexo_path && (
+                      <button onClick={() => downloadAnexo(t.anexo_path)} className="w-7 h-7 rounded bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center" title="Baixar anexo">
+                        <Download className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    {isEditor && (
+                      <button onClick={() => startEdit(t)} className="w-7 h-7 rounded bg-amber-100 text-amber-600 hover:bg-amber-600 hover:text-white flex items-center justify-center" title="Editar">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <button onClick={() => { if (confirm("Excluir treinamento e toda a lista de presença?")) del.mutate(t.id); }} className="w-7 h-7 rounded bg-red-100 text-red-600 hover:bg-red-600 hover:text-white flex items-center justify-center" title="Excluir">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[10px] font-bold text-slate-500 uppercase">
+                  <div><Clock className="h-3 w-3 inline mr-1" />{formatDateBR(t.data_realizacao)}</div>
+                  <div>{t.carga_horaria_h}h</div>
+                  <div>Val: {t.validade_meses}m</div>
+                  <div className="flex items-center gap-1"><Users className="h-3 w-3" />{attendeesCounts[t.id] ?? 0} part.</div>
+                </div>
+                {(t.instrutor || t.instituicao) && (
+                  <div className="text-[10px] text-slate-500 mt-2">
+                    {t.instrutor && <span>👤 {t.instrutor}</span>}
+                    {t.instrutor && t.instituicao && <span className="mx-1">•</span>}
+                    {t.instituicao && <span>🏫 {t.instituicao}</span>}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {openAttendees && (
+        <AttendeesDialog
+          trainingId={openAttendees}
+          training={trainings.find((t: any) => t.id === openAttendees)}
+          onClose={() => setOpenAttendees(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function AttendeesDialog({ trainingId, training, onClose }: { trainingId: string; training: any; onClose: () => void }) {
+  const qc = useQueryClient();
+  const { isEditor, isAdmin } = useAuth();
+  const [selectedEmp, setSelectedEmp] = useState("");
+  const [situacao, setSituacao] = useState<typeof SITUACOES[number]>("APROVADO");
+  const [nota, setNota] = useState<string>("");
+
+  const { data: attendees = [] } = useQuery({
+    queryKey: ["training-attendees", trainingId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("training_attendees")
+        .select("*, employees(nome, matricula, company_id)")
+        .eq("training_id", trainingId);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: emps = [] } = useQuery({
+    queryKey: ["employees-light"],
+    queryFn: async () => (await supabase.from("employees").select("id,nome,matricula,company_id").order("nome")).data ?? [],
+  });
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => (await supabase.from("companies").select("id,name")).data ?? [],
+  });
+
+  const enrolled = new Set(attendees.map((a: any) => a.employee_id));
+  const available = emps.filter((e: any) => !enrolled.has(e.id));
+
+  const add = useMutation({
+    mutationFn: async () => {
+      if (!selectedEmp) throw new Error("Selecione um colaborador");
+      const data_vencimento = addMonths(training.data_realizacao, training.validade_meses);
+      const { error } = await supabase.from("training_attendees").insert({
+        training_id: trainingId,
+        employee_id: selectedEmp,
+        situacao,
+        nota: nota ? Number(nota) : null,
+        data_vencimento,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["training-attendees", trainingId] });
+      qc.invalidateQueries({ queryKey: ["training-counts"] });
+      setSelectedEmp(""); setNota(""); setSituacao("APROVADO");
+      toast.success("Participante adicionado");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("training_attendees").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["training-attendees", trainingId] });
+      qc.invalidateQueries({ queryKey: ["training-counts"] });
+      toast.success("Participante removido");
+    },
+  });
+
+  function statusColor(a: any) {
+    if (a.situacao === "REPROVADO" || a.situacao === "AUSENTE") return "bg-red-100 text-red-700 border-red-200";
+    if (a.data_vencimento) {
+      const d = daysUntil(a.data_vencimento);
+      if (d !== null && d < 0) return "bg-red-100 text-red-700 border-red-200";
+      if (d !== null && d <= 30) return "bg-amber-100 text-amber-700 border-amber-200";
+    }
+    return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Participantes — {training?.tipo} {training?.titulo && `• ${training.titulo}`}
+          </DialogTitle>
+        </DialogHeader>
+
+        {isEditor && (
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Adicionar Participante</Label>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-2 mt-2">
+              <select
+                value={selectedEmp}
+                onChange={(e) => setSelectedEmp(e.target.value)}
+                className="md:col-span-6 bg-white border border-slate-200 rounded-md px-3 py-2 text-xs font-semibold"
+              >
+                <option value="">-- selecione --</option>
+                {available.map((e: any) => {
+                  const c = companies.find((x: any) => x.id === e.company_id);
+                  return <option key={e.id} value={e.id}>{e.nome} {e.matricula ? `(${e.matricula})` : ""} — {c?.name ?? "S/ EMPRESA"}</option>;
+                })}
+              </select>
+              <Select value={situacao} onValueChange={(v) => setSituacao(v as any)}>
+                <SelectTrigger className="md:col-span-3"><SelectValue /></SelectTrigger>
+                <SelectContent>{SITUACOES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+              <Input type="number" min={0} max={10} step={0.1} placeholder="Nota" value={nota} onChange={(e) => setNota(e.target.value)} className="md:col-span-1" />
+              <Button onClick={() => add.mutate()} disabled={add.isPending} className="md:col-span-2">
+                <Plus className="h-4 w-4 mr-1" /> Add
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+          {attendees.length === 0 ? (
+            <div className="text-center text-slate-400 py-8 text-xs uppercase font-bold">Nenhum participante.</div>
+          ) : (
+            attendees.map((a: any) => {
+              const c = companies.find((x: any) => x.id === a.employees?.company_id);
+              return (
+                <div key={a.id} className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg bg-white">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold text-slate-800 truncate">{a.employees?.nome ?? "—"}</div>
+                    <div className="text-[10px] text-slate-500 uppercase font-bold">
+                      {a.employees?.matricula && `MAT: ${a.employees.matricula} • `}{c?.name ?? "S/ EMPRESA"}
+                    </div>
+                  </div>
+                  <div className={`text-[10px] font-black uppercase px-2 py-1 rounded border ${statusColor(a)}`}>
+                    {a.situacao}
+                  </div>
+                  {a.nota !== null && a.nota !== undefined && (
+                    <div className="text-xs font-bold text-slate-700">Nota: {a.nota}</div>
+                  )}
+                  {a.data_vencimento && (
+                    <div className="text-[10px] text-slate-500 font-bold">
+                      Vence: {formatDateBR(a.data_vencimento)}
+                    </div>
+                  )}
+                  {isAdmin && (
+                    <button onClick={() => { if (confirm("Remover participante?")) remove.mutate(a.id); }} className="w-7 h-7 rounded bg-red-100 text-red-600 hover:bg-red-600 hover:text-white flex items-center justify-center">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

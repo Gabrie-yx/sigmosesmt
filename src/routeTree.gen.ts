@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppUsersRouteImport } from './routes/app.users'
+import { Route as AppTrainingsRouteImport } from './routes/app.trainings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppPtesRouteImport } from './routes/app.ptes'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
@@ -45,6 +46,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppUsersRoute = AppUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTrainingsRoute = AppTrainingsRouteImport.update({
+  id: '/trainings',
+  path: '/trainings',
   getParentRoute: () => AppRoute,
 } as any)
 const AppRolesRoute = AppRolesRouteImport.update({
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
+  '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/app/companies': typeof AppCompaniesRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
+  '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
   '/app': typeof AppIndexRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
+  '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/app/employees'
     | '/app/ptes'
     | '/app/roles'
+    | '/app/trainings'
     | '/app/users'
     | '/app/'
     | '/app/employees/$id'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/app/companies'
     | '/app/ptes'
     | '/app/roles'
+    | '/app/trainings'
     | '/app/users'
     | '/app'
     | '/app/employees/$id'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/app/employees'
     | '/app/ptes'
     | '/app/roles'
+    | '/app/trainings'
     | '/app/users'
     | '/app/'
     | '/app/employees/$id'
@@ -208,6 +220,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/app/users'
       preLoaderRoute: typeof AppUsersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/trainings': {
+      id: '/app/trainings'
+      path: '/trainings'
+      fullPath: '/app/trainings'
+      preLoaderRoute: typeof AppTrainingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/roles': {
@@ -282,6 +301,7 @@ interface AppRouteChildren {
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppPtesRoute: typeof AppPtesRoute
   AppRolesRoute: typeof AppRolesRoute
+  AppTrainingsRoute: typeof AppTrainingsRoute
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -292,6 +312,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppPtesRoute: AppPtesRoute,
   AppRolesRoute: AppRolesRoute,
+  AppTrainingsRoute: AppTrainingsRoute,
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
 }
