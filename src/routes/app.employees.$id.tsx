@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
 import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, UFS, VACINAS_LIST } from "@/lib/constants";
+import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -35,6 +36,7 @@ function EmployeeDetail() {
         </Button>
       </div>
       <EmployeeDetailContent id={id} showHeader initialTab={tab} />
+      <FileViewerHost />
     </div>
   );
 }
@@ -376,9 +378,7 @@ function DocsTab({ empId }: any) {
   });
 
   async function openDoc(path: string) {
-    const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(path, 60);
-    if (error) { toast.error(error.message); return; }
-    window.open(data.signedUrl, "_blank");
+    await openStorageFile("employee-docs", path);
   }
 
   const TIPOS_DOC = ["RG", "CPF", "CNH", "CTPS", "Título de Eleitor", "Comprovante Residência", "Certificado Reservista", "Foto 3x4", "Contrato", "Outro"];
@@ -486,9 +486,7 @@ function VaccinesTab({ empId, vaccines, role, canEdit, canDelete, qc }: any) {
   });
 
   async function openCard(path: string) {
-    const { data, error } = await supabase.storage.from("vaccination-cards").createSignedUrl(path, 60);
-    if (error) { toast.error(error.message); return; }
-    window.open(data.signedUrl, "_blank");
+    await openStorageFile("vaccination-cards", path);
   }
 
   // Status por vacina obrigatória
@@ -703,9 +701,7 @@ function HealthTab({ empId, exams, canEdit, canDelete, qc }: any) {
   });
 
   async function openExam(path: string) {
-    const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(path, 60);
-    if (error) { toast.error(error.message); return; }
-    window.open(data.signedUrl, "_blank");
+    await openStorageFile("employee-docs", path);
   }
 
   return (
