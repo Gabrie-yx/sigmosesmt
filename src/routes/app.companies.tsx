@@ -25,6 +25,7 @@ type Company = {
   email: string | null;
   encarregado1: string | null;
   encarregado2: string | null;
+  data_entrada?: string | null;
 };
 
 const empty: Partial<Company> = { name: "", type: "CLT", cnpj: "", email: "", encarregado1: "", encarregado2: "" };
@@ -292,16 +293,18 @@ function CompanyForm({
 }) {
   return (
     <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-8 overflow-y-auto custom-scrollbar animate-fadeIn relative">
-      <button onClick={onCancel} className="absolute top-8 right-8 text-slate-400 hover:text-red-500" aria-label="Cancelar">
-        <X className="h-6 w-6" />
-      </button>
+      {onCancel && (
+        <button onClick={onCancel} className="absolute top-8 right-8 text-slate-400 hover:text-red-500" aria-label="Cancelar">
+          <X className="h-6 w-6" />
+        </button>
+      )}
       <h3 className="text-lg font-black uppercase text-[#0369a1] mb-6 border-b border-slate-100 pb-4">
         {editing?.id ? "Editar Empresa" : "Cadastrar Nova Empresa"}
       </h3>
       <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="text-[10px] font-black text-slate-500 uppercase">Razão Social *</Label>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Razão Social / Nome da Empresa *</Label>
             <Input required value={editing?.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className="bg-slate-50 mt-1" />
           </div>
           <div>
@@ -316,13 +319,19 @@ function CompanyForm({
             </Select>
           </div>
         </div>
-        <div>
-          <Label className="text-[10px] font-black text-slate-500 uppercase">CNPJ</Label>
-          <Input value={editing?.cnpj ?? ""} onChange={(e) => setEditing({ ...editing, cnpj: e.target.value })} placeholder="00.000.000/0001-00" className="bg-slate-50 mt-1" />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">CNPJ</Label>
+            <Input value={editing?.cnpj ?? ""} onChange={(e) => setEditing({ ...editing, cnpj: e.target.value })} placeholder="00.000.000/0001-00" className="bg-slate-50 mt-1" />
+          </div>
+          <div>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Data da Entrada</Label>
+            <Input type="date" value={(editing as any)?.data_entrada ?? ""} onChange={(e) => setEditing({ ...editing, data_entrada: e.target.value } as any)} className="bg-slate-50 mt-1" />
+          </div>
         </div>
         <div>
           <Label className="text-[10px] font-black text-slate-500 uppercase">E-mail Corporativo</Label>
-          <Input type="email" value={editing?.email ?? ""} onChange={(e) => setEditing({ ...editing, email: e.target.value })} className="bg-slate-50 mt-1" />
+          <Input type="email" placeholder="contato@empresa.com" value={editing?.email ?? ""} onChange={(e) => setEditing({ ...editing, email: e.target.value })} className="bg-slate-50 mt-1" />
         </div>
         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
           <div>
