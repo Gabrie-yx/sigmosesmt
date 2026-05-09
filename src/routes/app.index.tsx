@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, AlertTriangle, Building2 } from "lucide-react";
+import { Search, AlertTriangle, Building2, Ban } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 
 export const Route = createFileRoute("/app/")({
@@ -55,6 +55,12 @@ function TstPanel() {
     if (filterCompany !== "ALL") list = list.filter((r) => r.emp.company_id === filterCompany);
     return list;
   }, [rows, filterCompany]);
+
+  const blocklist = useMemo(() => {
+    return rows
+      .filter((r) => r.status.label === "BLOQUEADO" || r.status.label === "SEM CARGO")
+      .sort((a, b) => (a.emp.nome ?? "").localeCompare(b.emp.nome ?? ""));
+  }, [rows]);
 
   const conformity = useMemo(() => {
     if (!data) return [];
@@ -174,6 +180,46 @@ function TstPanel() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* LISTA DE BLOQUEIO GSI */}
+      <div className="bg-white rounded-2xl p-8 shadow-sm border-2 border-red-200 mt-8">
+        <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+          <h3 className="text-sm font-black uppercase tracking-widest text-red-600 flex items-center gap-2">
+            <Ban className="h-4 w-4" /> Lista de Bloqueio GSI ({blocklist.length})
+          </h3>
+          <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+            Acesso ao estaleiro suspenso
+          </span>
+        </div>
+        {blocklist.length === 0 ? (
+          <div className="text-center text-emerald-600 py-6 font-black uppercase text-xs">
+            ✓ Nenhum colaborador bloqueado
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {blocklist.map((p) => (
+              <div
+                key={p.emp.id}
+                onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
+                className="p-4 border border-red-100 rounded-xl bg-red-50/50 hover:border-red-400 cursor-pointer transition-all"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-xs font-black uppercase text-slate-900 truncate">{p.emp.nome}</div>
+                  <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-red-600 text-white shrink-0 ml-2">
+                    {p.status.label}
+                  </span>
+                </div>
+                <div className="text-[9px] font-bold uppercase text-slate-500">
+                  {p.company} · {p.role?.name ?? "Sem cargo"}
+                </div>
+                <div className="text-[9px] font-bold text-red-600 mt-1.5 line-clamp-2">
+                  {p.status.msgs.join(" · ")}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
