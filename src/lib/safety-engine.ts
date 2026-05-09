@@ -25,6 +25,8 @@ export interface EngineRole {
   req_integra: boolean;
   req_nrs: string[];
   req_exames?: string[];
+  req_vacinas?: string[];
+  risco_biologico?: boolean;
 }
 
 export interface EngineExam {
@@ -35,10 +37,18 @@ export interface EngineExam {
   anexo_path?: string | null;
 }
 
+export interface EngineVaccine {
+  tipo_vacina: string;
+  data_aplicacao: string;
+  data_proxima_dose?: string | null;
+  anexo_path?: string | null;
+}
+
 export function calculateSafetyStatus(
   emp: EngineEmployee,
   role: EngineRole | null,
   exams: EngineExam[],
+  vaccines: EngineVaccine[] = [],
 ): SafetyStatus {
   if (emp.status === "INATIVO")
     return { label: "INATIVO", msgs: [], acessoPermitido: false, colorClass: "bg-status-inativo" };
@@ -145,6 +155,43 @@ export function calculateSafetyStatus(
       msgs.push(`${nr} Vence em ${d}d`);
     }
   });
+
+  // Vacinas obrigatórias (PCMSO – Risco Biológico)
+  const reqVacinas = role.req_vacinas ?? [];
+  if (reqVacinas.length) {
+    const latestVac: Record<string, EngineVaccine> = {};
+    vaccines.forEach((v) => {
+      if (
+        !latestVac[v.tipo_vacina] ||
+        new Date(v.data_aplicacao) > new Date(latestVac[v.tipo_vacina].data_aplicacao)
+      ) {
+        latestVac[v.tipo_vacina] = v;
+      }
+    });
+    reqVacinas.forEach((vac) => {
+      const short = vac.split(" ")[0];
+      const v = latestVac[vac];
+      if (!v) {
+        isRed = true;
+        msgs.push(`Falta vacina ${short}`);
+        return;
+      }
+      if (!v.anexo_path) {
+        isRed = true;
+        msgs.push(`Vacina ${short} sem carteira`);
+      }
+      if (v.data_proxima_dose) {
+        const d = daysUntil(v.data_proxima_dose);
+        if (d !== null && d < 0) {
+          isRed = true;
+          msgs.push(`Vacina ${short} vencida`);
+        } else if (d !== null && d <= 30) {
+          isYellow = true;
+          msgs.push(`Vacina ${short} vence em ${d}d`);
+        }
+      }
+    });
+  }
 
   if (isRed)
     return { label: "BLOQUEADO", msgs, acessoPermitido: false, colorClass: "bg-status-bloqueado" };

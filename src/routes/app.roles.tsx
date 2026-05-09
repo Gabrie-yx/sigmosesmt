@@ -4,18 +4,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Briefcase, UserCog, ChevronRight, Plus, FileText, Award, ShieldCheck, Save, Trash2, Stethoscope, AlertTriangle, X } from "lucide-react";
+import { Briefcase, UserCog, ChevronRight, Plus, FileText, Award, ShieldCheck, Save, Trash2, Stethoscope, AlertTriangle, X, Syringe } from "lucide-react";
 import { toast } from "sonner";
-import { NRS_LIST, TIPOS_EXAME } from "@/lib/constants";
+import { NRS_LIST, TIPOS_EXAME, VACINAS_LIST, VACINAS_RISCO_BIOLOGICO } from "@/lib/constants";
 
 export const Route = createFileRoute("/app/roles")({
   component: RolesPage,
 });
 
 type Riscos = { fisicos: string[]; quimicos: string[]; ergonomicos: string[]; descricao: string };
-type Role = { id: string; name: string; req_aso: boolean; req_integra: boolean; req_nrs: string[]; req_exames: string[]; riscos: Riscos };
+type Role = { id: string; name: string; req_aso: boolean; req_integra: boolean; req_nrs: string[]; req_exames: string[]; req_vacinas: string[]; risco_biologico: boolean; riscos: Riscos };
 const emptyRiscos: Riscos = { fisicos: [], quimicos: [], ergonomicos: [], descricao: "" };
-const empty: Partial<Role> = { name: "", req_aso: true, req_integra: true, req_nrs: [], req_exames: [], riscos: emptyRiscos };
+const empty: Partial<Role> = { name: "", req_aso: true, req_integra: true, req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos };
 
 function RolesPage() {
   const qc = useQueryClient();
@@ -29,6 +29,8 @@ function RolesPage() {
       if (error) throw error;
       return (data ?? []).map((r: any) => ({
         ...r,
+        req_vacinas: r.req_vacinas ?? [],
+        risco_biologico: !!r.risco_biologico,
         riscos: r.riscos && typeof r.riscos === "object" ? { ...emptyRiscos, ...r.riscos } : emptyRiscos,
       })) as Role[];
     },
@@ -42,6 +44,8 @@ function RolesPage() {
         req_integra: !!v.req_integra,
         req_nrs: v.req_nrs ?? [],
         req_exames: v.req_exames ?? [],
+        req_vacinas: v.req_vacinas ?? [],
+        risco_biologico: !!v.risco_biologico,
         riscos: v.riscos ?? emptyRiscos,
       };
       if (v.id) {
@@ -83,8 +87,23 @@ function RolesPage() {
     setEditing({ ...editing, req_exames: cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t] });
   }
 
+  function toggleVacina(t: string) {
+    const cur = editing.req_vacinas ?? [];
+    setEditing({ ...editing, req_vacinas: cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t] });
+  }
+
+  function toggleRiscoBio(v: boolean) {
+    // Quando marcado, pré-popula vacinas mínimas do PCMSO (Tétano + Hep. B)
+    let vac = editing.req_vacinas ?? [];
+    if (v) {
+      VACINAS_RISCO_BIOLOGICO.forEach((x) => { if (!vac.includes(x)) vac = [...vac, x]; });
+    }
+    setEditing({ ...editing, risco_biologico: v, req_vacinas: vac });
+  }
+
   const reqNRsSet = useMemo(() => new Set(editing.req_nrs ?? []), [editing.req_nrs]);
   const reqExamesSet = useMemo(() => new Set(editing.req_exames ?? []), [editing.req_exames]);
+  const reqVacinasSet = useMemo(() => new Set(editing.req_vacinas ?? []), [editing.req_vacinas]);
 
   const riscos: Riscos = editing.riscos ?? emptyRiscos;
   const updateRiscos = (patch: Partial<Riscos>) =>
@@ -249,6 +268,38 @@ function RolesPage() {
                     disabled={!isEditor}
                   />
                 ))}
+              </div>
+            </div>
+
+            {/* VACINAS / RISCO BIOLÓGICO */}
+            <div className="p-6 border border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col lg:col-span-2">
+              <div className="flex items-center gap-2 mb-6">
+                <Syringe className="h-5 w-5 text-rose-500" />
+                <div className="text-[11px] font-black uppercase text-slate-800 tracking-widest">
+                  Controle de Imunização (Risco Biológico)
+                </div>
+                <span className="ml-auto text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                  Vencida ou sem carteira → Bloqueio GSI
+                </span>
+              </div>
+              <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-5">
+                <ToggleRow
+                  label="Função com Exposição a Risco Biológico (Esgoto / Tanques / Resíduos)"
+                  checked={!!editing.risco_biologico}
+                  onChange={toggleRiscoBio}
+                  disabled={!isEditor}
+                />
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 pt-3 border-t border-slate-100">
+                  {VACINAS_LIST.map((v) => (
+                    <NRToggle
+                      key={v}
+                      label={v}
+                      checked={reqVacinasSet.has(v)}
+                      onChange={() => toggleVacina(v)}
+                      disabled={!isEditor}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
 

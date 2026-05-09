@@ -171,6 +171,48 @@ export type Database = {
           },
         ]
       }
+      employee_vaccinations: {
+        Row: {
+          anexo_path: string | null
+          created_at: string
+          data_aplicacao: string
+          data_proxima_dose: string | null
+          dose: string | null
+          employee_id: string
+          fabricante: string | null
+          id: string
+          lote: string | null
+          observacoes: string | null
+          tipo_vacina: string
+        }
+        Insert: {
+          anexo_path?: string | null
+          created_at?: string
+          data_aplicacao: string
+          data_proxima_dose?: string | null
+          dose?: string | null
+          employee_id: string
+          fabricante?: string | null
+          id?: string
+          lote?: string | null
+          observacoes?: string | null
+          tipo_vacina: string
+        }
+        Update: {
+          anexo_path?: string | null
+          created_at?: string
+          data_aplicacao?: string
+          data_proxima_dose?: string | null
+          dose?: string | null
+          employee_id?: string
+          fabricante?: string | null
+          id?: string
+          lote?: string | null
+          observacoes?: string | null
+          tipo_vacina?: string
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           admissao: string | null
@@ -421,6 +463,8 @@ export type Database = {
           req_exames: string[]
           req_integra: boolean
           req_nrs: string[]
+          req_vacinas: string[]
+          risco_biologico: boolean
           riscos: Json
           updated_at: string
         }
@@ -432,6 +476,8 @@ export type Database = {
           req_exames?: string[]
           req_integra?: boolean
           req_nrs?: string[]
+          req_vacinas?: string[]
+          risco_biologico?: boolean
           riscos?: Json
           updated_at?: string
         }
@@ -443,6 +489,8 @@ export type Database = {
           req_exames?: string[]
           req_integra?: boolean
           req_nrs?: string[]
+          req_vacinas?: string[]
+          risco_biologico?: boolean
           riscos?: Json
           updated_at?: string
         }
