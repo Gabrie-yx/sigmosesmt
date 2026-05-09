@@ -133,7 +133,7 @@ function PtesPage() {
 
   return (
     <div className="p-6 md:p-8 animate-fadeIn h-full overflow-y-auto custom-scrollbar bg-[#f1f5f9]">
-      <h2 className="heading-display text-3xl md:text-4xl text-[#0369a1] mb-8">
+      <h2 className="heading-display text-3xl md:text-4xl text-[#991b1b] mb-8">
         Emissão de PTE (Permissão de Trabalho)
       </h2>
 
@@ -175,7 +175,7 @@ function PtesPage() {
                 required
                 value={f.employee_id}
                 onChange={(e) => setF({ ...f, employee_id: e.target.value })}
-                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-[#0369a1]"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b]"
               >
                 <option value="">-- SELECIONE UM COLABORADOR NA BASE --</option>
                 {empOptions.map(({ e, st, compName }) => {
@@ -230,7 +230,7 @@ function PtesPage() {
                     )}
                   </div>
                 </div>
-                <h4 className="text-xs font-black text-[#0369a1] uppercase mb-1">{p.employee_name ?? "—"}</h4>
+                <h4 className="text-xs font-black text-[#991b1b] uppercase mb-1">{p.employee_name ?? "—"}</h4>
                 <div className="text-[10px] font-bold text-slate-500 uppercase mt-1">Risco: <span className="font-black text-slate-700">{p.risco}</span></div>
                 <div className="text-[10px] font-bold text-slate-500 uppercase">Local: {p.local ?? "—"}</div>
                 <div className="text-[9px] font-black text-slate-400 uppercase mt-3 tracking-widest flex items-center gap-1">

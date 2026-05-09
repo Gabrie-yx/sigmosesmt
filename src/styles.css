@@ -67,38 +67,39 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.968 0.005 247);
-  --foreground: oklch(0.129 0.042 264.695);
+  /* DMN: fundo cinza-neutro, primário vermelho do logo */
+  --background: oklch(0.97 0.003 25);
+  --foreground: oklch(0.20 0.02 25);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
+  --card-foreground: oklch(0.20 0.02 25);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.20 0.02 25);
+  --primary: oklch(0.55 0.21 25);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.95 0.005 25);
+  --secondary-foreground: oklch(0.30 0.02 25);
+  --muted: oklch(0.95 0.005 25);
+  --muted-foreground: oklch(0.50 0.02 25);
+  --accent: oklch(0.96 0.03 25);
+  --accent-foreground: oklch(0.46 0.20 25);
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.92 0.005 25);
+  --input: oklch(0.92 0.005 25);
+  --ring: oklch(0.55 0.21 25);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --sidebar: oklch(0.99 0 0);
+  --sidebar-foreground: oklch(0.20 0.02 25);
+  --sidebar-primary: oklch(0.55 0.21 25);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.96 0.03 25);
+  --sidebar-accent-foreground: oklch(0.46 0.20 25);
+  --sidebar-border: oklch(0.92 0.005 25);
+  --sidebar-ring: oklch(0.55 0.21 25);
   /* DMN brand — vermelho #C8102E inspirado no logotipo */
   --brand: oklch(0.55 0.21 25);
   --brand-dark: oklch(0.46 0.20 25);
@@ -199,10 +200,10 @@
       0 8px 24px -12px rgba(15,23,42,0.12);
   }
   .surface-elevated-dark {
-    background: linear-gradient(160deg, #0369a1 0%, #075985 60%, #0c4a6e 100%);
+    background: linear-gradient(160deg, #b91c1c 0%, #7f1d1d 60%, #5b0f0f 100%);
     box-shadow:
       0 1px 0 0 rgba(255,255,255,0.18) inset,
-      0 10px 30px -12px rgba(3,105,161,0.55),
+      0 10px 30px -12px rgba(185,28,28,0.55),
       0 2px 6px rgba(15,23,42,0.18);
   }
   .hover-lift {
@@ -213,7 +214,7 @@
     box-shadow:
       0 1px 0 0 rgba(255,255,255,0.9) inset,
       0 2px 4px rgba(15,23,42,0.06),
-      0 18px 40px -16px rgba(3,105,161,0.28);
+      0 18px 40px -16px rgba(185,28,28,0.28);
   }
   .ring-soft { box-shadow: 0 0 0 1px rgba(15,23,42,0.04), 0 1px 2px rgba(15,23,42,0.04); }
   .chip-3d {
@@ -228,16 +229,16 @@
   .chip-3d:hover { transform: translateY(-1px); filter: brightness(1.04); }
   .chip-3d:active { transform: translateY(0); filter: brightness(0.98); }
   .avatar-ring {
-    background: conic-gradient(from 220deg, #38bdf8, #0369a1, #0ea5e9, #38bdf8);
+    background: conic-gradient(from 220deg, #ef4444, #991b1b, #dc2626, #ef4444);
     padding: 2px;
     border-radius: 9999px;
-    box-shadow: 0 6px 16px -8px rgba(3,105,161,0.5);
+    box-shadow: 0 6px 16px -8px rgba(185,28,28,0.5);
   }
   .page-canvas {
     background:
-      radial-gradient(1200px 600px at -10% -20%, rgba(56,189,248,0.10), transparent 60%),
-      radial-gradient(900px 500px at 110% 10%, rgba(99,102,241,0.08), transparent 60%),
-      linear-gradient(180deg, #f1f5f9 0%, #eef2f7 100%);
+      radial-gradient(1200px 600px at -10% -20%, rgba(220,38,38,0.08), transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, rgba(63,63,63,0.06), transparent 60%),
+      linear-gradient(180deg, #f4f4f5 0%, #ececef 100%);
   }
   @keyframes floaty {
     0%,100% { transform: translateY(0); }

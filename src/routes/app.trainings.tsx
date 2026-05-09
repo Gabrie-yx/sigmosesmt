@@ -151,7 +151,7 @@ function TrainingsPage() {
 
   return (
     <div className="p-6 md:p-8 animate-fadeIn h-full overflow-y-auto custom-scrollbar bg-[#f1f5f9]">
-      <h2 className="heading-display text-3xl md:text-4xl text-[#0369a1] mb-8 flex items-center gap-3">
+      <h2 className="heading-display text-3xl md:text-4xl text-[#991b1b] mb-8 flex items-center gap-3">
         <GraduationCap className="h-8 w-8" /> Treinamentos &amp; Integrações
       </h2>
 
@@ -223,7 +223,7 @@ function TrainingsPage() {
                 <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="mt-2" />
               </div>
 
-              <Button type="submit" disabled={save.isPending} className="w-full bg-[#0369a1] hover:bg-[#075985] text-xs font-black uppercase tracking-widest h-auto py-4 rounded-xl">
+              <Button type="submit" disabled={save.isPending} className="w-full bg-[#991b1b] hover:bg-[#7f1d1d] text-xs font-black uppercase tracking-widest h-auto py-4 rounded-xl">
                 {editingId ? "Salvar Alterações" : "Cadastrar Treinamento"}
               </Button>
             </form>
@@ -245,7 +245,7 @@ function TrainingsPage() {
               <div key={t.id} className="p-4 border border-slate-200 rounded-xl bg-slate-50 hover:bg-white transition-colors">
                 <div className="flex justify-between items-start gap-2 mb-2">
                   <div className="flex-1 min-w-0">
-                    <div className="text-[10px] font-black uppercase text-[#0369a1] tracking-widest">{t.tipo}</div>
+                    <div className="text-[10px] font-black uppercase text-[#991b1b] tracking-widest">{t.tipo}</div>
                     <h4 className="text-sm font-black text-slate-800 truncate">{t.titulo || "—"}</h4>
                   </div>
                   <div className="flex gap-1">
