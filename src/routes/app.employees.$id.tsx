@@ -613,7 +613,7 @@ function VaccinesTab({ empId, vaccines, role, canEdit, canDelete, qc }: any) {
 }
 
 /* ============ EPI ============ */
-function EpiTab({ empId, epis, canEdit, canDelete, qc }: any) {
+function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc }: any) {
   const EPI_ITEMS = [
     "TREINAMENTOS","AVENTAL DE RASPA","BALACLAVA","BOTA","CALÇA","CAMISA",
     "CAPACETE","LENTES DE SOLDA","LUVA","MANGOTE DE RASPA","MÁSCARA DE SOLDA",
@@ -642,51 +642,118 @@ function EpiTab({ empId, epis, canEdit, canDelete, qc }: any) {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); toast.success("Removido"); },
   });
 
+  function gerarFicha() {
+    const { url, fname } = openEpiFichaPdf({ emp, company, role, epis });
+    openFileViewer({ url, name: fname, mime: "application/pdf" });
+  }
+
   return (
-    <Card className="p-6 space-y-6">
+    <div className="space-y-6">
+      {/* Header */}
+      <Card className="p-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl">
+        <div>
+          <div className="flex items-center gap-2">
+            <HardHat className="h-5 w-5 text-brand" />
+            <h2 className="text-lg font-black uppercase tracking-wider text-brand">Controle de EPIs</h2>
+          </div>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-1">
+            Gestão de entregas e impressão da ficha de EPI
+          </p>
+        </div>
+        <Button
+          onClick={gerarFicha}
+          className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs"
+          size="lg"
+        >
+          <Printer className="h-4 w-4 mr-2" /> Ficha em PDF
+        </Button>
+      </Card>
+
+      {/* Form */}
       {canEdit && (
-        <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end border-b pb-4">
-          <Field label="Item *">
-            <Select value={f.item} onValueChange={(v) => setF({ ...f, item: v, tamanho: "" })}>
-              <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
-              <SelectContent>{EPI_ITEMS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
-            </Select>
-          </Field>
-          <Field label="CA"><Input value={f.ca} onChange={(e) => setF({ ...f, ca: e.target.value })} /></Field>
-          <Field label="Tamanho">
-            {sizeOptions ? (
-              <Select value={f.tamanho} onValueChange={(v) => setF({ ...f, tamanho: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
-                <SelectContent>{sizeOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+        <Card className="p-5 rounded-2xl">
+          <div className="flex items-center gap-2 mb-4">
+            <Plus className="h-4 w-4 text-brand" />
+            <h3 className="text-xs font-black uppercase tracking-widest text-brand">Registrar entrega de EPI</h3>
+          </div>
+          <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            <div className="md:col-span-4 space-y-1.5">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição do EPI</Label>
+              <Select value={f.item} onValueChange={(v) => setF({ ...f, item: v, tamanho: "" })}>
+                <SelectTrigger><SelectValue placeholder="Ex: CAPACETE, LUVA…" /></SelectTrigger>
+                <SelectContent>{EPI_ITEMS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
               </Select>
-            ) : (
-              <Input value={f.tamanho} onChange={(e) => setF({ ...f, tamanho: e.target.value })} placeholder="—" />
-            )}
-          </Field>
-          <Field label="Qtd"><Input type="number" min="1" value={f.qtd} onChange={(e) => setF({ ...f, qtd: e.target.value })} /></Field>
-          <Field label="Data"><Input type="date" value={f.data_entrega} onChange={(e) => setF({ ...f, data_entrega: e.target.value })} /></Field>
-          <Button type="submit" className="col-span-2 md:col-span-5" disabled={create.isPending || !f.item}><Plus className="h-4 w-4 mr-2" />Entregar EPI</Button>
-        </form>
+            </div>
+            <div className="md:col-span-3 space-y-1.5">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tamanho / Modelo</Label>
+              {sizeOptions ? (
+                <Select value={f.tamanho} onValueChange={(v) => setF({ ...f, tamanho: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                  <SelectContent>{sizeOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                </Select>
+              ) : (
+                <Input value={f.tamanho} onChange={(e) => setF({ ...f, tamanho: e.target.value })} placeholder="Ex: TAM 42, INCOLOR…" />
+              )}
+            </div>
+            <div className="md:col-span-2 space-y-1.5">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">C.A.</Label>
+              <Input value={f.ca} onChange={(e) => setF({ ...f, ca: e.target.value })} placeholder="Apenas Número" />
+            </div>
+            <div className="md:col-span-2 space-y-1.5">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Entrega</Label>
+              <Input type="date" value={f.data_entrega} onChange={(e) => setF({ ...f, data_entrega: e.target.value })} />
+            </div>
+            <div className="md:col-span-1 space-y-1.5">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">QTD</Label>
+              <Input type="number" min="1" value={f.qtd} onChange={(e) => setF({ ...f, qtd: e.target.value })} />
+            </div>
+            <div className="md:col-span-12 flex justify-end">
+              <Button type="submit" disabled={create.isPending || !f.item} className="bg-brand text-white">
+                <Plus className="h-4 w-4 mr-2" /> Registrar entrega
+              </Button>
+            </div>
+          </form>
+        </Card>
       )}
-      <Table>
-        <TableHeader><TableRow><TableHead>Item</TableHead><TableHead>CA</TableHead><TableHead>Tam.</TableHead><TableHead>Qtd</TableHead><TableHead>Entrega</TableHead><TableHead></TableHead></TableRow></TableHeader>
-        <TableBody>
-          {epis.length === 0 && <TableRow><TableCell colSpan={6} className="text-muted-foreground text-center">Nenhum EPI entregue</TableCell></TableRow>}
+
+      {/* History as cards */}
+      <Card className="p-5 rounded-2xl space-y-3">
+        <div className="flex items-center gap-2">
+          <FileSignature className="h-4 w-4 text-slate-500" />
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Histórico de EPIs recebidos</h3>
+        </div>
+        {epis.length === 0 && (
+          <div className="text-center text-sm text-muted-foreground py-8">Nenhum EPI entregue</div>
+        )}
+        <div className="space-y-2">
           {epis.map((e: any) => (
-            <TableRow key={e.id}>
-              <TableCell className="font-medium">{e.item}</TableCell>
-              <TableCell>{e.ca ?? "—"}</TableCell>
-              <TableCell>{e.tamanho ?? "—"}</TableCell>
-              <TableCell>{e.qtd}</TableCell>
-              <TableCell>{formatDateBR(e.data_entrega)}</TableCell>
-              <TableCell className="text-right">
-                {canDelete && <Button size="icon" variant="ghost" onClick={() => del.mutate(e.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
-              </TableCell>
-            </TableRow>
+            <div
+              key={e.id}
+              className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition"
+            >
+              <div className="h-10 w-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0">
+                <HardHat className="h-5 w-5 text-brand" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-black text-sm text-slate-800 uppercase">{e.item}</span>
+                  {e.tamanho && <span className="text-xs text-slate-500">({e.tamanho})</span>}
+                  <Badge variant="secondary" className="text-[10px]">QTD: {e.qtd}</Badge>
+                </div>
+                <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-0.5">
+                  C.A.: {e.ca ?? "N/A"} • Entregue em: <span className="text-slate-700">{formatDateBR(e.data_entrega)}</span>
+                </div>
+              </div>
+              {canDelete && (
+                <Button size="icon" variant="ghost" onClick={() => del.mutate(e.id)}>
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              )}
+            </div>
           ))}
-        </TableBody>
-      </Table>
-    </Card>
+        </div>
+      </Card>
+    </div>
   );
 }
 
