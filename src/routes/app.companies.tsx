@@ -158,6 +158,56 @@ function CompaniesPage() {
     <div className="p-6 md:p-8 flex gap-6 h-full bg-[#f1f5f9] animate-fadeIn">
       {/* LEFT: Company cards */}
       <div className="w-[360px] flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1 shrink-0">
+        {selectedEmpId && selected ? (
+          <>
+            <div
+              className="p-5 rounded-2xl shadow-sm border bg-[#0369a1] border-[#0369a1] text-white"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div className="text-[9px] font-black px-2 py-1 rounded inline-block text-white bg-white/20">{selected.type}</div>
+                <div className="text-[9px] font-black uppercase flex items-center gap-1 text-white/80">
+                  <Users className="h-3 w-3" /> {compEmps.length} Vínculos
+                </div>
+              </div>
+              <h3 className="text-lg font-black uppercase text-white">{selected.name}</h3>
+              <p className="text-[10px] font-bold uppercase mt-1 text-white/70">
+                CNPJ: {selected.cnpj || "Não informado"}
+              </p>
+              <div className="mt-4 pt-4 border-t text-xs font-bold border-white/20 text-white/90">
+                <div className="flex items-center gap-2"><User className="h-3.5 w-3.5 text-white" /> {selected.encarregado1 ? `Empreiteiro: ${selected.encarregado1}` : "S/ Empreiteiro"}</div>
+                <div className="flex items-center gap-2 mt-1"><UserCog className="h-3.5 w-3.5 text-white" /> {selected.encarregado2 ? `Encarregado: ${selected.encarregado2}` : "S/ Encarregado"}</div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              {compEmps.map((emp: any) => {
+                const role = roles.find((r: any) => r.id === emp.role_id);
+                const isSel = selectedEmpId === emp.id;
+                return (
+                  <div
+                    key={emp.id}
+                    onClick={() => setSelectedEmpId(emp.id)}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                      isSel
+                        ? "bg-[#0369a1] border-[#0369a1] text-white shadow-md"
+                        : "bg-white border-slate-200 hover:border-[#0369a1]"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <div className={`text-[11px] font-black uppercase truncate ${isSel ? "text-white" : "text-slate-900"}`}>
+                        {emp.nome || "—"}
+                      </div>
+                      <div className={`text-[9px] font-bold uppercase mt-0.5 truncate ${isSel ? "text-white/80" : "text-slate-500"}`}>
+                        {role?.name || "Sem cargo"}
+                      </div>
+                    </div>
+                    <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${emp.status === "ATIVO" ? "bg-emerald-400" : "bg-red-400"}`} />
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+        <>
         <div className="flex items-center justify-between mb-1">
           <h2 className="heading-display text-xl text-slate-900 font-black uppercase tracking-tight">
             Empresas <span className="text-slate-400 font-bold">(Tabela Pai)</span>
@@ -204,6 +254,8 @@ function CompaniesPage() {
             </div>
           );
         })}
+        </>
+        )}
       </div>
 
       {/* RIGHT */}
