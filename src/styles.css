@@ -245,4 +245,9 @@
     50%     { transform: translateY(-3px); }
   }
   .floaty { animation: floaty 4s ease-in-out infinite; }
+  @keyframes pulse-critical {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--destructive) / 0.55); }
+    50%      { box-shadow: 0 0 0 8px hsl(var(--destructive) / 0); }
+  }
+  .animate-pulse-critical { animation: pulse-critical 1.8s ease-in-out infinite; }
 }
