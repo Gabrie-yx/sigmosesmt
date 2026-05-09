@@ -13,7 +13,7 @@ export function openFileViewer(p: ViewerPayload) {
 }
 
 export async function openStorageFile(bucket: string, path: string, name?: string) {
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 300);
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 600);
   if (error || !data) {
     toast.error(error?.message ?? "Não foi possível abrir o arquivo");
     return;
@@ -25,7 +25,9 @@ export async function openStorageFile(bucket: string, path: string, name?: strin
     ext === "png" ? "image/png" :
     ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
     ext === "webp" ? "image/webp" : undefined;
-  openFileViewer({ url: data.signedUrl, name: fname, mime });
+  // Append PDF viewer hint so Chrome/Firefox open with toolbar (download/print)
+  const url = ext === "pdf" ? `${data.signedUrl}#toolbar=1&navpanes=0&view=FitH` : data.signedUrl;
+  openFileViewer({ url, name: fname, mime });
 }
 
 export function FileViewerHost() {
@@ -37,11 +39,18 @@ export function FileViewerHost() {
   }, []);
 
   const isImage = payload?.mime?.startsWith("image/");
+  const isPdf = payload?.mime === "application/pdf";
 
   function handlePrint() {
     if (!payload) return;
+    if (isPdf) {
+      const frame = document.getElementById("file-viewer-iframe") as HTMLIFrameElement | null;
+      if (frame?.contentWindow) {
+        try { frame.contentWindow.focus(); frame.contentWindow.print(); return; } catch {}
+      }
+    }
     const w = window.open(payload.url, "_blank");
-    if (!w) { toast.error("Bloqueado pelo navegador"); return; }
+    if (!w) { toast.error("Permita pop-ups para imprimir"); return; }
     w.addEventListener("load", () => { try { w.focus(); w.print(); } catch {} });
   }
 
@@ -86,7 +95,7 @@ export function FileViewerHost() {
                 <img src={payload.url} alt={payload.name} className="max-w-full max-h-full object-contain" />
               </div>
             ) : (
-              <iframe src={payload.url} title={payload.name} className="w-full h-full border-0" />
+              <iframe id="file-viewer-iframe" src={payload.url} title={payload.name} className="w-full h-full border-0" />
             )
           )}
         </div>
