@@ -9,6 +9,7 @@ import {
   Upload,
   Menu,
   ChevronDown,
+  ChevronRight,
   ShieldCheck,
   Boxes,
   Factory,
@@ -41,8 +42,14 @@ const OTHER_MODULES = [
 ] as const;
 
 const ESTOQUE_SUBMENU = [
-  { key: "estoque-sesmt", label: "SESMT", to: "/app/estoque/sesmt" as const },
-  { key: "estoque-sesmt-epi", label: "SESMT · EPIs (Cards)", to: "/app/estoque/epi" as const },
+  {
+    key: "estoque-sesmt",
+    label: "SESMT",
+    to: "/app/estoque/sesmt" as const,
+    children: [
+      { key: "estoque-sesmt-epi", label: "EPIs (Cards)", to: "/app/estoque/epi" as const },
+    ],
+  },
   { key: "estoque-eletrica", label: "Elétrica" },
   { key: "estoque-mecanica", label: "Mecânica" },
 ] as const;
