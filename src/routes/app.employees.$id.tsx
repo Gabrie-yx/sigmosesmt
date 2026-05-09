@@ -350,20 +350,34 @@ function DocsTab({ empId }: any) {
     queryKey: ["docs", empId],
     queryFn: async () => (await supabase.from("employee_docs").select("*").eq("employee_id", empId)).data ?? [],
   });
-  const [tipo, setTipo] = useState("RG");
-  const [file, setFile] = useState<File | null>(null);
+  const [uploadingTipo, setUploadingTipo] = useState<string | null>(null);
+  const [extraTipo, setExtraTipo] = useState("CNH");
+  const [extraFile, setExtraFile] = useState<File | null>(null);
 
-  const upload = useMutation({
-    mutationFn: async () => {
-      if (!file) throw new Error("Selecione um arquivo");
-      const path = `${empId}/${Date.now()}_${file.name}`;
+  async function uploadFor(tipo: string, file: File) {
+    setUploadingTipo(tipo);
+    try {
+      const safe = file.name.replace(/[^\w.\-]+/g, "_");
+      const path = `${empId}/${Date.now()}_${safe}`;
       const { error: upErr } = await supabase.storage.from("employee-docs").upload(path, file, { upsert: false });
       if (upErr) throw upErr;
       const { error } = await supabase.from("employee_docs").insert({ employee_id: empId, tipo, file_path: path });
       if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["docs", empId] });
+      toast.success(`${tipo} enviado`);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setUploadingTipo(null);
+    }
+  }
+
+  const uploadExtra = useMutation({
+    mutationFn: async () => {
+      if (!extraFile) throw new Error("Selecione um arquivo");
+      await uploadFor(extraTipo, extraFile);
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["docs", empId] }); setFile(null); toast.success("Documento enviado"); },
-    onError: (e: any) => toast.error(e.message),
+    onSuccess: () => setExtraFile(null),
   });
 
   const del = useMutation({
@@ -380,52 +394,136 @@ function DocsTab({ empId }: any) {
     await openStorageFile("employee-docs", path);
   }
 
-  const TIPOS_DOC = ["RG", "CPF", "CNH", "CTPS", "Título de Eleitor", "Comprovante Residência", "Certificado Reservista", "Foto 3x4", "Contrato", "Outro"];
+  const REQUIRED_DOCS = ["RG", "CPF", "Comprovante Residência", "Comprovante MEI", "Cartão de Vacina"];
+  const TIPOS_EXTRA = ["CNH", "CTPS", "Título de Eleitor", "Certificado Reservista", "Foto 3x4", "Contrato", "Outro"];
+
+  const docsByTipo = (docs ?? []).reduce((acc: Record<string, any[]>, d: any) => {
+    (acc[d.tipo] ||= []).push(d);
+    return acc;
+  }, {});
+
+  const missing = REQUIRED_DOCS.filter((t) => !(docsByTipo[t]?.length));
+  const allOk = missing.length === 0;
+  const extraDocs = (docs ?? []).filter((d: any) => !REQUIRED_DOCS.includes(d.tipo));
 
   return (
-    <Card className="p-6 space-y-4">
-      <div className="text-sm text-muted-foreground">
-        Documentos pessoais (RG, CPF, comprovantes). Bucket privado <code>employee-docs</code>.
-      </div>
-      {isEditor && (
-        <form onSubmit={(e) => { e.preventDefault(); upload.mutate(); }} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end border-b pb-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Tipo</Label>
-            <Select value={tipo} onValueChange={setTipo}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{TIPOS_DOC.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
+    <div className="space-y-4">
+      <Card className={`p-4 flex items-center justify-between rounded-2xl border-2 ${allOk ? "border-emerald-300 bg-emerald-50" : "border-amber-300 bg-amber-50"}`}>
+        <div className="flex items-center gap-3">
+          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${allOk ? "bg-emerald-500" : "bg-amber-500"} text-white`}>
+            <FileText className="h-5 w-5" />
           </div>
-          <div className="space-y-1.5 md:col-span-2">
-            <Label className="text-xs">Arquivo (PDF/Imagem)</Label>
-            <Input type="file" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          <div>
+            <div className={`text-sm font-black uppercase tracking-widest ${allOk ? "text-emerald-700" : "text-amber-700"}`}>
+              {allOk ? "Documentos em dia" : "Documentos pendentes"}
+            </div>
+            <div className="text-xs text-slate-600">
+              {allOk
+                ? `Todos os ${REQUIRED_DOCS.length} documentos obrigatórios foram enviados.`
+                : `Faltando: ${missing.join(", ")}`}
+            </div>
           </div>
-          <Button type="submit" className="md:col-span-3" disabled={upload.isPending || !file}>
-            <Upload className="h-4 w-4 mr-2" /> Enviar documento
-          </Button>
-        </form>
-      )}
-      <Table>
-        <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Arquivo</TableHead><TableHead>Enviado em</TableHead><TableHead></TableHead></TableRow></TableHeader>
-        <TableBody>
-          {(docs ?? []).length === 0 && <TableRow><TableCell colSpan={4} className="text-muted-foreground text-center">Nenhum documento</TableCell></TableRow>}
-          {(docs ?? []).map((d: any) => (
-            <TableRow key={d.id}>
-              <TableCell className="font-medium">{d.tipo}</TableCell>
-              <TableCell>
-                <Button size="sm" variant="ghost" onClick={() => openDoc(d.file_path)}>
-                  <FileText className="h-4 w-4 mr-1" />Ver
-                </Button>
-              </TableCell>
-              <TableCell>{formatDateBR(d.uploaded_at)}</TableCell>
-              <TableCell className="text-right">
-                {isAdmin && <Button size="icon" variant="ghost" onClick={() => del.mutate(d)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Card>
+        </div>
+        <Badge className={`${allOk ? "bg-emerald-600" : "bg-amber-600"} text-white text-[10px] font-black uppercase tracking-widest`}>
+          {REQUIRED_DOCS.length - missing.length}/{REQUIRED_DOCS.length}
+        </Badge>
+      </Card>
+
+      <Card className="p-4 space-y-3">
+        <div className="text-[11px] font-black uppercase tracking-widest text-slate-600">Documentos obrigatórios</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {REQUIRED_DOCS.map((tipo) => {
+            const items = docsByTipo[tipo] ?? [];
+            const has = items.length > 0;
+            return (
+              <div key={tipo} className={`rounded-xl border p-3 flex items-center gap-3 ${has ? "border-emerald-200 bg-emerald-50/40" : "border-slate-200 bg-slate-50/40"}`}>
+                <div className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center ${has ? "bg-emerald-500" : "bg-slate-300"} text-white`}>
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold text-slate-800 truncate">{tipo}</div>
+                  <div className="text-[10px] text-slate-500">
+                    {has ? `Enviado em ${formatDateBR(items[0].uploaded_at)}` : "Não enviado"}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  {has && (
+                    <Button size="sm" variant="ghost" onClick={() => openDoc(items[0].file_path)}>
+                      <FileText className="h-4 w-4 mr-1" />Ver
+                    </Button>
+                  )}
+                  {isEditor && (
+                    <label className="inline-flex">
+                      <input
+                        type="file"
+                        accept="application/pdf,image/*"
+                        className="hidden"
+                        disabled={uploadingTipo === tipo}
+                        onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadFor(tipo, file); e.target.value = ""; }}
+                      />
+                      <span className="inline-flex items-center px-2.5 py-1.5 text-xs font-bold rounded-md bg-brand text-white hover:bg-brand/90 cursor-pointer">
+                        <Upload className="h-3.5 w-3.5 mr-1" />
+                        {uploadingTipo === tipo ? "Enviando..." : has ? "Substituir" : "Enviar"}
+                      </span>
+                    </label>
+                  )}
+                  {has && isAdmin && (
+                    <Button size="icon" variant="ghost" onClick={() => del.mutate(items[0])}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card className="p-4 space-y-3">
+        <div className="text-[11px] font-black uppercase tracking-widest text-slate-600">Outros documentos</div>
+        {isEditor && (
+          <form onSubmit={(e) => { e.preventDefault(); uploadExtra.mutate(); }} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end border-b pb-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Tipo</Label>
+              <Select value={extraTipo} onValueChange={setExtraTipo}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{TIPOS_EXTRA.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label className="text-xs">Arquivo (PDF/Imagem)</Label>
+              <Input type="file" accept="application/pdf,image/*" onChange={(e) => setExtraFile(e.target.files?.[0] ?? null)} />
+            </div>
+            <Button type="submit" className="md:col-span-3" disabled={uploadExtra.isPending || !extraFile}>
+              <Upload className="h-4 w-4 mr-2" /> Enviar documento
+            </Button>
+          </form>
+        )}
+        {extraDocs.length === 0 ? (
+          <div className="text-xs text-muted-foreground text-center py-3">Nenhum documento adicional</div>
+        ) : (
+          <Table>
+            <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Arquivo</TableHead><TableHead>Enviado em</TableHead><TableHead></TableHead></TableRow></TableHeader>
+            <TableBody>
+              {extraDocs.map((d: any) => (
+                <TableRow key={d.id}>
+                  <TableCell className="font-medium">{d.tipo}</TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="ghost" onClick={() => openDoc(d.file_path)}>
+                      <FileText className="h-4 w-4 mr-1" />Ver
+                    </Button>
+                  </TableCell>
+                  <TableCell>{formatDateBR(d.uploaded_at)}</TableCell>
+                  <TableCell className="text-right">
+                    {isAdmin && <Button size="icon" variant="ghost" onClick={() => del.mutate(d)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+    </div>
   );
 }
 
