@@ -790,23 +790,70 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
   };
   const [f, setF] = useState<any>({ item: "", ca: "", tamanho: "", qtd: 1, data_entrega: new Date().toISOString().slice(0, 10) });
   const sizeOptions = SIZES_BY_ITEM[f.item] ?? null;
+  const MOTIVOS_DEV = ["Danificado", "Desgaste Natural", "Extravio", "Mal Uso", "Furto", "Uso Temporário"];
+  const [substitution, setSubstitution] = useState<{ prev: any; motivo: string; data: string; obs: string } | null>(null);
+
+  function resetForm() {
+    setF({ item: "", ca: "", tamanho: "", qtd: 1, data_entrega: new Date().toISOString().slice(0, 10) });
+  }
+
+  async function insertNewDelivery() {
+    const { error } = await supabase.from("epi_deliveries").insert({
+      employee_id: empId, item: f.item, ca: f.ca || null, tamanho: f.tamanho || null,
+      qtd: Number(f.qtd) || 1, data_entrega: f.data_entrega,
+    });
+    if (error) throw error;
+  }
+
   const create = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("epi_deliveries").insert({
-        employee_id: empId, item: f.item, ca: f.ca || null, tamanho: f.tamanho || null,
-        qtd: Number(f.qtd) || 1, data_entrega: f.data_entrega,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); setF({ item: "", ca: "", tamanho: "", qtd: 1, data_entrega: new Date().toISOString().slice(0, 10) }); toast.success("Entregue"); },
+    mutationFn: insertNewDelivery,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); resetForm(); toast.success("Entregue"); },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const substituteMut = useMutation({
+    mutationFn: async () => {
+      if (!substitution) return;
+      const obs = `Motivo: ${substitution.motivo}${substitution.obs ? ` — ${substitution.obs}` : ""}`;
+      // 1) close previous delivery
+      const { error: upErr } = await supabase
+        .from("epi_deliveries")
+        .update({ data_devolucao: substitution.data, observacoes: obs })
+        .eq("id", substitution.prev.id);
+      if (upErr) throw upErr;
+      // 2) insert new delivery
+      await insertNewDelivery();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["epis", empId] });
+      resetForm();
+      setSubstitution(null);
+      toast.success("Substituição registrada");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  function submitDelivery() {
+    if (!f.item) return;
+    const norm = (s: any) => String(s ?? "").trim().toLowerCase();
+    // Find an active (non-returned) prior delivery of the same item
+    const prev = (epis ?? []).find((e: any) => !e.data_devolucao && norm(e.item) === norm(f.item));
+    if (prev) {
+      setSubstitution({
+        prev,
+        motivo: "Desgaste Natural",
+        data: f.data_entrega,
+        obs: "",
+      });
+      return;
+    }
+    create.mutate();
+  }
   const del = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("epi_deliveries").delete().eq("id", id); if (error) throw error; },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); toast.success("Removido"); },
   });
 
-  const MOTIVOS_DEV = ["Danificado", "Desgaste Natural", "Extravio", "Mal Uso", "Furto", "Uso Temporário"];
   const [returning, setReturning] = useState<any | null>(null);
   const [retForm, setRetForm] = useState<{ motivo: string; data: string; obs: string }>({
     motivo: "Desgaste Natural",
@@ -889,7 +936,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             <Plus className="h-4 w-4 text-brand" />
             <h3 className="text-xs font-black uppercase tracking-widest text-brand">Registrar entrega de EPI</h3>
           </div>
-          <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <form onSubmit={(e) => { e.preventDefault(); submitDelivery(); }} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
             <div className="md:col-span-4 space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição do EPI</Label>
               <Select value={f.item} onValueChange={(v) => setF({ ...f, item: v, tamanho: "" })}>
@@ -1028,6 +1075,50 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             <Button variant="ghost" onClick={() => setReturning(null)}>Cancelar</Button>
             <Button onClick={() => returnMut.mutate()} disabled={returnMut.isPending || !retForm.data || !retForm.motivo} className="bg-amber-600 hover:bg-amber-700 text-white">
               <Undo2 className="h-4 w-4 mr-2" /> Registrar devolução
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Substitution Dialog (auto-prompted on new delivery of same item) */}
+      <Dialog open={!!substitution} onOpenChange={(o) => !o && setSubstitution(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Undo2 className="h-5 w-5 text-amber-600" />
+              Substituição de EPI
+            </DialogTitle>
+          </DialogHeader>
+          {substitution && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                Este colaborador já possui um <strong className="uppercase">{substitution.prev.item}</strong>
+                {substitution.prev.tamanho ? ` (${substitution.prev.tamanho})` : ""} ativo, entregue em <strong>{formatDateBR(substitution.prev.data_entrega)}</strong>.
+                <br />Informe o motivo da substituição. O item anterior será encerrado e o novo será registrado.
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Motivo da substituição</Label>
+                <Select value={substitution.motivo} onValueChange={(v) => setSubstitution({ ...substitution, motivo: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MOTIVOS_DEV.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Data da devolução do anterior</Label>
+                <Input type="date" value={substitution.data} onChange={(e) => setSubstitution({ ...substitution, data: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Observações (opcional)</Label>
+                <Textarea rows={3} value={substitution.obs} onChange={(e) => setSubstitution({ ...substitution, obs: e.target.value })} placeholder="Detalhes adicionais (ex: B.O. do furto, etc.)" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSubstitution(null)}>Cancelar</Button>
+            <Button onClick={() => substituteMut.mutate()} disabled={substituteMut.isPending || !substitution?.data || !substitution?.motivo} className="bg-amber-600 hover:bg-amber-700 text-white">
+              <Plus className="h-4 w-4 mr-2" /> Confirmar substituição e entregar novo
             </Button>
           </DialogFooter>
         </DialogContent>
