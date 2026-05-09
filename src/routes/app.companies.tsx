@@ -162,7 +162,11 @@ function CompaniesPage() {
       <div className="w-[360px] flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1 shrink-0">
         {selectedEmpId && selected ? (
           <>
-            <div className="relative p-5 rounded-2xl border border-white/10 text-white surface-elevated-dark overflow-hidden">
+            <div
+              onClick={() => setSelectedEmpId(null)}
+              title={`Voltar para colaboradores de ${selected.name}`}
+              className="relative p-5 rounded-2xl border border-white/10 text-white surface-elevated-dark overflow-hidden cursor-pointer hover-lift"
+            >
               <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
               <div className="absolute -bottom-12 -left-8 w-32 h-32 rounded-full bg-red-300/20 blur-2xl pointer-events-none" />
               <div className="relative flex justify-between items-start mb-2">
