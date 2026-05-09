@@ -8,6 +8,7 @@ import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import dmnLogo from "@/assets/dmn-logo.png";
 
 const NAV = [
   { to: "/app", label: "Painel TST", exact: true },
@@ -56,7 +57,7 @@ export function AppHeader() {
             key={item.to}
             to={item.to}
             className={`rounded-md px-4 py-2 text-sm font-semibold transition-all ${
-              active ? "bg-[#0369a1] text-white shadow-md" : "text-white/90 hover:bg-white/10 hover:text-white"
+              active ? "bg-white/15 text-white shadow-md ring-1 ring-white/30" : "text-white/90 hover:bg-white/10 hover:text-white"
             }`}
           >
             {item.label}
@@ -67,8 +68,8 @@ export function AppHeader() {
         to="/app/ptes"
         className={`rounded-md px-4 py-2 text-sm font-semibold transition-all ${
           isActive("/app/ptes")
-            ? "bg-orange-500 text-white shadow-md"
-            : "text-orange-300 hover:bg-white/10"
+            ? "bg-amber-500 text-white shadow-md"
+            : "text-amber-200 hover:bg-white/10"
         }`}
       >
         Emitir PTE
@@ -77,7 +78,7 @@ export function AppHeader() {
         <Link
           to="/app/users"
           className={`rounded-md px-4 py-2 text-sm font-semibold transition-all ${
-            isActive("/app/users") ? "bg-[#0369a1] text-white shadow-md" : "text-white/90 hover:bg-white/10"
+            isActive("/app/users") ? "bg-white/15 text-white shadow-md ring-1 ring-white/30" : "text-white/90 hover:bg-white/10"
           }`}
         >
           Usuários
@@ -90,7 +91,9 @@ export function AppHeader() {
     <header className="bg-header sticky top-0 z-30 shadow-md">
       <div className="flex h-16 items-center justify-between px-4 md:px-8">
         <Link to="/app" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <div className="flex h-10 w-10 items-center justify-center rounded bg-white/10 border border-white/20" />
+          <div className="flex h-10 items-center justify-center rounded bg-white/95 px-2 py-1 shadow-sm">
+            <img src={dmnLogo} alt="DMN Estaleiro" className="h-8 w-auto object-contain" />
+          </div>
           <div>
             <h1 className="text-lg font-black uppercase tracking-tight leading-none text-white">
               ESTALEIRO DMN
