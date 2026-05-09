@@ -82,6 +82,29 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
 
   const role = (roles ?? []).find((r: any) => r.id === emp?.role_id) ?? null;
   const status = emp ? calculateSafetyStatus(emp as any, role as any, (exams ?? []) as any, (vaccines ?? []) as any) : null;
+  const canEditHeader = isEditor || isAdmin;
+  const [uploadingHeaderPhoto, setUploadingHeaderPhoto] = useState(false);
+
+  async function handleHeaderPhotoUpload(file: File) {
+    if (!file || !emp) return;
+    setUploadingHeaderPhoto(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${emp.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const { error } = await supabase.from("employees").update({ foto_url: pub.publicUrl }).eq("id", emp.id);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["employee", emp.id] });
+      qc.invalidateQueries({ queryKey: ["employees"] });
+      toast.success("Foto atualizada");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setUploadingHeaderPhoto(false);
+    }
+  }
 
   if (!emp) return <div className="p-8 text-muted-foreground">Carregando…</div>;
 
@@ -89,6 +112,22 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
     <div className="space-y-6 animate-fadeIn">
       {showHeader && (
       <Card className="p-6 flex flex-wrap items-center gap-6 rounded-2xl border-slate-200 shadow-sm">
+        <label className={`relative h-20 w-20 shrink-0 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200 flex items-center justify-center ${canEditHeader ? "cursor-pointer hover:border-brand transition-colors" : ""}`}>
+          {emp.foto_url ? (
+            <img src={emp.foto_url} alt={emp.nome} className="h-full w-full object-cover" />
+          ) : (
+            <Camera className="h-7 w-7 text-slate-400" />
+          )}
+          {canEditHeader && (
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              disabled={uploadingHeaderPhoto}
+              onChange={(e) => { const file = e.target.files?.[0]; if (file) handleHeaderPhotoUpload(file); }}
+            />
+          )}
+        </label>
         <div className="flex-1 min-w-[240px]">
           <h1 className="heading-display text-3xl text-brand">{emp.nome}</h1>
           <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-1">
