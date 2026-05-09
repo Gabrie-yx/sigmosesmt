@@ -12,7 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText, Camera, X, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText, Camera, X, AlertTriangle, Undo2, CheckCircle2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
@@ -804,6 +806,49 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); toast.success("Removido"); },
   });
 
+  const MOTIVOS_DEV = ["Danificado", "Desgaste Natural", "Extravio", "Mal Uso", "Furto", "Uso Temporário"];
+  const [returning, setReturning] = useState<any | null>(null);
+  const [retForm, setRetForm] = useState<{ motivo: string; data: string; obs: string }>({
+    motivo: "Desgaste Natural",
+    data: new Date().toISOString().slice(0, 10),
+    obs: "",
+  });
+
+  function openReturn(item: any) {
+    setRetForm({ motivo: "Desgaste Natural", data: new Date().toISOString().slice(0, 10), obs: "" });
+    setReturning(item);
+  }
+
+  const returnMut = useMutation({
+    mutationFn: async () => {
+      if (!returning) return;
+      const obs = `Motivo: ${retForm.motivo}${retForm.obs ? ` — ${retForm.obs}` : ""}`;
+      const { error } = await supabase
+        .from("epi_deliveries")
+        .update({ data_devolucao: retForm.data, observacoes: obs })
+        .eq("id", returning.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["epis", empId] });
+      toast.success("Devolução registrada");
+      setReturning(null);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const undoReturn = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("epi_deliveries")
+        .update({ data_devolucao: null, observacoes: null })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); toast.success("Devolução desfeita"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   function gerarFicha() {
     if (!docsOk) {
       toast.error(`Documentação incompleta. Pendentes: ${(missingDocs ?? []).join(", ")}`);
@@ -897,7 +942,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           {epis.map((e: any) => (
             <div
               key={e.id}
-              className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition"
+              className={`flex items-center gap-3 p-3 rounded-xl border transition ${e.data_devolucao ? "border-amber-200 bg-amber-50/40" : "border-slate-200 bg-slate-50/50 hover:bg-slate-50"}`}
             >
               <div className="h-10 w-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0">
                 <HardHat className="h-5 w-5 text-brand" />
@@ -907,11 +952,32 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                   <span className="font-black text-sm text-slate-800 uppercase">{e.item}</span>
                   {e.tamanho && <span className="text-xs text-slate-500">({e.tamanho})</span>}
                   <Badge variant="secondary" className="text-[10px]">QTD: {e.qtd}</Badge>
+                  {e.data_devolucao ? (
+                    <Badge className="bg-amber-500 text-white text-[10px]">DEVOLVIDO</Badge>
+                  ) : (
+                    <Badge className="bg-emerald-500 text-white text-[10px]">EM USO</Badge>
+                  )}
                 </div>
                 <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-0.5">
                   C.A.: {e.ca ?? "N/A"} • Entregue em: <span className="text-slate-700">{formatDateBR(e.data_entrega)}</span>
+                  {e.data_devolucao && (
+                    <> • Devolvido em: <span className="text-amber-700">{formatDateBR(e.data_devolucao)}</span></>
+                  )}
                 </div>
+                {e.data_devolucao && e.observacoes && (
+                  <div className="text-[11px] text-amber-800 mt-0.5 normal-case">{e.observacoes}</div>
+                )}
               </div>
+              {canEdit && !e.data_devolucao && (
+                <Button size="sm" variant="outline" onClick={() => openReturn(e)} className="border-amber-300 text-amber-700 hover:bg-amber-50">
+                  <Undo2 className="h-4 w-4 mr-1" /> Devolver
+                </Button>
+              )}
+              {canEdit && e.data_devolucao && (
+                <Button size="sm" variant="ghost" onClick={() => undoReturn.mutate(e.id)} title="Desfazer devolução">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                </Button>
+              )}
               {canDelete && (
                 <Button size="icon" variant="ghost" onClick={() => del.mutate(e.id)}>
                   <Trash2 className="h-4 w-4 text-destructive" />
@@ -921,6 +987,51 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           ))}
         </div>
       </Card>
+
+      {/* Devolução Dialog */}
+      <Dialog open={!!returning} onOpenChange={(o) => !o && setReturning(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Undo2 className="h-5 w-5 text-amber-600" />
+              Devolução de EPI
+            </DialogTitle>
+          </DialogHeader>
+          {returning && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
+                <div className="font-black uppercase text-slate-700">{returning.item}</div>
+                <div className="text-slate-500 mt-0.5">
+                  {returning.tamanho ? `Tam: ${returning.tamanho} • ` : ""}QTD: {returning.qtd} • Entregue em {formatDateBR(returning.data_entrega)}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Motivo da devolução</Label>
+                <Select value={retForm.motivo} onValueChange={(v) => setRetForm({ ...retForm, motivo: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MOTIVOS_DEV.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Data da devolução</Label>
+                <Input type="date" value={retForm.data} onChange={(e) => setRetForm({ ...retForm, data: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Observações (opcional)</Label>
+                <Textarea rows={3} value={retForm.obs} onChange={(e) => setRetForm({ ...retForm, obs: e.target.value })} placeholder="Detalhes adicionais sobre a devolução…" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setReturning(null)}>Cancelar</Button>
+            <Button onClick={() => returnMut.mutate()} disabled={returnMut.isPending || !retForm.data || !retForm.motivo} className="bg-amber-600 hover:bg-amber-700 text-white">
+              <Undo2 className="h-4 w-4 mr-2" /> Registrar devolução
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
