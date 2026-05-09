@@ -309,7 +309,7 @@ function CompaniesPage() {
         <div className="flex-1 surface-elevated rounded-2xl border border-slate-200/70 p-8 flex flex-col overflow-hidden animate-fadeIn">
           <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="floaty w-11 h-11 rounded-xl bg-gradient-to-br from-red-500 to-red-700 text-white flex items-center justify-center shadow-lg shadow-sky-500/30">
+              <div className="floaty w-11 h-11 rounded-xl bg-gradient-to-br from-red-500 to-red-700 text-white flex items-center justify-center shadow-lg shadow-red-500/30">
                 <Building2 className="h-5 w-5" />
               </div>
               <div>
