@@ -84,6 +84,16 @@ export function AppHeader() {
           Usuários
         </Link>
       )}
+      {isAdmin && (
+        <Link
+          to="/app/audit"
+          className={`rounded-md px-4 py-2 text-sm font-semibold transition-all ${
+            isActive("/app/audit") ? "bg-white/15 text-white shadow-md ring-1 ring-white/30" : "text-white/90 hover:bg-white/10"
+          }`}
+        >
+          Auditoria
+        </Link>
+      )}
     </>
   );
 
