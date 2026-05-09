@@ -15,6 +15,7 @@ const NAV = [
   { to: "/app/companies", label: "Empresas" },
   { to: "/app/roles", label: "Cargos/Riscos" },
   { to: "/app/employees", label: "Colaboradores" },
+  { to: "/app/trainings", label: "Treinamentos" },
 ];
 
 export function AppHeader() {
