@@ -46,20 +46,44 @@ function PtesPage() {
     queryKey: ["exams-all"],
     queryFn: async () => (await supabase.from("employee_exams").select("*")).data ?? [],
   });
+  const { data: vaccines = [] } = useQuery({
+    queryKey: ["vaccines-all"],
+    queryFn: async () => (await supabase.from("employee_vaccinations").select("*")).data ?? [],
+  });
 
   const empOptions = useMemo(() => {
     return emps.map((e: any) => {
       const role = roles.find((r: any) => r.id === e.role_id) ?? null;
       const empExams = exams.filter((x: any) => x.employee_id === e.id);
-      const st = calculateSafetyStatus(e, role as any, empExams as any);
+      const empVacs = vaccines.filter((x: any) => x.employee_id === e.id);
+      const st = calculateSafetyStatus(e, role as any, empExams as any, empVacs as any);
       const comp = companies.find((c: any) => c.id === e.company_id);
       return { e, st, compName: comp?.name ?? "S/ EMPRESA" };
     });
-  }, [emps, roles, exams, companies]);
+  }, [emps, roles, exams, vaccines, companies]);
 
   const save = useMutation({
     mutationFn: async () => {
       const emp = emps.find((x: any) => x.id === f.employee_id);
+      // Bloqueio específico para Limpeza de Tanque (Risco Biológico)
+      if (f.risco?.toLowerCase().includes("tanque") || f.risco?.toLowerCase().includes("biológic")) {
+        const role = roles.find((r: any) => r.id === emp?.role_id);
+        const reqVac: string[] = role?.req_vacinas ?? [];
+        const empVacs = vaccines.filter((v: any) => v.employee_id === emp?.id);
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const missing = reqVac.filter((vac) => {
+          const latest = empVacs
+            .filter((v: any) => v.tipo_vacina === vac)
+            .sort((a: any, b: any) => +new Date(b.data_aplicacao) - +new Date(a.data_aplicacao))[0];
+          if (!latest) return true;
+          if (!latest.anexo_path) return true;
+          if (latest.data_proxima_dose && new Date(latest.data_proxima_dose + "T00:00:00") < today) return true;
+          return false;
+        });
+        if (missing.length) {
+          throw new Error(`PTE bloqueada — vacinas obrigatórias pendentes: ${missing.join(", ")}`);
+        }
+      }
       if (editingId) {
         const { error } = await supabase.from("ptes").update({
           data: f.data, local: f.local || null, risco: f.risco,
