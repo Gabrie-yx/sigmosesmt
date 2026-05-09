@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Briefcase, UserCog, ChevronRight, Plus, FileText, Award, ShieldCheck, Save, Trash2, Stethoscope } from "lucide-react";
+import { Briefcase, UserCog, ChevronRight, Plus, FileText, Award, ShieldCheck, Save, Trash2, Stethoscope, AlertTriangle, X } from "lucide-react";
 import { toast } from "sonner";
 import { NRS_LIST, TIPOS_EXAME } from "@/lib/constants";
 
@@ -12,8 +12,10 @@ export const Route = createFileRoute("/app/roles")({
   component: RolesPage,
 });
 
-type Role = { id: string; name: string; req_aso: boolean; req_integra: boolean; req_nrs: string[]; req_exames: string[] };
-const empty: Partial<Role> = { name: "", req_aso: true, req_integra: true, req_nrs: [], req_exames: [] };
+type Riscos = { fisicos: string[]; quimicos: string[]; ergonomicos: string[]; descricao: string };
+type Role = { id: string; name: string; req_aso: boolean; req_integra: boolean; req_nrs: string[]; req_exames: string[]; riscos: Riscos };
+const emptyRiscos: Riscos = { fisicos: [], quimicos: [], ergonomicos: [], descricao: "" };
+const empty: Partial<Role> = { name: "", req_aso: true, req_integra: true, req_nrs: [], req_exames: [], riscos: emptyRiscos };
 
 function RolesPage() {
   const qc = useQueryClient();
@@ -37,6 +39,7 @@ function RolesPage() {
         req_integra: !!v.req_integra,
         req_nrs: v.req_nrs ?? [],
         req_exames: v.req_exames ?? [],
+        riscos: v.riscos ?? emptyRiscos,
       };
       if (v.id) {
         const { error } = await supabase.from("roles").update(payload).eq("id", v.id);
@@ -79,6 +82,10 @@ function RolesPage() {
 
   const reqNRsSet = useMemo(() => new Set(editing.req_nrs ?? []), [editing.req_nrs]);
   const reqExamesSet = useMemo(() => new Set(editing.req_exames ?? []), [editing.req_exames]);
+
+  const riscos: Riscos = editing.riscos ?? emptyRiscos;
+  const updateRiscos = (patch: Partial<Riscos>) =>
+    setEditing({ ...editing, riscos: { ...riscos, ...patch } });
 
   return (
     <div className="p-6 md:p-8 flex gap-6 h-full bg-[#f1f5f9] animate-fadeIn">
@@ -241,6 +248,54 @@ function RolesPage() {
                 ))}
               </div>
             </div>
+
+            {/* RISCOS PCMSO */}
+            <div className="p-6 border border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col lg:col-span-2">
+              <div className="flex items-center gap-2 mb-6">
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+                <div className="text-[11px] font-black uppercase text-slate-800 tracking-widest">
+                  Riscos Ocupacionais (PCMSO)
+                </div>
+              </div>
+              <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-5">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">
+                    Descrição da Função
+                  </label>
+                  <textarea
+                    value={riscos.descricao}
+                    onChange={(e) => updateRiscos({ descricao: e.target.value })}
+                    disabled={!isEditor}
+                    rows={2}
+                    placeholder="Descreva a atividade do cargo..."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 outline-none focus:border-[#0369a1] disabled:opacity-60"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <TagEditor
+                    label="Riscos Físicos"
+                    color="sky"
+                    items={riscos.fisicos}
+                    onChange={(v) => updateRiscos({ fisicos: v })}
+                    disabled={!isEditor}
+                  />
+                  <TagEditor
+                    label="Riscos Químicos"
+                    color="amber"
+                    items={riscos.quimicos}
+                    onChange={(v) => updateRiscos({ quimicos: v })}
+                    disabled={!isEditor}
+                  />
+                  <TagEditor
+                    label="Riscos Ergonómicos"
+                    color="emerald"
+                    items={riscos.ergonomicos}
+                    onChange={(v) => updateRiscos({ ergonomicos: v })}
+                    disabled={!isEditor}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {isEditor && (
@@ -310,5 +365,57 @@ function NRToggle({
         />
       </button>
     </label>
+  );
+}
+
+function TagEditor({
+  label, items, onChange, disabled, color,
+}: { label: string; items: string[]; onChange: (v: string[]) => void; disabled?: boolean; color: "sky" | "amber" | "emerald" }) {
+  const [val, setVal] = useState("");
+  const colorMap = {
+    sky: "bg-sky-100 text-sky-800 border-sky-200",
+    amber: "bg-amber-100 text-amber-800 border-amber-200",
+    emerald: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  } as const;
+  function add() {
+    const t = val.trim();
+    if (!t) return;
+    if (!items.includes(t)) onChange([...items, t]);
+    setVal("");
+  }
+  return (
+    <div>
+      <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">{label}</label>
+      <div className="flex flex-wrap gap-1.5 min-h-[40px] p-2 bg-slate-50 border border-slate-200 rounded-lg mb-2">
+        {items.length === 0 && (
+          <span className="text-[10px] text-slate-400 italic px-1">nenhum</span>
+        )}
+        {items.map((it) => (
+          <span key={it} className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold border ${colorMap[color]}`}>
+            {it}
+            {!disabled && (
+              <button type="button" onClick={() => onChange(items.filter((x) => x !== it))} className="hover:text-red-600">
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </span>
+        ))}
+      </div>
+      {!disabled && (
+        <div className="flex gap-1">
+          <input
+            type="text"
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
+            placeholder="Adicionar..."
+            className="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[11px] outline-none focus:border-[#0369a1]"
+          />
+          <button type="button" onClick={add} className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-[10px] font-black uppercase">
+            +
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
