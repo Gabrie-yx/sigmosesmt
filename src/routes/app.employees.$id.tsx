@@ -145,6 +145,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </Tabs>
         </TabsContent>
       </Tabs>
+      <FileViewerHost />
     </div>
   );
 }
