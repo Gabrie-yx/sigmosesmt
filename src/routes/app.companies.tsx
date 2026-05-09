@@ -168,8 +168,14 @@ function CompaniesPage() {
                 <div className="text-[9px] font-black px-2 py-1 rounded inline-flex items-center gap-1 text-white bg-white/15 backdrop-blur ring-1 ring-white/20">
                   <Briefcase className="h-3 w-3" /> {selected.type}
                 </div>
-                <div className="text-[9px] font-black uppercase flex items-center gap-1 text-white/80">
-                  <Users className="h-3 w-3" /> {compEmps.length} Vínculos
+                <div className="flex items-center gap-2 rounded-full bg-white/15 ring-1 ring-white/30 backdrop-blur pl-1 pr-3 py-1 shadow-md shadow-black/20">
+                  <span className="h-8 w-8 rounded-full bg-white/25 ring-1 ring-white/40 flex items-center justify-center">
+                    <Users className="h-4 w-4 text-white" />
+                  </span>
+                  <div className="leading-none">
+                    <div className="text-base font-black text-white tabular-nums">{compEmps.length}</div>
+                    <div className="text-[8px] font-black uppercase tracking-widest text-white/80">Vínculos</div>
+                  </div>
                 </div>
               </div>
               <div className="relative flex items-center gap-3">
@@ -258,8 +264,14 @@ function CompaniesPage() {
                 <div className={`text-[9px] font-black px-2 py-1 rounded inline-flex items-center gap-1 ${isSel ? "text-white bg-white/15 ring-1 ring-white/20 backdrop-blur" : ts}`}>
                   <Briefcase className="h-3 w-3" /> {c.type}
                 </div>
-                <div className={`text-[9px] font-black uppercase flex items-center gap-1 ${isSel ? "text-white/80" : "text-slate-400"}`}>
-                  <Users className="h-3 w-3" /> {empCount} Vínculos
+                <div className={`flex items-center gap-2 rounded-full pl-1 pr-3 py-1 shadow-md ${isSel ? "bg-white/15 ring-1 ring-white/30 backdrop-blur shadow-black/20" : "bg-gradient-to-br from-red-50 to-red-100 ring-1 ring-red-200 shadow-red-200/40"}`}>
+                  <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-1 ${isSel ? "bg-white/25 ring-white/40" : "bg-gradient-to-br from-red-500 to-red-700 ring-red-300"}`}>
+                    <Users className={`h-4 w-4 ${isSel ? "text-white" : "text-white"}`} />
+                  </span>
+                  <div className="leading-none">
+                    <div className={`text-base font-black tabular-nums ${isSel ? "text-white" : "text-[#991b1b]"}`}>{empCount}</div>
+                    <div className={`text-[8px] font-black uppercase tracking-widest ${isSel ? "text-white/80" : "text-slate-500"}`}>Vínculos</div>
+                  </div>
                 </div>
               </div>
               <div className="relative flex items-center gap-3">
