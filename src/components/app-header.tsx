@@ -3,23 +3,44 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LogOut, Download, Upload, Menu } from "lucide-react";
+import {
+  LogOut, Download, Upload, Menu, ChevronDown,
+  ShieldCheck, Boxes, Factory, Zap, Wrench, DoorOpen, Lock,
+} from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import dmnLogo from "@/assets/dmn-logo.png";
 
-const NAV = [
-  { to: "/app", label: "Painel TST", exact: true },
+const SESMT_ITEMS = [
   { to: "/app/companies", label: "Empresas" },
-  { to: "/app/roles", label: "Cargos/Riscos" },
+  { to: "/app/roles", label: "Cargos / Riscos" },
   { to: "/app/employees", label: "Colaboradores" },
   { to: "/app/trainings", label: "Treinamentos" },
-];
+  { to: "/app/ptes", label: "Emitir PTE" },
+] as const;
+
+const SESMT_PATHS = SESMT_ITEMS.map((i) => i.to);
+
+const OTHER_MODULES = [
+  { key: "estoque", label: "Estoque", icon: Boxes },
+  { key: "producao", label: "Produção", icon: Factory },
+  { key: "manut-eletrica", label: "Manutenção Elétrica", icon: Zap },
+  { key: "manut-mecanica", label: "Manutenção Mecânica", icon: Wrench },
+  { key: "portaria", label: "Portaria", icon: DoorOpen },
+] as const;
 
 export function AppHeader() {
-  const { user, roles, isAdmin } = useAuth();
+  const { user, roles } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -46,56 +67,85 @@ export function AppHeader() {
     }
   }
 
-  const isActive = (to: string, exact?: boolean) =>
-    exact ? location.pathname === to : location.pathname.startsWith(to);
+  const isActive = (to: string) => location.pathname.startsWith(to);
+  const sesmtActive = SESMT_PATHS.some((p) => location.pathname.startsWith(p));
 
-  const NavLinks = () => (
+  const triggerCls = (active: boolean) =>
+    `flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-bold uppercase tracking-wide transition-all ${
+      active
+        ? "bg-white/15 text-white shadow-md ring-1 ring-white/30"
+        : "text-white/85 hover:bg-white/10 hover:text-white"
+    }`;
+  const disabledCls =
+    "flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-bold uppercase tracking-wide text-white/40 cursor-not-allowed";
+
+  const DesktopNav = () => (
     <>
-      {NAV.map((item) => {
-        const active = isActive(item.to, item.exact);
-        return (
-          <Link
-            key={item.to}
-            to={item.to}
-            className={`rounded-md px-4 py-2 text-sm font-semibold transition-all ${
-              active ? "bg-white/15 text-white shadow-md ring-1 ring-white/30" : "text-white/90 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            {item.label}
-          </Link>
-        );
-      })}
-      <Link
-        to="/app/ptes"
-        className={`rounded-md px-4 py-2 text-sm font-semibold transition-all ${
-          isActive("/app/ptes")
-            ? "bg-amber-500 text-white shadow-md"
-            : "text-amber-200 hover:bg-white/10"
-        }`}
-      >
-        Emitir PTE
-      </Link>
-      {isAdmin && (
-        <Link
-          to="/app/users"
-          className={`rounded-md px-4 py-2 text-sm font-semibold transition-all ${
-            isActive("/app/users") ? "bg-white/15 text-white shadow-md ring-1 ring-white/30" : "text-white/90 hover:bg-white/10"
-          }`}
+      <DropdownMenu>
+        <DropdownMenuTrigger className={triggerCls(sesmtActive)}>
+          <ShieldCheck className="h-4 w-4" /> SESMT
+          <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-red-700">
+            SESMT
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {SESMT_ITEMS.map((item) => (
+            <DropdownMenuItem
+              key={item.to}
+              onSelect={() => navigate({ to: item.to })}
+              className={`cursor-pointer text-sm font-semibold ${
+                isActive(item.to) ? "bg-red-50 text-red-800" : ""
+              }`}
+            >
+              {item.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {OTHER_MODULES.map((m) => (
+        <button
+          key={m.key}
+          type="button"
+          title="Em breve"
+          onClick={() => toast.info(`${m.label}: módulo em desenvolvimento`)}
+          className={disabledCls}
         >
-          Usuários
-        </Link>
-      )}
-      {isAdmin && (
-        <Link
-          to="/app/audit"
-          className={`rounded-md px-4 py-2 text-sm font-semibold transition-all ${
-            isActive("/app/audit") ? "bg-white/15 text-white shadow-md ring-1 ring-white/30" : "text-white/90 hover:bg-white/10"
-          }`}
-        >
-          Auditoria
-        </Link>
-      )}
+          <m.icon className="h-4 w-4" /> {m.label}
+          <Lock className="h-3 w-3 opacity-60" />
+        </button>
+      ))}
     </>
+  );
+
+  const MobileNav = () => (
+    <div className="flex flex-col gap-1 mt-8">
+      <div className="text-[10px] font-black uppercase tracking-widest text-white/60 px-2 mb-1">SESMT</div>
+      {SESMT_ITEMS.map((item) => (
+        <Link
+          key={item.to}
+          to={item.to}
+          className={`rounded-md px-4 py-2 text-sm font-semibold ${
+            isActive(item.to) ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10"
+          }`}
+        >
+          {item.label}
+        </Link>
+      ))}
+      <div className="text-[10px] font-black uppercase tracking-widest text-white/60 px-2 mt-4 mb-1">Outros módulos</div>
+      {OTHER_MODULES.map((m) => (
+        <button
+          key={m.key}
+          onClick={() => toast.info(`${m.label}: módulo em desenvolvimento`)}
+          className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white/40 text-left"
+        >
+          <m.icon className="h-4 w-4" /> {m.label}
+          <Lock className="h-3 w-3 ml-auto" />
+        </button>
+      ))}
+    </div>
   );
 
   return (
@@ -116,7 +166,7 @@ export function AppHeader() {
         </Link>
 
         <nav className="hidden lg:flex items-center gap-1">
-          <NavLinks />
+          <DesktopNav />
         </nav>
 
         <div className="flex items-center gap-2">
@@ -166,12 +216,10 @@ export function AppHeader() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="bg-header border-white/10 text-header-foreground">
-              <div className="flex flex-col gap-2 mt-8">
-                <NavLinks />
-                <Button variant="outline" onClick={handleLogout} className="mt-4">
-                  <LogOut className="h-4 w-4 mr-2" /> Sair
-                </Button>
-              </div>
+              <MobileNav />
+              <Button variant="outline" onClick={handleLogout} className="mt-6 w-full">
+                <LogOut className="h-4 w-4 mr-2" /> Sair
+              </Button>
             </SheetContent>
           </Sheet>
         </div>
