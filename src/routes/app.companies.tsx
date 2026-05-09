@@ -46,6 +46,7 @@ function CompaniesPage() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedEmpId, setSelectedEmpId] = useState<string | null>(null);
+  const [selectedTab, setSelectedTab] = useState<string>("profile");
   const [editing, setEditing] = useState<Partial<Company> | null>(null);
   const [showForm, setShowForm] = useState(true);
 
@@ -271,7 +272,7 @@ function CompaniesPage() {
               <ArrowLeft className="h-4 w-4 mr-1" /> Voltar para {selected.name}
             </Button>
           </div>
-          <EmployeeDetailContent id={selectedEmpId} />
+          <EmployeeDetailContent id={selectedEmpId} initialTab={selectedTab} key={selectedEmpId + selectedTab} />
         </div>
       ) : showForm || (!selected && !showForm) ? (
         <CompanyForm
@@ -362,10 +363,15 @@ function CompaniesPage() {
               const globalOK = asoOK && nrOK && docsOK;
               const badge = (ok: boolean) => ok ? "bg-emerald-500 text-white" : "bg-red-500 text-white";
 
+              const openTab = (t: string) => (e: React.MouseEvent) => {
+                e.stopPropagation();
+                setSelectedTab(t);
+                setSelectedEmpId(emp.id);
+              };
               return (
                 <div
                   key={emp.id}
-                  onClick={() => setSelectedEmpId(emp.id)}
+                  onClick={() => { setSelectedTab("profile"); setSelectedEmpId(emp.id); }}
                   className={`p-4 rounded-xl border ${globalOK ? "border-slate-200 bg-slate-50" : "border-red-200 bg-red-50/30"} hover:border-[#0369a1] cursor-pointer transition-all flex items-center justify-between group`}
                 >
                   <div className="flex items-center gap-4">
@@ -378,22 +384,22 @@ function CompaniesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm ${badge(asoOK)}`}>
+                    <button type="button" onClick={openTab("health")} title="Ir para Saúde" className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm hover:opacity-90 ${badge(asoOK)}`}>
                       <HeartPulse className="h-3.5 w-3.5" /> ASO
-                    </span>
-                    <span className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm ${reqNRs.length === 0 ? "bg-red-500 text-white" : badge(nrOK)}`}>
+                    </button>
+                    <button type="button" onClick={openTab("nrs")} title="Ir para NRs" className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm hover:opacity-90 ${reqNRs.length === 0 ? "bg-red-500 text-white" : badge(nrOK)}`}>
                       <Award className="h-3.5 w-3.5" /> NR
-                    </span>
-                    <span className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm ${badge(docsOK)}`}>
+                    </button>
+                    <button type="button" onClick={openTab("docs")} title="Ir para Documentos" className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm hover:opacity-90 ${badge(docsOK)}`}>
                       <FolderOpen className="h-3.5 w-3.5" /> DOCS
-                    </span>
-                    <span className="w-9 h-9 rounded-lg bg-slate-200 text-slate-500 flex items-center justify-center shadow-sm">
+                    </button>
+                    <button type="button" onClick={openTab("epi")} title="Ir para EPI" className="w-9 h-9 rounded-lg bg-slate-200 text-slate-500 flex items-center justify-center shadow-sm hover:bg-slate-300">
                       <HardHat className="h-4 w-4" />
-                    </span>
-                    <span className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase ${globalOK ? "bg-emerald-500" : "bg-red-500"} text-white tracking-widest flex items-center gap-1.5 shadow-md`}>
+                    </button>
+                    <button type="button" onClick={openTab("profile")} title="Abrir auditoria do colaborador" className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase ${globalOK ? "bg-emerald-500" : "bg-red-500"} text-white tracking-widest flex items-center gap-1.5 shadow-md hover:opacity-90`}>
                       {globalOK ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
                       {globalOK ? "APTO" : "AUDITAR"}
-                    </span>
+                    </button>
                     <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-[#0369a1]" />
                   </div>
                 </div>
