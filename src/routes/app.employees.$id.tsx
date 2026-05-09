@@ -936,7 +936,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             <Plus className="h-4 w-4 text-brand" />
             <h3 className="text-xs font-black uppercase tracking-widest text-brand">Registrar entrega de EPI</h3>
           </div>
-          <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <form onSubmit={(e) => { e.preventDefault(); submitDelivery(); }} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
             <div className="md:col-span-4 space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição do EPI</Label>
               <Select value={f.item} onValueChange={(v) => setF({ ...f, item: v, tamanho: "" })}>
