@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -12,464 +11,185 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  HardHat,
-  Package,
-  AlertTriangle,
-  XCircle,
-  Plus,
-  Minus,
-  Search,
-  Download,
-  RotateCcw,
-  Trash2,
-} from "lucide-react";
+import { HardHat, Search, Download, RotateCcw, Plus } from "lucide-react";
 import { toast } from "sonner";
 
-type Variant = {
+type EpiRow = {
   id: string;
-  cor?: string;
-  tamanho?: string;
-  qtd: number;
-};
-
-type EpiProduct = {
-  id: string;
-  item: string;
+  arvAv: string;
+  material: string;
+  descricao: string;
+  umb: "UN" | "CX" | "PC" | "KG" | "M" | "GAL";
+  estoqueInicial: number;
+  entradas: number;
+  saidas: number;
   ca?: string;
-  unidade: "UN" | "CX";
-  minimo: number;
-  variantes: Variant[];
 };
 
-const SEED: EpiProduct[] = [
-  {
-    id: "camisa",
-    item: "CAMISA",
-    unidade: "UN",
-    minimo: 5,
-    variantes: [
-      { id: "v1", cor: "AZUL", tamanho: "P", qtd: 0 },
-      { id: "v2", cor: "AZUL", tamanho: "M", qtd: 0 },
-      { id: "v3", cor: "AZUL", tamanho: "G", qtd: 0 },
-      { id: "v4", cor: "AZUL", tamanho: "GG", qtd: 0 },
-      { id: "v5", cor: "CINZA", tamanho: "M", qtd: 0 },
-    ],
-  },
-  {
-    id: "calca",
-    item: "CALÇA",
-    unidade: "UN",
-    minimo: 5,
-    variantes: [
-      { id: "v1", cor: "AZUL", tamanho: "P", qtd: 0 },
-      { id: "v2", cor: "AZUL", tamanho: "M", qtd: 0 },
-      { id: "v3", cor: "AZUL", tamanho: "GG", qtd: 0 },
-      { id: "v4", cor: "AZUL", tamanho: "EG", qtd: 0 },
-      { id: "v5", cor: "CINZA", tamanho: "P", qtd: 0 },
-      { id: "v6", cor: "CINZA", tamanho: "M", qtd: 0 },
-    ],
-  },
-  {
-    id: "macacao",
-    item: "MACACÃO",
-    ca: "41609",
-    unidade: "UN",
-    minimo: 3,
-    variantes: [
-      { id: "v1", cor: "AZUL", tamanho: "P", qtd: 0 },
-      { id: "v2", cor: "AZUL", tamanho: "M", qtd: 0 },
-      { id: "v3", cor: "AZUL", tamanho: "G", qtd: 0 },
-      { id: "v4", cor: "CINZA", tamanho: "P", qtd: 2 },
-      { id: "v5", cor: "CINZA", tamanho: "M", qtd: 3 },
-    ],
-  },
-  {
-    id: "bota",
-    item: "BOTA",
-    ca: "43164",
-    unidade: "UN",
-    minimo: 3,
-    variantes: [
-      { id: "v1", tamanho: "36", qtd: 0 },
-      { id: "v2", tamanho: "37", qtd: 3 },
-      { id: "v3", tamanho: "39", qtd: 8 },
-      { id: "v4", tamanho: "40", qtd: 0 },
-      { id: "v5", tamanho: "41", qtd: 0 },
-      { id: "v6", tamanho: "42", qtd: 0 },
-      { id: "v7", tamanho: "44", qtd: 0 },
-    ],
-  },
-  {
-    id: "bota-pvc",
-    item: "BOTA PVC CANO CURTO",
-    ca: "37456",
-    unidade: "UN",
-    minimo: 3,
-    variantes: [
-      { id: "v1", tamanho: "42", qtd: 0 },
-      { id: "v2", tamanho: "44", qtd: 0 },
-    ],
-  },
-  {
-    id: "colete",
-    item: "COLETE",
-    unidade: "UN",
-    minimo: 5,
-    variantes: [{ id: "v1", cor: "LARANJA", qtd: 8 }],
-  },
-  {
-    id: "capacete",
-    item: "CAPACETE",
-    unidade: "UN",
-    minimo: 3,
-    variantes: [
-      { id: "v1", cor: "BRANCO", qtd: 2 },
-      { id: "v2", cor: "VERDE", qtd: 3 },
-      { id: "v3", cor: "VERMELHO", qtd: 7 },
-    ],
-  },
-  {
-    id: "carneira",
-    item: "CARNEIRA",
-    unidade: "UN",
-    minimo: 3,
-    variantes: [
-      { id: "v1", cor: "CINZA", qtd: 8 },
-      { id: "v2", cor: "3M", qtd: 0 },
-      { id: "v3", cor: "MSA", qtd: 0 },
-    ],
-  },
-  {
-    id: "viseira",
-    item: "VISEIRA",
-    unidade: "UN",
-    minimo: 10,
-    variantes: [{ id: "v1", qtd: 56 }],
-  },
-  {
-    id: "balaclava",
-    item: "BALACLAVA",
-    unidade: "UN",
-    minimo: 5,
-    variantes: [
-      { id: "v1", cor: "PRETA", qtd: 15 },
-      { id: "v2", cor: "BRANCA", qtd: 0 },
-    ],
-  },
-  {
-    id: "respirador-semifacial",
-    item: "RESPIRADOR SEMIFACIAL",
-    unidade: "UN",
-    minimo: 5,
-    variantes: [{ id: "v1", qtd: 15 }],
-  },
-  {
-    id: "retentor-filtro",
-    item: "RETENTOR PARA FILTRO",
-    unidade: "CX",
-    minimo: 2,
-    variantes: [{ id: "v1", qtd: 5 }],
-  },
-  {
-    id: "filtro-particula",
-    item: "FILTRO PARA PARTÍCULA",
-    unidade: "UN",
-    minimo: 5,
-    variantes: [{ id: "v1", qtd: 14 }],
-  },
-  {
-    id: "cartucho-vapores",
-    item: "CARTUCHO PARA VAPORES",
-    unidade: "UN",
-    minimo: 5,
-    variantes: [{ id: "v1", qtd: 20 }],
-  },
-  {
-    id: "filtro-particula-3m",
-    item: "FILTRO PARA PARTÍCULA 3M",
-    unidade: "CX",
-    minimo: 5,
-    variantes: [{ id: "v1", qtd: 20 }],
-  },
-  {
-    id: "respirador-descartavel",
-    item: "RESPIRADOR DESCARTÁVEL",
-    ca: "44594",
-    unidade: "UN",
-    minimo: 10,
-    variantes: [{ id: "v1", qtd: 43 }],
-  },
-  {
-    id: "oculos",
-    item: "ÓCULOS",
-    unidade: "UN",
-    minimo: 5,
-    variantes: [
-      { id: "v1", cor: "JAGUAR TRANSPARENTE", qtd: 25 },
-      { id: "v2", cor: "PRETO", qtd: 19 },
-      { id: "v3", cor: "AMARELO", qtd: 12 },
-    ],
-  },
-  {
-    id: "luva-vaqueta",
-    item: "LUVA VAQUETA",
-    ca: "253961",
-    unidade: "UN",
-    minimo: 20,
-    variantes: [
-      { id: "v1", cor: "PUNHO LONGO", qtd: 192 },
-      { id: "v2", cor: "PUNHO CURTO", qtd: 125 },
-    ],
-  },
-  {
-    id: "luva-raspa",
-    item: "LUVA DE RASPA",
-    unidade: "UN",
-    minimo: 20,
-    variantes: [
-      { id: "v1", cor: "VOLK", qtd: 157 },
-      { id: "v2", cor: "DMN", qtd: 0 },
-    ],
-  },
-  {
-    id: "luva-branca",
-    item: "LUVA BRANCA / ALGODÃO",
-    ca: "30521",
-    unidade: "UN",
-    minimo: 20,
-    variantes: [{ id: "v1", qtd: 118 }],
-  },
-  {
-    id: "macacao-seguranca",
-    item: "MACACÃO DE SEGURANÇA",
-    ca: "36783",
-    unidade: "UN",
-    minimo: 3,
-    variantes: [{ id: "v1", qtd: 0 }],
-  },
-  {
-    id: "avental-solda",
-    item: "AVENTAL DE SOLDA",
-    ca: "38716",
-    unidade: "UN",
-    minimo: 5,
-    variantes: [{ id: "v1", qtd: 40 }],
-  },
-  {
-    id: "perneira-raspa",
-    item: "PERNEIRA DE RASPA",
-    unidade: "UN",
-    minimo: 5,
-    variantes: [{ id: "v1", qtd: 58 }],
-  },
-  {
-    id: "luva-preta",
-    item: "LUVA PRETA",
-    unidade: "UN",
-    minimo: 20,
-    variantes: [{ id: "v1", qtd: 202 }],
-  },
-  {
-    id: "protetor-solar",
-    item: "PROTETOR SOLAR",
-    ca: "4114",
-    unidade: "UN",
-    minimo: 3,
-    variantes: [{ id: "v1", qtd: 6 }],
-  },
-  {
-    id: "lente-protecao",
-    item: "LENTE DE PROTEÇÃO",
-    unidade: "UN",
-    minimo: 30,
-    variantes: [
-      { id: "v1", cor: "ESCURA", qtd: 347 },
-      { id: "v2", cor: "TRANSPARENTE", qtd: 461 },
-    ],
-  },
-  {
-    id: "talabarte",
-    item: "TALABARTE",
-    ca: "35531",
-    unidade: "UN",
-    minimo: 2,
-    variantes: [{ id: "v1", qtd: 4 }],
-  },
-  {
-    id: "protetor-auricular",
-    item: "PROTETOR AURICULAR",
-    ca: "5745",
-    unidade: "UN",
-    minimo: 20,
-    variantes: [{ id: "v1", qtd: 168 }],
-  },
-  {
-    id: "jugular",
-    item: "JUGULAR",
-    unidade: "UN",
-    minimo: 3,
-    variantes: [
-      { id: "v1", cor: "MSA", qtd: 0 },
-      { id: "v2", cor: "3M", qtd: 12 },
-    ],
-  },
-  {
-    id: "mangote-raspa",
-    item: "MANGOTE RASPA",
-    ca: "39273",
-    unidade: "UN",
-    minimo: 10,
-    variantes: [{ id: "v1", qtd: 98 }],
-  },
+const SEED_RAW: Omit<EpiRow, "id" | "arvAv" | "material">[] = [
+  // CAMISA
+  { descricao: "CAMISA AZUL TAM. P", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  { descricao: "CAMISA AZUL TAM. M", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  { descricao: "CAMISA AZUL TAM. G", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  { descricao: "CAMISA AZUL TAM. GG", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  { descricao: "CAMISA CINZA TAM. M", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  // CALÇA
+  { descricao: "CALÇA AZUL TAM. P", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  { descricao: "CALÇA AZUL TAM. M", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  { descricao: "CALÇA AZUL TAM. GG", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  { descricao: "CALÇA AZUL TAM. EG", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  { descricao: "CALÇA CINZA TAM. P", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  { descricao: "CALÇA CINZA TAM. M", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  // MACACÃO
+  { descricao: "MACACÃO AZUL TAM. P", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "41609" },
+  { descricao: "MACACÃO AZUL TAM. M", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "41609" },
+  { descricao: "MACACÃO AZUL TAM. G", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "41609" },
+  { descricao: "MACACÃO CINZA TAM. P", umb: "UN", estoqueInicial: 2, entradas: 0, saidas: 0, ca: "41609" },
+  { descricao: "MACACÃO CINZA TAM. M", umb: "UN", estoqueInicial: 3, entradas: 0, saidas: 0, ca: "41609" },
+  // BOTA
+  { descricao: "BOTA TAM. 36", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "43164" },
+  { descricao: "BOTA TAM. 37", umb: "UN", estoqueInicial: 3, entradas: 0, saidas: 0, ca: "43164" },
+  { descricao: "BOTA TAM. 39", umb: "UN", estoqueInicial: 8, entradas: 0, saidas: 0, ca: "43164" },
+  { descricao: "BOTA TAM. 40", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "43164" },
+  { descricao: "BOTA TAM. 41", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "43164" },
+  { descricao: "BOTA TAM. 42", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "43164" },
+  { descricao: "BOTA TAM. 44", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "43164" },
+  // BOTA PVC
+  { descricao: "BOTA PVC CANO CURTO TAM. 42", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "37456" },
+  { descricao: "BOTA PVC CANO CURTO TAM. 44", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "37456" },
+  // CAPACETE
+  { descricao: "COLETE LARANJA", umb: "UN", estoqueInicial: 8, entradas: 0, saidas: 0 },
+  { descricao: "CAPACETE BRANCO", umb: "UN", estoqueInicial: 2, entradas: 0, saidas: 0, ca: "29792" },
+  { descricao: "CAPACETE VERDE", umb: "UN", estoqueInicial: 3, entradas: 0, saidas: 0, ca: "8304" },
+  { descricao: "CAPACETE VERMELHO", umb: "UN", estoqueInicial: 7, entradas: 0, saidas: 0, ca: "8304" },
+  // CARNEIRA
+  { descricao: "CARNEIRA CINZA", umb: "UN", estoqueInicial: 8, entradas: 0, saidas: 0 },
+  { descricao: "CARNEIRA 3M", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  { descricao: "CARNEIRA MSA", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "29638" },
+  { descricao: "VISEIRA", umb: "UN", estoqueInicial: 56, entradas: 0, saidas: 0 },
+  // BALACLAVA
+  { descricao: "BALACLAVA PRETA", umb: "UN", estoqueInicial: 15, entradas: 0, saidas: 0 },
+  { descricao: "BALACLAVA BRANCA", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  // RESPIRADOR
+  { descricao: "RESPIRADOR SEMIFACIAL", umb: "UN", estoqueInicial: 15, entradas: 0, saidas: 0 },
+  { descricao: "RETENTOR PARA FILTRO", umb: "CX", estoqueInicial: 5, entradas: 0, saidas: 0 },
+  { descricao: "FILTRO PARA PARTÍCULA", umb: "UN", estoqueInicial: 14, entradas: 0, saidas: 0 },
+  { descricao: "CARTUCHO PARA VAPORES", umb: "UN", estoqueInicial: 20, entradas: 0, saidas: 0 },
+  { descricao: "FILTRO PARA PARTÍCULA 3M", umb: "CX", estoqueInicial: 20, entradas: 0, saidas: 0 },
+  { descricao: "RESPIRADOR DESCARTÁVEL", umb: "UN", estoqueInicial: 43, entradas: 0, saidas: 0, ca: "44594" },
+  // ÓCULOS
+  { descricao: "ÓCULOS JAGUAR TRANSPARENTE", umb: "UN", estoqueInicial: 25, entradas: 0, saidas: 0, ca: "12572" },
+  { descricao: "ÓCULOS PRETO", umb: "UN", estoqueInicial: 19, entradas: 0, saidas: 0, ca: "27418" },
+  { descricao: "ÓCULOS AMARELO", umb: "UN", estoqueInicial: 12, entradas: 0, saidas: 0, ca: "12572" },
+  // LUVAS
+  { descricao: "LUVA VAQUETA PUNHO LONGO", umb: "UN", estoqueInicial: 192, entradas: 0, saidas: 0, ca: "253961" },
+  { descricao: "LUVA VAQUETA PUNHO CURTO", umb: "UN", estoqueInicial: 125, entradas: 0, saidas: 0, ca: "253961" },
+  { descricao: "LUVA DE RASPA VOLK", umb: "UN", estoqueInicial: 157, entradas: 0, saidas: 0, ca: "17158" },
+  { descricao: "LUVA DE RASPA DMN", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  { descricao: "LUVA BRANCA / ALGODÃO", umb: "UN", estoqueInicial: 118, entradas: 0, saidas: 0, ca: "30521" },
+  { descricao: "LUVA PRETA", umb: "UN", estoqueInicial: 202, entradas: 0, saidas: 0 },
+  // OUTROS
+  { descricao: "MACACÃO DE SEGURANÇA", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0, ca: "36783" },
+  { descricao: "AVENTAL DE SOLDA", umb: "UN", estoqueInicial: 40, entradas: 0, saidas: 0, ca: "38716" },
+  { descricao: "PERNEIRA DE RASPA", umb: "UN", estoqueInicial: 58, entradas: 0, saidas: 0 },
+  { descricao: "PROTETOR SOLAR", umb: "UN", estoqueInicial: 6, entradas: 0, saidas: 0, ca: "4114" },
+  { descricao: "LENTE DE PROTEÇÃO ESCURA", umb: "UN", estoqueInicial: 347, entradas: 0, saidas: 0 },
+  { descricao: "LENTE DE PROTEÇÃO TRANSPARENTE", umb: "UN", estoqueInicial: 461, entradas: 0, saidas: 0 },
+  { descricao: "TALABARTE", umb: "UN", estoqueInicial: 4, entradas: 0, saidas: 0, ca: "35531" },
+  { descricao: "PROTETOR AURICULAR", umb: "UN", estoqueInicial: 168, entradas: 0, saidas: 0, ca: "5745" },
+  { descricao: "JUGULAR MSA", umb: "UN", estoqueInicial: 0, entradas: 0, saidas: 0 },
+  { descricao: "JUGULAR 3M", umb: "UN", estoqueInicial: 12, entradas: 0, saidas: 0 },
+  { descricao: "MANGOTE RASPA", umb: "UN", estoqueInicial: 98, entradas: 0, saidas: 0, ca: "39273" },
 ];
 
-const STORAGE_KEY = "estoque-epi-sesmt-v2";
+function buildSeed(): EpiRow[] {
+  return SEED_RAW.map((r, i) => ({
+    ...r,
+    id: `epi-${i + 1}`,
+    arvAv: "C030",
+    material: String(40000001 + i),
+  }));
+}
+
+const STORAGE_KEY = "estoque-epi-sesmt-v3";
 
 export const Route = createFileRoute("/app/estoque/sesmt")({
   component: EstoqueSesmtPage,
 });
 
 function EstoqueSesmtPage() {
-  const [products, setProducts] = useState<EpiProduct[]>(() => SEED);
+  const [rows, setRows] = useState<EpiRow[]>(() => buildSeed());
   const [query, setQuery] = useState("");
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as EpiProduct[];
-        if (Array.isArray(parsed) && parsed.length) setProducts(parsed);
+        const parsed = JSON.parse(raw) as EpiRow[];
+        if (Array.isArray(parsed) && parsed.length) setRows(parsed);
       }
     } catch {}
   }, []);
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
     } catch {}
-  }, [products]);
-
-  const totals = useMemo(() => {
-    const totalProdutos = products.length;
-    const totalVariantes = products.reduce((a, p) => a + p.variantes.length, 0);
-    const totalUnidades = products.reduce(
-      (a, p) => a + p.variantes.reduce((b, v) => b + v.qtd, 0),
-      0,
-    );
-    let semEstoque = 0;
-    let baixo = 0;
-    products.forEach((p) => {
-      p.variantes.forEach((v) => {
-        if (v.qtd === 0) semEstoque++;
-        else if (v.qtd <= p.minimo) baixo++;
-      });
-    });
-    return { totalProdutos, totalVariantes, totalUnidades, semEstoque, baixo };
-  }, [products]);
+  }, [rows]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter(
-      (p) =>
-        p.item.toLowerCase().includes(q) ||
-        (p.ca || "").toLowerCase().includes(q) ||
-        p.variantes.some(
-          (v) =>
-            (v.cor || "").toLowerCase().includes(q) ||
-            (v.tamanho || "").toLowerCase().includes(q),
-        ),
+    if (!q) return rows;
+    return rows.filter(
+      (r) =>
+        r.descricao.toLowerCase().includes(q) ||
+        r.material.toLowerCase().includes(q) ||
+        (r.ca || "").toLowerCase().includes(q),
     );
-  }, [products, query]);
+  }, [rows, query]);
 
-  function updateVariant(productId: string, variantId: string, patch: Partial<Variant>) {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === productId
-          ? {
-              ...p,
-              variantes: p.variantes.map((v) =>
-                v.id === variantId ? { ...v, ...patch } : v,
-              ),
-            }
-          : p,
-      ),
-    );
+  const totals = useMemo(() => {
+    let inicial = 0, ent = 0, sai = 0, fin = 0;
+    rows.forEach((r) => {
+      inicial += r.estoqueInicial;
+      ent += r.entradas;
+      sai += r.saidas;
+      fin += r.estoqueInicial + r.entradas - r.saidas;
+    });
+    return { inicial, ent, sai, fin, total: rows.length };
+  }, [rows]);
+
+  function update(id: string, patch: Partial<EpiRow>) {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
 
-  function adjustVariant(productId: string, variantId: string, delta: number) {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === productId
-          ? {
-              ...p,
-              variantes: p.variantes.map((v) =>
-                v.id === variantId
-                  ? { ...v, qtd: Math.max(0, v.qtd + delta) }
-                  : v,
-              ),
-            }
-          : p,
-      ),
-    );
-  }
-
-  function addVariant(productId: string) {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === productId
-          ? {
-              ...p,
-              variantes: [
-                ...p.variantes,
-                {
-                  id: `v${Date.now()}`,
-                  cor: "",
-                  tamanho: "",
-                  qtd: 0,
-                },
-              ],
-            }
-          : p,
-      ),
-    );
-  }
-
-  function removeVariant(productId: string, variantId: string) {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === productId
-          ? { ...p, variantes: p.variantes.filter((v) => v.id !== variantId) }
-          : p,
-      ),
-    );
-  }
-
-  function updateProduct(productId: string, patch: Partial<EpiProduct>) {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === productId ? { ...p, ...patch } : p)),
-    );
+  function addRow() {
+    setRows((prev) => [
+      ...prev,
+      {
+        id: `epi-${Date.now()}`,
+        arvAv: "C030",
+        material: String(40000001 + prev.length),
+        descricao: "",
+        umb: "UN",
+        estoqueInicial: 0,
+        entradas: 0,
+        saidas: 0,
+      },
+    ]);
   }
 
   function exportCsv() {
-    const header = ["Produto", "CA", "Cor", "Tamanho", "Quantidade", "Unidade", "Mínimo", "Status"];
-    const rows: string[][] = [];
-    products.forEach((p) => {
-      p.variantes.forEach((v) => {
-        rows.push([
-          p.item,
-          p.ca || "",
-          v.cor || "",
-          v.tamanho || "",
-          String(v.qtd),
-          p.unidade,
-          String(p.minimo),
-          statusFor(v.qtd, p.minimo),
-        ]);
-      });
-    });
-    const csv = [header, ...rows]
+    const header = [
+      "ÁrAv", "Material", "Texto breve material", "UMB",
+      "Estoque inicial", "Totais qtds.entrada", "Totais qtds.saída", "Estoque final", "CA",
+    ];
+    const out = rows.map((r) => [
+      r.arvAv, r.material, r.descricao, r.umb,
+      String(r.estoqueInicial), String(r.entradas), String(r.saidas),
+      String(r.estoqueInicial + r.entradas - r.saidas), r.ca || "",
+    ]);
+    const csv = [header, ...out]
       .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(";"))
       .join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
@@ -484,12 +204,12 @@ function EstoqueSesmtPage() {
 
   function resetData() {
     if (!confirm("Restaurar estoque para os valores originais?")) return;
-    setProducts(SEED);
+    setRows(buildSeed());
     toast.success("Estoque restaurado");
   }
 
   return (
-    <div className="container mx-auto px-4 md:px-8 py-6 space-y-6">
+    <div className="container mx-auto px-4 md:px-8 py-6 space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
@@ -500,12 +220,15 @@ function EstoqueSesmtPage() {
             Painel de EPI's
           </h1>
           <p className="text-sm text-muted-foreground">
-            Controle de Equipamentos de Proteção Individual agrupados por produto e variação.
+            Controle de Estoque — formato SAP (ÁrAv · Material · Estoque inicial · Entradas · Saídas · Estoque final).
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={resetData}>
             <RotateCcw className="h-4 w-4 mr-1.5" /> Restaurar
+          </Button>
+          <Button variant="outline" size="sm" onClick={addRow}>
+            <Plus className="h-4 w-4 mr-1.5" /> Novo material
           </Button>
           <Button size="sm" onClick={exportCsv}>
             <Download className="h-4 w-4 mr-1.5" /> Exportar CSV
@@ -514,222 +237,158 @@ function EstoqueSesmtPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <SummaryCard icon={Package} label="Produtos" value={totals.totalProdutos} tone="slate" />
-        <SummaryCard icon={Package} label="Variações" value={totals.totalVariantes} tone="slate" />
-        <SummaryCard icon={Package} label="Unidades" value={totals.totalUnidades} tone="blue" />
-        <SummaryCard icon={AlertTriangle} label="Baixo estoque" value={totals.baixo} tone="amber" />
-        <SummaryCard icon={XCircle} label="Sem estoque" value={totals.semEstoque} tone="red" />
+        <Stat label="Materiais" value={totals.total} />
+        <Stat label="Estoque inicial" value={totals.inicial} />
+        <Stat label="Entradas" value={totals.ent} tone="green" />
+        <Stat label="Saídas" value={totals.sai} tone="red" />
+        <Stat label="Estoque final" value={totals.fin} tone="bold" />
       </div>
 
       <div className="relative max-w-md">
         <Search className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Buscar por produto, CA, cor ou tamanho…"
+          placeholder="Buscar por descrição, material ou CA…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="pl-8"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {filtered.map((p) => {
-          const totalQtd = p.variantes.reduce((a, v) => a + v.qtd, 0);
-          const hasCor = p.variantes.some((v) => v.cor);
-          const hasTam = p.variantes.some((v) => v.tamanho);
-          return (
-            <Card key={p.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <CardTitle className="text-base font-black uppercase tracking-tight">
-                      {p.item}
-                    </CardTitle>
-                    <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
-                      <span>
-                        CA:{" "}
-                        <input
-                          value={p.ca || ""}
-                          onChange={(e) => updateProduct(p.id, { ca: e.target.value })}
-                          placeholder="—"
-                          className="bg-transparent outline-none border-b border-dashed border-muted-foreground/30 focus:border-foreground w-20 text-foreground"
-                        />
-                      </span>
-                      <span>Un.: {p.unidade}</span>
-                      <span>
-                        Mínimo:{" "}
-                        <input
-                          value={p.minimo}
-                          onChange={(e) =>
-                            updateProduct(p.id, {
-                              minimo: Math.max(0, parseInt(e.target.value || "0", 10) || 0),
-                            })
-                          }
-                          inputMode="numeric"
-                          className="bg-transparent outline-none border-b border-dashed border-muted-foreground/30 focus:border-foreground w-10 text-foreground text-center"
-                        />
-                      </span>
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="font-black">
-                    {totalQtd} {p.unidade}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {hasCor && <TableHead className="h-8">Variação</TableHead>}
-                      {hasTam && <TableHead className="h-8">Tamanho</TableHead>}
-                      <TableHead className="h-8 text-center">Qtd.</TableHead>
-                      <TableHead className="h-8">Status</TableHead>
-                      <TableHead className="h-8 w-8"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {p.variantes.map((v) => {
-                      const status = statusFor(v.qtd, p.minimo);
-                      return (
-                        <TableRow key={v.id}>
-                          {hasCor && (
-                            <TableCell className="py-1.5">
-                              <Input
-                                value={v.cor || ""}
-                                onChange={(e) =>
-                                  updateVariant(p.id, v.id, { cor: e.target.value })
-                                }
-                                placeholder="—"
-                                className="h-7 text-xs uppercase font-semibold"
-                              />
-                            </TableCell>
-                          )}
-                          {hasTam && (
-                            <TableCell className="py-1.5">
-                              <Input
-                                value={v.tamanho || ""}
-                                onChange={(e) =>
-                                  updateVariant(p.id, v.id, { tamanho: e.target.value })
-                                }
-                                placeholder="—"
-                                className="h-7 text-xs uppercase text-center w-14"
-                              />
-                            </TableCell>
-                          )}
-                          <TableCell className="py-1.5">
-                            <div className="flex items-center justify-center gap-1">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => adjustVariant(p.id, v.id, -1)}
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <Input
-                                value={v.qtd}
-                                onChange={(e) =>
-                                  updateVariant(p.id, v.id, {
-                                    qtd: Math.max(0, parseInt(e.target.value || "0", 10) || 0),
-                                  })
-                                }
-                                inputMode="numeric"
-                                className="h-7 w-14 text-center text-sm"
-                              />
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => adjustVariant(p.id, v.id, 1)}
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                          <TableCell className="py-1.5">
-                            <StatusBadge status={status} />
-                          </TableCell>
-                          <TableCell className="py-1.5">
-                            {p.variantes.length > 1 && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 text-muted-foreground hover:text-red-700"
-                                onClick={() => removeVariant(p.id, v.id)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-                <div className="mt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={() => addVariant(p.id)}
-                  >
-                    <Plus className="h-3 w-3 mr-1" /> Adicionar variação
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-        {filtered.length === 0 && (
-          <div className="col-span-full text-center text-muted-foreground py-10">
-            Nenhum produto encontrado.
-          </div>
-        )}
-      </div>
+      <Card className="overflow-hidden">
+        <CardContent className="p-0 overflow-x-auto">
+          <Table className="min-w-[1000px] text-[12px] font-mono">
+            <TableHeader>
+              <TableRow className="bg-slate-100 hover:bg-slate-100 border-b-2 border-slate-300">
+                <TableHead className="h-8 font-bold text-slate-700 w-[60px]">ÁrAv</TableHead>
+                <TableHead className="h-8 font-bold text-slate-700 w-[90px]">Material</TableHead>
+                <TableHead className="h-8 font-bold text-slate-700">Texto breve material</TableHead>
+                <TableHead className="h-8 font-bold text-slate-700 w-[60px]">UMB</TableHead>
+                <TableHead className="h-8 font-bold text-slate-700 text-right w-[110px]">Estoque inicial</TableHead>
+                <TableHead className="h-8 font-bold text-slate-700 text-right w-[120px]">Totais qtds.entrada</TableHead>
+                <TableHead className="h-8 font-bold text-slate-700 text-right w-[120px]">Totais qtds.saída</TableHead>
+                <TableHead className="h-8 font-bold text-slate-700 text-right w-[110px]">Estoque final</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((r) => {
+                const final = r.estoqueInicial + r.entradas - r.saidas;
+                return (
+                  <TableRow key={r.id} className="hover:bg-slate-50/60 border-b border-slate-200">
+                    <TableCell className="py-1 px-2 text-slate-700">{r.arvAv}</TableCell>
+                    <TableCell className="py-1 px-2 text-slate-700">{r.material}</TableCell>
+                    <TableCell className="py-1 px-2">
+                      <input
+                        value={r.descricao}
+                        onChange={(e) => update(r.id, { descricao: e.target.value })}
+                        className="w-full bg-transparent outline-none focus:bg-yellow-50 px-1"
+                      />
+                    </TableCell>
+                    <TableCell className="py-1 px-2 text-slate-700">{r.umb}</TableCell>
+                    <Numeric
+                      value={r.estoqueInicial}
+                      onChange={(v) => update(r.id, { estoqueInicial: v })}
+                      highlight={r.estoqueInicial > 0 ? "green" : undefined}
+                    />
+                    <Numeric
+                      value={r.entradas}
+                      onChange={(v) => update(r.id, { entradas: v })}
+                      highlight={r.entradas > 0 ? "green" : undefined}
+                    />
+                    <Numeric
+                      value={r.saidas}
+                      onChange={(v) => update(r.id, { saidas: v })}
+                      highlight={r.saidas > 0 ? "red" : undefined}
+                      suffix={r.saidas > 0 ? "-" : ""}
+                    />
+                    <TableCell
+                      className={`py-1 px-2 text-right font-semibold ${
+                        final > 0 ? "bg-emerald-50 text-emerald-900" : final < 0 ? "bg-red-100 text-red-900" : "text-slate-500"
+                      }`}
+                    >
+                      {formatNum(final, r.umb)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    Nenhum material encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-function statusFor(qtd: number, minimo: number): "Sem estoque" | "Baixo" | "OK" {
-  if (qtd === 0) return "Sem estoque";
-  if (qtd <= minimo) return "Baixo";
-  return "OK";
+function formatNum(n: number, umb: string) {
+  if (umb === "KG" || umb === "M" || umb === "GAL") {
+    return n.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  }
+  return n.toLocaleString("pt-BR");
 }
 
-function StatusBadge({ status }: { status: "Sem estoque" | "Baixo" | "OK" }) {
-  if (status === "Sem estoque")
-    return <Badge className="bg-red-100 text-red-800 border border-red-200">Sem estoque</Badge>;
-  if (status === "Baixo")
-    return <Badge className="bg-amber-100 text-amber-800 border border-amber-200">Baixo</Badge>;
-  return <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200">OK</Badge>;
+function Numeric({
+  value,
+  onChange,
+  highlight,
+  suffix,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  highlight?: "green" | "red";
+  suffix?: string;
+}) {
+  const cls =
+    highlight === "green"
+      ? "bg-emerald-100/70 text-emerald-900"
+      : highlight === "red"
+        ? "bg-red-100 text-red-900"
+        : "text-slate-500";
+  return (
+    <TableCell className={`py-1 px-2 text-right ${cls}`}>
+      <div className="flex items-center justify-end gap-0.5">
+        <input
+          value={value}
+          onChange={(e) => {
+            const v = parseInt(e.target.value || "0", 10);
+            onChange(Math.max(0, Number.isFinite(v) ? v : 0));
+          }}
+          inputMode="numeric"
+          className="w-full bg-transparent outline-none text-right focus:bg-yellow-50 px-1"
+        />
+        {suffix && <span className="text-red-900">{suffix}</span>}
+      </div>
+    </TableCell>
+  );
 }
 
-function SummaryCard({
-  icon: Icon,
+function Stat({
   label,
   value,
   tone,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: number;
-  tone: "slate" | "blue" | "amber" | "red";
+  tone?: "green" | "red" | "bold";
 }) {
-  const toneCls = {
-    slate: "bg-slate-50 text-slate-700 border-slate-200",
-    blue: "bg-blue-50 text-blue-700 border-blue-200",
-    amber: "bg-amber-50 text-amber-800 border-amber-200",
-    red: "bg-red-50 text-red-700 border-red-200",
-  }[tone];
+  const cls =
+    tone === "green"
+      ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+      : tone === "red"
+        ? "bg-red-50 border-red-200 text-red-900"
+        : tone === "bold"
+          ? "bg-slate-900 border-slate-900 text-white"
+          : "bg-slate-50 border-slate-200 text-slate-800";
   return (
-    <Card className={`border ${toneCls}`}>
-      <CardContent className="p-3 flex items-center gap-3">
-        <div className="h-9 w-9 rounded-md bg-white/70 flex items-center justify-center">
-          <Icon className="h-4 w-4" />
-        </div>
-        <div>
-          <div className="text-[10px] font-black uppercase tracking-widest opacity-80">{label}</div>
-          <div className="text-xl font-black leading-tight">{value.toLocaleString("pt-BR")}</div>
-        </div>
+    <Card className={`border ${cls}`}>
+      <CardContent className="p-3">
+        <div className="text-[10px] font-black uppercase tracking-widest opacity-80">{label}</div>
+        <div className="text-xl font-black leading-tight">{value.toLocaleString("pt-BR")}</div>
       </CardContent>
     </Card>
   );
