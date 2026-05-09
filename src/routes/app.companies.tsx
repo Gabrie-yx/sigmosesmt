@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -363,11 +363,8 @@ function CompaniesPage() {
               const globalOK = asoOK && nrOK && docsOK;
               const badge = (ok: boolean) => ok ? "bg-emerald-500 text-white" : "bg-red-500 text-white";
 
-              const openTab = (t: string) => (e: React.MouseEvent) => {
-                e.stopPropagation();
-                setSelectedTab(t);
-                setSelectedEmpId(emp.id);
-              };
+              const stop = (e: React.MouseEvent) => e.stopPropagation();
+              const tabBtn = "px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm hover:opacity-90 transition-opacity";
               return (
                 <div
                   key={emp.id}
@@ -383,23 +380,23 @@ function CompaniesPage() {
                       <div className="text-[9px] font-bold text-slate-500 uppercase mt-0.5">MAT: {emp.matricula || "---"} | CPF: {emp.cpf || "---"}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button type="button" onClick={openTab("health")} title="Ir para Saúde" className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm hover:opacity-90 ${badge(asoOK)}`}>
+                  <div className="flex items-center gap-2 shrink-0" onClick={stop}>
+                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "health" }} onClick={stop} title="Abrir aba Saúde" className={`${tabBtn} ${badge(asoOK)}`}>
                       <HeartPulse className="h-3.5 w-3.5" /> ASO
-                    </button>
-                    <button type="button" onClick={openTab("nrs")} title="Ir para NRs" className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm hover:opacity-90 ${reqNRs.length === 0 ? "bg-red-500 text-white" : badge(nrOK)}`}>
+                    </Link>
+                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "nrs" }} onClick={stop} title="Abrir aba NRs" className={`${tabBtn} ${reqNRs.length === 0 ? "bg-red-500 text-white" : badge(nrOK)}`}>
                       <Award className="h-3.5 w-3.5" /> NR
-                    </button>
-                    <button type="button" onClick={openTab("docs")} title="Ir para Documentos" className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm hover:opacity-90 ${badge(docsOK)}`}>
+                    </Link>
+                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "docs" }} onClick={stop} title="Abrir aba Documentos" className={`${tabBtn} ${badge(docsOK)}`}>
                       <FolderOpen className="h-3.5 w-3.5" /> DOCS
-                    </button>
-                    <button type="button" onClick={openTab("epi")} title="Ir para EPI" className="w-9 h-9 rounded-lg bg-slate-200 text-slate-500 flex items-center justify-center shadow-sm hover:bg-slate-300">
+                    </Link>
+                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "epi" }} onClick={stop} title="Abrir aba EPI" className="w-9 h-9 rounded-lg bg-slate-200 text-slate-500 flex items-center justify-center shadow-sm hover:bg-slate-300 transition-colors">
                       <HardHat className="h-4 w-4" />
-                    </button>
-                    <button type="button" onClick={openTab("profile")} title="Abrir auditoria do colaborador" className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase ${globalOK ? "bg-emerald-500" : "bg-red-500"} text-white tracking-widest flex items-center gap-1.5 shadow-md hover:opacity-90`}>
+                    </Link>
+                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "profile" }} onClick={stop} title="Abrir auditoria do colaborador" className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase ${globalOK ? "bg-emerald-500" : "bg-red-500"} text-white tracking-widest flex items-center gap-1.5 shadow-md hover:opacity-90 transition-opacity`}>
                       {globalOK ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
                       {globalOK ? "APTO" : "AUDITAR"}
-                    </button>
+                    </Link>
                     <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-[#0369a1]" />
                   </div>
                 </div>
