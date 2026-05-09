@@ -250,7 +250,29 @@ export function AppHeader() {
         <Boxes className="h-4 w-4" /> Estoque
       </div>
       {ESTOQUE_SUBMENU.map((s) => (
-        "to" in s && s.to ? (
+        "children" in s && s.children ? (
+          <div key={s.key}>
+            <Link
+              to={s.to}
+              className={`flex items-center gap-2 rounded-md px-6 py-2 text-sm font-semibold text-left ${
+                isActive(s.to) ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10"
+              }`}
+            >
+              {s.label}
+            </Link>
+            {s.children.map((c) => (
+              <Link
+                key={c.key}
+                to={c.to}
+                className={`flex items-center gap-2 rounded-md px-10 py-2 text-xs font-semibold text-left ${
+                  isActive(c.to) ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10"
+                }`}
+              >
+                ↳ {c.label}
+              </Link>
+            ))}
+          </div>
+        ) : "to" in s && s.to ? (
           <Link
             key={s.key}
             to={s.to}
