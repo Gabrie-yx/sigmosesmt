@@ -4,8 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  LogOut, Download, Upload, Menu, ChevronDown,
-  ShieldCheck, Boxes, Factory, Zap, Wrench, DoorOpen, Lock,
+  LogOut,
+  Download,
+  Upload,
+  Menu,
+  ChevronDown,
+  ShieldCheck,
+  Boxes,
+  Factory,
+  Zap,
+  Wrench,
+  DoorOpen,
+  Lock,
 } from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
@@ -37,7 +47,6 @@ export function AppHeader() {
   const location = useLocation();
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -45,7 +54,8 @@ export function AppHeader() {
   }
 
   async function handleImport(file: File) {
-    if (!confirm("Isso vai SOBRESCREVER os dados atuais com o arquivo de backup. Continuar?")) return;
+    if (!confirm("Isso vai SOBRESCREVER os dados atuais com o arquivo de backup. Continuar?"))
+      return;
     setImporting(true);
     try {
       const text = await file.text();
@@ -75,52 +85,36 @@ export function AppHeader() {
   const DesktopNav = () => (
     <>
       {/* SESMT — abre ao passar o mouse */}
-      <div
-        className="relative"
-        onMouseEnter={() => setOpenMenu("sesmt")}
-        onMouseLeave={() => setOpenMenu(null)}
-      >
-        <button
-          type="button"
-          onClick={() => setOpenMenu(openMenu === "sesmt" ? null : "sesmt")}
-          className={triggerCls(sesmtActive)}
-        >
+      <div className="group relative">
+        <button type="button" aria-haspopup="true" className={triggerCls(sesmtActive)}>
           <ShieldCheck className="h-4 w-4" /> SESMT
           <ChevronDown className="h-3.5 w-3.5 opacity-70" />
         </button>
-        {openMenu === "sesmt" && (
-          <div className="absolute left-0 top-full pt-2 z-50">
-            <div className="w-60 rounded-lg border border-red-100 bg-white shadow-xl py-1 animate-fadeIn">
-              <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-700 border-b border-red-50">
-                SESMT
-              </div>
-              {SESMT_ITEMS.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setOpenMenu(null)}
-                  className={`block px-3 py-2 text-sm font-semibold transition-colors ${
-                    isActive(item.to)
-                      ? "bg-red-50 text-red-800"
-                      : "text-slate-700 hover:bg-red-50 hover:text-red-800"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+        <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+          <div className="w-60 rounded-lg border border-red-100 bg-white shadow-xl py-1">
+            <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-700 border-b border-red-50">
+              SESMT
             </div>
+            {SESMT_ITEMS.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`block px-3 py-2 text-sm font-semibold transition-colors ${
+                  isActive(item.to)
+                    ? "bg-red-50 text-red-800"
+                    : "text-slate-700 hover:bg-red-50 hover:text-red-800"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Outros módulos — placeholder, mostram "em breve" no hover */}
       {OTHER_MODULES.map((m) => (
-        <div
-          key={m.key}
-          className="relative"
-          onMouseEnter={() => setOpenMenu(m.key)}
-          onMouseLeave={() => setOpenMenu(null)}
-        >
+        <div key={m.key} className="group relative">
           <button
             type="button"
             onClick={() => toast.info(`${m.label}: módulo em desenvolvimento`)}
@@ -129,16 +123,14 @@ export function AppHeader() {
             <m.icon className="h-4 w-4" /> {m.label}
             <Lock className="h-3 w-3 opacity-60" />
           </button>
-          {openMenu === m.key && (
-            <div className="absolute left-0 top-full pt-2 z-50">
-              <div className="w-56 rounded-lg border border-slate-200 bg-white shadow-xl py-2 px-3 animate-fadeIn">
-                <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                  {m.label}
-                </div>
-                <div className="text-xs text-slate-600 mt-1">Módulo em desenvolvimento.</div>
+          <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+            <div className="w-56 rounded-lg border border-slate-200 bg-white shadow-xl py-2 px-3">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                {m.label}
               </div>
+              <div className="text-xs text-slate-600 mt-1">Módulo em desenvolvimento.</div>
             </div>
-          )}
+          </div>
         </div>
       ))}
     </>
@@ -146,7 +138,9 @@ export function AppHeader() {
 
   const MobileNav = () => (
     <div className="flex flex-col gap-1 mt-8">
-      <div className="text-[10px] font-black uppercase tracking-widest text-white/60 px-2 mb-1">SESMT</div>
+      <div className="text-[10px] font-black uppercase tracking-widest text-white/60 px-2 mb-1">
+        SESMT
+      </div>
       {SESMT_ITEMS.map((item) => (
         <Link
           key={item.to}
@@ -158,7 +152,9 @@ export function AppHeader() {
           {item.label}
         </Link>
       ))}
-      <div className="text-[10px] font-black uppercase tracking-widest text-white/60 px-2 mt-4 mb-1">Outros módulos</div>
+      <div className="text-[10px] font-black uppercase tracking-widest text-white/60 px-2 mt-4 mb-1">
+        Outros módulos
+      </div>
       {OTHER_MODULES.map((m) => (
         <button
           key={m.key}
@@ -220,22 +216,42 @@ export function AppHeader() {
           </div>
           <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-3">
             <div className="text-right">
-              <div className="text-xs font-bold text-header-foreground truncate max-w-[160px]">{user?.email}</div>
+              <div className="text-xs font-bold text-header-foreground truncate max-w-[160px]">
+                {user?.email}
+              </div>
               <div className="flex gap-1 justify-end mt-0.5">
-                {roles.length === 0 && <Badge variant="outline" className="text-[9px] border-white/20 text-header-foreground/70">sem papel</Badge>}
+                {roles.length === 0 && (
+                  <Badge
+                    variant="outline"
+                    className="text-[9px] border-white/20 text-header-foreground/70"
+                  >
+                    sem papel
+                  </Badge>
+                )}
                 {roles.map((r) => (
-                  <Badge key={r} className="text-[9px] bg-white/10 text-header-foreground border-0">{r}</Badge>
+                  <Badge key={r} className="text-[9px] bg-white/10 text-header-foreground border-0">
+                    {r}
+                  </Badge>
                 ))}
               </div>
             </div>
-            <Button size="icon" variant="ghost" onClick={handleLogout} className="text-header-foreground hover:bg-white/10">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={handleLogout}
+              className="text-header-foreground hover:bg-white/10"
+            >
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button size="icon" variant="ghost" className="lg:hidden text-header-foreground hover:bg-white/10">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="lg:hidden text-header-foreground hover:bg-white/10"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
