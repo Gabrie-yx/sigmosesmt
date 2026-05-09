@@ -21,7 +21,6 @@ import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
-import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -84,11 +83,6 @@ const AppEmployeesIndexRoute = AppEmployeesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppEmployeesRoute,
 } as any)
-const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
-  id: '/estoque/sesmt',
-  path: '/estoque/sesmt',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -108,7 +102,6 @@ export interface FileRoutesByFullPath {
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
-  '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -122,7 +115,6 @@ export interface FileRoutesByTo {
   '/app/users': typeof AppUsersRoute
   '/app': typeof AppIndexRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
-  '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/employees': typeof AppEmployeesIndexRoute
 }
 export interface FileRoutesById {
@@ -139,7 +131,6 @@ export interface FileRoutesById {
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
-  '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
 }
 export interface FileRouteTypes {
@@ -157,7 +148,6 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/'
     | '/app/employees/$id'
-    | '/app/estoque/sesmt'
     | '/app/employees/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -171,7 +161,6 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app'
     | '/app/employees/$id'
-    | '/app/estoque/sesmt'
     | '/app/employees'
   id:
     | '__root__'
@@ -187,7 +176,6 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/'
     | '/app/employees/$id'
-    | '/app/estoque/sesmt'
     | '/app/employees/'
   fileRoutesById: FileRoutesById
 }
@@ -283,13 +271,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmployeesIndexRouteImport
       parentRoute: typeof AppEmployeesRoute
     }
-    '/app/estoque/sesmt': {
-      id: '/app/estoque/sesmt'
-      path: '/estoque/sesmt'
-      fullPath: '/app/estoque/sesmt'
-      preLoaderRoute: typeof AppEstoqueSesmtRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/employees/$id': {
       id: '/app/employees/$id'
       path: '/$id'
@@ -323,7 +304,6 @@ interface AppRouteChildren {
   AppTrainingsRoute: typeof AppTrainingsRoute
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
-  AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -335,7 +315,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppTrainingsRoute: AppTrainingsRoute,
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
-  AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -348,3 +327,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
