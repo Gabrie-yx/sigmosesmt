@@ -18,7 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
-import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, UFS, VACINAS_LIST } from "@/lib/constants";
+import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, UFS, VACINAS_LIST, BAIRROS_MANAUS } from "@/lib/constants";
+import { maskCPF, maskCNPJ, maskPhone, maskCEP, maskRG } from "@/lib/masks";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
 import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
@@ -320,9 +321,9 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
             <SelectContent>{roles.map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="CPF"><Input value={f.cpf ?? ""} onChange={(e) => setF({ ...f, cpf: e.target.value })} disabled={!canEdit} /></Field>
+        <Field label="CPF"><Input inputMode="numeric" placeholder="000.000.000-00" value={f.cpf ?? ""} onChange={(e) => setF({ ...f, cpf: maskCPF(e.target.value) })} disabled={!canEdit} /></Field>
         <Field label="Matrícula"><Input value={f.matricula ?? ""} onChange={(e) => setF({ ...f, matricula: e.target.value })} disabled={!canEdit} /></Field>
-        <Field label="RG"><Input value={f.rg ?? ""} onChange={(e) => setF({ ...f, rg: e.target.value })} disabled={!canEdit} /></Field>
+        <Field label="RG"><Input placeholder="0000000" value={f.rg ?? ""} onChange={(e) => setF({ ...f, rg: maskRG(e.target.value) })} disabled={!canEdit} /></Field>
         <Field label="Órgão Emissor"><Input value={f.rg_orgao ?? ""} onChange={(e) => setF({ ...f, rg_orgao: e.target.value })} disabled={!canEdit} /></Field>
         <Field label="Tipo cadastro">
           <Select value={f.tipo_cadastro} onValueChange={(v) => setF({ ...f, tipo_cadastro: v })} disabled={!canEdit}>
@@ -333,14 +334,21 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
             </SelectContent>
           </Select>
         </Field>
-        <Field label="CNPJ (MEI)"><Input value={f.cnpj ?? ""} onChange={(e) => setF({ ...f, cnpj: e.target.value })} disabled={!canEdit} /></Field>
+        <Field label="CNPJ (MEI)"><Input inputMode="numeric" placeholder="00.000.000/0000-00" value={f.cnpj ?? ""} onChange={(e) => setF({ ...f, cnpj: maskCNPJ(e.target.value) })} disabled={!canEdit} /></Field>
         <Field label="Admissão"><Input type="date" value={f.admissao ?? ""} onChange={(e) => setF({ ...f, admissao: e.target.value || null })} disabled={!canEdit} /></Field>
         <Field label="Email"><Input type="email" value={f.email ?? ""} onChange={(e) => setF({ ...f, email: e.target.value })} disabled={!canEdit} /></Field>
-        <Field label="WhatsApp"><Input value={f.whatsapp ?? ""} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} disabled={!canEdit} /></Field>
+        <Field label="WhatsApp"><Input inputMode="tel" placeholder="(00) 00000-0000" value={f.whatsapp ?? ""} onChange={(e) => setF({ ...f, whatsapp: maskPhone(e.target.value) })} disabled={!canEdit} /></Field>
         <Field label="Contato Emergência"><Input value={f.nome_contato ?? ""} onChange={(e) => setF({ ...f, nome_contato: e.target.value })} disabled={!canEdit} /></Field>
-        <Field label="WhatsApp Emergência"><Input value={f.whatsapp_emergencia ?? ""} onChange={(e) => setF({ ...f, whatsapp_emergencia: e.target.value })} disabled={!canEdit} /></Field>
+        <Field label="WhatsApp Emergência"><Input inputMode="tel" placeholder="(00) 00000-0000" value={f.whatsapp_emergencia ?? ""} onChange={(e) => setF({ ...f, whatsapp_emergencia: maskPhone(e.target.value) })} disabled={!canEdit} /></Field>
         <Field label="Endereço" className="md:col-span-2"><Input value={f.endereco ?? ""} onChange={(e) => setF({ ...f, endereco: e.target.value })} disabled={!canEdit} /></Field>
-        <Field label="Bairro"><Input value={f.bairro ?? ""} onChange={(e) => setF({ ...f, bairro: e.target.value })} disabled={!canEdit} /></Field>
+        <Field label="Bairro">
+          <Select value={f.bairro ?? ""} onValueChange={(v) => setF({ ...f, bairro: v })} disabled={!canEdit}>
+            <SelectTrigger><SelectValue placeholder="Selecione o bairro" /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              {BAIRROS_MANAUS.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
         <Field label="Cidade"><Input value={f.cidade ?? ""} onChange={(e) => setF({ ...f, cidade: e.target.value })} disabled={!canEdit} /></Field>
         <Field label="UF">
           <Select value={f.uf ?? ""} onValueChange={(v) => setF({ ...f, uf: v })} disabled={!canEdit}>
@@ -348,7 +356,7 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
             <SelectContent>{UFS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="CEP"><Input value={f.cep ?? ""} onChange={(e) => setF({ ...f, cep: e.target.value })} disabled={!canEdit} /></Field>
+        <Field label="CEP"><Input inputMode="numeric" placeholder="00000-000" value={f.cep ?? ""} onChange={(e) => setF({ ...f, cep: maskCEP(e.target.value) })} disabled={!canEdit} /></Field>
       </div>
       <div className="flex justify-between pt-4 border-t">
         {canDelete ? (
