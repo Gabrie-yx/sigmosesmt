@@ -380,6 +380,7 @@ export type Database = {
           imagem_url: string | null
           nome_material: string
           quantidade_atual: number
+          ultimo_fornecedor: string | null
           updated_at: string
         }
         Insert: {
@@ -390,6 +391,7 @@ export type Database = {
           imagem_url?: string | null
           nome_material: string
           quantidade_atual?: number
+          ultimo_fornecedor?: string | null
           updated_at?: string
         }
         Update: {
@@ -400,6 +402,7 @@ export type Database = {
           imagem_url?: string | null
           nome_material?: string
           quantidade_atual?: number
+          ultimo_fornecedor?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -413,6 +416,7 @@ export type Database = {
           id: string
           nome_colaborador: string
           quantidade_entregue: number
+          tipo_movimentacao: Database["public"]["Enums"]["tipo_movimentacao_epi"]
         }
         Insert: {
           cpf_colaborador: string
@@ -422,6 +426,7 @@ export type Database = {
           id?: string
           nome_colaborador: string
           quantidade_entregue: number
+          tipo_movimentacao?: Database["public"]["Enums"]["tipo_movimentacao_epi"]
         }
         Update: {
           cpf_colaborador?: string
@@ -431,6 +436,7 @@ export type Database = {
           id?: string
           nome_colaborador?: string
           quantidade_entregue?: number
+          tipo_movimentacao?: Database["public"]["Enums"]["tipo_movimentacao_epi"]
         }
         Relationships: [
           {
@@ -677,6 +683,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ajustar_saldo_epi: {
+        Args: { _epi_id: string; _novo_saldo: number }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -689,9 +699,21 @@ export type Database = {
         Args: { _cpf: string; _epi_id: string; _nome: string; _qtd: number }
         Returns: string
       }
+      registrar_movimentacao_epi: {
+        Args: {
+          _cpf?: string
+          _epi_id: string
+          _fornecedor?: string
+          _nome?: string
+          _qtd: number
+          _tipo: Database["public"]["Enums"]["tipo_movimentacao_epi"]
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "tst" | "viewer"
+      tipo_movimentacao_epi: "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -820,6 +842,11 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "tst", "viewer"],
+      tipo_movimentacao_epi: [
+        "SAIDA_ENTREGA",
+        "ENTRADA_REPOSICAO",
+        "DEVOLUCAO",
+      ],
     },
   },
 } as const
