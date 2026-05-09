@@ -442,6 +442,90 @@ export type Database = {
         }
         Relationships: []
       }
+      training_attendees: {
+        Row: {
+          certificado_path: string | null
+          created_at: string
+          data_vencimento: string | null
+          employee_id: string
+          id: string
+          nota: number | null
+          observacoes: string | null
+          situacao: string
+          training_id: string
+        }
+        Insert: {
+          certificado_path?: string | null
+          created_at?: string
+          data_vencimento?: string | null
+          employee_id: string
+          id?: string
+          nota?: number | null
+          observacoes?: string | null
+          situacao?: string
+          training_id: string
+        }
+        Update: {
+          certificado_path?: string | null
+          created_at?: string
+          data_vencimento?: string | null
+          employee_id?: string
+          id?: string
+          nota?: number | null
+          observacoes?: string | null
+          situacao?: string
+          training_id?: string
+        }
+        Relationships: []
+      }
+      trainings: {
+        Row: {
+          anexo_path: string | null
+          carga_horaria_h: number
+          created_at: string
+          created_by: string | null
+          data_realizacao: string
+          id: string
+          instituicao: string | null
+          instrutor: string | null
+          observacoes: string | null
+          tipo: string
+          titulo: string | null
+          updated_at: string
+          validade_meses: number
+        }
+        Insert: {
+          anexo_path?: string | null
+          carga_horaria_h?: number
+          created_at?: string
+          created_by?: string | null
+          data_realizacao: string
+          id?: string
+          instituicao?: string | null
+          instrutor?: string | null
+          observacoes?: string | null
+          tipo: string
+          titulo?: string | null
+          updated_at?: string
+          validade_meses?: number
+        }
+        Update: {
+          anexo_path?: string | null
+          carga_horaria_h?: number
+          created_at?: string
+          created_by?: string | null
+          data_realizacao?: string
+          id?: string
+          instituicao?: string | null
+          instrutor?: string | null
+          observacoes?: string | null
+          tipo?: string
+          titulo?: string | null
+          updated_at?: string
+          validade_meses?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
