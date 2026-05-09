@@ -99,13 +99,13 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
-  /* EnviCorp brand & status tokens — #0369a1 / hover #075985 */
-  --brand: oklch(0.5 0.135 234);
-  --brand-dark: oklch(0.43 0.125 234);
+  /* DMN brand — vermelho #C8102E inspirado no logotipo */
+  --brand: oklch(0.55 0.21 25);
+  --brand-dark: oklch(0.46 0.20 25);
   --brand-foreground: oklch(0.99 0 0);
-  --brand-soft: oklch(0.96 0.02 240);
-  --header: oklch(0.21 0.04 265);
-  --header-foreground: oklch(0.97 0 0);
+  --brand-soft: oklch(0.96 0.03 25);
+  --header: oklch(0.46 0.20 25);
+  --header-foreground: oklch(0.99 0 0);
   --status-apto: oklch(0.7 0.17 152);
   --status-alerta: oklch(0.78 0.16 75);
   --status-bloqueado: oklch(0.62 0.22 27);
