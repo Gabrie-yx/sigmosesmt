@@ -38,7 +38,20 @@ export const PTE_RISCOS = [
   "Espaço Confinado",
   "Trabalho em Altura",
   "Eletricidade Alta Tensão",
+  "Limpeza de Tanque (Risco Biológico)",
 ] as const;
+
+export const VACINAS_LIST = [
+  "Tétano/Difteria (dT)",
+  "Hepatite B",
+  "Febre Amarela",
+  "Tríplice Viral (SCR)",
+  "Influenza",
+  "COVID-19",
+] as const;
+
+// Vacinas obrigatórias quando o cargo tem risco biológico (PCMSO Rev.05)
+export const VACINAS_RISCO_BIOLOGICO = ["Tétano/Difteria (dT)", "Hepatite B"] as const;
 
 export const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"] as const;
 
