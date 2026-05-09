@@ -16,6 +16,7 @@ type EpiRow = {
   ca?: string | null;
   data_entrega?: string | null;
   data_devolucao?: string | null;
+  observacoes?: string | null;
 };
 
 function brDate(s?: string | null) {
@@ -23,6 +24,25 @@ function brDate(s?: string | null) {
   const d = new Date(s);
   if (isNaN(d.getTime())) return "";
   return d.toLocaleDateString("pt-BR");
+}
+
+const MOTIVO_CODE: Record<string, string> = {
+  "danificado": "1",
+  "desgaste natural": "2",
+  "extravio": "3",
+  "mal uso": "4",
+  "furto": "5",
+  "uso temporário": "6",
+  "uso temporario": "6",
+  "temporário": "6",
+  "temporario": "6",
+};
+
+function extractMotivo(obs?: string | null): string {
+  if (!obs) return "";
+  const m = obs.match(/motivo\s*:\s*([^—\-\n]+)/i);
+  const raw = (m ? m[1] : obs).trim().toLowerCase();
+  return MOTIVO_CODE[raw] ?? "";
 }
 
 const TERMO_INTRO =
@@ -173,7 +193,7 @@ export function buildEpiFichaPdf(opts: {
     e.ca ?? "",
     "",
     brDate(e.data_entrega),
-    "",
+    extractMotivo(e.observacoes),
     brDate(e.data_devolucao),
     "",
   ]);
