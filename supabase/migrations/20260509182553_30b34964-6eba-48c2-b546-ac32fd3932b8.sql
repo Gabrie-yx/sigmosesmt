@@ -1,0 +1,1 @@
+UPDATE public.companies SET cnpj = '13.378.697/0001-80' WHERE id = '09795138-3af8-48ea-a558-7d90a2a89100';
