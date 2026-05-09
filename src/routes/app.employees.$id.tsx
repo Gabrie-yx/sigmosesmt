@@ -11,11 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
-import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, UFS } from "@/lib/constants";
+import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, UFS, VACINAS_LIST } from "@/lib/constants";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -63,9 +63,13 @@ export function EmployeeDetailContent({ id, showHeader = true }: { id: string; s
     queryKey: ["epis", id],
     queryFn: async () => (await supabase.from("epi_deliveries").select("*").eq("employee_id", id).order("data_entrega", { ascending: false })).data ?? [],
   });
+  const { data: vaccines } = useQuery({
+    queryKey: ["vaccines", id],
+    queryFn: async () => (await supabase.from("employee_vaccinations").select("*").eq("employee_id", id).order("data_aplicacao", { ascending: false })).data ?? [],
+  });
 
   const role = (roles ?? []).find((r: any) => r.id === emp?.role_id) ?? null;
-  const status = emp ? calculateSafetyStatus(emp as any, role as any, (exams ?? []) as any) : null;
+  const status = emp ? calculateSafetyStatus(emp as any, role as any, (exams ?? []) as any, (vaccines ?? []) as any) : null;
 
   if (!emp) return <div className="p-8 text-muted-foreground">Carregando…</div>;
 
@@ -97,12 +101,13 @@ export function EmployeeDetailContent({ id, showHeader = true }: { id: string; s
       )}
 
       <Tabs defaultValue="profile">
-        <TabsList className="grid grid-cols-5 w-full">
+        <TabsList className="grid grid-cols-6 w-full">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="nrs">NRs</TabsTrigger>
           <TabsTrigger value="docs">Docs</TabsTrigger>
           <TabsTrigger value="epi">EPI</TabsTrigger>
           <TabsTrigger value="health">Saúde</TabsTrigger>
+          <TabsTrigger value="vaccines">Vacinas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-4">
@@ -119,6 +124,9 @@ export function EmployeeDetailContent({ id, showHeader = true }: { id: string; s
         </TabsContent>
         <TabsContent value="health" className="mt-4">
           <HealthTab empId={id} exams={exams ?? []} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+        </TabsContent>
+        <TabsContent value="vaccines" className="mt-4">
+          <VaccinesTab empId={id} vaccines={vaccines ?? []} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
         </TabsContent>
       </Tabs>
     </div>
