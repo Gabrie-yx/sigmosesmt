@@ -1,12 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -16,11 +30,28 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { AlertTriangle, Package, Plus, History, ImageIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  Package,
+  Plus,
+  ImageIcon,
+  CheckCircle2,
+  AlertCircle,
+  Truck,
+  PackagePlus,
+  Undo2,
+  Search,
+  Pencil,
+  Save,
+  X,
+  ShieldCheck,
+} from "lucide-react";
 
 export const Route = createFileRoute("/app/estoque/epi")({
   component: EstoqueEpiPage,
 });
+
+type Tipo = "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO";
 
 type EpiRow = {
   id: string;
@@ -29,17 +60,21 @@ type EpiRow = {
   quantidade_atual: number;
   estoque_minimo: number;
   imagem_url: string | null;
+  ultimo_fornecedor: string | null;
 };
 
-type Entrega = {
+type Movimentacao = {
   id: string;
   cpf_colaborador: string;
   nome_colaborador: string;
   epi_id: string;
   quantidade_entregue: number;
   data_entrega: string;
+  tipo_movimentacao: Tipo;
   estoque_epi?: { nome_material: string; codigo_material: string } | null;
 };
+
+// ───────────────────────── helpers ─────────────────────────
 
 function maskCpf(v: string) {
   return v
@@ -50,9 +85,53 @@ function maskCpf(v: string) {
     .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 }
 
+/** Valida CPF pelo algoritmo dos dois dígitos verificadores. */
+function validaCpf(raw: string): boolean {
+  const cpf = raw.replace(/\D/g, "");
+  if (cpf.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+  const calc = (slice: number) => {
+    let sum = 0;
+    for (let i = 0; i < slice; i++) sum += parseInt(cpf[i], 10) * (slice + 1 - i);
+    const r = (sum * 10) % 11;
+    return r === 10 ? 0 : r;
+  };
+  return calc(9) === parseInt(cpf[9], 10) && calc(10) === parseInt(cpf[10], 10);
+}
+
+function statusInfo(saldo: number, minimo: number) {
+  if (saldo <= minimo)
+    return {
+      label: "ESTOQUE CRÍTICO",
+      cls: "bg-destructive text-destructive-foreground",
+      icon: AlertTriangle,
+      cardCls: "border-destructive border-2 bg-destructive/5",
+    };
+  if (saldo <= 10)
+    return {
+      label: "ESTOQUE MODERADO",
+      cls: "bg-amber-500 text-white",
+      icon: AlertCircle,
+      cardCls: "border-amber-400/60 border-2",
+    };
+  return {
+    label: "ESTOQUE OK",
+    cls: "bg-emerald-600 text-white",
+    icon: CheckCircle2,
+    cardCls: "",
+  };
+}
+
+const TIPO_LABEL: Record<Tipo, string> = {
+  SAIDA_ENTREGA: "Saída · Entrega",
+  ENTRADA_REPOSICAO: "Entrada · Reposição",
+  DEVOLUCAO: "Devolução",
+};
+
+// ───────────────────────── page ─────────────────────────
+
 function EstoqueEpiPage() {
   const qc = useQueryClient();
-  const [showHistory, setShowHistory] = useState(false);
 
   const { data: epis = [], isLoading } = useQuery({
     queryKey: ["estoque_epi"],
@@ -73,21 +152,15 @@ function EstoqueEpiPage() {
     <div className="mx-auto max-w-7xl p-4 md:p-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground">
+          <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+            <ShieldCheck className="h-6 w-6 text-primary" />
             Estoque de EPIs — SESMT
           </h1>
           <p className="text-sm text-muted-foreground">
-            Controle visual de saldo, alerta de estoque crítico e baixa automática por entrega.
+            Inventário visual, baixa atômica por entrega e histórico completo de movimentações.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowHistory(true)}>
-            <History className="h-4 w-4" /> Histórico
-          </Button>
-          <NewEpiDialog
-            onCreated={() => qc.invalidateQueries({ queryKey: ["estoque_epi"] })}
-          />
-        </div>
+        <NewEpiDialog onCreated={() => qc.invalidateQueries({ queryKey: ["estoque_epi"] })} />
       </div>
 
       {/* Resumo */}
@@ -108,9 +181,7 @@ function EstoqueEpiPage() {
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
             Itens críticos
           </div>
-          <div
-            className={`text-2xl font-black ${criticos > 0 ? "text-destructive" : ""}`}
-          >
+          <div className={`text-2xl font-black ${criticos > 0 ? "text-destructive" : ""}`}>
             {criticos}
           </div>
         </Card>
@@ -122,33 +193,45 @@ function EstoqueEpiPage() {
         </Card>
       </div>
 
-      {isLoading ? (
-        <div className="text-sm text-muted-foreground py-10 text-center">Carregando…</div>
-      ) : epis.length === 0 ? (
-        <Card className="p-10 text-center text-sm text-muted-foreground">
-          Nenhum EPI cadastrado. Clique em <strong>“Novo EPI”</strong> para começar.
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {epis.map((e) => (
-            <EpiCard key={e.id} epi={e} />
-          ))}
-        </div>
-      )}
+      <Tabs defaultValue="inventario">
+        <TabsList>
+          <TabsTrigger value="inventario">Inventário</TabsTrigger>
+          <TabsTrigger value="historico">Histórico Geral</TabsTrigger>
+        </TabsList>
 
-      <HistoryDialog open={showHistory} onOpenChange={setShowHistory} />
+        <TabsContent value="inventario" className="mt-4">
+          {isLoading ? (
+            <div className="text-sm text-muted-foreground py-10 text-center">Carregando…</div>
+          ) : epis.length === 0 ? (
+            <Card className="p-10 text-center text-sm text-muted-foreground">
+              Nenhum EPI cadastrado. Clique em <strong>“Novo EPI”</strong> para começar.
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {epis.map((e) => (
+                <EpiCard key={e.id} epi={e} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="historico" className="mt-4">
+          <HistoricoGeral epis={epis} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
+// ───────────────────────── EPI Card ─────────────────────────
+
 function EpiCard({ epi }: { epi: EpiRow }) {
-  const critico = epi.quantidade_atual <= epi.estoque_minimo;
+  const { isAdmin } = useAuth();
+  const status = statusInfo(epi.quantidade_atual, epi.estoque_minimo);
+  const Icon = status.icon;
+
   return (
-    <Card
-      className={`overflow-hidden transition-all hover:shadow-md ${
-        critico ? "border-destructive border-2 bg-destructive/5" : ""
-      }`}
-    >
+    <Card className={`overflow-hidden transition-all hover:shadow-md ${status.cardCls}`}>
       <div className="aspect-square bg-muted/40 flex items-center justify-center overflow-hidden relative">
         {epi.imagem_url ? (
           <img
@@ -162,17 +245,14 @@ function EpiCard({ epi }: { epi: EpiRow }) {
         ) : (
           <Package className="h-16 w-16 text-muted-foreground/40" />
         )}
-        {critico && (
-          <div className="absolute top-2 left-2 right-2 flex items-center justify-center gap-1.5 rounded-md bg-destructive px-2 py-1 text-[10px] font-black uppercase tracking-widest text-destructive-foreground shadow">
-            <AlertTriangle className="h-3.5 w-3.5" /> Estoque Crítico
-          </div>
-        )}
+        <div
+          className={`absolute top-2 left-2 right-2 flex items-center justify-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-black uppercase tracking-widest shadow ${status.cls}`}
+        >
+          <Icon className="h-3.5 w-3.5" /> {status.label}
+        </div>
       </div>
       <div className="p-3 space-y-2">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            {epi.codigo_material}
-          </div>
           <div className="font-bold text-sm leading-tight line-clamp-2">{epi.nome_material}</div>
         </div>
         <div className="flex items-end justify-between">
@@ -180,21 +260,95 @@ function EpiCard({ epi }: { epi: EpiRow }) {
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
               Saldo
             </div>
-            <div
-              className={`text-2xl font-black ${critico ? "text-destructive" : "text-foreground"}`}
-            >
-              {epi.quantidade_atual}
-            </div>
+            {isAdmin ? (
+              <SaldoInlineEdit epi={epi} />
+            ) : (
+              <div className="text-2xl font-black">{epi.quantidade_atual}</div>
+            )}
           </div>
           <Badge variant="outline" className="text-[10px]">
             mín {epi.estoque_minimo}
           </Badge>
         </div>
-        <DeliveryDialog epi={epi} />
+        <div className="grid grid-cols-2 gap-2">
+          <DeliveryDialog epi={epi} />
+          <EntradaDialog epi={epi} />
+        </div>
+        <div className="pt-2 border-t border-border/60 text-[10px] text-muted-foreground space-y-0.5">
+          <div>
+            <span className="font-bold">Cód.:</span> {epi.codigo_material}
+          </div>
+          <div className="truncate">
+            <span className="font-bold">Últ. fornecedor:</span> {epi.ultimo_fornecedor || "—"}
+          </div>
+        </div>
       </div>
     </Card>
   );
 }
+
+// ───────────────────────── Inline edit (admin) ─────────────────────────
+
+function SaldoInlineEdit({ epi }: { epi: EpiRow }) {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(epi.quantidade_atual);
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      if (val < 0) throw new Error("Saldo não pode ser negativo");
+      const { error } = await (supabase as any).rpc("ajustar_saldo_epi", {
+        _epi_id: epi.id,
+        _novo_saldo: val,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Saldo ajustado");
+      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
+      setEditing(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setVal(epi.quantidade_atual);
+          setEditing(true);
+        }}
+        title="Ajustar saldo (admin)"
+        className="text-2xl font-black hover:text-primary inline-flex items-center gap-1 group"
+      >
+        {epi.quantidade_atual}
+        <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-60" />
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <Input
+        type="number"
+        min={0}
+        value={val}
+        onChange={(e) => setVal(Math.max(0, Number(e.target.value) || 0))}
+        className="h-8 w-20"
+        autoFocus
+      />
+      <Button size="icon" className="h-7 w-7" onClick={() => mut.mutate()} disabled={mut.isPending}>
+        <Save className="h-3.5 w-3.5" />
+      </Button>
+      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditing(false)}>
+        <X className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+}
+
+// ───────────────────────── Entrega (saída) ─────────────────────────
 
 function DeliveryDialog({ epi }: { epi: EpiRow }) {
   const qc = useQueryClient();
@@ -203,27 +357,26 @@ function DeliveryDialog({ epi }: { epi: EpiRow }) {
   const [nome, setNome] = useState("");
   const [qtd, setQtd] = useState<number>(1);
 
+  const cpfValido = validaCpf(cpf);
+  const nomeValido = nome.trim().length >= 3;
+  const qtdValida = qtd > 0 && qtd <= epi.quantidade_atual;
+  const semSaldo = qtd > epi.quantidade_atual;
+  const podeConfirmar = cpfValido && nomeValido && qtdValida;
+
   const mut = useMutation({
     mutationFn: async () => {
-      const cpfLimpo = cpf.replace(/\D/g, "");
-      if (cpfLimpo.length !== 11) throw new Error("CPF inválido");
-      if (!nome.trim()) throw new Error("Informe o nome do colaborador");
-      if (qtd <= 0) throw new Error("Quantidade deve ser maior que zero");
-      if (qtd > epi.quantidade_atual)
-        throw new Error(`Saldo insuficiente (atual: ${epi.quantidade_atual})`);
-
       const { error } = await (supabase as any).rpc("registrar_entrega_epi", {
         _epi_id: epi.id,
-        _cpf: cpfLimpo,
-        _nome: nome.trim().toUpperCase(),
+        _cpf: cpf.replace(/\D/g, ""),
+        _nome: nome.trim().toUpperCase().slice(0, 120),
         _qtd: qtd,
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Entrega registrada e estoque atualizado");
+      toast.success("Baixa realizada com sucesso!");
       qc.invalidateQueries({ queryKey: ["estoque_epi"] });
-      qc.invalidateQueries({ queryKey: ["historico_entregas"] });
+      qc.invalidateQueries({ queryKey: ["historico_movimentacoes"] });
       setCpf("");
       setNome("");
       setQtd(1);
@@ -237,18 +390,25 @@ function DeliveryDialog({ epi }: { epi: EpiRow }) {
       <DialogTrigger asChild>
         <Button
           size="sm"
-          className="w-full"
           disabled={epi.quantidade_atual <= 0}
           variant={epi.quantidade_atual <= 0 ? "outline" : "default"}
         >
-          {epi.quantidade_atual <= 0 ? "Sem estoque" : "Registrar Entrega"}
+          <Truck className="h-3.5 w-3.5" /> Entrega
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Entrega de EPI — {epi.nome_material}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Truck className="h-5 w-5" /> Entrega de EPI — {epi.nome_material}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          <div className="rounded-md border bg-muted/40 p-2 text-xs">
+            <span className="font-bold">Saldo disponível: </span>
+            <span className={epi.quantidade_atual <= 5 ? "text-destructive font-black" : "font-black"}>
+              {epi.quantidade_atual}
+            </span>
+          </div>
           <div>
             <Label>CPF do colaborador</Label>
             <Input
@@ -256,32 +416,41 @@ function DeliveryDialog({ epi }: { epi: EpiRow }) {
               onChange={(e) => setCpf(maskCpf(e.target.value))}
               placeholder="000.000.000-00"
               inputMode="numeric"
+              maxLength={14}
+              className={cpf && !cpfValido ? "border-destructive" : ""}
             />
+            {cpf && !cpfValido && (
+              <p className="text-[11px] text-destructive mt-1">CPF inválido</p>
+            )}
           </div>
           <div>
-            <Label>Nome do colaborador</Label>
+            <Label>Nome completo do colaborador</Label>
             <Input
               value={nome}
-              onChange={(e) => setNome(e.target.value)}
+              onChange={(e) => setNome(e.target.value.slice(0, 120))}
               placeholder="Nome completo"
             />
           </div>
           <div>
-            <Label>Quantidade a entregar (saldo: {epi.quantidade_atual})</Label>
+            <Label>Quantidade a entregar</Label>
             <Input
               type="number"
               min={1}
               max={epi.quantidade_atual}
               value={qtd}
               onChange={(e) => setQtd(Math.max(1, Number(e.target.value) || 1))}
+              className={semSaldo ? "border-destructive" : ""}
             />
+            {semSaldo && (
+              <p className="text-[11px] text-destructive mt-1 font-bold">Saldo insuficiente</p>
+            )}
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancelar
           </Button>
-          <Button onClick={() => mut.mutate()} disabled={mut.isPending}>
+          <Button onClick={() => mut.mutate()} disabled={!podeConfirmar || mut.isPending}>
             {mut.isPending ? "Registrando…" : "Confirmar entrega"}
           </Button>
         </DialogFooter>
@@ -290,6 +459,138 @@ function DeliveryDialog({ epi }: { epi: EpiRow }) {
   );
 }
 
+// ───────────────────────── Entrada / Devolução ─────────────────────────
+
+function EntradaDialog({ epi }: { epi: EpiRow }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [tipo, setTipo] = useState<Exclude<Tipo, "SAIDA_ENTREGA">>("ENTRADA_REPOSICAO");
+  const [qtd, setQtd] = useState(1);
+  const [fornecedor, setFornecedor] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [nome, setNome] = useState("");
+
+  const isDev = tipo === "DEVOLUCAO";
+  const cpfOk = !isDev || validaCpf(cpf);
+  const nomeOk = !isDev || nome.trim().length >= 3;
+  const podeSalvar = qtd > 0 && cpfOk && nomeOk;
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      const { error } = await (supabase as any).rpc("registrar_movimentacao_epi", {
+        _epi_id: epi.id,
+        _qtd: qtd,
+        _tipo: tipo,
+        _cpf: isDev ? cpf.replace(/\D/g, "") : null,
+        _nome: isDev ? nome.trim().toUpperCase().slice(0, 120) : null,
+        _fornecedor: tipo === "ENTRADA_REPOSICAO" ? fornecedor.trim().slice(0, 120) || null : null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Movimentação registrada!");
+      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
+      qc.invalidateQueries({ queryKey: ["historico_movimentacoes"] });
+      setOpen(false);
+      setQtd(1);
+      setFornecedor("");
+      setCpf("");
+      setNome("");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          <PackagePlus className="h-3.5 w-3.5" /> Entrada
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Entrada de estoque — {epi.nome_material}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Tipo de movimentação</Label>
+            <Select value={tipo} onValueChange={(v) => setTipo(v as typeof tipo)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ENTRADA_REPOSICAO">
+                  <span className="inline-flex items-center gap-2">
+                    <PackagePlus className="h-3.5 w-3.5" /> Entrada / Reposição
+                  </span>
+                </SelectItem>
+                <SelectItem value="DEVOLUCAO">
+                  <span className="inline-flex items-center gap-2">
+                    <Undo2 className="h-3.5 w-3.5" /> Devolução de colaborador
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Quantidade</Label>
+            <Input
+              type="number"
+              min={1}
+              value={qtd}
+              onChange={(e) => setQtd(Math.max(1, Number(e.target.value) || 1))}
+            />
+          </div>
+          {tipo === "ENTRADA_REPOSICAO" && (
+            <div>
+              <Label>Fornecedor</Label>
+              <Input
+                value={fornecedor}
+                onChange={(e) => setFornecedor(e.target.value.slice(0, 120))}
+                placeholder="Ex.: 3M, Marluvas, etc."
+              />
+            </div>
+          )}
+          {isDev && (
+            <>
+              <div>
+                <Label>CPF do colaborador (devolvendo)</Label>
+                <Input
+                  value={cpf}
+                  onChange={(e) => setCpf(maskCpf(e.target.value))}
+                  placeholder="000.000.000-00"
+                  className={cpf && !cpfOk ? "border-destructive" : ""}
+                />
+                {cpf && !cpfOk && (
+                  <p className="text-[11px] text-destructive mt-1">CPF inválido</p>
+                )}
+              </div>
+              <div>
+                <Label>Nome do colaborador</Label>
+                <Input
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value.slice(0, 120))}
+                  placeholder="Nome completo"
+                />
+              </div>
+            </>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={() => mut.mutate()} disabled={!podeSalvar || mut.isPending}>
+            {mut.isPending ? "Salvando…" : "Confirmar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ───────────────────────── Novo EPI ─────────────────────────
+
 function NewEpiDialog({ onCreated }: { onCreated: () => void }) {
   const [open, setOpen] = useState(false);
   const [codigo, setCodigo] = useState("");
@@ -297,6 +598,7 @@ function NewEpiDialog({ onCreated }: { onCreated: () => void }) {
   const [qtd, setQtd] = useState(0);
   const [min, setMin] = useState(5);
   const [img, setImg] = useState("");
+  const [fornecedor, setFornecedor] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function save() {
@@ -307,11 +609,12 @@ function NewEpiDialog({ onCreated }: { onCreated: () => void }) {
     setSaving(true);
     try {
       const { error } = await (supabase as any).from("estoque_epi").insert({
-        codigo_material: codigo.trim().toUpperCase(),
-        nome_material: nome.trim().toUpperCase(),
-        quantidade_atual: qtd,
-        estoque_minimo: min,
+        codigo_material: codigo.trim().toUpperCase().slice(0, 60),
+        nome_material: nome.trim().toUpperCase().slice(0, 200),
+        quantidade_atual: Math.max(0, qtd),
+        estoque_minimo: Math.max(0, min),
         imagem_url: img.trim() || null,
+        ultimo_fornecedor: fornecedor.trim().slice(0, 120) || null,
       });
       if (error) throw error;
       toast.success("EPI cadastrado");
@@ -320,6 +623,7 @@ function NewEpiDialog({ onCreated }: { onCreated: () => void }) {
       setQtd(0);
       setMin(5);
       setImg("");
+      setFornecedor("");
       setOpen(false);
       onCreated();
     } catch (e) {
@@ -358,6 +662,10 @@ function NewEpiDialog({ onCreated }: { onCreated: () => void }) {
             <Input type="number" min={0} value={min} onChange={(e) => setMin(Number(e.target.value) || 0)} />
           </div>
           <div className="col-span-2">
+            <Label>Fornecedor padrão (opcional)</Label>
+            <Input value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} placeholder="Ex.: 3M" />
+          </div>
+          <div className="col-span-2">
             <Label className="flex items-center gap-1">
               <ImageIcon className="h-3.5 w-3.5" /> URL da imagem (opcional)
             </Label>
@@ -377,73 +685,137 @@ function NewEpiDialog({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-function HistoryDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-}) {
-  const { data = [] } = useQuery({
-    queryKey: ["historico_entregas"],
-    enabled: open,
+// ───────────────────────── Histórico Geral ─────────────────────────
+
+function HistoricoGeral({ epis }: { epis: EpiRow[] }) {
+  const [filtroCpf, setFiltroCpf] = useState("");
+  const [filtroEpi, setFiltroEpi] = useState<string>("todos");
+  const [filtroTipo, setFiltroTipo] = useState<string>("todos");
+
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["historico_movimentacoes"],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("historico_entregas")
         .select("*, estoque_epi(nome_material, codigo_material)")
         .order("data_entrega", { ascending: false })
-        .limit(200);
+        .limit(500);
       if (error) throw error;
-      return (data ?? []) as Entrega[];
+      return (data ?? []) as Movimentacao[];
     },
   });
 
+  const filtrado = useMemo(() => {
+    const cpfDigits = filtroCpf.replace(/\D/g, "");
+    return data.filter((m) => {
+      if (filtroEpi !== "todos" && m.epi_id !== filtroEpi) return false;
+      if (filtroTipo !== "todos" && m.tipo_movimentacao !== filtroTipo) return false;
+      if (cpfDigits && !m.cpf_colaborador.includes(cpfDigits)) return false;
+      return true;
+    });
+  }, [data, filtroCpf, filtroEpi, filtroTipo]);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>Histórico de entregas (últimas 200)</DialogTitle>
-        </DialogHeader>
-        <div className="max-h-[60vh] overflow-auto">
-          {data.length === 0 ? (
-            <div className="text-sm text-muted-foreground text-center py-8">
-              Nenhuma entrega registrada ainda.
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-background border-b">
-                <tr className="text-left text-[10px] uppercase tracking-widest text-muted-foreground">
-                  <th className="py-2 pr-2">Data</th>
-                  <th className="py-2 pr-2">CPF</th>
-                  <th className="py-2 pr-2">Colaborador</th>
-                  <th className="py-2 pr-2">EPI</th>
-                  <th className="py-2 pr-2 text-right">Qtd</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((h) => (
-                  <tr key={h.id} className="border-b hover:bg-muted/30">
-                    <td className="py-2 pr-2 whitespace-nowrap">
-                      {new Date(h.data_entrega).toLocaleString("pt-BR")}
-                    </td>
-                    <td className="py-2 pr-2 font-mono text-xs">
-                      {maskCpf(h.cpf_colaborador)}
-                    </td>
-                    <td className="py-2 pr-2">{h.nome_colaborador}</td>
-                    <td className="py-2 pr-2">
-                      {h.estoque_epi?.nome_material ?? "—"}
-                      <span className="text-[10px] text-muted-foreground ml-1">
-                        {h.estoque_epi?.codigo_material}
-                      </span>
-                    </td>
-                    <td className="py-2 pr-2 text-right font-bold">{h.quantidade_entregue}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+    <Card className="p-4 space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={filtroCpf}
+            onChange={(e) => setFiltroCpf(maskCpf(e.target.value))}
+            placeholder="Filtrar por CPF"
+            className="pl-8"
+          />
         </div>
-      </DialogContent>
-    </Dialog>
+        <Select value={filtroEpi} onValueChange={setFiltroEpi}>
+          <SelectTrigger>
+            <SelectValue placeholder="EPI" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os EPIs</SelectItem>
+            {epis.map((e) => (
+              <SelectItem key={e.id} value={e.id}>
+                {e.nome_material}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+          <SelectTrigger>
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os tipos</SelectItem>
+            <SelectItem value="SAIDA_ENTREGA">Saída · Entrega</SelectItem>
+            <SelectItem value="ENTRADA_REPOSICAO">Entrada · Reposição</SelectItem>
+            <SelectItem value="DEVOLUCAO">Devolução</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="text-xs text-muted-foreground">
+        Exibindo <strong>{filtrado.length}</strong> de {data.length} movimentações
+      </div>
+
+      <div className="max-h-[60vh] overflow-auto border rounded-md">
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground py-8 text-center">Carregando…</div>
+        ) : filtrado.length === 0 ? (
+          <div className="text-sm text-muted-foreground py-8 text-center">
+            Nenhuma movimentação encontrada com esses filtros.
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-background border-b">
+              <tr className="text-left text-[10px] uppercase tracking-widest text-muted-foreground">
+                <th className="py-2 px-2">Data</th>
+                <th className="py-2 px-2">Tipo</th>
+                <th className="py-2 px-2">CPF</th>
+                <th className="py-2 px-2">Colaborador</th>
+                <th className="py-2 px-2">EPI</th>
+                <th className="py-2 px-2 text-right">Qtd</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtrado.map((h) => (
+                <tr key={h.id} className="border-b hover:bg-muted/30">
+                  <td className="py-2 px-2 whitespace-nowrap">
+                    {new Date(h.data_entrega).toLocaleString("pt-BR")}
+                  </td>
+                  <td className="py-2 px-2">
+                    <Badge
+                      variant="outline"
+                      className={
+                        h.tipo_movimentacao === "SAIDA_ENTREGA"
+                          ? "border-destructive/40 text-destructive"
+                          : h.tipo_movimentacao === "ENTRADA_REPOSICAO"
+                            ? "border-emerald-500/40 text-emerald-700"
+                            : "border-amber-500/40 text-amber-700"
+                      }
+                    >
+                      {TIPO_LABEL[h.tipo_movimentacao]}
+                    </Badge>
+                  </td>
+                  <td className="py-2 px-2 font-mono text-xs">
+                    {h.cpf_colaborador ? maskCpf(h.cpf_colaborador) : "—"}
+                  </td>
+                  <td className="py-2 px-2">{h.nome_colaborador || "—"}</td>
+                  <td className="py-2 px-2">
+                    {h.estoque_epi?.nome_material ?? "—"}
+                    <span className="text-[10px] text-muted-foreground ml-1">
+                      {h.estoque_epi?.codigo_material}
+                    </span>
+                  </td>
+                  <td className="py-2 px-2 text-right font-bold">
+                    {h.tipo_movimentacao === "SAIDA_ENTREGA" ? "−" : "+"}
+                    {h.quantidade_entregue}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </Card>
   );
 }
