@@ -9,6 +9,7 @@ import {
   Upload,
   Menu,
   ChevronDown,
+  ChevronRight,
   ShieldCheck,
   Boxes,
   Factory,
@@ -41,8 +42,14 @@ const OTHER_MODULES = [
 ] as const;
 
 const ESTOQUE_SUBMENU = [
-  { key: "estoque-sesmt", label: "SESMT", to: "/app/estoque/sesmt" as const },
-  { key: "estoque-sesmt-epi", label: "SESMT · EPIs (Cards)", to: "/app/estoque/epi" as const },
+  {
+    key: "estoque-sesmt",
+    label: "SESMT",
+    to: "/app/estoque/sesmt" as const,
+    children: [
+      { key: "estoque-sesmt-epi", label: "EPIs (Cards)", to: "/app/estoque/epi" as const },
+    ],
+  },
   { key: "estoque-eletrica", label: "Elétrica" },
   { key: "estoque-mecanica", label: "Mecânica" },
 ] as const;
@@ -136,7 +143,41 @@ export function AppHeader() {
               Estoque
             </div>
             {ESTOQUE_SUBMENU.map((s) => (
-              "to" in s && s.to ? (
+              "children" in s && s.children ? (
+                <div key={s.key} className="group/sub relative">
+                  <Link
+                    to={s.to}
+                    className={`flex w-full items-center justify-between px-3 py-2 text-sm font-semibold transition-colors ${
+                      isActive(s.to)
+                        ? "bg-red-50 text-red-800"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                    }`}
+                  >
+                    {s.label}
+                    <ChevronRight className="h-3.5 w-3.5 opacity-60" />
+                  </Link>
+                  <div className="invisible absolute left-full top-0 z-50 pl-1 opacity-0 transition-all duration-150 group-hover/sub:visible group-hover/sub:opacity-100 group-focus-within/sub:visible group-focus-within/sub:opacity-100">
+                    <div className="w-56 rounded-lg border border-slate-200 bg-white shadow-xl py-1">
+                      <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-100">
+                        {s.label}
+                      </div>
+                      {s.children.map((c) => (
+                        <Link
+                          key={c.key}
+                          to={c.to}
+                          className={`block px-3 py-2 text-sm font-semibold transition-colors ${
+                            isActive(c.to)
+                              ? "bg-red-50 text-red-800"
+                              : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                          }`}
+                        >
+                          {c.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : "to" in s && s.to ? (
                 <Link
                   key={s.key}
                   to={s.to}
@@ -209,7 +250,29 @@ export function AppHeader() {
         <Boxes className="h-4 w-4" /> Estoque
       </div>
       {ESTOQUE_SUBMENU.map((s) => (
-        "to" in s && s.to ? (
+        "children" in s && s.children ? (
+          <div key={s.key}>
+            <Link
+              to={s.to}
+              className={`flex items-center gap-2 rounded-md px-6 py-2 text-sm font-semibold text-left ${
+                isActive(s.to) ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10"
+              }`}
+            >
+              {s.label}
+            </Link>
+            {s.children.map((c) => (
+              <Link
+                key={c.key}
+                to={c.to}
+                className={`flex items-center gap-2 rounded-md px-10 py-2 text-xs font-semibold text-left ${
+                  isActive(c.to) ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10"
+                }`}
+              >
+                ↳ {c.label}
+              </Link>
+            ))}
+          </div>
+        ) : "to" in s && s.to ? (
           <Link
             key={s.key}
             to={s.to}
