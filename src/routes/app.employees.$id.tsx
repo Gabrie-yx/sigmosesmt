@@ -611,7 +611,18 @@ function VaccinesTab({ empId, vaccines, role, canEdit, canDelete, qc }: any) {
 
 /* ============ EPI ============ */
 function EpiTab({ empId, epis, canEdit, canDelete, qc }: any) {
+  const EPI_ITEMS = [
+    "TREINAMENTOS","AVENTAL DE RASPA","BALACLAVA","BOTA","CALÇA","CAMISA",
+    "CAPACETE","LENTES DE SOLDA","LUVA","MANGOTE DE RASPA","MÁSCARA DE SOLDA",
+    "ÓCULOS","PROT. AURICULAR","VISEIRAS",
+  ];
+  const SIZES_BY_ITEM: Record<string, string[]> = {
+    "CAMISA": ["PP","P","M","G","GG","XGG","EXG"],
+    "CALÇA": ["PP","P","M","G"],
+    "BOTA": ["36","37","38","39","40","41","42","43","44"],
+  };
   const [f, setF] = useState<any>({ item: "", ca: "", tamanho: "", qtd: 1, data_entrega: new Date().toISOString().slice(0, 10) });
+  const sizeOptions = SIZES_BY_ITEM[f.item] ?? null;
   const create = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("epi_deliveries").insert({
@@ -632,12 +643,26 @@ function EpiTab({ empId, epis, canEdit, canDelete, qc }: any) {
     <Card className="p-6 space-y-6">
       {canEdit && (
         <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end border-b pb-4">
-          <Field label="Item *"><Input required value={f.item} onChange={(e) => setF({ ...f, item: e.target.value })} /></Field>
+          <Field label="Item *">
+            <Select value={f.item} onValueChange={(v) => setF({ ...f, item: v, tamanho: "" })}>
+              <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>{EPI_ITEMS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
           <Field label="CA"><Input value={f.ca} onChange={(e) => setF({ ...f, ca: e.target.value })} /></Field>
-          <Field label="Tamanho"><Input value={f.tamanho} onChange={(e) => setF({ ...f, tamanho: e.target.value })} /></Field>
+          <Field label="Tamanho">
+            {sizeOptions ? (
+              <Select value={f.tamanho} onValueChange={(v) => setF({ ...f, tamanho: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                <SelectContent>{sizeOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            ) : (
+              <Input value={f.tamanho} onChange={(e) => setF({ ...f, tamanho: e.target.value })} placeholder="—" />
+            )}
+          </Field>
           <Field label="Qtd"><Input type="number" min="1" value={f.qtd} onChange={(e) => setF({ ...f, qtd: e.target.value })} /></Field>
           <Field label="Data"><Input type="date" value={f.data_entrega} onChange={(e) => setF({ ...f, data_entrega: e.target.value })} /></Field>
-          <Button type="submit" className="col-span-2 md:col-span-5" disabled={create.isPending}><Plus className="h-4 w-4 mr-2" />Entregar EPI</Button>
+          <Button type="submit" className="col-span-2 md:col-span-5" disabled={create.isPending || !f.item}><Plus className="h-4 w-4 mr-2" />Entregar EPI</Button>
         </form>
       )}
       <Table>
