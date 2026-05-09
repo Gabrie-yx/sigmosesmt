@@ -57,7 +57,8 @@ function EstoqueEpiPage() {
   const { data: epis = [], isLoading } = useQuery({
     queryKey: ["estoque_epi"],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("estoque_epi" as never) as never)
+      const { data, error } = await (supabase as any)
+        .from("estoque_epi")
         .select("*")
         .order("nome_material");
       if (error) throw error;
@@ -211,12 +212,12 @@ function DeliveryDialog({ epi }: { epi: EpiRow }) {
       if (qtd > epi.quantidade_atual)
         throw new Error(`Saldo insuficiente (atual: ${epi.quantidade_atual})`);
 
-      const { error } = await supabase.rpc("registrar_entrega_epi" as never, {
+      const { error } = await (supabase as any).rpc("registrar_entrega_epi", {
         _epi_id: epi.id,
         _cpf: cpfLimpo,
         _nome: nome.trim().toUpperCase(),
         _qtd: qtd,
-      } as never);
+      });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -305,7 +306,7 @@ function NewEpiDialog({ onCreated }: { onCreated: () => void }) {
     }
     setSaving(true);
     try {
-      const { error } = await (supabase.from("estoque_epi" as never) as never).insert({
+      const { error } = await (supabase as any).from("estoque_epi").insert({
         codigo_material: codigo.trim().toUpperCase(),
         nome_material: nome.trim().toUpperCase(),
         quantidade_atual: qtd,
@@ -387,7 +388,8 @@ function HistoryDialog({
     queryKey: ["historico_entregas"],
     enabled: open,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("historico_entregas" as never) as never)
+      const { data, error } = await (supabase as any)
+        .from("historico_entregas")
         .select("*, estoque_epi(nome_material, codigo_material)")
         .order("data_entrega", { ascending: false })
         .limit(200);
