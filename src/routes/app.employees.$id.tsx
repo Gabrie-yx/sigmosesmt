@@ -23,6 +23,19 @@ export const Route = createFileRoute("/app/employees/$id")({
 
 function EmployeeDetail() {
   const { id } = Route.useParams();
+  return (
+    <div className="p-6 md:p-8 space-y-6 animate-fadeIn">
+      <div className="flex items-center gap-3">
+        <Button asChild variant="ghost" size="sm" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-brand">
+          <Link to="/app/employees"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
+        </Button>
+      </div>
+      <EmployeeDetailContent id={id} showHeader />
+    </div>
+  );
+}
+
+export function EmployeeDetailContent({ id, showHeader = true }: { id: string; showHeader?: boolean }) {
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
 
@@ -57,13 +70,8 @@ function EmployeeDetail() {
   if (!emp) return <div className="p-8 text-muted-foreground">Carregando…</div>;
 
   return (
-    <div className="p-6 md:p-8 space-y-6 animate-fadeIn">
-      <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="sm" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-brand">
-          <Link to="/app/employees"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
-        </Button>
-      </div>
-
+    <div className="space-y-6 animate-fadeIn">
+      {showHeader && (
       <Card className="p-6 flex flex-wrap items-center gap-6 rounded-2xl border-slate-200 shadow-sm">
         <div className="flex-1 min-w-[240px]">
           <h1 className="heading-display text-3xl text-brand">{emp.nome}</h1>
@@ -78,6 +86,7 @@ function EmployeeDetail() {
           </div>
         )}
       </Card>
+      )}
 
       {status && status.msgs.length > 0 && (
         <Card className="p-4 flex flex-wrap gap-2">
