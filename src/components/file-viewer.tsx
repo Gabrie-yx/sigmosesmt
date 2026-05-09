@@ -5,7 +5,7 @@ import { Download, Printer, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type ViewerPayload = { url: string; name: string; mime?: string };
+type ViewerPayload = { url: string; name: string; mime?: string; downloadUrl?: string; objectUrl?: string };
 let listener: ((p: ViewerPayload | null) => void) | null = null;
 
 export function openFileViewer(p: ViewerPayload) {
@@ -25,9 +25,18 @@ export async function openStorageFile(bucket: string, path: string, name?: strin
     ext === "png" ? "image/png" :
     ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
     ext === "webp" ? "image/webp" : undefined;
-  // Append PDF viewer hint so Chrome/Firefox open with toolbar (download/print)
-  const url = ext === "pdf" ? `${data.signedUrl}#toolbar=1&navpanes=0&view=FitH` : data.signedUrl;
-  openFileViewer({ url, name: fname, mime });
+  try {
+    const response = await fetch(data.signedUrl);
+    if (!response.ok) throw new Error("Não foi possível carregar o arquivo");
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const url = ext === "pdf" ? `${objectUrl}#toolbar=1&navpanes=0&view=FitH` : objectUrl;
+    openFileViewer({ url, name: fname, mime: blob.type || mime, downloadUrl: objectUrl, objectUrl });
+  } catch (e: any) {
+    toast.error(e.message ?? "Não foi possível visualizar o arquivo");
+    const url = ext === "pdf" ? `${data.signedUrl}#toolbar=1&navpanes=0&view=FitH` : data.signedUrl;
+    openFileViewer({ url, name: fname, mime, downloadUrl: data.signedUrl });
+  }
 }
 
 export function FileViewerHost() {
@@ -37,6 +46,12 @@ export function FileViewerHost() {
     listener = setPayload;
     return () => { listener = null; };
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (payload?.objectUrl) URL.revokeObjectURL(payload.objectUrl);
+    };
+  }, [payload]);
 
   const isImage = payload?.mime?.startsWith("image/");
   const isPdf = payload?.mime === "application/pdf";
@@ -57,7 +72,7 @@ export function FileViewerHost() {
   async function handleDownload() {
     if (!payload) return;
     try {
-      const res = await fetch(payload.url);
+      const res = await fetch(payload.downloadUrl ?? payload.url);
       const blob = await res.blob();
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
