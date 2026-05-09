@@ -232,7 +232,7 @@ function CompaniesPage() {
             <span className="floaty inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-700 text-white shadow-md">
               <Building2 className="h-4 w-4" />
             </span>
-            Empresas <span className="text-slate-400 font-bold text-sm">(Tabela Pai)</span>
+            Empresas
           </h2>
           {isEditor && (
             <Button
