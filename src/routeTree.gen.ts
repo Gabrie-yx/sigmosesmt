@@ -22,6 +22,7 @@ import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
+import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -89,6 +90,11 @@ const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
   path: '/estoque/sesmt',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEstoqueEpiRoute = AppEstoqueEpiRouteImport.update({
+  id: '/estoque/epi',
+  path: '/estoque/epi',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
+  '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
 }
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/app/users': typeof AppUsersRoute
   '/app': typeof AppIndexRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
+  '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/employees': typeof AppEmployeesIndexRoute
 }
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
+  '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
 }
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/'
     | '/app/employees/$id'
+    | '/app/estoque/epi'
     | '/app/estoque/sesmt'
     | '/app/employees/'
   fileRoutesByTo: FileRoutesByTo
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app'
     | '/app/employees/$id'
+    | '/app/estoque/epi'
     | '/app/estoque/sesmt'
     | '/app/employees'
   id:
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/'
     | '/app/employees/$id'
+    | '/app/estoque/epi'
     | '/app/estoque/sesmt'
     | '/app/employees/'
   fileRoutesById: FileRoutesById
@@ -290,6 +302,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEstoqueSesmtRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/estoque/epi': {
+      id: '/app/estoque/epi'
+      path: '/estoque/epi'
+      fullPath: '/app/estoque/epi'
+      preLoaderRoute: typeof AppEstoqueEpiRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/employees/$id': {
       id: '/app/employees/$id'
       path: '/$id'
@@ -323,6 +342,7 @@ interface AppRouteChildren {
   AppTrainingsRoute: typeof AppTrainingsRoute
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppEstoqueEpiRoute: typeof AppEstoqueEpiRoute
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
 }
 
@@ -335,6 +355,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTrainingsRoute: AppTrainingsRoute,
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
+  AppEstoqueEpiRoute: AppEstoqueEpiRoute,
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
 }
 
