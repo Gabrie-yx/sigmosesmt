@@ -18,6 +18,9 @@ import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
 import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, UFS, VACINAS_LIST } from "@/lib/constants";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
+import { openFileViewer } from "@/components/file-viewer";
+import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
+import { HardHat, Printer, FileSignature } from "lucide-react";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -128,7 +131,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           <DocsTab empId={id} />
         </TabsContent>
         <TabsContent value="epi" className="mt-4">
-          <EpiTab empId={id} epis={epis ?? []} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+          <EpiTab empId={id} epis={epis ?? []} emp={emp} company={(companies ?? []).find((c: any) => c.id === emp.company_id) ?? null} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
         </TabsContent>
         <TabsContent value="health" className="mt-4">
           <Tabs value={healthSub} onValueChange={setHealthSub}>
