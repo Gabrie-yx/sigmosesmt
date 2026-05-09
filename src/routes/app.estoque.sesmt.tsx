@@ -386,14 +386,27 @@ function EstoqueSesmtPage() {
         <Stat label="Saídas" value={totals.sai} tone="red" />
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por produto, variação ou CA…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="pl-8"
-        />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[260px] max-w-md">
+          <Search className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por produto, variação ou CA…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Mês de referência
+          </label>
+          <Input
+            type="month"
+            value={refMonth}
+            onChange={(e) => setRefMonth(e.target.value || currentMonth())}
+            className="h-9 w-[160px]"
+          />
+        </div>
       </div>
 
       <Card className="overflow-hidden">
