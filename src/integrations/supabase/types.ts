@@ -371,6 +371,77 @@ export type Database = {
           },
         ]
       }
+      estoque_epi: {
+        Row: {
+          codigo_material: string
+          created_at: string
+          estoque_minimo: number
+          id: string
+          imagem_url: string | null
+          nome_material: string
+          quantidade_atual: number
+          updated_at: string
+        }
+        Insert: {
+          codigo_material: string
+          created_at?: string
+          estoque_minimo?: number
+          id?: string
+          imagem_url?: string | null
+          nome_material: string
+          quantidade_atual?: number
+          updated_at?: string
+        }
+        Update: {
+          codigo_material?: string
+          created_at?: string
+          estoque_minimo?: number
+          id?: string
+          imagem_url?: string | null
+          nome_material?: string
+          quantidade_atual?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      historico_entregas: {
+        Row: {
+          cpf_colaborador: string
+          created_by: string | null
+          data_entrega: string
+          epi_id: string
+          id: string
+          nome_colaborador: string
+          quantidade_entregue: number
+        }
+        Insert: {
+          cpf_colaborador: string
+          created_by?: string | null
+          data_entrega?: string
+          epi_id: string
+          id?: string
+          nome_colaborador: string
+          quantidade_entregue: number
+        }
+        Update: {
+          cpf_colaborador?: string
+          created_by?: string | null
+          data_entrega?: string
+          epi_id?: string
+          id?: string
+          nome_colaborador?: string
+          quantidade_entregue?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_entregas_epi_id_fkey"
+            columns: ["epi_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_epi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -614,6 +685,10 @@ export type Database = {
         Returns: boolean
       }
       is_editor: { Args: { _user_id: string }; Returns: boolean }
+      registrar_entrega_epi: {
+        Args: { _cpf: string; _epi_id: string; _nome: string; _qtd: number }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "tst" | "viewer"
