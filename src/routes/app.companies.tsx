@@ -25,14 +25,15 @@ type Company = {
   email: string | null;
   encarregado1: string | null;
   encarregado2: string | null;
+  data_entrada?: string | null;
 };
 
 const empty: Partial<Company> = { name: "", type: "CLT", cnpj: "", email: "", encarregado1: "", encarregado2: "" };
 
 const typeStyle: Record<string, string> = {
   CLT: "bg-emerald-100 text-emerald-700",
-  TERCEIRIZADO: "bg-amber-100 text-amber-700",
-  TERCEIRIZADA: "bg-amber-100 text-amber-700",
+  TERCEIRIZADO: "bg-indigo-100 text-indigo-700",
+  TERCEIRIZADA: "bg-indigo-100 text-indigo-700",
   CONTRATANTE: "bg-sky-100 text-sky-700",
 };
 
@@ -43,7 +44,7 @@ function CompaniesPage() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Partial<Company> | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(true);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -76,6 +77,7 @@ function CompaniesPage() {
         name: v.name!, type: v.type ?? "CLT",
         cnpj: v.cnpj || null, email: v.email || null,
         encarregado1: v.encarregado1 || null, encarregado2: v.encarregado2 || null,
+        data_entrada: (v as any).data_entrada || null,
       };
       if (v.id) {
         const { error } = await supabase.from("companies").update(payload).eq("id", v.id);
@@ -87,7 +89,7 @@ function CompaniesPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["companies"] });
-      setShowForm(false); setEditing(null);
+      setEditing({ ...empty });
       toast.success("Empresa salva");
     },
     onError: (e: any) => toast.error(e.message),
@@ -102,12 +104,19 @@ function CompaniesPage() {
   function startNew() { setEditing({ ...empty }); setShowForm(true); setSelectedId(null); }
   function startEdit() { if (selected) { setEditing({ ...selected }); setShowForm(true); } }
 
+  // Garante editing inicial para o formulário fixo
+  if (showForm && !editing) {
+    setEditing({ ...empty });
+  }
+
   return (
     <div className="p-6 md:p-8 flex gap-6 h-full bg-[#f1f5f9] animate-fadeIn">
       {/* LEFT: Company cards */}
       <div className="w-[360px] flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1 shrink-0">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="heading-display text-xl text-slate-900">Empresas</h2>
+          <h2 className="heading-display text-xl text-slate-900 font-black uppercase tracking-tight">
+            Empresas <span className="text-slate-400 font-bold">(Tabela Pai)</span>
+          </h2>
           {isEditor && (
             <Button
               size="sm"
@@ -122,10 +131,13 @@ function CompaniesPage() {
           const isSel = selectedId === c.id;
           const empCount = employees.filter((e: any) => e.company_id === c.id).length;
           const ts = typeStyle[c.type] ?? "bg-slate-100 text-slate-700";
+          const entrada = (c as any).data_entrada
+            ? new Date((c as any).data_entrada + "T00:00:00").toLocaleDateString("pt-BR")
+            : "N/A";
           return (
             <div
               key={c.id}
-              onClick={() => { setSelectedId(c.id); setShowForm(false); }}
+              onClick={() => { setSelectedId(c.id); setShowForm(false); setEditing(null); }}
               className={`p-5 rounded-2xl shadow-sm border cursor-pointer transition-all ${
                 isSel ? "bg-[#0369a1] border-[#0369a1] text-white shadow-md" : "bg-white border-slate-200 hover:border-[#0369a1]"
               }`}
@@ -138,7 +150,7 @@ function CompaniesPage() {
               </div>
               <h3 className={`text-lg font-black uppercase ${isSel ? "text-white" : "text-slate-800"}`}>{c.name}</h3>
               <p className={`text-[10px] font-bold uppercase mt-1 ${isSel ? "text-white/70" : "text-slate-500"}`}>
-                CNPJ: {c.cnpj || "Não informado"}
+                CNPJ: {c.cnpj || "Não informado"} <span className="mx-1">|</span> ENTRADA: {entrada}
               </p>
               <div className={`mt-4 pt-4 border-t text-xs font-bold ${isSel ? "border-white/20 text-white/90" : "border-slate-100 text-slate-600"}`}>
                 <div className="flex items-center gap-2"><User className={`h-3.5 w-3.5 ${isSel ? "text-white" : "text-[#0369a1]"}`} /> {c.encarregado1 ? `Empreiteiro: ${c.encarregado1}` : "S/ Empreiteiro"}</div>
@@ -150,12 +162,12 @@ function CompaniesPage() {
       </div>
 
       {/* RIGHT */}
-      {showForm ? (
+      {showForm || (!selected && !showForm) ? (
         <CompanyForm
-          editing={editing!}
+          editing={editing ?? { ...empty }}
           setEditing={setEditing}
-          onCancel={() => { setShowForm(false); setEditing(null); }}
-          onSubmit={() => save.mutate(editing!)}
+          onCancel={selected ? () => { setShowForm(false); setEditing(null); } : undefined}
+          onSubmit={() => save.mutate(editing ?? { ...empty })}
           saving={save.isPending}
         />
       ) : selected ? (
@@ -275,22 +287,24 @@ function CompanyForm({
 }: {
   editing: Partial<Company>;
   setEditing: (v: Partial<Company>) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
   onSubmit: () => void;
   saving: boolean;
 }) {
   return (
     <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-8 overflow-y-auto custom-scrollbar animate-fadeIn relative">
-      <button onClick={onCancel} className="absolute top-8 right-8 text-slate-400 hover:text-red-500" aria-label="Cancelar">
-        <X className="h-6 w-6" />
-      </button>
+      {onCancel && (
+        <button onClick={onCancel} className="absolute top-8 right-8 text-slate-400 hover:text-red-500" aria-label="Cancelar">
+          <X className="h-6 w-6" />
+        </button>
+      )}
       <h3 className="text-lg font-black uppercase text-[#0369a1] mb-6 border-b border-slate-100 pb-4">
         {editing?.id ? "Editar Empresa" : "Cadastrar Nova Empresa"}
       </h3>
       <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="text-[10px] font-black text-slate-500 uppercase">Razão Social *</Label>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Razão Social / Nome da Empresa *</Label>
             <Input required value={editing?.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className="bg-slate-50 mt-1" />
           </div>
           <div>
@@ -305,13 +319,19 @@ function CompanyForm({
             </Select>
           </div>
         </div>
-        <div>
-          <Label className="text-[10px] font-black text-slate-500 uppercase">CNPJ</Label>
-          <Input value={editing?.cnpj ?? ""} onChange={(e) => setEditing({ ...editing, cnpj: e.target.value })} placeholder="00.000.000/0001-00" className="bg-slate-50 mt-1" />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">CNPJ</Label>
+            <Input value={editing?.cnpj ?? ""} onChange={(e) => setEditing({ ...editing, cnpj: e.target.value })} placeholder="00.000.000/0001-00" className="bg-slate-50 mt-1" />
+          </div>
+          <div>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Data da Entrada</Label>
+            <Input type="date" value={(editing as any)?.data_entrada ?? ""} onChange={(e) => setEditing({ ...editing, data_entrada: e.target.value } as any)} className="bg-slate-50 mt-1" />
+          </div>
         </div>
         <div>
           <Label className="text-[10px] font-black text-slate-500 uppercase">E-mail Corporativo</Label>
-          <Input type="email" value={editing?.email ?? ""} onChange={(e) => setEditing({ ...editing, email: e.target.value })} className="bg-slate-50 mt-1" />
+          <Input type="email" placeholder="contato@empresa.com" value={editing?.email ?? ""} onChange={(e) => setEditing({ ...editing, email: e.target.value })} className="bg-slate-50 mt-1" />
         </div>
         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
           <div>
