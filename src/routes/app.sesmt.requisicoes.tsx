@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -569,7 +569,7 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
   const [numero, setNumero] = useState<string>("Gerando...");
 
   // Gera número automático: SEQ/MM/AAAA (sequencial reiniciado por mês/ano)
-  React.useEffect(() => {
+  useEffect(() => {
     (async () => {
       const now = new Date();
       const mm = String(now.getMonth() + 1).padStart(2, "0");
