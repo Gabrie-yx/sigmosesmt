@@ -31,6 +31,7 @@ type Item = {
   codigo_material: string;
   nome_material: string;
   ca: string | null;
+  ca_validade: string | null;
   numero_pedido: string | null;
   imagem_url: string | null;
   quantidade_atual: number;
@@ -198,6 +199,7 @@ function EstoqueSesmtPage() {
       Codigo: i.codigo_material,
       Produto: i.nome_material,
       CA: i.ca ?? "",
+      CA_Validade: i.ca_validade ?? "",
       NumeroPedido: i.numero_pedido ?? "",
       Quantidade: i.quantidade_atual,
       EstoqueMinimo: i.estoque_minimo,
@@ -303,7 +305,14 @@ function EstoqueSesmtPage() {
                   <TableCell className="text-xs text-slate-500">{i.codigo_material}</TableCell>
                   <TableCell className="text-xs text-slate-500">{i.numero_pedido || "—"}</TableCell>
                   <TableCell className="text-xs">
-                    {i.ca ? <Badge variant="secondary">{i.ca}</Badge> : <span className="text-slate-300">—</span>}
+                    {i.ca ? (
+                      <div className="flex flex-col gap-0.5">
+                        <Badge variant="secondary" className="w-fit">{i.ca}</Badge>
+                        {i.ca_validade && (
+                          <span className="text-[10px] text-slate-500">val. {formatDateBR(i.ca_validade)}</span>
+                        )}
+                      </div>
+                    ) : <span className="text-slate-300">—</span>}
                   </TableCell>
                   <TableCell className="text-right font-black">
                     <span className={low ? "text-rose-600" : "text-slate-800"}>{i.quantidade_atual}</span>
@@ -486,11 +495,13 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
     nome_base: "",
     codigo_base: "",
     ca: "",
+    ca_validade: "",
     numero_pedido: "",
     qtd_inicial: "0",
     estoque_minimo: "5",
   };
   const [f, setF] = useState(initial);
+  const [caNA, setCaNA] = useState(false);
   const [variacoes, setVariacoes] = useState<string[]>([]);
   const [novaVar, setNovaVar] = useState("");
   const [foto, setFoto] = useState<File | null>(null);
@@ -503,6 +514,7 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
       setVariacoes([]);
       setNovaVar("");
       setFoto(null);
+      setCaNA(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -540,7 +552,8 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
 
     const qtd = Math.max(0, Number(f.qtd_inicial) || 0);
     const min = Math.max(0, Number(f.estoque_minimo) || 0);
-    const ca = f.ca.trim() || null;
+    const ca = caNA ? "N/A" : (f.ca.trim() || null);
+    const ca_validade = caNA ? null : (f.ca_validade || null);
     const pedido = f.numero_pedido.trim() || null;
 
     const rows =
@@ -549,6 +562,7 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
             nome_material: `${nome} - ${v}`,
             codigo_material: `${codigo}-${v.replace(/\s+/g, "")}`,
             ca,
+            ca_validade,
             numero_pedido: pedido,
             quantidade_atual: qtd,
             estoque_minimo: min,
@@ -558,6 +572,7 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
             nome_material: nome,
             codigo_material: codigo,
             ca,
+            ca_validade,
             numero_pedido: pedido,
             quantidade_atual: qtd,
             estoque_minimo: min,
@@ -585,8 +600,28 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA (opcional)</Label>
-              <Input value={f.ca} onChange={(e) => setF({ ...f, ca: e.target.value })} placeholder="Apenas número" />
+              <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</Label>
+                <label className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 cursor-pointer">
+                  <input type="checkbox" checked={caNA} onChange={(e) => setCaNA(e.target.checked)} className="h-3 w-3" />
+                  Não Aplicável
+                </label>
+              </div>
+              <Input
+                value={caNA ? "N/A" : f.ca}
+                onChange={(e) => setF({ ...f, ca: e.target.value })}
+                placeholder="Apenas número"
+                disabled={caNA}
+              />
+            </div>
+            <div>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Validade do CA</Label>
+              <Input
+                type="date"
+                value={f.ca_validade}
+                onChange={(e) => setF({ ...f, ca_validade: e.target.value })}
+                disabled={caNA}
+              />
             </div>
             <div>
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nº do Pedido</Label>
@@ -721,7 +756,8 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
 
 function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any) {
   const isDup = mode === "duplicate";
-  const [f, setF] = useState({ nome_material: "", codigo_material: "", ca: "", numero_pedido: "", estoque_minimo: "0", quantidade_atual: "0" });
+  const [f, setF] = useState({ nome_material: "", codigo_material: "", ca: "", ca_validade: "", numero_pedido: "", estoque_minimo: "0", quantidade_atual: "0" });
+  const [caNA, setCaNA] = useState(false);
   const [foto, setFoto] = useState<File | null>(null);
   const [removeFoto, setRemoveFoto] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -729,10 +765,13 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any
 
   useEffect(() => {
     if (item) {
+      const isNA = (item.ca ?? "").trim().toUpperCase() === "N/A";
+      setCaNA(isNA);
       setF({
         nome_material: item.nome_material ?? "",
         codigo_material: item.codigo_material ?? "",
-        ca: item.ca ?? "",
+        ca: isNA ? "" : (item.ca ?? ""),
+        ca_validade: item.ca_validade ?? "",
         numero_pedido: item.numero_pedido ?? "",
         estoque_minimo: String(item.estoque_minimo ?? 0),
         quantidade_atual: String(item.quantidade_atual ?? 0),
@@ -760,7 +799,8 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any
     const patch: any = {
       nome_material: f.nome_material.trim().toUpperCase(),
       codigo_material: f.codigo_material.trim(),
-      ca: f.ca.trim() || null,
+      ca: caNA ? "N/A" : (f.ca.trim() || null),
+      ca_validade: caNA ? null : (f.ca_validade || null),
       numero_pedido: f.numero_pedido.trim() || null,
       estoque_minimo: Math.max(0, Number(f.estoque_minimo) || 0),
       quantidade_atual: Math.max(0, Number(f.quantidade_atual) || 0),
@@ -784,8 +824,27 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</Label>
-                <Input value={f.ca} onChange={(e) => setF({ ...f, ca: e.target.value })} />
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</Label>
+                  <label className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 cursor-pointer">
+                    <input type="checkbox" checked={caNA} onChange={(e) => setCaNA(e.target.checked)} className="h-3 w-3" />
+                    Não Aplicável
+                  </label>
+                </div>
+                <Input
+                  value={caNA ? "N/A" : f.ca}
+                  onChange={(e) => setF({ ...f, ca: e.target.value })}
+                  disabled={caNA}
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Validade do CA</Label>
+                <Input
+                  type="date"
+                  value={f.ca_validade}
+                  onChange={(e) => setF({ ...f, ca_validade: e.target.value })}
+                  disabled={caNA}
+                />
               </div>
               <div>
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nº do Pedido</Label>
