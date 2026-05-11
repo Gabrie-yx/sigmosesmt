@@ -158,7 +158,7 @@ function normalizeStoredProducts(value: unknown): Product[] | null {
     .filter((p): p is Product => !!p && typeof p === "object" && typeof (p as Product).base === "string")
     .map((p) => ({
       ...p,
-      id: typeof p.id === "string" ? p.id : `p-${crypto.randomUUID?.() ?? Date.now()}`,
+      id: typeof p.id === "string" ? p.id : `p-${globalThis.crypto?.randomUUID?.() ?? Date.now()}`,
       umb: p.umb || "UN",
       variants: (Array.isArray(p.variants) ? p.variants : []).map((v, i) => ({
         ...v,
