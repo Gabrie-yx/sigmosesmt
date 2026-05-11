@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
-import { FileText, Upload, Eye, Trash2, Plus, Calendar, AlertTriangle, History } from "lucide-react";
+import { FileText, Upload, Eye, Trash2, Plus, Calendar, AlertTriangle, History, Pencil, X, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/sesmt/docs")({
