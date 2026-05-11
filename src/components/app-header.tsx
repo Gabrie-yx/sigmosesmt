@@ -365,11 +365,11 @@ export function AppHeader() {
           <div className="flex h-10 items-center justify-center rounded bg-white/95 px-2 py-1 shadow-sm">
             <img src={dmnLogo} alt="DMN Estaleiro" className="h-8 w-auto object-contain" />
           </div>
-          <div>
-            <h1 className="text-lg font-black uppercase tracking-tight leading-none text-white">
+          <div className="whitespace-nowrap">
+            <h1 className="text-lg font-black uppercase tracking-tight leading-none text-white whitespace-nowrap">
               ESTALEIRO DMN
             </h1>
-            <div className="text-[9px] font-bold uppercase tracking-widest text-white/60 mt-1">
+            <div className="text-[9px] font-bold uppercase tracking-widest text-white/60 mt-1 whitespace-nowrap">
               CNPJ: 13.378.697/0001-80
             </div>
           </div>
