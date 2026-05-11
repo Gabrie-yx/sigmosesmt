@@ -21,6 +21,7 @@ import {
 import {
   Search, Download, Plus, History,
   Trash2, ExternalLink, AlertTriangle, Pencil, X, Upload, ImageIcon, Copy,
+  ArrowDownToLine,
 } from "lucide-react";
 import protectiveClothingIcon from "@/assets/protective-clothing.png";
 import { toast } from "sonner";
