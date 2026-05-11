@@ -25,6 +25,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import dmnLogo from "@/assets/dmn-logo.png";
 
 const SESMT_ITEMS = [
+  { to: "/app/painel", label: "Painel SESMT" },
   { to: "/app/companies", label: "Empresas" },
   { to: "/app/roles", label: "Cargos / Riscos" },
   { to: "/app/employees", label: "Colaboradores" },
