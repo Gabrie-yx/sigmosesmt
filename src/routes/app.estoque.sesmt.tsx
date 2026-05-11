@@ -334,7 +334,7 @@ function EstoqueSesmtPage() {
       <NewItemDialog
         open={showNew}
         onOpenChange={setShowNew}
-        onSubmit={(p) => createMut.mutate(p, { onSuccess: () => setShowNew(false) })}
+        onSubmit={(p: any) => createMut.mutate(p, { onSuccess: () => setShowNew(false) })}
         pending={createMut.isPending}
       />
 
@@ -342,7 +342,7 @@ function EstoqueSesmtPage() {
       <MovementDialog
         state={movItem}
         onClose={() => setMovItem(null)}
-        onSubmit={(qtd, fornecedor) => {
+        onSubmit={(qtd: number, fornecedor?: string) => {
           if (!movItem) return;
           movMut.mutate(
             { id: movItem.item.id, qtd, tipo: movItem.tipo, fornecedor },
@@ -356,7 +356,7 @@ function EstoqueSesmtPage() {
       <AdjustDialog
         item={adjItem}
         onClose={() => setAdjItem(null)}
-        onSubmit={(novo) => {
+        onSubmit={(novo: number) => {
           if (!adjItem) return;
           ajustMut.mutate(
             { id: adjItem.id, novo },
