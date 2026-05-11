@@ -1057,7 +1057,7 @@ function MovementDialog({
               <div className="text-right">Saldo atual</div>
               <div className="text-right">Quantidade</div>
             </div>
-            {product.variants.map((v) => {
+            {(Array.isArray(product.variants) ? product.variants : []).map((v) => {
               const bal = variantBalance(v);
               return (
                 <div key={v.id} className="grid grid-cols-[1fr_auto_120px] gap-3 px-3 py-2 items-center">
