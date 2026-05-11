@@ -76,7 +76,8 @@ function findVariant(
   for (let pi = 0; pi < products.length; pi++) {
     const p = products[pi];
     if (!Array.isArray(p.variants)) continue;
-    if (norm(p.base) !== baseFirst) continue;
+    const baseN = norm(p.base);
+    if (baseN !== itemN && baseN !== baseFirst) continue;
     for (let vi = 0; vi < p.variants.length; vi++) {
       const labelN = norm(p.variants[vi].label);
       if (tamN) {
@@ -94,7 +95,8 @@ function findVariant(
   for (let pi = 0; pi < products.length; pi++) {
     const p = products[pi];
     if (!Array.isArray(p.variants)) continue;
-    if (norm(p.base) !== baseFirst) continue;
+    const baseN = norm(p.base);
+    if (baseN !== itemN && baseN !== baseFirst) continue;
     for (let vi = 0; vi < p.variants.length; vi++) {
       candidates.push({ pi, vi });
     }
