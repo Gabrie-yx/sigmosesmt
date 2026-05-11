@@ -370,7 +370,7 @@ export function AppHeader() {
               ESTALEIRO DMN
             </h1>
             <div className="text-[9px] font-bold uppercase tracking-widest text-white/60 mt-1">
-              Auditoria ISO 9001 — Módulo GSI
+              CNPJ: 13.378.697/0001-80
             </div>
           </div>
         </Link>
