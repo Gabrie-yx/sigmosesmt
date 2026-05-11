@@ -19,7 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Search, Download, Plus, History, ArrowUp, ArrowDown,
+  Search, Download, Plus, History,
   Trash2, ExternalLink, AlertTriangle, Pencil, X, Upload, ImageIcon, Copy,
 } from "lucide-react";
 import protectiveClothingIcon from "@/assets/protective-clothing.png";
@@ -163,47 +163,9 @@ function EstoqueSesmtPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const movMut = useMutation({
-    mutationFn: async (args: {
-      id: string; qtd: number; tipo: "ENTRADA_REPOSICAO" | "DEVOLUCAO";
-      fornecedor?: string;
-    }) => {
-      const { error } = await supabase.rpc("registrar_movimentacao_epi", {
-        _epi_id: args.id,
-        _qtd: args.qtd,
-        _tipo: args.tipo,
-        _fornecedor: args.fornecedor ?? undefined,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
-      qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
-      toast.success("Movimentação registrada");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  const ajustMut = useMutation({
-    mutationFn: async (args: { id: string; novo: number }) => {
-      const { error } = await supabase.rpc("ajustar_saldo_epi", {
-        _epi_id: args.id,
-        _novo_saldo: args.novo,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
-      toast.success("Saldo ajustado");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
   /* ---------- Dialogs ---------- */
   const [showNew, setShowNew] = useState(false);
-  const [movItem, setMovItem] = useState<{ item: Item; tipo: "ENTRADA_REPOSICAO" | "DEVOLUCAO" } | null>(null);
   const [histItem, setHistItem] = useState<Item | null>(null);
-  const [adjItem, setAdjItem] = useState<Item | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [dupItem, setDupItem] = useState<Item | null>(null);
 
@@ -465,34 +427,6 @@ function EstoqueSesmtPage() {
         movsByItem={movsByItem}
         snapshotByItem={snapshotByItem}
         monthStart={monthStart}
-      />
-
-      {/* Movement */}
-      <MovementDialog
-        state={movItem}
-        onClose={() => setMovItem(null)}
-        onSubmit={(qtd: number, fornecedor?: string) => {
-          if (!movItem) return;
-          movMut.mutate(
-            { id: movItem.item.id, qtd, tipo: movItem.tipo, fornecedor },
-            { onSuccess: () => setMovItem(null) },
-          );
-        }}
-        pending={movMut.isPending}
-      />
-
-      {/* Adjust */}
-      <AdjustDialog
-        item={adjItem}
-        onClose={() => setAdjItem(null)}
-        onSubmit={(novo: number) => {
-          if (!adjItem) return;
-          ajustMut.mutate(
-            { id: adjItem.id, novo },
-            { onSuccess: () => setAdjItem(null) },
-          );
-        }}
-        pending={ajustMut.isPending}
       />
 
       {/* History */}
