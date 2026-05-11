@@ -461,6 +461,15 @@ function EstoqueSesmtPage() {
         movs={histItem ? (movsByItem.get(histItem.id) ?? []) : []}
         onClose={() => setHistItem(null)}
       />
+
+      {/* Entrada de estoque */}
+      <EntradaDialog
+        open={showEntrada}
+        onOpenChange={setShowEntrada}
+        items={items}
+        onSubmit={(v) => entradaMut.mutate(v)}
+        pending={entradaMut.isPending}
+      />
     </div>
   );
 }
