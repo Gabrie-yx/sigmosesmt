@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,8 +16,11 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   Search, Download, Plus, History, ArrowUp, ArrowDown,
-  Trash2, ExternalLink, AlertTriangle,
+  Trash2, ExternalLink, AlertTriangle, Pencil, X, Upload, ImageIcon,
 } from "lucide-react";
 import protectiveClothingIcon from "@/assets/protective-clothing.png";
 import { toast } from "sonner";
@@ -28,6 +31,8 @@ type Item = {
   codigo_material: string;
   nome_material: string;
   ca: string | null;
+  numero_pedido: string | null;
+  imagem_url: string | null;
   quantidade_atual: number;
   estoque_minimo: number;
   ultimo_fornecedor: string | null;
