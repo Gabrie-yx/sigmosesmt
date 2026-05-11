@@ -487,11 +487,13 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
     nome_base: "",
     codigo_base: "",
     ca: "",
+    ca_validade: "",
     numero_pedido: "",
     qtd_inicial: "0",
     estoque_minimo: "5",
   };
   const [f, setF] = useState(initial);
+  const [caNA, setCaNA] = useState(false);
   const [variacoes, setVariacoes] = useState<string[]>([]);
   const [novaVar, setNovaVar] = useState("");
   const [foto, setFoto] = useState<File | null>(null);
@@ -504,6 +506,7 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
       setVariacoes([]);
       setNovaVar("");
       setFoto(null);
+      setCaNA(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -541,7 +544,8 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
 
     const qtd = Math.max(0, Number(f.qtd_inicial) || 0);
     const min = Math.max(0, Number(f.estoque_minimo) || 0);
-    const ca = f.ca.trim() || null;
+    const ca = caNA ? "N/A" : (f.ca.trim() || null);
+    const ca_validade = caNA ? null : (f.ca_validade || null);
     const pedido = f.numero_pedido.trim() || null;
 
     const rows =
@@ -550,6 +554,7 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
             nome_material: `${nome} - ${v}`,
             codigo_material: `${codigo}-${v.replace(/\s+/g, "")}`,
             ca,
+            ca_validade,
             numero_pedido: pedido,
             quantidade_atual: qtd,
             estoque_minimo: min,
@@ -559,6 +564,7 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
             nome_material: nome,
             codigo_material: codigo,
             ca,
+            ca_validade,
             numero_pedido: pedido,
             quantidade_atual: qtd,
             estoque_minimo: min,
@@ -586,8 +592,28 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA (opcional)</Label>
-              <Input value={f.ca} onChange={(e) => setF({ ...f, ca: e.target.value })} placeholder="Apenas número" />
+              <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</Label>
+                <label className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 cursor-pointer">
+                  <input type="checkbox" checked={caNA} onChange={(e) => setCaNA(e.target.checked)} className="h-3 w-3" />
+                  Não Aplicável
+                </label>
+              </div>
+              <Input
+                value={caNA ? "N/A" : f.ca}
+                onChange={(e) => setF({ ...f, ca: e.target.value })}
+                placeholder="Apenas número"
+                disabled={caNA}
+              />
+            </div>
+            <div>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Validade do CA</Label>
+              <Input
+                type="date"
+                value={f.ca_validade}
+                onChange={(e) => setF({ ...f, ca_validade: e.target.value })}
+                disabled={caNA}
+              />
             </div>
             <div>
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nº do Pedido</Label>
