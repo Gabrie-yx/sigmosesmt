@@ -329,11 +329,14 @@ function EstoqueSesmtPage() {
               const itemMovs = movsByItem.get(i.id) ?? [];
               let entradasItem = 0, saidasItem = 0;
               itemMovs.forEach((m) => {
+                const d = m.data_entrega ? new Date(m.data_entrega) : null;
+                if (!d || d < monthStart) return;
                 const q = m.quantidade_entregue ?? 0;
                 if (m.tipo_movimentacao === "SAIDA_ENTREGA") saidasItem += q;
                 else entradasItem += q;
               });
-              const estoqueInicial = (i.quantidade_atual ?? 0) - entradasItem + saidasItem;
+              const estoqueInicial = snapshotByItem.get(i.id) ?? 0;
+              const estoqueFinal = estoqueInicial + entradasItem - saidasItem;
               return (
                 <TableRow
                   key={i.id}
