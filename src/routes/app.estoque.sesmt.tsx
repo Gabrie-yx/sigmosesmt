@@ -505,56 +505,23 @@ function EstoqueSesmtPage() {
 }
 
 /* ============================== Row ============================== */
-function ProductRow({
-  product, variant, refMonth, onPickVariant, onBulkMove,
+function VariantRow({
+  product, variant, refMonth, onMove,
 }: {
   product: Product;
   variant: Variant;
   refMonth: string;
-  onPickVariant: (id: string) => void;
-  onBulkMove: (tipo: "ENTRADA" | "SAIDA", date: string, entries: Array<{ variantId: string; qty: number }>) => void;
+  onMove: (tipo: "ENTRADA" | "SAIDA", date: string, qty: number) => void;
 }) {
-  const totalProduto = productBalance(product);
   const { start, end } = monthRange(refMonth);
   const period = variantPeriod(variant, start, end);
+  const fullName = variant.label === "PADRÃO"
+    ? product.base
+    : `${product.base} ${variant.label}`;
 
   return (
     <TableRow className="hover:bg-slate-50/60 border-b border-slate-200">
-      <TableCell className="py-2 font-bold align-top">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-baseline gap-2">
-            <span>{product.base}</span>
-            <span className="text-[10px] text-muted-foreground font-normal">
-              Total: {fmt(totalProduto)}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {product.variants.map((vv) => {
-              const sel = vv.id === variant.id;
-              const b = variantBalance(vv);
-              return (
-                <button
-                  key={vv.id}
-                  type="button"
-                  onClick={() => onPickVariant(vv.id)}
-                  className={
-                    "px-2 py-0.5 rounded-full border text-[11px] font-semibold transition-colors " +
-                    (sel
-                      ? "bg-red-50 border-red-300 text-red-700"
-                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50")
-                  }
-                  title={`${vv.label} — saldo ${fmt(b)}`}
-                >
-                  {vv.label}
-                  <span className={"ml-1.5 font-mono " + (b > 0 ? "text-emerald-700" : b < 0 ? "text-red-700" : "text-slate-400")}>
-                    {fmt(b)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </TableCell>
+      <TableCell className="py-2 font-semibold align-middle">{fullName}</TableCell>
       <TableCell className="py-2 text-slate-700">{product.umb}</TableCell>
       <TableCell className="py-2">
         {product.ca ? <Badge variant="outline" className="font-mono">{product.ca}</Badge> : <span className="text-muted-foreground">—</span>}
@@ -567,14 +534,76 @@ function ProductRow({
       </TableCell>
       <TableCell className="py-2">
         <div className="flex items-center gap-1">
-          <MovementDialog product={product} tipo="ENTRADA" onConfirm={(date, entries) => onBulkMove("ENTRADA", date, entries)} />
-          <MovementDialog product={product} tipo="SAIDA" onConfirm={(date, entries) => onBulkMove("SAIDA", date, entries)} />
+          <SingleMoveDialog label={fullName} tipo="ENTRADA" onConfirm={(date, qty) => onMove("ENTRADA", date, qty)} />
+          <SingleMoveDialog label={fullName} tipo="SAIDA" onConfirm={(date, qty) => onMove("SAIDA", date, qty)} />
         </div>
       </TableCell>
       <TableCell className="py-2 text-center">
         <HistoryDialog product={product} variant={variant} />
       </TableCell>
     </TableRow>
+  );
+}
+
+/* ============================== Single-variant move dialog ============================== */
+function SingleMoveDialog({
+  label, tipo, onConfirm,
+}: {
+  label: string;
+  tipo: "ENTRADA" | "SAIDA";
+  onConfirm: (date: string, qty: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [qty, setQty] = useState<number>(0);
+  const isEntrada = tipo === "ENTRADA";
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setQty(0); setDate(new Date().toISOString().slice(0, 10)); } }}>
+      <DialogTrigger asChild>
+        <Button
+          size="sm"
+          variant="outline"
+          className={"h-8 px-2 " + (isEntrada
+            ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+            : "border-red-300 text-red-700 hover:bg-red-50")}
+        >
+          {isEntrada ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{isEntrada ? "Entrada" : "Saída"} — {label}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground w-16">Data</label>
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-9 flex-1" />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground w-16">Qtd</label>
+            <Input type="number" min={0} value={qty || ""} placeholder="0"
+              onChange={(e) => { const n = parseInt(e.target.value || "0", 10); setQty(isNaN(n) || n < 0 ? 0 : n); }}
+              className="h-9 flex-1 text-right font-mono" />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button
+              size="sm"
+              className={isEntrada ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}
+              onClick={() => {
+                if (qty <= 0) { toast.error("Informe a quantidade"); return; }
+                onConfirm(date, qty);
+                setOpen(false);
+                setQty(0);
+              }}
+            >
+              Confirmar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
