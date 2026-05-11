@@ -88,7 +88,7 @@ function TstPanel() {
 
   return (
     <div className="p-6 md:p-8 animate-fadeIn h-full flex flex-col bg-[#f1f5f9] overflow-y-auto custom-scrollbar">
-      <h2 className="heading-display text-3xl md:text-4xl text-[#991b1b] mb-8">Painel do TST / GSI</h2>
+      <h2 className="heading-display text-3xl md:text-4xl text-[#991b1b] mb-8">Painel SESMT / SGI - ISO 9001</h2>
 
       {/* OMNISEARCH */}
       <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 mb-8 shrink-0">
