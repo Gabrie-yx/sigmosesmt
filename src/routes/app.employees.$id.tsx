@@ -1032,9 +1032,23 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           <form onSubmit={(e) => { e.preventDefault(); submitDelivery(); }} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
             <div className="md:col-span-4 space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição do EPI</Label>
-              <Select value={f.item} onValueChange={(v) => setF({ ...f, item: v, tamanho: "" })}>
-                <SelectTrigger><SelectValue placeholder="Ex: CAPACETE, LUVA…" /></SelectTrigger>
-                <SelectContent>{EPI_ITEMS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
+              <Select
+                value={f.item}
+                onValueChange={(v) => {
+                  const prod = stockItems.find((p) => p.base === v);
+                  setF({ ...f, item: v, tamanho: "", ca: prod?.ca ?? f.ca });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={EPI_ITEMS.length ? "Selecione um EPI do estoque…" : "Nenhum item no estoque SESMT"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {EPI_ITEMS.length === 0 ? (
+                    <div className="px-2 py-1.5 text-xs text-slate-500">Cadastre itens no Estoque SESMT</div>
+                  ) : (
+                    EPI_ITEMS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)
+                  )}
+                </SelectContent>
               </Select>
             </div>
             <div className="md:col-span-3 space-y-1.5">
