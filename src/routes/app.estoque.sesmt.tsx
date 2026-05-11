@@ -748,7 +748,8 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
 
 function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any) {
   const isDup = mode === "duplicate";
-  const [f, setF] = useState({ nome_material: "", codigo_material: "", ca: "", numero_pedido: "", estoque_minimo: "0", quantidade_atual: "0" });
+  const [f, setF] = useState({ nome_material: "", codigo_material: "", ca: "", ca_validade: "", numero_pedido: "", estoque_minimo: "0", quantidade_atual: "0" });
+  const [caNA, setCaNA] = useState(false);
   const [foto, setFoto] = useState<File | null>(null);
   const [removeFoto, setRemoveFoto] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -756,10 +757,13 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any
 
   useEffect(() => {
     if (item) {
+      const isNA = (item.ca ?? "").trim().toUpperCase() === "N/A";
+      setCaNA(isNA);
       setF({
         nome_material: item.nome_material ?? "",
         codigo_material: item.codigo_material ?? "",
-        ca: item.ca ?? "",
+        ca: isNA ? "" : (item.ca ?? ""),
+        ca_validade: item.ca_validade ?? "",
         numero_pedido: item.numero_pedido ?? "",
         estoque_minimo: String(item.estoque_minimo ?? 0),
         quantidade_atual: String(item.quantidade_atual ?? 0),
@@ -787,7 +791,8 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any
     const patch: any = {
       nome_material: f.nome_material.trim().toUpperCase(),
       codigo_material: f.codigo_material.trim(),
-      ca: f.ca.trim() || null,
+      ca: caNA ? "N/A" : (f.ca.trim() || null),
+      ca_validade: caNA ? null : (f.ca_validade || null),
       numero_pedido: f.numero_pedido.trim() || null,
       estoque_minimo: Math.max(0, Number(f.estoque_minimo) || 0),
       quantidade_atual: Math.max(0, Number(f.quantidade_atual) || 0),
