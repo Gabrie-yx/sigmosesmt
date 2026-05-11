@@ -31,6 +31,7 @@ type Item = {
   codigo_material: string;
   nome_material: string;
   ca: string | null;
+  ca_validade: string | null;
   numero_pedido: string | null;
   imagem_url: string | null;
   quantidade_atual: number;
