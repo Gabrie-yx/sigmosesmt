@@ -849,18 +849,25 @@ function VaccinesTab({ empId, vaccines, role, canEdit, canDelete, qc }: any) {
 
 /* ============ EPI ============ */
 function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsOk, missingDocs }: any) {
-  const EPI_ITEMS = [
-    "TREINAMENTOS","AVENTAL DE RASPA","BALACLAVA","BOTA","CALÇA","CAMISA",
-    "CAPACETE","LENTES DE SOLDA","LUVA","MANGOTE DE RASPA","MÁSCARA DE SOLDA",
-    "ÓCULOS","PROT. AURICULAR","VISEIRAS",
-  ];
-  const SIZES_BY_ITEM: Record<string, string[]> = {
-    "CAMISA": ["PP","P","M","G","GG","XGG","EXG"],
-    "CALÇA": ["PP","P","M","G"],
-    "BOTA": ["36","37","38","39","40","41","42","43","44"],
-  };
+  const [stockItems, setStockItems] = useState<EstoqueProductOption[]>(() => listEstoqueProducts());
+  useEffect(() => {
+    const reload = () => setStockItems(listEstoqueProducts());
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === ESTOQUE_SESMT_STORAGE_KEY) reload();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(ESTOQUE_SESMT_EVENT, reload as EventListener);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(ESTOQUE_SESMT_EVENT, reload as EventListener);
+    };
+  }, []);
+  const EPI_ITEMS = stockItems.map((p) => p.base);
   const [f, setF] = useState<any>({ item: "", ca: "", tamanho: "", qtd: 1, data_entrega: new Date().toISOString().slice(0, 10) });
-  const sizeOptions = SIZES_BY_ITEM[f.item] ?? null;
+  const selectedProduct = stockItems.find((p) => p.base === f.item) ?? null;
+  const variantOptions = selectedProduct?.variants ?? [];
+  const hasRealSizes = variantOptions.some((v) => v.sizeValue && v.sizeValue.trim().length > 0);
+  const sizeOptions = hasRealSizes ? variantOptions.map((v) => v.sizeValue).filter(Boolean) : null;
   const MOTIVOS_DEV = ["Danificado", "Desgaste Natural", "Extravio", "Mal Uso", "Furto", "Uso Temporário"];
   const [substitution, setSubstitution] = useState<{ prev: any; motivo: string; data: string; obs: string } | null>(null);
 
