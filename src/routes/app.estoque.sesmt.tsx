@@ -136,8 +136,23 @@ function EstoqueSesmtPage() {
       if (m.tipo_movimentacao === "SAIDA_ENTREGA") saidas += q;
       else entradas += q;
     });
-    return { total, entradas, saidas };
+    // ENTRADAS reflete o que efetivamente está/esteve no estoque:
+    // estoque atual + tudo que já saiu = total histórico de entradas.
+    // Assim SALDO (entradas - saidas) = estoque em mãos.
+    const entradasReais = total + saidas;
+    return { total, entradas: entradasReais, saidas };
   }, [items, movs]);
+
+  const stockAlerts = useMemo(() => {
+    let zerados = 0, criticos = 0;
+    items.forEach((i) => {
+      const qtd = i.quantidade_atual ?? 0;
+      const min = i.estoque_minimo ?? 0;
+      if (qtd === 0) zerados++;
+      else if (qtd <= min && min > 0) criticos++;
+    });
+    return { zerados, criticos };
+  }, [items]);
 
   /* ---------- Mutations ---------- */
   const createMut = useMutation({
@@ -253,9 +268,10 @@ function EstoqueSesmtPage() {
       </div>
 
       {/* Stats — consolidados para evitar redundância */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="Produtos cadastrados" value={items.length} />
         <StatCard label="Estoque total (em mãos)" value={totals.total} highlight />
+        <AlertStatCard criticos={stockAlerts.criticos} zerados={stockAlerts.zerados} />
         <MovStatCard entradas={totals.entradas} saidas={totals.saidas} />
       </div>
 
@@ -510,6 +526,34 @@ function MovStatCard({ entradas, saidas }: { entradas: number; saidas: number })
           <div className={`text-2xl font-black leading-tight ${saldo >= 0 ? "text-slate-800" : "text-rose-700"}`}>
             {saldo >= 0 ? "+" : ""}{saldo}
           </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function AlertStatCard({ criticos, zerados }: { criticos: number; zerados: number }) {
+  const total = criticos + zerados;
+  const hasAlert = total > 0;
+  return (
+    <Card
+      className={`p-4 rounded-2xl border ${
+        hasAlert
+          ? "bg-gradient-to-br from-red-600 to-red-800 border-red-700 text-white shadow-lg shadow-red-500/20"
+          : "bg-white border-slate-200 text-slate-600"
+      }`}
+    >
+      <div className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 ${hasAlert ? "text-white/90" : "text-slate-500"}`}>
+        <AlertTriangle className="h-3.5 w-3.5" /> Alerta de estoque
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-3">
+        <div>
+          <div className={`text-[9px] font-bold uppercase tracking-wider ${hasAlert ? "text-white/80" : "text-slate-500"}`}>Críticos</div>
+          <div className="text-2xl font-black leading-tight">{criticos}</div>
+        </div>
+        <div>
+          <div className={`text-[9px] font-bold uppercase tracking-wider ${hasAlert ? "text-white/80" : "text-slate-500"}`}>Zerados</div>
+          <div className="text-2xl font-black leading-tight">{zerados}</div>
         </div>
       </div>
     </Card>
