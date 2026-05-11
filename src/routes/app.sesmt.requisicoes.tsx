@@ -638,107 +638,194 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
   });
 
   return (
-    <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
+    <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-0">
+      <DialogHeader className="px-4 pt-4 pb-2 border-b">
         <DialogTitle>Nova Requisição de Compra</DialogTitle>
       </DialogHeader>
-      <div className="space-y-3">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div>
-            <Label>Nº Requisição *</Label>
-            <Input value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} />
+
+      {/* Folha replicando o formulário FOR-COMP 03 */}
+      <div className="px-4 pb-4">
+        <div className="border-2 border-black bg-white text-black font-sans text-[12px] leading-tight">
+          {/* Cabeçalho: logo | título | bloco código */}
+          <div className="grid grid-cols-[110px_1fr_180px] border-b-2 border-black">
+            <div className="border-r-2 border-black flex items-center justify-center p-2">
+              <img src={dmnLogo} alt="DMN" className="max-h-14 object-contain" />
+            </div>
+            <div className="border-r-2 border-black flex items-center justify-center px-3 py-2 text-center">
+              <span className="font-extrabold text-[15px] uppercase">
+                Requisição de Compra de Materiais e Serviços
+              </span>
+            </div>
+            <div className="text-[11px] p-2 space-y-0.5">
+              <FieldInline label="CÓD." value={form.codigo_formulario} onChange={(v) => setForm({ ...form, codigo_formulario: v })} />
+              <FieldInline label="REVISÃO:" value={form.revisao} onChange={(v) => setForm({ ...form, revisao: v })} />
+              <FieldInline label="DATA:" type="date" value={form.data_revisao} onChange={(v) => setForm({ ...form, data_revisao: v })} />
+              <FieldInline label="PAG.:" value={form.pagina} onChange={(v) => setForm({ ...form, pagina: v })} />
+            </div>
           </div>
-          <div>
-            <Label>Data</Label>
-            <Input type="date" value={form.data_requisicao} onChange={(e) => setForm({ ...form, data_requisicao: e.target.value })} />
+
+          {/* Linha 1: Classificação | Data */}
+          <div className="grid grid-cols-2 border-b border-black">
+            <div className="border-r border-black p-1.5 flex items-center gap-2 flex-wrap">
+              <span className="font-bold uppercase">Classificação do Pedido:</span>
+              <label className="inline-flex items-center gap-1">
+                <span>MATERIAL</span>
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5"
+                  checked={form.classificacao === "MATERIAL"}
+                  onChange={() => setForm({ ...form, classificacao: "MATERIAL" })}
+                />
+              </label>
+              <label className="inline-flex items-center gap-1">
+                <span>SERVIÇO</span>
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5"
+                  checked={form.classificacao === "SERVICO"}
+                  onChange={() => setForm({ ...form, classificacao: "SERVICO" })}
+                />
+              </label>
+            </div>
+            <FieldRow label="DATA:" type="date" value={form.data_requisicao} onChange={(v) => setForm({ ...form, data_requisicao: v })} />
           </div>
-          <div>
-            <Label>Classificação</Label>
-            <Select value={form.classificacao} onValueChange={(v: Classe) => setForm({ ...form, classificacao: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MATERIAL">Material</SelectItem>
-                <SelectItem value="SERVICO">Serviço</SelectItem>
-              </SelectContent>
-            </Select>
+
+          {/* Linha 2: Solicitante | Nº Requisição */}
+          <div className="grid grid-cols-2 border-b border-black">
+            <FieldRow label="SOLICITANTE:" value={form.solicitante} onChange={(v) => setForm({ ...form, solicitante: v })} required />
+            <div className="border-l border-black">
+              <FieldRow label="Nº DA REQUISIÇÃO:" value={form.numero} onChange={(v) => setForm({ ...form, numero: v })} required />
+            </div>
           </div>
-          <div>
-            <Label>Página</Label>
-            <Input value={form.pagina} onChange={(e) => setForm({ ...form, pagina: e.target.value })} />
+
+          {/* Linha 3: Setor | Fornecedor */}
+          <div className="grid grid-cols-2 border-b border-black">
+            <FieldRow label="SETOR:" value={form.setor} onChange={(v) => setForm({ ...form, setor: v })} />
+            <div className="border-l border-black">
+              <FieldRow label="FORNECEDOR:" value={form.fornecedor} onChange={(v) => setForm({ ...form, fornecedor: v })} />
+            </div>
           </div>
-          <div className="md:col-span-2">
-            <Label>Solicitante *</Label>
-            <Input value={form.solicitante} onChange={(e) => setForm({ ...form, solicitante: e.target.value })} />
+
+          {/* Linha 4: Obra Construção | Obra Manutenção */}
+          <div className="grid grid-cols-2 border-b-2 border-black">
+            <FieldRow label="OBRA EM CONSTRUÇÃO:" value={form.obra_construcao} onChange={(v) => setForm({ ...form, obra_construcao: v })} />
+            <div className="border-l border-black">
+              <FieldRow label="OBRA EM MANUTENÇÃO:" value={form.obra_manutencao} onChange={(v) => setForm({ ...form, obra_manutencao: v })} />
+            </div>
           </div>
-          <div>
-            <Label>Setor</Label>
-            <Input value={form.setor} onChange={(e) => setForm({ ...form, setor: e.target.value })} />
+
+          {/* Cabeçalho da tabela de itens */}
+          <div className="grid grid-cols-[40px_1fr_70px_70px_1fr] bg-white font-bold uppercase text-center border-b-2 border-black">
+            <div className="border-r border-black p-1">Item</div>
+            <div className="border-r border-black p-1">Descrição completa do material ou serviço</div>
+            <div className="border-r border-black p-1">Qtde</div>
+            <div className="border-r border-black p-1">Unid.</div>
+            <div className="p-1">Observação</div>
           </div>
-          <div>
-            <Label>Fornecedor</Label>
-            <Input value={form.fornecedor} onChange={(e) => setForm({ ...form, fornecedor: e.target.value })} />
+
+          {/* Linhas de itens */}
+          {itens.map((it, idx) => (
+            <div key={idx} className="grid grid-cols-[40px_1fr_70px_70px_1fr] border-b border-black">
+              <div className="border-r border-black p-1 text-center font-bold">
+                {String(it.item_numero).padStart(2, "0")}
+              </div>
+              <div className="border-r border-black">
+                <CellInput value={it.descricao} onChange={(v) => setItem(idx, "descricao", v)} />
+              </div>
+              <div className="border-r border-black">
+                <CellInput value={it.quantidade} onChange={(v) => setItem(idx, "quantidade", v)} className="text-center" />
+              </div>
+              <div className="border-r border-black">
+                <CellInput value={it.unidade} onChange={(v) => setItem(idx, "unidade", v)} className="text-center" />
+              </div>
+              <div>
+                <CellInput value={it.observacao} onChange={(v) => setItem(idx, "observacao", v)} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bloco assinaturas */}
+        <div className="mt-4 border-2 border-black bg-white text-black text-[12px]">
+          <div className="grid grid-cols-3 font-bold text-center uppercase border-b border-black">
+            <div className="border-r border-black p-1.5">Assinatura Solicitante</div>
+            <div className="border-r border-black p-1.5">Assinatura Supervisor Geral</div>
+            <div className="p-1.5">Assinatura Analista de Compras</div>
           </div>
-          <div className="md:col-span-2">
-            <Label>Obra em construção</Label>
-            <Input value={form.obra_construcao} onChange={(e) => setForm({ ...form, obra_construcao: e.target.value })} />
+          <div className="grid grid-cols-3 h-16">
+            <div className="border-r border-black" />
+            <div className="border-r border-black" />
+            <div />
           </div>
-          <div className="md:col-span-2">
-            <Label>Obra em manutenção</Label>
-            <Input value={form.obra_manutencao} onChange={(e) => setForm({ ...form, obra_manutencao: e.target.value })} />
-          </div>
-          <div>
-            <Label>Cód. Formulário</Label>
-            <Input value={form.codigo_formulario} onChange={(e) => setForm({ ...form, codigo_formulario: e.target.value })} />
-          </div>
-          <div>
-            <Label>Revisão</Label>
-            <Input value={form.revisao} onChange={(e) => setForm({ ...form, revisao: e.target.value })} />
-          </div>
-          <div>
-            <Label>Data Revisão</Label>
-            <Input type="date" value={form.data_revisao} onChange={(e) => setForm({ ...form, data_revisao: e.target.value })} />
+          <div className="grid grid-cols-3 border-t border-black font-bold uppercase">
+            <div className="border-r border-black p-1.5">Data:</div>
+            <div className="border-r border-black p-1.5">Data:</div>
+            <div className="p-1.5">Data:</div>
           </div>
         </div>
 
-        <div>
-          <Label className="mb-2 block">Itens (até 10)</Label>
-          <div className="border rounded overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="bg-slate-100">
-                <tr>
-                  <th className="p-1.5 w-10">Item</th>
-                  <th className="p-1.5 text-left">Descrição</th>
-                  <th className="p-1.5 w-20">Qtde</th>
-                  <th className="p-1.5 w-20">Unid.</th>
-                  <th className="p-1.5 text-left">Observação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {itens.map((it, idx) => (
-                  <tr key={idx} className="border-t">
-                    <td className="p-1 text-center font-bold">{String(it.item_numero).padStart(2,"0")}</td>
-                    <td className="p-1"><Input className="h-8" value={it.descricao} onChange={(e) => setItem(idx, "descricao", e.target.value)} /></td>
-                    <td className="p-1"><Input className="h-8" value={it.quantidade} onChange={(e) => setItem(idx, "quantidade", e.target.value)} /></td>
-                    <td className="p-1"><Input className="h-8" value={it.unidade} onChange={(e) => setItem(idx, "unidade", e.target.value)} /></td>
-                    <td className="p-1"><Input className="h-8" value={it.observacao} onChange={(e) => setItem(idx, "observacao", e.target.value)} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div>
-          <Label>Observações gerais</Label>
-          <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+        <div className="mt-3">
+          <Label className="text-xs">Observações gerais (interno)</Label>
+          <Textarea
+            value={form.observacoes}
+            onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
+            rows={2}
+          />
         </div>
       </div>
-      <DialogFooter>
+
+      <DialogFooter className="px-4 pb-4 border-t pt-3">
         <Button variant="outline" onClick={onClose}>Cancelar</Button>
         <Button className="bg-red-700 hover:bg-red-800" disabled={save.isPending} onClick={() => save.mutate()}>
           {save.isPending ? "Salvando..." : "Salvar Requisição"}
         </Button>
       </DialogFooter>
     </DialogContent>
+  );
+}
+
+function FieldInline({
+  label, value, onChange, type = "text",
+}: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  return (
+    <div className="flex items-center gap-1">
+      <span className="font-bold whitespace-nowrap">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex-1 min-w-0 bg-transparent border-0 border-b border-dotted border-black/40 outline-none text-[11px] px-0.5 focus:border-red-700"
+      />
+    </div>
+  );
+}
+
+function FieldRow({
+  label, value, onChange, type = "text", required,
+}: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean }) {
+  return (
+    <div className="flex items-stretch">
+      <span className="font-bold uppercase whitespace-nowrap p-1.5 pr-2">
+        {label}{required && <span className="text-red-700 ml-0.5">*</span>}
+      </span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex-1 min-w-0 bg-transparent border-0 outline-none px-1 text-[12px] focus:bg-yellow-50"
+      />
+    </div>
+  );
+}
+
+function CellInput({
+  value, onChange, className = "",
+}: { value: string; onChange: (v: string) => void; className?: string }) {
+  return (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`w-full h-8 bg-transparent border-0 outline-none px-1.5 text-[12px] focus:bg-yellow-50 ${className}`}
+    />
   );
 }
