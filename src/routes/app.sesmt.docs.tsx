@@ -295,25 +295,21 @@ function SesmtDocsPage() {
                     <p className="text-sm text-slate-600 line-clamp-2">{d.descricao}</p>
                   )}
                   <div className="text-sm text-slate-700 space-y-1.5">
-                    {d.data_emissao && (
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-4 w-4 text-slate-500" />
-                        <span className="font-medium">Emissão:</span> {fmtDateBR(d.data_emissao)}
-                      </div>
-                    )}
-                    {lastRevByDoc[d.id] && (
-                      <div className="flex items-center gap-1.5">
-                        <History className="h-4 w-4 text-slate-500" />
-                        <span className="font-medium">Última Atualização:</span>{" "}
-                        {fmtDateBR(lastRevByDoc[d.id])}
-                      </div>
-                    )}
-                    {d.data_validade && (
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-4 w-4 text-slate-500" />
-                        <span className="font-medium">Validade:</span> {fmtDateBR(d.data_validade)}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-4 w-4 text-slate-500" />
+                      <span className="font-medium">Emissão:</span>{" "}
+                      {d.data_emissao ? fmtDateBR(d.data_emissao) : "—"}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <History className="h-4 w-4 text-slate-500" />
+                      <span className="font-medium">Última Atualização:</span>{" "}
+                      {lastRevByDoc[d.id] ? fmtDateBR(lastRevByDoc[d.id]) : "—"}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-4 w-4 text-slate-500" />
+                      <span className="font-medium">Validade:</span>{" "}
+                      {d.data_validade ? fmtDateBR(d.data_validade) : "—"}
+                    </div>
                   </div>
                   <div className="flex gap-2 pt-2 border-t">
                     <Button
