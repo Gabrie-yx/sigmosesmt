@@ -245,6 +245,8 @@ function RevisionsDialog({
   const [descricao, setDescricao] = useState("");
   const [motivo, setMotivo] = useState("");
   const [responsavel, setResponsavel] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<Partial<Revision>>({});
 
   const { data: revs = [], isLoading } = useQuery({
     queryKey: ["sesmt-doc-revisions", doc?.id],
