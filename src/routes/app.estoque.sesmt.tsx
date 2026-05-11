@@ -477,6 +477,22 @@ const TIPO_PRESETS: Record<string, string[]> = {
   OUTRO: [],
 };
 
+function detectTipoFromName(nome: string): { tipo: string; base: string; variacao: string | null } {
+  const n = (nome ?? "").trim();
+  for (const [tipo, presets] of Object.entries(TIPO_PRESETS)) {
+    for (const p of presets) {
+      const suf = " - " + p;
+      if (n.toUpperCase().endsWith(suf)) {
+        return { tipo, base: n.slice(0, -suf.length), variacao: p };
+      }
+    }
+  }
+  // Generic " - XYZ" suffix → keep tipo OUTRO but expose suffix as variation
+  const m = n.match(/^(.*) - ([^-]+)$/);
+  if (m) return { tipo: "OUTRO", base: m[1], variacao: m[2].trim().toUpperCase() };
+  return { tipo: "OUTRO", base: n, variacao: null };
+}
+
 async function uploadFotoEpi(file: File): Promise<string> {
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const path = `${crypto.randomUUID()}.${ext}`;
