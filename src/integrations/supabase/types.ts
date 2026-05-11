@@ -573,6 +573,50 @@ export type Database = {
         }
         Relationships: []
       }
+      sesmt_document_revisions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_revisao: string
+          descricao: string
+          document_id: string
+          id: string
+          motivo: string | null
+          numero_revisao: string
+          responsavel: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_revisao: string
+          descricao: string
+          document_id: string
+          id?: string
+          motivo?: string | null
+          numero_revisao: string
+          responsavel: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_revisao?: string
+          descricao?: string
+          document_id?: string
+          id?: string
+          motivo?: string | null
+          numero_revisao?: string
+          responsavel?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sesmt_document_revisions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "sesmt_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sesmt_documents: {
         Row: {
           company_id: string | null
