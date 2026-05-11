@@ -13,9 +13,10 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
-  HardHat, Search, Download, Upload, RotateCcw, Plus, History,
+  Search, Download, Upload, RotateCcw, Plus, History,
   ArrowUp, ArrowDown, Trash2, X,
 } from "lucide-react";
+import protectiveClothingIcon from "@/assets/protective-clothing.png";
 import { toast } from "sonner";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -408,8 +409,8 @@ function EstoqueSesmtPage() {
             Estoque · SESMT
           </div>
           <h1 className="text-2xl font-black flex items-center gap-2">
-            <HardHat className="h-6 w-6 text-red-700" />
-            Painel de EPI's
+            <img src={protectiveClothingIcon} alt="" className="h-6 w-6" />
+            PAINEL DE ESTOQUE SESMT
           </h1>
           <p className="text-sm text-muted-foreground">
             Uma linha por item — cada variação (tamanho, cor, modelo) ocupa sua própria linha.
