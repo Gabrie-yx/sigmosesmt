@@ -1,0 +1,2 @@
+ALTER TABLE public.estoque_epi
+ADD COLUMN IF NOT EXISTS ca TEXT;
