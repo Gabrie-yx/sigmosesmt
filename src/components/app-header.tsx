@@ -30,6 +30,7 @@ const SESMT_ITEMS = [
   { to: "/app/employees", label: "Colaboradores" },
   { to: "/app/trainings", label: "Treinamentos" },
   { to: "/app/ptes", label: "Emitir PTE" },
+  { to: "/app/sesmt/docs", label: "DOC's (PGR/PCMSO/LTCAT)" },
 ] as const;
 
 const SESMT_PATHS = SESMT_ITEMS.map((i) => i.to);

@@ -21,6 +21,7 @@ import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
+import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
@@ -85,6 +86,11 @@ const AppEmployeesIndexRoute = AppEmployeesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppEmployeesRoute,
 } as any)
+const AppSesmtDocsRoute = AppSesmtDocsRouteImport.update({
+  id: '/sesmt/docs',
+  path: '/sesmt/docs',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
   id: '/estoque/sesmt',
   path: '/estoque/sesmt',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/employees': typeof AppEmployeesIndexRoute
 }
 export interface FileRoutesById {
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
 }
 export interface FileRouteTypes {
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/sesmt/docs'
     | '/app/employees/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/sesmt/docs'
     | '/app/employees'
   id:
     | '__root__'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/sesmt/docs'
     | '/app/employees/'
   fileRoutesById: FileRoutesById
 }
@@ -295,6 +307,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmployeesIndexRouteImport
       parentRoute: typeof AppEmployeesRoute
     }
+    '/app/sesmt/docs': {
+      id: '/app/sesmt/docs'
+      path: '/sesmt/docs'
+      fullPath: '/app/sesmt/docs'
+      preLoaderRoute: typeof AppSesmtDocsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/estoque/sesmt': {
       id: '/app/estoque/sesmt'
       path: '/estoque/sesmt'
@@ -344,6 +363,7 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppEstoqueEpiRoute: typeof AppEstoqueEpiRoute
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
+  AppSesmtDocsRoute: typeof AppSesmtDocsRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -357,6 +377,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppEstoqueEpiRoute: AppEstoqueEpiRoute,
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
+  AppSesmtDocsRoute: AppSesmtDocsRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -369,3 +390,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
