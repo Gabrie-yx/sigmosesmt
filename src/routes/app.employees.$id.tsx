@@ -867,6 +867,9 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       qtd: Number(f.qtd) || 1, data_entrega: f.data_entrega,
     });
     if (error) throw error;
+    // Refletir saída no estoque SESMT (localStorage)
+    const ok = registrarSaidaEntregaEpi(f.item, f.tamanho, Number(f.qtd) || 1, emp?.nome);
+    if (!ok) toast.warning("Entrega registrada, mas item não localizado no estoque SESMT");
   }
 
   const create = useMutation({
@@ -914,7 +917,14 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     create.mutate();
   }
   const del = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("epi_deliveries").delete().eq("id", id); if (error) throw error; },
+    mutationFn: async (id: string) => {
+      const target = (epis ?? []).find((e: any) => e.id === id);
+      const { error } = await supabase.from("epi_deliveries").delete().eq("id", id);
+      if (error) throw error;
+      if (target && !target.data_devolucao) {
+        registrarReentradaEpi(target.item, target.tamanho, Number(target.qtd) || 1, "Entrega excluída");
+      }
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); toast.success("Removido"); },
   });
 
@@ -939,6 +949,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         .update({ data_devolucao: retForm.data, observacoes: obs })
         .eq("id", returning.id);
       if (error) throw error;
+      registrarReentradaEpi(returning.item, returning.tamanho, Number(returning.qtd) || 1, `Devolução: ${retForm.motivo}`);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["epis", empId] });
@@ -950,11 +961,15 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
 
   const undoReturn = useMutation({
     mutationFn: async (id: string) => {
+      const target = (epis ?? []).find((e: any) => e.id === id);
       const { error } = await supabase
         .from("epi_deliveries")
         .update({ data_devolucao: null, observacoes: null })
         .eq("id", id);
       if (error) throw error;
+      if (target) {
+        registrarSaidaEntregaEpi(target.item, target.tamanho, Number(target.qtd) || 1, emp?.nome);
+      }
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); toast.success("Devolução desfeita"); },
     onError: (e: any) => toast.error(e.message),
