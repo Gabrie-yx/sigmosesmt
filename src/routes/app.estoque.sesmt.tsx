@@ -944,6 +944,86 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any
                 <Input type="number" min="0" value={f.quantidade_atual} onChange={(e) => setF({ ...f, quantidade_atual: e.target.value })} />
               </div>
             </div>
+            {/* Variações (tamanho/modelo) */}
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  Variação {isDup ? "(selecione 1 ou várias para criar)" : "(tamanho / modelo)"}
+                </Label>
+                <span className="text-[10px] text-slate-400">
+                  {isDup
+                    ? `${variacoes.length} selecionada(s) → ${variacoes.length || 1} novo(s) item(ns)`
+                    : variacoes[0]
+                      ? `Atual: ${variacoes[0]}`
+                      : "Sem variação"}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[10px] font-bold uppercase text-slate-500">Tipo</Label>
+                  <Select value={tipo} onValueChange={(v) => { setTipo(v); setVariacoes([]); }}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CALÇA">CALÇA (PP–XGG)</SelectItem>
+                      <SelectItem value="CAMISA">CAMISA (PP–XGG)</SelectItem>
+                      <SelectItem value="BOTA">BOTA (37–44)</SelectItem>
+                      <SelectItem value="LUVA">LUVA (modelos)</SelectItem>
+                      <SelectItem value="OUTRO">OUTRO / sem variação</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-[10px] font-bold uppercase text-slate-500">Nome base</Label>
+                  <Input value={baseNome} onChange={(e) => setBaseNome(e.target.value.toUpperCase())} placeholder="Ex: BOTA DE SEGURANÇA" />
+                </div>
+              </div>
+              {presets.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {presets.map((p) => {
+                    const on = variacoes.includes(p);
+                    return (
+                      <button
+                        type="button"
+                        key={p}
+                        onClick={() => toggleVar(p)}
+                        className={`px-2.5 py-1 rounded-full text-xs font-bold border transition ${
+                          on ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-700 border-slate-300 hover:border-slate-500"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Input
+                  value={novaVar}
+                  onChange={(e) => setNovaVar(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addNovaVar(); } }}
+                  placeholder="Adicionar variação manual (ex.: 45, MODELO X)"
+                  className="bg-white"
+                />
+                <Button type="button" variant="outline" onClick={addNovaVar}>Adicionar</Button>
+              </div>
+              {variacoes.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1 border-t border-slate-200">
+                  {variacoes.map((v) => (
+                    <span key={v} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                      {v}
+                      <button type="button" onClick={() => toggleVar(v)} className="hover:text-emerald-950">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p className="text-[10px] text-slate-400">
+                {isDup
+                  ? "Cada variação cria 1 item independente com saldo próprio. Se nenhuma for selecionada, cria 1 cópia com o nome/código atual."
+                  : "A variação selecionada será aplicada ao nome e código do item ao salvar."}
+              </p>
+            </div>
             <div>
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Foto</Label>
               <div className="flex items-center gap-3 mt-1">
