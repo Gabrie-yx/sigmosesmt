@@ -23,7 +23,8 @@ import { maskCPF, maskCNPJ, maskPhone, maskCEP, maskRG } from "@/lib/masks";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
 import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
-import { HardHat, Printer, FileSignature } from "lucide-react";
+import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
+import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning } from "lucide-react";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -860,15 +861,50 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     },
   });
 
-  const [f, setF] = useState<{ epi_id: string; ca: string; qtd: string; data_entrega: string }>({
+  type MotivoEntrega = "PRIMEIRA_ENTREGA" | "TROCA_DESGASTE" | "EMPRESTIMO" | "PERDA_EXTRAVIO";
+  const MOTIVO_LABEL: Record<MotivoEntrega, string> = {
+    PRIMEIRA_ENTREGA: "1ª Entrega",
+    TROCA_DESGASTE: "Troca por desgaste/vencimento",
+    EMPRESTIMO: "Empréstimo (uso temporário)",
+    PERDA_EXTRAVIO: "Reposição por perda/extravio",
+  };
+  const MOTIVO_COLOR: Record<MotivoEntrega, string> = {
+    PRIMEIRA_ENTREGA: "bg-emerald-500",
+    TROCA_DESGASTE: "bg-blue-500",
+    EMPRESTIMO: "bg-amber-500",
+    PERDA_EXTRAVIO: "bg-rose-600",
+  };
+
+  const [f, setF] = useState<{
+    epi_id: string; ca: string; qtd: string; data_entrega: string;
+    motivo_entrega: MotivoEntrega; data_devolucao_prevista: string;
+    valor_unitario: string; observacoes: string;
+  }>({
     epi_id: "", ca: "", qtd: "1", data_entrega: new Date().toISOString().slice(0, 10),
+    motivo_entrega: "PRIMEIRA_ENTREGA", data_devolucao_prevista: "",
+    valor_unitario: "", observacoes: "",
   });
   const selected = stockItems.find((s) => s.id === f.epi_id) ?? null;
   const MOTIVOS_DEV = ["Danificado", "Desgaste Natural", "Extravio", "Mal Uso", "Furto", "Uso Temporário"];
   const [substitution, setSubstitution] = useState<{ prev: any; motivo: string; data: string; obs: string } | null>(null);
 
+  // Alerta de reincidência: mesmo EPI entregue ao colaborador nos últimos 30 dias
+  const reincidencia = (() => {
+    if (!selected) return null;
+    const norm = (s: any) => String(s ?? "").trim().toLowerCase();
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const ant = (epis ?? []).find(
+      (e: any) => norm(e.item) === norm(selected.nome_material) && new Date(e.data_entrega).getTime() >= cutoff,
+    );
+    return ant ?? null;
+  })();
+
   function resetForm() {
-    setF({ epi_id: "", ca: "", qtd: "1", data_entrega: new Date().toISOString().slice(0, 10) });
+    setF({
+      epi_id: "", ca: "", qtd: "1", data_entrega: new Date().toISOString().slice(0, 10),
+      motivo_entrega: "PRIMEIRA_ENTREGA", data_devolucao_prevista: "",
+      valor_unitario: "", observacoes: "",
+    });
   }
 
   /** Cria registro na ficha do colaborador + dá baixa no estoque (RPC). */
@@ -887,6 +923,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     });
     if (rpcErr) throw rpcErr;
     // 2) registro na ficha do colaborador
+    const valor = f.valor_unitario ? Number(String(f.valor_unitario).replace(",", ".")) : null;
     const { error } = await supabase.from("epi_deliveries").insert({
       employee_id: empId,
       item: selected.nome_material,
@@ -894,8 +931,27 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       tamanho: null,
       qtd,
       data_entrega: f.data_entrega,
-    });
+      motivo_entrega: f.motivo_entrega,
+      data_devolucao_prevista: f.motivo_entrega === "EMPRESTIMO" && f.data_devolucao_prevista
+        ? f.data_devolucao_prevista : null,
+      valor_unitario: valor,
+      observacoes: f.observacoes || null,
+    } as any);
     if (error) throw error;
+
+    // 3) Se for perda/extravio, gera termo de responsabilidade automaticamente
+    if (f.motivo_entrega === "PERDA_EXTRAVIO") {
+      const { url, fname } = openTermoPerdaPdf({
+        emp, company, role,
+        item: selected.nome_material,
+        ca: (f.ca || selected.ca) || null,
+        qtd,
+        valor_unitario: valor,
+        data_entrega: f.data_entrega,
+        observacoes: f.observacoes,
+      });
+      openFileViewer({ url, name: fname, mime: "application/pdf" });
+    }
   }
 
   const create = useMutation({
@@ -945,11 +1001,17 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
 
   function submitDelivery() {
     if (!selected) return;
-    const norm = (s: any) => String(s ?? "").trim().toLowerCase();
-    const prev = (epis ?? []).find((e: any) => !e.data_devolucao && norm(e.item) === norm(selected.nome_material));
-    if (prev) {
-      setSubstitution({ prev, motivo: "Desgaste Natural", data: f.data_entrega, obs: "" });
-      return;
+    // Só dispara o fluxo de substituição para "troca por desgaste".
+    // Empréstimo, perda e 1ª entrega seguem direto (registram nova entrega).
+    if (f.motivo_entrega === "TROCA_DESGASTE") {
+      const norm = (s: any) => String(s ?? "").trim().toLowerCase();
+      const prev = (epis ?? []).find(
+        (e: any) => !e.data_devolucao && norm(e.item) === norm(selected.nome_material),
+      );
+      if (prev) {
+        setSubstitution({ prev, motivo: "Desgaste Natural", data: f.data_entrega, obs: "" });
+        return;
+      }
     }
     create.mutate();
   }
@@ -1086,6 +1148,37 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             <h3 className="text-xs font-black uppercase tracking-widest text-brand">Registrar entrega de EPI</h3>
           </div>
           <form onSubmit={(e) => { e.preventDefault(); submitDelivery(); }} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            <div className="md:col-span-12 space-y-1.5">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Motivo da entrega</Label>
+              <Select
+                value={f.motivo_entrega}
+                onValueChange={(v) => setF({ ...f, motivo_entrega: v as MotivoEntrega })}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PRIMEIRA_ENTREGA">🟢 1ª Entrega — colaborador nunca recebeu este item</SelectItem>
+                  <SelectItem value="TROCA_DESGASTE">🔵 Troca por desgaste / vencimento — substitui o anterior</SelectItem>
+                  <SelectItem value="EMPRESTIMO">🟡 Empréstimo — uso temporário, com previsão de devolução</SelectItem>
+                  <SelectItem value="PERDA_EXTRAVIO">🔴 Reposição por perda / extravio — gera termo de responsabilidade</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {reincidencia && f.motivo_entrega === "PRIMEIRA_ENTREGA" && (
+              <div className="md:col-span-12 rounded-lg border-2 border-amber-300 bg-amber-50 p-3 flex gap-3 items-start">
+                <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-900">
+                  <div className="font-black uppercase tracking-wider">Atenção: possível reincidência</div>
+                  <div className="mt-0.5">
+                    Este colaborador já recebeu <strong>{reincidencia.item}</strong> em{" "}
+                    <strong>{formatDateBR(reincidencia.data_entrega)}</strong>{" "}
+                    ({Math.floor((Date.now() - new Date(reincidencia.data_entrega).getTime()) / 86400000)} dias atrás).
+                    Verifique se o motivo correto não é <em>Troca</em>, <em>Empréstimo</em> ou <em>Perda</em>.
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="md:col-span-6 space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição do EPI (do estoque SESMT)</Label>
               <Select
@@ -1123,14 +1216,121 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">QTD</Label>
               <Input type="number" min="1" value={f.qtd} onChange={(e) => setF({ ...f, qtd: e.target.value })} />
             </div>
+
+            {f.motivo_entrega === "EMPRESTIMO" && (
+              <div className="md:col-span-4 space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                  <Clock className="h-3 w-3 inline mr-1" /> Devolução prevista
+                </Label>
+                <Input
+                  type="date"
+                  value={f.data_devolucao_prevista}
+                  onChange={(e) => setF({ ...f, data_devolucao_prevista: e.target.value })}
+                  className="border-amber-300"
+                  required
+                />
+              </div>
+            )}
+
+            {f.motivo_entrega === "PERDA_EXTRAVIO" && (
+              <div className="md:col-span-4 space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-rose-700">
+                  Valor unitário (p/ termo) R$
+                </Label>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={f.valor_unitario}
+                  onChange={(e) => setF({ ...f, valor_unitario: e.target.value })}
+                  className="border-rose-300"
+                />
+              </div>
+            )}
+
+            {(f.motivo_entrega === "EMPRESTIMO" || f.motivo_entrega === "PERDA_EXTRAVIO") && (
+              <div className="md:col-span-12 space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  Observações {f.motivo_entrega === "PERDA_EXTRAVIO" && "(será impressa no termo)"}
+                </Label>
+                <Textarea
+                  rows={2}
+                  value={f.observacoes}
+                  onChange={(e) => setF({ ...f, observacoes: e.target.value })}
+                  placeholder={
+                    f.motivo_entrega === "EMPRESTIMO"
+                      ? "Ex: empréstimo para visita técnica do dia X"
+                      : "Ex: B.O. nº 1234, perda no canteiro de obras…"
+                  }
+                />
+              </div>
+            )}
+
             <div className="md:col-span-12 flex justify-end">
-              <Button type="submit" disabled={create.isPending || !f.epi_id} className="bg-brand text-white">
-                <Plus className="h-4 w-4 mr-2" /> Registrar entrega
+              <Button
+                type="submit"
+                disabled={create.isPending || !f.epi_id || (f.motivo_entrega === "EMPRESTIMO" && !f.data_devolucao_prevista)}
+                className={
+                  f.motivo_entrega === "PERDA_EXTRAVIO" ? "bg-rose-600 hover:bg-rose-700 text-white"
+                  : f.motivo_entrega === "EMPRESTIMO" ? "bg-amber-600 hover:bg-amber-700 text-white"
+                  : "bg-brand text-white"
+                }
+              >
+                {f.motivo_entrega === "PERDA_EXTRAVIO" ? <FileWarning className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                {f.motivo_entrega === "PERDA_EXTRAVIO" ? "Registrar e gerar termo de perda"
+                : f.motivo_entrega === "EMPRESTIMO" ? "Registrar empréstimo"
+                : "Registrar entrega"}
               </Button>
             </div>
           </form>
         </Card>
       )}
+
+      {(() => {
+        const emprestimos = (epis ?? []).filter(
+          (e: any) => e.motivo_entrega === "EMPRESTIMO" && !e.data_devolucao,
+        );
+        if (!emprestimos.length) return null;
+        return (
+          <Card className="p-5 rounded-2xl border-amber-300 bg-amber-50/40">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="h-4 w-4 text-amber-700" />
+              <h3 className="text-xs font-black uppercase tracking-widest text-amber-800">
+                EPIs emprestados — aguardando devolução ({emprestimos.length})
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {emprestimos.map((e: any) => {
+                const venc = e.data_devolucao_prevista
+                  ? Math.floor((new Date(e.data_devolucao_prevista).getTime() - Date.now()) / 86400000)
+                  : null;
+                const atrasado = venc !== null && venc < 0;
+                return (
+                  <div key={e.id} className={`flex items-center gap-3 p-3 rounded-xl border ${atrasado ? "border-rose-300 bg-rose-50" : "border-amber-200 bg-white"}`}>
+                    <Clock className={`h-5 w-5 ${atrasado ? "text-rose-600" : "text-amber-600"} shrink-0`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-black text-sm text-slate-800 uppercase">{e.item} <span className="text-xs text-slate-500">(QTD: {e.qtd})</span></div>
+                      <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-0.5">
+                        Entregue em {formatDateBR(e.data_entrega)} • Devolução prevista: {e.data_devolucao_prevista ? formatDateBR(e.data_devolucao_prevista) : "—"}
+                        {venc !== null && (
+                          <span className={`ml-2 ${atrasado ? "text-rose-700" : "text-amber-700"}`}>
+                            ({atrasado ? `${Math.abs(venc)}d em atraso` : `faltam ${venc}d`})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {canEdit && (
+                      <Button size="sm" variant="outline" onClick={() => openReturn(e)} className="border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+                        <CheckCircle2 className="h-4 w-4 mr-1" /> Receber de volta
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        );
+      })()}
 
       <Card className="p-5 rounded-2xl space-y-3">
         <div className="flex items-center gap-2">
@@ -1154,6 +1354,11 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                   <span className="font-black text-sm text-slate-800 uppercase">{e.item}</span>
                   {e.tamanho && <span className="text-xs text-slate-500">({e.tamanho})</span>}
                   <Badge variant="secondary" className="text-[10px]">QTD: {e.qtd}</Badge>
+                  {e.motivo_entrega && (
+                    <Badge className={`${MOTIVO_COLOR[e.motivo_entrega as MotivoEntrega] ?? "bg-slate-500"} text-white text-[10px]`}>
+                      {MOTIVO_LABEL[e.motivo_entrega as MotivoEntrega] ?? e.motivo_entrega}
+                    </Badge>
+                  )}
                   {e.data_devolucao ? (
                     <Badge className="bg-amber-500 text-white text-[10px]">DEVOLVIDO</Badge>
                   ) : (
