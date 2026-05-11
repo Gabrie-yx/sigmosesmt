@@ -140,10 +140,13 @@ function buildSeed(): Product[] {
 
 /* ============================== Helpers ============================== */
 function variantBalance(v: Variant): number {
-  return v.estoqueInicial + v.movements.reduce((s, m) => s + m.delta, 0);
+  const estoqueInicial = Number(v.estoqueInicial) || 0;
+  const movements = Array.isArray(v.movements) ? v.movements : [];
+  return estoqueInicial + movements.reduce((s, m) => s + (Number(m.delta) || 0), 0);
 }
 function productBalance(p: Product): number {
-  return p.variants.reduce((s, v) => s + variantBalance(v), 0);
+  const variants = Array.isArray(p.variants) ? p.variants : [];
+  return variants.reduce((s, v) => s + variantBalance(v), 0);
 }
 function fmt(n: number) {
   return n.toLocaleString("pt-BR");
@@ -154,7 +157,7 @@ function variantPeriod(v: Variant, startISO: string, endISO: string) {
   let inicial = v.estoqueInicial;
   let entradas = 0;
   let saidas = 0;
-  for (const m of v.movements) {
+  for (const m of Array.isArray(v.movements) ? v.movements : []) {
     if (m.date < startISO) {
       inicial += m.delta;
     } else if (m.date <= endISO) {
