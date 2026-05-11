@@ -152,6 +152,26 @@ function fmt(n: number) {
   return n.toLocaleString("pt-BR");
 }
 
+function normalizeStoredProducts(value: unknown): Product[] | null {
+  if (!Array.isArray(value)) return null;
+  const normalized = value
+    .filter((p): p is Product => !!p && typeof p === "object" && typeof (p as Product).base === "string")
+    .map((p) => ({
+      ...p,
+      id: typeof p.id === "string" ? p.id : `p-${crypto.randomUUID?.() ?? Date.now()}`,
+      umb: p.umb || "UN",
+      variants: (Array.isArray(p.variants) ? p.variants : []).map((v, i) => ({
+        ...v,
+        id: typeof v.id === "string" ? v.id : `${p.id || "p"}-v${i + 1}`,
+        label: typeof v.label === "string" ? v.label : "PADRÃO",
+        estoqueInicial: Number(v.estoqueInicial) || 0,
+        movements: Array.isArray(v.movements) ? v.movements : [],
+      })),
+    }))
+    .filter((p) => p.variants.length > 0);
+  return normalized.length ? normalized : null;
+}
+
 /** Calcula estoque inicial / entradas / saídas / final de uma variante em um intervalo [startISO, endISO]. */
 function variantPeriod(v: Variant, startISO: string, endISO: string) {
   let inicial = v.estoqueInicial;
