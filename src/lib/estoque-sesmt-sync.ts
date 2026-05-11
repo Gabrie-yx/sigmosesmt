@@ -39,7 +39,17 @@ function readProducts(): Product[] | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as Product[]) : null;
+    if (!Array.isArray(parsed)) return null;
+
+    const products = parsed.filter((p): p is Product => (
+      p &&
+      typeof p === "object" &&
+      typeof p.id === "string" &&
+      typeof p.base === "string" &&
+      Array.isArray((p as Product).variants)
+    ));
+
+    return products.length === parsed.length ? products : null;
   } catch {
     return null;
   }
@@ -65,6 +75,7 @@ function findVariant(
   // 1) match exato base do produto + label "TAM. X" se houver tamanho
   for (let pi = 0; pi < products.length; pi++) {
     const p = products[pi];
+    if (!Array.isArray(p.variants)) continue;
     if (norm(p.base) !== baseFirst) continue;
     for (let vi = 0; vi < p.variants.length; vi++) {
       const labelN = norm(p.variants[vi].label);
@@ -82,6 +93,7 @@ function findVariant(
   const candidates: Array<{ pi: number; vi: number }> = [];
   for (let pi = 0; pi < products.length; pi++) {
     const p = products[pi];
+    if (!Array.isArray(p.variants)) continue;
     if (norm(p.base) !== baseFirst) continue;
     for (let vi = 0; vi < p.variants.length; vi++) {
       candidates.push({ pi, vi });
@@ -98,6 +110,7 @@ function applyDelta(item: string, tamanho: string | null | undefined, delta: num
   if (!found) return false;
   const { pi, vi } = found;
   const v = products[pi].variants[vi];
+  if (!v || !Array.isArray(v.movements)) return false;
   v.movements = [
     ...v.movements,
     {

@@ -140,13 +140,36 @@ function buildSeed(): Product[] {
 
 /* ============================== Helpers ============================== */
 function variantBalance(v: Variant): number {
-  return v.estoqueInicial + v.movements.reduce((s, m) => s + m.delta, 0);
+  const estoqueInicial = Number(v.estoqueInicial) || 0;
+  const movements = Array.isArray(v.movements) ? v.movements : [];
+  return estoqueInicial + movements.reduce((s, m) => s + (Number(m.delta) || 0), 0);
 }
 function productBalance(p: Product): number {
-  return p.variants.reduce((s, v) => s + variantBalance(v), 0);
+  const variants = Array.isArray(p.variants) ? p.variants : [];
+  return variants.reduce((s, v) => s + variantBalance(v), 0);
 }
 function fmt(n: number) {
   return n.toLocaleString("pt-BR");
+}
+
+function normalizeStoredProducts(value: unknown): Product[] | null {
+  if (!Array.isArray(value)) return null;
+  const normalized = value
+    .filter((p): p is Product => !!p && typeof p === "object" && typeof (p as Product).base === "string")
+    .map((p) => ({
+      ...p,
+      id: typeof p.id === "string" ? p.id : `p-${globalThis.crypto?.randomUUID?.() ?? Date.now()}`,
+      umb: p.umb || "UN",
+      variants: (Array.isArray(p.variants) ? p.variants : []).map((v, i) => ({
+        ...v,
+        id: typeof v.id === "string" ? v.id : `${p.id || "p"}-v${i + 1}`,
+        label: typeof v.label === "string" ? v.label : "PADRÃO",
+        estoqueInicial: Number(v.estoqueInicial) || 0,
+        movements: Array.isArray(v.movements) ? v.movements : [],
+      })),
+    }))
+    .filter((p) => p.variants.length > 0);
+  return normalized.length ? normalized : null;
 }
 
 /** Calcula estoque inicial / entradas / saídas / final de uma variante em um intervalo [startISO, endISO]. */
@@ -154,7 +177,7 @@ function variantPeriod(v: Variant, startISO: string, endISO: string) {
   let inicial = v.estoqueInicial;
   let entradas = 0;
   let saidas = 0;
-  for (const m of v.movements) {
+  for (const m of Array.isArray(v.movements) ? v.movements : []) {
     if (m.date < startISO) {
       inicial += m.delta;
     } else if (m.date <= endISO) {
@@ -191,8 +214,8 @@ function EstoqueSesmtPage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as Product[];
-        if (Array.isArray(parsed) && parsed.length) setProducts(parsed);
+        const parsed = normalizeStoredProducts(JSON.parse(raw));
+        if (parsed) setProducts(parsed);
       }
     } catch {}
   }, []);
@@ -202,8 +225,8 @@ function EstoqueSesmtPage() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return;
-        const parsed = JSON.parse(raw) as Product[];
-        if (Array.isArray(parsed)) setProducts(parsed);
+        const parsed = normalizeStoredProducts(JSON.parse(raw));
+        if (parsed) setProducts(parsed);
       } catch {}
     }
     window.addEventListener("estoque-sesmt-updated", reload);
@@ -221,7 +244,8 @@ function EstoqueSesmtPage() {
     const q = query.trim().toLowerCase();
     const rows: Array<{ product: Product; variant: Variant }> = [];
     products.forEach((p) => {
-      p.variants.forEach((v) => {
+      const variants = Array.isArray(p.variants) ? p.variants : [];
+      variants.forEach((v) => {
         const fullName = `${p.base} ${v.label}`.toLowerCase();
         if (
           !q ||
@@ -238,10 +262,12 @@ function EstoqueSesmtPage() {
   const totals = useMemo(() => {
     let totalSku = 0, totalEst = 0, totalEnt = 0, totalSai = 0;
     products.forEach((p) => {
-      totalSku += p.variants.length;
-      p.variants.forEach((v) => {
+      const variants = Array.isArray(p.variants) ? p.variants : [];
+      totalSku += variants.length;
+      variants.forEach((v) => {
         totalEst += variantBalance(v);
-        v.movements.forEach((m) => {
+        const movements = Array.isArray(v.movements) ? v.movements : [];
+        movements.forEach((m) => {
           if (m.delta > 0) totalEnt += m.delta;
           else totalSai += -m.delta;
         });
@@ -254,11 +280,12 @@ function EstoqueSesmtPage() {
     if (!delta) return;
     setProducts((prev) => prev.map((p) => {
       if (p.id !== productId) return p;
+      const variants = Array.isArray(p.variants) ? p.variants : [];
       return {
         ...p,
-        variants: p.variants.map((v) => v.id !== variantId ? v : {
+        variants: variants.map((v) => v.id !== variantId ? v : {
           ...v,
-          movements: [...v.movements, {
+          movements: [...(Array.isArray(v.movements) ? v.movements : []), {
             id: `m-${Date.now()}`,
             date: new Date().toISOString().slice(0, 10),
             delta, tipo,
@@ -280,15 +307,16 @@ function EstoqueSesmtPage() {
     if (!valid.length) { toast.error("Informe ao menos uma quantidade"); return; }
     setProducts((prev) => prev.map((p) => {
       if (p.id !== productId) return p;
+      const variants = Array.isArray(p.variants) ? p.variants : [];
       return {
         ...p,
-        variants: p.variants.map((v) => {
+        variants: variants.map((v) => {
           const e = valid.find((x) => x.variantId === v.id);
           if (!e) return v;
           const delta = tipo === "ENTRADA" ? e.qty : -e.qty;
           return {
             ...v,
-            movements: [...v.movements, {
+            movements: [...(Array.isArray(v.movements) ? v.movements : []), {
               id: `m-${Date.now()}-${v.id}`,
               date,
               delta,
@@ -397,15 +425,17 @@ function EstoqueSesmtPage() {
   function exportXlsx() {
     const out: any[] = [];
     products.forEach((p) => {
-      p.variants.forEach((v) => {
+      const variants = Array.isArray(p.variants) ? p.variants : [];
+      variants.forEach((v) => {
+        const movements = Array.isArray(v.movements) ? v.movements : [];
         out.push({
           Produto: p.base,
           Variação: v.label,
           UMB: p.umb,
           CA: p.ca || "",
           "Estoque inicial": v.estoqueInicial,
-          Entradas: v.movements.filter((m) => m.delta > 0).reduce((s, m) => s + m.delta, 0),
-          Saídas: v.movements.filter((m) => m.delta < 0).reduce((s, m) => s + -m.delta, 0),
+          Entradas: movements.filter((m) => m.delta > 0).reduce((s, m) => s + m.delta, 0),
+          Saídas: movements.filter((m) => m.delta < 0).reduce((s, m) => s + -m.delta, 0),
           "Estoque atual": variantBalance(v),
         });
       });
@@ -628,11 +658,12 @@ function SingleMoveDialog({
 
 /* ============================== History Dialog ============================== */
 function HistoryDialog({ product, variant }: { product: Product; variant: Variant }) {
+  const movements = Array.isArray(variant.movements) ? variant.movements : [];
   const data = useMemo(() => {
     // saldo acumulado por dia
     const byDay = new Map<string, number>();
-    let acc = variant.estoqueInicial;
-    const sorted = [...variant.movements].sort((a, b) => a.date.localeCompare(b.date));
+    let acc = Number(variant.estoqueInicial) || 0;
+    const sorted = [...movements].sort((a, b) => a.date.localeCompare(b.date));
     if (!sorted.length) {
       const today = new Date().toISOString().slice(0, 10);
       return [{ date: today, saldo: acc }];
@@ -645,7 +676,7 @@ function HistoryDialog({ product, variant }: { product: Product; variant: Varian
       byDay.set(m.date, acc);
     }
     return Array.from(byDay.entries()).map(([date, saldo]) => ({ date, saldo }));
-  }, [variant]);
+  }, [movements, variant.estoqueInicial]);
 
   return (
     <Dialog>
@@ -669,13 +700,13 @@ function HistoryDialog({ product, variant }: { product: Product; variant: Varian
             <div className="p-2 rounded border bg-emerald-50">
               <div className="text-[10px] uppercase tracking-wide text-emerald-800">Entradas</div>
               <div className="text-xl font-black text-emerald-800">
-                {fmt(variant.movements.filter((m) => m.delta > 0).reduce((s, m) => s + m.delta, 0))}
+                {fmt(movements.filter((m) => m.delta > 0).reduce((s, m) => s + m.delta, 0))}
               </div>
             </div>
             <div className="p-2 rounded border bg-red-50">
               <div className="text-[10px] uppercase tracking-wide text-red-800">Saídas</div>
               <div className="text-xl font-black text-red-800">
-                {fmt(variant.movements.filter((m) => m.delta < 0).reduce((s, m) => s + -m.delta, 0))}
+                {fmt(movements.filter((m) => m.delta < 0).reduce((s, m) => s + -m.delta, 0))}
               </div>
             </div>
           </div>
@@ -700,10 +731,10 @@ function HistoryDialog({ product, variant }: { product: Product; variant: Varian
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {variant.movements.length === 0 && (
+                {movements.length === 0 && (
                   <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-4">Sem movimentações</TableCell></TableRow>
                 )}
-                {[...variant.movements].reverse().map((m) => (
+                {[...movements].reverse().map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>{m.date}</TableCell>
                     <TableCell>
@@ -1026,7 +1057,7 @@ function MovementDialog({
               <div className="text-right">Saldo atual</div>
               <div className="text-right">Quantidade</div>
             </div>
-            {product.variants.map((v) => {
+            {(Array.isArray(product.variants) ? product.variants : []).map((v) => {
               const bal = variantBalance(v);
               return (
                 <div key={v.id} className="grid grid-cols-[1fr_auto_120px] gap-3 px-3 py-2 items-center">
