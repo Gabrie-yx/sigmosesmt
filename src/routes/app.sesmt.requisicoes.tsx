@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -566,8 +566,29 @@ function IndeferBtn({ onConfirm }: { onConfirm: (motivo: string) => void }) {
 function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: string }) {
   const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
+  // Gera número automático: SEQ/MM/AAAA (sequencial reiniciado por mês/ano)
+  useEffect(() => {
+    (async () => {
+      const now = new Date();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const yyyy = String(now.getFullYear());
+      const start = `${yyyy}-${mm}-01`;
+      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const end = endDate.toISOString().slice(0, 10);
+      const { count } = await supabase
+        .from("purchase_requisitions")
+        .select("id", { count: "exact", head: true })
+        .gte("data_requisicao", start)
+        .lt("data_requisicao", end);
+      const seq = String((count ?? 0) + 1).padStart(3, "0");
+      const novo = `${seq}/${mm}/${yyyy}`;
+      setForm((f) => ({ ...f, numero: novo }));
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [form, setForm] = useState({
-    numero: "",
+    numero: "Gerando...",
     data_requisicao: today,
     classificacao: "MATERIAL" as Classe,
     solicitante: "",
