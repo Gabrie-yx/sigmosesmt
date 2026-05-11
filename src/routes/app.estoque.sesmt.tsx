@@ -224,7 +224,8 @@ function EstoqueSesmtPage() {
     const q = query.trim().toLowerCase();
     const rows: Array<{ product: Product; variant: Variant }> = [];
     products.forEach((p) => {
-      p.variants.forEach((v) => {
+      const variants = Array.isArray(p.variants) ? p.variants : [];
+      variants.forEach((v) => {
         const fullName = `${p.base} ${v.label}`.toLowerCase();
         if (
           !q ||
@@ -241,10 +242,12 @@ function EstoqueSesmtPage() {
   const totals = useMemo(() => {
     let totalSku = 0, totalEst = 0, totalEnt = 0, totalSai = 0;
     products.forEach((p) => {
-      totalSku += p.variants.length;
-      p.variants.forEach((v) => {
+      const variants = Array.isArray(p.variants) ? p.variants : [];
+      totalSku += variants.length;
+      variants.forEach((v) => {
         totalEst += variantBalance(v);
-        v.movements.forEach((m) => {
+        const movements = Array.isArray(v.movements) ? v.movements : [];
+        movements.forEach((m) => {
           if (m.delta > 0) totalEnt += m.delta;
           else totalSai += -m.delta;
         });
