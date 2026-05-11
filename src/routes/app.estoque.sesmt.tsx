@@ -532,6 +532,34 @@ function MovStatCard({ entradas, saidas }: { entradas: number; saidas: number })
   );
 }
 
+function AlertStatCard({ criticos, zerados }: { criticos: number; zerados: number }) {
+  const total = criticos + zerados;
+  const hasAlert = total > 0;
+  return (
+    <Card
+      className={`p-4 rounded-2xl border ${
+        hasAlert
+          ? "bg-gradient-to-br from-red-600 to-red-800 border-red-700 text-white shadow-lg shadow-red-500/20"
+          : "bg-white border-slate-200 text-slate-600"
+      }`}
+    >
+      <div className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 ${hasAlert ? "text-white/90" : "text-slate-500"}`}>
+        <AlertTriangle className="h-3.5 w-3.5" /> Alerta de estoque
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-3">
+        <div>
+          <div className={`text-[9px] font-bold uppercase tracking-wider ${hasAlert ? "text-white/80" : "text-slate-500"}`}>Críticos</div>
+          <div className="text-2xl font-black leading-tight">{criticos}</div>
+        </div>
+        <div>
+          <div className={`text-[9px] font-bold uppercase tracking-wider ${hasAlert ? "text-white/80" : "text-slate-500"}`}>Zerados</div>
+          <div className="text-2xl font-black leading-tight">{zerados}</div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 const TIPO_PRESETS: Record<string, string[]> = {
   CALÇA: ["PP", "P", "M", "G", "GG", "XGG"],
   CAMISA: ["PP", "P", "M", "G", "GG", "XGG"],
