@@ -416,6 +416,38 @@ export type Database = {
         }
         Relationships: []
       }
+      estoque_epi_monthly_snapshots: {
+        Row: {
+          created_at: string
+          epi_id: string
+          estoque_inicial: number
+          month: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          epi_id: string
+          estoque_inicial?: number
+          month: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          epi_id?: string
+          estoque_inicial?: number
+          month?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_epi_monthly_snapshots_epi_id_fkey"
+            columns: ["epi_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_epi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       historico_entregas: {
         Row: {
           cpf_colaborador: string
@@ -915,6 +947,7 @@ export type Database = {
         }
         Returns: string
       }
+      snapshot_estoque_epi_monthly: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "tst" | "viewer"

@@ -92,6 +92,31 @@ function EstoqueSesmtPage() {
     return map;
   }, [movs]);
 
+  // Mês corrente (America/Sao_Paulo aproximado pelo cliente)
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMonth = now.getMonth() + 1; // 1-12
+  const monthStart = useMemo(() => new Date(curYear, curMonth - 1, 1), [curYear, curMonth]);
+
+  const { data: snapshots = [] } = useQuery({
+    queryKey: ["estoque_epi_snapshots", curYear, curMonth],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("estoque_epi_monthly_snapshots")
+        .select("epi_id, estoque_inicial")
+        .eq("year", curYear)
+        .eq("month", curMonth);
+      if (error) throw error;
+      return (data ?? []) as { epi_id: string; estoque_inicial: number }[];
+    },
+  });
+
+  const snapshotByItem = useMemo(() => {
+    const map = new Map<string, number>();
+    snapshots.forEach((s) => map.set(s.epi_id, s.estoque_inicial ?? 0));
+    return map;
+  }, [snapshots]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return items;
@@ -278,9 +303,10 @@ function EstoqueSesmtPage() {
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Estoque Inicial</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Qtde Entradas</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Qtde Saída</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Estoque Final</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Qtd. atual</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Mínimo</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Movimentar</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Histórico</TableHead>
               {isEditor && <TableHead></TableHead>}
             </TableRow>
@@ -303,11 +329,14 @@ function EstoqueSesmtPage() {
               const itemMovs = movsByItem.get(i.id) ?? [];
               let entradasItem = 0, saidasItem = 0;
               itemMovs.forEach((m) => {
+                const d = m.data_entrega ? new Date(m.data_entrega) : null;
+                if (!d || d < monthStart) return;
                 const q = m.quantidade_entregue ?? 0;
                 if (m.tipo_movimentacao === "SAIDA_ENTREGA") saidasItem += q;
                 else entradasItem += q;
               });
-              const estoqueInicial = (i.quantidade_atual ?? 0) - entradasItem + saidasItem;
+              const estoqueInicial = snapshotByItem.get(i.id) ?? 0;
+              const estoqueFinal = estoqueInicial + entradasItem - saidasItem;
               return (
                 <TableRow
                   key={i.id}
@@ -364,39 +393,13 @@ function EstoqueSesmtPage() {
                   </TableCell>
                   <TableCell className="text-right text-xs text-slate-600 font-semibold">{estoqueInicial}</TableCell>
                   <TableCell className="text-right text-xs text-emerald-700 font-semibold">{entradasItem}</TableCell>
+                  <TableCell className="text-right text-xs text-rose-700 font-semibold">{saidasItem}</TableCell>
+                  <TableCell className="text-right text-xs text-slate-800 font-black">{estoqueFinal}</TableCell>
                   <TableCell className="text-right font-black">
                     <span className={low ? "text-rose-600" : "text-slate-800"}>{i.quantidade_atual}</span>
                     {low && <AlertTriangle className="inline h-3.5 w-3.5 ml-1 text-rose-500" />}
                   </TableCell>
                   <TableCell className="text-right text-xs text-slate-500">{i.estoque_minimo}</TableCell>
-                  <TableCell className="text-center">
-                    {isEditor && (
-                      <div className="inline-flex gap-1">
-                        <Button
-                          size="icon" variant="outline" className="h-8 w-8 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                          title="Entrada / Reposição"
-                          onClick={() => setMovItem({ item: i, tipo: "ENTRADA_REPOSICAO" })}
-                        >
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon" variant="outline" className="h-8 w-8 border-amber-300 text-amber-700 hover:bg-amber-50"
-                          title="Devolução"
-                          onClick={() => setMovItem({ item: i, tipo: "DEVOLUCAO" })}
-                        >
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
-                        {isAdmin && (
-                          <Button
-                            size="sm" variant="ghost" className="h-8 px-2 text-[10px] font-black uppercase tracking-widest"
-                            onClick={() => setAdjItem(i)}
-                          >
-                            Ajustar
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </TableCell>
                   <TableCell className="text-center">
                     <Button size="sm" variant="ghost" onClick={() => setHistItem(i)}>
                       <History className="h-4 w-4 mr-1" /> Ver
@@ -405,6 +408,29 @@ function EstoqueSesmtPage() {
                   {isEditor && (
                     <TableCell>
                       <div className="inline-flex gap-1">
+                        <Button
+                          size="icon" variant="ghost" className="h-8 w-8 text-emerald-700 hover:bg-emerald-50"
+                          title="Entrada / Reposição"
+                          onClick={() => setMovItem({ item: i, tipo: "ENTRADA_REPOSICAO" })}
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon" variant="ghost" className="h-8 w-8 text-amber-700 hover:bg-amber-50"
+                          title="Devolução"
+                          onClick={() => setMovItem({ item: i, tipo: "DEVOLUCAO" })}
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                        {isAdmin && (
+                          <Button
+                            size="sm" variant="ghost" className="h-8 px-2 text-[10px] font-black uppercase tracking-widest"
+                            title="Ajustar saldo"
+                            onClick={() => setAdjItem(i)}
+                          >
+                            Ajustar
+                          </Button>
+                        )}
                         <Button size="icon" variant="ghost" title="Editar" onClick={() => setEditItem(i)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -446,6 +472,8 @@ function EstoqueSesmtPage() {
         }}
         pending={updateMut.isPending}
         movsByItem={movsByItem}
+        snapshotByItem={snapshotByItem}
+        monthStart={monthStart}
       />
 
       {/* Duplicate product */}
@@ -459,6 +487,8 @@ function EstoqueSesmtPage() {
         }}
         pending={createMut.isPending}
         movsByItem={movsByItem}
+        snapshotByItem={snapshotByItem}
+        monthStart={monthStart}
       />
 
       {/* Movement */}
@@ -823,7 +853,7 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
   );
 }
 
-function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit", movsByItem }: any) {
+function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit", movsByItem, snapshotByItem, monthStart }: any) {
   const isDup = mode === "duplicate";
   const [f, setF] = useState({ nome_material: "", codigo_material: "", ca: "", ca_validade: "", numero_pedido: "", estoque_minimo: "0", quantidade_atual: "0" });
   const [caNA, setCaNA] = useState(false);
@@ -838,15 +868,16 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit", movsB
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { estoqueInicial, qtdEntradas } = (() => {
-    if (!item || !movsByItem) return { estoqueInicial: item?.quantidade_atual ?? 0, qtdEntradas: 0 };
-    const arr = movsByItem.get(item.id) ?? [];
-    let entradas = 0, saidas = 0;
+    if (!item) return { estoqueInicial: 0, qtdEntradas: 0 };
+    const inicial = snapshotByItem?.get?.(item.id) ?? 0;
+    const arr = movsByItem?.get?.(item.id) ?? [];
+    let entradas = 0;
     arr.forEach((m: any) => {
-      const q = m.quantidade_entregue ?? 0;
-      if (m.tipo_movimentacao === "SAIDA_ENTREGA") saidas += q;
-      else entradas += q;
+      const d = m.data_entrega ? new Date(m.data_entrega) : null;
+      if (monthStart && (!d || d < monthStart)) return;
+      if (m.tipo_movimentacao !== "SAIDA_ENTREGA") entradas += (m.quantidade_entregue ?? 0);
     });
-    return { estoqueInicial: (item.quantidade_atual ?? 0) - entradas + saidas, qtdEntradas: entradas };
+    return { estoqueInicial: inicial, qtdEntradas: entradas };
   })();
 
   useEffect(() => {
