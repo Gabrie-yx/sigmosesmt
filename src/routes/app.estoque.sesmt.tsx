@@ -303,9 +303,10 @@ function EstoqueSesmtPage() {
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Estoque Inicial</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Qtde Entradas</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Qtde Saída</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Estoque Final</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Qtd. atual</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Mínimo</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Movimentar</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Histórico</TableHead>
               {isEditor && <TableHead></TableHead>}
             </TableRow>
