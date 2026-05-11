@@ -311,9 +311,15 @@ function RevisionsDialog({
       responsavel: string;
     }) => {
       const { id, ...rest } = payload;
-      const { error } = await (supabase as any)
-        .from("sesmt_document_revisions").update(rest).eq("id", id);
+      const { data, error } = await (supabase as any)
+        .from("sesmt_document_revisions")
+        .update(rest)
+        .eq("id", id)
+        .select();
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Nenhuma linha atualizada (verifique permissões)");
+      }
     },
     onSuccess: () => {
       toast.success("Revisão atualizada");
