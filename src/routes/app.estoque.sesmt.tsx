@@ -425,15 +425,17 @@ function EstoqueSesmtPage() {
   function exportXlsx() {
     const out: any[] = [];
     products.forEach((p) => {
-      p.variants.forEach((v) => {
+      const variants = Array.isArray(p.variants) ? p.variants : [];
+      variants.forEach((v) => {
+        const movements = Array.isArray(v.movements) ? v.movements : [];
         out.push({
           Produto: p.base,
           Variação: v.label,
           UMB: p.umb,
           CA: p.ca || "",
           "Estoque inicial": v.estoqueInicial,
-          Entradas: v.movements.filter((m) => m.delta > 0).reduce((s, m) => s + m.delta, 0),
-          Saídas: v.movements.filter((m) => m.delta < 0).reduce((s, m) => s + -m.delta, 0),
+          Entradas: movements.filter((m) => m.delta > 0).reduce((s, m) => s + m.delta, 0),
+          Saídas: movements.filter((m) => m.delta < 0).reduce((s, m) => s + -m.delta, 0),
           "Estoque atual": variantBalance(v),
         });
       });
