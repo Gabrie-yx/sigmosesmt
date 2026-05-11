@@ -369,8 +369,19 @@ function EstoqueSesmtPage() {
       <NewItemDialog
         open={showNew}
         onOpenChange={setShowNew}
-        onSubmit={(p: any) => createMut.mutate(p, { onSuccess: () => setShowNew(false) })}
+        onSubmit={(rows: any[]) => createMut.mutate(rows, { onSuccess: () => setShowNew(false) })}
         pending={createMut.isPending}
+      />
+
+      {/* Edit product */}
+      <EditItemDialog
+        item={editItem}
+        onClose={() => setEditItem(null)}
+        onSubmit={(patch: any) => {
+          if (!editItem) return;
+          updateMut.mutate({ id: editItem.id, patch }, { onSuccess: () => setEditItem(null) });
+        }}
+        pending={updateMut.isPending}
       />
 
       {/* Movement */}
