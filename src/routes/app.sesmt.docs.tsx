@@ -59,6 +59,22 @@ const TIPOS = [
   "Outro",
 ] as const;
 
+// Mapa de Normas Regulamentadoras associadas a cada tipo de documento
+const NR_POR_TIPO: Record<string, string> = {
+  PGR: "NR-01 (GRO/PGR)",
+  PCMSO: "NR-07",
+  LTCAT: "Lei 8.213/91 (Anexo IV Dec. 3.048/99)",
+  PPRA: "NR-09 (revogada – substituída pelo PGR/NR-01)",
+  PPP: "IN INSS 128/2022",
+  AET: "NR-17",
+  "Laudo de Insalubridade": "NR-15",
+  "Laudo de Periculosidade": "NR-16",
+  "CIPA - Ata": "NR-05",
+  "Ordem de Serviço": "NR-01, item 1.4.1 'b'",
+  Procedimento: "NR aplicável ao processo",
+  Outro: "—",
+};
+
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
 function todayDateOnly() {
@@ -146,6 +162,23 @@ function SesmtDocsPage() {
         .order("uploaded_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as SesmtDoc[];
+    },
+  });
+
+  // Carrega a data da revisão mais recente de cada documento
+  const { data: lastRevByDoc = {} } = useQuery({
+    queryKey: ["sesmt-docs-last-rev"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("sesmt_document_revisions")
+        .select("documento_id, data_revisao")
+        .order("data_revisao", { ascending: false });
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      for (const r of (data ?? []) as Array<{ documento_id: string; data_revisao: string }>) {
+        if (!map[r.documento_id]) map[r.documento_id] = r.data_revisao;
+      }
+      return map;
     },
   });
 
