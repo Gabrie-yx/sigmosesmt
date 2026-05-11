@@ -37,13 +37,21 @@ function normalizeDateOnly(value?: string | null): string | null {
   const raw = String(value).trim();
   const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
   const dmy = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
-  const year = iso ? Number(iso[1]) : dmy ? Number(dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3]) : null;
+  const year = iso
+    ? Number(iso[1])
+    : dmy
+      ? Number(dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3])
+      : null;
   const month = iso ? Number(iso[2]) : dmy ? Number(dmy[2]) : null;
   const day = iso ? Number(iso[3]) : dmy ? Number(dmy[1]) : null;
 
   if (!year || !month || !day) return null;
   const utc = new Date(Date.UTC(year, month - 1, day));
-  if (utc.getUTCFullYear() !== year || utc.getUTCMonth() !== month - 1 || utc.getUTCDate() !== day) {
+  if (
+    utc.getUTCFullYear() !== year ||
+    utc.getUTCMonth() !== month - 1 ||
+    utc.getUTCDate() !== day
+  ) {
     return null;
   }
   return `${year}-${pad2(month)}-${pad2(day)}`;
