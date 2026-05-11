@@ -437,6 +437,7 @@ function RevisionsDialog({
     onSuccess: () => {
       toast.success("Revisão excluída");
       qc.invalidateQueries({ queryKey: ["sesmt-doc-revisions", doc?.id] });
+      qc.invalidateQueries({ queryKey: ["sesmt-docs-last-rev"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
@@ -466,6 +467,7 @@ function RevisionsDialog({
     onSuccess: () => {
       toast.success("Revisão atualizada");
       qc.invalidateQueries({ queryKey: ["sesmt-doc-revisions", doc?.id] });
+      qc.invalidateQueries({ queryKey: ["sesmt-docs-last-rev"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
