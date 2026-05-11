@@ -415,28 +415,92 @@ function RevisionsDialog({
                 </thead>
                 <tbody>
                   {revs.map((r) => (
-                    <tr key={r.id} className="border-t">
-                      <td className="px-3 py-2">{new Date(r.data_revisao).toLocaleDateString("pt-BR")}</td>
-                      <td className="px-3 py-2 font-mono">{r.numero_revisao}</td>
-                      <td className="px-3 py-2">{r.descricao}</td>
-                      <td className="px-3 py-2 text-slate-600">{r.motivo ?? "—"}</td>
-                      <td className="px-3 py-2">{r.responsavel}</td>
-                      {canDelete && (
-                        <td className="px-3 py-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-700"
-                            onClick={() => { if (confirm("Excluir revisão?")) del.mutate(r.id); }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                    editingId === r.id ? (
+                      <tr key={r.id} className="border-t bg-amber-50">
+                        <td className="px-2 py-1">
+                          <Input type="date" value={editDraft.data_revisao ?? ""} onChange={(e) => setEditDraft({ ...editDraft, data_revisao: e.target.value })} />
                         </td>
-                      )}
-                    </tr>
+                        <td className="px-2 py-1">
+                          <Input value={editDraft.numero_revisao ?? ""} onChange={(e) => setEditDraft({ ...editDraft, numero_revisao: e.target.value })} />
+                        </td>
+                        <td className="px-2 py-1">
+                          <Input value={editDraft.descricao ?? ""} onChange={(e) => setEditDraft({ ...editDraft, descricao: e.target.value })} />
+                        </td>
+                        <td className="px-2 py-1">
+                          <Input value={editDraft.motivo ?? ""} onChange={(e) => setEditDraft({ ...editDraft, motivo: e.target.value })} />
+                        </td>
+                        <td className="px-2 py-1">
+                          <Input value={editDraft.responsavel ?? ""} onChange={(e) => setEditDraft({ ...editDraft, responsavel: e.target.value })} />
+                        </td>
+                        <td className="px-2 py-1 whitespace-nowrap">
+                          <Button size="sm" variant="ghost" className="text-emerald-700" onClick={() => {
+                            update.mutate({
+                              id: r.id,
+                              data_revisao: editDraft.data_revisao || r.data_revisao,
+                              numero_revisao: editDraft.numero_revisao || r.numero_revisao,
+                              descricao: editDraft.descricao || r.descricao,
+                              motivo: editDraft.motivo ?? null,
+                              responsavel: editDraft.responsavel || r.responsavel,
+                            }, { onSuccess: () => { setEditingId(null); setEditDraft({}); } });
+                          }}><Check className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="ghost" onClick={() => { setEditingId(null); setEditDraft({}); }}><X className="h-4 w-4" /></Button>
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr key={r.id} className="border-t">
+                        <td className="px-3 py-2">{new Date(r.data_revisao).toLocaleDateString("pt-BR")}</td>
+                        <td className="px-3 py-2 font-mono">{r.numero_revisao}</td>
+                        <td className="px-3 py-2">{r.descricao}</td>
+                        <td className="px-3 py-2 text-slate-600">{r.motivo ?? "—"}</td>
+                        <td className="px-3 py-2">{r.responsavel}</td>
+                        {(canEdit || canDelete) && (
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            {canEdit && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-slate-700"
+                                onClick={() => {
+                                  setEditingId(r.id);
+                                  setEditDraft({
+                                    data_revisao: r.data_revisao,
+                                    numero_revisao: r.numero_revisao,
+                                    descricao: r.descricao,
+                                    motivo: r.motivo ?? "",
+                                    responsavel: r.responsavel,
+                                  });
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-700"
+                                onClick={() => { if (confirm("Excluir revisão?")) del.mutate(r.id); }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </td>
+                        )}
+                      </tr>
+                    )
                   ))}
                 </tbody>
               </table>
+              <div className="bg-slate-50 border-t px-3 py-2 text-xs text-slate-600">
+                <span className="font-semibold text-slate-700">Legenda – Motivo:</span>{" "}
+                <span className="mr-3"><b>1</b> Elaboração</span>
+                <span className="mr-3"><b>2</b> Atualização de cargo/função</span>
+                <span className="mr-3"><b>3</b> Acidente de trabalho</span>
+                <span className="mr-3"><b>4</b> Treinamento</span>
+                <span className="mr-3"><b>5</b> Alteração de processo</span>
+                <span className="mr-3"><b>6</b> Auditoria/Não conformidade</span>
+                <span className="mr-3"><b>7</b> Revisão periódica</span>
+              </div>
             </div>
           )}
         </div>
