@@ -187,7 +187,6 @@ function currentMonth(): string {
 function EstoqueSesmtPage() {
   const [products, setProducts] = useState<Product[]>(() => buildSeed());
   const [query, setQuery] = useState("");
-  const [selectedVariant, setSelectedVariant] = useState<Record<string, string>>({});
   const [refMonth, setRefMonth] = useState<string>(() => currentMonth());
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -208,13 +207,20 @@ function EstoqueSesmtPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter(
-      (p) =>
-        p.base.toLowerCase().includes(q) ||
-        (p.ca || "").toLowerCase().includes(q) ||
-        p.variants.some((v) => v.label.toLowerCase().includes(q)),
-    );
+    const rows: Array<{ product: Product; variant: Variant }> = [];
+    products.forEach((p) => {
+      p.variants.forEach((v) => {
+        const fullName = `${p.base} ${v.label}`.toLowerCase();
+        if (
+          !q ||
+          fullName.includes(q) ||
+          (p.ca || "").toLowerCase().includes(q)
+        ) {
+          rows.push({ product: p, variant: v });
+        }
+      });
+    });
+    return rows;
   }, [products, query]);
 
   const totals = useMemo(() => {
@@ -231,11 +237,6 @@ function EstoqueSesmtPage() {
     });
     return { produtos: products.length, sku: totalSku, est: totalEst, ent: totalEnt, sai: totalSai };
   }, [products]);
-
-  function getVariant(p: Product): Variant {
-    const id = selectedVariant[p.id] ?? p.variants[0]?.id;
-    return p.variants.find((v) => v.id === id) ?? p.variants[0];
-  }
 
   function addMovement(productId: string, variantId: string, delta: number, tipo: Movement["tipo"]) {
     if (!delta) return;
@@ -292,7 +293,6 @@ function EstoqueSesmtPage() {
   function resetData() {
     if (!confirm("Restaurar painel para os valores iniciais? Movimentações serão perdidas.")) return;
     setProducts(buildSeed());
-    setSelectedVariant({});
     toast.success("Painel restaurado");
   }
 
@@ -373,7 +373,6 @@ function EstoqueSesmtPage() {
         });
       }
       setProducts(Array.from(map.values()));
-      setSelectedVariant({});
       toast.success(`${rows.length} linhas importadas`);
     } catch (err: any) {
       toast.error("Falha ao importar: " + (err?.message ?? "erro"));
