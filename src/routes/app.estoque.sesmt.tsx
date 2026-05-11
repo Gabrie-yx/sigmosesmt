@@ -19,7 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Search, Download, Plus, History, ArrowUp, ArrowDown,
+  Search, Download, Plus, History,
   Trash2, ExternalLink, AlertTriangle, Pencil, X, Upload, ImageIcon, Copy,
 } from "lucide-react";
 import protectiveClothingIcon from "@/assets/protective-clothing.png";
@@ -163,47 +163,9 @@ function EstoqueSesmtPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const movMut = useMutation({
-    mutationFn: async (args: {
-      id: string; qtd: number; tipo: "ENTRADA_REPOSICAO" | "DEVOLUCAO";
-      fornecedor?: string;
-    }) => {
-      const { error } = await supabase.rpc("registrar_movimentacao_epi", {
-        _epi_id: args.id,
-        _qtd: args.qtd,
-        _tipo: args.tipo,
-        _fornecedor: args.fornecedor ?? undefined,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
-      qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
-      toast.success("Movimentação registrada");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  const ajustMut = useMutation({
-    mutationFn: async (args: { id: string; novo: number }) => {
-      const { error } = await supabase.rpc("ajustar_saldo_epi", {
-        _epi_id: args.id,
-        _novo_saldo: args.novo,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
-      toast.success("Saldo ajustado");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
   /* ---------- Dialogs ---------- */
   const [showNew, setShowNew] = useState(false);
-  const [movItem, setMovItem] = useState<{ item: Item; tipo: "ENTRADA_REPOSICAO" | "DEVOLUCAO" } | null>(null);
   const [histItem, setHistItem] = useState<Item | null>(null);
-  const [adjItem, setAdjItem] = useState<Item | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [dupItem, setDupItem] = useState<Item | null>(null);
 
@@ -407,29 +369,6 @@ function EstoqueSesmtPage() {
                   {isEditor && (
                     <TableCell>
                       <div className="inline-flex gap-1">
-                        <Button
-                          size="icon" variant="ghost" className="h-8 w-8 text-emerald-700 hover:bg-emerald-50"
-                          title="Entrada / Reposição"
-                          onClick={() => setMovItem({ item: i, tipo: "ENTRADA_REPOSICAO" })}
-                        >
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon" variant="ghost" className="h-8 w-8 text-amber-700 hover:bg-amber-50"
-                          title="Devolução"
-                          onClick={() => setMovItem({ item: i, tipo: "DEVOLUCAO" })}
-                        >
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
-                        {isAdmin && (
-                          <Button
-                            size="sm" variant="ghost" className="h-8 px-2 text-[10px] font-black uppercase tracking-widest"
-                            title="Ajustar saldo"
-                            onClick={() => setAdjItem(i)}
-                          >
-                            Ajustar
-                          </Button>
-                        )}
                         <Button size="icon" variant="ghost" title="Editar" onClick={() => setEditItem(i)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -488,34 +427,6 @@ function EstoqueSesmtPage() {
         movsByItem={movsByItem}
         snapshotByItem={snapshotByItem}
         monthStart={monthStart}
-      />
-
-      {/* Movement */}
-      <MovementDialog
-        state={movItem}
-        onClose={() => setMovItem(null)}
-        onSubmit={(qtd: number, fornecedor?: string) => {
-          if (!movItem) return;
-          movMut.mutate(
-            { id: movItem.item.id, qtd, tipo: movItem.tipo, fornecedor },
-            { onSuccess: () => setMovItem(null) },
-          );
-        }}
-        pending={movMut.isPending}
-      />
-
-      {/* Adjust */}
-      <AdjustDialog
-        item={adjItem}
-        onClose={() => setAdjItem(null)}
-        onSubmit={(novo: number) => {
-          if (!adjItem) return;
-          ajustMut.mutate(
-            { id: adjItem.id, novo },
-            { onSuccess: () => setAdjItem(null) },
-          );
-        }}
-        pending={ajustMut.isPending}
       />
 
       {/* History */}
