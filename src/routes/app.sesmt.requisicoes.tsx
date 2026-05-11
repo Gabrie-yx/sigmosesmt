@@ -41,6 +41,8 @@ type Item = {
   observacao: string;
 };
 
+type PrintMode = "download" | "print";
+
 type Req = {
   id: string;
   numero: string;
@@ -100,7 +102,7 @@ async function logoDataUrl(): Promise<string | null> {
   } catch { return null; }
 }
 
-async function gerarPdfRequisicao(req: Req, itens: Item[]) {
+async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "download") {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const M = 10;
@@ -171,7 +173,11 @@ async function gerarPdfRequisicao(req: Req, itens: Item[]) {
   });
 
   // Assinaturas
-  const finalY = (doc as any).lastAutoTable.finalY + 8;
+  let finalY = (doc as any).lastAutoTable.finalY + 8;
+  if (finalY > 245) {
+    doc.addPage();
+    finalY = M;
+  }
   const colW = (W - 2 * M) / 3;
   const sigH = 22;
   ["ASSINATURA SOLICITANTE","ASSINATURA SUPERVISOR GERAL","ASSINATURA ANALISTA DE COMPRAS"].forEach((label, idx) => {
@@ -181,6 +187,10 @@ async function gerarPdfRequisicao(req: Req, itens: Item[]) {
     doc.text(label, x + colW/2, finalY + 4, { align: "center" });
     doc.line(x, finalY + sigH - 6, x + colW, finalY + sigH - 6);
     doc.text("DATA:", x + 1.5, finalY + sigH - 1);
+    if (idx === 0) {
+      doc.setFont("helvetica", "normal");
+      doc.text(fmtBR(req.data_requisicao), x + 13, finalY + sigH - 1);
+    }
   });
 
   // Rodapé status
@@ -189,6 +199,15 @@ async function gerarPdfRequisicao(req: Req, itens: Item[]) {
   if (req.status === "INDEFERIDA" && req.motivo_indeferimento) {
     doc.setFont("helvetica","normal");
     doc.text(`Motivo: ${req.motivo_indeferimento}`, M, finalY + sigH + 12, { maxWidth: W - 2*M });
+  }
+
+  if (mode === "print") {
+    doc.autoPrint();
+    const url = URL.createObjectURL(doc.output("blob"));
+    const printWindow = window.open(url, "_blank");
+    if (!printWindow) doc.save(`requisicao-${req.numero || req.id.slice(0,8)}.pdf`);
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+    return;
   }
 
   doc.save(`requisicao-${req.numero || req.id.slice(0,8)}.pdf`);
