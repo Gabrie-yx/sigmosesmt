@@ -110,6 +110,7 @@ function applyDelta(item: string, tamanho: string | null | undefined, delta: num
   if (!found) return false;
   const { pi, vi } = found;
   const v = products[pi].variants[vi];
+  if (!v || !Array.isArray(v.movements)) return false;
   v.movements = [
     ...v.movements,
     {
