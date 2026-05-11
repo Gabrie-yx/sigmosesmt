@@ -466,14 +466,14 @@ function EstoqueSesmtPage() {
           <Table className="min-w-[1200px] text-sm">
             <TableHeader>
               <TableRow className="bg-slate-100 hover:bg-slate-100 border-b-2 border-slate-300">
-                <TableHead className="h-9 font-bold text-slate-700 min-w-[340px]">Produto / Variações</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 min-w-[340px]">Produto</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 w-[60px]">UMB</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 w-[90px]">CA</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 text-right w-[90px]">Est. inicial</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 text-right w-[80px]">Entradas</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 text-right w-[80px]">Saídas</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 text-right w-[100px]">Est. final</TableHead>
-                <TableHead className="h-9 font-bold text-slate-700 w-[240px]">Movimentar</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 w-[120px]">Movimentar</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 w-[90px] text-center">Histórico</TableHead>
               </TableRow>
             </TableHeader>
