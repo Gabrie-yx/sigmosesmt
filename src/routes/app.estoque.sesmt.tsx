@@ -762,6 +762,11 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any
   const [foto, setFoto] = useState<File | null>(null);
   const [removeFoto, setRemoveFoto] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [tipo, setTipo] = useState<string>("OUTRO");
+  const [variacoes, setVariacoes] = useState<string[]>([]);
+  const [novaVar, setNovaVar] = useState("");
+  const [baseNome, setBaseNome] = useState("");
+  const [baseCodigo, setBaseCodigo] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -779,8 +784,40 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any
       });
       setFoto(null);
       setRemoveFoto(false);
+      // Detect tipo + base name/code by stripping a trailing " - VAR"
+      const nome = (item.nome_material ?? "") as string;
+      const codigo = (item.codigo_material ?? "") as string;
+      const detected = detectTipoFromName(nome);
+      setTipo(detected.tipo);
+      setBaseNome(detected.base);
+      setVariacoes(detected.variacao ? [detected.variacao] : []);
+      // Strip suffix from code as well, if present
+      if (detected.variacao) {
+        const suf = "-" + detected.variacao.replace(/\s+/g, "");
+        setBaseCodigo(codigo.endsWith(suf) ? codigo.slice(0, -suf.length) : codigo);
+      } else {
+        setBaseCodigo(codigo);
+      }
+      setNovaVar("");
     }
   }, [item]);
+
+  const presets = TIPO_PRESETS[tipo] ?? [];
+  function toggleVar(v: string) {
+    if (isDup) {
+      setVariacoes((cur) => (cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]));
+    } else {
+      setVariacoes((cur) => (cur[0] === v ? [] : [v]));
+    }
+  }
+  function addNovaVar() {
+    const v = novaVar.trim().toUpperCase();
+    if (!v) return;
+    if (!variacoes.includes(v)) {
+      setVariacoes((c) => (isDup ? [...c, v] : [v]));
+    }
+    setNovaVar("");
+  }
 
   async function handleSave() {
     let imagem_url: string | null | undefined = undefined;
@@ -797,14 +834,41 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any
         setUploading(false);
       }
     }
+    const ca = caNA ? "N/A" : (f.ca.trim() || null);
+    const ca_validade = caNA ? null : (f.ca_validade || null);
+    const pedido = f.numero_pedido.trim() || null;
+    const min = Math.max(0, Number(f.estoque_minimo) || 0);
+    const qtd = Math.max(0, Number(f.quantidade_atual) || 0);
+    const baseN = (baseNome || f.nome_material).trim().toUpperCase();
+    const baseC = (baseCodigo || f.codigo_material).trim();
+
+    if (isDup && variacoes.length > 0) {
+      const rows = variacoes.map((v) => ({
+        nome_material: `${baseN} - ${v}`,
+        codigo_material: `${baseC}-${v.replace(/\s+/g, "")}`,
+        ca,
+        ca_validade,
+        numero_pedido: pedido,
+        quantidade_atual: qtd,
+        estoque_minimo: min,
+        ...(imagem_url !== undefined ? { imagem_url } : {}),
+      }));
+      onSubmit(rows);
+      return;
+    }
+
+    // Single row (edit, or duplicate without variations)
+    const v = variacoes[0];
+    const nome_material = v ? `${baseN} - ${v}` : f.nome_material.trim().toUpperCase();
+    const codigo_material = v ? `${baseC}-${v.replace(/\s+/g, "")}` : f.codigo_material.trim();
     const patch: any = {
-      nome_material: f.nome_material.trim().toUpperCase(),
-      codigo_material: f.codigo_material.trim(),
-      ca: caNA ? "N/A" : (f.ca.trim() || null),
-      ca_validade: caNA ? null : (f.ca_validade || null),
-      numero_pedido: f.numero_pedido.trim() || null,
-      estoque_minimo: Math.max(0, Number(f.estoque_minimo) || 0),
-      quantidade_atual: Math.max(0, Number(f.quantidade_atual) || 0),
+      nome_material,
+      codigo_material,
+      ca,
+      ca_validade,
+      numero_pedido: pedido,
+      estoque_minimo: min,
+      quantidade_atual: qtd,
     };
     if (imagem_url !== undefined) patch.imagem_url = imagem_url;
     onSubmit(patch);
