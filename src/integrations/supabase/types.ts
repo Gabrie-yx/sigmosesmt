@@ -380,6 +380,7 @@ export type Database = {
           id: string
           imagem_url: string | null
           nome_material: string
+          numero_pedido: string | null
           quantidade_atual: number
           ultimo_fornecedor: string | null
           updated_at: string
@@ -392,6 +393,7 @@ export type Database = {
           id?: string
           imagem_url?: string | null
           nome_material: string
+          numero_pedido?: string | null
           quantidade_atual?: number
           ultimo_fornecedor?: string | null
           updated_at?: string
@@ -404,6 +406,7 @@ export type Database = {
           id?: string
           imagem_url?: string | null
           nome_material?: string
+          numero_pedido?: string | null
           quantidade_atual?: number
           ultimo_fornecedor?: string | null
           updated_at?: string

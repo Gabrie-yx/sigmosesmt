@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,8 +16,11 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   Search, Download, Plus, History, ArrowUp, ArrowDown,
-  Trash2, ExternalLink, AlertTriangle,
+  Trash2, ExternalLink, AlertTriangle, Pencil, X, Upload, ImageIcon,
 } from "lucide-react";
 import protectiveClothingIcon from "@/assets/protective-clothing.png";
 import { toast } from "sonner";
@@ -28,6 +31,8 @@ type Item = {
   codigo_material: string;
   nome_material: string;
   ca: string | null;
+  numero_pedido: string | null;
+  imagem_url: string | null;
   quantidade_atual: number;
   estoque_minimo: number;
   ultimo_fornecedor: string | null;
@@ -109,16 +114,13 @@ function EstoqueSesmtPage() {
 
   /* ---------- Mutations ---------- */
   const createMut = useMutation({
-    mutationFn: async (payload: {
-      codigo_material: string; nome_material: string; ca: string | null;
-      quantidade_atual: number; estoque_minimo: number;
-    }) => {
+    mutationFn: async (payload: any[]) => {
       const { error } = await supabase.from("estoque_epi").insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["estoque_epi"] });
-      toast.success("Item cadastrado");
+      toast.success("Produto(s) cadastrado(s)");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -176,12 +178,26 @@ function EstoqueSesmtPage() {
   const [movItem, setMovItem] = useState<{ item: Item; tipo: "ENTRADA_REPOSICAO" | "DEVOLUCAO" } | null>(null);
   const [histItem, setHistItem] = useState<Item | null>(null);
   const [adjItem, setAdjItem] = useState<Item | null>(null);
+  const [editItem, setEditItem] = useState<Item | null>(null);
+
+  const updateMut = useMutation({
+    mutationFn: async (args: { id: string; patch: Partial<Item> }) => {
+      const { error } = await supabase.from("estoque_epi").update(args.patch).eq("id", args.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
+      toast.success("Item atualizado");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   function exportXlsx() {
     const rows = items.map((i) => ({
       Codigo: i.codigo_material,
       Produto: i.nome_material,
       CA: i.ca ?? "",
+      NumeroPedido: i.numero_pedido ?? "",
       Quantidade: i.quantidade_atual,
       EstoqueMinimo: i.estoque_minimo,
       UltimoFornecedor: i.ultimo_fornecedor ?? "",
@@ -249,20 +265,22 @@ function EstoqueSesmtPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50">
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Foto</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Produto</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Código</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nº Pedido</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Qtd. atual</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Mínimo</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Movimentar</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Histórico</TableHead>
-              {isAdmin && <TableHead></TableHead>}
+              {isEditor && <TableHead></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={isAdmin ? 8 : 7} className="text-center text-sm text-muted-foreground py-10">
+                <TableCell colSpan={isEditor ? 10 : 9} className="text-center text-sm text-muted-foreground py-10">
                   Nenhum item cadastrado. Clique em "Novo produto" para começar.
                 </TableCell>
               </TableRow>
@@ -271,8 +289,18 @@ function EstoqueSesmtPage() {
               const low = i.quantidade_atual <= (i.estoque_minimo ?? 0);
               return (
                 <TableRow key={i.id} className="hover:bg-slate-50/50">
+                  <TableCell>
+                    {i.imagem_url ? (
+                      <img src={i.imagem_url} alt="" className="h-10 w-10 rounded object-cover border border-slate-200" />
+                    ) : (
+                      <div className="h-10 w-10 rounded border border-dashed border-slate-300 flex items-center justify-center text-slate-300">
+                        <ImageIcon className="h-4 w-4" />
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-bold text-slate-800 uppercase">{i.nome_material}</TableCell>
                   <TableCell className="text-xs text-slate-500">{i.codigo_material}</TableCell>
+                  <TableCell className="text-xs text-slate-500">{i.numero_pedido || "—"}</TableCell>
                   <TableCell className="text-xs">
                     {i.ca ? <Badge variant="secondary">{i.ca}</Badge> : <span className="text-slate-300">—</span>}
                   </TableCell>
@@ -314,13 +342,20 @@ function EstoqueSesmtPage() {
                       <History className="h-4 w-4 mr-1" /> Ver
                     </Button>
                   </TableCell>
-                  {isAdmin && (
+                  {isEditor && (
                     <TableCell>
-                      <Button size="icon" variant="ghost" onClick={() => {
-                        if (confirm(`Excluir "${i.nome_material}"?`)) delMut.mutate(i.id);
-                      }}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="inline-flex gap-1">
+                        <Button size="icon" variant="ghost" title="Editar" onClick={() => setEditItem(i)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {isAdmin && (
+                          <Button size="icon" variant="ghost" onClick={() => {
+                            if (confirm(`Excluir "${i.nome_material}"?`)) delMut.mutate(i.id);
+                          }}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>
@@ -334,8 +369,19 @@ function EstoqueSesmtPage() {
       <NewItemDialog
         open={showNew}
         onOpenChange={setShowNew}
-        onSubmit={(p: any) => createMut.mutate(p, { onSuccess: () => setShowNew(false) })}
+        onSubmit={(rows: any[]) => createMut.mutate(rows, { onSuccess: () => setShowNew(false) })}
         pending={createMut.isPending}
+      />
+
+      {/* Edit product */}
+      <EditItemDialog
+        item={editItem}
+        onClose={() => setEditItem(null)}
+        onSubmit={(patch: any) => {
+          if (!editItem) return;
+          updateMut.mutate({ id: editItem.id, patch }, { onSuccess: () => setEditItem(null) });
+        }}
+        pending={updateMut.isPending}
       />
 
       {/* Movement */}
@@ -391,51 +437,381 @@ function StatCard({ label, value, variant, highlight }: { label: string; value: 
   );
 }
 
+const TIPO_PRESETS: Record<string, string[]> = {
+  CALÇA: ["PP", "P", "M", "G", "GG", "XGG"],
+  CAMISA: ["PP", "P", "M", "G", "GG", "XGG"],
+  BOTA: ["37", "38", "39", "40", "41", "42", "43", "44"],
+  LUVA: [
+    "VAQUETA LONGA",
+    "VAQUETA CURTA",
+    "RASPA VOLK",
+    "RASPA DMN",
+    "ALGODÃO BRANCA",
+    "ALGODÃO PRETA",
+  ],
+  OUTRO: [],
+};
+
+async function uploadFotoEpi(file: File): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from("epis-fotos").upload(path, file, {
+    cacheControl: "3600",
+    upsert: false,
+    contentType: file.type,
+  });
+  if (error) throw error;
+  const { data } = supabase.storage.from("epis-fotos").getPublicUrl(path);
+  return data.publicUrl;
+}
+
 function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
-  const [f, setF] = useState({ codigo_material: "", nome_material: "", ca: "", quantidade_atual: "0", estoque_minimo: "5" });
+  const initial = {
+    tipo: "OUTRO",
+    nome_base: "",
+    codigo_base: "",
+    ca: "",
+    numero_pedido: "",
+    qtd_inicial: "0",
+    estoque_minimo: "5",
+  };
+  const [f, setF] = useState(initial);
+  const [variacoes, setVariacoes] = useState<string[]>([]);
+  const [novaVar, setNovaVar] = useState("");
+  const [foto, setFoto] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setF(initial);
+      setVariacoes([]);
+      setNovaVar("");
+      setFoto(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const presets = TIPO_PRESETS[f.tipo] ?? [];
+
+  function toggleVar(v: string) {
+    setVariacoes((cur) => (cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]));
+  }
+  function addNovaVar() {
+    const v = novaVar.trim().toUpperCase();
+    if (!v) return;
+    if (!variacoes.includes(v)) setVariacoes((c) => [...c, v]);
+    setNovaVar("");
+  }
+
+  async function handleSubmit() {
+    const nome = f.nome_base.trim().toUpperCase();
+    const codigo = f.codigo_base.trim();
+    if (!nome || !codigo) return;
+
+    let imagem_url: string | null = null;
+    if (foto) {
+      try {
+        setUploading(true);
+        imagem_url = await uploadFotoEpi(foto);
+      } catch (e: any) {
+        toast.error("Falha ao enviar foto: " + e.message);
+        setUploading(false);
+        return;
+      } finally {
+        setUploading(false);
+      }
+    }
+
+    const qtd = Math.max(0, Number(f.qtd_inicial) || 0);
+    const min = Math.max(0, Number(f.estoque_minimo) || 0);
+    const ca = f.ca.trim() || null;
+    const pedido = f.numero_pedido.trim() || null;
+
+    const rows =
+      variacoes.length > 0
+        ? variacoes.map((v, idx) => ({
+            nome_material: `${nome} - ${v}`,
+            codigo_material: `${codigo}-${v.replace(/\s+/g, "")}`,
+            ca,
+            numero_pedido: pedido,
+            quantidade_atual: qtd,
+            estoque_minimo: min,
+            imagem_url,
+          }))
+        : [{
+            nome_material: nome,
+            codigo_material: codigo,
+            ca,
+            numero_pedido: pedido,
+            quantidade_atual: qtd,
+            estoque_minimo: min,
+            imagem_url,
+          }];
+
+    onSubmit(rows);
+  }
+
+  const busy = pending || uploading;
+
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setF({ codigo_material: "", nome_material: "", ca: "", quantidade_atual: "0", estoque_minimo: "5" }); }}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Novo produto</DialogTitle></DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
-            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição completa do EPI</Label>
-            <Input value={f.nome_material} onChange={(e) => setF({ ...f, nome_material: e.target.value.toUpperCase() })} placeholder="Ex: BOTA TAM. 39" />
-            <p className="text-[10px] text-slate-400 mt-1">Inclua o tamanho/variação no nome — uma linha por SKU.</p>
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição do EPI</Label>
+            <Input
+              value={f.nome_base}
+              onChange={(e) => setF({ ...f, nome_base: e.target.value.toUpperCase() })}
+              placeholder="Ex: CALÇA BRIM AZUL MARINHO"
+            />
           </div>
+
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Código</Label>
-              <Input value={f.codigo_material} onChange={(e) => setF({ ...f, codigo_material: e.target.value })} placeholder="SKU/Ref" />
-            </div>
             <div>
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA (opcional)</Label>
               <Input value={f.ca} onChange={(e) => setF({ ...f, ca: e.target.value })} placeholder="Apenas número" />
             </div>
             <div>
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Qtd. inicial</Label>
-              <Input type="number" min="0" value={f.quantidade_atual} onChange={(e) => setF({ ...f, quantidade_atual: e.target.value })} />
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nº do Pedido</Label>
+              <Input value={f.numero_pedido} onChange={(e) => setF({ ...f, numero_pedido: e.target.value })} placeholder="Código do pedido externo" />
+            </div>
+            <div>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Cód. do Material</Label>
+              <Input value={f.codigo_base} onChange={(e) => setF({ ...f, codigo_base: e.target.value })} placeholder="SKU / Ref base" />
+            </div>
+            <div>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tipo (define variações)</Label>
+              <Select value={f.tipo} onValueChange={(v) => { setF({ ...f, tipo: v }); setVariacoes([]); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CALÇA">CALÇA (PP–XGG)</SelectItem>
+                  <SelectItem value="CAMISA">CAMISA (PP–XGG)</SelectItem>
+                  <SelectItem value="BOTA">BOTA (37–44)</SelectItem>
+                  <SelectItem value="LUVA">LUVA (modelos)</SelectItem>
+                  <SelectItem value="OUTRO">OUTRO / sem variação</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Variações */}
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Variações</Label>
+              <span className="text-[10px] text-slate-400">{variacoes.length} selecionada(s) → 1 linha cada</span>
+            </div>
+
+            {presets.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {presets.map((p) => {
+                  const on = variacoes.includes(p);
+                  return (
+                    <button
+                      type="button"
+                      key={p}
+                      onClick={() => toggleVar(p)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-bold border transition ${
+                        on ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-700 border-slate-300 hover:border-slate-500"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Input
+                value={novaVar}
+                onChange={(e) => setNovaVar(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addNovaVar(); } }}
+                placeholder="Adicionar variação manual (ex.: TAM. ÚNICO, 45, MODELO X)"
+                className="bg-white"
+              />
+              <Button type="button" variant="outline" onClick={addNovaVar}>Adicionar</Button>
+            </div>
+
+            {variacoes.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-slate-200">
+                {variacoes.map((v) => (
+                  <span key={v} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                    {v}
+                    <button type="button" onClick={() => toggleVar(v)} className="hover:text-emerald-950">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="text-[10px] text-slate-400">
+              Sem variação = 1 linha. Com variações = 1 linha por variante (cada uma com saldo independente).
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Qtd. inicial (por variação)</Label>
+              <Input type="number" min="0" value={f.qtd_inicial} onChange={(e) => setF({ ...f, qtd_inicial: e.target.value })} />
             </div>
             <div>
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Estoque mínimo</Label>
               <Input type="number" min="0" value={f.estoque_minimo} onChange={(e) => setF({ ...f, estoque_minimo: e.target.value })} />
             </div>
           </div>
+
+          {/* Foto */}
+          <div>
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Foto do produto (opcional)</Label>
+            <div className="flex items-center gap-3 mt-1">
+              {foto ? (
+                <img src={URL.createObjectURL(foto)} alt="" className="h-16 w-16 rounded object-cover border border-slate-200" />
+              ) : (
+                <div className="h-16 w-16 rounded border border-dashed border-slate-300 flex items-center justify-center text-slate-300">
+                  <ImageIcon className="h-5 w-5" />
+                </div>
+              )}
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => setFoto(e.target.files?.[0] ?? null)}
+              />
+              <Button type="button" variant="outline" onClick={() => fileRef.current?.click()}>
+                <Upload className="h-4 w-4 mr-2" /> {foto ? "Trocar" : "Enviar"}
+              </Button>
+              {foto && (
+                <Button type="button" variant="ghost" onClick={() => setFoto(null)}>Remover</Button>
+              )}
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button
-            disabled={pending || !f.nome_material.trim() || !f.codigo_material.trim()}
-            onClick={() => onSubmit({
-              codigo_material: f.codigo_material.trim(),
-              nome_material: f.nome_material.trim(),
-              ca: f.ca.trim() || null,
-              quantidade_atual: Math.max(0, Number(f.quantidade_atual) || 0),
-              estoque_minimo: Math.max(0, Number(f.estoque_minimo) || 0),
-            })}
+            disabled={busy || !f.nome_base.trim() || !f.codigo_base.trim()}
+            onClick={handleSubmit}
             className="bg-brand text-white"
           >
-            Cadastrar
+            {uploading ? "Enviando foto..." : variacoes.length > 1 ? `Cadastrar ${variacoes.length} itens` : "Cadastrar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditItemDialog({ item, onClose, onSubmit, pending }: any) {
+  const [f, setF] = useState({ nome_material: "", codigo_material: "", ca: "", numero_pedido: "", estoque_minimo: "0" });
+  const [foto, setFoto] = useState<File | null>(null);
+  const [removeFoto, setRemoveFoto] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (item) {
+      setF({
+        nome_material: item.nome_material ?? "",
+        codigo_material: item.codigo_material ?? "",
+        ca: item.ca ?? "",
+        numero_pedido: item.numero_pedido ?? "",
+        estoque_minimo: String(item.estoque_minimo ?? 0),
+      });
+      setFoto(null);
+      setRemoveFoto(false);
+    }
+  }, [item]);
+
+  async function handleSave() {
+    let imagem_url: string | null | undefined = undefined;
+    if (removeFoto) imagem_url = null;
+    if (foto) {
+      try {
+        setUploading(true);
+        imagem_url = await uploadFotoEpi(foto);
+      } catch (e: any) {
+        toast.error("Falha ao enviar foto: " + e.message);
+        setUploading(false);
+        return;
+      } finally {
+        setUploading(false);
+      }
+    }
+    const patch: any = {
+      nome_material: f.nome_material.trim().toUpperCase(),
+      codigo_material: f.codigo_material.trim(),
+      ca: f.ca.trim() || null,
+      numero_pedido: f.numero_pedido.trim() || null,
+      estoque_minimo: Math.max(0, Number(f.estoque_minimo) || 0),
+    };
+    if (imagem_url !== undefined) patch.imagem_url = imagem_url;
+    onSubmit(patch);
+  }
+
+  const busy = pending || uploading;
+  const currentImg = removeFoto ? null : item?.imagem_url;
+
+  return (
+    <Dialog open={!!item} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Editar produto</DialogTitle></DialogHeader>
+        {item && (
+          <div className="space-y-3">
+            <div>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição</Label>
+              <Input value={f.nome_material} onChange={(e) => setF({ ...f, nome_material: e.target.value.toUpperCase() })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</Label>
+                <Input value={f.ca} onChange={(e) => setF({ ...f, ca: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nº do Pedido</Label>
+                <Input value={f.numero_pedido} onChange={(e) => setF({ ...f, numero_pedido: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Código</Label>
+                <Input value={f.codigo_material} onChange={(e) => setF({ ...f, codigo_material: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Estoque mínimo</Label>
+                <Input type="number" min="0" value={f.estoque_minimo} onChange={(e) => setF({ ...f, estoque_minimo: e.target.value })} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Foto</Label>
+              <div className="flex items-center gap-3 mt-1">
+                {foto ? (
+                  <img src={URL.createObjectURL(foto)} alt="" className="h-16 w-16 rounded object-cover border border-slate-200" />
+                ) : currentImg ? (
+                  <img src={currentImg} alt="" className="h-16 w-16 rounded object-cover border border-slate-200" />
+                ) : (
+                  <div className="h-16 w-16 rounded border border-dashed border-slate-300 flex items-center justify-center text-slate-300">
+                    <ImageIcon className="h-5 w-5" />
+                  </div>
+                )}
+                <input ref={fileRef} type="file" accept="image/*" className="hidden"
+                  onChange={(e) => { setFoto(e.target.files?.[0] ?? null); setRemoveFoto(false); }} />
+                <Button type="button" variant="outline" onClick={() => fileRef.current?.click()}>
+                  <Upload className="h-4 w-4 mr-2" /> {currentImg || foto ? "Trocar" : "Enviar"}
+                </Button>
+                {(currentImg || foto) && (
+                  <Button type="button" variant="ghost" onClick={() => { setFoto(null); setRemoveFoto(true); }}>
+                    Remover
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button disabled={busy || !f.nome_material.trim() || !f.codigo_material.trim()} onClick={handleSave} className="bg-brand text-white">
+            {uploading ? "Enviando foto..." : "Salvar"}
           </Button>
         </DialogFooter>
       </DialogContent>
