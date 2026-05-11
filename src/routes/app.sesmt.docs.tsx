@@ -513,7 +513,7 @@ function RevisionsDialog({
                                 onClick={() => {
                                   setEditingId(r.id);
                                   setEditDraft({
-                                    data_revisao: r.data_revisao,
+                                    data_revisao: normalizeDateOnly(r.data_revisao) ?? "",
                                     numero_revisao: r.numero_revisao,
                                     descricao: r.descricao,
                                     motivo: r.motivo ?? "",
@@ -584,14 +584,16 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
       });
       if (upErr) throw upErr;
 
+      const emissao = normalizeDateOnly(dataEmissao);
+      const validade = normalizeDateOnly(dataValidade);
       const { data: userData } = await supabase.auth.getUser();
       const { error: insErr } = await (supabase as any).from("sesmt_documents").insert({
         tipo,
         titulo: titulo || null,
         descricao: descricao || null,
         file_path: path,
-        data_emissao: dataEmissao || null,
-        data_validade: dataValidade || null,
+        data_emissao: emissao,
+        data_validade: validade,
         uploaded_by: userData.user?.id,
       });
       if (insErr) throw insErr;
