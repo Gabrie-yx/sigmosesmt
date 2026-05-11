@@ -59,6 +59,22 @@ const TIPOS = [
   "Outro",
 ] as const;
 
+// Mapa de Normas Regulamentadoras associadas a cada tipo de documento
+const NR_POR_TIPO: Record<string, string> = {
+  PGR: "NR-01 (GRO/PGR)",
+  PCMSO: "NR-07",
+  LTCAT: "Lei 8.213/91 (Anexo IV Dec. 3.048/99)",
+  PPRA: "NR-09 (revogada – substituída pelo PGR/NR-01)",
+  PPP: "IN INSS 128/2022",
+  AET: "NR-17",
+  "Laudo de Insalubridade": "NR-15",
+  "Laudo de Periculosidade": "NR-16",
+  "CIPA - Ata": "NR-05",
+  "Ordem de Serviço": "NR-01, item 1.4.1 'b'",
+  Procedimento: "NR aplicável ao processo",
+  Outro: "—",
+};
+
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
 function todayDateOnly() {
@@ -146,6 +162,23 @@ function SesmtDocsPage() {
         .order("uploaded_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as SesmtDoc[];
+    },
+  });
+
+  // Carrega a data da revisão mais recente de cada documento
+  const { data: lastRevByDoc = {} } = useQuery({
+    queryKey: ["sesmt-docs-last-rev"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("sesmt_document_revisions")
+        .select("document_id, data_revisao")
+        .order("data_revisao", { ascending: false });
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      for (const r of (data ?? []) as Array<{ document_id: string; data_revisao: string }>) {
+        if (!map[r.document_id]) map[r.document_id] = r.data_revisao;
+      }
+      return map;
     },
   });
 
@@ -253,20 +286,32 @@ function SesmtDocsPage() {
                   <CardTitle className="text-base mt-2 line-clamp-2">
                     {d.titulo || d.tipo}
                   </CardTitle>
+                  <p className="text-[11px] font-semibold text-red-700 mt-1 uppercase tracking-wide">
+                    Norma: {NR_POR_TIPO[d.tipo] ?? "NR aplicável"}
+                  </p>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {d.descricao && (
-                    <p className="text-xs text-slate-600 line-clamp-2">{d.descricao}</p>
+                    <p className="text-sm text-slate-600 line-clamp-2">{d.descricao}</p>
                   )}
-                  <div className="text-xs text-slate-500 space-y-1">
+                  <div className="text-sm text-slate-700 space-y-1.5">
                     {d.data_emissao && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" /> Emissão: {fmtDateBR(d.data_emissao)}
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4 text-slate-500" />
+                        <span className="font-medium">Emissão:</span> {fmtDateBR(d.data_emissao)}
+                      </div>
+                    )}
+                    {lastRevByDoc[d.id] && (
+                      <div className="flex items-center gap-1.5">
+                        <History className="h-4 w-4 text-slate-500" />
+                        <span className="font-medium">Última Atualização:</span>{" "}
+                        {fmtDateBR(lastRevByDoc[d.id])}
                       </div>
                     )}
                     {d.data_validade && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" /> Validade: {fmtDateBR(d.data_validade)}
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4 text-slate-500" />
+                        <span className="font-medium">Validade:</span> {fmtDateBR(d.data_validade)}
                       </div>
                     )}
                   </div>
@@ -392,6 +437,7 @@ function RevisionsDialog({
     onSuccess: () => {
       toast.success("Revisão excluída");
       qc.invalidateQueries({ queryKey: ["sesmt-doc-revisions", doc?.id] });
+      qc.invalidateQueries({ queryKey: ["sesmt-docs-last-rev"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
@@ -421,6 +467,7 @@ function RevisionsDialog({
     onSuccess: () => {
       toast.success("Revisão atualizada");
       qc.invalidateQueries({ queryKey: ["sesmt-doc-revisions", doc?.id] });
+      qc.invalidateQueries({ queryKey: ["sesmt-docs-last-rev"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
