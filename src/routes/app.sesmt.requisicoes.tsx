@@ -41,6 +41,8 @@ type Item = {
   observacao: string;
 };
 
+type PrintMode = "download" | "print";
+
 type Req = {
   id: string;
   numero: string;
@@ -100,7 +102,7 @@ async function logoDataUrl(): Promise<string | null> {
   } catch { return null; }
 }
 
-async function gerarPdfRequisicao(req: Req, itens: Item[]) {
+async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "download") {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const M = 10;
@@ -171,7 +173,11 @@ async function gerarPdfRequisicao(req: Req, itens: Item[]) {
   });
 
   // Assinaturas
-  const finalY = (doc as any).lastAutoTable.finalY + 8;
+  let finalY = (doc as any).lastAutoTable.finalY + 8;
+  if (finalY > 245) {
+    doc.addPage();
+    finalY = M;
+  }
   const colW = (W - 2 * M) / 3;
   const sigH = 22;
   ["ASSINATURA SOLICITANTE","ASSINATURA SUPERVISOR GERAL","ASSINATURA ANALISTA DE COMPRAS"].forEach((label, idx) => {
@@ -181,6 +187,10 @@ async function gerarPdfRequisicao(req: Req, itens: Item[]) {
     doc.text(label, x + colW/2, finalY + 4, { align: "center" });
     doc.line(x, finalY + sigH - 6, x + colW, finalY + sigH - 6);
     doc.text("DATA:", x + 1.5, finalY + sigH - 1);
+    if (idx === 0) {
+      doc.setFont("helvetica", "normal");
+      doc.text(fmtBR(req.data_requisicao), x + 13, finalY + sigH - 1);
+    }
   });
 
   // Rodapé status
@@ -189,6 +199,15 @@ async function gerarPdfRequisicao(req: Req, itens: Item[]) {
   if (req.status === "INDEFERIDA" && req.motivo_indeferimento) {
     doc.setFont("helvetica","normal");
     doc.text(`Motivo: ${req.motivo_indeferimento}`, M, finalY + sigH + 12, { maxWidth: W - 2*M });
+  }
+
+  if (mode === "print") {
+    doc.autoPrint();
+    const url = URL.createObjectURL(doc.output("blob"));
+    const printWindow = window.open(url, "_blank");
+    if (!printWindow) doc.save(`requisicao-${req.numero || req.id.slice(0,8)}.pdf`);
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+    return;
   }
 
   doc.save(`requisicao-${req.numero || req.id.slice(0,8)}.pdf`);
@@ -308,23 +327,24 @@ function RequisicoesPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  async function emitirPdf(r: Req) {
+  async function emitirPdf(r: Req, mode: PrintMode = "download") {
     const { data } = await supabase
       .from("purchase_requisition_items")
       .select("*")
       .eq("requisition_id", r.id)
       .order("item_numero");
-    const itens = emptyItems().map((d) => {
-      const f = (data ?? []).find((x: any) => x.item_numero === d.item_numero);
-      return f ? {
-        item_numero: f.item_numero,
-        descricao: f.descricao ?? "",
-        quantidade: f.quantidade != null ? String(f.quantidade) : "",
-        unidade: f.unidade ?? "",
-        observacao: f.observacao ?? "",
-      } : d;
-    });
-    await gerarPdfRequisicao(r, itens);
+    const savedItems = (data ?? []).map((f: any) => ({
+      item_numero: f.item_numero,
+      descricao: f.descricao ?? "",
+      quantidade: f.quantidade != null ? String(f.quantidade) : "",
+      unidade: f.unidade ?? "",
+      observacao: f.observacao ?? "",
+    }));
+    const minimumRows = emptyItems();
+    const itens = savedItems.length >= minimumRows.length
+      ? savedItems
+      : minimumRows.map((d) => savedItems.find((x) => x.item_numero === d.item_numero) ?? d);
+    await gerarPdfRequisicao(r, itens, mode);
   }
 
   function periodoLabel() {
@@ -419,6 +439,9 @@ function RequisicoesPage() {
                         )}
                       </div>
                       <div className="flex gap-1">
+                        <Button size="sm" variant="outline" onClick={() => emitirPdf(r, "print")}>
+                          <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => emitirPdf(r)}>
                           <Printer className="h-3.5 w-3.5 mr-1" /> PDF
                         </Button>
@@ -608,6 +631,17 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
     setItens((arr) => arr.map((it, i) => i === idx ? { ...it, [k]: v } : it));
   };
 
+  const addItem = () => {
+    setItens((arr) => [
+      ...arr,
+      { item_numero: arr.length + 1, descricao: "", quantidade: "", unidade: "", observacao: "" },
+    ]);
+  };
+
+  const removeLastItem = () => {
+    setItens((arr) => arr.length > 10 ? arr.slice(0, -1) : arr);
+  };
+
   const save = useMutation({
     mutationFn: async () => {
       if (!form.numero.trim() || !form.solicitante.trim()) {
@@ -766,6 +800,18 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
           ))}
         </div>
 
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground">Total de linhas: {itens.length}</span>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={removeLastItem} disabled={itens.length <= 10}>
+              Remover última linha
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={addItem}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar item
+            </Button>
+          </div>
+        </div>
+
         {/* Bloco assinaturas */}
         <div className="mt-4 border-2 border-black bg-white text-black text-[12px]">
           <div className="grid grid-cols-3 font-bold text-center uppercase border-b border-black">
@@ -779,7 +825,15 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
             <div />
           </div>
           <div className="grid grid-cols-3 border-t border-black font-bold uppercase">
-            <div className="border-r border-black p-1.5">Data:</div>
+            <div className="border-r border-black p-1.5 flex items-center gap-2">
+              <span>Data:</span>
+              <input
+                type="date"
+                value={form.data_requisicao}
+                onChange={(e) => setForm({ ...form, data_requisicao: e.target.value })}
+                className="flex-1 min-w-0 bg-transparent border-0 outline-none font-normal focus:bg-yellow-50"
+              />
+            </div>
             <div className="border-r border-black p-1.5">Data:</div>
             <div className="p-1.5">Data:</div>
           </div>
