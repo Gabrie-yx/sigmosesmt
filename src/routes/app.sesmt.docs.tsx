@@ -286,20 +286,32 @@ function SesmtDocsPage() {
                   <CardTitle className="text-base mt-2 line-clamp-2">
                     {d.titulo || d.tipo}
                   </CardTitle>
+                  <p className="text-[11px] font-semibold text-red-700 mt-1 uppercase tracking-wide">
+                    Norma: {NR_POR_TIPO[d.tipo] ?? "NR aplicável"}
+                  </p>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {d.descricao && (
-                    <p className="text-xs text-slate-600 line-clamp-2">{d.descricao}</p>
+                    <p className="text-sm text-slate-600 line-clamp-2">{d.descricao}</p>
                   )}
-                  <div className="text-xs text-slate-500 space-y-1">
+                  <div className="text-sm text-slate-700 space-y-1.5">
                     {d.data_emissao && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" /> Emissão: {fmtDateBR(d.data_emissao)}
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4 text-slate-500" />
+                        <span className="font-medium">Emissão:</span> {fmtDateBR(d.data_emissao)}
+                      </div>
+                    )}
+                    {lastRevByDoc[d.id] && (
+                      <div className="flex items-center gap-1.5">
+                        <History className="h-4 w-4 text-slate-500" />
+                        <span className="font-medium">Última Atualização:</span>{" "}
+                        {fmtDateBR(lastRevByDoc[d.id])}
                       </div>
                     )}
                     {d.data_validade && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" /> Validade: {fmtDateBR(d.data_validade)}
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4 text-slate-500" />
+                        <span className="font-medium">Validade:</span> {fmtDateBR(d.data_validade)}
                       </div>
                     )}
                   </div>
