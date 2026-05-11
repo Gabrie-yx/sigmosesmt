@@ -410,7 +410,7 @@ function RevisionsDialog({
                     <th className="px-3 py-2 text-left">Descrição</th>
                     <th className="px-3 py-2 text-left">Motivo</th>
                     <th className="px-3 py-2 text-left">Responsável</th>
-                    {canDelete && <th className="px-3 py-2"></th>}
+                    {(canEdit || canDelete) && <th className="px-3 py-2"></th>}
                   </tr>
                 </thead>
                 <tbody>
