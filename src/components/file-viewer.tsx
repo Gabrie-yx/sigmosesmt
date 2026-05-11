@@ -6,10 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type ViewerPayload = { url: string; name: string; mime?: string; downloadUrl?: string; objectUrl?: string };
-let listener: ((p: ViewerPayload | null) => void) | null = null;
+const listeners = new Set<(p: ViewerPayload | null) => void>();
 
 export function openFileViewer(p: ViewerPayload) {
-  listener?.(p);
+  listeners.forEach((l) => l(p));
 }
 
 export async function openStorageFile(bucket: string, path: string, name?: string) {
@@ -43,8 +43,8 @@ export function FileViewerHost() {
   const [payload, setPayload] = useState<ViewerPayload | null>(null);
 
   useEffect(() => {
-    listener = setPayload;
-    return () => { listener = null; };
+    listeners.add(setPayload);
+    return () => { listeners.delete(setPayload); };
   }, []);
 
   useEffect(() => {
