@@ -861,15 +861,50 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     },
   });
 
-  const [f, setF] = useState<{ epi_id: string; ca: string; qtd: string; data_entrega: string }>({
+  type MotivoEntrega = "PRIMEIRA_ENTREGA" | "TROCA_DESGASTE" | "EMPRESTIMO" | "PERDA_EXTRAVIO";
+  const MOTIVO_LABEL: Record<MotivoEntrega, string> = {
+    PRIMEIRA_ENTREGA: "1ª Entrega",
+    TROCA_DESGASTE: "Troca por desgaste/vencimento",
+    EMPRESTIMO: "Empréstimo (uso temporário)",
+    PERDA_EXTRAVIO: "Reposição por perda/extravio",
+  };
+  const MOTIVO_COLOR: Record<MotivoEntrega, string> = {
+    PRIMEIRA_ENTREGA: "bg-emerald-500",
+    TROCA_DESGASTE: "bg-blue-500",
+    EMPRESTIMO: "bg-amber-500",
+    PERDA_EXTRAVIO: "bg-rose-600",
+  };
+
+  const [f, setF] = useState<{
+    epi_id: string; ca: string; qtd: string; data_entrega: string;
+    motivo_entrega: MotivoEntrega; data_devolucao_prevista: string;
+    valor_unitario: string; observacoes: string;
+  }>({
     epi_id: "", ca: "", qtd: "1", data_entrega: new Date().toISOString().slice(0, 10),
+    motivo_entrega: "PRIMEIRA_ENTREGA", data_devolucao_prevista: "",
+    valor_unitario: "", observacoes: "",
   });
   const selected = stockItems.find((s) => s.id === f.epi_id) ?? null;
   const MOTIVOS_DEV = ["Danificado", "Desgaste Natural", "Extravio", "Mal Uso", "Furto", "Uso Temporário"];
   const [substitution, setSubstitution] = useState<{ prev: any; motivo: string; data: string; obs: string } | null>(null);
 
+  // Alerta de reincidência: mesmo EPI entregue ao colaborador nos últimos 30 dias
+  const reincidencia = (() => {
+    if (!selected) return null;
+    const norm = (s: any) => String(s ?? "").trim().toLowerCase();
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const ant = (epis ?? []).find(
+      (e: any) => norm(e.item) === norm(selected.nome_material) && new Date(e.data_entrega).getTime() >= cutoff,
+    );
+    return ant ?? null;
+  })();
+
   function resetForm() {
-    setF({ epi_id: "", ca: "", qtd: "1", data_entrega: new Date().toISOString().slice(0, 10) });
+    setF({
+      epi_id: "", ca: "", qtd: "1", data_entrega: new Date().toISOString().slice(0, 10),
+      motivo_entrega: "PRIMEIRA_ENTREGA", data_devolucao_prevista: "",
+      valor_unitario: "", observacoes: "",
+    });
   }
 
   /** Cria registro na ficha do colaborador + dá baixa no estoque (RPC). */
