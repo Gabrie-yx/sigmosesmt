@@ -402,8 +402,9 @@ function EstoqueSesmtPage() {
         mode="duplicate"
         item={dupItem}
         onClose={() => setDupItem(null)}
-        onSubmit={(patch: any) => {
-          createMut.mutate([patch], { onSuccess: () => setDupItem(null) });
+        onSubmit={(payload: any) => {
+          const rows = Array.isArray(payload) ? payload : [payload];
+          createMut.mutate(rows, { onSuccess: () => setDupItem(null) });
         }}
         pending={createMut.isPending}
       />
