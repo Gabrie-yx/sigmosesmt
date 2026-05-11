@@ -43,7 +43,7 @@ type Product = {
   variants: Variant[];
 };
 
-const STORAGE_KEY = "estoque-epi-sesmt-v4";
+const STORAGE_KEY = "estoque-epi-sesmt-v5";
 
 export const Route = createFileRoute("/app/estoque/sesmt")({
   component: EstoqueSesmtPage,
@@ -51,22 +51,17 @@ export const Route = createFileRoute("/app/estoque/sesmt")({
 
 /* ============================== Seed ============================== */
 const RAW_SEED: Array<{ descricao: string; umb: Product["umb"]; estoque: number; ca?: string }> = [
-  { descricao: "CAMISA AZUL TAM. P", umb: "UN", estoque: 0 },
-  { descricao: "CAMISA AZUL TAM. M", umb: "UN", estoque: 0 },
-  { descricao: "CAMISA AZUL TAM. G", umb: "UN", estoque: 0 },
-  { descricao: "CAMISA AZUL TAM. GG", umb: "UN", estoque: 0 },
-  { descricao: "CAMISA CINZA TAM. M", umb: "UN", estoque: 0 },
-  { descricao: "CALÇA AZUL TAM. P", umb: "UN", estoque: 0 },
-  { descricao: "CALÇA AZUL TAM. M", umb: "UN", estoque: 0 },
-  { descricao: "CALÇA AZUL TAM. GG", umb: "UN", estoque: 0 },
-  { descricao: "CALÇA AZUL TAM. EG", umb: "UN", estoque: 0 },
-  { descricao: "CALÇA CINZA TAM. P", umb: "UN", estoque: 0 },
-  { descricao: "CALÇA CINZA TAM. M", umb: "UN", estoque: 0 },
-  { descricao: "MACACÃO AZUL TAM. P", umb: "UN", estoque: 0, ca: "41609" },
-  { descricao: "MACACÃO AZUL TAM. M", umb: "UN", estoque: 0, ca: "41609" },
-  { descricao: "MACACÃO AZUL TAM. G", umb: "UN", estoque: 0, ca: "41609" },
-  { descricao: "MACACÃO CINZA TAM. P", umb: "UN", estoque: 2, ca: "41609" },
-  { descricao: "MACACÃO CINZA TAM. M", umb: "UN", estoque: 3, ca: "41609" },
+  { descricao: "CAMISA TAM. P", umb: "UN", estoque: 0 },
+  { descricao: "CAMISA TAM. M", umb: "UN", estoque: 0 },
+  { descricao: "CAMISA TAM. G", umb: "UN", estoque: 0 },
+  { descricao: "CAMISA TAM. GG", umb: "UN", estoque: 0 },
+  { descricao: "CALÇA TAM. P", umb: "UN", estoque: 0 },
+  { descricao: "CALÇA TAM. M", umb: "UN", estoque: 0 },
+  { descricao: "CALÇA TAM. GG", umb: "UN", estoque: 0 },
+  { descricao: "CALÇA TAM. EG", umb: "UN", estoque: 0 },
+  { descricao: "MACACÃO TAM. P", umb: "UN", estoque: 2, ca: "41609" },
+  { descricao: "MACACÃO TAM. M", umb: "UN", estoque: 3, ca: "41609" },
+  { descricao: "MACACÃO TAM. G", umb: "UN", estoque: 0, ca: "41609" },
   { descricao: "BOTA TAM. 36", umb: "UN", estoque: 0, ca: "43164" },
   { descricao: "BOTA TAM. 37", umb: "UN", estoque: 3, ca: "43164" },
   { descricao: "BOTA TAM. 39", umb: "UN", estoque: 8, ca: "43164" },
