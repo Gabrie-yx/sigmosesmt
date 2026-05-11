@@ -1148,6 +1148,37 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             <h3 className="text-xs font-black uppercase tracking-widest text-brand">Registrar entrega de EPI</h3>
           </div>
           <form onSubmit={(e) => { e.preventDefault(); submitDelivery(); }} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            <div className="md:col-span-12 space-y-1.5">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Motivo da entrega</Label>
+              <Select
+                value={f.motivo_entrega}
+                onValueChange={(v) => setF({ ...f, motivo_entrega: v as MotivoEntrega })}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PRIMEIRA_ENTREGA">🟢 1ª Entrega — colaborador nunca recebeu este item</SelectItem>
+                  <SelectItem value="TROCA_DESGASTE">🔵 Troca por desgaste / vencimento — substitui o anterior</SelectItem>
+                  <SelectItem value="EMPRESTIMO">🟡 Empréstimo — uso temporário, com previsão de devolução</SelectItem>
+                  <SelectItem value="PERDA_EXTRAVIO">🔴 Reposição por perda / extravio — gera termo de responsabilidade</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {reincidencia && f.motivo_entrega === "PRIMEIRA_ENTREGA" && (
+              <div className="md:col-span-12 rounded-lg border-2 border-amber-300 bg-amber-50 p-3 flex gap-3 items-start">
+                <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-900">
+                  <div className="font-black uppercase tracking-wider">Atenção: possível reincidência</div>
+                  <div className="mt-0.5">
+                    Este colaborador já recebeu <strong>{reincidencia.item}</strong> em{" "}
+                    <strong>{formatDateBR(reincidencia.data_entrega)}</strong>{" "}
+                    ({Math.floor((Date.now() - new Date(reincidencia.data_entrega).getTime()) / 86400000)} dias atrás).
+                    Verifique se o motivo correto não é <em>Troca</em>, <em>Empréstimo</em> ou <em>Perda</em>.
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="md:col-span-6 space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição do EPI (do estoque SESMT)</Label>
               <Select
@@ -1185,9 +1216,70 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">QTD</Label>
               <Input type="number" min="1" value={f.qtd} onChange={(e) => setF({ ...f, qtd: e.target.value })} />
             </div>
+
+            {f.motivo_entrega === "EMPRESTIMO" && (
+              <div className="md:col-span-4 space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                  <Clock className="h-3 w-3 inline mr-1" /> Devolução prevista
+                </Label>
+                <Input
+                  type="date"
+                  value={f.data_devolucao_prevista}
+                  onChange={(e) => setF({ ...f, data_devolucao_prevista: e.target.value })}
+                  className="border-amber-300"
+                  required
+                />
+              </div>
+            )}
+
+            {f.motivo_entrega === "PERDA_EXTRAVIO" && (
+              <div className="md:col-span-4 space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-rose-700">
+                  Valor unitário (p/ termo) R$
+                </Label>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={f.valor_unitario}
+                  onChange={(e) => setF({ ...f, valor_unitario: e.target.value })}
+                  className="border-rose-300"
+                />
+              </div>
+            )}
+
+            {(f.motivo_entrega === "EMPRESTIMO" || f.motivo_entrega === "PERDA_EXTRAVIO") && (
+              <div className="md:col-span-12 space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  Observações {f.motivo_entrega === "PERDA_EXTRAVIO" && "(será impressa no termo)"}
+                </Label>
+                <Textarea
+                  rows={2}
+                  value={f.observacoes}
+                  onChange={(e) => setF({ ...f, observacoes: e.target.value })}
+                  placeholder={
+                    f.motivo_entrega === "EMPRESTIMO"
+                      ? "Ex: empréstimo para visita técnica do dia X"
+                      : "Ex: B.O. nº 1234, perda no canteiro de obras…"
+                  }
+                />
+              </div>
+            )}
+
             <div className="md:col-span-12 flex justify-end">
-              <Button type="submit" disabled={create.isPending || !f.epi_id} className="bg-brand text-white">
-                <Plus className="h-4 w-4 mr-2" /> Registrar entrega
+              <Button
+                type="submit"
+                disabled={create.isPending || !f.epi_id || (f.motivo_entrega === "EMPRESTIMO" && !f.data_devolucao_prevista)}
+                className={
+                  f.motivo_entrega === "PERDA_EXTRAVIO" ? "bg-rose-600 hover:bg-rose-700 text-white"
+                  : f.motivo_entrega === "EMPRESTIMO" ? "bg-amber-600 hover:bg-amber-700 text-white"
+                  : "bg-brand text-white"
+                }
+              >
+                {f.motivo_entrega === "PERDA_EXTRAVIO" ? <FileWarning className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                {f.motivo_entrega === "PERDA_EXTRAVIO" ? "Registrar e gerar termo de perda"
+                : f.motivo_entrega === "EMPRESTIMO" ? "Registrar empréstimo"
+                : "Registrar entrega"}
               </Button>
             </div>
           </form>
