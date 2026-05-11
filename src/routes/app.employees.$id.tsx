@@ -1051,8 +1051,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
 
   function gerarFicha() {
     if (!docsOk) {
-      toast.error(`Documentação incompleta. Pendentes: ${(missingDocs ?? []).join(", ")}`);
-      return;
+      toast.warning(`Atenção: documentação pendente (${(missingDocs ?? []).join(", ")}). Ficha emitida mesmo assim.`);
     }
     const { url, fname } = openEpiFichaPdf({ emp, company, role, epis });
     openFileViewer({ url, name: fname, mime: "application/pdf" });
@@ -1072,9 +1071,8 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         </div>
         <Button
           onClick={gerarFicha}
-          disabled={!docsOk}
-          title={!docsOk ? `Bloqueado: documentação incompleta (${(missingDocs ?? []).join(", ")})` : "Gerar Ficha de EPI"}
-          className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Gerar Ficha de EPI"
+          className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs"
           size="lg"
         >
           <Printer className="h-4 w-4 mr-2" /> Ficha em PDF
