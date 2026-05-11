@@ -472,6 +472,8 @@ function EstoqueSesmtPage() {
         }}
         pending={updateMut.isPending}
         movsByItem={movsByItem}
+        snapshotByItem={snapshotByItem}
+        monthStart={monthStart}
       />
 
       {/* Duplicate product */}
