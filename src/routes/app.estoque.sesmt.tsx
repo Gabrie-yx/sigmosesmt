@@ -275,9 +275,9 @@ function EstoqueSesmtPage() {
             <TableRow className="bg-slate-50">
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Foto</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Produto</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Código</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nº Pedido</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Estoque Inicial</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Qtde Entradas</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Qtd. atual</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Mínimo</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Movimentar</TableHead>
@@ -300,6 +300,14 @@ function EstoqueSesmtPage() {
                 : null;
               const caExpired = caDays !== null && caDays < 0;
               const caSoon = caDays !== null && caDays >= 0 && caDays <= 180;
+              const itemMovs = movsByItem.get(i.id) ?? [];
+              let entradasItem = 0, saidasItem = 0;
+              itemMovs.forEach((m) => {
+                const q = m.quantidade_entregue ?? 0;
+                if (m.tipo_movimentacao === "SAIDA_ENTREGA") saidasItem += q;
+                else entradasItem += q;
+              });
+              const estoqueInicial = (i.quantidade_atual ?? 0) - entradasItem + saidasItem;
               return (
                 <TableRow
                   key={i.id}
@@ -321,8 +329,6 @@ function EstoqueSesmtPage() {
                     )}
                   </TableCell>
                   <TableCell className="font-bold text-slate-800 uppercase">{i.nome_material}</TableCell>
-                  <TableCell className="text-xs text-slate-500">{i.codigo_material}</TableCell>
-                  <TableCell className="text-xs text-slate-500">{i.numero_pedido || "—"}</TableCell>
                   <TableCell className="text-xs">
                     {i.ca ? (
                       <div className="flex flex-col gap-0.5">
@@ -356,6 +362,8 @@ function EstoqueSesmtPage() {
                       </div>
                     ) : <span className="text-slate-300">—</span>}
                   </TableCell>
+                  <TableCell className="text-right text-xs text-slate-600 font-semibold">{estoqueInicial}</TableCell>
+                  <TableCell className="text-right text-xs text-emerald-700 font-semibold">{entradasItem}</TableCell>
                   <TableCell className="text-right font-black">
                     <span className={low ? "text-rose-600" : "text-slate-800"}>{i.quantidade_atual}</span>
                     {low && <AlertTriangle className="inline h-3.5 w-3.5 ml-1 text-rose-500" />}
