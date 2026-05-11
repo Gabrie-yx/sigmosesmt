@@ -7,12 +7,37 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
-import { FileText, Upload, Eye, Trash2, Plus, Calendar, AlertTriangle, History, Pencil, X, Check } from "lucide-react";
+import {
+  FileText,
+  Upload,
+  Eye,
+  Trash2,
+  Plus,
+  Calendar,
+  AlertTriangle,
+  History,
+  Pencil,
+  X,
+  Check,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/sesmt/docs")({
@@ -20,8 +45,18 @@ export const Route = createFileRoute("/app/sesmt/docs")({
 });
 
 const TIPOS = [
-  "PGR", "PCMSO", "LTCAT", "PPRA", "PPP", "AET", "Laudo de Insalubridade",
-  "Laudo de Periculosidade", "CIPA - Ata", "Ordem de Serviço", "Procedimento", "Outro",
+  "PGR",
+  "PCMSO",
+  "LTCAT",
+  "PPRA",
+  "PPP",
+  "AET",
+  "Laudo de Insalubridade",
+  "Laudo de Periculosidade",
+  "CIPA - Ata",
+  "Ordem de Serviço",
+  "Procedimento",
+  "Outro",
 ] as const;
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -135,7 +170,8 @@ function SesmtDocsPage() {
     const hoje = dateOnlyTime(todayDateOnly())!;
     const dias = Math.ceil((validade - hoje) / (1000 * 60 * 60 * 24));
     if (dias < 0) return { label: "Vencido", color: "bg-red-100 text-red-800 border-red-200" };
-    if (dias <= 30) return { label: `Vence em ${dias}d`, color: "bg-amber-100 text-amber-800 border-amber-200" };
+    if (dias <= 30)
+      return { label: `Vence em ${dias}d`, color: "bg-amber-100 text-amber-800 border-amber-200" };
     return { label: "Vigente", color: "bg-emerald-100 text-emerald-800 border-emerald-200" };
   }
 
@@ -169,16 +205,20 @@ function SesmtDocsPage() {
             <div className="min-w-[200px]">
               <Label className="text-xs">Filtrar por tipo</Label>
               <Select value={filterTipo} onValueChange={setFilterTipo}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">Todos os tipos</SelectItem>
-                  {TIPOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  {TIPOS.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="text-sm text-slate-600 ml-auto">
-              {filtered.length} documento(s)
-            </div>
+            <div className="text-sm text-slate-600 ml-auto">{filtered.length} documento(s)</div>
           </div>
         </CardContent>
       </Card>
@@ -332,7 +372,10 @@ function RevisionsDialog({
     },
     onSuccess: () => {
       toast.success("Revisão registrada");
-      setNumero(""); setDescricao(""); setMotivo(""); setResponsavel("");
+      setNumero("");
+      setDescricao("");
+      setMotivo("");
+      setResponsavel("");
       qc.invalidateQueries({ queryKey: ["sesmt-doc-revisions", doc?.id] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
@@ -341,7 +384,9 @@ function RevisionsDialog({
   const del = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await (supabase as any)
-        .from("sesmt_document_revisions").delete().eq("id", id);
+        .from("sesmt_document_revisions")
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -382,9 +427,7 @@ function RevisionsDialog({
 
   // Suggest next revision number (00, 01, 02…)
   const suggestedNext = (() => {
-    const nums = revs
-      .map((r) => parseInt(r.numero_revisao, 10))
-      .filter((n) => !Number.isNaN(n));
+    const nums = revs.map((r) => parseInt(r.numero_revisao, 10)).filter((n) => !Number.isNaN(n));
     const next = nums.length ? Math.max(...nums) + 1 : 0;
     return String(next).padStart(2, "0");
   })();
@@ -472,36 +515,84 @@ function RevisionsDialog({
                   </tr>
                 </thead>
                 <tbody>
-                  {revs.map((r) => (
+                  {revs.map((r) =>
                     editingId === r.id ? (
                       <tr key={r.id} className="border-t bg-amber-50">
                         <td className="px-2 py-1">
-                          <Input type="date" value={editDraft.data_revisao ?? ""} onChange={(e) => setEditDraft({ ...editDraft, data_revisao: e.target.value })} />
+                          <Input
+                            type="date"
+                            value={editDraft.data_revisao ?? ""}
+                            onChange={(e) =>
+                              setEditDraft({ ...editDraft, data_revisao: e.target.value })
+                            }
+                          />
                         </td>
                         <td className="px-2 py-1">
-                          <Input value={editDraft.numero_revisao ?? ""} onChange={(e) => setEditDraft({ ...editDraft, numero_revisao: e.target.value })} />
+                          <Input
+                            value={editDraft.numero_revisao ?? ""}
+                            onChange={(e) =>
+                              setEditDraft({ ...editDraft, numero_revisao: e.target.value })
+                            }
+                          />
                         </td>
                         <td className="px-2 py-1">
-                          <Input value={editDraft.descricao ?? ""} onChange={(e) => setEditDraft({ ...editDraft, descricao: e.target.value })} />
+                          <Input
+                            value={editDraft.descricao ?? ""}
+                            onChange={(e) =>
+                              setEditDraft({ ...editDraft, descricao: e.target.value })
+                            }
+                          />
                         </td>
                         <td className="px-2 py-1">
-                          <Input value={editDraft.motivo ?? ""} onChange={(e) => setEditDraft({ ...editDraft, motivo: e.target.value })} />
+                          <Input
+                            value={editDraft.motivo ?? ""}
+                            onChange={(e) => setEditDraft({ ...editDraft, motivo: e.target.value })}
+                          />
                         </td>
                         <td className="px-2 py-1">
-                          <Input value={editDraft.responsavel ?? ""} onChange={(e) => setEditDraft({ ...editDraft, responsavel: e.target.value })} />
+                          <Input
+                            value={editDraft.responsavel ?? ""}
+                            onChange={(e) =>
+                              setEditDraft({ ...editDraft, responsavel: e.target.value })
+                            }
+                          />
                         </td>
                         <td className="px-2 py-1 whitespace-nowrap">
-                          <Button size="sm" variant="ghost" className="text-emerald-700" onClick={() => {
-                            update.mutate({
-                              id: r.id,
-                              data_revisao: editDraft.data_revisao || r.data_revisao,
-                              numero_revisao: editDraft.numero_revisao || r.numero_revisao,
-                              descricao: editDraft.descricao || r.descricao,
-                              motivo: editDraft.motivo ?? null,
-                              responsavel: editDraft.responsavel || r.responsavel,
-                            }, { onSuccess: () => { setEditingId(null); setEditDraft({}); } });
-                          }}><Check className="h-4 w-4" /></Button>
-                          <Button size="sm" variant="ghost" onClick={() => { setEditingId(null); setEditDraft({}); }}><X className="h-4 w-4" /></Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-emerald-700"
+                            onClick={() => {
+                              update.mutate(
+                                {
+                                  id: r.id,
+                                  data_revisao: editDraft.data_revisao || r.data_revisao,
+                                  numero_revisao: editDraft.numero_revisao || r.numero_revisao,
+                                  descricao: editDraft.descricao || r.descricao,
+                                  motivo: editDraft.motivo ?? null,
+                                  responsavel: editDraft.responsavel || r.responsavel,
+                                },
+                                {
+                                  onSuccess: () => {
+                                    setEditingId(null);
+                                    setEditDraft({});
+                                  },
+                                },
+                              );
+                            }}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditDraft({});
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </td>
                       </tr>
                     ) : (
@@ -537,7 +628,9 @@ function RevisionsDialog({
                                 size="sm"
                                 variant="ghost"
                                 className="text-red-700"
-                                onClick={() => { if (confirm("Excluir revisão?")) del.mutate(r.id); }}
+                                onClick={() => {
+                                  if (confirm("Excluir revisão?")) del.mutate(r.id);
+                                }}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -545,19 +638,33 @@ function RevisionsDialog({
                           </td>
                         )}
                       </tr>
-                    )
-                  ))}
+                    ),
+                  )}
                 </tbody>
               </table>
               <div className="bg-slate-50 border-t px-3 py-2 text-xs text-slate-600">
                 <span className="font-semibold text-slate-700">Legenda – Motivo:</span>{" "}
-                <span className="mr-3"><b>1</b> Elaboração</span>
-                <span className="mr-3"><b>2</b> Atualização de cargo/função</span>
-                <span className="mr-3"><b>3</b> Acidente de trabalho</span>
-                <span className="mr-3"><b>4</b> Treinamento</span>
-                <span className="mr-3"><b>5</b> Alteração de processo</span>
-                <span className="mr-3"><b>6</b> Auditoria/Não conformidade</span>
-                <span className="mr-3"><b>7</b> Revisão periódica</span>
+                <span className="mr-3">
+                  <b>1</b> Elaboração
+                </span>
+                <span className="mr-3">
+                  <b>2</b> Atualização de cargo/função
+                </span>
+                <span className="mr-3">
+                  <b>3</b> Acidente de trabalho
+                </span>
+                <span className="mr-3">
+                  <b>4</b> Treinamento
+                </span>
+                <span className="mr-3">
+                  <b>5</b> Alteração de processo
+                </span>
+                <span className="mr-3">
+                  <b>6</b> Auditoria/Não conformidade
+                </span>
+                <span className="mr-3">
+                  <b>7</b> Revisão periódica
+                </span>
               </div>
             </div>
           )}
@@ -578,9 +685,18 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
   const [uploading, setUploading] = useState(false);
 
   async function handleSave() {
-    if (!file) { toast.error("Selecione um arquivo"); return; }
-    if (!tipo) { toast.error("Selecione o tipo"); return; }
-    if (file.size > 25 * 1024 * 1024) { toast.error("Arquivo maior que 25MB"); return; }
+    if (!file) {
+      toast.error("Selecione um arquivo");
+      return;
+    }
+    if (!tipo) {
+      toast.error("Selecione o tipo");
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("Arquivo maior que 25MB");
+      return;
+    }
 
     setUploading(true);
     try {
@@ -625,15 +741,25 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
         <div>
           <Label>Tipo *</Label>
           <Select value={tipo} onValueChange={setTipo}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              {TIPOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              {TIPOS.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
         <div>
           <Label>Título</Label>
-          <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex.: PGR 2026 - Estaleiro DMN" />
+          <Input
+            value={titulo}
+            onChange={(e) => setTitulo(e.target.value)}
+            placeholder="Ex.: PGR 2026 - Estaleiro DMN"
+          />
         </div>
         <div>
           <Label>Descrição</Label>
@@ -642,11 +768,19 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Data de Emissão</Label>
-            <Input type="date" value={dataEmissao} onChange={(e) => setDataEmissao(e.target.value)} />
+            <Input
+              type="date"
+              value={dataEmissao}
+              onChange={(e) => setDataEmissao(e.target.value)}
+            />
           </div>
           <div>
             <Label>Data de Validade</Label>
-            <Input type="date" value={dataValidade} onChange={(e) => setDataValidade(e.target.value)} />
+            <Input
+              type="date"
+              value={dataValidade}
+              onChange={(e) => setDataValidade(e.target.value)}
+            />
           </div>
         </div>
         <div>
@@ -659,7 +793,9 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
         </div>
       </div>
       <DialogFooter>
-        <Button variant="outline" onClick={onClose} disabled={uploading}>Cancelar</Button>
+        <Button variant="outline" onClick={onClose} disabled={uploading}>
+          Cancelar
+        </Button>
         <Button onClick={handleSave} disabled={uploading} className="bg-red-700 hover:bg-red-800">
           <Upload className="h-4 w-4 mr-2" />
           {uploading ? "Enviando…" : "Enviar"}
