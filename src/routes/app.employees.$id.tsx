@@ -1001,11 +1001,17 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
 
   function submitDelivery() {
     if (!selected) return;
-    const norm = (s: any) => String(s ?? "").trim().toLowerCase();
-    const prev = (epis ?? []).find((e: any) => !e.data_devolucao && norm(e.item) === norm(selected.nome_material));
-    if (prev) {
-      setSubstitution({ prev, motivo: "Desgaste Natural", data: f.data_entrega, obs: "" });
-      return;
+    // Só dispara o fluxo de substituição para "troca por desgaste".
+    // Empréstimo, perda e 1ª entrega seguem direto (registram nova entrega).
+    if (f.motivo_entrega === "TROCA_DESGASTE") {
+      const norm = (s: any) => String(s ?? "").trim().toLowerCase();
+      const prev = (epis ?? []).find(
+        (e: any) => !e.data_devolucao && norm(e.item) === norm(selected.nome_material),
+      );
+      if (prev) {
+        setSubstitution({ prev, motivo: "Desgaste Natural", data: f.data_entrega, obs: "" });
+        return;
+      }
     }
     create.mutate();
   }
