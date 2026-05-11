@@ -281,7 +281,7 @@ function RevisionsDialog({
   canDelete: boolean;
 }) {
   const qc = useQueryClient();
-  const [dataRev, setDataRev] = useState(new Date().toISOString().slice(0, 10));
+  const [dataRev, setDataRev] = useState(todayDateOnly());
   const [numero, setNumero] = useState("");
   const [descricao, setDescricao] = useState("");
   const [motivo, setMotivo] = useState("");
@@ -306,13 +306,14 @@ function RevisionsDialog({
   const add = useMutation({
     mutationFn: async () => {
       if (!doc) return;
-      if (!numero || !descricao || !responsavel || !dataRev) {
+      const dataRevisao = normalizeDateOnly(dataRev);
+      if (!numero || !descricao || !responsavel || !dataRevisao) {
         throw new Error("Preencha data, número, descrição e responsável");
       }
       const { data: u } = await supabase.auth.getUser();
       const { error } = await (supabase as any).from("sesmt_document_revisions").insert({
         document_id: doc.id,
-        data_revisao: dataRev,
+        data_revisao: dataRevisao,
         numero_revisao: numero,
         descricao,
         motivo: motivo || null,
@@ -352,9 +353,11 @@ function RevisionsDialog({
       responsavel: string;
     }) => {
       const { id, ...rest } = payload;
+      const dataRevisao = normalizeDateOnly(rest.data_revisao);
+      if (!dataRevisao) throw new Error("Data da revisão inválida");
       const { data, error } = await (supabase as any)
         .from("sesmt_document_revisions")
-        .update(rest)
+        .update({ ...rest, data_revisao: dataRevisao })
         .eq("id", id)
         .select();
       if (error) throw error;
