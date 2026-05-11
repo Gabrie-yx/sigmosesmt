@@ -478,19 +478,17 @@ function EstoqueSesmtPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((p) => {
-                const v = getVariant(p);
-                return (
-                 <ProductRow
-                    key={p.id}
-                    product={p}
-                    variant={v}
-                    refMonth={refMonth}
-                    onPickVariant={(vid) => setSelectedVariant((s) => ({ ...s, [p.id]: vid }))}
-                    onBulkMove={(tipo, date, entries) => bulkMove(p.id, tipo, date, entries)}
-                  />
-                );
-              })}
+              {filtered.map(({ product, variant }) => (
+                <VariantRow
+                  key={`${product.id}:${variant.id}`}
+                  product={product}
+                  variant={variant}
+                  refMonth={refMonth}
+                  onMove={(tipo, date, qty) =>
+                    bulkMove(product.id, tipo, date, [{ variantId: variant.id, qty }])
+                  }
+                />
+              ))}
               {filtered.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
