@@ -531,6 +531,119 @@ export type Database = {
           },
         ]
       }
+      purchase_requisition_items: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          item_numero: number
+          observacao: string | null
+          quantidade: number | null
+          requisition_id: string
+          unidade: string | null
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          id?: string
+          item_numero: number
+          observacao?: string | null
+          quantidade?: number | null
+          requisition_id: string
+          unidade?: string | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          item_numero?: number
+          observacao?: string | null
+          quantidade?: number | null
+          requisition_id?: string
+          unidade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_requisition_items_requisition_id_fkey"
+            columns: ["requisition_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_requisitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_requisitions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          classificacao: Database["public"]["Enums"]["purchase_req_class"]
+          codigo_formulario: string | null
+          created_at: string
+          created_by: string | null
+          data_requisicao: string
+          data_revisao: string | null
+          fornecedor: string | null
+          id: string
+          motivo_indeferimento: string | null
+          numero: string
+          obra_construcao: string | null
+          obra_manutencao: string | null
+          observacoes: string | null
+          pagina: string | null
+          revisao: string | null
+          setor: string | null
+          solicitante: string
+          status: Database["public"]["Enums"]["purchase_req_status"]
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          classificacao?: Database["public"]["Enums"]["purchase_req_class"]
+          codigo_formulario?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_requisicao?: string
+          data_revisao?: string | null
+          fornecedor?: string | null
+          id?: string
+          motivo_indeferimento?: string | null
+          numero: string
+          obra_construcao?: string | null
+          obra_manutencao?: string | null
+          observacoes?: string | null
+          pagina?: string | null
+          revisao?: string | null
+          setor?: string | null
+          solicitante: string
+          status?: Database["public"]["Enums"]["purchase_req_status"]
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          classificacao?: Database["public"]["Enums"]["purchase_req_class"]
+          codigo_formulario?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_requisicao?: string
+          data_revisao?: string | null
+          fornecedor?: string | null
+          id?: string
+          motivo_indeferimento?: string | null
+          numero?: string
+          obra_construcao?: string | null
+          obra_manutencao?: string | null
+          observacoes?: string | null
+          pagina?: string | null
+          revisao?: string | null
+          setor?: string | null
+          solicitante?: string
+          status?: Database["public"]["Enums"]["purchase_req_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       roles: {
         Row: {
           created_at: string
@@ -796,6 +909,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "tst" | "viewer"
+      purchase_req_class: "MATERIAL" | "SERVICO"
+      purchase_req_status: "PENDENTE" | "APROVADA" | "INDEFERIDA"
       tipo_movimentacao_epi: "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO"
     }
     CompositeTypes: {
@@ -925,6 +1040,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "tst", "viewer"],
+      purchase_req_class: ["MATERIAL", "SERVICO"],
+      purchase_req_status: ["PENDENTE", "APROVADA", "INDEFERIDA"],
       tipo_movimentacao_epi: [
         "SAIDA_ENTREGA",
         "ENTRADA_REPOSICAO",

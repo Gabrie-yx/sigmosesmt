@@ -1,0 +1,744 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Tabs, TabsList, TabsTrigger, TabsContent,
+} from "@/components/ui/tabs";
+import {
+  ShoppingCart, Plus, FileDown, Printer, Check, X as XIcon, Trash2, Eye, Filter,
+} from "lucide-react";
+import { toast } from "sonner";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import dmnLogo from "@/assets/dmn-logo.png";
+
+export const Route = createFileRoute("/app/sesmt/requisicoes")({
+  component: RequisicoesPage,
+});
+
+type Status = "PENDENTE" | "APROVADA" | "INDEFERIDA";
+type Classe = "MATERIAL" | "SERVICO";
+
+type Item = {
+  item_numero: number;
+  descricao: string;
+  quantidade: string;
+  unidade: string;
+  observacao: string;
+};
+
+type Req = {
+  id: string;
+  numero: string;
+  data_requisicao: string;
+  classificacao: Classe;
+  solicitante: string;
+  setor: string | null;
+  fornecedor: string | null;
+  obra_construcao: string | null;
+  obra_manutencao: string | null;
+  codigo_formulario: string | null;
+  revisao: string | null;
+  data_revisao: string | null;
+  pagina: string | null;
+  status: Status;
+  motivo_indeferimento: string | null;
+  observacoes: string | null;
+  approved_at: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
+const STATUS_BADGE: Record<Status, string> = {
+  PENDENTE: "bg-amber-100 text-amber-800 border-amber-300",
+  APROVADA: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  INDEFERIDA: "bg-rose-100 text-rose-800 border-rose-300",
+};
+
+const STATUS_LABEL: Record<Status, string> = {
+  PENDENTE: "Em andamento",
+  APROVADA: "Deferida",
+  INDEFERIDA: "Indeferida",
+};
+
+function fmtBR(d?: string | null) {
+  if (!d) return "—";
+  const [y, m, day] = d.split("T")[0].split("-");
+  return `${day}/${m}/${y}`;
+}
+
+function emptyItems(): Item[] {
+  return Array.from({ length: 10 }, (_, i) => ({
+    item_numero: i + 1, descricao: "", quantidade: "", unidade: "", observacao: "",
+  }));
+}
+
+async function logoDataUrl(): Promise<string | null> {
+  try {
+    const r = await fetch(dmnLogo);
+    const b = await r.blob();
+    return await new Promise((res) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result as string);
+      fr.onerror = () => res(null);
+      fr.readAsDataURL(b);
+    });
+  } catch { return null; }
+}
+
+async function gerarPdfRequisicao(req: Req, itens: Item[]) {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const W = doc.internal.pageSize.getWidth();
+  const M = 10;
+  const logo = await logoDataUrl();
+
+  // Cabeçalho
+  doc.setLineWidth(0.4);
+  doc.rect(M, M, W - 2 * M, 22);
+  if (logo) {
+    try { doc.addImage(logo, "PNG", M + 2, M + 2, 28, 18); } catch { /* noop */ }
+  }
+  doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+  doc.text("REQUISIÇÃO DE COMPRA DE MATERIAIS E SERVIÇOS", M + 35, M + 13, { maxWidth: W - 2 * M - 80 });
+
+  // Bloco código
+  const codX = W - M - 55;
+  doc.line(codX, M, codX, M + 22);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+  doc.text(`CÓD. FOR-COMP: ${req.codigo_formulario ?? "03"}`, codX + 2, M + 5);
+  doc.text(`REVISÃO: ${req.revisao ?? "01"}`, codX + 2, M + 10);
+  doc.text(`DATA: ${fmtBR(req.data_revisao) || fmtBR(req.data_requisicao)}`, codX + 2, M + 15);
+  doc.text(`PAG.: ${req.pagina ?? "01/01"}`, codX + 2, M + 20);
+
+  // Linhas de cabeçalho do formulário
+  let y = M + 22;
+  const rowH = 7;
+  const halfW = (W - 2 * M) / 2;
+
+  const drawSplitRow = (l1: string, v1: string, l2: string, v2: string) => {
+    doc.rect(M, y, halfW, rowH); doc.rect(M + halfW, y, halfW, rowH);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+    doc.text(l1, M + 1.5, y + 4.5);
+    doc.text(l2, M + halfW + 1.5, y + 4.5);
+    doc.setFont("helvetica", "normal");
+    doc.text(v1, M + 1.5 + doc.getTextWidth(l1) + 2, y + 4.5);
+    doc.text(v2, M + halfW + 1.5 + doc.getTextWidth(l2) + 2, y + 4.5);
+    y += rowH;
+  };
+
+  const cls = req.classificacao === "MATERIAL" ? "MATERIAL (X) SERVIÇO ( )" : "MATERIAL ( ) SERVIÇO (X)";
+  drawSplitRow("CLASSIFICAÇÃO DO PEDIDO:", cls, "DATA:", fmtBR(req.data_requisicao));
+  drawSplitRow("SOLICITANTE:", req.solicitante || "", "Nº DA REQUISIÇÃO:", req.numero || "");
+  drawSplitRow("SETOR:", req.setor || "", "FORNECEDOR:", req.fornecedor || "");
+  drawSplitRow("OBRA EM CONSTRUÇÃO:", req.obra_construcao || "", "OBRA EM MANUTENÇÃO:", req.obra_manutencao || "");
+
+  // Tabela de itens
+  autoTable(doc, {
+    startY: y,
+    margin: { left: M, right: M },
+    theme: "grid",
+    styles: { fontSize: 9, cellPadding: 1.8, lineColor: [0,0,0], lineWidth: 0.3, minCellHeight: 7 },
+    headStyles: { fillColor: [255,255,255], textColor: [0,0,0], fontStyle: "bold", halign: "center" },
+    columnStyles: {
+      0: { cellWidth: 14, halign: "center" },
+      1: { cellWidth: 95 },
+      2: { cellWidth: 18, halign: "center" },
+      3: { cellWidth: 18, halign: "center" },
+      4: { cellWidth: "auto" },
+    },
+    head: [["ITEM","DESCRIÇÃO COMPLETA DO MATERIAL OU SERVIÇO","QTDE","UNID.","OBSERVAÇÃO"]],
+    body: itens.map((i) => [
+      String(i.item_numero).padStart(2,"0"),
+      i.descricao || "",
+      i.quantidade || "",
+      i.unidade || "",
+      i.observacao || "",
+    ]),
+  });
+
+  // Assinaturas
+  const finalY = (doc as any).lastAutoTable.finalY + 8;
+  const colW = (W - 2 * M) / 3;
+  const sigH = 22;
+  ["ASSINATURA SOLICITANTE","ASSINATURA SUPERVISOR GERAL","ASSINATURA ANALISTA DE COMPRAS"].forEach((label, idx) => {
+    const x = M + idx * colW;
+    doc.rect(x, finalY, colW, sigH);
+    doc.setFont("helvetica","bold"); doc.setFontSize(8);
+    doc.text(label, x + colW/2, finalY + 4, { align: "center" });
+    doc.line(x, finalY + sigH - 6, x + colW, finalY + sigH - 6);
+    doc.text("DATA:", x + 1.5, finalY + sigH - 1);
+  });
+
+  // Rodapé status
+  doc.setFont("helvetica","bold"); doc.setFontSize(9);
+  doc.text(`STATUS: ${STATUS_LABEL[req.status].toUpperCase()}`, M, finalY + sigH + 7);
+  if (req.status === "INDEFERIDA" && req.motivo_indeferimento) {
+    doc.setFont("helvetica","normal");
+    doc.text(`Motivo: ${req.motivo_indeferimento}`, M, finalY + sigH + 12, { maxWidth: W - 2*M });
+  }
+
+  doc.save(`requisicao-${req.numero || req.id.slice(0,8)}.pdf`);
+}
+
+async function gerarRelatorio(reqs: Req[], periodo: string) {
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
+  const W = doc.internal.pageSize.getWidth();
+  doc.setFont("helvetica","bold"); doc.setFontSize(14);
+  doc.text("RELATÓRIO DE REQUISIÇÕES DE COMPRA", W/2, 14, { align: "center" });
+  doc.setFont("helvetica","normal"); doc.setFontSize(10);
+  doc.text(`Período: ${periodo}`, W/2, 20, { align: "center" });
+  doc.text(`Emitido em: ${new Date().toLocaleString("pt-BR")}`, W/2, 25, { align: "center" });
+
+  const tot = reqs.length;
+  const def = reqs.filter(r => r.status === "APROVADA").length;
+  const ind = reqs.filter(r => r.status === "INDEFERIDA").length;
+  const pen = reqs.filter(r => r.status === "PENDENTE").length;
+  doc.setFontSize(9);
+  doc.text(`Total: ${tot}   |   Deferidas: ${def}   |   Em andamento: ${pen}   |   Indeferidas: ${ind}`, 14, 32);
+
+  autoTable(doc, {
+    startY: 36,
+    theme: "grid",
+    styles: { fontSize: 8, cellPadding: 1.5 },
+    headStyles: { fillColor: [180,0,0], textColor: 255, fontStyle: "bold" },
+    head: [["Nº", "Data", "Solicitante", "Setor", "Fornecedor", "Classif.", "Status", "Obs."]],
+    body: reqs.map(r => [
+      r.numero,
+      fmtBR(r.data_requisicao),
+      r.solicitante,
+      r.setor || "—",
+      r.fornecedor || "—",
+      r.classificacao === "MATERIAL" ? "Material" : "Serviço",
+      STATUS_LABEL[r.status],
+      r.status === "INDEFERIDA" ? (r.motivo_indeferimento || "") : (r.observacoes || ""),
+    ]),
+  });
+
+  doc.save(`relatorio-requisicoes-${Date.now()}.pdf`);
+}
+
+function RequisicoesPage() {
+  const { user, isEditor } = useAuth();
+  const qc = useQueryClient();
+  const [openNew, setOpenNew] = useState(false);
+  const [tab, setTab] = useState<"todas" | Status>("todas");
+  const [filtroPeriodo, setFiltroPeriodo] = useState<"all" | "week" | "month" | "year">("all");
+  const [filtroSolic, setFiltroSolic] = useState("");
+
+  const { data: reqs = [] } = useQuery({
+    queryKey: ["purchase-reqs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("purchase_requisitions")
+        .select("*")
+        .order("data_requisicao", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Req[];
+    },
+  });
+
+  const filtered = useMemo(() => {
+    let arr = reqs;
+    if (tab !== "todas") arr = arr.filter(r => r.status === tab);
+    if (filtroSolic.trim()) {
+      const s = filtroSolic.toLowerCase();
+      arr = arr.filter(r => r.solicitante?.toLowerCase().includes(s));
+    }
+    if (filtroPeriodo !== "all") {
+      const now = new Date();
+      const cutoff = new Date();
+      if (filtroPeriodo === "week") cutoff.setDate(now.getDate() - 7);
+      if (filtroPeriodo === "month") cutoff.setMonth(now.getMonth() - 1);
+      if (filtroPeriodo === "year") cutoff.setFullYear(now.getFullYear() - 1);
+      arr = arr.filter(r => new Date(r.data_requisicao) >= cutoff);
+    }
+    return arr;
+  }, [reqs, tab, filtroPeriodo, filtroSolic]);
+
+  const stats = useMemo(() => ({
+    total: reqs.length,
+    pendentes: reqs.filter(r => r.status === "PENDENTE").length,
+    aprovadas: reqs.filter(r => r.status === "APROVADA").length,
+    indeferidas: reqs.filter(r => r.status === "INDEFERIDA").length,
+  }), [reqs]);
+
+  const updateStatus = useMutation({
+    mutationFn: async (p: { id: string; status: Status; motivo?: string }) => {
+      const { error } = await supabase
+        .from("purchase_requisitions")
+        .update({
+          status: p.status,
+          motivo_indeferimento: p.status === "INDEFERIDA" ? (p.motivo || "") : null,
+          approved_by: user?.id ?? null,
+          approved_at: new Date().toISOString(),
+        })
+        .eq("id", p.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
+      toast.success("Status atualizado");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const delReq = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("purchase_requisitions").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
+      toast.success("Excluída");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  async function emitirPdf(r: Req) {
+    const { data } = await supabase
+      .from("purchase_requisition_items")
+      .select("*")
+      .eq("requisition_id", r.id)
+      .order("item_numero");
+    const itens = emptyItems().map((d) => {
+      const f = (data ?? []).find((x: any) => x.item_numero === d.item_numero);
+      return f ? {
+        item_numero: f.item_numero,
+        descricao: f.descricao ?? "",
+        quantidade: f.quantidade != null ? String(f.quantidade) : "",
+        unidade: f.unidade ?? "",
+        observacao: f.observacao ?? "",
+      } : d;
+    });
+    await gerarPdfRequisicao(r, itens);
+  }
+
+  function periodoLabel() {
+    if (filtroPeriodo === "all") return "Todos";
+    if (filtroPeriodo === "week") return "Última semana";
+    if (filtroPeriodo === "month") return "Último mês";
+    return "Último ano";
+  }
+
+  return (
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-black flex items-center gap-2">
+            <ShoppingCart className="h-6 w-6 text-red-700" /> Requisições de Compra
+          </h1>
+          <p className="text-sm text-slate-600">Materiais e serviços — FOR-COMP 03</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => gerarRelatorio(filtered, periodoLabel())}>
+            <FileDown className="h-4 w-4 mr-2" /> Relatório PDF
+          </Button>
+          {isEditor && (
+            <Dialog open={openNew} onOpenChange={setOpenNew}>
+              <DialogTrigger asChild>
+                <Button className="bg-red-700 hover:bg-red-800">
+                  <Plus className="h-4 w-4 mr-2" /> Nova Requisição
+                </Button>
+              </DialogTrigger>
+              <NewReqDialog onClose={() => setOpenNew(false)} userId={user?.id} />
+            </Dialog>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard label="Total" value={stats.total} cls="text-slate-800" />
+        <StatCard label="Em andamento" value={stats.pendentes} cls="text-amber-700" />
+        <StatCard label="Deferidas" value={stats.aprovadas} cls="text-emerald-700" />
+        <StatCard label="Indeferidas" value={stats.indeferidas} cls="text-rose-700" />
+      </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Filter className="h-4 w-4 text-slate-500" />
+            <Select value={filtroPeriodo} onValueChange={(v: any) => setFiltroPeriodo(v)}>
+              <SelectTrigger className="w-[180px] h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todo período</SelectItem>
+                <SelectItem value="week">Última semana</SelectItem>
+                <SelectItem value="month">Último mês</SelectItem>
+                <SelectItem value="year">Último ano</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              placeholder="Filtrar por solicitante"
+              value={filtroSolic}
+              onChange={(e) => setFiltroSolic(e.target.value)}
+              className="w-[240px] h-9"
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={tab} onValueChange={(v: any) => setTab(v)}>
+            <TabsList>
+              <TabsTrigger value="todas">Todas</TabsTrigger>
+              <TabsTrigger value="PENDENTE">Em andamento</TabsTrigger>
+              <TabsTrigger value="APROVADA">Deferidas</TabsTrigger>
+              <TabsTrigger value="INDEFERIDA">Indeferidas</TabsTrigger>
+            </TabsList>
+            <TabsContent value={tab} className="mt-4">
+              {filtered.length === 0 ? (
+                <div className="text-center text-slate-500 py-12 text-sm">Nenhuma requisição encontrada.</div>
+              ) : (
+                <div className="space-y-2">
+                  {filtered.map((r) => (
+                    <div key={r.id} className="border rounded-lg p-3 hover:bg-slate-50 transition flex flex-wrap items-center gap-3">
+                      <div className="flex-1 min-w-[220px]">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-slate-900">Nº {r.numero}</span>
+                          <Badge variant="outline" className={STATUS_BADGE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+                          <Badge variant="outline" className="text-[10px]">{r.classificacao === "MATERIAL" ? "Material" : "Serviço"}</Badge>
+                        </div>
+                        <div className="text-xs text-slate-700 mt-1">
+                          {fmtBR(r.data_requisicao)} · <strong>{r.solicitante}</strong>
+                          {r.setor ? ` · ${r.setor}` : ""}
+                          {r.fornecedor ? ` · Fornecedor: ${r.fornecedor}` : ""}
+                        </div>
+                        {r.status === "INDEFERIDA" && r.motivo_indeferimento && (
+                          <div className="text-xs text-rose-700 mt-1">Motivo: {r.motivo_indeferimento}</div>
+                        )}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="outline" onClick={() => emitirPdf(r)}>
+                          <Printer className="h-3.5 w-3.5 mr-1" /> PDF
+                        </Button>
+                        <ViewBtn req={r} />
+                        {isEditor && r.status === "PENDENTE" && (
+                          <>
+                            <Button
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700"
+                              onClick={() => updateStatus.mutate({ id: r.id, status: "APROVADA" })}
+                            >
+                              <Check className="h-3.5 w-3.5 mr-1" /> Deferir
+                            </Button>
+                            <IndeferBtn onConfirm={(motivo) => updateStatus.mutate({ id: r.id, status: "INDEFERIDA", motivo })} />
+                          </>
+                        )}
+                        {isEditor && r.status !== "PENDENTE" && (
+                          <Button size="sm" variant="ghost" onClick={() => updateStatus.mutate({ id: r.id, status: "PENDENTE" })}>
+                            Reabrir
+                          </Button>
+                        )}
+                        {isEditor && (
+                          <Button size="sm" variant="ghost" onClick={() => {
+                            if (confirm(`Excluir requisição ${r.numero}?`)) delReq.mutate(r.id);
+                          }}>
+                            <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function StatCard({ label, value, cls }: { label: string; value: number; cls: string }) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="text-xs font-bold uppercase text-slate-500">{label}</div>
+        <div className={`text-3xl font-black ${cls}`}>{value}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ViewBtn({ req }: { req: Req }) {
+  const [open, setOpen] = useState(false);
+  const { data: itens = [] } = useQuery({
+    queryKey: ["pr-items", req.id, open],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("purchase_requisition_items")
+        .select("*")
+        .eq("requisition_id", req.id)
+        .order("item_numero");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="ghost"><Eye className="h-3.5 w-3.5" /></Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Requisição Nº {req.numero}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 text-sm">
+          <div className="grid grid-cols-2 gap-2">
+            <div><strong>Data:</strong> {fmtBR(req.data_requisicao)}</div>
+            <div><strong>Classificação:</strong> {req.classificacao === "MATERIAL" ? "Material" : "Serviço"}</div>
+            <div><strong>Solicitante:</strong> {req.solicitante}</div>
+            <div><strong>Setor:</strong> {req.setor || "—"}</div>
+            <div><strong>Fornecedor:</strong> {req.fornecedor || "—"}</div>
+            <div><strong>Status:</strong> {STATUS_LABEL[req.status]}</div>
+            <div><strong>Obra construção:</strong> {req.obra_construcao || "—"}</div>
+            <div><strong>Obra manutenção:</strong> {req.obra_manutencao || "—"}</div>
+          </div>
+          <table className="w-full border text-xs mt-3">
+            <thead className="bg-slate-100">
+              <tr>
+                <th className="border p-1">Item</th>
+                <th className="border p-1 text-left">Descrição</th>
+                <th className="border p-1">Qtde</th>
+                <th className="border p-1">Unid.</th>
+                <th className="border p-1 text-left">Observação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {itens.map((i: any) => (
+                <tr key={i.id}>
+                  <td className="border p-1 text-center">{String(i.item_numero).padStart(2,"0")}</td>
+                  <td className="border p-1">{i.descricao}</td>
+                  <td className="border p-1 text-center">{i.quantidade ?? ""}</td>
+                  <td className="border p-1 text-center">{i.unidade ?? ""}</td>
+                  <td className="border p-1">{i.observacao ?? ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function IndeferBtn({ onConfirm }: { onConfirm: (motivo: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="border-rose-300 text-rose-700 hover:bg-rose-50">
+          <XIcon className="h-3.5 w-3.5 mr-1" /> Indeferir
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Indeferir requisição</DialogTitle></DialogHeader>
+        <Label>Motivo</Label>
+        <Textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Informe o motivo do indeferimento" />
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button
+            className="bg-rose-700 hover:bg-rose-800"
+            disabled={!motivo.trim()}
+            onClick={() => { onConfirm(motivo.trim()); setOpen(false); setMotivo(""); }}
+          >
+            Confirmar indeferimento
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: string }) {
+  const qc = useQueryClient();
+  const today = new Date().toISOString().slice(0, 10);
+  const [form, setForm] = useState({
+    numero: "",
+    data_requisicao: today,
+    classificacao: "MATERIAL" as Classe,
+    solicitante: "",
+    setor: "",
+    fornecedor: "",
+    obra_construcao: "",
+    obra_manutencao: "",
+    codigo_formulario: "FOR-COMP: 03",
+    revisao: "01",
+    data_revisao: today,
+    pagina: "01/01",
+    observacoes: "",
+  });
+  const [itens, setItens] = useState<Item[]>(emptyItems());
+
+  const setItem = (idx: number, k: keyof Item, v: string) => {
+    setItens((arr) => arr.map((it, i) => i === idx ? { ...it, [k]: v } : it));
+  };
+
+  const save = useMutation({
+    mutationFn: async () => {
+      if (!form.numero.trim() || !form.solicitante.trim()) {
+        throw new Error("Preencha número e solicitante");
+      }
+      const { data: req, error } = await supabase
+        .from("purchase_requisitions")
+        .insert({
+          numero: form.numero.trim(),
+          data_requisicao: form.data_requisicao,
+          classificacao: form.classificacao,
+          solicitante: form.solicitante.trim(),
+          setor: form.setor.trim() || null,
+          fornecedor: form.fornecedor.trim() || null,
+          obra_construcao: form.obra_construcao.trim() || null,
+          obra_manutencao: form.obra_manutencao.trim() || null,
+          codigo_formulario: form.codigo_formulario,
+          revisao: form.revisao,
+          data_revisao: form.data_revisao || null,
+          pagina: form.pagina,
+          observacoes: form.observacoes.trim() || null,
+          created_by: userId ?? null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+
+      const itemsToInsert = itens
+        .filter((i) => i.descricao.trim())
+        .map((i) => ({
+          requisition_id: req.id,
+          item_numero: i.item_numero,
+          descricao: i.descricao.trim(),
+          quantidade: i.quantidade ? Number(i.quantidade) : null,
+          unidade: i.unidade.trim() || null,
+          observacao: i.observacao.trim() || null,
+        }));
+      if (itemsToInsert.length > 0) {
+        const { error: e2 } = await supabase.from("purchase_requisition_items").insert(itemsToInsert);
+        if (e2) throw e2;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
+      toast.success("Requisição criada");
+      onClose();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Nova Requisição de Compra</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div>
+            <Label>Nº Requisição *</Label>
+            <Input value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} />
+          </div>
+          <div>
+            <Label>Data</Label>
+            <Input type="date" value={form.data_requisicao} onChange={(e) => setForm({ ...form, data_requisicao: e.target.value })} />
+          </div>
+          <div>
+            <Label>Classificação</Label>
+            <Select value={form.classificacao} onValueChange={(v: Classe) => setForm({ ...form, classificacao: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MATERIAL">Material</SelectItem>
+                <SelectItem value="SERVICO">Serviço</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Página</Label>
+            <Input value={form.pagina} onChange={(e) => setForm({ ...form, pagina: e.target.value })} />
+          </div>
+          <div className="md:col-span-2">
+            <Label>Solicitante *</Label>
+            <Input value={form.solicitante} onChange={(e) => setForm({ ...form, solicitante: e.target.value })} />
+          </div>
+          <div>
+            <Label>Setor</Label>
+            <Input value={form.setor} onChange={(e) => setForm({ ...form, setor: e.target.value })} />
+          </div>
+          <div>
+            <Label>Fornecedor</Label>
+            <Input value={form.fornecedor} onChange={(e) => setForm({ ...form, fornecedor: e.target.value })} />
+          </div>
+          <div className="md:col-span-2">
+            <Label>Obra em construção</Label>
+            <Input value={form.obra_construcao} onChange={(e) => setForm({ ...form, obra_construcao: e.target.value })} />
+          </div>
+          <div className="md:col-span-2">
+            <Label>Obra em manutenção</Label>
+            <Input value={form.obra_manutencao} onChange={(e) => setForm({ ...form, obra_manutencao: e.target.value })} />
+          </div>
+          <div>
+            <Label>Cód. Formulário</Label>
+            <Input value={form.codigo_formulario} onChange={(e) => setForm({ ...form, codigo_formulario: e.target.value })} />
+          </div>
+          <div>
+            <Label>Revisão</Label>
+            <Input value={form.revisao} onChange={(e) => setForm({ ...form, revisao: e.target.value })} />
+          </div>
+          <div>
+            <Label>Data Revisão</Label>
+            <Input type="date" value={form.data_revisao} onChange={(e) => setForm({ ...form, data_revisao: e.target.value })} />
+          </div>
+        </div>
+
+        <div>
+          <Label className="mb-2 block">Itens (até 10)</Label>
+          <div className="border rounded overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-slate-100">
+                <tr>
+                  <th className="p-1.5 w-10">Item</th>
+                  <th className="p-1.5 text-left">Descrição</th>
+                  <th className="p-1.5 w-20">Qtde</th>
+                  <th className="p-1.5 w-20">Unid.</th>
+                  <th className="p-1.5 text-left">Observação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {itens.map((it, idx) => (
+                  <tr key={idx} className="border-t">
+                    <td className="p-1 text-center font-bold">{String(it.item_numero).padStart(2,"0")}</td>
+                    <td className="p-1"><Input className="h-8" value={it.descricao} onChange={(e) => setItem(idx, "descricao", e.target.value)} /></td>
+                    <td className="p-1"><Input className="h-8" value={it.quantidade} onChange={(e) => setItem(idx, "quantidade", e.target.value)} /></td>
+                    <td className="p-1"><Input className="h-8" value={it.unidade} onChange={(e) => setItem(idx, "unidade", e.target.value)} /></td>
+                    <td className="p-1"><Input className="h-8" value={it.observacao} onChange={(e) => setItem(idx, "observacao", e.target.value)} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <Label>Observações gerais</Label>
+          <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>Cancelar</Button>
+        <Button className="bg-red-700 hover:bg-red-800" disabled={save.isPending} onClick={() => save.mutate()}>
+          {save.isPending ? "Salvando..." : "Salvar Requisição"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
