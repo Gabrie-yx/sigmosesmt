@@ -327,23 +327,24 @@ function RequisicoesPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  async function emitirPdf(r: Req) {
+  async function emitirPdf(r: Req, mode: PrintMode = "download") {
     const { data } = await supabase
       .from("purchase_requisition_items")
       .select("*")
       .eq("requisition_id", r.id)
       .order("item_numero");
-    const itens = emptyItems().map((d) => {
-      const f = (data ?? []).find((x: any) => x.item_numero === d.item_numero);
-      return f ? {
-        item_numero: f.item_numero,
-        descricao: f.descricao ?? "",
-        quantidade: f.quantidade != null ? String(f.quantidade) : "",
-        unidade: f.unidade ?? "",
-        observacao: f.observacao ?? "",
-      } : d;
-    });
-    await gerarPdfRequisicao(r, itens);
+    const savedItems = (data ?? []).map((f: any) => ({
+      item_numero: f.item_numero,
+      descricao: f.descricao ?? "",
+      quantidade: f.quantidade != null ? String(f.quantidade) : "",
+      unidade: f.unidade ?? "",
+      observacao: f.observacao ?? "",
+    }));
+    const minimumRows = emptyItems();
+    const itens = savedItems.length >= minimumRows.length
+      ? savedItems
+      : minimumRows.map((d) => savedItems.find((x) => x.item_numero === d.item_numero) ?? d);
+    await gerarPdfRequisicao(r, itens, mode);
   }
 
   function periodoLabel() {
@@ -438,6 +439,9 @@ function RequisicoesPage() {
                         )}
                       </div>
                       <div className="flex gap-1">
+                        <Button size="sm" variant="outline" onClick={() => emitirPdf(r, "print")}>
+                          <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => emitirPdf(r)}>
                           <Printer className="h-3.5 w-3.5 mr-1" /> PDF
                         </Button>
