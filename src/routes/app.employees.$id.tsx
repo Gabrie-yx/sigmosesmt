@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +24,14 @@ import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
 import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
 import { HardHat, Printer, FileSignature } from "lucide-react";
-import { registrarSaidaEntregaEpi, registrarReentradaEpi } from "@/lib/estoque-sesmt-sync";
+import {
+  registrarSaidaEntregaEpi,
+  registrarReentradaEpi,
+  listEstoqueProducts,
+  ESTOQUE_SESMT_EVENT,
+  ESTOQUE_SESMT_STORAGE_KEY,
+  type EstoqueProductOption,
+} from "@/lib/estoque-sesmt-sync";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
