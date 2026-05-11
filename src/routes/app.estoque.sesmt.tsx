@@ -196,6 +196,22 @@ function EstoqueSesmtPage() {
       }
     } catch {}
   }, []);
+  // Reagir a atualizações vindas da tela de entrega de EPI
+  useEffect(() => {
+    function reload() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw) as Product[];
+        if (Array.isArray(parsed)) setProducts(parsed);
+      } catch {}
+    }
+    window.addEventListener("estoque-sesmt-updated", reload);
+    window.addEventListener("storage", (e) => { if (e.key === STORAGE_KEY) reload(); });
+    return () => {
+      window.removeEventListener("estoque-sesmt-updated", reload);
+    };
+  }, []);
   // persist
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(products)); } catch {}
