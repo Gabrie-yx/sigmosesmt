@@ -264,12 +264,11 @@ function EstoqueSesmtPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Produtos" value={items.length} />
-        <StatCard label="Estoque total" value={totals.total} highlight />
-        <StatCard label="Entradas (total)" value={totals.entradas} variant="emerald" />
-        <StatCard label="Saídas (total)" value={totals.saidas} variant="rose" />
+      {/* Stats — consolidados para evitar redundância */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <StatCard label="Produtos cadastrados" value={items.length} />
+        <StatCard label="Estoque total (em mãos)" value={totals.total} highlight />
+        <MovStatCard entradas={totals.entradas} saidas={totals.saidas} />
       </div>
 
       {/* Search */}
@@ -540,6 +539,33 @@ function StatCard({ label, value, variant, highlight }: { label: string; value: 
     <Card className={`p-4 rounded-2xl border ${cls}`}>
       <div className="text-[10px] font-black uppercase tracking-widest opacity-70">{label}</div>
       <div className="text-3xl font-black mt-1">{value}</div>
+    </Card>
+  );
+}
+
+function MovStatCard({ entradas, saidas }: { entradas: number; saidas: number }) {
+  const saldo = entradas - saidas;
+  return (
+    <Card className="p-4 rounded-2xl border bg-white border-slate-200">
+      <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+        Movimentações (total)
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-3">
+        <div>
+          <div className="text-[9px] font-bold uppercase tracking-wider text-emerald-700">Entradas</div>
+          <div className="text-2xl font-black text-emerald-700 leading-tight">{entradas}</div>
+        </div>
+        <div>
+          <div className="text-[9px] font-bold uppercase tracking-wider text-rose-700">Saídas</div>
+          <div className="text-2xl font-black text-rose-700 leading-tight">{saidas}</div>
+        </div>
+        <div>
+          <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Saldo</div>
+          <div className={`text-2xl font-black leading-tight ${saldo >= 0 ? "text-slate-800" : "text-rose-700"}`}>
+            {saldo >= 0 ? "+" : ""}{saldo}
+          </div>
+        </div>
+      </div>
     </Card>
   );
 }
