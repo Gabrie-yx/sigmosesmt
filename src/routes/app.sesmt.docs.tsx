@@ -171,12 +171,12 @@ function SesmtDocsPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("sesmt_document_revisions")
-        .select("documento_id, data_revisao")
+        .select("document_id, data_revisao")
         .order("data_revisao", { ascending: false });
       if (error) throw error;
       const map: Record<string, string> = {};
-      for (const r of (data ?? []) as Array<{ documento_id: string; data_revisao: string }>) {
-        if (!map[r.documento_id]) map[r.documento_id] = r.data_revisao;
+      for (const r of (data ?? []) as Array<{ document_id: string; data_revisao: string }>) {
+        if (!map[r.document_id]) map[r.document_id] = r.data_revisao;
       }
       return map;
     },
