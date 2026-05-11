@@ -24,14 +24,6 @@ import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
 import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
 import { HardHat, Printer, FileSignature } from "lucide-react";
-import {
-  registrarSaidaEntregaEpi,
-  registrarReentradaEpi,
-  listEstoqueProducts,
-  ESTOQUE_SESMT_EVENT,
-  ESTOQUE_SESMT_STORAGE_KEY,
-  type EstoqueProductOption,
-} from "@/lib/estoque-sesmt-sync";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -848,47 +840,73 @@ function VaccinesTab({ empId, vaccines, role, canEdit, canDelete, qc }: any) {
 }
 
 /* ============ EPI ============ */
+type EstoqueRow = {
+  id: string;
+  codigo_material: string;
+  nome_material: string;
+  ca: string | null;
+  quantidade_atual: number;
+};
 function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsOk, missingDocs }: any) {
-  const [stockItems, setStockItems] = useState<EstoqueProductOption[]>(() => listEstoqueProducts());
-  useEffect(() => {
-    const reload = () => setStockItems(listEstoqueProducts());
-    const onStorage = (e: StorageEvent) => {
-      if (!e.key || e.key === ESTOQUE_SESMT_STORAGE_KEY) reload();
-    };
-    window.addEventListener("storage", onStorage);
-    window.addEventListener(ESTOQUE_SESMT_EVENT, reload as EventListener);
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener(ESTOQUE_SESMT_EVENT, reload as EventListener);
-    };
-  }, []);
-  const EPI_ITEMS = stockItems.map((p) => p.base);
-  const [f, setF] = useState<any>({ item: "", ca: "", tamanho: "", qtd: 1, data_entrega: new Date().toISOString().slice(0, 10) });
-  const selectedProduct = stockItems.find((p) => p.base === f.item) ?? null;
-  const variantOptions = selectedProduct?.variants ?? [];
-  const hasRealSizes = variantOptions.some((v) => v.sizeValue && v.sizeValue.trim().length > 0);
-  const sizeOptions = hasRealSizes ? variantOptions.map((v) => v.sizeValue).filter(Boolean) : null;
+  const { data: stockItems = [] } = useQuery({
+    queryKey: ["estoque_epi"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("estoque_epi")
+        .select("id, codigo_material, nome_material, ca, quantidade_atual")
+        .order("nome_material");
+      if (error) throw error;
+      return (data ?? []) as EstoqueRow[];
+    },
+  });
+
+  const [f, setF] = useState<{ epi_id: string; ca: string; qtd: string; data_entrega: string }>({
+    epi_id: "", ca: "", qtd: "1", data_entrega: new Date().toISOString().slice(0, 10),
+  });
+  const selected = stockItems.find((s) => s.id === f.epi_id) ?? null;
   const MOTIVOS_DEV = ["Danificado", "Desgaste Natural", "Extravio", "Mal Uso", "Furto", "Uso Temporário"];
   const [substitution, setSubstitution] = useState<{ prev: any; motivo: string; data: string; obs: string } | null>(null);
 
   function resetForm() {
-    setF({ item: "", ca: "", tamanho: "", qtd: 1, data_entrega: new Date().toISOString().slice(0, 10) });
+    setF({ epi_id: "", ca: "", qtd: "1", data_entrega: new Date().toISOString().slice(0, 10) });
   }
 
+  /** Cria registro na ficha do colaborador + dá baixa no estoque (RPC). */
   async function insertNewDelivery() {
+    if (!selected) throw new Error("Selecione um EPI do estoque");
+    const qtd = Math.max(1, Number(f.qtd) || 1);
+    if ((selected.quantidade_atual ?? 0) < qtd) {
+      throw new Error(`Saldo insuficiente no estoque SESMT (atual: ${selected.quantidade_atual})`);
+    }
+    // 1) baixa atômica no estoque + log em historico_entregas
+    const { error: rpcErr } = await supabase.rpc("registrar_entrega_epi", {
+      _epi_id: selected.id,
+      _cpf: emp?.cpf ?? "",
+      _nome: emp?.nome ?? "",
+      _qtd: qtd,
+    });
+    if (rpcErr) throw rpcErr;
+    // 2) registro na ficha do colaborador
     const { error } = await supabase.from("epi_deliveries").insert({
-      employee_id: empId, item: f.item, ca: f.ca || null, tamanho: f.tamanho || null,
-      qtd: Number(f.qtd) || 1, data_entrega: f.data_entrega,
+      employee_id: empId,
+      item: selected.nome_material,
+      ca: (f.ca || selected.ca) || null,
+      tamanho: null,
+      qtd,
+      data_entrega: f.data_entrega,
     });
     if (error) throw error;
-    // Refletir saída no estoque SESMT (localStorage)
-    const ok = registrarSaidaEntregaEpi(f.item, f.tamanho, Number(f.qtd) || 1, emp?.nome);
-    if (!ok) toast.warning("Entrega registrada, mas item não localizado no estoque SESMT");
   }
 
   const create = useMutation({
     mutationFn: insertNewDelivery,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); resetForm(); toast.success("Entregue"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["epis", empId] });
+      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
+      qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
+      resetForm();
+      toast.success("Entrega registrada e estoque atualizado");
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -896,17 +914,28 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     mutationFn: async () => {
       if (!substitution) return;
       const obs = `Motivo: ${substitution.motivo}${substitution.obs ? ` — ${substitution.obs}` : ""}`;
-      // 1) close previous delivery
       const { error: upErr } = await supabase
         .from("epi_deliveries")
         .update({ data_devolucao: substitution.data, observacoes: obs })
         .eq("id", substitution.prev.id);
       if (upErr) throw upErr;
-      // 2) insert new delivery
+      // devolve o anterior ao estoque (se identificado)
+      const prevItem = stockItems.find((s) => s.nome_material === substitution.prev.item);
+      if (prevItem) {
+        await supabase.rpc("registrar_movimentacao_epi", {
+          _epi_id: prevItem.id,
+          _qtd: Number(substitution.prev.qtd) || 1,
+          _tipo: "DEVOLUCAO",
+          _cpf: emp?.cpf ?? "",
+          _nome: emp?.nome ?? "",
+        });
+      }
       await insertNewDelivery();
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["epis", empId] });
+      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
+      qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
       resetForm();
       setSubstitution(null);
       toast.success("Substituição registrada");
@@ -915,40 +944,47 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
   });
 
   function submitDelivery() {
-    if (!f.item) return;
+    if (!selected) return;
     const norm = (s: any) => String(s ?? "").trim().toLowerCase();
-    // Find an active (non-returned) prior delivery of the same item
-    const prev = (epis ?? []).find((e: any) => !e.data_devolucao && norm(e.item) === norm(f.item));
+    const prev = (epis ?? []).find((e: any) => !e.data_devolucao && norm(e.item) === norm(selected.nome_material));
     if (prev) {
-      setSubstitution({
-        prev,
-        motivo: "Desgaste Natural",
-        data: f.data_entrega,
-        obs: "",
-      });
+      setSubstitution({ prev, motivo: "Desgaste Natural", data: f.data_entrega, obs: "" });
       return;
     }
     create.mutate();
   }
+
   const del = useMutation({
     mutationFn: async (id: string) => {
       const target = (epis ?? []).find((e: any) => e.id === id);
       const { error } = await supabase.from("epi_deliveries").delete().eq("id", id);
       if (error) throw error;
       if (target && !target.data_devolucao) {
-        registrarReentradaEpi(target.item, target.tamanho, Number(target.qtd) || 1, "Entrega excluída");
+        const stockRow = stockItems.find((s) => s.nome_material === target.item);
+        if (stockRow) {
+          await supabase.rpc("registrar_movimentacao_epi", {
+            _epi_id: stockRow.id,
+            _qtd: Number(target.qtd) || 1,
+            _tipo: "DEVOLUCAO",
+            _cpf: emp?.cpf ?? "",
+            _nome: emp?.nome ?? "",
+          });
+        }
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); toast.success("Removido"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["epis", empId] });
+      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
+      qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
+      toast.success("Removido");
+    },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const [returning, setReturning] = useState<any | null>(null);
   const [retForm, setRetForm] = useState<{ motivo: string; data: string; obs: string }>({
-    motivo: "Desgaste Natural",
-    data: new Date().toISOString().slice(0, 10),
-    obs: "",
+    motivo: "Desgaste Natural", data: new Date().toISOString().slice(0, 10), obs: "",
   });
-
   function openReturn(item: any) {
     setRetForm({ motivo: "Desgaste Natural", data: new Date().toISOString().slice(0, 10), obs: "" });
     setReturning(item);
@@ -963,10 +999,21 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         .update({ data_devolucao: retForm.data, observacoes: obs })
         .eq("id", returning.id);
       if (error) throw error;
-      registrarReentradaEpi(returning.item, returning.tamanho, Number(returning.qtd) || 1, `Devolução: ${retForm.motivo}`);
+      const stockRow = stockItems.find((s) => s.nome_material === returning.item);
+      if (stockRow) {
+        await supabase.rpc("registrar_movimentacao_epi", {
+          _epi_id: stockRow.id,
+          _qtd: Number(returning.qtd) || 1,
+          _tipo: "DEVOLUCAO",
+          _cpf: emp?.cpf ?? "",
+          _nome: emp?.nome ?? "",
+        });
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["epis", empId] });
+      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
+      qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
       toast.success("Devolução registrada");
       setReturning(null);
     },
@@ -982,10 +1029,23 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         .eq("id", id);
       if (error) throw error;
       if (target) {
-        registrarSaidaEntregaEpi(target.item, target.tamanho, Number(target.qtd) || 1, emp?.nome);
+        const stockRow = stockItems.find((s) => s.nome_material === target.item);
+        if (stockRow) {
+          await supabase.rpc("registrar_entrega_epi", {
+            _epi_id: stockRow.id,
+            _cpf: emp?.cpf ?? "",
+            _nome: emp?.nome ?? "",
+            _qtd: Number(target.qtd) || 1,
+          });
+        }
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["epis", empId] }); toast.success("Devolução desfeita"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["epis", empId] });
+      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
+      qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
+      toast.success("Devolução desfeita");
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -1000,7 +1060,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <Card className="p-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl">
         <div>
           <div className="flex items-center gap-2">
@@ -1008,7 +1067,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             <h2 className="text-lg font-black uppercase tracking-wider text-brand">Controle de EPIs</h2>
           </div>
           <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-1">
-            Gestão de entregas e impressão da ficha de EPI
+            Itens vinculados ao Estoque SESMT — saída automática ao registrar entrega
           </p>
         </div>
         <Button
@@ -1022,7 +1081,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         </Button>
       </Card>
 
-      {/* Form */}
       {canEdit && (
         <Card className="p-5 rounded-2xl">
           <div className="flex items-center gap-2 mb-4">
@@ -1030,52 +1088,45 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             <h3 className="text-xs font-black uppercase tracking-widest text-brand">Registrar entrega de EPI</h3>
           </div>
           <form onSubmit={(e) => { e.preventDefault(); submitDelivery(); }} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-            <div className="md:col-span-4 space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição do EPI</Label>
+            <div className="md:col-span-6 space-y-1.5">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição do EPI (do estoque SESMT)</Label>
               <Select
-                value={f.item}
+                value={f.epi_id}
                 onValueChange={(v) => {
-                  const prod = stockItems.find((p) => p.base === v);
-                  setF({ ...f, item: v, tamanho: "", ca: prod?.ca ?? f.ca });
+                  const prod = stockItems.find((s) => s.id === v);
+                  setF({ ...f, epi_id: v, ca: prod?.ca ?? "" });
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={EPI_ITEMS.length ? "Selecione um EPI do estoque…" : "Nenhum item no estoque SESMT"} />
+                  <SelectValue placeholder={stockItems.length ? "Selecione um EPI…" : "Nenhum item cadastrado no Estoque SESMT"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {EPI_ITEMS.length === 0 ? (
-                    <div className="px-2 py-1.5 text-xs text-slate-500">Cadastre itens no Estoque SESMT</div>
+                  {stockItems.length === 0 ? (
+                    <div className="px-2 py-1.5 text-xs text-slate-500">Cadastre itens no Painel de Estoque SESMT</div>
                   ) : (
-                    EPI_ITEMS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)
+                    stockItems.map((s) => (
+                      <SelectItem key={s.id} value={s.id} disabled={(s.quantidade_atual ?? 0) <= 0}>
+                        {s.nome_material} {s.ca ? `(CA ${s.ca})` : ""} — saldo: {s.quantidade_atual}
+                      </SelectItem>
+                    ))
                   )}
                 </SelectContent>
               </Select>
             </div>
-            <div className="md:col-span-3 space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tamanho / Modelo</Label>
-              {sizeOptions ? (
-                <Select value={f.tamanho} onValueChange={(v) => setF({ ...f, tamanho: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
-                  <SelectContent>{sizeOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                </Select>
-              ) : (
-                <Input value={f.tamanho} onChange={(e) => setF({ ...f, tamanho: e.target.value })} placeholder="Ex: TAM 42, INCOLOR…" />
-              )}
-            </div>
             <div className="md:col-span-2 space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">C.A.</Label>
-              <Input value={f.ca} onChange={(e) => setF({ ...f, ca: e.target.value })} placeholder="Apenas Número" />
+              <Input value={f.ca} onChange={(e) => setF({ ...f, ca: e.target.value })} placeholder="—" />
             </div>
             <div className="md:col-span-2 space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Entrega</Label>
               <Input type="date" value={f.data_entrega} onChange={(e) => setF({ ...f, data_entrega: e.target.value })} />
             </div>
-            <div className="md:col-span-1 space-y-1.5">
+            <div className="md:col-span-2 space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">QTD</Label>
               <Input type="number" min="1" value={f.qtd} onChange={(e) => setF({ ...f, qtd: e.target.value })} />
             </div>
             <div className="md:col-span-12 flex justify-end">
-              <Button type="submit" disabled={create.isPending || !f.item} className="bg-brand text-white">
+              <Button type="submit" disabled={create.isPending || !f.epi_id} className="bg-brand text-white">
                 <Plus className="h-4 w-4 mr-2" /> Registrar entrega
               </Button>
             </div>
@@ -1083,7 +1134,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         </Card>
       )}
 
-      {/* History as cards */}
       <Card className="p-5 rounded-2xl space-y-3">
         <div className="flex items-center gap-2">
           <FileSignature className="h-4 w-4 text-slate-500" />
@@ -1142,7 +1192,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         </div>
       </Card>
 
-      {/* Devolução Dialog */}
       <Dialog open={!!returning} onOpenChange={(o) => !o && setReturning(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -1155,9 +1204,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             <div className="space-y-4">
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
                 <div className="font-black uppercase text-slate-700">{returning.item}</div>
-                <div className="text-slate-500 mt-0.5">
-                  {returning.tamanho ? `Tam: ${returning.tamanho} • ` : ""}QTD: {returning.qtd} • Entregue em {formatDateBR(returning.data_entrega)}
-                </div>
+                <div className="text-slate-500 mt-0.5">QTD: {returning.qtd} • Entregue em {formatDateBR(returning.data_entrega)}</div>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Motivo da devolução</Label>
@@ -1187,7 +1234,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         </DialogContent>
       </Dialog>
 
-      {/* Substitution Dialog (auto-prompted on new delivery of same item) */}
       <Dialog open={!!substitution} onOpenChange={(o) => !o && setSubstitution(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -1198,10 +1244,9 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           </DialogHeader>
           {substitution && (
             <div className="space-y-4">
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                Este colaborador já possui um <strong className="uppercase">{substitution.prev.item}</strong>
-                {substitution.prev.tamanho ? ` (${substitution.prev.tamanho})` : ""} ativo, entregue em <strong>{formatDateBR(substitution.prev.data_entrega)}</strong>.
-                <br />Informe o motivo da substituição. O item anterior será encerrado e o novo será registrado.
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs">
+                Já existe uma entrega ativa de <strong className="uppercase">{substitution.prev.item}</strong> para este colaborador.
+                Vamos finalizar a entrega anterior e registrar a nova.
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Motivo da substituição</Label>
@@ -1233,7 +1278,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     </div>
   );
 }
-
 /* ============ HEALTH ============ */
 function HealthTab({ empId, exams, canEdit, canDelete, qc }: any) {
   const [f, setF] = useState<any>({
