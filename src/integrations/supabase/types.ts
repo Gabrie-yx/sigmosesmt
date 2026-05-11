@@ -329,37 +329,46 @@ export type Database = {
           ca: string | null
           created_at: string
           data_devolucao: string | null
+          data_devolucao_prevista: string | null
           data_entrega: string
           employee_id: string
           id: string
           item: string
+          motivo_entrega: string
           observacoes: string | null
           qtd: number
           tamanho: string | null
+          valor_unitario: number | null
         }
         Insert: {
           ca?: string | null
           created_at?: string
           data_devolucao?: string | null
+          data_devolucao_prevista?: string | null
           data_entrega?: string
           employee_id: string
           id?: string
           item: string
+          motivo_entrega?: string
           observacoes?: string | null
           qtd?: number
           tamanho?: string | null
+          valor_unitario?: number | null
         }
         Update: {
           ca?: string | null
           created_at?: string
           data_devolucao?: string | null
+          data_devolucao_prevista?: string | null
           data_entrega?: string
           employee_id?: string
           id?: string
           item?: string
+          motivo_entrega?: string
           observacoes?: string | null
           qtd?: number
           tamanho?: string | null
+          valor_unitario?: number | null
         }
         Relationships: [
           {
