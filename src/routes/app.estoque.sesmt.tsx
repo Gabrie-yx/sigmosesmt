@@ -214,8 +214,8 @@ function EstoqueSesmtPage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as Product[];
-        if (Array.isArray(parsed) && parsed.length) setProducts(parsed);
+        const parsed = normalizeStoredProducts(JSON.parse(raw));
+        if (parsed) setProducts(parsed);
       }
     } catch {}
   }, []);
@@ -225,8 +225,8 @@ function EstoqueSesmtPage() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return;
-        const parsed = JSON.parse(raw) as Product[];
-        if (Array.isArray(parsed)) setProducts(parsed);
+        const parsed = normalizeStoredProducts(JSON.parse(raw));
+        if (parsed) setProducts(parsed);
       } catch {}
     }
     window.addEventListener("estoque-sesmt-updated", reload);
