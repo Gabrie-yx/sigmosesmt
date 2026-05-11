@@ -853,7 +853,7 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
   );
 }
 
-function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit", movsByItem }: any) {
+function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit", movsByItem, snapshotByItem, monthStart }: any) {
   const isDup = mode === "duplicate";
   const [f, setF] = useState({ nome_material: "", codigo_material: "", ca: "", ca_validade: "", numero_pedido: "", estoque_minimo: "0", quantidade_atual: "0" });
   const [caNA, setCaNA] = useState(false);
@@ -868,15 +868,16 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit", movsB
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { estoqueInicial, qtdEntradas } = (() => {
-    if (!item || !movsByItem) return { estoqueInicial: item?.quantidade_atual ?? 0, qtdEntradas: 0 };
-    const arr = movsByItem.get(item.id) ?? [];
-    let entradas = 0, saidas = 0;
+    if (!item) return { estoqueInicial: 0, qtdEntradas: 0 };
+    const inicial = snapshotByItem?.get?.(item.id) ?? 0;
+    const arr = movsByItem?.get?.(item.id) ?? [];
+    let entradas = 0;
     arr.forEach((m: any) => {
-      const q = m.quantidade_entregue ?? 0;
-      if (m.tipo_movimentacao === "SAIDA_ENTREGA") saidas += q;
-      else entradas += q;
+      const d = m.data_entrega ? new Date(m.data_entrega) : null;
+      if (monthStart && (!d || d < monthStart)) return;
+      if (m.tipo_movimentacao !== "SAIDA_ENTREGA") entradas += (m.quantidade_entregue ?? 0);
     });
-    return { estoqueInicial: (item.quantidade_atual ?? 0) - entradas + saidas, qtdEntradas: entradas };
+    return { estoqueInicial: inicial, qtdEntradas: entradas };
   })();
 
   useEffect(() => {
