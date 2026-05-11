@@ -417,7 +417,7 @@ function EstoqueSesmtPage() {
             Painel de EPI's
           </h1>
           <p className="text-sm text-muted-foreground">
-            Um produto por linha. Selecione a variação para ver estoque e histórico.
+            Uma linha por item — cada variação (tamanho, cor, modelo) ocupa sua própria linha.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
