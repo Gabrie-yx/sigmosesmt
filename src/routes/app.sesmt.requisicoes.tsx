@@ -631,6 +631,17 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
     setItens((arr) => arr.map((it, i) => i === idx ? { ...it, [k]: v } : it));
   };
 
+  const addItem = () => {
+    setItens((arr) => [
+      ...arr,
+      { item_numero: arr.length + 1, descricao: "", quantidade: "", unidade: "", observacao: "" },
+    ]);
+  };
+
+  const removeLastItem = () => {
+    setItens((arr) => arr.length > 10 ? arr.slice(0, -1) : arr);
+  };
+
   const save = useMutation({
     mutationFn: async () => {
       if (!form.numero.trim() || !form.solicitante.trim()) {
@@ -789,6 +800,18 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
           ))}
         </div>
 
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground">Total de linhas: {itens.length}</span>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={removeLastItem} disabled={itens.length <= 10}>
+              Remover última linha
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={addItem}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar item
+            </Button>
+          </div>
+        </div>
+
         {/* Bloco assinaturas */}
         <div className="mt-4 border-2 border-black bg-white text-black text-[12px]">
           <div className="grid grid-cols-3 font-bold text-center uppercase border-b border-black">
@@ -802,7 +825,15 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
             <div />
           </div>
           <div className="grid grid-cols-3 border-t border-black font-bold uppercase">
-            <div className="border-r border-black p-1.5">Data:</div>
+            <div className="border-r border-black p-1.5 flex items-center gap-2">
+              <span>Data:</span>
+              <input
+                type="date"
+                value={form.data_requisicao}
+                onChange={(e) => setForm({ ...form, data_requisicao: e.target.value })}
+                className="flex-1 min-w-0 bg-transparent border-0 outline-none font-normal focus:bg-yellow-50"
+              />
+            </div>
             <div className="border-r border-black p-1.5">Data:</div>
             <div className="p-1.5">Data:</div>
           </div>
