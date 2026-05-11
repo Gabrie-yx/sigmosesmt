@@ -1,0 +1,1 @@
+ALTER TABLE public.estoque_epi ADD COLUMN ca_validade DATE;

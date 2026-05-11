@@ -374,6 +374,7 @@ export type Database = {
       estoque_epi: {
         Row: {
           ca: string | null
+          ca_validade: string | null
           codigo_material: string
           created_at: string
           estoque_minimo: number
@@ -387,6 +388,7 @@ export type Database = {
         }
         Insert: {
           ca?: string | null
+          ca_validade?: string | null
           codigo_material: string
           created_at?: string
           estoque_minimo?: number
@@ -400,6 +402,7 @@ export type Database = {
         }
         Update: {
           ca?: string | null
+          ca_validade?: string | null
           codigo_material?: string
           created_at?: string
           estoque_minimo?: number
