@@ -404,22 +404,22 @@ export function AppHeader() {
               onChange={(e) => e.target.files?.[0] && handleImport(e.target.files[0])}
             />
           </div>
-          <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-3">
-            <div className="text-right">
-              <div className="text-xs font-bold text-header-foreground truncate max-w-[160px]">
+          <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-2">
+            <div className="text-right leading-tight">
+              <div className="text-[11px] font-bold text-header-foreground truncate max-w-[180px]">
                 {user?.email}
               </div>
               <div className="flex gap-1 justify-end mt-0.5">
                 {roles.length === 0 && (
                   <Badge
                     variant="outline"
-                    className="text-[9px] border-white/20 text-header-foreground/70"
+                    className="text-[9px] py-0 px-1.5 border-white/20 text-header-foreground/70"
                   >
                     sem papel
                   </Badge>
                 )}
                 {roles.map((r) => (
-                  <Badge key={r} className="text-[9px] bg-white/10 text-header-foreground border-0">
+                  <Badge key={r} className="text-[9px] py-0 px-1.5 bg-white/10 text-header-foreground border-0">
                     {r}
                   </Badge>
                 ))}
@@ -429,7 +429,7 @@ export function AppHeader() {
               size="icon"
               variant="ghost"
               onClick={handleLogout}
-              className="text-header-foreground hover:bg-white/10"
+              className="h-8 w-8 text-header-foreground hover:bg-white/10"
             >
               <LogOut className="h-4 w-4" />
             </Button>
