@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
-import { FileText, Upload, Eye, Trash2, Plus, Calendar, AlertTriangle } from "lucide-react";
+import { FileText, Upload, Eye, Trash2, Plus, Calendar, AlertTriangle, History } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/sesmt/docs")({
@@ -35,6 +35,17 @@ type SesmtDoc = {
   uploaded_at: string;
 };
 
+type Revision = {
+  id: string;
+  document_id: string;
+  data_revisao: string;
+  numero_revisao: string;
+  descricao: string;
+  motivo: string | null;
+  responsavel: string;
+  created_at: string;
+};
+
 function SesmtDocsPage() {
   const { roles } = useAuth();
   const isEditor = roles.includes("admin") || roles.includes("tst");
@@ -42,6 +53,7 @@ function SesmtDocsPage() {
   const qc = useQueryClient();
   const [filterTipo, setFilterTipo] = useState<string>("ALL");
   const [openDialog, setOpenDialog] = useState(false);
+  const [historyDoc, setHistoryDoc] = useState<SesmtDoc | null>(null);
 
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ["sesmt-docs"],
@@ -178,6 +190,14 @@ function SesmtDocsPage() {
                     >
                       <Eye className="h-4 w-4 mr-1" /> Ver
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setHistoryDoc(d)}
+                      title="Controle de revisões"
+                    >
+                      <History className="h-4 w-4" />
+                    </Button>
                     {isAdmin && (
                       <Button
                         size="sm"
@@ -197,7 +217,208 @@ function SesmtDocsPage() {
           })}
         </div>
       )}
+
+      <RevisionsDialog
+        doc={historyDoc}
+        onClose={() => setHistoryDoc(null)}
+        canEdit={isEditor}
+        canDelete={isAdmin}
+      />
     </div>
+  );
+}
+
+function RevisionsDialog({
+  doc,
+  onClose,
+  canEdit,
+  canDelete,
+}: {
+  doc: SesmtDoc | null;
+  onClose: () => void;
+  canEdit: boolean;
+  canDelete: boolean;
+}) {
+  const qc = useQueryClient();
+  const [dataRev, setDataRev] = useState(new Date().toISOString().slice(0, 10));
+  const [numero, setNumero] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [motivo, setMotivo] = useState("");
+  const [responsavel, setResponsavel] = useState("");
+
+  const { data: revs = [], isLoading } = useQuery({
+    queryKey: ["sesmt-doc-revisions", doc?.id],
+    enabled: !!doc?.id,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("sesmt_document_revisions")
+        .select("*")
+        .eq("document_id", doc!.id)
+        .order("data_revisao", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Revision[];
+    },
+  });
+
+  const add = useMutation({
+    mutationFn: async () => {
+      if (!doc) return;
+      if (!numero || !descricao || !responsavel || !dataRev) {
+        throw new Error("Preencha data, número, descrição e responsável");
+      }
+      const { data: u } = await supabase.auth.getUser();
+      const { error } = await (supabase as any).from("sesmt_document_revisions").insert({
+        document_id: doc.id,
+        data_revisao: dataRev,
+        numero_revisao: numero,
+        descricao,
+        motivo: motivo || null,
+        responsavel,
+        created_by: u.user?.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Revisão registrada");
+      setNumero(""); setDescricao(""); setMotivo(""); setResponsavel("");
+      qc.invalidateQueries({ queryKey: ["sesmt-doc-revisions", doc?.id] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro"),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any)
+        .from("sesmt_document_revisions").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Revisão excluída");
+      qc.invalidateQueries({ queryKey: ["sesmt-doc-revisions", doc?.id] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro"),
+  });
+
+  // Suggest next revision number (00, 01, 02…)
+  const suggestedNext = (() => {
+    const nums = revs
+      .map((r) => parseInt(r.numero_revisao, 10))
+      .filter((n) => !Number.isNaN(n));
+    const next = nums.length ? Math.max(...nums) + 1 : 0;
+    return String(next).padStart(2, "0");
+  })();
+
+  return (
+    <Dialog open={!!doc} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" /> Controle de Revisões — {doc?.titulo ?? doc?.tipo}
+          </DialogTitle>
+        </DialogHeader>
+
+        {canEdit && (
+          <Card className="bg-slate-50">
+            <CardContent className="pt-4 space-y-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-xs">Data *</Label>
+                  <Input type="date" value={dataRev} onChange={(e) => setDataRev(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Revisão *</Label>
+                  <Input
+                    placeholder={suggestedNext}
+                    value={numero}
+                    onChange={(e) => setNumero(e.target.value)}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Responsável *</Label>
+                  <Input value={responsavel} onChange={(e) => setResponsavel(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Descrição *</Label>
+                <Textarea
+                  rows={2}
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                  placeholder="Ex.: Realização de treinamento NR-35"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Motivo</Label>
+                <Input
+                  value={motivo}
+                  onChange={(e) => setMotivo(e.target.value)}
+                  placeholder="Ex.: 1-Elaboração, 2-Atualização de cargo, 3-Acidente, 4-Treinamento"
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  className="bg-red-700 hover:bg-red-800"
+                  onClick={() => add.mutate()}
+                  disabled={add.isPending}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Registrar revisão
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="mt-2">
+          <h3 className="text-sm font-bold text-slate-700 mb-2">Histórico</h3>
+          {isLoading ? (
+            <div className="text-sm text-slate-500 py-4 text-center">Carregando…</div>
+          ) : revs.length === 0 ? (
+            <div className="text-sm text-slate-500 py-6 text-center border rounded-md">
+              Nenhuma revisão registrada.
+            </div>
+          ) : (
+            <div className="overflow-x-auto border rounded-md">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-900 text-white">
+                  <tr>
+                    <th className="px-3 py-2 text-left">Data</th>
+                    <th className="px-3 py-2 text-left">Revisão</th>
+                    <th className="px-3 py-2 text-left">Descrição</th>
+                    <th className="px-3 py-2 text-left">Motivo</th>
+                    <th className="px-3 py-2 text-left">Responsável</th>
+                    {canDelete && <th className="px-3 py-2"></th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {revs.map((r) => (
+                    <tr key={r.id} className="border-t">
+                      <td className="px-3 py-2">{new Date(r.data_revisao).toLocaleDateString("pt-BR")}</td>
+                      <td className="px-3 py-2 font-mono">{r.numero_revisao}</td>
+                      <td className="px-3 py-2">{r.descricao}</td>
+                      <td className="px-3 py-2 text-slate-600">{r.motivo ?? "—"}</td>
+                      <td className="px-3 py-2">{r.responsavel}</td>
+                      {canDelete && (
+                        <td className="px-3 py-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-700"
+                            onClick={() => { if (confirm("Excluir revisão?")) del.mutate(r.id); }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
