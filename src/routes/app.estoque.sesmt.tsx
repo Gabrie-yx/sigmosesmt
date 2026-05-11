@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   Search, Download, Upload, RotateCcw, Plus, History,
-  ArrowUp, ArrowDown, Trash2, X,
+  ArrowUp, ArrowDown, Trash2, X, ExternalLink,
 } from "lucide-react";
 import protectiveClothingIcon from "@/assets/protective-clothing.png";
 import { toast } from "sonner";
@@ -419,6 +419,13 @@ function EstoqueSesmtPage() {
         <div className="flex flex-wrap gap-2">
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={onImportFile} />
           <NewProductDialog onCreate={addProduct} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open("https://consultaca.com", "_blank", "noopener,noreferrer")}
+          >
+            <ExternalLink className="h-4 w-4 mr-1.5" /> Consultar CA
+          </Button>
           <Button variant="outline" size="sm" onClick={handleImportClick}>
             <Upload className="h-4 w-4 mr-1.5" /> Importar planilha
           </Button>
