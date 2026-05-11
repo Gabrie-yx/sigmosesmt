@@ -304,7 +304,14 @@ function EstoqueSesmtPage() {
                   <TableCell className="text-xs text-slate-500">{i.codigo_material}</TableCell>
                   <TableCell className="text-xs text-slate-500">{i.numero_pedido || "—"}</TableCell>
                   <TableCell className="text-xs">
-                    {i.ca ? <Badge variant="secondary">{i.ca}</Badge> : <span className="text-slate-300">—</span>}
+                    {i.ca ? (
+                      <div className="flex flex-col gap-0.5">
+                        <Badge variant="secondary" className="w-fit">{i.ca}</Badge>
+                        {i.ca_validade && (
+                          <span className="text-[10px] text-slate-500">val. {formatDateBR(i.ca_validade)}</span>
+                        )}
+                      </div>
+                    ) : <span className="text-slate-300">—</span>}
                   </TableCell>
                   <TableCell className="text-right font-black">
                     <span className={low ? "text-rose-600" : "text-slate-800"}>{i.quantidade_atual}</span>
