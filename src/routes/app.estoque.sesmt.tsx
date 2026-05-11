@@ -280,11 +280,12 @@ function EstoqueSesmtPage() {
     if (!delta) return;
     setProducts((prev) => prev.map((p) => {
       if (p.id !== productId) return p;
+      const variants = Array.isArray(p.variants) ? p.variants : [];
       return {
         ...p,
-        variants: p.variants.map((v) => v.id !== variantId ? v : {
+        variants: variants.map((v) => v.id !== variantId ? v : {
           ...v,
-          movements: [...v.movements, {
+          movements: [...(Array.isArray(v.movements) ? v.movements : []), {
             id: `m-${Date.now()}`,
             date: new Date().toISOString().slice(0, 10),
             delta, tipo,
@@ -306,15 +307,16 @@ function EstoqueSesmtPage() {
     if (!valid.length) { toast.error("Informe ao menos uma quantidade"); return; }
     setProducts((prev) => prev.map((p) => {
       if (p.id !== productId) return p;
+      const variants = Array.isArray(p.variants) ? p.variants : [];
       return {
         ...p,
-        variants: p.variants.map((v) => {
+        variants: variants.map((v) => {
           const e = valid.find((x) => x.variantId === v.id);
           if (!e) return v;
           const delta = tipo === "ENTRADA" ? e.qty : -e.qty;
           return {
             ...v,
-            movements: [...v.movements, {
+            movements: [...(Array.isArray(v.movements) ? v.movements : []), {
               id: `m-${Date.now()}-${v.id}`,
               date,
               delta,
