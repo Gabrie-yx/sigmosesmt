@@ -573,6 +573,45 @@ export type Database = {
         }
         Relationships: []
       }
+      sesmt_documents: {
+        Row: {
+          company_id: string | null
+          data_emissao: string | null
+          data_validade: string | null
+          descricao: string | null
+          file_path: string
+          id: string
+          tipo: string
+          titulo: string | null
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          data_emissao?: string | null
+          data_validade?: string | null
+          descricao?: string | null
+          file_path: string
+          id?: string
+          tipo: string
+          titulo?: string | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          data_emissao?: string | null
+          data_validade?: string | null
+          descricao?: string | null
+          file_path?: string
+          id?: string
+          tipo?: string
+          titulo?: string | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       training_attendees: {
         Row: {
           certificado_path: string | null
