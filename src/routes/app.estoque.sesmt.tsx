@@ -705,7 +705,7 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
 }
 
 function EditItemDialog({ item, onClose, onSubmit, pending }: any) {
-  const [f, setF] = useState({ nome_material: "", codigo_material: "", ca: "", numero_pedido: "", estoque_minimo: "0" });
+  const [f, setF] = useState({ nome_material: "", codigo_material: "", ca: "", numero_pedido: "", estoque_minimo: "0", quantidade_atual: "0" });
   const [foto, setFoto] = useState<File | null>(null);
   const [removeFoto, setRemoveFoto] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -719,6 +719,7 @@ function EditItemDialog({ item, onClose, onSubmit, pending }: any) {
         ca: item.ca ?? "",
         numero_pedido: item.numero_pedido ?? "",
         estoque_minimo: String(item.estoque_minimo ?? 0),
+        quantidade_atual: String(item.quantidade_atual ?? 0),
       });
       setFoto(null);
       setRemoveFoto(false);
@@ -746,6 +747,7 @@ function EditItemDialog({ item, onClose, onSubmit, pending }: any) {
       ca: f.ca.trim() || null,
       numero_pedido: f.numero_pedido.trim() || null,
       estoque_minimo: Math.max(0, Number(f.estoque_minimo) || 0),
+      quantidade_atual: Math.max(0, Number(f.quantidade_atual) || 0),
     };
     if (imagem_url !== undefined) patch.imagem_url = imagem_url;
     onSubmit(patch);
@@ -780,6 +782,10 @@ function EditItemDialog({ item, onClose, onSubmit, pending }: any) {
               <div>
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Estoque mínimo</Label>
                 <Input type="number" min="0" value={f.estoque_minimo} onChange={(e) => setF({ ...f, estoque_minimo: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Quantidade em estoque</Label>
+                <Input type="number" min="0" value={f.quantidade_atual} onChange={(e) => setF({ ...f, quantidade_atual: e.target.value })} />
               </div>
             </div>
             <div>
