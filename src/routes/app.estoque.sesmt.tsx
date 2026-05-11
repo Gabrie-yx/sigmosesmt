@@ -992,12 +992,12 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit", movsB
                 />
               </div>
               <div>
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nº do Pedido</Label>
-                <Input value={f.numero_pedido} onChange={(e) => setF({ ...f, numero_pedido: e.target.value })} />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Estoque Inicial (informativo)</Label>
+                <Input value={String(estoqueInicial)} readOnly disabled className="bg-slate-50 font-semibold" />
               </div>
               <div>
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Código</Label>
-                <Input value={f.codigo_material} onChange={(e) => setF({ ...f, codigo_material: e.target.value })} />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Qtde Entradas (informativo)</Label>
+                <Input value={String(qtdEntradas)} readOnly disabled className="bg-slate-50 font-semibold text-emerald-700" />
               </div>
               <div>
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Estoque mínimo</Label>
