@@ -199,6 +199,7 @@ function EstoqueSesmtPage() {
       Codigo: i.codigo_material,
       Produto: i.nome_material,
       CA: i.ca ?? "",
+      CA_Validade: i.ca_validade ?? "",
       NumeroPedido: i.numero_pedido ?? "",
       Quantidade: i.quantidade_atual,
       EstoqueMinimo: i.estoque_minimo,
