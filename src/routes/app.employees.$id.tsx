@@ -42,7 +42,6 @@ function EmployeeDetail() {
         </Button>
       </div>
       <EmployeeDetailContent id={id} showHeader initialTab={tab} />
-      <FileViewerHost />
     </div>
   );
 }
@@ -89,7 +88,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [uploadingHeaderPhoto, setUploadingHeaderPhoto] = useState(false);
 
   const { data: docsList } = useQuery({
-    queryKey: ["docs", id],
+    queryKey: ["docs-summary", id],
     queryFn: async () => (await supabase.from("employee_docs").select("tipo").eq("employee_id", id)).data ?? [],
   });
   const REQUIRED_DOCS = ["RG", "CPF", "Comprovante Residência", "Comprovante MEI", "Cartão de Vacina"];
@@ -480,7 +479,7 @@ function DocsTab({ empId }: any) {
   const { isEditor, isAdmin } = useAuth();
   const { data: docs } = useQuery({
     queryKey: ["docs", empId],
-    queryFn: async () => (await supabase.from("employee_docs").select("*").eq("employee_id", empId)).data ?? [],
+    queryFn: async () => (await supabase.from("employee_docs").select("*").eq("employee_id", empId).order("uploaded_at", { ascending: false })).data ?? [],
   });
   const [uploadingTipo, setUploadingTipo] = useState<string | null>(null);
   const [extraTipo, setExtraTipo] = useState("CNH");
@@ -496,6 +495,7 @@ function DocsTab({ empId }: any) {
       const { error } = await supabase.from("employee_docs").insert({ employee_id: empId, tipo, file_path: path });
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["docs", empId] });
+      qc.invalidateQueries({ queryKey: ["docs-summary", empId] });
       toast.success(`${tipo} enviado`);
     } catch (e: any) {
       toast.error(e.message);
@@ -514,15 +514,17 @@ function DocsTab({ empId }: any) {
 
   const del = useMutation({
     mutationFn: async (d: any) => {
+      if (!d?.id || !d?.file_path) throw new Error("Documento inválido. Atualize a página e tente novamente.");
       await supabase.storage.from("employee-docs").remove([d.file_path]);
       const { error } = await supabase.from("employee_docs").delete().eq("id", d.id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["docs", empId] }); toast.success("Removido"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["docs", empId] }); qc.invalidateQueries({ queryKey: ["docs-summary", empId] }); toast.success("Removido"); },
     onError: (e: any) => toast.error(e.message),
   });
 
   async function openDoc(path: string) {
+    if (!path) { toast.error("Documento sem arquivo vinculado. Atualize a página e tente novamente."); return; }
     await openStorageFile("employee-docs", path);
   }
 
