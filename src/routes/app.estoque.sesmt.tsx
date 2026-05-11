@@ -290,8 +290,22 @@ function EstoqueSesmtPage() {
             )}
             {filtered.map((i) => {
               const low = i.quantidade_atual <= (i.estoque_minimo ?? 0);
+              const caDays = i.ca_validade
+                ? Math.floor((new Date(i.ca_validade).getTime() - Date.now()) / 86400000)
+                : null;
+              const caExpired = caDays !== null && caDays < 0;
+              const caSoon = caDays !== null && caDays >= 0 && caDays <= 180;
               return (
-                <TableRow key={i.id} className="hover:bg-slate-50/50">
+                <TableRow
+                  key={i.id}
+                  className={
+                    caExpired
+                      ? "bg-rose-50 hover:bg-rose-100"
+                      : caSoon
+                      ? "bg-slate-200/70 hover:bg-slate-200"
+                      : "hover:bg-slate-50/50"
+                  }
+                >
                   <TableCell>
                     {i.imagem_url ? (
                       <img src={i.imagem_url} alt="" className="h-10 w-10 rounded object-cover border border-slate-200" />
@@ -307,9 +321,32 @@ function EstoqueSesmtPage() {
                   <TableCell className="text-xs">
                     {i.ca ? (
                       <div className="flex flex-col gap-0.5">
-                        <Badge variant="secondary" className="w-fit">{i.ca}</Badge>
+                        <Badge
+                          variant="secondary"
+                          className={`w-fit ${
+                            caExpired
+                              ? "bg-rose-600 text-white hover:bg-rose-600"
+                              : caSoon
+                              ? "bg-slate-700 text-white hover:bg-slate-700"
+                              : ""
+                          }`}
+                        >
+                          {i.ca}
+                          {caExpired && <AlertTriangle className="inline h-3 w-3 ml-1" />}
+                        </Badge>
                         {i.ca_validade && (
-                          <span className="text-[10px] text-slate-500">val. {formatDateBR(i.ca_validade)}</span>
+                          <span
+                            className={`text-[10px] font-semibold ${
+                              caExpired
+                                ? "text-rose-700"
+                                : caSoon
+                                ? "text-slate-700"
+                                : "text-slate-500"
+                            }`}
+                          >
+                            {caExpired ? "VENCIDO em " : "val. "}
+                            {formatDateBR(i.ca_validade)}
+                          </span>
                         )}
                       </div>
                     ) : <span className="text-slate-300">—</span>}
