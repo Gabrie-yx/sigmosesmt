@@ -816,8 +816,27 @@ function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</Label>
-                <Input value={f.ca} onChange={(e) => setF({ ...f, ca: e.target.value })} />
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</Label>
+                  <label className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 cursor-pointer">
+                    <input type="checkbox" checked={caNA} onChange={(e) => setCaNA(e.target.checked)} className="h-3 w-3" />
+                    Não Aplicável
+                  </label>
+                </div>
+                <Input
+                  value={caNA ? "N/A" : f.ca}
+                  onChange={(e) => setF({ ...f, ca: e.target.value })}
+                  disabled={caNA}
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Validade do CA</Label>
+                <Input
+                  type="date"
+                  value={f.ca_validade}
+                  onChange={(e) => setF({ ...f, ca_validade: e.target.value })}
+                  disabled={caNA}
+                />
               </div>
               <div>
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nº do Pedido</Label>
