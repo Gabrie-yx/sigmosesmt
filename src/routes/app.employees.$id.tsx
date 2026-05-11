@@ -923,6 +923,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     });
     if (rpcErr) throw rpcErr;
     // 2) registro na ficha do colaborador
+    const valor = f.valor_unitario ? Number(String(f.valor_unitario).replace(",", ".")) : null;
     const { error } = await supabase.from("epi_deliveries").insert({
       employee_id: empId,
       item: selected.nome_material,
@@ -930,8 +931,27 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       tamanho: null,
       qtd,
       data_entrega: f.data_entrega,
-    });
+      motivo_entrega: f.motivo_entrega,
+      data_devolucao_prevista: f.motivo_entrega === "EMPRESTIMO" && f.data_devolucao_prevista
+        ? f.data_devolucao_prevista : null,
+      valor_unitario: valor,
+      observacoes: f.observacoes || null,
+    } as any);
     if (error) throw error;
+
+    // 3) Se for perda/extravio, gera termo de responsabilidade automaticamente
+    if (f.motivo_entrega === "PERDA_EXTRAVIO") {
+      const { url, fname } = openTermoPerdaPdf({
+        emp, company, role,
+        item: selected.nome_material,
+        ca: (f.ca || selected.ca) || null,
+        qtd,
+        valor_unitario: valor,
+        data_entrega: f.data_entrega,
+        observacoes: f.observacoes,
+      });
+      openFileViewer({ url, name: fname, mime: "application/pdf" });
+    }
   }
 
   const create = useMutation({
