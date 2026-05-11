@@ -21,6 +21,7 @@ import {
 import {
   Search, Download, Plus, History,
   Trash2, ExternalLink, AlertTriangle, Pencil, X, Upload, ImageIcon, Copy,
+  ArrowDownToLine,
 } from "lucide-react";
 import protectiveClothingIcon from "@/assets/protective-clothing.png";
 import { toast } from "sonner";
@@ -168,6 +169,26 @@ function EstoqueSesmtPage() {
   const [histItem, setHistItem] = useState<Item | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [dupItem, setDupItem] = useState<Item | null>(null);
+  const [showEntrada, setShowEntrada] = useState(false);
+
+  const entradaMut = useMutation({
+    mutationFn: async (args: { epi_id: string; qtd: number; fornecedor?: string }) => {
+      const { error } = await (supabase as any).rpc("registrar_movimentacao_epi", {
+        _epi_id: args.epi_id,
+        _qtd: args.qtd,
+        _tipo: "ENTRADA_REPOSICAO",
+        _fornecedor: args.fornecedor || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
+      qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
+      toast.success("Entrada registrada");
+      setShowEntrada(false);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const updateMut = useMutation({
     mutationFn: async (args: { id: string; patch: Partial<Item> }) => {
@@ -216,9 +237,14 @@ function EstoqueSesmtPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {isEditor && (
-            <Button onClick={() => setShowNew(true)} className="bg-brand text-white">
-              <Plus className="h-4 w-4 mr-2" /> Novo produto
-            </Button>
+            <>
+              <Button onClick={() => setShowEntrada(true)} variant="outline" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50">
+                <ArrowDownToLine className="h-4 w-4 mr-2" /> Dar entrada
+              </Button>
+              <Button onClick={() => setShowNew(true)} className="bg-brand text-white">
+                <Plus className="h-4 w-4 mr-2" /> Novo produto
+              </Button>
+            </>
           )}
           <Button variant="outline" onClick={exportXlsx}>
             <Download className="h-4 w-4 mr-2" /> Exportar XLSX
@@ -434,6 +460,15 @@ function EstoqueSesmtPage() {
         item={histItem}
         movs={histItem ? (movsByItem.get(histItem.id) ?? []) : []}
         onClose={() => setHistItem(null)}
+      />
+
+      {/* Entrada de estoque */}
+      <EntradaDialog
+        open={showEntrada}
+        onOpenChange={setShowEntrada}
+        items={items}
+        onSubmit={(v) => entradaMut.mutate(v)}
+        pending={entradaMut.isPending}
       />
     </div>
   );
@@ -1213,6 +1248,130 @@ function HistoryDialog({ item, movs, onClose }: { item: Item | null; movs: Movim
             </TableBody>
           </Table>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ---------- Entrada (reposição) Dialog ---------- */
+function EntradaDialog({
+  open, onOpenChange, items, onSubmit, pending,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  items: Item[];
+  onSubmit: (v: { epi_id: string; qtd: number; fornecedor?: string }) => void;
+  pending: boolean;
+}) {
+  const [epiId, setEpiId] = useState<string>("");
+  const [qtd, setQtd] = useState<string>("");
+  const [fornecedor, setFornecedor] = useState<string>("");
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    if (!open) {
+      setEpiId(""); setQtd(""); setFornecedor(""); setSearch("");
+    }
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((i) =>
+      i.nome_material.toLowerCase().includes(q) ||
+      (i.codigo_material ?? "").toLowerCase().includes(q) ||
+      (i.ca ?? "").toLowerCase().includes(q),
+    );
+  }, [items, search]);
+
+  const selected = items.find((i) => i.id === epiId) || null;
+
+  function submit() {
+    const n = Number(qtd);
+    if (!epiId) { toast.error("Selecione um produto"); return; }
+    if (!n || n <= 0) { toast.error("Quantidade inválida"); return; }
+    onSubmit({ epi_id: epiId, qtd: n, fornecedor: fornecedor.trim() || undefined });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Dar entrada em estoque</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>Buscar produto</Label>
+            <div className="relative mt-1">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Nome, código ou CA…"
+                className="pl-9"
+              />
+            </div>
+          </div>
+          <div>
+            <Label>Produto *</Label>
+            <Select value={epiId} onValueChange={setEpiId}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Selecione um produto existente" />
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                {filtered.length === 0 && (
+                  <div className="px-2 py-3 text-xs text-muted-foreground">Nenhum produto encontrado</div>
+                )}
+                {filtered.map((i) => (
+                  <SelectItem key={i.id} value={i.id}>
+                    {i.nome_material}
+                    {i.ca ? ` · CA ${i.ca}` : ""}
+                    {` · saldo ${i.quantidade_atual}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selected && (
+              <div className="text-[11px] text-slate-500 mt-1">
+                Saldo atual: <b>{selected.quantidade_atual}</b>
+                {selected.ultimo_fornecedor ? ` · último fornecedor: ${selected.ultimo_fornecedor}` : ""}
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Quantidade *</Label>
+              <Input
+                type="number"
+                min={1}
+                value={qtd}
+                onChange={(e) => setQtd(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Fornecedor</Label>
+              <Input
+                value={fornecedor}
+                onChange={(e) => setFornecedor(e.target.value)}
+                placeholder="Opcional"
+                className="mt-1"
+              />
+            </div>
+          </div>
+          {selected && Number(qtd) > 0 && (
+            <div className="rounded-md bg-emerald-50 border border-emerald-200 p-2 text-xs text-emerald-800">
+              Novo saldo após entrada: <b>{selected.quantidade_atual + Number(qtd)}</b>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={submit} disabled={pending} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+            <ArrowDownToLine className="h-4 w-4 mr-2" />
+            {pending ? "Registrando…" : "Registrar entrada"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
