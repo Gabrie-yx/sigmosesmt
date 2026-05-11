@@ -566,6 +566,30 @@ function IndeferBtn({ onConfirm }: { onConfirm: (motivo: string) => void }) {
 function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: string }) {
   const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
+  const [numero, setNumero] = useState<string>("Gerando...");
+
+  // Gera número automático: SEQ/MM/AAAA (sequencial reiniciado por mês/ano)
+  React.useEffect(() => {
+    (async () => {
+      const now = new Date();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const yyyy = String(now.getFullYear());
+      const start = `${yyyy}-${mm}-01`;
+      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const end = endDate.toISOString().slice(0, 10);
+      const { count } = await supabase
+        .from("purchase_requisitions")
+        .select("id", { count: "exact", head: true })
+        .gte("data_requisicao", start)
+        .lt("data_requisicao", end);
+      const seq = String((count ?? 0) + 1).padStart(3, "0");
+      const novo = `${seq}/${mm}/${yyyy}`;
+      setNumero(novo);
+      setForm((f) => ({ ...f, numero: novo }));
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [form, setForm] = useState({
     numero: "",
     data_requisicao: today,
