@@ -169,6 +169,26 @@ function EstoqueSesmtPage() {
   const [histItem, setHistItem] = useState<Item | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [dupItem, setDupItem] = useState<Item | null>(null);
+  const [showEntrada, setShowEntrada] = useState(false);
+
+  const entradaMut = useMutation({
+    mutationFn: async (args: { epi_id: string; qtd: number; fornecedor?: string }) => {
+      const { error } = await (supabase as any).rpc("registrar_movimentacao_epi", {
+        _epi_id: args.epi_id,
+        _qtd: args.qtd,
+        _tipo: "ENTRADA_REPOSICAO",
+        _fornecedor: args.fornecedor || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
+      qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
+      toast.success("Entrada registrada");
+      setShowEntrada(false);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const updateMut = useMutation({
     mutationFn: async (args: { id: string; patch: Partial<Item> }) => {
@@ -217,9 +237,14 @@ function EstoqueSesmtPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {isEditor && (
-            <Button onClick={() => setShowNew(true)} className="bg-brand text-white">
-              <Plus className="h-4 w-4 mr-2" /> Novo produto
-            </Button>
+            <>
+              <Button onClick={() => setShowEntrada(true)} variant="outline" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50">
+                <ArrowDownToLine className="h-4 w-4 mr-2" /> Dar entrada
+              </Button>
+              <Button onClick={() => setShowNew(true)} className="bg-brand text-white">
+                <Plus className="h-4 w-4 mr-2" /> Novo produto
+              </Button>
+            </>
           )}
           <Button variant="outline" onClick={exportXlsx}>
             <Download className="h-4 w-4 mr-2" /> Exportar XLSX
