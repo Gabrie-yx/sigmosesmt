@@ -24,12 +24,43 @@ const TIPOS = [
   "Laudo de Periculosidade", "CIPA - Ata", "Ordem de Serviço", "Procedimento", "Outro",
 ] as const;
 
-// Formata "YYYY-MM-DD" como "DD/MM/YYYY" sem aplicar timezone (evita off-by-one).
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+function todayDateOnly() {
+  const now = new Date();
+  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+}
+
+// Normaliza datas sem usar new Date("YYYY-MM-DD"), evitando diferença de fuso horário.
+function normalizeDateOnly(value?: string | null): string | null {
+  if (!value) return null;
+  const raw = String(value).trim();
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const dmy = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+  const year = iso ? Number(iso[1]) : dmy ? Number(dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3]) : null;
+  const month = iso ? Number(iso[2]) : dmy ? Number(dmy[2]) : null;
+  const day = iso ? Number(iso[3]) : dmy ? Number(dmy[1]) : null;
+
+  if (!year || !month || !day) return null;
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  if (utc.getUTCFullYear() !== year || utc.getUTCMonth() !== month - 1 || utc.getUTCDate() !== day) {
+    return null;
+  }
+  return `${year}-${pad2(month)}-${pad2(day)}`;
+}
+
 function fmtDateBR(value?: string | null): string {
-  if (!value) return "";
-  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-  return value;
+  const normalized = normalizeDateOnly(value);
+  if (!normalized) return "";
+  const [year, month, day] = normalized.split("-");
+  return `${day}/${month}/${year}`;
+}
+
+function dateOnlyTime(value?: string | null): number | null {
+  const normalized = normalizeDateOnly(value);
+  if (!normalized) return null;
+  const [year, month, day] = normalized.split("-").map(Number);
+  return Date.UTC(year, month - 1, day);
 }
 
 type SesmtDoc = {
@@ -91,8 +122,10 @@ function SesmtDocsPage() {
   const filtered = filterTipo === "ALL" ? docs : docs.filter((d) => d.tipo === filterTipo);
 
   function vencimentoStatus(data_validade: string | null) {
-    if (!data_validade) return null;
-    const dias = Math.ceil((new Date(data_validade).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    const validade = dateOnlyTime(data_validade);
+    if (validade === null) return null;
+    const hoje = dateOnlyTime(todayDateOnly())!;
+    const dias = Math.ceil((validade - hoje) / (1000 * 60 * 60 * 24));
     if (dias < 0) return { label: "Vencido", color: "bg-red-100 text-red-800 border-red-200" };
     if (dias <= 30) return { label: `Vence em ${dias}d`, color: "bg-amber-100 text-amber-800 border-amber-200" };
     return { label: "Vigente", color: "bg-emerald-100 text-emerald-800 border-emerald-200" };
