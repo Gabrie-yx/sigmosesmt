@@ -23,7 +23,8 @@ import { maskCPF, maskCNPJ, maskPhone, maskCEP, maskRG } from "@/lib/masks";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
 import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
-import { HardHat, Printer, FileSignature } from "lucide-react";
+import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
+import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning } from "lucide-react";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
