@@ -233,11 +233,6 @@ function EstoqueSesmtPage() {
               <Plus className="h-4 w-4 mr-2" /> Novo produto
             </Button>
           )}
-          <Button variant="outline" asChild>
-            <a href="https://consultaca.com.br" target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4 mr-2" /> Consultar CA
-            </a>
-          </Button>
           <Button variant="outline" onClick={exportXlsx}>
             <Download className="h-4 w-4 mr-2" /> Exportar XLSX
           </Button>
@@ -253,14 +248,24 @@ function EstoqueSesmtPage() {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por produto, código ou CA…"
-          className="pl-9"
-        />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[260px] max-w-md">
+          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por produto, código ou CA…"
+            className="pl-9"
+          />
+        </div>
+        <Button
+          asChild
+          className="bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold uppercase tracking-wide shadow-lg shadow-orange-500/30 hover:from-amber-600 hover:to-orange-700"
+        >
+          <a href="https://consultaca.com.br" target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="h-4 w-4 mr-2" /> Consultar CA
+          </a>
+        </Button>
       </div>
 
       {/* Table */}
