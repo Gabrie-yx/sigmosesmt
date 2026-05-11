@@ -445,6 +445,7 @@ function EstoqueSesmtPage() {
           updateMut.mutate({ id: editItem.id, patch }, { onSuccess: () => setEditItem(null) });
         }}
         pending={updateMut.isPending}
+        movsByItem={movsByItem}
       />
 
       {/* Duplicate product */}
@@ -457,6 +458,7 @@ function EstoqueSesmtPage() {
           createMut.mutate(rows, { onSuccess: () => setDupItem(null) });
         }}
         pending={createMut.isPending}
+        movsByItem={movsByItem}
       />
 
       {/* Movement */}
