@@ -680,7 +680,7 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
             <div className="text-[11px] p-2 space-y-0.5">
               <FieldInline label="CÓD." value={form.codigo_formulario} onChange={(v) => setForm({ ...form, codigo_formulario: v })} />
               <FieldInline label="REVISÃO:" value={form.revisao} onChange={(v) => setForm({ ...form, revisao: v })} />
-              <FieldInline label="DATA:" type="date" value={form.data_revisao} onChange={(v) => setForm({ ...form, data_revisao: v })} />
+              <FieldInline label="DATA:" type="date" value={form.data_revisao} onChange={(v) => setForm({ ...form, data_revisao: v })} readOnly />
               <FieldInline label="PAG.:" value={form.pagina} onChange={(v) => setForm({ ...form, pagina: v })} />
             </div>
           </div>
@@ -806,8 +806,8 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
 }
 
 function FieldInline({
-  label, value, onChange, type = "text",
-}: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  label, value, onChange, type = "text", readOnly,
+}: { label: string; value: string; onChange: (v: string) => void; type?: string; readOnly?: boolean }) {
   return (
     <div className="flex items-center gap-1">
       <span className="font-bold whitespace-nowrap">{label}</span>
@@ -815,7 +815,8 @@ function FieldInline({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 min-w-0 bg-transparent border-0 border-b border-dotted border-black/40 outline-none text-[11px] px-0.5 focus:border-red-700"
+        readOnly={readOnly}
+        className={`flex-1 min-w-0 bg-transparent border-0 border-b border-dotted border-black/40 outline-none text-[11px] px-0.5 focus:border-red-700 ${readOnly ? "cursor-default text-black/70" : ""}`}
       />
     </div>
   );
