@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +24,14 @@ import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
 import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
 import { HardHat, Printer, FileSignature } from "lucide-react";
-import { registrarSaidaEntregaEpi, registrarReentradaEpi } from "@/lib/estoque-sesmt-sync";
+import {
+  registrarSaidaEntregaEpi,
+  registrarReentradaEpi,
+  listEstoqueProducts,
+  ESTOQUE_SESMT_EVENT,
+  ESTOQUE_SESMT_STORAGE_KEY,
+  type EstoqueProductOption,
+} from "@/lib/estoque-sesmt-sync";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -842,18 +849,25 @@ function VaccinesTab({ empId, vaccines, role, canEdit, canDelete, qc }: any) {
 
 /* ============ EPI ============ */
 function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsOk, missingDocs }: any) {
-  const EPI_ITEMS = [
-    "TREINAMENTOS","AVENTAL DE RASPA","BALACLAVA","BOTA","CALÇA","CAMISA",
-    "CAPACETE","LENTES DE SOLDA","LUVA","MANGOTE DE RASPA","MÁSCARA DE SOLDA",
-    "ÓCULOS","PROT. AURICULAR","VISEIRAS",
-  ];
-  const SIZES_BY_ITEM: Record<string, string[]> = {
-    "CAMISA": ["PP","P","M","G","GG","XGG","EXG"],
-    "CALÇA": ["PP","P","M","G"],
-    "BOTA": ["36","37","38","39","40","41","42","43","44"],
-  };
+  const [stockItems, setStockItems] = useState<EstoqueProductOption[]>(() => listEstoqueProducts());
+  useEffect(() => {
+    const reload = () => setStockItems(listEstoqueProducts());
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === ESTOQUE_SESMT_STORAGE_KEY) reload();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(ESTOQUE_SESMT_EVENT, reload as EventListener);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(ESTOQUE_SESMT_EVENT, reload as EventListener);
+    };
+  }, []);
+  const EPI_ITEMS = stockItems.map((p) => p.base);
   const [f, setF] = useState<any>({ item: "", ca: "", tamanho: "", qtd: 1, data_entrega: new Date().toISOString().slice(0, 10) });
-  const sizeOptions = SIZES_BY_ITEM[f.item] ?? null;
+  const selectedProduct = stockItems.find((p) => p.base === f.item) ?? null;
+  const variantOptions = selectedProduct?.variants ?? [];
+  const hasRealSizes = variantOptions.some((v) => v.sizeValue && v.sizeValue.trim().length > 0);
+  const sizeOptions = hasRealSizes ? variantOptions.map((v) => v.sizeValue).filter(Boolean) : null;
   const MOTIVOS_DEV = ["Danificado", "Desgaste Natural", "Extravio", "Mal Uso", "Furto", "Uso Temporário"];
   const [substitution, setSubstitution] = useState<{ prev: any; motivo: string; data: string; obs: string } | null>(null);
 
@@ -1018,9 +1032,23 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           <form onSubmit={(e) => { e.preventDefault(); submitDelivery(); }} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
             <div className="md:col-span-4 space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição do EPI</Label>
-              <Select value={f.item} onValueChange={(v) => setF({ ...f, item: v, tamanho: "" })}>
-                <SelectTrigger><SelectValue placeholder="Ex: CAPACETE, LUVA…" /></SelectTrigger>
-                <SelectContent>{EPI_ITEMS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
+              <Select
+                value={f.item}
+                onValueChange={(v) => {
+                  const prod = stockItems.find((p) => p.base === v);
+                  setF({ ...f, item: v, tamanho: "", ca: prod?.ca ?? f.ca });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={EPI_ITEMS.length ? "Selecione um EPI do estoque…" : "Nenhum item no estoque SESMT"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {EPI_ITEMS.length === 0 ? (
+                    <div className="px-2 py-1.5 text-xs text-slate-500">Cadastre itens no Estoque SESMT</div>
+                  ) : (
+                    EPI_ITEMS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)
+                  )}
+                </SelectContent>
               </Select>
             </div>
             <div className="md:col-span-3 space-y-1.5">

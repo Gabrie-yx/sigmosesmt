@@ -76,7 +76,8 @@ function findVariant(
   for (let pi = 0; pi < products.length; pi++) {
     const p = products[pi];
     if (!Array.isArray(p.variants)) continue;
-    if (norm(p.base) !== baseFirst) continue;
+    const baseN = norm(p.base);
+    if (baseN !== itemN && baseN !== baseFirst) continue;
     for (let vi = 0; vi < p.variants.length; vi++) {
       const labelN = norm(p.variants[vi].label);
       if (tamN) {
@@ -94,7 +95,8 @@ function findVariant(
   for (let pi = 0; pi < products.length; pi++) {
     const p = products[pi];
     if (!Array.isArray(p.variants)) continue;
-    if (norm(p.base) !== baseFirst) continue;
+    const baseN = norm(p.base);
+    if (baseN !== itemN && baseN !== baseFirst) continue;
     for (let vi = 0; vi < p.variants.length; vi++) {
       candidates.push({ pi, vi });
     }
@@ -140,3 +142,31 @@ export function registrarReentradaEpi(item: string, tamanho?: string | null, qtd
 
 export const ESTOQUE_SESMT_EVENT = EVENT;
 export const ESTOQUE_SESMT_STORAGE_KEY = STORAGE_KEY;
+
+export type EstoqueProductOption = {
+  base: string;
+  ca?: string;
+  variants: Array<{ label: string; sizeValue: string }>;
+};
+
+/** Extrai o "tamanho" puro do label da variante (ex.: "TAM. 39" -> "39"). */
+function extractSize(label: string): string {
+  const l = (label || "").trim();
+  if (!l) return "";
+  if (/^padrao$/i.test(norm(l))) return "";
+  return l.replace(/^TAM\.?\s*/i, "").trim();
+}
+
+/** Lista produtos do estoque SESMT para uso em selects (ex.: ficha do colaborador). */
+export function listEstoqueProducts(): EstoqueProductOption[] {
+  const products = readProducts();
+  if (!products) return [];
+  return products.map((p) => ({
+    base: p.base,
+    ca: p.ca,
+    variants: (p.variants ?? []).map((v) => ({
+      label: v.label,
+      sizeValue: extractSize(v.label),
+    })),
+  }));
+}
