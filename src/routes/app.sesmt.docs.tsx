@@ -180,12 +180,12 @@ function SesmtDocsPage() {
                   <div className="text-xs text-slate-500 space-y-1">
                     {d.data_emissao && (
                       <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" /> Emissão: {new Date(d.data_emissao).toLocaleDateString("pt-BR")}
+                        <Calendar className="h-3 w-3" /> Emissão: {fmtDateBR(d.data_emissao)}
                       </div>
                     )}
                     {d.data_validade && (
                       <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" /> Validade: {new Date(d.data_validade).toLocaleDateString("pt-BR")}
+                        <Calendar className="h-3 w-3" /> Validade: {fmtDateBR(d.data_validade)}
                       </div>
                     )}
                   </div>
@@ -462,7 +462,7 @@ function RevisionsDialog({
                       </tr>
                     ) : (
                       <tr key={r.id} className="border-t">
-                        <td className="px-3 py-2">{new Date(r.data_revisao).toLocaleDateString("pt-BR")}</td>
+                        <td className="px-3 py-2">{fmtDateBR(r.data_revisao)}</td>
                         <td className="px-3 py-2 font-mono">{r.numero_revisao}</td>
                         <td className="px-3 py-2">{r.descricao}</td>
                         <td className="px-3 py-2 text-slate-600">{r.motivo ?? "—"}</td>
