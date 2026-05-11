@@ -187,7 +187,6 @@ function currentMonth(): string {
 function EstoqueSesmtPage() {
   const [products, setProducts] = useState<Product[]>(() => buildSeed());
   const [query, setQuery] = useState("");
-  const [selectedVariant, setSelectedVariant] = useState<Record<string, string>>({});
   const [refMonth, setRefMonth] = useState<string>(() => currentMonth());
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -208,13 +207,20 @@ function EstoqueSesmtPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter(
-      (p) =>
-        p.base.toLowerCase().includes(q) ||
-        (p.ca || "").toLowerCase().includes(q) ||
-        p.variants.some((v) => v.label.toLowerCase().includes(q)),
-    );
+    const rows: Array<{ product: Product; variant: Variant }> = [];
+    products.forEach((p) => {
+      p.variants.forEach((v) => {
+        const fullName = `${p.base} ${v.label}`.toLowerCase();
+        if (
+          !q ||
+          fullName.includes(q) ||
+          (p.ca || "").toLowerCase().includes(q)
+        ) {
+          rows.push({ product: p, variant: v });
+        }
+      });
+    });
+    return rows;
   }, [products, query]);
 
   const totals = useMemo(() => {
@@ -231,11 +237,6 @@ function EstoqueSesmtPage() {
     });
     return { produtos: products.length, sku: totalSku, est: totalEst, ent: totalEnt, sai: totalSai };
   }, [products]);
-
-  function getVariant(p: Product): Variant {
-    const id = selectedVariant[p.id] ?? p.variants[0]?.id;
-    return p.variants.find((v) => v.id === id) ?? p.variants[0];
-  }
 
   function addMovement(productId: string, variantId: string, delta: number, tipo: Movement["tipo"]) {
     if (!delta) return;
@@ -292,7 +293,6 @@ function EstoqueSesmtPage() {
   function resetData() {
     if (!confirm("Restaurar painel para os valores iniciais? Movimentações serão perdidas.")) return;
     setProducts(buildSeed());
-    setSelectedVariant({});
     toast.success("Painel restaurado");
   }
 
@@ -373,7 +373,6 @@ function EstoqueSesmtPage() {
         });
       }
       setProducts(Array.from(map.values()));
-      setSelectedVariant({});
       toast.success(`${rows.length} linhas importadas`);
     } catch (err: any) {
       toast.error("Falha ao importar: " + (err?.message ?? "erro"));
@@ -418,7 +417,7 @@ function EstoqueSesmtPage() {
             Painel de EPI's
           </h1>
           <p className="text-sm text-muted-foreground">
-            Um produto por linha. Selecione a variação para ver estoque e histórico.
+            Uma linha por item — cada variação (tamanho, cor, modelo) ocupa sua própria linha.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -467,31 +466,29 @@ function EstoqueSesmtPage() {
           <Table className="min-w-[1200px] text-sm">
             <TableHeader>
               <TableRow className="bg-slate-100 hover:bg-slate-100 border-b-2 border-slate-300">
-                <TableHead className="h-9 font-bold text-slate-700 min-w-[340px]">Produto / Variações</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 min-w-[340px]">Produto</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 w-[60px]">UMB</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 w-[90px]">CA</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 text-right w-[90px]">Est. inicial</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 text-right w-[80px]">Entradas</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 text-right w-[80px]">Saídas</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 text-right w-[100px]">Est. final</TableHead>
-                <TableHead className="h-9 font-bold text-slate-700 w-[240px]">Movimentar</TableHead>
+                <TableHead className="h-9 font-bold text-slate-700 w-[120px]">Movimentar</TableHead>
                 <TableHead className="h-9 font-bold text-slate-700 w-[90px] text-center">Histórico</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((p) => {
-                const v = getVariant(p);
-                return (
-                 <ProductRow
-                    key={p.id}
-                    product={p}
-                    variant={v}
-                    refMonth={refMonth}
-                    onPickVariant={(vid) => setSelectedVariant((s) => ({ ...s, [p.id]: vid }))}
-                    onBulkMove={(tipo, date, entries) => bulkMove(p.id, tipo, date, entries)}
-                  />
-                );
-              })}
+              {filtered.map(({ product, variant }) => (
+                <VariantRow
+                  key={`${product.id}:${variant.id}`}
+                  product={product}
+                  variant={variant}
+                  refMonth={refMonth}
+                  onMove={(tipo, date, qty) =>
+                    bulkMove(product.id, tipo, date, [{ variantId: variant.id, qty }])
+                  }
+                />
+              ))}
               {filtered.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
@@ -508,56 +505,23 @@ function EstoqueSesmtPage() {
 }
 
 /* ============================== Row ============================== */
-function ProductRow({
-  product, variant, refMonth, onPickVariant, onBulkMove,
+function VariantRow({
+  product, variant, refMonth, onMove,
 }: {
   product: Product;
   variant: Variant;
   refMonth: string;
-  onPickVariant: (id: string) => void;
-  onBulkMove: (tipo: "ENTRADA" | "SAIDA", date: string, entries: Array<{ variantId: string; qty: number }>) => void;
+  onMove: (tipo: "ENTRADA" | "SAIDA", date: string, qty: number) => void;
 }) {
-  const totalProduto = productBalance(product);
   const { start, end } = monthRange(refMonth);
   const period = variantPeriod(variant, start, end);
+  const fullName = variant.label === "PADRÃO"
+    ? product.base
+    : `${product.base} ${variant.label}`;
 
   return (
     <TableRow className="hover:bg-slate-50/60 border-b border-slate-200">
-      <TableCell className="py-2 font-bold align-top">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-baseline gap-2">
-            <span>{product.base}</span>
-            <span className="text-[10px] text-muted-foreground font-normal">
-              Total: {fmt(totalProduto)}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {product.variants.map((vv) => {
-              const sel = vv.id === variant.id;
-              const b = variantBalance(vv);
-              return (
-                <button
-                  key={vv.id}
-                  type="button"
-                  onClick={() => onPickVariant(vv.id)}
-                  className={
-                    "px-2 py-0.5 rounded-full border text-[11px] font-semibold transition-colors " +
-                    (sel
-                      ? "bg-red-50 border-red-300 text-red-700"
-                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50")
-                  }
-                  title={`${vv.label} — saldo ${fmt(b)}`}
-                >
-                  {vv.label}
-                  <span className={"ml-1.5 font-mono " + (b > 0 ? "text-emerald-700" : b < 0 ? "text-red-700" : "text-slate-400")}>
-                    {fmt(b)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </TableCell>
+      <TableCell className="py-2 font-semibold align-middle">{fullName}</TableCell>
       <TableCell className="py-2 text-slate-700">{product.umb}</TableCell>
       <TableCell className="py-2">
         {product.ca ? <Badge variant="outline" className="font-mono">{product.ca}</Badge> : <span className="text-muted-foreground">—</span>}
@@ -570,14 +534,76 @@ function ProductRow({
       </TableCell>
       <TableCell className="py-2">
         <div className="flex items-center gap-1">
-          <MovementDialog product={product} tipo="ENTRADA" onConfirm={(date, entries) => onBulkMove("ENTRADA", date, entries)} />
-          <MovementDialog product={product} tipo="SAIDA" onConfirm={(date, entries) => onBulkMove("SAIDA", date, entries)} />
+          <SingleMoveDialog label={fullName} tipo="ENTRADA" onConfirm={(date, qty) => onMove("ENTRADA", date, qty)} />
+          <SingleMoveDialog label={fullName} tipo="SAIDA" onConfirm={(date, qty) => onMove("SAIDA", date, qty)} />
         </div>
       </TableCell>
       <TableCell className="py-2 text-center">
         <HistoryDialog product={product} variant={variant} />
       </TableCell>
     </TableRow>
+  );
+}
+
+/* ============================== Single-variant move dialog ============================== */
+function SingleMoveDialog({
+  label, tipo, onConfirm,
+}: {
+  label: string;
+  tipo: "ENTRADA" | "SAIDA";
+  onConfirm: (date: string, qty: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [qty, setQty] = useState<number>(0);
+  const isEntrada = tipo === "ENTRADA";
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setQty(0); setDate(new Date().toISOString().slice(0, 10)); } }}>
+      <DialogTrigger asChild>
+        <Button
+          size="sm"
+          variant="outline"
+          className={"h-8 px-2 " + (isEntrada
+            ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+            : "border-red-300 text-red-700 hover:bg-red-50")}
+        >
+          {isEntrada ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{isEntrada ? "Entrada" : "Saída"} — {label}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground w-16">Data</label>
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-9 flex-1" />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground w-16">Qtd</label>
+            <Input type="number" min={0} value={qty || ""} placeholder="0"
+              onChange={(e) => { const n = parseInt(e.target.value || "0", 10); setQty(isNaN(n) || n < 0 ? 0 : n); }}
+              className="h-9 flex-1 text-right font-mono" />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button
+              size="sm"
+              className={isEntrada ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}
+              onClick={() => {
+                if (qty <= 0) { toast.error("Informe a quantidade"); return; }
+                onConfirm(date, qty);
+                setOpen(false);
+                setQty(0);
+              }}
+            >
+              Confirmar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
