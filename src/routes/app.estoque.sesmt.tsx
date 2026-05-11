@@ -43,7 +43,7 @@ type Product = {
   variants: Variant[];
 };
 
-const STORAGE_KEY = "estoque-epi-sesmt-v4";
+const STORAGE_KEY = "estoque-epi-sesmt-v5";
 
 export const Route = createFileRoute("/app/estoque/sesmt")({
   component: EstoqueSesmtPage,
