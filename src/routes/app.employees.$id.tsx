@@ -24,6 +24,7 @@ import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
 import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
 import { HardHat, Printer, FileSignature } from "lucide-react";
+import { registrarSaidaEntregaEpi, registrarReentradaEpi } from "@/lib/estoque-sesmt-sync";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
