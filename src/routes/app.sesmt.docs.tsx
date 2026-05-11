@@ -299,6 +299,27 @@ function RevisionsDialog({
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
+  const update = useMutation({
+    mutationFn: async (payload: {
+      id: string;
+      data_revisao: string;
+      numero_revisao: string;
+      descricao: string;
+      motivo: string | null;
+      responsavel: string;
+    }) => {
+      const { id, ...rest } = payload;
+      const { error } = await (supabase as any)
+        .from("sesmt_document_revisions").update(rest).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Revisão atualizada");
+      qc.invalidateQueries({ queryKey: ["sesmt-doc-revisions", doc?.id] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro"),
+  });
+
   // Suggest next revision number (00, 01, 02…)
   const suggestedNext = (() => {
     const nums = revs
