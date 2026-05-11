@@ -487,6 +487,8 @@ function EstoqueSesmtPage() {
         }}
         pending={createMut.isPending}
         movsByItem={movsByItem}
+        snapshotByItem={snapshotByItem}
+        monthStart={monthStart}
       />
 
       {/* Movement */}
