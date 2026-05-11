@@ -369,9 +369,6 @@ export function AppHeader() {
             <h1 className="text-[15px] font-black uppercase tracking-tight text-white">
               ESTALEIRO DMN
             </h1>
-            <div className="text-[9px] font-semibold uppercase tracking-widest text-white/55 mt-1">
-              CNPJ: 13.378.697/0001-80
-            </div>
           </div>
         </Link>
 
