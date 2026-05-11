@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import {
   Search, Download, Plus, History, ArrowUp, ArrowDown,
-  Trash2, ExternalLink, AlertTriangle, Pencil, X, Upload, ImageIcon,
+  Trash2, ExternalLink, AlertTriangle, Pencil, X, Upload, ImageIcon, Copy,
 } from "lucide-react";
 import protectiveClothingIcon from "@/assets/protective-clothing.png";
 import { toast } from "sonner";
@@ -179,6 +179,7 @@ function EstoqueSesmtPage() {
   const [histItem, setHistItem] = useState<Item | null>(null);
   const [adjItem, setAdjItem] = useState<Item | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
+  const [dupItem, setDupItem] = useState<Item | null>(null);
 
   const updateMut = useMutation({
     mutationFn: async (args: { id: string; patch: Partial<Item> }) => {
@@ -348,6 +349,9 @@ function EstoqueSesmtPage() {
                         <Button size="icon" variant="ghost" title="Editar" onClick={() => setEditItem(i)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
+                        <Button size="icon" variant="ghost" title="Duplicar" onClick={() => setDupItem(i)}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
                         {isAdmin && (
                           <Button size="icon" variant="ghost" onClick={() => {
                             if (confirm(`Excluir "${i.nome_material}"?`)) delMut.mutate(i.id);
@@ -382,6 +386,17 @@ function EstoqueSesmtPage() {
           updateMut.mutate({ id: editItem.id, patch }, { onSuccess: () => setEditItem(null) });
         }}
         pending={updateMut.isPending}
+      />
+
+      {/* Duplicate product */}
+      <EditItemDialog
+        mode="duplicate"
+        item={dupItem}
+        onClose={() => setDupItem(null)}
+        onSubmit={(patch: any) => {
+          createMut.mutate([patch], { onSuccess: () => setDupItem(null) });
+        }}
+        pending={createMut.isPending}
       />
 
       {/* Movement */}
@@ -704,7 +719,8 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
   );
 }
 
-function EditItemDialog({ item, onClose, onSubmit, pending }: any) {
+function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any) {
+  const isDup = mode === "duplicate";
   const [f, setF] = useState({ nome_material: "", codigo_material: "", ca: "", numero_pedido: "", estoque_minimo: "0", quantidade_atual: "0" });
   const [foto, setFoto] = useState<File | null>(null);
   const [removeFoto, setRemoveFoto] = useState(false);
@@ -759,7 +775,7 @@ function EditItemDialog({ item, onClose, onSubmit, pending }: any) {
   return (
     <Dialog open={!!item} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Editar produto</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isDup ? "Duplicar produto" : "Editar produto"}</DialogTitle></DialogHeader>
         {item && (
           <div className="space-y-3">
             <div>
