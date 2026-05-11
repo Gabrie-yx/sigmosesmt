@@ -566,8 +566,6 @@ function IndeferBtn({ onConfirm }: { onConfirm: (motivo: string) => void }) {
 function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: string }) {
   const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
-  const [numero, setNumero] = useState<string>("Gerando...");
-
   // Gera número automático: SEQ/MM/AAAA (sequencial reiniciado por mês/ano)
   useEffect(() => {
     (async () => {
@@ -584,14 +582,13 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
         .lt("data_requisicao", end);
       const seq = String((count ?? 0) + 1).padStart(3, "0");
       const novo = `${seq}/${mm}/${yyyy}`;
-      setNumero(novo);
       setForm((f) => ({ ...f, numero: novo }));
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [form, setForm] = useState({
-    numero: "",
+    numero: "Gerando...",
     data_requisicao: today,
     classificacao: "MATERIAL" as Classe,
     solicitante: "",
