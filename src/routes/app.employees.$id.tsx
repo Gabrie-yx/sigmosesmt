@@ -1286,6 +1286,52 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         </Card>
       )}
 
+      {(() => {
+        const emprestimos = (epis ?? []).filter(
+          (e: any) => e.motivo_entrega === "EMPRESTIMO" && !e.data_devolucao,
+        );
+        if (!emprestimos.length) return null;
+        return (
+          <Card className="p-5 rounded-2xl border-amber-300 bg-amber-50/40">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="h-4 w-4 text-amber-700" />
+              <h3 className="text-xs font-black uppercase tracking-widest text-amber-800">
+                EPIs emprestados — aguardando devolução ({emprestimos.length})
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {emprestimos.map((e: any) => {
+                const venc = e.data_devolucao_prevista
+                  ? Math.floor((new Date(e.data_devolucao_prevista).getTime() - Date.now()) / 86400000)
+                  : null;
+                const atrasado = venc !== null && venc < 0;
+                return (
+                  <div key={e.id} className={`flex items-center gap-3 p-3 rounded-xl border ${atrasado ? "border-rose-300 bg-rose-50" : "border-amber-200 bg-white"}`}>
+                    <Clock className={`h-5 w-5 ${atrasado ? "text-rose-600" : "text-amber-600"} shrink-0`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-black text-sm text-slate-800 uppercase">{e.item} <span className="text-xs text-slate-500">(QTD: {e.qtd})</span></div>
+                      <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-0.5">
+                        Entregue em {formatDateBR(e.data_entrega)} • Devolução prevista: {e.data_devolucao_prevista ? formatDateBR(e.data_devolucao_prevista) : "—"}
+                        {venc !== null && (
+                          <span className={`ml-2 ${atrasado ? "text-rose-700" : "text-amber-700"}`}>
+                            ({atrasado ? `${Math.abs(venc)}d em atraso` : `faltam ${venc}d`})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {canEdit && (
+                      <Button size="sm" variant="outline" onClick={() => openReturn(e)} className="border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+                        <CheckCircle2 className="h-4 w-4 mr-1" /> Receber de volta
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        );
+      })()}
+
       <Card className="p-5 rounded-2xl space-y-3">
         <div className="flex items-center gap-2">
           <FileSignature className="h-4 w-4 text-slate-500" />
@@ -1308,6 +1354,11 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                   <span className="font-black text-sm text-slate-800 uppercase">{e.item}</span>
                   {e.tamanho && <span className="text-xs text-slate-500">({e.tamanho})</span>}
                   <Badge variant="secondary" className="text-[10px]">QTD: {e.qtd}</Badge>
+                  {e.motivo_entrega && (
+                    <Badge className={`${MOTIVO_COLOR[e.motivo_entrega as MotivoEntrega] ?? "bg-slate-500"} text-white text-[10px]`}>
+                      {MOTIVO_LABEL[e.motivo_entrega as MotivoEntrega] ?? e.motivo_entrega}
+                    </Badge>
+                  )}
                   {e.data_devolucao ? (
                     <Badge className="bg-amber-500 text-white text-[10px]">DEVOLVIDO</Badge>
                   ) : (
