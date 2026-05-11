@@ -181,12 +181,26 @@ function EstoqueSesmtPage() {
   const [movItem, setMovItem] = useState<{ item: Item; tipo: "ENTRADA_REPOSICAO" | "DEVOLUCAO" } | null>(null);
   const [histItem, setHistItem] = useState<Item | null>(null);
   const [adjItem, setAdjItem] = useState<Item | null>(null);
+  const [editItem, setEditItem] = useState<Item | null>(null);
+
+  const updateMut = useMutation({
+    mutationFn: async (args: { id: string; patch: Partial<Item> }) => {
+      const { error } = await supabase.from("estoque_epi").update(args.patch).eq("id", args.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["estoque_epi"] });
+      toast.success("Item atualizado");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   function exportXlsx() {
     const rows = items.map((i) => ({
       Codigo: i.codigo_material,
       Produto: i.nome_material,
       CA: i.ca ?? "",
+      NumeroPedido: i.numero_pedido ?? "",
       Quantidade: i.quantidade_atual,
       EstoqueMinimo: i.estoque_minimo,
       UltimoFornecedor: i.ultimo_fornecedor ?? "",
