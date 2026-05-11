@@ -144,7 +144,7 @@ function EstoqueSesmtPage() {
         _epi_id: args.id,
         _qtd: args.qtd,
         _tipo: args.tipo,
-        _fornecedor: args.fornecedor ?? null,
+        _fornecedor: args.fornecedor ?? undefined,
       });
       if (error) throw error;
     },
