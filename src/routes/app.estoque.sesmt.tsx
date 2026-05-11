@@ -92,6 +92,31 @@ function EstoqueSesmtPage() {
     return map;
   }, [movs]);
 
+  // Mês corrente (America/Sao_Paulo aproximado pelo cliente)
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMonth = now.getMonth() + 1; // 1-12
+  const monthStart = useMemo(() => new Date(curYear, curMonth - 1, 1), [curYear, curMonth]);
+
+  const { data: snapshots = [] } = useQuery({
+    queryKey: ["estoque_epi_snapshots", curYear, curMonth],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("estoque_epi_monthly_snapshots")
+        .select("epi_id, estoque_inicial")
+        .eq("year", curYear)
+        .eq("month", curMonth);
+      if (error) throw error;
+      return (data ?? []) as { epi_id: string; estoque_inicial: number }[];
+    },
+  });
+
+  const snapshotByItem = useMemo(() => {
+    const map = new Map<string, number>();
+    snapshots.forEach((s) => map.set(s.epi_id, s.estoque_inicial ?? 0));
+    return map;
+  }, [snapshots]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return items;
