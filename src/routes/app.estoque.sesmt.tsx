@@ -264,12 +264,11 @@ function EstoqueSesmtPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Produtos" value={items.length} />
-        <StatCard label="Estoque total" value={totals.total} highlight />
-        <StatCard label="Entradas (total)" value={totals.entradas} variant="emerald" />
-        <StatCard label="Saídas (total)" value={totals.saidas} variant="rose" />
+      {/* Stats — consolidados para evitar redundância */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <StatCard label="Produtos cadastrados" value={items.length} />
+        <StatCard label="Estoque total (em mãos)" value={totals.total} highlight />
+        <MovStatCard entradas={totals.entradas} saidas={totals.saidas} />
       </div>
 
       {/* Search */}
