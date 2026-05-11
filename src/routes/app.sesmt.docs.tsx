@@ -24,6 +24,14 @@ const TIPOS = [
   "Laudo de Periculosidade", "CIPA - Ata", "Ordem de Serviço", "Procedimento", "Outro",
 ] as const;
 
+// Formata "YYYY-MM-DD" como "DD/MM/YYYY" sem aplicar timezone (evita off-by-one).
+function fmtDateBR(value?: string | null): string {
+  if (!value) return "";
+  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return value;
+}
+
 type SesmtDoc = {
   id: string;
   tipo: string;
