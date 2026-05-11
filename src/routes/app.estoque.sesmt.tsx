@@ -719,7 +719,8 @@ function NewItemDialog({ open, onOpenChange, onSubmit, pending }: any) {
   );
 }
 
-function EditItemDialog({ item, onClose, onSubmit, pending }: any) {
+function EditItemDialog({ item, onClose, onSubmit, pending, mode = "edit" }: any) {
+  const isDup = mode === "duplicate";
   const [f, setF] = useState({ nome_material: "", codigo_material: "", ca: "", numero_pedido: "", estoque_minimo: "0", quantidade_atual: "0" });
   const [foto, setFoto] = useState<File | null>(null);
   const [removeFoto, setRemoveFoto] = useState(false);
@@ -774,7 +775,7 @@ function EditItemDialog({ item, onClose, onSubmit, pending }: any) {
   return (
     <Dialog open={!!item} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Editar produto</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isDup ? "Duplicar produto" : "Editar produto"}</DialogTitle></DialogHeader>
         {item && (
           <div className="space-y-3">
             <div>
