@@ -265,20 +265,22 @@ function EstoqueSesmtPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50">
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Foto</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Produto</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Código</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nº Pedido</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Qtd. atual</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Mínimo</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Movimentar</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Histórico</TableHead>
-              {isAdmin && <TableHead></TableHead>}
+              {isEditor && <TableHead></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={isAdmin ? 8 : 7} className="text-center text-sm text-muted-foreground py-10">
+                <TableCell colSpan={isEditor ? 10 : 9} className="text-center text-sm text-muted-foreground py-10">
                   Nenhum item cadastrado. Clique em "Novo produto" para começar.
                 </TableCell>
               </TableRow>
@@ -287,8 +289,18 @@ function EstoqueSesmtPage() {
               const low = i.quantidade_atual <= (i.estoque_minimo ?? 0);
               return (
                 <TableRow key={i.id} className="hover:bg-slate-50/50">
+                  <TableCell>
+                    {i.imagem_url ? (
+                      <img src={i.imagem_url} alt="" className="h-10 w-10 rounded object-cover border border-slate-200" />
+                    ) : (
+                      <div className="h-10 w-10 rounded border border-dashed border-slate-300 flex items-center justify-center text-slate-300">
+                        <ImageIcon className="h-4 w-4" />
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-bold text-slate-800 uppercase">{i.nome_material}</TableCell>
                   <TableCell className="text-xs text-slate-500">{i.codigo_material}</TableCell>
+                  <TableCell className="text-xs text-slate-500">{i.numero_pedido || "—"}</TableCell>
                   <TableCell className="text-xs">
                     {i.ca ? <Badge variant="secondary">{i.ca}</Badge> : <span className="text-slate-300">—</span>}
                   </TableCell>
@@ -330,13 +342,20 @@ function EstoqueSesmtPage() {
                       <History className="h-4 w-4 mr-1" /> Ver
                     </Button>
                   </TableCell>
-                  {isAdmin && (
+                  {isEditor && (
                     <TableCell>
-                      <Button size="icon" variant="ghost" onClick={() => {
-                        if (confirm(`Excluir "${i.nome_material}"?`)) delMut.mutate(i.id);
-                      }}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="inline-flex gap-1">
+                        <Button size="icon" variant="ghost" title="Editar" onClick={() => setEditItem(i)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {isAdmin && (
+                          <Button size="icon" variant="ghost" onClick={() => {
+                            if (confirm(`Excluir "${i.nome_material}"?`)) delMut.mutate(i.id);
+                          }}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>
