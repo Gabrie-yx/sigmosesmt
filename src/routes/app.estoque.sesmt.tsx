@@ -658,11 +658,12 @@ function SingleMoveDialog({
 
 /* ============================== History Dialog ============================== */
 function HistoryDialog({ product, variant }: { product: Product; variant: Variant }) {
+  const movements = Array.isArray(variant.movements) ? variant.movements : [];
   const data = useMemo(() => {
     // saldo acumulado por dia
     const byDay = new Map<string, number>();
-    let acc = variant.estoqueInicial;
-    const sorted = [...variant.movements].sort((a, b) => a.date.localeCompare(b.date));
+    let acc = Number(variant.estoqueInicial) || 0;
+    const sorted = [...movements].sort((a, b) => a.date.localeCompare(b.date));
     if (!sorted.length) {
       const today = new Date().toISOString().slice(0, 10);
       return [{ date: today, saldo: acc }];
@@ -675,7 +676,7 @@ function HistoryDialog({ product, variant }: { product: Product; variant: Varian
       byDay.set(m.date, acc);
     }
     return Array.from(byDay.entries()).map(([date, saldo]) => ({ date, saldo }));
-  }, [variant]);
+  }, [movements, variant.estoqueInicial]);
 
   return (
     <Dialog>
@@ -699,13 +700,13 @@ function HistoryDialog({ product, variant }: { product: Product; variant: Varian
             <div className="p-2 rounded border bg-emerald-50">
               <div className="text-[10px] uppercase tracking-wide text-emerald-800">Entradas</div>
               <div className="text-xl font-black text-emerald-800">
-                {fmt(variant.movements.filter((m) => m.delta > 0).reduce((s, m) => s + m.delta, 0))}
+                {fmt(movements.filter((m) => m.delta > 0).reduce((s, m) => s + m.delta, 0))}
               </div>
             </div>
             <div className="p-2 rounded border bg-red-50">
               <div className="text-[10px] uppercase tracking-wide text-red-800">Saídas</div>
               <div className="text-xl font-black text-red-800">
-                {fmt(variant.movements.filter((m) => m.delta < 0).reduce((s, m) => s + -m.delta, 0))}
+                {fmt(movements.filter((m) => m.delta < 0).reduce((s, m) => s + -m.delta, 0))}
               </div>
             </div>
           </div>
@@ -730,10 +731,10 @@ function HistoryDialog({ product, variant }: { product: Product; variant: Varian
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {variant.movements.length === 0 && (
+                {movements.length === 0 && (
                   <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-4">Sem movimentações</TableCell></TableRow>
                 )}
-                {[...variant.movements].reverse().map((m) => (
+                {[...movements].reverse().map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>{m.date}</TableCell>
                     <TableCell>
