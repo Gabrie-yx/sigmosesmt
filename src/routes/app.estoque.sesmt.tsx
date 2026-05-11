@@ -114,16 +114,13 @@ function EstoqueSesmtPage() {
 
   /* ---------- Mutations ---------- */
   const createMut = useMutation({
-    mutationFn: async (payload: {
-      codigo_material: string; nome_material: string; ca: string | null;
-      quantidade_atual: number; estoque_minimo: number;
-    }) => {
+    mutationFn: async (payload: any[]) => {
       const { error } = await supabase.from("estoque_epi").insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["estoque_epi"] });
-      toast.success("Item cadastrado");
+      toast.success("Produto(s) cadastrado(s)");
     },
     onError: (e: any) => toast.error(e.message),
   });
