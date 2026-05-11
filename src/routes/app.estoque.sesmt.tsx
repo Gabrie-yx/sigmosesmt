@@ -543,6 +543,33 @@ function StatCard({ label, value, variant, highlight }: { label: string; value: 
   );
 }
 
+function MovStatCard({ entradas, saidas }: { entradas: number; saidas: number }) {
+  const saldo = entradas - saidas;
+  return (
+    <Card className="p-4 rounded-2xl border bg-white border-slate-200">
+      <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+        Movimentações (total)
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-3">
+        <div>
+          <div className="text-[9px] font-bold uppercase tracking-wider text-emerald-700">Entradas</div>
+          <div className="text-2xl font-black text-emerald-700 leading-tight">{entradas}</div>
+        </div>
+        <div>
+          <div className="text-[9px] font-bold uppercase tracking-wider text-rose-700">Saídas</div>
+          <div className="text-2xl font-black text-rose-700 leading-tight">{saidas}</div>
+        </div>
+        <div>
+          <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Saldo</div>
+          <div className={`text-2xl font-black leading-tight ${saldo >= 0 ? "text-slate-800" : "text-rose-700"}`}>
+            {saldo >= 0 ? "+" : ""}{saldo}
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 const TIPO_PRESETS: Record<string, string[]> = {
   CALÇA: ["PP", "P", "M", "G", "GG", "XGG"],
   CAMISA: ["PP", "P", "M", "G", "GG", "XGG"],
