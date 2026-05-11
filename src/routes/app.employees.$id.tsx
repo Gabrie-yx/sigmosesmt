@@ -42,7 +42,6 @@ function EmployeeDetail() {
         </Button>
       </div>
       <EmployeeDetailContent id={id} showHeader initialTab={tab} />
-      <FileViewerHost />
     </div>
   );
 }
