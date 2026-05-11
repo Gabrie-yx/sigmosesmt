@@ -95,13 +95,13 @@ export function AppHeader() {
   const sesmtActive = SESMT_PATHS.some((p) => location.pathname.startsWith(p));
 
   const triggerCls = (active: boolean) =>
-    `flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-bold uppercase tracking-wide transition-all ${
+    `flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-all ${
       active
         ? "bg-white/15 text-white shadow-md ring-1 ring-white/30"
         : "text-white/85 hover:bg-white/10 hover:text-white"
     }`;
   const disabledCls =
-    "flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-bold uppercase tracking-wide text-white/40 cursor-not-allowed";
+    "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide whitespace-nowrap text-white/40 cursor-not-allowed";
 
   const DesktopNav = () => (
     <>
@@ -359,28 +359,28 @@ export function AppHeader() {
   );
 
   return (
-    <header className="bg-header sticky top-0 z-30 shadow-md">
-      <div className="flex h-16 items-center justify-between px-4 md:px-8">
-        <Link to="/app" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <div className="flex h-10 items-center justify-center rounded bg-white/95 px-2 py-1 shadow-sm">
-            <img src={dmnLogo} alt="DMN Estaleiro" className="h-8 w-auto object-contain" />
+    <header className="bg-header sticky top-0 z-30 shadow-md bg-gradient-to-b from-[#a01818] to-[#7f1212]">
+      <div className="flex h-14 items-center gap-4 px-4 md:px-6">
+        <Link to="/app" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity shrink-0">
+          <div className="flex h-9 items-center justify-center rounded bg-white/95 px-1.5 py-1 shadow-sm">
+            <img src={dmnLogo} alt="DMN Estaleiro" className="h-7 w-auto object-contain" />
           </div>
-          <div className="whitespace-nowrap">
-            <h1 className="text-lg font-black uppercase tracking-tight leading-none text-white whitespace-nowrap">
+          <div className="whitespace-nowrap leading-none">
+            <h1 className="text-[15px] font-black uppercase tracking-tight text-white">
               ESTALEIRO DMN
             </h1>
-            <div className="text-[9px] font-bold uppercase tracking-widest text-white/60 mt-1 whitespace-nowrap">
+            <div className="text-[9px] font-semibold uppercase tracking-widest text-white/55 mt-1">
               CNPJ: 13.378.697/0001-80
             </div>
           </div>
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-1">
+        <nav className="hidden lg:flex flex-1 items-center justify-center gap-0.5 min-w-0">
           <DesktopNav />
         </nav>
 
-        <div className="flex items-center gap-2">
-          <div className="hidden md:flex items-center gap-1 border-l border-white/10 pl-3">
+        <div className="flex items-center gap-1.5 shrink-0 ml-auto lg:ml-0">
+          <div className="hidden md:flex items-center gap-0.5 border-l border-white/10 pl-2">
             <button
               title="Exportar backup"
               onClick={() => exportBackup()}
@@ -404,22 +404,22 @@ export function AppHeader() {
               onChange={(e) => e.target.files?.[0] && handleImport(e.target.files[0])}
             />
           </div>
-          <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-3">
-            <div className="text-right">
-              <div className="text-xs font-bold text-header-foreground truncate max-w-[160px]">
+          <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-2">
+            <div className="text-right leading-tight">
+              <div className="text-[11px] font-bold text-header-foreground truncate max-w-[180px]">
                 {user?.email}
               </div>
               <div className="flex gap-1 justify-end mt-0.5">
                 {roles.length === 0 && (
                   <Badge
                     variant="outline"
-                    className="text-[9px] border-white/20 text-header-foreground/70"
+                    className="text-[9px] py-0 px-1.5 border-white/20 text-header-foreground/70"
                   >
                     sem papel
                   </Badge>
                 )}
                 {roles.map((r) => (
-                  <Badge key={r} className="text-[9px] bg-white/10 text-header-foreground border-0">
+                  <Badge key={r} className="text-[9px] py-0 px-1.5 bg-white/10 text-header-foreground border-0">
                     {r}
                   </Badge>
                 ))}
@@ -429,7 +429,7 @@ export function AppHeader() {
               size="icon"
               variant="ghost"
               onClick={handleLogout}
-              className="text-header-foreground hover:bg-white/10"
+              className="h-8 w-8 text-header-foreground hover:bg-white/10"
             >
               <LogOut className="h-4 w-4" />
             </Button>
