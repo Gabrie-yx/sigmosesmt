@@ -108,6 +108,8 @@ export type Database = {
           status: string
           tema_id: string | null
           tema_livre: string | null
+          temas_ids: string[]
+          temas_livres: string[]
           updated_at: string
         }
         Insert: {
@@ -128,6 +130,8 @@ export type Database = {
           status?: string
           tema_id?: string | null
           tema_livre?: string | null
+          temas_ids?: string[]
+          temas_livres?: string[]
           updated_at?: string
         }
         Update: {
@@ -148,6 +152,8 @@ export type Database = {
           status?: string
           tema_id?: string | null
           tema_livre?: string | null
+          temas_ids?: string[]
+          temas_livres?: string[]
           updated_at?: string
         }
         Relationships: [

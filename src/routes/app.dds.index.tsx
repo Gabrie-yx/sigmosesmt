@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3 } from "lucide-react";
+import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/dds/")({
@@ -26,6 +26,8 @@ type DDS = {
   setor: string | null;
   tema_id: string | null;
   tema_livre: string | null;
+  temas_ids: string[] | null;
+  temas_livres: string[] | null;
   duracao_min: number;
   conteudo: string | null;
   participantes_esperados: number;
