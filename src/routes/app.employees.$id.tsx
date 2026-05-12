@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
-import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, UFS, VACINAS_LIST, BAIRROS_MANAUS } from "@/lib/constants";
+import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, NATUREZA_KEY_MAP, UFS, VACINAS_LIST, BAIRROS_MANAUS } from "@/lib/constants";
 import { maskCPF, maskCNPJ, maskPhone, maskCEP, maskRG } from "@/lib/masks";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
@@ -275,7 +275,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               <TabsTrigger value="vaccines">Vacinas</TabsTrigger>
             </TabsList>
             <TabsContent value="exams" className="mt-4">
-              <HealthTab empId={id} exams={exams ?? []} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+              <HealthTab empId={id} exams={exams ?? []} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
             </TabsContent>
             <TabsContent value="vaccines" className="mt-4">
               <VaccinesTab empId={id} vaccines={vaccines ?? []} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
