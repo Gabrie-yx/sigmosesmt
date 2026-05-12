@@ -192,6 +192,22 @@ function RolesPage() {
     if (v) VACINAS_RISCO_BIOLOGICO.forEach((x) => { if (!vac.includes(x)) vac = [...vac, x]; });
     setEditing({ ...editing, risco_biologico: v, req_vacinas: vac });
   }
+  function toggleExameNatureza(natureza: Natureza, exame: string) {
+    if (!editing) return;
+    const cur = editing.exames_por_natureza ?? emptyExames;
+    const list = cur[natureza] ?? [];
+    const next: ExamesPorNatureza = {
+      ...cur,
+      [natureza]: list.includes(exame) ? list.filter((x) => x !== exame) : [...list, exame],
+    };
+    setEditing({ ...editing, exames_por_natureza: next });
+  }
+  function copyExamesNatureza(from: Natureza, to: Natureza) {
+    if (!editing) return;
+    const cur = editing.exames_por_natureza ?? emptyExames;
+    setEditing({ ...editing, exames_por_natureza: { ...cur, [to]: [...(cur[from] ?? [])] } });
+    toast.success(`Exames copiados para ${NATUREZAS.find((n) => n.key === to)?.label}`);
+  }
 
   const reqNRsSet = useMemo(() => new Set(editing?.req_nrs ?? []), [editing?.req_nrs]);
   const reqExamesSet = useMemo(() => new Set(editing?.req_exames ?? []), [editing?.req_exames]);
