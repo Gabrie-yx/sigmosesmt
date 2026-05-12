@@ -14,6 +14,249 @@ export type Database = {
   }
   public: {
     Tables: {
+      apr_assinaturas: {
+        Row: {
+          apr_id: string
+          assinatura_imagem_path: string | null
+          assinou_em: string | null
+          confirmado_por: string | null
+          cpf: string | null
+          created_at: string
+          employee_id: string | null
+          funcao: string | null
+          id: string
+          nome: string
+          ordem: number
+          papel: string
+        }
+        Insert: {
+          apr_id: string
+          assinatura_imagem_path?: string | null
+          assinou_em?: string | null
+          confirmado_por?: string | null
+          cpf?: string | null
+          created_at?: string
+          employee_id?: string | null
+          funcao?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          papel: string
+        }
+        Update: {
+          apr_id?: string
+          assinatura_imagem_path?: string | null
+          assinou_em?: string | null
+          confirmado_por?: string | null
+          cpf?: string | null
+          created_at?: string
+          employee_id?: string | null
+          funcao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          papel?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apr_assinaturas_apr_id_fkey"
+            columns: ["apr_id"]
+            isOneToOne: false
+            referencedRelation: "aprs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apr_assinaturas_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apr_riscos: {
+        Row: {
+          acoes_preventivas: string | null
+          apr_id: string
+          catalogo_risco_id: string | null
+          created_at: string
+          efeitos_danos: string | null
+          epis: string[]
+          id: string
+          nivel_risco: number | null
+          nrs: string[]
+          ordem: number
+          probabilidade: number
+          responsavel_acoes: string | null
+          risco_categoria: string | null
+          risco_nome: string
+          severidade: number
+        }
+        Insert: {
+          acoes_preventivas?: string | null
+          apr_id: string
+          catalogo_risco_id?: string | null
+          created_at?: string
+          efeitos_danos?: string | null
+          epis?: string[]
+          id?: string
+          nivel_risco?: number | null
+          nrs?: string[]
+          ordem?: number
+          probabilidade?: number
+          responsavel_acoes?: string | null
+          risco_categoria?: string | null
+          risco_nome: string
+          severidade?: number
+        }
+        Update: {
+          acoes_preventivas?: string | null
+          apr_id?: string
+          catalogo_risco_id?: string | null
+          created_at?: string
+          efeitos_danos?: string | null
+          epis?: string[]
+          id?: string
+          nivel_risco?: number | null
+          nrs?: string[]
+          ordem?: number
+          probabilidade?: number
+          responsavel_acoes?: string | null
+          risco_categoria?: string | null
+          risco_nome?: string
+          severidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apr_riscos_apr_id_fkey"
+            columns: ["apr_id"]
+            isOneToOne: false
+            referencedRelation: "aprs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apr_riscos_catalogo_risco_id_fkey"
+            columns: ["catalogo_risco_id"]
+            isOneToOne: false
+            referencedRelation: "catalogo_riscos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aprs: {
+        Row: {
+          atividade_descricao: string
+          casco_id: string | null
+          condicoes_climaticas: string | null
+          created_at: string
+          created_by: string | null
+          data_emissao: string
+          data_validade: string | null
+          empresa_id: string | null
+          encarregado_id: string | null
+          exige_pte: boolean
+          hora_fim: string | null
+          hora_inicio: string | null
+          id: string
+          local: string | null
+          numero: string
+          observacoes_gerais: string | null
+          pdf_path: string | null
+          pte_id: string | null
+          setor: string | null
+          status: string
+          tst_id: string | null
+          updated_at: string
+          validade_dias: number
+        }
+        Insert: {
+          atividade_descricao: string
+          casco_id?: string | null
+          condicoes_climaticas?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_emissao?: string
+          data_validade?: string | null
+          empresa_id?: string | null
+          encarregado_id?: string | null
+          exige_pte?: boolean
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          local?: string | null
+          numero: string
+          observacoes_gerais?: string | null
+          pdf_path?: string | null
+          pte_id?: string | null
+          setor?: string | null
+          status?: string
+          tst_id?: string | null
+          updated_at?: string
+          validade_dias?: number
+        }
+        Update: {
+          atividade_descricao?: string
+          casco_id?: string | null
+          condicoes_climaticas?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_emissao?: string
+          data_validade?: string | null
+          empresa_id?: string | null
+          encarregado_id?: string | null
+          exige_pte?: boolean
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          local?: string | null
+          numero?: string
+          observacoes_gerais?: string | null
+          pdf_path?: string | null
+          pte_id?: string | null
+          setor?: string | null
+          status?: string
+          tst_id?: string | null
+          updated_at?: string
+          validade_dias?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aprs_casco_id_fkey"
+            columns: ["casco_id"]
+            isOneToOne: false
+            referencedRelation: "cascos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprs_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprs_encarregado_id_fkey"
+            columns: ["encarregado_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprs_pte_id_fkey"
+            columns: ["pte_id"]
+            isOneToOne: false
+            referencedRelation: "ptes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprs_tst_id_fkey"
+            columns: ["tst_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -1399,6 +1642,7 @@ export type Database = {
         Args: { _epi_id: string; _novo_saldo: number }
         Returns: undefined
       }
+      gerar_numero_apr: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
