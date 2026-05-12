@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { PTE_RISCOS } from "@/lib/constants";
 import { formatDateBR } from "@/lib/utils-date";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
+import { hasGlobalOverride, type SafetyOverride } from "@/lib/safety-overrides";
 
 export const Route = createFileRoute("/app/ptes")({
   component: PtesPage,
@@ -50,23 +51,36 @@ function PtesPage() {
     queryKey: ["vaccines-all"],
     queryFn: async () => (await supabase.from("employee_vaccinations").select("*")).data ?? [],
   });
+  const { data: overridesAll = [] } = useQuery({
+    queryKey: ["safety-overrides-all"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("safety_overrides").select("*").eq("ativo", true);
+      if (error) throw error;
+      return (data ?? []) as SafetyOverride[];
+    },
+  });
 
   const empOptions = useMemo(() => {
     return emps.map((e: any) => {
       const role = roles.find((r: any) => r.id === e.role_id) ?? null;
       const empExams = exams.filter((x: any) => x.employee_id === e.id);
       const empVacs = vaccines.filter((x: any) => x.employee_id === e.id);
-      const st = calculateSafetyStatus(e, role as any, empExams as any, empVacs as any);
+      const empOv = overridesAll.filter((o) => o.employee_id === e.id);
+      const st = calculateSafetyStatus(e, role as any, empExams as any, empVacs as any, empOv);
       const comp = companies.find((c: any) => c.id === e.company_id);
       return { e, st, compName: comp?.name ?? "S/ EMPRESA" };
     });
-  }, [emps, roles, exams, vaccines, companies]);
+  }, [emps, roles, exams, vaccines, companies, overridesAll]);
 
   const save = useMutation({
     mutationFn: async () => {
       const emp = emps.find((x: any) => x.id === f.employee_id);
       // Bloqueio específico para Limpeza de Tanque (Risco Biológico)
       if (f.risco?.toLowerCase().includes("tanque") || f.risco?.toLowerCase().includes("biológic")) {
+        const empOv = overridesAll.filter((o) => o.employee_id === emp?.id);
+        if (hasGlobalOverride(empOv) || empOv.some((o) => o.item_key === "PTE")) {
+          // Override ativo: pula bloqueio de vacinas
+        } else {
         const role = roles.find((r: any) => r.id === emp?.role_id);
         const reqVac: string[] = role?.req_vacinas ?? [];
         const empVacs = vaccines.filter((v: any) => v.employee_id === emp?.id);
@@ -81,7 +95,8 @@ function PtesPage() {
           return false;
         });
         if (missing.length) {
-          throw new Error(`PTE bloqueada — vacinas obrigatórias pendentes: ${missing.join(", ")}`);
+          throw new Error(`PTE bloqueada — vacinas obrigatórias pendentes: ${missing.join(", ")}. Admin pode liberar via Override no perfil do funcionário.`);
+        }
         }
       }
       if (editingId) {
