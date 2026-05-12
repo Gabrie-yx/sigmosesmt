@@ -146,13 +146,19 @@ function DDSPage() {
                   <div className="text-xs text-muted-foreground">{d.hora?.slice(0, 5) ?? ""}</div>
                 </div>
                 <div className="col-span-4 min-w-0">
-                  <div className="font-medium truncate">{t?.titulo ?? d.tema_livre ?? "—"}</div>
-                  {t && (
-                    <div className="flex gap-1 mt-0.5">
-                      <Badge variant="secondary" className="text-[9px] py-0">{t.categoria}</Badge>
-                      <Badge variant="outline" className="text-[9px] py-0">{t.criticidade}</Badge>
-                    </div>
-                  )}
+                  {(() => {
+                    const ids = (d.temas_ids && d.temas_ids.length > 0) ? d.temas_ids : (d.tema_id ? [d.tema_id] : []);
+                    const livres = (d.temas_livres && d.temas_livres.length > 0) ? d.temas_livres : (d.tema_livre ? [d.tema_livre] : []);
+                    const titles = [
+                      ...ids.map((id) => (temaMap[id] as any)?.titulo).filter(Boolean),
+                      ...livres,
+                    ];
+                    return (
+                      <>
+                        <div className="font-medium truncate" title={titles.join(" · ")}>{titles[0] ?? "—"}{titles.length > 1 ? ` +${titles.length - 1}` : ""}</div>
+                      </>
+                    );
+                  })()}
                 </div>
                 <div className="col-span-2 min-w-0">
                   <div className="font-medium truncate">{g?.nome ?? "—"}</div>
