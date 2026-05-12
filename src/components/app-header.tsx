@@ -415,6 +415,16 @@ export function AppHeader() {
           <Lock className="h-3 w-3 ml-auto" />
         </button>
       ))}
+      {isAdmin && (
+        <Link
+          to="/app/users"
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold ${
+            isActive("/app/users") ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10"
+          }`}
+        >
+          <UsersIcon className="h-4 w-4" /> Usuários
+        </Link>
+      )}
     </div>
   );
 
