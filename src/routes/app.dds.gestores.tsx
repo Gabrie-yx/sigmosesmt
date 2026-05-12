@@ -64,6 +64,7 @@ function DDSGestoresPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["dds-gestores"] });
+      qc.invalidateQueries({ queryKey: ["dds-gestores-active"] });
       setEditing(null);
       toast.success("Gestor salvo");
     },
@@ -75,7 +76,11 @@ function DDSGestoresPage() {
       const { error } = await supabase.from("dds_gestores").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["dds-gestores"] }); toast.success("Excluído"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dds-gestores"] });
+      qc.invalidateQueries({ queryKey: ["dds-gestores-active"] });
+      toast.success("Excluído");
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
