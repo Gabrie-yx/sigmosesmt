@@ -24,7 +24,7 @@ import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
 import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
-import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning } from "lucide-react";
+import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban } from "lucide-react";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -1111,6 +1111,52 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     onError: (e: any) => toast.error(e.message),
   });
 
+  // ===== Cenário "Não devolvido" — fecha entrega como perda/extravio
+  // (não retorna ao estoque, gera Termo de Perda)
+  const [notReturning, setNotReturning] = useState<any | null>(null);
+  const [nrForm, setNrForm] = useState<{ data: string; valor: string; obs: string }>({
+    data: new Date().toISOString().slice(0, 10), valor: "", obs: "",
+  });
+  function openNotReturned(item: any) {
+    setNrForm({ data: new Date().toISOString().slice(0, 10), valor: item.valor_unitario ? String(item.valor_unitario).replace(".", ",") : "", obs: "" });
+    setNotReturning(item);
+  }
+  const notReturnMut = useMutation({
+    mutationFn: async () => {
+      if (!notReturning) return;
+      const valor = nrForm.valor ? Number(String(nrForm.valor).replace(",", ".")) : null;
+      const obsHeader = `NÃO DEVOLVIDO — perda/extravio${nrForm.obs ? ` — ${nrForm.obs}` : ""}`;
+      const { error } = await supabase
+        .from("epi_deliveries")
+        .update({
+          data_devolucao: nrForm.data,
+          observacoes: obsHeader,
+          motivo_entrega: "PERDA_EXTRAVIO",
+          valor_unitario: valor ?? notReturning.valor_unitario ?? null,
+        } as any)
+        .eq("id", notReturning.id);
+      if (error) throw error;
+      // gera termo de perda
+      const { url, fname } = openTermoPerdaPdf({
+        emp, company, role,
+        item: notReturning.item,
+        ca: notReturning.ca ?? null,
+        qtd: Number(notReturning.qtd) || 1,
+        valor_unitario: valor ?? notReturning.valor_unitario ?? null,
+        data_entrega: notReturning.data_entrega,
+        observacoes: nrForm.obs || "Item não devolvido pelo colaborador.",
+      });
+      openFileViewer({ url, name: fname, mime: "application/pdf" });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["epis", empId] });
+      qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
+      toast.success("Marcado como não devolvido. Termo gerado.");
+      setNotReturning(null);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   function gerarFicha() {
     if (!docsOk) {
       toast.warning(`Atenção: documentação pendente (${(missingDocs ?? []).join(", ")}). Ficha emitida mesmo assim.`);
@@ -1376,9 +1422,14 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                 )}
               </div>
               {canEdit && !e.data_devolucao && (
-                <Button size="sm" variant="outline" onClick={() => openReturn(e)} className="border-amber-300 text-amber-700 hover:bg-amber-50">
-                  <Undo2 className="h-4 w-4 mr-1" /> Devolver
-                </Button>
+                <>
+                  <Button size="sm" variant="outline" onClick={() => openReturn(e)} className="border-amber-300 text-amber-700 hover:bg-amber-50">
+                    <Undo2 className="h-4 w-4 mr-1" /> Devolver
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => openNotReturned(e)} className="border-rose-300 text-rose-700 hover:bg-rose-50" title="Marcar como não devolvido (perda/extravio)">
+                    <Ban className="h-4 w-4 mr-1" /> Não devolvido
+                  </Button>
+                </>
               )}
               {canEdit && e.data_devolucao && (
                 <Button size="sm" variant="ghost" onClick={() => undoReturn.mutate(e.id)} title="Desfazer devolução">
@@ -1474,6 +1525,47 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             <Button variant="ghost" onClick={() => setSubstitution(null)}>Cancelar</Button>
             <Button onClick={() => substituteMut.mutate()} disabled={substituteMut.isPending || !substitution?.data || !substitution?.motivo} className="bg-amber-600 hover:bg-amber-700 text-white">
               <Plus className="h-4 w-4 mr-2" /> Confirmar substituição e entregar novo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!notReturning} onOpenChange={(o) => !o && setNotReturning(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ban className="h-5 w-5 text-rose-600" />
+              Marcar EPI como não devolvido
+            </DialogTitle>
+          </DialogHeader>
+          {notReturning && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900">
+                <strong>Atenção:</strong> esta ação registra <strong>perda/extravio</strong> do item{" "}
+                <strong className="uppercase">{notReturning.item}</strong>. O EPI <u>não retorna ao estoque</u> e
+                será gerado um <strong>Termo de Responsabilidade por Perda</strong> para assinatura do colaborador
+                (base para desconto em folha conforme NR-06 / Art. 462 CLT).
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Data do registro</Label>
+                  <Input type="date" value={nrForm.data} onChange={(e) => setNrForm({ ...nrForm, data: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Valor unitário (R$)</Label>
+                  <Input inputMode="decimal" placeholder="0,00" value={nrForm.valor} onChange={(e) => setNrForm({ ...nrForm, valor: e.target.value })} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Observações (impressas no termo)</Label>
+                <Textarea rows={3} value={nrForm.obs} onChange={(e) => setNrForm({ ...nrForm, obs: e.target.value })} placeholder="Ex.: rescisão sem devolução, item perdido em obra, B.O. nº…" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setNotReturning(null)}>Cancelar</Button>
+            <Button onClick={() => notReturnMut.mutate()} disabled={notReturnMut.isPending} className="bg-rose-600 hover:bg-rose-700 text-white">
+              <FileWarning className="h-4 w-4 mr-2" /> Confirmar e gerar termo
             </Button>
           </DialogFooter>
         </DialogContent>
