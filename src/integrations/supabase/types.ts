@@ -50,6 +50,126 @@ export type Database = {
         }
         Relationships: []
       }
+      cascos: {
+        Row: {
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          empresa_responsavel_id: string | null
+          encarregado_id: string | null
+          id: string
+          nome: string | null
+          numero: string
+          observacoes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          empresa_responsavel_id?: string | null
+          encarregado_id?: string | null
+          id?: string
+          nome?: string | null
+          numero: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          empresa_responsavel_id?: string | null
+          encarregado_id?: string | null
+          id?: string
+          nome?: string | null
+          numero?: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cascos_empresa_responsavel_id_fkey"
+            columns: ["empresa_responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cascos_encarregado_id_fkey"
+            columns: ["encarregado_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalogo_nrs: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          id: string
+          titulo: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          titulo: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
+      catalogo_riscos: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          created_at: string
+          efeitos_tipicos: string[]
+          epis_sugeridos: string[]
+          id: string
+          medidas_controle_padrao: string[]
+          nome: string
+          nrs_aplicaveis: string[]
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          created_at?: string
+          efeitos_tipicos?: string[]
+          epis_sugeridos?: string[]
+          id?: string
+          medidas_controle_padrao?: string[]
+          nome: string
+          nrs_aplicaveis?: string[]
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          efeitos_tipicos?: string[]
+          epis_sugeridos?: string[]
+          id?: string
+          medidas_controle_padrao?: string[]
+          nome?: string
+          nrs_aplicaveis?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           cnpj: string | null
