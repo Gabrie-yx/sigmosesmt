@@ -696,12 +696,15 @@ function NRToggle({
 
 function TagEditor({
   label, items, onChange, disabled, color,
-}: { label: string; items: string[]; onChange: (v: string[]) => void; disabled?: boolean; color: "sky" | "amber" | "emerald" }) {
+}: { label: string; items: string[]; onChange: (v: string[]) => void; disabled?: boolean; color: "sky" | "amber" | "emerald" | "red" | "rose" | "violet" }) {
   const [val, setVal] = useState("");
   const colorMap = {
     sky: "bg-gradient-to-br from-sky-400 to-sky-600 text-white border-sky-300 shadow-sky-400/40",
     amber: "bg-gradient-to-br from-amber-400 to-orange-500 text-white border-amber-300 shadow-amber-400/40",
     emerald: "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white border-emerald-300 shadow-emerald-400/40",
+    red: "bg-gradient-to-br from-rose-500 to-red-600 text-white border-red-300 shadow-rose-500/40",
+    rose: "bg-gradient-to-br from-pink-400 to-rose-600 text-white border-rose-300 shadow-rose-400/40",
+    violet: "bg-gradient-to-br from-violet-400 to-purple-600 text-white border-violet-300 shadow-violet-400/40",
   } as const;
   function add() {
     const t = val.trim();
@@ -740,6 +743,75 @@ function TagEditor({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function ExamesMatrix({
+  value, onToggle, onCopy, disabled,
+}: {
+  value: ExamesPorNatureza;
+  onToggle: (n: Natureza, exame: string) => void;
+  onCopy: (from: Natureza, to: Natureza) => void;
+  disabled?: boolean;
+}) {
+  const [active, setActive] = useState<Natureza>("ADMISSIONAL");
+  const toneMap: Record<string, string> = {
+    rose: "from-rose-500 to-rose-600 ring-rose-200",
+    sky: "from-sky-500 to-sky-600 ring-sky-200",
+    emerald: "from-emerald-500 to-emerald-600 ring-emerald-200",
+    amber: "from-amber-500 to-orange-500 ring-amber-200",
+    slate: "from-slate-500 to-slate-700 ring-slate-200",
+    violet: "from-violet-500 to-purple-600 ring-violet-200",
+  };
+  return (
+    <div className="space-y-3">
+      {/* Tabs por natureza */}
+      <div className="flex flex-wrap gap-2">
+        {NATUREZAS.map((n) => {
+          const count = (value[n.key] ?? []).length;
+          const isActive = active === n.key;
+          return (
+            <button
+              key={n.key} type="button" onClick={() => setActive(n.key)}
+              className={`px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
+                isActive
+                  ? `bg-gradient-to-r ${toneMap[n.tone]} text-white shadow-lg ring-2 ring-white -translate-y-0.5`
+                  : "bg-white text-slate-600 border-2 border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              {n.label}
+              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${isActive ? "bg-white/25" : "bg-slate-100 text-slate-700"}`}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Copiar de outra natureza */}
+      {!disabled && (
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-slate-500 font-bold uppercase tracking-wider">Copiar de:</span>
+          {NATUREZAS.filter((n) => n.key !== active).map((n) => (
+            <button
+              key={n.key} type="button" onClick={() => onCopy(n.key, active)}
+              className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[10px] uppercase"
+            >
+              {n.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Grade de exames da natureza ativa */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3 pt-2">
+        {TIPOS_EXAME.map((t) => {
+          const checked = (value[active] ?? []).includes(t);
+          return (
+            <NRToggle key={t} label={t} checked={checked}
+              onChange={() => onToggle(active, t)} disabled={disabled} />
+          );
+        })}
+      </div>
     </div>
   );
 }
