@@ -26,11 +26,26 @@ function RolesPageWithTabs() {
   return (
     <div className="h-full flex flex-col bg-slate-50">
       <Tabs defaultValue="cargos" className="flex-1 flex flex-col min-h-0">
-        <div className="px-6 pt-4 border-b border-slate-200 bg-white">
-          <TabsList className="h-10">
-            <TabsTrigger value="cargos" className="font-bold">Cargos</TabsTrigger>
-            <TabsTrigger value="riscos" className="font-bold">Catálogo de Riscos</TabsTrigger>
-            <TabsTrigger value="nrs" className="font-bold">Catálogo de NRs</TabsTrigger>
+        <div className="px-6 pt-5 pb-3 border-b border-rose-100 bg-gradient-to-r from-rose-50 via-white to-amber-50 shadow-sm">
+          <TabsList className="h-14 bg-white/80 backdrop-blur p-1.5 rounded-xl shadow-md border border-rose-100 gap-1">
+            <TabsTrigger
+              value="cargos"
+              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-rose-600 data-[state=active]:to-[#991b1b] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+            >
+              Cargos
+            </TabsTrigger>
+            <TabsTrigger
+              value="riscos"
+              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-rose-600 data-[state=active]:to-[#991b1b] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+            >
+              Catálogo de Riscos
+            </TabsTrigger>
+            <TabsTrigger
+              value="nrs"
+              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-rose-600 data-[state=active]:to-[#991b1b] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+            >
+              Catálogo de NRs
+            </TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="cargos" className="flex-1 min-h-0 m-0 overflow-hidden">
