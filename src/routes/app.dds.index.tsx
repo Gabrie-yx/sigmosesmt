@@ -267,8 +267,10 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
   const [hora, setHora] = useState("07:30");
   const [gestorId, setGestorId] = useState<string>("");
   const [setor, setSetor] = useState("");
-  const [temaId, setTemaId] = useState<string>("");
-  const [temaLivre, setTemaLivre] = useState("");
+  const [temaIds, setTemaIds] = useState<string[]>([]);
+  const [temasLivres, setTemasLivres] = useState<string[]>([]);
+  const [temaLivreInput, setTemaLivreInput] = useState("");
+  const [temaSearch, setTemaSearch] = useState("");
   const [duracao, setDuracao] = useState(10);
   const [conteudo, setConteudo] = useState("");
   const [esperados, setEsperados] = useState(employees.length);
@@ -290,12 +292,15 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
 
   async function save() {
     if (!gestorId) return toast.error("Selecione o gestor");
-    if (!temaId && !temaLivre.trim()) return toast.error("Selecione um tema ou digite um tema livre");
+    if (temaIds.length === 0 && temasLivres.length === 0) return toast.error("Selecione ao menos um tema ou adicione um tema livre");
     setSaving(true);
     try {
       const { data: created, error } = await supabase.from("dds").insert({
         data, hora, gestor_id: gestorId, setor: setor || null,
-        tema_id: temaId || null, tema_livre: temaId ? null : (temaLivre.trim() || null),
+        tema_id: temaIds[0] ?? null,
+        tema_livre: temasLivres[0] ?? null,
+        temas_ids: temaIds,
+        temas_livres: temasLivres,
         duracao_min: duracao, conteudo: conteudo || null,
         participantes_esperados: esperados, participantes_presentes: presentes.size,
       }).select("id").single();
@@ -352,15 +357,65 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
           </div>
 
           <div>
-            <Label>Tema *</Label>
-            <Select value={temaId} onValueChange={setTemaId}>
-              <SelectTrigger><SelectValue placeholder="Selecione da biblioteca..." /></SelectTrigger>
-              <SelectContent className="max-h-72">
-                {temas.map((t) => <SelectItem key={t.id} value={t.id}>{t.codigo ? `${t.codigo}. ` : ""}{t.titulo} [{t.criticidade}]</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <div className="text-xs text-muted-foreground mt-1">Ou digite tema livre:</div>
-            <Input value={temaLivre} onChange={(e) => setTemaLivre(e.target.value)} placeholder="Tema fora da biblioteca" disabled={!!temaId} />
+            <Label>Temas * ({temaIds.length + temasLivres.length} selecionado{temaIds.length + temasLivres.length === 1 ? "" : "s"})</Label>
+            {(temaIds.length > 0 || temasLivres.length > 0) && (
+              <div className="flex flex-wrap gap-1 mb-2 mt-1">
+                {temaIds.map((id) => {
+                  const t = temas.find((x) => x.id === id);
+                  if (!t) return null;
+                  return (
+                    <Badge key={id} variant="secondary" className="gap-1 pr-1">
+                      <span className="truncate max-w-[280px]">{t.codigo ? `${t.codigo}. ` : ""}{t.titulo}</span>
+                      <button type="button" onClick={() => setTemaIds(temaIds.filter((x) => x !== id))} className="hover:bg-slate-300 rounded p-0.5"><X className="h-3 w-3" /></button>
+                    </Badge>
+                  );
+                })}
+                {temasLivres.map((tl, i) => (
+                  <Badge key={`l-${i}`} variant="outline" className="gap-1 pr-1 border-amber-400 text-amber-800">
+                    <span className="truncate max-w-[280px]">{tl}</span>
+                    <button type="button" onClick={() => setTemasLivres(temasLivres.filter((_, idx) => idx !== i))} className="hover:bg-amber-100 rounded p-0.5"><X className="h-3 w-3" /></button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <Input placeholder="Buscar tema na biblioteca..." value={temaSearch} onChange={(e) => setTemaSearch(e.target.value)} className="mb-2" />
+            <div className="border rounded max-h-48 overflow-auto divide-y">
+              {temas
+                .filter((t) => {
+                  const q = temaSearch.toLowerCase().trim();
+                  if (!q) return true;
+                  return t.titulo.toLowerCase().includes(q) || String(t.codigo ?? "").includes(q);
+                })
+                .slice(0, 100)
+                .map((t) => {
+                  const checked = temaIds.includes(t.id);
+                  return (
+                    <label key={t.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-sm">
+                      <Checkbox checked={checked} onCheckedChange={() => setTemaIds(checked ? temaIds.filter((x) => x !== t.id) : [...temaIds, t.id])} />
+                      <span className="flex-1 truncate">{t.codigo ? `${t.codigo}. ` : ""}{t.titulo}</span>
+                      <Badge variant="outline" className="text-[9px] py-0">{t.criticidade}</Badge>
+                    </label>
+                  );
+                })}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Input
+                value={temaLivreInput}
+                onChange={(e) => setTemaLivreInput(e.target.value)}
+                placeholder="Adicionar tema livre (fora da biblioteca)"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const v = temaLivreInput.trim();
+                    if (v) { setTemasLivres([...temasLivres, v]); setTemaLivreInput(""); }
+                  }
+                }}
+              />
+              <Button type="button" variant="outline" onClick={() => {
+                const v = temaLivreInput.trim();
+                if (v) { setTemasLivres([...temasLivres, v]); setTemaLivreInput(""); }
+              }}>Adicionar</Button>
+            </div>
           </div>
 
           <div>
