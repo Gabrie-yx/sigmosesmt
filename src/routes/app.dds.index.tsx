@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X, FileDown } from "lucide-react";
+import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X, FileDown, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { DDSFormularioSemanalDialog } from "@/components/dds-formulario-semanal-dialog";
 import { DDSEvidencias } from "@/components/dds-evidencias";
@@ -51,6 +51,7 @@ function DDSPage() {
   const { isEditor, isAdmin } = useAuth();
   const [creating, setCreating] = useState(false);
   const [viewing, setViewing] = useState<DDS | null>(null);
+  const [editing, setEditing] = useState<DDS | null>(null);
   const [search, setSearch] = useState("");
   const [genForm, setGenForm] = useState(false);
 
@@ -174,6 +175,7 @@ function DDSPage() {
                 </div>
                 <div className="col-span-1 flex justify-end gap-1">
                   <Button size="icon" variant="ghost" onClick={() => setViewing(d)}><Eye className="h-4 w-4" /></Button>
+                  {isEditor && <Button size="icon" variant="ghost" onClick={() => setEditing(d)}><Pencil className="h-4 w-4" /></Button>}
                   {isAdmin && <Button size="icon" variant="ghost" onClick={() => { if (confirm("Excluir DDS?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4 text-red-600" /></Button>}
                 </div>
               </div>
@@ -202,6 +204,17 @@ function DDSPage() {
       </Dialog>
 
       {genForm && <DDSFormularioSemanalDialog open={genForm} onClose={() => setGenForm(false)} />}
+
+      {editing && (
+        <EditDDSDialog
+          open={!!editing}
+          dds={editing}
+          temas={temas as any}
+          gestores={gestores as any}
+          onClose={() => setEditing(null)}
+          onSaved={() => { qc.invalidateQueries({ queryKey: ["dds-list"] }); setEditing(null); }}
+        />
+      )}
     </div>
   );
 }
