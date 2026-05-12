@@ -210,10 +210,9 @@ export function AppHeader() {
           </div>
         </div>
       </div>
-
+      )}
       {/* Outros módulos — placeholder, mostram "em breve" no hover */}
       {/* Estoque — dropdown com submenus */}
-      )}
       {canEstoque && (<div className="group relative">
         <button
           type="button"
