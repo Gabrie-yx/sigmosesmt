@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Save, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf";
+import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-pdf";
 import { formatDateBR } from "@/lib/utils-date";
 
 type APR = {
@@ -21,6 +22,7 @@ type APR = {
   validade_dias: number; data_validade?: string | null;
   condicoes_climaticas?: string | null; observacoes_gerais?: string | null;
   status: string; exige_pte: boolean;
+  texto_gerais?: string | null;
 };
 
 type Risco = {
@@ -43,16 +45,22 @@ type Assin = {
 };
 
 function nivelMeta(n: number) {
-  if (n <= 4) return { label: "BAIXO", cls: "bg-emerald-500" };
-  if (n <= 9) return { label: "MÉDIO", cls: "bg-yellow-500" };
-  if (n <= 14) return { label: "ALTO", cls: "bg-orange-500" };
-  return { label: "CRÍTICO", cls: "bg-red-600" };
+  // Escala homologada: P+S (2..6)
+  switch (n) {
+    case 2: return { label: "TRIVIAL", cls: "bg-emerald-500" };
+    case 3: return { label: "TOLERÁVEL", cls: "bg-lime-500" };
+    case 4: return { label: "MODERADO", cls: "bg-yellow-500" };
+    case 5: return { label: "SUBSTANCIAL", cls: "bg-orange-500" };
+    case 6: return { label: "INACEITÁVEL", cls: "bg-red-600" };
+    default: return { label: "—", cls: "bg-slate-400" };
+  }
 }
 
 const emptyApr: APR = {
   atividade_descricao: "",
   data_emissao: new Date().toISOString().slice(0, 10),
   validade_dias: 7, status: "RASCUNHO", exige_pte: false,
+  texto_gerais: DEFAULT_TEXTO_GERAIS,
 };
 
 export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: () => void }) {
@@ -76,8 +84,8 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const tst = useMemo(() => employees.find((e: any) => e.id === apr.tst_id), [employees, apr.tst_id]);
   const pte = useMemo(() => ptes.find((p: any) => p.id === apr.pte_id), [ptes, apr.pte_id]);
 
-  // Detecta risco grave automaticamente
-  const temRiscoGrave = useMemo(() => riscos.some((r) => r.probabilidade * r.severidade >= 10), [riscos]);
+  // Detecta risco grave automaticamente — escala P+S, Substancial(5) ou Inaceitável(6) exigem PTE
+  const temRiscoGrave = useMemo(() => riscos.some((r) => (r.probabilidade + r.severidade) >= 5), [riscos]);
   useEffect(() => {
     if (temRiscoGrave && !apr.exige_pte) setApr((a) => ({ ...a, exige_pte: true }));
   }, [temRiscoGrave]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -202,6 +210,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         observacoes_gerais: apr.observacoes_gerais || null,
         status: publish ? "ATIVA" : (apr.status || "RASCUNHO"),
         exige_pte: apr.exige_pte,
+        texto_gerais: apr.texto_gerais ?? null,
       };
 
       let id = apr.id;
@@ -257,17 +266,37 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     onError: (e: any) => toast.error(e.message),
   });
 
+  function addAllExecutantesEmpresa() {
+    if (!apr.empresa_id) { toast.error("Selecione a Empresa Executante na aba 1"); return; }
+    const da = employees.filter((e: any) => e.company_id === apr.empresa_id);
+    if (da.length === 0) { toast.warning("Nenhum colaborador encontrado para essa empresa"); return; }
+    setAssinaturas((arr) => {
+      const next = [...arr];
+      da.forEach((e: any) => {
+        if (next.some((a) => a.papel === "EXECUTANTE" && a.employee_id === e.id)) return;
+        const role = roles.find((r: any) => r.id === e.role_id);
+        next.push({
+          papel: "EXECUTANTE", employee_id: e.id, nome: e.nome, cpf: e.cpf, funcao: role?.name ?? "",
+          ordem: next.filter((a) => a.papel === "EXECUTANTE").length + 1,
+        });
+      });
+      return next;
+    });
+    toast.success(`${da.length} executante(s) adicionado(s)`);
+  }
+
   function handleImprimir() {
     if (!apr.atividade_descricao || riscos.length === 0) {
       toast.error("Salve a APR antes de imprimir");
       return;
     }
-    const matriz = companies.find((c: any) => c.cnpj && c.name);
     const doc = gerarAPR({
       matrizNome: "J C S CONSTRUÇÃO NAVAL LTDA",
-      matrizCnpj: matriz?.cnpj ?? null,
+      matrizCnpj: "13.378.697/0001-80",
       numero: apr.numero ?? "APR-RASCUNHO",
       data_emissao: formatDateBR(apr.data_emissao),
+      data_inicio: apr.data_emissao ? formatDateBR(apr.data_emissao) : null,
+      data_fim: apr.data_validade ? formatDateBR(apr.data_validade) : null,
       hora_inicio: apr.hora_inicio,
       hora_fim: apr.hora_fim,
       data_validade: apr.data_validade ? formatDateBR(apr.data_validade) : null,
@@ -278,11 +307,14 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
       local: apr.local,
       setor: apr.setor,
       atividade: apr.atividade_descricao,
+      servico_detalhado: apr.observacoes_gerais ?? null,
+      elaborado_por: tst?.nome ?? null,
       encarregado: enc?.nome,
       tst: tst?.nome,
       pte_numero: pte?.numero ?? null,
       condicoes_climaticas: apr.condicoes_climaticas,
       observacoes: apr.observacoes_gerais,
+      texto_gerais: apr.texto_gerais ?? null,
       riscos: riscos.map((r) => ({
         ordem: r.ordem,
         risco_nome: r.risco_nome,
@@ -290,7 +322,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         efeitos_danos: r.efeitos_danos,
         probabilidade: r.probabilidade,
         severidade: r.severidade,
-        nivel_risco: r.probabilidade * r.severidade,
+        nivel_risco: r.probabilidade + r.severidade,
         acoes_preventivas: r.acoes_preventivas,
         epis: r.epis ?? [], nrs: r.nrs ?? [],
         responsavel_acoes: r.responsavel_acoes,
@@ -495,7 +527,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                           className="flex-1 font-bold"
                         />
                         <span className={`${meta.cls} text-white font-black text-xs rounded px-3 py-2`}>
-                          {nivel} · {meta.label}
+                          G={nivel} · {meta.label}
                         </span>
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => moveRisco(idx, -1)}>
                           <ChevronUp className="h-4 w-4" />
@@ -521,28 +553,24 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
 
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         <div>
-                          <Label className="text-xs">Probabilidade (1-5)</Label>
+                          <Label className="text-xs">Probabilidade (1-3)</Label>
                           <Select value={String(r.probabilidade)} onValueChange={(v) => updateRisco(idx, { probabilidade: parseInt(v) })}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="1">1 - Raríssimo</SelectItem>
-                              <SelectItem value="2">2 - Raro</SelectItem>
-                              <SelectItem value="3">3 - Ocasional</SelectItem>
-                              <SelectItem value="4">4 - Frequente</SelectItem>
-                              <SelectItem value="5">5 - Constante</SelectItem>
+                              <SelectItem value="1">1 - Baixa</SelectItem>
+                              <SelectItem value="2">2 - Média</SelectItem>
+                              <SelectItem value="3">3 - Alta</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div>
-                          <Label className="text-xs">Severidade (1-5)</Label>
+                          <Label className="text-xs">Severidade (1-3)</Label>
                           <Select value={String(r.severidade)} onValueChange={(v) => updateRisco(idx, { severidade: parseInt(v) })}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="1">1 - Insignificante</SelectItem>
-                              <SelectItem value="2">2 - Pequena</SelectItem>
-                              <SelectItem value="3">3 - Moderada</SelectItem>
-                              <SelectItem value="4">4 - Grave</SelectItem>
-                              <SelectItem value="5">5 - Catastrófica</SelectItem>
+                              <SelectItem value="1">1 - Baixa</SelectItem>
+                              <SelectItem value="2">2 - Média</SelectItem>
+                              <SelectItem value="3">3 - Alta</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -573,12 +601,17 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
               <Select onValueChange={(v) => addExecutante(v)}>
                 <SelectTrigger className="w-[320px]"><SelectValue placeholder="+ Adicionar executante (colaborador)..." /></SelectTrigger>
                 <SelectContent className="max-h-[400px]">
-                  {employees.filter((e: any) => !assinaturas.some((a) => a.employee_id === e.id && a.papel === "EXECUTANTE")).map((e: any) => (
+                  {employees.filter((e: any) => !assinaturas.some((a) => a.employee_id === e.id && a.papel === "EXECUTANTE"))
+                    .filter((e: any) => !apr.empresa_id || e.company_id === apr.empresa_id)
+                    .map((e: any) => (
                     <SelectItem key={e.id} value={e.id}>{e.nome} {e.cpf ? `· ${e.cpf}` : ""}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <span className="text-xs text-slate-500">Encarregado e TST aparecem automaticamente quando selecionados na aba 1</span>
+              <Button size="sm" variant="outline" onClick={addAllExecutantesEmpresa} disabled={!apr.empresa_id}>
+                <Plus className="h-4 w-4 mr-1" /> Adicionar todos da empresa
+              </Button>
+              <span className="text-xs text-slate-500 ml-auto">Encarregado e TST aparecem automaticamente da aba 1</span>
             </div>
 
             {(["ENCARREGADO", "TST", "EXECUTANTE"] as const).map((papel) => {
