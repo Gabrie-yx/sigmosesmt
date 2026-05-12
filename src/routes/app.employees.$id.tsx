@@ -1111,6 +1111,52 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     onError: (e: any) => toast.error(e.message),
   });
 
+  // ===== Cenário "Não devolvido" — fecha entrega como perda/extravio
+  // (não retorna ao estoque, gera Termo de Perda)
+  const [notReturning, setNotReturning] = useState<any | null>(null);
+  const [nrForm, setNrForm] = useState<{ data: string; valor: string; obs: string }>({
+    data: new Date().toISOString().slice(0, 10), valor: "", obs: "",
+  });
+  function openNotReturned(item: any) {
+    setNrForm({ data: new Date().toISOString().slice(0, 10), valor: item.valor_unitario ? String(item.valor_unitario).replace(".", ",") : "", obs: "" });
+    setNotReturning(item);
+  }
+  const notReturnMut = useMutation({
+    mutationFn: async () => {
+      if (!notReturning) return;
+      const valor = nrForm.valor ? Number(String(nrForm.valor).replace(",", ".")) : null;
+      const obsHeader = `NÃO DEVOLVIDO — perda/extravio${nrForm.obs ? ` — ${nrForm.obs}` : ""}`;
+      const { error } = await supabase
+        .from("epi_deliveries")
+        .update({
+          data_devolucao: nrForm.data,
+          observacoes: obsHeader,
+          motivo_entrega: "PERDA_EXTRAVIO",
+          valor_unitario: valor ?? notReturning.valor_unitario ?? null,
+        } as any)
+        .eq("id", notReturning.id);
+      if (error) throw error;
+      // gera termo de perda
+      const { url, fname } = openTermoPerdaPdf({
+        emp, company, role,
+        item: notReturning.item,
+        ca: notReturning.ca ?? null,
+        qtd: Number(notReturning.qtd) || 1,
+        valor_unitario: valor ?? notReturning.valor_unitario ?? null,
+        data_entrega: notReturning.data_entrega,
+        observacoes: nrForm.obs || "Item não devolvido pelo colaborador.",
+      });
+      openFileViewer({ url, name: fname, mime: "application/pdf" });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["epis", empId] });
+      qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
+      toast.success("Marcado como não devolvido. Termo gerado.");
+      setNotReturning(null);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   function gerarFicha() {
     if (!docsOk) {
       toast.warning(`Atenção: documentação pendente (${(missingDocs ?? []).join(", ")}). Ficha emitida mesmo assim.`);
