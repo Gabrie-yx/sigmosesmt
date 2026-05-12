@@ -1678,7 +1678,7 @@ export type Database = {
       snapshot_estoque_epi_monthly: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "admin" | "tst" | "viewer"
+      app_role: "admin" | "tst" | "viewer" | "moderador" | "editor"
       purchase_req_class: "MATERIAL" | "SERVICO"
       purchase_req_status: "PENDENTE" | "APROVADA" | "INDEFERIDA"
       tipo_movimentacao_epi: "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO"
@@ -1809,7 +1809,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "tst", "viewer"],
+      app_role: ["admin", "tst", "viewer", "moderador", "editor"],
       purchase_req_class: ["MATERIAL", "SERVICO"],
       purchase_req_status: ["PENDENTE", "APROVADA", "INDEFERIDA"],
       tipo_movimentacao_epi: [
