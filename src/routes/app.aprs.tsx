@@ -9,10 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2, FileText, Filter } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { AprForm } from "@/components/aprs/apr-form";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { abrirAprPdf, imprimirAprPdf, baixarAprPdf } from "@/lib/apr-pdf-loader";
 
 export const Route = createFileRoute("/app/aprs")({
   component: AprsPage,
@@ -152,15 +154,37 @@ function AprsPage() {
                       <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${STATUS_TONE[a.status] ?? ""}`}>{a.status}</span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(a.id)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      {isAdmin && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-rose-600"
-                          onClick={() => { if (confirm(`Excluir ${a.numero}?`)) del.mutate(a.id); }}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuItem onClick={() => abrirAprPdf(a.id).catch((e) => toast.error(e.message))}>
+                            <Eye className="h-4 w-4 mr-2" /> Visualizar PDF
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => imprimirAprPdf(a.id).catch((e) => toast.error(e.message))}>
+                            <Printer className="h-4 w-4 mr-2" /> Imprimir
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => baixarAprPdf(a.id, a.numero).catch((e) => toast.error(e.message))}>
+                            <Download className="h-4 w-4 mr-2" /> Baixar PDF
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {isEditor && (
+                            <DropdownMenuItem onClick={() => setEditing(a.id)}>
+                              <Pencil className="h-4 w-4 mr-2" /> Editar
+                            </DropdownMenuItem>
+                          )}
+                          {isAdmin && (
+                            <DropdownMenuItem
+                              className="text-rose-600 focus:text-rose-600"
+                              onClick={() => { if (confirm(`Excluir ${a.numero}?`)) del.mutate(a.id); }}>
+                              <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
