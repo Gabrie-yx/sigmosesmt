@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
-import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, UFS, VACINAS_LIST, BAIRROS_MANAUS } from "@/lib/constants";
+import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, NATUREZA_KEY_MAP, UFS, VACINAS_LIST, BAIRROS_MANAUS } from "@/lib/constants";
 import { maskCPF, maskCNPJ, maskPhone, maskCEP, maskRG } from "@/lib/masks";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
@@ -275,7 +275,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               <TabsTrigger value="vaccines">Vacinas</TabsTrigger>
             </TabsList>
             <TabsContent value="exams" className="mt-4">
-              <HealthTab empId={id} exams={exams ?? []} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+              <HealthTab empId={id} exams={exams ?? []} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
             </TabsContent>
             <TabsContent value="vaccines" className="mt-4">
               <VaccinesTab empId={id} vaccines={vaccines ?? []} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
@@ -1574,7 +1574,16 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
   );
 }
 /* ============ HEALTH ============ */
-function HealthTab({ empId, exams, canEdit, canDelete, qc }: any) {
+const NATUREZA_LABELS: { key: "ADMISSIONAL" | "PERIODICO" | "RETORNO_TRABALHO" | "MUDANCA_RISCO" | "DEMISSIONAL" | "SEMESTRAL"; label: string }[] = [
+  { key: "ADMISSIONAL", label: "Admissional" },
+  { key: "PERIODICO", label: "Periódico" },
+  { key: "SEMESTRAL", label: "Semestral" },
+  { key: "RETORNO_TRABALHO", label: "Retorno ao Trabalho" },
+  { key: "MUDANCA_RISCO", label: "Mudança de Risco Ocupacional" },
+  { key: "DEMISSIONAL", label: "Demissional" },
+];
+
+function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
   const [f, setF] = useState<any>({
     tipo_exame: "ASO Clínico", natureza: "Periódico", periodicidade_meses: 12,
     data_realizacao: new Date().toISOString().slice(0, 10), data_vencimento: addMonthsToDate(new Date().toISOString().slice(0, 10), 12),
@@ -1616,8 +1625,146 @@ function HealthTab({ empId, exams, canEdit, canDelete, qc }: any) {
     await openStorageFile("employee-docs", path);
   }
 
+  // ===== Aptidão por Natureza/Risco (PCMSO/ISO 9001) =====
+  const exMatrix: Record<string, string[]> = role?.exames_por_natureza ?? {};
+  const riscos = role?.riscos ?? {};
+  const today = new Date().toISOString().slice(0, 10);
+
+  // último exame por (natureza-key + tipo)
+  function latestFor(naturezaKey: string, tipo: string) {
+    const list = (exams ?? []).filter((ex: any) => {
+      const k = NATUREZA_KEY_MAP[ex.natureza] ?? null;
+      return k === naturezaKey && (ex.tipo_exame || "").toLowerCase().includes(tipo.toLowerCase().split(" ")[0]);
+    });
+    if (!list.length) return null;
+    return list.sort((a: any, b: any) => (b.data_realizacao || "").localeCompare(a.data_realizacao || ""))[0];
+  }
+
+  function statusForReq(naturezaKey: string, tipo: string) {
+    const ex = latestFor(naturezaKey, tipo);
+    if (!ex) return { state: "PENDENTE" as const, ex: null };
+    if (ex.aptidao === "NÃO") return { state: "INAPTO" as const, ex };
+    if (ex.data_vencimento && ex.data_vencimento < today) return { state: "VENCIDO" as const, ex };
+    return { state: "OK" as const, ex };
+  }
+
+  function naturezaAptidao(naturezaKey: string, reqs: string[]) {
+    if (!reqs.length) return "SEM_EXIGENCIA" as const;
+    let pendente = false;
+    for (const tipo of reqs) {
+      const s = statusForReq(naturezaKey, tipo).state;
+      if (s === "INAPTO") return "INAPTO" as const;
+      if (s !== "OK") pendente = true;
+    }
+    return pendente ? "PENDENTE" : "APTO";
+  }
+
+  const todasCategoriasRisco: { key: string; label: string }[] = [
+    { key: "acidente_mecanico", label: "Acidente / Mecânico" },
+    { key: "fisicos", label: "Físicos" },
+    { key: "quimicos", label: "Químicos" },
+    { key: "biologicos", label: "Biológicos" },
+    { key: "ergonomicos", label: "Ergonômicos" },
+    { key: "psicossociais", label: "Psicossociais" },
+  ];
+
   return (
     <Card className="p-6 space-y-6">
+      {/* Painel PCMSO / ISO 9001 — Exigências do Cargo */}
+      {role && (
+        <div className="rounded-lg border-2 border-brand/30 bg-gradient-to-br from-brand/5 to-transparent p-4 space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-black uppercase tracking-widest text-brand">Aptidão por Natureza · PCMSO/ISO 9001</span>
+            {role.ghe && <Badge variant="outline" className="font-bold">GHE {role.ghe}</Badge>}
+            {role.setor && <Badge variant="outline">{role.setor}</Badge>}
+            {role.cbo && <Badge variant="outline">CBO {role.cbo}</Badge>}
+            <span className="text-xs text-muted-foreground">· Cargo: <strong>{role.name}</strong></span>
+          </div>
+
+          {/* Riscos do GHE */}
+          <div className="space-y-1.5">
+            <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Riscos Ocupacionais do GHE</div>
+            <div className="flex flex-wrap gap-1.5">
+              {todasCategoriasRisco.map((cat) => {
+                const items: string[] = riscos?.[cat.key] ?? [];
+                if (!items.length) return null;
+                return items.map((it) => (
+                  <Badge key={`${cat.key}-${it}`} variant="secondary" className="text-[10px]">
+                    <span className="opacity-60 mr-1">{cat.label}:</span>{it}
+                  </Badge>
+                ));
+              })}
+              {todasCategoriasRisco.every((c) => !(riscos?.[c.key]?.length)) && (
+                <span className="text-xs text-muted-foreground italic">Sem riscos cadastrados no cargo.</span>
+              )}
+            </div>
+            {riscos?.descricao && <div className="text-xs text-slate-600 italic">{riscos.descricao}</div>}
+          </div>
+
+          {/* Matriz de exames por natureza */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {NATUREZA_LABELS.map(({ key, label }) => {
+              const reqs: string[] = exMatrix?.[key] ?? [];
+              const apt = naturezaAptidao(key, reqs);
+              const tone =
+                apt === "APTO" ? "border-emerald-300 bg-emerald-50" :
+                apt === "INAPTO" ? "border-rose-300 bg-rose-50" :
+                apt === "PENDENTE" ? "border-amber-300 bg-amber-50" :
+                "border-slate-200 bg-slate-50";
+              const badge =
+                apt === "APTO" ? <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white"><CheckCircle2 className="h-3 w-3 mr-1" />APTO</Badge> :
+                apt === "INAPTO" ? <Badge variant="destructive"><Ban className="h-3 w-3 mr-1" />INAPTO</Badge> :
+                apt === "PENDENTE" ? <Badge className="bg-amber-500 hover:bg-amber-500 text-white"><AlertTriangle className="h-3 w-3 mr-1" />PENDENTE</Badge> :
+                <Badge variant="outline">SEM EXIGÊNCIA</Badge>;
+              return (
+                <div key={key} className={`rounded-md border p-3 ${tone}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-black uppercase tracking-widest">{label}</span>
+                    {badge}
+                  </div>
+                  {reqs.length === 0 ? (
+                    <div className="text-[11px] text-slate-500 italic">Nenhum procedimento exigido pelo cargo.</div>
+                  ) : (
+                    <ul className="space-y-1">
+                      {reqs.map((tipo) => {
+                        const s = statusForReq(key, tipo);
+                        const icon =
+                          s.state === "OK" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> :
+                          s.state === "INAPTO" ? <Ban className="h-3.5 w-3.5 text-rose-600" /> :
+                          s.state === "VENCIDO" ? <Clock className="h-3.5 w-3.5 text-amber-600" /> :
+                          <AlertCircle className="h-3.5 w-3.5 text-slate-500" />;
+                        const txt =
+                          s.state === "OK" ? `válido até ${formatDateBR(s.ex.data_vencimento)}` :
+                          s.state === "INAPTO" ? `INAPTO em ${formatDateBR(s.ex!.data_realizacao)}` :
+                          s.state === "VENCIDO" ? `vencido em ${formatDateBR(s.ex!.data_vencimento)}` :
+                          "não realizado";
+                        return (
+                          <li key={tipo} className="flex items-center gap-2 text-xs">
+                            {icon}
+                            <span className="font-medium">{tipo}</span>
+                            <span className="text-slate-500">— {txt}</span>
+                            {canEdit && s.state !== "OK" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2 text-[10px] ml-auto"
+                                onClick={() => setF((p: any) => ({ ...p, tipo_exame: TIPOS_EXAME.includes(tipo as any) ? tipo : p.tipo_exame, natureza: NATUREZA_LABELS.find(n => n.key === key)!.label }))}
+                              >
+                                Registrar
+                              </Button>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {canEdit && (
         <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="grid grid-cols-2 md:grid-cols-4 gap-3 items-end border-b pb-4">
           <Field label="Tipo">
