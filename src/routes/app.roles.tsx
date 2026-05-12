@@ -167,54 +167,56 @@ function RolesPage() {
     editing && setEditing({ ...editing, riscos: { ...riscos, ...patch } });
 
   return (
-    <div className="p-4 md:p-6 flex gap-4 md:gap-6 h-full bg-gradient-to-br from-slate-50 via-white to-slate-100 animate-fadeIn">
+    <div className="p-4 md:p-6 flex gap-4 md:gap-6 h-full bg-gradient-to-br from-indigo-50 via-rose-50 to-amber-50 animate-fadeIn">
       {/* LEFT: Cargos Catalogados */}
-      <aside className="w-[340px] flex flex-col bg-white rounded-2xl shadow-lg shadow-slate-200/60 border border-slate-200/80 overflow-hidden shrink-0">
+      <aside className="w-[360px] flex flex-col bg-white/90 backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_-15px_rgba(153,27,27,0.35)] border border-white/60 overflow-hidden shrink-0 ring-1 ring-rose-100">
         {/* Header */}
-        <div className="p-5 bg-gradient-to-br from-[#991b1b] to-[#7f1d1d] text-white">
+        <div className="p-5 bg-gradient-to-br from-rose-600 via-[#991b1b] to-[#7f1d1d] text-white relative overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-12 -left-8 w-32 h-32 bg-rose-300/20 rounded-full blur-3xl pointer-events-none" />
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-black uppercase tracking-wider flex items-center gap-2">
-              <Briefcase className="h-4 w-4" /> Cargos / Funções
+            <h2 className="text-base font-black uppercase tracking-wider flex items-center gap-2 relative">
+              <Briefcase className="h-5 w-5" /> Cargos / Funções
             </h2>
-            <span className="text-[10px] font-bold bg-white/15 px-2 py-1 rounded-full">
+            <span className="text-xs font-bold bg-white/20 backdrop-blur px-2.5 py-1 rounded-full ring-1 ring-white/30 relative">
               {stats.ativos}/{stats.total}
             </span>
           </div>
           {isEditor && (
             <button
               onClick={startNew}
-              className="w-full py-2.5 bg-white text-[#991b1b] hover:bg-amber-50 text-[11px] font-black rounded-lg uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+              className="relative w-full py-3 bg-gradient-to-r from-amber-400 to-amber-300 text-[#7f1d1d] hover:from-amber-300 hover:to-amber-200 text-sm font-black rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-amber-400/50 hover:-translate-y-0.5"
             >
-              <FilePlus2 className="h-4 w-4" /> Novo Cargo
+              <FilePlus2 className="h-5 w-5" /> Novo Cargo
             </button>
           )}
         </div>
 
         {/* Search & filter */}
-        <div className="p-3 border-b border-slate-100 space-y-2">
+        <div className="p-4 border-b border-rose-100/60 space-y-2.5 bg-white/70">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-rose-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar cargo..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs outline-none focus:border-[#991b1b] focus:bg-white transition-all"
+              className="w-full bg-white border border-rose-100 rounded-xl pl-10 pr-3 py-2.5 text-sm outline-none focus:border-[#991b1b] focus:ring-2 focus:ring-rose-200 shadow-sm transition-all"
             />
           </div>
-          <label className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700">
+          <label className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700">
             <input
               type="checkbox"
               checked={showInactive}
               onChange={(e) => setShowInactive(e.target.checked)}
-              className="rounded border-slate-300"
+              className="rounded border-slate-300 accent-[#991b1b]"
             />
             Mostrar inativos ({stats.inativos})
           </label>
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1.5">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
           {filtered.length === 0 && (
             <div className="text-center py-12 px-4">
               <Briefcase className="h-10 w-10 text-slate-200 mx-auto mb-3" />
@@ -232,39 +234,39 @@ function RolesPage() {
               <div
                 key={r.id}
                 onClick={() => setEditing(r)}
-                className={`group relative p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                className={`group relative p-3.5 rounded-2xl border-2 cursor-pointer transition-all hover:-translate-y-0.5 ${
                   isSel
-                    ? "border-[#991b1b] bg-gradient-to-r from-red-50 to-white shadow-md"
+                    ? "border-[#991b1b] bg-gradient-to-r from-rose-100 via-rose-50 to-white shadow-[0_10px_25px_-10px_rgba(153,27,27,0.5)]"
                     : !r.ativo
                     ? "border-slate-100 bg-slate-50/50 opacity-70 hover:opacity-100 hover:border-slate-300"
-                    : "border-slate-100 bg-white hover:border-[#991b1b] hover:shadow-md"
+                    : "border-white bg-white hover:border-rose-300 hover:shadow-lg shadow-sm"
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all ${
-                    isSel ? "bg-[#991b1b] text-white shadow-md" : "bg-slate-100 text-slate-500 group-hover:bg-[#991b1b] group-hover:text-white"
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                    isSel ? "bg-gradient-to-br from-rose-600 to-[#7f1d1d] text-white shadow-lg shadow-rose-500/40" : "bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500 group-hover:from-rose-500 group-hover:to-[#991b1b] group-hover:text-white group-hover:shadow-md"
                   }`}>
-                    <UserCog className="h-4 w-4" />
+                    <UserCog className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-1">
-                      <h3 className="text-[12px] font-black uppercase text-slate-800 leading-tight truncate">{r.name}</h3>
+                      <h3 className="text-sm font-black uppercase text-slate-800 leading-tight truncate">{r.name}</h3>
                       {!r.ativo && (
-                        <span className="text-[8px] font-black bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded uppercase shrink-0">Inativo</span>
+                        <span className="text-[9px] font-black bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded uppercase shrink-0">Inativo</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 flex-wrap">
-                      {r.req_aso && <Pill icon={<Stethoscope className="h-2.5 w-2.5" />} label="ASO" tone="emerald" />}
-                      {r.req_integra && <Pill icon={<ShieldCheck className="h-2.5 w-2.5" />} label="INT" tone="sky" />}
-                      {r.req_nrs.length > 0 && <Pill icon={<Award className="h-2.5 w-2.5" />} label={`${r.req_nrs.length} NR`} tone="red" />}
-                      {r.risco_biologico && <Pill icon={<Syringe className="h-2.5 w-2.5" />} label="BIO" tone="rose" />}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {r.req_aso && <Pill icon={<Stethoscope className="h-3 w-3" />} label="ASO" tone="emerald" />}
+                      {r.req_integra && <Pill icon={<ShieldCheck className="h-3 w-3" />} label="INT" tone="sky" />}
+                      {r.req_nrs.length > 0 && <Pill icon={<Award className="h-3 w-3" />} label={`${r.req_nrs.length} NR`} tone="red" />}
+                      {r.risco_biologico && <Pill icon={<Syringe className="h-3 w-3" />} label="BIO" tone="rose" />}
                     </div>
                   </div>
                   {isEditor && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <button className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-slate-100 transition-all">
-                          <MoreVertical className="h-3.5 w-3.5 text-slate-500" />
+                        <button className="opacity-60 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-50 transition-all">
+                          <MoreVertical className="h-4 w-4 text-slate-500" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
@@ -300,37 +302,48 @@ function RolesPage() {
       </aside>
 
       {/* RIGHT: Matriz de Requisitos */}
-      <main className="flex-1 bg-white rounded-2xl shadow-lg shadow-slate-200/60 border border-slate-200/80 overflow-hidden flex flex-col">
+      <main className="flex-1 bg-white/90 backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_-15px_rgba(15,23,42,0.25)] border border-white/60 overflow-hidden flex flex-col ring-1 ring-slate-100">
         {!editing ? (
           <EmptyState canEdit={isEditor} onNew={startNew} />
         ) : (
           <>
             {/* Header */}
-            <div className="px-8 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#991b1b] to-[#7f1d1d] text-white flex items-center justify-center shadow-md">
-                  <ShieldCheck className="h-6 w-6" />
+            <div className="px-8 py-5 border-b border-rose-100/60 bg-gradient-to-r from-rose-50 via-white to-amber-50 flex items-center justify-between shrink-0 relative overflow-hidden">
+              <div className="absolute -top-12 right-1/3 w-48 h-48 bg-rose-200/30 rounded-full blur-3xl pointer-events-none" />
+              <div className="flex items-center gap-4 relative">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 via-[#991b1b] to-[#7f1d1d] text-white flex items-center justify-center shadow-xl shadow-rose-500/40 -translate-y-0.5">
+                  <ShieldCheck className="h-7 w-7" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black uppercase text-slate-900 tracking-tight flex items-center gap-2">
+                  <h3 className="text-2xl font-black uppercase text-slate-900 tracking-tight flex items-center gap-2">
                     {editing.id ? "Matriz de Requisitos" : (
-                      <><Sparkles className="h-5 w-5 text-amber-500" /> Novo Cargo</>
+                      <><Sparkles className="h-6 w-6 text-amber-500" /> Novo Cargo</>
                     )}
                   </h3>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5">
                     {editing.id ? "Configure exigências de saúde e segurança · ISO 9001" : "Preencha os dados para catalogar a função"}
                   </p>
                 </div>
               </div>
-              {editing.id && (
-                <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider ${
-                    editing.ativo ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"
+              <div className="flex items-center gap-3 relative">
+                {editing.id && (
+                  <span className={`text-xs font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm ${
+                    editing.ativo ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200" : "bg-slate-200 text-slate-600"
                   }`}>
                     {editing.ativo ? "● Ativo" : "○ Inativo"}
                   </span>
-                </div>
-              )}
+                )}
+                {isEditor && (
+                  <Button
+                    type="button"
+                    onClick={() => save.mutate(editing)}
+                    disabled={save.isPending}
+                    className="bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-400 hover:via-emerald-500 hover:to-teal-500 text-white text-sm font-black rounded-2xl uppercase tracking-wider shadow-xl shadow-emerald-500/40 hover:shadow-emerald-500/60 hover:-translate-y-0.5 px-7 py-3 h-auto flex items-center gap-2 transition-all ring-2 ring-white"
+                  >
+                    <Save className="h-5 w-5" /> {save.isPending ? "Salvando..." : "Salvar Diretrizes"}
+                  </Button>
+                )}
+              </div>
             </div>
 
             <form
@@ -340,7 +353,7 @@ function RolesPage() {
               <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-6">
                 {/* Nome */}
                 <div className="mb-6">
-                  <label className="block text-[10px] font-black text-[#991b1b] uppercase mb-2 tracking-widest">
+                  <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">
                     Nomenclatura Oficial do Cargo
                   </label>
                   <input
@@ -350,7 +363,7 @@ function RolesPage() {
                     onChange={(e) => setEditing({ ...editing, name: e.target.value })}
                     placeholder="Ex: Eletricista, Soldador, Operador de Empilhadeira..."
                     disabled={!isEditor}
-                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-5 py-3.5 text-sm font-black uppercase text-slate-800 focus:border-[#991b1b] focus:bg-white focus:ring-4 focus:ring-[#991b1b]/10 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60"
+                    className="w-full bg-white border-2 border-rose-100 rounded-2xl px-5 py-4 text-base font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60 shadow-sm"
                   />
                 </div>
 
@@ -431,14 +444,14 @@ function RolesPage() {
                 </div>
               </div>
 
-              {/* Footer Actions */}
+              {/* Footer Actions (secondary) */}
               {isEditor && (
                 <div className="px-8 py-4 border-t border-slate-100 bg-gradient-to-r from-slate-50 to-white flex items-center gap-3 shrink-0">
                   <Button
                     type="button"
                     variant="ghost"
                     onClick={() => setEditing(null)}
-                    className="text-slate-600 hover:text-slate-900 text-[11px] font-black uppercase tracking-wider"
+                    className="text-slate-600 hover:text-slate-900 text-xs font-black uppercase tracking-wider"
                   >
                     Cancelar
                   </Button>
@@ -447,7 +460,7 @@ function RolesPage() {
                       type="button"
                       variant="outline"
                       onClick={() => toggleAtivo.mutate({ id: editing.id!, ativo: !editing.ativo })}
-                      className="text-[11px] font-black uppercase tracking-wider"
+                      className="text-xs font-black uppercase tracking-wider"
                     >
                       {editing.ativo ? <><PowerOff className="h-4 w-4 mr-1.5" /> Desativar</> : <><Power className="h-4 w-4 mr-1.5" /> Reativar</>}
                     </Button>
@@ -457,7 +470,7 @@ function RolesPage() {
                       type="button"
                       variant="ghost"
                       onClick={() => { if (confirm(`Excluir "${editing.name}"? Essa ação não pode ser desfeita.`)) del.mutate(editing.id!); }}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 text-[11px] font-black uppercase tracking-wider"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs font-black uppercase tracking-wider"
                     >
                       <Trash2 className="h-4 w-4 mr-1.5" /> Excluir
                     </Button>
@@ -465,9 +478,9 @@ function RolesPage() {
                   <Button
                     type="submit"
                     disabled={save.isPending}
-                    className="ml-auto bg-gradient-to-r from-[#0f172a] to-[#1e293b] hover:from-[#991b1b] hover:to-[#7f1d1d] text-white text-[11px] font-black rounded-xl uppercase tracking-wider shadow-lg hover:shadow-xl px-8 py-3 h-auto flex items-center gap-2 transition-all"
+                    className="ml-auto bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs font-black rounded-xl uppercase tracking-wider shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 px-6 py-2.5 h-auto flex items-center gap-2 transition-all"
                   >
-                    <Save className="h-4 w-4" /> {save.isPending ? "Salvando..." : "Salvar Diretrizes"}
+                    <Save className="h-4 w-4" /> {save.isPending ? "Salvando..." : "Salvar"}
                   </Button>
                 </div>
               )}
@@ -509,15 +522,15 @@ function Section({
   icon, title, hint, full, children,
 }: { icon: React.ReactNode; title: string; hint?: string; full?: boolean; children: React.ReactNode }) {
   return (
-    <div className={`p-5 border border-slate-200 rounded-2xl bg-gradient-to-br from-slate-50/80 to-white ${full ? "lg:col-span-2" : ""}`}>
+    <div className={`p-5 border border-white/80 rounded-3xl bg-gradient-to-br from-white via-rose-50/30 to-amber-50/30 shadow-[0_10px_30px_-12px_rgba(15,23,42,0.18)] hover:shadow-[0_15px_40px_-12px_rgba(153,27,27,0.25)] transition-all ${full ? "lg:col-span-2" : ""}`}>
       <div className="flex items-center gap-2 mb-4">
-        <div className="text-slate-500">{icon}</div>
-        <div className="text-[11px] font-black uppercase text-slate-800 tracking-widest">{title}</div>
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-100 to-amber-100 text-[#991b1b] flex items-center justify-center shadow-sm">{icon}</div>
+        <div className="text-sm font-black uppercase text-slate-800 tracking-wider">{title}</div>
         {hint && (
-          <span className="ml-auto text-[9px] font-bold text-slate-400 uppercase tracking-widest">{hint}</span>
+          <span className="ml-auto text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-full uppercase tracking-wider">{hint}</span>
         )}
       </div>
-      <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm space-y-4">
+      <div className="bg-white/80 backdrop-blur p-4 rounded-2xl border border-white shadow-inner space-y-4">
         {children}
       </div>
     </div>
@@ -526,13 +539,13 @@ function Section({
 
 function Pill({ icon, label, tone }: { icon: React.ReactNode; label: string; tone: "emerald" | "sky" | "red" | "rose" }) {
   const map = {
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    sky: "bg-sky-50 text-sky-700 border-sky-200",
-    red: "bg-red-50 text-red-700 border-red-200",
-    rose: "bg-rose-50 text-rose-700 border-rose-200",
+    emerald: "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white border-emerald-300 shadow-emerald-400/40",
+    sky: "bg-gradient-to-br from-sky-400 to-sky-600 text-white border-sky-300 shadow-sky-400/40",
+    red: "bg-gradient-to-br from-rose-500 to-red-600 text-white border-red-300 shadow-rose-500/40",
+    rose: "bg-gradient-to-br from-pink-400 to-rose-600 text-white border-rose-300 shadow-rose-400/40",
   } as const;
   return (
-    <span className={`inline-flex items-center gap-0.5 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${map[tone]}`}>
+    <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border shadow-md ${map[tone]}`}>
       {icon}{label}
     </span>
   );
@@ -543,7 +556,7 @@ function ToggleRow({
 }: { label: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; divider?: boolean }) {
   return (
     <label className={`flex items-center justify-between cursor-pointer group ${divider ? "pb-4 border-b border-slate-100" : ""} ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}>
-      <span className="text-[11px] font-bold uppercase text-slate-600 group-hover:text-slate-900 transition-colors">{label}</span>
+      <span className="text-xs font-bold uppercase text-slate-700 group-hover:text-slate-900 transition-colors">{label}</span>
       <button
         type="button"
         role="switch"
@@ -563,7 +576,7 @@ function NRToggle({
 }: { label: string; checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
     <label className={`flex items-center justify-between cursor-pointer group ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}>
-      <span className="text-[10px] font-bold uppercase text-slate-600 group-hover:text-[#991b1b] transition-colors">{label}</span>
+      <span className="text-xs font-bold uppercase text-slate-700 group-hover:text-[#991b1b] transition-colors">{label}</span>
       <button
         type="button"
         role="switch"
@@ -583,9 +596,9 @@ function TagEditor({
 }: { label: string; items: string[]; onChange: (v: string[]) => void; disabled?: boolean; color: "sky" | "amber" | "emerald" }) {
   const [val, setVal] = useState("");
   const colorMap = {
-    sky: "bg-sky-50 text-sky-800 border-sky-200",
-    amber: "bg-amber-50 text-amber-800 border-amber-200",
-    emerald: "bg-emerald-50 text-emerald-800 border-emerald-200",
+    sky: "bg-gradient-to-br from-sky-400 to-sky-600 text-white border-sky-300 shadow-sky-400/40",
+    amber: "bg-gradient-to-br from-amber-400 to-orange-500 text-white border-amber-300 shadow-amber-400/40",
+    emerald: "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white border-emerald-300 shadow-emerald-400/40",
   } as const;
   function add() {
     const t = val.trim();
@@ -595,14 +608,14 @@ function TagEditor({
   }
   return (
     <div>
-      <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">{label}</label>
-      <div className="flex flex-wrap gap-1.5 min-h-[40px] p-2 bg-slate-50 border border-slate-200 rounded-lg mb-2">
-        {items.length === 0 && <span className="text-[10px] text-slate-400 italic px-1">nenhum</span>}
+      <label className="block text-xs font-black text-slate-600 uppercase mb-2 tracking-widest">{label}</label>
+      <div className="flex flex-wrap gap-1.5 min-h-[44px] p-2 bg-white border border-slate-200 rounded-xl mb-2 shadow-inner">
+        {items.length === 0 && <span className="text-xs text-slate-400 italic px-1">nenhum</span>}
         {items.map((it) => (
-          <span key={it} className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold border ${colorMap[color]}`}>
+          <span key={it} className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border shadow-md ${colorMap[color]}`}>
             {it}
             {!disabled && (
-              <button type="button" onClick={() => onChange(items.filter((x) => x !== it))} className="hover:text-red-600">
+              <button type="button" onClick={() => onChange(items.filter((x) => x !== it))} className="hover:text-rose-100">
                 <X className="h-3 w-3" />
               </button>
             )}
