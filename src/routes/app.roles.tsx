@@ -167,9 +167,13 @@ function RolesPage() {
     editing && setEditing({ ...editing, riscos: { ...riscos, ...patch } });
 
   return (
-    <div className="p-4 md:p-6 flex gap-4 md:gap-6 h-full bg-gradient-to-br from-indigo-50 via-rose-50 to-amber-50 animate-fadeIn">
+    <div className="p-4 md:p-6 flex gap-4 md:gap-6 h-full bg-gradient-to-br from-fuchsia-100 via-rose-100 to-amber-100 animate-fadeIn relative overflow-hidden">
+      {/* floating decorative blobs */}
+      <div className="absolute top-0 left-1/3 w-96 h-96 bg-rose-300/40 rounded-full blur-3xl pointer-events-none animate-pulse" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-300/40 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 right-0 w-72 h-72 bg-fuchsia-300/30 rounded-full blur-3xl pointer-events-none" />
       {/* LEFT: Cargos Catalogados */}
-      <aside className="w-[360px] flex flex-col bg-white/90 backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_-15px_rgba(153,27,27,0.35)] border border-white/60 overflow-hidden shrink-0 ring-1 ring-rose-100">
+      <aside className="w-[360px] flex flex-col bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_25px_70px_-15px_rgba(153,27,27,0.45)] border border-white/60 overflow-hidden shrink-0 ring-1 ring-rose-200 relative z-10">
         {/* Header */}
         <div className="p-5 bg-gradient-to-br from-rose-600 via-[#991b1b] to-[#7f1d1d] text-white relative overflow-hidden">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -302,47 +306,52 @@ function RolesPage() {
       </aside>
 
       {/* RIGHT: Matriz de Requisitos */}
-      <main className="flex-1 bg-white/90 backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_-15px_rgba(15,23,42,0.25)] border border-white/60 overflow-hidden flex flex-col ring-1 ring-slate-100">
+      <main className="flex-1 bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_25px_70px_-15px_rgba(15,23,42,0.3)] border border-white/60 overflow-hidden flex flex-col ring-1 ring-rose-100 relative z-10">
         {!editing ? (
           <EmptyState canEdit={isEditor} onNew={startNew} />
         ) : (
           <>
-            {/* Header */}
-            <div className="px-8 py-5 border-b border-rose-100/60 bg-gradient-to-r from-rose-50 via-white to-amber-50 flex items-center justify-between shrink-0 relative overflow-hidden">
-              <div className="absolute -top-12 right-1/3 w-48 h-48 bg-rose-200/30 rounded-full blur-3xl pointer-events-none" />
-              <div className="flex items-center gap-4 relative">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 via-[#991b1b] to-[#7f1d1d] text-white flex items-center justify-center shadow-xl shadow-rose-500/40 -translate-y-0.5">
-                  <ShieldCheck className="h-7 w-7" />
+            {/* Sticky Top Action Bar — SALVAR em destaque máximo */}
+            {isEditor && (
+              <div className="px-6 py-3 border-b border-rose-100 bg-gradient-to-r from-emerald-50 via-white to-rose-50 flex items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-600">
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  {editing.id ? "Editando cargo" : "Novo cargo"}
+                  {editing.id && (
+                    <span className={`ml-2 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                      editing.ativo ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300" : "bg-slate-200 text-slate-600"
+                    }`}>
+                      {editing.ativo ? "● Ativo" : "○ Inativo"}
+                    </span>
+                  )}
                 </div>
-                <div>
-                  <h3 className="text-2xl font-black uppercase text-slate-900 tracking-tight flex items-center gap-2">
-                    {editing.id ? "Matriz de Requisitos" : (
-                      <><Sparkles className="h-6 w-6 text-amber-500" /> Novo Cargo</>
-                    )}
-                  </h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5">
-                    {editing.id ? "Configure exigências de saúde e segurança · ISO 9001" : "Preencha os dados para catalogar a função"}
-                  </p>
-                </div>
+                <Button
+                  type="button"
+                  onClick={() => save.mutate(editing)}
+                  disabled={save.isPending}
+                  className="bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-sm font-black rounded-xl uppercase tracking-wider shadow-lg shadow-emerald-500/50 hover:shadow-emerald-500/70 hover:-translate-y-0.5 px-6 py-2.5 h-auto flex items-center gap-2 transition-all ring-2 ring-white animate-pulse-slow"
+                >
+                  <Save className="h-5 w-5" /> {save.isPending ? "Salvando..." : "Salvar Diretrizes"}
+                </Button>
               </div>
-              <div className="flex items-center gap-3 relative">
-                {editing.id && (
-                  <span className={`text-xs font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm ${
-                    editing.ativo ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200" : "bg-slate-200 text-slate-600"
-                  }`}>
-                    {editing.ativo ? "● Ativo" : "○ Inativo"}
-                  </span>
-                )}
-                {isEditor && (
-                  <Button
-                    type="button"
-                    onClick={() => save.mutate(editing)}
-                    disabled={save.isPending}
-                    className="bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-400 hover:via-emerald-500 hover:to-teal-500 text-white text-sm font-black rounded-2xl uppercase tracking-wider shadow-xl shadow-emerald-500/40 hover:shadow-emerald-500/60 hover:-translate-y-0.5 px-7 py-3 h-auto flex items-center gap-2 transition-all ring-2 ring-white"
-                  >
-                    <Save className="h-5 w-5" /> {save.isPending ? "Salvando..." : "Salvar Diretrizes"}
-                  </Button>
-                )}
+            )}
+
+            {/* Header (banner colorido) */}
+            <div className="px-8 py-5 border-b border-rose-100/60 bg-gradient-to-r from-rose-500 via-[#991b1b] to-fuchsia-700 text-white flex items-center gap-4 shrink-0 relative overflow-hidden">
+              <div className="absolute -top-12 right-1/3 w-56 h-56 bg-amber-300/30 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-12 -right-8 w-56 h-56 bg-fuchsia-400/30 rounded-full blur-3xl pointer-events-none" />
+              <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-xl text-white flex items-center justify-center shadow-xl ring-2 ring-white/30 relative shrink-0">
+                <ShieldCheck className="h-7 w-7" />
+              </div>
+              <div className="relative min-w-0">
+                <h3 className="text-2xl font-black uppercase tracking-tight flex items-center gap-2 truncate">
+                  {editing.id ? "Matriz de Requisitos" : (
+                    <><Sparkles className="h-6 w-6 text-amber-300" /> Novo Cargo</>
+                  )}
+                </h3>
+                <p className="text-xs font-bold text-rose-100 uppercase tracking-widest mt-0.5">
+                  {editing.id ? "Configure exigências de saúde e segurança · ISO 9001" : "Preencha os dados para catalogar a função"}
+                </p>
               </div>
             </div>
 
