@@ -29,9 +29,21 @@ export const NATUREZAS_EXAME = [
   "Admissional",
   "Periódico",
   "Retorno ao Trabalho",
-  "Mudança de Função",
+  "Mudança de Risco Ocupacional",
   "Demissional",
+  "Semestral",
 ] as const;
+
+// Mapeia o rótulo exibido (employee_exams.natureza) → chave usada em roles.exames_por_natureza
+export const NATUREZA_KEY_MAP: Record<string, "ADMISSIONAL" | "PERIODICO" | "RETORNO_TRABALHO" | "MUDANCA_RISCO" | "DEMISSIONAL" | "SEMESTRAL"> = {
+  "Admissional": "ADMISSIONAL",
+  "Periódico": "PERIODICO",
+  "Retorno ao Trabalho": "RETORNO_TRABALHO",
+  "Mudança de Risco Ocupacional": "MUDANCA_RISCO",
+  "Mudança de Função": "MUDANCA_RISCO",
+  "Demissional": "DEMISSIONAL",
+  "Semestral": "SEMESTRAL",
+};
 
 export const PTE_RISCOS = [
   "Trabalho a Quente",
