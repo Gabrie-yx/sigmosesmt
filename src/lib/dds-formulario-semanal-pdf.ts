@@ -38,12 +38,16 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams): jsPDF {
   doc.setFontSize(8);
   doc.text(`CNPJ: ${p.matrizCnpj}`, margin + c1W / 2, headerY + 9.5, { align: "center" });
   // coluna 2 — título
-  const c3W = 45;
+  const c3W = 55;
   const c2W = pageW - margin * 2 - c1W - c3W;
   doc.line(margin + c1W + c2W, headerY, margin + c1W + c2W, headerY + headerH);
-  doc.setFont("helvetica", "bold").setFontSize(11);
-  doc.text("Diálogo Diário de Segurança, Meio Ambiente e Saúde - Responsabilidade Social  -  DDSMS-RS",
-    margin + c1W + c2W / 2, headerY + 8, { align: "center" });
+  doc.setFont("helvetica", "bold").setFontSize(9);
+  doc.text(
+    "Diálogo Diário de Segurança, Meio Ambiente e Saúde\nResponsabilidade Social  -  DDSMS-RS",
+    margin + c1W + c2W / 2,
+    headerY + 6,
+    { align: "center" }
+  );
   // coluna 3 — código
   doc.setFont("helvetica", "normal").setFontSize(8);
   const c3X = margin + c1W + c2W + 2;
