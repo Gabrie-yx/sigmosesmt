@@ -41,7 +41,7 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-for-dds"],
-    queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,encarregado1,encarregado2").order("name")).data ?? [],
+    queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,encarregado1,encarregado2,matriz_nome,matriz_cnpj").order("name")).data ?? [],
   });
   const { data: temas = [] } = useQuery({
     queryKey: ["dds-temas-active"],
@@ -65,6 +65,9 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
   useEffect(() => {
     if (company) {
       setEncarregado(company.encarregado1 ?? "");
+      // Se a empresa tiver matriz própria cadastrada, usar; caso contrário, usar o nome/CNPJ da própria empresa
+      setMatrizNome(company.matriz_nome || company.name || "");
+      setMatrizCnpj(company.matriz_cnpj || company.cnpj || "");
     }
   }, [companyId]); // eslint-disable-line
 
