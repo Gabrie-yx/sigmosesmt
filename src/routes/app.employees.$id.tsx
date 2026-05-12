@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +17,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
+import { SafetyOverridePanel } from "@/components/safety-override-panel";
+import type { SafetyOverride } from "@/lib/safety-overrides";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
 import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, NATUREZA_KEY_MAP, UFS, VACINAS_LIST, BAIRROS_MANAUS } from "@/lib/constants";
 import { maskCPF, maskCNPJ, maskPhone, maskCEP, maskRG } from "@/lib/masks";
@@ -82,9 +84,31 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
     queryKey: ["vaccines", id],
     queryFn: async () => (await supabase.from("employee_vaccinations").select("*").eq("employee_id", id).order("data_aplicacao", { ascending: false })).data ?? [],
   });
+  const { data: overrides = [] } = useQuery({
+    queryKey: ["safety-overrides", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("safety_overrides")
+        .select("*")
+        .eq("employee_id", id);
+      if (error) throw error;
+      return (data ?? []) as SafetyOverride[];
+    },
+  });
 
   const role = (roles ?? []).find((r: any) => r.id === emp?.role_id) ?? null;
-  const status = emp ? calculateSafetyStatus(emp as any, role as any, (exams ?? []) as any, (vaccines ?? []) as any) : null;
+  const status = emp ? calculateSafetyStatus(emp as any, role as any, (exams ?? []) as any, (vaccines ?? []) as any, overrides) : null;
+
+  // Constrói lista de chaves disponíveis para liberação granular
+  const availableItemKeys = useMemo(() => {
+    const keys = new Set<string>();
+    if (role?.req_aso) keys.add("ASO");
+    if (role?.req_integra) keys.add("INTEGRACAO");
+    (role?.req_nrs ?? []).forEach((nr: string) => keys.add(nr));
+    (role?.req_exames ?? []).forEach((ex: string) => keys.add(`EXAME:${ex}`));
+    (role?.req_vacinas ?? []).forEach((v: string) => keys.add(`VACINA:${v}`));
+    return Array.from(keys);
+  }, [role]);
   const canEditHeader = isEditor || isAdmin;
   const [uploadingHeaderPhoto, setUploadingHeaderPhoto] = useState(false);
 
@@ -236,6 +260,8 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           ))}
         </Card>
       )}
+
+      <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="grid grid-cols-5 w-full h-auto p-1.5 bg-gradient-to-r from-red-50 via-white to-red-50 border border-red-200/60 rounded-xl shadow-sm gap-1">

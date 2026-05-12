@@ -1,4 +1,5 @@
 import { daysUntil, addYearsToDate } from "./utils-date";
+import { type SafetyOverride, filterActiveOverrides, hasGlobalOverride, isMessageOverridden } from "./safety-overrides";
 
 export type SafetyLabel = "APTO" | "ALERTA" | "BLOQUEADO" | "INATIVO" | "AFASTADO" | "SEM CARGO";
 
@@ -49,6 +50,7 @@ export function calculateSafetyStatus(
   role: EngineRole | null,
   exams: EngineExam[],
   vaccines: EngineVaccine[] = [],
+  overrides: SafetyOverride[] = [],
 ): SafetyStatus {
   if (emp.status === "INATIVO")
     return { label: "INATIVO", msgs: [], acessoPermitido: false, colorClass: "bg-status-inativo" };
@@ -194,7 +196,29 @@ export function calculateSafetyStatus(
   }
 
   if (isRed)
-    return { label: "BLOQUEADO", msgs, acessoPermitido: false, colorClass: "bg-status-bloqueado" };
+  {
+    const active = filterActiveOverrides(overrides);
+    if (hasGlobalOverride(active)) {
+      return {
+        label: "APTO",
+        msgs: [`LIBERADO MANUALMENTE — ${msgs.join(", ")}`],
+        acessoPermitido: true,
+        colorClass: "bg-status-alerta",
+      };
+    }
+    // Filtra mensagens cobertas por overrides item-a-item
+    const remaining = msgs.filter((m) => !isMessageOverridden(m, active));
+    const liberadas = msgs.filter((m) => isMessageOverridden(m, active));
+    if (remaining.length === 0) {
+      return {
+        label: "APTO",
+        msgs: liberadas.length ? [`LIBERADO MANUALMENTE — ${liberadas.join(", ")}`] : [],
+        acessoPermitido: true,
+        colorClass: liberadas.length ? "bg-status-alerta" : "bg-status-apto",
+      };
+    }
+    return { label: "BLOQUEADO", msgs: remaining, acessoPermitido: false, colorClass: "bg-status-bloqueado" };
+  }
   if (isYellow)
     return { label: "ALERTA", msgs, acessoPermitido: true, colorClass: "bg-status-alerta" };
   return { label: "APTO", msgs: [], acessoPermitido: true, colorClass: "bg-status-apto" };
