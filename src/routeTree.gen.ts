@@ -28,6 +28,7 @@ import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.r
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
+import { Route as AppDdsTemasRouteImport } from './routes/app.dds.temas'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -125,6 +126,11 @@ const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppEmployeesRoute,
 } as any)
+const AppDdsTemasRoute = AppDdsTemasRouteImport.update({
+  id: '/dds/temas',
+  path: '/dds/temas',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
+  '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
   '/app': typeof AppIndexRoute
+  '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
@@ -180,6 +188,7 @@ export interface FileRoutesById {
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
+  '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/app/trainings'
     | '/app/users'
     | '/app/'
+    | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/app/trainings'
     | '/app/users'
     | '/app'
+    | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/app/trainings'
     | '/app/users'
     | '/app/'
+    | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
@@ -393,6 +405,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmployeesIdRouteImport
       parentRoute: typeof AppEmployeesRoute
     }
+    '/app/dds/temas': {
+      id: '/app/dds/temas'
+      path: '/dds/temas'
+      fullPath: '/app/dds/temas'
+      preLoaderRoute: typeof AppDdsTemasRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -420,6 +439,7 @@ interface AppRouteChildren {
   AppTrainingsRoute: typeof AppTrainingsRoute
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppDdsTemasRoute: typeof AppDdsTemasRoute
   AppEstoqueEpiRoute: typeof AppEstoqueEpiRoute
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
   AppRelatoriosReincidenciaEpiRoute: typeof AppRelatoriosReincidenciaEpiRoute
@@ -437,6 +457,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTrainingsRoute: AppTrainingsRoute,
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
+  AppDdsTemasRoute: AppDdsTemasRoute,
   AppEstoqueEpiRoute: AppEstoqueEpiRoute,
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
   AppRelatoriosReincidenciaEpiRoute: AppRelatoriosReincidenciaEpiRoute,
@@ -454,3 +475,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
