@@ -2,28 +2,52 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, AlertTriangle, Building2, Ban } from "lucide-react";
+import {
+  Search, AlertTriangle, Building2, Ban, Users, ShieldCheck, Package,
+  HardHat, FileWarning, Activity, TrendingUp, Boxes, ClipboardCheck,
+  ArrowUpRight, Stethoscope,
+} from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
+  AreaChart, Area, PieChart, Pie, Cell, Legend,
+} from "recharts";
 
 export const Route = createFileRoute("/app/painel")({
   component: TstPanel,
 });
 
+const dayMs = 86400000;
+const today = new Date();
+const fmt = (d: Date) => d.toISOString().slice(0, 10);
+const MONTHS_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
 function TstPanel() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [filterCompany, setFilterCompany] = useState("ALL");
+  const [periodo, setPeriodo] = useState<"30" | "60" | "90" | "180">("90");
+
+  const dias = Number(periodo);
+  const since = fmt(new Date(today.getTime() - dias * dayMs));
 
   const { data } = useQuery({
-    queryKey: ["tst-panel"],
+    queryKey: ["sesmt-painel", since],
     queryFn: async () => {
-      const [emps, comps, roles, exams, overrides] = await Promise.all([
+      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs] = await Promise.all([
         supabase.from("employees").select("*").order("nome"),
         supabase.from("companies").select("id,name").order("name"),
         supabase.from("roles").select("*"),
         supabase.from("employee_exams").select("*"),
         supabase.from("safety_overrides").select("*").eq("ativo", true),
+        supabase.from("epi_deliveries").select("id,employee_id,item,qtd,data_entrega,motivo_entrega,valor_unitario").gte("data_entrega", since),
+        supabase.from("estoque_epi").select("id,nome_material,quantidade_atual,estoque_minimo,ca_validade"),
+        supabase.from("dds").select("id,data,aderencia,participantes_presentes,participantes_esperados").gte("data", since),
+        supabase.from("dds_attendees").select("dds_id,employee_id,status"),
+        supabase.from("aprs").select("id,status,data_emissao,data_validade").gte("data_emissao", since),
+        supabase.from("ptes").select("id,status,data,risco").gte("data", since),
+        supabase.from("employee_docs").select("id,employee_id,tipo"),
       ]);
       return {
         employees: emps.data ?? [],
@@ -31,6 +55,13 @@ function TstPanel() {
         roles: roles.data ?? [],
         exams: exams.data ?? [],
         overrides: (overrides.data ?? []) as SafetyOverride[],
+        deliveries: deliveries.data ?? [],
+        estoque: estoque.data ?? [],
+        dds: dds.data ?? [],
+        ddsAtt: ddsAtt.data ?? [],
+        aprs: aprs.data ?? [],
+        ptes: ptes.data ?? [],
+        docs: docs.data ?? [],
       };
     },
   });
@@ -59,17 +90,110 @@ function TstPanel() {
     }));
   }, [data]);
 
+  // === KPIs ===
+  const totalEmp = rows.length;
+  const aptos = rows.filter((r) => r.status.label === "APTO").length;
+  const alertas = rows.filter((r) => r.status.label === "ALERTA").length;
+  const bloqueados = rows.filter((r) => r.status.label === "BLOQUEADO" || r.status.label === "SEM CARGO").length;
+  const conformidadeGeral = totalEmp > 0 ? Math.round((aptos / totalEmp) * 100) : 0;
+
+  const totalEntregas = (data?.deliveries ?? []).reduce((s, d: any) => s + Number(d.qtd || 0), 0);
+  const valorEntregas = (data?.deliveries ?? []).reduce((s, d: any) => s + Number(d.qtd || 0) * Number(d.valor_unitario || 0), 0);
+  const perdas = (data?.deliveries ?? []).filter((d: any) => d.motivo_entrega === "PERDA_EXTRAVIO").length;
+
+  const estoqueTotal = (data?.estoque ?? []).reduce((s: number, e: any) => s + Number(e.quantidade_atual || 0), 0);
+  const estoqueBaixo = (data?.estoque ?? []).filter((e: any) => Number(e.quantidade_atual || 0) <= Number(e.estoque_minimo || 0)).length;
+  const caVencendo = (data?.estoque ?? []).filter((e: any) => {
+    if (!e.ca_validade) return false;
+    const d = new Date(e.ca_validade + "T00:00").getTime();
+    return d - today.getTime() < 60 * dayMs;
+  }).length;
+
+  const asoVencendo30 = (data?.exams ?? []).filter((ex: any) => {
+    if (!ex.data_vencimento) return false;
+    const diff = (new Date(ex.data_vencimento + "T00:00").getTime() - today.getTime()) / dayMs;
+    return diff >= 0 && diff <= 30;
+  }).length;
+  const asoVencidos = (data?.exams ?? []).filter((ex: any) => {
+    if (!ex.data_vencimento) return false;
+    return new Date(ex.data_vencimento + "T00:00").getTime() < today.getTime();
+  }).length;
+
+  const aprsAtivas = (data?.aprs ?? []).filter((a: any) => a.status !== "CANCELADA" && a.status !== "ENCERRADA").length;
+  const ptesAtivas = (data?.ptes ?? []).filter((p: any) => p.status !== "CANCELADA" && p.status !== "ENCERRADA").length;
+
+  const ddsCount = (data?.dds ?? []).length;
+  const ddsAderencia = ddsCount > 0
+    ? Math.round((data!.dds.reduce((s: number, d: any) => s + Number(d.aderencia || 0), 0) / ddsCount))
+    : 0;
+
+  // === CHARTS ===
+  const statusPie = [
+    { name: "Aptos", value: aptos, color: "#10b981" },
+    { name: "Alerta", value: alertas, color: "#f59e0b" },
+    { name: "Bloqueados", value: bloqueados, color: "#ef4444" },
+  ].filter((x) => x.value > 0);
+
+  const topItens = useMemo(() => {
+    const m = new Map<string, number>();
+    (data?.deliveries ?? []).forEach((d: any) => {
+      m.set(d.item, (m.get(d.item) ?? 0) + Number(d.qtd || 0));
+    });
+    return Array.from(m.entries())
+      .map(([item, qtd]) => ({ item: item.length > 28 ? item.slice(0, 26) + "…" : item, qtd }))
+      .sort((a, b) => b.qtd - a.qtd).slice(0, 8);
+  }, [data]);
+
+  const entregaMensal = useMemo(() => {
+    const m = new Map<string, { mes: string; qtd: number; valor: number }>();
+    (data?.deliveries ?? []).forEach((d: any) => {
+      const dt = new Date(d.data_entrega + "T00:00");
+      const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+      const label = `${MONTHS_PT[dt.getMonth()]}/${String(dt.getFullYear()).slice(2)}`;
+      const cur = m.get(key) ?? { mes: label, qtd: 0, valor: 0 };
+      cur.qtd += Number(d.qtd || 0);
+      cur.valor += Number(d.qtd || 0) * Number(d.valor_unitario || 0);
+      m.set(key, cur);
+    });
+    return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v);
+  }, [data]);
+
+  const topRecip = useMemo(() => {
+    const m = new Map<string, number>();
+    (data?.deliveries ?? []).forEach((d: any) => {
+      m.set(d.employee_id, (m.get(d.employee_id) ?? 0) + Number(d.qtd || 0));
+    });
+    const empMap = new Map((data?.employees ?? []).map((e: any) => [e.id, e.nome]));
+    return Array.from(m.entries())
+      .map(([id, qtd]) => ({ nome: (empMap.get(id) ?? "—") as string, qtd }))
+      .sort((a, b) => b.qtd - a.qtd).slice(0, 5);
+  }, [data]);
+
+  const ddsTrend = useMemo(() => {
+    const m = new Map<string, { mes: string; qtd: number; ad: number; n: number }>();
+    (data?.dds ?? []).forEach((d: any) => {
+      const dt = new Date(d.data + "T00:00");
+      const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+      const label = `${MONTHS_PT[dt.getMonth()]}/${String(dt.getFullYear()).slice(2)}`;
+      const cur = m.get(key) ?? { mes: label, qtd: 0, ad: 0, n: 0 };
+      cur.qtd += 1; cur.ad += Number(d.aderencia || 0); cur.n += 1;
+      m.set(key, cur);
+    });
+    return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => ({
+      mes: v.mes, qtd: v.qtd, aderencia: v.n > 0 ? Math.round(v.ad / v.n) : 0,
+    }));
+  }, [data]);
+
+  // === LISTS ===
   const pendencias = useMemo(() => {
     let list = rows.filter((r) => r.status.label === "ALERTA" || r.status.label === "BLOQUEADO" || r.status.label === "SEM CARGO");
     if (filterCompany !== "ALL") list = list.filter((r) => r.emp.company_id === filterCompany);
     return list;
   }, [rows, filterCompany]);
 
-  const blocklist = useMemo(() => {
-    return rows
-      .filter((r) => r.status.label === "BLOQUEADO" || r.status.label === "SEM CARGO")
-      .sort((a, b) => (a.emp.nome ?? "").localeCompare(b.emp.nome ?? ""));
-  }, [rows]);
+  const blocklist = useMemo(() => rows
+    .filter((r) => r.status.label === "BLOQUEADO" || r.status.label === "SEM CARGO")
+    .sort((a, b) => (a.emp.nome ?? "").localeCompare(b.emp.nome ?? "")), [rows]);
 
   const conformity = useMemo(() => {
     if (!data) return [];
@@ -79,9 +203,11 @@ function TstPanel() {
       if (total === 0) return null;
       const oks = compEmps.filter((r) => r.status.label === "APTO").length;
       const perc = Math.round((oks / total) * 100);
-      const color = perc === 100 ? "bg-emerald-500" : perc > 80 ? "bg-yellow-400" : "bg-red-500";
-      return { name: c.name, perc, color };
-    }).filter(Boolean) as { name: string; perc: number; color: string }[];
+      const color = perc === 100 ? "from-emerald-500 to-emerald-600"
+        : perc > 80 ? "from-amber-400 to-amber-500"
+        : "from-red-500 to-red-600";
+      return { name: c.name, perc, color, total, oks };
+    }).filter(Boolean) as { name: string; perc: number; color: string; total: number; oks: number }[];
   }, [data, rows]);
 
   const search = q.trim().toLowerCase();
@@ -96,140 +222,357 @@ function TstPanel() {
   }, [rows, search]);
 
   return (
-    <div className="p-6 md:p-8 animate-fadeIn h-full flex flex-col bg-[#f1f5f9] overflow-y-auto custom-scrollbar">
-      <h2 className="heading-display text-3xl md:text-4xl text-[#991b1b] mb-8">Painel SESMT / SGI - ISO 9001</h2>
-
-      {/* OMNISEARCH */}
-      <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 mb-8 shrink-0">
-        <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-          <Search className="h-4 w-4" /> Busca Universal (Omnisearch)
-        </h3>
-        <input
-          type="text"
-          placeholder="Digite Nome, CPF, Função Técnica ou Empresa..."
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-6 py-4 text-sm font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b] transition-all placeholder:text-slate-400 placeholder:normal-case"
-        />
-        {search && (
-          <div className="mt-4 space-y-2">
-            {searchResults.length === 0 ? (
-              <div className="text-center text-slate-400 py-4 text-xs font-bold uppercase">Nenhum resultado</div>
-            ) : searchResults.map((r) => (
-              <Link
-                key={r.emp.id}
-                to="/app/employees/$id"
-                params={{ id: r.emp.id }}
-                className="flex items-center justify-between p-3 border border-slate-100 rounded-xl bg-slate-50 hover:border-[#991b1b] transition-all"
-              >
-                <div>
-                  <div className="text-xs font-black uppercase text-slate-900">{r.emp.nome}</div>
-                  <div className="text-[9px] font-bold uppercase text-slate-500 mt-0.5">{r.company} · {r.role?.name ?? "Sem cargo"}</div>
-                </div>
-                <span className={`px-3 py-1 rounded text-[9px] font-black uppercase ${r.status.colorClass} text-white`}>{r.status.label}</span>
-              </Link>
-            ))}
-          </div>
-        )}
+    <div className="p-4 md:p-6 animate-fadeIn h-full flex flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-white overflow-y-auto custom-scrollbar">
+      {/* HEADER */}
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div>
+          <div className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-1">SGI · ISO 9001 · NRs</div>
+          <h2 className="heading-display text-2xl md:text-3xl text-slate-900">Painel SESMT — Estaleiro DMN</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          {(["30", "60", "90", "180"] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriodo(p)}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                periodo === p
+                  ? "bg-gradient-to-br from-[#0f766e] to-[#134e4a] text-white shadow-md"
+                  : "bg-white text-slate-500 border border-slate-200 hover:border-[#0f766e]"
+              }`}
+            >{p} dias</button>
+          ))}
+        </div>
       </div>
 
-      {/* GRID: Pendências + Conformidade */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1 min-h-[400px]">
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 flex flex-col">
-          <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-            <h3 className="text-sm font-black uppercase tracking-widest text-orange-600 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" /> Relatório de Vencimentos e Bloqueios
-            </h3>
-            <select
-              value={filterCompany}
-              onChange={(e) => setFilterCompany(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b] max-w-[200px] truncate"
-            >
-              <option value="ALL">Todas as Empresas</option>
-              {(data?.companies ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+      {/* KPI TILES */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+        <KpiTile icon={Users} label="Colaboradores" value={totalEmp} hint="ativos no sistema" tone="dark" />
+        <KpiTile icon={ShieldCheck} label="Conformidade" value={`${conformidadeGeral}%`} hint={`${aptos} aptos`} tone={conformidadeGeral >= 90 ? "green" : conformidadeGeral >= 70 ? "amber" : "red"} />
+        <KpiTile icon={Stethoscope} label="ASOs vencendo" value={asoVencendo30} hint={`${asoVencidos} vencidos`} tone={asoVencidos > 0 ? "red" : "amber"} />
+        <KpiTile icon={Package} label="EPIs em estoque" value={estoqueTotal} hint={`${estoqueBaixo} baixo`} tone="dark" />
+        <KpiTile icon={HardHat} label="EPIs entregues" value={totalEntregas} hint={`R$ ${valorEntregas.toFixed(0)}`} tone="teal" />
+        <KpiTile icon={ClipboardCheck} label="DDS no período" value={ddsCount} hint={`${ddsAderencia}% aderência`} tone="teal" />
+        <KpiTile icon={FileWarning} label="APRs · PTEs" value={`${aprsAtivas} · ${ptesAtivas}`} hint="abertos" tone="dark" />
+      </div>
+
+      {/* SEARCH + FILTERS */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 mb-6">
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Search className="h-4 w-4 text-[#0f766e]" />
+            <h3 className="text-[11px] font-black text-slate-700 uppercase tracking-widest">Busca Universal</h3>
           </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
-            {pendencias.length === 0 ? (
-              <div className="text-center text-slate-400 py-10 font-bold uppercase text-xs">Nenhuma pendência na matriz</div>
-            ) : pendencias.map((p) => (
-              <div
-                key={p.emp.id}
-                onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
-                className="p-4 border border-slate-100 rounded-xl bg-slate-50 flex justify-between items-center cursor-pointer hover:border-[#991b1b] transition-all"
-              >
-                <div>
-                  <div className="text-xs font-black uppercase text-slate-900">{p.emp.nome}</div>
-                  <div className="text-[9px] font-bold uppercase text-slate-500 mt-1">{p.status.msgs.join(", ") || p.status.label}</div>
-                </div>
-                <div className={`px-3 py-1 rounded text-[9px] font-black uppercase ${p.status.colorClass} text-white`}>{p.status.label}</div>
-              </div>
-            ))}
-          </div>
+          <input
+            type="text"
+            placeholder="Nome, CPF, função técnica ou empresa..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e] transition-all placeholder:text-slate-400 placeholder:font-normal"
+          />
+          {search && (
+            <div className="mt-3 space-y-1.5 max-h-64 overflow-y-auto">
+              {searchResults.length === 0 ? (
+                <div className="text-center text-slate-400 py-3 text-xs font-bold uppercase">Nenhum resultado</div>
+              ) : searchResults.map((r) => (
+                <Link
+                  key={r.emp.id}
+                  to="/app/employees/$id"
+                  params={{ id: r.emp.id }}
+                  className="flex items-center justify-between p-3 border border-slate-100 rounded-lg bg-slate-50 hover:border-[#0f766e] hover:bg-white transition-all"
+                >
+                  <div className="min-w-0">
+                    <div className="text-xs font-black uppercase text-slate-900 truncate">{r.emp.nome}</div>
+                    <div className="text-[9px] font-bold uppercase text-slate-500 mt-0.5 truncate">{r.company} · {r.role?.name ?? "Sem cargo"}</div>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${r.status.colorClass} text-white shrink-0 ml-2`}>{r.status.label}</span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
-          <h3 className="text-sm font-black uppercase tracking-widest mb-6 border-b border-slate-100 pb-4 text-[#991b1b] flex items-center gap-2">
-            <Building2 className="h-4 w-4" /> Conformidade por Empresa
-          </h3>
-          <div className="space-y-4">
-            {conformity.length === 0 && (
-              <div className="text-center text-slate-400 py-10 font-bold uppercase text-xs">Sem dados de empresa</div>
+        <div className="bg-gradient-to-br from-[#0f766e] to-[#134e4a] rounded-2xl p-5 text-white shadow-md flex flex-col justify-between">
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Saúde do SESMT</div>
+            <div className="text-4xl font-black leading-none">{conformidadeGeral}<span className="text-xl opacity-70">%</span></div>
+            <div className="text-[10px] uppercase tracking-wide opacity-80 mt-1">conformidade geral</div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-4 text-center">
+            <div className="bg-white/10 rounded-lg p-2">
+              <div className="text-lg font-black">{aptos}</div>
+              <div className="text-[8px] font-bold uppercase opacity-80">Aptos</div>
+            </div>
+            <div className="bg-white/10 rounded-lg p-2">
+              <div className="text-lg font-black">{alertas}</div>
+              <div className="text-[8px] font-bold uppercase opacity-80">Alerta</div>
+            </div>
+            <div className="bg-white/10 rounded-lg p-2">
+              <div className="text-lg font-black">{bloqueados}</div>
+              <div className="text-[8px] font-bold uppercase opacity-80">Bloq.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CHARTS ROW 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <Card title="Status dos colaboradores" icon={Activity}>
+          <div className="h-56">
+            {statusPie.length === 0 ? (
+              <Empty />
+            ) : (
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie data={statusPie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
+                    {statusPie.map((s) => <Cell key={s.name} fill={s.color} />)}
+                  </Pie>
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                </PieChart>
+              </ResponsiveContainer>
             )}
+          </div>
+        </Card>
+
+        <Card title="EPIs entregues / mês" icon={TrendingUp} className="lg:col-span-2">
+          <div className="h-56">
+            {entregaMensal.length === 0 ? (
+              <Empty />
+            ) : (
+              <ResponsiveContainer>
+                <AreaChart data={entregaMensal}>
+                  <defs>
+                    <linearGradient id="entg" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0f766e" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="#0f766e" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="qtd" stroke="#0f766e" strokeWidth={2.5} fill="url(#entg)" name="Qtd" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* CHARTS ROW 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <Card title="Top equipamentos entregues" icon={Boxes} className="lg:col-span-2">
+          <div className="h-64">
+            {topItens.length === 0 ? (
+              <Empty />
+            ) : (
+              <ResponsiveContainer>
+                <BarChart data={topItens} layout="vertical" margin={{ left: 90 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis type="number" tick={{ fontSize: 10 }} />
+                  <YAxis type="category" dataKey="item" width={150} tick={{ fontSize: 10 }} />
+                  <Tooltip />
+                  <Bar dataKey="qtd" fill="#0f766e" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </Card>
+
+        <Card title="Top recebedores de EPI" icon={HardHat}>
+          <div className="space-y-2.5">
+            {topRecip.length === 0 ? <Empty /> : topRecip.map((r, i) => {
+              const max = topRecip[0].qtd || 1;
+              const perc = (r.qtd / max) * 100;
+              return (
+                <div key={r.nome + i}>
+                  <div className="flex items-center justify-between text-[10px] font-bold mb-1">
+                    <span className="truncate text-slate-700">{r.nome}</span>
+                    <span className="text-[#0f766e] font-black">{r.qtd}</span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-[#0f766e] to-[#14b8a6]" style={{ width: `${perc}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      </div>
+
+      {/* DDS + Conformidade por empresa */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <Card title="DDS · evolução & aderência" icon={ClipboardCheck}>
+          <div className="h-56">
+            {ddsTrend.length === 0 ? (
+              <Empty />
+            ) : (
+              <ResponsiveContainer>
+                <BarChart data={ddsTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
+                  <YAxis yAxisId="l" tick={{ fontSize: 10 }} />
+                  <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10 }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar yAxisId="l" dataKey="qtd" fill="#0f766e" name="DDS realizados" radius={[4, 4, 0, 0]} />
+                  <Bar yAxisId="r" dataKey="aderencia" fill="#14b8a6" name="% aderência" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </Card>
+
+        <Card title="Conformidade por empresa" icon={Building2}>
+          <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+            {conformity.length === 0 && <Empty />}
             {conformity.map((c) => (
               <div key={c.name}>
                 <div className="flex justify-between text-[10px] font-black uppercase text-slate-600 mb-1">
-                  <span>{c.name}</span>
-                  <span>{c.perc}% APTO</span>
+                  <span className="truncate">{c.name}</span>
+                  <span>{c.oks}/{c.total} · {c.perc}%</span>
                 </div>
                 <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                  <div className={`h-full ${c.color}`} style={{ width: `${c.perc}%` }} />
+                  <div className={`h-full bg-gradient-to-r ${c.color}`} style={{ width: `${c.perc}%` }} />
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
 
-      {/* LISTA DE BLOQUEIO GSI */}
-      <div className="bg-white rounded-2xl p-8 shadow-sm border-2 border-red-200 mt-8">
-        <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-          <h3 className="text-sm font-black uppercase tracking-widest text-red-600 flex items-center gap-2">
+      {/* PENDÊNCIAS */}
+      <Card
+        title="Vencimentos & pendências"
+        icon={AlertTriangle}
+        accent="amber"
+        right={
+          <select
+            value={filterCompany}
+            onChange={(e) => setFilterCompany(e.target.value)}
+            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase outline-none focus:ring-2 focus:border-[#0f766e] max-w-[200px] truncate"
+          >
+            <option value="ALL">Todas as empresas</option>
+            {(data?.companies ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 max-h-80 overflow-y-auto pr-1">
+          {pendencias.length === 0 ? (
+            <div className="col-span-full text-center text-emerald-600 py-8 font-black uppercase text-xs">✓ Nenhuma pendência</div>
+          ) : pendencias.map((p) => (
+            <div
+              key={p.emp.id}
+              onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
+              className="p-3 border border-slate-100 rounded-xl bg-slate-50 hover:bg-white hover:border-[#0f766e] hover:shadow-sm cursor-pointer transition-all group"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs font-black uppercase text-slate-900 truncate">{p.emp.nome}</div>
+                <ArrowUpRight className="h-3 w-3 text-slate-300 group-hover:text-[#0f766e]" />
+              </div>
+              <div className="text-[9px] font-bold uppercase text-slate-500 mb-1.5 truncate">{p.company}</div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[9px] font-bold text-slate-600 line-clamp-1">{p.status.msgs.join(" · ") || "—"}</div>
+                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${p.status.colorClass} text-white shrink-0`}>{p.status.label}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* BLOCKLIST */}
+      <div className="mt-6 bg-gradient-to-br from-red-50 to-white rounded-2xl p-5 shadow-sm border-2 border-red-200">
+        <div className="flex items-center justify-between mb-4 border-b border-red-100 pb-3">
+          <h3 className="text-xs font-black uppercase tracking-widest text-red-700 flex items-center gap-2">
             <Ban className="h-4 w-4" /> Lista de Bloqueio GSI ({blocklist.length})
           </h3>
-          <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-            Acesso ao estaleiro suspenso
-          </span>
+          <span className="text-[9px] font-bold uppercase tracking-widest text-red-400">Acesso ao estaleiro suspenso</span>
         </div>
         {blocklist.length === 0 ? (
-          <div className="text-center text-emerald-600 py-6 font-black uppercase text-xs">
-            ✓ Nenhum colaborador bloqueado
-          </div>
+          <div className="text-center text-emerald-600 py-6 font-black uppercase text-xs">✓ Nenhum colaborador bloqueado</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {blocklist.map((p) => (
               <div
                 key={p.emp.id}
                 onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
-                className="p-4 border border-red-100 rounded-xl bg-red-50/50 hover:border-red-400 cursor-pointer transition-all"
+                className="p-3 border border-red-100 rounded-xl bg-white hover:border-red-400 hover:shadow-sm cursor-pointer transition-all"
               >
                 <div className="flex items-center justify-between mb-1">
                   <div className="text-xs font-black uppercase text-slate-900 truncate">{p.emp.nome}</div>
-                  <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-red-600 text-white shrink-0 ml-2">
-                    {p.status.label}
-                  </span>
+                  <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-red-600 text-white shrink-0 ml-2">{p.status.label}</span>
                 </div>
-                <div className="text-[9px] font-bold uppercase text-slate-500">
-                  {p.company} · {p.role?.name ?? "Sem cargo"}
-                </div>
-                <div className="text-[9px] font-bold text-red-600 mt-1.5 line-clamp-2">
-                  {p.status.msgs.join(" · ")}
-                </div>
+                <div className="text-[9px] font-bold uppercase text-slate-500">{p.company} · {p.role?.name ?? "Sem cargo"}</div>
+                <div className="text-[9px] font-bold text-red-600 mt-1.5 line-clamp-2">{p.status.msgs.join(" · ")}</div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* FOOTER NOTE */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 text-[10px] font-bold uppercase tracking-wider">
+        <FootStat label="Estoque baixo" value={estoqueBaixo} tone={estoqueBaixo > 0 ? "red" : "green"} />
+        <FootStat label="CAs vencendo (60d)" value={caVencendo} tone={caVencendo > 0 ? "amber" : "green"} />
+        <FootStat label="Perdas / extravios EPI" value={perdas} tone={perdas > 0 ? "amber" : "green"} />
+      </div>
+    </div>
+  );
+}
+
+function KpiTile({ icon: Icon, label, value, hint, tone }: {
+  icon: any; label: string; value: string | number; hint?: string;
+  tone: "dark" | "teal" | "green" | "amber" | "red";
+}) {
+  const styles: Record<string, string> = {
+    dark: "from-slate-800 to-slate-900 text-white",
+    teal: "from-[#0f766e] to-[#134e4a] text-white",
+    green: "from-emerald-500 to-emerald-700 text-white",
+    amber: "from-amber-400 to-amber-600 text-white",
+    red: "from-red-500 to-red-700 text-white",
+  };
+  return (
+    <div className={`bg-gradient-to-br ${styles[tone]} rounded-xl p-3 shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5`}>
+      <div className="flex items-center justify-between mb-1.5 opacity-80">
+        <Icon className="h-4 w-4" />
+        <div className="text-[8px] font-black uppercase tracking-widest text-right truncate max-w-[100px]">{label}</div>
+      </div>
+      <div className="text-2xl font-black leading-tight">{value}</div>
+      {hint && <div className="text-[9px] font-semibold opacity-75 mt-0.5 truncate">{hint}</div>}
+    </div>
+  );
+}
+
+function Card({ title, icon: Icon, children, className = "", right, accent }: {
+  title: string; icon: any; children: React.ReactNode; className?: string;
+  right?: React.ReactNode; accent?: "amber" | "red";
+}) {
+  const accentCls = accent === "amber" ? "text-amber-600" : accent === "red" ? "text-red-600" : "text-[#0f766e]";
+  return (
+    <div className={`bg-white rounded-2xl p-5 shadow-sm border border-slate-200 ${className}`}>
+      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+        <h3 className={`text-[11px] font-black uppercase tracking-widest flex items-center gap-2 ${accentCls}`}>
+          <Icon className="h-4 w-4" /> {title}
+        </h3>
+        {right}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Empty() {
+  return <div className="h-full w-full flex items-center justify-center text-[10px] font-bold uppercase text-slate-400">Sem dados no período</div>;
+}
+
+function FootStat({ label, value, tone }: { label: string; value: number; tone: "red" | "amber" | "green" }) {
+  const cls = tone === "red" ? "border-red-200 bg-red-50 text-red-700"
+    : tone === "amber" ? "border-amber-200 bg-amber-50 text-amber-700"
+    : "border-emerald-200 bg-emerald-50 text-emerald-700";
+  return (
+    <div className={`border-2 rounded-xl p-3 flex items-center justify-between ${cls}`}>
+      <span>{label}</span>
+      <span className="text-lg font-black">{value}</span>
     </div>
   );
 }
