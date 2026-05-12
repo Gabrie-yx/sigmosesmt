@@ -107,7 +107,10 @@ function DDSTemasPage() {
       const { error } = await supabase.from("dds_temas").update({ ativo: !t.ativo }).eq("id", t.id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["dds-temas"] }); qc.invalidateQueries({ queryKey: ["dds-temas-active"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dds-temas"] });
+      qc.invalidateQueries({ queryKey: ["dds-temas-active"] });
+    },
   });
 
   return (
