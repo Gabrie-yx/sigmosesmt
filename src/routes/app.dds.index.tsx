@@ -210,8 +210,9 @@ function KPI({ label, value }: { label: string; value: string | number }) {
 }
 
 function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestorMap: any }) {
-  const t: any = dds.tema_id ? temaMap[dds.tema_id] : null;
   const g: any = dds.gestor_id ? gestorMap[dds.gestor_id] : null;
+  const ids = (dds.temas_ids && dds.temas_ids.length > 0) ? dds.temas_ids : (dds.tema_id ? [dds.tema_id] : []);
+  const livres = (dds.temas_livres && dds.temas_livres.length > 0) ? dds.temas_livres : (dds.tema_livre ? [dds.tema_livre] : []);
 
   const { data: attendees = [] } = useQuery({
     queryKey: ["dds-att", dds.id],
@@ -225,7 +226,7 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
         <Field label="Hora" value={dds.hora?.slice(0, 5) ?? "—"} />
         <Field label="Gestor" value={g?.nome ?? "—"} />
         <Field label="Setor" value={dds.setor ?? "—"} />
-        <Field label="Tema" value={t?.titulo ?? dds.tema_livre ?? "—"} />
+        <Field label="Temas" value={[...ids.map((id) => (temaMap[id] as any)?.titulo).filter(Boolean), ...livres].join(" · ") || "—"} />
         <Field label="Duração" value={`${dds.duracao_min} min`} />
         <Field label="Esperados" value={String(dds.participantes_esperados)} />
         <Field label="Presentes" value={`${dds.participantes_presentes} (${Number(dds.aderencia).toFixed(0)}%)`} />
