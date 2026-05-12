@@ -59,6 +59,8 @@ export type Database = {
           encarregado1: string | null
           encarregado2: string | null
           id: string
+          matriz_cnpj: string | null
+          matriz_nome: string | null
           name: string
           type: string
           updated_at: string
@@ -71,6 +73,8 @@ export type Database = {
           encarregado1?: string | null
           encarregado2?: string | null
           id?: string
+          matriz_cnpj?: string | null
+          matriz_nome?: string | null
           name: string
           type?: string
           updated_at?: string
@@ -83,6 +87,8 @@ export type Database = {
           encarregado1?: string | null
           encarregado2?: string | null
           id?: string
+          matriz_cnpj?: string | null
+          matriz_nome?: string | null
           name?: string
           type?: string
           updated_at?: string
