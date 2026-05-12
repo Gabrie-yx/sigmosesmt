@@ -130,33 +130,33 @@ export function CatalogoNrsPanel() {
           Nenhuma NR encontrada
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((n) => (
             <div
               key={n.id}
-              className={`border rounded-lg p-3 bg-white flex items-center justify-between gap-2 hover:shadow-sm transition-all ${!n.ativo ? "opacity-50" : ""}`}
+              className={`border border-slate-200 rounded-2xl p-5 bg-white shadow-md hover:shadow-xl hover:-translate-y-0.5 hover:border-sky-300 flex items-center justify-between gap-3 transition-all ${!n.ativo ? "opacity-50" : ""}`}
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-black text-sky-700 text-sm">{n.codigo}</span>
-                  {!n.ativo && <span className="text-[9px] font-bold uppercase text-slate-400">inativa</span>}
+                  <span className="font-black text-sky-700 text-lg">{n.codigo}</span>
+                  {!n.ativo && <span className="text-[10px] font-bold uppercase text-slate-400">inativa</span>}
                 </div>
-                <div className="text-xs text-slate-600 truncate">{n.titulo}</div>
+                <div className="text-sm text-slate-600 truncate mt-0.5">{n.titulo}</div>
               </div>
               {isEditor && (
-                <div className="flex gap-0.5 shrink-0">
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditing(n)}>
-                    <Pencil className="h-3.5 w-3.5" />
+                <div className="flex gap-1 shrink-0">
+                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(n)}>
+                    <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7"
+                  <Button size="icon" variant="ghost" className="h-8 w-8"
                     onClick={() => toggleAtivo.mutate({ id: n.id, ativo: !n.ativo })}
                     title={n.ativo ? "Desativar" : "Ativar"}>
-                    {n.ativo ? <PowerOff className="h-3.5 w-3.5 text-amber-600" /> : <Power className="h-3.5 w-3.5 text-emerald-600" />}
+                    {n.ativo ? <PowerOff className="h-4 w-4 text-amber-600" /> : <Power className="h-4 w-4 text-emerald-600" />}
                   </Button>
                   {isAdmin && (
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-rose-600"
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-rose-600"
                       onClick={() => { if (confirm(`Excluir ${n.codigo}?`)) del.mutate(n.id); }}>
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
