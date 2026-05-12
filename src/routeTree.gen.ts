@@ -19,6 +19,7 @@ import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppPtesRouteImport } from './routes/app.ptes'
 import { Route as AppPainelRouteImport } from './routes/app.painel'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
+import { Route as AppDdsRouteImport } from './routes/app.dds'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
@@ -81,6 +82,11 @@ const AppEmployeesRoute = AppEmployeesRouteImport.update({
   path: '/employees',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDdsRoute = AppDdsRouteImport.update({
+  id: '/dds',
+  path: '/dds',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCompaniesRoute = AppCompaniesRouteImport.update({
   id: '/companies',
   path: '/companies',
@@ -128,14 +134,14 @@ const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
   getParentRoute: () => AppEmployeesRoute,
 } as any)
 const AppDdsTemasRoute = AppDdsTemasRouteImport.update({
-  id: '/dds/temas',
-  path: '/dds/temas',
-  getParentRoute: () => AppRoute,
+  id: '/temas',
+  path: '/temas',
+  getParentRoute: () => AppDdsRoute,
 } as any)
 const AppDdsGestoresRoute = AppDdsGestoresRouteImport.update({
-  id: '/dds/gestores',
-  path: '/dds/gestores',
-  getParentRoute: () => AppRoute,
+  id: '/gestores',
+  path: '/gestores',
+  getParentRoute: () => AppDdsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAuditRoute
   '/app/companies': typeof AppCompaniesRoute
+  '/app/dds': typeof AppDdsRouteWithChildren
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAuditRoute
   '/app/companies': typeof AppCompaniesRoute
+  '/app/dds': typeof AppDdsRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAuditRoute
   '/app/companies': typeof AppCompaniesRoute
+  '/app/dds': typeof AppDdsRouteWithChildren
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/audit'
     | '/app/companies'
+    | '/app/dds'
     | '/app/employees'
     | '/app/painel'
     | '/app/ptes'
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/audit'
     | '/app/companies'
+    | '/app/dds'
     | '/app/painel'
     | '/app/ptes'
     | '/app/roles'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/audit'
     | '/app/companies'
+    | '/app/dds'
     | '/app/employees'
     | '/app/painel'
     | '/app/ptes'
@@ -354,6 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmployeesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/dds': {
+      id: '/app/dds'
+      path: '/dds'
+      fullPath: '/app/dds'
+      preLoaderRoute: typeof AppDdsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/companies': {
       id: '/app/companies'
       path: '/companies'
@@ -419,20 +438,33 @@ declare module '@tanstack/react-router' {
     }
     '/app/dds/temas': {
       id: '/app/dds/temas'
-      path: '/dds/temas'
+      path: '/temas'
       fullPath: '/app/dds/temas'
       preLoaderRoute: typeof AppDdsTemasRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppDdsRoute
     }
     '/app/dds/gestores': {
       id: '/app/dds/gestores'
-      path: '/dds/gestores'
+      path: '/gestores'
       fullPath: '/app/dds/gestores'
       preLoaderRoute: typeof AppDdsGestoresRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppDdsRoute
     }
   }
 }
+
+interface AppDdsRouteChildren {
+  AppDdsGestoresRoute: typeof AppDdsGestoresRoute
+  AppDdsTemasRoute: typeof AppDdsTemasRoute
+}
+
+const AppDdsRouteChildren: AppDdsRouteChildren = {
+  AppDdsGestoresRoute: AppDdsGestoresRoute,
+  AppDdsTemasRoute: AppDdsTemasRoute,
+}
+
+const AppDdsRouteWithChildren =
+  AppDdsRoute._addFileChildren(AppDdsRouteChildren)
 
 interface AppEmployeesRouteChildren {
   AppEmployeesIdRoute: typeof AppEmployeesIdRoute
@@ -451,6 +483,7 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
 interface AppRouteChildren {
   AppAuditRoute: typeof AppAuditRoute
   AppCompaniesRoute: typeof AppCompaniesRoute
+  AppDdsRoute: typeof AppDdsRouteWithChildren
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppPainelRoute: typeof AppPainelRoute
   AppPtesRoute: typeof AppPtesRoute
@@ -458,8 +491,6 @@ interface AppRouteChildren {
   AppTrainingsRoute: typeof AppTrainingsRoute
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
-  AppDdsGestoresRoute: typeof AppDdsGestoresRoute
-  AppDdsTemasRoute: typeof AppDdsTemasRoute
   AppEstoqueEpiRoute: typeof AppEstoqueEpiRoute
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
   AppRelatoriosReincidenciaEpiRoute: typeof AppRelatoriosReincidenciaEpiRoute
@@ -470,6 +501,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAuditRoute: AppAuditRoute,
   AppCompaniesRoute: AppCompaniesRoute,
+  AppDdsRoute: AppDdsRouteWithChildren,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppPainelRoute: AppPainelRoute,
   AppPtesRoute: AppPtesRoute,
@@ -477,8 +509,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppTrainingsRoute: AppTrainingsRoute,
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
-  AppDdsGestoresRoute: AppDdsGestoresRoute,
-  AppDdsTemasRoute: AppDdsTemasRoute,
   AppEstoqueEpiRoute: AppEstoqueEpiRoute,
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
   AppRelatoriosReincidenciaEpiRoute: AppRelatoriosReincidenciaEpiRoute,
