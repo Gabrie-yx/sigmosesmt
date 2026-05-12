@@ -485,6 +485,22 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                 <Input value={apr.observacoes_gerais ?? ""} onChange={(e) => setApr({ ...apr, observacoes_gerais: e.target.value })} />
               </div>
             </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <Label>Texto "GERAIS" do PDF (orientações fixas, página 3)</Label>
+                <Button type="button" size="sm" variant="ghost" className="h-7 text-xs"
+                  onClick={() => setApr({ ...apr, texto_gerais: DEFAULT_TEXTO_GERAIS })}>
+                  Restaurar padrão DMN
+                </Button>
+              </div>
+              <Textarea
+                rows={10}
+                value={apr.texto_gerais ?? ""}
+                onChange={(e) => setApr({ ...apr, texto_gerais: e.target.value })}
+                className="font-mono text-xs"
+              />
+            </div>
           </div>
         )}
 
