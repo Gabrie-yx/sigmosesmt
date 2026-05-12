@@ -25,17 +25,41 @@ import { useRef, useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import dmnLogo from "@/assets/dmn-logo.png";
 
-const SESMT_ITEMS = [
-  { to: "/app/painel", label: "Painel SESMT" },
-  { to: "/app/companies", label: "Empresas" },
-  { to: "/app/roles", label: "Cargos / Riscos" },
-  { to: "/app/employees", label: "Colaboradores" },
-  { to: "/app/trainings", label: "Treinamentos" },
-  { to: "/app/cascos", label: "Cascos / Embarcações" },
-  { to: "/app/ptes", label: "Emitir PTE" },
-  { to: "/app/aprs", label: "Emitir APR" },
-  { to: "/app/relatorios/reincidencia-epi", label: "Reincidência EPI" },
-] as const;
+// Menu SESMT reorganizado seguindo o ciclo PDCA da SST
+// (NR-1 GRO/PGR → NR-7 PCMSO → NR-6 EPI → NR-35 etc.)
+type SesmtItem = { to: string; label: string };
+type SesmtGroup = { title: string; items: SesmtItem[] };
+const SESMT_GROUPS: SesmtGroup[] = [
+  {
+    title: "Visão Geral",
+    items: [{ to: "/app/painel", label: "Painel SESMT" }],
+  },
+  {
+    title: "Cadastros Base",
+    items: [
+      { to: "/app/companies", label: "Empresas / Contratadas" },
+      { to: "/app/roles", label: "Cargos & Matriz de Riscos" },
+      { to: "/app/employees", label: "Colaboradores" },
+      { to: "/app/cascos", label: "Cascos / Embarcações" },
+    ],
+  },
+  {
+    title: "Saúde & Capacitação",
+    items: [{ to: "/app/trainings", label: "Treinamentos & NRs" }],
+  },
+  {
+    title: "Documentos & Permissões",
+    items: [
+      { to: "/app/ptes", label: "Emitir PTE" },
+      { to: "/app/aprs", label: "Emitir APR" },
+    ],
+  },
+  {
+    title: "Indicadores SST",
+    items: [{ to: "/app/relatorios/reincidencia-epi", label: "Reincidência de Perda EPI" }],
+  },
+];
+const SESMT_FLAT: SesmtItem[] = SESMT_GROUPS.flatMap((g) => g.items);
 
 const DDS_SUBMENU = [
   { to: "/app/dds", label: "DDS" },
@@ -49,7 +73,7 @@ const DOCUMENTOS_SUBMENU = [
 ] as const;
 
 const SESMT_PATHS = [
-  ...SESMT_ITEMS.map((i) => i.to),
+  ...SESMT_FLAT.map((i) => i.to),
   ...DDS_SUBMENU.map((i) => i.to),
   ...DOCUMENTOS_SUBMENU.map((i) => i.to),
 ];
@@ -135,20 +159,32 @@ export function AppHeader() {
           <ChevronDown className="h-3.5 w-3.5 opacity-70" />
         </button>
         <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-          <div className="w-60 rounded-lg border border-red-100 bg-white shadow-xl py-1">
-            {SESMT_ITEMS.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={`block px-3 py-2 text-sm font-semibold transition-colors ${
-                  isActive(item.to)
-                    ? "bg-red-50 text-red-800"
-                    : "text-slate-700 hover:bg-red-50 hover:text-red-800"
-                }`}
-              >
-                {item.label}
-              </Link>
+          <div className="w-72 rounded-lg border border-red-100 bg-white shadow-xl py-1">
+            {SESMT_GROUPS.map((group, gi) => (
+              <div key={group.title}>
+                {gi > 0 && <div className="my-1 border-t border-slate-100" />}
+                <div className="px-3 pt-2 pb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                  {group.title}
+                </div>
+                {group.items.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={`block px-3 py-2 text-sm font-semibold transition-colors ${
+                      isActive(item.to)
+                        ? "bg-red-50 text-red-800"
+                        : "text-slate-700 hover:bg-red-50 hover:text-red-800"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
             ))}
+            <div className="my-1 border-t border-slate-100" />
+            <div className="px-3 pt-2 pb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">
+              Diálogos & Documentos
+            </div>
             <div className="group/sub relative">
               <div
                 className={`flex w-full items-center justify-between px-3 py-2 text-sm font-semibold cursor-default transition-colors ${
@@ -369,16 +405,23 @@ export function AppHeader() {
       <div className="text-[10px] font-black uppercase tracking-widest text-white/60 px-2 mb-1">
         SESMT
       </div>
-      {SESMT_ITEMS.map((item) => (
-        <Link
-          key={item.to}
-          to={item.to}
-          className={`rounded-md px-4 py-2 text-sm font-semibold ${
-            isActive(item.to) ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10"
-          }`}
-        >
-          {item.label}
-        </Link>
+      {SESMT_GROUPS.map((group) => (
+        <div key={group.title} className="mt-2">
+          <div className="text-[9px] font-black uppercase tracking-widest text-white/50 px-2 mb-0.5">
+            {group.title}
+          </div>
+          {group.items.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`block rounded-md px-4 py-2 text-sm font-semibold ${
+                isActive(item.to) ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
       ))}
       <div className="text-xs font-bold text-white/70 px-2 mt-2">DDS</div>
       {DDS_SUBMENU.map((s) => (
