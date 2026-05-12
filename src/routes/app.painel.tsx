@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, AlertTriangle, Building2, Ban } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
+import { type SafetyOverride } from "@/lib/safety-overrides";
 
 export const Route = createFileRoute("/app/painel")({
   component: TstPanel,
@@ -17,17 +18,19 @@ function TstPanel() {
   const { data } = useQuery({
     queryKey: ["tst-panel"],
     queryFn: async () => {
-      const [emps, comps, roles, exams] = await Promise.all([
+      const [emps, comps, roles, exams, overrides] = await Promise.all([
         supabase.from("employees").select("*").order("nome"),
         supabase.from("companies").select("id,name").order("name"),
         supabase.from("roles").select("*"),
         supabase.from("employee_exams").select("*"),
+        supabase.from("safety_overrides").select("*").eq("ativo", true),
       ]);
       return {
         employees: emps.data ?? [],
         companies: comps.data ?? [],
         roles: roles.data ?? [],
         exams: exams.data ?? [],
+        overrides: (overrides.data ?? []) as SafetyOverride[],
       };
     },
   });
@@ -42,11 +45,17 @@ function TstPanel() {
       arr.push(ex);
       exMap.set(ex.employee_id, arr);
     });
+    const ovMap = new Map<string, SafetyOverride[]>();
+    data.overrides.forEach((o) => {
+      const arr = ovMap.get(o.employee_id) ?? [];
+      arr.push(o);
+      ovMap.set(o.employee_id, arr);
+    });
     return data.employees.map((e: any) => ({
       emp: e,
       company: e.company_id ? cMap.get(e.company_id) ?? "—" : "—",
       role: e.role_id ? rMap.get(e.role_id) : null,
-      status: calculateSafetyStatus(e, e.role_id ? (rMap.get(e.role_id) as any) : null, exMap.get(e.id) ?? []),
+      status: calculateSafetyStatus(e, e.role_id ? (rMap.get(e.role_id) as any) : null, exMap.get(e.id) ?? [], [], ovMap.get(e.id) ?? []),
     }));
   }, [data]);
 
