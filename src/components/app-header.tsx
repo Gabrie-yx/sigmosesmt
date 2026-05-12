@@ -31,9 +31,12 @@ const SESMT_ITEMS = [
   { to: "/app/employees", label: "Colaboradores" },
   { to: "/app/trainings", label: "Treinamentos" },
   { to: "/app/ptes", label: "Emitir PTE" },
-  { to: "/app/dds", label: "DDS" },
-  { to: "/app/dds/painel", label: "DDS · Painel Qualidade" },
   { to: "/app/relatorios/reincidencia-epi", label: "Reincidência EPI" },
+] as const;
+
+const DDS_SUBMENU = [
+  { to: "/app/dds", label: "DDS" },
+  { to: "/app/dds/painel", label: "Painel de Qualidade" },
 ] as const;
 
 const DOCUMENTOS_SUBMENU = [
@@ -43,6 +46,7 @@ const DOCUMENTOS_SUBMENU = [
 
 const SESMT_PATHS = [
   ...SESMT_ITEMS.map((i) => i.to),
+  ...DDS_SUBMENU.map((i) => i.to),
   ...DOCUMENTOS_SUBMENU.map((i) => i.to),
 ];
 
