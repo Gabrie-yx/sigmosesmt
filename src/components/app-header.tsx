@@ -55,10 +55,13 @@ const SESMT_PATHS = [
 ];
 
 const OTHER_MODULES = [
-  { key: "producao", label: "Produção", icon: Factory },
   { key: "manut-eletrica", label: "Manutenção Elétrica", icon: Zap },
   { key: "manut-mecanica", label: "Manutenção Mecânica", icon: Wrench },
   { key: "portaria", label: "Portaria", icon: DoorOpen },
+] as const;
+
+const PRODUCAO_SUBMENU = [
+  { to: "/app/producao/ordens", label: "Ordens de Produção" },
 ] as const;
 
 const ESTOQUE_SUBMENU = [
@@ -309,6 +312,38 @@ export function AppHeader() {
           </div>
         </div>
       ))}
+      {/* Produção — dropdown ativo */}
+      <div className="group relative">
+        <button
+          type="button"
+          aria-haspopup="true"
+          onClick={() => navigate({ to: "/app/producao/ordens" })}
+          className={triggerCls(isActive("/app/producao"))}
+        >
+          <Factory className="h-4 w-4" /> Produção
+          <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+        </button>
+        <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+          <div className="w-60 rounded-lg border border-amber-100 bg-white shadow-xl py-1">
+            <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-amber-700 border-b border-amber-50">
+              Produção
+            </div>
+            {PRODUCAO_SUBMENU.map((s) => (
+              <Link
+                key={s.to}
+                to={s.to}
+                className={`block px-3 py-2 text-sm font-semibold transition-colors ${
+                  isActive(s.to)
+                    ? "bg-amber-50 text-amber-800"
+                    : "text-slate-700 hover:bg-amber-50 hover:text-amber-800"
+                }`}
+              >
+                {s.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
       {isAdmin && (
         <Link to="/app/users" className={triggerCls(isActive("/app/users"))}>
           <UsersIcon className="h-4 w-4" /> Usuários
@@ -416,6 +451,20 @@ export function AppHeader() {
           <m.icon className="h-4 w-4" /> {m.label}
           <Lock className="h-3 w-3 ml-auto" />
         </button>
+      ))}
+      <div className="text-xs font-bold text-white/70 px-2 mt-2 flex items-center gap-2">
+        <Factory className="h-4 w-4" /> Produção
+      </div>
+      {PRODUCAO_SUBMENU.map((s) => (
+        <Link
+          key={s.to}
+          to={s.to}
+          className={`rounded-md px-6 py-2 text-sm font-semibold ${
+            isActive(s.to) ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10"
+          }`}
+        >
+          ↳ {s.label}
+        </Link>
       ))}
       {isAdmin && (
         <Link
