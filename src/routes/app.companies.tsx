@@ -530,6 +530,16 @@ function CompanyForm({
             <Input value={editing?.encarregado2 ?? ""} onChange={(e) => setEditing({ ...editing, encarregado2: e.target.value })} className="bg-slate-50 mt-1" />
           </div>
         </div>
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+          <div>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Matriz - Nome (cabeçalho DDS)</Label>
+            <Input value={editing?.matriz_nome ?? ""} onChange={(e) => setEditing({ ...editing, matriz_nome: e.target.value })} placeholder="Deixe em branco para usar o nome da empresa" className="bg-slate-50 mt-1" />
+          </div>
+          <div>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Matriz - CNPJ</Label>
+            <Input value={maskCNPJ(editing?.matriz_cnpj ?? "")} onChange={(e) => setEditing({ ...editing, matriz_cnpj: maskCNPJ(e.target.value) })} placeholder="00.000.000/0001-00" maxLength={18} inputMode="numeric" className="bg-slate-50 mt-1" />
+          </div>
+        </div>
         <Button type="submit" disabled={saving} className="mt-4 bg-[#991b1b] hover:bg-[#7f1d1d] text-white text-xs font-black uppercase tracking-widest px-8 py-4 h-auto rounded-xl shadow-lg">
           Salvar Dados da Empresa
         </Button>
