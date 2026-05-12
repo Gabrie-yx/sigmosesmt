@@ -1,95 +1,97 @@
-## Objetivo
+# Reforço de segurança + novo módulo Usuários
 
-Reformular a tela de emissão da APR para ficar **visualmente idêntica** ao documento físico homologado (cabeçalho DMN vermelho, blocos com bordas, cabeçalho de tabela laranja, cores de risco), com os mesmos campos, mesma ordem e mesma diagramação das 5 páginas do papel. O PDF gerado já segue esse layout — vamos alinhar a tela de preenchimento ao mesmo padrão e ajustar os campos que faltam.
+## 1. Banco de dados (migração)
 
-## Estrutura final da APR (5 páginas, espelhando o papel)
+### 1.1. Novo papel `viewer` e renomeação
+- `app_role` hoje tem `admin` e `tst`. Vamos para: `admin`, `moderador`, `editor`, `viewer`.
+- Mantemos `tst` como alias durante a transição (não removemos do enum agora para não quebrar dados).
+- `is_editor()` passa a aceitar `admin`, `moderador`, `editor`.
+- Nova função `is_moderator()` → `admin` ou `moderador` (para ações de aprovação/revogação).
+- Nova função `is_viewer_or_above()` → qualquer papel ativo (usada para SELECT).
 
-**Página 1 — Identificação + Tabela de Riscos**
-- Cabeçalho: Logo DMN | Razão social + "APR – Análise Preliminar de Riscos" | Bloco ISO (Cód./Rev./Data/Pág.)
-- Linha de identificação: CNPJ | Início | Fim | APR Nº | Elaborado
-- Atividade Principal | Serviço Detalhado
-- **Elaborado por** (seletor de funcionário — TST) | **Responsável pelo Serviço** (seletor de **empresa** cadastrada) | **Local da Atividade** | Horário (Seg–Qui / Sexta)
-- Tabela de riscos: Passo a Passo | Riscos Identificados | Efeitos/Danos | P | S | G | Ações Preventivas | EPI | Responsáveis | NRs
+### 1.2. Acesso por módulo (on/off)
+Nova tabela `user_module_access`:
+- `user_id`, `module` (enum: `sesmt`, `estoque`, `producao`, `manutencao`, `portaria`, `usuarios`), `enabled`.
+- RLS: só admin gerencia; usuário lê o próprio.
+- Função `has_module_access(_user_id, _module)` SECURITY DEFINER.
+- Admin sempre tem acesso a todos os módulos (bypass na função).
 
-**Página 2 — GERAIS**
-- Texto padrão (10 itens de orientação + comportamentos inaceitáveis), editável.
+### 1.3. Convites
+Tabela `user_invites`:
+- `email`, `full_name`, `role`, `modules` (array), `invited_by`, `accepted_at`, `expires_at`.
+- RLS: só admin lê/escreve.
+- Edge Function `invite-user` chama `supabaseAdmin.auth.admin.inviteUserByEmail()` e cria registros em `user_roles` + `user_module_access` ao aceitar (via trigger em `auth.users` no INSERT).
 
-**Página 3 — Avaliação de Risco + Assinaturas**
-- Legenda dos riscos ambientais (Físico, Químico, Biológico, Ergonômico, Mecânico)
-- Hierarquia (CA / EPC / EPI)
-- Bloco "AVALIAÇÃO DO RISCO" com Probabilidade (Baixa/Média/Alta) e Severidade (Baixa/Média/Alta) coloridas
-- Grau do Risco: Trivial (2) → Inaceitável (6) com cores
-- Caixas de assinatura: TST | Responsável pelo Serviço
+### 1.4. MFA enforcement
+- Função `requires_mfa(_user_id)` retorna true se papel ∈ {admin, moderador}.
+- RLS sensíveis (`user_roles`, `user_module_access`, `audit_logs`, `safety_overrides`, `temp_admins`) passam a checar `auth.jwt()->>'aal' = 'aal2'` quando `requires_mfa()` for true.
 
-**Página 4 — Anexo I: Assinatura dos Executantes**
-- Tabela Nº | Nome | Assinatura
-- **Lista preenchida automaticamente** com os funcionários ativos da empresa selecionada em "Responsável pelo Serviço"
-- Usuário pode **desmarcar** quem não vai executar antes de salvar
+### 1.5. Auditoria de login (opcional, fica para próxima)
+Não nesta etapa para não inflar.
 
-## Mudanças no Formulário (`src/components/aprs/apr-form.tsx`)
+## 2. Edge Functions
 
-Reescrever a tela em **abas/passos visuais** que espelham as páginas do papel:
+### 2.1. `invite-user` (nova)
+- Recebe: `{ email, full_name, role, modules[] }`.
+- Verifica chamador é admin (via JWT + `has_role`).
+- Chama `auth.admin.inviteUserByEmail(email, { data: { full_name } })`.
+- Insere em `user_invites` com `role` e `modules` pendentes.
+- Trigger `handle_new_user` (já existe) cria profile; vamos estender para aplicar invite pendente: ler `user_invites` por email, criar `user_roles` e `user_module_access`, marcar `accepted_at`.
 
-1. **Aba "Identificação"** (página 1 do papel)
-   - Cabeçalho DMN replicado no topo do formulário (vermelho + nome estaleiro + bloco ISO)
-   - Campos na mesma ordem e diagramação do papel, com bordas pretas finas
-   - "Responsável pelo Serviço" → `<Select>` de empresas (`companies`)
-   - "Elaborado por" → `<Select>` de funcionários (mesma lista TST)
-   - "Local da Atividade" (renomear o campo atual `local`)
-   - Horário: 2 pares (Seg–Qui início/fim, Sexta início/fim)
+### 2.2. `delete-user` (nova)
+- Admin remove usuário: apaga de `user_roles`, `user_module_access` e `auth.users` via service role.
 
-2. **Aba "Riscos"** (página 1 — tabela)
-   - Tabela com cabeçalho laranja idêntico ao papel
-   - Coluna G colorida conforme P+S (verde→vermelho)
-   - Linhas adicionáveis com seleção do catálogo de riscos
+## 3. Frontend
 
-3. **Aba "Gerais"** (página 2)
-   - Textarea com o texto padrão pré-carregado, editável.
+### 3.1. Página `/app/usuarios` (refatorar)
+- Lista usuários com: nome, email, papel, módulos (chips), MFA status, último acesso.
+- Botão **"Convidar usuário"** abre modal:
+  - Nome completo, Email, Papel (radio), Módulos (checkboxes).
+  - Submete para `invite-user`.
+- Ações por linha: Editar papel/módulos, Reenviar convite, Remover.
+- Filtros: papel, módulo, status (ativo/pendente).
 
-4. **Aba "Avaliação & Assinaturas"** (página 3)
-   - Mostrar a legenda colorida (somente leitura, igual ao papel)
-   - TST e Responsável pelo Serviço já vêm dos campos da aba 1 (somente exibição).
+### 3.2. Guard de módulo
+- Hook `useModuleAccess(module)` busca `user_module_access` do usuário logado.
+- `<ModuleGuard module="sesmt">` envolve rotas — redireciona para `/app` com toast se sem acesso.
+- Aplicar em `/app/sesmt/*`, `/app/estoque/*`, `/app/producao/*`, `/app/manutencao/*`, `/app/portaria/*`, `/app/usuarios`.
+- Header esconde itens de menu sem acesso.
 
-5. **Aba "Executantes"** (página 4)
-   - Ao mudar "Responsável pelo Serviço" (empresa) na aba 1, lista todos os `employees` ativos dessa empresa
-   - Cada funcionário vem com checkbox **marcado por padrão**; usuário desmarca quem não vai executar
-   - Ao salvar, gera `apr_assinaturas` (papel = `EXECUTANTE`) só dos marcados
+### 3.3. MFA enrollment
+- Página `/app/conta/seguranca`:
+  - Status MFA (enrolled/não).
+  - Botão "Ativar 2FA" → QR code (TOTP via `supabase.auth.mfa.enroll`).
+  - Verificação com código de 6 dígitos.
+- Banner global obrigatório: se `role ∈ {admin, moderador}` e sem MFA, redireciona para `/app/conta/seguranca` em todas as rotas exceto essa.
 
-## Mudanças no Banco
+### 3.4. Login
+- Após `signInWithPassword`, checar `aal`. Se papel exige MFA e `aal=aal1`, mostrar tela de challenge TOTP.
 
-Apenas dois ajustes pequenos em `aprs`:
+### 3.5. Página de aceite de convite
+- Rota pública `/aceitar-convite` (já tratada pelo Supabase via redirect do email — só precisamos garantir que `/reset-password` ou similar exista para definir senha).
 
-- `hora_inicio_sexta TIME NULL`
-- `hora_fim_sexta TIME NULL`
+## 4. Considerações sobre papéis
 
-(Mantemos `hora_inicio` / `hora_fim` como Seg–Qui.)
+- **Admin**: tudo, gerencia usuários, MFA obrigatório.
+- **Moderador**: edita + aprova/revoga (ex.: aprovar requisição de compra, revogar safety_override), MFA obrigatório.
+- **Editor**: cria/edita registros nos módulos liberados, sem aprovações.
+- **Visualizador**: somente leitura nos módulos liberados.
 
-Nada mais muda na estrutura — `empresa_id`, `tst_id`, `apr_assinaturas` etc. já existem.
+## 5. Ordem de execução
 
-## Mudanças no PDF (`src/lib/apr-pdf.ts` e `apr-pdf-loader.ts`)
-
-- Página 1: usar os 2 pares de horário (Seg–Qui / Sexta) na célula "Horário"
-- "Responsável pelo Serviço" puxa de `companies.name` (já implementado, só garantir)
-- Página 4 (Anexo I): listar **somente os executantes marcados** (já é o comportamento — só garantir que a tela escreva corretamente em `apr_assinaturas`)
-- Restante do PDF já está fiel ao papel.
+1. Migração SQL (enum, funções, tabelas, RLS).
+2. Edge Functions `invite-user` e `delete-user`.
+3. Refactor da página de Usuários (UI nova com convite + módulos).
+4. ModuleGuard + esconder itens do header.
+5. Página de segurança com MFA + banner obrigatório.
+6. Ajuste no fluxo de login para challenge MFA.
 
 ## Detalhes técnicos
+- Enum `app_role`: `ALTER TYPE app_role ADD VALUE 'moderador'; ADD VALUE 'editor'; ADD VALUE 'viewer';` (o valor `tst` permanece, depreciado — `is_editor` passa a aceitar editor/moderador/admin).
+- `audit_logs` ganha trigger em `auth.users` para login? Não — Supabase já loga isso internamente; deixamos para depois.
+- MFA: `supabase.auth.mfa.enroll({ factorType: 'totp' })` + `challenge` + `verify`. RLS checa `(auth.jwt()->>'aal')::text = 'aal2'`.
+- Convite: o `inviteUserByEmail` envia email padrão do Supabase com link para definir senha; precisamos garantir que a URL de redirect aponte para uma rota de definição de senha (já temos `/reset-password`? verificar e criar se faltar).
 
-- Layout do formulário usa `<div>` com `border border-black`, cabeçalhos com `bg-[#dc3545] text-white` (vermelho DMN) e tabela com `bg-[#ff9900]` (laranja) — mantemos coerência com o PDF.
-- Tokens novos em `src/styles.css`: `--apr-red`, `--apr-orange`, `--apr-cream` (usados só dentro do formulário/preview da APR — não afeta o resto do app).
-- Seletor de empresa e de funcionário usam `Select` shadcn (igual TST atual) com busca.
-- Ao trocar a empresa, dispara um `useEffect` que recarrega os funcionários ativos e marca todos por padrão.
-
-## Não muda
-
-- Estrutura de rotas, autenticação, RLS, demais módulos.
-- Catálogo de riscos, NRs, EPIs.
-- Lógica de geração de número da APR e validade.
-
-## Próximo passo
-
-Se você aprovar, eu:
-1. Crio a migration dos 2 campos de horário de sexta.
-2. Reescrevo o `apr-form.tsx` com as 5 abas espelhando o papel.
-3. Ajusto o PDF para usar os 2 pares de horário.
-4. Mostro o resultado pra você validar antes de qualquer outra coisa.
+## Riscos
+- Quebrar acesso atual: usuários `tst` continuam funcionando porque `is_editor` mantém aceitação.
+- MFA obrigatório pode trancar admins fora — vamos liberar 7 dias de carência mostrando banner antes de bloquear.
