@@ -20,6 +20,7 @@ import { Route as AppPtesRouteImport } from './routes/app.ptes'
 import { Route as AppPainelRouteImport } from './routes/app.painel'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
+import { Route as AppCascosRouteImport } from './routes/app.cascos'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
@@ -87,6 +88,11 @@ const AppEmployeesRoute = AppEmployeesRouteImport.update({
 const AppCompaniesRoute = AppCompaniesRouteImport.update({
   id: '/companies',
   path: '/companies',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCascosRoute = AppCascosRouteImport.update({
+  id: '/cascos',
+  path: '/cascos',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAuditRoute = AppAuditRouteImport.update({
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAuditRoute
+  '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/painel': typeof AppPainelRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAuditRoute
+  '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAuditRoute
+  '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/painel': typeof AppPainelRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/app/audit'
+    | '/app/cascos'
     | '/app/companies'
     | '/app/employees'
     | '/app/painel'
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/app/audit'
+    | '/app/cascos'
     | '/app/companies'
     | '/app/painel'
     | '/app/ptes'
@@ -290,6 +301,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/app/audit'
+    | '/app/cascos'
     | '/app/companies'
     | '/app/employees'
     | '/app/painel'
@@ -395,6 +407,13 @@ declare module '@tanstack/react-router' {
       path: '/companies'
       fullPath: '/app/companies'
       preLoaderRoute: typeof AppCompaniesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/cascos': {
+      id: '/app/cascos'
+      path: '/cascos'
+      fullPath: '/app/cascos'
+      preLoaderRoute: typeof AppCascosRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/audit': {
@@ -507,6 +526,7 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAuditRoute: typeof AppAuditRoute
+  AppCascosRoute: typeof AppCascosRoute
   AppCompaniesRoute: typeof AppCompaniesRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppPainelRoute: typeof AppPainelRoute
@@ -529,6 +549,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAuditRoute: AppAuditRoute,
+  AppCascosRoute: AppCascosRoute,
   AppCompaniesRoute: AppCompaniesRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppPainelRoute: AppPainelRoute,
