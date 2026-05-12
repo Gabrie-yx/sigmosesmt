@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Briefcase, UserCog, Plus, FileText, Award, ShieldCheck, Save, Trash2,
   Stethoscope, AlertTriangle, X, Syringe, Search, Copy, Power, PowerOff,
-  Sparkles, MoreVertical, FilePlus2,
+  Sparkles, MoreVertical, FilePlus2, Layers, Activity, Zap, Beaker, Brain,
 } from "lucide-react";
 import { toast } from "sonner";
 import { NRS_LIST, TIPOS_EXAME, VACINAS_LIST, VACINAS_RISCO_BIOLOGICO } from "@/lib/constants";
@@ -19,17 +19,42 @@ export const Route = createFileRoute("/app/roles")({
   component: RolesPage,
 });
 
-type Riscos = { fisicos: string[]; quimicos: string[]; ergonomicos: string[]; descricao: string };
+type Riscos = {
+  acidente_mecanico: string[]; fisicos: string[]; quimicos: string[];
+  biologicos: string[]; ergonomicos: string[]; psicossociais: string[];
+  descricao: string;
+};
+type Natureza = "ADMISSIONAL" | "PERIODICO" | "RETORNO_TRABALHO" | "MUDANCA_RISCO" | "DEMISSIONAL" | "SEMESTRAL";
+type ExamesPorNatureza = Record<Natureza, string[]>;
 type Role = {
   id: string; name: string; ativo: boolean;
+  ghe: string | null; setor: string | null; cbo: string | null;
   req_aso: boolean; req_integra: boolean;
   req_nrs: string[]; req_exames: string[]; req_vacinas: string[];
   risco_biologico: boolean; riscos: Riscos;
+  exames_por_natureza: ExamesPorNatureza;
 };
-const emptyRiscos: Riscos = { fisicos: [], quimicos: [], ergonomicos: [], descricao: "" };
+const emptyRiscos: Riscos = {
+  acidente_mecanico: [], fisicos: [], quimicos: [],
+  biologicos: [], ergonomicos: [], psicossociais: [], descricao: "",
+};
+const NATUREZAS: { key: Natureza; label: string; tone: "rose" | "sky" | "amber" | "emerald" | "violet" | "slate" }[] = [
+  { key: "ADMISSIONAL", label: "Admissional", tone: "rose" },
+  { key: "PERIODICO", label: "Periódico", tone: "sky" },
+  { key: "RETORNO_TRABALHO", label: "Retorno ao Trabalho", tone: "emerald" },
+  { key: "MUDANCA_RISCO", label: "Mudança de Risco", tone: "amber" },
+  { key: "DEMISSIONAL", label: "Demissional", tone: "slate" },
+  { key: "SEMESTRAL", label: "Semestral", tone: "violet" },
+];
+const emptyExames: ExamesPorNatureza = {
+  ADMISSIONAL: [], PERIODICO: [], RETORNO_TRABALHO: [],
+  MUDANCA_RISCO: [], DEMISSIONAL: [], SEMESTRAL: [],
+};
 const empty: Partial<Role> = {
-  name: "", ativo: true, req_aso: true, req_integra: true,
+  name: "", ativo: true, ghe: "", setor: "", cbo: "",
+  req_aso: true, req_integra: true,
   req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos,
+  exames_por_natureza: emptyExames,
 };
 
 function RolesPage() {
@@ -47,9 +72,15 @@ function RolesPage() {
       return (data ?? []).map((r: any) => ({
         ...r,
         ativo: r.ativo ?? true,
+        ghe: r.ghe ?? "",
+        setor: r.setor ?? "",
+        cbo: r.cbo ?? "",
         req_vacinas: r.req_vacinas ?? [],
         risco_biologico: !!r.risco_biologico,
         riscos: r.riscos && typeof r.riscos === "object" ? { ...emptyRiscos, ...r.riscos } : emptyRiscos,
+        exames_por_natureza: r.exames_por_natureza && typeof r.exames_por_natureza === "object"
+          ? { ...emptyExames, ...r.exames_por_natureza }
+          : emptyExames,
       })) as Role[];
     },
   });
@@ -73,6 +104,9 @@ function RolesPage() {
       const payload = {
         name: v.name!,
         ativo: v.ativo ?? true,
+        ghe: v.ghe || null,
+        setor: v.setor || null,
+        cbo: v.cbo || null,
         req_aso: !!v.req_aso,
         req_integra: !!v.req_integra,
         req_nrs: v.req_nrs ?? [],
@@ -80,6 +114,7 @@ function RolesPage() {
         req_vacinas: v.req_vacinas ?? [],
         risco_biologico: !!v.risco_biologico,
         riscos: v.riscos ?? emptyRiscos,
+        exames_por_natureza: v.exames_por_natureza ?? emptyExames,
       };
       if (v.id) {
         const { error } = await supabase.from("roles").update(payload).eq("id", v.id);
