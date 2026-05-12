@@ -55,13 +55,16 @@ const SESMT_PATHS = [
 ];
 
 const OTHER_MODULES = [
-  { key: "manut-eletrica", label: "Manutenção Elétrica", icon: Zap },
-  { key: "manut-mecanica", label: "Manutenção Mecânica", icon: Wrench },
   { key: "portaria", label: "Portaria", icon: DoorOpen },
 ] as const;
 
 const PRODUCAO_SUBMENU = [
   { to: "/app/producao/ordens", label: "Ordens de Produção" },
+] as const;
+
+const MANUTENCAO_SUBMENU = [
+  { key: "manut-eletrica", label: "Elétrica", icon: Zap },
+  { key: "manut-mecanica", label: "Mecânica", icon: Wrench },
 ] as const;
 
 const ESTOQUE_SUBMENU = [
@@ -312,6 +315,32 @@ export function AppHeader() {
           </div>
         </div>
       ))}
+      {/* Manutenção — dropdown agrupando Elétrica e Mecânica */}
+      <div className="group relative">
+        <button type="button" aria-haspopup="true" className={disabledCls}>
+          <Wrench className="h-4 w-4" /> Manutenção
+          <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+        </button>
+        <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+          <div className="w-56 rounded-lg border border-slate-200 bg-white shadow-xl py-1">
+            <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-100">
+              Manutenção
+            </div>
+            {MANUTENCAO_SUBMENU.map((s) => (
+              <button
+                key={s.key}
+                onClick={() => toast.info(`Manutenção · ${s.label}: módulo em desenvolvimento`)}
+                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+              >
+                <span className="flex items-center gap-2">
+                  <s.icon className="h-4 w-4" /> {s.label}
+                </span>
+                <Lock className="h-3 w-3 opacity-60" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
       {/* Produção — dropdown ativo */}
       <div className="group relative">
         <button
@@ -449,6 +478,19 @@ export function AppHeader() {
           className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white/40 text-left"
         >
           <m.icon className="h-4 w-4" /> {m.label}
+          <Lock className="h-3 w-3 ml-auto" />
+        </button>
+      ))}
+      <div className="text-xs font-bold text-white/70 px-2 mt-2 flex items-center gap-2">
+        <Wrench className="h-4 w-4" /> Manutenção
+      </div>
+      {MANUTENCAO_SUBMENU.map((s) => (
+        <button
+          key={s.key}
+          onClick={() => toast.info(`Manutenção · ${s.label}: módulo em desenvolvimento`)}
+          className="flex items-center gap-2 rounded-md px-6 py-2 text-sm font-semibold text-white/50 text-left"
+        >
+          <s.icon className="h-4 w-4" /> {s.label}
           <Lock className="h-3 w-3 ml-auto" />
         </button>
       ))}
