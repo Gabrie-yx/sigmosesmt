@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye } from "lucide-react";
+import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/dds")({
@@ -104,6 +104,7 @@ function DDSPage() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="text-xl md:text-2xl font-bold flex-1">Diálogos Diários de Segurança</h1>
+        <Button asChild variant="outline" size="sm"><Link to="/app/dds/painel"><BarChart3 className="h-4 w-4 mr-1" />Painel</Link></Button>
         <Button asChild variant="outline" size="sm"><Link to="/app/dds/temas"><BookOpen className="h-4 w-4 mr-1" />Temas</Link></Button>
         <Button asChild variant="outline" size="sm"><Link to="/app/dds/gestores"><Users className="h-4 w-4 mr-1" />Gestores</Link></Button>
         {isEditor && <Button onClick={() => setCreating(true)}><Plus className="h-4 w-4 mr-1" />Novo DDS</Button>}
