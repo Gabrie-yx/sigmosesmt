@@ -89,6 +89,220 @@ export type Database = {
         }
         Relationships: []
       }
+      dds: {
+        Row: {
+          aderencia: number | null
+          conteudo: string | null
+          created_at: string
+          created_by: string | null
+          data: string
+          duracao_min: number
+          gestor_id: string | null
+          hora: string | null
+          id: string
+          incident_id: string | null
+          observacoes: string | null
+          participantes_esperados: number
+          participantes_presentes: number
+          setor: string | null
+          status: string
+          tema_id: string | null
+          tema_livre: string | null
+          updated_at: string
+        }
+        Insert: {
+          aderencia?: number | null
+          conteudo?: string | null
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          duracao_min?: number
+          gestor_id?: string | null
+          hora?: string | null
+          id?: string
+          incident_id?: string | null
+          observacoes?: string | null
+          participantes_esperados?: number
+          participantes_presentes?: number
+          setor?: string | null
+          status?: string
+          tema_id?: string | null
+          tema_livre?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aderencia?: number | null
+          conteudo?: string | null
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          duracao_min?: number
+          gestor_id?: string | null
+          hora?: string | null
+          id?: string
+          incident_id?: string | null
+          observacoes?: string | null
+          participantes_esperados?: number
+          participantes_presentes?: number
+          setor?: string | null
+          status?: string
+          tema_id?: string | null
+          tema_livre?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dds_gestor_id_fkey"
+            columns: ["gestor_id"]
+            isOneToOne: false
+            referencedRelation: "dds_gestores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dds_tema_id_fkey"
+            columns: ["tema_id"]
+            isOneToOne: false
+            referencedRelation: "dds_temas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dds_attendees: {
+        Row: {
+          created_at: string
+          dds_id: string
+          employee_id: string
+          id: string
+          observacao: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          dds_id: string
+          employee_id: string
+          id?: string
+          observacao?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          dds_id?: string
+          employee_id?: string
+          id?: string
+          observacao?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dds_attendees_dds_id_fkey"
+            columns: ["dds_id"]
+            isOneToOne: false
+            referencedRelation: "dds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dds_evidencias: {
+        Row: {
+          dds_id: string
+          descricao: string | null
+          file_path: string
+          id: string
+          tipo: string | null
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          dds_id: string
+          descricao?: string | null
+          file_path: string
+          id?: string
+          tipo?: string | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          dds_id?: string
+          descricao?: string | null
+          file_path?: string
+          id?: string
+          tipo?: string | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dds_evidencias_dds_id_fkey"
+            columns: ["dds_id"]
+            isOneToOne: false
+            referencedRelation: "dds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dds_gestores: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          employee_id: string | null
+          id: string
+          nome: string
+          setor: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          nome: string
+          setor?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          nome?: string
+          setor?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dds_temas: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          codigo: number | null
+          created_at: string
+          criticidade: string
+          id: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string
+          codigo?: number | null
+          created_at?: string
+          criticidade?: string
+          id?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          codigo?: number | null
+          created_at?: string
+          criticidade?: string
+          id?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employee_docs: {
         Row: {
           employee_id: string
