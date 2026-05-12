@@ -213,7 +213,7 @@ export function AppHeader() {
 
       {/* Outros módulos — placeholder, mostram "em breve" no hover */}
       {/* Estoque — dropdown com submenus */}
-      </div>)}
+      )}
       {canEstoque && (<div className="group relative">
         <button
           type="button"
