@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/app/dds")({
+export const Route = createFileRoute("/app/dds/")({
   component: DDSPage,
 });
 

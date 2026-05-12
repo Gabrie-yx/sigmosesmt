@@ -19,10 +19,10 @@ import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppPtesRouteImport } from './routes/app.ptes'
 import { Route as AppPainelRouteImport } from './routes/app.painel'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
-import { Route as AppDdsRouteImport } from './routes/app.dds'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
+import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
 import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requisicoes'
 import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
 import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.relatorios.reincidencia-epi'
@@ -83,11 +83,6 @@ const AppEmployeesRoute = AppEmployeesRouteImport.update({
   path: '/employees',
   getParentRoute: () => AppRoute,
 } as any)
-const AppDdsRoute = AppDdsRouteImport.update({
-  id: '/dds',
-  path: '/dds',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppCompaniesRoute = AppCompaniesRouteImport.update({
   id: '/companies',
   path: '/companies',
@@ -102,6 +97,11 @@ const AppEmployeesIndexRoute = AppEmployeesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppEmployeesRoute,
+} as any)
+const AppDdsIndexRoute = AppDdsIndexRouteImport.update({
+  id: '/dds/',
+  path: '/dds/',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppSesmtRequisicoesRoute = AppSesmtRequisicoesRouteImport.update({
   id: '/sesmt/requisicoes',
@@ -135,19 +135,19 @@ const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
   getParentRoute: () => AppEmployeesRoute,
 } as any)
 const AppDdsTemasRoute = AppDdsTemasRouteImport.update({
-  id: '/temas',
-  path: '/temas',
-  getParentRoute: () => AppDdsRoute,
+  id: '/dds/temas',
+  path: '/dds/temas',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppDdsPainelRoute = AppDdsPainelRouteImport.update({
-  id: '/painel',
-  path: '/painel',
-  getParentRoute: () => AppDdsRoute,
+  id: '/dds/painel',
+  path: '/dds/painel',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppDdsGestoresRoute = AppDdsGestoresRouteImport.update({
-  id: '/gestores',
-  path: '/gestores',
-  getParentRoute: () => AppDdsRoute,
+  id: '/dds/gestores',
+  path: '/dds/gestores',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -156,7 +156,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAuditRoute
   '/app/companies': typeof AppCompaniesRoute
-  '/app/dds': typeof AppDdsRouteWithChildren
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
@@ -173,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
+  '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -180,7 +180,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAuditRoute
   '/app/companies': typeof AppCompaniesRoute
-  '/app/dds': typeof AppDdsRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -196,6 +195,7 @@ export interface FileRoutesByTo {
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
+  '/app/dds': typeof AppDdsIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
 }
 export interface FileRoutesById {
@@ -205,7 +205,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAuditRoute
   '/app/companies': typeof AppCompaniesRoute
-  '/app/dds': typeof AppDdsRouteWithChildren
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
@@ -222,6 +221,7 @@ export interface FileRoutesById {
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
+  '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
 }
 export interface FileRouteTypes {
@@ -232,7 +232,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/audit'
     | '/app/companies'
-    | '/app/dds'
     | '/app/employees'
     | '/app/painel'
     | '/app/ptes'
@@ -249,6 +248,7 @@ export interface FileRouteTypes {
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
     | '/app/sesmt/requisicoes'
+    | '/app/dds/'
     | '/app/employees/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -256,7 +256,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/audit'
     | '/app/companies'
-    | '/app/dds'
     | '/app/painel'
     | '/app/ptes'
     | '/app/roles'
@@ -272,6 +271,7 @@ export interface FileRouteTypes {
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
     | '/app/sesmt/requisicoes'
+    | '/app/dds'
     | '/app/employees'
   id:
     | '__root__'
@@ -280,7 +280,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/audit'
     | '/app/companies'
-    | '/app/dds'
     | '/app/employees'
     | '/app/painel'
     | '/app/ptes'
@@ -297,6 +296,7 @@ export interface FileRouteTypes {
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
     | '/app/sesmt/requisicoes'
+    | '/app/dds/'
     | '/app/employees/'
   fileRoutesById: FileRoutesById
 }
@@ -378,13 +378,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmployeesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/dds': {
-      id: '/app/dds'
-      path: '/dds'
-      fullPath: '/app/dds'
-      preLoaderRoute: typeof AppDdsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/companies': {
       id: '/app/companies'
       path: '/companies'
@@ -405,6 +398,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/employees/'
       preLoaderRoute: typeof AppEmployeesIndexRouteImport
       parentRoute: typeof AppEmployeesRoute
+    }
+    '/app/dds/': {
+      id: '/app/dds/'
+      path: '/dds'
+      fullPath: '/app/dds/'
+      preLoaderRoute: typeof AppDdsIndexRouteImport
+      parentRoute: typeof AppRoute
     }
     '/app/sesmt/requisicoes': {
       id: '/app/sesmt/requisicoes'
@@ -450,42 +450,27 @@ declare module '@tanstack/react-router' {
     }
     '/app/dds/temas': {
       id: '/app/dds/temas'
-      path: '/temas'
+      path: '/dds/temas'
       fullPath: '/app/dds/temas'
       preLoaderRoute: typeof AppDdsTemasRouteImport
-      parentRoute: typeof AppDdsRoute
+      parentRoute: typeof AppRoute
     }
     '/app/dds/painel': {
       id: '/app/dds/painel'
-      path: '/painel'
+      path: '/dds/painel'
       fullPath: '/app/dds/painel'
       preLoaderRoute: typeof AppDdsPainelRouteImport
-      parentRoute: typeof AppDdsRoute
+      parentRoute: typeof AppRoute
     }
     '/app/dds/gestores': {
       id: '/app/dds/gestores'
-      path: '/gestores'
+      path: '/dds/gestores'
       fullPath: '/app/dds/gestores'
       preLoaderRoute: typeof AppDdsGestoresRouteImport
-      parentRoute: typeof AppDdsRoute
+      parentRoute: typeof AppRoute
     }
   }
 }
-
-interface AppDdsRouteChildren {
-  AppDdsGestoresRoute: typeof AppDdsGestoresRoute
-  AppDdsPainelRoute: typeof AppDdsPainelRoute
-  AppDdsTemasRoute: typeof AppDdsTemasRoute
-}
-
-const AppDdsRouteChildren: AppDdsRouteChildren = {
-  AppDdsGestoresRoute: AppDdsGestoresRoute,
-  AppDdsPainelRoute: AppDdsPainelRoute,
-  AppDdsTemasRoute: AppDdsTemasRoute,
-}
-
-const AppDdsRouteWithChildren =
-  AppDdsRoute._addFileChildren(AppDdsRouteChildren)
 
 interface AppEmployeesRouteChildren {
   AppEmployeesIdRoute: typeof AppEmployeesIdRoute
@@ -504,7 +489,6 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
 interface AppRouteChildren {
   AppAuditRoute: typeof AppAuditRoute
   AppCompaniesRoute: typeof AppCompaniesRoute
-  AppDdsRoute: typeof AppDdsRouteWithChildren
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppPainelRoute: typeof AppPainelRoute
   AppPtesRoute: typeof AppPtesRoute
@@ -512,17 +496,20 @@ interface AppRouteChildren {
   AppTrainingsRoute: typeof AppTrainingsRoute
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppDdsGestoresRoute: typeof AppDdsGestoresRoute
+  AppDdsPainelRoute: typeof AppDdsPainelRoute
+  AppDdsTemasRoute: typeof AppDdsTemasRoute
   AppEstoqueEpiRoute: typeof AppEstoqueEpiRoute
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
   AppRelatoriosReincidenciaEpiRoute: typeof AppRelatoriosReincidenciaEpiRoute
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
   AppSesmtRequisicoesRoute: typeof AppSesmtRequisicoesRoute
+  AppDdsIndexRoute: typeof AppDdsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAuditRoute: AppAuditRoute,
   AppCompaniesRoute: AppCompaniesRoute,
-  AppDdsRoute: AppDdsRouteWithChildren,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppPainelRoute: AppPainelRoute,
   AppPtesRoute: AppPtesRoute,
@@ -530,11 +517,15 @@ const AppRouteChildren: AppRouteChildren = {
   AppTrainingsRoute: AppTrainingsRoute,
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
+  AppDdsGestoresRoute: AppDdsGestoresRoute,
+  AppDdsPainelRoute: AppDdsPainelRoute,
+  AppDdsTemasRoute: AppDdsTemasRoute,
   AppEstoqueEpiRoute: AppEstoqueEpiRoute,
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
   AppRelatoriosReincidenciaEpiRoute: AppRelatoriosReincidenciaEpiRoute,
   AppSesmtDocsRoute: AppSesmtDocsRoute,
   AppSesmtRequisicoesRoute: AppSesmtRequisicoesRoute,
+  AppDdsIndexRoute: AppDdsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -547,3 +538,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
