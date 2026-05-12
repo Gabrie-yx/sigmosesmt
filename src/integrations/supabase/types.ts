@@ -1004,6 +1004,57 @@ export type Database = {
         }
         Relationships: []
       }
+      safety_overrides: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          employee_id: string
+          expira_em: string | null
+          id: string
+          item_key: string | null
+          justificativa: string
+          liberado_em: string
+          liberado_por: string
+          liberado_por_email: string | null
+          motivo_revogacao: string | null
+          revogado_em: string | null
+          revogado_por: string | null
+          scope: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          employee_id: string
+          expira_em?: string | null
+          id?: string
+          item_key?: string | null
+          justificativa: string
+          liberado_em?: string
+          liberado_por: string
+          liberado_por_email?: string | null
+          motivo_revogacao?: string | null
+          revogado_em?: string | null
+          revogado_por?: string | null
+          scope: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          employee_id?: string
+          expira_em?: string | null
+          id?: string
+          item_key?: string | null
+          justificativa?: string
+          liberado_em?: string
+          liberado_por?: string
+          liberado_por_email?: string | null
+          motivo_revogacao?: string | null
+          revogado_em?: string | null
+          revogado_por?: string | null
+          scope?: string
+        }
+        Relationships: []
+      }
       sesmt_document_revisions: {
         Row: {
           created_at: string
