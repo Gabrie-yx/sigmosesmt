@@ -165,42 +165,42 @@ export function CatalogoRiscosPanel() {
           Nenhum risco no catálogo
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filtered.map((r) => (
             <div
               key={r.id}
-              className={`border rounded-xl p-4 bg-white hover:shadow-md transition-all ${!r.ativo ? "opacity-50" : ""}`}
+              className={`border border-slate-200 rounded-2xl p-5 bg-white shadow-md hover:shadow-xl hover:-translate-y-0.5 hover:border-rose-300 transition-all ${!r.ativo ? "opacity-50" : ""}`}
             >
-              <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-start justify-between gap-2 mb-3">
                 <div className="min-w-0">
-                  <span className={`inline-block text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${TONE[r.categoria] ?? ""}`}>
+                  <span className={`inline-block text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md border ${TONE[r.categoria] ?? ""}`}>
                     {CATEGORIAS.find((c) => c.value === r.categoria)?.label ?? r.categoria}
                   </span>
-                  <div className="font-bold text-slate-800 text-sm mt-1.5 truncate">{r.nome}</div>
+                  <div className="font-bold text-slate-800 text-base mt-2 truncate">{r.nome}</div>
                 </div>
                 {isEditor && (
                   <div className="flex gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditing(r)}>
-                      <Pencil className="h-3.5 w-3.5" />
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(r)}>
+                      <Pencil className="h-4 w-4" />
                     </Button>
                     {isAdmin && (
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-rose-600"
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-rose-600"
                         onClick={() => { if (confirm(`Excluir "${r.nome}"?`)) del.mutate(r.id); }}>
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
                   </div>
                 )}
               </div>
               {r.nrs_aplicaveis?.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
+                <div className="flex flex-wrap gap-1.5 mt-2">
                   {r.nrs_aplicaveis.map((nr) => (
-                    <span key={nr} className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded">{nr}</span>
+                    <span key={nr} className="text-[11px] font-bold px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md">{nr}</span>
                   ))}
                 </div>
               )}
               {r.epis_sugeridos?.length > 0 && (
-                <div className="text-[10px] text-slate-500 mt-2 line-clamp-2">
+                <div className="text-xs text-slate-500 mt-3 line-clamp-2">
                   <span className="font-bold uppercase">EPIs:</span> {r.epis_sugeridos.join(", ")}
                 </div>
               )}
