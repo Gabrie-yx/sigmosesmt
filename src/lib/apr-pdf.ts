@@ -32,6 +32,8 @@ export type APRPdfParams = {
   data_fim?: string | null;
   hora_inicio?: string | null;
   hora_fim?: string | null;
+  hora_inicio_sexta?: string | null;
+  hora_fim_sexta?: string | null;
   data_validade?: string | null;
   empresa_nome?: string | null;
   empresa_cnpj?: string | null;
