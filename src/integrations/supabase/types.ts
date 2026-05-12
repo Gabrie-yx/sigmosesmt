@@ -165,6 +165,7 @@ export type Database = {
           pte_id: string | null
           setor: string | null
           status: string
+          texto_gerais: string | null
           tst_id: string | null
           updated_at: string
           validade_dias: number
@@ -190,6 +191,7 @@ export type Database = {
           pte_id?: string | null
           setor?: string | null
           status?: string
+          texto_gerais?: string | null
           tst_id?: string | null
           updated_at?: string
           validade_dias?: number
@@ -215,6 +217,7 @@ export type Database = {
           pte_id?: string | null
           setor?: string | null
           status?: string
+          texto_gerais?: string | null
           tst_id?: string | null
           updated_at?: string
           validade_dias?: number
