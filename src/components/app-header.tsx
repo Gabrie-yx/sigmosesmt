@@ -132,9 +132,6 @@ export function AppHeader() {
         </button>
         <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
           <div className="w-60 rounded-lg border border-red-100 bg-white shadow-xl py-1">
-            <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-700 border-b border-red-50">
-              SESMT
-            </div>
             {SESMT_ITEMS.map((item) => (
               <Link
                 key={item.to}
@@ -161,9 +158,6 @@ export function AppHeader() {
               </div>
               <div className="invisible absolute left-full top-0 z-50 pl-1 opacity-0 transition-all duration-150 group-hover/sub:visible group-hover/sub:opacity-100 group-focus-within/sub:visible group-focus-within/sub:opacity-100">
                 <div className="w-60 rounded-lg border border-red-100 bg-white shadow-xl py-1">
-                  <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-700 border-b border-red-50">
-                    DDS
-                  </div>
                   {DDS_SUBMENU.map((s) => (
                     <Link
                       key={s.to}
@@ -193,9 +187,6 @@ export function AppHeader() {
               </div>
               <div className="invisible absolute left-full top-0 z-50 pl-1 opacity-0 transition-all duration-150 group-hover/sub:visible group-hover/sub:opacity-100 group-focus-within/sub:visible group-focus-within/sub:opacity-100">
                 <div className="w-60 rounded-lg border border-red-100 bg-white shadow-xl py-1">
-                  <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-700 border-b border-red-50">
-                    Documentos
-                  </div>
                   {DOCUMENTOS_SUBMENU.map((s) => (
                     <Link
                       key={s.to}
@@ -230,9 +221,6 @@ export function AppHeader() {
         </button>
         <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
           <div className="w-56 rounded-lg border border-slate-200 bg-white shadow-xl py-1">
-            <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-100">
-              Estoque
-            </div>
             {ESTOQUE_SUBMENU.map((s) => (
               "children" in s && s.children ? (
                 <div key={s.key} className="group/sub relative">
@@ -249,9 +237,6 @@ export function AppHeader() {
                   </Link>
                   <div className="invisible absolute left-full top-0 z-50 pl-1 opacity-0 transition-all duration-150 group-hover/sub:visible group-hover/sub:opacity-100 group-focus-within/sub:visible group-focus-within/sub:opacity-100">
                     <div className="w-56 rounded-lg border border-slate-200 bg-white shadow-xl py-1">
-                      <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-100">
-                        {s.label}
-                      </div>
                       {s.children.map((c) => (
                         <Link
                           key={c.key}
@@ -323,9 +308,6 @@ export function AppHeader() {
         </button>
         <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
           <div className="w-56 rounded-lg border border-slate-200 bg-white shadow-xl py-1">
-            <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-100">
-              Manutenção
-            </div>
             {MANUTENCAO_SUBMENU.map((s) => (
               <button
                 key={s.key}
@@ -354,9 +336,6 @@ export function AppHeader() {
         </button>
         <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
           <div className="w-60 rounded-lg border border-amber-100 bg-white shadow-xl py-1">
-            <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-amber-700 border-b border-amber-50">
-              Produção
-            </div>
             {PRODUCAO_SUBMENU.map((s) => (
               <Link
                 key={s.to}
