@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Briefcase, UserCog, Plus, FileText, Award, ShieldCheck, Save, Trash2,
   Stethoscope, AlertTriangle, X, Syringe, Search, Copy, Power, PowerOff,
-  Sparkles, MoreVertical, FilePlus2,
+  Sparkles, MoreVertical, FilePlus2, Layers, Activity, Zap, Beaker, Brain,
 } from "lucide-react";
 import { toast } from "sonner";
 import { NRS_LIST, TIPOS_EXAME, VACINAS_LIST, VACINAS_RISCO_BIOLOGICO } from "@/lib/constants";
@@ -19,17 +19,42 @@ export const Route = createFileRoute("/app/roles")({
   component: RolesPage,
 });
 
-type Riscos = { fisicos: string[]; quimicos: string[]; ergonomicos: string[]; descricao: string };
+type Riscos = {
+  acidente_mecanico: string[]; fisicos: string[]; quimicos: string[];
+  biologicos: string[]; ergonomicos: string[]; psicossociais: string[];
+  descricao: string;
+};
+type Natureza = "ADMISSIONAL" | "PERIODICO" | "RETORNO_TRABALHO" | "MUDANCA_RISCO" | "DEMISSIONAL" | "SEMESTRAL";
+type ExamesPorNatureza = Record<Natureza, string[]>;
 type Role = {
   id: string; name: string; ativo: boolean;
+  ghe: string | null; setor: string | null; cbo: string | null;
   req_aso: boolean; req_integra: boolean;
   req_nrs: string[]; req_exames: string[]; req_vacinas: string[];
   risco_biologico: boolean; riscos: Riscos;
+  exames_por_natureza: ExamesPorNatureza;
 };
-const emptyRiscos: Riscos = { fisicos: [], quimicos: [], ergonomicos: [], descricao: "" };
+const emptyRiscos: Riscos = {
+  acidente_mecanico: [], fisicos: [], quimicos: [],
+  biologicos: [], ergonomicos: [], psicossociais: [], descricao: "",
+};
+const NATUREZAS: { key: Natureza; label: string; tone: "rose" | "sky" | "amber" | "emerald" | "violet" | "slate" }[] = [
+  { key: "ADMISSIONAL", label: "Admissional", tone: "rose" },
+  { key: "PERIODICO", label: "Periódico", tone: "sky" },
+  { key: "RETORNO_TRABALHO", label: "Retorno ao Trabalho", tone: "emerald" },
+  { key: "MUDANCA_RISCO", label: "Mudança de Risco", tone: "amber" },
+  { key: "DEMISSIONAL", label: "Demissional", tone: "slate" },
+  { key: "SEMESTRAL", label: "Semestral", tone: "violet" },
+];
+const emptyExames: ExamesPorNatureza = {
+  ADMISSIONAL: [], PERIODICO: [], RETORNO_TRABALHO: [],
+  MUDANCA_RISCO: [], DEMISSIONAL: [], SEMESTRAL: [],
+};
 const empty: Partial<Role> = {
-  name: "", ativo: true, req_aso: true, req_integra: true,
+  name: "", ativo: true, ghe: "", setor: "", cbo: "",
+  req_aso: true, req_integra: true,
   req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos,
+  exames_por_natureza: emptyExames,
 };
 
 function RolesPage() {
@@ -47,9 +72,15 @@ function RolesPage() {
       return (data ?? []).map((r: any) => ({
         ...r,
         ativo: r.ativo ?? true,
+        ghe: r.ghe ?? "",
+        setor: r.setor ?? "",
+        cbo: r.cbo ?? "",
         req_vacinas: r.req_vacinas ?? [],
         risco_biologico: !!r.risco_biologico,
         riscos: r.riscos && typeof r.riscos === "object" ? { ...emptyRiscos, ...r.riscos } : emptyRiscos,
+        exames_por_natureza: r.exames_por_natureza && typeof r.exames_por_natureza === "object"
+          ? { ...emptyExames, ...r.exames_por_natureza }
+          : emptyExames,
       })) as Role[];
     },
   });
@@ -73,6 +104,9 @@ function RolesPage() {
       const payload = {
         name: v.name!,
         ativo: v.ativo ?? true,
+        ghe: v.ghe || null,
+        setor: v.setor || null,
+        cbo: v.cbo || null,
         req_aso: !!v.req_aso,
         req_integra: !!v.req_integra,
         req_nrs: v.req_nrs ?? [],
@@ -80,6 +114,7 @@ function RolesPage() {
         req_vacinas: v.req_vacinas ?? [],
         risco_biologico: !!v.risco_biologico,
         riscos: v.riscos ?? emptyRiscos,
+        exames_por_natureza: v.exames_por_natureza ?? emptyExames,
       };
       if (v.id) {
         const { error } = await supabase.from("roles").update(payload).eq("id", v.id);
@@ -156,6 +191,22 @@ function RolesPage() {
     let vac = editing.req_vacinas ?? [];
     if (v) VACINAS_RISCO_BIOLOGICO.forEach((x) => { if (!vac.includes(x)) vac = [...vac, x]; });
     setEditing({ ...editing, risco_biologico: v, req_vacinas: vac });
+  }
+  function toggleExameNatureza(natureza: Natureza, exame: string) {
+    if (!editing) return;
+    const cur = editing.exames_por_natureza ?? emptyExames;
+    const list = cur[natureza] ?? [];
+    const next: ExamesPorNatureza = {
+      ...cur,
+      [natureza]: list.includes(exame) ? list.filter((x) => x !== exame) : [...list, exame],
+    };
+    setEditing({ ...editing, exames_por_natureza: next });
+  }
+  function copyExamesNatureza(from: Natureza, to: Natureza) {
+    if (!editing) return;
+    const cur = editing.exames_por_natureza ?? emptyExames;
+    setEditing({ ...editing, exames_por_natureza: { ...cur, [to]: [...(cur[from] ?? [])] } });
+    toast.success(`Exames copiados para ${NATUREZAS.find((n) => n.key === to)?.label}`);
   }
 
   const reqNRsSet = useMemo(() => new Set(editing?.req_nrs ?? []), [editing?.req_nrs]);
@@ -259,6 +310,12 @@ function RolesPage() {
                         <span className="text-[9px] font-black bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded uppercase shrink-0">Inativo</span>
                       )}
                     </div>
+                    {(r.ghe || r.setor) && (
+                      <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        {r.ghe && <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-black">{r.ghe}</span>}
+                        {r.setor && <span className="truncate">{r.setor}</span>}
+                      </div>
+                    )}
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {r.req_aso && <Pill icon={<Stethoscope className="h-3 w-3" />} label="ASO" tone="emerald" />}
                       {r.req_integra && <Pill icon={<ShieldCheck className="h-3 w-3" />} label="INT" tone="sky" />}
@@ -360,20 +417,56 @@ function RolesPage() {
               className="flex-1 flex flex-col overflow-hidden"
             >
               <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-6">
-                {/* Nome */}
-                <div className="mb-6">
-                  <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">
-                    Nomenclatura Oficial do Cargo
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editing.name ?? ""}
-                    onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                    placeholder="Ex: Eletricista, Soldador, Operador de Empilhadeira..."
-                    disabled={!isEditor}
-                    className="w-full bg-white border-2 border-rose-100 rounded-2xl px-5 py-4 text-base font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60 shadow-sm"
-                  />
+                {/* Identificação do Cargo (PCMSO/ISO 9001) */}
+                <div className="mb-6 grid grid-cols-1 lg:grid-cols-12 gap-3">
+                  <div className="lg:col-span-6">
+                    <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">
+                      Nomenclatura Oficial do Cargo
+                    </label>
+                    <input
+                      type="text" required
+                      value={editing.name ?? ""}
+                      onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                      placeholder="Ex: Eletricista, Soldador, Operador..."
+                      disabled={!isEditor}
+                      className="w-full bg-white border-2 border-rose-100 rounded-2xl px-5 py-3.5 text-base font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60 shadow-sm"
+                    />
+                  </div>
+                  <div className="lg:col-span-3">
+                    <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest flex items-center gap-1">
+                      <Layers className="h-3.5 w-3.5" /> GHE
+                    </label>
+                    <input
+                      type="text"
+                      value={editing.ghe ?? ""}
+                      onChange={(e) => setEditing({ ...editing, ghe: e.target.value })}
+                      placeholder="Ex: GHE 01"
+                      disabled={!isEditor}
+                      className="w-full bg-white border-2 border-rose-100 rounded-2xl px-4 py-3.5 text-sm font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60 shadow-sm"
+                    />
+                  </div>
+                  <div className="lg:col-span-3">
+                    <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">CBO</label>
+                    <input
+                      type="text"
+                      value={editing.cbo ?? ""}
+                      onChange={(e) => setEditing({ ...editing, cbo: e.target.value })}
+                      placeholder="Ex: 7156-25"
+                      disabled={!isEditor}
+                      className="w-full bg-white border-2 border-rose-100 rounded-2xl px-4 py-3.5 text-sm font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60 shadow-sm"
+                    />
+                  </div>
+                  <div className="lg:col-span-12">
+                    <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">Setor</label>
+                    <input
+                      type="text"
+                      value={editing.setor ?? ""}
+                      onChange={(e) => setEditing({ ...editing, setor: e.target.value })}
+                      placeholder="Ex: Administrativo, Produção, Almoxarifado..."
+                      disabled={!isEditor}
+                      className="w-full bg-white border border-rose-100 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 focus:border-[#991b1b] focus:ring-2 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal disabled:opacity-60 shadow-sm"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -394,15 +487,16 @@ function RolesPage() {
 
                   <Section
                     icon={<Stethoscope className="h-4 w-4" />}
-                    title="Exames Médicos (Saúde)"
+                    title="Procedimentos Diagnósticos por Natureza (PCMSO · eSocial Tabela 27)"
                     hint="Vencido ou sem PDF → Bloqueio GSI"
                     full
                   >
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
-                      {TIPOS_EXAME.map((t) => (
-                        <NRToggle key={t} label={t} checked={reqExamesSet.has(t)} onChange={() => toggleExame(t)} disabled={!isEditor} />
-                      ))}
-                    </div>
+                    <ExamesMatrix
+                      value={editing.exames_por_natureza ?? emptyExames}
+                      onToggle={toggleExameNatureza}
+                      onCopy={copyExamesNatureza}
+                      disabled={!isEditor}
+                    />
                   </Section>
 
                   <Section
@@ -425,10 +519,10 @@ function RolesPage() {
                     </div>
                   </Section>
 
-                  <Section icon={<AlertTriangle className="h-4 w-4 text-orange-500" />} title="Riscos Ocupacionais (PCMSO)" full>
+                  <Section icon={<AlertTriangle className="h-4 w-4 text-orange-500" />} title="Riscos Ocupacionais (PCMSO · 6 categorias)" full>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">
+                        <label className="block text-xs font-black text-slate-500 uppercase mb-2 tracking-widest">
                           Descrição da Função
                         </label>
                         <textarea
@@ -437,16 +531,22 @@ function RolesPage() {
                           disabled={!isEditor}
                           rows={2}
                           placeholder="Descreva a atividade do cargo..."
-                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 outline-none focus:border-[#991b1b] focus:bg-white disabled:opacity-60 transition-all"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#991b1b] focus:bg-white disabled:opacity-60 transition-all"
                         />
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <TagEditor label="Acidente / Mecânico" color="red" items={riscos.acidente_mecanico}
+                          onChange={(v) => updateRiscos({ acidente_mecanico: v })} disabled={!isEditor} />
                         <TagEditor label="Riscos Físicos" color="sky" items={riscos.fisicos}
                           onChange={(v) => updateRiscos({ fisicos: v })} disabled={!isEditor} />
                         <TagEditor label="Riscos Químicos" color="amber" items={riscos.quimicos}
                           onChange={(v) => updateRiscos({ quimicos: v })} disabled={!isEditor} />
-                        <TagEditor label="Riscos Ergonómicos" color="emerald" items={riscos.ergonomicos}
+                        <TagEditor label="Riscos Biológicos" color="rose" items={riscos.biologicos}
+                          onChange={(v) => updateRiscos({ biologicos: v })} disabled={!isEditor} />
+                        <TagEditor label="Riscos Ergonômicos" color="emerald" items={riscos.ergonomicos}
                           onChange={(v) => updateRiscos({ ergonomicos: v })} disabled={!isEditor} />
+                        <TagEditor label="Psicossociais" color="violet" items={riscos.psicossociais}
+                          onChange={(v) => updateRiscos({ psicossociais: v })} disabled={!isEditor} />
                       </div>
                     </div>
                   </Section>
@@ -602,12 +702,15 @@ function NRToggle({
 
 function TagEditor({
   label, items, onChange, disabled, color,
-}: { label: string; items: string[]; onChange: (v: string[]) => void; disabled?: boolean; color: "sky" | "amber" | "emerald" }) {
+}: { label: string; items: string[]; onChange: (v: string[]) => void; disabled?: boolean; color: "sky" | "amber" | "emerald" | "red" | "rose" | "violet" }) {
   const [val, setVal] = useState("");
   const colorMap = {
     sky: "bg-gradient-to-br from-sky-400 to-sky-600 text-white border-sky-300 shadow-sky-400/40",
     amber: "bg-gradient-to-br from-amber-400 to-orange-500 text-white border-amber-300 shadow-amber-400/40",
     emerald: "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white border-emerald-300 shadow-emerald-400/40",
+    red: "bg-gradient-to-br from-rose-500 to-red-600 text-white border-red-300 shadow-rose-500/40",
+    rose: "bg-gradient-to-br from-pink-400 to-rose-600 text-white border-rose-300 shadow-rose-400/40",
+    violet: "bg-gradient-to-br from-violet-400 to-purple-600 text-white border-violet-300 shadow-violet-400/40",
   } as const;
   function add() {
     const t = val.trim();
@@ -646,6 +749,75 @@ function TagEditor({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function ExamesMatrix({
+  value, onToggle, onCopy, disabled,
+}: {
+  value: ExamesPorNatureza;
+  onToggle: (n: Natureza, exame: string) => void;
+  onCopy: (from: Natureza, to: Natureza) => void;
+  disabled?: boolean;
+}) {
+  const [active, setActive] = useState<Natureza>("ADMISSIONAL");
+  const toneMap: Record<string, string> = {
+    rose: "from-rose-500 to-rose-600 ring-rose-200",
+    sky: "from-sky-500 to-sky-600 ring-sky-200",
+    emerald: "from-emerald-500 to-emerald-600 ring-emerald-200",
+    amber: "from-amber-500 to-orange-500 ring-amber-200",
+    slate: "from-slate-500 to-slate-700 ring-slate-200",
+    violet: "from-violet-500 to-purple-600 ring-violet-200",
+  };
+  return (
+    <div className="space-y-3">
+      {/* Tabs por natureza */}
+      <div className="flex flex-wrap gap-2">
+        {NATUREZAS.map((n) => {
+          const count = (value[n.key] ?? []).length;
+          const isActive = active === n.key;
+          return (
+            <button
+              key={n.key} type="button" onClick={() => setActive(n.key)}
+              className={`px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
+                isActive
+                  ? `bg-gradient-to-r ${toneMap[n.tone]} text-white shadow-lg ring-2 ring-white -translate-y-0.5`
+                  : "bg-white text-slate-600 border-2 border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              {n.label}
+              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${isActive ? "bg-white/25" : "bg-slate-100 text-slate-700"}`}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Copiar de outra natureza */}
+      {!disabled && (
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-slate-500 font-bold uppercase tracking-wider">Copiar de:</span>
+          {NATUREZAS.filter((n) => n.key !== active).map((n) => (
+            <button
+              key={n.key} type="button" onClick={() => onCopy(n.key, active)}
+              className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[10px] uppercase"
+            >
+              {n.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Grade de exames da natureza ativa */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3 pt-2">
+        {TIPOS_EXAME.map((t) => {
+          const checked = (value[active] ?? []).includes(t);
+          return (
+            <NRToggle key={t} label={t} checked={checked}
+              onChange={() => onToggle(active, t)} disabled={disabled} />
+          );
+        })}
+      </div>
     </div>
   );
 }
