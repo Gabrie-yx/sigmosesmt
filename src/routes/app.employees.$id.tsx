@@ -1422,9 +1422,14 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                 )}
               </div>
               {canEdit && !e.data_devolucao && (
-                <Button size="sm" variant="outline" onClick={() => openReturn(e)} className="border-amber-300 text-amber-700 hover:bg-amber-50">
-                  <Undo2 className="h-4 w-4 mr-1" /> Devolver
-                </Button>
+                <>
+                  <Button size="sm" variant="outline" onClick={() => openReturn(e)} className="border-amber-300 text-amber-700 hover:bg-amber-50">
+                    <Undo2 className="h-4 w-4 mr-1" /> Devolver
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => openNotReturned(e)} className="border-rose-300 text-rose-700 hover:bg-rose-50" title="Marcar como não devolvido (perda/extravio)">
+                    <Ban className="h-4 w-4 mr-1" /> Não devolvido
+                  </Button>
+                </>
               )}
               {canEdit && e.data_devolucao && (
                 <Button size="sm" variant="ghost" onClick={() => undoReturn.mutate(e.id)} title="Desfazer devolução">
