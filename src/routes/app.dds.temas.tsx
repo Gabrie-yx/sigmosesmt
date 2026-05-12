@@ -83,7 +83,7 @@ function DDSTemasPage() {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["dds-temas"] });
+      qc.invalidateQueries({ queryKey: ["dds-temas"] }); qc.invalidateQueries({ queryKey: ["dds-temas-active"] });
       setEditing(null);
       toast.success("Tema salvo");
     },
@@ -96,7 +96,7 @@ function DDSTemasPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["dds-temas"] });
+      qc.invalidateQueries({ queryKey: ["dds-temas"] }); qc.invalidateQueries({ queryKey: ["dds-temas-active"] });
       toast.success("Tema excluído");
     },
     onError: (e: any) => toast.error(e.message),
@@ -107,7 +107,7 @@ function DDSTemasPage() {
       const { error } = await supabase.from("dds_temas").update({ ativo: !t.ativo }).eq("id", t.id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["dds-temas"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["dds-temas"] }); qc.invalidateQueries({ queryKey: ["dds-temas-active"] }),
   });
 
   return (
