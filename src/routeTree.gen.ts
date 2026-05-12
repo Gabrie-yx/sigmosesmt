@@ -22,6 +22,7 @@ import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppCascosRouteImport } from './routes/app.cascos'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
+import { Route as AppAprsRouteImport } from './routes/app.aprs'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
 import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requisicoes'
@@ -100,6 +101,11 @@ const AppAuditRoute = AppAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAprsRoute = AppAprsRouteImport.update({
+  id: '/aprs',
+  path: '/aprs',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEmployeesIndexRoute = AppEmployeesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -166,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/login'
+    | '/app/aprs'
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/app/aprs'
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/login'
+    | '/app/aprs'
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
@@ -423,6 +435,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/aprs': {
+      id: '/app/aprs'
+      path: '/aprs'
+      fullPath: '/app/aprs'
+      preLoaderRoute: typeof AppAprsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/employees/': {
       id: '/app/employees/'
       path: '/'
@@ -525,6 +544,7 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAprsRoute: typeof AppAprsRoute
   AppAuditRoute: typeof AppAuditRoute
   AppCascosRoute: typeof AppCascosRoute
   AppCompaniesRoute: typeof AppCompaniesRoute
@@ -548,6 +568,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAprsRoute: AppAprsRoute,
   AppAuditRoute: AppAuditRoute,
   AppCascosRoute: AppCascosRoute,
   AppCompaniesRoute: AppCompaniesRoute,
