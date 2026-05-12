@@ -31,6 +31,7 @@ import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 import { Route as AppDdsTemasRouteImport } from './routes/app.dds.temas'
 import { Route as AppDdsPainelRouteImport } from './routes/app.dds.painel'
+import { Route as AppDdsHistoricoRouteImport } from './routes/app.dds.historico'
 import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
 
 const LoginRoute = LoginRouteImport.update({
@@ -144,6 +145,11 @@ const AppDdsPainelRoute = AppDdsPainelRouteImport.update({
   path: '/dds/painel',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDdsHistoricoRoute = AppDdsHistoricoRouteImport.update({
+  id: '/dds/historico',
+  path: '/dds/historico',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDdsGestoresRoute = AppDdsGestoresRouteImport.update({
   id: '/dds/gestores',
   path: '/dds/gestores',
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
+  '/app/dds/historico': typeof AppDdsHistoricoRoute
   '/app/dds/painel': typeof AppDdsPainelRoute
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/app/users': typeof AppUsersRoute
   '/app': typeof AppIndexRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
+  '/app/dds/historico': typeof AppDdsHistoricoRoute
   '/app/dds/painel': typeof AppDdsPainelRoute
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
+  '/app/dds/historico': typeof AppDdsHistoricoRoute
   '/app/dds/painel': typeof AppDdsPainelRoute
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/'
     | '/app/dds/gestores'
+    | '/app/dds/historico'
     | '/app/dds/painel'
     | '/app/dds/temas'
     | '/app/employees/$id'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app'
     | '/app/dds/gestores'
+    | '/app/dds/historico'
     | '/app/dds/painel'
     | '/app/dds/temas'
     | '/app/employees/$id'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/'
     | '/app/dds/gestores'
+    | '/app/dds/historico'
     | '/app/dds/painel'
     | '/app/dds/temas'
     | '/app/employees/$id'
@@ -462,6 +474,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDdsPainelRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/dds/historico': {
+      id: '/app/dds/historico'
+      path: '/dds/historico'
+      fullPath: '/app/dds/historico'
+      preLoaderRoute: typeof AppDdsHistoricoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/dds/gestores': {
       id: '/app/dds/gestores'
       path: '/dds/gestores'
@@ -497,6 +516,7 @@ interface AppRouteChildren {
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
   AppDdsGestoresRoute: typeof AppDdsGestoresRoute
+  AppDdsHistoricoRoute: typeof AppDdsHistoricoRoute
   AppDdsPainelRoute: typeof AppDdsPainelRoute
   AppDdsTemasRoute: typeof AppDdsTemasRoute
   AppEstoqueEpiRoute: typeof AppEstoqueEpiRoute
@@ -518,6 +538,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
   AppDdsGestoresRoute: AppDdsGestoresRoute,
+  AppDdsHistoricoRoute: AppDdsHistoricoRoute,
   AppDdsPainelRoute: AppDdsPainelRoute,
   AppDdsTemasRoute: AppDdsTemasRoute,
   AppEstoqueEpiRoute: AppEstoqueEpiRoute,

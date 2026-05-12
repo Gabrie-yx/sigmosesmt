@@ -36,6 +36,7 @@ const SESMT_ITEMS = [
 
 const DDS_SUBMENU = [
   { to: "/app/dds", label: "DDS" },
+  { to: "/app/dds/historico", label: "Histórico Mensal" },
   { to: "/app/dds/painel", label: "Painel de Qualidade" },
 ] as const;
 
