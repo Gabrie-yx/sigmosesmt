@@ -310,6 +310,12 @@ function RolesPage() {
                         <span className="text-[9px] font-black bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded uppercase shrink-0">Inativo</span>
                       )}
                     </div>
+                    {(r.ghe || r.setor) && (
+                      <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        {r.ghe && <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-black">{r.ghe}</span>}
+                        {r.setor && <span className="truncate">{r.setor}</span>}
+                      </div>
+                    )}
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {r.req_aso && <Pill icon={<Stethoscope className="h-3 w-3" />} label="ASO" tone="emerald" />}
                       {r.req_integra && <Pill icon={<ShieldCheck className="h-3 w-3" />} label="INT" tone="sky" />}
