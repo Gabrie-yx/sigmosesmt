@@ -140,6 +140,38 @@ export function AppHeader() {
             <div className="group/sub relative">
               <div
                 className={`flex w-full items-center justify-between px-3 py-2 text-sm font-semibold cursor-default transition-colors ${
+                  DDS_SUBMENU.some((s) => isActive(s.to))
+                    ? "bg-red-50 text-red-800"
+                    : "text-slate-700 hover:bg-red-50 hover:text-red-800"
+                }`}
+              >
+                DDS
+                <ChevronRight className="h-3.5 w-3.5 opacity-60" />
+              </div>
+              <div className="invisible absolute left-full top-0 z-50 pl-1 opacity-0 transition-all duration-150 group-hover/sub:visible group-hover/sub:opacity-100 group-focus-within/sub:visible group-focus-within/sub:opacity-100">
+                <div className="w-60 rounded-lg border border-red-100 bg-white shadow-xl py-1">
+                  <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-700 border-b border-red-50">
+                    DDS
+                  </div>
+                  {DDS_SUBMENU.map((s) => (
+                    <Link
+                      key={s.to}
+                      to={s.to}
+                      className={`block px-3 py-2 text-sm font-semibold transition-colors ${
+                        isActive(s.to)
+                          ? "bg-red-50 text-red-800"
+                          : "text-slate-700 hover:bg-red-50 hover:text-red-800"
+                      }`}
+                    >
+                      {s.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="group/sub relative">
+              <div
+                className={`flex w-full items-center justify-between px-3 py-2 text-sm font-semibold cursor-default transition-colors ${
                   DOCUMENTOS_SUBMENU.some((s) => isActive(s.to))
                     ? "bg-red-50 text-red-800"
                     : "text-slate-700 hover:bg-red-50 hover:text-red-800"
@@ -289,6 +321,18 @@ export function AppHeader() {
           }`}
         >
           {item.label}
+        </Link>
+      ))}
+      <div className="text-xs font-bold text-white/70 px-2 mt-2">DDS</div>
+      {DDS_SUBMENU.map((s) => (
+        <Link
+          key={s.to}
+          to={s.to}
+          className={`rounded-md px-6 py-2 text-sm font-semibold ${
+            isActive(s.to) ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10"
+          }`}
+        >
+          ↳ {s.label}
         </Link>
       ))}
       <div className="text-xs font-bold text-white/70 px-2 mt-2">Documentos</div>
