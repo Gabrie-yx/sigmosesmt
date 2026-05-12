@@ -1,15 +1,17 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useLocation, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AppHeader } from "@/components/app-header";
+import { ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
 });
 
 function AppLayout() {
-  const { session, loading } = useAuth();
+  const { session, loading, requiresMfa, mfaSatisfied } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (!loading && !session) {
@@ -28,6 +30,15 @@ function AppLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
       <AppHeader />
+      {requiresMfa && !mfaSatisfied && !location.pathname.startsWith("/app/conta/seguranca") && (
+        <div className="bg-amber-100 border-b border-amber-300 text-amber-900 px-4 py-2 text-sm flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4" />
+            <span>Seu papel exige MFA. Ative agora para acessar áreas sensíveis.</span>
+          </div>
+          <Link to="/app/conta/seguranca" className="font-bold underline">Configurar MFA</Link>
+        </div>
+      )}
       <main className="flex-1">
         <Outlet />
       </main>
