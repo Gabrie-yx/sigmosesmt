@@ -27,7 +27,9 @@ import dmnLogo from "@/assets/dmn-logo.png";
 
 // Menu SESMT reorganizado seguindo o ciclo PDCA da SST
 // (NR-1 GRO/PGR → NR-7 PCMSO → NR-6 EPI → NR-35 etc.)
-const SESMT_GROUPS = [
+type SesmtItem = { to: string; label: string };
+type SesmtGroup = { title: string; items: SesmtItem[] };
+const SESMT_GROUPS: SesmtGroup[] = [
   {
     title: "Visão Geral",
     items: [{ to: "/app/painel", label: "Painel SESMT" }],
@@ -56,8 +58,8 @@ const SESMT_GROUPS = [
     title: "Indicadores SST",
     items: [{ to: "/app/relatorios/reincidencia-epi", label: "Reincidência de Perda EPI" }],
   },
-] as const;
-const SESMT_FLAT = SESMT_GROUPS.flatMap((g) => g.items);
+];
+const SESMT_FLAT: SesmtItem[] = SESMT_GROUPS.flatMap((g) => g.items);
 
 const DDS_SUBMENU = [
   { to: "/app/dds", label: "DDS" },
