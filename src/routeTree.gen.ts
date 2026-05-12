@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -36,7 +37,13 @@ import { Route as AppDdsTemasRouteImport } from './routes/app.dds.temas'
 import { Route as AppDdsPainelRouteImport } from './routes/app.dds.painel'
 import { Route as AppDdsHistoricoRouteImport } from './routes/app.dds.historico'
 import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
+import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -173,11 +180,17 @@ const AppDdsGestoresRoute = AppDdsGestoresRouteImport.update({
   path: '/dds/gestores',
   getParentRoute: () => AppRoute,
 } as any)
+const AppContaSegurancaRoute = AppContaSegurancaRouteImport.update({
+  id: '/conta/seguranca',
+  path: '/conta/seguranca',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
@@ -189,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
+  '/app/conta/seguranca': typeof AppContaSegurancaRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
   '/app/dds/historico': typeof AppDdsHistoricoRoute
   '/app/dds/painel': typeof AppDdsPainelRoute
@@ -206,6 +220,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
@@ -216,6 +231,7 @@ export interface FileRoutesByTo {
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
   '/app': typeof AppIndexRoute
+  '/app/conta/seguranca': typeof AppContaSegurancaRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
   '/app/dds/historico': typeof AppDdsHistoricoRoute
   '/app/dds/painel': typeof AppDdsPainelRoute
@@ -235,6 +251,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
@@ -246,6 +263,7 @@ export interface FileRoutesById {
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
+  '/app/conta/seguranca': typeof AppContaSegurancaRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
   '/app/dds/historico': typeof AppDdsHistoricoRoute
   '/app/dds/painel': typeof AppDdsPainelRoute
@@ -266,6 +284,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/login'
+    | '/reset-password'
     | '/app/aprs'
     | '/app/audit'
     | '/app/cascos'
@@ -277,6 +296,7 @@ export interface FileRouteTypes {
     | '/app/trainings'
     | '/app/users'
     | '/app/'
+    | '/app/conta/seguranca'
     | '/app/dds/gestores'
     | '/app/dds/historico'
     | '/app/dds/painel'
@@ -294,6 +314,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/reset-password'
     | '/app/aprs'
     | '/app/audit'
     | '/app/cascos'
@@ -304,6 +325,7 @@ export interface FileRouteTypes {
     | '/app/trainings'
     | '/app/users'
     | '/app'
+    | '/app/conta/seguranca'
     | '/app/dds/gestores'
     | '/app/dds/historico'
     | '/app/dds/painel'
@@ -322,6 +344,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/login'
+    | '/reset-password'
     | '/app/aprs'
     | '/app/audit'
     | '/app/cascos'
@@ -333,6 +356,7 @@ export interface FileRouteTypes {
     | '/app/trainings'
     | '/app/users'
     | '/app/'
+    | '/app/conta/seguranca'
     | '/app/dds/gestores'
     | '/app/dds/historico'
     | '/app/dds/painel'
@@ -352,10 +376,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -545,6 +577,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDdsGestoresRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/conta/seguranca': {
+      id: '/app/conta/seguranca'
+      path: '/conta/seguranca'
+      fullPath: '/app/conta/seguranca'
+      preLoaderRoute: typeof AppContaSegurancaRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -574,6 +613,7 @@ interface AppRouteChildren {
   AppTrainingsRoute: typeof AppTrainingsRoute
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppContaSegurancaRoute: typeof AppContaSegurancaRoute
   AppDdsGestoresRoute: typeof AppDdsGestoresRoute
   AppDdsHistoricoRoute: typeof AppDdsHistoricoRoute
   AppDdsPainelRoute: typeof AppDdsPainelRoute
@@ -599,6 +639,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTrainingsRoute: AppTrainingsRoute,
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
+  AppContaSegurancaRoute: AppContaSegurancaRoute,
   AppDdsGestoresRoute: AppDdsGestoresRoute,
   AppDdsHistoricoRoute: AppDdsHistoricoRoute,
   AppDdsPainelRoute: AppDdsPainelRoute,
@@ -618,6 +659,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

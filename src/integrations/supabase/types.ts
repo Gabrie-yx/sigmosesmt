@@ -1621,6 +1621,69 @@ export type Database = {
         }
         Relationships: []
       }
+      user_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          full_name: string
+          id: string
+          invited_by: string | null
+          modules: Database["public"]["Enums"]["app_module"][]
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          full_name: string
+          id?: string
+          invited_by?: string | null
+          modules?: Database["public"]["Enums"]["app_module"][]
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          full_name?: string
+          id?: string
+          invited_by?: string | null
+          modules?: Database["public"]["Enums"]["app_module"][]
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      user_module_access: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          module: Database["public"]["Enums"]["app_module"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module: Database["public"]["Enums"]["app_module"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module?: Database["public"]["Enums"]["app_module"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1651,7 +1714,15 @@ export type Database = {
         Args: { _epi_id: string; _novo_saldo: number }
         Returns: undefined
       }
+      current_aal: { Args: never; Returns: string }
       gerar_numero_apr: { Args: never; Returns: string }
+      has_module_access: {
+        Args: {
+          _module: Database["public"]["Enums"]["app_module"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1660,6 +1731,9 @@ export type Database = {
         Returns: boolean
       }
       is_editor: { Args: { _user_id: string }; Returns: boolean }
+      is_moderator: { Args: { _user_id: string }; Returns: boolean }
+      is_viewer_or_above: { Args: { _user_id: string }; Returns: boolean }
+      mfa_ok: { Args: never; Returns: boolean }
       registrar_entrega_epi: {
         Args: { _cpf: string; _epi_id: string; _nome: string; _qtd: number }
         Returns: string
@@ -1675,9 +1749,17 @@ export type Database = {
         }
         Returns: string
       }
+      requires_mfa: { Args: { _user_id: string }; Returns: boolean }
       snapshot_estoque_epi_monthly: { Args: never; Returns: undefined }
     }
     Enums: {
+      app_module:
+        | "sesmt"
+        | "estoque"
+        | "producao"
+        | "manutencao"
+        | "portaria"
+        | "usuarios"
       app_role: "admin" | "tst" | "viewer" | "moderador" | "editor"
       purchase_req_class: "MATERIAL" | "SERVICO"
       purchase_req_status: "PENDENTE" | "APROVADA" | "INDEFERIDA"
@@ -1809,6 +1891,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_module: [
+        "sesmt",
+        "estoque",
+        "producao",
+        "manutencao",
+        "portaria",
+        "usuarios",
+      ],
       app_role: ["admin", "tst", "viewer", "moderador", "editor"],
       purchase_req_class: ["MATERIAL", "SERVICO"],
       purchase_req_status: ["PENDENTE", "APROVADA", "INDEFERIDA"],

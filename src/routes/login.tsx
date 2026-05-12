@@ -18,6 +18,25 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaChallengeId, setMfaChallengeId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+
+  async function verifyMfa(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaFactorId || !mfaChallengeId) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: mfaFactorId, challengeId: mfaChallengeId, code: mfaCode,
+      });
+      if (error) throw error;
+      toast.success("Bem-vindo!");
+      nav({ to: "/app" });
+    } catch (e: any) {
+      toast.error(e.message ?? "Código inválido");
+    } finally { setLoading(false); }
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -60,6 +79,18 @@ function LoginPage() {
           }
           throw error;
         }
+        const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (aalData?.nextLevel === "aal2" && aalData.currentLevel !== "aal2") {
+          const { data: factors } = await supabase.auth.mfa.listFactors();
+          const totp = (factors?.totp ?? []).find((f) => f.status === "verified");
+          if (totp) {
+            setMfaFactorId(totp.id);
+            const { data: ch } = await supabase.auth.mfa.challenge({ factorId: totp.id });
+            setMfaChallengeId(ch?.id ?? null);
+            setLoading(false);
+            return;
+          }
+        }
         toast.success("Bem-vindo!");
       }
       nav({ to: "/app" });
@@ -78,6 +109,22 @@ function LoginPage() {
           <CardDescription>EnviCorp · Gestão de Fardamento e SST</CardDescription>
         </CardHeader>
         <CardContent>
+          {mfaChallengeId ? (
+            <form onSubmit={verifyMfa} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Código MFA (6 dígitos)</Label>
+                <Input value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  className="font-mono text-lg tracking-widest" placeholder="000000" maxLength={6} autoFocus />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading || mfaCode.length !== 6}>
+                {loading ? "Verificando..." : "Confirmar"}
+              </Button>
+              <button type="button" onClick={() => { setMfaChallengeId(null); setMfaFactorId(null); setMfaCode(""); supabase.auth.signOut(); }}
+                className="w-full text-sm text-muted-foreground hover:text-foreground">
+                Cancelar
+              </button>
+            </form>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
               <div className="space-y-2">
@@ -107,6 +154,7 @@ function LoginPage() {
               <Link to="/">← Voltar</Link>
             </div>
           </form>
+          )}
         </CardContent>
       </Card>
     </div>
