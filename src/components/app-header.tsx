@@ -17,6 +17,7 @@ import {
   Wrench,
   DoorOpen,
   Lock,
+  Users as UsersIcon,
 } from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
@@ -102,6 +103,7 @@ export function AppHeader() {
 
   const isActive = (to: string) => location.pathname.startsWith(to);
   const sesmtActive = SESMT_PATHS.some((p) => location.pathname.startsWith(p));
+  const isAdmin = roles.includes("admin");
 
   const triggerCls = (active: boolean) =>
     `flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-all ${
@@ -305,6 +307,11 @@ export function AppHeader() {
           </div>
         </div>
       ))}
+      {isAdmin && (
+        <Link to="/app/users" className={triggerCls(isActive("/app/users"))}>
+          <UsersIcon className="h-4 w-4" /> Usuários
+        </Link>
+      )}
     </>
   );
 
