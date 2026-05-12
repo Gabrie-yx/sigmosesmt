@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X, FileDown } from "lucide-react";
+import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X, FileDown, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { DDSFormularioSemanalDialog } from "@/components/dds-formulario-semanal-dialog";
 import { DDSEvidencias } from "@/components/dds-evidencias";
@@ -51,6 +51,7 @@ function DDSPage() {
   const { isEditor, isAdmin } = useAuth();
   const [creating, setCreating] = useState(false);
   const [viewing, setViewing] = useState<DDS | null>(null);
+  const [editing, setEditing] = useState<DDS | null>(null);
   const [search, setSearch] = useState("");
   const [genForm, setGenForm] = useState(false);
 
@@ -174,6 +175,7 @@ function DDSPage() {
                 </div>
                 <div className="col-span-1 flex justify-end gap-1">
                   <Button size="icon" variant="ghost" onClick={() => setViewing(d)}><Eye className="h-4 w-4" /></Button>
+                  {isEditor && <Button size="icon" variant="ghost" onClick={() => setEditing(d)}><Pencil className="h-4 w-4" /></Button>}
                   {isAdmin && <Button size="icon" variant="ghost" onClick={() => { if (confirm("Excluir DDS?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4 text-red-600" /></Button>}
                 </div>
               </div>
@@ -202,6 +204,17 @@ function DDSPage() {
       </Dialog>
 
       {genForm && <DDSFormularioSemanalDialog open={genForm} onClose={() => setGenForm(false)} />}
+
+      {editing && (
+        <EditDDSDialog
+          open={!!editing}
+          dds={editing}
+          temas={temas as any}
+          gestores={gestores as any}
+          onClose={() => setEditing(null)}
+          onSaved={() => { qc.invalidateQueries({ queryKey: ["dds-list"] }); setEditing(null); }}
+        />
+      )}
     </div>
   );
 }
@@ -458,6 +471,149 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
           <Button onClick={save} disabled={saving}>Salvar DDS</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditDDSDialog({ open, dds, temas, gestores, onClose, onSaved }: {
+  open: boolean;
+  dds: DDS;
+  temas: { id: string; codigo: number | null; titulo: string; categoria: string; criticidade: string }[];
+  gestores: { id: string; nome: string; setor: string | null }[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [data, setData] = useState(dds.data);
+  const [hora, setHora] = useState(dds.hora?.slice(0, 5) ?? "");
+  const [gestorId, setGestorId] = useState<string>(dds.gestor_id ?? "");
+  const [setor, setSetor] = useState(dds.setor ?? "");
+  const [duracao, setDuracao] = useState(dds.duracao_min);
+  const [esperados, setEsperados] = useState(dds.participantes_esperados);
+  const [conteudo, setConteudo] = useState(dds.conteudo ?? "");
+  const [temaIds, setTemaIds] = useState<string[]>(
+    (dds.temas_ids && dds.temas_ids.length > 0) ? dds.temas_ids : (dds.tema_id ? [dds.tema_id] : []),
+  );
+  const [temasLivres, setTemasLivres] = useState<string[]>(
+    (dds.temas_livres && dds.temas_livres.length > 0) ? dds.temas_livres : (dds.tema_livre ? [dds.tema_livre] : []),
+  );
+  const [temaLivreInput, setTemaLivreInput] = useState("");
+  const [temaSearch, setTemaSearch] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    if (!gestorId) return toast.error("Selecione o gestor");
+    if (temaIds.length === 0 && temasLivres.length === 0) return toast.error("Selecione ao menos um tema");
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("dds").update({
+        data, hora: hora || null, gestor_id: gestorId, setor: setor || null,
+        tema_id: temaIds[0] ?? null,
+        tema_livre: temasLivres[0] ?? null,
+        temas_ids: temaIds,
+        temas_livres: temasLivres,
+        duracao_min: duracao, conteudo: conteudo || null,
+        participantes_esperados: esperados,
+      }).eq("id", dds.id);
+      if (error) throw error;
+      toast.success("DDS atualizado");
+      onSaved();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
+        <DialogHeader><DialogTitle>Editar DDS</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div><Label>Data *</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
+            <div><Label>Hora</Label><Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} /></div>
+            <div><Label>Duração (min)</Label><Input type="number" value={duracao} onChange={(e) => setDuracao(Number(e.target.value) || 10)} /></div>
+            <div><Label>Esperados</Label><Input type="number" value={esperados} onChange={(e) => setEsperados(Number(e.target.value) || 0)} /></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label>Gestor *</Label>
+              <Select value={gestorId} onValueChange={setGestorId}>
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>
+                  {gestores.map((g) => <SelectItem key={g.id} value={g.id}>{g.nome}{g.setor ? ` — ${g.setor}` : ""}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Setor / Local</Label><Input value={setor} onChange={(e) => setSetor(e.target.value)} /></div>
+          </div>
+          <div>
+            <Label>Temas * ({temaIds.length + temasLivres.length})</Label>
+            {(temaIds.length > 0 || temasLivres.length > 0) && (
+              <div className="flex flex-wrap gap-1 mb-2 mt-1">
+                {temaIds.map((id) => {
+                  const t = temas.find((x) => x.id === id);
+                  if (!t) return null;
+                  return (
+                    <Badge key={id} variant="secondary" className="gap-1 pr-1">
+                      <span className="truncate max-w-[280px]">{t.codigo ? `${t.codigo}. ` : ""}{t.titulo}</span>
+                      <button type="button" onClick={() => setTemaIds(temaIds.filter((x) => x !== id))} className="hover:bg-slate-300 rounded p-0.5"><X className="h-3 w-3" /></button>
+                    </Badge>
+                  );
+                })}
+                {temasLivres.map((tl, i) => (
+                  <Badge key={`l-${i}`} variant="outline" className="gap-1 pr-1 border-amber-400 text-amber-800">
+                    <span className="truncate max-w-[280px]">{tl}</span>
+                    <button type="button" onClick={() => setTemasLivres(temasLivres.filter((_, idx) => idx !== i))} className="hover:bg-amber-100 rounded p-0.5"><X className="h-3 w-3" /></button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <Input placeholder="Buscar tema na biblioteca..." value={temaSearch} onChange={(e) => setTemaSearch(e.target.value)} className="mb-2" />
+            <div className="border rounded max-h-40 overflow-auto divide-y">
+              {temas
+                .filter((t) => {
+                  const q = temaSearch.toLowerCase().trim();
+                  if (!q) return true;
+                  return t.titulo.toLowerCase().includes(q) || String(t.codigo ?? "").includes(q);
+                })
+                .slice(0, 100)
+                .map((t) => {
+                  const checked = temaIds.includes(t.id);
+                  return (
+                    <label key={t.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-sm">
+                      <Checkbox checked={checked} onCheckedChange={() => setTemaIds(checked ? temaIds.filter((x) => x !== t.id) : [...temaIds, t.id])} />
+                      <span className="flex-1 truncate">{t.codigo ? `${t.codigo}. ` : ""}{t.titulo}</span>
+                    </label>
+                  );
+                })}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Input value={temaLivreInput} onChange={(e) => setTemaLivreInput(e.target.value)} placeholder="Adicionar tema livre"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const v = temaLivreInput.trim();
+                    if (v) { setTemasLivres([...temasLivres, v]); setTemaLivreInput(""); }
+                  }
+                }} />
+              <Button type="button" variant="outline" onClick={() => {
+                const v = temaLivreInput.trim();
+                if (v) { setTemasLivres([...temasLivres, v]); setTemaLivreInput(""); }
+              }}>Adicionar</Button>
+            </div>
+          </div>
+          <div>
+            <Label>Conteúdo / Pontos abordados</Label>
+            <Textarea rows={3} value={conteudo} onChange={(e) => setConteudo(e.target.value)} />
+          </div>
+          <div className="text-xs text-muted-foreground">Para alterar a lista de presentes, exclua e relance o DDS.</div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button onClick={save} disabled={saving}>Salvar alterações</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
