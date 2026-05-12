@@ -683,6 +683,33 @@ export type Database = {
           },
         ]
       }
+      exam_catalog: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          id: string
+          procedimento: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          procedimento: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          procedimento?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       historico_entregas: {
         Row: {
           cpf_colaborador: string
@@ -923,7 +950,10 @@ export type Database = {
       roles: {
         Row: {
           ativo: boolean
+          cbo: string | null
           created_at: string
+          exames_por_natureza: Json
+          ghe: string | null
           id: string
           name: string
           req_aso: boolean
@@ -933,11 +963,15 @@ export type Database = {
           req_vacinas: string[]
           risco_biologico: boolean
           riscos: Json
+          setor: string | null
           updated_at: string
         }
         Insert: {
           ativo?: boolean
+          cbo?: string | null
           created_at?: string
+          exames_por_natureza?: Json
+          ghe?: string | null
           id?: string
           name: string
           req_aso?: boolean
@@ -947,11 +981,15 @@ export type Database = {
           req_vacinas?: string[]
           risco_biologico?: boolean
           riscos?: Json
+          setor?: string | null
           updated_at?: string
         }
         Update: {
           ativo?: boolean
+          cbo?: string | null
           created_at?: string
+          exames_por_natureza?: Json
+          ghe?: string | null
           id?: string
           name?: string
           req_aso?: boolean
@@ -961,6 +999,7 @@ export type Database = {
           req_vacinas?: string[]
           risco_biologico?: boolean
           riscos?: Json
+          setor?: string | null
           updated_at?: string
         }
         Relationships: []
