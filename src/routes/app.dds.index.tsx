@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X } from "lucide-react";
+import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X, FileDown } from "lucide-react";
 import { toast } from "sonner";
+import { DDSFormularioSemanalDialog } from "@/components/dds-formulario-semanal-dialog";
+import { DDSEvidencias } from "@/components/dds-evidencias";
 
 export const Route = createFileRoute("/app/dds/")({
   component: DDSPage,
@@ -50,6 +52,7 @@ function DDSPage() {
   const [creating, setCreating] = useState(false);
   const [viewing, setViewing] = useState<DDS | null>(null);
   const [search, setSearch] = useState("");
+  const [genForm, setGenForm] = useState(false);
 
   const { data: dds = [] } = useQuery({
     queryKey: ["dds-list"],
@@ -109,6 +112,7 @@ function DDSPage() {
         <Button asChild variant="outline" size="sm"><Link to="/app/dds/painel"><BarChart3 className="h-4 w-4 mr-1" />Painel</Link></Button>
         <Button asChild variant="outline" size="sm"><Link to="/app/dds/temas"><BookOpen className="h-4 w-4 mr-1" />Temas</Link></Button>
         <Button asChild variant="outline" size="sm"><Link to="/app/dds/gestores"><Users className="h-4 w-4 mr-1" />Gestores</Link></Button>
+        {isEditor && <Button variant="outline" size="sm" onClick={() => setGenForm(true)}><FileDown className="h-4 w-4 mr-1" />Formulário semanal</Button>}
         {isEditor && <Button onClick={() => setCreating(true)}><Plus className="h-4 w-4 mr-1" />Novo DDS</Button>}
       </div>
 
@@ -196,6 +200,8 @@ function DDSPage() {
           {viewing && <DDSDetail dds={viewing} temaMap={temaMap} gestorMap={gestorMap} />}
         </DialogContent>
       </Dialog>
+
+      {genForm && <DDSFormularioSemanalDialog open={genForm} onClose={() => setGenForm(false)} />}
     </div>
   );
 }
@@ -249,6 +255,7 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
           {attendees.length === 0 && <div className="p-3 text-xs text-muted-foreground text-center">Sem registro</div>}
         </div>
       </div>
+      <DDSEvidencias ddsId={dds.id} />
     </div>
   );
 }
