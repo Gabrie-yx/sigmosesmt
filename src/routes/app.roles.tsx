@@ -14,10 +14,38 @@ import { NRS_LIST, TIPOS_EXAME, VACINAS_LIST, VACINAS_RISCO_BIOLOGICO } from "@/
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { CatalogoRiscosPanel } from "@/components/catalogo/catalogo-riscos-panel";
+import { CatalogoNrsPanel } from "@/components/catalogo/catalogo-nrs-panel";
 
 export const Route = createFileRoute("/app/roles")({
-  component: RolesPage,
+  component: RolesPageWithTabs,
 });
+
+function RolesPageWithTabs() {
+  return (
+    <div className="h-full flex flex-col bg-slate-50">
+      <Tabs defaultValue="cargos" className="flex-1 flex flex-col min-h-0">
+        <div className="px-6 pt-4 border-b border-slate-200 bg-white">
+          <TabsList className="h-10">
+            <TabsTrigger value="cargos" className="font-bold">Cargos</TabsTrigger>
+            <TabsTrigger value="riscos" className="font-bold">Catálogo de Riscos</TabsTrigger>
+            <TabsTrigger value="nrs" className="font-bold">Catálogo de NRs</TabsTrigger>
+          </TabsList>
+        </div>
+        <TabsContent value="cargos" className="flex-1 min-h-0 m-0 overflow-hidden">
+          <RolesPage />
+        </TabsContent>
+        <TabsContent value="riscos" className="flex-1 min-h-0 m-0 overflow-y-auto">
+          <CatalogoRiscosPanel />
+        </TabsContent>
+        <TabsContent value="nrs" className="flex-1 min-h-0 m-0 overflow-y-auto">
+          <CatalogoNrsPanel />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
 
 type Riscos = {
   acidente_mecanico: string[]; fisicos: string[]; quimicos: string[];
