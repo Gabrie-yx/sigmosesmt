@@ -32,6 +32,8 @@ export type APRPdfParams = {
   data_fim?: string | null;
   hora_inicio?: string | null;
   hora_fim?: string | null;
+  hora_inicio_sexta?: string | null;
+  hora_fim_sexta?: string | null;
   data_validade?: string | null;
   empresa_nome?: string | null;
   empresa_cnpj?: string | null;
@@ -195,8 +197,10 @@ function drawIdBlock(doc: jsPDF, p: APRPdfParams, yStart: number): number {
   doc.setFont("helvetica", "bold").setFontSize(7);
   doc.text("Horário:", x + 1.2, y + 3.5);
   doc.setFont("helvetica", "normal").setFontSize(8);
-  doc.text(`${p.hora_inicio ?? "--:--"} às ${p.hora_fim ?? "--:--"}`, x + 1.2, y + 8);
-  if (p.casco_numero) doc.text(`Casco: ${p.casco_numero}`, x + 1.2, y + 11);
+  doc.setFontSize(7);
+  doc.text(`Seg-Qui: ${p.hora_inicio ?? "--:--"} às ${p.hora_fim ?? "--:--"}`, x + 1.2, y + 7);
+  doc.text(`Sexta:    ${p.hora_inicio_sexta ?? "--:--"} às ${p.hora_fim_sexta ?? "--:--"}`, x + 1.2, y + 10);
+  if (p.casco_numero) doc.text(`Casco: ${p.casco_numero}`, x + 1.2, y + 13);
   y += rowH * 2;
 
   return y + 1;

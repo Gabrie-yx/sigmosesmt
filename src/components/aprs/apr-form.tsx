@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Save, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
@@ -12,13 +12,16 @@ import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-pdf";
 import { formatDateBR } from "@/lib/utils-date";
 
+/* ---------- tipos ---------- */
 type APR = {
   id?: string; numero?: string;
   casco_id?: string | null; pte_id?: string | null;
   empresa_id?: string | null; encarregado_id?: string | null; tst_id?: string | null;
   local?: string | null; setor?: string | null;
   atividade_descricao: string;
-  data_emissao: string; hora_inicio?: string | null; hora_fim?: string | null;
+  data_emissao: string;
+  hora_inicio?: string | null; hora_fim?: string | null;
+  hora_inicio_sexta?: string | null; hora_fim_sexta?: string | null;
   validade_dias: number; data_validade?: string | null;
   condicoes_climaticas?: string | null; observacoes_gerais?: string | null;
   status: string; exige_pte: boolean;
@@ -45,7 +48,6 @@ type Assin = {
 };
 
 function nivelMeta(n: number) {
-  // Escala homologada: P+S (2..6)
   switch (n) {
     case 2: return { label: "TRIVIAL", cls: "bg-emerald-500" };
     case 3: return { label: "TOLERÁVEL", cls: "bg-lime-500" };
@@ -61,19 +63,56 @@ const emptyApr: APR = {
   data_emissao: new Date().toISOString().slice(0, 10),
   validade_dias: 7, status: "RASCUNHO", exige_pte: false,
   texto_gerais: DEFAULT_TEXTO_GERAIS,
+  hora_inicio: "07:30", hora_fim: "17:30",
+  hora_inicio_sexta: "07:30", hora_fim_sexta: "16:30",
 };
 
+/* ---------- componentes visuais (espelho do papel) ---------- */
+const APR_RED = "#dc3545";
+const APR_ORANGE = "#ff9900";
+
+function PaperHeader({ numero, pageLabel }: { numero?: string | null; pageLabel: string }) {
+  return (
+    <div className="border-2 border-black grid grid-cols-[120px_1fr_180px] text-black bg-white">
+      <div className="border-r-2 border-black flex items-center justify-center p-2">
+        <div className="bg-[var(--apr-red)] text-white font-black text-2xl rounded px-4 py-2 tracking-wider"
+          style={{ background: APR_RED }}>DMN</div>
+      </div>
+      <div className="flex flex-col items-center justify-center py-2 px-3">
+        <div className="font-black text-base leading-tight">DMN ESTALEIRO DA AMAZONIA LTDA</div>
+        <div className="text-sm">APR – Análise Preliminar de Riscos</div>
+      </div>
+      <div className="border-l-2 border-black grid grid-rows-4 text-[10px] font-bold">
+        <div className="border-b border-black px-2 flex items-center">CÓD.FOR-SEG 07</div>
+        <div className="border-b border-black px-2 flex items-center">REVISÃO: 00</div>
+        <div className="border-b border-black px-2 flex items-center">DATA: 30/08/2025</div>
+        <div className="px-2 flex items-center">{pageLabel}{numero ? ` · ${numero}` : ""}</div>
+      </div>
+    </div>
+  );
+}
+
+function PaperCell({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`border border-black p-1.5 ${className}`}>
+      <div className="text-[10px] font-bold uppercase text-slate-700 mb-0.5">{label}</div>
+      {children}
+    </div>
+  );
+}
+
+/* ---------- componente principal ---------- */
 export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: () => void }) {
   const qc = useQueryClient();
   const [apr, setApr] = useState<APR>(emptyApr);
   const [riscos, setRiscos] = useState<Risco[]>([]);
   const [assinaturas, setAssinaturas] = useState<Assin[]>([]);
-  const [tab, setTab] = useState<"cab" | "riscos" | "assin">("cab");
+  const [tab, setTab] = useState<"p1" | "p2" | "p3" | "p4" | "p5">("p1");
 
-  // ---- catálogos ----
+  // catálogos
   const { data: cascos = [] } = useQuery({ queryKey: ["cascos-light"], queryFn: async () => (await supabase.from("cascos").select("id,numero,nome,status").eq("status", "ATIVO").order("numero")).data ?? [] });
   const { data: companies = [] } = useQuery({ queryKey: ["companies-light"], queryFn: async () => (await supabase.from("companies").select("id,name,cnpj").order("name")).data ?? [] });
-  const { data: employees = [] } = useQuery({ queryKey: ["employees-light-apr"], queryFn: async () => (await supabase.from("employees").select("id,nome,cpf,company_id,role_id").eq("status", "ATIVO").order("nome")).data ?? [] });
+  const { data: employees = [] } = useQuery({ queryKey: ["employees-light-apr"], queryFn: async () => (await supabase.from("employees").select("id,nome,cpf,company_id,role_id,status").eq("status", "ATIVO").order("nome")).data ?? [] });
   const { data: roles = [] } = useQuery({ queryKey: ["roles-light"], queryFn: async () => (await supabase.from("roles").select("id,name").order("name")).data ?? [] });
   const { data: catRiscos = [] } = useQuery({ queryKey: ["catalogo_riscos_form"], queryFn: async () => (await supabase.from("catalogo_riscos").select("*").eq("ativo", true).order("nome")).data ?? [] });
   const { data: ptes = [] } = useQuery({ queryKey: ["ptes-light"], queryFn: async () => (await supabase.from("ptes").select("id,numero,data_emissao,risco").order("data_emissao", { ascending: false }).limit(50)).data ?? [] });
@@ -84,13 +123,12 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const tst = useMemo(() => employees.find((e: any) => e.id === apr.tst_id), [employees, apr.tst_id]);
   const pte = useMemo(() => ptes.find((p: any) => p.id === apr.pte_id), [ptes, apr.pte_id]);
 
-  // Detecta risco grave automaticamente — escala P+S, Substancial(5) ou Inaceitável(6) exigem PTE
   const temRiscoGrave = useMemo(() => riscos.some((r) => (r.probabilidade + r.severidade) >= 5), [riscos]);
   useEffect(() => {
     if (temRiscoGrave && !apr.exige_pte) setApr((a) => ({ ...a, exige_pte: true }));
   }, [temRiscoGrave]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ---- carregar APR existente ----
+  // carregar APR existente
   useEffect(() => {
     if (!aprId) return;
     (async () => {
@@ -105,68 +143,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     })();
   }, [aprId]);
 
-  // ---- ações riscos ----
-  function addRiscoFromCatalogo(catId: string) {
-    const c = catRiscos.find((x: any) => x.id === catId);
-    if (!c) return;
-    setRiscos((rs) => [...rs, {
-      ordem: rs.length + 1,
-      catalogo_risco_id: c.id,
-      risco_nome: c.nome,
-      risco_categoria: c.categoria,
-      efeitos_danos: (c.efeitos_tipicos ?? []).join(", "),
-      probabilidade: 2, severidade: 2,
-      acoes_preventivas: (c.medidas_controle_padrao ?? []).join("; "),
-      epis: c.epis_sugeridos ?? [],
-      nrs: c.nrs_aplicaveis ?? [],
-      responsavel_acoes: "",
-    }]);
-  }
-  function addRiscoLivre() {
-    setRiscos((rs) => [...rs, {
-      ordem: rs.length + 1, risco_nome: "", probabilidade: 1, severidade: 1,
-      epis: [], nrs: [],
-    }]);
-  }
-  function moveRisco(idx: number, dir: -1 | 1) {
-    setRiscos((rs) => {
-      const next = [...rs]; const j = idx + dir;
-      if (j < 0 || j >= next.length) return rs;
-      [next[idx], next[j]] = [next[j], next[idx]];
-      return next.map((r, i) => ({ ...r, ordem: i + 1 }));
-    });
-  }
-  function removeRisco(idx: number) {
-    setRiscos((rs) => rs.filter((_, i) => i !== idx).map((r, i) => ({ ...r, ordem: i + 1 })));
-  }
-  function updateRisco(idx: number, patch: Partial<Risco>) {
-    setRiscos((rs) => rs.map((r, i) => i === idx ? { ...r, ...patch } : r));
-  }
-
-  // ---- ações assinaturas ----
-  function addExecutante(empId?: string) {
-    const e = employees.find((x: any) => x.id === empId);
-    const role = e ? roles.find((r: any) => r.id === e.role_id) : null;
-    setAssinaturas((arr) => [...arr, {
-      papel: "EXECUTANTE",
-      employee_id: e?.id ?? null,
-      nome: e?.nome ?? "",
-      cpf: e?.cpf ?? "",
-      funcao: role?.name ?? "",
-      ordem: arr.filter((a) => a.papel === "EXECUTANTE").length + 1,
-    }]);
-  }
-  function removeAssin(idx: number) {
-    setAssinaturas((arr) => arr.filter((_, i) => i !== idx));
-  }
-  function updateAssin(idx: number, patch: Partial<Assin>) {
-    setAssinaturas((arr) => arr.map((a, i) => i === idx ? { ...a, ...patch } : a));
-  }
-  function toggleAssinou(idx: number) {
-    updateAssin(idx, { assinou_em: assinaturas[idx].assinou_em ? null : new Date().toISOString() });
-  }
-
-  // Sincroniza encarregado/TST nas assinaturas quando o select muda
+  // sincroniza encarregado/TST nas assinaturas
   useEffect(() => {
     setAssinaturas((arr) => {
       const others = arr.filter((a) => a.papel !== "ENCARREGADO" && a.papel !== "TST");
@@ -183,7 +160,74 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     });
   }, [enc, tst, roles]);
 
-  // ---- salvar ----
+  // ao trocar empresa: pré-marca todos os funcionários ativos da empresa como executantes
+  // (não duplica se já estiverem; mantém os já marcados manualmente)
+  useEffect(() => {
+    if (!apr.empresa_id || aprId /* não auto-popula em edição */) return;
+    const da = employees.filter((e: any) => e.company_id === apr.empresa_id);
+    if (da.length === 0) return;
+    setAssinaturas((arr) => {
+      // remove executantes anteriores que vieram de auto-popular outra empresa
+      const semExecAuto = arr.filter((a) => a.papel !== "EXECUTANTE");
+      const novos: Assin[] = da.map((e: any, i: number) => {
+        const role = roles.find((r: any) => r.id === e.role_id);
+        return {
+          papel: "EXECUTANTE", employee_id: e.id, nome: e.nome, cpf: e.cpf,
+          funcao: role?.name ?? "", ordem: i + 1,
+        };
+      });
+      return [...semExecAuto, ...novos];
+    });
+  }, [apr.empresa_id, employees, roles, aprId]);
+
+  /* ---------- ações ---------- */
+  function addRiscoFromCatalogo(catId: string) {
+    const c = catRiscos.find((x: any) => x.id === catId);
+    if (!c) return;
+    setRiscos((rs) => [...rs, {
+      ordem: rs.length + 1,
+      catalogo_risco_id: c.id,
+      risco_nome: c.nome,
+      risco_categoria: c.categoria,
+      efeitos_danos: (c.efeitos_tipicos ?? []).join(", "),
+      probabilidade: 2, severidade: 2,
+      acoes_preventivas: (c.medidas_controle_padrao ?? []).join("; "),
+      epis: c.epis_sugeridos ?? [], nrs: c.nrs_aplicaveis ?? [],
+      responsavel_acoes: "",
+    }]);
+  }
+  const addRiscoLivre = () => setRiscos((rs) => [...rs, { ordem: rs.length + 1, risco_nome: "", probabilidade: 1, severidade: 1, epis: [], nrs: [] }]);
+  const moveRisco = (idx: number, dir: -1 | 1) => setRiscos((rs) => {
+    const next = [...rs]; const j = idx + dir;
+    if (j < 0 || j >= next.length) return rs;
+    [next[idx], next[j]] = [next[j], next[idx]];
+    return next.map((r, i) => ({ ...r, ordem: i + 1 }));
+  });
+  const removeRisco = (idx: number) => setRiscos((rs) => rs.filter((_, i) => i !== idx).map((r, i) => ({ ...r, ordem: i + 1 })));
+  const updateRisco = (idx: number, patch: Partial<Risco>) => setRiscos((rs) => rs.map((r, i) => i === idx ? { ...r, ...patch } : r));
+
+  // executantes: lista derivada de empresa + assinaturas atuais
+  const execAtuais = assinaturas.filter((a) => a.papel === "EXECUTANTE");
+  const empresaFuncs = useMemo(
+    () => apr.empresa_id ? employees.filter((e: any) => e.company_id === apr.empresa_id) : [],
+    [employees, apr.empresa_id],
+  );
+  function toggleExecutante(empId: string) {
+    const exists = execAtuais.find((a) => a.employee_id === empId);
+    if (exists) {
+      setAssinaturas((arr) => arr.filter((a) => !(a.papel === "EXECUTANTE" && a.employee_id === empId)));
+    } else {
+      const e: any = employees.find((x: any) => x.id === empId);
+      if (!e) return;
+      const role = roles.find((r: any) => r.id === e.role_id);
+      setAssinaturas((arr) => [...arr, {
+        papel: "EXECUTANTE", employee_id: e.id, nome: e.nome, cpf: e.cpf,
+        funcao: role?.name ?? "", ordem: arr.filter((a) => a.papel === "EXECUTANTE").length + 1,
+      }]);
+    }
+  }
+
+  /* ---------- salvar ---------- */
   const save = useMutation({
     mutationFn: async (publish: boolean) => {
       if (!apr.atividade_descricao.trim()) throw new Error("Descreva a atividade");
@@ -205,6 +249,8 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         data_emissao: apr.data_emissao,
         hora_inicio: apr.hora_inicio || null,
         hora_fim: apr.hora_fim || null,
+        hora_inicio_sexta: apr.hora_inicio_sexta || null,
+        hora_fim_sexta: apr.hora_fim_sexta || null,
         validade_dias: apr.validade_dias,
         condicoes_climaticas: apr.condicoes_climaticas || null,
         observacoes_gerais: apr.observacoes_gerais || null,
@@ -223,15 +269,13 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         id = data.id;
       }
 
-      // Substituir riscos
       await supabase.from("apr_riscos").delete().eq("apr_id", id);
       if (riscos.length > 0) {
         const { error: e2 } = await supabase.from("apr_riscos").insert(
           riscos.map((r) => ({
             apr_id: id, ordem: r.ordem,
             catalogo_risco_id: r.catalogo_risco_id || null,
-            risco_nome: r.risco_nome,
-            risco_categoria: r.risco_categoria || null,
+            risco_nome: r.risco_nome, risco_categoria: r.risco_categoria || null,
             efeitos_danos: r.efeitos_danos || null,
             probabilidade: r.probabilidade, severidade: r.severidade,
             acoes_preventivas: r.acoes_preventivas || null,
@@ -242,7 +286,6 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         if (e2) throw e2;
       }
 
-      // Substituir assinaturas
       await supabase.from("apr_assinaturas").delete().eq("apr_id", id);
       if (assinaturas.length > 0) {
         const { error: e3 } = await supabase.from("apr_assinaturas").insert(
@@ -266,62 +309,33 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     onError: (e: any) => toast.error(e.message),
   });
 
-  function addAllExecutantesEmpresa() {
-    if (!apr.empresa_id) { toast.error("Selecione a Empresa Executante na aba 1"); return; }
-    const da = employees.filter((e: any) => e.company_id === apr.empresa_id);
-    if (da.length === 0) { toast.warning("Nenhum colaborador encontrado para essa empresa"); return; }
-    setAssinaturas((arr) => {
-      const next = [...arr];
-      da.forEach((e: any) => {
-        if (next.some((a) => a.papel === "EXECUTANTE" && a.employee_id === e.id)) return;
-        const role = roles.find((r: any) => r.id === e.role_id);
-        next.push({
-          papel: "EXECUTANTE", employee_id: e.id, nome: e.nome, cpf: e.cpf, funcao: role?.name ?? "",
-          ordem: next.filter((a) => a.papel === "EXECUTANTE").length + 1,
-        });
-      });
-      return next;
-    });
-    toast.success(`${da.length} executante(s) adicionado(s)`);
-  }
-
-  function handleImprimir() {
-    if (!apr.atividade_descricao || riscos.length === 0) {
-      toast.error("Salve a APR antes de imprimir");
-      return;
-    }
-    const doc = gerarAPR({
+  function buildPdf() {
+    return gerarAPR({
       matrizNome: "J C S CONSTRUÇÃO NAVAL LTDA",
       matrizCnpj: "13.378.697/0001-80",
       numero: apr.numero ?? "APR-RASCUNHO",
       data_emissao: formatDateBR(apr.data_emissao),
       data_inicio: apr.data_emissao ? formatDateBR(apr.data_emissao) : null,
       data_fim: apr.data_validade ? formatDateBR(apr.data_validade) : null,
-      hora_inicio: apr.hora_inicio,
-      hora_fim: apr.hora_fim,
+      hora_inicio: apr.hora_inicio, hora_fim: apr.hora_fim,
+      hora_inicio_sexta: apr.hora_inicio_sexta, hora_fim_sexta: apr.hora_fim_sexta,
       data_validade: apr.data_validade ? formatDateBR(apr.data_validade) : null,
       empresa_nome: empresa?.name ?? null,
       empresa_cnpj: empresa?.cnpj ?? null,
-      casco_numero: casco?.numero ?? null,
-      casco_nome: casco?.nome ?? null,
-      local: apr.local,
-      setor: apr.setor,
+      casco_numero: casco?.numero ?? null, casco_nome: casco?.nome ?? null,
+      local: apr.local, setor: apr.setor,
       atividade: apr.atividade_descricao,
       servico_detalhado: apr.observacoes_gerais ?? null,
       elaborado_por: tst?.nome ?? null,
-      encarregado: enc?.nome,
+      encarregado: empresa?.name ?? enc?.nome,
       tst: tst?.nome,
       pte_numero: pte?.numero ?? null,
       condicoes_climaticas: apr.condicoes_climaticas,
       observacoes: apr.observacoes_gerais,
       texto_gerais: apr.texto_gerais ?? null,
       riscos: riscos.map((r) => ({
-        ordem: r.ordem,
-        risco_nome: r.risco_nome,
-        risco_categoria: r.risco_categoria,
-        efeitos_danos: r.efeitos_danos,
-        probabilidade: r.probabilidade,
-        severidade: r.severidade,
+        ordem: r.ordem, risco_nome: r.risco_nome, risco_categoria: r.risco_categoria,
+        efeitos_danos: r.efeitos_danos, probabilidade: r.probabilidade, severidade: r.severidade,
         nivel_risco: r.probabilidade + r.severidade,
         acoes_preventivas: r.acoes_preventivas,
         epis: r.epis ?? [], nrs: r.nrs ?? [],
@@ -331,351 +345,387 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         papel: a.papel, nome: a.nome, cpf: a.cpf, funcao: a.funcao,
       } as APRPdfAssinatura)),
     });
+  }
+
+  function handleAbrir() {
+    if (!apr.id) { toast.error("Salve a APR antes"); return; }
+    const doc = buildPdf();
+    window.open(doc.output("bloburl"), "_blank");
+  }
+  function handleImprimir() {
+    if (!apr.id) { toast.error("Salve a APR antes"); return; }
+    const doc = buildPdf();
     doc.autoPrint();
     window.open(doc.output("bloburl"), "_blank");
   }
 
+  /* ---------- render ---------- */
   return (
-    <div className="flex flex-col h-full">
-      {/* Tabs internas */}
-      <div className="flex gap-1 p-2 bg-slate-100 border-b">
+    <div className="flex flex-col h-full bg-slate-100">
+      {/* Toolbar / abas como páginas */}
+      <div className="flex flex-wrap gap-1 p-2 bg-white border-b border-slate-300">
         {([
-          ["cab", "1. Identificação"],
-          ["riscos", `2. Riscos (${riscos.length})`],
-          ["assin", `3. Assinaturas (${assinaturas.length})`],
+          ["p1", "Pág 1 — Identificação & Riscos"],
+          ["p2", "Pág 2 — Gerais"],
+          ["p3", "Pág 3 — Avaliação & Assinaturas"],
+          ["p4", "Pág 4 — Anexo I (Executantes)"],
         ] as const).map(([k, l]) => (
-          <button
-            key={k}
-            onClick={() => setTab(k)}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === k ? "bg-[#991b1b] text-white shadow" : "bg-white text-slate-600 hover:bg-slate-50"}`}
-          >{l}</button>
+          <button key={k} onClick={() => setTab(k as any)}
+            className={`px-3 py-1.5 rounded text-xs font-bold transition ${tab === k ? "text-white shadow" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+            style={tab === k ? { background: APR_RED } : {}}>
+            {l}
+          </button>
         ))}
         <div className="ml-auto flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleImprimir} disabled={!apr.id}>
-            <Printer className="h-4 w-4 mr-1" /> Imprimir
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => save.mutate(false)} disabled={save.isPending}>
-            <Save className="h-4 w-4 mr-1" /> Salvar Rascunho
-          </Button>
-          <Button size="sm" onClick={() => save.mutate(true)} disabled={save.isPending}>
-            <FileText className="h-4 w-4 mr-1" /> Emitir APR
-          </Button>
+          <Button variant="outline" size="sm" onClick={handleAbrir} disabled={!apr.id}><FileText className="h-4 w-4 mr-1" /> Abrir PDF</Button>
+          <Button variant="outline" size="sm" onClick={handleImprimir} disabled={!apr.id}><Printer className="h-4 w-4 mr-1" /> Imprimir</Button>
+          <Button variant="outline" size="sm" onClick={() => save.mutate(false)} disabled={save.isPending}><Save className="h-4 w-4 mr-1" /> Salvar Rascunho</Button>
+          <Button size="sm" onClick={() => save.mutate(true)} disabled={save.isPending} style={{ background: APR_RED }}>Emitir APR</Button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5">
-        {tab === "cab" && (
-          <div className="space-y-4 max-w-4xl">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <Label>Casco / Embarcação</Label>
-                <Select value={apr.casco_id ?? "none"} onValueChange={(v) => setApr({ ...apr, casco_id: v === "none" ? null : v })}>
-                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+      <div className="flex-1 overflow-y-auto p-4">
+        {/* ============ PÁGINA 1 ============ */}
+        {tab === "p1" && (
+          <div className="bg-white max-w-[1400px] mx-auto shadow border border-slate-300">
+            <PaperHeader numero={apr.numero} pageLabel="PÁG. 01/05" />
+
+            {/* Linha 1: CNPJ | Início | Fim | APR Nº | Elaborado em */}
+            <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+              <PaperCell label="CNPJ"><div className="text-xs">13.378.697/0001-80</div></PaperCell>
+              <PaperCell label="Início">
+                <Input type="date" className="h-7 text-xs border-0 p-0" value={apr.data_emissao} onChange={(e) => setApr({ ...apr, data_emissao: e.target.value })} />
+              </PaperCell>
+              <PaperCell label="Fim"><div className="text-xs">{apr.data_validade ? formatDateBR(apr.data_validade) : "—"}</div></PaperCell>
+              <PaperCell label="APR Nº"><div className="text-xs font-bold">{apr.numero ?? "(será gerado)"}</div></PaperCell>
+              <PaperCell label="Elaborado em"><div className="text-xs">{formatDateBR(apr.data_emissao)}</div></PaperCell>
+            </div>
+
+            {/* Linha 2: Atividade Principal | Serviço Detalhado */}
+            <div className="grid grid-cols-2">
+              <PaperCell label="Atividade Principal *">
+                <Textarea rows={3} className="border-0 p-1 text-xs resize-none focus-visible:ring-0"
+                  value={apr.atividade_descricao} onChange={(e) => setApr({ ...apr, atividade_descricao: e.target.value })} />
+              </PaperCell>
+              <PaperCell label="Serviço Detalhado">
+                <Textarea rows={3} className="border-0 p-1 text-xs resize-none focus-visible:ring-0"
+                  value={apr.observacoes_gerais ?? ""} onChange={(e) => setApr({ ...apr, observacoes_gerais: e.target.value })} />
+              </PaperCell>
+            </div>
+
+            {/* Linha 3: Elaborado por | Responsável pelo Serviço (empresa) | Local da Atividade | Horário */}
+            <div className="grid grid-cols-[1.2fr_1.4fr_1.2fr_1fr]">
+              <PaperCell label="Elaborado por (TST)">
+                <Select value={apr.tst_id ?? "none"} onValueChange={(v) => setApr({ ...apr, tst_id: v === "none" ? null : v })}>
+                  <SelectTrigger className="h-7 text-xs border-0 p-0"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">— Nenhum —</SelectItem>
-                    {cascos.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.numero}{c.nome ? ` · ${c.nome}` : ""}</SelectItem>)}
+                    {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label>Empresa Executante</Label>
+              </PaperCell>
+              <PaperCell label="Responsável pelo Serviço (Empresa)">
                 <Select value={apr.empresa_id ?? "none"} onValueChange={(v) => setApr({ ...apr, empresa_id: v === "none" ? null : v })}>
-                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectTrigger className="h-7 text-xs border-0 p-0"><SelectValue placeholder="Selecionar empresa..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">— Nenhuma —</SelectItem>
                     {companies.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label>PTE Vinculada {apr.exige_pte && <span className="text-rose-600">*</span>}</Label>
-                <Select value={apr.pte_id ?? "none"} onValueChange={(v) => setApr({ ...apr, pte_id: v === "none" ? null : v })}>
-                  <SelectTrigger><SelectValue placeholder="— Sem PTE —" /></SelectTrigger>
+              </PaperCell>
+              <PaperCell label="Local da Atividade">
+                <Input className="h-7 text-xs border-0 p-0" value={apr.local ?? ""} onChange={(e) => setApr({ ...apr, local: e.target.value })} placeholder="Ex.: Casco 23, deck superior" />
+              </PaperCell>
+              <PaperCell label="Horário">
+                <div className="flex flex-col gap-0.5 text-[10px]">
+                  <div className="flex items-center gap-1">
+                    <span className="font-bold w-12">Seg-Qui</span>
+                    <Input type="time" className="h-5 text-[10px] border p-0.5 w-16" value={apr.hora_inicio ?? ""} onChange={(e) => setApr({ ...apr, hora_inicio: e.target.value })} />
+                    <span>às</span>
+                    <Input type="time" className="h-5 text-[10px] border p-0.5 w-16" value={apr.hora_fim ?? ""} onChange={(e) => setApr({ ...apr, hora_fim: e.target.value })} />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="font-bold w-12">Sexta</span>
+                    <Input type="time" className="h-5 text-[10px] border p-0.5 w-16" value={apr.hora_inicio_sexta ?? ""} onChange={(e) => setApr({ ...apr, hora_inicio_sexta: e.target.value })} />
+                    <span>às</span>
+                    <Input type="time" className="h-5 text-[10px] border p-0.5 w-16" value={apr.hora_fim_sexta ?? ""} onChange={(e) => setApr({ ...apr, hora_fim_sexta: e.target.value })} />
+                  </div>
+                </div>
+              </PaperCell>
+            </div>
+
+            {/* Linha 4: Casco | Setor | PTE | Validade */}
+            <div className="grid grid-cols-4">
+              <PaperCell label="Casco / Embarcação">
+                <Select value={apr.casco_id ?? "none"} onValueChange={(v) => setApr({ ...apr, casco_id: v === "none" ? null : v })}>
+                  <SelectTrigger className="h-7 text-xs border-0 p-0"><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">— Sem PTE —</SelectItem>
-                    {ptes.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.numero ?? p.id.slice(0, 8)} · {formatDateBR(p.data_emissao)} · {p.risco}</SelectItem>)}
+                    <SelectItem value="none">— Nenhum —</SelectItem>
+                    {cascos.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.numero}{c.nome ? ` · ${c.nome}` : ""}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                {apr.exige_pte && !apr.pte_id && (
-                  <p className="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" /> Risco ALTO/CRÍTICO exige PTE
-                  </p>
+              </PaperCell>
+              <PaperCell label="Setor">
+                <Input className="h-7 text-xs border-0 p-0" value={apr.setor ?? ""} onChange={(e) => setApr({ ...apr, setor: e.target.value })} />
+              </PaperCell>
+              <PaperCell label={`PTE Vinculada${apr.exige_pte ? " *" : ""}`}>
+                <Select value={apr.pte_id ?? "none"} onValueChange={(v) => setApr({ ...apr, pte_id: v === "none" ? null : v })}>
+                  <SelectTrigger className="h-7 text-xs border-0 p-0"><SelectValue placeholder="— Sem PTE —" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Sem PTE —</SelectItem>
+                    {ptes.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.numero ?? p.id.slice(0, 8)} · {formatDateBR(p.data_emissao)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </PaperCell>
+              <PaperCell label="Validade (dias)">
+                <Select value={String(apr.validade_dias)} onValueChange={(v) => setApr({ ...apr, validade_dias: parseInt(v) })}>
+                  <SelectTrigger className="h-7 text-xs border-0 p-0"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[1, 7, 15, 30].map((n) => <SelectItem key={n} value={String(n)}>{n} dia{n > 1 ? "s" : ""}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </PaperCell>
+            </div>
+
+            {/* Tabela de riscos com cabeçalho LARANJA */}
+            <div className="border-t-2 border-black">
+              <div className="grid text-white text-[11px] font-bold text-center"
+                style={{ background: APR_ORANGE, gridTemplateColumns: "1.6fr 1.4fr 1.4fr 0.4fr 0.4fr 0.5fr 2fr 1.2fr 1.2fr 0.7fr" }}>
+                {["PASSO A PASSO DA ATIVIDADE","RISCOS IDENTIFICADOS","EFEITOS / DANOS","P","S","G","AÇÕES PREVENTIVAS DOS RISCOS","EPI","RESPONSÁVEIS PELAS AÇÕES","NRs"].map((h) => (
+                  <div key={h} className="border border-black px-1 py-1.5 text-black">{h}</div>
+                ))}
+              </div>
+
+              {riscos.length === 0 ? (
+                <div className="text-center text-slate-400 py-6 text-xs border border-black">Nenhum risco. Use o botão abaixo para adicionar.</div>
+              ) : riscos.map((r, idx) => {
+                const nivel = r.probabilidade + r.severidade;
+                const meta = nivelMeta(nivel);
+                return (
+                  <div key={idx} className="grid text-[11px] items-stretch"
+                    style={{ gridTemplateColumns: "1.6fr 1.4fr 1.4fr 0.4fr 0.4fr 0.5fr 2fr 1.2fr 1.2fr 0.7fr" }}>
+                    <div className="border border-black p-1">
+                      <Input className="h-6 text-[11px] border-0 p-0" value={`${r.ordem}. ${r.risco_categoria ?? ""}`} readOnly />
+                    </div>
+                    <div className="border border-black p-1">
+                      <Input className="h-6 text-[11px] border-0 p-0 font-bold" value={r.risco_nome} onChange={(e) => updateRisco(idx, { risco_nome: e.target.value })} />
+                    </div>
+                    <div className="border border-black p-1">
+                      <Textarea rows={2} className="text-[11px] border-0 p-0 resize-none focus-visible:ring-0" value={r.efeitos_danos ?? ""} onChange={(e) => updateRisco(idx, { efeitos_danos: e.target.value })} />
+                    </div>
+                    <div className="border border-black p-0.5">
+                      <Select value={String(r.probabilidade)} onValueChange={(v) => updateRisco(idx, { probabilidade: parseInt(v) })}>
+                        <SelectTrigger className="h-6 text-[11px] border-0 p-0 justify-center"><SelectValue /></SelectTrigger>
+                        <SelectContent>{[1,2,3].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="border border-black p-0.5">
+                      <Select value={String(r.severidade)} onValueChange={(v) => updateRisco(idx, { severidade: parseInt(v) })}>
+                        <SelectTrigger className="h-6 text-[11px] border-0 p-0 justify-center"><SelectValue /></SelectTrigger>
+                        <SelectContent>{[1,2,3].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className={`border border-black flex items-center justify-center font-black text-white ${meta.cls}`}>{nivel}</div>
+                    <div className="border border-black p-1">
+                      <Textarea rows={2} className="text-[11px] border-0 p-0 resize-none focus-visible:ring-0" value={r.acoes_preventivas ?? ""} onChange={(e) => updateRisco(idx, { acoes_preventivas: e.target.value })} />
+                    </div>
+                    <div className="border border-black p-1">
+                      <Input className="h-6 text-[11px] border-0 p-0" value={(r.epis ?? []).join(", ")} onChange={(e) => updateRisco(idx, { epis: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} />
+                    </div>
+                    <div className="border border-black p-1">
+                      <Input className="h-6 text-[11px] border-0 p-0" value={r.responsavel_acoes ?? ""} onChange={(e) => updateRisco(idx, { responsavel_acoes: e.target.value })} />
+                    </div>
+                    <div className="border border-black p-1 flex items-center justify-between gap-0.5">
+                      <Input className="h-6 text-[10px] border-0 p-0 w-12" value={(r.nrs ?? []).join(",")} onChange={(e) => updateRisco(idx, { nrs: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} />
+                      <div className="flex flex-col">
+                        <button onClick={() => moveRisco(idx, -1)} className="hover:bg-slate-200 rounded"><ChevronUp className="h-3 w-3" /></button>
+                        <button onClick={() => moveRisco(idx, 1)} className="hover:bg-slate-200 rounded"><ChevronDown className="h-3 w-3" /></button>
+                      </div>
+                      <button onClick={() => removeRisco(idx)} className="text-rose-600 hover:bg-rose-50 rounded p-0.5"><Trash2 className="h-3 w-3" /></button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="bg-slate-50 p-2 flex flex-wrap gap-2 items-center border border-black border-t-0">
+                <Select onValueChange={addRiscoFromCatalogo}>
+                  <SelectTrigger className="w-[280px] h-8 text-xs"><SelectValue placeholder="+ Adicionar do catálogo..." /></SelectTrigger>
+                  <SelectContent className="max-h-[400px]">
+                    {catRiscos.map((c: any) => <SelectItem key={c.id} value={c.id}>[{c.categoria}] {c.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="sm" onClick={addRiscoLivre}><Plus className="h-3.5 w-3.5 mr-1" /> Risco manual</Button>
+                {temRiscoGrave && (
+                  <span className="ml-auto text-xs font-bold text-rose-600 flex items-center gap-1 bg-rose-50 px-2 py-1 rounded border border-rose-200">
+                    <AlertTriangle className="h-3 w-3" /> Risco ALTO/CRÍTICO — PTE obrigatória
+                  </span>
                 )}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="md:col-span-2">
-                <Label>Local</Label>
-                <Input value={apr.local ?? ""} onChange={(e) => setApr({ ...apr, local: e.target.value })} placeholder="Ex.: Casario do Casco 23, deck superior" />
-              </div>
-              <div>
-                <Label>Setor</Label>
-                <Input value={apr.setor ?? ""} onChange={(e) => setApr({ ...apr, setor: e.target.value })} placeholder="Ex.: Construção Naval" />
-              </div>
-            </div>
-
-            <div>
-              <Label>Descrição da Atividade *</Label>
-              <Textarea
-                rows={3}
-                value={apr.atividade_descricao}
-                onChange={(e) => setApr({ ...apr, atividade_descricao: e.target.value })}
-                placeholder="Descreva a atividade a ser executada..."
-              />
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div>
-                <Label>Data emissão</Label>
-                <Input type="date" value={apr.data_emissao} onChange={(e) => setApr({ ...apr, data_emissao: e.target.value })} />
-              </div>
-              <div>
-                <Label>Hora início</Label>
-                <Input type="time" value={apr.hora_inicio ?? ""} onChange={(e) => setApr({ ...apr, hora_inicio: e.target.value })} />
-              </div>
-              <div>
-                <Label>Hora fim</Label>
-                <Input type="time" value={apr.hora_fim ?? ""} onChange={(e) => setApr({ ...apr, hora_fim: e.target.value })} />
-              </div>
-              <div>
-                <Label>Validade (dias)</Label>
-                <Select value={String(apr.validade_dias)} onValueChange={(v) => setApr({ ...apr, validade_dias: parseInt(v) })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 dia</SelectItem>
-                    <SelectItem value="7">7 dias</SelectItem>
-                    <SelectItem value="15">15 dias</SelectItem>
-                    <SelectItem value="30">30 dias</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <Label>Encarregado Responsável</Label>
-                <Select value={apr.encarregado_id ?? "none"} onValueChange={(v) => setApr({ ...apr, encarregado_id: v === "none" ? null : v })}>
-                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— Nenhum —</SelectItem>
-                    {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Técnico de Segurança (TST)</Label>
-                <Select value={apr.tst_id ?? "none"} onValueChange={(v) => setApr({ ...apr, tst_id: v === "none" ? null : v })}>
-                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— Nenhum —</SelectItem>
-                    {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <Label>Condições climáticas</Label>
-                <Input value={apr.condicoes_climaticas ?? ""} onChange={(e) => setApr({ ...apr, condicoes_climaticas: e.target.value })} placeholder="Ex.: Ensolarado, vento moderado" />
-              </div>
-              <div>
-                <Label>Observações gerais</Label>
-                <Input value={apr.observacoes_gerais ?? ""} onChange={(e) => setApr({ ...apr, observacoes_gerais: e.target.value })} />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <Label>Texto "GERAIS" do PDF (orientações fixas, página 3)</Label>
-                <Button type="button" size="sm" variant="ghost" className="h-7 text-xs"
-                  onClick={() => setApr({ ...apr, texto_gerais: DEFAULT_TEXTO_GERAIS })}>
-                  Restaurar padrão DMN
-                </Button>
-              </div>
-              <Textarea
-                rows={10}
-                value={apr.texto_gerais ?? ""}
-                onChange={(e) => setApr({ ...apr, texto_gerais: e.target.value })}
-                className="font-mono text-xs"
-              />
+            <div className="text-center font-bold text-[11px] text-rose-600 p-2 italic">
+              "NENHUM TRABALHO É TÃO URGENTE OU IMPORTANTE QUE NÃO POSSA SER PLANEJADO E EXECUTADO COM SEGURANÇA"
             </div>
           </div>
         )}
 
-        {tab === "riscos" && (
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <Select onValueChange={addRiscoFromCatalogo}>
-                <SelectTrigger className="w-[320px]"><SelectValue placeholder="+ Adicionar do catálogo..." /></SelectTrigger>
-                <SelectContent className="max-h-[400px]">
-                  {catRiscos.map((c: any) => <SelectItem key={c.id} value={c.id}>[{c.categoria}] {c.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" onClick={addRiscoLivre}>
-                <Plus className="h-4 w-4 mr-1" /> Risco manual
-              </Button>
-              {temRiscoGrave && (
-                <span className="ml-auto text-xs font-bold text-rose-600 flex items-center gap-1 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200">
-                  <AlertTriangle className="h-3.5 w-3.5" /> Risco ALTO/CRÍTICO detectado — PTE obrigatória
-                </span>
-              )}
-            </div>
-
-            {riscos.length === 0 ? (
-              <div className="text-center text-slate-400 py-12 border-2 border-dashed border-slate-200 rounded-xl">
-                Nenhum risco adicionado. Selecione no catálogo acima ou adicione manualmente.
+        {/* ============ PÁGINA 2 — GERAIS ============ */}
+        {tab === "p2" && (
+          <div className="bg-white max-w-[1100px] mx-auto shadow border border-slate-300">
+            <PaperHeader numero={apr.numero} pageLabel="PÁG. 02/05" />
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="font-black text-base">GERAIS:</h2>
+                <Button type="button" size="sm" variant="ghost" className="h-7 text-xs"
+                  onClick={() => setApr({ ...apr, texto_gerais: DEFAULT_TEXTO_GERAIS })}>Restaurar padrão DMN</Button>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {riscos.map((r, idx) => {
-                  const nivel = r.probabilidade * r.severidade;
-                  const meta = nivelMeta(nivel);
+              <Textarea rows={26} value={apr.texto_gerais ?? ""} onChange={(e) => setApr({ ...apr, texto_gerais: e.target.value })} className="font-mono text-xs leading-relaxed" />
+            </div>
+          </div>
+        )}
+
+        {/* ============ PÁGINA 3 — Avaliação & Assinaturas ============ */}
+        {tab === "p3" && (
+          <div className="bg-white max-w-[1100px] mx-auto shadow border border-slate-300">
+            <PaperHeader numero={apr.numero} pageLabel="PÁG. 03/05" />
+            <div className="p-4 space-y-3">
+              <div className="text-center text-[11px] font-bold text-rose-600 border border-rose-300 bg-rose-50 p-2">
+                ATENÇÃO: AO OBSERVAR OUTRO RISCO NÃO PREVISTO NESTA APR, PARALISAR O TRABALHO IMEDIATAMENTE E COMUNICAR AO SESMT
+              </div>
+
+              <div className="grid grid-cols-2 gap-0">
+                <div className="border border-black p-2 text-xs">
+                  <div className="font-bold mb-1">Riscos Ambientais — Classificar:</div>
+                  <div>1 – Físico   2 – Químico   3 – Biológico   4 – Ergonômico   5 – Mecânico/Acidentes</div>
+                </div>
+                <div className="border border-black p-2 text-xs">
+                  <div className="font-bold mb-1">Atender a Hierarquia:</div>
+                  <div>CA – Controles Administrativos / EPC – Equip. de Proteção Coletiva / EPI – Equip. de Proteção Individual</div>
+                </div>
+              </div>
+
+              {/* Avaliação do Risco */}
+              <div className="border border-black">
+                <div className="grid grid-cols-[160px_1fr_1fr]">
+                  <div className="border-r border-black p-2 font-black text-xs flex items-center justify-center text-center">AVALIAÇÃO DO RISCO</div>
+                  <div className="border-r border-black">
+                    <div className="border-b border-black p-1 text-center font-bold text-[11px]">PROBABILIDADE (FREQUÊNCIA)</div>
+                    <div className="grid grid-cols-3 text-white font-bold text-[11px]">
+                      <div className="bg-emerald-500 p-2 text-center">BAIXA (1)</div>
+                      <div className="bg-yellow-500 p-2 text-center">MÉDIA (2)</div>
+                      <div className="bg-red-600 p-2 text-center">ALTA (3)</div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="border-b border-black p-1 text-center font-bold text-[11px]">SEVERIDADE (IMPACTO)</div>
+                    <div className="grid grid-cols-3 text-white font-bold text-[11px]">
+                      <div className="bg-emerald-500 p-2 text-center">BAIXA (1)</div>
+                      <div className="bg-yellow-500 p-2 text-center">MÉDIA (2)</div>
+                      <div className="bg-red-600 p-2 text-center">ALTA (3)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-black">
+                <div className="bg-slate-100 text-center font-bold text-xs p-1 border-b border-black">
+                  GRAU DO RISCO (SOMATÓRIO DA PROBABILIDADE + SEVERIDADE)
+                </div>
+                <div className="grid grid-cols-5 text-white font-black text-xs">
+                  <div className="bg-emerald-500 p-2 text-center">2 = TRIVIAL</div>
+                  <div className="bg-lime-500 p-2 text-center">3 = TOLERÁVEL</div>
+                  <div className="bg-yellow-500 p-2 text-center text-black">4 = MODERADO</div>
+                  <div className="bg-orange-500 p-2 text-center">5 = SUBSTANCIAL</div>
+                  <div className="bg-red-600 p-2 text-center">6 = INACEITÁVEL</div>
+                </div>
+              </div>
+
+              <h3 className="text-center font-black text-base tracking-widest mt-4">A S S I N A T U R A S</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="border-2 border-black">
+                  <div className="bg-slate-100 p-1 text-center font-bold text-xs border-b border-black">Técnico em Segurança do Trabalho</div>
+                  <div className="p-3 text-center min-h-[120px] flex flex-col justify-end">
+                    <div className="text-sm font-medium">{tst?.nome ?? "—"}</div>
+                    <div className="border-t border-black mt-2 pt-1 text-[10px] italic">Assinatura</div>
+                  </div>
+                </div>
+                <div className="border-2 border-black">
+                  <div className="bg-slate-100 p-1 text-center font-bold text-xs border-b border-black">Responsável pelo Serviço</div>
+                  <div className="p-3 text-center min-h-[120px] flex flex-col justify-end">
+                    <div className="text-sm font-medium">{empresa?.name ?? enc?.nome ?? "—"}</div>
+                    <div className="border-t border-black mt-2 pt-1 text-[10px] italic">Assinatura</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div>
+                  <label className="text-xs font-bold">Encarregado Responsável (interno)</label>
+                  <Select value={apr.encarregado_id ?? "none"} onValueChange={(v) => setApr({ ...apr, encarregado_id: v === "none" ? null : v })}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Nenhum —</SelectItem>
+                      {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold">Condições climáticas</label>
+                  <Input className="h-8 text-xs" value={apr.condicoes_climaticas ?? ""} onChange={(e) => setApr({ ...apr, condicoes_climaticas: e.target.value })} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============ PÁGINA 4 — ANEXO I EXECUTANTES ============ */}
+        {tab === "p4" && (
+          <div className="bg-white max-w-[1100px] mx-auto shadow border border-slate-300">
+            <PaperHeader numero={apr.numero} pageLabel="PÁG. 04/05" />
+            <div className="p-4 space-y-3">
+              <h2 className="text-center font-black text-base">ANEXO I – ASSINATURA DOS EXECUTANTES DO SERVIÇO</h2>
+              {!apr.empresa_id && (
+                <div className="text-center text-rose-700 bg-rose-50 border border-rose-200 p-2 text-xs font-bold rounded">
+                  Selecione a Empresa em <em>"Responsável pelo Serviço"</em> na Página 1 para listar os funcionários.
+                </div>
+              )}
+              {apr.empresa_id && empresaFuncs.length === 0 && (
+                <div className="text-center text-amber-700 bg-amber-50 border border-amber-200 p-2 text-xs font-bold rounded">
+                  Nenhum funcionário ATIVO encontrado para esta empresa.
+                </div>
+              )}
+
+              <div className="text-xs text-slate-600">
+                Marque/desmarque quem realmente vai executar este serviço. Por padrão, todos os funcionários ativos da empresa vêm marcados.
+              </div>
+
+              <div className="border-2 border-black">
+                <div className="grid grid-cols-[50px_60px_1fr_120px] bg-slate-100 font-bold text-xs border-b border-black">
+                  <div className="border-r border-black p-1.5 text-center">Nº</div>
+                  <div className="border-r border-black p-1.5 text-center">Inclui?</div>
+                  <div className="border-r border-black p-1.5">NOME</div>
+                  <div className="p-1.5">FUNÇÃO</div>
+                </div>
+                {empresaFuncs.map((e: any, i: number) => {
+                  const checked = !!execAtuais.find((a) => a.employee_id === e.id);
+                  const role = roles.find((r: any) => r.id === e.role_id);
                   return (
-                    <div key={idx} className="border-2 border-slate-200 rounded-xl p-4 bg-white shadow-sm">
-                      <div className="flex items-start gap-2 mb-3">
-                        <span className="bg-slate-700 text-white font-black text-xs rounded px-2 py-1">#{r.ordem}</span>
-                        <Input
-                          value={r.risco_nome}
-                          onChange={(e) => updateRisco(idx, { risco_nome: e.target.value })}
-                          placeholder="Nome do risco"
-                          className="flex-1 font-bold"
-                        />
-                        <span className={`${meta.cls} text-white font-black text-xs rounded px-3 py-2`}>
-                          G={nivel} · {meta.label}
-                        </span>
-                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => moveRisco(idx, -1)}>
-                          <ChevronUp className="h-4 w-4" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => moveRisco(idx, 1)}>
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-rose-600" onClick={() => removeRisco(idx)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                    <div key={e.id} className={`grid grid-cols-[50px_60px_1fr_120px] text-xs border-b border-black ${checked ? "" : "bg-slate-50 text-slate-400"}`}>
+                      <div className="border-r border-black p-1.5 text-center font-bold">{String(i + 1).padStart(2, "0")}</div>
+                      <div className="border-r border-black p-1.5 flex items-center justify-center">
+                        <Checkbox checked={checked} onCheckedChange={() => toggleExecutante(e.id)} />
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                        <div>
-                          <Label className="text-xs">Efeitos / Danos</Label>
-                          <Textarea rows={2} value={r.efeitos_danos ?? ""} onChange={(e) => updateRisco(idx, { efeitos_danos: e.target.value })} />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Ações Preventivas</Label>
-                          <Textarea rows={2} value={r.acoes_preventivas ?? ""} onChange={(e) => updateRisco(idx, { acoes_preventivas: e.target.value })} />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                        <div>
-                          <Label className="text-xs">Probabilidade (1-3)</Label>
-                          <Select value={String(r.probabilidade)} onValueChange={(v) => updateRisco(idx, { probabilidade: parseInt(v) })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1">1 - Baixa</SelectItem>
-                              <SelectItem value="2">2 - Média</SelectItem>
-                              <SelectItem value="3">3 - Alta</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-xs">Severidade (1-3)</Label>
-                          <Select value={String(r.severidade)} onValueChange={(v) => updateRisco(idx, { severidade: parseInt(v) })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1">1 - Baixa</SelectItem>
-                              <SelectItem value="2">2 - Média</SelectItem>
-                              <SelectItem value="3">3 - Alta</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-xs">EPIs (vírgula)</Label>
-                          <Input value={(r.epis ?? []).join(", ")} onChange={(e) => updateRisco(idx, { epis: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} />
-                        </div>
-                        <div>
-                          <Label className="text-xs">NRs (vírgula)</Label>
-                          <Input value={(r.nrs ?? []).join(", ")} onChange={(e) => updateRisco(idx, { nrs: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Responsável</Label>
-                          <Input value={r.responsavel_acoes ?? ""} onChange={(e) => updateRisco(idx, { responsavel_acoes: e.target.value })} />
-                        </div>
-                      </div>
+                      <div className="border-r border-black p-1.5">{e.nome}</div>
+                      <div className="p-1.5">{role?.name ?? "—"}</div>
                     </div>
                   );
                 })}
               </div>
-            )}
-          </div>
-        )}
 
-        {tab === "assin" && (
-          <div className="space-y-4 max-w-3xl">
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-wrap items-center gap-2">
-              <Select onValueChange={(v) => addExecutante(v)}>
-                <SelectTrigger className="w-[320px]"><SelectValue placeholder="+ Adicionar executante (colaborador)..." /></SelectTrigger>
-                <SelectContent className="max-h-[400px]">
-                  {employees.filter((e: any) => !assinaturas.some((a) => a.employee_id === e.id && a.papel === "EXECUTANTE"))
-                    .filter((e: any) => !apr.empresa_id || e.company_id === apr.empresa_id)
-                    .map((e: any) => (
-                    <SelectItem key={e.id} value={e.id}>{e.nome} {e.cpf ? `· ${e.cpf}` : ""}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button size="sm" variant="outline" onClick={addAllExecutantesEmpresa} disabled={!apr.empresa_id}>
-                <Plus className="h-4 w-4 mr-1" /> Adicionar todos da empresa
-              </Button>
-              <span className="text-xs text-slate-500 ml-auto">Encarregado e TST aparecem automaticamente da aba 1</span>
+              <div className="text-xs text-slate-600 mt-2">
+                <strong>{execAtuais.length}</strong> executante(s) selecionado(s) — aparecerão na página 5 do PDF.
+              </div>
             </div>
-
-            {(["ENCARREGADO", "TST", "EXECUTANTE"] as const).map((papel) => {
-              const list = assinaturas.filter((a) => a.papel === papel);
-              if (list.length === 0 && papel === "EXECUTANTE") {
-                return (
-                  <div key={papel}>
-                    <h3 className="font-bold text-sm text-slate-700 mb-2">EXECUTANTES ({list.length})</h3>
-                    <div className="text-center text-slate-400 py-6 border-2 border-dashed border-slate-200 rounded-xl text-sm">
-                      Adicione os colaboradores que executarão a atividade
-                    </div>
-                  </div>
-                );
-              }
-              if (list.length === 0) return null;
-              return (
-                <div key={papel}>
-                  <h3 className="font-bold text-sm text-slate-700 mb-2">{papel === "ENCARREGADO" ? "ENCARREGADO" : papel === "TST" ? "TÉCNICO DE SEGURANÇA" : `EXECUTANTES (${list.length})`}</h3>
-                  <div className="space-y-2">
-                    {list.map((a) => {
-                      const idx = assinaturas.indexOf(a);
-                      return (
-                        <div key={idx} className="border border-slate-200 rounded-xl p-3 bg-white flex items-center gap-3">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 flex-1">
-                            <Input value={a.nome} onChange={(e) => updateAssin(idx, { nome: e.target.value })} placeholder="Nome" className="font-medium" />
-                            <Input value={a.cpf ?? ""} onChange={(e) => updateAssin(idx, { cpf: e.target.value })} placeholder="CPF" />
-                            <Input value={a.funcao ?? ""} onChange={(e) => updateAssin(idx, { funcao: e.target.value })} placeholder="Função" />
-                          </div>
-                          <Button
-                            size="sm"
-                            variant={a.assinou_em ? "default" : "outline"}
-                            onClick={() => toggleAssinou(idx)}
-                            className={a.assinou_em ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-                          >
-                            {a.assinou_em ? "✓ Assinou" : "Marcar assinatura"}
-                          </Button>
-                          {papel === "EXECUTANTE" && (
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-rose-600" onClick={() => removeAssin(idx)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
           </div>
         )}
       </div>

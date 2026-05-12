@@ -156,7 +156,9 @@ export type Database = {
           encarregado_id: string | null
           exige_pte: boolean
           hora_fim: string | null
+          hora_fim_sexta: string | null
           hora_inicio: string | null
+          hora_inicio_sexta: string | null
           id: string
           local: string | null
           numero: string
@@ -182,7 +184,9 @@ export type Database = {
           encarregado_id?: string | null
           exige_pte?: boolean
           hora_fim?: string | null
+          hora_fim_sexta?: string | null
           hora_inicio?: string | null
+          hora_inicio_sexta?: string | null
           id?: string
           local?: string | null
           numero: string
@@ -208,7 +212,9 @@ export type Database = {
           encarregado_id?: string | null
           exige_pte?: boolean
           hora_fim?: string | null
+          hora_fim_sexta?: string | null
           hora_inicio?: string | null
+          hora_inicio_sexta?: string | null
           id?: string
           local?: string | null
           numero?: string
