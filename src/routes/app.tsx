@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useNavigate, useLocation, Link } from "@tansta
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AppHeader } from "@/components/app-header";
+import { ModuleRouteGuard } from "@/components/module-guard";
 import { ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/app")({
@@ -40,7 +41,9 @@ function AppLayout() {
         </div>
       )}
       <main className="flex-1">
-        <Outlet />
+        <ModuleRouteGuard>
+          <Outlet />
+        </ModuleRouteGuard>
       </main>
       <footer className="border-t bg-white/60 backdrop-blur py-3 px-4 text-center text-[11px] text-muted-foreground">
         Copyright© 2026. Todos os Direitos Reservados. Desenvolvido por Francisco Bandeira e Anderson Soares — Sistema de Gerenciamento de SST.

@@ -81,7 +81,7 @@ const ESTOQUE_SUBMENU = [
 ] as const;
 
 export function AppHeader() {
-  const { user, roles } = useAuth();
+  const { user, roles, hasModule } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -112,6 +112,10 @@ export function AppHeader() {
   const isActive = (to: string) => location.pathname.startsWith(to);
   const sesmtActive = SESMT_PATHS.some((p) => location.pathname.startsWith(p));
   const isAdmin = roles.includes("admin");
+  const canSesmt = isAdmin || hasModule("sesmt");
+  const canEstoque = isAdmin || hasModule("estoque");
+  const canProducao = isAdmin || hasModule("producao");
+  const canUsuarios = isAdmin || hasModule("usuarios");
 
   const triggerCls = (active: boolean) =>
     `flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-all ${
@@ -125,7 +129,7 @@ export function AppHeader() {
   const DesktopNav = () => (
     <>
       {/* SESMT — abre ao passar o mouse */}
-      <div className="group relative">
+      {canSesmt && (<div className="group relative">
         <button type="button" aria-haspopup="true" className={triggerCls(sesmtActive)}>
           <ShieldCheck className="h-4 w-4" /> SESMT
           <ChevronDown className="h-3.5 w-3.5 opacity-70" />
@@ -206,10 +210,10 @@ export function AppHeader() {
           </div>
         </div>
       </div>
-
+      )}
       {/* Outros módulos — placeholder, mostram "em breve" no hover */}
       {/* Estoque — dropdown com submenus */}
-      <div className="group relative">
+      {canEstoque && (<div className="group relative">
         <button
           type="button"
           aria-haspopup="true"
@@ -278,7 +282,7 @@ export function AppHeader() {
             ))}
           </div>
         </div>
-      </div>
+      </div>)}
 
       {OTHER_MODULES.map((m) => (
         <div key={m.key} className="group relative">
@@ -324,7 +328,7 @@ export function AppHeader() {
         </div>
       </div>
       {/* Produção — dropdown ativo */}
-      <div className="group relative">
+      {canProducao && (<div className="group relative">
         <button
           type="button"
           aria-haspopup="true"
@@ -351,8 +355,8 @@ export function AppHeader() {
             ))}
           </div>
         </div>
-      </div>
-      {isAdmin && (
+      </div>)}
+      {(isAdmin || canUsuarios) && (
         <Link to="/app/users" className={triggerCls(isActive("/app/users"))}>
           <UsersIcon className="h-4 w-4" /> Usuários
         </Link>
