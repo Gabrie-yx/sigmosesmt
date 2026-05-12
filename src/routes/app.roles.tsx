@@ -411,20 +411,56 @@ function RolesPage() {
               className="flex-1 flex flex-col overflow-hidden"
             >
               <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-6">
-                {/* Nome */}
-                <div className="mb-6">
-                  <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">
-                    Nomenclatura Oficial do Cargo
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editing.name ?? ""}
-                    onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                    placeholder="Ex: Eletricista, Soldador, Operador de Empilhadeira..."
-                    disabled={!isEditor}
-                    className="w-full bg-white border-2 border-rose-100 rounded-2xl px-5 py-4 text-base font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60 shadow-sm"
-                  />
+                {/* Identificação do Cargo (PCMSO/ISO 9001) */}
+                <div className="mb-6 grid grid-cols-1 lg:grid-cols-12 gap-3">
+                  <div className="lg:col-span-6">
+                    <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">
+                      Nomenclatura Oficial do Cargo
+                    </label>
+                    <input
+                      type="text" required
+                      value={editing.name ?? ""}
+                      onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                      placeholder="Ex: Eletricista, Soldador, Operador..."
+                      disabled={!isEditor}
+                      className="w-full bg-white border-2 border-rose-100 rounded-2xl px-5 py-3.5 text-base font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60 shadow-sm"
+                    />
+                  </div>
+                  <div className="lg:col-span-3">
+                    <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest flex items-center gap-1">
+                      <Layers className="h-3.5 w-3.5" /> GHE
+                    </label>
+                    <input
+                      type="text"
+                      value={editing.ghe ?? ""}
+                      onChange={(e) => setEditing({ ...editing, ghe: e.target.value })}
+                      placeholder="Ex: GHE 01"
+                      disabled={!isEditor}
+                      className="w-full bg-white border-2 border-rose-100 rounded-2xl px-4 py-3.5 text-sm font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60 shadow-sm"
+                    />
+                  </div>
+                  <div className="lg:col-span-3">
+                    <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">CBO</label>
+                    <input
+                      type="text"
+                      value={editing.cbo ?? ""}
+                      onChange={(e) => setEditing({ ...editing, cbo: e.target.value })}
+                      placeholder="Ex: 7156-25"
+                      disabled={!isEditor}
+                      className="w-full bg-white border-2 border-rose-100 rounded-2xl px-4 py-3.5 text-sm font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60 shadow-sm"
+                    />
+                  </div>
+                  <div className="lg:col-span-12">
+                    <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">Setor</label>
+                    <input
+                      type="text"
+                      value={editing.setor ?? ""}
+                      onChange={(e) => setEditing({ ...editing, setor: e.target.value })}
+                      placeholder="Ex: Administrativo, Produção, Almoxarifado..."
+                      disabled={!isEditor}
+                      className="w-full bg-white border border-rose-100 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 focus:border-[#991b1b] focus:ring-2 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal disabled:opacity-60 shadow-sm"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -445,15 +481,16 @@ function RolesPage() {
 
                   <Section
                     icon={<Stethoscope className="h-4 w-4" />}
-                    title="Exames Médicos (Saúde)"
+                    title="Procedimentos Diagnósticos por Natureza (PCMSO · eSocial Tabela 27)"
                     hint="Vencido ou sem PDF → Bloqueio GSI"
                     full
                   >
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
-                      {TIPOS_EXAME.map((t) => (
-                        <NRToggle key={t} label={t} checked={reqExamesSet.has(t)} onChange={() => toggleExame(t)} disabled={!isEditor} />
-                      ))}
-                    </div>
+                    <ExamesMatrix
+                      value={editing.exames_por_natureza ?? emptyExames}
+                      onToggle={toggleExameNatureza}
+                      onCopy={copyExamesNatureza}
+                      disabled={!isEditor}
+                    />
                   </Section>
 
                   <Section
@@ -476,10 +513,10 @@ function RolesPage() {
                     </div>
                   </Section>
 
-                  <Section icon={<AlertTriangle className="h-4 w-4 text-orange-500" />} title="Riscos Ocupacionais (PCMSO)" full>
+                  <Section icon={<AlertTriangle className="h-4 w-4 text-orange-500" />} title="Riscos Ocupacionais (PCMSO · 6 categorias)" full>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">
+                        <label className="block text-xs font-black text-slate-500 uppercase mb-2 tracking-widest">
                           Descrição da Função
                         </label>
                         <textarea
@@ -488,16 +525,22 @@ function RolesPage() {
                           disabled={!isEditor}
                           rows={2}
                           placeholder="Descreva a atividade do cargo..."
-                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 outline-none focus:border-[#991b1b] focus:bg-white disabled:opacity-60 transition-all"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#991b1b] focus:bg-white disabled:opacity-60 transition-all"
                         />
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <TagEditor label="Acidente / Mecânico" color="red" items={riscos.acidente_mecanico}
+                          onChange={(v) => updateRiscos({ acidente_mecanico: v })} disabled={!isEditor} />
                         <TagEditor label="Riscos Físicos" color="sky" items={riscos.fisicos}
                           onChange={(v) => updateRiscos({ fisicos: v })} disabled={!isEditor} />
                         <TagEditor label="Riscos Químicos" color="amber" items={riscos.quimicos}
                           onChange={(v) => updateRiscos({ quimicos: v })} disabled={!isEditor} />
-                        <TagEditor label="Riscos Ergonómicos" color="emerald" items={riscos.ergonomicos}
+                        <TagEditor label="Riscos Biológicos" color="rose" items={riscos.biologicos}
+                          onChange={(v) => updateRiscos({ biologicos: v })} disabled={!isEditor} />
+                        <TagEditor label="Riscos Ergonômicos" color="emerald" items={riscos.ergonomicos}
                           onChange={(v) => updateRiscos({ ergonomicos: v })} disabled={!isEditor} />
+                        <TagEditor label="Psicossociais" color="violet" items={riscos.psicossociais}
+                          onChange={(v) => updateRiscos({ psicossociais: v })} disabled={!isEditor} />
                       </div>
                     </div>
                   </Section>
