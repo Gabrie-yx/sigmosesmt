@@ -283,7 +283,7 @@ export function AppHeader() {
             ))}
           </div>
         </div>
-      </div>
+      </div>)}
 
       {OTHER_MODULES.map((m) => (
         <div key={m.key} className="group relative">
