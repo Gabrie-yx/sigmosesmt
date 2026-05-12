@@ -29,6 +29,7 @@ import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 import { Route as AppDdsTemasRouteImport } from './routes/app.dds.temas'
+import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -131,6 +132,11 @@ const AppDdsTemasRoute = AppDdsTemasRouteImport.update({
   path: '/dds/temas',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDdsGestoresRoute = AppDdsGestoresRouteImport.update({
+  id: '/dds/gestores',
+  path: '/dds/gestores',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
+  '/app/dds/gestores': typeof AppDdsGestoresRoute
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
   '/app': typeof AppIndexRoute
+  '/app/dds/gestores': typeof AppDdsGestoresRoute
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
   '/app/': typeof AppIndexRoute
+  '/app/dds/gestores': typeof AppDdsGestoresRoute
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/app/trainings'
     | '/app/users'
     | '/app/'
+    | '/app/dds/gestores'
     | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/estoque/epi'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/app/trainings'
     | '/app/users'
     | '/app'
+    | '/app/dds/gestores'
     | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/estoque/epi'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/app/trainings'
     | '/app/users'
     | '/app/'
+    | '/app/dds/gestores'
     | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/estoque/epi'
@@ -412,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDdsTemasRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/dds/gestores': {
+      id: '/app/dds/gestores'
+      path: '/dds/gestores'
+      fullPath: '/app/dds/gestores'
+      preLoaderRoute: typeof AppDdsGestoresRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -439,6 +458,7 @@ interface AppRouteChildren {
   AppTrainingsRoute: typeof AppTrainingsRoute
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppDdsGestoresRoute: typeof AppDdsGestoresRoute
   AppDdsTemasRoute: typeof AppDdsTemasRoute
   AppEstoqueEpiRoute: typeof AppEstoqueEpiRoute
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
@@ -457,6 +477,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTrainingsRoute: AppTrainingsRoute,
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
+  AppDdsGestoresRoute: AppDdsGestoresRoute,
   AppDdsTemasRoute: AppDdsTemasRoute,
   AppEstoqueEpiRoute: AppEstoqueEpiRoute,
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
