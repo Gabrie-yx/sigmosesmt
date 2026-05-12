@@ -31,6 +31,7 @@ const SESMT_ITEMS = [
   { to: "/app/employees", label: "Colaboradores" },
   { to: "/app/trainings", label: "Treinamentos" },
   { to: "/app/ptes", label: "Emitir PTE" },
+  { to: "/app/dds", label: "DDS" },
   { to: "/app/relatorios/reincidencia-epi", label: "Reincidência EPI" },
 ] as const;
 
