@@ -1529,6 +1529,47 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!notReturning} onOpenChange={(o) => !o && setNotReturning(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ban className="h-5 w-5 text-rose-600" />
+              Marcar EPI como não devolvido
+            </DialogTitle>
+          </DialogHeader>
+          {notReturning && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900">
+                <strong>Atenção:</strong> esta ação registra <strong>perda/extravio</strong> do item{" "}
+                <strong className="uppercase">{notReturning.item}</strong>. O EPI <u>não retorna ao estoque</u> e
+                será gerado um <strong>Termo de Responsabilidade por Perda</strong> para assinatura do colaborador
+                (base para desconto em folha conforme NR-06 / Art. 462 CLT).
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Data do registro</Label>
+                  <Input type="date" value={nrForm.data} onChange={(e) => setNrForm({ ...nrForm, data: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Valor unitário (R$)</Label>
+                  <Input inputMode="decimal" placeholder="0,00" value={nrForm.valor} onChange={(e) => setNrForm({ ...nrForm, valor: e.target.value })} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Observações (impressas no termo)</Label>
+                <Textarea rows={3} value={nrForm.obs} onChange={(e) => setNrForm({ ...nrForm, obs: e.target.value })} placeholder="Ex.: rescisão sem devolução, item perdido em obra, B.O. nº…" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setNotReturning(null)}>Cancelar</Button>
+            <Button onClick={() => notReturnMut.mutate()} disabled={notReturnMut.isPending} className="bg-rose-600 hover:bg-rose-700 text-white">
+              <FileWarning className="h-4 w-4 mr-2" /> Confirmar e gerar termo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
