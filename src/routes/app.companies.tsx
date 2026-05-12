@@ -29,9 +29,11 @@ type Company = {
   encarregado1: string | null;
   encarregado2: string | null;
   data_entrada?: string | null;
+  matriz_nome?: string | null;
+  matriz_cnpj?: string | null;
 };
 
-const empty: Partial<Company> = { name: "", type: "CLT", cnpj: "", email: "", encarregado1: "", encarregado2: "" };
+const empty: Partial<Company> = { name: "", type: "CLT", cnpj: "", email: "", encarregado1: "", encarregado2: "", matriz_nome: "", matriz_cnpj: "" };
 
 const typeStyle: Record<string, string> = {
   CLT: "bg-emerald-100 text-emerald-700",
@@ -83,6 +85,8 @@ function CompaniesPage() {
         cnpj: v.cnpj || null, email: v.email || null,
         encarregado1: v.encarregado1 || null, encarregado2: v.encarregado2 || null,
         data_entrada: (v as any).data_entrada || null,
+        matriz_nome: v.matriz_nome || null,
+        matriz_cnpj: v.matriz_cnpj || null,
       };
       if (v.id) {
         const { error } = await supabase.from("companies").update(payload).eq("id", v.id);
