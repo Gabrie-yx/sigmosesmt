@@ -74,27 +74,6 @@ const emptyApr: APR = {
 const APR_RED = "#dc3545";
 const APR_ORANGE = "#ff9900";
 
-function PaperHeader({ numero, pageLabel }: { numero?: string | null; pageLabel: string }) {
-  return (
-    <div className="border-2 border-black grid grid-cols-[120px_1fr_180px] text-black bg-white">
-      <div className="border-r-2 border-black flex items-center justify-center p-2">
-        <div className="bg-[var(--apr-red)] text-white font-black text-2xl rounded px-4 py-2 tracking-wider"
-          style={{ background: APR_RED }}>DMN</div>
-      </div>
-      <div className="flex flex-col items-center justify-center py-2 px-3">
-        <div className="font-black text-base leading-tight">DMN ESTALEIRO DA AMAZONIA LTDA</div>
-        <div className="text-sm">APR – Análise Preliminar de Riscos</div>
-      </div>
-      <div className="border-l-2 border-black grid grid-rows-4 text-[10px] font-bold">
-        <div className="border-b border-black px-2 flex items-center">CÓD.FOR-SEG 07</div>
-        <div className="border-b border-black px-2 flex items-center">REVISÃO: 00</div>
-        <div className="border-b border-black px-2 flex items-center">DATA: 30/08/2025</div>
-        <div className="px-2 flex items-center">{pageLabel}{numero ? ` · ${numero}` : ""}</div>
-      </div>
-    </div>
-  );
-}
-
 function PaperCell({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={`border border-black p-1.5 ${className}`}>
@@ -106,22 +85,73 @@ function PaperCell({ label, children, className = "" }: { label: string; childre
 
 const DIAS = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"] as const;
 
-/* Cabeçalho compacto reutilizável (CNPJ / datas / APR Nº / Atividade / Local) */
-function PaperInfoBar({ apr, empresa, casco }: { apr: APR; empresa?: any; casco?: any }) {
+/* Cabeçalho COMPLETO homologado ISO 9001 — replicado exatamente do formulário oficial.
+   Estrutura idêntica ao print: 4 linhas, mesmos campos, mesma ordem. */
+function PaperFullHeader({
+  apr, empresa, casco, enc, tst, pagina, totalPaginas = 4,
+}: {
+  apr: APR; empresa?: any; casco?: any; enc?: any; tst?: any;
+  pagina: number; totalPaginas?: number;
+}) {
+  const horarioSeg = `${apr.hora_inicio ?? "--:--"} às ${apr.hora_fim ?? "--:--"} Seg a Quinta`;
+  const horarioSex = `${apr.hora_inicio_sexta ?? "--:--"} às ${apr.hora_fim_sexta ?? "--:--"} Sexta-feira`;
+  const responsavel = empresa?.name ?? enc?.nome ?? "—";
+  const elaboradoPor = tst?.nome ?? "—";
   return (
-    <>
-      <div className="grid grid-cols-[1.4fr_1fr_1fr_1.2fr] text-black bg-white">
-        <PaperCell label="CNPJ"><div className="text-xs">13.378.697/0001-80</div></PaperCell>
-        <PaperCell label="Início"><div className="text-xs">{apr.data_emissao ? formatDateBR(apr.data_emissao) : "—"}</div></PaperCell>
-        <PaperCell label="Fim"><div className="text-xs">{apr.data_validade ? formatDateBR(apr.data_validade) : "—"}</div></PaperCell>
-        <PaperCell label="APR Nº"><div className="text-xs font-bold">{apr.numero ?? "—"}</div></PaperCell>
+    <div className="border-2 border-black text-black bg-white text-[11px]">
+      {/* Linha 1 — barra de marca + título + bloco ISO */}
+      <div className="grid grid-cols-[110px_1fr_150px] border-b-2 border-black">
+        <div className="border-r-2 border-black flex items-center justify-center p-2">
+          <div className="text-white font-black text-2xl rounded px-3 py-1.5 tracking-wider"
+            style={{ background: APR_RED }}>DMN</div>
+        </div>
+        <div className="flex flex-col items-center justify-center py-1 px-2 border-r-2 border-black">
+          <div className="font-black text-lg leading-tight text-center">DMN ESTALEIRO DA AMAZONIA LTDA</div>
+          <div className="text-xs border-t border-black w-full text-center pt-0.5 mt-0.5 font-semibold">
+            APR – Análise Preliminar de Riscos
+          </div>
+        </div>
+        <div className="grid grid-rows-4 text-[10px] font-bold leading-none">
+          <div className="border-b border-black px-2 flex items-center">CÓD.FOR-SEG 07</div>
+          <div className="border-b border-black px-2 flex items-center">REVISÃO: 00</div>
+          <div className="border-b border-black px-2 flex items-center">DATA: 30/08/2025</div>
+          <div className="px-2 flex items-center">PÁG.: {String(pagina).padStart(2, "0")}/{String(totalPaginas).padStart(2, "0")}</div>
+        </div>
       </div>
-      <div className="grid grid-cols-[1.4fr_1.2fr_1.2fr] text-black bg-white">
-        <PaperCell label="Atividade Principal"><div className="text-xs truncate">{apr.atividade_descricao || "—"}</div></PaperCell>
-        <PaperCell label="Local"><div className="text-xs truncate">{apr.local || "—"}</div></PaperCell>
-        <PaperCell label="Casco / Empresa"><div className="text-xs truncate">{[casco?.numero, empresa?.name].filter(Boolean).join(" · ") || "—"}</div></PaperCell>
+
+      {/* Linha 2 — CNPJ | Início | Fim | APR Nº | Elaborado | Página X de N */}
+      <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_0.9fr] border-b border-black font-semibold">
+        <div className="px-2 py-1 border-r border-black"><b>CNPJ:</b> 13.378.697/0001-80</div>
+        <div className="px-2 py-1 border-r border-black"><b>Início:</b> {apr.data_emissao ? formatDateBR(apr.data_emissao) : "—"}</div>
+        <div className="px-2 py-1 border-r border-black"><b>Fim:</b> {apr.data_validade ? formatDateBR(apr.data_validade) : "—"}</div>
+        <div className="px-2 py-1 border-r border-black"><b>APR Nº</b> {apr.numero ?? "—"}</div>
+        <div className="px-2 py-1 border-r border-black"><b>Elaborado:</b> 30/08/2025</div>
+        <div className="px-2 py-1 text-right"><b>Página</b> {pagina} de {totalPaginas}</div>
       </div>
-    </>
+
+      {/* Linha 3 — ATIVIDADE PRINCIPAL | SERVIÇO DETALHADO */}
+      <div className="grid grid-cols-[1fr_1.2fr] border-b border-black">
+        <div className="px-2 py-1 border-r border-black">
+          <b>ATIVIDADE PRINCIPAL:</b> {apr.atividade_descricao
+            ? apr.atividade_descricao + (casco?.numero ? ` - CASCO ${casco.numero}` : "")
+            : "—"}
+        </div>
+        <div className="px-2 py-1">
+          <b>SERVIÇO DETALHADO:</b> {apr.observacoes_gerais ?? "—"}
+        </div>
+      </div>
+
+      {/* Linha 4 — Elaborado por | Responsável pelo serviço | Local | Horário */}
+      <div className="grid grid-cols-[1.1fr_1.2fr_1fr_1.4fr]">
+        <div className="px-2 py-1 border-r border-black"><b>Elaborado por:</b> {elaboradoPor}</div>
+        <div className="px-2 py-1 border-r border-black"><b>Responsável pelo serviço:</b> {responsavel}</div>
+        <div className="px-2 py-1 border-r border-black"><b>Local da Atividade:</b> {apr.local ?? "—"}</div>
+        <div className="px-2 py-1 leading-tight">
+          <b>Horário:</b> {horarioSeg}<br />
+          <span className="pl-[52px]">{horarioSex}</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
