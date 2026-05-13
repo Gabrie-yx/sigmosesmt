@@ -526,8 +526,7 @@ export async function gerarAPR(p: APRPdfParams): Promise<jsPDF> {
     doc.setPage(i);
     // Atualiza apenas o número da página (canto sup. direito) com o total correto
     doc.setFillColor(255, 255, 255);
-    const cMeta = 50;
-    doc.rect(MARGIN + CONTENT_W - cMeta, MARGIN, cMeta, 18, "F");
+    doc.rect(MARGIN, MARGIN, CONTENT_W, 18, "F");
     drawHeader(doc, p, i, total);
   }
 
