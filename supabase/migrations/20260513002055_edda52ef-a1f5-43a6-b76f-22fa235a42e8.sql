@@ -1,0 +1,1 @@
+-- Substituído pela leitura abaixo
