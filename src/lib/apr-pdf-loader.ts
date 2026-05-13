@@ -12,18 +12,20 @@ export async function buildAprPdf(aprId: string) {
   if (!a) throw new Error("APR não encontrada");
 
   const apr: any = a;
-  const [empresaQ, cascoQ, encQ, tstQ, pteQ] = await Promise.all([
+  const [empresaQ, cascoQ, encQ, tstQ, pteQ, ptesLinkQ] = await Promise.all([
     apr.empresa_id ? supabase.from("companies").select("name,cnpj").eq("id", apr.empresa_id).maybeSingle() : Promise.resolve({ data: null } as any),
     apr.casco_id ? supabase.from("cascos").select("numero,nome").eq("id", apr.casco_id).maybeSingle() : Promise.resolve({ data: null } as any),
     apr.encarregado_id ? supabase.from("employees").select("nome").eq("id", apr.encarregado_id).maybeSingle() : Promise.resolve({ data: null } as any),
     apr.tst_id ? supabase.from("employees").select("nome").eq("id", apr.tst_id).maybeSingle() : Promise.resolve({ data: null } as any),
     apr.pte_id ? supabase.from("ptes").select("numero").eq("id", apr.pte_id).maybeSingle() : Promise.resolve({ data: null } as any),
+    supabase.from("ptes").select("numero").eq("apr_id", aprId),
   ]);
   const empresa: any = empresaQ.data;
   const casco: any = cascoQ.data;
   const enc: any = encQ.data;
   const tst: any = tstQ.data;
   const pte: any = pteQ.data;
+  const ptesVinculadas = (ptesLinkQ.data ?? []).map((p: any) => p.numero).filter(Boolean);
 
   return gerarAPR({
     logoUrl: dmnLogo,
@@ -55,6 +57,8 @@ export async function buildAprPdf(aprId: string) {
     condicoes_climaticas: apr.condicoes_climaticas,
     observacoes: apr.observacoes_gerais,
     texto_gerais: apr.texto_gerais ?? null,
+    exige_pte: !!apr.exige_pte,
+    ptes_vinculadas: ptesVinculadas,
     riscos: (rs ?? []).map((r: any) => ({
       ordem: r.ordem,
       passo: r.passo_a_passo ?? null,

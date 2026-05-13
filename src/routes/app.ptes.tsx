@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { createFileRoute, useSearch, useNavigate } from "@tanstack/react-router";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -7,22 +7,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Files, Printer, Pencil, Trash2, X, HardHat, Clock } from "lucide-react";
+import { FileText, Files, Printer, Pencil, Trash2, X, HardHat, Clock, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { PTE_RISCOS } from "@/lib/constants";
 import { formatDateBR } from "@/lib/utils-date";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { hasGlobalOverride, type SafetyOverride } from "@/lib/safety-overrides";
+import { detectarExigenciaPTE } from "@/lib/apr-pte-rules";
 
 export const Route = createFileRoute("/app/ptes")({
   component: PtesPage,
+  validateSearch: (s: Record<string, unknown>) => ({
+    apr_id: typeof s.apr_id === "string" ? s.apr_id : undefined,
+    filter: typeof s.filter === "string" ? (s.filter as "all" | "linked" | "orphan") : undefined,
+  }),
 });
 
 function PtesPage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const search = useSearch({ from: "/app/ptes" });
   const { isEditor, isAdmin } = useAuth();
   const today = new Date().toISOString().slice(0, 10);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [linkedAprId, setLinkedAprId] = useState<string | null>(null);
   const [f, setF] = useState<any>({
     data: today, employee_id: "", risco: PTE_RISCOS[0], local: "",
   });
@@ -31,6 +39,36 @@ function PtesPage() {
     queryKey: ["ptes"],
     queryFn: async () => (await supabase.from("ptes").select("*").order("data_emissao", { ascending: false })).data ?? [],
   });
+  const { data: aprsAll = [] } = useQuery({
+    queryKey: ["aprs-light-for-ptes"],
+    queryFn: async () => (await supabase.from("aprs").select("id,numero,atividade_descricao,casco_id,empresa_id,local").order("data_emissao", { ascending: false })).data ?? [],
+  });
+  const aprsMap = useMemo(() => new Map(aprsAll.map((a: any) => [a.id, a])), [aprsAll]);
+
+  // Pré-preencher PTE a partir de uma APR (vindo do menu "Gerar PTE vinculada")
+  useEffect(() => {
+    const aprId = search.apr_id;
+    if (!aprId || aprsAll.length === 0) return;
+    const apr = aprsMap.get(aprId);
+    if (!apr) return;
+    (async () => {
+      const { data: rs } = await supabase.from("apr_riscos").select("risco_nome,nrs").eq("apr_id", aprId);
+      const det = detectarExigenciaPTE((rs ?? []) as any);
+      const riscoSugerido = det.categoriaPrincipal && PTE_RISCOS.includes(det.categoriaPrincipal as any)
+        ? det.categoriaPrincipal
+        : (det.categoriaPrincipal ?? PTE_RISCOS[0]);
+      setLinkedAprId(aprId);
+      setF((cur: any) => ({
+        ...cur,
+        risco: riscoSugerido,
+        local: apr.local ?? cur.local,
+      }));
+      toast.info(`Vinculando nova PTE à APR ${apr.numero}`);
+      // limpa o search para não repetir ao voltar
+      navigate({ to: "/app/ptes", search: {}, replace: true });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.apr_id, aprsAll]);
   const { data: emps = [] } = useQuery({
     queryKey: ["employees-light"],
     queryFn: async () => (await supabase.from("employees").select("id,nome,matricula,company_id,role_id,nrs,status,data_aso").order("nome")).data ?? [],
@@ -112,13 +150,16 @@ function PtesPage() {
           numero, data: f.data, local: f.local || null, risco: f.risco, status: "ATIVA",
           employee_id: f.employee_id || null, employee_name: emp?.nome ?? null,
           company_id: emp?.company_id ?? null, dados: {},
+          apr_id: linkedAprId,
         });
         if (error) throw error;
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["ptes"] });
+      qc.invalidateQueries({ queryKey: ["ptes-by-apr"] });
       setEditingId(null);
+      setLinkedAprId(null);
       setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "" });
       toast.success(editingId ? "PTE atualizada" : "PTE emitida");
     },
@@ -166,6 +207,15 @@ function PtesPage() {
             )}
           </h3>
           <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="space-y-6">
+            {linkedAprId && (
+              <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 flex items-start gap-2">
+                <Link2 className="h-4 w-4 text-amber-700 mt-0.5 shrink-0" />
+                <div className="flex-1 text-[10px] font-bold uppercase text-amber-900">
+                  Vinculando à APR {(aprsMap.get(linkedAprId) as any)?.numero ?? linkedAprId.slice(0, 8)}
+                  <button type="button" onClick={() => setLinkedAprId(null)} className="ml-2 text-amber-700 underline">remover vínculo</button>
+                </div>
+              </div>
+            )}
             <div>
               <Label className="text-[10px] font-black text-slate-500 uppercase">Local do Trabalho / Instalação</Label>
               <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-slate-50 mt-2 text-xs font-bold uppercase" />
@@ -248,6 +298,11 @@ function PtesPage() {
                 <h4 className="text-xs font-black text-[#991b1b] uppercase mb-1">{p.employee_name ?? "—"}</h4>
                 <div className="text-[10px] font-bold text-slate-500 uppercase mt-1">Risco: <span className="font-black text-slate-700">{p.risco}</span></div>
                 <div className="text-[10px] font-bold text-slate-500 uppercase">Local: {p.local ?? "—"}</div>
+                {p.apr_id && (
+                  <div className="text-[10px] font-bold text-emerald-700 uppercase mt-1 flex items-center gap-1">
+                    <Link2 className="h-3 w-3" /> APR {(aprsMap.get(p.apr_id) as any)?.numero ?? p.apr_id.slice(0, 8)}
+                  </div>
+                )}
                 <div className="text-[9px] font-black text-slate-400 uppercase mt-3 tracking-widest flex items-center gap-1">
                   <Clock className="h-3 w-3" /> Emitida em: {formatDateBR(p.data_emissao || p.data)}
                 </div>

@@ -12,6 +12,7 @@ import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 import { formatDateBR } from "@/lib/utils-date";
 import dmnLogo from "@/assets/dmn-logo.png";
+import { detectarExigenciaPTE } from "@/lib/apr-pte-rules";
 
 /* ---------- tipos ---------- */
 type APR = {
@@ -277,10 +278,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const tst = useMemo(() => employees.find((e: any) => e.id === apr.tst_id), [employees, apr.tst_id]);
   const pte = useMemo(() => ptes.find((p: any) => p.id === apr.pte_id), [ptes, apr.pte_id]);
 
+  const deteccaoPTE = useMemo(
+    () => detectarExigenciaPTE(riscos.map((r) => ({ risco_nome: r.risco_nome, nrs: r.nrs }))),
+    [riscos],
+  );
   const temRiscoGrave = useMemo(() => riscos.some((r) => (r.probabilidade + r.severidade) >= 5), [riscos]);
   useEffect(() => {
-    if (temRiscoGrave && !apr.exige_pte) setApr((a) => ({ ...a, exige_pte: true }));
-  }, [temRiscoGrave]); // eslint-disable-line react-hooks/exhaustive-deps
+    if ((deteccaoPTE.exige || temRiscoGrave) && !apr.exige_pte) {
+      setApr((a) => ({ ...a, exige_pte: true }));
+    }
+  }, [deteccaoPTE.exige, temRiscoGrave]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // carregar APR existente
   useEffect(() => {
@@ -595,6 +602,24 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           <div className="bg-white max-w-[1400px] mx-auto shadow border border-slate-300">
             <PaperFullHeader apr={apr} setApr={setApr} empresa={empresa} casco={casco} enc={enc} tst={tst}
               employees={employees} companies={companies} pagina={1} />
+
+            {/* Banner de detecção automática de PTE */}
+            {deteccaoPTE.exige && (
+              <div className="border-x border-b border-black bg-amber-50 px-3 py-2 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <div className="text-[11px] font-black uppercase text-amber-900">
+                    Esta APR EXIGE Permissão de Trabalho Especial (PTE) — detectado automaticamente
+                  </div>
+                  <ul className="text-[10px] text-amber-800 mt-0.5 list-disc list-inside">
+                    {deteccaoPTE.motivos.map((m) => <li key={m}>{m}</li>)}
+                  </ul>
+                  <div className="text-[10px] text-amber-700 mt-1">
+                    Salve a APR e use <b>“Gerar PTE vinculada”</b> no menu de ações para emitir a permissão antes do início da atividade.
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Casco | PTE — Validade subiu para o cabeçalho */}
             <div className="grid grid-cols-2">
