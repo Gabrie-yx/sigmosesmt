@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import dmnLogo from "@/assets/dmn-logo.png";
 
 export type OrdemFull = {
   id: string;
@@ -14,6 +15,7 @@ export type OrdemFull = {
   codigo_formulario?: string | null;
   revisao?: string | null;
   pagina?: string | null;
+  mtart?: string | null;
   itens?: Array<{
     id: string;
     item: number;
@@ -31,78 +33,156 @@ export type OrdemFull = {
     controle_preco: string | null;
     origem_material: string | null;
     utilizacao_material: string | null;
+    codigo_sap?: string | null;
+    ocorrencia?: string | null;
   }>;
+};
+
+// Cabeçalhos das colunas conforme formulário homologado FOR-PROD 01
+// Cores: Y = amarelo, B = azul, G = cinza padrão
+type ColTone = "Y" | "B" | "G";
+const COLS: { label: string; key: keyof NonNullable<OrdemFull["itens"]>[number] | "item" | "data_solicitacao"; tone: ColTone; w: number }[] = [
+  { label: "ITEM",                 key: "item",                  tone: "G", w: 10 },
+  { label: "DATA\nSOLICITAÇÃO",    key: "data_solicitacao",      tone: "Y", w: 22 },
+  { label: "DESCRIÇÃO DO MATERIAL",key: "descricao_material",    tone: "Y", w: 50 },
+  { label: "UNIDADE\nMEDIDA",      key: "unidade_medida",        tone: "G", w: 16 },
+  { label: "GRUPO\nCOMPRADORES",   key: "grupo_compradores",     tone: "G", w: 18 },
+  { label: "NCM",                  key: "ncm",                   tone: "G", w: 18 },
+  { label: "CENTRO",               key: "centro",                tone: "G", w: 14 },
+  { label: "DEPÓSITO",             key: "deposito",              tone: "G", w: 14 },
+  { label: "GRUPO DE\nMERCADORIAS",key: "grupo_mercadorias",     tone: "B", w: 20 },
+  { label: "SETOR DE\nATIVIDADE",  key: "setor_atividade",       tone: "G", w: 16 },
+  { label: "GR. CATEG.\nITEM GER", key: "grupo_categ_item_ger",  tone: "G", w: 18 },
+  { label: "CLASSE DE\nAVALIAÇÃO", key: "classe_avaliacao",      tone: "B", w: 18 },
+  { label: "Determ.\npreço",       key: "determ_preco",          tone: "G", w: 14 },
+  { label: "CONTROLE\nPREÇO",      key: "controle_preco",        tone: "G", w: 16 },
+  { label: "ORIGEM DO\nMATERIAL",  key: "origem_material",       tone: "Y", w: 20 },
+  { label: "UTILIZAÇÃO DO\nMATERIAL", key: "utilizacao_material",tone: "Y", w: 26 },
+  { label: "CÓDIGO SAP",           key: "codigo_sap" as any,     tone: "G", w: 18 },
+  { label: "OCORRÊNCIA",           key: "ocorrencia" as any,     tone: "G", w: 22 },
+];
+
+const TONE_FILL: Record<ColTone, [number, number, number]> = {
+  Y: [255, 242, 0],   // amarelo
+  B: [91, 155, 213],  // azul
+  G: [217, 217, 217], // cinza claro
 };
 
 function build(ordem: OrdemFull): jsPDF {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const pageW = 297;
+  const margin = 6;
   const data = ordem.data_solicitacao
     ? new Date(ordem.data_solicitacao).toLocaleDateString("pt-BR")
-    : "—";
+    : "";
 
-  // Cabeçalho
-  doc.setFillColor(245, 158, 11);
-  doc.rect(0, 0, 297, 14, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(13);
+  const isHalb = (ordem.mtart ?? "").toUpperCase() === "HALB";
+  const tituloProduto = isHalb ? "HALB ( PRODUTO SEMIACABADO)" : "FERT ( PRODUTO ACABADO)";
+  const titulo = `MATERIAIS - ${tituloProduto}`;
+
+  // ===== Cabeçalho institucional =====
+  const headerH = 18;
+  doc.setDrawColor(0); doc.setLineWidth(0.3);
+  doc.rect(margin, margin, pageW - margin * 2, headerH);
+
+  // Logo (se carregar)
+  try {
+    doc.addImage(dmnLogo as any, "PNG", margin + 1.5, margin + 2, 30, 14);
+  } catch { /* ignora se asset indisponível */ }
+
+  // Título central
   doc.setFont("helvetica", "bold");
-  doc.text("ORDEM DE PRODUÇÃO", 10, 9);
-  doc.setFontSize(10);
-  doc.text(ordem.numero, 287, 9, { align: "right" });
+  doc.setFontSize(13);
+  doc.setTextColor(0);
+  doc.text(titulo, pageW / 2, margin + headerH / 2 + 1, { align: "center" });
 
-  doc.setTextColor(20, 20, 20);
-  doc.setFontSize(8);
+  // Bloco de controle (direita) - 4 linhas
+  const ctrlW = 50;
+  const ctrlX = pageW - margin - ctrlW;
+  const ctrlRowH = headerH / 4;
+  const ctrlRows = [
+    `CÓD.: ${ordem.codigo_formulario ?? "FOR-PROD 01"}`,
+    `REVISÃO: ${ordem.revisao ?? "00"}`,
+    `DATA: ${data || "01/08/2025"}`,
+    `PÁG. ${ordem.pagina ?? "01/01"}`,
+  ];
   doc.setFont("helvetica", "normal");
-  doc.text(`Formulário: ${ordem.codigo_formulario ?? "FOR-PROD 01"}   Rev.: ${ordem.revisao ?? "00"}   Pág.: ${ordem.pagina ?? "01/01"}`, 10, 19);
-
-  // Cabeçalho dados
-  autoTable(doc, {
-    startY: 23,
-    theme: "grid",
-    styles: { fontSize: 9, cellPadding: 1.8 },
-    headStyles: { fillColor: [255, 237, 213], textColor: 60, fontStyle: "bold" },
-    body: [
-      [{ content: "Data", styles: { fontStyle: "bold" } }, data,
-       { content: "Casco", styles: { fontStyle: "bold" } }, ordem.casco ?? "—",
-       { content: "Tipo de Produto", styles: { fontStyle: "bold" } }, ordem.tipo_produto ?? "—"],
-      [{ content: "Solicitante", styles: { fontStyle: "bold" } }, ordem.solicitante ?? "—",
-       { content: "Qtde. Itens", styles: { fontStyle: "bold" } }, ordem.qtde_itens?.toString() ?? "—",
-       { content: "Status", styles: { fontStyle: "bold" } }, ordem.status],
-    ],
+  doc.setFontSize(8);
+  ctrlRows.forEach((txt, i) => {
+    const y = margin + i * ctrlRowH;
+    doc.rect(ctrlX, y, ctrlW, ctrlRowH);
+    doc.text(txt, ctrlX + 2, y + ctrlRowH / 2 + 1);
   });
 
-  // Itens
+  // ===== Faixa SOLICITAÇÃO =====
+  const solY = margin + headerH;
+  const solH = 6;
+  doc.setFillColor(217, 217, 217);
+  doc.rect(margin, solY, pageW - margin * 2, solH, "FD");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("SOLICITAÇÃO", pageW / 2, solY + solH / 2 + 1, { align: "center" });
+
+  // ===== Tabela =====
+  // normaliza largura das colunas para preencher a página
+  const tableW = pageW - margin * 2;
+  const sumW = COLS.reduce((s, c) => s + c.w, 0);
+  const factor = tableW / sumW;
+
   const itens = ordem.itens ?? [];
-  autoTable(doc, {
-    startY: (doc as any).lastAutoTable.finalY + 4,
-    theme: "striped",
-    styles: { fontSize: 7.5, cellPadding: 1.2, overflow: "linebreak" },
-    headStyles: { fillColor: [245, 158, 11], textColor: 255, fontStyle: "bold" },
-    head: [["#", "Descrição", "UM", "NCM", "Centro", "Depósito", "Gr. Merc.", "Setor", "Gr. Compr.", "Cl. Aval."]],
-    body: itens.map((it) => [
-      it.item, it.descricao_material, it.unidade_medida ?? "", it.ncm ?? "",
-      it.centro ?? "", it.deposito ?? "", it.grupo_mercadorias ?? "",
-      it.setor_atividade ?? "", it.grupo_compradores ?? "", it.classe_avaliacao ?? "",
-    ]),
-  });
-
-  if (ordem.observacoes) {
-    autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 4,
-      theme: "plain",
-      styles: { fontSize: 9 },
-      body: [[{ content: "Observações", styles: { fontStyle: "bold" } }], [ordem.observacoes]],
-    });
+  // Garante pelo menos 8 linhas (formulário em branco quando faltarem itens)
+  const minRows = 8;
+  const rows: any[][] = [];
+  for (let i = 0; i < Math.max(minRows, itens.length); i++) {
+    const it: any = itens[i];
+    rows.push(
+      COLS.map((c) => {
+        if (!it) return "";
+        if (c.key === "item") return it.item ?? i + 1;
+        if (c.key === "data_solicitacao") return data;
+        return (it as any)[c.key] ?? "";
+      })
+    );
   }
 
-  // Rodapé assinatura
-  const finalY = Math.max((doc as any).lastAutoTable.finalY + 20, 180);
-  doc.setDrawColor(120);
-  doc.line(30, finalY, 130, finalY);
-  doc.line(167, finalY, 267, finalY);
-  doc.setFontSize(8);
-  doc.text("Assinatura do Solicitante", 80, finalY + 4, { align: "center" });
-  doc.text("Assinatura do Responsável", 217, finalY + 4, { align: "center" });
+  autoTable(doc, {
+    startY: solY + solH,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: tableW,
+    styles: {
+      fontSize: 6.5,
+      cellPadding: 1.2,
+      lineColor: [0, 0, 0],
+      lineWidth: 0.2,
+      textColor: [0, 0, 0],
+      overflow: "linebreak",
+      valign: "middle",
+      halign: "center",
+      minCellHeight: 8,
+    },
+    headStyles: {
+      fontStyle: "bold",
+      fontSize: 6.8,
+      textColor: [0, 0, 0],
+      lineColor: [0, 0, 0],
+      lineWidth: 0.3,
+      halign: "center",
+      valign: "middle",
+      minCellHeight: 12,
+    },
+    head: [COLS.map((c) => c.label)],
+    body: rows,
+    columnStyles: Object.fromEntries(
+      COLS.map((c, i) => [i, { cellWidth: c.w * factor }])
+    ) as any,
+    didParseCell: (d) => {
+      if (d.section === "head") {
+        const tone = COLS[d.column.index].tone;
+        d.cell.styles.fillColor = TONE_FILL[tone];
+      }
+    },
+  });
 
   return doc;
 }

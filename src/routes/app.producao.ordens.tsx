@@ -42,6 +42,26 @@ function OrdensListPage() {
     },
   });
 
+  // Lookup MTART por nome do tipo de produto (para o cabeçalho do PDF)
+  const { data: tipos = [] } = useQuery({
+    queryKey: ["producao-tipos-mtart"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("producao_tipos_produto")
+        .select("nome, mtart");
+      return data ?? [];
+    },
+  });
+  const mtartByNome = useMemo(() => {
+    const m = new Map<string, string>();
+    (tipos as any[]).forEach((t) => t?.nome && m.set(t.nome, t.mtart ?? ""));
+    return m;
+  }, [tipos]);
+  const withMtart = (o: any): OrdemFull => ({
+    ...o,
+    mtart: o.mtart ?? (o.tipo_produto ? mtartByNome.get(o.tipo_produto) ?? null : null),
+  });
+
   const filtradas = useMemo(() => {
     const q = busca.trim().toLowerCase();
     if (!q) return ordens;
@@ -138,11 +158,11 @@ function OrdensListPage() {
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button size="icon" variant="ghost" title="Imprimir"
-                      onClick={() => imprimirOrdem(o)}>
+                      onClick={() => imprimirOrdem(withMtart(o))}>
                       <Printer className="h-4 w-4" />
                     </Button>
                     <Button size="icon" variant="ghost" title="Baixar PDF"
-                      onClick={() => gerarPdfOrdem(o)}>
+                      onClick={() => gerarPdfOrdem(withMtart(o))}>
                       <FileDown className="h-4 w-4" />
                     </Button>
                     <Button size="icon" variant="ghost" title="Excluir"
@@ -192,10 +212,10 @@ function OrdensListPage() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => viewing && imprimirOrdem(viewing)}>
+            <Button variant="outline" onClick={() => viewing && imprimirOrdem(withMtart(viewing))}>
               <Printer className="h-4 w-4 mr-1.5" /> Imprimir
             </Button>
-            <Button variant="outline" onClick={() => viewing && gerarPdfOrdem(viewing)}>
+            <Button variant="outline" onClick={() => viewing && gerarPdfOrdem(withMtart(viewing))}>
               <FileDown className="h-4 w-4 mr-1.5" /> Baixar PDF
             </Button>
             <Button onClick={() => setViewing(null)}>Fechar</Button>

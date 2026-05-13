@@ -371,8 +371,9 @@ function CriarOrdemPage() {
   // Auto-preenche Casco com o próximo sequencial
   useEffect(() => {
     if (!proximoCascoLabel) return;
-    setValues((v) => (v.casco ? v : { ...v, casco: proximoCascoLabel }));
-  }, [proximoCascoLabel]);
+    if (editId) return; // em edição, mantém o casco da ordem
+    setValues((v) => (v.casco === proximoCascoLabel ? v : { ...v, casco: proximoCascoLabel }));
+  }, [proximoCascoLabel, editId]);
 
   const addUm = useMutation({
     mutationFn: async () => {
@@ -547,11 +548,11 @@ function CriarOrdemPage() {
           <div onMouseDown={(e) => e.stopPropagation()} className="space-y-1">
             <Input
               value={v}
-              onChange={(e) => setVal(f.key, e.target.value)}
-              className="font-bold text-amber-700"
+              readOnly
+              className="font-bold text-amber-700 bg-amber-50 cursor-not-allowed"
             />
             <p className="text-[10px] text-muted-foreground">
-              Sequencial automático — próximo: <span className="font-bold text-amber-700">{proximoCascoLabel}</span>
+              Gerado automaticamente — próximo: <span className="font-bold text-amber-700">{proximoCascoLabel}</span>
             </p>
           </div>
         );
