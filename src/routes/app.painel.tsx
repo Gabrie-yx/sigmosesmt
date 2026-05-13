@@ -13,9 +13,12 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   AreaChart, Area, PieChart, Pie, Cell, Legend,
 } from "recharts";
-import GridLayout, { WidthProvider, type Layout } from "react-grid-layout";
+import RGL from "react-grid-layout";
 
-const ResponsiveGridLayout = WidthProvider(GridLayout);
+// react-grid-layout types are inconsistent across versions — use loose typing
+const RGLAny = RGL as any;
+const ResponsiveGridLayout: any = RGLAny.WidthProvider(RGLAny);
+type Layout = { i: string; x: number; y: number; w: number; h: number; minH?: number; minW?: number };
 
 export const Route = createFileRoute("/app/painel")({
   component: TstPanel,
@@ -38,8 +41,7 @@ const DEFAULT_LAYOUT: Layout[] = [
   { i: "dds-trend",   x: 0, y: 24, w: 6,  h: 7,  minH: 5, minW: 4 },
   { i: "conformidade",x: 6, y: 24, w: 6,  h: 7,  minH: 5, minW: 4 },
   { i: "pendencias",  x: 0, y: 31, w: 12, h: 9,  minH: 5, minW: 6 },
-  { i: "blocklist",   x: 0, y: 40, w: 12, h: 9,  minH: 5, minW: 6 },
-  { i: "footer",      x: 0, y: 49, w: 12, h: 3,  minH: 2, minW: 6 },
+  { i: "footer",      x: 0, y: 40, w: 12, h: 3,  minH: 2, minW: 6 },
 ];
 
 function loadLayout(): Layout[] {
@@ -229,10 +231,6 @@ function TstPanel() {
     if (filterCompany !== "ALL") list = list.filter((r) => r.emp.company_id === filterCompany);
     return list;
   }, [rows, filterCompany]);
-
-  const blocklist = useMemo(() => rows
-    .filter((r) => r.status.label === "BLOQUEADO" || r.status.label === "SEM CARGO")
-    .sort((a, b) => (a.emp.nome ?? "").localeCompare(b.emp.nome ?? "")), [rows]);
 
   const conformity = useMemo(() => {
     if (!data) return [];
@@ -482,31 +480,6 @@ function TstPanel() {
         </div>
       ),
     },
-    blocklist: {
-      title: `Lista de bloqueio GSI (${blocklist.length})`, icon: Ban, accent: "red",
-      render: () => (
-        <div className="overflow-auto h-full">
-          {blocklist.length === 0 ? (
-            <div className="text-center text-emerald-600 py-6 font-black uppercase text-xs">✓ Nenhum colaborador bloqueado</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {blocklist.map((p) => (
-                <div key={p.emp.id}
-                  onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
-                  className="p-3 border border-red-100 rounded-xl bg-white hover:border-red-400 hover:shadow-sm cursor-pointer transition-all">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="text-xs font-black uppercase text-slate-900 truncate">{p.emp.nome}</div>
-                    <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-red-600 text-white shrink-0 ml-2">{p.status.label}</span>
-                  </div>
-                  <div className="text-[9px] font-bold uppercase text-slate-500">{p.company} · {p.role?.name ?? "Sem cargo"}</div>
-                  <div className="text-[9px] font-bold text-red-600 mt-1.5 line-clamp-2">{p.status.msgs.join(" · ")}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ),
-    },
     footer: {
       title: "Alertas operacionais", icon: AlertTriangle,
       render: () => (
@@ -561,7 +534,7 @@ function TstPanel() {
         rowHeight={40}
         margin={[12, 12]}
         containerPadding={[0, 0]}
-        onLayoutChange={(l) => setLayout(l)}
+        onLayoutChange={(l: Layout[]) => setLayout(l)}
         draggableHandle=".widget-drag-handle"
         isDraggable={!locked}
         isResizable={!locked}
