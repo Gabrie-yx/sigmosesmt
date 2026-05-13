@@ -102,7 +102,14 @@ function AprsPage() {
           <p className="text-sm text-slate-500 mt-1">{filtered.length} APR(s) listadas</p>
         </div>
         {isEditor && (
-          <Button onClick={() => setEditing("new")} size="lg" className="bg-[#991b1b] hover:bg-[#7f1d1d]">
+          <Button
+            onClick={() => {
+              qc.setQueryData(["apr-form-draft", "new"], newAprDraft);
+              setEditing("new");
+            }}
+            size="lg"
+            className="bg-[#991b1b] hover:bg-[#7f1d1d]"
+          >
             <Plus className="h-4 w-4 mr-1" /> Nova APR
           </Button>
         )}
@@ -215,7 +222,7 @@ function AprsPage() {
             <DialogTitle>{editing === "new" ? "Nova APR" : "Editar APR"}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
-            <AprForm aprId={editing === "new" ? null : editing} onClose={() => setEditing(null)} />
+            <AprForm key={editing ?? "closed"} aprId={editing === "new" ? null : editing} onClose={() => setEditing(null)} />
           </div>
         </DialogContent>
       </Dialog>
