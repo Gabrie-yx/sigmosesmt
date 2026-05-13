@@ -534,7 +534,7 @@ function TstPanel() {
         rowHeight={40}
         margin={[12, 12]}
         containerPadding={[0, 0]}
-        onLayoutChange={(l) => setLayout(l)}
+        onLayoutChange={(l: Layout[]) => setLayout(l)}
         draggableHandle=".widget-drag-handle"
         isDraggable={!locked}
         isResizable={!locked}
