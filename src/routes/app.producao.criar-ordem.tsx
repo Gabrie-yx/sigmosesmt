@@ -218,7 +218,7 @@ function CriarOrdemPage() {
     queryKey: ["producao-tipos"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("producao_tipos_produto").select("id, nome").eq("ativo", true).order("nome");
+        .from("producao_tipos_produto").select("id, nome, ncm, grupo_mercadorias").eq("ativo", true).order("nome");
       if (error) throw error;
       return data ?? [];
     },
