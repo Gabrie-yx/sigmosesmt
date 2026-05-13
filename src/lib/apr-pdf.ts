@@ -82,6 +82,9 @@ const PAGE_W = 297; // A4 landscape
 const PAGE_H = 210;
 const MARGIN = 6;
 const CONTENT_W = PAGE_W - MARGIN * 2;
+// Y onde começa o conteúdo da página (logo abaixo do cabeçalho completo:
+// chrome ISO + bloco de identificação) — repetido em TODAS as páginas.
+const CONTENT_TOP = 60;
 
 function drawHeader(doc: jsPDF, p: APRPdfParams, pagina: number, totalPaginas: number) {
   const headerH = 18;
