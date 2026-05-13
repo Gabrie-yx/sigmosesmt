@@ -83,6 +83,8 @@ const OTHER_MODULES = [
 ] as const;
 
 const PRODUCAO_SUBMENU = [
+  { to: "/app/producao/materiais", label: "Catálogo de Materiais (HALB/FERT)" },
+  { to: "/app/producao/embarcacoes", label: "Embarcações da Produção" },
   { to: "/app/producao/ordens", label: "Ordens de Produção" },
 ] as const;
 
