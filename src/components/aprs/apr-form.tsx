@@ -204,8 +204,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   useEffect(() => {
     if (aprId || apr.numero) return;
     (async () => {
-      const { data } = await supabase.rpc("peek_proximo_numero_apr" as any);
-      if (data && !apr.numero) setApr((a) => ({ ...a, numero: `APR-PREV-${data}` }));
+      try {
+        const { data, error } = await supabase.rpc("peek_proximo_numero_apr" as any);
+        if (error) {
+          console.warn("[APR] Não foi possível pré-visualizar o próximo número:", error.message);
+          return;
+        }
+        if (data && !apr.numero) setApr((a) => ({ ...a, numero: `APR-PREV-${data}` }));
+      } catch (error) {
+        console.warn("[APR] Falha ao pré-visualizar o próximo número:", error);
+      }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aprId]);
