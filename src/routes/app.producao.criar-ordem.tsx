@@ -24,7 +24,7 @@ export const Route = createFileRoute("/app/producao/criar-ordem")({
 
 type Layout = { i: string; x: number; y: number; w: number; h: number; minW?: number; minH?: number };
 
-type FieldKind = "text" | "textarea" | "number" | "date" | "casco-auto" | "select-tipo" | "select-um" | "select-grupo-merc";
+type FieldKind = "text" | "textarea" | "number" | "date" | "casco-auto" | "select-tipo" | "select-um" | "select-grupo-merc" | "select-classe";
 
 type FieldDef = {
   key: string;
