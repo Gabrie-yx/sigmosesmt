@@ -30,6 +30,7 @@ import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requ
 import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
 import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.relatorios.reincidencia-epi'
 import { Route as AppProducaoOrdensRouteImport } from './routes/app.producao.ordens'
+import { Route as AppProducaoMateriaisRouteImport } from './routes/app.producao.materiais'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
@@ -145,6 +146,11 @@ const AppProducaoOrdensRoute = AppProducaoOrdensRouteImport.update({
   path: '/producao/ordens',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProducaoMateriaisRoute = AppProducaoMateriaisRouteImport.update({
+  id: '/producao/materiais',
+  path: '/producao/materiais',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
   id: '/estoque/sesmt',
   path: '/estoque/sesmt',
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/producao/materiais': typeof AppProducaoMateriaisRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
@@ -239,6 +246,7 @@ export interface FileRoutesByTo {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/producao/materiais': typeof AppProducaoMateriaisRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
@@ -271,6 +279,7 @@ export interface FileRoutesById {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/producao/materiais': typeof AppProducaoMateriaisRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
@@ -304,6 +313,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/producao/materiais'
     | '/app/producao/ordens'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
@@ -333,6 +343,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/producao/materiais'
     | '/app/producao/ordens'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
@@ -364,6 +375,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/producao/materiais'
     | '/app/producao/ordens'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
@@ -528,6 +540,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoOrdensRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/producao/materiais': {
+      id: '/app/producao/materiais'
+      path: '/producao/materiais'
+      fullPath: '/app/producao/materiais'
+      preLoaderRoute: typeof AppProducaoMateriaisRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/estoque/sesmt': {
       id: '/app/estoque/sesmt'
       path: '/estoque/sesmt'
@@ -620,6 +639,7 @@ interface AppRouteChildren {
   AppDdsTemasRoute: typeof AppDdsTemasRoute
   AppEstoqueEpiRoute: typeof AppEstoqueEpiRoute
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
+  AppProducaoMateriaisRoute: typeof AppProducaoMateriaisRoute
   AppProducaoOrdensRoute: typeof AppProducaoOrdensRoute
   AppRelatoriosReincidenciaEpiRoute: typeof AppRelatoriosReincidenciaEpiRoute
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
@@ -646,6 +666,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDdsTemasRoute: AppDdsTemasRoute,
   AppEstoqueEpiRoute: AppEstoqueEpiRoute,
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
+  AppProducaoMateriaisRoute: AppProducaoMateriaisRoute,
   AppProducaoOrdensRoute: AppProducaoOrdensRoute,
   AppRelatoriosReincidenciaEpiRoute: AppRelatoriosReincidenciaEpiRoute,
   AppSesmtDocsRoute: AppSesmtDocsRoute,
