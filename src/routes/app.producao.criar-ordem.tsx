@@ -546,6 +546,39 @@ function CriarOrdemPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Grupo de Mercadorias dialog */}
+      <Dialog open={gmDialogOpen} onOpenChange={setGmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Grupo de Mercadorias</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Código *</Label>
+              <Input value={newGm.codigo}
+                onChange={(e) => setNewGm((s) => ({ ...s, codigo: e.target.value.toUpperCase() }))}
+                placeholder="Ex.: AT0050"
+                maxLength={20}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Descrição</Label>
+              <Input value={newGm.descricao}
+                onChange={(e) => setNewGm((s) => ({ ...s, descricao: e.target.value }))}
+                placeholder="Descrição (opcional)"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGmDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={() => addGm.mutate()} disabled={addGm.isPending}
+              className="bg-amber-600 hover:bg-amber-700 text-white">
+              {addGm.isPending ? "Salvando…" : "Adicionar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
