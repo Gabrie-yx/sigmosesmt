@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -190,25 +190,14 @@ function TipoDialog({
   const [ativo, setAtivo] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // sync when opening
-  useState(() => 0); // placeholder
-
-  // reset on tipo change
-  if (open && tipo && nome !== tipo.nome && (tipo.id || nome === "")) {
-    // Run only when we open with a different record; guarded above.
-  }
-
-  // Use effect-like sync via key on Dialog mount: simpler — re-init when `tipo` changes
-  // Replaced below using useEffect would be ideal; using inline sync via render guard:
-  if (open && tipo && (tipo.id !== "" ? tipo.id !== (nome === tipo.nome ? tipo.id : "") : false)) {
-    // no-op
-  }
-
-  // Simple controlled re-init using a ref-less approach:
-  // We rely on `key` prop set by parent if needed. To keep it robust, sync on open transitions.
-  // Implement via plain effect:
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useSyncTipo(open, tipo, { setNome, setNcm, setGrupo, setAtivo });
+  useEffect(() => {
+    if (!open) return;
+    setNome(tipo?.nome ?? "");
+    setNcm(tipo?.ncm ?? "");
+    setGrupo(tipo?.grupo_mercadorias ?? "");
+    setAtivo(tipo?.ativo ?? true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, tipo?.id]);
 
   async function salvar() {
     if (!nome.trim()) { toast.error("Nome é obrigatório"); return; }
@@ -280,26 +269,4 @@ function TipoDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-// Sync local form state when the dialog opens with a different tipo
-import { useEffect } from "react";
-function useSyncTipo(
-  open: boolean,
-  tipo: Tipo | null,
-  s: {
-    setNome: (v: string) => void;
-    setNcm: (v: string) => void;
-    setGrupo: (v: string) => void;
-    setAtivo: (v: boolean) => void;
-  },
-) {
-  useEffect(() => {
-    if (!open) return;
-    s.setNome(tipo?.nome ?? "");
-    s.setNcm(tipo?.ncm ?? "");
-    s.setGrupo(tipo?.grupo_mercadorias ?? "");
-    s.setAtivo(tipo?.ativo ?? true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, tipo?.id]);
 }

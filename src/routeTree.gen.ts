@@ -29,6 +29,7 @@ import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
 import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requisicoes'
 import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
 import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.relatorios.reincidencia-epi'
+import { Route as AppProducaoTiposProdutoRouteImport } from './routes/app.producao.tipos-produto'
 import { Route as AppProducaoOrdensRouteImport } from './routes/app.producao.ordens'
 import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
@@ -141,6 +142,11 @@ const AppRelatoriosReincidenciaEpiRoute =
     path: '/relatorios/reincidencia-epi',
     getParentRoute: () => AppRoute,
   } as any)
+const AppProducaoTiposProdutoRoute = AppProducaoTiposProdutoRouteImport.update({
+  id: '/producao/tipos-produto',
+  path: '/producao/tipos-produto',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProducaoOrdensRoute = AppProducaoOrdensRouteImport.update({
   id: '/producao/ordens',
   path: '/producao/ordens',
@@ -218,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
+  '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
@@ -248,6 +255,7 @@ export interface FileRoutesByTo {
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
+  '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
@@ -281,6 +289,7 @@ export interface FileRoutesById {
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
+  '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
     | '/app/estoque/sesmt'
     | '/app/producao/criar-ordem'
     | '/app/producao/ordens'
+    | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
     | '/app/sesmt/requisicoes'
@@ -345,6 +355,7 @@ export interface FileRouteTypes {
     | '/app/estoque/sesmt'
     | '/app/producao/criar-ordem'
     | '/app/producao/ordens'
+    | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
     | '/app/sesmt/requisicoes'
@@ -377,6 +388,7 @@ export interface FileRouteTypes {
     | '/app/estoque/sesmt'
     | '/app/producao/criar-ordem'
     | '/app/producao/ordens'
+    | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
     | '/app/sesmt/requisicoes'
@@ -533,6 +545,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRelatoriosReincidenciaEpiRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/producao/tipos-produto': {
+      id: '/app/producao/tipos-produto'
+      path: '/producao/tipos-produto'
+      fullPath: '/app/producao/tipos-produto'
+      preLoaderRoute: typeof AppProducaoTiposProdutoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/producao/ordens': {
       id: '/app/producao/ordens'
       path: '/producao/ordens'
@@ -641,6 +660,7 @@ interface AppRouteChildren {
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
   AppProducaoCriarOrdemRoute: typeof AppProducaoCriarOrdemRoute
   AppProducaoOrdensRoute: typeof AppProducaoOrdensRoute
+  AppProducaoTiposProdutoRoute: typeof AppProducaoTiposProdutoRoute
   AppRelatoriosReincidenciaEpiRoute: typeof AppRelatoriosReincidenciaEpiRoute
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
   AppSesmtRequisicoesRoute: typeof AppSesmtRequisicoesRoute
@@ -668,6 +688,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
   AppProducaoCriarOrdemRoute: AppProducaoCriarOrdemRoute,
   AppProducaoOrdensRoute: AppProducaoOrdensRoute,
+  AppProducaoTiposProdutoRoute: AppProducaoTiposProdutoRoute,
   AppRelatoriosReincidenciaEpiRoute: AppRelatoriosReincidenciaEpiRoute,
   AppSesmtDocsRoute: AppSesmtDocsRoute,
   AppSesmtRequisicoesRoute: AppSesmtRequisicoesRoute,
@@ -685,13 +706,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
