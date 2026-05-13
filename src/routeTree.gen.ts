@@ -32,6 +32,9 @@ import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.r
 import { Route as AppProducaoOrdensRouteImport } from './routes/app.producao.ordens'
 import { Route as AppProducaoMateriaisRouteImport } from './routes/app.producao.materiais'
 import { Route as AppProducaoEmbarcacoesRouteImport } from './routes/app.producao.embarcacoes'
+import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
+import { Route as AppProducaoCriarHalbRouteImport } from './routes/app.producao.criar-halb'
+import { Route as AppProducaoCriarFertRouteImport } from './routes/app.producao.criar-fert'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
@@ -157,6 +160,21 @@ const AppProducaoEmbarcacoesRoute = AppProducaoEmbarcacoesRouteImport.update({
   path: '/producao/embarcacoes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProducaoCriarOrdemRoute = AppProducaoCriarOrdemRouteImport.update({
+  id: '/producao/criar-ordem',
+  path: '/producao/criar-ordem',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProducaoCriarHalbRoute = AppProducaoCriarHalbRouteImport.update({
+  id: '/producao/criar-halb',
+  path: '/producao/criar-halb',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProducaoCriarFertRoute = AppProducaoCriarFertRouteImport.update({
+  id: '/producao/criar-fert',
+  path: '/producao/criar-fert',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
   id: '/estoque/sesmt',
   path: '/estoque/sesmt',
@@ -222,6 +240,9 @@ export interface FileRoutesByFullPath {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/producao/criar-fert': typeof AppProducaoCriarFertRoute
+  '/app/producao/criar-halb': typeof AppProducaoCriarHalbRoute
+  '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/embarcacoes': typeof AppProducaoEmbarcacoesRoute
   '/app/producao/materiais': typeof AppProducaoMateriaisRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
@@ -253,6 +274,9 @@ export interface FileRoutesByTo {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/producao/criar-fert': typeof AppProducaoCriarFertRoute
+  '/app/producao/criar-halb': typeof AppProducaoCriarHalbRoute
+  '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/embarcacoes': typeof AppProducaoEmbarcacoesRoute
   '/app/producao/materiais': typeof AppProducaoMateriaisRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
@@ -287,6 +311,9 @@ export interface FileRoutesById {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/producao/criar-fert': typeof AppProducaoCriarFertRoute
+  '/app/producao/criar-halb': typeof AppProducaoCriarHalbRoute
+  '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/embarcacoes': typeof AppProducaoEmbarcacoesRoute
   '/app/producao/materiais': typeof AppProducaoMateriaisRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
@@ -322,6 +349,9 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/producao/criar-fert'
+    | '/app/producao/criar-halb'
+    | '/app/producao/criar-ordem'
     | '/app/producao/embarcacoes'
     | '/app/producao/materiais'
     | '/app/producao/ordens'
@@ -353,6 +383,9 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/producao/criar-fert'
+    | '/app/producao/criar-halb'
+    | '/app/producao/criar-ordem'
     | '/app/producao/embarcacoes'
     | '/app/producao/materiais'
     | '/app/producao/ordens'
@@ -386,6 +419,9 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/producao/criar-fert'
+    | '/app/producao/criar-halb'
+    | '/app/producao/criar-ordem'
     | '/app/producao/embarcacoes'
     | '/app/producao/materiais'
     | '/app/producao/ordens'
@@ -566,6 +602,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoEmbarcacoesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/producao/criar-ordem': {
+      id: '/app/producao/criar-ordem'
+      path: '/producao/criar-ordem'
+      fullPath: '/app/producao/criar-ordem'
+      preLoaderRoute: typeof AppProducaoCriarOrdemRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/producao/criar-halb': {
+      id: '/app/producao/criar-halb'
+      path: '/producao/criar-halb'
+      fullPath: '/app/producao/criar-halb'
+      preLoaderRoute: typeof AppProducaoCriarHalbRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/producao/criar-fert': {
+      id: '/app/producao/criar-fert'
+      path: '/producao/criar-fert'
+      fullPath: '/app/producao/criar-fert'
+      preLoaderRoute: typeof AppProducaoCriarFertRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/estoque/sesmt': {
       id: '/app/estoque/sesmt'
       path: '/estoque/sesmt'
@@ -658,6 +715,9 @@ interface AppRouteChildren {
   AppDdsTemasRoute: typeof AppDdsTemasRoute
   AppEstoqueEpiRoute: typeof AppEstoqueEpiRoute
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
+  AppProducaoCriarFertRoute: typeof AppProducaoCriarFertRoute
+  AppProducaoCriarHalbRoute: typeof AppProducaoCriarHalbRoute
+  AppProducaoCriarOrdemRoute: typeof AppProducaoCriarOrdemRoute
   AppProducaoEmbarcacoesRoute: typeof AppProducaoEmbarcacoesRoute
   AppProducaoMateriaisRoute: typeof AppProducaoMateriaisRoute
   AppProducaoOrdensRoute: typeof AppProducaoOrdensRoute
@@ -686,6 +746,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppDdsTemasRoute: AppDdsTemasRoute,
   AppEstoqueEpiRoute: AppEstoqueEpiRoute,
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
+  AppProducaoCriarFertRoute: AppProducaoCriarFertRoute,
+  AppProducaoCriarHalbRoute: AppProducaoCriarHalbRoute,
+  AppProducaoCriarOrdemRoute: AppProducaoCriarOrdemRoute,
   AppProducaoEmbarcacoesRoute: AppProducaoEmbarcacoesRoute,
   AppProducaoMateriaisRoute: AppProducaoMateriaisRoute,
   AppProducaoOrdensRoute: AppProducaoOrdensRoute,
