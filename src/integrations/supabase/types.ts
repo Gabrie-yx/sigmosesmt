@@ -86,6 +86,7 @@ export type Database = {
           nivel_risco: number | null
           nrs: string[]
           ordem: number
+          passo_a_passo: string | null
           probabilidade: number
           responsavel_acoes: string | null
           risco_categoria: string | null
@@ -103,6 +104,7 @@ export type Database = {
           nivel_risco?: number | null
           nrs?: string[]
           ordem?: number
+          passo_a_passo?: string | null
           probabilidade?: number
           responsavel_acoes?: string | null
           risco_categoria?: string | null
@@ -120,6 +122,7 @@ export type Database = {
           nivel_risco?: number | null
           nrs?: string[]
           ordem?: number
+          passo_a_passo?: string | null
           probabilidade?: number
           responsavel_acoes?: string | null
           risco_categoria?: string | null
@@ -152,6 +155,7 @@ export type Database = {
           created_by: string | null
           data_emissao: string
           data_validade: string | null
+          dias_semana: string[] | null
           empresa_id: string | null
           encarregado_id: string | null
           exige_pte: boolean
@@ -180,6 +184,7 @@ export type Database = {
           created_by?: string | null
           data_emissao?: string
           data_validade?: string | null
+          dias_semana?: string[] | null
           empresa_id?: string | null
           encarregado_id?: string | null
           exige_pte?: boolean
@@ -208,6 +213,7 @@ export type Database = {
           created_by?: string | null
           data_emissao?: string
           data_validade?: string | null
+          dias_semana?: string[] | null
           empresa_id?: string | null
           encarregado_id?: string | null
           exige_pte?: boolean
@@ -2017,6 +2023,7 @@ export type Database = {
       is_moderator: { Args: { _user_id: string }; Returns: boolean }
       is_viewer_or_above: { Args: { _user_id: string }; Returns: boolean }
       mfa_ok: { Args: never; Returns: boolean }
+      peek_proximo_numero_apr: { Args: never; Returns: string }
       registrar_entrega_epi: {
         Args: { _cpf: string; _epi_id: string; _nome: string; _qtd: number }
         Returns: string
