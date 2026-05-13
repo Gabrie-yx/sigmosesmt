@@ -84,11 +84,6 @@ const OTHER_MODULES = [
 
 const PRODUCAO_SUBMENU = [
   { to: "/app/producao/criar-ordem", label: "Criar Nova Ordem" },
-  { to: "/app/producao/criar-halb", label: "Criar HALB (Semiacabado)" },
-  { to: "/app/producao/criar-fert", label: "Criar FERT (Produto Acabado)" },
-  { to: "/app/producao/materiais", label: "Catálogo de Materiais (HALB/FERT)" },
-  { to: "/app/producao/embarcacoes", label: "Embarcações da Produção" },
-  { to: "/app/producao/ordens", label: "Ordens de Produção" },
 ] as const;
 
 const MANUTENCAO_SUBMENU = [
@@ -373,7 +368,7 @@ export function AppHeader() {
         <button
           type="button"
           aria-haspopup="true"
-          onClick={() => navigate({ to: "/app/producao/ordens" })}
+          onClick={() => navigate({ to: "/app/producao/criar-ordem" })}
           className={triggerCls(isActive("/app/producao"))}
         >
           <Factory className="h-4 w-4" /> Produção
