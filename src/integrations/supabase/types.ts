@@ -1452,21 +1452,27 @@ export type Database = {
         Row: {
           ativo: boolean
           created_at: string
+          grupo_mercadorias: string | null
           id: string
+          ncm: string | null
           nome: string
           updated_at: string
         }
         Insert: {
           ativo?: boolean
           created_at?: string
+          grupo_mercadorias?: string | null
           id?: string
+          ncm?: string | null
           nome: string
           updated_at?: string
         }
         Update: {
           ativo?: boolean
           created_at?: string
+          grupo_mercadorias?: string | null
           id?: string
+          ncm?: string | null
           nome?: string
           updated_at?: string
         }
