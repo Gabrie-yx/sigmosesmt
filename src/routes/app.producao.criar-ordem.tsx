@@ -347,80 +347,135 @@ function CriarOrdemPage() {
           </p>
         </div>
 
-        {/* Faixa SOLICITAÇÃO + grid de itens */}
+        {/* Faixa SOLICITAÇÃO + cartões de itens (formulário vertical) */}
         <div className="bg-slate-100 px-5 py-2 border-b text-center text-xs font-black uppercase tracking-widest text-slate-700">
           Solicitação
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-[11px] border-collapse min-w-[1600px]">
-            <thead>
-              <tr className="bg-amber-50 text-slate-800">
-                <Th>ITEM</Th>
-                <Th>DATA SOLIC.</Th>
-                <Th className="min-w-[220px]">DESCRIÇÃO DO MATERIAL</Th>
-                <Th>UMB</Th>
-                <Th>GRUPO COMPRAD.</Th>
-                <Th>NCM</Th>
-                <Th>CENTRO</Th>
-                <Th>DEPÓSITO</Th>
-                <Th>GRUPO MERCAD.</Th>
-                <Th>SETOR ATIV.</Th>
-                <Th>GRUPO CATEG ITEM</Th>
-                <Th>CLASSE AVAL.</Th>
-                <Th>DETERM. PREÇO</Th>
-                <Th>CONTR. PREÇO</Th>
-                <Th>ORIGEM</Th>
-                <Th>UTILIZAÇÃO</Th>
-                <Th>CÓDIGO SAP</Th>
-                <Th>OCORRÊNCIA</Th>
-                <Th></Th>
-              </tr>
-            </thead>
-            <tbody>
-              {itens.map((row, idx) => (
-                <tr key={idx} className="border-b border-slate-200">
-                  <Td className="text-center font-bold w-12 bg-slate-50">{row.item}</Td>
-                  <Td><CellInput type="date" value={row.data_solicitacao} onChange={(v) => updateRow(idx, { data_solicitacao: v })} /></Td>
-                  <Td><CellInput value={row.descricao_material} onChange={(v) => updateRow(idx, { descricao_material: v })} placeholder="ex: AMAZON AGRO 1 - CASCO 130" /></Td>
-                  <Td><CellInput value={row.unidade_medida} onChange={(v) => updateRow(idx, { unidade_medida: v })} className="w-14" /></Td>
-                  <Td><CellInput value={row.grupo_compradores} onChange={(v) => updateRow(idx, { grupo_compradores: v })} className="w-24" /></Td>
-                  <Td><CellInput value={row.ncm} onChange={(v) => updateRow(idx, { ncm: v })} className="w-24" /></Td>
-                  <Td><CellInput value={row.centro} onChange={(v) => updateRow(idx, { centro: v })} className="w-16" /></Td>
-                  <Td><CellInput value={row.deposito} onChange={(v) => updateRow(idx, { deposito: v })} className="w-16" /></Td>
-                  <Td><CellInput value={row.grupo_mercadorias} onChange={(v) => updateRow(idx, { grupo_mercadorias: v })} className="w-20" /></Td>
-                  <Td><CellInput value={row.setor_atividade} onChange={(v) => updateRow(idx, { setor_atividade: v })} className="w-14" /></Td>
-                  <Td><CellInput value={row.grupo_categ_item_ger} onChange={(v) => updateRow(idx, { grupo_categ_item_ger: v })} className="w-16" /></Td>
-                  <Td><CellInput value={row.classe_avaliacao} onChange={(v) => updateRow(idx, { classe_avaliacao: v })} className="w-16" /></Td>
-                  <Td><CellInput value={row.determ_preco} onChange={(v) => updateRow(idx, { determ_preco: v })} className="w-14" /></Td>
-                  <Td><CellInput value={row.controle_preco} onChange={(v) => updateRow(idx, { controle_preco: v })} className="w-12" /></Td>
-                  <Td>
-                    <select
-                      value={row.origem_material}
-                      onChange={(e) => updateRow(idx, { origem_material: e.target.value })}
-                      className="h-7 w-24 rounded border border-slate-300 bg-white px-1 text-[11px] text-red-600 font-bold"
-                    >
-                      <option value="NACIONAL">NACIONAL</option>
-                      <option value="IMPORTADO">IMPORTADO</option>
-                    </select>
-                  </Td>
-                  <Td><CellInput value={row.utilizacao_material} onChange={(v) => updateRow(idx, { utilizacao_material: v })} className="w-36" /></Td>
-                  <Td><CellInput value={row.codigo_sap} onChange={(v) => updateRow(idx, { codigo_sap: v })} className="w-24 font-mono" /></Td>
-                  <Td><CellInput value={row.ocorrencia} onChange={(v) => updateRow(idx, { ocorrencia: v })} className="w-32" /></Td>
-                  <Td className="w-10">
-                    <button
-                      type="button"
-                      onClick={() => removeRow(idx)}
-                      className="text-red-600 hover:text-red-800 disabled:opacity-30"
-                      title="Remover item"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="px-5 py-4 space-y-4 bg-slate-50/60">
+          {itens.length === 0 && (
+            <div className="text-center py-10 text-sm text-muted-foreground border-2 border-dashed rounded-lg bg-white">
+              Nenhum item ainda. Use o <span className="font-semibold text-amber-700">Gerador de Itens</span> acima
+              ou clique em <span className="font-semibold">Adicionar Item</span> abaixo.
+            </div>
+          )}
+
+          {itens.map((row, idx) => (
+            <div key={idx} className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              {/* Cabeçalho do item */}
+              <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 border-b">
+                <div className="flex items-center gap-3">
+                  <span className="h-7 w-7 rounded-lg bg-amber-600 text-white text-xs font-black flex items-center justify-center">
+                    {row.item}
+                  </span>
+                  <span className="text-sm font-bold text-slate-800">
+                    {row.descricao_material || "Novo item"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeRow(idx)}
+                  className="text-red-600 hover:bg-red-50 rounded-md p-1.5"
+                  title="Remover item"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-5">
+                {/* Seção: Identificação */}
+                <Section title="Identificação">
+                  <Field label="Item" className="md:col-span-1">
+                    <Input value={String(row.item)} readOnly className="bg-slate-50 font-mono text-center" />
+                  </Field>
+                  <Field label="Data de Solicitação" className="md:col-span-3">
+                    <Input type="date" value={row.data_solicitacao} onChange={(e) => updateRow(idx, { data_solicitacao: e.target.value })} />
+                  </Field>
+                  <Field label="Descrição do Material *" className="md:col-span-8">
+                    <Input
+                      value={row.descricao_material}
+                      onChange={(e) => updateRow(idx, { descricao_material: e.target.value })}
+                      placeholder="ex: AMAZON AGRO - CASCO 141"
+                      className="font-semibold"
+                    />
+                  </Field>
+                </Section>
+
+                {/* Seção: Cadastro Básico */}
+                <Section title="Cadastro Básico">
+                  <Field label="Unidade de Medida" className="md:col-span-2">
+                    <Input value={row.unidade_medida} onChange={(e) => updateRow(idx, { unidade_medida: e.target.value })} />
+                  </Field>
+                  <Field label="Grupo de Compradores" className="md:col-span-3">
+                    <Input value={row.grupo_compradores} onChange={(e) => updateRow(idx, { grupo_compradores: e.target.value })} />
+                  </Field>
+                  <Field label="NCM" className="md:col-span-3">
+                    <Input value={row.ncm} onChange={(e) => updateRow(idx, { ncm: e.target.value })} className="font-mono" />
+                  </Field>
+                  <Field label="Grupo de Mercadorias" className="md:col-span-4">
+                    <Input value={row.grupo_mercadorias} onChange={(e) => updateRow(idx, { grupo_mercadorias: e.target.value })} />
+                  </Field>
+                </Section>
+
+                {/* Seção: Centro / Depósito */}
+                <Section title="Centro & Depósito">
+                  <Field label="Centro" className="md:col-span-3">
+                    <Input value={row.centro} onChange={(e) => updateRow(idx, { centro: e.target.value })} />
+                  </Field>
+                  <Field label="Depósito" className="md:col-span-3">
+                    <Input value={row.deposito} onChange={(e) => updateRow(idx, { deposito: e.target.value })} />
+                  </Field>
+                  <Field label="Setor de Atividade" className="md:col-span-3">
+                    <Input value={row.setor_atividade} onChange={(e) => updateRow(idx, { setor_atividade: e.target.value })} />
+                  </Field>
+                  <Field label="Grupo Categ. Item Geral" className="md:col-span-3">
+                    <Input value={row.grupo_categ_item_ger} onChange={(e) => updateRow(idx, { grupo_categ_item_ger: e.target.value })} />
+                  </Field>
+                </Section>
+
+                {/* Seção: Avaliação & Preço */}
+                <Section title="Avaliação & Preço">
+                  <Field label="Classe de Avaliação" className="md:col-span-3">
+                    <Input value={row.classe_avaliacao} onChange={(e) => updateRow(idx, { classe_avaliacao: e.target.value })} />
+                  </Field>
+                  <Field label="Determ. Preço" className="md:col-span-3">
+                    <Input value={row.determ_preco} onChange={(e) => updateRow(idx, { determ_preco: e.target.value })} />
+                  </Field>
+                  <Field label="Controle de Preço" className="md:col-span-3">
+                    <Select value={row.controle_preco} onValueChange={(v) => updateRow(idx, { controle_preco: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="S">S — Standard</SelectItem>
+                        <SelectItem value="V">V — Variável</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Origem do Material" className="md:col-span-3">
+                    <Select value={row.origem_material} onValueChange={(v) => updateRow(idx, { origem_material: v })}>
+                      <SelectTrigger className="text-red-600 font-bold"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NACIONAL">NACIONAL</SelectItem>
+                        <SelectItem value="IMPORTADO">IMPORTADO</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </Section>
+
+                {/* Seção: Códigos & Utilização */}
+                <Section title="Utilização & Códigos">
+                  <Field label="Utilização do Material" className="md:col-span-5">
+                    <Input value={row.utilizacao_material} onChange={(e) => updateRow(idx, { utilizacao_material: e.target.value })} />
+                  </Field>
+                  <Field label="Código SAP" className="md:col-span-3">
+                    <Input value={row.codigo_sap} onChange={(e) => updateRow(idx, { codigo_sap: e.target.value })} className="font-mono" placeholder="—" />
+                  </Field>
+                  <Field label="Ocorrência" className="md:col-span-4">
+                    <Input value={row.ocorrencia} onChange={(e) => updateRow(idx, { ocorrencia: e.target.value })} placeholder="—" />
+                  </Field>
+                </Section>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="px-5 py-3 border-t bg-slate-50 flex items-center justify-between">
@@ -471,34 +526,15 @@ function Field({
   );
 }
 
-function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <th className={`border border-slate-300 px-2 py-2 text-[10px] font-black uppercase tracking-wide ${className ?? ""}`}>
-      {children}
-    </th>
-  );
-}
-
-function Td({ children, className }: { children?: React.ReactNode; className?: string }) {
-  return <td className={`border border-slate-200 px-1 py-1 align-middle ${className ?? ""}`}>{children}</td>;
-}
-
-function CellInput({
-  value, onChange, placeholder, className, type,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  className?: string;
-  type?: string;
-}) {
-  return (
-    <input
-      type={type ?? "text"}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className={`h-7 w-full rounded border border-slate-300 bg-white px-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-amber-500 ${className ?? ""}`}
-    />
+    <div className="space-y-2">
+      <div className="text-[10px] font-black uppercase tracking-widest text-amber-700 border-b border-amber-200 pb-1">
+        {title}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+        {children}
+      </div>
+    </div>
   );
 }
