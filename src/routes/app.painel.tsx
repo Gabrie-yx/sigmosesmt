@@ -13,11 +13,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   AreaChart, Area, PieChart, Pie, Cell, Legend,
 } from "recharts";
-import RGL from "react-grid-layout";
-
-// react-grid-layout types are inconsistent across versions — use loose typing
-const RGLAny = RGL as any;
-const ResponsiveGridLayout: any = RGLAny.WidthProvider(RGLAny);
+// react-grid-layout touches `window` at import — load it client-only via lazy state
 type Layout = { i: string; x: number; y: number; w: number; h: number; minH?: number; minW?: number };
 
 export const Route = createFileRoute("/app/painel")({
@@ -67,6 +63,17 @@ function TstPanel() {
   const [layout, setLayout] = useState<Layout[]>(() => loadLayout());
   const [locked, setLocked] = useState(false);
   const initial = useRef(true);
+  const [Grid, setGrid] = useState<any>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    import("react-grid-layout").then((mod) => {
+      const RGL: any = (mod as any).default ?? mod;
+      const WidthProvider: any = (mod as any).WidthProvider ?? RGL.WidthProvider;
+      if (mounted) setGrid(() => WidthProvider(RGL));
+    });
+    return () => { mounted = false; };
+  }, []);
 
   useEffect(() => {
     if (initial.current) { initial.current = false; return; }
@@ -527,7 +534,8 @@ function TstPanel() {
         </div>
       </div>
 
-      <ResponsiveGridLayout
+      {Grid ? (
+      <Grid
         className="layout"
         layout={layout}
         cols={12}
@@ -560,7 +568,10 @@ function TstPanel() {
             </div>
           );
         })}
-      </ResponsiveGridLayout>
+      </Grid>
+      ) : (
+        <div className="text-center text-xs text-slate-400 py-8">Carregando layout…</div>
+      )}
     </div>
   );
 }
