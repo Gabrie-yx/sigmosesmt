@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Save, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf";
-import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-pdf";
+import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 import { formatDateBR } from "@/lib/utils-date";
 
 /* ---------- tipos ---------- */
