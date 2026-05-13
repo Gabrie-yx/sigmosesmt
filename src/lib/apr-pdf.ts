@@ -431,14 +431,15 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
 
 function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
   doc.addPage();
-  drawHeader(doc, p, doc.getCurrentPageInfo().pageNumber, doc.getNumberOfPages());
-  drawFooter(doc);
+  const drawAnexoChrome = () => {
+    drawHeader(doc, p, doc.getCurrentPageInfo().pageNumber, doc.getNumberOfPages());
+    drawFooter(doc);
+    doc.setFont("helvetica", "bold").setFontSize(13).setTextColor(0, 0, 0);
+    doc.text("ANEXO I – ASSINATURA DOS EXECUTANTES DO SERVIÇO", PAGE_W / 2, MARGIN + 22, { align: "center" });
+  };
+  drawAnexoChrome();
 
-  let y = MARGIN + 22;
-  doc.setFont("helvetica", "bold").setFontSize(13);
-  doc.text("ANEXO I – ASSINATURA DOS EXECUTANTES DO SERVIÇO", PAGE_W / 2, y, { align: "center" });
-  y += 4;
-
+  const y = MARGIN + 26;
   const exec = p.assinaturas.filter((a) => a.papel === "EXECUTANTE");
   // Garante mínimo de 18 linhas (linhas mais estreitas, melhor uso da página)
   const totalLinhas = Math.max(18, exec.length);
@@ -454,7 +455,7 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
 
   autoTable(doc, {
     startY: y + 2,
-    margin: { left: MARGIN, right: MARGIN, top: MARGIN + 22 },
+    margin: { left: MARGIN, right: MARGIN, top: MARGIN + 26 },
     head: [["Nº", "NOME", "ASSINATURA"]],
     body,
     theme: "grid",
@@ -465,10 +466,7 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
       1: { cellWidth: 130 },
       2: { cellWidth: "auto" },
     },
-    didDrawPage: () => {
-      drawHeader(doc, p, doc.getCurrentPageInfo().pageNumber, doc.getNumberOfPages());
-      drawFooter(doc);
-    },
+    didDrawPage: () => { drawAnexoChrome(); },
   });
 }
 
