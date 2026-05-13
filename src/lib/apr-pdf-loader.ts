@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf";
 import { formatDateBR } from "@/lib/utils-date";
+import dmnLogo from "@/assets/dmn-logo.png";
 
 export async function buildAprPdf(aprId: string) {
   const [{ data: a }, { data: rs }, { data: ass }] = await Promise.all([
@@ -25,6 +26,7 @@ export async function buildAprPdf(aprId: string) {
   const pte: any = pteQ.data;
 
   return gerarAPR({
+    logoUrl: dmnLogo,
     matrizNome: "J C S CONSTRUÇÃO NAVAL LTDA",
     matrizCnpj: "13.378.697/0001-80",
     numero: apr.numero ?? "APR-RASCUNHO",
@@ -35,6 +37,8 @@ export async function buildAprPdf(aprId: string) {
     hora_fim: apr.hora_fim,
     hora_inicio_sexta: apr.hora_inicio_sexta,
     hora_fim_sexta: apr.hora_fim_sexta,
+    dias_semana: apr.dias_semana ?? null,
+    validade_dias: apr.validade_dias ?? null,
     data_validade: apr.data_validade ? formatDateBR(apr.data_validade) : null,
     empresa_nome: empresa?.name ?? null,
     empresa_cnpj: empresa?.cnpj ?? null,
@@ -53,6 +57,7 @@ export async function buildAprPdf(aprId: string) {
     texto_gerais: apr.texto_gerais ?? null,
     riscos: (rs ?? []).map((r: any) => ({
       ordem: r.ordem,
+      passo: r.passo_a_passo ?? null,
       risco_nome: r.risco_nome,
       risco_categoria: r.risco_categoria,
       efeitos_danos: r.efeitos_danos,
