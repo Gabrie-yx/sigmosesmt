@@ -1438,6 +1438,7 @@ export type Database = {
       }
       ptes: {
         Row: {
+          apr_id: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
@@ -1454,6 +1455,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          apr_id?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1470,6 +1472,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          apr_id?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
