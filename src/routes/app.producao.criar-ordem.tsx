@@ -610,6 +610,29 @@ function CriarOrdemPage() {
             </Button>
           </div>
         );
+      case "select-classe":
+        return (
+          <div className="flex gap-2" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="flex-1">
+              <Select value={v} onValueChange={(val) => setVal(f.key, val)}>
+                <SelectTrigger><SelectValue placeholder="Classe…" /></SelectTrigger>
+                <SelectContent>
+                  {classes.map((c: any) => (
+                    <SelectItem key={c.id} value={c.codigo}>
+                      {c.codigo}{c.descricao ? ` — ${c.descricao}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button type="button" variant="outline" size="icon"
+              className="shrink-0"
+              onClick={() => setClDialogOpen(true)}
+              title="Adicionar nova classe">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        );
       default:
         return (
           <Input value={v}
