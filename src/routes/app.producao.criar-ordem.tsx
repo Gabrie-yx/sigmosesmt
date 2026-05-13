@@ -547,11 +547,11 @@ function CriarOrdemPage() {
           <div onMouseDown={(e) => e.stopPropagation()} className="space-y-1">
             <Input
               value={v}
-              onChange={(e) => setVal(f.key, e.target.value)}
-              className="font-bold text-amber-700"
+              readOnly
+              className="font-bold text-amber-700 bg-amber-50 cursor-not-allowed"
             />
             <p className="text-[10px] text-muted-foreground">
-              Sequencial automático — próximo: <span className="font-bold text-amber-700">{proximoCascoLabel}</span>
+              Gerado automaticamente — próximo: <span className="font-bold text-amber-700">{proximoCascoLabel}</span>
             </p>
           </div>
         );
