@@ -534,7 +534,8 @@ function TstPanel() {
         </div>
       </div>
 
-      <ResponsiveGridLayout
+      {Grid ? (
+      <Grid
         className="layout"
         layout={layout}
         cols={12}
@@ -567,7 +568,10 @@ function TstPanel() {
             </div>
           );
         })}
-      </ResponsiveGridLayout>
+      </Grid>
+      ) : (
+        <div className="text-center text-xs text-slate-400 py-8">Carregando layout…</div>
+      )}
     </div>
   );
 }
