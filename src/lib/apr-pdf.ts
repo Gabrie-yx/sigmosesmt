@@ -447,13 +447,12 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
 
 function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
   doc.addPage();
-  const drawAnexoChrome = () => {
-    drawHeader(doc, p, doc.getCurrentPageInfo().pageNumber, doc.getNumberOfPages());
-    drawFooter(doc);
+  const chrome = () => {
+    drawFullChrome(doc, p);
     doc.setFont("helvetica", "bold").setFontSize(13).setTextColor(0, 0, 0);
-    doc.text("ANEXO I – ASSINATURA DOS EXECUTANTES DO SERVIÇO", PAGE_W / 2, MARGIN + 22, { align: "center" });
+    doc.text("ANEXO I – ASSINATURA DOS EXECUTANTES DO SERVIÇO", PAGE_W / 2, CONTENT_TOP + 3, { align: "center" });
   };
-  drawAnexoChrome();
+  chrome();
 
   const exec = p.assinaturas.filter((a) => a.papel === "EXECUTANTE");
   // Garante mínimo de 25 linhas (linhas estreitas para máximo aproveitamento)
@@ -469,8 +468,8 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
   }
 
   autoTable(doc, {
-    startY: MARGIN + 28,
-    margin: { left: MARGIN, right: MARGIN, top: MARGIN + 26 },
+    startY: CONTENT_TOP + 7,
+    margin: { left: MARGIN, right: MARGIN, top: CONTENT_TOP + 7 },
     head: [["Nº", "NOME", "ASSINATURA"]],
     body,
     theme: "grid",
@@ -481,7 +480,7 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
       1: { cellWidth: 130 },
       2: { cellWidth: "auto" },
     },
-    didDrawPage: () => { drawAnexoChrome(); },
+    didDrawPage: () => { chrome(); },
   });
 }
 
@@ -509,10 +508,8 @@ export async function gerarAPR(p: APRPdfParams): Promise<jsPDF> {
   }
 
   // Página(s) 1..N: cabeçalho + identificação + tabela de riscos
-  drawHeader(doc, p, 1, 1); // total ajustado depois
-  drawFooter(doc);
-  const yAfterId = drawIdBlock(doc, p, MARGIN + 20);
-  drawRiscosTable(doc, p, yAfterId);
+  drawFullChrome(doc, p);
+  drawRiscosTable(doc, p, CONTENT_TOP);
 
   // Página GERAIS
   drawGeraisPage(doc, p);
@@ -527,9 +524,10 @@ export async function gerarAPR(p: APRPdfParams): Promise<jsPDF> {
   const total = doc.getNumberOfPages();
   for (let i = 1; i <= total; i++) {
     doc.setPage(i);
-    // Limpa área do cabeçalho (cobre com branco) e redesenha com paginação correta
+    // Atualiza apenas o número da página (canto sup. direito) com o total correto
     doc.setFillColor(255, 255, 255);
-    doc.rect(MARGIN, MARGIN, CONTENT_W, 18, "F");
+    const cMeta = 50;
+    doc.rect(MARGIN + CONTENT_W - cMeta, MARGIN, cMeta, 18, "F");
     drawHeader(doc, p, i, total);
   }
 
