@@ -15,6 +15,7 @@ import { formatDateBR } from "@/lib/utils-date";
 import { AprForm } from "@/components/aprs/apr-form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { abrirAprPdf, imprimirAprPdf, baixarAprPdf } from "@/lib/apr-pdf-loader";
+import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 
 export const Route = createFileRoute("/app/aprs")({
   component: AprsPage,
@@ -25,6 +26,20 @@ const STATUS_TONE: Record<string, string> = {
   ATIVA: "bg-emerald-100 text-emerald-700 border-emerald-200",
   ENCERRADA: "bg-slate-100 text-slate-600",
   CANCELADA: "bg-rose-100 text-rose-700",
+};
+
+const newAprDraft = {
+  atividade_descricao: "",
+  data_emissao: new Date().toISOString().slice(0, 10),
+  validade_dias: 7,
+  status: "RASCUNHO",
+  exige_pte: false,
+  texto_gerais: DEFAULT_TEXTO_GERAIS,
+  hora_inicio: "07:30",
+  hora_fim: "17:30",
+  hora_inicio_sexta: "07:30",
+  hora_fim_sexta: "16:30",
+  dias_semana: ["SEG", "TER", "QUA", "QUI", "SEX"],
 };
 
 function AprsPage() {
