@@ -553,15 +553,10 @@ function TstPanel() {
         className="layout"
         layout={layout}
         width={gridWidth}
-        cols={12}
-        rowHeight={40}
-        margin={[12, 12]}
-        containerPadding={[0, 0]}
+        gridConfig={{ cols: 12, rowHeight: 40, margin: [12, 12], containerPadding: [0, 0] }}
         onLayoutChange={(l: Layout[]) => setLayout(l)}
-        draggableHandle=".widget-drag-handle"
-        isDraggable={!locked}
-        isResizable={!locked}
-        compactType="vertical"
+        dragConfig={{ enabled: !locked, handle: ".widget-drag-handle" }}
+        resizeConfig={{ enabled: !locked }}
       >
         {layout.map((l) => {
           const w = widgets[l.i];
