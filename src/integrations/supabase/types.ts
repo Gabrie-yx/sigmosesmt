@@ -1478,29 +1478,38 @@ export type Database = {
       producao_tipos_produto: {
         Row: {
           ativo: boolean
+          classe_avaliacao: string | null
           created_at: string
           grupo_mercadorias: string | null
           id: string
+          mtart: string | null
           ncm: string | null
           nome: string
+          tipo_embarcacao: string | null
           updated_at: string
         }
         Insert: {
           ativo?: boolean
+          classe_avaliacao?: string | null
           created_at?: string
           grupo_mercadorias?: string | null
           id?: string
+          mtart?: string | null
           ncm?: string | null
           nome: string
+          tipo_embarcacao?: string | null
           updated_at?: string
         }
         Update: {
           ativo?: boolean
+          classe_avaliacao?: string | null
           created_at?: string
           grupo_mercadorias?: string | null
           id?: string
+          mtart?: string | null
           ncm?: string | null
           nome?: string
+          tipo_embarcacao?: string | null
           updated_at?: string
         }
         Relationships: []

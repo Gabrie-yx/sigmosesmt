@@ -231,7 +231,9 @@ function CriarOrdemPage() {
     queryKey: ["producao-tipos"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("producao_tipos_produto").select("id, nome, ncm, grupo_mercadorias").eq("ativo", true).order("nome");
+        .from("producao_tipos_produto")
+        .select("id, nome, ncm, grupo_mercadorias, classe_avaliacao, mtart, tipo_embarcacao")
+        .eq("ativo", true).order("nome");
       if (error) throw error;
       return data ?? [];
     },
@@ -332,6 +334,7 @@ function CriarOrdemPage() {
     const sel = (tipos as any[]).find((t) => t.nome === values.tipo_produto);
     let ncm = sel?.ncm ?? "";
     const grupoMerc = sel?.grupo_mercadorias ?? "";
+    const classeAval = sel?.classe_avaliacao ?? "";
     if (!ncm) {
       if (tipo.includes("EMPURRADOR")) ncm = NCM_POR_TIPO.EMPURRADOR;
       else if (tipo.includes("BALSA")) ncm = NCM_POR_TIPO.BALSA;
@@ -343,6 +346,7 @@ function CriarOrdemPage() {
       let changed = false;
       if (ncm && v.ncm !== ncm) { next.ncm = ncm; changed = true; }
       if (grupoMerc && v.grupo_mercadorias !== grupoMerc) { next.grupo_mercadorias = grupoMerc; changed = true; }
+      if (classeAval && v.classe_avaliacao !== classeAval) { next.classe_avaliacao = classeAval; changed = true; }
       return changed ? next : v;
     });
   }, [values.tipo_produto, tipos]);

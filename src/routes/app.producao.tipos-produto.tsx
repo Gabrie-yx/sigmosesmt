@@ -18,6 +18,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2, Plus, Tags } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/app/producao/tipos-produto")({
   component: TiposProdutoPage,
@@ -28,6 +31,9 @@ type Tipo = {
   nome: string;
   ncm: string | null;
   grupo_mercadorias: string | null;
+  classe_avaliacao: string | null;
+  mtart: string | null;
+  tipo_embarcacao: string | null;
   ativo: boolean;
 };
 
@@ -42,7 +48,7 @@ function TiposProdutoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("producao_tipos_produto")
-        .select("id, nome, ncm, grupo_mercadorias, ativo")
+        .select("id, nome, ncm, grupo_mercadorias, classe_avaliacao, mtart, tipo_embarcacao, ativo")
         .order("nome");
       if (error) throw error;
       return (data ?? []) as Tipo[];
@@ -54,6 +60,16 @@ function TiposProdutoPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("producao_grupo_mercadorias")
+        .select("codigo, descricao").eq("ativo", true).order("codigo");
+      return data ?? [];
+    },
+  });
+
+  const { data: classes = [] } = useQuery({
+    queryKey: ["producao-classes-admin"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("producao_classes_avaliacao")
         .select("codigo, descricao").eq("ativo", true).order("codigo");
       return data ?? [];
     },
@@ -74,7 +90,7 @@ function TiposProdutoPage() {
   });
 
   function novo() {
-    setEditing({ id: "", nome: "", ncm: "", grupo_mercadorias: "", ativo: true });
+    setEditing({ id: "", nome: "", ncm: "", grupo_mercadorias: "", classe_avaliacao: "", mtart: "FERT", tipo_embarcacao: "", ativo: true });
     setOpen(true);
   }
   function editar(t: Tipo) {
@@ -109,24 +125,30 @@ function TiposProdutoPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
+              <TableHead>MTART</TableHead>
+              <TableHead>Tipo Embarc.</TableHead>
               <TableHead>NCM</TableHead>
               <TableHead>Grupo de Mercadorias</TableHead>
+              <TableHead>Classe Aval.</TableHead>
               <TableHead className="w-24">Status</TableHead>
               <TableHead className="w-32 text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-6 text-muted-foreground">Carregando…</TableCell></TableRow>
             )}
             {!isLoading && tipos.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">Nenhum tipo cadastrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-6 text-muted-foreground">Nenhum tipo cadastrado</TableCell></TableRow>
             )}
             {tipos.map((t) => (
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.nome}</TableCell>
+                <TableCell>{t.mtart || <span className="text-muted-foreground">—</span>}</TableCell>
+                <TableCell>{t.tipo_embarcacao || <span className="text-muted-foreground">—</span>}</TableCell>
                 <TableCell>{t.ncm || <span className="text-muted-foreground">—</span>}</TableCell>
                 <TableCell>{t.grupo_mercadorias || <span className="text-muted-foreground">—</span>}</TableCell>
+                <TableCell>{t.classe_avaliacao || <span className="text-muted-foreground">—</span>}</TableCell>
                 <TableCell>{t.ativo ? "Ativo" : "Inativo"}</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => editar(t)} title="Editar">
@@ -146,6 +168,7 @@ function TiposProdutoPage() {
         open={open}
         tipo={editing}
         gruposMerc={gruposMerc as any[]}
+        classes={classes as any[]}
         onClose={() => { setOpen(false); setEditing(null); }}
         onSaved={() => {
           qc.invalidateQueries({ queryKey: ["producao-tipos-admin"] });
@@ -176,17 +199,21 @@ function TiposProdutoPage() {
 }
 
 function TipoDialog({
-  open, tipo, gruposMerc, onClose, onSaved,
+  open, tipo, gruposMerc, classes, onClose, onSaved,
 }: {
   open: boolean;
   tipo: Tipo | null;
   gruposMerc: { codigo: string; descricao: string | null }[];
+  classes: { codigo: string; descricao: string | null }[];
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [nome, setNome] = useState("");
   const [ncm, setNcm] = useState("");
   const [grupo, setGrupo] = useState("");
+  const [classe, setClasse] = useState("");
+  const [mtart, setMtart] = useState<string>("FERT");
+  const [tipoEmb, setTipoEmb] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -195,6 +222,9 @@ function TipoDialog({
     setNome(tipo?.nome ?? "");
     setNcm(tipo?.ncm ?? "");
     setGrupo(tipo?.grupo_mercadorias ?? "");
+    setClasse(tipo?.classe_avaliacao ?? "");
+    setMtart(tipo?.mtart ?? "FERT");
+    setTipoEmb(tipo?.tipo_embarcacao ?? "");
     setAtivo(tipo?.ativo ?? true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, tipo?.id]);
@@ -207,6 +237,9 @@ function TipoDialog({
         nome: nome.trim(),
         ncm: ncm.trim() || null,
         grupo_mercadorias: grupo.trim() || null,
+        classe_avaliacao: classe.trim() || null,
+        mtart: mtart || null,
+        tipo_embarcacao: tipoEmb.trim() || null,
         ativo,
       };
       if (tipo?.id) {
@@ -237,6 +270,30 @@ function TipoDialog({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
+              <Label>MTART (Tipo de Material SAP)</Label>
+              <Select value={mtart} onValueChange={setMtart}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="HALB">HALB — Semi-acabado (Casco em construção)</SelectItem>
+                  <SelectItem value="FERT">FERT — Produto Acabado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Tipo de Embarcação</Label>
+              <Select value={tipoEmb || undefined} onValueChange={setTipoEmb}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="EMPURRADOR">Empurrador</SelectItem>
+                  <SelectItem value="BALSA">Balsa</SelectItem>
+                  <SelectItem value="ESTRUTURA FLUTUANTE">Estrutura Flutuante</SelectItem>
+                  <SelectItem value="EMBARCACAO">Embarcação</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
               <Label>NCM padrão</Label>
               <Input value={ncm} onChange={(e) => setNcm(e.target.value)} placeholder="Ex: 89011000" />
             </div>
@@ -245,7 +302,7 @@ function TipoDialog({
               <Input
                 value={grupo}
                 onChange={(e) => setGrupo(e.target.value)}
-                placeholder="Ex: NAVAL01"
+                placeholder="Ex: AT0023"
                 list="grupos-merc-list"
               />
               <datalist id="grupos-merc-list">
@@ -256,6 +313,22 @@ function TipoDialog({
                 ))}
               </datalist>
             </div>
+          </div>
+          <div>
+            <Label>Classe de Avaliação padrão</Label>
+            <Input
+              value={classe}
+              onChange={(e) => setClasse(e.target.value)}
+              placeholder="Ex: 7921"
+              list="classes-aval-list"
+            />
+            <datalist id="classes-aval-list">
+              {classes.map((c) => (
+                <option key={c.codigo} value={c.codigo}>
+                  {c.descricao ?? c.codigo}
+                </option>
+              ))}
+            </datalist>
           </div>
           <div className="flex items-center gap-2 pt-1">
             <Switch checked={ativo} onCheckedChange={setAtivo} />
