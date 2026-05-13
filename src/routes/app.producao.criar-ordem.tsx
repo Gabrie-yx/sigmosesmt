@@ -493,9 +493,22 @@ function CriarOrdemPage() {
       }, 0) + 1;
       const numero = `OP-${String(nextSeq).padStart(4, "0")}/${ano}`;
 
+      // Recalcula CASCO no momento do insert direto do banco — evita
+      // colisão por cache obsoleto (duas OPs salvas como CASCO 144).
+      const { data: cascosAtuais } = await supabase
+        .from("producao_ordens")
+        .select("casco")
+        .not("casco", "is", null);
+      const maxCasco = (cascosAtuais ?? []).reduce((mx: number, r: any) => {
+        const m = String(r.casco ?? "").match(/(\d+)/);
+        const n = m ? parseInt(m[1], 10) : 0;
+        return n > mx ? n : mx;
+      }, 0);
+      const cascoFinal = `CASCO ${String(maxCasco + 1).padStart(3, "0")}`;
+
       const { data: novaOrdem, error: e1 } = await supabase
         .from("producao_ordens")
-        .insert({ ...ordemBase, numero })
+        .insert({ ...ordemBase, casco: cascoFinal, numero })
         .select("id, numero").single();
       if (e1) throw e1;
       const { error: e2 } = await supabase
@@ -507,6 +520,7 @@ function CriarOrdemPage() {
     onSuccess: (res) => {
       toast.success(editId ? "Ordem atualizada" : `Ordem ${res?.numero ?? ""} criada`);
       qc.invalidateQueries({ queryKey: ["producao-ordens"] });
+      qc.invalidateQueries({ queryKey: ["cascos-em-ordens"] });
       navigate({ to: "/app/producao/ordens" });
     },
     onError: (e: any) => toast.error(e.message),
