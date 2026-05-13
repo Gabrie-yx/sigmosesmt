@@ -27,6 +27,8 @@ export type APRPdfAssinatura = {
 };
 
 export type APRPdfParams = {
+  logoUrl?: string | null;
+  logoDataUrl?: string | null;
   matrizNome: string;
   matrizCnpj?: string | null;
   numero: string;
@@ -37,6 +39,8 @@ export type APRPdfParams = {
   hora_fim?: string | null;
   hora_inicio_sexta?: string | null;
   hora_fim_sexta?: string | null;
+  dias_semana?: string[] | null;
+  validade_dias?: number | null;
   data_validade?: string | null;
   empresa_nome?: string | null;
   empresa_cnpj?: string | null;
@@ -90,12 +94,20 @@ function drawHeader(doc: jsPDF, p: APRPdfParams, pagina: number, totalPaginas: n
   doc.line(MARGIN + cLogo, MARGIN, MARGIN + cLogo, MARGIN + headerH);
   doc.line(MARGIN + CONTENT_W - cMeta, MARGIN, MARGIN + CONTENT_W - cMeta, MARGIN + headerH);
 
-  // Logo DMN
-  doc.setFillColor(C_HEADER[0], C_HEADER[1], C_HEADER[2]);
-  doc.roundedRect(MARGIN + 4, MARGIN + 4, cLogo - 8, headerH - 8, 1.5, 1.5, "F");
-  doc.setTextColor(255, 255, 255).setFont("helvetica", "bold").setFontSize(13);
-  doc.text("DMN", MARGIN + cLogo / 2, MARGIN + headerH / 2 + 2, { align: "center" });
-  doc.setTextColor(0, 0, 0);
+  // Logo DMN — imagem oficial se disponível, senão fallback texto
+  if (p.logoDataUrl) {
+    try {
+      doc.addImage(p.logoDataUrl, "PNG", MARGIN + 2, MARGIN + 1.5, cLogo - 4, headerH - 3, undefined, "FAST");
+    } catch {
+      doc.setFont("helvetica", "bold").setFontSize(13).text("DMN", MARGIN + cLogo / 2, MARGIN + headerH / 2 + 2, { align: "center" });
+    }
+  } else {
+    doc.setFillColor(C_HEADER[0], C_HEADER[1], C_HEADER[2]);
+    doc.roundedRect(MARGIN + 4, MARGIN + 4, cLogo - 8, headerH - 8, 1.5, 1.5, "F");
+    doc.setTextColor(255, 255, 255).setFont("helvetica", "bold").setFontSize(13);
+    doc.text("DMN", MARGIN + cLogo / 2, MARGIN + headerH / 2 + 2, { align: "center" });
+    doc.setTextColor(0, 0, 0);
+  }
 
   // Centro: nome + título
   const cx = MARGIN + cLogo + (CONTENT_W - cLogo - cMeta) / 2;
@@ -121,13 +133,13 @@ function drawIdBlock(doc: jsPDF, p: APRPdfParams, yStart: number): number {
   const rowH = 6;
   doc.setLineWidth(0.25);
 
-  // Linha 1: CNPJ | Início | Fim | APR Nº | Elaborado | Página
+  // Linha 1: CNPJ | Início | Fim | APR Nº | Validade (dias)
   const cells1: [string, string, number][] = [
     ["CNPJ:", p.matrizCnpj ?? "13.378.697/0001-80", 60],
     ["Início:", p.data_inicio ?? p.data_emissao, 45],
     ["Fim:", p.data_fim ?? (p.data_validade ?? ""), 45],
     ["APR Nº", p.numero, 65],
-    ["Elaborado:", p.data_emissao, 50],
+    ["Validade:", `${p.validade_dias ?? "—"} dia${(p.validade_dias ?? 0) > 1 ? "s" : ""}`, 50],
   ];
   let x = MARGIN;
   cells1.forEach(([lbl, val, w], i) => {
@@ -167,8 +179,7 @@ function drawIdBlock(doc: jsPDF, p: APRPdfParams, yStart: number): number {
   ];
   x = MARGIN;
   c3.forEach(([lbl, val, w], i) => {
-    const last = i === c3.length - 1;
-    const cw = last ? CONTENT_W - (x - MARGIN) - 65 : w;
+    const cw = w;
     doc.rect(x, y, cw, rowH * 2);
     doc.setFont("helvetica", "bold").setFontSize(7);
     doc.text(lbl, x + 1.2, y + 3.5);
@@ -177,38 +188,50 @@ function drawIdBlock(doc: jsPDF, p: APRPdfParams, yStart: number): number {
     doc.text(lines.slice(0, 2), x + 1.2, y + 8);
     x += cw;
   });
-  // Horário (sempre por último)
+  // Horário (sempre por último) — layout limpo em 3 linhas
   const wH = CONTENT_W - (x - MARGIN);
   doc.rect(x, y, wH, rowH * 2);
   doc.setFont("helvetica", "bold").setFontSize(7);
-  doc.text("Horário:", x + 1.2, y + 3.5);
-  doc.setFont("helvetica", "normal").setFontSize(8);
-  doc.setFontSize(7);
-  doc.text(`Seg-Qui: ${p.hora_inicio ?? "--:--"} às ${p.hora_fim ?? "--:--"}`, x + 1.2, y + 7);
-  doc.text(`Sexta:    ${p.hora_inicio_sexta ?? "--:--"} às ${p.hora_fim_sexta ?? "--:--"}`, x + 1.2, y + 10);
-  if (p.casco_numero) doc.text(`Casco: ${p.casco_numero}`, x + 1.2, y + 13);
+  doc.text("Horário da atividade:", x + 1.2, y + 3.2);
+  doc.setFont("helvetica", "normal").setFontSize(7);
+  doc.text(`Seg–Qui:  ${p.hora_inicio ?? "--:--"} às ${p.hora_fim ?? "--:--"}`, x + 1.2, y + 6.6);
+  doc.text(`Sexta:    ${p.hora_inicio_sexta ?? "--:--"} às ${p.hora_fim_sexta ?? "--:--"}`, x + 1.2, y + 9.4);
+  if (p.dias_semana && p.dias_semana.length > 0) {
+    doc.setFontSize(6.5).setTextColor(80, 80, 80);
+    doc.text(`Dias: ${p.dias_semana.join(" · ")}`, x + 1.2, y + 11.6);
+    doc.setTextColor(0, 0, 0);
+  }
   y += rowH * 2;
 
   return y + 1;
 }
 
 function drawRiscosTable(doc: jsPDF, p: APRPdfParams, yStart: number) {
-  const head = [[
-    "PASSO A PASSO DA ATIVIDADE",
-    "RISCOS IDENTIFICADOS",
-    "EFEITOS / DANOS",
-    "P", "S", "G",
-    "AÇÕES PREVENTIVAS DOS RISCOS",
-    "EPI",
-    "RESPONSÁVEIS PELAS AÇÕES",
-    "NRs",
-  ]];
+  // Cabeçalho duplo: "AVALIAÇÃO DO RISCO" agrupando P/S/G
+  const head = [
+    [
+      { content: "PASSO A PASSO DA ATIVIDADE", rowSpan: 2 },
+      { content: "RISCOS IDENTIFICADOS", rowSpan: 2 },
+      { content: "EFEITOS / DANOS", rowSpan: 2 },
+      { content: "AVALIAÇÃO DO RISCO", colSpan: 3 },
+      { content: "AÇÕES PREVENTIVAS DOS RISCOS", rowSpan: 2 },
+      { content: "EPI", rowSpan: 2 },
+      { content: "RESPONSÁVEIS PELAS AÇÕES", rowSpan: 2 },
+      { content: "NRs", rowSpan: 2 },
+    ],
+    ["P", "S", "G"],
+  ];
 
   const body = p.riscos.map((r) => {
-    const passo = r.passo ?? `${r.ordem}. ${r.risco_categoria ?? ""}`.trim();
+    // Use SOMENTE o que o usuário digitou no campo "passo a passo".
+    const passo = (r.passo ?? "").trim();
+    // Risco em duas linhas: nome \n (CATEGORIA)
+    const riscoTexto = r.risco_categoria
+      ? `${r.risco_nome}\n(${r.risco_categoria})`
+      : r.risco_nome;
     return [
       passo,
-      r.risco_nome + (r.risco_categoria ? `\n[${r.risco_categoria}]` : ""),
+      riscoTexto,
       r.efeitos_danos ?? "",
       String(r.probabilidade),
       String(r.severidade),
@@ -221,7 +244,7 @@ function drawRiscosTable(doc: jsPDF, p: APRPdfParams, yStart: number) {
   });
 
   autoTable(doc, {
-    head, body,
+    head: head as any, body,
     startY: yStart,
     margin: { left: MARGIN, right: MARGIN, top: MARGIN + 20 },
     theme: "grid",
@@ -232,7 +255,7 @@ function drawRiscosTable(doc: jsPDF, p: APRPdfParams, yStart: number) {
     },
     columnStyles: {
       0: { cellWidth: 38 },
-      1: { cellWidth: 30 },
+      1: { cellWidth: 30, halign: "center" },
       2: { cellWidth: 28 },
       3: { cellWidth: 6, halign: "center" },
       4: { cellWidth: 6, halign: "center" },
@@ -417,8 +440,8 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
   y += 4;
 
   const exec = p.assinaturas.filter((a) => a.papel === "EXECUTANTE");
-  // Garante mínimo de 14 linhas no papel
-  const totalLinhas = Math.max(14, exec.length);
+  // Garante mínimo de 18 linhas (linhas mais estreitas, melhor uso da página)
+  const totalLinhas = Math.max(18, exec.length);
   const body: string[][] = [];
   for (let i = 0; i < totalLinhas; i++) {
     const a = exec[i];
@@ -435,11 +458,11 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
     head: [["Nº", "NOME", "ASSINATURA"]],
     body,
     theme: "grid",
-    styles: { fontSize: 9, cellPadding: 2.5, minCellHeight: 11, lineColor: [0, 0, 0], lineWidth: 0.2, valign: "middle" },
+    styles: { fontSize: 9, cellPadding: 1.5, minCellHeight: 8, lineColor: [0, 0, 0], lineWidth: 0.2, valign: "middle" },
     headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold", halign: "center", lineColor: [0, 0, 0], lineWidth: 0.3 },
     columnStyles: {
-      0: { cellWidth: 14, halign: "center", fontStyle: "bold" },
-      1: { cellWidth: 110 },
+      0: { cellWidth: 12, halign: "center", fontStyle: "bold" },
+      1: { cellWidth: 130 },
       2: { cellWidth: "auto" },
     },
     didDrawPage: () => {
@@ -449,8 +472,28 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
   });
 }
 
-export function gerarAPR(p: APRPdfParams): jsPDF {
+async function loadImageDataUrl(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function gerarAPR(p: APRPdfParams): Promise<jsPDF> {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+  // Pré-carrega o logotipo (uma única vez)
+  if (!p.logoDataUrl && p.logoUrl) {
+    p.logoDataUrl = await loadImageDataUrl(p.logoUrl);
+  }
 
   // Página(s) 1..N: cabeçalho + identificação + tabela de riscos
   drawHeader(doc, p, 1, 1); // total ajustado depois

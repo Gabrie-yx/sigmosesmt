@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf";
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 import { formatDateBR } from "@/lib/utils-date";
+import dmnLogo from "@/assets/dmn-logo.png";
 
 /* ---------- tipos ---------- */
 type APR = {
@@ -96,17 +97,14 @@ function PaperFullHeader({
   pagina: number; totalPaginas?: number;
 }) {
   const editable = !!setApr;
-  const horarioSeg = `${apr.hora_inicio ?? "--:--"} às ${apr.hora_fim ?? "--:--"} Seg a Quinta`;
-  const horarioSex = `${apr.hora_inicio_sexta ?? "--:--"} às ${apr.hora_fim_sexta ?? "--:--"} Sexta-feira`;
   const responsavel = empresa?.name ?? enc?.nome ?? "—";
   const elaboradoPor = tst?.nome ?? "—";
   return (
     <div className="border-2 border-black text-black bg-white text-[11px]">
       {/* Linha 1 — barra de marca + título + bloco ISO */}
       <div className="grid grid-cols-[110px_1fr_150px] border-b-2 border-black">
-        <div className="border-r-2 border-black flex items-center justify-center p-2">
-          <div className="text-white font-black text-2xl rounded px-3 py-1.5 tracking-wider"
-            style={{ background: APR_RED }}>DMN</div>
+        <div className="border-r-2 border-black flex items-center justify-center p-1 bg-white">
+          <img src={dmnLogo} alt="DMN Estaleiro" className="max-h-[60px] object-contain" />
         </div>
         <div className="flex flex-col items-center justify-center py-1 px-2 border-r-2 border-black">
           <div className="font-black text-lg leading-tight text-center">DMN ESTALEIRO DA AMAZONIA LTDA</div>
@@ -122,8 +120,8 @@ function PaperFullHeader({
         </div>
       </div>
 
-      {/* Linha 2 — CNPJ | Início | Fim | APR Nº | Elaborado | Página X de N */}
-      <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_0.9fr] border-b border-black font-semibold">
+      {/* Linha 2 — CNPJ | Início | Fim | APR Nº | Validade (dias) | Página X de N */}
+      <div className="grid grid-cols-[1.6fr_1fr_1fr_1.1fr_1fr_0.9fr] border-b border-black font-semibold">
         <div className="px-2 py-1 border-r border-black"><b>CNPJ:</b> 13.378.697/0001-80</div>
         <div className="px-2 py-1 border-r border-black flex items-center gap-1">
           <b>Início:</b>{editable ? (
@@ -140,7 +138,16 @@ function PaperFullHeader({
           ) : (apr.data_validade ? formatDateBR(apr.data_validade) : "—")}
         </div>
         <div className="px-2 py-1 border-r border-black"><b>APR Nº</b> {apr.numero ?? "—"}</div>
-        <div className="px-2 py-1 border-r border-black"><b>Emissão:</b> {apr.data_emissao ? formatDateBR(apr.data_emissao) : "—"}</div>
+        <div className="px-2 py-1 border-r border-black flex items-center gap-1">
+          <b>Validade:</b>{editable ? (
+            <Select value={String(apr.validade_dias)} onValueChange={(v) => setApr!({ ...apr, validade_dias: parseInt(v) })}>
+              <SelectTrigger className="h-6 text-[11px] border-0 p-0 flex-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {[1, 7, 15, 30].map((n) => <SelectItem key={n} value={String(n)}>{n} dia{n > 1 ? "s" : ""}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          ) : <span>{apr.validade_dias} dia{apr.validade_dias > 1 ? "s" : ""}</span>}
+        </div>
         <div className="px-2 py-1 text-right"><b>Página</b> {pagina} de {totalPaginas}</div>
       </div>
 
@@ -231,7 +238,13 @@ function PaperFullHeader({
               </div>
             </div>
           ) : (
-            <>{horarioSeg}<br /><span className="pl-[52px]">{horarioSex}</span></>
+            <div className="text-[10px] leading-tight">
+              <div><b>Seg–Qui:</b> {apr.hora_inicio ?? "--:--"} às {apr.hora_fim ?? "--:--"}</div>
+              <div><b>Sexta:</b> {apr.hora_inicio_sexta ?? "--:--"} às {apr.hora_fim_sexta ?? "--:--"}</div>
+              {(apr.dias_semana?.length ?? 0) > 0 && (
+                <div className="text-[9px] text-slate-600">{(apr.dias_semana ?? []).join(" · ")}</div>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -294,7 +307,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           console.warn("[APR] Não foi possível pré-visualizar o próximo número:", error.message);
           return;
         }
-        if (data && !apr.numero) setApr((a) => ({ ...a, numero: `APR-PREV-${data}` }));
+        if (data && !apr.numero) setApr((a) => ({ ...a, numero: String(data) }));
       } catch (error) {
         console.warn("[APR] Falha ao pré-visualizar o próximo número:", error);
       }
@@ -495,8 +508,9 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     onError: (e: any) => toast.error(e.message),
   });
 
-  function buildPdf() {
-    return gerarAPR({
+  async function buildPdf() {
+    return await gerarAPR({
+      logoUrl: dmnLogo,
       matrizNome: "J C S CONSTRUÇÃO NAVAL LTDA",
       matrizCnpj: "13.378.697/0001-80",
       numero: apr.numero ?? "APR-RASCUNHO",
@@ -505,6 +519,8 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
       data_fim: apr.data_validade ? formatDateBR(apr.data_validade) : null,
       hora_inicio: apr.hora_inicio, hora_fim: apr.hora_fim,
       hora_inicio_sexta: apr.hora_inicio_sexta, hora_fim_sexta: apr.hora_fim_sexta,
+      dias_semana: apr.dias_semana ?? null,
+      validade_dias: apr.validade_dias,
       data_validade: apr.data_validade ? formatDateBR(apr.data_validade) : null,
       empresa_nome: empresa?.name ?? null,
       empresa_cnpj: empresa?.cnpj ?? null,
@@ -520,7 +536,10 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
       observacoes: apr.observacoes_gerais,
       texto_gerais: apr.texto_gerais ?? null,
       riscos: riscos.map((r) => ({
-        ordem: r.ordem, risco_nome: r.risco_nome, risco_categoria: r.risco_categoria,
+        ordem: r.ordem,
+        passo: r.passo_a_passo ?? null,
+        risco_nome: r.risco_nome,
+        risco_categoria: r.risco_categoria,
         efeitos_danos: r.efeitos_danos, probabilidade: r.probabilidade, severidade: r.severidade,
         nivel_risco: r.probabilidade + r.severidade,
         acoes_preventivas: r.acoes_preventivas,
@@ -533,14 +552,14 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     });
   }
 
-  function handleAbrir() {
+  async function handleAbrir() {
     if (!apr.id) { toast.error("Salve a APR antes"); return; }
-    const doc = buildPdf();
+    const doc = await buildPdf();
     window.open(doc.output("bloburl"), "_blank");
   }
-  function handleImprimir() {
+  async function handleImprimir() {
     if (!apr.id) { toast.error("Salve a APR antes"); return; }
-    const doc = buildPdf();
+    const doc = await buildPdf();
     doc.autoPrint();
     window.open(doc.output("bloburl"), "_blank");
   }
@@ -577,8 +596,8 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
             <PaperFullHeader apr={apr} setApr={setApr} empresa={empresa} casco={casco} enc={enc} tst={tst}
               employees={employees} companies={companies} pagina={1} />
 
-            {/* Casco | PTE | Validade */}
-            <div className="grid grid-cols-3">
+            {/* Casco | PTE — Validade subiu para o cabeçalho */}
+            <div className="grid grid-cols-2">
               <PaperCell label="Casco / Embarcação">
                 <Select value={apr.casco_id ?? "none"} onValueChange={(v) => setApr({ ...apr, casco_id: v === "none" ? null : v })}>
                   <SelectTrigger className="h-7 text-xs border-0 p-0"><SelectValue placeholder="—" /></SelectTrigger>
@@ -594,14 +613,6 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                   <SelectContent>
                     <SelectItem value="none">— Sem PTE —</SelectItem>
                     {ptes.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.numero ?? p.id.slice(0, 8)} · {formatDateBR(p.data_emissao)}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </PaperCell>
-              <PaperCell label="Validade (dias)">
-                <Select value={String(apr.validade_dias)} onValueChange={(v) => setApr({ ...apr, validade_dias: parseInt(v) })}>
-                  <SelectTrigger className="h-7 text-xs border-0 p-0"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {[1, 7, 15, 30].map((n) => <SelectItem key={n} value={String(n)}>{n} dia{n > 1 ? "s" : ""}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </PaperCell>
