@@ -46,7 +46,7 @@ const FIELDS: FieldDef[] = [
   { key: "grupo_mercadorias",  label: "Grupo de Mercadorias",       kind: "select-grupo-merc" },
   { key: "setor_atividade",    label: "Setor de Atividade",         kind: "text" },
   { key: "grupo_categ_item",   label: "Grupo de Categoria Item Ger",kind: "text" },
-  { key: "classe_avaliacao",   label: "Classe de Avaliação",        kind: "text" },
+  { key: "classe_avaliacao",   label: "Classe de Avaliação",        kind: "select-classe" },
   { key: "determ_preco",       label: "Determinação de Preço",      kind: "text" },
   { key: "controle_preco",     label: "Controle de Preço",          kind: "text" },
   { key: "origem_material",    label: "Origem do Material",         kind: "text" },
