@@ -15,6 +15,7 @@ import { formatDateBR } from "@/lib/utils-date";
 import { AprForm } from "@/components/aprs/apr-form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { abrirAprPdf, imprimirAprPdf, baixarAprPdf } from "@/lib/apr-pdf-loader";
+import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 
 export const Route = createFileRoute("/app/aprs")({
   component: AprsPage,
@@ -25,6 +26,20 @@ const STATUS_TONE: Record<string, string> = {
   ATIVA: "bg-emerald-100 text-emerald-700 border-emerald-200",
   ENCERRADA: "bg-slate-100 text-slate-600",
   CANCELADA: "bg-rose-100 text-rose-700",
+};
+
+const newAprDraft = {
+  atividade_descricao: "",
+  data_emissao: new Date().toISOString().slice(0, 10),
+  validade_dias: 7,
+  status: "RASCUNHO",
+  exige_pte: false,
+  texto_gerais: DEFAULT_TEXTO_GERAIS,
+  hora_inicio: "07:30",
+  hora_fim: "17:30",
+  hora_inicio_sexta: "07:30",
+  hora_fim_sexta: "16:30",
+  dias_semana: ["SEG", "TER", "QUA", "QUI", "SEX"],
 };
 
 function AprsPage() {
@@ -87,7 +102,14 @@ function AprsPage() {
           <p className="text-sm text-slate-500 mt-1">{filtered.length} APR(s) listadas</p>
         </div>
         {isEditor && (
-          <Button onClick={() => setEditing("new")} size="lg" className="bg-[#991b1b] hover:bg-[#7f1d1d]">
+          <Button
+            onClick={() => {
+              qc.setQueryData(["apr-form-draft", "new"], newAprDraft);
+              setEditing("new");
+            }}
+            size="lg"
+            className="bg-[#991b1b] hover:bg-[#7f1d1d]"
+          >
             <Plus className="h-4 w-4 mr-1" /> Nova APR
           </Button>
         )}
@@ -200,7 +222,7 @@ function AprsPage() {
             <DialogTitle>{editing === "new" ? "Nova APR" : "Editar APR"}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
-            <AprForm aprId={editing === "new" ? null : editing} onClose={() => setEditing(null)} />
+            <AprForm key={editing ?? "closed"} aprId={editing === "new" ? null : editing} onClose={() => setEditing(null)} />
           </div>
         </DialogContent>
       </Dialog>

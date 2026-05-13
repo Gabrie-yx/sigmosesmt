@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Save, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf";
-import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-pdf";
+import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 import { formatDateBR } from "@/lib/utils-date";
 
 /* ---------- tipos ---------- */
@@ -158,7 +158,10 @@ function PaperFullHeader({
 /* ---------- componente principal ---------- */
 export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: () => void }) {
   const qc = useQueryClient();
-  const [apr, setApr] = useState<APR>(emptyApr);
+  const [apr, setApr] = useState<APR>(() => ({
+    ...emptyApr,
+    ...((qc.getQueryData(["apr-form-draft", "new"]) as Partial<APR> | undefined) ?? {}),
+  }));
   const [riscos, setRiscos] = useState<Risco[]>([]);
   const [assinaturas, setAssinaturas] = useState<Assin[]>([]);
   const [tab, setTab] = useState<"p1" | "p2" | "p3" | "p4" | "p5">("p1");
@@ -201,8 +204,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   useEffect(() => {
     if (aprId || apr.numero) return;
     (async () => {
-      const { data } = await supabase.rpc("peek_proximo_numero_apr" as any);
-      if (data && !apr.numero) setApr((a) => ({ ...a, numero: `APR-PREV-${data}` }));
+      try {
+        const { data, error } = await supabase.rpc("peek_proximo_numero_apr" as any);
+        if (error) {
+          console.warn("[APR] Não foi possível pré-visualizar o próximo número:", error.message);
+          return;
+        }
+        if (data && !apr.numero) setApr((a) => ({ ...a, numero: `APR-PREV-${data}` }));
+      } catch (error) {
+        console.warn("[APR] Falha ao pré-visualizar o próximo número:", error);
+      }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aprId]);
