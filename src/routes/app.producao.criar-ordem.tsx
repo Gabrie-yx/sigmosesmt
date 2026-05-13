@@ -383,15 +383,15 @@ function CriarOrdemPage() {
               </div>
 
               <div className="p-4 space-y-5">
-                {/* Seção: Identificação */}
-                <Section title="Identificação">
-                  <Field label="Item" className="md:col-span-1">
-                    <Input value={String(row.item)} readOnly className="bg-slate-50 font-mono text-center" />
+                {/* Bloco 1 — Identificação (cols 1-3 da planilha) */}
+                <Block tone="yellow" title="01 · Identificação">
+                  <Field tone="yellow" label="Item" className="md:col-span-1">
+                    <Input value={String(row.item)} readOnly className="bg-amber-50 font-mono text-center" />
                   </Field>
-                  <Field label="Data de Solicitação" className="md:col-span-3">
+                  <Field tone="yellow" label="Data Solicitação" className="md:col-span-3">
                     <Input type="date" value={row.data_solicitacao} onChange={(e) => updateRow(idx, { data_solicitacao: e.target.value })} />
                   </Field>
-                  <Field label="Descrição do Material *" className="md:col-span-8">
+                  <Field tone="yellow" label="Descrição do Material *" className="md:col-span-8">
                     <Input
                       value={row.descricao_material}
                       onChange={(e) => updateRow(idx, { descricao_material: e.target.value })}
@@ -399,49 +399,49 @@ function CriarOrdemPage() {
                       className="font-semibold"
                     />
                   </Field>
-                </Section>
+                </Block>
 
-                {/* Seção: Cadastro Básico */}
-                <Section title="Cadastro Básico">
-                  <Field label="Unidade de Medida" className="md:col-span-2">
-                    <Input value={row.unidade_medida} onChange={(e) => updateRow(idx, { unidade_medida: e.target.value })} />
+                {/* Bloco 2 — Cadastro / Compra / Fiscal (cols 4-7) */}
+                <Block tone="yellow" title="02 · Cadastro · Compra · Fiscal">
+                  <Field tone="yellow" label="Unidade Medida" className="md:col-span-2">
+                    <Input value={row.unidade_medida} onChange={(e) => updateRow(idx, { unidade_medida: e.target.value })} className="text-center font-semibold" />
                   </Field>
-                  <Field label="Grupo de Compradores" className="md:col-span-3">
+                  <Field tone="yellow" label="Grupo Compradores" className="md:col-span-3">
                     <Input value={row.grupo_compradores} onChange={(e) => updateRow(idx, { grupo_compradores: e.target.value })} />
                   </Field>
-                  <Field label="NCM" className="md:col-span-3">
+                  <Field tone="yellow" label="NCM" className="md:col-span-3">
                     <Input value={row.ncm} onChange={(e) => updateRow(idx, { ncm: e.target.value })} className="font-mono" />
                   </Field>
-                  <Field label="Grupo de Mercadorias" className="md:col-span-4">
+                  <Field tone="yellow" label="Centro" className="md:col-span-2">
+                    <Input value={row.centro} onChange={(e) => updateRow(idx, { centro: e.target.value })} className="text-center font-mono" />
+                  </Field>
+                  <Field tone="yellow" label="Depósito" className="md:col-span-2">
+                    <Input value={row.deposito} onChange={(e) => updateRow(idx, { deposito: e.target.value })} className="text-center font-mono" />
+                  </Field>
+                </Block>
+
+                {/* Bloco 3 — Classificação (cols 8-10) — col 8 e 10 azul */}
+                <Block tone="blue" title="03 · Classificação">
+                  <Field tone="blue" label="Grupo de Mercadorias" className="md:col-span-4">
                     <Input value={row.grupo_mercadorias} onChange={(e) => updateRow(idx, { grupo_mercadorias: e.target.value })} />
                   </Field>
-                </Section>
-
-                {/* Seção: Centro / Depósito */}
-                <Section title="Centro & Depósito">
-                  <Field label="Centro" className="md:col-span-3">
-                    <Input value={row.centro} onChange={(e) => updateRow(idx, { centro: e.target.value })} />
-                  </Field>
-                  <Field label="Depósito" className="md:col-span-3">
-                    <Input value={row.deposito} onChange={(e) => updateRow(idx, { deposito: e.target.value })} />
-                  </Field>
-                  <Field label="Setor de Atividade" className="md:col-span-3">
+                  <Field tone="yellow" label="Setor de Atividade" className="md:col-span-4">
                     <Input value={row.setor_atividade} onChange={(e) => updateRow(idx, { setor_atividade: e.target.value })} />
                   </Field>
-                  <Field label="Grupo Categ. Item Geral" className="md:col-span-3">
+                  <Field tone="yellow" label="Grupo Categ. Item Geral" className="md:col-span-4">
                     <Input value={row.grupo_categ_item_ger} onChange={(e) => updateRow(idx, { grupo_categ_item_ger: e.target.value })} />
                   </Field>
-                </Section>
+                </Block>
 
-                {/* Seção: Avaliação & Preço */}
-                <Section title="Avaliação & Preço">
-                  <Field label="Classe de Avaliação" className="md:col-span-3">
+                {/* Bloco 4 — Avaliação & Preço (cols 11-14) — col 11 azul */}
+                <Block tone="blue" title="04 · Avaliação & Preço">
+                  <Field tone="blue" label="Classe de Avaliação" className="md:col-span-3">
                     <Input value={row.classe_avaliacao} onChange={(e) => updateRow(idx, { classe_avaliacao: e.target.value })} />
                   </Field>
-                  <Field label="Determ. Preço" className="md:col-span-3">
+                  <Field tone="yellow" label="Determ. Preço" className="md:col-span-3">
                     <Input value={row.determ_preco} onChange={(e) => updateRow(idx, { determ_preco: e.target.value })} />
                   </Field>
-                  <Field label="Controle de Preço" className="md:col-span-3">
+                  <Field tone="yellow" label="Controle Preço" className="md:col-span-3">
                     <Select value={row.controle_preco} onValueChange={(v) => updateRow(idx, { controle_preco: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -450,7 +450,7 @@ function CriarOrdemPage() {
                       </SelectContent>
                     </Select>
                   </Field>
-                  <Field label="Origem do Material" className="md:col-span-3">
+                  <Field tone="yellow" label="Origem do Material" className="md:col-span-3" labelClass="text-red-600">
                     <Select value={row.origem_material} onValueChange={(v) => updateRow(idx, { origem_material: v })}>
                       <SelectTrigger className="text-red-600 font-bold"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -459,20 +459,20 @@ function CriarOrdemPage() {
                       </SelectContent>
                     </Select>
                   </Field>
-                </Section>
+                </Block>
 
-                {/* Seção: Códigos & Utilização */}
-                <Section title="Utilização & Códigos">
-                  <Field label="Utilização do Material" className="md:col-span-5">
+                {/* Bloco 5 — Utilização & Códigos (cols 15-18) */}
+                <Block tone="yellow" title="05 · Utilização & Códigos">
+                  <Field tone="yellow" label="Utilização do Material" className="md:col-span-5">
                     <Input value={row.utilizacao_material} onChange={(e) => updateRow(idx, { utilizacao_material: e.target.value })} />
                   </Field>
-                  <Field label="Código SAP" className="md:col-span-3">
+                  <Field tone="yellow" label="Código SAP" className="md:col-span-3">
                     <Input value={row.codigo_sap} onChange={(e) => updateRow(idx, { codigo_sap: e.target.value })} className="font-mono" placeholder="—" />
                   </Field>
-                  <Field label="Ocorrência" className="md:col-span-4">
+                  <Field tone="yellow" label="Ocorrência" className="md:col-span-4">
                     <Input value={row.ocorrencia} onChange={(e) => updateRow(idx, { ocorrencia: e.target.value })} placeholder="—" />
                   </Field>
-                </Section>
+                </Block>
               </div>
             </div>
           ))}
@@ -516,20 +516,36 @@ function CriarOrdemPage() {
 }
 
 function Field({
-  label, children, className,
-}: { label: string; children: React.ReactNode; className?: string }) {
+  label, children, className, tone = "yellow", labelClass,
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+  tone?: "yellow" | "blue";
+  labelClass?: string;
+}) {
+  const dot = tone === "blue" ? "bg-sky-400" : "bg-amber-400";
   return (
     <div className={`space-y-1 ${className ?? ""}`}>
-      <Label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">{label}</Label>
+      <Label className={`flex items-center gap-1.5 text-[10.5px] font-bold text-slate-600 uppercase tracking-wider ${labelClass ?? ""}`}>
+        <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+        {label}
+      </Label>
       {children}
     </div>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Block({
+  title, children, tone = "yellow",
+}: { title: string; children: React.ReactNode; tone?: "yellow" | "blue" }) {
+  const accent =
+    tone === "blue"
+      ? "from-sky-50 to-white border-sky-200 text-sky-800"
+      : "from-amber-50 to-white border-amber-200 text-amber-800";
   return (
-    <div className="space-y-2">
-      <div className="text-[10px] font-black uppercase tracking-widest text-amber-700 border-b border-amber-200 pb-1">
+    <div className={`rounded-lg border bg-gradient-to-br p-3.5 ${accent}`}>
+      <div className="text-[10px] font-black uppercase tracking-[0.18em] mb-3">
         {title}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
