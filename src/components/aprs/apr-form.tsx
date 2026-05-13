@@ -451,15 +451,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           <div className="bg-white max-w-[1400px] mx-auto shadow border border-slate-300">
             <PaperHeader numero={apr.numero} pageLabel="PÁG. 01/05" />
 
-            {/* Linha 1: CNPJ | Início | Fim | APR Nº | Elaborado em */}
-            <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+            {/* Linha 1: CNPJ | Início | Fim | APR Nº */}
+            <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr]">
               <PaperCell label="CNPJ"><div className="text-xs">13.378.697/0001-80</div></PaperCell>
               <PaperCell label="Início">
                 <Input type="date" className="h-7 text-xs border-0 p-0" value={apr.data_emissao} onChange={(e) => setApr({ ...apr, data_emissao: e.target.value })} />
               </PaperCell>
-              <PaperCell label="Fim"><div className="text-xs">{apr.data_validade ? formatDateBR(apr.data_validade) : "—"}</div></PaperCell>
-              <PaperCell label="APR Nº"><div className="text-xs font-bold">{apr.numero ?? "(será gerado)"}</div></PaperCell>
-              <PaperCell label="Elaborado em"><div className="text-xs">{formatDateBR(apr.data_emissao)}</div></PaperCell>
+              <PaperCell label="Fim (encerramento)">
+                <Input type="date" className="h-7 text-xs border-0 p-0" value={apr.data_validade ?? ""} onChange={(e) => setApr({ ...apr, data_validade: e.target.value || null })} />
+              </PaperCell>
+              <PaperCell label="APR Nº (automático)"><div className="text-xs font-bold">{apr.numero ?? "—"}</div></PaperCell>
             </div>
 
             {/* Linha 2: Atividade Principal | Serviço Detalhado */}
@@ -497,26 +498,43 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
               <PaperCell label="Local da Atividade">
                 <Input className="h-7 text-xs border-0 p-0" value={apr.local ?? ""} onChange={(e) => setApr({ ...apr, local: e.target.value })} placeholder="Ex.: Casco 23, deck superior" />
               </PaperCell>
-              <PaperCell label="Horário">
-                <div className="flex flex-col gap-0.5 text-[10px]">
-                  <div className="flex items-center gap-1">
-                    <span className="font-bold w-12">Seg-Qui</span>
-                    <Input type="time" className="h-5 text-[10px] border p-0.5 w-16" value={apr.hora_inicio ?? ""} onChange={(e) => setApr({ ...apr, hora_inicio: e.target.value })} />
-                    <span>às</span>
-                    <Input type="time" className="h-5 text-[10px] border p-0.5 w-16" value={apr.hora_fim ?? ""} onChange={(e) => setApr({ ...apr, hora_fim: e.target.value })} />
+              <PaperCell label="Horário da Atividade">
+                <div className="flex flex-col gap-1 text-[11px]">
+                  <div className="flex flex-wrap gap-1">
+                    {DIAS.map((d) => {
+                      const active = (apr.dias_semana ?? []).includes(d);
+                      return (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => {
+                            const cur = new Set(apr.dias_semana ?? []);
+                            if (cur.has(d)) cur.delete(d); else cur.add(d);
+                            setApr({ ...apr, dias_semana: Array.from(cur) });
+                          }}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${active ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-500 border-slate-300"}`}
+                        >
+                          {d}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="font-bold w-12">Sexta</span>
-                    <Input type="time" className="h-5 text-[10px] border p-0.5 w-16" value={apr.hora_inicio_sexta ?? ""} onChange={(e) => setApr({ ...apr, hora_inicio_sexta: e.target.value })} />
-                    <span>às</span>
-                    <Input type="time" className="h-5 text-[10px] border p-0.5 w-16" value={apr.hora_fim_sexta ?? ""} onChange={(e) => setApr({ ...apr, hora_fim_sexta: e.target.value })} />
+                  <div className="grid grid-cols-[auto_1fr_auto_1fr] gap-1 items-center">
+                    <span className="font-bold text-[10px]">Seg-Qui</span>
+                    <Input type="time" className="h-6 text-[10px] border p-0.5" value={apr.hora_inicio ?? ""} onChange={(e) => setApr({ ...apr, hora_inicio: e.target.value })} />
+                    <span className="text-[10px]">às</span>
+                    <Input type="time" className="h-6 text-[10px] border p-0.5" value={apr.hora_fim ?? ""} onChange={(e) => setApr({ ...apr, hora_fim: e.target.value })} />
+                    <span className="font-bold text-[10px]">Sexta</span>
+                    <Input type="time" className="h-6 text-[10px] border p-0.5" value={apr.hora_inicio_sexta ?? ""} onChange={(e) => setApr({ ...apr, hora_inicio_sexta: e.target.value })} />
+                    <span className="text-[10px]">às</span>
+                    <Input type="time" className="h-6 text-[10px] border p-0.5" value={apr.hora_fim_sexta ?? ""} onChange={(e) => setApr({ ...apr, hora_fim_sexta: e.target.value })} />
                   </div>
                 </div>
               </PaperCell>
             </div>
 
-            {/* Linha 4: Casco | Setor | PTE | Validade */}
-            <div className="grid grid-cols-4">
+            {/* Linha 4: Casco | PTE | Validade */}
+            <div className="grid grid-cols-3">
               <PaperCell label="Casco / Embarcação">
                 <Select value={apr.casco_id ?? "none"} onValueChange={(v) => setApr({ ...apr, casco_id: v === "none" ? null : v })}>
                   <SelectTrigger className="h-7 text-xs border-0 p-0"><SelectValue placeholder="—" /></SelectTrigger>
@@ -525,9 +543,6 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                     {cascos.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.numero}{c.nome ? ` · ${c.nome}` : ""}</SelectItem>)}
                   </SelectContent>
                 </Select>
-              </PaperCell>
-              <PaperCell label="Setor">
-                <Input className="h-7 text-xs border-0 p-0" value={apr.setor ?? ""} onChange={(e) => setApr({ ...apr, setor: e.target.value })} />
               </PaperCell>
               <PaperCell label={`PTE Vinculada${apr.exige_pte ? " *" : ""}`}>
                 <Select value={apr.pte_id ?? "none"} onValueChange={(v) => setApr({ ...apr, pte_id: v === "none" ? null : v })}>
@@ -550,11 +565,22 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
 
             {/* Tabela de riscos com cabeçalho LARANJA */}
             <div className="border-t-2 border-black">
-              <div className="grid text-white text-[11px] font-bold text-center"
-                style={{ background: APR_ORANGE, gridTemplateColumns: "1.6fr 1.4fr 1.4fr 0.4fr 0.4fr 0.5fr 2fr 1.2fr 1.2fr 0.7fr" }}>
-                {["PASSO A PASSO DA ATIVIDADE","RISCOS IDENTIFICADOS","EFEITOS / DANOS","P","S","G","AÇÕES PREVENTIVAS DOS RISCOS","EPI","RESPONSÁVEIS PELAS AÇÕES","NRs"].map((h) => (
-                  <div key={h} className="border border-black px-1 py-1.5 text-black">{h}</div>
-                ))}
+              {/* Cabeçalho duplo: super-header AVALIAÇÃO DO RISCO sobre P/S/G */}
+              <div className="grid text-black text-[11px] font-bold text-center" style={{ background: APR_ORANGE, gridTemplateColumns: "1.6fr 1.4fr 1.4fr 1.3fr 2fr 1.2fr 1.2fr 0.7fr" }}>
+                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center">PASSO A PASSO DA ATIVIDADE</div>
+                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center">RISCOS IDENTIFICADOS</div>
+                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center">EFEITOS / DANOS</div>
+                <div className="border border-black px-1 py-1 col-start-4">AVALIAÇÃO DO RISCO</div>
+                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center col-start-5 row-start-1">AÇÕES PREVENTIVAS DOS RISCOS</div>
+                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center col-start-6 row-start-1">EPI</div>
+                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center col-start-7 row-start-1">RESPONSÁVEIS PELAS AÇÕES</div>
+                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center col-start-8 row-start-1">NRs</div>
+                {/* Sub-cabeçalho P/S/G dentro da coluna AVALIAÇÃO */}
+                <div className="border border-black col-start-4 row-start-2 grid grid-cols-3">
+                  <div className="border-r border-black py-1">P</div>
+                  <div className="border-r border-black py-1">S</div>
+                  <div className="py-1">G</div>
+                </div>
               </div>
 
               {riscos.length === 0 ? (
@@ -566,10 +592,17 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                   <div key={idx} className="grid text-[11px] items-stretch"
                     style={{ gridTemplateColumns: "1.6fr 1.4fr 1.4fr 0.4fr 0.4fr 0.5fr 2fr 1.2fr 1.2fr 0.7fr" }}>
                     <div className="border border-black p-1">
-                      <Input className="h-6 text-[11px] border-0 p-0" value={`${r.ordem}. ${r.risco_categoria ?? ""}`} readOnly />
+                      <Textarea rows={2} placeholder={`${r.ordem}. Descreva o passo...`}
+                        className="text-[11px] border-0 p-0 resize-none focus-visible:ring-0"
+                        value={r.passo_a_passo ?? ""} onChange={(e) => updateRisco(idx, { passo_a_passo: e.target.value })} />
                     </div>
                     <div className="border border-black p-1">
-                      <Input className="h-6 text-[11px] border-0 p-0 font-bold" value={r.risco_nome} onChange={(e) => updateRisco(idx, { risco_nome: e.target.value })} />
+                      <Select value={r.catalogo_risco_id ?? ""} onValueChange={(v) => setRiscoFromCatalogo(idx, v)}>
+                        <SelectTrigger className="h-6 text-[11px] border-0 p-0 font-bold"><SelectValue placeholder={r.risco_nome || "Selecionar risco..."} /></SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {catRiscos.map((c: any) => <SelectItem key={c.id} value={c.id}>[{c.categoria}] {c.nome}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="border border-black p-1">
                       <Textarea rows={2} className="text-[11px] border-0 p-0 resize-none focus-visible:ring-0" value={r.efeitos_danos ?? ""} onChange={(e) => updateRisco(idx, { efeitos_danos: e.target.value })} />
