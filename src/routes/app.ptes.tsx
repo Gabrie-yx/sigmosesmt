@@ -207,6 +207,15 @@ function PtesPage() {
             )}
           </h3>
           <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="space-y-6">
+            {linkedAprId && (
+              <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 flex items-start gap-2">
+                <Link2 className="h-4 w-4 text-amber-700 mt-0.5 shrink-0" />
+                <div className="flex-1 text-[10px] font-bold uppercase text-amber-900">
+                  Vinculando à APR {(aprsMap.get(linkedAprId) as any)?.numero ?? linkedAprId.slice(0, 8)}
+                  <button type="button" onClick={() => setLinkedAprId(null)} className="ml-2 text-amber-700 underline">remover vínculo</button>
+                </div>
+              </div>
+            )}
             <div>
               <Label className="text-[10px] font-black text-slate-500 uppercase">Local do Trabalho / Instalação</Label>
               <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-slate-50 mt-2 text-xs font-bold uppercase" />
@@ -289,6 +298,11 @@ function PtesPage() {
                 <h4 className="text-xs font-black text-[#991b1b] uppercase mb-1">{p.employee_name ?? "—"}</h4>
                 <div className="text-[10px] font-bold text-slate-500 uppercase mt-1">Risco: <span className="font-black text-slate-700">{p.risco}</span></div>
                 <div className="text-[10px] font-bold text-slate-500 uppercase">Local: {p.local ?? "—"}</div>
+                {p.apr_id && (
+                  <div className="text-[10px] font-bold text-emerald-700 uppercase mt-1 flex items-center gap-1">
+                    <Link2 className="h-3 w-3" /> APR {(aprsMap.get(p.apr_id) as any)?.numero ?? p.apr_id.slice(0, 8)}
+                  </div>
+                )}
                 <div className="text-[9px] font-black text-slate-400 uppercase mt-3 tracking-widest flex items-center gap-1">
                   <Clock className="h-3 w-3" /> Emitida em: {formatDateBR(p.data_emissao || p.data)}
                 </div>
