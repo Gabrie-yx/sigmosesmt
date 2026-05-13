@@ -477,31 +477,6 @@ function TstPanel() {
         </div>
       ),
     },
-    blocklist: {
-      title: `Lista de bloqueio GSI (${blocklist.length})`, icon: Ban, accent: "red",
-      render: () => (
-        <div className="overflow-auto h-full">
-          {blocklist.length === 0 ? (
-            <div className="text-center text-emerald-600 py-6 font-black uppercase text-xs">✓ Nenhum colaborador bloqueado</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {blocklist.map((p) => (
-                <div key={p.emp.id}
-                  onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
-                  className="p-3 border border-red-100 rounded-xl bg-white hover:border-red-400 hover:shadow-sm cursor-pointer transition-all">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="text-xs font-black uppercase text-slate-900 truncate">{p.emp.nome}</div>
-                    <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-red-600 text-white shrink-0 ml-2">{p.status.label}</span>
-                  </div>
-                  <div className="text-[9px] font-bold uppercase text-slate-500">{p.company} · {p.role?.name ?? "Sem cargo"}</div>
-                  <div className="text-[9px] font-bold text-red-600 mt-1.5 line-clamp-2">{p.status.msgs.join(" · ")}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ),
-    },
     footer: {
       title: "Alertas operacionais", icon: AlertTriangle,
       render: () => (
