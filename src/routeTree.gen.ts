@@ -32,6 +32,7 @@ import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.r
 import { Route as AppProducaoOrdensRouteImport } from './routes/app.producao.ordens'
 import { Route as AppProducaoMateriaisRouteImport } from './routes/app.producao.materiais'
 import { Route as AppProducaoEmbarcacoesRouteImport } from './routes/app.producao.embarcacoes'
+import { Route as AppProducaoCriarHalbRouteImport } from './routes/app.producao.criar-halb'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
@@ -157,6 +158,11 @@ const AppProducaoEmbarcacoesRoute = AppProducaoEmbarcacoesRouteImport.update({
   path: '/producao/embarcacoes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProducaoCriarHalbRoute = AppProducaoCriarHalbRouteImport.update({
+  id: '/producao/criar-halb',
+  path: '/producao/criar-halb',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
   id: '/estoque/sesmt',
   path: '/estoque/sesmt',
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/producao/criar-halb': typeof AppProducaoCriarHalbRoute
   '/app/producao/embarcacoes': typeof AppProducaoEmbarcacoesRoute
   '/app/producao/materiais': typeof AppProducaoMateriaisRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
@@ -253,6 +260,7 @@ export interface FileRoutesByTo {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/producao/criar-halb': typeof AppProducaoCriarHalbRoute
   '/app/producao/embarcacoes': typeof AppProducaoEmbarcacoesRoute
   '/app/producao/materiais': typeof AppProducaoMateriaisRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
@@ -287,6 +295,7 @@ export interface FileRoutesById {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/producao/criar-halb': typeof AppProducaoCriarHalbRoute
   '/app/producao/embarcacoes': typeof AppProducaoEmbarcacoesRoute
   '/app/producao/materiais': typeof AppProducaoMateriaisRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
@@ -322,6 +331,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/producao/criar-halb'
     | '/app/producao/embarcacoes'
     | '/app/producao/materiais'
     | '/app/producao/ordens'
@@ -353,6 +363,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/producao/criar-halb'
     | '/app/producao/embarcacoes'
     | '/app/producao/materiais'
     | '/app/producao/ordens'
@@ -386,6 +397,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/producao/criar-halb'
     | '/app/producao/embarcacoes'
     | '/app/producao/materiais'
     | '/app/producao/ordens'
@@ -566,6 +578,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoEmbarcacoesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/producao/criar-halb': {
+      id: '/app/producao/criar-halb'
+      path: '/producao/criar-halb'
+      fullPath: '/app/producao/criar-halb'
+      preLoaderRoute: typeof AppProducaoCriarHalbRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/estoque/sesmt': {
       id: '/app/estoque/sesmt'
       path: '/estoque/sesmt'
@@ -658,6 +677,7 @@ interface AppRouteChildren {
   AppDdsTemasRoute: typeof AppDdsTemasRoute
   AppEstoqueEpiRoute: typeof AppEstoqueEpiRoute
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
+  AppProducaoCriarHalbRoute: typeof AppProducaoCriarHalbRoute
   AppProducaoEmbarcacoesRoute: typeof AppProducaoEmbarcacoesRoute
   AppProducaoMateriaisRoute: typeof AppProducaoMateriaisRoute
   AppProducaoOrdensRoute: typeof AppProducaoOrdensRoute
@@ -686,6 +706,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDdsTemasRoute: AppDdsTemasRoute,
   AppEstoqueEpiRoute: AppEstoqueEpiRoute,
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
+  AppProducaoCriarHalbRoute: AppProducaoCriarHalbRoute,
   AppProducaoEmbarcacoesRoute: AppProducaoEmbarcacoesRoute,
   AppProducaoMateriaisRoute: AppProducaoMateriaisRoute,
   AppProducaoOrdensRoute: AppProducaoOrdensRoute,
@@ -706,3 +727,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
