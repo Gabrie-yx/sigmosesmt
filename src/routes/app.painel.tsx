@@ -13,9 +13,12 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   AreaChart, Area, PieChart, Pie, Cell, Legend,
 } from "recharts";
-import GridLayout, { WidthProvider, type Layout } from "react-grid-layout";
+import RGL from "react-grid-layout";
 
-const ResponsiveGridLayout = WidthProvider(GridLayout);
+// react-grid-layout types are inconsistent across versions — use loose typing
+const RGLAny = RGL as any;
+const ResponsiveGridLayout: any = RGLAny.WidthProvider(RGLAny);
+type Layout = { i: string; x: number; y: number; w: number; h: number; minH?: number; minW?: number };
 
 export const Route = createFileRoute("/app/painel")({
   component: TstPanel,
