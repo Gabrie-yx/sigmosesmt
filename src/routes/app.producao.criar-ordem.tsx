@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,11 +13,12 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  ClipboardList, GripVertical, Lock, Unlock, RotateCcw, Plus, Save,
+  ClipboardList, GripVertical, Lock, Unlock, RotateCcw, Plus, Save, ListOrdered,
 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/producao/criar-ordem")({
+  validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
   component: CriarOrdemPage,
 });
 
@@ -150,6 +151,8 @@ function autoFitRows(layout: Layout[]): Layout[] {
 
 function CriarOrdemPage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { id: editId } = Route.useSearch();
   const [layout, setLayout] = useState<Layout[]>(() => loadLayout());
   const [locked, setLocked] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -161,6 +164,7 @@ function CriarOrdemPage() {
   const [newUm, setNewUm] = useState({ sigla: "", descricao: "" });
   const [gmDialogOpen, setGmDialogOpen] = useState(false);
   const [newGm, setNewGm] = useState({ codigo: "", descricao: "" });
+  const loadedRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -225,6 +229,46 @@ function CriarOrdemPage() {
         .select("id, codigo, descricao").eq("ativo", true).order("codigo");
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  // Carregar ordem existente para edição
+  useQuery({
+    queryKey: ["producao-ordem", editId],
+    enabled: !!editId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("producao_ordens")
+        .select("*, itens:producao_ordem_itens(*)")
+        .eq("id", editId!)
+        .maybeSingle();
+      if (error) throw error;
+      if (data && !loadedRef.current) {
+        loadedRef.current = true;
+        const it = ((data as any).itens ?? [])[0] ?? {};
+        setValues({
+          qtde_itens: data.qtde_itens?.toString() ?? "",
+          descricao_material: it.descricao_material ?? "",
+          casco: data.casco ?? "",
+          unidade_medida: it.unidade_medida ?? "UN",
+          grupo_compradores: it.grupo_compradores ?? "",
+          tipo_produto: data.tipo_produto ?? "",
+          ncm: it.ncm ?? "",
+          centro: it.centro ?? "",
+          deposito: it.deposito ?? "",
+          grupo_mercadorias: it.grupo_mercadorias ?? "",
+          setor_atividade: it.setor_atividade ?? "",
+          grupo_categ_item: it.grupo_categ_item_ger ?? "",
+          classe_avaliacao: it.classe_avaliacao ?? "",
+          determ_preco: it.determ_preco ?? "",
+          controle_preco: it.controle_preco ?? "",
+          origem_material: it.origem_material ?? "",
+          utilizacao_material: it.utilizacao_material ?? "",
+          solicitante: data.solicitante ?? "",
+          data: data.data_solicitacao ?? "",
+        });
+      }
+      return data;
     },
   });
 
@@ -310,6 +354,82 @@ function CriarOrdemPage() {
       setGmDialogOpen(false);
       setValues((v) => ({ ...v, grupo_mercadorias: newGm.codigo.trim().toUpperCase() }));
       setNewGm({ codigo: "", descricao: "" });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  // Salvar (insert ou update)
+  const salvar = useMutation({
+    mutationFn: async () => {
+      const v = values;
+      if (!v.descricao_material?.trim()) throw new Error("Descrição do material é obrigatória");
+
+      const ordemBase = {
+        casco: v.casco || null,
+        tipo_produto: v.tipo_produto || null,
+        solicitante: v.solicitante || null,
+        qtde_itens: v.qtde_itens ? parseInt(v.qtde_itens, 10) : null,
+        data_solicitacao: v.data || new Date().toISOString().slice(0, 10),
+      };
+      const itemBase = {
+        item: 1,
+        descricao_material: v.descricao_material,
+        unidade_medida: v.unidade_medida || "UN",
+        grupo_compradores: v.grupo_compradores || null,
+        ncm: v.ncm || null,
+        centro: v.centro || null,
+        deposito: v.deposito || null,
+        grupo_mercadorias: v.grupo_mercadorias || null,
+        setor_atividade: v.setor_atividade || null,
+        grupo_categ_item_ger: v.grupo_categ_item || "NORM",
+        classe_avaliacao: v.classe_avaliacao || null,
+        determ_preco: v.determ_preco || null,
+        controle_preco: v.controle_preco || null,
+        origem_material: v.origem_material || null,
+        utilizacao_material: v.utilizacao_material || null,
+        data_solicitacao: v.data || new Date().toISOString().slice(0, 10),
+      };
+
+      if (editId) {
+        const { error: e1 } = await supabase
+          .from("producao_ordens").update(ordemBase).eq("id", editId);
+        if (e1) throw e1;
+        // upsert único item (substitui o conjunto)
+        await supabase.from("producao_ordem_itens").delete().eq("ordem_id", editId);
+        const { error: e2 } = await supabase
+          .from("producao_ordem_itens").insert({ ...itemBase, ordem_id: editId });
+        if (e2) throw e2;
+        return { id: editId, numero: null };
+      }
+
+      // Gera próximo número client-side
+      const ano = new Date().getFullYear();
+      const { data: existentes } = await supabase
+        .from("producao_ordens")
+        .select("numero")
+        .like("numero", `OP-%/${ano}`);
+      const nextSeq = (existentes ?? []).reduce((mx: number, r: any) => {
+        const m = String(r.numero).match(/^OP-(\d+)\//);
+        const n = m ? parseInt(m[1], 10) : 0;
+        return n > mx ? n : mx;
+      }, 0) + 1;
+      const numero = `OP-${String(nextSeq).padStart(4, "0")}/${ano}`;
+
+      const { data: novaOrdem, error: e1 } = await supabase
+        .from("producao_ordens")
+        .insert({ ...ordemBase, numero })
+        .select("id, numero").single();
+      if (e1) throw e1;
+      const { error: e2 } = await supabase
+        .from("producao_ordem_itens")
+        .insert({ ...itemBase, ordem_id: novaOrdem.id });
+      if (e2) throw e2;
+      return novaOrdem;
+    },
+    onSuccess: (res) => {
+      toast.success(editId ? "Ordem atualizada" : `Ordem ${res?.numero ?? ""} criada`);
+      qc.invalidateQueries({ queryKey: ["producao-ordens"] });
+      navigate({ to: "/app/producao/ordens" });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -447,7 +567,9 @@ function CriarOrdemPage() {
             <ClipboardList className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight">Nova Ordem de Produção</h1>
+            <h1 className="text-2xl font-black tracking-tight">
+              {editId ? "Editar Ordem de Produção" : "Nova Ordem de Produção"}
+            </h1>
             <p className="text-[11px] text-muted-foreground font-medium">
               FORMULÁRIO – MATERIAIS HALB · widgets arrastáveis e redimensionáveis
             </p>
@@ -455,6 +577,11 @@ function CriarOrdemPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link to="/app/producao/ordens">
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <ListOrdered className="h-3.5 w-3.5" /> Ver Ordens
+            </Button>
+          </Link>
           <Button
             variant="outline" size="sm"
             onClick={() => setLocked((v) => !v)}
@@ -466,8 +593,9 @@ function CriarOrdemPage() {
             <RotateCcw className="h-3.5 w-3.5" /> Resetar
           </Button>
           <Button size="sm" className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white"
-            onClick={() => toast.message("Persistência será habilitada na próxima etapa.")}>
-            <Save className="h-3.5 w-3.5" /> Salvar
+            disabled={salvar.isPending}
+            onClick={() => salvar.mutate()}>
+            <Save className="h-3.5 w-3.5" /> {salvar.isPending ? "Salvando…" : (editId ? "Atualizar" : "Salvar")}
           </Button>
         </div>
       </div>
