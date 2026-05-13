@@ -408,6 +408,25 @@ function CriarOrdemPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const addCl = useMutation({
+    mutationFn: async () => {
+      const codigo = newCl.codigo.trim();
+      if (!codigo) throw new Error("Informe o código");
+      const { error } = await supabase
+        .from("producao_classes_avaliacao")
+        .insert({ codigo, descricao: newCl.descricao || null });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["producao-classes-aval"] });
+      toast.success("Classe adicionada");
+      setClDialogOpen(false);
+      setValues((v) => ({ ...v, classe_avaliacao: newCl.codigo.trim() }));
+      setNewCl({ codigo: "", descricao: "" });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   // Salvar (insert ou update)
   const salvar = useMutation({
     mutationFn: async () => {
