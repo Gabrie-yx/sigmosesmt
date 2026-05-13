@@ -83,6 +83,7 @@ const OTHER_MODULES = [
 ] as const;
 
 const PRODUCAO_SUBMENU = [
+  { to: "/app/producao/ordens", label: "Ordens de Produção" },
   { to: "/app/producao/criar-ordem", label: "Criar Nova Ordem" },
 ] as const;
 
