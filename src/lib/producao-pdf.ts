@@ -103,7 +103,7 @@ function build(ordem: OrdemFull): jsPDF {
   const ctrlRows = [
     `CÓD.: ${ordem.codigo_formulario ?? "FOR-PROD 01"}`,
     `REVISÃO: ${ordem.revisao ?? "00"}`,
-    `DATA: ${data || "01/08/2025"}`,
+    `DATA: 01/08/2025`,
     `PÁG. ${ordem.pagina ?? "01/01"}`,
   ];
   doc.setFont("helvetica", "normal");
