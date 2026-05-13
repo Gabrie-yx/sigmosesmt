@@ -667,6 +667,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         {tab === "p2" && (
           <div className="bg-white max-w-[1100px] mx-auto shadow border border-slate-300">
             <PaperHeader numero={apr.numero} pageLabel="PÁG. 02/05" />
+            <PaperInfoBar apr={apr} empresa={empresa} casco={casco} />
             <div className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-black text-base">GERAIS:</h2>
@@ -682,6 +683,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         {tab === "p3" && (
           <div className="bg-white max-w-[1100px] mx-auto shadow border border-slate-300">
             <PaperHeader numero={apr.numero} pageLabel="PÁG. 03/05" />
+            <PaperInfoBar apr={apr} empresa={empresa} casco={casco} />
             <div className="p-4 space-y-3">
               <div className="text-center text-[11px] font-bold text-rose-600 border border-rose-300 bg-rose-50 p-2">
                 ATENÇÃO: AO OBSERVAR OUTRO RISCO NÃO PREVISTO NESTA APR, PARALISAR O TRABALHO IMEDIATAMENTE E COMUNICAR AO SESMT
@@ -776,6 +778,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         {tab === "p4" && (
           <div className="bg-white max-w-[1100px] mx-auto shadow border border-slate-300">
             <PaperHeader numero={apr.numero} pageLabel="PÁG. 04/05" />
+            <PaperInfoBar apr={apr} empresa={empresa} casco={casco} />
             <div className="p-4 space-y-3">
               <h2 className="text-center font-black text-base">ANEXO I – ASSINATURA DOS EXECUTANTES DO SERVIÇO</h2>
               {!apr.empresa_id && (
