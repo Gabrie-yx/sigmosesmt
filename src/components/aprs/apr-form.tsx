@@ -12,6 +12,7 @@ import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 import { formatDateBR } from "@/lib/utils-date";
 import dmnLogo from "@/assets/dmn-logo.png";
+import { detectarExigenciaPTE } from "@/lib/apr-pte-rules";
 
 /* ---------- tipos ---------- */
 type APR = {
@@ -277,10 +278,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const tst = useMemo(() => employees.find((e: any) => e.id === apr.tst_id), [employees, apr.tst_id]);
   const pte = useMemo(() => ptes.find((p: any) => p.id === apr.pte_id), [ptes, apr.pte_id]);
 
+  const deteccaoPTE = useMemo(
+    () => detectarExigenciaPTE(riscos.map((r) => ({ risco_nome: r.risco_nome, nrs: r.nrs }))),
+    [riscos],
+  );
   const temRiscoGrave = useMemo(() => riscos.some((r) => (r.probabilidade + r.severidade) >= 5), [riscos]);
   useEffect(() => {
-    if (temRiscoGrave && !apr.exige_pte) setApr((a) => ({ ...a, exige_pte: true }));
-  }, [temRiscoGrave]); // eslint-disable-line react-hooks/exhaustive-deps
+    if ((deteccaoPTE.exige || temRiscoGrave) && !apr.exige_pte) {
+      setApr((a) => ({ ...a, exige_pte: true }));
+    }
+  }, [deteccaoPTE.exige, temRiscoGrave]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // carregar APR existente
   useEffect(() => {
