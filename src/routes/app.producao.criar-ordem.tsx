@@ -371,7 +371,7 @@ function CriarOrdemPage() {
   // Auto-preenche Casco com o próximo sequencial
   useEffect(() => {
     if (!proximoCascoLabel) return;
-    if (editId && !loadedRef.current) return; // aguarda carregar a ordem em edição
+    if (editId) return; // em edição, mantém o casco da ordem
     setValues((v) => (v.casco === proximoCascoLabel ? v : { ...v, casco: proximoCascoLabel }));
   }, [proximoCascoLabel, editId]);
 
