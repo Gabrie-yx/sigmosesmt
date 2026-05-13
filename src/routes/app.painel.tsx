@@ -38,8 +38,7 @@ const DEFAULT_LAYOUT: Layout[] = [
   { i: "dds-trend",   x: 0, y: 24, w: 6,  h: 7,  minH: 5, minW: 4 },
   { i: "conformidade",x: 6, y: 24, w: 6,  h: 7,  minH: 5, minW: 4 },
   { i: "pendencias",  x: 0, y: 31, w: 12, h: 9,  minH: 5, minW: 6 },
-  { i: "blocklist",   x: 0, y: 40, w: 12, h: 9,  minH: 5, minW: 6 },
-  { i: "footer",      x: 0, y: 49, w: 12, h: 3,  minH: 2, minW: 6 },
+  { i: "footer",      x: 0, y: 40, w: 12, h: 3,  minH: 2, minW: 6 },
 ];
 
 function loadLayout(): Layout[] {
@@ -229,10 +228,6 @@ function TstPanel() {
     if (filterCompany !== "ALL") list = list.filter((r) => r.emp.company_id === filterCompany);
     return list;
   }, [rows, filterCompany]);
-
-  const blocklist = useMemo(() => rows
-    .filter((r) => r.status.label === "BLOQUEADO" || r.status.label === "SEM CARGO")
-    .sort((a, b) => (a.emp.nome ?? "").localeCompare(b.emp.nome ?? "")), [rows]);
 
   const conformity = useMemo(() => {
     if (!data) return [];
