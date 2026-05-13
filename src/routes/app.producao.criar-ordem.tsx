@@ -400,7 +400,7 @@ function CriarOrdemPage() {
             layout={layout}
             width={gridWidth}
             gridConfig={{ cols: 12, rowHeight: 32, margin: [12, 12], containerPadding: [0, 0] }}
-            onLayoutChange={(l: Layout[]) => setLayout(l)}
+            onLayoutChange={(l: Layout[]) => setLayout(autoFitRows(l))}
             dragConfig={{ enabled: !locked, handle: ".widget-drag-handle" }}
             resizeConfig={{ enabled: !locked }}
           >
