@@ -411,7 +411,6 @@ function CriarOrdemPage() {
                     <button
                       type="button"
                       onClick={() => removeRow(idx)}
-                      disabled={itens.length === 1}
                       className="text-red-600 hover:text-red-800 disabled:opacity-30"
                       title="Remover item"
                     >
