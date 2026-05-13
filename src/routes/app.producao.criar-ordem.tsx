@@ -223,6 +223,25 @@ function CriarOrdemPage() {
     }
   }, [unidades, values.unidade_medida]);
 
+  // NCM automático com base no Tipo de Produto
+  const NCM_POR_TIPO: Record<string, string> = {
+    BALSA: "89079000",
+    EMPURRADOR: "89040000",
+    EMBARCACAO: "89011000",
+    "ESTRUTURA FLUTUANTE": "89079000",
+  };
+  useEffect(() => {
+    const tipo = (values.tipo_produto ?? "").toString().toUpperCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (!tipo) return;
+    let ncm = "";
+    if (tipo.includes("EMPURRADOR")) ncm = NCM_POR_TIPO.EMPURRADOR;
+    else if (tipo.includes("BALSA")) ncm = NCM_POR_TIPO.BALSA;
+    else if (tipo.includes("ESTRUTURA")) ncm = NCM_POR_TIPO["ESTRUTURA FLUTUANTE"];
+    else if (tipo.includes("EMBARCACAO") || tipo.includes("EMBARCA")) ncm = NCM_POR_TIPO.EMBARCACAO;
+    if (ncm) setValues((v) => (v.ncm === ncm ? v : { ...v, ncm }));
+  }, [values.tipo_produto]);
+
   // Sugestão: próximo número de casco sequencial = max + 1
   const proximoCascoNum = useMemo(() => {
     let max = 0;
