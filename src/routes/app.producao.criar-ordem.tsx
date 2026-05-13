@@ -24,7 +24,7 @@ export const Route = createFileRoute("/app/producao/criar-ordem")({
 
 type Layout = { i: string; x: number; y: number; w: number; h: number; minW?: number; minH?: number };
 
-type FieldKind = "text" | "textarea" | "number" | "date" | "casco-auto" | "select-tipo" | "select-um" | "select-grupo-merc";
+type FieldKind = "text" | "textarea" | "number" | "date" | "casco-auto" | "select-tipo" | "select-um" | "select-grupo-merc" | "select-classe";
 
 type FieldDef = {
   key: string;
@@ -46,7 +46,7 @@ const FIELDS: FieldDef[] = [
   { key: "grupo_mercadorias",  label: "Grupo de Mercadorias",       kind: "select-grupo-merc" },
   { key: "setor_atividade",    label: "Setor de Atividade",         kind: "text" },
   { key: "grupo_categ_item",   label: "Grupo de Categoria Item Ger",kind: "text" },
-  { key: "classe_avaliacao",   label: "Classe de Avaliação",        kind: "text" },
+  { key: "classe_avaliacao",   label: "Classe de Avaliação",        kind: "select-classe" },
   { key: "determ_preco",       label: "Determinação de Preço",      kind: "text" },
   { key: "controle_preco",     label: "Controle de Preço",          kind: "text" },
   { key: "origem_material",    label: "Origem do Material",         kind: "text" },
@@ -155,7 +155,18 @@ function CriarOrdemPage() {
   const { id: editId } = Route.useSearch();
   const [layout, setLayout] = useState<Layout[]>(() => loadLayout());
   const [locked, setLocked] = useState(false);
-  const [values, setValues] = useState<Record<string, string>>({ data: new Date().toISOString().slice(0, 10) });
+  const [values, setValues] = useState<Record<string, string>>({
+    data: new Date().toISOString().slice(0, 10),
+    grupo_compradores: "Não tem",
+    centro: "C020",
+    deposito: "DP01",
+    setor_atividade: "20",
+    grupo_categ_item: "NORM",
+    determ_preco: "3",
+    controle_preco: "S",
+    origem_material: "NACIONAL",
+    utilizacao_material: "1 - INDUSTRIALIZAÇÃO",
+  });
   const [Grid, setGrid] = useState<any>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [gridWidth, setGridWidth] = useState(0);
@@ -164,6 +175,8 @@ function CriarOrdemPage() {
   const [newUm, setNewUm] = useState({ sigla: "", descricao: "" });
   const [gmDialogOpen, setGmDialogOpen] = useState(false);
   const [newGm, setNewGm] = useState({ codigo: "", descricao: "" });
+  const [clDialogOpen, setClDialogOpen] = useState(false);
+  const [newCl, setNewCl] = useState({ codigo: "", descricao: "" });
   const loadedRef = useRef(false);
 
   useEffect(() => {
@@ -239,6 +252,17 @@ function CriarOrdemPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("producao_grupo_mercadorias")
+        .select("id, codigo, descricao").eq("ativo", true).order("codigo");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: classes = [] } = useQuery({
+    queryKey: ["producao-classes-aval"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("producao_classes_avaliacao")
         .select("id, codigo, descricao").eq("ativo", true).order("codigo");
       if (error) throw error;
       return data ?? [];
@@ -380,6 +404,25 @@ function CriarOrdemPage() {
       setGmDialogOpen(false);
       setValues((v) => ({ ...v, grupo_mercadorias: newGm.codigo.trim().toUpperCase() }));
       setNewGm({ codigo: "", descricao: "" });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const addCl = useMutation({
+    mutationFn: async () => {
+      const codigo = newCl.codigo.trim();
+      if (!codigo) throw new Error("Informe o código");
+      const { error } = await supabase
+        .from("producao_classes_avaliacao")
+        .insert({ codigo, descricao: newCl.descricao || null });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["producao-classes-aval"] });
+      toast.success("Classe adicionada");
+      setClDialogOpen(false);
+      setValues((v) => ({ ...v, classe_avaliacao: newCl.codigo.trim() }));
+      setNewCl({ codigo: "", descricao: "" });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -567,6 +610,29 @@ function CriarOrdemPage() {
             </Button>
           </div>
         );
+      case "select-classe":
+        return (
+          <div className="flex gap-2" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="flex-1">
+              <Select value={v} onValueChange={(val) => setVal(f.key, val)}>
+                <SelectTrigger><SelectValue placeholder="Classe…" /></SelectTrigger>
+                <SelectContent>
+                  {classes.map((c: any) => (
+                    <SelectItem key={c.id} value={c.codigo}>
+                      {c.codigo}{c.descricao ? ` — ${c.descricao}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button type="button" variant="outline" size="icon"
+              className="shrink-0"
+              onClick={() => setClDialogOpen(true)}
+              title="Adicionar nova classe">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        );
       default:
         return (
           <Input value={v}
@@ -729,6 +795,39 @@ function CriarOrdemPage() {
             <Button onClick={() => addGm.mutate()} disabled={addGm.isPending}
               className="bg-amber-600 hover:bg-amber-700 text-white">
               {addGm.isPending ? "Salvando…" : "Adicionar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Classe de Avaliação dialog */}
+      <Dialog open={clDialogOpen} onOpenChange={setClDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova Classe de Avaliação</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Código *</Label>
+              <Input value={newCl.codigo}
+                onChange={(e) => setNewCl((s) => ({ ...s, codigo: e.target.value }))}
+                placeholder="Ex.: 7900"
+                maxLength={20}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Descrição</Label>
+              <Input value={newCl.descricao}
+                onChange={(e) => setNewCl((s) => ({ ...s, descricao: e.target.value }))}
+                placeholder="Descrição (opcional)"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setClDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={() => addCl.mutate()} disabled={addCl.isPending}
+              className="bg-amber-600 hover:bg-amber-700 text-white">
+              {addCl.isPending ? "Salvando…" : "Adicionar"}
             </Button>
           </DialogFooter>
         </DialogContent>
