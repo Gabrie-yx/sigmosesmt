@@ -34,7 +34,6 @@ type FieldDef = {
 
 const FIELDS: FieldDef[] = [
   { key: "qtde_itens",         label: "Qtde. Itens",                kind: "number" },
-  { key: "solicitacao",        label: "Solicitação",                kind: "text" },
   { key: "descricao_material", label: "Descrição do Material",      kind: "textarea" },
   { key: "casco",              label: "Casco",                      kind: "select-casco" },
   { key: "unidade_medida",     label: "Unidade de Medida",          kind: "select-um" },
@@ -62,9 +61,8 @@ const DEFAULT_LAYOUT: Layout[] = (() => {
   let y = 0;
   const out: Layout[] = [];
   // row 1
-  out.push({ i: "qtde_itens",  x: 0, y, w: 4, h: 3, minW: 2, minH: 3 });
-  out.push({ i: "solicitacao", x: 4, y, w: 4, h: 3, minW: 2, minH: 3 });
-  out.push({ i: "data",        x: 8, y, w: 4, h: 3, minW: 2, minH: 3 });
+  out.push({ i: "qtde_itens",  x: 0, y, w: 6, h: 3, minW: 2, minH: 3 });
+  out.push({ i: "data",        x: 6, y, w: 6, h: 3, minW: 2, minH: 3 });
   y += 3;
   // descricao full width
   out.push({ i: "descricao_material", x: 0, y, w: 8, h: 4, minW: 4, minH: 3 });
