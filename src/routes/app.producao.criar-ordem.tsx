@@ -201,6 +201,19 @@ function CriarOrdemPage() {
     },
   });
 
+  // Cascos já utilizados em ordens de produção (para sequenciamento automático)
+  const { data: cascosOrdens = [] } = useQuery({
+    queryKey: ["cascos-em-ordens"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("producao_ordens")
+        .select("casco")
+        .not("casco", "is", null);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: tipos = [] } = useQuery({
     queryKey: ["producao-tipos"],
     queryFn: async () => {
@@ -302,12 +315,14 @@ function CriarOrdemPage() {
   // Sugestão: próximo número de casco sequencial = max + 1
   const proximoCascoNum = useMemo(() => {
     let max = 0;
-    cascos.forEach((c: any) => {
-      const m = String(c.numero).match(/(\d+)/);
+    const consumir = (val: any) => {
+      const m = String(val ?? "").match(/(\d+)/);
       if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
-    });
+    };
+    cascos.forEach((c: any) => consumir(c.numero));
+    cascosOrdens.forEach((o: any) => consumir(o.casco));
     return max + 1;
-  }, [cascos]);
+  }, [cascos, cascosOrdens]);
 
   const proximoCascoLabel = useMemo(
     () => `CASCO ${String(proximoCascoNum).padStart(3, "0")}`,
