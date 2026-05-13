@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from "@/components/ui/select";
-import { ClipboardList, Plus, Trash2, Save } from "lucide-react";
+import { ClipboardList, Plus, Trash2, Save, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import dmnLogo from "@/assets/dmn-logo.png";
 
@@ -17,7 +17,17 @@ export const Route = createFileRoute("/app/producao/criar-ordem")({
   component: CriarOrdemPage,
 });
 
-type Embarcacao = { id: string; nome: string; numero_casco: string | null };
+type TipoEmb = "BALSA" | "EMBARCAÇÃO" | "EMPURRADOR" | "ESTRUTURA FLUTUANTE";
+
+const TIPOS_EMB: TipoEmb[] = ["BALSA", "EMBARCAÇÃO", "EMPURRADOR", "ESTRUTURA FLUTUANTE"];
+
+// Mapeamento NCM por tipo extraído da planilha HALB e FERT Geral
+const NCM_POR_TIPO: Record<TipoEmb, string> = {
+  "BALSA": "89079000",
+  "EMBARCAÇÃO": "89011000",
+  "EMPURRADOR": "89040000",
+  "ESTRUTURA FLUTUANTE": "89079000",
+};
 
 type ItemRow = {
   item: number;
@@ -40,15 +50,21 @@ type ItemRow = {
   ocorrencia: string;
 };
 
-function blankRow(item: number, dataPadrao: string, tipo: "HALB" | "FERT" | "MISTA"): ItemRow {
+function blankRow(
+  item: number,
+  dataPadrao: string,
+  tipo: "HALB" | "FERT" | "MISTA",
+  descricao = "",
+  ncm = "89079000",
+): ItemRow {
   const isFert = tipo === "FERT";
   return {
     item,
     data_solicitacao: dataPadrao,
-    descricao_material: "",
+    descricao_material: descricao,
     unidade_medida: "UN",
     grupo_compradores: isFert ? "A03" : "não tem",
-    ncm: "89079000",
+    ncm,
     centro: "C020",
     deposito: isFert ? "DE01" : "DP01",
     grupo_mercadorias: "AT0024",
@@ -71,29 +87,74 @@ function CriarOrdemPage() {
   const today = new Date().toISOString().split("T")[0];
   const [numero, setNumero] = useState(`OP-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
   const [dataSolicitacao, setDataSolicitacao] = useState(today);
-  const [embarcacaoId, setEmbarcacaoId] = useState<string>("");
   const [tipoOrdem, setTipoOrdem] = useState<"HALB" | "FERT" | "MISTA">("HALB");
   const [revisao, setRevisao] = useState("00");
   const [pagina, setPagina] = useState("01/01");
   const [observacoes, setObservacoes] = useState("");
-  const [itens, setItens] = useState<ItemRow[]>([blankRow(1, today, "HALB")]);
 
-  const { data: embarcacoes = [] } = useQuery({
-    queryKey: ["producao_embarcacoes"],
+  // Gerador de cascos (cabeçalho da ordem)
+  const [nomeEmbarcacao, setNomeEmbarcacao] = useState("");
+  const [tipoEmbarcacao, setTipoEmbarcacao] = useState<TipoEmb>("BALSA");
+  const [cascoInicial, setCascoInicial] = useState<number>(1);
+  const [qtdCascos, setQtdCascos] = useState<number>(1);
+
+  const [itens, setItens] = useState<ItemRow[]>([]);
+
+  // Sugere o próximo número de casco com base no maior já registrado
+  const { data: ultimoCasco } = useQuery({
+    queryKey: ["ultimo_casco_global"],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("producao_embarcacoes")
-        .select("id, nome, numero_casco")
-        .order("nome");
+        .select("numero_casco")
+        .not("numero_casco", "is", null)
+        .order("numero_casco", { ascending: false })
+        .limit(1);
       if (error) throw error;
-      return data as Embarcacao[];
+      const v = data?.[0]?.numero_casco;
+      return v ? Number(v) : 0;
     },
   });
 
+  // Quando o último casco é carregado, ajusta o sugerido (apenas 1ª vez)
+  useMemo(() => {
+    if (ultimoCasco && cascoInicial === 1) setCascoInicial(ultimoCasco + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ultimoCasco]);
+
   const codigoFormulario = tipoOrdem === "FERT" ? "FOR-PROD 02" : "FOR-PROD 01";
+  const ncmAtual = NCM_POR_TIPO[tipoEmbarcacao];
+
+  function gerarCascos() {
+    const nome = nomeEmbarcacao.trim().toUpperCase();
+    if (!nome) {
+      toast.error("Informe o nome da embarcação");
+      return;
+    }
+    if (!cascoInicial || cascoInicial < 1) {
+      toast.error("Informe o casco inicial");
+      return;
+    }
+    if (!qtdCascos || qtdCascos < 1) {
+      toast.error("Informe a quantidade de cascos");
+      return;
+    }
+    const novos: ItemRow[] = Array.from({ length: qtdCascos }, (_, i) => {
+      const casco = String(cascoInicial + i).padStart(3, "0");
+      return blankRow(
+        itens.length + i + 1,
+        dataSolicitacao,
+        tipoOrdem,
+        `${nome} - CASCO ${casco}`,
+        ncmAtual,
+      );
+    });
+    setItens((rs) => [...rs, ...novos].map((r, i) => ({ ...r, item: i + 1 })));
+    toast.success(`${qtdCascos} casco(s) adicionado(s)`);
+  }
 
   function addRow() {
-    setItens((rs) => [...rs, blankRow(rs.length + 1, dataSolicitacao, tipoOrdem)]);
+    setItens((rs) => [...rs, blankRow(rs.length + 1, dataSolicitacao, tipoOrdem, "", ncmAtual)]);
   }
   function removeRow(idx: number) {
     setItens((rs) => rs.filter((_, i) => i !== idx).map((r, i) => ({ ...r, item: i + 1 })));
@@ -105,7 +166,7 @@ function CriarOrdemPage() {
   const saveMut = useMutation({
     mutationFn: async () => {
       if (!numero.trim()) throw new Error("Informe o número da ordem");
-      if (!embarcacaoId) throw new Error("Selecione uma embarcação");
+      if (!nomeEmbarcacao.trim()) throw new Error("Informe o nome da embarcação");
       const validos = itens.filter((i) => i.descricao_material.trim());
       if (validos.length === 0) throw new Error("Adicione ao menos um item com descrição");
 
@@ -114,12 +175,16 @@ function CriarOrdemPage() {
         .insert({
           numero,
           data_solicitacao: dataSolicitacao,
-          embarcacao_id: embarcacaoId,
+          embarcacao_id: null,
           tipo_ordem: tipoOrdem,
           codigo_formulario: codigoFormulario,
           revisao,
           pagina,
-          observacoes: observacoes || null,
+          observacoes: [
+            `Embarcação: ${nomeEmbarcacao.trim().toUpperCase()} (${tipoEmbarcacao})`,
+            `Cascos: ${cascoInicial} a ${cascoInicial + qtdCascos - 1}`,
+            observacoes,
+          ].filter(Boolean).join("\n"),
           status: "RASCUNHO",
         })
         .select("id")
@@ -160,11 +225,6 @@ function CriarOrdemPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
-  const embarcacaoSel = useMemo(
-    () => embarcacoes.find((e) => e.id === embarcacaoId),
-    [embarcacoes, embarcacaoId],
-  );
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-[1400px] space-y-5">
@@ -220,32 +280,71 @@ function CriarOrdemPage() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Embarcação / Casco *">
-            <Select value={embarcacaoId} onValueChange={setEmbarcacaoId}>
-              <SelectTrigger><SelectValue placeholder="Selecionar…" /></SelectTrigger>
-              <SelectContent>
-                {embarcacoes.map((e) => (
-                  <SelectItem key={e.id} value={e.id}>
-                    {e.numero_casco ? `Casco ${e.numero_casco} · ` : ""}{e.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
           <Field label="Revisão">
             <Input value={revisao} onChange={(e) => setRevisao(e.target.value)} />
           </Field>
           <Field label="Página">
             <Input value={pagina} onChange={(e) => setPagina(e.target.value)} />
           </Field>
-          <Field label="Embarcação Selecionada" className="md:col-span-2">
-            <Input
-              readOnly
-              value={embarcacaoSel ? `${embarcacaoSel.nome}${embarcacaoSel.numero_casco ? ` · Casco ${embarcacaoSel.numero_casco}` : ""}` : ""}
-              className="bg-slate-50"
-              placeholder="—"
-            />
-          </Field>
+        </div>
+
+        {/* Gerador de cascos — alimenta itens automaticamente da planilha HALB/FERT Geral */}
+        <div className="bg-amber-50/50 px-5 py-4 border-b">
+          <div className="text-[11px] font-black uppercase tracking-widest text-amber-800 mb-3">
+            Gerador de Itens (planilha HALB/FERT Geral)
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            <Field label="Nome da Embarcação *" className="md:col-span-4">
+              <Input
+                value={nomeEmbarcacao}
+                onChange={(e) => setNomeEmbarcacao(e.target.value)}
+                placeholder="ex: AMAZON AGRO"
+                className="uppercase font-semibold"
+              />
+            </Field>
+            <Field label="Tipo de Embarcação *" className="md:col-span-3">
+              <Select value={tipoEmbarcacao} onValueChange={(v) => setTipoEmbarcacao(v as TipoEmb)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TIPOS_EMB.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t} · NCM {NCM_POR_TIPO[t]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Casco Inicial *" className="md:col-span-2">
+              <Input
+                type="number"
+                min={1}
+                value={cascoInicial}
+                onChange={(e) => setCascoInicial(Number(e.target.value))}
+              />
+            </Field>
+            <Field label="Qtd. de Cascos *" className="md:col-span-1">
+              <Input
+                type="number"
+                min={1}
+                value={qtdCascos}
+                onChange={(e) => setQtdCascos(Number(e.target.value))}
+              />
+            </Field>
+            <div className="md:col-span-2">
+              <Button
+                type="button"
+                onClick={gerarCascos}
+                className="w-full gap-2 bg-amber-600 hover:bg-amber-700"
+              >
+                <Wand2 className="h-4 w-4" /> Gerar
+              </Button>
+            </div>
+          </div>
+          <p className="text-[10px] text-amber-900/70 mt-2 font-medium">
+            Próximo casco sugerido: <span className="font-mono font-bold">{(ultimoCasco ?? 0) + 1}</span> ·
+            NCM aplicado a esse tipo: <span className="font-mono font-bold">{ncmAtual}</span> ·
+            Descrição gerada: <span className="font-mono">{nomeEmbarcacao.toUpperCase() || "{NOME}"} - CASCO {String(cascoInicial).padStart(3, "0")}</span>
+          </p>
         </div>
 
         {/* Faixa SOLICITAÇÃO + grid de itens */}
@@ -312,7 +411,6 @@ function CriarOrdemPage() {
                     <button
                       type="button"
                       onClick={() => removeRow(idx)}
-                      disabled={itens.length === 1}
                       className="text-red-600 hover:text-red-800 disabled:opacity-30"
                       title="Remover item"
                     >
