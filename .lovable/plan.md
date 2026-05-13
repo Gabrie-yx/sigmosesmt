@@ -1,97 +1,100 @@
-# Reforço de segurança + novo módulo Usuários
+
+## Objetivo
+
+Tornar a APR o documento "guarda-chuva" e a PTE a autorização operacional vinculada a ela — fechando o ciclo de segurança e permitindo medir cobertura.
+
+---
 
 ## 1. Banco de dados (migração)
 
-### 1.1. Novo papel `viewer` e renomeação
-- `app_role` hoje tem `admin` e `tst`. Vamos para: `admin`, `moderador`, `editor`, `viewer`.
-- Mantemos `tst` como alias durante a transição (não removemos do enum agora para não quebrar dados).
-- `is_editor()` passa a aceitar `admin`, `moderador`, `editor`.
-- Nova função `is_moderator()` → `admin` ou `moderador` (para ações de aprovação/revogação).
-- Nova função `is_viewer_or_above()` → qualquer papel ativo (usada para SELECT).
+- Adicionar coluna `apr_id UUID NULL` em `ptes` (referência lógica à APR de origem; nullable porque PTEs antigas/avulsas continuam válidas).
+- Índice em `ptes(apr_id)` para joins do painel.
+- Sem RLS nova — herda as policies já existentes de `ptes`.
 
-### 1.2. Acesso por módulo (on/off)
-Nova tabela `user_module_access`:
-- `user_id`, `module` (enum: `sesmt`, `estoque`, `producao`, `manutencao`, `portaria`, `usuarios`), `enabled`.
-- RLS: só admin gerencia; usuário lê o próprio.
-- Função `has_module_access(_user_id, _module)` SECURITY DEFINER.
-- Admin sempre tem acesso a todos os módulos (bypass na função).
+> Não vou criar FK física pois a APR pode ser excluída e a PTE histórica deve persistir (igual a outras relações do projeto).
 
-### 1.3. Convites
-Tabela `user_invites`:
-- `email`, `full_name`, `role`, `modules` (array), `invited_by`, `accepted_at`, `expires_at`.
-- RLS: só admin lê/escreve.
-- Edge Function `invite-user` chama `supabaseAdmin.auth.admin.inviteUserByEmail()` e cria registros em `user_roles` + `user_module_access` ao aceitar (via trigger em `auth.users` no INSERT).
+---
 
-### 1.4. MFA enforcement
-- Função `requires_mfa(_user_id)` retorna true se papel ∈ {admin, moderador}.
-- RLS sensíveis (`user_roles`, `user_module_access`, `audit_logs`, `safety_overrides`, `temp_admins`) passam a checar `auth.jwt()->>'aal' = 'aal2'` quando `requires_mfa()` for true.
+## 2. Auto-detecção de "exige PTE" na APR
 
-### 1.5. Auditoria de login (opcional, fica para próxima)
-Não nesta etapa para não inflar.
+Lista de gatilhos (qualquer um marca `exige_pte = true` automaticamente quando o usuário adiciona/edita risco):
 
-## 2. Edge Functions
+| Gatilho | Origem |
+|---|---|
+| NR-35 (Altura > 2 m) | `apr_riscos.nrs` contém "NR-35" ou nome do risco contém "altura" |
+| NR-33 (Espaço Confinado) | "NR-33" ou nome contém "confinad" |
+| NR-34 (Trabalho a Quente: solda/corte/esmerilhamento) | "NR-34" ou nome contém "quente"/"solda"/"corte"/"esmeril" |
+| NR-10 (Eletricidade energizada/AT) | "NR-10" ou nome contém "el\u00e9tric"/"energiz" |
+| Içamento / carga suspensa | nome contém "i\u00e7amento"/"carga suspensa"/"guindaste"/"p\u00f3rtico" |
+| Pintura em ambiente fechado | nome contém "pintura" + algum indicador de "fechado/confinado" |
 
-### 2.1. `invite-user` (nova)
-- Recebe: `{ email, full_name, role, modules[] }`.
-- Verifica chamador é admin (via JWT + `has_role`).
-- Chama `auth.admin.inviteUserByEmail(email, { data: { full_name } })`.
-- Insere em `user_invites` com `role` e `modules` pendentes.
-- Trigger `handle_new_user` (já existe) cria profile; vamos estender para aplicar invite pendente: ler `user_invites` por email, criar `user_roles` e `user_module_access`, marcar `accepted_at`.
+Comportamento na UI (`apr-form.tsx`):
+- Toggle `exige_pte` continua editável, mas vira **read-only TRUE** quando a auto-detecção dispara, com badge "Detectado automaticamente — riscos críticos presentes".
+- Lista os motivos abaixo do toggle.
 
-### 2.2. `delete-user` (nova)
-- Admin remove usuário: apaga de `user_roles`, `user_module_access` e `auth.users` via service role.
+---
 
-## 3. Frontend
+## 3. Botão "Gerar PTE da APR"
 
-### 3.1. Página `/app/usuarios` (refatorar)
-- Lista usuários com: nome, email, papel, módulos (chips), MFA status, último acesso.
-- Botão **"Convidar usuário"** abre modal:
-  - Nome completo, Email, Papel (radio), Módulos (checkboxes).
-  - Submete para `invite-user`.
-- Ações por linha: Editar papel/módulos, Reenviar convite, Remover.
-- Filtros: papel, módulo, status (ativo/pendente).
+No menu de ações da APR (lista `app.aprs.tsx` + dentro do form ao salvar APR ATIVA com `exige_pte`):
 
-### 3.2. Guard de módulo
-- Hook `useModuleAccess(module)` busca `user_module_access` do usuário logado.
-- `<ModuleGuard module="sesmt">` envolve rotas — redireciona para `/app` com toast se sem acesso.
-- Aplicar em `/app/sesmt/*`, `/app/estoque/*`, `/app/producao/*`, `/app/manutencao/*`, `/app/portaria/*`, `/app/usuarios`.
-- Header esconde itens de menu sem acesso.
+- Item: **"Gerar PTE vinculada"** (visível só para editor e quando `exige_pte = true`).
+- Ao clicar, navega para `/app/ptes` abrindo o formulário de PTE em modo "novo", pré-preenchendo via state:
+  - `apr_id` = APR de origem
+  - `casco_id`, `empresa_id`, `local`, `data` 
+  - `risco` = principal categoria detectada (NR-35/33/34/10/Içamento/Pintura)
+  - `dados.nrs` = união dos `nrs` da APR
+  - `dados.executantes` = assinaturas de papel "EXECUTANTE" da APR
+  - `dados.atividade` = `atividade_descricao`
+- Após salvar a PTE, o sistema:
+  - Mostra toast "PTE 0001/25 vinculada à APR 00012525"
+  - Volta para lista de APRs com a APR origem destacada.
 
-### 3.3. MFA enrollment
-- Página `/app/conta/seguranca`:
-  - Status MFA (enrolled/não).
-  - Botão "Ativar 2FA" → QR code (TOTP via `supabase.auth.mfa.enroll`).
-  - Verificação com código de 6 dígitos.
-- Banner global obrigatório: se `role ∈ {admin, moderador}` e sem MFA, redireciona para `/app/conta/seguranca` em todas as rotas exceto essa.
+Na lista de PTEs, nova coluna **"APR origem"** com link clicável; filtro por "Tem APR / Órfã".
 
-### 3.4. Login
-- Após `signInWithPassword`, checar `aal`. Se papel exige MFA e `aal=aal1`, mostrar tela de challenge TOTP.
+Na lista de APRs, nova coluna **"PTEs"** mostrando contagem (`2 emitidas`) com tooltip listando números — clique abre o filtro de PTEs daquela APR.
 
-### 3.5. Página de aceite de convite
-- Rota pública `/aceitar-convite` (já tratada pelo Supabase via redirect do email — só precisamos garantir que `/reset-password` ou similar exista para definir senha).
+---
 
-## 4. Considerações sobre papéis
+## 4. Indicadores no Painel (`app.painel.tsx`)
 
-- **Admin**: tudo, gerencia usuários, MFA obrigatório.
-- **Moderador**: edita + aprova/revoga (ex.: aprovar requisição de compra, revogar safety_override), MFA obrigatório.
-- **Editor**: cria/edita registros nos módulos liberados, sem aprovações.
-- **Visualizador**: somente leitura nos módulos liberados.
+Bloco novo **"Cobertura APR ↔ PTE"** com 4 cards:
 
-## 5. Ordem de execução
+1. **Cobertura de APRs críticas** — `% de APRs com exige_pte=true que possuem ≥1 PTE emitida` (período: últimos 30 dias). Cor: verde ≥95%, amarelo 80–95%, vermelho <80%.
+2. **PTEs órfãs** — contagem de PTEs sem `apr_id` no período. Drill-down: lista.
+3. **APRs vencidas com PTE ativa** — `aprs.data_validade < hoje` AND existe PTE `status='ATIVA'` vinculada. Risco operacional crítico.
+4. **PTEs no mês por NR** — mini gráfico de barras (NR-35, NR-33, NR-34, NR-10, Içamento) usando `ptes.risco`.
 
-1. Migração SQL (enum, funções, tabelas, RLS).
-2. Edge Functions `invite-user` e `delete-user`.
-3. Refactor da página de Usuários (UI nova com convite + módulos).
-4. ModuleGuard + esconder itens do header.
-5. Página de segurança com MFA + banner obrigatório.
-6. Ajuste no fluxo de login para challenge MFA.
+---
 
-## Detalhes técnicos
-- Enum `app_role`: `ALTER TYPE app_role ADD VALUE 'moderador'; ADD VALUE 'editor'; ADD VALUE 'viewer';` (o valor `tst` permanece, depreciado — `is_editor` passa a aceitar editor/moderador/admin).
-- `audit_logs` ganha trigger em `auth.users` para login? Não — Supabase já loga isso internamente; deixamos para depois.
-- MFA: `supabase.auth.mfa.enroll({ factorType: 'totp' })` + `challenge` + `verify`. RLS checa `(auth.jwt()->>'aal')::text = 'aal2'`.
-- Convite: o `inviteUserByEmail` envia email padrão do Supabase com link para definir senha; precisamos garantir que a URL de redirect aponte para uma rota de definição de senha (já temos `/reset-password`? verificar e criar se faltar).
+## 5. PDF da APR
 
-## Riscos
-- Quebrar acesso atual: usuários `tst` continuam funcionando porque `is_editor` mantém aceitação.
-- MFA obrigatório pode trancar admins fora — vamos liberar 7 dias de carência mostrando banner antes de bloquear.
+- No bloco GERAIS, ao final, adicionar linha condicional quando `exige_pte = true`:
+  > "⚠ Esta atividade EXIGE Permissão de Trabalho Especial (PTE). Emitir PTE conforme procedimento interno antes do início das atividades. PTE(s) vinculada(s): 0001/25, 0002/25 — ou — NENHUMA EMITIDA (PENDENTE)."
+
+---
+
+## 6. Arquivos afetados
+
+**Novos:**
+- `supabase/migrations/<timestamp>_apr_pte_link.sql`
+- `src/lib/apr-pte-rules.ts` — função `detectarExigenciaPTE(riscos)` reutilizada no form e no PDF.
+
+**Editados:**
+- `src/components/aprs/apr-form.tsx` — auto-detecção + UI.
+- `src/routes/app.aprs.tsx` — coluna PTEs + ação "Gerar PTE".
+- `src/routes/app.ptes.tsx` — coluna APR origem + filtro órfãs + suporte a `apr_id` prefill via location state.
+- `src/lib/apr-pdf.ts` — bloco de aviso PTE no GERAIS.
+- `src/routes/app.painel.tsx` — bloco novo de cards.
+
+---
+
+## Fora de escopo (deixar para depois se quiser)
+
+- Bloquear ATIVAÇÃO da APR sem PTE (você escolheu o fluxo de botão, não bloqueio).
+- Relação N:N (escolheu 1:N).
+- Workflow de aprovação eletrônica da PTE pelo SESMT (já existe `created_by`).
+
+---
+
+Aprova? Se sim, eu já disparo a migração e implemento na sequência.
