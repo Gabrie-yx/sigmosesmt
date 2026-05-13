@@ -603,6 +603,24 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
             <PaperFullHeader apr={apr} setApr={setApr} empresa={empresa} casco={casco} enc={enc} tst={tst}
               employees={employees} companies={companies} pagina={1} />
 
+            {/* Banner de detecção automática de PTE */}
+            {deteccaoPTE.exige && (
+              <div className="border-x border-b border-black bg-amber-50 px-3 py-2 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <div className="text-[11px] font-black uppercase text-amber-900">
+                    Esta APR EXIGE Permissão de Trabalho Especial (PTE) — detectado automaticamente
+                  </div>
+                  <ul className="text-[10px] text-amber-800 mt-0.5 list-disc list-inside">
+                    {deteccaoPTE.motivos.map((m) => <li key={m}>{m}</li>)}
+                  </ul>
+                  <div className="text-[10px] text-amber-700 mt-1">
+                    Salve a APR e use <b>“Gerar PTE vinculada”</b> no menu de ações para emitir a permissão antes do início da atividade.
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Casco | PTE — Validade subiu para o cabeçalho */}
             <div className="grid grid-cols-2">
               <PaperCell label="Casco / Embarcação">
