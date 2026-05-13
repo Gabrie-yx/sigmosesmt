@@ -106,8 +106,8 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-white to-red-50 px-4 py-10">
       <Card className="w-full max-w-md shadow-xl border-slate-200">
         <CardHeader className="text-center space-y-3 pb-4">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-b from-[#a01818] to-[#7f1212] shadow-lg ring-1 ring-red-900/20">
-            <img src={dmnLogo} alt="Estaleiro DMN" className="h-14 w-auto object-contain drop-shadow" />
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-white shadow-lg ring-1 ring-slate-200">
+            <img src={dmnLogo} alt="Estaleiro DMN" className="h-14 w-auto object-contain" />
           </div>
           <CardTitle className="text-2xl font-black uppercase tracking-tight text-slate-900">
             {mode === "signin" ? "Entrar" : "Criar conta"}
