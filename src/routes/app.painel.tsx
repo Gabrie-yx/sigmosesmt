@@ -13,11 +13,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   AreaChart, Area, PieChart, Pie, Cell, Legend,
 } from "recharts";
-import RGL from "react-grid-layout";
-
-// react-grid-layout types are inconsistent across versions — use loose typing
-const RGLAny = RGL as any;
-const ResponsiveGridLayout: any = RGLAny.WidthProvider(RGLAny);
+// react-grid-layout touches `window` at import — load it client-only via lazy state
 type Layout = { i: string; x: number; y: number; w: number; h: number; minH?: number; minW?: number };
 
 export const Route = createFileRoute("/app/painel")({
