@@ -155,7 +155,18 @@ function CriarOrdemPage() {
   const { id: editId } = Route.useSearch();
   const [layout, setLayout] = useState<Layout[]>(() => loadLayout());
   const [locked, setLocked] = useState(false);
-  const [values, setValues] = useState<Record<string, string>>({ data: new Date().toISOString().slice(0, 10) });
+  const [values, setValues] = useState<Record<string, string>>({
+    data: new Date().toISOString().slice(0, 10),
+    grupo_compradores: "Não tem",
+    centro: "C020",
+    deposito: "DP01",
+    setor_atividade: "20",
+    grupo_categ_item: "NORM",
+    determ_preco: "3",
+    controle_preco: "S",
+    origem_material: "NACIONAL",
+    utilizacao_material: "1 - INDUSTRIALIZAÇÃO",
+  });
   const [Grid, setGrid] = useState<any>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [gridWidth, setGridWidth] = useState(0);
@@ -164,6 +175,8 @@ function CriarOrdemPage() {
   const [newUm, setNewUm] = useState({ sigla: "", descricao: "" });
   const [gmDialogOpen, setGmDialogOpen] = useState(false);
   const [newGm, setNewGm] = useState({ codigo: "", descricao: "" });
+  const [clDialogOpen, setClDialogOpen] = useState(false);
+  const [newCl, setNewCl] = useState({ codigo: "", descricao: "" });
   const loadedRef = useRef(false);
 
   useEffect(() => {
@@ -239,6 +252,17 @@ function CriarOrdemPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("producao_grupo_mercadorias")
+        .select("id, codigo, descricao").eq("ativo", true).order("codigo");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: classes = [] } = useQuery({
+    queryKey: ["producao-classes-aval"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("producao_classes_avaliacao")
         .select("id, codigo, descricao").eq("ativo", true).order("codigo");
       if (error) throw error;
       return data ?? [];
