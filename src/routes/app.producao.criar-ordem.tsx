@@ -371,8 +371,9 @@ function CriarOrdemPage() {
   // Auto-preenche Casco com o próximo sequencial
   useEffect(() => {
     if (!proximoCascoLabel) return;
-    setValues((v) => (v.casco ? v : { ...v, casco: proximoCascoLabel }));
-  }, [proximoCascoLabel]);
+    if (editId && !loadedRef.current) return; // aguarda carregar a ordem em edição
+    setValues((v) => (v.casco === proximoCascoLabel ? v : { ...v, casco: proximoCascoLabel }));
+  }, [proximoCascoLabel, editId]);
 
   const addUm = useMutation({
     mutationFn: async () => {
