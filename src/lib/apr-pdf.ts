@@ -59,6 +59,8 @@ export type APRPdfParams = {
   texto_gerais?: string | null;
   riscos: APRPdfRisco[];
   assinaturas: APRPdfAssinatura[];
+  exige_pte?: boolean;
+  ptes_vinculadas?: string[];
 };
 
 // Cores fixas (modelo homologado)
@@ -322,6 +324,25 @@ function drawGeraisPage(doc: jsPDF, p: APRPdfParams) {
     columnStyles: { 0: { cellWidth: CONTENT_W - 2 } },
     didDrawPage: () => { chrome(); },
   });
+
+  // Aviso de exigência de PTE (após o GERAIS)
+  if (p.exige_pte) {
+    const lastY = (doc as any).lastAutoTable?.finalY ?? CONTENT_TOP + 6;
+    const yStart = lastY + 4;
+    const linhas = p.ptes_vinculadas && p.ptes_vinculadas.length > 0
+      ? `PTE(s) vinculada(s): ${p.ptes_vinculadas.join(", ")}`
+      : "NENHUMA PTE EMITIDA — PENDENTE DE EMISSÃO ANTES DO INÍCIO DA ATIVIDADE";
+    doc.setFillColor(255, 243, 205);
+    doc.setDrawColor(220, 53, 69);
+    doc.setLineWidth(0.5);
+    doc.rect(MARGIN, yStart, CONTENT_W, 14, "FD");
+    doc.setFont("helvetica", "bold").setFontSize(9).setTextColor(220, 53, 69);
+    doc.text("⚠ ESTA ATIVIDADE EXIGE PERMISSÃO DE TRABALHO ESPECIAL (PTE)", MARGIN + 2, yStart + 5);
+    doc.setFont("helvetica", "normal").setFontSize(8).setTextColor(0, 0, 0);
+    doc.text("Emitir PTE conforme procedimento interno antes do início das atividades.", MARGIN + 2, yStart + 9);
+    doc.setFont("helvetica", "bold").setFontSize(8.5);
+    doc.text(linhas, MARGIN + 2, yStart + 12.5);
+  }
 }
 
 function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
