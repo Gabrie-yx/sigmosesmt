@@ -199,17 +199,21 @@ function TiposProdutoPage() {
 }
 
 function TipoDialog({
-  open, tipo, gruposMerc, onClose, onSaved,
+  open, tipo, gruposMerc, classes, onClose, onSaved,
 }: {
   open: boolean;
   tipo: Tipo | null;
   gruposMerc: { codigo: string; descricao: string | null }[];
+  classes: { codigo: string; descricao: string | null }[];
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [nome, setNome] = useState("");
   const [ncm, setNcm] = useState("");
   const [grupo, setGrupo] = useState("");
+  const [classe, setClasse] = useState("");
+  const [mtart, setMtart] = useState<string>("FERT");
+  const [tipoEmb, setTipoEmb] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -218,6 +222,9 @@ function TipoDialog({
     setNome(tipo?.nome ?? "");
     setNcm(tipo?.ncm ?? "");
     setGrupo(tipo?.grupo_mercadorias ?? "");
+    setClasse(tipo?.classe_avaliacao ?? "");
+    setMtart(tipo?.mtart ?? "FERT");
+    setTipoEmb(tipo?.tipo_embarcacao ?? "");
     setAtivo(tipo?.ativo ?? true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, tipo?.id]);
@@ -230,6 +237,9 @@ function TipoDialog({
         nome: nome.trim(),
         ncm: ncm.trim() || null,
         grupo_mercadorias: grupo.trim() || null,
+        classe_avaliacao: classe.trim() || null,
+        mtart: mtart || null,
+        tipo_embarcacao: tipoEmb.trim() || null,
         ativo,
       };
       if (tipo?.id) {
@@ -260,6 +270,30 @@ function TipoDialog({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
+              <Label>MTART (Tipo de Material SAP)</Label>
+              <Select value={mtart} onValueChange={setMtart}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="HALB">HALB — Semi-acabado (Casco em construção)</SelectItem>
+                  <SelectItem value="FERT">FERT — Produto Acabado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Tipo de Embarcação</Label>
+              <Select value={tipoEmb || undefined} onValueChange={setTipoEmb}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="EMPURRADOR">Empurrador</SelectItem>
+                  <SelectItem value="BALSA">Balsa</SelectItem>
+                  <SelectItem value="ESTRUTURA FLUTUANTE">Estrutura Flutuante</SelectItem>
+                  <SelectItem value="EMBARCACAO">Embarcação</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
               <Label>NCM padrão</Label>
               <Input value={ncm} onChange={(e) => setNcm(e.target.value)} placeholder="Ex: 89011000" />
             </div>
@@ -268,7 +302,7 @@ function TipoDialog({
               <Input
                 value={grupo}
                 onChange={(e) => setGrupo(e.target.value)}
-                placeholder="Ex: NAVAL01"
+                placeholder="Ex: AT0023"
                 list="grupos-merc-list"
               />
               <datalist id="grupos-merc-list">
@@ -279,6 +313,22 @@ function TipoDialog({
                 ))}
               </datalist>
             </div>
+          </div>
+          <div>
+            <Label>Classe de Avaliação padrão</Label>
+            <Input
+              value={classe}
+              onChange={(e) => setClasse(e.target.value)}
+              placeholder="Ex: 7921"
+              list="classes-aval-list"
+            />
+            <datalist id="classes-aval-list">
+              {classes.map((c) => (
+                <option key={c.codigo} value={c.codigo}>
+                  {c.descricao ?? c.codigo}
+                </option>
+              ))}
+            </datalist>
           </div>
           <div className="flex items-center gap-2 pt-1">
             <Switch checked={ativo} onCheckedChange={setAtivo} />
