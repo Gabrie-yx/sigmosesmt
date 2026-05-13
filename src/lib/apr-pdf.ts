@@ -82,6 +82,9 @@ const PAGE_W = 297; // A4 landscape
 const PAGE_H = 210;
 const MARGIN = 6;
 const CONTENT_W = PAGE_W - MARGIN * 2;
+// Y onde começa o conteúdo da página (logo abaixo do cabeçalho completo:
+// chrome ISO + bloco de identificação) — repetido em TODAS as páginas.
+const CONTENT_TOP = 60;
 
 function drawHeader(doc: jsPDF, p: APRPdfParams, pagina: number, totalPaginas: number) {
   const headerH = 18;
@@ -246,7 +249,7 @@ function drawRiscosTable(doc: jsPDF, p: APRPdfParams, yStart: number) {
   autoTable(doc, {
     head: head as any, body,
     startY: yStart,
-    margin: { left: MARGIN, right: MARGIN, top: MARGIN + 20 },
+    margin: { left: MARGIN, right: MARGIN, top: CONTENT_TOP },
     theme: "grid",
     styles: { fontSize: 7, cellPadding: 1.4, valign: "middle", lineColor: [0, 0, 0], lineWidth: 0.15, textColor: 0 },
     headStyles: {
@@ -276,8 +279,7 @@ function drawRiscosTable(doc: jsPDF, p: APRPdfParams, yStart: number) {
       }
     },
     didDrawPage: () => {
-      drawHeader(doc, p, doc.getCurrentPageInfo().pageNumber, doc.getNumberOfPages());
-      drawFooter(doc);
+      drawFullChrome(doc, p);
     },
   });
 }
@@ -292,36 +294,41 @@ function drawFooter(doc: jsPDF) {
   doc.setTextColor(0, 0, 0);
 }
 
+// Cabeçalho COMPLETO desenhado em TODAS as páginas (chrome ISO + identificação + rodapé).
+function drawFullChrome(doc: jsPDF, p: APRPdfParams) {
+  drawHeader(doc, p, doc.getCurrentPageInfo().pageNumber, doc.getNumberOfPages());
+  drawFooter(doc);
+  drawIdBlock(doc, p, MARGIN + 20);
+}
+
 function drawGeraisPage(doc: jsPDF, p: APRPdfParams) {
   doc.addPage();
-  const drawGeraisChrome = () => {
-    drawHeader(doc, p, doc.getCurrentPageInfo().pageNumber, doc.getNumberOfPages());
-    drawFooter(doc);
+  const chrome = () => {
+    drawFullChrome(doc, p);
     doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(0, 0, 0);
-    doc.text("GERAIS:", MARGIN, MARGIN + 22);
+    doc.text("GERAIS:", MARGIN, CONTENT_TOP + 2);
   };
-  drawGeraisChrome();
+  chrome();
 
   const txt = (p.texto_gerais && p.texto_gerais.trim()) || DEFAULT_TEXTO_GERAIS;
   // Cada linha numerada como uma row da tabela (sem bordas) para auto-paginar com cabeçalho.
   const items = txt.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   autoTable(doc, {
-    startY: MARGIN + 26,
-    margin: { left: MARGIN, right: MARGIN, top: MARGIN + 26 },
+    startY: CONTENT_TOP + 6,
+    margin: { left: MARGIN, right: MARGIN, top: CONTENT_TOP + 6 },
     body: items.map((t) => [t]),
     theme: "plain",
     styles: { fontSize: 9, cellPadding: { top: 1, bottom: 1, left: 1, right: 1 }, textColor: 0 },
     columnStyles: { 0: { cellWidth: CONTENT_W - 2 } },
-    didDrawPage: () => { drawGeraisChrome(); },
+    didDrawPage: () => { chrome(); },
   });
 }
 
 function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   doc.addPage();
-  drawHeader(doc, p, doc.getCurrentPageInfo().pageNumber, doc.getNumberOfPages());
-  drawFooter(doc);
+  drawFullChrome(doc, p);
 
-  let y = MARGIN + 22;
+  let y = CONTENT_TOP + 2;
   doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(220, 38, 38);
   doc.text("ATENÇÃO: AO OBSERVAR OUTRO RISCO NÃO PREVISTO NESTA APR, PARALISAR O TRABALHO IMEDIATAMENTE E COMUNICAR AO SESMT", PAGE_W / 2, y, { align: "center" });
   doc.setTextColor(0, 0, 0);
@@ -440,13 +447,12 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
 
 function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
   doc.addPage();
-  const drawAnexoChrome = () => {
-    drawHeader(doc, p, doc.getCurrentPageInfo().pageNumber, doc.getNumberOfPages());
-    drawFooter(doc);
+  const chrome = () => {
+    drawFullChrome(doc, p);
     doc.setFont("helvetica", "bold").setFontSize(13).setTextColor(0, 0, 0);
-    doc.text("ANEXO I – ASSINATURA DOS EXECUTANTES DO SERVIÇO", PAGE_W / 2, MARGIN + 22, { align: "center" });
+    doc.text("ANEXO I – ASSINATURA DOS EXECUTANTES DO SERVIÇO", PAGE_W / 2, CONTENT_TOP + 3, { align: "center" });
   };
-  drawAnexoChrome();
+  chrome();
 
   const exec = p.assinaturas.filter((a) => a.papel === "EXECUTANTE");
   // Garante mínimo de 25 linhas (linhas estreitas para máximo aproveitamento)
@@ -462,8 +468,8 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
   }
 
   autoTable(doc, {
-    startY: MARGIN + 28,
-    margin: { left: MARGIN, right: MARGIN, top: MARGIN + 26 },
+    startY: CONTENT_TOP + 7,
+    margin: { left: MARGIN, right: MARGIN, top: CONTENT_TOP + 7 },
     head: [["Nº", "NOME", "ASSINATURA"]],
     body,
     theme: "grid",
@@ -474,7 +480,7 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
       1: { cellWidth: 130 },
       2: { cellWidth: "auto" },
     },
-    didDrawPage: () => { drawAnexoChrome(); },
+    didDrawPage: () => { chrome(); },
   });
 }
 
@@ -502,10 +508,8 @@ export async function gerarAPR(p: APRPdfParams): Promise<jsPDF> {
   }
 
   // Página(s) 1..N: cabeçalho + identificação + tabela de riscos
-  drawHeader(doc, p, 1, 1); // total ajustado depois
-  drawFooter(doc);
-  const yAfterId = drawIdBlock(doc, p, MARGIN + 20);
-  drawRiscosTable(doc, p, yAfterId);
+  drawFullChrome(doc, p);
+  drawRiscosTable(doc, p, CONTENT_TOP);
 
   // Página GERAIS
   drawGeraisPage(doc, p);
@@ -520,7 +524,7 @@ export async function gerarAPR(p: APRPdfParams): Promise<jsPDF> {
   const total = doc.getNumberOfPages();
   for (let i = 1; i <= total; i++) {
     doc.setPage(i);
-    // Limpa área do cabeçalho (cobre com branco) e redesenha com paginação correta
+    // Atualiza apenas o número da página (canto sup. direito) com o total correto
     doc.setFillColor(255, 255, 255);
     doc.rect(MARGIN, MARGIN, CONTENT_W, 18, "F");
     drawHeader(doc, p, i, total);
