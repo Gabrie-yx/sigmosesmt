@@ -294,17 +294,26 @@ function drawFooter(doc: jsPDF) {
 
 function drawGeraisPage(doc: jsPDF, p: APRPdfParams) {
   doc.addPage();
-  drawHeader(doc, p, doc.getCurrentPageInfo().pageNumber, doc.getNumberOfPages());
-  drawFooter(doc);
+  const drawGeraisChrome = () => {
+    drawHeader(doc, p, doc.getCurrentPageInfo().pageNumber, doc.getNumberOfPages());
+    drawFooter(doc);
+    doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(0, 0, 0);
+    doc.text("GERAIS:", MARGIN, MARGIN + 22);
+  };
+  drawGeraisChrome();
 
-  let y = MARGIN + 22;
-  doc.setFont("helvetica", "bold").setFontSize(11);
-  doc.text("GERAIS:", MARGIN, y);
-  y += 5;
-  doc.setFont("helvetica", "normal").setFontSize(9);
   const txt = (p.texto_gerais && p.texto_gerais.trim()) || DEFAULT_TEXTO_GERAIS;
-  const lines = doc.splitTextToSize(txt, CONTENT_W - 2);
-  doc.text(lines, MARGIN + 1, y);
+  // Cada linha numerada como uma row da tabela (sem bordas) para auto-paginar com cabeçalho.
+  const items = txt.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  autoTable(doc, {
+    startY: MARGIN + 26,
+    margin: { left: MARGIN, right: MARGIN, top: MARGIN + 26 },
+    body: items.map((t) => [t]),
+    theme: "plain",
+    styles: { fontSize: 9, cellPadding: { top: 1, bottom: 1, left: 1, right: 1 }, textColor: 0 },
+    columnStyles: { 0: { cellWidth: CONTENT_W - 2 } },
+    didDrawPage: () => { drawGeraisChrome(); },
+  });
 }
 
 function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
@@ -439,10 +448,9 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
   };
   drawAnexoChrome();
 
-  const y = MARGIN + 26;
   const exec = p.assinaturas.filter((a) => a.papel === "EXECUTANTE");
-  // Garante mínimo de 18 linhas (linhas mais estreitas, melhor uso da página)
-  const totalLinhas = Math.max(18, exec.length);
+  // Garante mínimo de 25 linhas (linhas estreitas para máximo aproveitamento)
+  const totalLinhas = Math.max(25, exec.length);
   const body: string[][] = [];
   for (let i = 0; i < totalLinhas; i++) {
     const a = exec[i];
@@ -454,12 +462,12 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
   }
 
   autoTable(doc, {
-    startY: y + 2,
+    startY: MARGIN + 28,
     margin: { left: MARGIN, right: MARGIN, top: MARGIN + 26 },
     head: [["Nº", "NOME", "ASSINATURA"]],
     body,
     theme: "grid",
-    styles: { fontSize: 9, cellPadding: 1.5, minCellHeight: 8, lineColor: [0, 0, 0], lineWidth: 0.2, valign: "middle" },
+    styles: { fontSize: 8, cellPadding: { top: 0.6, bottom: 0.6, left: 1.2, right: 1.2 }, minCellHeight: 5.5, lineColor: [0, 0, 0], lineWidth: 0.2, valign: "middle" },
     headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold", halign: "center", lineColor: [0, 0, 0], lineWidth: 0.3 },
     columnStyles: {
       0: { cellWidth: 12, halign: "center", fontStyle: "bold" },
