@@ -23,6 +23,7 @@ type APR = {
   hora_inicio?: string | null; hora_fim?: string | null;
   hora_inicio_sexta?: string | null; hora_fim_sexta?: string | null;
   validade_dias: number; data_validade?: string | null;
+  dias_semana?: string[] | null;
   condicoes_climaticas?: string | null; observacoes_gerais?: string | null;
   status: string; exige_pte: boolean;
   texto_gerais?: string | null;
@@ -37,6 +38,7 @@ type Risco = {
   acoes_preventivas?: string | null;
   epis: string[]; nrs: string[];
   responsavel_acoes?: string | null;
+  passo_a_passo?: string | null;
 };
 
 type Assin = {
@@ -65,6 +67,7 @@ const emptyApr: APR = {
   texto_gerais: DEFAULT_TEXTO_GERAIS,
   hora_inicio: "07:30", hora_fim: "17:30",
   hora_inicio_sexta: "07:30", hora_fim_sexta: "16:30",
+  dias_semana: ["SEG", "TER", "QUA", "QUI", "SEX"],
 };
 
 /* ---------- componentes visuais (espelho do papel) ---------- */
@@ -98,6 +101,27 @@ function PaperCell({ label, children, className = "" }: { label: string; childre
       <div className="text-[10px] font-bold uppercase text-slate-700 mb-0.5">{label}</div>
       {children}
     </div>
+  );
+}
+
+const DIAS = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"] as const;
+
+/* Cabeçalho compacto reutilizável (CNPJ / datas / APR Nº / Atividade / Local) */
+function PaperInfoBar({ apr, empresa, casco }: { apr: APR; empresa?: any; casco?: any }) {
+  return (
+    <>
+      <div className="grid grid-cols-[1.4fr_1fr_1fr_1.2fr] text-black bg-white">
+        <PaperCell label="CNPJ"><div className="text-xs">13.378.697/0001-80</div></PaperCell>
+        <PaperCell label="Início"><div className="text-xs">{apr.data_emissao ? formatDateBR(apr.data_emissao) : "—"}</div></PaperCell>
+        <PaperCell label="Fim"><div className="text-xs">{apr.data_validade ? formatDateBR(apr.data_validade) : "—"}</div></PaperCell>
+        <PaperCell label="APR Nº"><div className="text-xs font-bold">{apr.numero ?? "—"}</div></PaperCell>
+      </div>
+      <div className="grid grid-cols-[1.4fr_1.2fr_1.2fr] text-black bg-white">
+        <PaperCell label="Atividade Principal"><div className="text-xs truncate">{apr.atividade_descricao || "—"}</div></PaperCell>
+        <PaperCell label="Local"><div className="text-xs truncate">{apr.local || "—"}</div></PaperCell>
+        <PaperCell label="Casco / Empresa"><div className="text-xs truncate">{[casco?.numero, empresa?.name].filter(Boolean).join(" · ") || "—"}</div></PaperCell>
+      </div>
+    </>
   );
 }
 
@@ -142,6 +166,26 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
       if (ass) setAssinaturas(ass as any);
     })();
   }, [aprId]);
+
+  // Pré-visualiza próximo número da APR para nova APR (apenas display; reservado no save)
+  useEffect(() => {
+    if (aprId || apr.numero) return;
+    (async () => {
+      const { data } = await supabase.rpc("peek_proximo_numero_apr" as any);
+      if (data && !apr.numero) setApr((a) => ({ ...a, numero: `APR-PREV-${data}` }));
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aprId]);
+
+  // Auto-calcula data_validade a partir de data_emissao + validade_dias
+  useEffect(() => {
+    if (!apr.data_emissao) return;
+    const d = new Date(apr.data_emissao + "T00:00:00");
+    d.setDate(d.getDate() + (apr.validade_dias || 0));
+    const iso = d.toISOString().slice(0, 10);
+    if (iso !== apr.data_validade) setApr((a) => ({ ...a, data_validade: iso }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apr.data_emissao, apr.validade_dias]);
 
   // sincroniza encarregado/TST nas assinaturas
   useEffect(() => {
@@ -194,9 +238,23 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
       acoes_preventivas: (c.medidas_controle_padrao ?? []).join("; "),
       epis: c.epis_sugeridos ?? [], nrs: c.nrs_aplicaveis ?? [],
       responsavel_acoes: "",
+      passo_a_passo: "",
     }]);
   }
-  const addRiscoLivre = () => setRiscos((rs) => [...rs, { ordem: rs.length + 1, risco_nome: "", probabilidade: 1, severidade: 1, epis: [], nrs: [] }]);
+  const addRiscoLivre = () => setRiscos((rs) => [...rs, { ordem: rs.length + 1, risco_nome: "", probabilidade: 1, severidade: 1, epis: [], nrs: [], passo_a_passo: "" }]);
+  function setRiscoFromCatalogo(idx: number, catId: string) {
+    const c = catRiscos.find((x: any) => x.id === catId);
+    if (!c) return;
+    updateRisco(idx, {
+      catalogo_risco_id: c.id,
+      risco_nome: c.nome,
+      risco_categoria: c.categoria,
+      efeitos_danos: (c.efeitos_tipicos ?? []).join(", "),
+      acoes_preventivas: (c.medidas_controle_padrao ?? []).join("; "),
+      epis: c.epis_sugeridos ?? [],
+      nrs: c.nrs_aplicaveis ?? [],
+    });
+  }
   const moveRisco = (idx: number, dir: -1 | 1) => setRiscos((rs) => {
     const next = [...rs]; const j = idx + dir;
     if (j < 0 || j >= next.length) return rs;
@@ -244,7 +302,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         encarregado_id: apr.encarregado_id || null,
         tst_id: apr.tst_id || null,
         local: apr.local || null,
-        setor: apr.setor || null,
+        setor: null,
         atividade_descricao: apr.atividade_descricao,
         data_emissao: apr.data_emissao,
         hora_inicio: apr.hora_inicio || null,
@@ -252,6 +310,8 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         hora_inicio_sexta: apr.hora_inicio_sexta || null,
         hora_fim_sexta: apr.hora_fim_sexta || null,
         validade_dias: apr.validade_dias,
+        data_validade: apr.data_validade || null,
+        dias_semana: apr.dias_semana ?? null,
         condicoes_climaticas: apr.condicoes_climaticas || null,
         observacoes_gerais: apr.observacoes_gerais || null,
         status: publish ? "ATIVA" : (apr.status || "RASCUNHO"),
@@ -281,6 +341,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
             acoes_preventivas: r.acoes_preventivas || null,
             epis: r.epis ?? [], nrs: r.nrs ?? [],
             responsavel_acoes: r.responsavel_acoes || null,
+            passo_a_passo: r.passo_a_passo || null,
           })),
         );
         if (e2) throw e2;
