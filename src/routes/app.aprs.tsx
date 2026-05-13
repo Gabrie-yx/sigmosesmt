@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { AprForm } from "@/components/aprs/apr-form";
@@ -44,6 +44,7 @@ const newAprDraft = {
 
 function AprsPage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { isEditor, isAdmin } = useAuth();
   const [editing, setEditing] = useState<string | null | "new">(null);
   const [search, setSearch] = useState("");
@@ -53,6 +54,10 @@ function AprsPage() {
   const { data: aprs = [], isLoading } = useQuery({
     queryKey: ["aprs"],
     queryFn: async () => (await supabase.from("aprs").select("*").order("data_emissao", { ascending: false }).order("numero", { ascending: false })).data ?? [],
+  });
+  const { data: ptesLink = [] } = useQuery({
+    queryKey: ["ptes-by-apr"],
+    queryFn: async () => (await supabase.from("ptes").select("id,numero,apr_id,status").not("apr_id", "is", null)).data ?? [],
   });
   const { data: cascos = [] } = useQuery({
     queryKey: ["cascos-light-list"],
@@ -65,6 +70,16 @@ function AprsPage() {
 
   const cascoMap = useMemo(() => new Map(cascos.map((c: any) => [c.id, c])), [cascos]);
   const companyMap = useMemo(() => new Map(companies.map((c: any) => [c.id, c.name])), [companies]);
+  const ptesByApr = useMemo(() => {
+    const m = new Map<string, any[]>();
+    ptesLink.forEach((p: any) => {
+      if (!p.apr_id) return;
+      const arr = m.get(p.apr_id) ?? [];
+      arr.push(p);
+      m.set(p.apr_id, arr);
+    });
+    return m;
+  }, [ptesLink]);
 
   const filtered = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -150,17 +165,19 @@ function AprsPage() {
                 <TableHead>Empresa</TableHead>
                 <TableHead>Atividade</TableHead>
                 <TableHead>Validade</TableHead>
+                <TableHead>PTEs</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-400">Carregando…</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-8 text-slate-400">Carregando…</TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-12 text-slate-400">Nenhuma APR encontrada</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-12 text-slate-400">Nenhuma APR encontrada</TableCell></TableRow>
               ) : filtered.map((a: any) => {
                 const casco = a.casco_id ? cascoMap.get(a.casco_id) as any : null;
+                const linkedPtes = ptesByApr.get(a.id) ?? [];
                 return (
                   <TableRow key={a.id} className={a._vencida ? "bg-rose-50/50" : ""}>
                     <TableCell className="font-bold text-[#991b1b]">{a.numero}</TableCell>
@@ -171,6 +188,22 @@ function AprsPage() {
                     <TableCell className="text-sm">
                       {a.data_validade ? formatDateBR(a.data_validade) : "—"}
                       {a._vencida && <Badge variant="destructive" className="ml-1 text-[9px]">VENCIDA</Badge>}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {a.exige_pte ? (
+                        linkedPtes.length > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-black"
+                            title={linkedPtes.map((p: any) => p.numero).join(", ")}>
+                            ✓ {linkedPtes.length} emitida{linkedPtes.length > 1 ? "s" : ""}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-black">
+                            <ShieldAlert className="h-3 w-3" /> Pendente
+                          </span>
+                        )
+                      ) : (
+                        <span className="text-slate-400 text-[10px]">N/A</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${STATUS_TONE[a.status] ?? ""}`}>{a.status}</span>
@@ -193,6 +226,14 @@ function AprsPage() {
                             <Download className="h-4 w-4 mr-2" /> Baixar PDF
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
+                          {isEditor && a.exige_pte && (
+                            <DropdownMenuItem
+                              className="text-orange-600 focus:text-orange-600"
+                              onClick={() => navigate({ to: "/app/ptes", search: { apr_id: a.id } as any })}
+                            >
+                              <ShieldAlert className="h-4 w-4 mr-2" /> Gerar PTE vinculada
+                            </DropdownMenuItem>
+                          )}
                           {isEditor && (
                             <DropdownMenuItem onClick={() => setEditing(a.id)}>
                               <Pencil className="h-4 w-4 mr-2" /> Editar
