@@ -80,6 +80,7 @@ function OrdensListPage() {
     onSuccess: () => {
       toast.success("Ordem excluída");
       qc.invalidateQueries({ queryKey: ["producao-ordens"] });
+      qc.invalidateQueries({ queryKey: ["cascos-em-ordens"] });
       setDeleting(null);
     },
     onError: (e: any) => toast.error(e.message),

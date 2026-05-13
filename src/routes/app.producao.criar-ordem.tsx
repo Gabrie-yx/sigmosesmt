@@ -214,7 +214,9 @@ function CriarOrdemPage() {
     },
   });
 
-  // Cascos já utilizados em ordens de produção (para sequenciamento automático)
+  // Cascos já utilizados em ordens de produção (para sequenciamento automático).
+  // O CASCO é um CONTADOR: a cada nova OP soma +1; se uma OP é excluída, volta
+  // para a última numeração (max() recalcula naturalmente).
   const { data: cascosOrdens = [] } = useQuery({
     queryKey: ["cascos-em-ordens"],
     queryFn: async () => {
@@ -225,6 +227,8 @@ function CriarOrdemPage() {
       if (error) throw error;
       return data ?? [];
     },
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const { data: tipos = [] } = useQuery({
@@ -351,17 +355,17 @@ function CriarOrdemPage() {
     });
   }, [values.tipo_produto, tipos]);
 
-  // Sugestão: próximo número de casco sequencial = max + 1
+  // Sugestão: próximo número de casco sequencial = max(casco em OPs) + 1.
+  // Usa SOMENTE producao_ordens — assim, ao excluir uma OP, o contador
+  // automaticamente regride para a última numeração existente.
   const proximoCascoNum = useMemo(() => {
     let max = 0;
-    const consumir = (val: any) => {
-      const m = String(val ?? "").match(/(\d+)/);
+    cascosOrdens.forEach((o: any) => {
+      const m = String(o.casco ?? "").match(/(\d+)/);
       if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
-    };
-    cascos.forEach((c: any) => consumir(c.numero));
-    cascosOrdens.forEach((o: any) => consumir(o.casco));
+    });
     return max + 1;
-  }, [cascos, cascosOrdens]);
+  }, [cascosOrdens]);
 
   const proximoCascoLabel = useMemo(
     () => `CASCO ${String(proximoCascoNum).padStart(3, "0")}`,
@@ -489,9 +493,22 @@ function CriarOrdemPage() {
       }, 0) + 1;
       const numero = `OP-${String(nextSeq).padStart(4, "0")}/${ano}`;
 
+      // Recalcula CASCO no momento do insert direto do banco — evita
+      // colisão por cache obsoleto (duas OPs salvas como CASCO 144).
+      const { data: cascosAtuais } = await supabase
+        .from("producao_ordens")
+        .select("casco")
+        .not("casco", "is", null);
+      const maxCasco = (cascosAtuais ?? []).reduce((mx: number, r: any) => {
+        const m = String(r.casco ?? "").match(/(\d+)/);
+        const n = m ? parseInt(m[1], 10) : 0;
+        return n > mx ? n : mx;
+      }, 0);
+      const cascoFinal = `CASCO ${String(maxCasco + 1).padStart(3, "0")}`;
+
       const { data: novaOrdem, error: e1 } = await supabase
         .from("producao_ordens")
-        .insert({ ...ordemBase, numero })
+        .insert({ ...ordemBase, casco: cascoFinal, numero })
         .select("id, numero").single();
       if (e1) throw e1;
       const { error: e2 } = await supabase
@@ -503,6 +520,7 @@ function CriarOrdemPage() {
     onSuccess: (res) => {
       toast.success(editId ? "Ordem atualizada" : `Ordem ${res?.numero ?? ""} criada`);
       qc.invalidateQueries({ queryKey: ["producao-ordens"] });
+      qc.invalidateQueries({ queryKey: ["cascos-em-ordens"] });
       navigate({ to: "/app/producao/ordens" });
     },
     onError: (e: any) => toast.error(e.message),
