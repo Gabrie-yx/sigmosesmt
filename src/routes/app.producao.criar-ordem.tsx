@@ -113,6 +113,43 @@ function loadLayout(): Layout[] {
   }
 }
 
+// Auto-fit: quando widgets compartilham a mesma linha (mesmo Y) e a soma das
+// larguras passa de 12 colunas (ou há sobreposição em X), redistribui as
+// larguras igualmente entre eles, preenchendo as 12 colunas.
+function autoFitRows(layout: Layout[]): Layout[] {
+  const groups = new Map<number, Layout[]>();
+  layout.forEach((l) => {
+    const arr = groups.get(l.y) ?? [];
+    arr.push(l);
+    groups.set(l.y, arr);
+  });
+
+  const result: Layout[] = [];
+  groups.forEach((items) => {
+    if (items.length <= 1) {
+      result.push(...items);
+      return;
+    }
+    const sorted = [...items].sort((a, b) => a.x - b.x);
+    const totalW = sorted.reduce((s, it) => s + it.w, 0);
+    const overlap = sorted.some((it, i) => i > 0 && it.x < sorted[i - 1].x + sorted[i - 1].w);
+    if (totalW <= 12 && !overlap) {
+      result.push(...items);
+      return;
+    }
+    const n = sorted.length;
+    const base = Math.floor(12 / n);
+    const extra = 12 - base * n;
+    let cursor = 0;
+    sorted.forEach((it, i) => {
+      const w = Math.max(it.minW ?? 2, base + (i < extra ? 1 : 0));
+      result.push({ ...it, x: cursor, w });
+      cursor += w;
+    });
+  });
+  return result;
+}
+
 function CriarOrdemPage() {
   const qc = useQueryClient();
   const [layout, setLayout] = useState<Layout[]>(() => loadLayout());
@@ -363,7 +400,7 @@ function CriarOrdemPage() {
             layout={layout}
             width={gridWidth}
             gridConfig={{ cols: 12, rowHeight: 32, margin: [12, 12], containerPadding: [0, 0] }}
-            onLayoutChange={(l: Layout[]) => setLayout(l)}
+            onLayoutChange={(l: Layout[]) => setLayout(autoFitRows(l))}
             dragConfig={{ enabled: !locked, handle: ".widget-drag-handle" }}
             resizeConfig={{ enabled: !locked }}
           >
