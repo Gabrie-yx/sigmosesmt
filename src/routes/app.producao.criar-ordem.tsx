@@ -155,7 +155,7 @@ function CriarOrdemPage() {
   const { id: editId } = Route.useSearch();
   const [layout, setLayout] = useState<Layout[]>(() => loadLayout());
   const [locked, setLocked] = useState(false);
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string>>({ data: new Date().toISOString().slice(0, 10) });
   const [Grid, setGrid] = useState<any>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [gridWidth, setGridWidth] = useState(0);
