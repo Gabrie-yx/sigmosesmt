@@ -1257,6 +1257,155 @@ export type Database = {
           },
         ]
       }
+      producao_ordem_itens: {
+        Row: {
+          centro: string | null
+          classe_avaliacao: string | null
+          codigo_sap: string | null
+          controle_preco: string | null
+          created_at: string
+          data_solicitacao: string | null
+          deposito: string | null
+          descricao_material: string
+          determ_preco: string | null
+          grupo_categ_item_ger: string | null
+          grupo_compradores: string | null
+          grupo_mercadorias: string | null
+          id: string
+          item: number
+          material_id: string | null
+          ncm: string | null
+          ocorrencia: string | null
+          ordem_id: string
+          origem_material: string | null
+          setor_atividade: string | null
+          unidade_medida: string | null
+          updated_at: string
+          utilizacao_material: string | null
+        }
+        Insert: {
+          centro?: string | null
+          classe_avaliacao?: string | null
+          codigo_sap?: string | null
+          controle_preco?: string | null
+          created_at?: string
+          data_solicitacao?: string | null
+          deposito?: string | null
+          descricao_material: string
+          determ_preco?: string | null
+          grupo_categ_item_ger?: string | null
+          grupo_compradores?: string | null
+          grupo_mercadorias?: string | null
+          id?: string
+          item: number
+          material_id?: string | null
+          ncm?: string | null
+          ocorrencia?: string | null
+          ordem_id: string
+          origem_material?: string | null
+          setor_atividade?: string | null
+          unidade_medida?: string | null
+          updated_at?: string
+          utilizacao_material?: string | null
+        }
+        Update: {
+          centro?: string | null
+          classe_avaliacao?: string | null
+          codigo_sap?: string | null
+          controle_preco?: string | null
+          created_at?: string
+          data_solicitacao?: string | null
+          deposito?: string | null
+          descricao_material?: string
+          determ_preco?: string | null
+          grupo_categ_item_ger?: string | null
+          grupo_compradores?: string | null
+          grupo_mercadorias?: string | null
+          id?: string
+          item?: number
+          material_id?: string | null
+          ncm?: string | null
+          ocorrencia?: string | null
+          ordem_id?: string
+          origem_material?: string | null
+          setor_atividade?: string | null
+          unidade_medida?: string | null
+          updated_at?: string
+          utilizacao_material?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producao_ordem_itens_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "producao_materiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "producao_ordem_itens_ordem_id_fkey"
+            columns: ["ordem_id"]
+            isOneToOne: false
+            referencedRelation: "producao_ordens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      producao_ordens: {
+        Row: {
+          codigo_formulario: string
+          created_at: string
+          created_by: string | null
+          data_solicitacao: string
+          embarcacao_id: string | null
+          id: string
+          numero: string
+          observacoes: string | null
+          pagina: string
+          revisao: string
+          status: string
+          tipo_ordem: string
+          updated_at: string
+        }
+        Insert: {
+          codigo_formulario?: string
+          created_at?: string
+          created_by?: string | null
+          data_solicitacao?: string
+          embarcacao_id?: string | null
+          id?: string
+          numero: string
+          observacoes?: string | null
+          pagina?: string
+          revisao?: string
+          status?: string
+          tipo_ordem?: string
+          updated_at?: string
+        }
+        Update: {
+          codigo_formulario?: string
+          created_at?: string
+          created_by?: string | null
+          data_solicitacao?: string
+          embarcacao_id?: string | null
+          id?: string
+          numero?: string
+          observacoes?: string | null
+          pagina?: string
+          revisao?: string
+          status?: string
+          tipo_ordem?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producao_ordens_embarcacao_id_fkey"
+            columns: ["embarcacao_id"]
+            isOneToOne: false
+            referencedRelation: "producao_embarcacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
