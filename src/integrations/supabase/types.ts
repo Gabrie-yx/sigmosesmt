@@ -1123,6 +1123,140 @@ export type Database = {
           },
         ]
       }
+      producao_embarcacoes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          ncm: string | null
+          nome: string
+          numero_casco: string | null
+          observacoes: string | null
+          status: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ncm?: string | null
+          nome: string
+          numero_casco?: string | null
+          observacoes?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ncm?: string | null
+          nome?: string
+          numero_casco?: string | null
+          observacoes?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      producao_materiais: {
+        Row: {
+          canal_distribuicao: string | null
+          centro: string | null
+          classe_avaliacao: string | null
+          codigo_material: string
+          controle_preco: string | null
+          created_at: string
+          created_by: string | null
+          data_solicitacao: string | null
+          deposito: string | null
+          descricao: string
+          determ_preco: string | null
+          embarcacao_id: string | null
+          grupo_categ_item: string | null
+          grupo_compradores: string | null
+          grupo_mercadorias: string | null
+          id: string
+          item_solicitacao: number | null
+          ncm: string | null
+          observacoes: string | null
+          org_vendas: string | null
+          setor_atividade: string | null
+          tipo_embarcacao: string | null
+          tipo_material: string
+          umb: string | null
+          unidade_preco: number | null
+          updated_at: string
+        }
+        Insert: {
+          canal_distribuicao?: string | null
+          centro?: string | null
+          classe_avaliacao?: string | null
+          codigo_material: string
+          controle_preco?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_solicitacao?: string | null
+          deposito?: string | null
+          descricao: string
+          determ_preco?: string | null
+          embarcacao_id?: string | null
+          grupo_categ_item?: string | null
+          grupo_compradores?: string | null
+          grupo_mercadorias?: string | null
+          id?: string
+          item_solicitacao?: number | null
+          ncm?: string | null
+          observacoes?: string | null
+          org_vendas?: string | null
+          setor_atividade?: string | null
+          tipo_embarcacao?: string | null
+          tipo_material: string
+          umb?: string | null
+          unidade_preco?: number | null
+          updated_at?: string
+        }
+        Update: {
+          canal_distribuicao?: string | null
+          centro?: string | null
+          classe_avaliacao?: string | null
+          codigo_material?: string
+          controle_preco?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_solicitacao?: string | null
+          deposito?: string | null
+          descricao?: string
+          determ_preco?: string | null
+          embarcacao_id?: string | null
+          grupo_categ_item?: string | null
+          grupo_compradores?: string | null
+          grupo_mercadorias?: string | null
+          id?: string
+          item_solicitacao?: number | null
+          ncm?: string | null
+          observacoes?: string | null
+          org_vendas?: string | null
+          setor_atividade?: string | null
+          tipo_embarcacao?: string | null
+          tipo_material?: string
+          umb?: string | null
+          unidade_preco?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producao_materiais_embarcacao_id_fkey"
+            columns: ["embarcacao_id"]
+            isOneToOne: false
+            referencedRelation: "producao_embarcacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
