@@ -218,7 +218,7 @@ function CriarOrdemPage() {
     queryKey: ["producao-tipos"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("producao_tipos_produto").select("id, nome").eq("ativo", true).order("nome");
+        .from("producao_tipos_produto").select("id, nome, ncm, grupo_mercadorias").eq("ativo", true).order("nome");
       if (error) throw error;
       return data ?? [];
     },
@@ -304,13 +304,24 @@ function CriarOrdemPage() {
     const tipo = (values.tipo_produto ?? "").toString().toUpperCase()
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     if (!tipo) return;
-    let ncm = "";
-    if (tipo.includes("EMPURRADOR")) ncm = NCM_POR_TIPO.EMPURRADOR;
-    else if (tipo.includes("BALSA")) ncm = NCM_POR_TIPO.BALSA;
-    else if (tipo.includes("ESTRUTURA")) ncm = NCM_POR_TIPO["ESTRUTURA FLUTUANTE"];
-    else if (tipo.includes("EMBARCACAO") || tipo.includes("EMBARCA")) ncm = NCM_POR_TIPO.EMBARCACAO;
-    if (ncm) setValues((v) => (v.ncm === ncm ? v : { ...v, ncm }));
-  }, [values.tipo_produto]);
+    // Prefer values configured on the Tipo de Produto record
+    const sel = (tipos as any[]).find((t) => t.nome === values.tipo_produto);
+    let ncm = sel?.ncm ?? "";
+    const grupoMerc = sel?.grupo_mercadorias ?? "";
+    if (!ncm) {
+      if (tipo.includes("EMPURRADOR")) ncm = NCM_POR_TIPO.EMPURRADOR;
+      else if (tipo.includes("BALSA")) ncm = NCM_POR_TIPO.BALSA;
+      else if (tipo.includes("ESTRUTURA")) ncm = NCM_POR_TIPO["ESTRUTURA FLUTUANTE"];
+      else if (tipo.includes("EMBARCACAO") || tipo.includes("EMBARCA")) ncm = NCM_POR_TIPO.EMBARCACAO;
+    }
+    setValues((v) => {
+      const next = { ...v };
+      let changed = false;
+      if (ncm && v.ncm !== ncm) { next.ncm = ncm; changed = true; }
+      if (grupoMerc && v.grupo_mercadorias !== grupoMerc) { next.grupo_mercadorias = grupoMerc; changed = true; }
+      return changed ? next : v;
+    });
+  }, [values.tipo_produto, tipos]);
 
   // Sugestão: próximo número de casco sequencial = max + 1
   const proximoCascoNum = useMemo(() => {
