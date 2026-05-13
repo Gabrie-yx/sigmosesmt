@@ -46,10 +46,12 @@ function loadLayout(): Layout[] {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return DEFAULT_LAYOUT;
     const parsed = JSON.parse(raw) as Layout[];
-    // ensure all widgets exist (merge new ones from defaults)
-    const ids = new Set(parsed.map((p) => p.i));
+    // keep saved positions, but discard widgets removed from the dashboard
+    const defaultIds = new Set(DEFAULT_LAYOUT.map((d) => d.i));
+    const valid = parsed.filter((p) => defaultIds.has(p.i));
+    const ids = new Set(valid.map((p) => p.i));
     const missing = DEFAULT_LAYOUT.filter((d) => !ids.has(d.i));
-    return [...parsed, ...missing];
+    return [...valid, ...missing];
   } catch {
     return DEFAULT_LAYOUT;
   }
