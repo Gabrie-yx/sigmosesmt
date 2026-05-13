@@ -439,10 +439,17 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
 
       const numero = apr.numero ?? (await supabase.rpc("gerar_numero_apr")).data as string;
 
+      // Valida pte_id: se a PTE referenciada não existir mais, limpa para evitar violação de FK
+      let safePteId: string | null = apr.pte_id || null;
+      if (safePteId) {
+        const { data: pteRow } = await supabase.from("ptes").select("id").eq("id", safePteId).maybeSingle();
+        if (!pteRow) safePteId = null;
+      }
+
       const payload: any = {
         numero,
         casco_id: apr.casco_id || null,
-        pte_id: apr.pte_id || null,
+        pte_id: safePteId,
         empresa_id: apr.empresa_id || null,
         encarregado_id: apr.encarregado_id || null,
         tst_id: apr.tst_id || null,
