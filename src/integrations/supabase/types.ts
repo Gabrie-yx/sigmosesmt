@@ -1382,6 +1382,7 @@ export type Database = {
       }
       producao_ordens: {
         Row: {
+          casco: string | null
           codigo_formulario: string
           created_at: string
           created_by: string | null
@@ -1391,12 +1392,16 @@ export type Database = {
           numero: string
           observacoes: string | null
           pagina: string
+          qtde_itens: number | null
           revisao: string
+          solicitante: string | null
           status: string
           tipo_ordem: string
+          tipo_produto: string | null
           updated_at: string
         }
         Insert: {
+          casco?: string | null
           codigo_formulario?: string
           created_at?: string
           created_by?: string | null
@@ -1406,12 +1411,16 @@ export type Database = {
           numero: string
           observacoes?: string | null
           pagina?: string
+          qtde_itens?: number | null
           revisao?: string
+          solicitante?: string | null
           status?: string
           tipo_ordem?: string
+          tipo_produto?: string | null
           updated_at?: string
         }
         Update: {
+          casco?: string | null
           codigo_formulario?: string
           created_at?: string
           created_by?: string | null
@@ -1421,9 +1430,12 @@ export type Database = {
           numero?: string
           observacoes?: string | null
           pagina?: string
+          qtde_itens?: number | null
           revisao?: string
+          solicitante?: string | null
           status?: string
           tipo_ordem?: string
+          tipo_produto?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2080,6 +2092,7 @@ export type Database = {
       }
       current_aal: { Args: never; Returns: string }
       gerar_numero_apr: { Args: never; Returns: string }
+      gerar_numero_ordem_producao: { Args: never; Returns: string }
       has_module_access: {
         Args: {
           _module: Database["public"]["Enums"]["app_module"]
