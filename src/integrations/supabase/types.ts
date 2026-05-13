@@ -1168,6 +1168,30 @@ export type Database = {
         }
         Relationships: []
       }
+      producao_grupo_mercadorias: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       producao_materiais: {
         Row: {
           canal_distribuicao: string | null

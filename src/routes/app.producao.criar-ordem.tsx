@@ -23,7 +23,7 @@ export const Route = createFileRoute("/app/producao/criar-ordem")({
 
 type Layout = { i: string; x: number; y: number; w: number; h: number; minW?: number; minH?: number };
 
-type FieldKind = "text" | "textarea" | "number" | "date" | "select-casco" | "select-tipo" | "select-um";
+type FieldKind = "text" | "textarea" | "number" | "date" | "casco-auto" | "select-tipo" | "select-um" | "select-grupo-merc";
 
 type FieldDef = {
   key: string;
@@ -35,14 +35,14 @@ type FieldDef = {
 const FIELDS: FieldDef[] = [
   { key: "qtde_itens",         label: "Qtde. Itens",                kind: "number" },
   { key: "descricao_material", label: "Descrição do Material",      kind: "textarea" },
-  { key: "casco",              label: "Casco",                      kind: "select-casco" },
+  { key: "casco",              label: "Casco",                      kind: "casco-auto" },
   { key: "unidade_medida",     label: "Unidade de Medida",          kind: "select-um" },
   { key: "grupo_compradores",  label: "Grupo Compradores",          kind: "text" },
   { key: "tipo_produto",       label: "Tipo de Produto",            kind: "select-tipo" },
   { key: "ncm",                label: "NCM",                        kind: "text" },
   { key: "centro",             label: "Centro",                     kind: "text" },
   { key: "deposito",           label: "Depósito",                   kind: "text" },
-  { key: "grupo_mercadorias",  label: "Grupo de Mercadorias",       kind: "text" },
+  { key: "grupo_mercadorias",  label: "Grupo de Mercadorias",       kind: "select-grupo-merc" },
   { key: "setor_atividade",    label: "Setor de Atividade",         kind: "text" },
   { key: "grupo_categ_item",   label: "Grupo de Categoria Item Ger",kind: "text" },
   { key: "classe_avaliacao",   label: "Classe de Avaliação",        kind: "text" },
@@ -159,6 +159,8 @@ function CriarOrdemPage() {
   const initial = useRef(true);
   const [umDialogOpen, setUmDialogOpen] = useState(false);
   const [newUm, setNewUm] = useState({ sigla: "", descricao: "" });
+  const [gmDialogOpen, setGmDialogOpen] = useState(false);
+  const [newGm, setNewGm] = useState({ codigo: "", descricao: "" });
 
   useEffect(() => {
     let mounted = true;
@@ -215,6 +217,17 @@ function CriarOrdemPage() {
     },
   });
 
+  const { data: gruposMerc = [] } = useQuery({
+    queryKey: ["producao-grupo-merc"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("producao_grupo_mercadorias")
+        .select("id, codigo, descricao").eq("ativo", true).order("codigo");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   // Default UM = "UN" once available
   useEffect(() => {
     if (unidades.length && !values.unidade_medida) {
@@ -252,6 +265,17 @@ function CriarOrdemPage() {
     return max + 1;
   }, [cascos]);
 
+  const proximoCascoLabel = useMemo(
+    () => `CASCO ${String(proximoCascoNum).padStart(3, "0")}`,
+    [proximoCascoNum]
+  );
+
+  // Auto-preenche Casco com o próximo sequencial
+  useEffect(() => {
+    if (!proximoCascoLabel) return;
+    setValues((v) => (v.casco ? v : { ...v, casco: proximoCascoLabel }));
+  }, [proximoCascoLabel]);
+
   const addUm = useMutation({
     mutationFn: async () => {
       const sigla = newUm.sigla.trim().toUpperCase();
@@ -267,6 +291,25 @@ function CriarOrdemPage() {
       setUmDialogOpen(false);
       setValues((v) => ({ ...v, unidade_medida: newUm.sigla.trim().toUpperCase() }));
       setNewUm({ sigla: "", descricao: "" });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const addGm = useMutation({
+    mutationFn: async () => {
+      const codigo = newGm.codigo.trim().toUpperCase();
+      if (!codigo) throw new Error("Informe o código");
+      const { error } = await supabase
+        .from("producao_grupo_mercadorias")
+        .insert({ codigo, descricao: newGm.descricao || null });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["producao-grupo-merc"] });
+      toast.success("Grupo adicionado");
+      setGmDialogOpen(false);
+      setValues((v) => ({ ...v, grupo_mercadorias: newGm.codigo.trim().toUpperCase() }));
+      setNewGm({ codigo: "", descricao: "" });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -306,20 +349,40 @@ function CriarOrdemPage() {
             onMouseDown={(e) => e.stopPropagation()}
           />
         );
-      case "select-casco":
+      case "casco-auto":
         return (
-          <div onMouseDown={(e) => e.stopPropagation()}>
-            <Select value={v} onValueChange={(val) => setVal(f.key, val)}>
-              <SelectTrigger><SelectValue placeholder="Selecione o casco…" /></SelectTrigger>
-              <SelectContent className="max-h-72">
-                {cascos.map((c: any) => (
-                  <SelectItem key={c.id} value={c.numero}>{c.numero}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="mt-1 text-[10px] text-muted-foreground">
-              Próximo sequencial sugerido: <span className="font-bold text-amber-700">CASCO {String(proximoCascoNum).padStart(3, "0")}</span>
+          <div onMouseDown={(e) => e.stopPropagation()} className="space-y-1">
+            <Input
+              value={v}
+              onChange={(e) => setVal(f.key, e.target.value)}
+              className="font-bold text-amber-700"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Sequencial automático — próximo: <span className="font-bold text-amber-700">{proximoCascoLabel}</span>
             </p>
+          </div>
+        );
+      case "select-grupo-merc":
+        return (
+          <div className="flex gap-2" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="flex-1">
+              <Select value={v} onValueChange={(val) => setVal(f.key, val)}>
+                <SelectTrigger><SelectValue placeholder="(Selecionar Tudo)" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {gruposMerc.map((g: any) => (
+                    <SelectItem key={g.id} value={g.codigo}>
+                      {g.codigo}{g.descricao ? ` — ${g.descricao}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button type="button" variant="outline" size="icon"
+              className="shrink-0"
+              onClick={() => setGmDialogOpen(true)}
+              title="Adicionar novo grupo">
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         );
       case "select-tipo":
@@ -479,6 +542,39 @@ function CriarOrdemPage() {
             <Button onClick={() => addUm.mutate()} disabled={addUm.isPending}
               className="bg-amber-600 hover:bg-amber-700 text-white">
               {addUm.isPending ? "Salvando…" : "Adicionar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Grupo de Mercadorias dialog */}
+      <Dialog open={gmDialogOpen} onOpenChange={setGmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Grupo de Mercadorias</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Código *</Label>
+              <Input value={newGm.codigo}
+                onChange={(e) => setNewGm((s) => ({ ...s, codigo: e.target.value.toUpperCase() }))}
+                placeholder="Ex.: AT0050"
+                maxLength={20}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Descrição</Label>
+              <Input value={newGm.descricao}
+                onChange={(e) => setNewGm((s) => ({ ...s, descricao: e.target.value }))}
+                placeholder="Descrição (opcional)"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGmDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={() => addGm.mutate()} disabled={addGm.isPending}
+              className="bg-amber-600 hover:bg-amber-700 text-white">
+              {addGm.isPending ? "Salvando…" : "Adicionar"}
             </Button>
           </DialogFooter>
         </DialogContent>
