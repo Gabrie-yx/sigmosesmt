@@ -63,6 +63,17 @@ function TstPanel() {
   const [layout, setLayout] = useState<Layout[]>(() => loadLayout());
   const [locked, setLocked] = useState(false);
   const initial = useRef(true);
+  const [Grid, setGrid] = useState<any>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    import("react-grid-layout").then((mod) => {
+      const RGL: any = (mod as any).default ?? mod;
+      const WidthProvider: any = (mod as any).WidthProvider ?? RGL.WidthProvider;
+      if (mounted) setGrid(() => WidthProvider(RGL));
+    });
+    return () => { mounted = false; };
+  }, []);
 
   useEffect(() => {
     if (initial.current) { initial.current = false; return; }
