@@ -88,11 +88,14 @@ const DIAS = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"] as const;
 /* Cabeçalho COMPLETO homologado ISO 9001 — replicado exatamente do formulário oficial.
    Estrutura idêntica ao print: 4 linhas, mesmos campos, mesma ordem. */
 function PaperFullHeader({
-  apr, empresa, casco, enc, tst, pagina, totalPaginas = 4,
+  apr, setApr, empresa, casco, enc, tst, employees, companies, pagina, totalPaginas = 4,
 }: {
-  apr: APR; empresa?: any; casco?: any; enc?: any; tst?: any;
+  apr: APR; setApr?: (a: APR) => void;
+  empresa?: any; casco?: any; enc?: any; tst?: any;
+  employees?: any[]; companies?: any[];
   pagina: number; totalPaginas?: number;
 }) {
+  const editable = !!setApr;
   const horarioSeg = `${apr.hora_inicio ?? "--:--"} às ${apr.hora_fim ?? "--:--"} Seg a Quinta`;
   const horarioSex = `${apr.hora_inicio_sexta ?? "--:--"} às ${apr.hora_fim_sexta ?? "--:--"} Sexta-feira`;
   const responsavel = empresa?.name ?? enc?.nome ?? "—";
@@ -122,33 +125,114 @@ function PaperFullHeader({
       {/* Linha 2 — CNPJ | Início | Fim | APR Nº | Elaborado | Página X de N */}
       <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_0.9fr] border-b border-black font-semibold">
         <div className="px-2 py-1 border-r border-black"><b>CNPJ:</b> 13.378.697/0001-80</div>
-        <div className="px-2 py-1 border-r border-black"><b>Início:</b> {apr.data_emissao ? formatDateBR(apr.data_emissao) : "—"}</div>
-        <div className="px-2 py-1 border-r border-black"><b>Fim:</b> {apr.data_validade ? formatDateBR(apr.data_validade) : "—"}</div>
+        <div className="px-2 py-1 border-r border-black flex items-center gap-1">
+          <b>Início:</b>{editable ? (
+            <Input type="date" className="h-6 text-[11px] border-0 p-0 flex-1"
+              value={apr.data_emissao}
+              onChange={(e) => setApr!({ ...apr, data_emissao: e.target.value })} />
+          ) : (apr.data_emissao ? formatDateBR(apr.data_emissao) : "—")}
+        </div>
+        <div className="px-2 py-1 border-r border-black flex items-center gap-1">
+          <b>Fim:</b>{editable ? (
+            <Input type="date" className="h-6 text-[11px] border-0 p-0 flex-1"
+              value={apr.data_validade ?? ""}
+              onChange={(e) => setApr!({ ...apr, data_validade: e.target.value || null })} />
+          ) : (apr.data_validade ? formatDateBR(apr.data_validade) : "—")}
+        </div>
         <div className="px-2 py-1 border-r border-black"><b>APR Nº</b> {apr.numero ?? "—"}</div>
-        <div className="px-2 py-1 border-r border-black"><b>Elaborado:</b> 30/08/2025</div>
+        <div className="px-2 py-1 border-r border-black"><b>Emissão:</b> {apr.data_emissao ? formatDateBR(apr.data_emissao) : "—"}</div>
         <div className="px-2 py-1 text-right"><b>Página</b> {pagina} de {totalPaginas}</div>
       </div>
 
       {/* Linha 3 — ATIVIDADE PRINCIPAL | SERVIÇO DETALHADO */}
       <div className="grid grid-cols-[1fr_1.2fr] border-b border-black">
         <div className="px-2 py-1 border-r border-black">
-          <b>ATIVIDADE PRINCIPAL:</b> {apr.atividade_descricao
-            ? apr.atividade_descricao + (casco?.numero ? ` - CASCO ${casco.numero}` : "")
-            : "—"}
+          <div className="font-bold text-[10px]">ATIVIDADE PRINCIPAL:</div>
+          {editable ? (
+            <Textarea rows={2} className="border-0 p-0 text-[11px] resize-none focus-visible:ring-0 min-h-0"
+              value={apr.atividade_descricao}
+              onChange={(e) => setApr!({ ...apr, atividade_descricao: e.target.value })} />
+          ) : <span>{apr.atividade_descricao || "—"}{casco?.numero ? ` - CASCO ${casco.numero}` : ""}</span>}
         </div>
         <div className="px-2 py-1">
-          <b>SERVIÇO DETALHADO:</b> {apr.observacoes_gerais ?? "—"}
+          <div className="font-bold text-[10px]">SERVIÇO DETALHADO:</div>
+          {editable ? (
+            <Textarea rows={2} className="border-0 p-0 text-[11px] resize-none focus-visible:ring-0 min-h-0"
+              value={apr.observacoes_gerais ?? ""}
+              onChange={(e) => setApr!({ ...apr, observacoes_gerais: e.target.value || null })} />
+          ) : <span>{apr.observacoes_gerais ?? "—"}</span>}
         </div>
       </div>
 
       {/* Linha 4 — Elaborado por | Responsável pelo serviço | Local | Horário */}
       <div className="grid grid-cols-[1.1fr_1.2fr_1fr_1.4fr]">
-        <div className="px-2 py-1 border-r border-black"><b>Elaborado por:</b> {elaboradoPor}</div>
-        <div className="px-2 py-1 border-r border-black"><b>Responsável pelo serviço:</b> {responsavel}</div>
-        <div className="px-2 py-1 border-r border-black"><b>Local da Atividade:</b> {apr.local ?? "—"}</div>
+        <div className="px-2 py-1 border-r border-black">
+          <div className="font-bold text-[10px]">ELABORADO POR (TST):</div>
+          {editable ? (
+            <Select value={apr.tst_id ?? "none"} onValueChange={(v) => setApr!({ ...apr, tst_id: v === "none" ? null : v })}>
+              <SelectTrigger className="h-6 text-[11px] border-0 p-0"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— Nenhum —</SelectItem>
+                {(employees ?? []).map((e: any) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          ) : <span>{elaboradoPor}</span>}
+        </div>
+        <div className="px-2 py-1 border-r border-black">
+          <div className="font-bold text-[10px]">RESPONSÁVEL PELO SERVIÇO (EMPRESA):</div>
+          {editable ? (
+            <Select value={apr.empresa_id ?? "none"} onValueChange={(v) => setApr!({ ...apr, empresa_id: v === "none" ? null : v })}>
+              <SelectTrigger className="h-6 text-[11px] border-0 p-0"><SelectValue placeholder="Selecionar empresa..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— Nenhuma —</SelectItem>
+                {(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          ) : <span>{responsavel}</span>}
+        </div>
+        <div className="px-2 py-1 border-r border-black">
+          <div className="font-bold text-[10px]">LOCAL DA ATIVIDADE:</div>
+          {editable ? (
+            <Input className="h-6 text-[11px] border-0 p-0"
+              value={apr.local ?? ""}
+              onChange={(e) => setApr!({ ...apr, local: e.target.value })}
+              placeholder="Ex.: Casco 23, deck superior" />
+          ) : <span>{apr.local ?? "—"}</span>}
+        </div>
         <div className="px-2 py-1 leading-tight">
-          <b>Horário:</b> {horarioSeg}<br />
-          <span className="pl-[52px]">{horarioSex}</span>
+          <div className="font-bold text-[10px]">HORÁRIO DA ATIVIDADE:</div>
+          {editable ? (
+            <div className="flex flex-col gap-0.5 text-[10px]">
+              <div className="flex flex-wrap gap-0.5">
+                {DIAS.map((d) => {
+                  const active = (apr.dias_semana ?? []).includes(d);
+                  return (
+                    <button key={d} type="button"
+                      onClick={() => {
+                        const cur = new Set(apr.dias_semana ?? []);
+                        if (cur.has(d)) cur.delete(d); else cur.add(d);
+                        setApr!({ ...apr, dias_semana: Array.from(cur) });
+                      }}
+                      className={`px-1 py-0.5 rounded text-[9px] font-bold border ${active ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-500 border-slate-300"}`}>
+                      {d}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="grid grid-cols-[auto_1fr_auto_1fr] gap-1 items-center">
+                <span className="font-bold">Seg-Qui</span>
+                <Input type="time" className="h-5 text-[10px] border p-0.5" value={apr.hora_inicio ?? ""} onChange={(e) => setApr!({ ...apr, hora_inicio: e.target.value })} />
+                <span>às</span>
+                <Input type="time" className="h-5 text-[10px] border p-0.5" value={apr.hora_fim ?? ""} onChange={(e) => setApr!({ ...apr, hora_fim: e.target.value })} />
+                <span className="font-bold">Sexta</span>
+                <Input type="time" className="h-5 text-[10px] border p-0.5" value={apr.hora_inicio_sexta ?? ""} onChange={(e) => setApr!({ ...apr, hora_inicio_sexta: e.target.value })} />
+                <span>às</span>
+                <Input type="time" className="h-5 text-[10px] border p-0.5" value={apr.hora_fim_sexta ?? ""} onChange={(e) => setApr!({ ...apr, hora_fim_sexta: e.target.value })} />
+              </div>
+            </div>
+          ) : (
+            <>{horarioSeg}<br /><span className="pl-[52px]">{horarioSex}</span></>
+          )}
         </div>
       </div>
     </div>
@@ -490,91 +574,10 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         {/* ============ PÁGINA 1 ============ */}
         {tab === "p1" && (
           <div className="bg-white max-w-[1400px] mx-auto shadow border border-slate-300">
-            <PaperFullHeader apr={apr} empresa={empresa} casco={casco} enc={enc} tst={tst} pagina={1} />
+            <PaperFullHeader apr={apr} setApr={setApr} empresa={empresa} casco={casco} enc={enc} tst={tst}
+              employees={employees} companies={companies} pagina={1} />
 
-            {/* Linha 1: CNPJ | Início | Fim | APR Nº */}
-            <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr]">
-              <PaperCell label="CNPJ"><div className="text-xs">13.378.697/0001-80</div></PaperCell>
-              <PaperCell label="Início">
-                <Input type="date" className="h-7 text-xs border-0 p-0" value={apr.data_emissao} onChange={(e) => setApr({ ...apr, data_emissao: e.target.value })} />
-              </PaperCell>
-              <PaperCell label="Fim (encerramento)">
-                <Input type="date" className="h-7 text-xs border-0 p-0" value={apr.data_validade ?? ""} onChange={(e) => setApr({ ...apr, data_validade: e.target.value || null })} />
-              </PaperCell>
-              <PaperCell label="APR Nº (automático)"><div className="text-xs font-bold">{apr.numero ?? "—"}</div></PaperCell>
-            </div>
-
-            {/* Linha 2: Atividade Principal | Serviço Detalhado */}
-            <div className="grid grid-cols-2">
-              <PaperCell label="Atividade Principal *">
-                <Textarea rows={3} className="border-0 p-1 text-xs resize-none focus-visible:ring-0"
-                  value={apr.atividade_descricao} onChange={(e) => setApr({ ...apr, atividade_descricao: e.target.value })} />
-              </PaperCell>
-              <PaperCell label="Serviço Detalhado">
-                <Textarea rows={3} className="border-0 p-1 text-xs resize-none focus-visible:ring-0"
-                  value={apr.observacoes_gerais ?? ""} onChange={(e) => setApr({ ...apr, observacoes_gerais: e.target.value })} />
-              </PaperCell>
-            </div>
-
-            {/* Linha 3: Elaborado por | Responsável pelo Serviço (empresa) | Local da Atividade | Horário */}
-            <div className="grid grid-cols-[1.2fr_1.4fr_1.2fr_1fr]">
-              <PaperCell label="Elaborado por (TST)">
-                <Select value={apr.tst_id ?? "none"} onValueChange={(v) => setApr({ ...apr, tst_id: v === "none" ? null : v })}>
-                  <SelectTrigger className="h-7 text-xs border-0 p-0"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— Nenhum —</SelectItem>
-                    {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </PaperCell>
-              <PaperCell label="Responsável pelo Serviço (Empresa)">
-                <Select value={apr.empresa_id ?? "none"} onValueChange={(v) => setApr({ ...apr, empresa_id: v === "none" ? null : v })}>
-                  <SelectTrigger className="h-7 text-xs border-0 p-0"><SelectValue placeholder="Selecionar empresa..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— Nenhuma —</SelectItem>
-                    {companies.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </PaperCell>
-              <PaperCell label="Local da Atividade">
-                <Input className="h-7 text-xs border-0 p-0" value={apr.local ?? ""} onChange={(e) => setApr({ ...apr, local: e.target.value })} placeholder="Ex.: Casco 23, deck superior" />
-              </PaperCell>
-              <PaperCell label="Horário da Atividade">
-                <div className="flex flex-col gap-1 text-[11px]">
-                  <div className="flex flex-wrap gap-1">
-                    {DIAS.map((d) => {
-                      const active = (apr.dias_semana ?? []).includes(d);
-                      return (
-                        <button
-                          key={d}
-                          type="button"
-                          onClick={() => {
-                            const cur = new Set(apr.dias_semana ?? []);
-                            if (cur.has(d)) cur.delete(d); else cur.add(d);
-                            setApr({ ...apr, dias_semana: Array.from(cur) });
-                          }}
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${active ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-500 border-slate-300"}`}
-                        >
-                          {d}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="grid grid-cols-[auto_1fr_auto_1fr] gap-1 items-center">
-                    <span className="font-bold text-[10px]">Seg-Qui</span>
-                    <Input type="time" className="h-6 text-[10px] border p-0.5" value={apr.hora_inicio ?? ""} onChange={(e) => setApr({ ...apr, hora_inicio: e.target.value })} />
-                    <span className="text-[10px]">às</span>
-                    <Input type="time" className="h-6 text-[10px] border p-0.5" value={apr.hora_fim ?? ""} onChange={(e) => setApr({ ...apr, hora_fim: e.target.value })} />
-                    <span className="font-bold text-[10px]">Sexta</span>
-                    <Input type="time" className="h-6 text-[10px] border p-0.5" value={apr.hora_inicio_sexta ?? ""} onChange={(e) => setApr({ ...apr, hora_inicio_sexta: e.target.value })} />
-                    <span className="text-[10px]">às</span>
-                    <Input type="time" className="h-6 text-[10px] border p-0.5" value={apr.hora_fim_sexta ?? ""} onChange={(e) => setApr({ ...apr, hora_fim_sexta: e.target.value })} />
-                  </div>
-                </div>
-              </PaperCell>
-            </div>
-
-            {/* Linha 4: Casco | PTE | Validade */}
+            {/* Casco | PTE | Validade */}
             <div className="grid grid-cols-3">
               <PaperCell label="Casco / Embarcação">
                 <Select value={apr.casco_id ?? "none"} onValueChange={(v) => setApr({ ...apr, casco_id: v === "none" ? null : v })}>
