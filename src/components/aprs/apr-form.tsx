@@ -158,7 +158,10 @@ function PaperFullHeader({
 /* ---------- componente principal ---------- */
 export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: () => void }) {
   const qc = useQueryClient();
-  const [apr, setApr] = useState<APR>(emptyApr);
+  const [apr, setApr] = useState<APR>(() => ({
+    ...emptyApr,
+    ...((qc.getQueryData(["apr-form-draft", "new"]) as Partial<APR> | undefined) ?? {}),
+  }));
   const [riscos, setRiscos] = useState<Risco[]>([]);
   const [assinaturas, setAssinaturas] = useState<Assin[]>([]);
   const [tab, setTab] = useState<"p1" | "p2" | "p3" | "p4" | "p5">("p1");
