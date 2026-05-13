@@ -18,6 +18,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2, Plus, Tags } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/app/producao/tipos-produto")({
   component: TiposProdutoPage,
@@ -28,6 +31,9 @@ type Tipo = {
   nome: string;
   ncm: string | null;
   grupo_mercadorias: string | null;
+  classe_avaliacao: string | null;
+  mtart: string | null;
+  tipo_embarcacao: string | null;
   ativo: boolean;
 };
 
@@ -42,7 +48,7 @@ function TiposProdutoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("producao_tipos_produto")
-        .select("id, nome, ncm, grupo_mercadorias, ativo")
+        .select("id, nome, ncm, grupo_mercadorias, classe_avaliacao, mtart, tipo_embarcacao, ativo")
         .order("nome");
       if (error) throw error;
       return (data ?? []) as Tipo[];
@@ -54,6 +60,16 @@ function TiposProdutoPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("producao_grupo_mercadorias")
+        .select("codigo, descricao").eq("ativo", true).order("codigo");
+      return data ?? [];
+    },
+  });
+
+  const { data: classes = [] } = useQuery({
+    queryKey: ["producao-classes-admin"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("producao_classes_avaliacao")
         .select("codigo, descricao").eq("ativo", true).order("codigo");
       return data ?? [];
     },
@@ -74,7 +90,7 @@ function TiposProdutoPage() {
   });
 
   function novo() {
-    setEditing({ id: "", nome: "", ncm: "", grupo_mercadorias: "", ativo: true });
+    setEditing({ id: "", nome: "", ncm: "", grupo_mercadorias: "", classe_avaliacao: "", mtart: "FERT", tipo_embarcacao: "", ativo: true });
     setOpen(true);
   }
   function editar(t: Tipo) {
@@ -109,24 +125,30 @@ function TiposProdutoPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
+              <TableHead>MTART</TableHead>
+              <TableHead>Tipo Embarc.</TableHead>
               <TableHead>NCM</TableHead>
               <TableHead>Grupo de Mercadorias</TableHead>
+              <TableHead>Classe Aval.</TableHead>
               <TableHead className="w-24">Status</TableHead>
               <TableHead className="w-32 text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-6 text-muted-foreground">Carregando…</TableCell></TableRow>
             )}
             {!isLoading && tipos.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">Nenhum tipo cadastrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-6 text-muted-foreground">Nenhum tipo cadastrado</TableCell></TableRow>
             )}
             {tipos.map((t) => (
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.nome}</TableCell>
+                <TableCell>{t.mtart || <span className="text-muted-foreground">—</span>}</TableCell>
+                <TableCell>{t.tipo_embarcacao || <span className="text-muted-foreground">—</span>}</TableCell>
                 <TableCell>{t.ncm || <span className="text-muted-foreground">—</span>}</TableCell>
                 <TableCell>{t.grupo_mercadorias || <span className="text-muted-foreground">—</span>}</TableCell>
+                <TableCell>{t.classe_avaliacao || <span className="text-muted-foreground">—</span>}</TableCell>
                 <TableCell>{t.ativo ? "Ativo" : "Inativo"}</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => editar(t)} title="Editar">
@@ -146,6 +168,7 @@ function TiposProdutoPage() {
         open={open}
         tipo={editing}
         gruposMerc={gruposMerc as any[]}
+        classes={classes as any[]}
         onClose={() => { setOpen(false); setEditing(null); }}
         onSaved={() => {
           qc.invalidateQueries({ queryKey: ["producao-tipos-admin"] });
