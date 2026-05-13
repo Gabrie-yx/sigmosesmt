@@ -597,7 +597,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                         value={r.passo_a_passo ?? ""} onChange={(e) => updateRisco(idx, { passo_a_passo: e.target.value })} />
                     </div>
                     <div className="border border-black p-1">
-                      <Select value={r.catalogo_risco_id ?? ""} onValueChange={(v) => setRiscoFromCatalogo(idx, v)}>
+                      <Select value={r.catalogo_risco_id ?? undefined} onValueChange={(v) => setRiscoFromCatalogo(idx, v)}>
                         <SelectTrigger className="h-6 text-[11px] border-0 p-0 font-bold"><SelectValue placeholder={r.risco_nome || "Selecionar risco..."} /></SelectTrigger>
                         <SelectContent className="max-h-[300px]">
                           {catRiscos.map((c: any) => <SelectItem key={c.id} value={c.id}>[{c.categoria}] {c.nome}</SelectItem>)}
