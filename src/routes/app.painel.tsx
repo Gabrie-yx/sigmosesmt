@@ -64,15 +64,26 @@ function TstPanel() {
   const [locked, setLocked] = useState(false);
   const initial = useRef(true);
   const [Grid, setGrid] = useState<any>(null);
+  const gridWrapRef = useRef<HTMLDivElement>(null);
+  const [gridWidth, setGridWidth] = useState(0);
 
   useEffect(() => {
     let mounted = true;
     import("react-grid-layout").then((mod) => {
-      const RGL: any = (mod as any).default ?? mod;
-      const WidthProvider: any = (mod as any).WidthProvider ?? RGL.WidthProvider;
-      if (mounted) setGrid(() => WidthProvider(RGL));
+      const RGL: any = (mod as any).default ?? (mod as any).ReactGridLayout ?? (mod as any).GridLayout;
+      if (mounted) setGrid(() => RGL);
     });
     return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    const el = gridWrapRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const update = () => setGridWidth(Math.max(320, Math.floor(el.clientWidth)));
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
@@ -534,10 +545,12 @@ function TstPanel() {
         </div>
       </div>
 
-      {Grid ? (
+      <div ref={gridWrapRef} className="min-w-0">
+      {Grid && gridWidth > 0 ? (
       <Grid
         className="layout"
         layout={layout}
+        width={gridWidth}
         cols={12}
         rowHeight={40}
         margin={[12, 12]}
@@ -572,6 +585,7 @@ function TstPanel() {
       ) : (
         <div className="text-center text-xs text-slate-400 py-8">Carregando layout…</div>
       )}
+      </div>
     </div>
   );
 }
