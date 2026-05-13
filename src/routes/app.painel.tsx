@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Search, AlertTriangle, Building2, Ban, Users, ShieldCheck, Package,
   HardHat, FileWarning, Activity, TrendingUp, Boxes, ClipboardCheck,
-  ArrowUpRight, Stethoscope,
+  ArrowUpRight, Stethoscope, GripVertical, RotateCcw, Lock, Unlock,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
@@ -13,6 +13,9 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   AreaChart, Area, PieChart, Pie, Cell, Legend,
 } from "recharts";
+import GridLayout, { WidthProvider, type Layout } from "react-grid-layout";
+
+const ResponsiveGridLayout = WidthProvider(GridLayout);
 
 export const Route = createFileRoute("/app/painel")({
   component: TstPanel,
@@ -23,11 +26,50 @@ const today = new Date();
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
 const MONTHS_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
+const LS_KEY = "sesmt-painel-layout-v1";
+const DEFAULT_LAYOUT: Layout[] = [
+  { i: "kpis",        x: 0, y: 0,  w: 12, h: 4,  minH: 3, minW: 6 },
+  { i: "search",      x: 0, y: 4,  w: 8,  h: 5,  minH: 4, minW: 4 },
+  { i: "health",      x: 8, y: 4,  w: 4,  h: 5,  minH: 4, minW: 3 },
+  { i: "status-pie",  x: 0, y: 9,  w: 4,  h: 7,  minH: 5, minW: 3 },
+  { i: "epi-mensal",  x: 4, y: 9,  w: 8,  h: 7,  minH: 5, minW: 4 },
+  { i: "top-itens",   x: 0, y: 16, w: 8,  h: 8,  minH: 5, minW: 4 },
+  { i: "top-recip",   x: 8, y: 16, w: 4,  h: 8,  minH: 5, minW: 3 },
+  { i: "dds-trend",   x: 0, y: 24, w: 6,  h: 7,  minH: 5, minW: 4 },
+  { i: "conformidade",x: 6, y: 24, w: 6,  h: 7,  minH: 5, minW: 4 },
+  { i: "pendencias",  x: 0, y: 31, w: 12, h: 9,  minH: 5, minW: 6 },
+  { i: "blocklist",   x: 0, y: 40, w: 12, h: 9,  minH: 5, minW: 6 },
+  { i: "footer",      x: 0, y: 49, w: 12, h: 3,  minH: 2, minW: 6 },
+];
+
+function loadLayout(): Layout[] {
+  if (typeof window === "undefined") return DEFAULT_LAYOUT;
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return DEFAULT_LAYOUT;
+    const parsed = JSON.parse(raw) as Layout[];
+    // ensure all widgets exist (merge new ones from defaults)
+    const ids = new Set(parsed.map((p) => p.i));
+    const missing = DEFAULT_LAYOUT.filter((d) => !ids.has(d.i));
+    return [...parsed, ...missing];
+  } catch {
+    return DEFAULT_LAYOUT;
+  }
+}
+
 function TstPanel() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [filterCompany, setFilterCompany] = useState("ALL");
   const [periodo, setPeriodo] = useState<"30" | "60" | "90" | "180">("90");
+  const [layout, setLayout] = useState<Layout[]>(() => loadLayout());
+  const [locked, setLocked] = useState(false);
+  const initial = useRef(true);
+
+  useEffect(() => {
+    if (initial.current) { initial.current = false; return; }
+    try { localStorage.setItem(LS_KEY, JSON.stringify(layout)); } catch {}
+  }, [layout]);
 
   const dias = Number(periodo);
   const since = fmt(new Date(today.getTime() - dias * dayMs));
@@ -90,7 +132,6 @@ function TstPanel() {
     }));
   }, [data]);
 
-  // === KPIs ===
   const totalEmp = rows.length;
   const aptos = rows.filter((r) => r.status.label === "APTO").length;
   const alertas = rows.filter((r) => r.status.label === "ALERTA").length;
@@ -127,7 +168,6 @@ function TstPanel() {
     ? Math.round((data!.dds.reduce((s: number, d: any) => s + Number(d.aderencia || 0), 0) / ddsCount))
     : 0;
 
-  // === CHARTS ===
   const statusPie = [
     { name: "Aptos", value: aptos, color: "#10b981" },
     { name: "Alerta", value: alertas, color: "#f59e0b" },
@@ -184,7 +224,6 @@ function TstPanel() {
     }));
   }, [data]);
 
-  // === LISTS ===
   const pendencias = useMemo(() => {
     let list = rows.filter((r) => r.status.label === "ALERTA" || r.status.label === "BLOQUEADO" || r.status.label === "SEM CARGO");
     if (filterCompany !== "ALL") list = list.filter((r) => r.emp.company_id === filterCompany);
@@ -221,52 +260,32 @@ function TstPanel() {
     ).slice(0, 8);
   }, [rows, search]);
 
-  return (
-    <div className="p-4 md:p-6 animate-fadeIn h-full flex flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-white overflow-y-auto custom-scrollbar">
-      {/* HEADER */}
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-1">SGI · ISO 9001 · NRs</div>
-          <h2 className="heading-display text-2xl md:text-3xl text-slate-900">Painel SESMT — Estaleiro DMN</h2>
+  // --- WIDGETS ---
+  const widgets: Record<string, { title: string; icon: any; render: () => React.ReactNode; accent?: "amber" | "red" }> = {
+    kpis: {
+      title: "Indicadores principais", icon: Activity,
+      render: () => (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 h-full content-start">
+          <KpiTile icon={Users} label="Colaboradores" value={totalEmp} hint="ativos no sistema" tone="dark" />
+          <KpiTile icon={ShieldCheck} label="Conformidade" value={`${conformidadeGeral}%`} hint={`${aptos} aptos`} tone={conformidadeGeral >= 90 ? "green" : conformidadeGeral >= 70 ? "amber" : "red"} />
+          <KpiTile icon={Stethoscope} label="ASOs vencendo" value={asoVencendo30} hint={`${asoVencidos} vencidos`} tone={asoVencidos > 0 ? "red" : "amber"} />
+          <KpiTile icon={Package} label="EPIs em estoque" value={estoqueTotal} hint={`${estoqueBaixo} baixo`} tone="dark" />
+          <KpiTile icon={HardHat} label="EPIs entregues" value={totalEntregas} hint={`R$ ${valorEntregas.toFixed(0)}`} tone="teal" />
+          <KpiTile icon={ClipboardCheck} label="DDS no período" value={ddsCount} hint={`${ddsAderencia}% aderência`} tone="teal" />
+          <KpiTile icon={FileWarning} label="APRs · PTEs" value={`${aprsAtivas} · ${ptesAtivas}`} hint="abertos" tone="dark" />
         </div>
-        <div className="flex items-center gap-2">
-          {(["30", "60", "90", "180"] as const).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriodo(p)}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
-                periodo === p
-                  ? "bg-gradient-to-br from-[#0f766e] to-[#134e4a] text-white shadow-md"
-                  : "bg-white text-slate-500 border border-slate-200 hover:border-[#0f766e]"
-              }`}
-            >{p} dias</button>
-          ))}
-        </div>
-      </div>
-
-      {/* KPI TILES */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
-        <KpiTile icon={Users} label="Colaboradores" value={totalEmp} hint="ativos no sistema" tone="dark" />
-        <KpiTile icon={ShieldCheck} label="Conformidade" value={`${conformidadeGeral}%`} hint={`${aptos} aptos`} tone={conformidadeGeral >= 90 ? "green" : conformidadeGeral >= 70 ? "amber" : "red"} />
-        <KpiTile icon={Stethoscope} label="ASOs vencendo" value={asoVencendo30} hint={`${asoVencidos} vencidos`} tone={asoVencidos > 0 ? "red" : "amber"} />
-        <KpiTile icon={Package} label="EPIs em estoque" value={estoqueTotal} hint={`${estoqueBaixo} baixo`} tone="dark" />
-        <KpiTile icon={HardHat} label="EPIs entregues" value={totalEntregas} hint={`R$ ${valorEntregas.toFixed(0)}`} tone="teal" />
-        <KpiTile icon={ClipboardCheck} label="DDS no período" value={ddsCount} hint={`${ddsAderencia}% aderência`} tone="teal" />
-        <KpiTile icon={FileWarning} label="APRs · PTEs" value={`${aprsAtivas} · ${ptesAtivas}`} hint="abertos" tone="dark" />
-      </div>
-
-      {/* SEARCH + FILTERS */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 mb-6">
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-          <div className="flex items-center gap-2 mb-3">
-            <Search className="h-4 w-4 text-[#0f766e]" />
-            <h3 className="text-[11px] font-black text-slate-700 uppercase tracking-widest">Busca Universal</h3>
-          </div>
+      ),
+    },
+    search: {
+      title: "Busca universal", icon: Search,
+      render: () => (
+        <>
           <input
             type="text"
             placeholder="Nome, CPF, função técnica ou empresa..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            onMouseDown={(e) => e.stopPropagation()}
             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e] transition-all placeholder:text-slate-400 placeholder:font-normal"
           />
           {search && (
@@ -274,12 +293,8 @@ function TstPanel() {
               {searchResults.length === 0 ? (
                 <div className="text-center text-slate-400 py-3 text-xs font-bold uppercase">Nenhum resultado</div>
               ) : searchResults.map((r) => (
-                <Link
-                  key={r.emp.id}
-                  to="/app/employees/$id"
-                  params={{ id: r.emp.id }}
-                  className="flex items-center justify-between p-3 border border-slate-100 rounded-lg bg-slate-50 hover:border-[#0f766e] hover:bg-white transition-all"
-                >
+                <Link key={r.emp.id} to="/app/employees/$id" params={{ id: r.emp.id }}
+                  className="flex items-center justify-between p-3 border border-slate-100 rounded-lg bg-slate-50 hover:border-[#0f766e] hover:bg-white transition-all">
                   <div className="min-w-0">
                     <div className="text-xs font-black uppercase text-slate-900 truncate">{r.emp.nome}</div>
                     <div className="text-[9px] font-bold uppercase text-slate-500 mt-0.5 truncate">{r.company} · {r.role?.name ?? "Sem cargo"}</div>
@@ -289,233 +304,290 @@ function TstPanel() {
               ))}
             </div>
           )}
-        </div>
-
-        <div className="bg-gradient-to-br from-[#0f766e] to-[#134e4a] rounded-2xl p-5 text-white shadow-md flex flex-col justify-between">
+        </>
+      ),
+    },
+    health: {
+      title: "Saúde do SESMT", icon: ShieldCheck,
+      render: () => (
+        <div className="bg-gradient-to-br from-[#0f766e] to-[#134e4a] -m-2 p-4 rounded-xl text-white h-full flex flex-col justify-between">
           <div>
-            <div className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Saúde do SESMT</div>
             <div className="text-4xl font-black leading-none">{conformidadeGeral}<span className="text-xl opacity-70">%</span></div>
             <div className="text-[10px] uppercase tracking-wide opacity-80 mt-1">conformidade geral</div>
           </div>
           <div className="grid grid-cols-3 gap-2 mt-4 text-center">
-            <div className="bg-white/10 rounded-lg p-2">
-              <div className="text-lg font-black">{aptos}</div>
-              <div className="text-[8px] font-bold uppercase opacity-80">Aptos</div>
-            </div>
-            <div className="bg-white/10 rounded-lg p-2">
-              <div className="text-lg font-black">{alertas}</div>
-              <div className="text-[8px] font-bold uppercase opacity-80">Alerta</div>
-            </div>
-            <div className="bg-white/10 rounded-lg p-2">
-              <div className="text-lg font-black">{bloqueados}</div>
-              <div className="text-[8px] font-bold uppercase opacity-80">Bloq.</div>
-            </div>
+            <div className="bg-white/10 rounded-lg p-2"><div className="text-lg font-black">{aptos}</div><div className="text-[8px] font-bold uppercase opacity-80">Aptos</div></div>
+            <div className="bg-white/10 rounded-lg p-2"><div className="text-lg font-black">{alertas}</div><div className="text-[8px] font-bold uppercase opacity-80">Alerta</div></div>
+            <div className="bg-white/10 rounded-lg p-2"><div className="text-lg font-black">{bloqueados}</div><div className="text-[8px] font-bold uppercase opacity-80">Bloq.</div></div>
           </div>
         </div>
-      </div>
-
-      {/* CHARTS ROW 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <Card title="Status dos colaboradores" icon={Activity}>
-          <div className="h-56">
-            {statusPie.length === 0 ? (
-              <Empty />
-            ) : (
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie data={statusPie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
-                    {statusPie.map((s) => <Cell key={s.name} fill={s.color} />)}
-                  </Pie>
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </Card>
-
-        <Card title="EPIs entregues / mês" icon={TrendingUp} className="lg:col-span-2">
-          <div className="h-56">
-            {entregaMensal.length === 0 ? (
-              <Empty />
-            ) : (
-              <ResponsiveContainer>
-                <AreaChart data={entregaMensal}>
-                  <defs>
-                    <linearGradient id="entg" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#0f766e" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="#0f766e" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="qtd" stroke="#0f766e" strokeWidth={2.5} fill="url(#entg)" name="Qtd" />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </Card>
-      </div>
-
-      {/* CHARTS ROW 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <Card title="Top equipamentos entregues" icon={Boxes} className="lg:col-span-2">
-          <div className="h-64">
-            {topItens.length === 0 ? (
-              <Empty />
-            ) : (
-              <ResponsiveContainer>
-                <BarChart data={topItens} layout="vertical" margin={{ left: 90 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis type="number" tick={{ fontSize: 10 }} />
-                  <YAxis type="category" dataKey="item" width={150} tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Bar dataKey="qtd" fill="#0f766e" radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </Card>
-
-        <Card title="Top recebedores de EPI" icon={HardHat}>
-          <div className="space-y-2.5">
-            {topRecip.length === 0 ? <Empty /> : topRecip.map((r, i) => {
-              const max = topRecip[0].qtd || 1;
-              const perc = (r.qtd / max) * 100;
-              return (
-                <div key={r.nome + i}>
-                  <div className="flex items-center justify-between text-[10px] font-bold mb-1">
-                    <span className="truncate text-slate-700">{r.nome}</span>
-                    <span className="text-[#0f766e] font-black">{r.qtd}</span>
-                  </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-[#0f766e] to-[#14b8a6]" style={{ width: `${perc}%` }} />
-                  </div>
+      ),
+    },
+    "status-pie": {
+      title: "Status dos colaboradores", icon: Activity,
+      render: () => (
+        <div className="h-full min-h-0">
+          {statusPie.length === 0 ? <Empty /> : (
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={statusPie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
+                  {statusPie.map((s) => <Cell key={s.name} fill={s.color} />)}
+                </Pie>
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      ),
+    },
+    "epi-mensal": {
+      title: "EPIs entregues / mês", icon: TrendingUp,
+      render: () => (
+        <div className="h-full min-h-0">
+          {entregaMensal.length === 0 ? <Empty /> : (
+            <ResponsiveContainer>
+              <AreaChart data={entregaMensal}>
+                <defs>
+                  <linearGradient id="entg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#0f766e" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="#0f766e" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Area type="monotone" dataKey="qtd" stroke="#0f766e" strokeWidth={2.5} fill="url(#entg)" name="Qtd" />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      ),
+    },
+    "top-itens": {
+      title: "Top equipamentos entregues", icon: Boxes,
+      render: () => (
+        <div className="h-full min-h-0">
+          {topItens.length === 0 ? <Empty /> : (
+            <ResponsiveContainer>
+              <BarChart data={topItens} layout="vertical" margin={{ left: 90 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis type="number" tick={{ fontSize: 10 }} />
+                <YAxis type="category" dataKey="item" width={150} tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Bar dataKey="qtd" fill="#0f766e" radius={[0, 6, 6, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      ),
+    },
+    "top-recip": {
+      title: "Top recebedores de EPI", icon: HardHat,
+      render: () => (
+        <div className="space-y-2.5 overflow-auto h-full">
+          {topRecip.length === 0 ? <Empty /> : topRecip.map((r, i) => {
+            const max = topRecip[0].qtd || 1;
+            const perc = (r.qtd / max) * 100;
+            return (
+              <div key={r.nome + i}>
+                <div className="flex items-center justify-between text-[10px] font-bold mb-1">
+                  <span className="truncate text-slate-700">{r.nome}</span>
+                  <span className="text-[#0f766e] font-black">{r.qtd}</span>
                 </div>
-              );
-            })}
-          </div>
-        </Card>
-      </div>
-
-      {/* DDS + Conformidade por empresa */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <Card title="DDS · evolução & aderência" icon={ClipboardCheck}>
-          <div className="h-56">
-            {ddsTrend.length === 0 ? (
-              <Empty />
-            ) : (
-              <ResponsiveContainer>
-                <BarChart data={ddsTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                  <YAxis yAxisId="l" tick={{ fontSize: 10 }} />
-                  <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar yAxisId="l" dataKey="qtd" fill="#0f766e" name="DDS realizados" radius={[4, 4, 0, 0]} />
-                  <Bar yAxisId="r" dataKey="aderencia" fill="#14b8a6" name="% aderência" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </Card>
-
-        <Card title="Conformidade por empresa" icon={Building2}>
-          <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
-            {conformity.length === 0 && <Empty />}
-            {conformity.map((c) => (
-              <div key={c.name}>
-                <div className="flex justify-between text-[10px] font-black uppercase text-slate-600 mb-1">
-                  <span className="truncate">{c.name}</span>
-                  <span>{c.oks}/{c.total} · {c.perc}%</span>
-                </div>
-                <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                  <div className={`h-full bg-gradient-to-r ${c.color}`} style={{ width: `${c.perc}%` }} />
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#0f766e] to-[#14b8a6]" style={{ width: `${perc}%` }} />
                 </div>
               </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      {/* PENDÊNCIAS */}
-      <Card
-        title="Vencimentos & pendências"
-        icon={AlertTriangle}
-        accent="amber"
-        right={
-          <select
-            value={filterCompany}
-            onChange={(e) => setFilterCompany(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase outline-none focus:ring-2 focus:border-[#0f766e] max-w-[200px] truncate"
-          >
-            <option value="ALL">Todas as empresas</option>
-            {(data?.companies ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        }
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 max-h-80 overflow-y-auto pr-1">
-          {pendencias.length === 0 ? (
-            <div className="col-span-full text-center text-emerald-600 py-8 font-black uppercase text-xs">✓ Nenhuma pendência</div>
-          ) : pendencias.map((p) => (
-            <div
-              key={p.emp.id}
-              onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
-              className="p-3 border border-slate-100 rounded-xl bg-slate-50 hover:bg-white hover:border-[#0f766e] hover:shadow-sm cursor-pointer transition-all group"
-            >
-              <div className="flex items-center justify-between mb-1">
-                <div className="text-xs font-black uppercase text-slate-900 truncate">{p.emp.nome}</div>
-                <ArrowUpRight className="h-3 w-3 text-slate-300 group-hover:text-[#0f766e]" />
+            );
+          })}
+        </div>
+      ),
+    },
+    "dds-trend": {
+      title: "DDS · evolução & aderência", icon: ClipboardCheck,
+      render: () => (
+        <div className="h-full min-h-0">
+          {ddsTrend.length === 0 ? <Empty /> : (
+            <ResponsiveContainer>
+              <BarChart data={ddsTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
+                <YAxis yAxisId="l" tick={{ fontSize: 10 }} />
+                <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar yAxisId="l" dataKey="qtd" fill="#0f766e" name="DDS realizados" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="r" dataKey="aderencia" fill="#14b8a6" name="% aderência" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      ),
+    },
+    conformidade: {
+      title: "Conformidade por empresa", icon: Building2,
+      render: () => (
+        <div className="space-y-3 overflow-y-auto pr-1 h-full">
+          {conformity.length === 0 && <Empty />}
+          {conformity.map((c) => (
+            <div key={c.name}>
+              <div className="flex justify-between text-[10px] font-black uppercase text-slate-600 mb-1">
+                <span className="truncate">{c.name}</span>
+                <span>{c.oks}/{c.total} · {c.perc}%</span>
               </div>
-              <div className="text-[9px] font-bold uppercase text-slate-500 mb-1.5 truncate">{p.company}</div>
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-[9px] font-bold text-slate-600 line-clamp-1">{p.status.msgs.join(" · ") || "—"}</div>
-                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${p.status.colorClass} text-white shrink-0`}>{p.status.label}</span>
+              <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                <div className={`h-full bg-gradient-to-r ${c.color}`} style={{ width: `${c.perc}%` }} />
               </div>
             </div>
           ))}
         </div>
-      </Card>
-
-      {/* BLOCKLIST */}
-      <div className="mt-6 bg-gradient-to-br from-red-50 to-white rounded-2xl p-5 shadow-sm border-2 border-red-200">
-        <div className="flex items-center justify-between mb-4 border-b border-red-100 pb-3">
-          <h3 className="text-xs font-black uppercase tracking-widest text-red-700 flex items-center gap-2">
-            <Ban className="h-4 w-4" /> Lista de Bloqueio GSI ({blocklist.length})
-          </h3>
-          <span className="text-[9px] font-bold uppercase tracking-widest text-red-400">Acesso ao estaleiro suspenso</span>
-        </div>
-        {blocklist.length === 0 ? (
-          <div className="text-center text-emerald-600 py-6 font-black uppercase text-xs">✓ Nenhum colaborador bloqueado</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {blocklist.map((p) => (
-              <div
-                key={p.emp.id}
+      ),
+    },
+    pendencias: {
+      title: "Vencimentos & pendências", icon: AlertTriangle, accent: "amber",
+      render: () => (
+        <div className="h-full flex flex-col min-h-0">
+          <div className="mb-2">
+            <select
+              value={filterCompany}
+              onChange={(e) => setFilterCompany(e.target.value)}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase outline-none focus:ring-2 focus:border-[#0f766e] max-w-[240px] truncate"
+            >
+              <option value="ALL">Todas as empresas</option>
+              {(data?.companies ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 overflow-y-auto pr-1 flex-1">
+            {pendencias.length === 0 ? (
+              <div className="col-span-full text-center text-emerald-600 py-8 font-black uppercase text-xs">✓ Nenhuma pendência</div>
+            ) : pendencias.map((p) => (
+              <div key={p.emp.id}
                 onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
-                className="p-3 border border-red-100 rounded-xl bg-white hover:border-red-400 hover:shadow-sm cursor-pointer transition-all"
-              >
+                className="p-3 border border-slate-100 rounded-xl bg-slate-50 hover:bg-white hover:border-[#0f766e] hover:shadow-sm cursor-pointer transition-all group">
                 <div className="flex items-center justify-between mb-1">
                   <div className="text-xs font-black uppercase text-slate-900 truncate">{p.emp.nome}</div>
-                  <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-red-600 text-white shrink-0 ml-2">{p.status.label}</span>
+                  <ArrowUpRight className="h-3 w-3 text-slate-300 group-hover:text-[#0f766e]" />
                 </div>
-                <div className="text-[9px] font-bold uppercase text-slate-500">{p.company} · {p.role?.name ?? "Sem cargo"}</div>
-                <div className="text-[9px] font-bold text-red-600 mt-1.5 line-clamp-2">{p.status.msgs.join(" · ")}</div>
+                <div className="text-[9px] font-bold uppercase text-slate-500 mb-1.5 truncate">{p.company}</div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-[9px] font-bold text-slate-600 line-clamp-1">{p.status.msgs.join(" · ") || "—"}</div>
+                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${p.status.colorClass} text-white shrink-0`}>{p.status.label}</span>
+                </div>
               </div>
             ))}
           </div>
-        )}
+        </div>
+      ),
+    },
+    blocklist: {
+      title: `Lista de bloqueio GSI (${blocklist.length})`, icon: Ban, accent: "red",
+      render: () => (
+        <div className="overflow-auto h-full">
+          {blocklist.length === 0 ? (
+            <div className="text-center text-emerald-600 py-6 font-black uppercase text-xs">✓ Nenhum colaborador bloqueado</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {blocklist.map((p) => (
+                <div key={p.emp.id}
+                  onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
+                  className="p-3 border border-red-100 rounded-xl bg-white hover:border-red-400 hover:shadow-sm cursor-pointer transition-all">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="text-xs font-black uppercase text-slate-900 truncate">{p.emp.nome}</div>
+                    <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-red-600 text-white shrink-0 ml-2">{p.status.label}</span>
+                  </div>
+                  <div className="text-[9px] font-bold uppercase text-slate-500">{p.company} · {p.role?.name ?? "Sem cargo"}</div>
+                  <div className="text-[9px] font-bold text-red-600 mt-1.5 line-clamp-2">{p.status.msgs.join(" · ")}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    footer: {
+      title: "Alertas operacionais", icon: AlertTriangle,
+      render: () => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[10px] font-bold uppercase tracking-wider h-full content-start">
+          <FootStat label="Estoque baixo" value={estoqueBaixo} tone={estoqueBaixo > 0 ? "red" : "green"} />
+          <FootStat label="CAs vencendo (60d)" value={caVencendo} tone={caVencendo > 0 ? "amber" : "green"} />
+          <FootStat label="Perdas / extravios EPI" value={perdas} tone={perdas > 0 ? "amber" : "green"} />
+        </div>
+      ),
+    },
+  };
+
+  const resetLayout = () => {
+    setLayout(DEFAULT_LAYOUT);
+    try { localStorage.removeItem(LS_KEY); } catch {}
+  };
+
+  return (
+    <div className="p-4 md:p-6 animate-fadeIn h-full flex flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-white overflow-y-auto custom-scrollbar">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+        <div>
+          <div className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-1">SGI · ISO 9001 · NRs · Dashboard</div>
+          <h2 className="heading-display text-2xl md:text-3xl text-slate-900">Painel SESMT — Estaleiro DMN</h2>
+          <div className="text-[10px] text-slate-500 mt-1">
+            {locked ? "Layout bloqueado" : "Arraste pelo cabeçalho · redimensione pelo canto inferior direito"}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          {(["30", "60", "90", "180"] as const).map((p) => (
+            <button key={p} onClick={() => setPeriodo(p)}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                periodo === p
+                  ? "bg-gradient-to-br from-[#0f766e] to-[#134e4a] text-white shadow-md"
+                  : "bg-white text-slate-500 border border-slate-200 hover:border-[#0f766e]"
+              }`}>{p} dias</button>
+          ))}
+          <button onClick={() => setLocked((v) => !v)}
+            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white text-slate-600 border border-slate-200 hover:border-[#0f766e] flex items-center gap-1.5">
+            {locked ? <><Lock className="h-3 w-3" /> Bloqueado</> : <><Unlock className="h-3 w-3" /> Editar</>}
+          </button>
+          <button onClick={resetLayout}
+            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white text-slate-600 border border-slate-200 hover:border-red-400 hover:text-red-600 flex items-center gap-1.5">
+            <RotateCcw className="h-3 w-3" /> Resetar
+          </button>
+        </div>
       </div>
 
-      {/* FOOTER NOTE */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 text-[10px] font-bold uppercase tracking-wider">
-        <FootStat label="Estoque baixo" value={estoqueBaixo} tone={estoqueBaixo > 0 ? "red" : "green"} />
-        <FootStat label="CAs vencendo (60d)" value={caVencendo} tone={caVencendo > 0 ? "amber" : "green"} />
-        <FootStat label="Perdas / extravios EPI" value={perdas} tone={perdas > 0 ? "amber" : "green"} />
-      </div>
+      <ResponsiveGridLayout
+        className="layout"
+        layout={layout}
+        cols={12}
+        rowHeight={40}
+        margin={[12, 12]}
+        containerPadding={[0, 0]}
+        onLayoutChange={(l) => setLayout(l)}
+        draggableHandle=".widget-drag-handle"
+        isDraggable={!locked}
+        isResizable={!locked}
+        compactType="vertical"
+      >
+        {layout.map((l) => {
+          const w = widgets[l.i];
+          if (!w) return null;
+          const Icon = w.icon;
+          const accentCls = w.accent === "amber" ? "text-amber-600" : w.accent === "red" ? "text-red-600" : "text-[#0f766e]";
+          const borderCls = w.accent === "red" ? "border-red-200" : "border-slate-200";
+          return (
+            <div key={l.i} className={`bg-white rounded-2xl shadow-sm border ${borderCls} flex flex-col overflow-hidden`}>
+              <div className={`widget-drag-handle ${locked ? "cursor-default" : "cursor-grab active:cursor-grabbing"} flex items-center justify-between px-4 py-2.5 border-b border-slate-100 bg-gradient-to-b from-white to-slate-50`}>
+                <h3 className={`text-[11px] font-black uppercase tracking-widest flex items-center gap-2 ${accentCls}`}>
+                  <Icon className="h-4 w-4" /> {w.title}
+                </h3>
+                {!locked && <GripVertical className="h-3.5 w-3.5 text-slate-300" />}
+              </div>
+              <div className="flex-1 p-4 min-h-0 overflow-hidden">
+                {w.render()}
+              </div>
+            </div>
+          );
+        })}
+      </ResponsiveGridLayout>
     </div>
   );
 }
@@ -532,31 +604,13 @@ function KpiTile({ icon: Icon, label, value, hint, tone }: {
     red: "from-red-500 to-red-700 text-white",
   };
   return (
-    <div className={`bg-gradient-to-br ${styles[tone]} rounded-xl p-3 shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5`}>
+    <div className={`bg-gradient-to-br ${styles[tone]} rounded-xl p-3 shadow-md`}>
       <div className="flex items-center justify-between mb-1.5 opacity-80">
         <Icon className="h-4 w-4" />
         <div className="text-[8px] font-black uppercase tracking-widest text-right truncate max-w-[100px]">{label}</div>
       </div>
       <div className="text-2xl font-black leading-tight">{value}</div>
       {hint && <div className="text-[9px] font-semibold opacity-75 mt-0.5 truncate">{hint}</div>}
-    </div>
-  );
-}
-
-function Card({ title, icon: Icon, children, className = "", right, accent }: {
-  title: string; icon: any; children: React.ReactNode; className?: string;
-  right?: React.ReactNode; accent?: "amber" | "red";
-}) {
-  const accentCls = accent === "amber" ? "text-amber-600" : accent === "red" ? "text-red-600" : "text-[#0f766e]";
-  return (
-    <div className={`bg-white rounded-2xl p-5 shadow-sm border border-slate-200 ${className}`}>
-      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-        <h3 className={`text-[11px] font-black uppercase tracking-widest flex items-center gap-2 ${accentCls}`}>
-          <Icon className="h-4 w-4" /> {title}
-        </h3>
-        {right}
-      </div>
-      {children}
     </div>
   );
 }
