@@ -799,6 +799,39 @@ function CriarOrdemPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Classe de Avaliação dialog */}
+      <Dialog open={clDialogOpen} onOpenChange={setClDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova Classe de Avaliação</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Código *</Label>
+              <Input value={newCl.codigo}
+                onChange={(e) => setNewCl((s) => ({ ...s, codigo: e.target.value }))}
+                placeholder="Ex.: 7900"
+                maxLength={20}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Descrição</Label>
+              <Input value={newCl.descricao}
+                onChange={(e) => setNewCl((s) => ({ ...s, descricao: e.target.value }))}
+                placeholder="Descrição (opcional)"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setClDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={() => addCl.mutate()} disabled={addCl.isPending}
+              className="bg-amber-600 hover:bg-amber-700 text-white">
+              {addCl.isPending ? "Salvando…" : "Adicionar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
