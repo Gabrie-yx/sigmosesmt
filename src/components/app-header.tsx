@@ -39,7 +39,7 @@ const SESMT_GROUPS: SesmtGroup[] = [
     items: [
       { to: "/app/companies", label: "Empresas / Contratadas" },
       { to: "/app/roles", label: "Cargos & Matriz de Riscos" },
-      { to: "/app/employees", label: "Colaboradores" },
+      { to: "/app/employees", label: "Funcionários" },
       { to: "/app/cascos", label: "Cascos / Embarcações" },
     ],
   },
