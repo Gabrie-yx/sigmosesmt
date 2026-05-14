@@ -9,16 +9,28 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { GraduationCap, Plus, Pencil, Trash2, Settings2, Filter, Save, Users } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
+import {
+  computeStatus,
+  requiredCourseIds,
+  PERIODICIDADES,
+  STATUS_OVERRIDE,
+  CATEGORIAS,
+  CATEGORIA_LABEL,
+  CATEGORIA_COLOR,
+  type MatrizCourse as Course,
+  type MatrizEntry as Entry,
+  type SectorCourse,
+  type RoleCourse,
+} from "@/lib/matriz-status";
 
 export const Route = createFileRoute("/app/matriz-treinamento")({
   component: MatrizPage,
 });
 
-const PERIODICIDADES = ["ADMISSAO", "ANUAL", "BIENAL", "NA"] as const;
-const STATUS_OVERRIDE = ["REALIZADO", "PENDENTE", "EM_ANDAMENTO", "NAO_SE_APLICA"] as const;
 const SETORES_PADRAO = ["PRODUCAO", "ALMOXARIFADO", "ADMINISTRATIVO", "MANUTENCAO"] as const;
 const STATUS_FILTROS = [
   { value: "ALL", label: "Todos" },
@@ -29,55 +41,12 @@ const STATUS_FILTROS = [
   { value: "NA", label: "N/A" },
 ] as const;
 
-type Course = {
-  id: string; codigo: string; nome: string;
-  periodicidade: string; ordem: number; ativo: boolean;
-};
 type Employee = {
   id: string; matricula: string | null; nome: string;
-  setor: string | null; company_id: string | null;
+  setor: string | null; company_id: string | null; role_id: string | null;
 };
 type Company = { id: string; name: string; type: string };
-type Entry = {
-  id: string; employee_id: string; course_id: string;
-  data_realizacao: string | null; status_override: string | null; observacao: string | null;
-};
-type SectorCourse = { setor: string; course_id: string };
-
-function periodMonths(p: string): number | null {
-  if (p === "ANUAL") return 12;
-  if (p === "BIENAL") return 24;
-  return null;
-}
-
-function computeStatus(entry: Entry | undefined, course: Course): {
-  label: string; color: string; expira?: string;
-} {
-  if (entry?.status_override) {
-    const map: Record<string, { label: string; color: string }> = {
-      REALIZADO: { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300" },
-      PENDENTE: { label: "PENDENTE", color: "bg-red-100 text-red-700 border-red-300" },
-      EM_ANDAMENTO: { label: "EM ANDAMENTO", color: "bg-blue-100 text-blue-700 border-blue-300" },
-      NAO_SE_APLICA: { label: "N/A", color: "bg-slate-100 text-slate-500 border-slate-300" },
-    };
-    return map[entry.status_override] ?? map.PENDENTE;
-  }
-  if (course.periodicidade === "NA") return { label: "N/A", color: "bg-slate-100 text-slate-500 border-slate-300" };
-  if (!entry?.data_realizacao) return { label: "PENDENTE", color: "bg-red-100 text-red-700 border-red-300" };
-  if (course.periodicidade === "ADMISSAO") {
-    return { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300" };
-  }
-  const months = periodMonths(course.periodicidade);
-  if (!months) return { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300" };
-  const dt = new Date(entry.data_realizacao);
-  dt.setMonth(dt.getMonth() + months);
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const expira = dt.toISOString().slice(0, 10);
-  const diff = Math.floor((dt.getTime() - today.getTime()) / 86400000);
-  if (diff < 0) return { label: "VENCIDO", color: "bg-red-100 text-red-700 border-red-300", expira };
-  if (diff <= 30) return { label: "A VENCER", color: "bg-amber-100 text-amber-700 border-amber-300", expira };
-  return { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300", expira };
-}
+type Role = { id: string; name: string };
 
 function MatrizPage() {
   const qc = useQueryClient();
@@ -110,6 +79,19 @@ function MatrizPage() {
     },
   });
 
+  const { data: roleCourses = [] } = useQuery<RoleCourse[]>({
+    queryKey: ["matriz-role-courses"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("training_matrix_role_courses").select("*");
+      if (error) throw error; return data as RoleCourse[];
+    },
+  });
+
+  const { data: roles = [] } = useQuery<Role[]>({
+    queryKey: ["roles-list"],
+    queryFn: async () => (await supabase.from("roles").select("id,name").eq("ativo", true).order("name")).data ?? [],
+  });
+
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ["companies"],
     queryFn: async () => (await supabase.from("companies").select("id,name,type")).data ?? [],
@@ -119,7 +101,7 @@ function MatrizPage() {
     queryKey: ["matriz-employees"],
     queryFn: async () => {
       const { data, error } = await supabase.from("employees")
-        .select("id,matricula,nome,setor,company_id").eq("status", "ATIVO").order("nome");
+        .select("id,matricula,nome,setor,company_id,role_id").eq("status", "ATIVO").order("nome");
       if (error) throw error; return data as Employee[];
     },
   });
@@ -165,21 +147,24 @@ function MatrizPage() {
     return base.filter((e) =>
       courses.some((c) => {
         const en = entryMap.get(`${e.id}|${c.id}`);
-        const required = sectorCourses.some((sc) => sc.setor === (e.setor ?? "") && sc.course_id === c.id);
+        const required = requiredCourseIds(e, sectorCourses, roleCourses).has(c.id);
         if (!required && !en) return false;
         return wanted.has(computeStatus(en, c).label);
       }),
     );
-  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses]);
+  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses, roleCourses]);
 
-  // cursos visíveis: união dos setores presentes nos empsFiltrados
+  // cursos visíveis: cursos exigidos pelos funcionários filtrados (união setor+função) + cursos com lançamentos
   const cursosVisiveis = useMemo(() => {
     if (filtroSetor !== "ALL") {
-      const ids = new Set(sectorCourses.filter((sc) => sc.setor === filtroSetor).map((sc) => sc.course_id));
+      const ids = new Set<string>();
+      empsFiltrados.forEach((e) => {
+        requiredCourseIds(e, sectorCourses, roleCourses).forEach((id) => ids.add(id));
+      });
       return courses.filter((c) => ids.has(c.id));
     }
     return courses;
-  }, [courses, sectorCourses, filtroSetor]);
+  }, [courses, sectorCourses, roleCourses, filtroSetor, empsFiltrados]);
 
   return (
     <div className="p-4 md:p-6 animate-fadeIn h-full bg-[#f1f5f9]">
@@ -263,7 +248,6 @@ function MatrizPage() {
           </thead>
           <tbody>
             {empsFiltrados.map((emp, i) => {
-              const setorCursos = new Set(sectorCourses.filter((sc) => sc.setor === (emp.setor ?? "")).map((sc) => sc.course_id));
               const comp = emp.company_id ? compMap[emp.company_id] : null;
               return (
                 <tr key={emp.id} className={i % 2 ? "bg-slate-50/50" : "bg-white"}>
@@ -279,7 +263,7 @@ function MatrizPage() {
                     )}
                   </td>
                   {cursosVisiveis.map((c) => {
-                    const required = setorCursos.has(c.id);
+                    const required = requiredCourseIds(emp, sectorCourses, roleCourses).has(c.id);
                     const entry = entryMap.get(`${emp.id}|${c.id}`);
                     if (!required && !entry) {
                       return (
@@ -331,8 +315,8 @@ function MatrizPage() {
         />
       )}
       {openCatalog && <CatalogDialog onClose={() => setOpenCatalog(false)} courses={courses} isAdmin={isAdmin} />}
-      {openSetores && <SetoresDialog onClose={() => setOpenSetores(false)} courses={courses} mapping={sectorCourses} />}
-      {openEmp !== null && <EmpDialog emp={openEmp === "new" ? null : openEmp} companies={companies} onClose={() => setOpenEmp(null)} isAdmin={isAdmin} />}
+      {openSetores && <VinculosDialog onClose={() => setOpenSetores(false)} courses={courses} sectorMapping={sectorCourses} roleMapping={roleCourses} roles={roles} />}
+      {openEmp !== null && <EmpDialog emp={openEmp === "new" ? null : openEmp} companies={companies} roles={roles} onClose={() => setOpenEmp(null)} isAdmin={isAdmin} />}
       {openBulk && <BulkEmpDialog companies={companies} employees={employees} onClose={() => setOpenBulk(false)} />}
     </div>
   );
@@ -418,22 +402,31 @@ function EntryDialog({ emp, course, entry, onClose, onSaved, isAdmin }:
 function CatalogDialog({ onClose, courses, isAdmin }:
   { onClose: () => void; courses: Course[]; isAdmin: boolean }) {
   const qc = useQueryClient();
-  const [novo, setNovo] = useState({ codigo: "", nome: "", periodicidade: "ANUAL", ordem: 999 });
+  const [novo, setNovo] = useState({ codigo: "", nome: "", periodicidade: "ANUAL", ordem: 999, categoria: "CURSO", carga_horaria_h: 0 });
 
   const add = useMutation({
     mutationFn: async () => {
       if (!novo.codigo || !novo.nome) throw new Error("Código e nome obrigatórios");
-      const { error } = await supabase.from("training_matrix_courses").insert(novo);
+      const { error } = await supabase.from("training_matrix_courses").insert({
+        codigo: novo.codigo, nome: novo.nome, periodicidade: novo.periodicidade,
+        ordem: novo.ordem, categoria: novo.categoria,
+        carga_horaria_h: novo.carga_horaria_h || null,
+      });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Curso criado"); setNovo({ codigo: "", nome: "", periodicidade: "ANUAL", ordem: 999 }); qc.invalidateQueries({ queryKey: ["matriz-courses"] }); },
+    onSuccess: () => { toast.success("Curso criado"); setNovo({ codigo: "", nome: "", periodicidade: "ANUAL", ordem: 999, categoria: "CURSO", carga_horaria_h: 0 }); qc.invalidateQueries({ queryKey: ["matriz-courses"] }); },
     onError: (e: any) => toast.error(e.message),
   });
 
   const upd = useMutation({
     mutationFn: async (c: Course) => {
       const { error } = await supabase.from("training_matrix_courses")
-        .update({ codigo: c.codigo, nome: c.nome, periodicidade: c.periodicidade, ordem: c.ordem, ativo: c.ativo })
+        .update({
+          codigo: c.codigo, nome: c.nome, periodicidade: c.periodicidade,
+          ordem: c.ordem, ativo: c.ativo,
+          categoria: c.categoria ?? "NR",
+          carga_horaria_h: c.carga_horaria_h ?? null,
+        })
         .eq("id", c.id);
       if (error) throw error;
     },
@@ -452,20 +445,39 @@ function CatalogDialog({ onClose, courses, isAdmin }:
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Cursos / NRs do catálogo</DialogTitle></DialogHeader>
-        <div className="border border-slate-200 rounded p-3 bg-slate-50 grid grid-cols-12 gap-2">
-          <Input placeholder="Código" value={novo.codigo} onChange={(e) => setNovo({ ...novo, codigo: e.target.value })} className="col-span-3 h-8 text-xs" />
-          <Input placeholder="Nome" value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} className="col-span-5 h-8 text-xs" />
-          <Select value={novo.periodicidade} onValueChange={(v) => setNovo({ ...novo, periodicidade: v })}>
-            <SelectTrigger className="col-span-2 h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>{PERIODICIDADES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-          </Select>
-          <Button size="sm" onClick={() => add.mutate()} className="col-span-2"><Plus className="h-3.5 w-3.5 mr-1" />Add</Button>
+        <div className="border border-slate-200 rounded p-3 bg-slate-50 space-y-2">
+          <div className="grid grid-cols-12 gap-2">
+            <Input placeholder="Código" value={novo.codigo} onChange={(e) => setNovo({ ...novo, codigo: e.target.value })} className="col-span-3 h-8 text-xs" />
+            <Input placeholder="Nome" value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} className="col-span-9 h-8 text-xs" />
+          </div>
+          <div className="grid grid-cols-12 gap-2">
+            <Select value={novo.categoria} onValueChange={(v) => setNovo({ ...novo, categoria: v })}>
+              <SelectTrigger className="col-span-3 h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>{CATEGORIAS.map((c) => <SelectItem key={c} value={c}>{CATEGORIA_LABEL[c]}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={novo.periodicidade} onValueChange={(v) => setNovo({ ...novo, periodicidade: v })}>
+              <SelectTrigger className="col-span-3 h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>{PERIODICIDADES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+            </Select>
+            <Input type="number" placeholder="CH (h)" value={novo.carga_horaria_h || ""} onChange={(e) => setNovo({ ...novo, carga_horaria_h: Number(e.target.value) })} className="col-span-2 h-8 text-xs" />
+            <Input type="number" placeholder="Ordem" value={novo.ordem} onChange={(e) => setNovo({ ...novo, ordem: Number(e.target.value) })} className="col-span-2 h-8 text-xs" />
+            <Button size="sm" onClick={() => add.mutate()} className="col-span-2"><Plus className="h-3.5 w-3.5 mr-1" />Add</Button>
+          </div>
         </div>
         <table className="text-xs w-full mt-3">
           <thead className="bg-slate-100">
-            <tr><th className="text-left p-2">Código</th><th className="text-left p-2">Nome</th><th className="p-2">Periodic.</th><th className="p-2">Ordem</th><th className="p-2">Ativo</th><th></th></tr>
+            <tr>
+              <th className="text-left p-2">Código</th>
+              <th className="text-left p-2">Nome</th>
+              <th className="p-2">Categoria</th>
+              <th className="p-2">Periodic.</th>
+              <th className="p-2">CH</th>
+              <th className="p-2">Ordem</th>
+              <th className="p-2">Ativo</th>
+              <th></th>
+            </tr>
           </thead>
           <tbody>
             {courses.map((c) => (
@@ -487,11 +499,18 @@ function CourseRow({ c, onSave, onDel, canDelete }: { c: Course; onSave: (c: Cou
       <td className="p-1"><Input value={v.codigo} onChange={(e) => setV({ ...v, codigo: e.target.value })} className="h-7 text-xs" /></td>
       <td className="p-1"><Input value={v.nome} onChange={(e) => setV({ ...v, nome: e.target.value })} className="h-7 text-xs" /></td>
       <td className="p-1">
+        <Select value={v.categoria ?? "NR"} onValueChange={(x) => setV({ ...v, categoria: x })}>
+          <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>{CATEGORIAS.map((cc) => <SelectItem key={cc} value={cc}>{CATEGORIA_LABEL[cc]}</SelectItem>)}</SelectContent>
+        </Select>
+      </td>
+      <td className="p-1">
         <Select value={v.periodicidade} onValueChange={(x) => setV({ ...v, periodicidade: x })}>
           <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>{PERIODICIDADES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
         </Select>
       </td>
+      <td className="p-1 w-16"><Input type="number" value={v.carga_horaria_h ?? 0} onChange={(e) => setV({ ...v, carga_horaria_h: Number(e.target.value) })} className="h-7 text-xs" /></td>
       <td className="p-1 w-20"><Input type="number" value={v.ordem} onChange={(e) => setV({ ...v, ordem: Number(e.target.value) })} className="h-7 text-xs" /></td>
       <td className="p-1 text-center"><input type="checkbox" checked={v.ativo} onChange={(e) => setV({ ...v, ativo: e.target.checked })} /></td>
       <td className="p-1 flex gap-1">
@@ -502,14 +521,15 @@ function CourseRow({ c, onSave, onDel, canDelete }: { c: Course; onSave: (c: Cou
   );
 }
 
-function SetoresDialog({ onClose, courses, mapping }:
-  { onClose: () => void; courses: Course[]; mapping: SectorCourse[] }) {
+function VinculosDialog({ onClose, courses, sectorMapping, roleMapping, roles }:
+  { onClose: () => void; courses: Course[]; sectorMapping: SectorCourse[]; roleMapping: RoleCourse[]; roles: Role[] }) {
   const qc = useQueryClient();
   const setores = SETORES_PADRAO;
 
-  const has = (setor: string, courseId: string) => mapping.some((m) => m.setor === setor && m.course_id === courseId);
+  const hasSetor = (setor: string, courseId: string) => sectorMapping.some((m) => m.setor === setor && m.course_id === courseId);
+  const hasRole = (roleId: string, courseId: string) => roleMapping.some((m) => m.role_id === roleId && m.course_id === courseId);
 
-  const toggle = useMutation({
+  const toggleSetor = useMutation({
     mutationFn: async ({ setor, courseId, on }: { setor: string; courseId: string; on: boolean }) => {
       if (on) {
         const { error } = await supabase.from("training_matrix_sector_courses").insert({ setor, course_id: courseId });
@@ -523,48 +543,99 @@ function SetoresDialog({ onClose, courses, mapping }:
     onError: (e: any) => toast.error(e.message),
   });
 
+  const toggleRole = useMutation({
+    mutationFn: async ({ roleId, courseId, on }: { roleId: string; courseId: string; on: boolean }) => {
+      if (on) {
+        const { error } = await supabase.from("training_matrix_role_courses").insert({ role_id: roleId, course_id: courseId });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("training_matrix_role_courses").delete().eq("role_id", roleId).eq("course_id", courseId);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["matriz-role-courses"] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Cursos exigidos por Setor</DialogTitle></DialogHeader>
-        <table className="text-xs w-full">
-          <thead className="bg-slate-100">
-            <tr>
-              <th className="text-left p-2">Curso</th>
-              {setores.map((s) => <th key={s} className="p-2">{s}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {courses.map((c) => (
-              <tr key={c.id} className="border-b">
-                <td className="p-2"><strong>{c.codigo}</strong> — {c.nome}</td>
-                {setores.map((s) => (
-                  <td key={s} className="p-2 text-center">
-                    <input type="checkbox" checked={has(s, c.id)} onChange={(e) => toggle.mutate({ setor: s, courseId: c.id, on: e.target.checked })} />
-                  </td>
+      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Vincular Cursos a Setor / Função</DialogTitle></DialogHeader>
+        <Tabs defaultValue="setor">
+          <TabsList>
+            <TabsTrigger value="setor">Por Setor</TabsTrigger>
+            <TabsTrigger value="funcao">Por Função</TabsTrigger>
+          </TabsList>
+          <TabsContent value="setor" className="mt-3">
+            <table className="text-xs w-full">
+              <thead className="bg-slate-100 sticky top-0">
+                <tr>
+                  <th className="text-left p-2">Curso</th>
+                  {setores.map((s) => <th key={s} className="p-2">{s}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {courses.map((c) => (
+                  <tr key={c.id} className="border-b">
+                    <td className="p-2"><strong>{c.codigo}</strong> — {c.nome}</td>
+                    {setores.map((s) => (
+                      <td key={s} className="p-2 text-center">
+                        <input type="checkbox" checked={hasSetor(s, c.id)} onChange={(e) => toggleSetor.mutate({ setor: s, courseId: c.id, on: e.target.checked })} />
+                      </td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          </TabsContent>
+          <TabsContent value="funcao" className="mt-3">
+            {roles.length === 0 ? (
+              <div className="text-center text-slate-400 text-xs py-8 uppercase font-bold">Cadastre funções em Cargos / Funções primeiro.</div>
+            ) : (
+              <div className="overflow-auto">
+                <table className="text-xs w-full">
+                  <thead className="bg-slate-100 sticky top-0">
+                    <tr>
+                      <th className="text-left p-2 sticky left-0 bg-slate-100">Curso</th>
+                      {roles.map((r) => <th key={r.id} className="p-2 whitespace-nowrap">{r.name}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {courses.map((c) => (
+                      <tr key={c.id} className="border-b">
+                        <td className="p-2 sticky left-0 bg-white"><strong>{c.codigo}</strong> — {c.nome}</td>
+                        {roles.map((r) => (
+                          <td key={r.id} className="p-2 text-center">
+                            <input type="checkbox" checked={hasRole(r.id, c.id)} onChange={(e) => toggleRole.mutate({ roleId: r.id, courseId: c.id, on: e.target.checked })} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
         <DialogFooter><Button variant="outline" onClick={onClose}>Fechar</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-function EmpDialog({ emp, companies, onClose, isAdmin }:
-  { emp: Employee | null; companies: Company[]; onClose: () => void; isAdmin: boolean }) {
+function EmpDialog({ emp, companies, roles, onClose, isAdmin }:
+  { emp: Employee | null; companies: Company[]; roles: Role[]; onClose: () => void; isAdmin: boolean }) {
   const qc = useQueryClient();
   const [v, setV] = useState({
     matricula: emp?.matricula ?? "", nome: emp?.nome ?? "",
     setor: emp?.setor ?? "PRODUCAO", company_id: emp?.company_id ?? (companies[0]?.id ?? ""),
+    role_id: emp?.role_id ?? "",
   });
 
   const save = useMutation({
     mutationFn: async () => {
       if (!v.nome) throw new Error("Nome obrigatório");
-      const payload = { matricula: v.matricula || null, nome: v.nome, setor: v.setor, company_id: v.company_id || null };
+      const payload = { matricula: v.matricula || null, nome: v.nome, setor: v.setor, company_id: v.company_id || null, role_id: v.role_id || null };
       if (emp) {
         const { error } = await supabase.from("employees").update(payload).eq("id", emp.id);
         if (error) throw error;
@@ -614,6 +685,16 @@ function EmpDialog({ emp, companies, onClose, isAdmin }:
             <Select value={v.company_id} onValueChange={(x) => setV({ ...v, company_id: x })}>
               <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name} ({c.type})</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase font-black">Função</Label>
+            <Select value={v.role_id || "NONE"} onValueChange={(x) => setV({ ...v, role_id: x === "NONE" ? "" : x })}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">— sem função —</SelectItem>
+                {roles.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+              </SelectContent>
             </Select>
           </div>
         </div>
