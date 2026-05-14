@@ -220,18 +220,11 @@ function MatrizPage() {
         courses.some((c) => {
           const en = entryMap.get(`${e.id}|${c.id}`);
           const sched = scheduledMap.get(`${e.id}|${c.id}`);
-          return sched && !en?.data_realizacao;
+          return sched && (!en?.data_realizacao || en.data_realizacao >= hoje);
         }),
       );
     }
-    const map: Record<string, string[]> = {
-      REALIZADO: ["REALIZADO"],
-      A_VENCER: ["A VENCER"],
-      VENCIDO_PENDENTE: ["VENCIDO", "PENDENTE"],
-      EM_ANDAMENTO: ["EM ANDAMENTO"],
-      NA: ["N/A"],
-    };
-    const wanted = new Set(map[filtroStatus] ?? []);
+    const wanted = new Set(STATUS_CELL_MAP[filtroStatus] ?? []);
     return base.filter((e) =>
       courses.some((c) => {
         const en = entryMap.get(`${e.id}|${c.id}`);
@@ -240,7 +233,7 @@ function MatrizPage() {
         return wanted.has(computeStatus(en, c).label);
       }),
     );
-  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses, roleCourses, scheduledMap]);
+  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses, roleCourses, scheduledMap, hoje]);
 
   // cursos visíveis: cursos exigidos pelos funcionários filtrados (união setor+função) + cursos com lançamentos
   const cursosVisiveis = useMemo(() => {
@@ -319,7 +312,18 @@ function MatrizPage() {
         <div className="text-[11px] text-slate-500 font-bold">{empsFiltrados.length} funcionário(s) · {cursosVisiveis.length} curso(s)</div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 290px)" }}>
+      <div className="mb-3 bg-white rounded-xl shadow-sm border border-slate-200 px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="text-[10px] font-black uppercase text-slate-500">Legenda</div>
+        {STATUS_LEGENDA.map((item) => (
+          <div key={item.label} className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
+            <span className={`h-3.5 w-3.5 rounded-sm border border-slate-300 ${item.className}`} />
+            <span className="uppercase">{item.label}</span>
+            <span className="hidden md:inline text-slate-400 normal-case">({item.detalhe})</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 340px)" }}>
         <table className="text-[10px] border-collapse">
           <thead className="sticky top-0 bg-slate-100 z-10">
             <tr>
