@@ -275,16 +275,18 @@ function MatrizPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 290px)" }}>
-        <table className="text-[11px] border-collapse min-w-full">
+        <table className="text-[10px] border-collapse">
           <thead className="sticky top-0 bg-slate-100 z-10">
             <tr>
-              <th className="sticky left-0 bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[60px]">Mat.</th>
-              <th className="sticky left-[60px] bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[200px]">Funcionário</th>
-              <th className="text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[110px]">Setor</th>
+              <th className="sticky left-0 bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 w-[55px] text-[10px]">Mat.</th>
+              <th className="sticky left-[55px] bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 w-[180px] text-[10px]">Funcionário</th>
+              <th className="sticky left-[235px] bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 w-[100px] text-[10px]">Setor</th>
               {cursosVisiveis.map((c) => (
-                <th key={c.id} className="text-center px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[100px]" title={`${c.nome} (${c.periodicidade})`}>
-                  <div>{c.codigo}</div>
-                  <div className="text-[9px] text-slate-400 font-bold normal-case">{c.periodicidade}</div>
+                <th key={c.id} className="text-center px-0.5 py-2 font-black uppercase border-b border-r border-slate-200 align-bottom" style={{ width: 38, minWidth: 38, maxWidth: 38, height: 130 }} title={`${c.nome} (${c.periodicidade})`}>
+                  <div className="flex flex-col items-center justify-end h-full">
+                    <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }} className="text-[10px] whitespace-nowrap leading-tight">{c.codigo}</span>
+                    <span className="text-[8px] text-slate-400 font-bold normal-case mt-1">{c.periodicidade.slice(0,3)}</span>
+                  </div>
                 </th>
               ))}
             </tr>
@@ -294,12 +296,12 @@ function MatrizPage() {
               const comp = emp.company_id ? compMap[emp.company_id] : null;
               return (
                 <tr key={emp.id} className={i % 2 ? "bg-slate-50/50" : "bg-white"}>
-                  <td className="sticky left-0 z-10 bg-inherit px-2 py-1 border-b border-r border-slate-200 font-bold">{emp.matricula ?? "—"}</td>
-                  <td className="sticky left-[60px] z-10 bg-inherit px-2 py-1 border-b border-r border-slate-200">
-                    <div className="font-bold text-slate-800">{emp.nome}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">{comp?.name ?? "—"} · {comp?.type ?? "—"}</div>
+                  <td className="sticky left-0 z-10 bg-inherit px-2 py-1 border-b border-r border-slate-200 font-bold text-[10px]">{emp.matricula ?? "—"}</td>
+                  <td className="sticky left-[55px] z-10 bg-inherit px-2 py-1 border-b border-r border-slate-200">
+                    <div className="font-bold text-slate-800 text-[10px] leading-tight truncate max-w-[170px]">{emp.nome}</div>
+                    <div className="text-[8px] text-slate-500 uppercase truncate max-w-[170px]">{comp?.name ?? "—"} · {comp?.type ?? "—"}</div>
                   </td>
-                  <td className="px-2 py-1 border-b border-r border-slate-200 text-[10px] uppercase font-bold text-slate-600">
+                  <td className="sticky left-[235px] z-10 bg-inherit px-2 py-1 border-b border-r border-slate-200 text-[9px] uppercase font-bold text-slate-600">
                     {emp.setor ?? <span className="text-red-500">—</span>}
                     {isEditor && (
                       <button onClick={() => setOpenEmp(emp)} className="ml-1 text-slate-400 hover:text-slate-700"><Pencil className="h-3 w-3 inline" /></button>
@@ -311,9 +313,9 @@ function MatrizPage() {
                     const sched = scheduledMap.get(`${emp.id}|${c.id}`);
                     if (!required && !entry && !sched) {
                       return (
-                        <td key={c.id} className="px-1 py-1 border-b border-r border-slate-200 text-center bg-slate-50/40">
+                        <td key={c.id} className="p-0 border-b border-r border-slate-200 text-center bg-slate-50/40" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
                           <button disabled={!isEditor} onClick={() => setEditing({ emp, course: c })}
-                            className="text-[9px] text-slate-300 hover:text-slate-600 uppercase">—</button>
+                            className="w-full h-7 text-[9px] text-slate-300 hover:text-slate-600">—</button>
                         </td>
                       );
                     }
@@ -336,26 +338,34 @@ function MatrizPage() {
                       const wantedCell = statusMap[filtroStatus] ?? [];
                       if (!wantedCell.includes(st.label)) {
                         return (
-                          <td key={c.id} className="px-1 py-1 border-b border-r border-slate-200 text-center bg-slate-50/40">
+                          <td key={c.id} className="p-0 border-b border-r border-slate-200 text-center bg-slate-50/40" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
                             <button disabled={!isEditor} onClick={() => setEditing({ emp, course: c, entry })}
-                              className="text-[9px] text-slate-300 hover:text-slate-600 uppercase">—</button>
+                              className="w-full h-7 text-[9px] text-slate-300 hover:text-slate-600">—</button>
                           </td>
                         );
                       }
                     }
+                    // Mapeia status -> cor de fundo sólida (sem texto, célula inteira colorida)
+                    const cellBg: Record<string, string> = {
+                      "REALIZADO": "bg-emerald-400 hover:bg-emerald-500",
+                      "A VENCER": "bg-amber-400 hover:bg-amber-500",
+                      "VENCIDO": "bg-red-500 hover:bg-red-600",
+                      "PENDENTE": "bg-red-300 hover:bg-red-400",
+                      "EM ANDAMENTO": "bg-blue-400 hover:bg-blue-500",
+                      "A INICIAR": "bg-indigo-400 hover:bg-indigo-500",
+                      "N/A": "bg-slate-200 hover:bg-slate-300",
+                    };
+                    const dataLabel = entry?.data_realizacao
+                      ? formatDateBR(entry.data_realizacao)
+                      : (showAIniciar && sched ? formatDateBR(sched.data) : "");
                     return (
-                      <td key={c.id} className="px-1 py-1 border-b border-r border-slate-200 text-center align-middle">
+                      <td key={c.id} className="p-0 border-b border-r border-slate-200 text-center align-middle" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
                         <button
                           disabled={!isEditor}
                           onClick={() => setEditing({ emp, course: c, entry })}
-                          className={`w-full px-1.5 py-1 rounded border text-[10px] font-bold leading-tight ${st.color} hover:brightness-95`}
-                          title={`${c.nome}${sched ? ` — Turma: ${sched.titulo} (${sched.data})` : ""}${entry?.observacao ? ` — ${entry.observacao}` : ""}`}
-                        >
-                          {entry?.data_realizacao
-                            ? <div className="font-black">{formatDateBR(entry.data_realizacao)}</div>
-                            : showAIniciar && sched && <div className="font-black">{formatDateBR(sched.data)}</div>}
-                          <div className="text-[9px]">{st.label}</div>
-                        </button>
+                          className={`w-full h-7 ${cellBg[st.label] ?? "bg-slate-200"} text-white text-[8px] font-black leading-none`}
+                          title={`${c.nome} — ${st.label}${dataLabel ? ` (${dataLabel})` : ""}${sched ? ` — Turma: ${sched.titulo}` : ""}${entry?.observacao ? ` — ${entry.observacao}` : ""}`}
+                        />
                       </td>
                     );
                   })}
