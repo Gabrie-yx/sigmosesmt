@@ -343,6 +343,7 @@ function MatrizPage() {
         <span className="px-2 py-1 rounded border bg-amber-100 text-amber-700 border-amber-300">A vencer (≤30d)</span>
         <span className="px-2 py-1 rounded border bg-red-100 text-red-700 border-red-300">Pendente / Vencido</span>
         <span className="px-2 py-1 rounded border bg-blue-100 text-blue-700 border-blue-300">Em andamento</span>
+        <span className="px-2 py-1 rounded border bg-indigo-100 text-indigo-700 border-indigo-300">A iniciar (turma agendada)</span>
         <span className="px-2 py-1 rounded border bg-slate-100 text-slate-500 border-slate-300">N/A</span>
       </div>
 
