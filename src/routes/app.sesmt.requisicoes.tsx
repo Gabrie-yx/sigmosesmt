@@ -615,11 +615,22 @@ function _IndeferBtnImpl({ onConfirm }: { onConfirm: (motivo: string) => void })
   );
 }
 
-function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: string }) {
+function ReqFormDialog({
+  onClose,
+  userId,
+  existing,
+}: {
+  onClose: () => void;
+  userId?: string;
+  existing?: Req;
+}) {
   const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
-  // Gera número automático: SEQ/MM/AAAA (sequencial reiniciado por mês/ano)
+  const isEdit = !!existing;
+
+  // Gera número automático apenas no modo de criação
   useEffect(() => {
+    if (isEdit) return;
     (async () => {
       const now = new Date();
       const mm = String(now.getMonth() + 1).padStart(2, "0");
@@ -640,23 +651,48 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
   }, []);
 
   const [form, setForm] = useState({
-    numero: "Gerando...",
-    data_requisicao: today,
-    classificacao: "MATERIAL" as Classe,
-    solicitante: "",
-    setor: "",
-    fornecedor: "",
-    obra_construcao: "",
-    obra_manutencao: "",
-    codigo_formulario: "FOR-COMP: 03",
-    revisao: "01",
-    data_revisao: today,
-    pagina: "01/01",
-    observacoes: "",
+    numero: existing?.numero ?? "Gerando...",
+    data_requisicao: existing?.data_requisicao ?? today,
+    classificacao: (existing?.classificacao ?? "MATERIAL") as Classe,
+    solicitante: existing?.solicitante ?? "",
+    setor: existing?.setor ?? "",
+    fornecedor: existing?.fornecedor ?? "",
+    obra_construcao: existing?.obra_construcao ?? "",
+    obra_manutencao: existing?.obra_manutencao ?? "",
+    codigo_formulario: existing?.codigo_formulario ?? "FOR-COMP: 03",
+    revisao: existing?.revisao ?? "01",
+    data_revisao: existing?.data_revisao ?? today,
+    pagina: existing?.pagina ?? "01/01",
+    observacoes: existing?.observacoes ?? "",
   });
   const [itens, setItens] = useState<Item[]>(emptyItems());
-  const [signature, setSignature] = useState<string | null>(null);
-  const [signatureHeight, setSignatureHeight] = useState<number>(80);
+  const [signature, setSignature] = useState<string | null>(existing?.signature_solicitante ?? null);
+  const [signatureHeight, setSignatureHeight] = useState<number>(existing?.signature_solicitante_height ?? 80);
+
+  // Carrega itens existentes em modo edição
+  useEffect(() => {
+    if (!existing) return;
+    (async () => {
+      const { data } = await supabase
+        .from("purchase_requisition_items")
+        .select("*")
+        .eq("requisition_id", existing.id)
+        .order("item_numero");
+      const loaded: Item[] = (data ?? []).map((f: any) => ({
+        item_numero: f.item_numero,
+        descricao: f.descricao ?? "",
+        quantidade: f.quantidade != null ? String(f.quantidade) : "",
+        unidade: f.unidade ?? "",
+        observacao: f.observacao ?? "",
+      }));
+      // Garante no mínimo 10 linhas
+      const base = emptyItems();
+      const merged = base.map((d) => loaded.find((x) => x.item_numero === d.item_numero) ?? d);
+      const extras = loaded.filter((x) => x.item_numero > base.length);
+      setItens([...merged, ...extras]);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existing?.id]);
 
   const onSignatureUpload = async (file: File | null) => {
     if (!file) return;
@@ -693,34 +729,52 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
       if (!form.numero.trim() || !form.solicitante.trim()) {
         throw new Error("Preencha número e solicitante");
       }
-      const { data: req, error } = await supabase
-        .from("purchase_requisitions")
-        .insert({
-          numero: form.numero.trim(),
-          data_requisicao: form.data_requisicao,
-          classificacao: form.classificacao,
-          solicitante: form.solicitante.trim(),
-          setor: form.setor.trim() || null,
-          fornecedor: form.fornecedor.trim() || null,
-          obra_construcao: form.obra_construcao.trim() || null,
-          obra_manutencao: form.obra_manutencao.trim() || null,
-          codigo_formulario: form.codigo_formulario,
-          revisao: form.revisao,
-          data_revisao: form.data_revisao || null,
-          pagina: form.pagina,
-          observacoes: form.observacoes.trim() || null,
-          created_by: userId ?? null,
-          signature_solicitante: signature,
-          signature_solicitante_height: signature ? signatureHeight : null,
-        })
-        .select()
-        .single();
-      if (error) throw error;
+      const payload = {
+        numero: form.numero.trim(),
+        data_requisicao: form.data_requisicao,
+        classificacao: form.classificacao,
+        solicitante: form.solicitante.trim(),
+        setor: form.setor.trim() || null,
+        fornecedor: form.fornecedor.trim() || null,
+        obra_construcao: form.obra_construcao.trim() || null,
+        obra_manutencao: form.obra_manutencao.trim() || null,
+        codigo_formulario: form.codigo_formulario,
+        revisao: form.revisao,
+        data_revisao: form.data_revisao || null,
+        pagina: form.pagina,
+        observacoes: form.observacoes.trim() || null,
+        signature_solicitante: signature,
+        signature_solicitante_height: signature ? signatureHeight : null,
+      };
+
+      let reqId: string;
+      if (isEdit && existing) {
+        const { error } = await supabase
+          .from("purchase_requisitions")
+          .update(payload)
+          .eq("id", existing.id);
+        if (error) throw error;
+        reqId = existing.id;
+        // Substitui itens
+        const { error: eDel } = await supabase
+          .from("purchase_requisition_items")
+          .delete()
+          .eq("requisition_id", reqId);
+        if (eDel) throw eDel;
+      } else {
+        const { data: req, error } = await supabase
+          .from("purchase_requisitions")
+          .insert({ ...payload, created_by: userId ?? null })
+          .select()
+          .single();
+        if (error) throw error;
+        reqId = req.id;
+      }
 
       const itemsToInsert = itens
         .filter((i) => i.descricao.trim())
         .map((i) => ({
-          requisition_id: req.id,
+          requisition_id: reqId,
           item_numero: i.item_numero,
           descricao: i.descricao.trim(),
           quantidade: i.quantidade ? Number(i.quantidade) : null,
@@ -734,7 +788,7 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
-      toast.success("Requisição criada");
+      toast.success(isEdit ? "Requisição atualizada" : "Requisição criada");
       onClose();
     },
     onError: (e: any) => toast.error(e.message),
@@ -743,7 +797,7 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
   return (
     <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-0">
       <DialogHeader className="px-4 pt-4 pb-2 border-b">
-        <DialogTitle>Nova Requisição de Compra</DialogTitle>
+        <DialogTitle>{isEdit ? `Editar Requisição Nº ${existing?.numero}` : "Nova Requisição de Compra"}</DialogTitle>
       </DialogHeader>
 
       {/* Folha replicando o formulário FOR-COMP 03 */}
