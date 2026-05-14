@@ -45,7 +45,10 @@ const SESMT_GROUPS: SesmtGroup[] = [
   },
   {
     title: "Saúde & Capacitação",
-    items: [{ to: "/app/trainings", label: "Treinamentos & NRs" }],
+    items: [
+      { to: "/app/trainings", label: "Treinamentos & NRs" },
+      { to: "/app/matriz-treinamento", label: "Matriz de Treinamento" },
+    ],
   },
   {
     title: "Documentos & Permissões",
