@@ -9,27 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { GraduationCap, Plus, Pencil, Trash2, Users, Paperclip, Download, X, FileText, Clock, Link2, Building2 } from "lucide-react";
+import { GraduationCap, Plus, Pencil, Trash2, Users, Paperclip, Download, X, FileText, Clock, Link2, Building2, ClipboardList, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
+import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
 
 export const Route = createFileRoute("/app/trainings")({
   component: TrainingsPage,
 });
 
-const TIPOS = [
-  "Integração",
-  "NR-06 (EPI)",
-  "NR-10 (Elétrica)",
-  "NR-11 (Cargas)",
-  "NR-12 (Máquinas)",
-  "NR-18 (Construção)",
-  "NR-33 (Confinado)",
-  "NR-34 (Naval)",
-  "NR-35 (Altura)",
-  "Reciclagem",
-  "Outro",
-];
+const TIPOS_FIXOS = ["Integração", "Reciclagem", "DDS", "Palestra", "Outro"];
 
 const SITUACOES = ["APROVADO", "REPROVADO", "PRESENTE", "AUSENTE"] as const;
 
@@ -47,10 +36,11 @@ function TrainingsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [openAttendees, setOpenAttendees] = useState<string | null>(null);
   const [f, setF] = useState({
-    tipo: TIPOS[0],
+    tipo: TIPOS_FIXOS[0],
     titulo: "",
     instrutor: "",
     instituicao: "",
+    local: "",
     data_realizacao: today(),
     carga_horaria_h: 8,
     validade_meses: 12,
@@ -58,6 +48,7 @@ function TrainingsPage() {
     course_id: "" as string,
   });
   const [file, setFile] = useState<File | null>(null);
+  const [assinaturaFile, setAssinaturaFile] = useState<File | null>(null);
 
   const { data: trainings = [] } = useQuery({
     queryKey: ["trainings"],
@@ -101,14 +92,23 @@ function TrainingsPage() {
         if (upErr) throw upErr;
         anexo_path = path;
       }
+      let assinatura_path: string | null = null;
+      if (assinaturaFile) {
+        const path = `assinaturas/${Date.now()}_${assinaturaFile.name.replace(/[^\w.-]/g, "_")}`;
+        const { error: upErr } = await supabase.storage.from("training-docs").upload(path, assinaturaFile);
+        if (upErr) throw upErr;
+        assinatura_path = path;
+      }
       const payload: any = {
         tipo: f.tipo, titulo: f.titulo || null, instrutor: f.instrutor || null,
         instituicao: f.instituicao || null, data_realizacao: f.data_realizacao,
         carga_horaria_h: f.carga_horaria_h, validade_meses: f.validade_meses,
         observacoes: f.observacoes || null,
         course_id: f.course_id || null,
+        local: f.local || null,
       };
       if (anexo_path) payload.anexo_path = anexo_path;
+      if (assinatura_path) payload.assinatura_path = assinatura_path;
       if (editingId) {
         const { error } = await supabase.from("trainings").update(payload).eq("id", editingId);
         if (error) throw error;
@@ -145,8 +145,9 @@ function TrainingsPage() {
   function reset() {
     setEditingId(null);
     setFile(null);
+    setAssinaturaFile(null);
     setF({
-      tipo: TIPOS[0], titulo: "", instrutor: "", instituicao: "",
+      tipo: TIPOS_FIXOS[0], titulo: "", instrutor: "", instituicao: "", local: "",
       data_realizacao: today(), carga_horaria_h: 8, validade_meses: 12, observacoes: "",
       course_id: "",
     });
@@ -156,18 +157,69 @@ function TrainingsPage() {
     setEditingId(t.id);
     setF({
       tipo: t.tipo, titulo: t.titulo ?? "", instrutor: t.instrutor ?? "",
-      instituicao: t.instituicao ?? "", data_realizacao: t.data_realizacao,
+      instituicao: t.instituicao ?? "", local: t.local ?? "", data_realizacao: t.data_realizacao,
       carga_horaria_h: Number(t.carga_horaria_h), validade_meses: t.validade_meses,
       observacoes: t.observacoes ?? "",
       course_id: t.course_id ?? "",
     });
     setFile(null);
+    setAssinaturaFile(null);
   }
 
   async function downloadAnexo(path: string) {
     const { data, error } = await supabase.storage.from("training-docs").createSignedUrl(path, 60);
     if (error) return toast.error(error.message);
     window.open(data.signedUrl, "_blank");
+  }
+
+  async function pathToDataUrl(path: string | null | undefined): Promise<string | null> {
+    if (!path) return null;
+    const { data, error } = await supabase.storage.from("training-docs").download(path);
+    if (error || !data) return null;
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(data);
+    });
+  }
+
+  async function gerarLista(t: any) {
+    try {
+      const { data: atts, error } = await supabase
+        .from("training_attendees")
+        .select("employees(nome, company_id, role_id)")
+        .eq("training_id", t.id);
+      if (error) throw error;
+      const compIds = Array.from(new Set((atts ?? []).map((a: any) => a.employees?.company_id).filter(Boolean)));
+      const roleIds = Array.from(new Set((atts ?? []).map((a: any) => a.employees?.role_id).filter(Boolean)));
+      const [compRes, roleRes] = await Promise.all([
+        compIds.length ? supabase.from("companies").select("id,name").in("id", compIds) : Promise.resolve({ data: [] as any[] }),
+        roleIds.length ? supabase.from("roles").select("id,name").in("id", roleIds) : Promise.resolve({ data: [] as any[] }),
+      ]);
+      const compMap = Object.fromEntries((compRes.data ?? []).map((c: any) => [c.id, c.name]));
+      const roleMap = Object.fromEntries((roleRes.data ?? []).map((r: any) => [r.id, r.name]));
+      const participantes = (atts ?? []).map((a: any) => ({
+        nome: a.employees?.nome ?? "",
+        empresa: compMap[a.employees?.company_id] ?? "",
+        cargo: roleMap[a.employees?.role_id] ?? "",
+      }));
+      const assinaturaDataUrl = await pathToDataUrl(t.assinatura_path);
+      const doc = gerarListaPresenca({
+        titulo: `${t.tipo}${t.titulo ? " — " + t.titulo : ""}`,
+        instrutor: t.instrutor ?? "",
+        assinaturaDataUrl,
+        assunto: t.observacoes ?? t.titulo ?? t.tipo,
+        tipo: "INTERNO",
+        data: formatDateBR(t.data_realizacao),
+        cargaHoraria: `${t.carga_horaria_h}h`,
+        instituicao: t.instituicao ?? "",
+        local: t.local ?? "",
+        participantes,
+      });
+      doc.save(`lista-presenca-${(t.titulo || t.tipo).replace(/[^\w-]/g, "_")}.pdf`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao gerar lista");
+    }
   }
 
   return (
@@ -198,7 +250,12 @@ function TrainingsPage() {
                   <Label className="text-[10px] font-black text-slate-500 uppercase">Tipo</Label>
                   <Select value={f.tipo} onValueChange={(v) => setF({ ...f, tipo: v })}>
                     <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
-                    <SelectContent>{TIPOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {TIPOS_FIXOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      {matrixCourses.map((c: any) => (
+                        <SelectItem key={c.id} value={`${c.codigo} — ${c.nome}`}>{c.codigo} — {c.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div>
@@ -211,7 +268,11 @@ function TrainingsPage() {
                 <Label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-1">
                   <Link2 className="h-3 w-3" /> Curso da Matriz (vínculo automático)
                 </Label>
-                <Select value={f.course_id || "__none__"} onValueChange={(v) => setF({ ...f, course_id: v === "__none__" ? "" : v })}>
+                <Select value={f.course_id || "__none__"} onValueChange={(v) => {
+                  if (v === "__none__") { setF({ ...f, course_id: "" }); return; }
+                  const c = matrixCourses.find((x: any) => x.id === v);
+                  setF({ ...f, course_id: v, tipo: c ? `${c.codigo} — ${c.nome}` : f.tipo });
+                }}>
                   <SelectTrigger className="mt-2"><SelectValue placeholder="— sem vínculo —" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">— sem vínculo —</SelectItem>
@@ -243,6 +304,11 @@ function TrainingsPage() {
                 </div>
               </div>
 
+              <div>
+                <Label className="text-[10px] font-black text-slate-500 uppercase">Local</Label>
+                <Input value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex.: Auditório DMN" className="mt-2" />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-[10px] font-black text-slate-500 uppercase">Carga Horária (h)</Label>
@@ -262,6 +328,14 @@ function TrainingsPage() {
               <div>
                 <Label className="text-[10px] font-black text-slate-500 uppercase">Certificado / Lista de Presença (PDF)</Label>
                 <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="mt-2" />
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-1">
+                  <ImageIcon className="h-3 w-3" /> Assinatura do Instrutor (PNG)
+                </Label>
+                <Input type="file" accept="image/png" onChange={(e) => setAssinaturaFile(e.target.files?.[0] ?? null)} className="mt-2" />
+                <p className="text-[10px] text-slate-500 mt-1">PNG transparente recomendado — aparece no campo "ASSINATURA" da lista de presença.</p>
               </div>
 
               <Button type="submit" disabled={save.isPending} className="w-full bg-[#991b1b] hover:bg-[#7f1d1d] text-xs font-black uppercase tracking-widest h-auto py-4 rounded-xl">
@@ -292,6 +366,9 @@ function TrainingsPage() {
                   <div className="flex gap-1">
                     <button onClick={() => setOpenAttendees(t.id)} className="w-7 h-7 rounded bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors" title="Participantes">
                       <Users className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={() => gerarLista(t)} className="w-7 h-7 rounded bg-violet-100 text-violet-600 hover:bg-violet-600 hover:text-white flex items-center justify-center" title="Gerar Lista de Presença (PDF)">
+                      <ClipboardList className="h-3.5 w-3.5" />
                     </button>
                     {t.anexo_path && (
                       <button onClick={() => downloadAnexo(t.anexo_path)} className="w-7 h-7 rounded bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center" title="Baixar anexo">
