@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { GraduationCap, Plus, Pencil, Trash2, Users, Paperclip, Download, X, FileText, Clock, Link2 } from "lucide-react";
+import { GraduationCap, Plus, Pencil, Trash2, Users, Paperclip, Download, X, FileText, Clock, Link2, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
 
@@ -112,15 +112,19 @@ function TrainingsPage() {
       if (editingId) {
         const { error } = await supabase.from("trainings").update(payload).eq("id", editingId);
         if (error) throw error;
+        return editingId;
       } else {
-        const { error } = await supabase.from("trainings").insert(payload);
+        const { data, error } = await supabase.from("trainings").insert(payload).select("id").single();
         if (error) throw error;
+        return data.id as string;
       }
     },
-    onSuccess: () => {
+    onSuccess: (newId) => {
       qc.invalidateQueries({ queryKey: ["trainings"] });
       toast.success(editingId ? "Treinamento atualizado" : "Treinamento cadastrado");
+      const wasNew = !editingId;
       reset();
+      if (wasNew && newId) setOpenAttendees(newId);
     },
     onError: (e: any) => toast.error(e.message),
   });
