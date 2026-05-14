@@ -19,6 +19,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaChallengeId, setMfaChallengeId] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
@@ -47,6 +48,10 @@ function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (mode === "signup" && !acceptTerms) {
+      toast.error("Você precisa aceitar os Termos de Uso e a Política de Privacidade.");
+      return;
+    }
     setLoading(true);
     try {
       if (mode === "signup") {
@@ -151,6 +156,27 @@ function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Aguarde..." : mode === "signin" ? "Entrar" : "Criar conta"}
             </Button>
+            {mode === "signup" && (
+              <label className="flex items-start gap-2 text-xs text-slate-600 leading-snug">
+                <input
+                  type="checkbox"
+                  checked={acceptTerms}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                />
+                <span>
+                  Li e aceito os{" "}
+                  <Link to="/termos" target="_blank" className="font-semibold text-red-600 hover:underline">
+                    Termos de Uso
+                  </Link>{" "}
+                  e a{" "}
+                  <Link to="/privacidade" target="_blank" className="font-semibold text-red-600 hover:underline">
+                    Política de Privacidade
+                  </Link>{" "}
+                  (LGPD).
+                </span>
+              </label>
+            )}
             <button
               type="button"
               onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
@@ -158,8 +184,12 @@ function LoginPage() {
             >
               {mode === "signin" ? "Não tem conta? Criar" : "Já tem conta? Entrar"}
             </button>
-            <div className="text-center text-xs text-muted-foreground">
-              <Link to="/">← Voltar</Link>
+            <div className="border-t border-slate-200 pt-3 text-center text-[11px] text-muted-foreground space-x-3">
+              <Link to="/termos" className="hover:text-slate-900 hover:underline">Termos de Uso</Link>
+              <span>·</span>
+              <Link to="/privacidade" className="hover:text-slate-900 hover:underline">Política de Privacidade</Link>
+              <span>·</span>
+              <Link to="/" className="hover:text-slate-900 hover:underline">Início</Link>
             </div>
           </form>
           )}
