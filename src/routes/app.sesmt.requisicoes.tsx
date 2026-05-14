@@ -19,7 +19,7 @@ import {
   Tabs, TabsList, TabsTrigger, TabsContent,
 } from "@/components/ui/tabs";
 import {
-  ShoppingCart, Plus, FileDown, Printer, Check, X as XIcon, Trash2, Eye, Filter,
+  ShoppingCart, Plus, FileDown, Printer, Check, X as XIcon, Trash2, Eye, Filter, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
@@ -456,6 +456,7 @@ function RequisicoesPage() {
                           <Printer className="h-3.5 w-3.5 mr-1" /> PDF
                         </Button>
                         <ViewBtn req={r} />
+                        {isEditor && <EditSignatureBtn req={r} />}
                         {isEditor && r.status === "PENDENTE" && (
                           <>
                             <Button
