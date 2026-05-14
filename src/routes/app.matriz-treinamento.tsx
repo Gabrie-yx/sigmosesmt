@@ -114,6 +114,38 @@ function MatrizPage() {
     },
   });
 
+  // Inscritos em turmas vinculadas a curso da matriz (mostrar "A INICIAR")
+  const { data: scheduled = [] } = useQuery<Array<{ employee_id: string; course_id: string; data_realizacao: string; titulo: string | null; tipo: string }>>({
+    queryKey: ["matriz-scheduled"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("training_attendees")
+        .select("employee_id, trainings!inner(course_id, data_realizacao, titulo, tipo)")
+        .not("trainings.course_id", "is", null);
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({
+        employee_id: r.employee_id,
+        course_id: r.trainings.course_id,
+        data_realizacao: r.trainings.data_realizacao,
+        titulo: r.trainings.titulo,
+        tipo: r.trainings.tipo,
+      }));
+    },
+  });
+
+  const scheduledMap = useMemo(() => {
+    const m = new Map<string, { data: string; titulo: string }>();
+    scheduled.forEach((s) => {
+      const k = `${s.employee_id}|${s.course_id}`;
+      const cur = m.get(k);
+      // Mantém a próxima data agendada
+      if (!cur || s.data_realizacao < cur.data) {
+        m.set(k, { data: s.data_realizacao, titulo: s.titulo || s.tipo });
+      }
+    });
+    return m;
+  }, [scheduled]);
+
   const compMap = useMemo(() => Object.fromEntries(companies.map((c) => [c.id, c])), [companies]);
   const entryMap = useMemo(() => {
     const m = new Map<string, Entry>();
@@ -265,7 +297,8 @@ function MatrizPage() {
                   {cursosVisiveis.map((c) => {
                     const required = requiredCourseIds(emp, sectorCourses, roleCourses).has(c.id);
                     const entry = entryMap.get(`${emp.id}|${c.id}`);
-                    if (!required && !entry) {
+                    const sched = scheduledMap.get(`${emp.id}|${c.id}`);
+                    if (!required && !entry && !sched) {
                       return (
                         <td key={c.id} className="px-1 py-1 border-b border-r border-slate-200 text-center bg-slate-50/40">
                           <button disabled={!isEditor} onClick={() => setEditing({ emp, course: c })}
@@ -273,16 +306,23 @@ function MatrizPage() {
                         </td>
                       );
                     }
-                    const st = computeStatus(entry, c);
+                    const baseSt = computeStatus(entry, c);
+                    // Sobrescreve "PENDENTE" com "A INICIAR" se há turma agendada e ainda não realizada
+                    const showAIniciar = sched && (!entry?.data_realizacao) && (baseSt.label === "PENDENTE" || baseSt.label === "N/A" || !entry);
+                    const st = showAIniciar
+                      ? { label: "A INICIAR", color: "bg-indigo-100 text-indigo-700 border-indigo-300" }
+                      : baseSt;
                     return (
                       <td key={c.id} className="px-1 py-1 border-b border-r border-slate-200 text-center align-middle">
                         <button
                           disabled={!isEditor}
                           onClick={() => setEditing({ emp, course: c, entry })}
                           className={`w-full px-1.5 py-1 rounded border text-[10px] font-bold leading-tight ${st.color} hover:brightness-95`}
-                          title={`${c.nome}${entry?.observacao ? ` — ${entry.observacao}` : ""}`}
+                          title={`${c.nome}${sched ? ` — Turma: ${sched.titulo} (${sched.data})` : ""}${entry?.observacao ? ` — ${entry.observacao}` : ""}`}
                         >
-                          {entry?.data_realizacao && <div className="font-black">{formatDateBR(entry.data_realizacao)}</div>}
+                          {entry?.data_realizacao
+                            ? <div className="font-black">{formatDateBR(entry.data_realizacao)}</div>
+                            : showAIniciar && sched && <div className="font-black">{formatDateBR(sched.data)}</div>}
                           <div className="text-[9px]">{st.label}</div>
                         </button>
                       </td>
