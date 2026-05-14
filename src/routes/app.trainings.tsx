@@ -346,6 +346,8 @@ function AttendeesDialog({ trainingId, training, onClose }: { trainingId: string
   const [selectedEmp, setSelectedEmp] = useState("");
   const [situacao, setSituacao] = useState<typeof SITUACOES[number]>("APROVADO");
   const [nota, setNota] = useState<string>("");
+  const [bulkCompany, setBulkCompany] = useState<string>("");
+  const [bulkSituacao, setBulkSituacao] = useState<typeof SITUACOES[number]>("PRESENTE");
 
   const { data: attendees = [] } = useQuery({
     queryKey: ["training-attendees", trainingId],
@@ -406,6 +408,30 @@ function AttendeesDialog({ trainingId, training, onClose }: { trainingId: string
     },
   });
 
+  const bulkAdd = useMutation({
+    mutationFn: async () => {
+      if (!bulkCompany) throw new Error("Selecione uma empresa");
+      const targets = emps.filter((e: any) => e.company_id === bulkCompany && !enrolled.has(e.id));
+      if (targets.length === 0) throw new Error("Nenhum colaborador novo dessa empresa");
+      const data_vencimento = addMonths(training.data_realizacao, training.validade_meses);
+      const rows = targets.map((e: any) => ({
+        training_id: trainingId,
+        employee_id: e.id,
+        situacao: bulkSituacao,
+        data_vencimento,
+      }));
+      const { error } = await supabase.from("training_attendees").insert(rows);
+      if (error) throw error;
+      return targets.length;
+    },
+    onSuccess: (n) => {
+      qc.invalidateQueries({ queryKey: ["training-attendees", trainingId] });
+      qc.invalidateQueries({ queryKey: ["training-counts"] });
+      toast.success(`${n} participantes adicionados`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   function statusColor(a: any) {
     if (a.situacao === "REPROVADO" || a.situacao === "AUSENTE") return "bg-red-100 text-red-700 border-red-200";
     if (a.data_vencimento) {
@@ -428,6 +454,30 @@ function AttendeesDialog({ trainingId, training, onClose }: { trainingId: string
 
         {isEditor && (
           <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <Label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-1">
+              <Building2 className="h-3 w-3" /> Adicionar em massa por empresa
+            </Label>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-2 mt-2 mb-4">
+              <select
+                value={bulkCompany}
+                onChange={(e) => setBulkCompany(e.target.value)}
+                className="md:col-span-7 bg-white border border-slate-200 rounded-md px-3 py-2 text-xs font-semibold"
+              >
+                <option value="">-- selecione empresa --</option>
+                {companies.map((c: any) => {
+                  const total = emps.filter((e: any) => e.company_id === c.id && !enrolled.has(e.id)).length;
+                  return <option key={c.id} value={c.id}>{c.name} ({total} disponíveis)</option>;
+                })}
+              </select>
+              <Select value={bulkSituacao} onValueChange={(v) => setBulkSituacao(v as any)}>
+                <SelectTrigger className="md:col-span-3"><SelectValue /></SelectTrigger>
+                <SelectContent>{SITUACOES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+              <Button onClick={() => bulkAdd.mutate()} disabled={bulkAdd.isPending || !bulkCompany} className="md:col-span-2 bg-blue-600 hover:bg-blue-700">
+                <Users className="h-4 w-4 mr-1" /> Add Todos
+              </Button>
+            </div>
+
             <Label className="text-[10px] font-black text-slate-500 uppercase">Adicionar Participante</Label>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-2 mt-2">
               <select
