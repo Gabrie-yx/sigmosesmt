@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   UserPlus, Pencil, Plus, X, ChevronRight, HardHat,
   HeartPulse, Award, FolderOpen, CheckCircle2, AlertTriangle, Users, User, UserCog,
-  Upload, Download, ArrowLeft, Building2, Briefcase, IdCard, Shield,
+  Upload, Download, ArrowLeft, Building2, Briefcase, IdCard, Shield, Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmployeeDetailContent } from "./app.employees.$id";
