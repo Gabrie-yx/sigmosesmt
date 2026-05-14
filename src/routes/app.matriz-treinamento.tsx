@@ -322,6 +322,26 @@ function MatrizPage() {
                     const st = showAIniciar
                       ? { label: "A INICIAR", color: "bg-indigo-100 text-indigo-700 border-indigo-300" }
                       : baseSt;
+                    // Aplica filtro de status à célula: se um filtro está ativo e esta célula não corresponde, oculta
+                    const statusMap: Record<string, string[]> = {
+                      REALIZADO: ["REALIZADO"],
+                      A_VENCER: ["A VENCER"],
+                      VENCIDO_PENDENTE: ["VENCIDO", "PENDENTE"],
+                      EM_ANDAMENTO: ["EM ANDAMENTO"],
+                      NA: ["N/A"],
+                      A_INICIAR: ["A INICIAR"],
+                    };
+                    if (filtroStatus !== "ALL") {
+                      const wantedCell = statusMap[filtroStatus] ?? [];
+                      if (!wantedCell.includes(st.label)) {
+                        return (
+                          <td key={c.id} className="px-1 py-1 border-b border-r border-slate-200 text-center bg-slate-50/40">
+                            <button disabled={!isEditor} onClick={() => setEditing({ emp, course: c, entry })}
+                              className="text-[9px] text-slate-300 hover:text-slate-600 uppercase">—</button>
+                          </td>
+                        );
+                      }
+                    }
                     return (
                       <td key={c.id} className="px-1 py-1 border-b border-r border-slate-200 text-center align-middle">
                         <button
