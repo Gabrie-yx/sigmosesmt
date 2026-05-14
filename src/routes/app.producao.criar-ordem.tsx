@@ -204,7 +204,7 @@ function CriarOrdemPage() {
   }, [layout]);
 
   // data sources
-  const { data: cascos = [] } = useQuery({
+  const { data: cascos = [], isLoading: loadingCascosBase } = useQuery({
     queryKey: ["cascos-min"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -212,12 +212,14 @@ function CriarOrdemPage() {
       if (error) throw error;
       return data ?? [];
     },
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   // Cascos já utilizados em ordens de produção (para sequenciamento automático).
   // O CASCO é um CONTADOR: a cada nova OP soma +1; se uma OP é excluída, volta
   // para a última numeração (max() recalcula naturalmente).
-  const { data: cascosOrdens = [] } = useQuery({
+  const { data: cascosOrdens = [], isLoading: loadingCascosOrdens } = useQuery({
     queryKey: ["cascos-em-ordens"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -355,17 +357,19 @@ function CriarOrdemPage() {
     });
   }, [values.tipo_produto, tipos]);
 
-  // Sugestão: próximo número de casco sequencial = max(casco em OPs) + 1.
-  // Usa SOMENTE producao_ordens — assim, ao excluir uma OP, o contador
-  // automaticamente regride para a última numeração existente.
+  const extractCascoNumber = (casco?: string | null) => {
+    const m = String(casco ?? "").match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+  };
+
+  // Sugestão: próximo número de casco sequencial = maior casco cadastrado + 1.
+  // A base homologada vem da tabela cascos (ex.: parou em 141) e as OPs novas
+  // avançam a partir dela; se OPs forem excluídas, max(OPs) recalcula e regride.
   const proximoCascoNum = useMemo(() => {
-    let max = 0;
-    cascosOrdens.forEach((o: any) => {
-      const m = String(o.casco ?? "").match(/(\d+)/);
-      if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
-    });
-    return max + 1;
-  }, [cascosOrdens]);
+    const maxBase = cascos.reduce((mx: number, r: any) => Math.max(mx, extractCascoNumber(r.numero)), 0);
+    const maxOrdens = cascosOrdens.reduce((mx: number, r: any) => Math.max(mx, extractCascoNumber(r.casco)), 0);
+    return Math.max(maxBase, maxOrdens) + 1;
+  }, [cascos, cascosOrdens]);
 
   const proximoCascoLabel = useMemo(
     () => `CASCO ${String(proximoCascoNum).padStart(3, "0")}`,
@@ -375,9 +379,10 @@ function CriarOrdemPage() {
   // Auto-preenche Casco com o próximo sequencial
   useEffect(() => {
     if (!proximoCascoLabel) return;
+    if (loadingCascosBase || loadingCascosOrdens) return;
     if (editId) return; // em edição, mantém o casco da ordem
     setValues((v) => (v.casco === proximoCascoLabel ? v : { ...v, casco: proximoCascoLabel }));
-  }, [proximoCascoLabel, editId]);
+  }, [proximoCascoLabel, loadingCascosBase, loadingCascosOrdens, editId]);
 
   const addUm = useMutation({
     mutationFn: async () => {
@@ -493,17 +498,15 @@ function CriarOrdemPage() {
       }, 0) + 1;
       const numero = `OP-${String(nextSeq).padStart(4, "0")}/${ano}`;
 
-      // Recalcula CASCO no momento do insert direto do banco — evita
-      // colisão por cache obsoleto (duas OPs salvas como CASCO 144).
-      const { data: cascosAtuais } = await supabase
-        .from("producao_ordens")
-        .select("casco")
-        .not("casco", "is", null);
-      const maxCasco = (cascosAtuais ?? []).reduce((mx: number, r: any) => {
-        const m = String(r.casco ?? "").match(/(\d+)/);
-        const n = m ? parseInt(m[1], 10) : 0;
-        return n > mx ? n : mx;
-      }, 0);
+      // Recalcula CASCO no momento do insert direto do banco — evita cache
+      // obsoleto e mantém a base histórica da tabela cascos (ex.: 141).
+      const [{ data: cascosBase }, { data: cascosAtuais }] = await Promise.all([
+        supabase.from("cascos").select("numero"),
+        supabase.from("producao_ordens").select("casco").not("casco", "is", null),
+      ]);
+      const maxCascoBase = (cascosBase ?? []).reduce((mx: number, r: any) => Math.max(mx, extractCascoNumber(r.numero)), 0);
+      const maxCascoOrdens = (cascosAtuais ?? []).reduce((mx: number, r: any) => Math.max(mx, extractCascoNumber(r.casco)), 0);
+      const maxCasco = Math.max(maxCascoBase, maxCascoOrdens);
       const cascoFinal = `CASCO ${String(maxCasco + 1).padStart(3, "0")}`;
 
       const { data: novaOrdem, error: e1 } = await supabase
