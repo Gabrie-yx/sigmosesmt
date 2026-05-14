@@ -42,6 +42,37 @@ const STATUS_FILTROS = [
   { value: "NA", label: "N/A" },
 ] as const;
 
+const STATUS_CELL_MAP: Record<string, string[]> = {
+  REALIZADO: ["REALIZADO"],
+  A_VENCER: ["A VENCER"],
+  VENCIDO_PENDENTE: ["VENCIDO", "PENDENTE"],
+  EM_ANDAMENTO: ["EM ANDAMENTO"],
+  NA: ["N/A"],
+  A_INICIAR: ["A INICIAR"],
+};
+
+const CELL_BG: Record<string, string> = {
+  "REALIZADO": "bg-emerald-400 hover:bg-emerald-500",
+  "A VENCER": "bg-amber-400 hover:bg-amber-500",
+  "VENCIDO": "bg-red-500 hover:bg-red-600",
+  "PENDENTE": "bg-red-300 hover:bg-red-400",
+  "EM ANDAMENTO": "bg-blue-400 hover:bg-blue-500",
+  "A INICIAR": "bg-indigo-400 hover:bg-indigo-500",
+  "N/A": "bg-slate-200 hover:bg-slate-300",
+};
+
+const STATUS_LEGENDA = [
+  { label: "Realizado", className: CELL_BG["REALIZADO"], detalhe: "concluído e válido" },
+  { label: "A vencer", className: CELL_BG["A VENCER"], detalhe: "vence em até 30 dias" },
+  { label: "Vencido", className: CELL_BG["VENCIDO"], detalhe: "validade expirada" },
+  { label: "Pendente", className: CELL_BG["PENDENTE"], detalhe: "sem realização" },
+  { label: "Em andamento", className: CELL_BG["EM ANDAMENTO"], detalhe: "em execução" },
+  { label: "A iniciar", className: CELL_BG["A INICIAR"], detalhe: "turma futura agendada" },
+  { label: "N/A", className: CELL_BG["N/A"], detalhe: "não aplicável" },
+] as const;
+
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
 type Employee = {
   id: string; matricula: string | null; nome: string;
   setor: string | null; company_id: string | null; role_id: string | null;
@@ -52,6 +83,7 @@ type Role = { id: string; name: string };
 function MatrizPage() {
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
+  const hoje = todayISO();
 
   const [filtroSetor, setFiltroSetor] = useState<string>("ALL");
   const [filtroVinculo, setFiltroVinculo] = useState<string>("ALL");
@@ -117,21 +149,34 @@ function MatrizPage() {
 
   // Inscritos em turmas vinculadas a curso da matriz (mostrar "A INICIAR")
   const { data: scheduled = [] } = useQuery<Array<{ employee_id: string; course_id: string; data_realizacao: string; titulo: string | null; tipo: string }>>({
-    queryKey: ["matriz-scheduled"],
+    queryKey: ["matriz-scheduled", hoje],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: attendees, error: attendeesError } = await supabase
         .from("training_attendees")
-        .select("employee_id, trainings!inner(course_id, data_realizacao, titulo, tipo)");
-      if (error) throw error;
-      return (data ?? [])
-        .filter((r: any) => r.trainings?.course_id)
-        .map((r: any) => ({
+        .select("employee_id, training_id, situacao")
+        .in("situacao", ["APROVADO", "PRESENTE"]);
+      if (attendeesError) throw attendeesError;
+      const trainingIds = Array.from(new Set((attendees ?? []).map((r: any) => r.training_id).filter(Boolean)));
+      if (trainingIds.length === 0) return [];
+      const { data: trainings, error: trainingsError } = await supabase
+        .from("trainings")
+        .select("id, course_id, data_realizacao, titulo, tipo")
+        .in("id", trainingIds)
+        .not("course_id", "is", null)
+        .gte("data_realizacao", hoje);
+      if (trainingsError) throw trainingsError;
+      const trainingMap = new Map((trainings ?? []).map((t: any) => [t.id, t]));
+      return (attendees ?? []).flatMap((r: any) => {
+        const t = trainingMap.get(r.training_id) as any;
+        if (!t?.course_id) return [];
+        return [{
           employee_id: r.employee_id,
-          course_id: r.trainings.course_id,
-          data_realizacao: r.trainings.data_realizacao,
-          titulo: r.trainings.titulo,
-          tipo: r.trainings.tipo,
-        }));
+          course_id: t.course_id,
+          data_realizacao: t.data_realizacao,
+          titulo: t.titulo,
+          tipo: t.tipo,
+        }];
+      });
     },
   });
 
