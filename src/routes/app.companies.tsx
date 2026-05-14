@@ -392,10 +392,30 @@ function CompaniesPage() {
             </div>
           </div>
 
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              value={empSearch}
+              onChange={(e) => setEmpSearch(e.target.value)}
+              placeholder="Buscar colaborador por nome, CPF ou matrícula…"
+              className="pl-9 h-10 rounded-xl border-slate-200 bg-white shadow-sm text-sm"
+            />
+            {empSearch && (
+              <button
+                type="button"
+                onClick={() => setEmpSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                title="Limpar busca"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
             {compEmps.length === 0 && (
               <div className="text-center text-slate-400 py-10 font-bold uppercase text-xs">
-                Nenhum colaborador nesta empresa.
+                {empSearch ? "Nenhum colaborador encontrado para a busca." : "Nenhum colaborador nesta empresa."}
               </div>
             )}
             {compEmps.map((emp: any) => {
