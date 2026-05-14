@@ -636,6 +636,23 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
     observacoes: "",
   });
   const [itens, setItens] = useState<Item[]>(emptyItems());
+  const [signature, setSignature] = useState<string | null>(null);
+  const [signatureHeight, setSignatureHeight] = useState<number>(80);
+
+  const onSignatureUpload = async (file: File | null) => {
+    if (!file) return;
+    if (file.type !== "image/png") {
+      toast.error("A assinatura deve estar no formato PNG");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Arquivo muito grande (máx. 2MB)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setSignature(reader.result as string);
+    reader.readAsDataURL(file);
+  };
 
   const setItem = (idx: number, k: keyof Item, v: string) => {
     setItens((arr) => arr.map((it, i) => i === idx ? { ...it, [k]: v } : it));
