@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   UserPlus, Pencil, Plus, X, ChevronRight, HardHat,
   HeartPulse, Award, FolderOpen, CheckCircle2, AlertTriangle, Users, User, UserCog,
-  Upload, Download, ArrowLeft, Building2, Briefcase, IdCard, Shield,
+  Upload, Download, ArrowLeft, Building2, Briefcase, IdCard, Shield, Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmployeeDetailContent } from "./app.employees.$id";
@@ -52,6 +52,7 @@ function CompaniesPage() {
   const [selectedTab, setSelectedTab] = useState<string>("profile");
   const [editing, setEditing] = useState<Partial<Company> | null>(null);
   const [showForm, setShowForm] = useState(true);
+  const [empSearch, setEmpSearch] = useState("");
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -106,8 +107,22 @@ function CompaniesPage() {
 
   const selected = useMemo(() => companies.find((c) => c.id === selectedId) || null, [companies, selectedId]);
   const compEmps = useMemo(
-    () => (selected ? employees.filter((e: any) => e.company_id === selected.id) : []),
-    [employees, selected],
+    () => {
+      if (!selected) return [];
+      const base = employees.filter((e: any) => e.company_id === selected.id);
+      const q = empSearch.trim().toLowerCase();
+      if (!q) return base;
+      const digits = q.replace(/\D/g, "");
+      return base.filter((e: any) => {
+        const nome = (e.nome ?? "").toLowerCase();
+        const cpf = (e.cpf ?? "").toLowerCase();
+        const cpfDigits = cpf.replace(/\D/g, "");
+        const mat = (e.matricula ?? "").toLowerCase();
+        return nome.includes(q) || cpf.includes(q) || mat.includes(q) ||
+          (digits && (cpfDigits.includes(digits) || mat.replace(/\D/g, "").includes(digits)));
+      });
+    },
+    [employees, selected, empSearch],
   );
 
   function startNew() { setEditing({ ...empty }); setShowForm(true); setSelectedId(null); }
@@ -377,10 +392,30 @@ function CompaniesPage() {
             </div>
           </div>
 
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              value={empSearch}
+              onChange={(e) => setEmpSearch(e.target.value)}
+              placeholder="Buscar colaborador por nome, CPF ou matrícula…"
+              className="pl-9 h-10 rounded-xl border-slate-200 bg-white shadow-sm text-sm"
+            />
+            {empSearch && (
+              <button
+                type="button"
+                onClick={() => setEmpSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                title="Limpar busca"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
             {compEmps.length === 0 && (
               <div className="text-center text-slate-400 py-10 font-bold uppercase text-xs">
-                Nenhum colaborador nesta empresa.
+                {empSearch ? "Nenhum colaborador encontrado para a busca." : "Nenhum colaborador nesta empresa."}
               </div>
             )}
             {compEmps.map((emp: any) => {
