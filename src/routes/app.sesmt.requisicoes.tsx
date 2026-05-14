@@ -848,8 +848,48 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
             <div className="border-r border-black p-1.5">Assinatura Supervisor Geral</div>
             <div className="p-1.5">Assinatura Analista de Compras</div>
           </div>
-          <div className="grid grid-cols-3 h-16">
-            <div className="border-r border-black" />
+          <div className="grid grid-cols-3 min-h-16">
+            <div className="border-r border-black relative flex items-center justify-center p-1">
+              {signature ? (
+                <div className="flex flex-col items-center gap-1 w-full">
+                  <img
+                    src={signature}
+                    alt="Assinatura do solicitante"
+                    style={{ height: `${signatureHeight}px` }}
+                    className="object-contain max-w-full"
+                  />
+                  <div className="flex items-center gap-2 w-full px-2">
+                    <span className="text-[10px] text-muted-foreground">Tamanho</span>
+                    <input
+                      type="range"
+                      min={20}
+                      max={140}
+                      step={2}
+                      value={signatureHeight}
+                      onChange={(e) => setSignatureHeight(Number(e.target.value))}
+                      className="flex-1 accent-red-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSignature(null)}
+                      className="text-[10px] text-red-700 hover:underline"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label className="cursor-pointer text-[11px] text-red-700 hover:underline px-2 py-1 border border-dashed border-red-700/50 rounded">
+                  Enviar assinatura (PNG)
+                  <input
+                    type="file"
+                    accept="image/png"
+                    className="hidden"
+                    onChange={(e) => onSignatureUpload(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              )}
+            </div>
             <div className="border-r border-black" />
             <div />
           </div>
