@@ -1,100 +1,76 @@
-
 ## Objetivo
 
-Tornar a APR o documento "guarda-chuva" e a PTE a autorização operacional vinculada a ela — fechando o ciclo de segurança e permitindo medir cobertura.
+1. Refletir a Matriz de Treinamento na ficha de cada funcionário.
+2. Remodelar a página **Treinamentos & NR** com visual premium e organização intuitiva.
+3. Catálogo de tipos cobrindo **todas as NRs + categorias** (Curso, Palestra, Workshop, Oficina, Integração, Reciclagem, Outro) com opção de inclusão livre.
+4. Vincular cursos à **função (role)** do funcionário, não só ao setor.
 
 ---
 
-## 1. Banco de dados (migração)
+## 1. Banco — migration única
 
-- Adicionar coluna `apr_id UUID NULL` em `ptes` (referência lógica à APR de origem; nullable porque PTEs antigas/avulsas continuam válidas).
-- Índice em `ptes(apr_id)` para joins do painel.
-- Sem RLS nova — herda as policies já existentes de `ptes`.
+**Estender `training_matrix_courses`:**
+- `categoria text` default `'NR'` (`NR | CURSO | PALESTRA | WORKSHOP | OFICINA | INTEGRACAO | RECICLAGEM | OUTRO`)
+- `descricao text` (opcional)
+- `carga_horaria_h numeric` (opcional)
 
-> Não vou criar FK física pois a APR pode ser excluída e a PTE histórica deve persistir (igual a outras relações do projeto).
+**Nova tabela `training_matrix_role_courses`:**
+- `role_id uuid`, `course_id uuid` (PK composta) — define cursos obrigatórios por função (em adição a setor).
 
----
+**Seed do catálogo:**
+- Inserir NR-01 a NR-38 (apenas as faltantes), categoria `NR`, periodicidade `NA` por padrão (admin ajusta as obrigatórias).
+- Manter cursos já existentes.
 
-## 2. Auto-detecção de "exige PTE" na APR
-
-Lista de gatilhos (qualquer um marca `exige_pte = true` automaticamente quando o usuário adiciona/edita risco):
-
-| Gatilho | Origem |
-|---|---|
-| NR-35 (Altura > 2 m) | `apr_riscos.nrs` contém "NR-35" ou nome do risco contém "altura" |
-| NR-33 (Espaço Confinado) | "NR-33" ou nome contém "confinad" |
-| NR-34 (Trabalho a Quente: solda/corte/esmerilhamento) | "NR-34" ou nome contém "quente"/"solda"/"corte"/"esmeril" |
-| NR-10 (Eletricidade energizada/AT) | "NR-10" ou nome contém "el\u00e9tric"/"energiz" |
-| Içamento / carga suspensa | nome contém "i\u00e7amento"/"carga suspensa"/"guindaste"/"p\u00f3rtico" |
-| Pintura em ambiente fechado | nome contém "pintura" + algum indicador de "fechado/confinado" |
-
-Comportamento na UI (`apr-form.tsx`):
-- Toggle `exige_pte` continua editável, mas vira **read-only TRUE** quando a auto-detecção dispara, com badge "Detectado automaticamente — riscos críticos presentes".
-- Lista os motivos abaixo do toggle.
+RLS: mesmas policies do padrão (`is_editor` / select público a autenticados).
 
 ---
 
-## 3. Botão "Gerar PTE da APR"
+## 2. Ficha do funcionário (`app.employees.$id.tsx`)
 
-No menu de ações da APR (lista `app.aprs.tsx` + dentro do form ao salvar APR ATIVA com `exige_pte`):
+Adicionar nova aba **"Matriz de Treinamento"** ao lado das abas existentes:
+- Lista de cursos obrigatórios para o funcionário, derivados da união de `sector_courses` (pelo `setor`) + `role_courses` (pela `role_id`).
+- Para cada curso: status colorido (REALIZADO / A VENCER / VENCIDO / PENDENTE / EM ANDAMENTO / N/A) usando a mesma `computeStatus` da matriz.
+- Data de realização + data de vencimento calculada.
+- Botão **Editar** que abre o mesmo modal de edição (data, override, observação) usado na matriz, gravando em `training_matrix_entries`.
+- Resumo no topo: % de aderência, contagem por status.
 
-- Item: **"Gerar PTE vinculada"** (visível só para editor e quando `exige_pte = true`).
-- Ao clicar, navega para `/app/ptes` abrindo o formulário de PTE em modo "novo", pré-preenchendo via state:
-  - `apr_id` = APR de origem
-  - `casco_id`, `empresa_id`, `local`, `data` 
-  - `risco` = principal categoria detectada (NR-35/33/34/10/Içamento/Pintura)
-  - `dados.nrs` = união dos `nrs` da APR
-  - `dados.executantes` = assinaturas de papel "EXECUTANTE" da APR
-  - `dados.atividade` = `atividade_descricao`
-- Após salvar a PTE, o sistema:
-  - Mostra toast "PTE 0001/25 vinculada à APR 00012525"
-  - Volta para lista de APRs com a APR origem destacada.
-
-Na lista de PTEs, nova coluna **"APR origem"** com link clicável; filtro por "Tem APR / Órfã".
-
-Na lista de APRs, nova coluna **"PTEs"** mostrando contagem (`2 emitidas`) com tooltip listando números — clique abre o filtro de PTEs daquela APR.
+`computeStatus` será extraída de `app.matriz-treinamento.tsx` para `src/lib/matriz-status.ts` e reutilizada nas duas telas.
 
 ---
 
-## 4. Indicadores no Painel (`app.painel.tsx`)
+## 3. Remodelar página `app.trainings.tsx` (Treinamentos & NR)
 
-Bloco novo **"Cobertura APR ↔ PTE"** com 4 cards:
-
-1. **Cobertura de APRs críticas** — `% de APRs com exige_pte=true que possuem ≥1 PTE emitida` (período: últimos 30 dias). Cor: verde ≥95%, amarelo 80–95%, vermelho <80%.
-2. **PTEs órfãs** — contagem de PTEs sem `apr_id` no período. Drill-down: lista.
-3. **APRs vencidas com PTE ativa** — `aprs.data_validade < hoje` AND existe PTE `status='ATIVA'` vinculada. Risco operacional crítico.
-4. **PTEs no mês por NR** — mini gráfico de barras (NR-35, NR-33, NR-34, NR-10, Içamento) usando `ptes.risco`.
-
----
-
-## 5. PDF da APR
-
-- No bloco GERAIS, ao final, adicionar linha condicional quando `exige_pte = true`:
-  > "⚠ Esta atividade EXIGE Permissão de Trabalho Especial (PTE). Emitir PTE conforme procedimento interno antes do início das atividades. PTE(s) vinculada(s): 0001/25, 0002/25 — ou — NENHUMA EMITIDA (PENDENTE)."
+Layout premium:
+- **Header** com título grande, métricas resumo (total de eventos no ano, próximos a vencer, taxa de presença média).
+- **Filtros** topo: categoria (NR/Curso/Palestra/...), período, busca.
+- **Lista** em cards com agrupamento por mês, badges de categoria coloridas, ícone por categoria, indicador de validade.
+- **Botão "Novo Treinamento"** abre dialog (em vez do form ocupar metade da tela).
+- Dialog usa o **catálogo unificado** (`training_matrix_courses`) como dropdown de tipo, com opção "+ Cadastrar novo tipo" inline (que insere no catálogo).
+- Categoria selecionável para tipos novos: Curso, Palestra, Workshop, Oficina, Integração, Reciclagem, Outro.
 
 ---
 
-## 6. Arquivos afetados
+## 4. Cruzamento curso × função
 
-**Novos:**
-- `supabase/migrations/<timestamp>_apr_pte_link.sql`
-- `src/lib/apr-pte-rules.ts` — função `detectarExigenciaPTE(riscos)` reutilizada no form e no PDF.
+Na página da Matriz de Treinamento:
+- No diálogo "Cursos / NRs" (catálogo): adicionar campo categoria + carga horária.
+- No diálogo "Setores": renomear para **"Vincular Cursos"** com 2 abas: **Por Setor** e **Por Função**.
+- Na tabela da matriz: cursos obrigatórios = união de setor + função do funcionário.
 
-**Editados:**
-- `src/components/aprs/apr-form.tsx` — auto-detecção + UI.
-- `src/routes/app.aprs.tsx` — coluna PTEs + ação "Gerar PTE".
-- `src/routes/app.ptes.tsx` — coluna APR origem + filtro órfãs + suporte a `apr_id` prefill via location state.
-- `src/lib/apr-pdf.ts` — bloco de aviso PTE no GERAIS.
-- `src/routes/app.painel.tsx` — bloco novo de cards.
+Na ficha do funcionário: idem — união setor + função.
 
 ---
 
-## Fora de escopo (deixar para depois se quiser)
+## Arquivos afetados
 
-- Bloquear ATIVAÇÃO da APR sem PTE (você escolheu o fluxo de botão, não bloqueio).
-- Relação N:N (escolheu 1:N).
-- Workflow de aprovação eletrônica da PTE pelo SESMT (já existe `created_by`).
+- Nova migration (estende catálogo + cria `training_matrix_role_courses` + seed NRs).
+- `src/lib/matriz-status.ts` (novo) — helper extraído.
+- `src/routes/app.matriz-treinamento.tsx` — usar helper, união setor+função, dialog catálogo com categoria, dialog vínculos com aba função.
+- `src/routes/app.employees.$id.tsx` — nova aba "Matriz de Treinamento".
+- `src/routes/app.trainings.tsx` — redesign completo (dialog form, cards, filtros, métricas, catálogo unificado).
 
 ---
 
-Aprova? Se sim, eu já disparo a migração e implemento na sequência.
+## Fora do escopo (confirmar se quiser)
+
+- Importar histórico de `trainings`/`training_attendees` para `training_matrix_entries` automaticamente — hoje são tabelas separadas (eventos x matriz). Posso unificar depois se desejar.
