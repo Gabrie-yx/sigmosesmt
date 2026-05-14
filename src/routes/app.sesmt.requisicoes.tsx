@@ -384,7 +384,7 @@ function RequisicoesPage() {
                   <Plus className="h-4 w-4 mr-2" /> Nova Requisição
                 </Button>
               </DialogTrigger>
-              <NewReqDialog onClose={() => setOpenNew(false)} userId={user?.id} />
+              <ReqFormDialog onClose={() => setOpenNew(false)} userId={user?.id} />
             </Dialog>
           )}
         </div>
