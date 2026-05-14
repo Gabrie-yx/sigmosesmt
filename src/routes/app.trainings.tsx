@@ -187,22 +187,30 @@ function TrainingsPage() {
     try {
       const { data: atts, error } = await supabase
         .from("training_attendees")
-        .select("employees(nome, company_id, role_id)")
+        .select("employee_id")
         .eq("training_id", t.id);
       if (error) throw error;
-      const compIds = Array.from(new Set((atts ?? []).map((a: any) => a.employees?.company_id).filter(Boolean)));
-      const roleIds = Array.from(new Set((atts ?? []).map((a: any) => a.employees?.role_id).filter(Boolean)));
+      const empIds = Array.from(new Set((atts ?? []).map((a: any) => a.employee_id).filter(Boolean)));
+      const empRes = empIds.length
+        ? await supabase.from("employees").select("id, nome, company_id, role_id").in("id", empIds)
+        : { data: [] as any[] };
+      const empMap = Object.fromEntries((empRes.data ?? []).map((e: any) => [e.id, e]));
+      const compIds = Array.from(new Set((empRes.data ?? []).map((e: any) => e.company_id).filter(Boolean)));
+      const roleIds = Array.from(new Set((empRes.data ?? []).map((e: any) => e.role_id).filter(Boolean)));
       const [compRes, roleRes] = await Promise.all([
         compIds.length ? supabase.from("companies").select("id,name").in("id", compIds) : Promise.resolve({ data: [] as any[] }),
         roleIds.length ? supabase.from("roles").select("id,name").in("id", roleIds) : Promise.resolve({ data: [] as any[] }),
       ]);
       const compMap = Object.fromEntries((compRes.data ?? []).map((c: any) => [c.id, c.name]));
       const roleMap = Object.fromEntries((roleRes.data ?? []).map((r: any) => [r.id, r.name]));
-      const participantes = (atts ?? []).map((a: any) => ({
-        nome: a.employees?.nome ?? "",
-        empresa: compMap[a.employees?.company_id] ?? "",
-        cargo: roleMap[a.employees?.role_id] ?? "",
-      }));
+      const participantes = (atts ?? []).map((a: any) => {
+        const e = empMap[a.employee_id] ?? {};
+        return {
+          nome: e.nome ?? "",
+          empresa: compMap[e.company_id] ?? "",
+          cargo: roleMap[e.role_id] ?? "",
+        };
+      });
       const assinaturaDataUrl = await pathToDataUrl(t.assinatura_path);
       const doc = gerarListaPresenca({
         titulo: `${t.tipo}${t.titulo ? " — " + t.titulo : ""}`,
