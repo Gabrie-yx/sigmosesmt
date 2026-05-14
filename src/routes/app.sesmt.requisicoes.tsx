@@ -691,6 +691,8 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
           pagina: form.pagina,
           observacoes: form.observacoes.trim() || null,
           created_by: userId ?? null,
+          signature_solicitante: signature,
+          signature_solicitante_height: signature ? signatureHeight : null,
         })
         .select()
         .single();
