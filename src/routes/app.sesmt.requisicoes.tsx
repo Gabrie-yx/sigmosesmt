@@ -994,7 +994,7 @@ function ReqFormDialog({
       <DialogFooter className="px-4 pb-4 border-t pt-3">
         <Button variant="outline" onClick={onClose}>Cancelar</Button>
         <Button className="bg-red-700 hover:bg-red-800" disabled={save.isPending} onClick={() => save.mutate()}>
-          {save.isPending ? "Salvando..." : "Salvar Requisição"}
+          {save.isPending ? "Salvando..." : isEdit ? "Atualizar Requisição" : "Salvar Requisição"}
         </Button>
       </DialogFooter>
     </DialogContent>
