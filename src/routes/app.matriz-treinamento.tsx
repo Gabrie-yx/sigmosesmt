@@ -1,0 +1,592 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { GraduationCap, Plus, Pencil, Trash2, Settings2, Filter, X, Save } from "lucide-react";
+import { toast } from "sonner";
+import { formatDateBR } from "@/lib/utils-date";
+
+export const Route = createFileRoute("/app/matriz-treinamento")({
+  component: MatrizPage,
+});
+
+const PERIODICIDADES = ["ADMISSAO", "ANUAL", "BIENAL", "NA"] as const;
+const STATUS_OVERRIDE = ["REALIZADO", "PENDENTE", "EM_ANDAMENTO", "NAO_SE_APLICA"] as const;
+const SETORES_PADRAO = ["PRODUCAO", "ALMOXARIFADO", "ADMINISTRATIVO", "MANUTENCAO"] as const;
+
+type Course = {
+  id: string; codigo: string; nome: string;
+  periodicidade: string; ordem: number; ativo: boolean;
+};
+type Employee = {
+  id: string; matricula: string | null; nome: string;
+  setor: string | null; company_id: string | null;
+};
+type Company = { id: string; name: string; type: string };
+type Entry = {
+  id: string; employee_id: string; course_id: string;
+  data_realizacao: string | null; status_override: string | null; observacao: string | null;
+};
+type SectorCourse = { setor: string; course_id: string };
+
+function periodMonths(p: string): number | null {
+  if (p === "ANUAL") return 12;
+  if (p === "BIENAL") return 24;
+  return null;
+}
+
+function computeStatus(entry: Entry | undefined, course: Course): {
+  label: string; color: string; expira?: string;
+} {
+  if (entry?.status_override) {
+    const map: Record<string, { label: string; color: string }> = {
+      REALIZADO: { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300" },
+      PENDENTE: { label: "PENDENTE", color: "bg-red-100 text-red-700 border-red-300" },
+      EM_ANDAMENTO: { label: "EM ANDAMENTO", color: "bg-blue-100 text-blue-700 border-blue-300" },
+      NAO_SE_APLICA: { label: "N/A", color: "bg-slate-100 text-slate-500 border-slate-300" },
+    };
+    return map[entry.status_override] ?? map.PENDENTE;
+  }
+  if (course.periodicidade === "NA") return { label: "N/A", color: "bg-slate-100 text-slate-500 border-slate-300" };
+  if (!entry?.data_realizacao) return { label: "PENDENTE", color: "bg-red-100 text-red-700 border-red-300" };
+  if (course.periodicidade === "ADMISSAO") {
+    return { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300" };
+  }
+  const months = periodMonths(course.periodicidade);
+  if (!months) return { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300" };
+  const dt = new Date(entry.data_realizacao);
+  dt.setMonth(dt.getMonth() + months);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const expira = dt.toISOString().slice(0, 10);
+  const diff = Math.floor((dt.getTime() - today.getTime()) / 86400000);
+  if (diff < 0) return { label: "VENCIDO", color: "bg-red-100 text-red-700 border-red-300", expira };
+  if (diff <= 30) return { label: "A VENCER", color: "bg-amber-100 text-amber-700 border-amber-300", expira };
+  return { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300", expira };
+}
+
+function MatrizPage() {
+  const qc = useQueryClient();
+  const { isEditor, isAdmin } = useAuth();
+
+  const [filtroSetor, setFiltroSetor] = useState<string>("ALL");
+  const [filtroVinculo, setFiltroVinculo] = useState<string>("ALL");
+  const [busca, setBusca] = useState("");
+  const [editing, setEditing] = useState<{ emp: Employee; course: Course; entry?: Entry } | null>(null);
+  const [openCatalog, setOpenCatalog] = useState(false);
+  const [openSetores, setOpenSetores] = useState(false);
+  const [openEmp, setOpenEmp] = useState<Employee | null | "new">(null);
+
+  const { data: courses = [] } = useQuery<Course[]>({
+    queryKey: ["matriz-courses"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("training_matrix_courses")
+        .select("*").eq("ativo", true).order("ordem");
+      if (error) throw error; return data as Course[];
+    },
+  });
+
+  const { data: sectorCourses = [] } = useQuery<SectorCourse[]>({
+    queryKey: ["matriz-sector-courses"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("training_matrix_sector_courses").select("*");
+      if (error) throw error; return data as SectorCourse[];
+    },
+  });
+
+  const { data: companies = [] } = useQuery<Company[]>({
+    queryKey: ["companies"],
+    queryFn: async () => (await supabase.from("companies").select("id,name,type")).data ?? [],
+  });
+
+  const { data: employees = [] } = useQuery<Employee[]>({
+    queryKey: ["matriz-employees"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("employees")
+        .select("id,matricula,nome,setor,company_id").eq("status", "ATIVO").order("nome");
+      if (error) throw error; return data as Employee[];
+    },
+  });
+
+  const { data: entries = [] } = useQuery<Entry[]>({
+    queryKey: ["matriz-entries"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("training_matrix_entries").select("*");
+      if (error) throw error; return data as Entry[];
+    },
+  });
+
+  const compMap = useMemo(() => Object.fromEntries(companies.map((c) => [c.id, c])), [companies]);
+  const entryMap = useMemo(() => {
+    const m = new Map<string, Entry>();
+    entries.forEach((e) => m.set(`${e.employee_id}|${e.course_id}`, e));
+    return m;
+  }, [entries]);
+
+  const empsFiltrados = useMemo(() => {
+    return employees.filter((e) => {
+      if (filtroSetor !== "ALL" && (e.setor ?? "") !== filtroSetor) return false;
+      if (filtroVinculo !== "ALL") {
+        const c = e.company_id ? compMap[e.company_id] : null;
+        if ((c?.type ?? "") !== filtroVinculo) return false;
+      }
+      if (busca) {
+        const q = busca.toLowerCase();
+        const txt = `${e.nome} ${e.matricula ?? ""}`.toLowerCase();
+        if (!txt.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [employees, filtroSetor, filtroVinculo, busca, compMap]);
+
+  // cursos visíveis: união dos setores presentes nos empsFiltrados
+  const cursosVisiveis = useMemo(() => {
+    if (filtroSetor !== "ALL") {
+      const ids = new Set(sectorCourses.filter((sc) => sc.setor === filtroSetor).map((sc) => sc.course_id));
+      return courses.filter((c) => ids.has(c.id));
+    }
+    return courses;
+  }, [courses, sectorCourses, filtroSetor]);
+
+  return (
+    <div className="p-4 md:p-6 animate-fadeIn h-full bg-[#f1f5f9]">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 className="heading-display text-2xl md:text-3xl text-[#991b1b] flex items-center gap-3">
+          <GraduationCap className="h-7 w-7" /> Matriz de Treinamento — 2026
+        </h2>
+        {isEditor && (
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => setOpenEmp("new")}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> Colaborador
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setOpenCatalog(true)}>
+              <Settings2 className="h-3.5 w-3.5 mr-1" /> Cursos / NRs
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setOpenSetores(true)}>
+              <Settings2 className="h-3.5 w-3.5 mr-1" /> Cursos por Setor
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-xl p-3 mb-3 shadow-sm border border-slate-200 flex flex-wrap items-end gap-3">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
+          <Filter className="h-4 w-4" /> Filtros
+        </div>
+        <div>
+          <Label className="text-[10px] font-black text-slate-500 uppercase">Setor</Label>
+          <Select value={filtroSetor} onValueChange={setFiltroSetor}>
+            <SelectTrigger className="mt-1 h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos</SelectItem>
+              {SETORES_PADRAO.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-[10px] font-black text-slate-500 uppercase">Vínculo</Label>
+          <Select value={filtroVinculo} onValueChange={setFiltroVinculo}>
+            <SelectTrigger className="mt-1 h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos</SelectItem>
+              <SelectItem value="CLT">CLT (DMN)</SelectItem>
+              <SelectItem value="TERCEIRIZADO">Terceirizado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex-1 min-w-[200px]">
+          <Label className="text-[10px] font-black text-slate-500 uppercase">Buscar</Label>
+          <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="nome ou matrícula" className="mt-1 h-8 text-xs" />
+        </div>
+        <div className="text-[11px] text-slate-500 font-bold">{empsFiltrados.length} colaborador(es) · {cursosVisiveis.length} curso(s)</div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 290px)" }}>
+        <table className="text-[11px] border-collapse min-w-full">
+          <thead className="sticky top-0 bg-slate-100 z-10">
+            <tr>
+              <th className="sticky left-0 bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[60px]">Mat.</th>
+              <th className="sticky left-[60px] bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[200px]">Colaborador</th>
+              <th className="text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[110px]">Setor</th>
+              {cursosVisiveis.map((c) => (
+                <th key={c.id} className="text-center px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[100px]" title={`${c.nome} (${c.periodicidade})`}>
+                  <div>{c.codigo}</div>
+                  <div className="text-[9px] text-slate-400 font-bold normal-case">{c.periodicidade}</div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {empsFiltrados.map((emp, i) => {
+              const setorCursos = new Set(sectorCourses.filter((sc) => sc.setor === (emp.setor ?? "")).map((sc) => sc.course_id));
+              const comp = emp.company_id ? compMap[emp.company_id] : null;
+              return (
+                <tr key={emp.id} className={i % 2 ? "bg-slate-50/50" : "bg-white"}>
+                  <td className="sticky left-0 z-10 bg-inherit px-2 py-1 border-b border-r border-slate-200 font-bold">{emp.matricula ?? "—"}</td>
+                  <td className="sticky left-[60px] z-10 bg-inherit px-2 py-1 border-b border-r border-slate-200">
+                    <div className="font-bold text-slate-800">{emp.nome}</div>
+                    <div className="text-[9px] text-slate-500 uppercase">{comp?.name ?? "—"} · {comp?.type ?? "—"}</div>
+                  </td>
+                  <td className="px-2 py-1 border-b border-r border-slate-200 text-[10px] uppercase font-bold text-slate-600">
+                    {emp.setor ?? <span className="text-red-500">—</span>}
+                    {isEditor && (
+                      <button onClick={() => setOpenEmp(emp)} className="ml-1 text-slate-400 hover:text-slate-700"><Pencil className="h-3 w-3 inline" /></button>
+                    )}
+                  </td>
+                  {cursosVisiveis.map((c) => {
+                    const required = setorCursos.has(c.id);
+                    const entry = entryMap.get(`${emp.id}|${c.id}`);
+                    if (!required && !entry) {
+                      return (
+                        <td key={c.id} className="px-1 py-1 border-b border-r border-slate-200 text-center bg-slate-50/40">
+                          <button disabled={!isEditor} onClick={() => setEditing({ emp, course: c })}
+                            className="text-[9px] text-slate-300 hover:text-slate-600 uppercase">—</button>
+                        </td>
+                      );
+                    }
+                    const st = computeStatus(entry, c);
+                    return (
+                      <td key={c.id} className="px-1 py-1 border-b border-r border-slate-200 text-center align-middle">
+                        <button
+                          disabled={!isEditor}
+                          onClick={() => setEditing({ emp, course: c, entry })}
+                          className={`w-full px-1.5 py-1 rounded border text-[10px] font-bold leading-tight ${st.color} hover:brightness-95`}
+                          title={`${c.nome}${entry?.observacao ? ` — ${entry.observacao}` : ""}`}
+                        >
+                          {entry?.data_realizacao && <div className="font-black">{formatDateBR(entry.data_realizacao)}</div>}
+                          <div className="text-[9px]">{st.label}</div>
+                        </button>
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+            {empsFiltrados.length === 0 && (
+              <tr><td colSpan={cursosVisiveis.length + 3} className="text-center py-8 text-slate-400 text-xs uppercase font-bold">Nenhum colaborador.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-3 text-[10px] font-bold uppercase">
+        <span className="px-2 py-1 rounded border bg-emerald-100 text-emerald-700 border-emerald-300">Realizado</span>
+        <span className="px-2 py-1 rounded border bg-amber-100 text-amber-700 border-amber-300">A vencer (≤30d)</span>
+        <span className="px-2 py-1 rounded border bg-red-100 text-red-700 border-red-300">Pendente / Vencido</span>
+        <span className="px-2 py-1 rounded border bg-blue-100 text-blue-700 border-blue-300">Em andamento</span>
+        <span className="px-2 py-1 rounded border bg-slate-100 text-slate-500 border-slate-300">N/A</span>
+      </div>
+
+      {editing && (
+        <EntryDialog
+          emp={editing.emp} course={editing.course} entry={editing.entry}
+          onClose={() => setEditing(null)}
+          onSaved={() => { qc.invalidateQueries({ queryKey: ["matriz-entries"] }); setEditing(null); }}
+          isAdmin={isAdmin}
+        />
+      )}
+      {openCatalog && <CatalogDialog onClose={() => setOpenCatalog(false)} courses={courses} isAdmin={isAdmin} />}
+      {openSetores && <SetoresDialog onClose={() => setOpenSetores(false)} courses={courses} mapping={sectorCourses} />}
+      {openEmp !== null && <EmpDialog emp={openEmp === "new" ? null : openEmp} companies={companies} onClose={() => setOpenEmp(null)} isAdmin={isAdmin} />}
+    </div>
+  );
+}
+
+function EntryDialog({ emp, course, entry, onClose, onSaved, isAdmin }:
+  { emp: Employee; course: Course; entry?: Entry; onClose: () => void; onSaved: () => void; isAdmin: boolean }) {
+  const [data, setData] = useState(entry?.data_realizacao ?? "");
+  const [stOver, setStOver] = useState(entry?.status_override ?? "AUTO");
+  const [obs, setObs] = useState(entry?.observacao ?? "");
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const payload: any = {
+        employee_id: emp.id, course_id: course.id,
+        data_realizacao: data || null,
+        status_override: stOver === "AUTO" ? null : stOver,
+        observacao: obs || null,
+      };
+      if (entry) {
+        const { error } = await supabase.from("training_matrix_entries").update(payload).eq("id", entry.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("training_matrix_entries").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => { toast.success("Salvo"); onSaved(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async () => {
+      if (!entry) return;
+      const { error } = await supabase.from("training_matrix_entries").delete().eq("id", entry.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Removido"); onSaved(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>{course.nome}</DialogTitle></DialogHeader>
+        <div className="text-xs text-slate-500 -mt-2 mb-2">{emp.nome} · {emp.matricula ?? "—"} · {course.periodicidade}</div>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-[10px] font-black uppercase">Data de realização</Label>
+            <Input type="date" value={data} onChange={(e) => setData(e.target.value)} className="mt-1" />
+          </div>
+          <div>
+            <Label className="text-[10px] font-black uppercase">Status (sobrescrever)</Label>
+            <Select value={stOver} onValueChange={setStOver}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="AUTO">Automático (com base na data + periodicidade)</SelectItem>
+                {STATUS_OVERRIDE.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[10px] font-black uppercase">Observação</Label>
+            <Textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} className="mt-1" />
+          </div>
+        </div>
+        <DialogFooter className="gap-2">
+          {entry && isAdmin && (
+            <Button variant="destructive" size="sm" onClick={() => { if (confirm("Remover lançamento?")) del.mutate(); }}>
+              <Trash2 className="h-3.5 w-3.5 mr-1" /> Remover
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={onClose}>Cancelar</Button>
+          <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>
+            <Save className="h-3.5 w-3.5 mr-1" /> Salvar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CatalogDialog({ onClose, courses, isAdmin }:
+  { onClose: () => void; courses: Course[]; isAdmin: boolean }) {
+  const qc = useQueryClient();
+  const [novo, setNovo] = useState({ codigo: "", nome: "", periodicidade: "ANUAL", ordem: 999 });
+
+  const add = useMutation({
+    mutationFn: async () => {
+      if (!novo.codigo || !novo.nome) throw new Error("Código e nome obrigatórios");
+      const { error } = await supabase.from("training_matrix_courses").insert(novo);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Curso criado"); setNovo({ codigo: "", nome: "", periodicidade: "ANUAL", ordem: 999 }); qc.invalidateQueries({ queryKey: ["matriz-courses"] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const upd = useMutation({
+    mutationFn: async (c: Course) => {
+      const { error } = await supabase.from("training_matrix_courses")
+        .update({ codigo: c.codigo, nome: c.nome, periodicidade: c.periodicidade, ordem: c.ordem, ativo: c.ativo })
+        .eq("id", c.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Atualizado"); qc.invalidateQueries({ queryKey: ["matriz-courses"] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("training_matrix_courses").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Removido"); qc.invalidateQueries({ queryKey: ["matriz-courses"] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Cursos / NRs do catálogo</DialogTitle></DialogHeader>
+        <div className="border border-slate-200 rounded p-3 bg-slate-50 grid grid-cols-12 gap-2">
+          <Input placeholder="Código" value={novo.codigo} onChange={(e) => setNovo({ ...novo, codigo: e.target.value })} className="col-span-3 h-8 text-xs" />
+          <Input placeholder="Nome" value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} className="col-span-5 h-8 text-xs" />
+          <Select value={novo.periodicidade} onValueChange={(v) => setNovo({ ...novo, periodicidade: v })}>
+            <SelectTrigger className="col-span-2 h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>{PERIODICIDADES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+          </Select>
+          <Button size="sm" onClick={() => add.mutate()} className="col-span-2"><Plus className="h-3.5 w-3.5 mr-1" />Add</Button>
+        </div>
+        <table className="text-xs w-full mt-3">
+          <thead className="bg-slate-100">
+            <tr><th className="text-left p-2">Código</th><th className="text-left p-2">Nome</th><th className="p-2">Periodic.</th><th className="p-2">Ordem</th><th className="p-2">Ativo</th><th></th></tr>
+          </thead>
+          <tbody>
+            {courses.map((c) => (
+              <CourseRow key={c.id} c={c} onSave={(x) => upd.mutate(x)} onDel={(id) => { if (confirm("Excluir curso?")) del.mutate(id); }} canDelete={isAdmin} />
+            ))}
+          </tbody>
+        </table>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Fechar</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CourseRow({ c, onSave, onDel, canDelete }: { c: Course; onSave: (c: Course) => void; onDel: (id: string) => void; canDelete: boolean }) {
+  const [v, setV] = useState(c);
+  const dirty = JSON.stringify(v) !== JSON.stringify(c);
+  return (
+    <tr className="border-b">
+      <td className="p-1"><Input value={v.codigo} onChange={(e) => setV({ ...v, codigo: e.target.value })} className="h-7 text-xs" /></td>
+      <td className="p-1"><Input value={v.nome} onChange={(e) => setV({ ...v, nome: e.target.value })} className="h-7 text-xs" /></td>
+      <td className="p-1">
+        <Select value={v.periodicidade} onValueChange={(x) => setV({ ...v, periodicidade: x })}>
+          <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>{PERIODICIDADES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+        </Select>
+      </td>
+      <td className="p-1 w-20"><Input type="number" value={v.ordem} onChange={(e) => setV({ ...v, ordem: Number(e.target.value) })} className="h-7 text-xs" /></td>
+      <td className="p-1 text-center"><input type="checkbox" checked={v.ativo} onChange={(e) => setV({ ...v, ativo: e.target.checked })} /></td>
+      <td className="p-1 flex gap-1">
+        {dirty && <button onClick={() => onSave(v)} className="text-emerald-600 hover:text-emerald-800"><Save className="h-3.5 w-3.5" /></button>}
+        {canDelete && <button onClick={() => onDel(c.id)} className="text-red-600 hover:text-red-800"><Trash2 className="h-3.5 w-3.5" /></button>}
+      </td>
+    </tr>
+  );
+}
+
+function SetoresDialog({ onClose, courses, mapping }:
+  { onClose: () => void; courses: Course[]; mapping: SectorCourse[] }) {
+  const qc = useQueryClient();
+  const setores = SETORES_PADRAO;
+
+  const has = (setor: string, courseId: string) => mapping.some((m) => m.setor === setor && m.course_id === courseId);
+
+  const toggle = useMutation({
+    mutationFn: async ({ setor, courseId, on }: { setor: string; courseId: string; on: boolean }) => {
+      if (on) {
+        const { error } = await supabase.from("training_matrix_sector_courses").insert({ setor, course_id: courseId });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("training_matrix_sector_courses").delete().eq("setor", setor).eq("course_id", courseId);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["matriz-sector-courses"] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Cursos exigidos por Setor</DialogTitle></DialogHeader>
+        <table className="text-xs w-full">
+          <thead className="bg-slate-100">
+            <tr>
+              <th className="text-left p-2">Curso</th>
+              {setores.map((s) => <th key={s} className="p-2">{s}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {courses.map((c) => (
+              <tr key={c.id} className="border-b">
+                <td className="p-2"><strong>{c.codigo}</strong> — {c.nome}</td>
+                {setores.map((s) => (
+                  <td key={s} className="p-2 text-center">
+                    <input type="checkbox" checked={has(s, c.id)} onChange={(e) => toggle.mutate({ setor: s, courseId: c.id, on: e.target.checked })} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Fechar</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EmpDialog({ emp, companies, onClose, isAdmin }:
+  { emp: Employee | null; companies: Company[]; onClose: () => void; isAdmin: boolean }) {
+  const qc = useQueryClient();
+  const [v, setV] = useState({
+    matricula: emp?.matricula ?? "", nome: emp?.nome ?? "",
+    setor: emp?.setor ?? "PRODUCAO", company_id: emp?.company_id ?? (companies[0]?.id ?? ""),
+  });
+
+  const save = useMutation({
+    mutationFn: async () => {
+      if (!v.nome) throw new Error("Nome obrigatório");
+      const payload = { matricula: v.matricula || null, nome: v.nome, setor: v.setor, company_id: v.company_id || null };
+      if (emp) {
+        const { error } = await supabase.from("employees").update(payload).eq("id", emp.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("employees").insert({ ...payload, status: "ATIVO", tipo_cadastro: "NAO_MEI" });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => { toast.success("Salvo"); qc.invalidateQueries({ queryKey: ["matriz-employees"] }); onClose(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async () => {
+      if (!emp) return;
+      const { error } = await supabase.from("employees").delete().eq("id", emp.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Excluído"); qc.invalidateQueries({ queryKey: ["matriz-employees"] }); onClose(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>{emp ? "Editar colaborador" : "Novo colaborador"}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-2">
+            <div className="col-span-1">
+              <Label className="text-[10px] uppercase font-black">Matrícula</Label>
+              <Input value={v.matricula} onChange={(e) => setV({ ...v, matricula: e.target.value })} className="mt-1" />
+            </div>
+            <div className="col-span-2">
+              <Label className="text-[10px] uppercase font-black">Nome</Label>
+              <Input value={v.nome} onChange={(e) => setV({ ...v, nome: e.target.value })} className="mt-1" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase font-black">Setor</Label>
+            <Select value={v.setor} onValueChange={(x) => setV({ ...v, setor: x })}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>{SETORES_PADRAO.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase font-black">Empresa</Label>
+            <Select value={v.company_id} onValueChange={(x) => setV({ ...v, company_id: x })}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name} ({c.type})</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter className="gap-2">
+          {emp && isAdmin && (
+            <Button variant="destructive" size="sm" onClick={() => { if (confirm("Excluir colaborador? Os lançamentos serão removidos.")) del.mutate(); }}>
+              <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
+            </Button>
+          )}
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => save.mutate()} disabled={save.isPending}><Save className="h-3.5 w-3.5 mr-1" /> Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
