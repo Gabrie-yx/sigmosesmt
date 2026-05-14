@@ -384,7 +384,7 @@ function RequisicoesPage() {
                   <Plus className="h-4 w-4 mr-2" /> Nova Requisição
                 </Button>
               </DialogTrigger>
-              <NewReqDialog onClose={() => setOpenNew(false)} userId={user?.id} />
+              <ReqFormDialog onClose={() => setOpenNew(false)} userId={user?.id} />
             </Dialog>
           )}
         </div>
@@ -456,7 +456,7 @@ function RequisicoesPage() {
                           <Printer className="h-3.5 w-3.5 mr-1" /> PDF
                         </Button>
                         <ViewBtn req={r} />
-                        {isEditor && <EditSignatureBtn req={r} />}
+                        {isEditor && <EditReqBtn req={r} userId={user?.id} />}
                         {isEditor && r.status === "PENDENTE" && (
                           <>
                             <Button
@@ -572,114 +572,16 @@ function IndeferBtn({ onConfirm }: { onConfirm: (motivo: string) => void }) {
   return <_IndeferBtnImpl onConfirm={onConfirm} />;
 }
 
-function EditSignatureBtn({ req }: { req: Req }) {
-  const qc = useQueryClient();
+function EditReqBtn({ req, userId }: { req: Req; userId?: string }) {
   const [open, setOpen] = useState(false);
-  const [signature, setSignature] = useState<string | null>(req.signature_solicitante);
-  const [signatureHeight, setSignatureHeight] = useState<number>(req.signature_solicitante_height ?? 80);
-
-  useEffect(() => {
-    if (open) {
-      setSignature(req.signature_solicitante);
-      setSignatureHeight(req.signature_solicitante_height ?? 80);
-    }
-  }, [open, req.signature_solicitante, req.signature_solicitante_height]);
-
-  const onUpload = (file: File | null) => {
-    if (!file) return;
-    if (file.type !== "image/png") {
-      toast.error("A assinatura deve estar no formato PNG");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Arquivo muito grande (máx. 2MB)");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => setSignature(reader.result as string);
-    reader.readAsDataURL(file);
-  };
-
-  const save = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from("purchase_requisitions")
-        .update({
-          signature_solicitante: signature,
-          signature_solicitante_height: signature ? signatureHeight : null,
-        })
-        .eq("id", req.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
-      toast.success("Assinatura atualizada");
-      setOpen(false);
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="ghost" title="Editar assinatura do solicitante">
+        <Button size="sm" variant="ghost" title="Editar requisição">
           <Pencil className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Assinatura do Solicitante — Nº {req.numero}</DialogTitle>
-        </DialogHeader>
-        <div className="border-2 border-dashed border-slate-300 rounded p-3 min-h-[140px] flex items-center justify-center bg-slate-50">
-          {signature ? (
-            <img
-              src={signature}
-              alt="Assinatura"
-              style={{ height: `${signatureHeight}px` }}
-              className="object-contain max-w-full"
-            />
-          ) : (
-            <span className="text-xs text-slate-500">Nenhuma assinatura</span>
-          )}
-        </div>
-        {signature && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Tamanho</span>
-            <input
-              type="range"
-              min={20}
-              max={140}
-              step={2}
-              value={signatureHeight}
-              onChange={(e) => setSignatureHeight(Number(e.target.value))}
-              className="flex-1 accent-red-700"
-            />
-            <span className="text-[11px] tabular-nums w-10 text-right">{signatureHeight}px</span>
-          </div>
-        )}
-        <div className="flex flex-wrap gap-2">
-          <label className="cursor-pointer text-[12px] text-red-700 hover:underline px-3 py-1.5 border border-dashed border-red-700/50 rounded">
-            {signature ? "Substituir PNG" : "Enviar assinatura (PNG)"}
-            <input
-              type="file"
-              accept="image/png"
-              className="hidden"
-              onChange={(e) => { onUpload(e.target.files?.[0] ?? null); e.target.value = ""; }}
-            />
-          </label>
-          {signature && (
-            <Button type="button" variant="outline" size="sm" onClick={() => setSignature(null)}>
-              Remover
-            </Button>
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button className="bg-red-700 hover:bg-red-800" disabled={save.isPending} onClick={() => save.mutate()}>
-            {save.isPending ? "Salvando..." : "Salvar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+      {open && <ReqFormDialog onClose={() => setOpen(false)} userId={userId} existing={req} />}
     </Dialog>
   );
 }
@@ -713,11 +615,22 @@ function _IndeferBtnImpl({ onConfirm }: { onConfirm: (motivo: string) => void })
   );
 }
 
-function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: string }) {
+function ReqFormDialog({
+  onClose,
+  userId,
+  existing,
+}: {
+  onClose: () => void;
+  userId?: string;
+  existing?: Req;
+}) {
   const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
-  // Gera número automático: SEQ/MM/AAAA (sequencial reiniciado por mês/ano)
+  const isEdit = !!existing;
+
+  // Gera número automático apenas no modo de criação
   useEffect(() => {
+    if (isEdit) return;
     (async () => {
       const now = new Date();
       const mm = String(now.getMonth() + 1).padStart(2, "0");
@@ -738,23 +651,48 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
   }, []);
 
   const [form, setForm] = useState({
-    numero: "Gerando...",
-    data_requisicao: today,
-    classificacao: "MATERIAL" as Classe,
-    solicitante: "",
-    setor: "",
-    fornecedor: "",
-    obra_construcao: "",
-    obra_manutencao: "",
-    codigo_formulario: "FOR-COMP: 03",
-    revisao: "01",
-    data_revisao: today,
-    pagina: "01/01",
-    observacoes: "",
+    numero: existing?.numero ?? "Gerando...",
+    data_requisicao: existing?.data_requisicao ?? today,
+    classificacao: (existing?.classificacao ?? "MATERIAL") as Classe,
+    solicitante: existing?.solicitante ?? "",
+    setor: existing?.setor ?? "",
+    fornecedor: existing?.fornecedor ?? "",
+    obra_construcao: existing?.obra_construcao ?? "",
+    obra_manutencao: existing?.obra_manutencao ?? "",
+    codigo_formulario: existing?.codigo_formulario ?? "FOR-COMP: 03",
+    revisao: existing?.revisao ?? "01",
+    data_revisao: existing?.data_revisao ?? today,
+    pagina: existing?.pagina ?? "01/01",
+    observacoes: existing?.observacoes ?? "",
   });
   const [itens, setItens] = useState<Item[]>(emptyItems());
-  const [signature, setSignature] = useState<string | null>(null);
-  const [signatureHeight, setSignatureHeight] = useState<number>(80);
+  const [signature, setSignature] = useState<string | null>(existing?.signature_solicitante ?? null);
+  const [signatureHeight, setSignatureHeight] = useState<number>(existing?.signature_solicitante_height ?? 80);
+
+  // Carrega itens existentes em modo edição
+  useEffect(() => {
+    if (!existing) return;
+    (async () => {
+      const { data } = await supabase
+        .from("purchase_requisition_items")
+        .select("*")
+        .eq("requisition_id", existing.id)
+        .order("item_numero");
+      const loaded: Item[] = (data ?? []).map((f: any) => ({
+        item_numero: f.item_numero,
+        descricao: f.descricao ?? "",
+        quantidade: f.quantidade != null ? String(f.quantidade) : "",
+        unidade: f.unidade ?? "",
+        observacao: f.observacao ?? "",
+      }));
+      // Garante no mínimo 10 linhas
+      const base = emptyItems();
+      const merged = base.map((d) => loaded.find((x) => x.item_numero === d.item_numero) ?? d);
+      const extras = loaded.filter((x) => x.item_numero > base.length);
+      setItens([...merged, ...extras]);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existing?.id]);
 
   const onSignatureUpload = async (file: File | null) => {
     if (!file) return;
@@ -791,34 +729,52 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
       if (!form.numero.trim() || !form.solicitante.trim()) {
         throw new Error("Preencha número e solicitante");
       }
-      const { data: req, error } = await supabase
-        .from("purchase_requisitions")
-        .insert({
-          numero: form.numero.trim(),
-          data_requisicao: form.data_requisicao,
-          classificacao: form.classificacao,
-          solicitante: form.solicitante.trim(),
-          setor: form.setor.trim() || null,
-          fornecedor: form.fornecedor.trim() || null,
-          obra_construcao: form.obra_construcao.trim() || null,
-          obra_manutencao: form.obra_manutencao.trim() || null,
-          codigo_formulario: form.codigo_formulario,
-          revisao: form.revisao,
-          data_revisao: form.data_revisao || null,
-          pagina: form.pagina,
-          observacoes: form.observacoes.trim() || null,
-          created_by: userId ?? null,
-          signature_solicitante: signature,
-          signature_solicitante_height: signature ? signatureHeight : null,
-        })
-        .select()
-        .single();
-      if (error) throw error;
+      const payload = {
+        numero: form.numero.trim(),
+        data_requisicao: form.data_requisicao,
+        classificacao: form.classificacao,
+        solicitante: form.solicitante.trim(),
+        setor: form.setor.trim() || null,
+        fornecedor: form.fornecedor.trim() || null,
+        obra_construcao: form.obra_construcao.trim() || null,
+        obra_manutencao: form.obra_manutencao.trim() || null,
+        codigo_formulario: form.codigo_formulario,
+        revisao: form.revisao,
+        data_revisao: form.data_revisao || null,
+        pagina: form.pagina,
+        observacoes: form.observacoes.trim() || null,
+        signature_solicitante: signature,
+        signature_solicitante_height: signature ? signatureHeight : null,
+      };
+
+      let reqId: string;
+      if (isEdit && existing) {
+        const { error } = await supabase
+          .from("purchase_requisitions")
+          .update(payload)
+          .eq("id", existing.id);
+        if (error) throw error;
+        reqId = existing.id;
+        // Substitui itens
+        const { error: eDel } = await supabase
+          .from("purchase_requisition_items")
+          .delete()
+          .eq("requisition_id", reqId);
+        if (eDel) throw eDel;
+      } else {
+        const { data: req, error } = await supabase
+          .from("purchase_requisitions")
+          .insert({ ...payload, created_by: userId ?? null })
+          .select()
+          .single();
+        if (error) throw error;
+        reqId = req.id;
+      }
 
       const itemsToInsert = itens
         .filter((i) => i.descricao.trim())
         .map((i) => ({
-          requisition_id: req.id,
+          requisition_id: reqId,
           item_numero: i.item_numero,
           descricao: i.descricao.trim(),
           quantidade: i.quantidade ? Number(i.quantidade) : null,
@@ -832,7 +788,7 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
-      toast.success("Requisição criada");
+      toast.success(isEdit ? "Requisição atualizada" : "Requisição criada");
       onClose();
     },
     onError: (e: any) => toast.error(e.message),
@@ -841,7 +797,7 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
   return (
     <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-0">
       <DialogHeader className="px-4 pt-4 pb-2 border-b">
-        <DialogTitle>Nova Requisição de Compra</DialogTitle>
+        <DialogTitle>{isEdit ? `Editar Requisição Nº ${existing?.numero}` : "Nova Requisição de Compra"}</DialogTitle>
       </DialogHeader>
 
       {/* Folha replicando o formulário FOR-COMP 03 */}
@@ -1038,7 +994,7 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
       <DialogFooter className="px-4 pb-4 border-t pt-3">
         <Button variant="outline" onClick={onClose}>Cancelar</Button>
         <Button className="bg-red-700 hover:bg-red-800" disabled={save.isPending} onClick={() => save.mutate()}>
-          {save.isPending ? "Salvando..." : "Salvar Requisição"}
+          {save.isPending ? "Salvando..." : isEdit ? "Atualizar Requisição" : "Salvar Requisição"}
         </Button>
       </DialogFooter>
     </DialogContent>
