@@ -456,7 +456,7 @@ function RequisicoesPage() {
                           <Printer className="h-3.5 w-3.5 mr-1" /> PDF
                         </Button>
                         <ViewBtn req={r} />
-                        {isEditor && <EditSignatureBtn req={r} />}
+                        {isEditor && <EditReqBtn req={r} userId={user?.id} />}
                         {isEditor && r.status === "PENDENTE" && (
                           <>
                             <Button
