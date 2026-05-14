@@ -1997,8 +1997,11 @@ export type Database = {
       training_matrix_courses: {
         Row: {
           ativo: boolean
+          carga_horaria_h: number | null
+          categoria: string
           codigo: string
           created_at: string
+          descricao: string | null
           id: string
           nome: string
           ordem: number
@@ -2007,8 +2010,11 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          carga_horaria_h?: number | null
+          categoria?: string
           codigo: string
           created_at?: string
+          descricao?: string | null
           id?: string
           nome: string
           ordem?: number
@@ -2017,8 +2023,11 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          carga_horaria_h?: number | null
+          categoria?: string
           codigo?: string
           created_at?: string
+          descricao?: string | null
           id?: string
           nome?: string
           ordem?: number
@@ -2077,6 +2086,32 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_matrix_role_courses: {
+        Row: {
+          course_id: string
+          created_at: string
+          role_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          role_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_matrix_role_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "training_matrix_courses"
             referencedColumns: ["id"]
           },
         ]
