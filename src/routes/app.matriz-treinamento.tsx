@@ -370,21 +370,13 @@ function MatrizPage() {
                     }
                     const baseSt = computeStatus(entry, c);
                     // Sobrescreve "PENDENTE" com "A INICIAR" se há turma agendada e ainda não realizada
-                    const showAIniciar = sched && (!entry?.data_realizacao) && (baseSt.label === "PENDENTE" || baseSt.label === "N/A" || !entry);
+                    const showAIniciar = sched && (!entry?.data_realizacao || entry.data_realizacao >= hoje);
                     const st = showAIniciar
                       ? { label: "A INICIAR", color: "bg-indigo-100 text-indigo-700 border-indigo-300" }
                       : baseSt;
                     // Aplica filtro de status à célula: se um filtro está ativo e esta célula não corresponde, oculta
-                    const statusMap: Record<string, string[]> = {
-                      REALIZADO: ["REALIZADO"],
-                      A_VENCER: ["A VENCER"],
-                      VENCIDO_PENDENTE: ["VENCIDO", "PENDENTE"],
-                      EM_ANDAMENTO: ["EM ANDAMENTO"],
-                      NA: ["N/A"],
-                      A_INICIAR: ["A INICIAR"],
-                    };
                     if (filtroStatus !== "ALL") {
-                      const wantedCell = statusMap[filtroStatus] ?? [];
+                      const wantedCell = STATUS_CELL_MAP[filtroStatus] ?? [];
                       if (!wantedCell.includes(st.label)) {
                         return (
                           <td key={c.id} className="p-0 border-b border-r border-slate-200 text-center bg-slate-50/40" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
@@ -394,16 +386,6 @@ function MatrizPage() {
                         );
                       }
                     }
-                    // Mapeia status -> cor de fundo sólida (sem texto, célula inteira colorida)
-                    const cellBg: Record<string, string> = {
-                      "REALIZADO": "bg-emerald-400 hover:bg-emerald-500",
-                      "A VENCER": "bg-amber-400 hover:bg-amber-500",
-                      "VENCIDO": "bg-red-500 hover:bg-red-600",
-                      "PENDENTE": "bg-red-300 hover:bg-red-400",
-                      "EM ANDAMENTO": "bg-blue-400 hover:bg-blue-500",
-                      "A INICIAR": "bg-indigo-400 hover:bg-indigo-500",
-                      "N/A": "bg-slate-200 hover:bg-slate-300",
-                    };
                     const dataLabel = entry?.data_realizacao
                       ? formatDateBR(entry.data_realizacao)
                       : (showAIniciar && sched ? formatDateBR(sched.data) : "");
@@ -412,7 +394,7 @@ function MatrizPage() {
                         <button
                           disabled={!isEditor}
                           onClick={() => setEditing({ emp, course: c, entry })}
-                          className={`w-full h-7 ${cellBg[st.label] ?? "bg-slate-200"} text-white text-[8px] font-black leading-none`}
+                          className={`w-full h-7 ${CELL_BG[st.label] ?? "bg-slate-200"} text-white text-[8px] font-black leading-none`}
                           title={`${c.nome} — ${st.label}${dataLabel ? ` (${dataLabel})` : ""}${sched ? ` — Turma: ${sched.titulo}` : ""}${entry?.observacao ? ` — ${entry.observacao}` : ""}`}
                         />
                       </td>
