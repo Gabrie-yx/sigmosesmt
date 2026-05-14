@@ -569,6 +569,122 @@ function ViewBtn({ req }: { req: Req }) {
 }
 
 function IndeferBtn({ onConfirm }: { onConfirm: (motivo: string) => void }) {
+  return _IndeferBtnImpl({ onConfirm });
+}
+
+function EditSignatureBtn({ req }: { req: Req }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [signature, setSignature] = useState<string | null>(req.signature_solicitante);
+  const [signatureHeight, setSignatureHeight] = useState<number>(req.signature_solicitante_height ?? 80);
+
+  useEffect(() => {
+    if (open) {
+      setSignature(req.signature_solicitante);
+      setSignatureHeight(req.signature_solicitante_height ?? 80);
+    }
+  }, [open, req.signature_solicitante, req.signature_solicitante_height]);
+
+  const onUpload = (file: File | null) => {
+    if (!file) return;
+    if (file.type !== "image/png") {
+      toast.error("A assinatura deve estar no formato PNG");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Arquivo muito grande (máx. 2MB)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setSignature(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("purchase_requisitions")
+        .update({
+          signature_solicitante: signature,
+          signature_solicitante_height: signature ? signatureHeight : null,
+        })
+        .eq("id", req.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
+      toast.success("Assinatura atualizada");
+      setOpen(false);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="ghost" title="Editar assinatura do solicitante">
+          <Pencil className="h-3.5 w-3.5" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Assinatura do Solicitante — Nº {req.numero}</DialogTitle>
+        </DialogHeader>
+        <div className="border-2 border-dashed border-slate-300 rounded p-3 min-h-[140px] flex items-center justify-center bg-slate-50">
+          {signature ? (
+            <img
+              src={signature}
+              alt="Assinatura"
+              style={{ height: `${signatureHeight}px` }}
+              className="object-contain max-w-full"
+            />
+          ) : (
+            <span className="text-xs text-slate-500">Nenhuma assinatura</span>
+          )}
+        </div>
+        {signature && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Tamanho</span>
+            <input
+              type="range"
+              min={20}
+              max={140}
+              step={2}
+              value={signatureHeight}
+              onChange={(e) => setSignatureHeight(Number(e.target.value))}
+              className="flex-1 accent-red-700"
+            />
+            <span className="text-[11px] tabular-nums w-10 text-right">{signatureHeight}px</span>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <label className="cursor-pointer text-[12px] text-red-700 hover:underline px-3 py-1.5 border border-dashed border-red-700/50 rounded">
+            {signature ? "Substituir PNG" : "Enviar assinatura (PNG)"}
+            <input
+              type="file"
+              accept="image/png"
+              className="hidden"
+              onChange={(e) => { onUpload(e.target.files?.[0] ?? null); e.target.value = ""; }}
+            />
+          </label>
+          {signature && (
+            <Button type="button" variant="outline" size="sm" onClick={() => setSignature(null)}>
+              Remover
+            </Button>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button className="bg-red-700 hover:bg-red-800" disabled={save.isPending} onClick={() => save.mutate()}>
+            {save.isPending ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function _IndeferBtnImpl({ onConfirm }: { onConfirm: (motivo: string) => void }) {
   const [open, setOpen] = useState(false);
   const [motivo, setMotivo] = useState("");
   return (
