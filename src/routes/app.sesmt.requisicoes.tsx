@@ -569,7 +569,7 @@ function ViewBtn({ req }: { req: Req }) {
 }
 
 function IndeferBtn({ onConfirm }: { onConfirm: (motivo: string) => void }) {
-  return _IndeferBtnImpl({ onConfirm });
+  return <_IndeferBtnImpl onConfirm={onConfirm} />;
 }
 
 function EditSignatureBtn({ req }: { req: Req }) {
