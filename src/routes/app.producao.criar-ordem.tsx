@@ -357,17 +357,19 @@ function CriarOrdemPage() {
     });
   }, [values.tipo_produto, tipos]);
 
-  // Sugestão: próximo número de casco sequencial = max(casco em OPs) + 1.
-  // Usa SOMENTE producao_ordens — assim, ao excluir uma OP, o contador
-  // automaticamente regride para a última numeração existente.
+  const extractCascoNumber = (casco?: string | null) => {
+    const m = String(casco ?? "").match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+  };
+
+  // Sugestão: próximo número de casco sequencial = maior casco cadastrado + 1.
+  // A base homologada vem da tabela cascos (ex.: parou em 141) e as OPs novas
+  // avançam a partir dela; se OPs forem excluídas, max(OPs) recalcula e regride.
   const proximoCascoNum = useMemo(() => {
-    let max = 0;
-    cascosOrdens.forEach((o: any) => {
-      const m = String(o.casco ?? "").match(/(\d+)/);
-      if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
-    });
-    return max + 1;
-  }, [cascosOrdens]);
+    const maxBase = cascos.reduce((mx: number, r: any) => Math.max(mx, extractCascoNumber(r.numero)), 0);
+    const maxOrdens = cascosOrdens.reduce((mx: number, r: any) => Math.max(mx, extractCascoNumber(r.casco)), 0);
+    return Math.max(maxBase, maxOrdens) + 1;
+  }, [cascos, cascosOrdens]);
 
   const proximoCascoLabel = useMemo(
     () => `CASCO ${String(proximoCascoNum).padStart(3, "0")}`,
@@ -377,9 +379,10 @@ function CriarOrdemPage() {
   // Auto-preenche Casco com o próximo sequencial
   useEffect(() => {
     if (!proximoCascoLabel) return;
+    if (loadingCascosBase || loadingCascosOrdens) return;
     if (editId) return; // em edição, mantém o casco da ordem
     setValues((v) => (v.casco === proximoCascoLabel ? v : { ...v, casco: proximoCascoLabel }));
-  }, [proximoCascoLabel, editId]);
+  }, [proximoCascoLabel, loadingCascosBase, loadingCascosOrdens, editId]);
 
   const addUm = useMutation({
     mutationFn: async () => {
