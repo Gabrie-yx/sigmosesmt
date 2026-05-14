@@ -372,8 +372,8 @@ function MatrizPage() {
                       );
                     }
                     const baseSt = computeStatus(entry, c);
-                    // Sobrescreve "PENDENTE" com "A INICIAR" se há turma agendada e ainda não realizada
-                    const showAIniciar = sched && (!entry?.data_realizacao || entry.data_realizacao >= hoje);
+                    // Sobrescreve com "A INICIAR" quando há turma agendada ou data futura na matriz
+                    const showAIniciar = Boolean(sched) || Boolean(entry?.data_realizacao && entry.data_realizacao >= hoje);
                     const st = showAIniciar
                       ? { label: "A INICIAR", color: "bg-indigo-100 text-indigo-700 border-indigo-300" }
                       : baseSt;
