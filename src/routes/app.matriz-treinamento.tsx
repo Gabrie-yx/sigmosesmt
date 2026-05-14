@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { GraduationCap, Plus, Pencil, Trash2, Settings2, Filter, X, Save } from "lucide-react";
+import { GraduationCap, Plus, Pencil, Trash2, Settings2, Filter, Save, Users } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 
@@ -20,6 +20,14 @@ export const Route = createFileRoute("/app/matriz-treinamento")({
 const PERIODICIDADES = ["ADMISSAO", "ANUAL", "BIENAL", "NA"] as const;
 const STATUS_OVERRIDE = ["REALIZADO", "PENDENTE", "EM_ANDAMENTO", "NAO_SE_APLICA"] as const;
 const SETORES_PADRAO = ["PRODUCAO", "ALMOXARIFADO", "ADMINISTRATIVO", "MANUTENCAO"] as const;
+const STATUS_FILTROS = [
+  { value: "ALL", label: "Todos" },
+  { value: "REALIZADO", label: "Realizado" },
+  { value: "A_VENCER", label: "A vencer" },
+  { value: "VENCIDO_PENDENTE", label: "Pendente / Vencido" },
+  { value: "EM_ANDAMENTO", label: "Em andamento" },
+  { value: "NA", label: "N/A" },
+] as const;
 
 type Course = {
   id: string; codigo: string; nome: string;
@@ -77,11 +85,13 @@ function MatrizPage() {
 
   const [filtroSetor, setFiltroSetor] = useState<string>("ALL");
   const [filtroVinculo, setFiltroVinculo] = useState<string>("ALL");
+  const [filtroStatus, setFiltroStatus] = useState<string>("ALL");
   const [busca, setBusca] = useState("");
   const [editing, setEditing] = useState<{ emp: Employee; course: Course; entry?: Entry } | null>(null);
   const [openCatalog, setOpenCatalog] = useState(false);
   const [openSetores, setOpenSetores] = useState(false);
   const [openEmp, setOpenEmp] = useState<Employee | null | "new">(null);
+  const [openBulk, setOpenBulk] = useState(false);
 
   const { data: courses = [] } = useQuery<Course[]>({
     queryKey: ["matriz-courses"],
@@ -130,7 +140,7 @@ function MatrizPage() {
   }, [entries]);
 
   const empsFiltrados = useMemo(() => {
-    return employees.filter((e) => {
+    const base = employees.filter((e) => {
       if (filtroSetor !== "ALL" && (e.setor ?? "") !== filtroSetor) return false;
       if (filtroVinculo !== "ALL") {
         const c = e.company_id ? compMap[e.company_id] : null;
@@ -143,7 +153,24 @@ function MatrizPage() {
       }
       return true;
     });
-  }, [employees, filtroSetor, filtroVinculo, busca, compMap]);
+    if (filtroStatus === "ALL") return base;
+    const map: Record<string, string[]> = {
+      REALIZADO: ["REALIZADO"],
+      A_VENCER: ["A VENCER"],
+      VENCIDO_PENDENTE: ["VENCIDO", "PENDENTE"],
+      EM_ANDAMENTO: ["EM ANDAMENTO"],
+      NA: ["N/A"],
+    };
+    const wanted = new Set(map[filtroStatus] ?? []);
+    return base.filter((e) =>
+      courses.some((c) => {
+        const en = entryMap.get(`${e.id}|${c.id}`);
+        const required = sectorCourses.some((sc) => sc.setor === (e.setor ?? "") && sc.course_id === c.id);
+        if (!required && !en) return false;
+        return wanted.has(computeStatus(en, c).label);
+      }),
+    );
+  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses]);
 
   // cursos visíveis: união dos setores presentes nos empsFiltrados
   const cursosVisiveis = useMemo(() => {
@@ -163,7 +190,10 @@ function MatrizPage() {
         {isEditor && (
           <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={() => setOpenEmp("new")}>
-              <Plus className="h-3.5 w-3.5 mr-1" /> Colaborador
+              <Plus className="h-3.5 w-3.5 mr-1" /> Funcionário
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setOpenBulk(true)}>
+              <Users className="h-3.5 w-3.5 mr-1" /> Inserir em massa
             </Button>
             <Button variant="outline" size="sm" onClick={() => setOpenCatalog(true)}>
               <Settings2 className="h-3.5 w-3.5 mr-1" /> Cursos / NRs
@@ -200,11 +230,20 @@ function MatrizPage() {
             </SelectContent>
           </Select>
         </div>
+        <div>
+          <Label className="text-[10px] font-black text-slate-500 uppercase">Status</Label>
+          <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+            <SelectTrigger className="mt-1 h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {STATUS_FILTROS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex-1 min-w-[200px]">
           <Label className="text-[10px] font-black text-slate-500 uppercase">Buscar</Label>
           <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="nome ou matrícula" className="mt-1 h-8 text-xs" />
         </div>
-        <div className="text-[11px] text-slate-500 font-bold">{empsFiltrados.length} colaborador(es) · {cursosVisiveis.length} curso(s)</div>
+        <div className="text-[11px] text-slate-500 font-bold">{empsFiltrados.length} funcionário(s) · {cursosVisiveis.length} curso(s)</div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 290px)" }}>
@@ -212,7 +251,7 @@ function MatrizPage() {
           <thead className="sticky top-0 bg-slate-100 z-10">
             <tr>
               <th className="sticky left-0 bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[60px]">Mat.</th>
-              <th className="sticky left-[60px] bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[200px]">Colaborador</th>
+              <th className="sticky left-[60px] bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[200px]">Funcionário</th>
               <th className="text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[110px]">Setor</th>
               {cursosVisiveis.map((c) => (
                 <th key={c.id} className="text-center px-2 py-2 font-black uppercase border-b border-r border-slate-200 min-w-[100px]" title={`${c.nome} (${c.periodicidade})`}>
@@ -269,7 +308,7 @@ function MatrizPage() {
               );
             })}
             {empsFiltrados.length === 0 && (
-              <tr><td colSpan={cursosVisiveis.length + 3} className="text-center py-8 text-slate-400 text-xs uppercase font-bold">Nenhum colaborador.</td></tr>
+              <tr><td colSpan={cursosVisiveis.length + 3} className="text-center py-8 text-slate-400 text-xs uppercase font-bold">Nenhum funcionário.</td></tr>
             )}
           </tbody>
         </table>
@@ -294,6 +333,7 @@ function MatrizPage() {
       {openCatalog && <CatalogDialog onClose={() => setOpenCatalog(false)} courses={courses} isAdmin={isAdmin} />}
       {openSetores && <SetoresDialog onClose={() => setOpenSetores(false)} courses={courses} mapping={sectorCourses} />}
       {openEmp !== null && <EmpDialog emp={openEmp === "new" ? null : openEmp} companies={companies} onClose={() => setOpenEmp(null)} isAdmin={isAdmin} />}
+      {openBulk && <BulkEmpDialog companies={companies} employees={employees} onClose={() => setOpenBulk(false)} />}
     </div>
   );
 }
@@ -550,7 +590,7 @@ function EmpDialog({ emp, companies, onClose, isAdmin }:
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>{emp ? "Editar colaborador" : "Novo colaborador"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{emp ? "Editar funcionário" : "Novo funcionário"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-1">
@@ -579,12 +619,126 @@ function EmpDialog({ emp, companies, onClose, isAdmin }:
         </div>
         <DialogFooter className="gap-2">
           {emp && isAdmin && (
-            <Button variant="destructive" size="sm" onClick={() => { if (confirm("Excluir colaborador? Os lançamentos serão removidos.")) del.mutate(); }}>
+            <Button variant="destructive" size="sm" onClick={() => { if (confirm("Excluir funcionário? Os lançamentos serão removidos.")) del.mutate(); }}>
               <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
             </Button>
           )}
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={() => save.mutate()} disabled={save.isPending}><Save className="h-3.5 w-3.5 mr-1" /> Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function BulkEmpDialog({ companies, employees, onClose }:
+  { companies: Company[]; employees: Employee[]; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [companyId, setCompanyId] = useState(companies[0]?.id ?? "");
+  const [setor, setSetor] = useState("PRODUCAO");
+  const [texto, setTexto] = useState("");
+
+  const existentes = useMemo(
+    () => employees.filter((e) => e.company_id === companyId)
+      .sort((a, b) => a.nome.localeCompare(b.nome)),
+    [employees, companyId],
+  );
+
+  const submit = useMutation({
+    mutationFn: async () => {
+      const linhas = texto.split("\n").map((l) => l.trim()).filter(Boolean);
+      if (!linhas.length) throw new Error("Cole pelo menos uma linha");
+      if (!companyId) throw new Error("Selecione a empresa");
+
+      // chaves já existentes (matrícula+empresa) e (nome+empresa) para evitar duplicar
+      const matsExist = new Set(existentes.map((e) => (e.matricula ?? "").trim()).filter(Boolean));
+      const nomesExist = new Set(existentes.map((e) => e.nome.trim().toUpperCase()));
+
+      const novos: any[] = [];
+      const ignorados: string[] = [];
+      for (const l of linhas) {
+        // aceita "matricula;nome" ou "matricula\tnome" ou só "nome"
+        const partes = l.split(/[\t;|,]/).map((p) => p.trim()).filter(Boolean);
+        let matricula = ""; let nome = "";
+        if (partes.length >= 2) { matricula = partes[0]; nome = partes.slice(1).join(" "); }
+        else { nome = partes[0] ?? ""; }
+        if (!nome) continue;
+        if (matricula && matsExist.has(matricula)) { ignorados.push(`${matricula} ${nome}`); continue; }
+        if (nomesExist.has(nome.toUpperCase())) { ignorados.push(nome); continue; }
+        novos.push({
+          matricula: matricula || null, nome, setor, company_id: companyId,
+          status: "ATIVO", tipo_cadastro: "NAO_MEI",
+        });
+      }
+      if (!novos.length) throw new Error("Nenhum novo funcionário para inserir");
+      const { error } = await supabase.from("employees").insert(novos);
+      if (error) throw error;
+      return { criados: novos.length, ignorados };
+    },
+    onSuccess: (r) => {
+      toast.success(`${r.criados} criado(s)${r.ignorados.length ? ` · ${r.ignorados.length} ignorado(s)` : ""}`);
+      qc.invalidateQueries({ queryKey: ["matriz-employees"] });
+      onClose();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Inserir funcionários em massa</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-[10px] uppercase font-black">Empresa</Label>
+              <Select value={companyId} onValueChange={setCompanyId}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name} ({c.type})</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-[10px] uppercase font-black">Setor padrão</Label>
+              <Select value={setor} onValueChange={setSetor}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{SETORES_PADRAO.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-[10px] uppercase font-black">
+              Já cadastrados nesta empresa ({existentes.length})
+            </Label>
+            <div className="mt-1 border border-slate-200 rounded p-2 max-h-40 overflow-y-auto bg-slate-50 text-[11px]">
+              {existentes.length === 0 && <div className="text-slate-400 italic">Nenhum cadastro nesta empresa ainda.</div>}
+              {existentes.map((e) => (
+                <div key={e.id} className="flex justify-between border-b border-slate-100 py-0.5">
+                  <span className="font-bold">{e.matricula ?? "—"}</span>
+                  <span className="flex-1 px-2">{e.nome}</span>
+                  <span className="text-slate-500 uppercase">{e.setor ?? "—"}</span>
+                </div>
+              ))}
+            </div>
+            <div className="text-[10px] text-slate-500 mt-1">Use a lista acima para evitar duplicar matrículas/nomes — eles serão ignorados automaticamente.</div>
+          </div>
+
+          <div>
+            <Label className="text-[10px] uppercase font-black">Cole as linhas (1 por funcionário)</Label>
+            <Textarea
+              rows={10}
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              placeholder={"matricula;NOME COMPLETO\n000999;FULANO DE TAL\n000998;CICLANO\n— ou só o nome:\nBELTRANO DA SILVA"}
+              className="mt-1 font-mono text-xs"
+            />
+            <div className="text-[10px] text-slate-500 mt-1">Separadores aceitos: <code>;</code> <code>|</code> <code>,</code> ou tabulação. Matrícula é opcional.</div>
+          </div>
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => submit.mutate()} disabled={submit.isPending}>
+            <Save className="h-3.5 w-3.5 mr-1" /> Inserir
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
