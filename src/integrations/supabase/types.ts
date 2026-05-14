@@ -2152,6 +2152,7 @@ export type Database = {
         Row: {
           anexo_path: string | null
           carga_horaria_h: number
+          course_id: string | null
           created_at: string
           created_by: string | null
           data_realizacao: string
@@ -2167,6 +2168,7 @@ export type Database = {
         Insert: {
           anexo_path?: string | null
           carga_horaria_h?: number
+          course_id?: string | null
           created_at?: string
           created_by?: string | null
           data_realizacao: string
@@ -2182,6 +2184,7 @@ export type Database = {
         Update: {
           anexo_path?: string | null
           carga_horaria_h?: number
+          course_id?: string | null
           created_at?: string
           created_by?: string | null
           data_realizacao?: string
@@ -2194,7 +2197,15 @@ export type Database = {
           updated_at?: string
           validade_meses?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trainings_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "training_matrix_courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_invites: {
         Row: {

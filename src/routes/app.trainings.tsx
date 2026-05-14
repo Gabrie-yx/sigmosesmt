@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { GraduationCap, Plus, Pencil, Trash2, Users, Paperclip, Download, X, FileText, Clock } from "lucide-react";
+import { GraduationCap, Plus, Pencil, Trash2, Users, Paperclip, Download, X, FileText, Clock, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
 
@@ -55,6 +55,7 @@ function TrainingsPage() {
     carga_horaria_h: 8,
     validade_meses: 12,
     observacoes: "",
+    course_id: "" as string,
   });
   const [file, setFile] = useState<File | null>(null);
 
@@ -64,6 +65,19 @@ function TrainingsPage() {
       const { data, error } = await supabase.from("trainings").select("*").order("data_realizacao", { ascending: false });
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: matrixCourses = [] } = useQuery({
+    queryKey: ["matrix-courses-active"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("training_matrix_courses")
+        .select("id,codigo,nome,periodicidade,ativo")
+        .eq("ativo", true)
+        .order("ordem");
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
@@ -92,6 +106,7 @@ function TrainingsPage() {
         instituicao: f.instituicao || null, data_realizacao: f.data_realizacao,
         carga_horaria_h: f.carga_horaria_h, validade_meses: f.validade_meses,
         observacoes: f.observacoes || null,
+        course_id: f.course_id || null,
       };
       if (anexo_path) payload.anexo_path = anexo_path;
       if (editingId) {
@@ -129,6 +144,7 @@ function TrainingsPage() {
     setF({
       tipo: TIPOS[0], titulo: "", instrutor: "", instituicao: "",
       data_realizacao: today(), carga_horaria_h: 8, validade_meses: 12, observacoes: "",
+      course_id: "",
     });
   }
 
@@ -139,6 +155,7 @@ function TrainingsPage() {
       instituicao: t.instituicao ?? "", data_realizacao: t.data_realizacao,
       carga_horaria_h: Number(t.carga_horaria_h), validade_meses: t.validade_meses,
       observacoes: t.observacoes ?? "",
+      course_id: t.course_id ?? "",
     });
     setFile(null);
   }
@@ -184,6 +201,26 @@ function TrainingsPage() {
                   <Label className="text-[10px] font-black text-slate-500 uppercase">Data de Realização</Label>
                   <Input type="date" required value={f.data_realizacao} onChange={(e) => setF({ ...f, data_realizacao: e.target.value })} className="mt-2" />
                 </div>
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-1">
+                  <Link2 className="h-3 w-3" /> Curso da Matriz (vínculo automático)
+                </Label>
+                <Select value={f.course_id || "__none__"} onValueChange={(v) => setF({ ...f, course_id: v === "__none__" ? "" : v })}>
+                  <SelectTrigger className="mt-2"><SelectValue placeholder="— sem vínculo —" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— sem vínculo —</SelectItem>
+                    {matrixCourses.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.codigo} — {c.nome} ({c.periodicidade})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Ao vincular um curso, todo participante marcado como <b>APROVADO</b> ou <b>PRESENTE</b> recebe automaticamente a data deste evento na sua Matriz de Treinamento.
+                </p>
               </div>
 
               <div>
