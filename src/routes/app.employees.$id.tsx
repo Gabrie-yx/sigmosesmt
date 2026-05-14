@@ -1859,3 +1859,209 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
     </Card>
   );
 }
+function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState<{ course: MatrizCourse; entry?: MatrizEntry } | null>(null);
+
+  const { data: courses = [] } = useQuery<MatrizCourse[]>({
+    queryKey: ["matriz-courses"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("training_matrix_courses").select("*").eq("ativo", true).order("ordem");
+      if (error) throw error;
+      return data as MatrizCourse[];
+    },
+  });
+  const { data: sectorCourses = [] } = useQuery<SectorCourse[]>({
+    queryKey: ["matriz-sector-courses"],
+    queryFn: async () => (await supabase.from("training_matrix_sector_courses").select("*")).data as SectorCourse[] ?? [],
+  });
+  const { data: roleCourses = [] } = useQuery<RoleCourse[]>({
+    queryKey: ["matriz-role-courses"],
+    queryFn: async () => (await supabase.from("training_matrix_role_courses").select("*")).data as RoleCourse[] ?? [],
+  });
+  const { data: entries = [] } = useQuery<MatrizEntry[]>({
+    queryKey: ["matriz-entries", emp.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("training_matrix_entries").select("*").eq("employee_id", emp.id);
+      if (error) throw error;
+      return data as MatrizEntry[];
+    },
+  });
+
+  const requiredIds = useMemo(
+    () => requiredCourseIds({ setor: emp.setor, role_id: emp.role_id }, sectorCourses, roleCourses),
+    [emp.setor, emp.role_id, sectorCourses, roleCourses],
+  );
+  const entryByCourse = useMemo(() => {
+    const m = new Map<string, MatrizEntry>();
+    entries.forEach((e) => m.set(e.course_id, e));
+    return m;
+  }, [entries]);
+
+  // Cursos exibidos: obrigatórios pelo setor/função + os que já têm lançamento manual
+  const cursosExibidos = useMemo(
+    () => courses.filter((c) => requiredIds.has(c.id) || entryByCourse.has(c.id)),
+    [courses, requiredIds, entryByCourse],
+  );
+
+  const stats = useMemo(() => {
+    const counts: Record<string, number> = { REALIZADO: 0, "A VENCER": 0, VENCIDO: 0, PENDENTE: 0, "EM ANDAMENTO": 0, "N/A": 0 };
+    cursosExibidos.forEach((c) => {
+      const st = computeStatus(entryByCourse.get(c.id), c);
+      counts[st.label] = (counts[st.label] ?? 0) + 1;
+    });
+    const aderencia = cursosExibidos.length
+      ? Math.round((counts.REALIZADO / cursosExibidos.length) * 100)
+      : 0;
+    return { counts, aderencia, total: cursosExibidos.length };
+  }, [cursosExibidos, entryByCourse]);
+
+  return (
+    <Card className="p-6 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <GraduationCap className="h-6 w-6 text-[#991b1b]" />
+          <div>
+            <div className="text-lg font-black text-slate-800">Matriz de Treinamento</div>
+            <div className="text-xs text-slate-500">Cursos exigidos pela função e setor do funcionário</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <div className="text-3xl font-black text-emerald-600">{stats.aderencia}%</div>
+            <div className="text-[10px] uppercase font-bold text-slate-500">Aderência</div>
+          </div>
+          <div className="grid grid-cols-3 gap-1 text-[10px] font-bold uppercase">
+            <span className="px-2 py-1 rounded border bg-emerald-100 text-emerald-700 border-emerald-300">Realiz: {stats.counts.REALIZADO}</span>
+            <span className="px-2 py-1 rounded border bg-amber-100 text-amber-700 border-amber-300">A venc: {stats.counts["A VENCER"]}</span>
+            <span className="px-2 py-1 rounded border bg-red-100 text-red-700 border-red-300">Pend/Venc: {stats.counts.VENCIDO + stats.counts.PENDENTE}</span>
+          </div>
+        </div>
+      </div>
+
+      {cursosExibidos.length === 0 ? (
+        <div className="text-center py-12 border border-dashed rounded-xl text-xs uppercase font-bold text-slate-400">
+          Nenhum curso vinculado ao setor ({emp.setor ?? "—"}) ou função deste funcionário.<br />
+          Configure em <strong>Matriz de Treinamento → Vincular Cursos</strong>.
+        </div>
+      ) : (
+        <div className="overflow-auto rounded-xl border border-slate-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead className="w-32">Código</TableHead>
+                <TableHead>Curso</TableHead>
+                <TableHead className="w-32">Categoria</TableHead>
+                <TableHead className="w-24">Periodic.</TableHead>
+                <TableHead className="w-32">Realização</TableHead>
+                <TableHead className="w-32">Vencimento</TableHead>
+                <TableHead className="w-32">Status</TableHead>
+                {canEdit && <TableHead className="w-16"></TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cursosExibidos.map((c) => {
+                const entry = entryByCourse.get(c.id);
+                const st = computeStatus(entry, c);
+                const cat = c.categoria ?? "NR";
+                return (
+                  <TableRow key={c.id} className="hover:bg-slate-50/50">
+                    <TableCell className="font-bold">{c.codigo}</TableCell>
+                    <TableCell>{c.nome}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-0.5 rounded border text-[10px] font-bold uppercase ${CATEGORIA_COLOR[cat] ?? CATEGORIA_COLOR.OUTRO}`}>
+                        {CATEGORIA_LABEL[cat] ?? cat}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-xs uppercase font-bold">{c.periodicidade}</TableCell>
+                    <TableCell className="text-xs">{entry?.data_realizacao ? formatDateBR(entry.data_realizacao) : "—"}</TableCell>
+                    <TableCell className="text-xs">{st.expira ? formatDateBR(st.expira) : "—"}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded border text-[10px] font-black ${st.color}`}>{st.label}</span>
+                    </TableCell>
+                    {canEdit && (
+                      <TableCell>
+                        <Button size="sm" variant="ghost" onClick={() => setEditing({ course: c, entry })}>
+                          <Plus className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {editing && (
+        <MatrizEntryDialog
+          empId={emp.id}
+          course={editing.course}
+          entry={editing.entry}
+          onClose={() => setEditing(null)}
+          onSaved={() => { qc.invalidateQueries({ queryKey: ["matriz-entries", emp.id] }); setEditing(null); }}
+        />
+      )}
+    </Card>
+  );
+}
+
+function MatrizEntryDialog({ empId, course, entry, onClose, onSaved }:
+  { empId: string; course: MatrizCourse; entry?: MatrizEntry; onClose: () => void; onSaved: () => void }) {
+  const [data, setData] = useState(entry?.data_realizacao ?? "");
+  const [stOver, setStOver] = useState(entry?.status_override ?? "AUTO");
+  const [obs, setObs] = useState(entry?.observacao ?? "");
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const payload: any = {
+        employee_id: empId, course_id: course.id,
+        data_realizacao: data || null,
+        status_override: stOver === "AUTO" ? null : stOver,
+        observacao: obs || null,
+      };
+      if (entry) {
+        const { error } = await supabase.from("training_matrix_entries").update(payload).eq("id", entry.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("training_matrix_entries").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => { toast.success("Salvo"); onSaved(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>{course.codigo} — {course.nome}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-[10px] uppercase font-black">Data de realização</Label>
+            <Input type="date" value={data} onChange={(e) => setData(e.target.value)} className="mt-1" />
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase font-black">Status (sobrescrever)</Label>
+            <Select value={stOver} onValueChange={setStOver}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="AUTO">Automático</SelectItem>
+                {STATUS_OVERRIDE.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase font-black">Observação</Label>
+            <Textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} className="mt-1" />
+          </div>
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => save.mutate()} disabled={save.isPending}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
