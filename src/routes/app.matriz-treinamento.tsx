@@ -9,16 +9,28 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { GraduationCap, Plus, Pencil, Trash2, Settings2, Filter, Save, Users } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
+import {
+  computeStatus,
+  requiredCourseIds,
+  PERIODICIDADES,
+  STATUS_OVERRIDE,
+  CATEGORIAS,
+  CATEGORIA_LABEL,
+  CATEGORIA_COLOR,
+  type MatrizCourse as Course,
+  type MatrizEntry as Entry,
+  type SectorCourse,
+  type RoleCourse,
+} from "@/lib/matriz-status";
 
 export const Route = createFileRoute("/app/matriz-treinamento")({
   component: MatrizPage,
 });
 
-const PERIODICIDADES = ["ADMISSAO", "ANUAL", "BIENAL", "NA"] as const;
-const STATUS_OVERRIDE = ["REALIZADO", "PENDENTE", "EM_ANDAMENTO", "NAO_SE_APLICA"] as const;
 const SETORES_PADRAO = ["PRODUCAO", "ALMOXARIFADO", "ADMINISTRATIVO", "MANUTENCAO"] as const;
 const STATUS_FILTROS = [
   { value: "ALL", label: "Todos" },
@@ -29,55 +41,12 @@ const STATUS_FILTROS = [
   { value: "NA", label: "N/A" },
 ] as const;
 
-type Course = {
-  id: string; codigo: string; nome: string;
-  periodicidade: string; ordem: number; ativo: boolean;
-};
 type Employee = {
   id: string; matricula: string | null; nome: string;
-  setor: string | null; company_id: string | null;
+  setor: string | null; company_id: string | null; role_id: string | null;
 };
 type Company = { id: string; name: string; type: string };
-type Entry = {
-  id: string; employee_id: string; course_id: string;
-  data_realizacao: string | null; status_override: string | null; observacao: string | null;
-};
-type SectorCourse = { setor: string; course_id: string };
-
-function periodMonths(p: string): number | null {
-  if (p === "ANUAL") return 12;
-  if (p === "BIENAL") return 24;
-  return null;
-}
-
-function computeStatus(entry: Entry | undefined, course: Course): {
-  label: string; color: string; expira?: string;
-} {
-  if (entry?.status_override) {
-    const map: Record<string, { label: string; color: string }> = {
-      REALIZADO: { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300" },
-      PENDENTE: { label: "PENDENTE", color: "bg-red-100 text-red-700 border-red-300" },
-      EM_ANDAMENTO: { label: "EM ANDAMENTO", color: "bg-blue-100 text-blue-700 border-blue-300" },
-      NAO_SE_APLICA: { label: "N/A", color: "bg-slate-100 text-slate-500 border-slate-300" },
-    };
-    return map[entry.status_override] ?? map.PENDENTE;
-  }
-  if (course.periodicidade === "NA") return { label: "N/A", color: "bg-slate-100 text-slate-500 border-slate-300" };
-  if (!entry?.data_realizacao) return { label: "PENDENTE", color: "bg-red-100 text-red-700 border-red-300" };
-  if (course.periodicidade === "ADMISSAO") {
-    return { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300" };
-  }
-  const months = periodMonths(course.periodicidade);
-  if (!months) return { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300" };
-  const dt = new Date(entry.data_realizacao);
-  dt.setMonth(dt.getMonth() + months);
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const expira = dt.toISOString().slice(0, 10);
-  const diff = Math.floor((dt.getTime() - today.getTime()) / 86400000);
-  if (diff < 0) return { label: "VENCIDO", color: "bg-red-100 text-red-700 border-red-300", expira };
-  if (diff <= 30) return { label: "A VENCER", color: "bg-amber-100 text-amber-700 border-amber-300", expira };
-  return { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300", expira };
-}
+type Role = { id: string; name: string };
 
 function MatrizPage() {
   const qc = useQueryClient();
@@ -110,6 +79,19 @@ function MatrizPage() {
     },
   });
 
+  const { data: roleCourses = [] } = useQuery<RoleCourse[]>({
+    queryKey: ["matriz-role-courses"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("training_matrix_role_courses").select("*");
+      if (error) throw error; return data as RoleCourse[];
+    },
+  });
+
+  const { data: roles = [] } = useQuery<Role[]>({
+    queryKey: ["roles-list"],
+    queryFn: async () => (await supabase.from("roles").select("id,name").eq("ativo", true).order("name")).data ?? [],
+  });
+
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ["companies"],
     queryFn: async () => (await supabase.from("companies").select("id,name,type")).data ?? [],
@@ -119,7 +101,7 @@ function MatrizPage() {
     queryKey: ["matriz-employees"],
     queryFn: async () => {
       const { data, error } = await supabase.from("employees")
-        .select("id,matricula,nome,setor,company_id").eq("status", "ATIVO").order("nome");
+        .select("id,matricula,nome,setor,company_id,role_id").eq("status", "ATIVO").order("nome");
       if (error) throw error; return data as Employee[];
     },
   });
@@ -165,21 +147,24 @@ function MatrizPage() {
     return base.filter((e) =>
       courses.some((c) => {
         const en = entryMap.get(`${e.id}|${c.id}`);
-        const required = sectorCourses.some((sc) => sc.setor === (e.setor ?? "") && sc.course_id === c.id);
+        const required = requiredCourseIds(e, sectorCourses, roleCourses).has(c.id);
         if (!required && !en) return false;
         return wanted.has(computeStatus(en, c).label);
       }),
     );
-  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses]);
+  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses, roleCourses]);
 
-  // cursos visíveis: união dos setores presentes nos empsFiltrados
+  // cursos visíveis: cursos exigidos pelos funcionários filtrados (união setor+função) + cursos com lançamentos
   const cursosVisiveis = useMemo(() => {
     if (filtroSetor !== "ALL") {
-      const ids = new Set(sectorCourses.filter((sc) => sc.setor === filtroSetor).map((sc) => sc.course_id));
+      const ids = new Set<string>();
+      empsFiltrados.forEach((e) => {
+        requiredCourseIds(e, sectorCourses, roleCourses).forEach((id) => ids.add(id));
+      });
       return courses.filter((c) => ids.has(c.id));
     }
     return courses;
-  }, [courses, sectorCourses, filtroSetor]);
+  }, [courses, sectorCourses, roleCourses, filtroSetor, empsFiltrados]);
 
   return (
     <div className="p-4 md:p-6 animate-fadeIn h-full bg-[#f1f5f9]">
@@ -279,7 +264,7 @@ function MatrizPage() {
                     )}
                   </td>
                   {cursosVisiveis.map((c) => {
-                    const required = setorCursos.has(c.id);
+                    const required = requiredCourseIds(emp, sectorCourses, roleCourses).has(c.id);
                     const entry = entryMap.get(`${emp.id}|${c.id}`);
                     if (!required && !entry) {
                       return (
@@ -331,8 +316,8 @@ function MatrizPage() {
         />
       )}
       {openCatalog && <CatalogDialog onClose={() => setOpenCatalog(false)} courses={courses} isAdmin={isAdmin} />}
-      {openSetores && <SetoresDialog onClose={() => setOpenSetores(false)} courses={courses} mapping={sectorCourses} />}
-      {openEmp !== null && <EmpDialog emp={openEmp === "new" ? null : openEmp} companies={companies} onClose={() => setOpenEmp(null)} isAdmin={isAdmin} />}
+      {openSetores && <VinculosDialog onClose={() => setOpenSetores(false)} courses={courses} sectorMapping={sectorCourses} roleMapping={roleCourses} roles={roles} />}
+      {openEmp !== null && <EmpDialog emp={openEmp === "new" ? null : openEmp} companies={companies} roles={roles} onClose={() => setOpenEmp(null)} isAdmin={isAdmin} />}
       {openBulk && <BulkEmpDialog companies={companies} employees={employees} onClose={() => setOpenBulk(false)} />}
     </div>
   );
