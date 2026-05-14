@@ -27,6 +27,8 @@ import { openFileViewer } from "@/components/file-viewer";
 import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban } from "lucide-react";
+import { GraduationCap } from "lucide-react";
+import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type SectorCourse, type RoleCourse } from "@/lib/matriz-status";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -264,13 +266,14 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
       <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="grid grid-cols-5 w-full h-auto p-1.5 bg-gradient-to-r from-red-50 via-white to-red-50 border border-red-200/60 rounded-xl shadow-sm gap-1">
+        <TabsList className="grid grid-cols-6 w-full h-auto p-1.5 bg-gradient-to-r from-red-50 via-white to-red-50 border border-red-200/60 rounded-xl shadow-sm gap-1">
           {[
             { v: "profile", l: "Perfil" },
             { v: "nrs", l: "NRs" },
             { v: "docs", l: "Docs" },
             { v: "epi", l: "EPI" },
             { v: "health", l: "Saúde" },
+            { v: "matriz", l: "Matriz" },
           ].map((t) => (
             <TabsTrigger
               key={t.v}
@@ -307,6 +310,9 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               <VaccinesTab empId={id} vaccines={vaccines ?? []} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
             </TabsContent>
           </Tabs>
+        </TabsContent>
+        <TabsContent value="matriz" className="mt-4">
+          <MatrizTab emp={emp} canEdit={isEditor} />
         </TabsContent>
       </Tabs>
       <FileViewerHost />
