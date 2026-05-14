@@ -841,6 +841,7 @@ export type Database = {
           rg: string | null
           rg_orgao: string | null
           role_id: string | null
+          setor: string | null
           status: string
           tipo_cadastro: string
           titulo: string | null
@@ -872,6 +873,7 @@ export type Database = {
           rg?: string | null
           rg_orgao?: string | null
           role_id?: string | null
+          setor?: string | null
           status?: string
           tipo_cadastro?: string
           titulo?: string | null
@@ -903,6 +905,7 @@ export type Database = {
           rg?: string | null
           rg_orgao?: string | null
           role_id?: string | null
+          setor?: string | null
           status?: string
           tipo_cadastro?: string
           titulo?: string | null
@@ -1990,6 +1993,119 @@ export type Database = {
           training_id?: string
         }
         Relationships: []
+      }
+      training_matrix_courses: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          periodicidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          periodicidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          periodicidade?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      training_matrix_entries: {
+        Row: {
+          anexo_path: string | null
+          course_id: string
+          created_at: string
+          created_by: string | null
+          data_realizacao: string | null
+          employee_id: string
+          id: string
+          observacao: string | null
+          status_override: string | null
+          updated_at: string
+        }
+        Insert: {
+          anexo_path?: string | null
+          course_id: string
+          created_at?: string
+          created_by?: string | null
+          data_realizacao?: string | null
+          employee_id: string
+          id?: string
+          observacao?: string | null
+          status_override?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anexo_path?: string | null
+          course_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_realizacao?: string | null
+          employee_id?: string
+          id?: string
+          observacao?: string | null
+          status_override?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_matrix_entries_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "training_matrix_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_matrix_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_matrix_sector_courses: {
+        Row: {
+          course_id: string
+          created_at: string
+          setor: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          setor: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          setor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_matrix_sector_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "training_matrix_courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trainings: {
         Row: {
