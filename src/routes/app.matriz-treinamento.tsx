@@ -38,6 +38,7 @@ const STATUS_FILTROS = [
   { value: "A_VENCER", label: "A vencer" },
   { value: "VENCIDO_PENDENTE", label: "Pendente / Vencido" },
   { value: "EM_ANDAMENTO", label: "Em andamento" },
+  { value: "A_INICIAR", label: "A iniciar (turma agendada)" },
   { value: "NA", label: "N/A" },
 ] as const;
 
@@ -168,6 +169,15 @@ function MatrizPage() {
       return true;
     });
     if (filtroStatus === "ALL") return base;
+    if (filtroStatus === "A_INICIAR") {
+      return base.filter((e) =>
+        courses.some((c) => {
+          const en = entryMap.get(`${e.id}|${c.id}`);
+          const sched = scheduledMap.get(`${e.id}|${c.id}`);
+          return sched && !en?.data_realizacao;
+        }),
+      );
+    }
     const map: Record<string, string[]> = {
       REALIZADO: ["REALIZADO"],
       A_VENCER: ["A VENCER"],
@@ -184,7 +194,7 @@ function MatrizPage() {
         return wanted.has(computeStatus(en, c).label);
       }),
     );
-  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses, roleCourses]);
+  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses, roleCourses, scheduledMap]);
 
   // cursos visíveis: cursos exigidos pelos funcionários filtrados (união setor+função) + cursos com lançamentos
   const cursosVisiveis = useMemo(() => {
