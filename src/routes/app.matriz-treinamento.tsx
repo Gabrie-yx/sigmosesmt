@@ -220,7 +220,7 @@ function MatrizPage() {
         courses.some((c) => {
           const en = entryMap.get(`${e.id}|${c.id}`);
           const sched = scheduledMap.get(`${e.id}|${c.id}`);
-          return sched && (!en?.data_realizacao || en.data_realizacao >= hoje);
+          return Boolean(sched) || Boolean(en?.data_realizacao && en.data_realizacao >= hoje);
         }),
       );
     }
@@ -231,7 +231,7 @@ function MatrizPage() {
         const sched = scheduledMap.get(`${e.id}|${c.id}`);
         const required = requiredCourseIds(e, sectorCourses, roleCourses).has(c.id);
         if (!required && !en && !sched) return false;
-        const showAIniciar = sched && (!en?.data_realizacao || en.data_realizacao >= hoje);
+        const showAIniciar = Boolean(sched) || Boolean(en?.data_realizacao && en.data_realizacao >= hoje);
         const statusLabel = showAIniciar ? "A INICIAR" : computeStatus(en, c).label;
         return wanted.has(statusLabel);
       }),
