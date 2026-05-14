@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { GraduationCap, Plus, Pencil, Trash2, Settings2, Filter, Save, Users } from "lucide-react";
+import { GraduationCap, Plus, Pencil, Trash2, Settings2, Filter, Save, Users, ChevronDown, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import {
@@ -664,67 +664,108 @@ function VinculosDialog({ onClose, courses, sectorMapping, roleMapping, roles }:
     onError: (e: any) => toast.error(e.message),
   });
 
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [busca, setBusca] = useState("");
+
+  const cursosFiltrados = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    if (!q) return courses;
+    return courses.filter((c) => c.codigo.toLowerCase().includes(q) || c.nome.toLowerCase().includes(q));
+  }, [busca, courses]);
+
+  const TopBar = (
+    <div className="flex items-center gap-2 flex-wrap">
+      <div className="relative flex-1 min-w-[180px]">
+        <Search className="h-3.5 w-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar curso..." className="h-8 text-xs pl-7" />
+      </div>
+      <Button size="sm" onClick={onClose} className="h-8"><Save className="h-3.5 w-3.5 mr-1" /> Salvar e fechar</Button>
+    </div>
+  );
+
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Vincular Cursos a Setor / Função</DialogTitle></DialogHeader>
-        <Tabs defaultValue="setor">
-          <TabsList>
-            <TabsTrigger value="setor">Por Setor</TabsTrigger>
-            <TabsTrigger value="funcao">Por Função</TabsTrigger>
-          </TabsList>
-          <TabsContent value="setor" className="mt-3">
-            <table className="text-xs w-full">
-              <thead className="bg-slate-100 sticky top-0">
-                <tr>
-                  <th className="text-left p-2">Curso</th>
-                  {setores.map((s) => <th key={s} className="p-2">{s}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {courses.map((c) => (
-                  <tr key={c.id} className="border-b">
-                    <td className="p-2"><strong>{c.codigo}</strong> — {c.nome}</td>
-                    {setores.map((s) => (
-                      <td key={s} className="p-2 text-center">
-                        <input type="checkbox" checked={hasSetor(s, c.id)} onChange={(e) => toggleSetor.mutate({ setor: s, courseId: c.id, on: e.target.checked })} />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </TabsContent>
-          <TabsContent value="funcao" className="mt-3">
-            {roles.length === 0 ? (
-              <div className="text-center text-slate-400 text-xs py-8 uppercase font-bold">Cadastre funções em Cargos / Funções primeiro.</div>
-            ) : (
-              <div className="overflow-auto">
-                <table className="text-xs w-full">
-                  <thead className="bg-slate-100 sticky top-0">
-                    <tr>
-                      <th className="text-left p-2 sticky left-0 bg-slate-100">Curso</th>
-                      {roles.map((r) => <th key={r.id} className="p-2 whitespace-nowrap">{r.name}</th>)}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {courses.map((c) => (
-                      <tr key={c.id} className="border-b">
-                        <td className="p-2 sticky left-0 bg-white"><strong>{c.codigo}</strong> — {c.nome}</td>
-                        {roles.map((r) => (
-                          <td key={r.id} className="p-2 text-center">
-                            <input type="checkbox" checked={hasRole(r.id, c.id)} onChange={(e) => toggleRole.mutate({ roleId: r.id, courseId: c.id, on: e.target.checked })} />
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="p-4 pb-2 border-b">
+          <DialogTitle className="text-base">Vincular Cursos a Setor / Função</DialogTitle>
+          <p className="text-[11px] text-slate-500 mt-1">As alterações são salvas automaticamente. Clique em uma NR para vincular setores e funções.</p>
+        </DialogHeader>
+
+        <div className="px-4 py-2 border-b bg-slate-50/50 sticky top-0 z-10">{TopBar}</div>
+
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {cursosFiltrados.length === 0 && (
+            <div className="text-center text-slate-400 text-xs py-8 uppercase font-bold">Nenhum curso encontrado</div>
+          )}
+          {cursosFiltrados.map((c) => {
+            const open = openId === c.id;
+            const nSetores = setores.filter((s) => hasSetor(s, c.id)).length;
+            const nRoles = roles.filter((r) => hasRole(r.id, c.id)).length;
+            return (
+              <div key={c.id} className="border rounded-md bg-white">
+                <button
+                  type="button"
+                  onClick={() => setOpenId(open ? null : c.id)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-slate-50"
+                >
+                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${open ? "" : "-rotate-90"}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold truncate">{c.codigo} — <span className="font-normal text-slate-700">{c.nome}</span></div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">{nSetores} setor{nSetores === 1 ? "" : "es"}</span>
+                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-violet-50 text-violet-700">{nRoles} função{nRoles === 1 ? "" : "ões"}</span>
+                  </div>
+                </button>
+                {open && (
+                  <div className="border-t p-3 bg-slate-50/40">
+                    <Tabs defaultValue="setor">
+                      <TabsList className="h-8">
+                        <TabsTrigger value="setor" className="text-xs h-7">Setores</TabsTrigger>
+                        <TabsTrigger value="funcao" className="text-xs h-7">Funções</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="setor" className="mt-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                          {setores.map((s) => {
+                            const checked = hasSetor(s, c.id);
+                            return (
+                              <label key={s} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded border cursor-pointer transition ${checked ? "bg-blue-50 border-blue-300" : "bg-white border-slate-200 hover:bg-slate-50"}`}>
+                                <input type="checkbox" checked={checked} onChange={(e) => toggleSetor.mutate({ setor: s, courseId: c.id, on: e.target.checked })} />
+                                <span className="truncate">{s}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="funcao" className="mt-2">
+                        {roles.length === 0 ? (
+                          <div className="text-center text-slate-400 text-xs py-6 uppercase font-bold">Cadastre funções em Cargos / Funções primeiro.</div>
+                        ) : (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-64 overflow-y-auto pr-1">
+                            {roles.map((r) => {
+                              const checked = hasRole(r.id, c.id);
+                              return (
+                                <label key={r.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded border cursor-pointer transition ${checked ? "bg-violet-50 border-violet-300" : "bg-white border-slate-200 hover:bg-slate-50"}`}>
+                                  <input type="checkbox" checked={checked} onChange={(e) => toggleRole.mutate({ roleId: r.id, courseId: c.id, on: e.target.checked })} />
+                                  <span className="truncate" title={r.name}>{r.name}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                )}
               </div>
-            )}
-          </TabsContent>
-        </Tabs>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Fechar</Button></DialogFooter>
+            );
+          })}
+        </div>
+
+        <DialogFooter className="p-3 border-t bg-slate-50/50 gap-2">
+          <Button variant="outline" size="sm" onClick={onClose}><X className="h-3.5 w-3.5 mr-1" /> Fechar</Button>
+          <Button size="sm" onClick={onClose}><Save className="h-3.5 w-3.5 mr-1" /> Salvar e fechar</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
