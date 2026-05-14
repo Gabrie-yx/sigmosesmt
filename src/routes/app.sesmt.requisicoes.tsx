@@ -192,6 +192,14 @@ async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "do
     if (idx === 0) {
       doc.setFont("helvetica", "normal");
       doc.text(fmtBR(req.data_requisicao), x + 13, finalY + sigH - 1);
+      if (req.signature_solicitante) {
+        try {
+          const hMm = Math.max(6, Math.min(sigH - 8, ((req.signature_solicitante_height ?? 80) / 96) * 25.4));
+          const wMm = colW - 4;
+          const yImg = finalY + 5 + ((sigH - 11 - hMm) / 2);
+          doc.addImage(req.signature_solicitante, "PNG", x + 2, yImg, wMm, hMm, undefined, "FAST");
+        } catch { /* noop */ }
+      }
     }
   });
 
