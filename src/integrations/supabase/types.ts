@@ -2151,6 +2151,7 @@ export type Database = {
       trainings: {
         Row: {
           anexo_path: string | null
+          assinatura_path: string | null
           carga_horaria_h: number
           course_id: string | null
           created_at: string
@@ -2159,6 +2160,7 @@ export type Database = {
           id: string
           instituicao: string | null
           instrutor: string | null
+          local: string | null
           observacoes: string | null
           tipo: string
           titulo: string | null
@@ -2167,6 +2169,7 @@ export type Database = {
         }
         Insert: {
           anexo_path?: string | null
+          assinatura_path?: string | null
           carga_horaria_h?: number
           course_id?: string | null
           created_at?: string
@@ -2175,6 +2178,7 @@ export type Database = {
           id?: string
           instituicao?: string | null
           instrutor?: string | null
+          local?: string | null
           observacoes?: string | null
           tipo: string
           titulo?: string | null
@@ -2183,6 +2187,7 @@ export type Database = {
         }
         Update: {
           anexo_path?: string | null
+          assinatura_path?: string | null
           carga_horaria_h?: number
           course_id?: string | null
           created_at?: string
@@ -2191,6 +2196,7 @@ export type Database = {
           id?: string
           instituicao?: string | null
           instrutor?: string | null
+          local?: string | null
           observacoes?: string | null
           tipo?: string
           titulo?: string | null
