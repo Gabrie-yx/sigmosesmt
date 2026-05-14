@@ -204,7 +204,7 @@ function CriarOrdemPage() {
   }, [layout]);
 
   // data sources
-  const { data: cascos = [] } = useQuery({
+  const { data: cascos = [], isLoading: loadingCascosBase } = useQuery({
     queryKey: ["cascos-min"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -212,12 +212,14 @@ function CriarOrdemPage() {
       if (error) throw error;
       return data ?? [];
     },
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   // Cascos já utilizados em ordens de produção (para sequenciamento automático).
   // O CASCO é um CONTADOR: a cada nova OP soma +1; se uma OP é excluída, volta
   // para a última numeração (max() recalcula naturalmente).
-  const { data: cascosOrdens = [] } = useQuery({
+  const { data: cascosOrdens = [], isLoading: loadingCascosOrdens } = useQuery({
     queryKey: ["cascos-em-ordens"],
     queryFn: async () => {
       const { data, error } = await supabase
