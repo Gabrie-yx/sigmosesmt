@@ -52,6 +52,7 @@ function CompaniesPage() {
   const [selectedTab, setSelectedTab] = useState<string>("profile");
   const [editing, setEditing] = useState<Partial<Company> | null>(null);
   const [showForm, setShowForm] = useState(true);
+  const [empSearch, setEmpSearch] = useState("");
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -106,8 +107,22 @@ function CompaniesPage() {
 
   const selected = useMemo(() => companies.find((c) => c.id === selectedId) || null, [companies, selectedId]);
   const compEmps = useMemo(
-    () => (selected ? employees.filter((e: any) => e.company_id === selected.id) : []),
-    [employees, selected],
+    () => {
+      if (!selected) return [];
+      const base = employees.filter((e: any) => e.company_id === selected.id);
+      const q = empSearch.trim().toLowerCase();
+      if (!q) return base;
+      const digits = q.replace(/\D/g, "");
+      return base.filter((e: any) => {
+        const nome = (e.nome ?? "").toLowerCase();
+        const cpf = (e.cpf ?? "").toLowerCase();
+        const cpfDigits = cpf.replace(/\D/g, "");
+        const mat = (e.matricula ?? "").toLowerCase();
+        return nome.includes(q) || cpf.includes(q) || mat.includes(q) ||
+          (digits && (cpfDigits.includes(digits) || mat.replace(/\D/g, "").includes(digits)));
+      });
+    },
+    [employees, selected, empSearch],
   );
 
   function startNew() { setEditing({ ...empty }); setShowForm(true); setSelectedId(null); }
