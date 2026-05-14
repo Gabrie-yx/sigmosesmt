@@ -228,9 +228,12 @@ function MatrizPage() {
     return base.filter((e) =>
       courses.some((c) => {
         const en = entryMap.get(`${e.id}|${c.id}`);
+        const sched = scheduledMap.get(`${e.id}|${c.id}`);
         const required = requiredCourseIds(e, sectorCourses, roleCourses).has(c.id);
-        if (!required && !en) return false;
-        return wanted.has(computeStatus(en, c).label);
+        if (!required && !en && !sched) return false;
+        const showAIniciar = sched && (!en?.data_realizacao || en.data_realizacao >= hoje);
+        const statusLabel = showAIniciar ? "A INICIAR" : computeStatus(en, c).label;
+        return wanted.has(statusLabel);
       }),
     );
   }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses, roleCourses, scheduledMap, hoje]);
