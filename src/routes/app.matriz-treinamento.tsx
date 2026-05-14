@@ -42,6 +42,37 @@ const STATUS_FILTROS = [
   { value: "NA", label: "N/A" },
 ] as const;
 
+const STATUS_CELL_MAP: Record<string, string[]> = {
+  REALIZADO: ["REALIZADO"],
+  A_VENCER: ["A VENCER"],
+  VENCIDO_PENDENTE: ["VENCIDO", "PENDENTE"],
+  EM_ANDAMENTO: ["EM ANDAMENTO"],
+  NA: ["N/A"],
+  A_INICIAR: ["A INICIAR"],
+};
+
+const CELL_BG: Record<string, string> = {
+  "REALIZADO": "bg-emerald-400 hover:bg-emerald-500",
+  "A VENCER": "bg-amber-400 hover:bg-amber-500",
+  "VENCIDO": "bg-red-500 hover:bg-red-600",
+  "PENDENTE": "bg-red-300 hover:bg-red-400",
+  "EM ANDAMENTO": "bg-blue-400 hover:bg-blue-500",
+  "A INICIAR": "bg-indigo-400 hover:bg-indigo-500",
+  "N/A": "bg-slate-200 hover:bg-slate-300",
+};
+
+const STATUS_LEGENDA = [
+  { label: "Realizado", className: CELL_BG["REALIZADO"], detalhe: "concluído e válido" },
+  { label: "A vencer", className: CELL_BG["A VENCER"], detalhe: "vence em até 30 dias" },
+  { label: "Vencido", className: CELL_BG["VENCIDO"], detalhe: "validade expirada" },
+  { label: "Pendente", className: CELL_BG["PENDENTE"], detalhe: "sem realização" },
+  { label: "Em andamento", className: CELL_BG["EM ANDAMENTO"], detalhe: "em execução" },
+  { label: "A iniciar", className: CELL_BG["A INICIAR"], detalhe: "turma futura agendada" },
+  { label: "N/A", className: CELL_BG["N/A"], detalhe: "não aplicável" },
+] as const;
+
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
 type Employee = {
   id: string; matricula: string | null; nome: string;
   setor: string | null; company_id: string | null; role_id: string | null;
@@ -52,6 +83,7 @@ type Role = { id: string; name: string };
 function MatrizPage() {
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
+  const hoje = todayISO();
 
   const [filtroSetor, setFiltroSetor] = useState<string>("ALL");
   const [filtroVinculo, setFiltroVinculo] = useState<string>("ALL");
@@ -117,21 +149,34 @@ function MatrizPage() {
 
   // Inscritos em turmas vinculadas a curso da matriz (mostrar "A INICIAR")
   const { data: scheduled = [] } = useQuery<Array<{ employee_id: string; course_id: string; data_realizacao: string; titulo: string | null; tipo: string }>>({
-    queryKey: ["matriz-scheduled"],
+    queryKey: ["matriz-scheduled", hoje],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: attendees, error: attendeesError } = await supabase
         .from("training_attendees")
-        .select("employee_id, trainings!inner(course_id, data_realizacao, titulo, tipo)");
-      if (error) throw error;
-      return (data ?? [])
-        .filter((r: any) => r.trainings?.course_id)
-        .map((r: any) => ({
+        .select("employee_id, training_id, situacao")
+        .in("situacao", ["APROVADO", "PRESENTE"]);
+      if (attendeesError) throw attendeesError;
+      const trainingIds = Array.from(new Set((attendees ?? []).map((r: any) => r.training_id).filter(Boolean)));
+      if (trainingIds.length === 0) return [];
+      const { data: trainings, error: trainingsError } = await supabase
+        .from("trainings")
+        .select("id, course_id, data_realizacao, titulo, tipo")
+        .in("id", trainingIds)
+        .not("course_id", "is", null)
+        .gte("data_realizacao", hoje);
+      if (trainingsError) throw trainingsError;
+      const trainingMap = new Map((trainings ?? []).map((t: any) => [t.id, t]));
+      return (attendees ?? []).flatMap((r: any) => {
+        const t = trainingMap.get(r.training_id) as any;
+        if (!t?.course_id) return [];
+        return [{
           employee_id: r.employee_id,
-          course_id: r.trainings.course_id,
-          data_realizacao: r.trainings.data_realizacao,
-          titulo: r.trainings.titulo,
-          tipo: r.trainings.tipo,
-        }));
+          course_id: t.course_id,
+          data_realizacao: t.data_realizacao,
+          titulo: t.titulo,
+          tipo: t.tipo,
+        }];
+      });
     },
   });
 
@@ -175,27 +220,23 @@ function MatrizPage() {
         courses.some((c) => {
           const en = entryMap.get(`${e.id}|${c.id}`);
           const sched = scheduledMap.get(`${e.id}|${c.id}`);
-          return sched && !en?.data_realizacao;
+          return sched && (!en?.data_realizacao || en.data_realizacao >= hoje);
         }),
       );
     }
-    const map: Record<string, string[]> = {
-      REALIZADO: ["REALIZADO"],
-      A_VENCER: ["A VENCER"],
-      VENCIDO_PENDENTE: ["VENCIDO", "PENDENTE"],
-      EM_ANDAMENTO: ["EM ANDAMENTO"],
-      NA: ["N/A"],
-    };
-    const wanted = new Set(map[filtroStatus] ?? []);
+    const wanted = new Set(STATUS_CELL_MAP[filtroStatus] ?? []);
     return base.filter((e) =>
       courses.some((c) => {
         const en = entryMap.get(`${e.id}|${c.id}`);
+        const sched = scheduledMap.get(`${e.id}|${c.id}`);
         const required = requiredCourseIds(e, sectorCourses, roleCourses).has(c.id);
-        if (!required && !en) return false;
-        return wanted.has(computeStatus(en, c).label);
+        if (!required && !en && !sched) return false;
+        const showAIniciar = sched && (!en?.data_realizacao || en.data_realizacao >= hoje);
+        const statusLabel = showAIniciar ? "A INICIAR" : computeStatus(en, c).label;
+        return wanted.has(statusLabel);
       }),
     );
-  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses, roleCourses, scheduledMap]);
+  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses, roleCourses, scheduledMap, hoje]);
 
   // cursos visíveis: cursos exigidos pelos funcionários filtrados (união setor+função) + cursos com lançamentos
   const cursosVisiveis = useMemo(() => {
@@ -274,7 +315,18 @@ function MatrizPage() {
         <div className="text-[11px] text-slate-500 font-bold">{empsFiltrados.length} funcionário(s) · {cursosVisiveis.length} curso(s)</div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 290px)" }}>
+      <div className="mb-3 bg-white rounded-xl shadow-sm border border-slate-200 px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="text-[10px] font-black uppercase text-slate-500">Legenda</div>
+        {STATUS_LEGENDA.map((item) => (
+          <div key={item.label} className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
+            <span className={`h-3.5 w-3.5 rounded-sm border border-slate-300 ${item.className}`} />
+            <span className="uppercase">{item.label}</span>
+            <span className="hidden md:inline text-slate-400 normal-case">({item.detalhe})</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 340px)" }}>
         <table className="text-[10px] border-collapse">
           <thead className="sticky top-0 bg-slate-100 z-10">
             <tr>
@@ -321,21 +373,13 @@ function MatrizPage() {
                     }
                     const baseSt = computeStatus(entry, c);
                     // Sobrescreve "PENDENTE" com "A INICIAR" se há turma agendada e ainda não realizada
-                    const showAIniciar = sched && (!entry?.data_realizacao) && (baseSt.label === "PENDENTE" || baseSt.label === "N/A" || !entry);
+                    const showAIniciar = sched && (!entry?.data_realizacao || entry.data_realizacao >= hoje);
                     const st = showAIniciar
                       ? { label: "A INICIAR", color: "bg-indigo-100 text-indigo-700 border-indigo-300" }
                       : baseSt;
                     // Aplica filtro de status à célula: se um filtro está ativo e esta célula não corresponde, oculta
-                    const statusMap: Record<string, string[]> = {
-                      REALIZADO: ["REALIZADO"],
-                      A_VENCER: ["A VENCER"],
-                      VENCIDO_PENDENTE: ["VENCIDO", "PENDENTE"],
-                      EM_ANDAMENTO: ["EM ANDAMENTO"],
-                      NA: ["N/A"],
-                      A_INICIAR: ["A INICIAR"],
-                    };
                     if (filtroStatus !== "ALL") {
-                      const wantedCell = statusMap[filtroStatus] ?? [];
+                      const wantedCell = STATUS_CELL_MAP[filtroStatus] ?? [];
                       if (!wantedCell.includes(st.label)) {
                         return (
                           <td key={c.id} className="p-0 border-b border-r border-slate-200 text-center bg-slate-50/40" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
@@ -345,16 +389,6 @@ function MatrizPage() {
                         );
                       }
                     }
-                    // Mapeia status -> cor de fundo sólida (sem texto, célula inteira colorida)
-                    const cellBg: Record<string, string> = {
-                      "REALIZADO": "bg-emerald-400 hover:bg-emerald-500",
-                      "A VENCER": "bg-amber-400 hover:bg-amber-500",
-                      "VENCIDO": "bg-red-500 hover:bg-red-600",
-                      "PENDENTE": "bg-red-300 hover:bg-red-400",
-                      "EM ANDAMENTO": "bg-blue-400 hover:bg-blue-500",
-                      "A INICIAR": "bg-indigo-400 hover:bg-indigo-500",
-                      "N/A": "bg-slate-200 hover:bg-slate-300",
-                    };
                     const dataLabel = entry?.data_realizacao
                       ? formatDateBR(entry.data_realizacao)
                       : (showAIniciar && sched ? formatDateBR(sched.data) : "");
@@ -363,7 +397,7 @@ function MatrizPage() {
                         <button
                           disabled={!isEditor}
                           onClick={() => setEditing({ emp, course: c, entry })}
-                          className={`w-full h-7 ${cellBg[st.label] ?? "bg-slate-200"} text-white text-[8px] font-black leading-none`}
+                          className={`w-full h-7 ${CELL_BG[st.label] ?? "bg-slate-200"} text-white text-[8px] font-black leading-none`}
                           title={`${c.nome} — ${st.label}${dataLabel ? ` (${dataLabel})` : ""}${sched ? ` — Turma: ${sched.titulo}` : ""}${entry?.observacao ? ` — ${entry.observacao}` : ""}`}
                         />
                       </td>
@@ -377,15 +411,6 @@ function MatrizPage() {
             )}
           </tbody>
         </table>
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-3 text-[10px] font-bold uppercase">
-        <span className="px-2 py-1 rounded border bg-emerald-100 text-emerald-700 border-emerald-300">Realizado</span>
-        <span className="px-2 py-1 rounded border bg-amber-100 text-amber-700 border-amber-300">A vencer (≤30d)</span>
-        <span className="px-2 py-1 rounded border bg-red-100 text-red-700 border-red-300">Pendente / Vencido</span>
-        <span className="px-2 py-1 rounded border bg-blue-100 text-blue-700 border-blue-300">Em andamento</span>
-        <span className="px-2 py-1 rounded border bg-indigo-100 text-indigo-700 border-indigo-300">A iniciar (turma agendada)</span>
-        <span className="px-2 py-1 rounded border bg-slate-100 text-slate-500 border-slate-300">N/A</span>
       </div>
 
       {editing && (
