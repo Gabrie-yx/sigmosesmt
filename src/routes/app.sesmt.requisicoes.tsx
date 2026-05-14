@@ -63,6 +63,8 @@ type Req = {
   approved_at: string | null;
   created_by: string | null;
   created_at: string;
+  signature_solicitante: string | null;
+  signature_solicitante_height: number | null;
 };
 
 const STATUS_BADGE: Record<Status, string> = {
