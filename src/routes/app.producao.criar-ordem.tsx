@@ -498,17 +498,15 @@ function CriarOrdemPage() {
       }, 0) + 1;
       const numero = `OP-${String(nextSeq).padStart(4, "0")}/${ano}`;
 
-      // Recalcula CASCO no momento do insert direto do banco — evita
-      // colisão por cache obsoleto (duas OPs salvas como CASCO 144).
-      const { data: cascosAtuais } = await supabase
-        .from("producao_ordens")
-        .select("casco")
-        .not("casco", "is", null);
-      const maxCasco = (cascosAtuais ?? []).reduce((mx: number, r: any) => {
-        const m = String(r.casco ?? "").match(/(\d+)/);
-        const n = m ? parseInt(m[1], 10) : 0;
-        return n > mx ? n : mx;
-      }, 0);
+      // Recalcula CASCO no momento do insert direto do banco — evita cache
+      // obsoleto e mantém a base histórica da tabela cascos (ex.: 141).
+      const [{ data: cascosBase }, { data: cascosAtuais }] = await Promise.all([
+        supabase.from("cascos").select("numero"),
+        supabase.from("producao_ordens").select("casco").not("casco", "is", null),
+      ]);
+      const maxCascoBase = (cascosBase ?? []).reduce((mx: number, r: any) => Math.max(mx, extractCascoNumber(r.numero)), 0);
+      const maxCascoOrdens = (cascosAtuais ?? []).reduce((mx: number, r: any) => Math.max(mx, extractCascoNumber(r.casco)), 0);
+      const maxCasco = Math.max(maxCascoBase, maxCascoOrdens);
       const cascoFinal = `CASCO ${String(maxCasco + 1).padStart(3, "0")}`;
 
       const { data: novaOrdem, error: e1 } = await supabase
