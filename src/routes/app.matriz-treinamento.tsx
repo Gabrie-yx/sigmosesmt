@@ -121,16 +121,17 @@ function MatrizPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("training_attendees")
-        .select("employee_id, trainings!inner(course_id, data_realizacao, titulo, tipo)")
-        .not("trainings.course_id", "is", null);
+        .select("employee_id, trainings!inner(course_id, data_realizacao, titulo, tipo)");
       if (error) throw error;
-      return (data ?? []).map((r: any) => ({
-        employee_id: r.employee_id,
-        course_id: r.trainings.course_id,
-        data_realizacao: r.trainings.data_realizacao,
-        titulo: r.trainings.titulo,
-        tipo: r.trainings.tipo,
-      }));
+      return (data ?? [])
+        .filter((r: any) => r.trainings?.course_id)
+        .map((r: any) => ({
+          employee_id: r.employee_id,
+          course_id: r.trainings.course_id,
+          data_realizacao: r.trainings.data_realizacao,
+          titulo: r.trainings.titulo,
+          tipo: r.trainings.tipo,
+        }));
     },
   });
 
