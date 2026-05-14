@@ -63,6 +63,8 @@ type Req = {
   approved_at: string | null;
   created_by: string | null;
   created_at: string;
+  signature_solicitante: string | null;
+  signature_solicitante_height: number | null;
 };
 
 const STATUS_BADGE: Record<Status, string> = {
@@ -190,6 +192,14 @@ async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "do
     if (idx === 0) {
       doc.setFont("helvetica", "normal");
       doc.text(fmtBR(req.data_requisicao), x + 13, finalY + sigH - 1);
+      if (req.signature_solicitante) {
+        try {
+          const hMm = Math.max(6, Math.min(sigH - 8, ((req.signature_solicitante_height ?? 80) / 96) * 25.4));
+          const wMm = colW - 4;
+          const yImg = finalY + 5 + ((sigH - 11 - hMm) / 2);
+          doc.addImage(req.signature_solicitante, "PNG", x + 2, yImg, wMm, hMm, undefined, "FAST");
+        } catch { /* noop */ }
+      }
     }
   });
 
@@ -626,6 +636,23 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
     observacoes: "",
   });
   const [itens, setItens] = useState<Item[]>(emptyItems());
+  const [signature, setSignature] = useState<string | null>(null);
+  const [signatureHeight, setSignatureHeight] = useState<number>(80);
+
+  const onSignatureUpload = async (file: File | null) => {
+    if (!file) return;
+    if (file.type !== "image/png") {
+      toast.error("A assinatura deve estar no formato PNG");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Arquivo muito grande (máx. 2MB)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setSignature(reader.result as string);
+    reader.readAsDataURL(file);
+  };
 
   const setItem = (idx: number, k: keyof Item, v: string) => {
     setItens((arr) => arr.map((it, i) => i === idx ? { ...it, [k]: v } : it));
@@ -664,6 +691,8 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
           pagina: form.pagina,
           observacoes: form.observacoes.trim() || null,
           created_by: userId ?? null,
+          signature_solicitante: signature,
+          signature_solicitante_height: signature ? signatureHeight : null,
         })
         .select()
         .single();
@@ -819,8 +848,48 @@ function NewReqDialog({ onClose, userId }: { onClose: () => void; userId?: strin
             <div className="border-r border-black p-1.5">Assinatura Supervisor Geral</div>
             <div className="p-1.5">Assinatura Analista de Compras</div>
           </div>
-          <div className="grid grid-cols-3 h-16">
-            <div className="border-r border-black" />
+          <div className="grid grid-cols-3 min-h-16">
+            <div className="border-r border-black relative flex items-center justify-center p-1">
+              {signature ? (
+                <div className="flex flex-col items-center gap-1 w-full">
+                  <img
+                    src={signature}
+                    alt="Assinatura do solicitante"
+                    style={{ height: `${signatureHeight}px` }}
+                    className="object-contain max-w-full"
+                  />
+                  <div className="flex items-center gap-2 w-full px-2">
+                    <span className="text-[10px] text-muted-foreground">Tamanho</span>
+                    <input
+                      type="range"
+                      min={20}
+                      max={140}
+                      step={2}
+                      value={signatureHeight}
+                      onChange={(e) => setSignatureHeight(Number(e.target.value))}
+                      className="flex-1 accent-red-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSignature(null)}
+                      className="text-[10px] text-red-700 hover:underline"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label className="cursor-pointer text-[11px] text-red-700 hover:underline px-2 py-1 border border-dashed border-red-700/50 rounded">
+                  Enviar assinatura (PNG)
+                  <input
+                    type="file"
+                    accept="image/png"
+                    className="hidden"
+                    onChange={(e) => onSignatureUpload(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              )}
+            </div>
             <div className="border-r border-black" />
             <div />
           </div>

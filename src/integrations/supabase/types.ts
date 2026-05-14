@@ -1688,6 +1688,8 @@ export type Database = {
           pagina: string | null
           revisao: string | null
           setor: string | null
+          signature_solicitante: string | null
+          signature_solicitante_height: number | null
           solicitante: string
           status: Database["public"]["Enums"]["purchase_req_status"]
           updated_at: string
@@ -1711,6 +1713,8 @@ export type Database = {
           pagina?: string | null
           revisao?: string | null
           setor?: string | null
+          signature_solicitante?: string | null
+          signature_solicitante_height?: number | null
           solicitante: string
           status?: Database["public"]["Enums"]["purchase_req_status"]
           updated_at?: string
@@ -1734,6 +1738,8 @@ export type Database = {
           pagina?: string | null
           revisao?: string | null
           setor?: string | null
+          signature_solicitante?: string | null
+          signature_solicitante_height?: number | null
           solicitante?: string
           status?: Database["public"]["Enums"]["purchase_req_status"]
           updated_at?: string
