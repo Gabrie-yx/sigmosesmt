@@ -102,19 +102,20 @@ function TstPanel() {
   const { data } = useQuery({
     queryKey: ["sesmt-painel", since],
     queryFn: async () => {
-      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs] = await Promise.all([
+      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs, ddsTemas] = await Promise.all([
         supabase.from("employees").select("*").order("nome"),
         supabase.from("companies").select("id,name").order("name"),
         supabase.from("roles").select("*"),
         supabase.from("employee_exams").select("*"),
         supabase.from("safety_overrides").select("*").eq("ativo", true),
-        supabase.from("epi_deliveries").select("id,employee_id,item,qtd,data_entrega,motivo_entrega,valor_unitario").gte("data_entrega", since),
+        supabase.from("epi_deliveries").select("id,employee_id,item,qtd,data_entrega,motivo_entrega,valor_unitario").gte("data_entrega", since).order("data_entrega", { ascending: false }),
         supabase.from("estoque_epi").select("id,nome_material,quantidade_atual,estoque_minimo,ca_validade"),
-        supabase.from("dds").select("id,data,aderencia,participantes_presentes,participantes_esperados").gte("data", since),
+        supabase.from("dds").select("id,data,hora,setor,tema_id,tema_livre,aderencia,participantes_presentes,participantes_esperados").gte("data", since).order("data", { ascending: false }),
         supabase.from("dds_attendees").select("dds_id,employee_id,status"),
         supabase.from("aprs").select("id,status,data_emissao,data_validade").gte("data_emissao", since),
         supabase.from("ptes").select("id,status,data,risco").gte("data", since),
         supabase.from("employee_docs").select("id,employee_id,tipo"),
+        supabase.from("dds_temas").select("id,titulo"),
       ]);
       return {
         employees: emps.data ?? [],
@@ -129,6 +130,7 @@ function TstPanel() {
         aprs: aprs.data ?? [],
         ptes: ptes.data ?? [],
         docs: docs.data ?? [],
+        ddsTemas: ddsTemas.data ?? [],
       };
     },
   });
