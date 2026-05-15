@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dmnLogo from "@/assets/dmn-logo.png";
+import { EstoqueLookupSheet, type PickedItem } from "@/components/estoque-lookup-sheet";
 
 export const Route = createFileRoute("/app/sesmt/requisicoes")({
   component: RequisicoesPage,
@@ -377,6 +378,7 @@ function RequisicoesPage() {
           <Button variant="outline" onClick={() => gerarRelatorio(filtered, periodoLabel())}>
             <FileDown className="h-4 w-4 mr-2" /> Relatório PDF
           </Button>
+          <EstoqueLookupSheet />
           {isEditor && (
             <Dialog open={openNew} onOpenChange={setOpenNew}>
               <DialogTrigger asChild>
@@ -724,6 +726,34 @@ function ReqFormDialog({
     setItens((arr) => arr.length > 10 ? arr.slice(0, -1) : arr);
   };
 
+  const pickFromEstoque = (picked: PickedItem) => {
+    setItens((arr) => {
+      const idx = arr.findIndex((it) => !it.descricao.trim());
+      if (idx === -1) {
+        return [
+          ...arr,
+          {
+            item_numero: arr.length + 1,
+            descricao: picked.descricao,
+            quantidade: "",
+            unidade: picked.unidade || "",
+            observacao: picked.ca ? `CA ${picked.ca}` : "",
+          },
+        ];
+      }
+      return arr.map((it, i) =>
+        i === idx
+          ? {
+              ...it,
+              descricao: picked.descricao,
+              unidade: it.unidade || picked.unidade || "",
+              observacao: it.observacao || (picked.ca ? `CA ${picked.ca}` : ""),
+            }
+          : it,
+      );
+    });
+  };
+
   const save = useMutation({
     mutationFn: async () => {
       if (!form.numero.trim() || !form.solicitante.trim()) {
@@ -797,7 +827,10 @@ function ReqFormDialog({
   return (
     <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-0">
       <DialogHeader className="px-4 pt-4 pb-2 border-b">
-        <DialogTitle>{isEdit ? `Editar Requisição Nº ${existing?.numero}` : "Nova Requisição de Compra"}</DialogTitle>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <DialogTitle>{isEdit ? `Editar Requisição Nº ${existing?.numero}` : "Nova Requisição de Compra"}</DialogTitle>
+          <EstoqueLookupSheet onPick={pickFromEstoque} triggerLabel="Consultar Estoque / CA" />
+        </div>
       </DialogHeader>
 
       {/* Folha replicando o formulário FOR-COMP 03 */}
@@ -903,7 +936,10 @@ function ReqFormDialog({
         </div>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">Total de linhas: {itens.length}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">Total de linhas: {itens.length}</span>
+            <EstoqueLookupSheet onPick={pickFromEstoque} triggerLabel="Consultar Estoque / CA" />
+          </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" size="sm" onClick={removeLastItem} disabled={itens.length <= 10}>
               Remover última linha
