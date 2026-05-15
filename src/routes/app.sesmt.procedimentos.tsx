@@ -966,7 +966,7 @@ function DetailDialog({
                       <div className="text-sm font-medium">{e.nome}</div>
                       <div className="text-xs text-slate-500">
                         {e.setor || "—"}
-                        {e.company_id && companyType.get(e.company_id) === "TERCEIRO" && (
+                        {e.company_id && companyType.get(e.company_id) === "TERCEIRIZADO" && (
                           <Badge
                             variant="outline"
                             className="ml-2 bg-purple-50 text-purple-700 border-purple-200 text-[10px] py-0"
