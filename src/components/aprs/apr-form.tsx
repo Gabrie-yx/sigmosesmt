@@ -671,46 +671,55 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
             <PaperFullHeader apr={apr} setApr={setApr} empresa={empresa} casco={casco} enc={enc} tst={tst}
               employees={employees} companies={companies} pagina={1} />
 
-            {/* Banner de detecção automática de PTE */}
-            {deteccaoPTE.exige && !(apr.pte_id && pte) && (
-              <div className="border-x border-b border-black bg-amber-50 px-3 py-2 flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-[11px] font-black uppercase text-amber-900">
-                    Esta APR EXIGE Permissão de Trabalho Especial (PTE) — detectado automaticamente
-                  </div>
-                  <ul className="text-[10px] text-amber-800 mt-0.5 list-disc list-inside">
-                    {deteccaoPTE.motivos.map((m) => <li key={m}>{m}</li>)}
-                  </ul>
-                  <div className="text-[10px] text-amber-700 mt-1 flex items-center gap-2 flex-wrap">
-                    <span>Abra o painel ao lado para vincular uma PTE existente ou criar uma nova sem sair desta APR.</span>
-                    <Button size="sm" className="h-6 text-[10px] bg-orange-600 hover:bg-orange-700"
-                      onClick={() => setPteSheetOpen(true)}>
-                      <FileText className="h-3 w-3 mr-1" /> Abrir painel de PTE
-                    </Button>
+            {/* Painel de cobertura de PTE por categoria de risco detectada */}
+            {coberturaCategorias.length > 0 && (
+              <div className={`border-x border-b border-black px-3 py-2 ${categoriasPendentes.length > 0 ? "bg-amber-50" : "bg-emerald-50"}`}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  {categoriasPendentes.length > 0 ? (
+                    <AlertTriangle className="h-4 w-4 text-amber-700 shrink-0" />
+                  ) : (
+                    <FileText className="h-4 w-4 text-emerald-700 shrink-0" />
+                  )}
+                  <div className={`text-[11px] font-black uppercase ${categoriasPendentes.length > 0 ? "text-amber-900" : "text-emerald-900"}`}>
+                    {categoriasPendentes.length > 0
+                      ? `PTE OBRIGATÓRIA — ${categoriasCobertas.length}/${coberturaCategorias.length} categoria(s) coberta(s)`
+                      : `PTE — Todas as ${categoriasCobertas.length} categoria(s) cobertas`}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Banner: PTE já vinculada */}
-            {deteccaoPTE.exige && apr.pte_id && pte && (
-              <div className="border-x border-b border-black bg-emerald-50 px-3 py-2 flex items-start gap-2">
-                <FileText className="h-4 w-4 text-emerald-700 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-[11px] font-black uppercase text-emerald-900">
-                    PTE VINCULADA — {(pte as any).risco ?? deteccaoPTE.categoriaPrincipal ?? "Permissão de Trabalho Especial"}
-                  </div>
-                  <div className="text-[10px] text-emerald-800 mt-0.5">
-                    Nº <span className="font-bold">{(pte as any).numero ?? String((pte as any).id).slice(0, 8)}</span>
-                    {" · "}Emissão: <span className="font-bold">{formatDateBR((pte as any).data_emissao)}</span>
-                  </div>
-                  <div className="text-[10px] text-emerald-700 mt-1 flex items-center gap-2 flex-wrap">
-                    <Button size="sm" variant="outline" className="h-6 text-[10px] border-emerald-300 text-emerald-800 hover:bg-emerald-100"
-                      onClick={() => setPteSheetOpen(true)}>
-                      <FileText className="h-3 w-3 mr-1" /> Trocar / Gerenciar PTE
-                    </Button>
-                  </div>
+                <div className="space-y-1">
+                  {coberturaCategorias.map((c) => (
+                    <div key={c.categoria} className="flex items-center gap-2 text-[10px]">
+                      {c.pte ? (
+                        <>
+                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600 text-white font-black text-[9px]">✓</span>
+                          <span className="font-bold text-emerald-900">{c.categoria}</span>
+                          <span className="text-emerald-700">— PTE Nº <b>{(c.pte as any).numero ?? String((c.pte as any).id).slice(0, 8)}</b> · {formatDateBR((c.pte as any).data_emissao)}</span>
+                        </>
+                      ) : c.riscoLabel ? (
+                        <>
+                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-600 text-white font-black text-[9px]">!</span>
+                          <span className="font-bold text-amber-900">{c.categoria}</span>
+                          <span className="text-amber-800">— {c.motivo}</span>
+                          <Button
+                            size="sm"
+                            className="h-5 px-2 text-[9px] bg-orange-600 hover:bg-orange-700 ml-auto"
+                            onClick={() => {
+                              setPteSheetRiscoSugerido(c.riscoLabel);
+                              setPteSheetOpen(true);
+                            }}
+                          >
+                            Resolver
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-400 text-white font-black text-[9px]">i</span>
+                          <span className="font-bold text-slate-700">{c.categoria}</span>
+                          <span className="text-slate-600">— {c.motivo} (advisory)</span>
+                        </>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
