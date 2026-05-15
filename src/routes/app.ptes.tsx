@@ -158,6 +158,10 @@ function PtesPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["ptes"] });
       qc.invalidateQueries({ queryKey: ["ptes-by-apr"] });
+      qc.invalidateQueries({ predicate: (q) => {
+        const k = q.queryKey?.[0];
+        return k === "ptes-linked-apr" || k === "ptes-light";
+      } });
       setEditingId(null);
       setLinkedAprId(null);
       setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "" });
@@ -171,11 +175,23 @@ function PtesPage() {
       const { error } = await supabase.from("ptes").update({ status: "ENCERRADA" }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["ptes"] }); toast.success("PTE encerrada"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ predicate: (q) => {
+        const k = q.queryKey?.[0];
+        return k === "ptes" || k === "ptes-by-apr" || k === "ptes-linked-apr" || k === "ptes-light";
+      } });
+      toast.success("PTE encerrada");
+    },
   });
   const del = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("ptes").delete().eq("id", id); if (error) throw error; },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["ptes"] }); toast.success("Removido"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ predicate: (q) => {
+        const k = q.queryKey?.[0];
+        return k === "ptes" || k === "ptes-by-apr" || k === "ptes-linked-apr" || k === "ptes-light";
+      } });
+      toast.success("Removido");
+    },
   });
 
   function startEdit(p: any) {
