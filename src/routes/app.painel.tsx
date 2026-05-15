@@ -386,17 +386,23 @@ function TstPanel() {
     "top-itens": {
       title: "Top equipamentos entregues", icon: Boxes,
       render: () => (
-        <div className="h-full min-h-0">
+        <div className="h-full min-h-0 overflow-y-auto pr-1">
           {topItens.length === 0 ? <Empty /> : (
-            <ResponsiveContainer>
-              <BarChart data={topItens} layout="vertical" margin={{ left: 90 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis type="number" tick={{ fontSize: 10 }} />
-                <YAxis type="category" dataKey="item" width={150} tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Bar dataKey="qtd" fill="#0f766e" radius={[0, 6, 6, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+              {topItens.map((it, idx) => {
+                const max = topItens[0].qtd || 1;
+                const perc = Math.max(6, Math.round((it.qtd / max) * 100));
+                return (
+                  <div key={it.item + idx} className="p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:shadow-md transition-all">
+                    <div className="text-[9px] text-slate-500 font-black uppercase mb-1 truncate" title={it.item}>{it.item}</div>
+                    <div className="text-xl font-black text-[#0f766e]">{it.qtd}</div>
+                    <div className="mt-2 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-[#0f766e] to-[#14b8a6]" style={{ width: `${perc}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       ),
@@ -404,18 +410,26 @@ function TstPanel() {
     "top-recip": {
       title: "Top recebedores de EPI", icon: HardHat,
       render: () => (
-        <div className="space-y-2.5 overflow-auto h-full">
+        <div className="space-y-2 overflow-auto h-full">
           {topRecip.length === 0 ? <Empty /> : topRecip.map((r, i) => {
-            const max = topRecip[0].qtd || 1;
-            const perc = (r.qtd / max) * 100;
+            const initials = r.nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("") || "?";
+            const medal = i === 0 ? { bg: "bg-yellow-400", label: "1º" }
+              : i === 1 ? { bg: "bg-slate-300", label: "2º" }
+              : i === 2 ? { bg: "bg-orange-300", label: "3º" }
+              : null;
+            const isFirst = i === 0;
             return (
-              <div key={r.nome + i}>
-                <div className="flex items-center justify-between text-[10px] font-bold mb-1">
-                  <span className="truncate text-slate-700">{r.nome}</span>
-                  <span className="text-[#0f766e] font-black">{r.qtd}</span>
+              <div key={r.nome + i}
+                className={`flex items-center gap-3 p-2 rounded-lg ${isFirst ? "bg-slate-50 border-l-4 border-[#0f766e]" : ""}`}>
+                <div className="relative shrink-0">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-xs ${
+                    isFirst ? "bg-teal-100 text-[#0f766e] border-2 border-teal-200" : "bg-slate-100 text-slate-600"
+                  }`}>{initials}</div>
+                  {medal && <span className={`absolute -bottom-1 -right-1 ${medal.bg} text-[8px] px-1 rounded font-black`}>{medal.label}</span>}
                 </div>
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-[#0f766e] to-[#14b8a6]" style={{ width: `${perc}%` }} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-slate-800 truncate">{r.nome}</div>
+                  <div className="text-[10px] text-slate-500 font-medium">{r.qtd} {r.qtd === 1 ? "item" : "itens"}</div>
                 </div>
               </div>
             );
@@ -447,19 +461,35 @@ function TstPanel() {
     conformidade: {
       title: "Conformidade por empresa", icon: Building2,
       render: () => (
-        <div className="space-y-3 overflow-y-auto pr-1 h-full">
-          {conformity.length === 0 && <Empty />}
-          {conformity.map((c) => (
-            <div key={c.name}>
-              <div className="flex justify-between text-[10px] font-black uppercase text-slate-600 mb-1">
-                <span className="truncate">{c.name}</span>
-                <span>{c.oks}/{c.total} · {c.perc}%</span>
-              </div>
-              <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                <div className={`h-full bg-gradient-to-r ${c.color}`} style={{ width: `${c.perc}%` }} />
-              </div>
+        <div className="overflow-y-auto pr-1 h-full">
+          {conformity.length === 0 ? <Empty /> : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {conformity.map((c) => {
+                const stroke = c.perc === 100 ? "#10b981"
+                  : c.perc > 80 ? "#f59e0b"
+                  : c.perc > 0 ? "#ef4444"
+                  : "#94a3b8";
+                const dash = 150;
+                const offset = dash - (dash * c.perc) / 100;
+                return (
+                  <div key={c.name} className="flex flex-col items-center gap-2 p-2 rounded-xl border border-slate-100 bg-slate-50/40 hover:bg-white hover:shadow-sm transition-all">
+                    <div className="relative flex items-center justify-center">
+                      <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
+                        <circle cx="28" cy="28" r="24" stroke="#e2e8f0" strokeWidth="4" fill="transparent" />
+                        <circle cx="28" cy="28" r="24" stroke={stroke} strokeWidth="4" fill="transparent"
+                          strokeDasharray={dash} strokeDashoffset={offset} strokeLinecap="round" />
+                      </svg>
+                      <span className="absolute text-[10px] font-black text-slate-700">{c.perc}%</span>
+                    </div>
+                    <div className="text-center w-full">
+                      <div className="text-[9px] font-black text-slate-700 uppercase truncate" title={c.name}>{c.name}</div>
+                      <div className="text-[9px] text-slate-400 font-bold">{c.oks}/{c.total}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          )}
         </div>
       ),
     },
