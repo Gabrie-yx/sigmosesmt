@@ -41,8 +41,11 @@ import {
   Clock,
   Search,
   Pencil,
+  Wand2,
+  FileDown,
 } from "lucide-react";
 import { toast } from "sonner";
+import { gerarAuditoriaPopPdf } from "@/lib/pop-auditoria-pdf";
 
 export const Route = createFileRoute("/app/sesmt/procedimentos")({
   component: ProcedimentosPage,
@@ -139,6 +142,7 @@ function ProcedimentosPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [editing, setEditing] = useState<Procedimento | null>(null);
   const [detail, setDetail] = useState<Procedimento | null>(null);
+  const [creatingGuided, setCreatingGuided] = useState(false);
 
   const { data: procs = [], isLoading } = useQuery({
     queryKey: ["procedimentos"],
@@ -273,6 +277,78 @@ function ProcedimentosPage() {
           </Dialog>
         )}
       </div>
+
+      {isEditor && !procs.some((p) => p.codigo === "POP-SST-001") && (
+        <Card className="mb-4 border-amber-300 bg-amber-50">
+          <CardContent className="pt-4 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <Wand2 className="h-5 w-5 text-amber-700 mt-0.5" />
+              <div>
+                <div className="font-bold text-amber-900">
+                  Cadastro guiado: POP-SST-001
+                </div>
+                <div className="text-sm text-amber-800">
+                  Cria automaticamente o POP-SST-001 (Controle SST CLT/Terceiros), escopo
+                  AMBOS, criticidade ALTA, v01 já HOMOLOGADA. Anexe o PDF em seguida pelo
+                  botão “Detalhes”.
+                </div>
+              </div>
+            </div>
+            <Button
+              disabled={creatingGuided}
+              onClick={async () => {
+                setCreatingGuided(true);
+                try {
+                  const today = new Date();
+                  const proxima = new Date(today);
+                  proxima.setMonth(proxima.getMonth() + 24);
+                  const payload = {
+                    codigo: "POP-SST-001",
+                    titulo: "Controle de SST para CLT e Terceiros",
+                    objetivo:
+                      "Padronizar a admissão, aptidão e ciência de procedimentos para colaboradores CLT e terceirizados, garantindo conformidade com NR-01, NR-07 e NR-18.",
+                    escopo: "AMBOS",
+                    area: "SST",
+                    criticidade: "ALTA",
+                    status: "HOMOLOGADO",
+                    versao_atual: "01",
+                    periodicidade_revisao_meses: 24,
+                    proxima_revisao: proxima.toISOString().slice(0, 10),
+                    responsavel: "SESMT",
+                    observacoes:
+                      "POP base de auditoria — define a metodologia executada pelo safety-engine.",
+                  };
+                  const { data: ins, error } = await (supabase as any)
+                    .from("procedimentos")
+                    .insert(payload)
+                    .select()
+                    .single();
+                  if (error) throw error;
+                  await (supabase as any).from("procedimento_revisoes").insert({
+                    procedimento_id: ins.id,
+                    versao: "01",
+                    status: "HOMOLOGADO",
+                    motivo_revisao: "Emissão inicial — auditoria POP-SST-001",
+                    responsavel: "SESMT",
+                    data_homologacao: today.toISOString().slice(0, 10),
+                  });
+                  toast.success("POP-SST-001 criado e homologado em v01");
+                  qc.invalidateQueries({ queryKey: ["procedimentos"] });
+                  setDetail(ins as Procedimento);
+                } catch (e: any) {
+                  toast.error(e.message ?? "Erro ao cadastrar POP guiado");
+                } finally {
+                  setCreatingGuided(false);
+                }
+              }}
+              className="bg-amber-700 hover:bg-amber-800 text-white"
+            >
+              <Wand2 className="h-4 w-4 mr-2" />
+              {creatingGuided ? "Criando…" : "Cadastrar POP-SST-001"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
         <StatCard label="Total" value={stats.total} icon={<FileCheck2 className="h-4 w-4" />} />
@@ -455,6 +531,7 @@ function ProcedimentosPage() {
             proc={detail}
             employees={employees}
             companyType={companyType}
+            companies={companies}
             isEditor={isEditor}
             onClose={() => setDetail(null)}
           />
@@ -697,16 +774,23 @@ function DetailDialog({
   proc,
   employees,
   companyType,
+  companies,
   isEditor,
   onClose,
 }: {
   proc: Procedimento;
   employees: EmployeeMini[];
   companyType: Map<string, string>;
+  companies: CompanyMini[];
   isEditor: boolean;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const companyName = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of companies) m.set(c.id, c.name);
+    return m;
+  }, [companies]);
 
   const { data: revisoes = [] } = useQuery({
     queryKey: ["proc-revisoes", proc.id],
@@ -1093,6 +1177,22 @@ function DetailDialog({
       <DialogFooter>
         <Button variant="outline" onClick={onClose}>
           Fechar
+        </Button>
+        <Button
+          variant="outline"
+          className="border-red-700 text-red-700 hover:bg-red-50"
+          onClick={() =>
+            gerarAuditoriaPopPdf({
+              proc,
+              revisoes,
+              applicable,
+              cientesAtuais: cientes,
+              companyName,
+              companyType,
+            })
+          }
+        >
+          <FileDown className="h-4 w-4 mr-1" /> Relatório de auditoria (PDF)
         </Button>
       </DialogFooter>
     </DialogContent>
