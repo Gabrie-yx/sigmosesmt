@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,20 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
   const fotos = itens.filter((i: any) => i.tipo === "FOTO_DDS");
   const outros = itens.filter((i: any) => i.tipo !== "LISTA_PRESENCA" && i.tipo !== "FOTO_DDS");
 
+  const [thumbs, setThumbs] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      const next: Record<string, string> = {};
+      for (const f of fotos) {
+        const { data } = await supabase.storage.from("dds-anexos").createSignedUrl(f.file_path, 60 * 10);
+        if (data?.signedUrl) next[f.id] = data.signedUrl;
+      }
+      if (!cancel) setThumbs(next);
+    })();
+    return () => { cancel = true; };
+  }, [fotos.map((f: any) => f.id).join(",")]);
+
   function Section({ title, icon, hint, items, onAttach, accept, multiple }: {
     title: string; icon: React.ReactNode; hint: string; items: any[];
     onAttach: () => void; accept: string; multiple: boolean;
@@ -120,6 +134,24 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
         accept="image/*"
         multiple={true}
       />
+      {fotos.length > 0 && (
+        <div className="grid grid-cols-4 gap-2">
+          {fotos.map((f: any) => (
+            <button
+              key={f.id}
+              onClick={() => abrir(f.file_path)}
+              className="aspect-square border rounded overflow-hidden bg-slate-100 hover:ring-2 hover:ring-primary"
+              title={f.descricao}
+            >
+              {thumbs[f.id] ? (
+                <img src={thumbs[f.id]} alt={f.descricao} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">…</div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
       {outros.length > 0 && (
         <Section
           title="Outros anexos"
