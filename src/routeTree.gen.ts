@@ -29,6 +29,7 @@ import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppAprsRouteImport } from './routes/app.aprs'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
+import { Route as AppSesmtTerceirosRouteImport } from './routes/app.sesmt.terceiros'
 import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requisicoes'
 import { Route as AppSesmtProcedimentosRouteImport } from './routes/app.sesmt.procedimentos'
 import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
@@ -145,6 +146,11 @@ const AppDdsIndexRoute = AppDdsIndexRouteImport.update({
   path: '/dds/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSesmtTerceirosRoute = AppSesmtTerceirosRouteImport.update({
+  id: '/sesmt/terceiros',
+  path: '/sesmt/terceiros',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSesmtRequisicoesRoute = AppSesmtRequisicoesRouteImport.update({
   id: '/sesmt/requisicoes',
   path: '/sesmt/requisicoes',
@@ -256,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
+  '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
 }
@@ -291,6 +298,7 @@ export interface FileRoutesByTo {
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
+  '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
   '/app/dds': typeof AppDdsIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
 }
@@ -329,6 +337,7 @@ export interface FileRoutesById {
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
+  '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
 }
@@ -368,6 +377,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/docs'
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
+    | '/app/sesmt/terceiros'
     | '/app/dds/'
     | '/app/employees/'
   fileRoutesByTo: FileRoutesByTo
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/docs'
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
+    | '/app/sesmt/terceiros'
     | '/app/dds'
     | '/app/employees'
   id:
@@ -440,6 +451,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/docs'
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
+    | '/app/sesmt/terceiros'
     | '/app/dds/'
     | '/app/employees/'
   fileRoutesById: FileRoutesById
@@ -595,6 +607,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDdsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/sesmt/terceiros': {
+      id: '/app/sesmt/terceiros'
+      path: '/sesmt/terceiros'
+      fullPath: '/app/sesmt/terceiros'
+      preLoaderRoute: typeof AppSesmtTerceirosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/sesmt/requisicoes': {
       id: '/app/sesmt/requisicoes'
       path: '/sesmt/requisicoes'
@@ -744,6 +763,7 @@ interface AppRouteChildren {
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
   AppSesmtProcedimentosRoute: typeof AppSesmtProcedimentosRoute
   AppSesmtRequisicoesRoute: typeof AppSesmtRequisicoesRoute
+  AppSesmtTerceirosRoute: typeof AppSesmtTerceirosRoute
   AppDdsIndexRoute: typeof AppDdsIndexRoute
 }
 
@@ -774,6 +794,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtDocsRoute: AppSesmtDocsRoute,
   AppSesmtProcedimentosRoute: AppSesmtProcedimentosRoute,
   AppSesmtRequisicoesRoute: AppSesmtRequisicoesRoute,
+  AppSesmtTerceirosRoute: AppSesmtTerceirosRoute,
   AppDdsIndexRoute: AppDdsIndexRoute,
 }
 
