@@ -1014,10 +1014,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         aprNumero={apr.numero ?? null}
         aprLocal={apr.local ?? null}
         empresaId={apr.empresa_id ?? null}
-        riscoSugerido={deteccaoPTE.categoriaPrincipal}
+        riscoSugerido={
+          pteSheetRiscoSugerido ??
+          (deteccaoPTE.categoriaPrincipal
+            ? CATEGORIA_PTE_TO_RISCO_LABEL[deteccaoPTE.categoriaPrincipal] ?? null
+            : null)
+        }
         onPick={(pteId) => {
           setApr((a) => ({ ...a, pte_id: pteId, exige_pte: true }));
           qc.invalidateQueries({ queryKey: ["ptes-light"] });
+          qc.invalidateQueries({ queryKey: ["ptes-linked-apr", aprId] });
         }}
       />
     </div>
