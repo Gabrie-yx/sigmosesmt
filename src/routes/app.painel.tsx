@@ -3,15 +3,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Search, AlertTriangle, Building2, Ban, Users, ShieldCheck, Package,
+  Search, AlertTriangle, Building2, Users, ShieldCheck, Package,
   HardHat, FileWarning, Activity, TrendingUp, Boxes, ClipboardCheck,
   ArrowUpRight, Stethoscope, GripVertical, RotateCcw, Lock, Unlock,
+  ShoppingBag, MessageSquare,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  AreaChart, Area, PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell, Legend, ComposedChart, Line,
 } from "recharts";
 // react-grid-layout touches `window` at import — load it client-only via lazy state
 type Layout = { i: string; x: number; y: number; w: number; h: number; minH?: number; minW?: number };
@@ -25,19 +26,21 @@ const today = new Date();
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
 const MONTHS_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-const LS_KEY = "sesmt-painel-layout-v1";
+const LS_KEY = "sesmt-painel-layout-v2";
 const DEFAULT_LAYOUT: Layout[] = [
   { i: "kpis",        x: 0, y: 0,  w: 12, h: 4,  minH: 3, minW: 6 },
   { i: "search",      x: 0, y: 4,  w: 8,  h: 5,  minH: 4, minW: 4 },
   { i: "health",      x: 8, y: 4,  w: 4,  h: 5,  minH: 4, minW: 3 },
-  { i: "status-pie",  x: 0, y: 9,  w: 4,  h: 7,  minH: 5, minW: 3 },
-  { i: "epi-mensal",  x: 4, y: 9,  w: 8,  h: 7,  minH: 5, minW: 4 },
-  { i: "top-itens",   x: 0, y: 16, w: 8,  h: 8,  minH: 5, minW: 4 },
-  { i: "top-recip",   x: 8, y: 16, w: 4,  h: 8,  minH: 5, minW: 3 },
-  { i: "dds-trend",   x: 0, y: 24, w: 6,  h: 7,  minH: 5, minW: 4 },
-  { i: "conformidade",x: 6, y: 24, w: 6,  h: 7,  minH: 5, minW: 4 },
-  { i: "pendencias",  x: 0, y: 31, w: 12, h: 9,  minH: 5, minW: 6 },
-  { i: "footer",      x: 0, y: 40, w: 12, h: 3,  minH: 2, minW: 6 },
+  { i: "epi-mensal",  x: 0, y: 9,  w: 8,  h: 8,  minH: 6, minW: 5 },
+  { i: "status-pie",  x: 8, y: 9,  w: 4,  h: 8,  minH: 6, minW: 3 },
+  { i: "epi-recentes",x: 0, y: 17, w: 6,  h: 8,  minH: 5, minW: 4 },
+  { i: "dds-recentes",x: 6, y: 17, w: 6,  h: 8,  minH: 5, minW: 4 },
+  { i: "top-itens",   x: 0, y: 25, w: 8,  h: 8,  minH: 5, minW: 4 },
+  { i: "top-recip",   x: 8, y: 25, w: 4,  h: 8,  minH: 5, minW: 3 },
+  { i: "dds-trend",   x: 0, y: 33, w: 6,  h: 7,  minH: 5, minW: 4 },
+  { i: "conformidade",x: 6, y: 33, w: 6,  h: 7,  minH: 5, minW: 4 },
+  { i: "pendencias",  x: 0, y: 40, w: 12, h: 9,  minH: 5, minW: 6 },
+  { i: "footer",      x: 0, y: 49, w: 12, h: 3,  minH: 2, minW: 6 },
 ];
 
 function loadLayout(): Layout[] {
