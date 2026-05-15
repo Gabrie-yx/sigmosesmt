@@ -774,16 +774,23 @@ function DetailDialog({
   proc,
   employees,
   companyType,
+  companies,
   isEditor,
   onClose,
 }: {
   proc: Procedimento;
   employees: EmployeeMini[];
   companyType: Map<string, string>;
+  companies: CompanyMini[];
   isEditor: boolean;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const companyName = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of companies) m.set(c.id, c.name);
+    return m;
+  }, [companies]);
 
   const { data: revisoes = [] } = useQuery({
     queryKey: ["proc-revisoes", proc.id],
