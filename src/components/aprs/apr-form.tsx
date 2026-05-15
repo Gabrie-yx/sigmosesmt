@@ -73,7 +73,7 @@ const emptyApr: APR = {
   dias_semana: ["SEG", "TER", "QUA", "QUI", "SEX"],
 };
 
-const EMPTY_QUERY_LIST: any[] = [];
+const EMPTY_QUERY_LIST: [] = [];
 
 /* ---------- componentes visuais (espelho do papel) ---------- */
 const APR_RED = "#dc3545";
