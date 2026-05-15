@@ -212,17 +212,49 @@ function TstPanel() {
   }, [data]);
 
   const entregaMensal = useMemo(() => {
-    const m = new Map<string, { mes: string; qtd: number; valor: number }>();
+    const m = new Map<string, { mes: string; primeira: number; troca: number; perda: number; devolucao: number; outros: number; valor: number }>();
     (data?.deliveries ?? []).forEach((d: any) => {
       const dt = new Date(d.data_entrega + "T00:00");
       const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
       const label = `${MONTHS_PT[dt.getMonth()]}/${String(dt.getFullYear()).slice(2)}`;
-      const cur = m.get(key) ?? { mes: label, qtd: 0, valor: 0 };
-      cur.qtd += Number(d.qtd || 0);
-      cur.valor += Number(d.qtd || 0) * Number(d.valor_unitario || 0);
+      const cur = m.get(key) ?? { mes: label, primeira: 0, troca: 0, perda: 0, devolucao: 0, outros: 0, valor: 0 };
+      const q = Number(d.qtd || 0);
+      const motivo = String(d.motivo_entrega || "");
+      if (motivo === "PRIMEIRA_ENTREGA") cur.primeira += q;
+      else if (motivo === "TROCA" || motivo === "TROCA_DESGASTE") cur.troca += q;
+      else if (motivo === "PERDA_EXTRAVIO") cur.perda += q;
+      else if (motivo === "DEVOLUCAO") cur.devolucao += q;
+      else cur.outros += q;
+      cur.valor += q * Number(d.valor_unitario || 0);
       m.set(key, cur);
     });
     return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v);
+  }, [data]);
+
+  const epiRecentes = useMemo(() => {
+    const empMap = new Map((data?.employees ?? []).map((e: any) => [e.id, e.nome]));
+    return (data?.deliveries ?? []).slice(0, 10).map((d: any) => ({
+      id: d.id,
+      item: d.item,
+      qtd: Number(d.qtd || 0),
+      colaborador: (empMap.get(d.employee_id) as string) ?? "—",
+      employee_id: d.employee_id,
+      data: d.data_entrega,
+      motivo: String(d.motivo_entrega || ""),
+    }));
+  }, [data]);
+
+  const ddsRecentes = useMemo(() => {
+    const tMap = new Map((data?.ddsTemas ?? []).map((t: any) => [t.id, t.titulo]));
+    return (data?.dds ?? []).slice(0, 10).map((d: any) => ({
+      id: d.id,
+      data: d.data,
+      tema: (d.tema_id ? (tMap.get(d.tema_id) as string) : null) ?? d.tema_livre ?? "Sem tema",
+      setor: d.setor ?? "—",
+      presentes: Number(d.participantes_presentes || 0),
+      esperados: Number(d.participantes_esperados || 0),
+      aderencia: Number(d.aderencia || 0),
+    }));
   }, [data]);
 
   const topRecip = useMemo(() => {
