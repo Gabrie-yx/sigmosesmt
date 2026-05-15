@@ -19,8 +19,11 @@ export type DDSFormParams = {
   responsavelSesmt?: string | null;
 };
 
-export function gerarFormularioSemanalDDS(p: DDSFormParams): jsPDF {
-  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF): jsPDF {
+  const doc = existingDoc ?? new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  if (existingDoc) {
+    doc.addPage("a4", "landscape");
+  }
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 6;

@@ -15,6 +15,8 @@ import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X, Fil
 import { toast } from "sonner";
 import { DDSEvidencias } from "@/components/dds-evidencias";
 import { gerarFormularioSemanalDDS } from "@/lib/dds-formulario-semanal-pdf";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/dds/")({
   component: DDSPage,
@@ -292,7 +294,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
   const [horaFim, setHoraFim] = useState("07:40");
   const [gestorId, setGestorId] = useState<string>("");
   const [setor, setSetor] = useState("");
-  const [companyId, setCompanyId] = useState<string>("");
+  const [companyIds, setCompanyIds] = useState<string[]>([]);
   const [encarregado, setEncarregado] = useState("");
   const [sesmt, setSesmt] = useState("");
   const [temaIds, setTemaIds] = useState<string[]>([]);
@@ -308,28 +310,32 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
   const [gerarPdf, setGerarPdf] = useState(true);
   const [listaFile, setListaFile] = useState<File | null>(null);
   const [fotosFiles, setFotosFiles] = useState<File[]>([]);
+  const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
+  const [previewName, setPreviewName] = useState<string>("");
+  const [previewFromSave, setPreviewFromSave] = useState(false);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-for-dds-novo"],
     queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,encarregado1,matriz_nome,matriz_cnpj").order("name")).data ?? [],
   });
   const { data: empresaEmployees = [] } = useQuery({
-    queryKey: ["employees-by-company-dds", companyId],
-    enabled: !!companyId,
-    queryFn: async () => (await supabase.from("employees").select("id,nome,cpf,roles(name)").eq("status","ATIVO").eq("company_id", companyId).order("nome")).data ?? [],
+    queryKey: ["employees-by-companies-dds", companyIds.join(",")],
+    enabled: companyIds.length > 0,
+    queryFn: async () => (await supabase.from("employees").select("id,nome,cpf,company_id,roles(name)").eq("status","ATIVO").in("company_id", companyIds).order("nome")).data ?? [],
   });
-  const company = companies.find((c: any) => c.id === companyId);
+  const selectedCompanies = useMemo(() => companies.filter((c: any) => companyIds.includes(c.id)), [companies, companyIds]);
+  const primaryCompany = selectedCompanies[0];
 
-  const empList = companyId ? empresaEmployees as any[] : employees as any[];
-  // ao trocar empresa: pré-marcar todos como presentes e ajustar esperados
+  const empList = companyIds.length > 0 ? empresaEmployees as any[] : employees as any[];
+  // ao trocar empresas: pré-marcar todos como presentes e ajustar esperados
   useMemo(() => {
-    if (companyId && empresaEmployees.length > 0) {
+    if (companyIds.length > 0 && empresaEmployees.length > 0) {
       setPresentes(new Set(empresaEmployees.map((e: any) => e.id)));
       setEsperados(empresaEmployees.length);
-      if (company?.encarregado1 && !encarregado) setEncarregado(company.encarregado1);
+      if (primaryCompany?.encarregado1 && !encarregado) setEncarregado(primaryCompany.encarregado1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId, empresaEmployees.length]);
+  }, [companyIds.join(","), empresaEmployees.length]);
 
   useMemo(() => {
     if (!sesmt && user?.user_metadata?.full_name) setSesmt(user.user_metadata.full_name as string);
@@ -358,7 +364,8 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
   function fmtBR(d: Date) { return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }); }
   function fmtBRFull(d: Date) { return d.toLocaleDateString("pt-BR"); }
 
-  function gerarPDFSemanal(funcionarios: { nome: string; funcao?: string | null }[]) {
+  function buildPDFSemanal(): { doc: jsPDF; name: string } | null {
+    if (selectedCompanies.length === 0) return null;
     const seg = getMonday(data);
     const sex = new Date(seg); sex.setDate(sex.getDate() + 4);
     const temasSel = temaIds
@@ -367,29 +374,38 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
       .map((t: any) => `${t!.codigo ? t!.codigo + "- " : ""}${t!.titulo}`)
       .join(" / ");
     const assuntos = [temasSel, ...temasLivres].filter(Boolean).join(" / ") || "—";
-    const doc = gerarFormularioSemanalDDS({
-      matrizNome: company?.matriz_nome || company?.name || "—",
-      matrizCnpj: company?.matriz_cnpj || company?.cnpj || "",
-      codigo: "FOR-SEG 06",
-      revisao: "00",
-      dataDocumento: new Date().toLocaleDateString("pt-BR"),
-      pagina: "01/01",
-      empresaNome: company?.name ?? "",
-      empresaCnpj: company?.cnpj ?? "",
-      localSetor: setor || "—",
-      periodoTexto: `${fmtBR(seg)} à ${fmtBRFull(sex)}`,
-      horaTexto: `${(hora || "").replace(":", "h")}min às ${(horaFim || "").replace(":", "h")}min`,
-      assuntos,
-      funcionarios,
-      encarregado, responsavelSesmt: sesmt,
+    let doc: jsPDF | undefined;
+    selectedCompanies.forEach((company: any, idx: number) => {
+      const funcs = (empresaEmployees as any[])
+        .filter((e) => e.company_id === company.id)
+        .map((e) => ({ nome: e.nome, funcao: e.roles?.name ?? "" }));
+      doc = gerarFormularioSemanalDDS({
+        matrizNome: company?.matriz_nome || company?.name || "—",
+        matrizCnpj: company?.matriz_cnpj || company?.cnpj || "",
+        codigo: "FOR-SEG 06",
+        revisao: "00",
+        dataDocumento: new Date().toLocaleDateString("pt-BR"),
+        pagina: `${String(idx + 1).padStart(2, "0")}/${String(selectedCompanies.length).padStart(2, "0")}`,
+        empresaNome: company?.name ?? "",
+        empresaCnpj: company?.cnpj ?? "",
+        localSetor: setor || "—",
+        periodoTexto: `${fmtBR(seg)} à ${fmtBRFull(sex)}`,
+        horaTexto: `${(hora || "").replace(":", "h")}min às ${(horaFim || "").replace(":", "h")}min`,
+        assuntos,
+        funcionarios: funcs,
+        encarregado, responsavelSesmt: sesmt,
+      }, doc);
     });
-    const fname = `DDS_${(company?.name ?? "empresa").replace(/\s+/g, "_")}_${seg.toISOString().slice(0,10)}.pdf`;
-    doc.save(fname);
+    const baseName = selectedCompanies.length === 1
+      ? (selectedCompanies[0].name ?? "empresa").replace(/\s+/g, "_")
+      : `${selectedCompanies.length}_empresas`;
+    const name = `DDS_${baseName}_${seg.toISOString().slice(0, 10)}.pdf`;
+    return { doc: doc!, name };
   }
 
   async function save() {
     if (!gestorId) return toast.error("Selecione o gestor");
-    if (gerarPdf && !companyId) return toast.error("Selecione a empresa para gerar o PDF semanal");
+    if (gerarPdf && companyIds.length === 0) return toast.error("Selecione ao menos uma empresa para gerar o PDF semanal");
     if (temaIds.length === 0 && temasLivres.length === 0) return toast.error("Selecione ao menos um tema ou adicione um tema livre");
     if (!listaFile) toast.warning("Atenção: salvando sem lista de presença assinada");
     if (fotosFiles.length < 2) toast.warning(`Atenção: salvando com ${fotosFiles.length} foto(s) — recomendado 2 a 4`);
@@ -399,7 +415,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
       const { data: created, error } = await supabase.from("dds").insert({
         data, hora, hora_fim: horaFim || null,
         gestor_id: gestorId, setor: setor || null,
-        company_id: companyId || null,
+        company_id: companyIds[0] || null,
         encarregado: encarregado || null,
         responsavel_sesmt: sesmt || null,
         tema_id: temaIds[0] ?? null,
@@ -434,12 +450,19 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
       } catch (upErr: any) {
         toast.error("DDS salvo, mas falhou anexo: " + upErr.message);
       }
-      if (gerarPdf && companyId) {
-        const funcs = (empresaEmployees as any[]).map((e) => ({ nome: e.nome, funcao: e.roles?.name ?? "" }));
-        try { gerarPDFSemanal(funcs); } catch (err: any) { toast.error("DDS salvo, mas falhou ao gerar PDF: " + err.message); }
+      if (gerarPdf && companyIds.length > 0) {
+        try {
+          const built = buildPDFSemanal();
+          if (built) {
+            setPreviewDoc(built.doc);
+            setPreviewName(built.name);
+            setPreviewFromSave(true);
+          }
+        } catch (err: any) { toast.error("DDS salvo, mas falhou ao gerar PDF: " + err.message); }
       }
       toast.success("DDS lançado");
-      onSaved();
+      // Não fechar até o usuário concluir o preview; se não há PDF, fecha
+      if (!gerarPdf || companyIds.length === 0) onSaved();
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -462,14 +485,29 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label>Empresa * (para o PDF)</Label>
-              <Select value={companyId} onValueChange={setCompanyId}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {companies.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {companyId && <div className="text-xs text-muted-foreground mt-1">{empresaEmployees.length} funcionário(s) ativo(s)</div>}
+              <Label>Empresas * (uma página de PDF por empresa)</Label>
+              {companyIds.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1 mt-1">
+                  {selectedCompanies.map((c: any) => (
+                    <Badge key={c.id} variant="secondary" className="gap-1 pr-1">
+                      <span className="truncate max-w-[200px]">{c.name}</span>
+                      <button type="button" onClick={() => setCompanyIds(companyIds.filter((x) => x !== c.id))} className="hover:bg-slate-300 rounded p-0.5"><X className="h-3 w-3" /></button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <div className="border rounded max-h-32 overflow-auto divide-y">
+                {companies.map((c: any) => {
+                  const checked = companyIds.includes(c.id);
+                  return (
+                    <label key={c.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-sm">
+                      <Checkbox checked={checked} onCheckedChange={() => setCompanyIds(checked ? companyIds.filter((x) => x !== c.id) : [...companyIds, c.id])} />
+                      <span className="flex-1 truncate">{c.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              {companyIds.length > 0 && <div className="text-xs text-muted-foreground mt-1">{empresaEmployees.length} funcionário(s) ativo(s) em {companyIds.length} empresa(s)</div>}
             </div>
             <div><Label>Local / Setor</Label><Input value={setor} onChange={(e) => setSetor(e.target.value)} placeholder="Ex: PRODUÇÃO" /></div>
           </div>
@@ -627,9 +665,23 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          {gerarPdf && companyIds.length > 0 && (
+            <Button variant="outline" type="button" onClick={() => {
+              try {
+                const built = buildPDFSemanal();
+                if (built) { setPreviewDoc(built.doc); setPreviewName(built.name); setPreviewFromSave(false); }
+              } catch (err: any) { toast.error(err.message); }
+            }}><Eye className="h-4 w-4 mr-1" />Pré-visualizar PDF</Button>
+          )}
           <Button onClick={save} disabled={saving}>Salvar DDS</Button>
         </DialogFooter>
       </DialogContent>
+      <PDFPreviewDialog
+        open={!!previewDoc}
+        doc={previewDoc}
+        fileName={previewName}
+        onClose={() => { setPreviewDoc(null); if (previewFromSave) { setPreviewFromSave(false); onSaved(); } }}
+      />
     </Dialog>
   );
 }
