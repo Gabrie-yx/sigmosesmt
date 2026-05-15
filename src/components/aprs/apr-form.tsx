@@ -12,7 +12,12 @@ import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 import { formatDateBR } from "@/lib/utils-date";
 import dmnLogo from "@/assets/dmn-logo.png";
-import { detectarExigenciaPTE } from "@/lib/apr-pte-rules";
+import {
+  detectarExigenciaPTE,
+  detectarCategoriasPTE,
+  CATEGORIA_PTE_TO_RISCO_LABEL,
+  type CategoriaDetectada,
+} from "@/lib/apr-pte-rules";
 import { PteLookupSheet } from "@/components/aprs/pte-lookup-sheet";
 
 /* ---------- tipos ---------- */
