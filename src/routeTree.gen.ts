@@ -30,6 +30,7 @@ import { Route as AppAprsRouteImport } from './routes/app.aprs'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
 import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requisicoes'
+import { Route as AppSesmtProcedimentosRouteImport } from './routes/app.sesmt.procedimentos'
 import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
 import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.relatorios.reincidencia-epi'
 import { Route as AppProducaoTiposProdutoRouteImport } from './routes/app.producao.tipos-produto'
@@ -149,6 +150,11 @@ const AppSesmtRequisicoesRoute = AppSesmtRequisicoesRouteImport.update({
   path: '/sesmt/requisicoes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSesmtProcedimentosRoute = AppSesmtProcedimentosRouteImport.update({
+  id: '/sesmt/procedimentos',
+  path: '/sesmt/procedimentos',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSesmtDocsRoute = AppSesmtDocsRouteImport.update({
   id: '/sesmt/docs',
   path: '/sesmt/docs',
@@ -248,6 +254,7 @@ export interface FileRoutesByFullPath {
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
+  '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
@@ -282,6 +289,7 @@ export interface FileRoutesByTo {
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
+  '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/dds': typeof AppDdsIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
@@ -319,6 +327,7 @@ export interface FileRoutesById {
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
+  '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
@@ -357,6 +366,7 @@ export interface FileRouteTypes {
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
+    | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
     | '/app/dds/'
     | '/app/employees/'
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
+    | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
     | '/app/dds'
     | '/app/employees'
@@ -427,6 +438,7 @@ export interface FileRouteTypes {
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
+    | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
     | '/app/dds/'
     | '/app/employees/'
@@ -590,6 +602,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtRequisicoesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/sesmt/procedimentos': {
+      id: '/app/sesmt/procedimentos'
+      path: '/sesmt/procedimentos'
+      fullPath: '/app/sesmt/procedimentos'
+      preLoaderRoute: typeof AppSesmtProcedimentosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/sesmt/docs': {
       id: '/app/sesmt/docs'
       path: '/sesmt/docs'
@@ -723,6 +742,7 @@ interface AppRouteChildren {
   AppProducaoTiposProdutoRoute: typeof AppProducaoTiposProdutoRoute
   AppRelatoriosReincidenciaEpiRoute: typeof AppRelatoriosReincidenciaEpiRoute
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
+  AppSesmtProcedimentosRoute: typeof AppSesmtProcedimentosRoute
   AppSesmtRequisicoesRoute: typeof AppSesmtRequisicoesRoute
   AppDdsIndexRoute: typeof AppDdsIndexRoute
 }
@@ -752,6 +772,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProducaoTiposProdutoRoute: AppProducaoTiposProdutoRoute,
   AppRelatoriosReincidenciaEpiRoute: AppRelatoriosReincidenciaEpiRoute,
   AppSesmtDocsRoute: AppSesmtDocsRoute,
+  AppSesmtProcedimentosRoute: AppSesmtProcedimentosRoute,
   AppSesmtRequisicoesRoute: AppSesmtRequisicoesRoute,
   AppDdsIndexRoute: AppDdsIndexRoute,
 }
