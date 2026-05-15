@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X, FileDown, Pencil } from "lucide-react";
+import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X, FileDown, Pencil, Upload, ClipboardList, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { DDSEvidencias } from "@/components/dds-evidencias";
 import { gerarFormularioSemanalDDS } from "@/lib/dds-formulario-semanal-pdf";
@@ -306,6 +306,8 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
   const [empSearch, setEmpSearch] = useState("");
   const [saving, setSaving] = useState(false);
   const [gerarPdf, setGerarPdf] = useState(true);
+  const [listaFile, setListaFile] = useState<File | null>(null);
+  const [fotosFiles, setFotosFiles] = useState<File[]>([]);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-for-dds-novo"],
@@ -389,6 +391,9 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
     if (!gestorId) return toast.error("Selecione o gestor");
     if (gerarPdf && !companyId) return toast.error("Selecione a empresa para gerar o PDF semanal");
     if (temaIds.length === 0 && temasLivres.length === 0) return toast.error("Selecione ao menos um tema ou adicione um tema livre");
+    if (!listaFile) toast.warning("Atenção: salvando sem lista de presença assinada");
+    if (fotosFiles.length < 2) toast.warning(`Atenção: salvando com ${fotosFiles.length} foto(s) — recomendado 2 a 4`);
+    if (fotosFiles.length > 4) return toast.error("Máximo de 4 fotos por DDS");
     setSaving(true);
     try {
       const { data: created, error } = await supabase.from("dds").insert({
@@ -405,10 +410,29 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
         participantes_esperados: esperados, participantes_presentes: presentes.size,
       }).select("id").single();
       if (error) throw error;
+      if (!created) throw new Error("Falha ao criar DDS");
       if (presentes.size > 0) {
         const rows = Array.from(presentes).map((eid) => ({ dds_id: created.id, employee_id: eid, status: "PRESENTE" }));
         const { error: e2 } = await supabase.from("dds_attendees").insert(rows);
         if (e2) throw e2;
+      }
+      // Upload das evidências
+      const ddsId = created.id;
+      async function uploadOne(file: File, tipo: "LISTA_PRESENCA" | "FOTO_DDS") {
+        const ext = file.name.split(".").pop() ?? "bin";
+        const path = `${ddsId}/${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`;
+        const { error: ue } = await supabase.storage.from("dds-anexos").upload(path, file);
+        if (ue) throw ue;
+        const { error: ie } = await supabase.from("dds_evidencias").insert({
+          dds_id: ddsId, file_path: path, tipo, descricao: file.name,
+        });
+        if (ie) throw ie;
+      }
+      try {
+        if (listaFile) await uploadOne(listaFile, "LISTA_PRESENCA");
+        for (const f of fotosFiles) await uploadOne(f, "FOTO_DDS");
+      } catch (upErr: any) {
+        toast.error("DDS salvo, mas falhou anexo: " + upErr.message);
       }
       if (gerarPdf && companyId) {
         const funcs = (empresaEmployees as any[]).map((e) => ({ nome: e.nome, funcao: e.roles?.name ?? "" }));
@@ -563,6 +587,41 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
                 </label>
               ))}
               {filteredEmp.length === 0 && <div className="p-3 text-xs text-muted-foreground text-center">Nenhum funcionário</div>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="border rounded p-2">
+              <Label className="text-xs flex items-center gap-1"><ClipboardList className="h-3.5 w-3.5" />Lista de presença assinada</Label>
+              <div className="text-[10px] text-muted-foreground mb-1">1 arquivo (PDF ou foto da folha).</div>
+              <Input type="file" accept="application/pdf,image/*" onChange={(e) => setListaFile(e.target.files?.[0] ?? null)} />
+              {listaFile && (
+                <div className="mt-1 text-xs flex items-center gap-2">
+                  <span className="truncate flex-1">{listaFile.name}</span>
+                  <button type="button" onClick={() => setListaFile(null)} className="text-red-600 hover:underline">remover</button>
+                </div>
+              )}
+            </div>
+            <div className="border rounded p-2">
+              <Label className="text-xs flex items-center gap-1"><ImageIcon className="h-3.5 w-3.5" />Fotos do DDS ({fotosFiles.length}/4)</Label>
+              <div className="text-[10px] text-muted-foreground mb-1">2 a 4 fotos do momento.</div>
+              <Input type="file" accept="image/*" multiple onChange={(e) => {
+                const novos = Array.from(e.target.files ?? []);
+                const total = [...fotosFiles, ...novos].slice(0, 4);
+                if (fotosFiles.length + novos.length > 4) toast.warning("Limitado a 4 fotos");
+                setFotosFiles(total);
+                e.target.value = "";
+              }} />
+              {fotosFiles.length > 0 && (
+                <div className="mt-1 space-y-0.5">
+                  {fotosFiles.map((f, i) => (
+                    <div key={i} className="text-xs flex items-center gap-2">
+                      <span className="truncate flex-1">{f.name}</span>
+                      <button type="button" onClick={() => setFotosFiles(fotosFiles.filter((_, idx) => idx !== i))} className="text-red-600 hover:underline">remover</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
