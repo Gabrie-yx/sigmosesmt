@@ -142,7 +142,7 @@ function ProcedimentosPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [editing, setEditing] = useState<Procedimento | null>(null);
   const [detail, setDetail] = useState<Procedimento | null>(null);
-  const [creatingGuided, setCreatingGuided] = useState(false);
+  const [creatingGuided, setCreatingGuided] = useState<string | null>(null);
 
   const { data: procs = [], isLoading } = useQuery({
     queryKey: ["procedimentos"],
