@@ -826,6 +826,13 @@ function EditDDSDialog({ open, dds, temas, gestores, onClose, onSaved }: {
             </div>
             <DDSAttendeesEditor ddsId={dds.id} esperados={esperados} />
           </div>
+          <div>
+            <Label>Evidências (lista de presença assinada e fotos)</Label>
+            <div className="text-[11px] text-muted-foreground mb-1">
+              Suba o PDF/foto da lista assinada e de 2 a 4 fotos do momento do DDS.
+            </div>
+            <DDSEvidencias ddsId={dds.id} />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
