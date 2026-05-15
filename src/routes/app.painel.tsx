@@ -3,15 +3,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Search, AlertTriangle, Building2, Ban, Users, ShieldCheck, Package,
+  Search, AlertTriangle, Building2, Users, ShieldCheck, Package,
   HardHat, FileWarning, Activity, TrendingUp, Boxes, ClipboardCheck,
   ArrowUpRight, Stethoscope, GripVertical, RotateCcw, Lock, Unlock,
+  ShoppingBag, MessageSquare,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  AreaChart, Area, PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell, Legend, ComposedChart, Line,
 } from "recharts";
 // react-grid-layout touches `window` at import — load it client-only via lazy state
 type Layout = { i: string; x: number; y: number; w: number; h: number; minH?: number; minW?: number };
@@ -25,19 +26,21 @@ const today = new Date();
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
 const MONTHS_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-const LS_KEY = "sesmt-painel-layout-v1";
+const LS_KEY = "sesmt-painel-layout-v2";
 const DEFAULT_LAYOUT: Layout[] = [
   { i: "kpis",        x: 0, y: 0,  w: 12, h: 4,  minH: 3, minW: 6 },
   { i: "search",      x: 0, y: 4,  w: 8,  h: 5,  minH: 4, minW: 4 },
   { i: "health",      x: 8, y: 4,  w: 4,  h: 5,  minH: 4, minW: 3 },
-  { i: "status-pie",  x: 0, y: 9,  w: 4,  h: 7,  minH: 5, minW: 3 },
-  { i: "epi-mensal",  x: 4, y: 9,  w: 8,  h: 7,  minH: 5, minW: 4 },
-  { i: "top-itens",   x: 0, y: 16, w: 8,  h: 8,  minH: 5, minW: 4 },
-  { i: "top-recip",   x: 8, y: 16, w: 4,  h: 8,  minH: 5, minW: 3 },
-  { i: "dds-trend",   x: 0, y: 24, w: 6,  h: 7,  minH: 5, minW: 4 },
-  { i: "conformidade",x: 6, y: 24, w: 6,  h: 7,  minH: 5, minW: 4 },
-  { i: "pendencias",  x: 0, y: 31, w: 12, h: 9,  minH: 5, minW: 6 },
-  { i: "footer",      x: 0, y: 40, w: 12, h: 3,  minH: 2, minW: 6 },
+  { i: "epi-mensal",  x: 0, y: 9,  w: 8,  h: 8,  minH: 6, minW: 5 },
+  { i: "status-pie",  x: 8, y: 9,  w: 4,  h: 8,  minH: 6, minW: 3 },
+  { i: "epi-recentes",x: 0, y: 17, w: 6,  h: 8,  minH: 5, minW: 4 },
+  { i: "dds-recentes",x: 6, y: 17, w: 6,  h: 8,  minH: 5, minW: 4 },
+  { i: "top-itens",   x: 0, y: 25, w: 8,  h: 8,  minH: 5, minW: 4 },
+  { i: "top-recip",   x: 8, y: 25, w: 4,  h: 8,  minH: 5, minW: 3 },
+  { i: "dds-trend",   x: 0, y: 33, w: 6,  h: 7,  minH: 5, minW: 4 },
+  { i: "conformidade",x: 6, y: 33, w: 6,  h: 7,  minH: 5, minW: 4 },
+  { i: "pendencias",  x: 0, y: 40, w: 12, h: 9,  minH: 5, minW: 6 },
+  { i: "footer",      x: 0, y: 49, w: 12, h: 3,  minH: 2, minW: 6 },
 ];
 
 function loadLayout(): Layout[] {
@@ -99,19 +102,20 @@ function TstPanel() {
   const { data } = useQuery({
     queryKey: ["sesmt-painel", since],
     queryFn: async () => {
-      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs] = await Promise.all([
+      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs, ddsTemas] = await Promise.all([
         supabase.from("employees").select("*").order("nome"),
         supabase.from("companies").select("id,name").order("name"),
         supabase.from("roles").select("*"),
         supabase.from("employee_exams").select("*"),
         supabase.from("safety_overrides").select("*").eq("ativo", true),
-        supabase.from("epi_deliveries").select("id,employee_id,item,qtd,data_entrega,motivo_entrega,valor_unitario").gte("data_entrega", since),
+        supabase.from("epi_deliveries").select("id,employee_id,item,qtd,data_entrega,motivo_entrega,valor_unitario").gte("data_entrega", since).order("data_entrega", { ascending: false }),
         supabase.from("estoque_epi").select("id,nome_material,quantidade_atual,estoque_minimo,ca_validade"),
-        supabase.from("dds").select("id,data,aderencia,participantes_presentes,participantes_esperados").gte("data", since),
+        supabase.from("dds").select("id,data,hora,setor,tema_id,tema_livre,aderencia,participantes_presentes,participantes_esperados").gte("data", since).order("data", { ascending: false }),
         supabase.from("dds_attendees").select("dds_id,employee_id,status"),
         supabase.from("aprs").select("id,status,data_emissao,data_validade").gte("data_emissao", since),
         supabase.from("ptes").select("id,status,data,risco").gte("data", since),
         supabase.from("employee_docs").select("id,employee_id,tipo"),
+        supabase.from("dds_temas").select("id,titulo"),
       ]);
       return {
         employees: emps.data ?? [],
@@ -126,6 +130,7 @@ function TstPanel() {
         aprs: aprs.data ?? [],
         ptes: ptes.data ?? [],
         docs: docs.data ?? [],
+        ddsTemas: ddsTemas.data ?? [],
       };
     },
   });
@@ -207,17 +212,49 @@ function TstPanel() {
   }, [data]);
 
   const entregaMensal = useMemo(() => {
-    const m = new Map<string, { mes: string; qtd: number; valor: number }>();
+    const m = new Map<string, { mes: string; primeira: number; troca: number; perda: number; devolucao: number; outros: number; valor: number }>();
     (data?.deliveries ?? []).forEach((d: any) => {
       const dt = new Date(d.data_entrega + "T00:00");
       const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
       const label = `${MONTHS_PT[dt.getMonth()]}/${String(dt.getFullYear()).slice(2)}`;
-      const cur = m.get(key) ?? { mes: label, qtd: 0, valor: 0 };
-      cur.qtd += Number(d.qtd || 0);
-      cur.valor += Number(d.qtd || 0) * Number(d.valor_unitario || 0);
+      const cur = m.get(key) ?? { mes: label, primeira: 0, troca: 0, perda: 0, devolucao: 0, outros: 0, valor: 0 };
+      const q = Number(d.qtd || 0);
+      const motivo = String(d.motivo_entrega || "");
+      if (motivo === "PRIMEIRA_ENTREGA") cur.primeira += q;
+      else if (motivo === "TROCA" || motivo === "TROCA_DESGASTE") cur.troca += q;
+      else if (motivo === "PERDA_EXTRAVIO") cur.perda += q;
+      else if (motivo === "DEVOLUCAO") cur.devolucao += q;
+      else cur.outros += q;
+      cur.valor += q * Number(d.valor_unitario || 0);
       m.set(key, cur);
     });
     return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v);
+  }, [data]);
+
+  const epiRecentes = useMemo(() => {
+    const empMap = new Map((data?.employees ?? []).map((e: any) => [e.id, e.nome]));
+    return (data?.deliveries ?? []).slice(0, 10).map((d: any) => ({
+      id: d.id,
+      item: d.item,
+      qtd: Number(d.qtd || 0),
+      colaborador: (empMap.get(d.employee_id) as string) ?? "—",
+      employee_id: d.employee_id,
+      data: d.data_entrega,
+      motivo: String(d.motivo_entrega || ""),
+    }));
+  }, [data]);
+
+  const ddsRecentes = useMemo(() => {
+    const tMap = new Map((data?.ddsTemas ?? []).map((t: any) => [t.id, t.titulo]));
+    return (data?.dds ?? []).slice(0, 10).map((d: any) => ({
+      id: d.id,
+      data: d.data,
+      tema: (d.tema_id ? (tMap.get(d.tema_id) as string) : null) ?? d.tema_livre ?? "Sem tema",
+      setor: d.setor ?? "—",
+      presentes: Number(d.participantes_presentes || 0),
+      esperados: Number(d.participantes_esperados || 0),
+      aderencia: Number(d.aderencia || 0),
+    }));
   }, [data]);
 
   const topRecip = useMemo(() => {
@@ -360,26 +397,79 @@ function TstPanel() {
       ),
     },
     "epi-mensal": {
-      title: "EPIs entregues / mês", icon: TrendingUp,
+      title: "EPIs entregues / mês — por motivo + valor R$", icon: TrendingUp,
       render: () => (
         <div className="h-full min-h-0">
           {entregaMensal.length === 0 ? <Empty /> : (
             <ResponsiveContainer>
-              <AreaChart data={entregaMensal}>
-                <defs>
-                  <linearGradient id="entg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0f766e" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="#0f766e" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
+              <ComposedChart data={entregaMensal} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Area type="monotone" dataKey="qtd" stroke="#0f766e" strokeWidth={2.5} fill="url(#entg)" name="Qtd" />
-              </AreaChart>
+                <YAxis yAxisId="l" tick={{ fontSize: 10 }} />
+                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10 }} tickFormatter={(v) => `R$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`} />
+                <Tooltip formatter={(v: any, n: any) => n === "Valor R$" ? [`R$ ${Number(v).toFixed(2)}`, n] : [v, n]} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar yAxisId="l" dataKey="primeira" stackId="a" fill="#0f766e" name="1ª entrega" radius={[0, 0, 0, 0]} />
+                <Bar yAxisId="l" dataKey="troca" stackId="a" fill="#14b8a6" name="Troca" />
+                <Bar yAxisId="l" dataKey="perda" stackId="a" fill="#ef4444" name="Perda/Extravio" />
+                <Bar yAxisId="l" dataKey="devolucao" stackId="a" fill="#94a3b8" name="Devolução" radius={[4, 4, 0, 0]} />
+                <Line yAxisId="r" type="monotone" dataKey="valor" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 3 }} name="Valor R$" />
+              </ComposedChart>
             </ResponsiveContainer>
           )}
+        </div>
+      ),
+    },
+    "epi-recentes": {
+      title: "Últimas entregas de EPI", icon: ShoppingBag,
+      render: () => (
+        <div className="h-full overflow-y-auto pr-1 space-y-1.5">
+          {epiRecentes.length === 0 ? <Empty /> : epiRecentes.map((e) => {
+            const motivoLabel = e.motivo === "PRIMEIRA_ENTREGA" ? "1ª entrega"
+              : e.motivo === "PERDA_EXTRAVIO" ? "Perda"
+              : e.motivo === "DEVOLUCAO" ? "Devolução"
+              : e.motivo.replace(/_/g, " ").toLowerCase();
+            const motivoCls = e.motivo === "PERDA_EXTRAVIO" ? "bg-red-100 text-red-700"
+              : e.motivo === "PRIMEIRA_ENTREGA" ? "bg-emerald-100 text-emerald-700"
+              : e.motivo === "DEVOLUCAO" ? "bg-slate-200 text-slate-700"
+              : "bg-teal-100 text-teal-700";
+            return (
+              <Link key={e.id} to="/app/employees/$id" params={{ id: e.employee_id }}
+                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#0f766e] transition-all">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#0f766e] to-[#134e4a] text-white flex items-center justify-center font-black text-sm shrink-0">{e.qtd}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] font-black uppercase text-slate-900 truncate">{e.item}</div>
+                  <div className="text-[9px] font-bold uppercase text-slate-500 truncate">{e.colaborador}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${motivoCls}`}>{motivoLabel}</span>
+                  <div className="text-[9px] text-slate-400 font-bold mt-0.5">{new Date(e.data + "T00:00").toLocaleDateString("pt-BR")}</div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      ),
+    },
+    "dds-recentes": {
+      title: "Últimos DDS realizados", icon: MessageSquare,
+      render: () => (
+        <div className="h-full overflow-y-auto pr-1 space-y-1.5">
+          {ddsRecentes.length === 0 ? <Empty /> : ddsRecentes.map((d) => {
+            const ad = d.aderencia || (d.esperados > 0 ? Math.round((d.presentes / d.esperados) * 100) : 0);
+            const adCls = ad >= 90 ? "bg-emerald-500" : ad >= 70 ? "bg-amber-400" : ad > 0 ? "bg-red-500" : "bg-slate-300";
+            return (
+              <Link key={d.id} to="/app/dds/historico"
+                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#0f766e] transition-all">
+                <div className={`w-9 h-9 rounded-lg ${adCls} text-white flex items-center justify-center font-black text-[10px] shrink-0`}>{ad}%</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] font-black uppercase text-slate-900 truncate" title={d.tema}>{d.tema}</div>
+                  <div className="text-[9px] font-bold uppercase text-slate-500 truncate">{d.setor} · {d.presentes}/{d.esperados} presentes</div>
+                </div>
+                <div className="text-[9px] text-slate-400 font-bold shrink-0">{new Date(d.data + "T00:00").toLocaleDateString("pt-BR")}</div>
+              </Link>
+            );
+          })}
         </div>
       ),
     },
