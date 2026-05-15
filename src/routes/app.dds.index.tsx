@@ -237,8 +237,61 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
     queryFn: async () => (await supabase.from("dds_attendees").select("*, employees(nome)").eq("dds_id", dds.id)).data ?? [],
   });
 
+  const { data: ddsFull } = useQuery({
+    queryKey: ["dds-full", dds.id],
+    queryFn: async () => (await supabase.from("dds").select("company_id, encarregado, responsavel_sesmt, hora, hora_fim, setor").eq("id", dds.id).maybeSingle()).data,
+  });
+  const { data: company } = useQuery({
+    queryKey: ["dds-company", (ddsFull as any)?.company_id],
+    enabled: !!(ddsFull as any)?.company_id,
+    queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,matriz_nome,matriz_cnpj").eq("id", (ddsFull as any).company_id).maybeSingle()).data,
+  });
+  const presentesIds = attendees.filter((a: any) => a.status === "PRESENTE").map((a: any) => a.employee_id);
+  const { data: empPresentes = [] } = useQuery({
+    queryKey: ["dds-emp-pres", dds.id, presentesIds.join(",")],
+    enabled: presentesIds.length > 0,
+    queryFn: async () => (await supabase.from("employees").select("id,nome,roles(name)").in("id", presentesIds)).data ?? [],
+  });
+
+  const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
+  const [pdfName, setPdfName] = useState("");
+
+  function abrirPdf() {
+    const c: any = company;
+    if (!c) { toast.error("DDS sem empresa vinculada — não é possível gerar PDF"); return; }
+    const seg = (() => { const d = new Date(dds.data + "T00:00"); const day = d.getDay(); d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day)); return d; })();
+    const sex = new Date(seg); sex.setDate(sex.getDate() + 4);
+    const fmtBR = (d: Date) => d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    const fmtBRFull = (d: Date) => d.toLocaleDateString("pt-BR");
+    const titulos = [...ids.map((id) => (temaMap[id] as any)?.titulo).filter(Boolean), ...livres];
+    const funcs = (empPresentes as any[]).map((e) => ({ nome: e.nome, funcao: e.roles?.name ?? "" }));
+    const f: any = ddsFull;
+    const doc = gerarFormularioSemanalDDS({
+      matrizNome: c.matriz_nome || c.name || "—",
+      matrizCnpj: c.matriz_cnpj || c.cnpj || "",
+      codigo: "FOR-SEG 06", revisao: "00",
+      dataDocumento: new Date().toLocaleDateString("pt-BR"),
+      pagina: "01/01",
+      empresaNome: c.name ?? "", empresaCnpj: c.cnpj ?? "",
+      localSetor: f?.setor ?? dds.setor ?? "—",
+      periodoTexto: `${fmtBR(seg)} à ${fmtBRFull(sex)}`,
+      horaTexto: `${(f?.hora ?? dds.hora ?? "").toString().slice(0,5).replace(":","h")}min às ${(f?.hora_fim ?? "").toString().slice(0,5).replace(":","h")}min`,
+      assuntos: titulos.join(" / ") || "—",
+      funcionarios: funcs,
+      encarregado: f?.encarregado ?? null,
+      responsavelSesmt: f?.responsavel_sesmt ?? null,
+    });
+    setPdfDoc(doc);
+    setPdfName(`DDS_${(c.name ?? "empresa").replace(/\s+/g,"_")}_${dds.data}.pdf`);
+  }
+
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button size="sm" variant="outline" onClick={abrirPdf}>
+          <FileDown className="h-4 w-4 mr-1" /> Visualizar PDF semanal
+        </Button>
+      </div>
       <div className="grid grid-cols-2 gap-3 text-sm">
         <Field label="Data" value={new Date(dds.data + "T00:00").toLocaleDateString("pt-BR")} />
         <Field label="Hora" value={dds.hora?.slice(0, 5) ?? "—"} />
@@ -246,9 +299,26 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
         <Field label="Setor" value={dds.setor ?? "—"} />
         <Field label="Temas" value={[...ids.map((id) => (temaMap[id] as any)?.titulo).filter(Boolean), ...livres].join(" · ") || "—"} />
         <Field label="Duração" value={`${dds.duracao_min} min`} />
-        <Field label="Esperados" value={String(dds.participantes_esperados)} />
-        <Field label="Presentes" value={`${dds.participantes_presentes} (${Number(dds.aderencia).toFixed(0)}%)`} />
       </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <div className="border rounded p-3 bg-slate-50">
+          <div className="text-[10px] font-bold uppercase text-slate-500">Esperados</div>
+          <div className="text-2xl font-bold">{dds.participantes_esperados}</div>
+          <div className="text-[10px] text-muted-foreground">funcionários convocados</div>
+        </div>
+        <div className="border rounded p-3 bg-emerald-50">
+          <div className="text-[10px] font-bold uppercase text-emerald-700">Presentes</div>
+          <div className="text-2xl font-bold text-emerald-700">{dds.participantes_presentes}</div>
+          <div className="text-[10px] text-muted-foreground">marcados PRESENTE na lista</div>
+        </div>
+        <div className={`border rounded p-3 ${adColor(Number(dds.aderencia))}`}>
+          <div className="text-[10px] font-bold uppercase">Aderência</div>
+          <div className="text-2xl font-bold">{Number(dds.aderencia).toFixed(0)}%</div>
+          <div className="text-[10px]">presentes ÷ esperados</div>
+        </div>
+      </div>
+
       {dds.conteudo && (
         <div>
           <div className="text-xs font-bold uppercase text-slate-500 mb-1">Conteúdo</div>
@@ -256,18 +326,24 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
         </div>
       )}
       <div>
-        <div className="text-xs font-bold uppercase text-slate-500 mb-1">Participantes ({attendees.length})</div>
+        <div className="text-xs font-bold uppercase text-slate-500 mb-1">
+          Participantes ({attendees.filter((a:any)=>a.status==="PRESENTE").length} presentes / {attendees.length} registrados)
+        </div>
         <div className="border rounded max-h-48 overflow-auto divide-y">
           {attendees.map((a: any) => (
             <div key={a.id} className="px-3 py-1.5 text-sm flex justify-between">
               <span>{a.employees?.nome ?? "—"}</span>
-              <Badge variant="outline" className="text-[10px]">{a.status}</Badge>
+              <Badge variant="outline" className={`text-[10px] ${a.status==="PRESENTE" ? "border-emerald-300 text-emerald-700" : "border-red-300 text-red-700"}`}>{a.status}</Badge>
             </div>
           ))}
           {attendees.length === 0 && <div className="p-3 text-xs text-muted-foreground text-center">Sem registro</div>}
         </div>
+        <div className="text-[11px] text-muted-foreground mt-1">
+          Use “Editar presenças” na lista do DDS para ajustar quem assinou — a contagem de presentes e a aderência são recalculadas automaticamente.
+        </div>
       </div>
       <DDSEvidencias ddsId={dds.id} />
+      <PDFPreviewDialog open={!!pdfDoc} onClose={() => setPdfDoc(null)} doc={pdfDoc} fileName={pdfName} />
     </div>
   );
 }
