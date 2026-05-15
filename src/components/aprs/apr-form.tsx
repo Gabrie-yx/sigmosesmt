@@ -285,6 +285,8 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const { data: linkedPtes = EMPTY_QUERY_LIST } = useQuery({
     queryKey: ["ptes-linked-apr", aprId],
     enabled: !!aprId,
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () =>
       (await supabase
         .from("ptes")
