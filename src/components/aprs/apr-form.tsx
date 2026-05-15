@@ -12,7 +12,12 @@ import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 import { formatDateBR } from "@/lib/utils-date";
 import dmnLogo from "@/assets/dmn-logo.png";
-import { detectarExigenciaPTE } from "@/lib/apr-pte-rules";
+import {
+  detectarExigenciaPTE,
+  detectarCategoriasPTE,
+  CATEGORIA_PTE_TO_RISCO_LABEL,
+  type CategoriaDetectada,
+} from "@/lib/apr-pte-rules";
 import { PteLookupSheet } from "@/components/aprs/pte-lookup-sheet";
 
 /* ---------- tipos ---------- */
@@ -267,6 +272,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const [assinaturas, setAssinaturas] = useState<Assin[]>([]);
   const [tab, setTab] = useState<"p1" | "p2" | "p3" | "p4" | "p5">("p1");
   const [pteSheetOpen, setPteSheetOpen] = useState(false);
+  const [pteSheetRiscoSugerido, setPteSheetRiscoSugerido] = useState<string | null>(null);
 
   // catálogos
   const { data: cascos = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["cascos-light"], queryFn: async () => (await supabase.from("cascos").select("id,numero,nome,status").eq("status", "ATIVO").order("numero")).data ?? [] });
@@ -275,6 +281,18 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const { data: roles = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["roles-light"], queryFn: async () => (await supabase.from("roles").select("id,name").order("name")).data ?? [] });
   const { data: catRiscos = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["catalogo_riscos_form"], queryFn: async () => (await supabase.from("catalogo_riscos").select("*").eq("ativo", true).order("nome")).data ?? [] });
   const { data: ptes = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["ptes-light"], queryFn: async () => (await supabase.from("ptes").select("id,numero,data_emissao,risco").order("data_emissao", { ascending: false }).limit(50)).data ?? [] });
+  // PTEs JÁ vinculadas a esta APR (1 APR ↔ N PTEs, uma por categoria detectada)
+  const { data: linkedPtes = EMPTY_QUERY_LIST } = useQuery({
+    queryKey: ["ptes-linked-apr", aprId],
+    enabled: !!aprId,
+    queryFn: async () =>
+      (await supabase
+        .from("ptes")
+        .select("id,numero,data_emissao,risco,status")
+        .eq("apr_id", aprId!)
+        .order("data_emissao", { ascending: false })
+      ).data ?? [],
+  });
 
   const empresa = useMemo(() => companies.find((c: any) => c.id === apr.empresa_id), [companies, apr.empresa_id]);
   const casco = useMemo(() => cascos.find((c: any) => c.id === apr.casco_id), [cascos, apr.casco_id]);
@@ -286,6 +304,28 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     () => detectarExigenciaPTE(riscos.map((r) => ({ risco_nome: r.risco_nome, nrs: r.nrs }))),
     [riscos],
   );
+  const categoriasDetectadas = useMemo<CategoriaDetectada[]>(
+    () => detectarCategoriasPTE(riscos.map((r) => ({ risco_nome: r.risco_nome, nrs: r.nrs }))),
+    [riscos],
+  );
+  /** Mescla a PTE legada (apr.pte_id) caso ela não esteja na lista de linked. */
+  const todasPtesVinculadas = useMemo(() => {
+    const map = new Map<string, any>();
+    (linkedPtes as any[]).forEach((p) => map.set(p.id, p));
+    if (apr.pte_id && pte && !map.has(apr.pte_id)) map.set(apr.pte_id, pte);
+    return Array.from(map.values());
+  }, [linkedPtes, apr.pte_id, pte]);
+  /** Para cada categoria detectada → PTE que a cobre (match por ptes.risco === riscoLabel) */
+  const coberturaCategorias = useMemo(() => {
+    return categoriasDetectadas.map((cat) => {
+      const cobertura = cat.riscoLabel
+        ? todasPtesVinculadas.find((p: any) => (p.risco ?? "") === cat.riscoLabel)
+        : null;
+      return { ...cat, pte: cobertura ?? null };
+    });
+  }, [categoriasDetectadas, todasPtesVinculadas]);
+  const categoriasPendentes = coberturaCategorias.filter((c) => !c.pte && c.riscoLabel);
+  const categoriasCobertas = coberturaCategorias.filter((c) => !!c.pte);
   const temRiscoGrave = useMemo(() => riscos.some((r) => (r.probabilidade + r.severidade) >= 5), [riscos]);
   useEffect(() => {
     if ((deteccaoPTE.exige || temRiscoGrave) && !apr.exige_pte) {
@@ -601,14 +641,21 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         ))}
         <div className="ml-auto flex gap-2">
           <Button
-            variant={deteccaoPTE.exige && !apr.pte_id ? "default" : "outline"}
+            variant={categoriasPendentes.length > 0 ? "default" : "outline"}
             size="sm"
-            onClick={() => setPteSheetOpen(true)}
-            className={deteccaoPTE.exige && !apr.pte_id ? "bg-orange-600 hover:bg-orange-700 text-white animate-pulse" : ""}
+            onClick={() => {
+              setPteSheetRiscoSugerido(categoriasPendentes[0]?.riscoLabel ?? null);
+              setPteSheetOpen(true);
+            }}
+            className={categoriasPendentes.length > 0 ? "bg-orange-600 hover:bg-orange-700 text-white animate-pulse" : ""}
             title="Vincular ou criar PTE sem sair da APR"
           >
             <FileText className="h-4 w-4 mr-1" />
-            {apr.pte_id ? "Trocar PTE" : "Vincular/Nova PTE"}
+            {categoriasPendentes.length > 0
+              ? `Resolver ${categoriasPendentes.length} PTE${categoriasPendentes.length > 1 ? "s" : ""} pendente${categoriasPendentes.length > 1 ? "s" : ""}`
+              : todasPtesVinculadas.length > 0
+              ? "Gerenciar PTEs"
+              : "Vincular/Nova PTE"}
           </Button>
           <Button variant="outline" size="sm" onClick={handleAbrir} disabled={!apr.id}><FileText className="h-4 w-4 mr-1" /> Abrir PDF</Button>
           <Button variant="outline" size="sm" onClick={handleImprimir} disabled={!apr.id}><Printer className="h-4 w-4 mr-1" /> Imprimir</Button>
@@ -624,46 +671,55 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
             <PaperFullHeader apr={apr} setApr={setApr} empresa={empresa} casco={casco} enc={enc} tst={tst}
               employees={employees} companies={companies} pagina={1} />
 
-            {/* Banner de detecção automática de PTE */}
-            {deteccaoPTE.exige && !(apr.pte_id && pte) && (
-              <div className="border-x border-b border-black bg-amber-50 px-3 py-2 flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-[11px] font-black uppercase text-amber-900">
-                    Esta APR EXIGE Permissão de Trabalho Especial (PTE) — detectado automaticamente
-                  </div>
-                  <ul className="text-[10px] text-amber-800 mt-0.5 list-disc list-inside">
-                    {deteccaoPTE.motivos.map((m) => <li key={m}>{m}</li>)}
-                  </ul>
-                  <div className="text-[10px] text-amber-700 mt-1 flex items-center gap-2 flex-wrap">
-                    <span>Abra o painel ao lado para vincular uma PTE existente ou criar uma nova sem sair desta APR.</span>
-                    <Button size="sm" className="h-6 text-[10px] bg-orange-600 hover:bg-orange-700"
-                      onClick={() => setPteSheetOpen(true)}>
-                      <FileText className="h-3 w-3 mr-1" /> Abrir painel de PTE
-                    </Button>
+            {/* Painel de cobertura de PTE por categoria de risco detectada */}
+            {coberturaCategorias.length > 0 && (
+              <div className={`border-x border-b border-black px-3 py-2 ${categoriasPendentes.length > 0 ? "bg-amber-50" : "bg-emerald-50"}`}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  {categoriasPendentes.length > 0 ? (
+                    <AlertTriangle className="h-4 w-4 text-amber-700 shrink-0" />
+                  ) : (
+                    <FileText className="h-4 w-4 text-emerald-700 shrink-0" />
+                  )}
+                  <div className={`text-[11px] font-black uppercase ${categoriasPendentes.length > 0 ? "text-amber-900" : "text-emerald-900"}`}>
+                    {categoriasPendentes.length > 0
+                      ? `PTE OBRIGATÓRIA — ${categoriasCobertas.length}/${coberturaCategorias.length} categoria(s) coberta(s)`
+                      : `PTE — Todas as ${categoriasCobertas.length} categoria(s) cobertas`}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Banner: PTE já vinculada */}
-            {deteccaoPTE.exige && apr.pte_id && pte && (
-              <div className="border-x border-b border-black bg-emerald-50 px-3 py-2 flex items-start gap-2">
-                <FileText className="h-4 w-4 text-emerald-700 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-[11px] font-black uppercase text-emerald-900">
-                    PTE VINCULADA — {(pte as any).risco ?? deteccaoPTE.categoriaPrincipal ?? "Permissão de Trabalho Especial"}
-                  </div>
-                  <div className="text-[10px] text-emerald-800 mt-0.5">
-                    Nº <span className="font-bold">{(pte as any).numero ?? String((pte as any).id).slice(0, 8)}</span>
-                    {" · "}Emissão: <span className="font-bold">{formatDateBR((pte as any).data_emissao)}</span>
-                  </div>
-                  <div className="text-[10px] text-emerald-700 mt-1 flex items-center gap-2 flex-wrap">
-                    <Button size="sm" variant="outline" className="h-6 text-[10px] border-emerald-300 text-emerald-800 hover:bg-emerald-100"
-                      onClick={() => setPteSheetOpen(true)}>
-                      <FileText className="h-3 w-3 mr-1" /> Trocar / Gerenciar PTE
-                    </Button>
-                  </div>
+                <div className="space-y-1">
+                  {coberturaCategorias.map((c) => (
+                    <div key={c.categoria} className="flex items-center gap-2 text-[10px]">
+                      {c.pte ? (
+                        <>
+                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600 text-white font-black text-[9px]">✓</span>
+                          <span className="font-bold text-emerald-900">{c.categoria}</span>
+                          <span className="text-emerald-700">— PTE Nº <b>{(c.pte as any).numero ?? String((c.pte as any).id).slice(0, 8)}</b> · {formatDateBR((c.pte as any).data_emissao)}</span>
+                        </>
+                      ) : c.riscoLabel ? (
+                        <>
+                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-600 text-white font-black text-[9px]">!</span>
+                          <span className="font-bold text-amber-900">{c.categoria}</span>
+                          <span className="text-amber-800">— {c.motivo}</span>
+                          <Button
+                            size="sm"
+                            className="h-5 px-2 text-[9px] bg-orange-600 hover:bg-orange-700 ml-auto"
+                            onClick={() => {
+                              setPteSheetRiscoSugerido(c.riscoLabel);
+                              setPteSheetOpen(true);
+                            }}
+                          >
+                            Resolver
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-400 text-white font-black text-[9px]">i</span>
+                          <span className="font-bold text-slate-700">{c.categoria}</span>
+                          <span className="text-slate-600">— {c.motivo} (advisory)</span>
+                        </>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -958,10 +1014,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         aprNumero={apr.numero ?? null}
         aprLocal={apr.local ?? null}
         empresaId={apr.empresa_id ?? null}
-        riscoSugerido={deteccaoPTE.categoriaPrincipal}
+        riscoSugerido={
+          pteSheetRiscoSugerido ??
+          (deteccaoPTE.categoriaPrincipal
+            ? CATEGORIA_PTE_TO_RISCO_LABEL[deteccaoPTE.categoriaPrincipal] ?? null
+            : null)
+        }
         onPick={(pteId) => {
           setApr((a) => ({ ...a, pte_id: pteId, exige_pte: true }));
           qc.invalidateQueries({ queryKey: ["ptes-light"] });
+          qc.invalidateQueries({ queryKey: ["ptes-linked-apr", aprId] });
         }}
       />
     </div>
