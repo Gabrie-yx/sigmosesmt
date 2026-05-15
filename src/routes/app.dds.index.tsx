@@ -312,6 +312,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
   const [fotosFiles, setFotosFiles] = useState<File[]>([]);
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [previewName, setPreviewName] = useState<string>("");
+  const [previewFromSave, setPreviewFromSave] = useState(false);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-for-dds-novo"],
@@ -455,6 +456,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
           if (built) {
             setPreviewDoc(built.doc);
             setPreviewName(built.name);
+            setPreviewFromSave(true);
           }
         } catch (err: any) { toast.error("DDS salvo, mas falhou ao gerar PDF: " + err.message); }
       }
@@ -667,7 +669,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
             <Button variant="outline" type="button" onClick={() => {
               try {
                 const built = buildPDFSemanal();
-                if (built) { setPreviewDoc(built.doc); setPreviewName(built.name); }
+                if (built) { setPreviewDoc(built.doc); setPreviewName(built.name); setPreviewFromSave(false); }
               } catch (err: any) { toast.error(err.message); }
             }}><Eye className="h-4 w-4 mr-1" />Pré-visualizar PDF</Button>
           )}
@@ -678,7 +680,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
         open={!!previewDoc}
         doc={previewDoc}
         fileName={previewName}
-        onClose={() => { setPreviewDoc(null); onSaved(); }}
+        onClose={() => { setPreviewDoc(null); if (previewFromSave) { setPreviewFromSave(false); onSaved(); } }}
       />
     </Dialog>
   );
