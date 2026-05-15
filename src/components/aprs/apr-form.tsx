@@ -623,7 +623,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
               employees={employees} companies={companies} pagina={1} />
 
             {/* Banner de detecção automática de PTE */}
-            {deteccaoPTE.exige && (
+            {deteccaoPTE.exige && !(apr.pte_id && pte) && (
               <div className="border-x border-b border-black bg-amber-50 px-3 py-2 flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" />
                 <div className="flex-1">
@@ -638,6 +638,28 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                     <Button size="sm" className="h-6 text-[10px] bg-orange-600 hover:bg-orange-700"
                       onClick={() => setPteSheetOpen(true)}>
                       <FileText className="h-3 w-3 mr-1" /> Abrir painel de PTE
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Banner: PTE já vinculada */}
+            {deteccaoPTE.exige && apr.pte_id && pte && (
+              <div className="border-x border-b border-black bg-emerald-50 px-3 py-2 flex items-start gap-2">
+                <FileText className="h-4 w-4 text-emerald-700 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <div className="text-[11px] font-black uppercase text-emerald-900">
+                    PTE VINCULADA — {(pte as any).risco ?? deteccaoPTE.categoriaPrincipal ?? "Permissão de Trabalho Especial"}
+                  </div>
+                  <div className="text-[10px] text-emerald-800 mt-0.5">
+                    Nº <span className="font-bold">{(pte as any).numero ?? String((pte as any).id).slice(0, 8)}</span>
+                    {" · "}Emissão: <span className="font-bold">{formatDateBR((pte as any).data_emissao)}</span>
+                  </div>
+                  <div className="text-[10px] text-emerald-700 mt-1 flex items-center gap-2 flex-wrap">
+                    <Button size="sm" variant="outline" className="h-6 text-[10px] border-emerald-300 text-emerald-800 hover:bg-emerald-100"
+                      onClick={() => setPteSheetOpen(true)}>
+                      <FileText className="h-3 w-3 mr-1" /> Trocar / Gerenciar PTE
                     </Button>
                   </div>
                 </div>
