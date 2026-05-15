@@ -257,8 +257,7 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
   const [pdfName, setPdfName] = useState("");
 
   function abrirPdf() {
-    const c: any = company;
-    if (!c) { toast.error("DDS sem empresa vinculada — não é possível gerar PDF"); return; }
+    const c: any = company ?? {};
     const seg = (() => { const d = new Date(dds.data + "T00:00"); const day = d.getDay(); d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day)); return d; })();
     const sex = new Date(seg); sex.setDate(sex.getDate() + 4);
     const fmtBR = (d: Date) => d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
@@ -267,12 +266,12 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
     const funcs = (empPresentes as any[]).map((e) => ({ nome: e.nome, funcao: e.roles?.name ?? "" }));
     const f: any = ddsFull;
     const doc = gerarFormularioSemanalDDS({
-      matrizNome: c.matriz_nome || c.name || "—",
+      matrizNome: c.matriz_nome || c.name || "J C S CONSTRUÇÃO NAVAL",
       matrizCnpj: c.matriz_cnpj || c.cnpj || "",
       codigo: "FOR-SEG 06", revisao: "00",
       dataDocumento: new Date().toLocaleDateString("pt-BR"),
       pagina: "01/01",
-      empresaNome: c.name ?? "", empresaCnpj: c.cnpj ?? "",
+      empresaNome: c.name ?? "—", empresaCnpj: c.cnpj ?? "",
       localSetor: f?.setor ?? dds.setor ?? "—",
       periodoTexto: `${fmtBR(seg)} à ${fmtBRFull(sex)}`,
       horaTexto: `${(f?.hora ?? dds.hora ?? "").toString().slice(0,5).replace(":","h")}min às ${(f?.hora_fim ?? "").toString().slice(0,5).replace(":","h")}min`,
