@@ -85,7 +85,7 @@ export function DDSAttendeesEditor({
       }
       const { error: e2 } = await supabase
         .from("dds")
-        .update({ participantes_presentes: totalPresentes, aderencia })
+        .update({ participantes_presentes: totalPresentes })
         .eq("id", ddsId);
       if (e2) throw e2;
       toast.success("Presenças atualizadas");
