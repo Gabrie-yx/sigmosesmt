@@ -30,7 +30,7 @@ function TerceirosDashboard() {
       const { data, error } = await supabase
         .from("companies")
         .select("id, name, type, cnpj")
-        .eq("type", "TERCEIRO");
+        .eq("type", "TERCEIRIZADO");
       if (error) throw error;
       return data ?? [];
     },
@@ -70,7 +70,7 @@ function TerceirosDashboard() {
         .from("procedimentos")
         .select("id, codigo, titulo, escopo, status, versao_atual")
         .eq("status", "HOMOLOGADO")
-        .in("escopo", ["TERCEIRO", "AMBOS"]);
+        .in("escopo", ["TERCEIRIZADO", "TERCEIRO", "AMBOS"]);
       if (error) throw error;
       return data ?? [];
     },
