@@ -397,26 +397,79 @@ function TstPanel() {
       ),
     },
     "epi-mensal": {
-      title: "EPIs entregues / mês", icon: TrendingUp,
+      title: "EPIs entregues / mês — por motivo + valor R$", icon: TrendingUp,
       render: () => (
         <div className="h-full min-h-0">
           {entregaMensal.length === 0 ? <Empty /> : (
             <ResponsiveContainer>
-              <AreaChart data={entregaMensal}>
-                <defs>
-                  <linearGradient id="entg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0f766e" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="#0f766e" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
+              <ComposedChart data={entregaMensal} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Area type="monotone" dataKey="qtd" stroke="#0f766e" strokeWidth={2.5} fill="url(#entg)" name="Qtd" />
-              </AreaChart>
+                <YAxis yAxisId="l" tick={{ fontSize: 10 }} />
+                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10 }} tickFormatter={(v) => `R$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`} />
+                <Tooltip formatter={(v: any, n: any) => n === "Valor R$" ? [`R$ ${Number(v).toFixed(2)}`, n] : [v, n]} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar yAxisId="l" dataKey="primeira" stackId="a" fill="#0f766e" name="1ª entrega" radius={[0, 0, 0, 0]} />
+                <Bar yAxisId="l" dataKey="troca" stackId="a" fill="#14b8a6" name="Troca" />
+                <Bar yAxisId="l" dataKey="perda" stackId="a" fill="#ef4444" name="Perda/Extravio" />
+                <Bar yAxisId="l" dataKey="devolucao" stackId="a" fill="#94a3b8" name="Devolução" radius={[4, 4, 0, 0]} />
+                <Line yAxisId="r" type="monotone" dataKey="valor" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 3 }} name="Valor R$" />
+              </ComposedChart>
             </ResponsiveContainer>
           )}
+        </div>
+      ),
+    },
+    "epi-recentes": {
+      title: "Últimas entregas de EPI", icon: ShoppingBag,
+      render: () => (
+        <div className="h-full overflow-y-auto pr-1 space-y-1.5">
+          {epiRecentes.length === 0 ? <Empty /> : epiRecentes.map((e) => {
+            const motivoLabel = e.motivo === "PRIMEIRA_ENTREGA" ? "1ª entrega"
+              : e.motivo === "PERDA_EXTRAVIO" ? "Perda"
+              : e.motivo === "DEVOLUCAO" ? "Devolução"
+              : e.motivo.replace(/_/g, " ").toLowerCase();
+            const motivoCls = e.motivo === "PERDA_EXTRAVIO" ? "bg-red-100 text-red-700"
+              : e.motivo === "PRIMEIRA_ENTREGA" ? "bg-emerald-100 text-emerald-700"
+              : e.motivo === "DEVOLUCAO" ? "bg-slate-200 text-slate-700"
+              : "bg-teal-100 text-teal-700";
+            return (
+              <Link key={e.id} to="/app/employees/$id" params={{ id: e.employee_id }}
+                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#0f766e] transition-all">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#0f766e] to-[#134e4a] text-white flex items-center justify-center font-black text-sm shrink-0">{e.qtd}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] font-black uppercase text-slate-900 truncate">{e.item}</div>
+                  <div className="text-[9px] font-bold uppercase text-slate-500 truncate">{e.colaborador}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${motivoCls}`}>{motivoLabel}</span>
+                  <div className="text-[9px] text-slate-400 font-bold mt-0.5">{new Date(e.data + "T00:00").toLocaleDateString("pt-BR")}</div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      ),
+    },
+    "dds-recentes": {
+      title: "Últimos DDS realizados", icon: MessageSquare,
+      render: () => (
+        <div className="h-full overflow-y-auto pr-1 space-y-1.5">
+          {ddsRecentes.length === 0 ? <Empty /> : ddsRecentes.map((d) => {
+            const ad = d.aderencia || (d.esperados > 0 ? Math.round((d.presentes / d.esperados) * 100) : 0);
+            const adCls = ad >= 90 ? "bg-emerald-500" : ad >= 70 ? "bg-amber-400" : ad > 0 ? "bg-red-500" : "bg-slate-300";
+            return (
+              <Link key={d.id} to="/app/dds/historico"
+                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#0f766e] transition-all">
+                <div className={`w-9 h-9 rounded-lg ${adCls} text-white flex items-center justify-center font-black text-[10px] shrink-0`}>{ad}%</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] font-black uppercase text-slate-900 truncate" title={d.tema}>{d.tema}</div>
+                  <div className="text-[9px] font-bold uppercase text-slate-500 truncate">{d.setor} · {d.presentes}/{d.esperados} presentes</div>
+                </div>
+                <div className="text-[9px] text-slate-400 font-bold shrink-0">{new Date(d.data + "T00:00").toLocaleDateString("pt-BR")}</div>
+              </Link>
+            );
+          })}
         </div>
       ),
     },
