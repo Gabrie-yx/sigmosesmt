@@ -1,16 +1,20 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, Trash2, Image as ImageIcon, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DDSAttendeesEditor } from "@/components/dds-attendees-editor";
 
 export function DDSEvidencias({ ddsId }: { ddsId: string }) {
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
   const listaRef = useRef<HTMLInputElement>(null);
   const fotosRef = useRef<HTMLInputElement>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [esperados, setEsperados] = useState(0);
 
   const { data: itens = [] } = useQuery({
     queryKey: ["dds-evid", ddsId],
@@ -27,8 +31,17 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
         dds_id: ddsId, file_path: path, tipo, descricao: file.name,
       });
       if (e2) throw e2;
+      return tipo;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["dds-evid", ddsId] }); toast.success("Evidência enviada"); },
+    onSuccess: async (tipo) => {
+      qc.invalidateQueries({ queryKey: ["dds-evid", ddsId] });
+      toast.success("Evidência enviada");
+      if (tipo === "LISTA_PRESENCA") {
+        const { data } = await supabase.from("dds").select("participantes_esperados").eq("id", ddsId).maybeSingle();
+        setEsperados((data as any)?.participantes_esperados ?? 0);
+        setConfirmOpen(true);
+      }
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -127,6 +140,18 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
           files.forEach((f) => upload.mutate({ file: f, tipo: "FOTO_DDS" }));
           e.target.value = "";
         }} />
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Confirmar presenças reais</DialogTitle>
+          </DialogHeader>
+          <div className="text-xs text-muted-foreground mb-2">
+            Confira a lista assinada que você acabou de subir e marque apenas quem realmente assinou.
+            Isto trava o número oficial de presentes e a aderência do DDS.
+          </div>
+          <DDSAttendeesEditor ddsId={ddsId} esperados={esperados} onSaved={() => setConfirmOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
