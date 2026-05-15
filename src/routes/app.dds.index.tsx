@@ -255,33 +255,80 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
 
   const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
   const [pdfName, setPdfName] = useState("");
+  const [prepOpen, setPrepOpen] = useState(false);
+  const [prepCompanyIds, setPrepCompanyIds] = useState<string[]>([]);
 
-  function abrirPdf() {
-    const c: any = company ?? {};
+  const { data: allCompanies = [] } = useQuery({
+    queryKey: ["companies-for-dds-prep"],
+    enabled: prepOpen,
+    queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,matriz_nome,matriz_cnpj,encarregado1").order("name")).data ?? [],
+  });
+
+  function buildAndShow(companies: any[], funcs: { nome: string; funcao?: string | null }[]) {
+    const c: any = companies[0] ?? company ?? {};
     const seg = (() => { const d = new Date(dds.data + "T00:00"); const day = d.getDay(); d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day)); return d; })();
     const sex = new Date(seg); sex.setDate(sex.getDate() + 4);
     const fmtBR = (d: Date) => d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
     const fmtBRFull = (d: Date) => d.toLocaleDateString("pt-BR");
     const titulos = [...ids.map((id) => (temaMap[id] as any)?.titulo).filter(Boolean), ...livres];
-    const funcs = (empPresentes as any[]).map((e) => ({ nome: e.nome, funcao: e.roles?.name ?? "" }));
     const f: any = ddsFull;
-    const doc = gerarFormularioSemanalDDS({
-      matrizNome: c.matriz_nome || c.name || "J C S CONSTRUÇÃO NAVAL",
-      matrizCnpj: c.matriz_cnpj || c.cnpj || "",
-      codigo: "FOR-SEG 06", revisao: "00",
-      dataDocumento: new Date().toLocaleDateString("pt-BR"),
-      pagina: "01/01",
-      empresaNome: c.name ?? "—", empresaCnpj: c.cnpj ?? "",
-      localSetor: f?.setor ?? dds.setor ?? "—",
-      periodoTexto: `${fmtBR(seg)} à ${fmtBRFull(sex)}`,
-      horaTexto: `${(f?.hora ?? dds.hora ?? "").toString().slice(0,5).replace(":","h")}min às ${(f?.hora_fim ?? "").toString().slice(0,5).replace(":","h")}min`,
-      assuntos: titulos.join(" / ") || "—",
-      funcionarios: funcs,
-      encarregado: f?.encarregado ?? null,
-      responsavelSesmt: f?.responsavel_sesmt ?? null,
+    const list = companies.length > 0 ? companies : [c];
+    let doc: jsPDF | undefined;
+    list.forEach((co: any, idx: number) => {
+      const coFuncs = companies.length > 1
+        ? funcs.filter((x: any) => x.company_id === co.id).map(({ nome, funcao }) => ({ nome, funcao }))
+        : funcs;
+      doc = gerarFormularioSemanalDDS({
+        matrizNome: co.matriz_nome || co.name || "J C S CONSTRUÇÃO NAVAL",
+        matrizCnpj: co.matriz_cnpj || co.cnpj || "",
+        codigo: "FOR-SEG 06", revisao: "00",
+        dataDocumento: new Date().toLocaleDateString("pt-BR"),
+        pagina: `${String(idx + 1).padStart(2, "0")}/${String(list.length).padStart(2, "0")}`,
+        empresaNome: co.name ?? "—", empresaCnpj: co.cnpj ?? "",
+        localSetor: f?.setor ?? dds.setor ?? "—",
+        periodoTexto: `${fmtBR(seg)} à ${fmtBRFull(sex)}`,
+        horaTexto: `${(f?.hora ?? dds.hora ?? "").toString().slice(0,5).replace(":","h")}min às ${(f?.hora_fim ?? "").toString().slice(0,5).replace(":","h")}min`,
+        assuntos: titulos.join(" / ") || "—",
+        funcionarios: coFuncs,
+        encarregado: f?.encarregado ?? co.encarregado1 ?? null,
+        responsavelSesmt: f?.responsavel_sesmt ?? null,
+      }, doc);
     });
+    if (!doc) return;
     setPdfDoc(doc);
-    setPdfName(`DDS_${(c.name ?? "empresa").replace(/\s+/g,"_")}_${dds.data}.pdf`);
+    const baseName = list.length === 1 ? (list[0].name ?? "empresa").replace(/\s+/g,"_") : `${list.length}_empresas`;
+    setPdfName(`DDS_${baseName}_${dds.data}.pdf`);
+  }
+
+  function abrirPdf() {
+    const f: any = ddsFull;
+    const hasCompany = !!f?.company_id;
+    const hasFuncs = (empPresentes as any[]).length > 0;
+    if (hasCompany && hasFuncs) {
+      const funcs = (empPresentes as any[]).map((e) => ({ nome: e.nome, funcao: e.roles?.name ?? "" }));
+      buildAndShow(company ? [company] : [], funcs);
+      return;
+    }
+    setPrepCompanyIds(f?.company_id ? [f.company_id] : []);
+    setPrepOpen(true);
+  }
+
+  async function confirmarPrep() {
+    if (prepCompanyIds.length === 0) { toast.error("Selecione ao menos uma empresa"); return; }
+    const cos = (allCompanies as any[]).filter((c) => prepCompanyIds.includes(c.id));
+    const { data: emps } = await supabase
+      .from("employees")
+      .select("id,nome,company_id,roles(name)")
+      .eq("status", "ATIVO")
+      .in("company_id", prepCompanyIds)
+      .order("nome");
+    const funcs = (emps ?? []).map((e: any) => ({ nome: e.nome, funcao: e.roles?.name ?? "", company_id: e.company_id }));
+    // persistir 1ª empresa no DDS para próximas visualizações
+    if (!(ddsFull as any)?.company_id) {
+      await supabase.from("dds").update({ company_id: prepCompanyIds[0] }).eq("id", dds.id);
+    }
+    setPrepOpen(false);
+    buildAndShow(cos, funcs);
   }
 
   return (
@@ -343,6 +390,35 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
       </div>
       <DDSEvidencias ddsId={dds.id} />
       <PDFPreviewDialog open={!!pdfDoc} onClose={() => setPdfDoc(null)} doc={pdfDoc} fileName={pdfName} />
+      <Dialog open={prepOpen} onOpenChange={(o) => !o && setPrepOpen(false)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Selecione as empresas para o PDF semanal</DialogTitle></DialogHeader>
+          <div className="text-xs text-muted-foreground mb-2">
+            Este DDS não tem empresa/participantes vinculados. Escolha as empresas — usaremos os funcionários ATIVOS de cada uma para preencher o formulário (uma página por empresa).
+          </div>
+          <div className="border rounded max-h-72 overflow-auto divide-y">
+            {(allCompanies as any[]).map((c) => {
+              const checked = prepCompanyIds.includes(c.id);
+              return (
+                <label key={c.id} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm">
+                  <Checkbox checked={checked} onCheckedChange={() => {
+                    const next = new Set(prepCompanyIds);
+                    if (checked) next.delete(c.id); else next.add(c.id);
+                    setPrepCompanyIds(Array.from(next));
+                  }} />
+                  <span className="flex-1">{c.name}</span>
+                  <span className="text-[10px] text-muted-foreground">{c.cnpj ?? ""}</span>
+                </label>
+              );
+            })}
+            {(allCompanies as any[]).length === 0 && <div className="p-3 text-xs text-muted-foreground text-center">Carregando...</div>}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPrepOpen(false)}>Cancelar</Button>
+            <Button onClick={confirmarPrep}>Gerar PDF</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
