@@ -531,6 +531,7 @@ function ProcedimentosPage() {
             proc={detail}
             employees={employees}
             companyType={companyType}
+            companies={companies}
             isEditor={isEditor}
             onClose={() => setDetail(null)}
           />
