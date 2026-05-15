@@ -476,18 +476,22 @@ export type Database = {
       dds: {
         Row: {
           aderencia: number | null
+          company_id: string | null
           conteudo: string | null
           created_at: string
           created_by: string | null
           data: string
           duracao_min: number
+          encarregado: string | null
           gestor_id: string | null
           hora: string | null
+          hora_fim: string | null
           id: string
           incident_id: string | null
           observacoes: string | null
           participantes_esperados: number
           participantes_presentes: number
+          responsavel_sesmt: string | null
           setor: string | null
           status: string
           tema_id: string | null
@@ -498,18 +502,22 @@ export type Database = {
         }
         Insert: {
           aderencia?: number | null
+          company_id?: string | null
           conteudo?: string | null
           created_at?: string
           created_by?: string | null
           data?: string
           duracao_min?: number
+          encarregado?: string | null
           gestor_id?: string | null
           hora?: string | null
+          hora_fim?: string | null
           id?: string
           incident_id?: string | null
           observacoes?: string | null
           participantes_esperados?: number
           participantes_presentes?: number
+          responsavel_sesmt?: string | null
           setor?: string | null
           status?: string
           tema_id?: string | null
@@ -520,18 +528,22 @@ export type Database = {
         }
         Update: {
           aderencia?: number | null
+          company_id?: string | null
           conteudo?: string | null
           created_at?: string
           created_by?: string | null
           data?: string
           duracao_min?: number
+          encarregado?: string | null
           gestor_id?: string | null
           hora?: string | null
+          hora_fim?: string | null
           id?: string
           incident_id?: string | null
           observacoes?: string | null
           participantes_esperados?: number
           participantes_presentes?: number
+          responsavel_sesmt?: string | null
           setor?: string | null
           status?: string
           tema_id?: string | null

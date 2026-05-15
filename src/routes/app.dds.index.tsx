@@ -13,8 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X, FileDown, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { DDSFormularioSemanalDialog } from "@/components/dds-formulario-semanal-dialog";
 import { DDSEvidencias } from "@/components/dds-evidencias";
+import { gerarFormularioSemanalDDS } from "@/lib/dds-formulario-semanal-pdf";
 
 export const Route = createFileRoute("/app/dds/")({
   component: DDSPage,
@@ -53,7 +53,6 @@ function DDSPage() {
   const [viewing, setViewing] = useState<DDS | null>(null);
   const [editing, setEditing] = useState<DDS | null>(null);
   const [search, setSearch] = useState("");
-  const [genForm, setGenForm] = useState(false);
 
   const { data: dds = [] } = useQuery({
     queryKey: ["dds-list"],
@@ -113,7 +112,6 @@ function DDSPage() {
         <Button asChild variant="outline" size="sm"><Link to="/app/dds/painel"><BarChart3 className="h-4 w-4 mr-1" />Painel</Link></Button>
         <Button asChild variant="outline" size="sm"><Link to="/app/dds/temas"><BookOpen className="h-4 w-4 mr-1" />Temas</Link></Button>
         <Button asChild variant="outline" size="sm"><Link to="/app/dds/gestores"><Users className="h-4 w-4 mr-1" />Gestores</Link></Button>
-        {isEditor && <Button variant="outline" size="sm" onClick={() => setGenForm(true)}><FileDown className="h-4 w-4 mr-1" />Formulário semanal</Button>}
         {isEditor && <Button onClick={() => setCreating(true)}><Plus className="h-4 w-4 mr-1" />Novo DDS</Button>}
       </div>
 
@@ -202,8 +200,6 @@ function DDSPage() {
           {viewing && <DDSDetail dds={viewing} temaMap={temaMap} gestorMap={gestorMap} />}
         </DialogContent>
       </Dialog>
-
-      {genForm && <DDSFormularioSemanalDialog open={genForm} onClose={() => setGenForm(false)} />}
 
       {editing && (
         <EditDDSDialog
