@@ -31,11 +31,18 @@ export function DDSAttendeesEditor({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("dds_attendees")
-        .select("id, employee_id, status, employees(nome)")
+        .select("id, employee_id, status")
         .eq("dds_id", ddsId)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as Att[];
+      const rows = (data ?? []) as { id: string; employee_id: string; status: string }[];
+      const empIds = Array.from(new Set(rows.map((r) => r.employee_id)));
+      let nomeMap: Record<string, string> = {};
+      if (empIds.length > 0) {
+        const { data: emps } = await supabase.from("employees").select("id, nome").in("id", empIds);
+        nomeMap = Object.fromEntries((emps ?? []).map((e: any) => [e.id, e.nome]));
+      }
+      return rows.map((r) => ({ ...r, employees: { nome: nomeMap[r.employee_id] ?? "—" } })) as Att[];
     },
   });
 
