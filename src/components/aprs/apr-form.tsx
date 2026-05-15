@@ -641,14 +641,21 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         ))}
         <div className="ml-auto flex gap-2">
           <Button
-            variant={deteccaoPTE.exige && !apr.pte_id ? "default" : "outline"}
+            variant={categoriasPendentes.length > 0 ? "default" : "outline"}
             size="sm"
-            onClick={() => setPteSheetOpen(true)}
-            className={deteccaoPTE.exige && !apr.pte_id ? "bg-orange-600 hover:bg-orange-700 text-white animate-pulse" : ""}
+            onClick={() => {
+              setPteSheetRiscoSugerido(categoriasPendentes[0]?.riscoLabel ?? null);
+              setPteSheetOpen(true);
+            }}
+            className={categoriasPendentes.length > 0 ? "bg-orange-600 hover:bg-orange-700 text-white animate-pulse" : ""}
             title="Vincular ou criar PTE sem sair da APR"
           >
             <FileText className="h-4 w-4 mr-1" />
-            {apr.pte_id ? "Trocar PTE" : "Vincular/Nova PTE"}
+            {categoriasPendentes.length > 0
+              ? `Resolver ${categoriasPendentes.length} PTE${categoriasPendentes.length > 1 ? "s" : ""} pendente${categoriasPendentes.length > 1 ? "s" : ""}`
+              : todasPtesVinculadas.length > 0
+              ? "Gerenciar PTEs"
+              : "Vincular/Nova PTE"}
           </Button>
           <Button variant="outline" size="sm" onClick={handleAbrir} disabled={!apr.id}><FileText className="h-4 w-4 mr-1" /> Abrir PDF</Button>
           <Button variant="outline" size="sm" onClick={handleImprimir} disabled={!apr.id}><Printer className="h-4 w-4 mr-1" /> Imprimir</Button>
