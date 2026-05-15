@@ -827,7 +827,10 @@ function ReqFormDialog({
   return (
     <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-0">
       <DialogHeader className="px-4 pt-4 pb-2 border-b">
-        <DialogTitle>{isEdit ? `Editar Requisição Nº ${existing?.numero}` : "Nova Requisição de Compra"}</DialogTitle>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <DialogTitle>{isEdit ? `Editar Requisição Nº ${existing?.numero}` : "Nova Requisição de Compra"}</DialogTitle>
+          <EstoqueLookupSheet onPick={pickFromEstoque} triggerLabel="Consultar Estoque / CA" />
+        </div>
       </DialogHeader>
 
       {/* Folha replicando o formulário FOR-COMP 03 */}
