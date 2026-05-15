@@ -410,6 +410,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
         participantes_esperados: esperados, participantes_presentes: presentes.size,
       }).select("id").single();
       if (error) throw error;
+      if (!created) throw new Error("Falha ao criar DDS");
       if (presentes.size > 0) {
         const rows = Array.from(presentes).map((eid) => ({ dds_id: created.id, employee_id: eid, status: "PRESENTE" }));
         const { error: e2 } = await supabase.from("dds_attendees").insert(rows);
