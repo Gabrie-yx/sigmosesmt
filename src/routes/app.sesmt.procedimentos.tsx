@@ -56,6 +56,77 @@ const AREAS = ["SST", "QUALIDADE", "PRODUCAO", "RH", "OUTRO"] as const;
 const CRITICIDADES = ["ALTA", "MEDIA", "BAIXA"] as const;
 const STATUS = ["RASCUNHO", "HOMOLOGADO", "OBSOLETO"] as const;
 
+type GuidedPop = {
+  codigo: string;
+  titulo: string;
+  objetivo: string;
+  escopo: "AMBOS" | "CLT" | "TERCEIRO";
+  criticidade: "ALTA" | "MEDIA" | "BAIXA";
+  periodicidade: number;
+  baseLegal: string;
+  descricao: string;
+  observacoes: string;
+};
+
+const GUIDED_POPS: GuidedPop[] = [
+  {
+    codigo: "POP-SST-001",
+    titulo: "Controle de SST para CLT e Terceiros",
+    objetivo:
+      "Padronizar a admissão, aptidão e ciência de procedimentos para colaboradores CLT e terceirizados, garantindo conformidade com NR-01, NR-07 e NR-18.",
+    escopo: "AMBOS",
+    criticidade: "ALTA",
+    periodicidade: 24,
+    baseLegal: "NR-01 + NR-07 + NR-18",
+    descricao:
+      "Cria o POP-SST-001 (Controle SST CLT/Terceiros), escopo AMBOS, criticidade ALTA, v01 já HOMOLOGADA.",
+    observacoes:
+      "POP base de auditoria — define a metodologia executada pelo safety-engine.",
+  },
+  {
+    codigo: "POP-SST-002",
+    titulo: "Integração de Segurança",
+    objetivo:
+      "Definir conteúdo, carga horária e registro da integração de segurança aplicada a todo colaborador (CLT ou terceiro) antes do início das atividades.",
+    escopo: "AMBOS",
+    criticidade: "ALTA",
+    periodicidade: 24,
+    baseLegal: "NR-01 item 1.7 + NR-18",
+    descricao:
+      "Cria o POP-SST-002 (Integração de Segurança), escopo AMBOS, criticidade ALTA, v01 já HOMOLOGADA.",
+    observacoes:
+      "Carga horária mínima 4h. Conteúdo: política de SST, riscos da empresa, EPIs obrigatórios, plano de emergência, comunicação de acidentes.",
+  },
+  {
+    codigo: "POP-SST-003",
+    titulo: "Controle de ASO e PCMSO",
+    objetivo:
+      "Padronizar a solicitação, realização, arquivamento e controle de validade dos exames ocupacionais (admissional, periódico, mudança de função, retorno e demissional).",
+    escopo: "AMBOS",
+    criticidade: "ALTA",
+    periodicidade: 12,
+    baseLegal: "NR-07 (PCMSO)",
+    descricao:
+      "Cria o POP-SST-003 (Controle ASO/PCMSO), escopo AMBOS, criticidade ALTA, v01 já HOMOLOGADA.",
+    observacoes:
+      "Periodicidade dos exames conforme PCMSO. Bloqueio automático ao vencer (safety-engine).",
+  },
+  {
+    codigo: "POP-SST-004",
+    titulo: "Gestão de Empresas Terceirizadas",
+    objetivo:
+      "Estabelecer critérios para contratação, avaliação e fiscalização de empresas terceirizadas no que se refere a SST, evitando responsabilização subsidiária.",
+    escopo: "TERCEIRO",
+    criticidade: "ALTA",
+    periodicidade: 12,
+    baseLegal: "NR-01 + Súmula 331 TST",
+    descricao:
+      "Cria o POP-SST-004 (Gestão de Terceiros), escopo TERCEIRO, criticidade ALTA, v01 já HOMOLOGADA.",
+    observacoes:
+      "Exige cláusula contratual de SST, apresentação mensal de ASOs/treinamentos e auditoria semestral nas terceiras.",
+  },
+];
+
 type Procedimento = {
   id: string;
   codigo: string;
@@ -142,7 +213,7 @@ function ProcedimentosPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [editing, setEditing] = useState<Procedimento | null>(null);
   const [detail, setDetail] = useState<Procedimento | null>(null);
-  const [creatingGuided, setCreatingGuided] = useState(false);
+  const [creatingGuided, setCreatingGuided] = useState<string | null>(null);
 
   const { data: procs = [], isLoading } = useQuery({
     queryKey: ["procedimentos"],
@@ -278,77 +349,77 @@ function ProcedimentosPage() {
         )}
       </div>
 
-      {isEditor && !procs.some((p) => p.codigo === "POP-SST-001") && (
-        <Card className="mb-4 border-amber-300 bg-amber-50">
-          <CardContent className="pt-4 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <Wand2 className="h-5 w-5 text-amber-700 mt-0.5" />
-              <div>
-                <div className="font-bold text-amber-900">
-                  Cadastro guiado: POP-SST-001
-                </div>
-                <div className="text-sm text-amber-800">
-                  Cria automaticamente o POP-SST-001 (Controle SST CLT/Terceiros), escopo
-                  AMBOS, criticidade ALTA, v01 já HOMOLOGADA. Anexe o PDF em seguida pelo
-                  botão “Detalhes”.
+      {isEditor &&
+        GUIDED_POPS.filter((g) => !procs.some((p) => p.codigo === g.codigo)).map((g) => (
+          <Card key={g.codigo} className="mb-3 border-amber-300 bg-amber-50">
+            <CardContent className="pt-4 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <Wand2 className="h-5 w-5 text-amber-700 mt-0.5" />
+                <div>
+                  <div className="font-bold text-amber-900">
+                    Cadastro guiado: {g.codigo}
+                  </div>
+                  <div className="text-sm text-amber-800">
+                    {g.descricao} Anexe o PDF em seguida pelo botão “Detalhes”.
+                  </div>
+                  <div className="text-xs text-amber-700 mt-1 font-mono">
+                    Base legal: {g.baseLegal}
+                  </div>
                 </div>
               </div>
-            </div>
-            <Button
-              disabled={creatingGuided}
-              onClick={async () => {
-                setCreatingGuided(true);
-                try {
-                  const today = new Date();
-                  const proxima = new Date(today);
-                  proxima.setMonth(proxima.getMonth() + 24);
-                  const payload = {
-                    codigo: "POP-SST-001",
-                    titulo: "Controle de SST para CLT e Terceiros",
-                    objetivo:
-                      "Padronizar a admissão, aptidão e ciência de procedimentos para colaboradores CLT e terceirizados, garantindo conformidade com NR-01, NR-07 e NR-18.",
-                    escopo: "AMBOS",
-                    area: "SST",
-                    criticidade: "ALTA",
-                    status: "HOMOLOGADO",
-                    versao_atual: "01",
-                    periodicidade_revisao_meses: 24,
-                    proxima_revisao: proxima.toISOString().slice(0, 10),
-                    responsavel: "SESMT",
-                    observacoes:
-                      "POP base de auditoria — define a metodologia executada pelo safety-engine.",
-                  };
-                  const { data: ins, error } = await (supabase as any)
-                    .from("procedimentos")
-                    .insert(payload)
-                    .select()
-                    .single();
-                  if (error) throw error;
-                  await (supabase as any).from("procedimento_revisoes").insert({
-                    procedimento_id: ins.id,
-                    versao: "01",
-                    status: "HOMOLOGADO",
-                    motivo_revisao: "Emissão inicial — auditoria POP-SST-001",
-                    responsavel: "SESMT",
-                    data_homologacao: today.toISOString().slice(0, 10),
-                  });
-                  toast.success("POP-SST-001 criado e homologado em v01");
-                  qc.invalidateQueries({ queryKey: ["procedimentos"] });
-                  setDetail(ins as Procedimento);
-                } catch (e: any) {
-                  toast.error(e.message ?? "Erro ao cadastrar POP guiado");
-                } finally {
-                  setCreatingGuided(false);
-                }
-              }}
-              className="bg-amber-700 hover:bg-amber-800 text-white"
-            >
-              <Wand2 className="h-4 w-4 mr-2" />
-              {creatingGuided ? "Criando…" : "Cadastrar POP-SST-001"}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+              <Button
+                disabled={creatingGuided === g.codigo}
+                onClick={async () => {
+                  setCreatingGuided(g.codigo);
+                  try {
+                    const today = new Date();
+                    const proxima = new Date(today);
+                    proxima.setMonth(proxima.getMonth() + g.periodicidade);
+                    const payload = {
+                      codigo: g.codigo,
+                      titulo: g.titulo,
+                      objetivo: g.objetivo,
+                      escopo: g.escopo,
+                      area: "SST",
+                      criticidade: g.criticidade,
+                      status: "HOMOLOGADO",
+                      versao_atual: "01",
+                      periodicidade_revisao_meses: g.periodicidade,
+                      proxima_revisao: proxima.toISOString().slice(0, 10),
+                      responsavel: "SESMT",
+                      observacoes: g.observacoes,
+                    };
+                    const { data: ins, error } = await (supabase as any)
+                      .from("procedimentos")
+                      .insert(payload)
+                      .select()
+                      .single();
+                    if (error) throw error;
+                    await (supabase as any).from("procedimento_revisoes").insert({
+                      procedimento_id: ins.id,
+                      versao: "01",
+                      status: "HOMOLOGADO",
+                      motivo_revisao: `Emissão inicial — auditoria ${g.codigo}`,
+                      responsavel: "SESMT",
+                      data_homologacao: today.toISOString().slice(0, 10),
+                    });
+                    toast.success(`${g.codigo} criado e homologado em v01`);
+                    qc.invalidateQueries({ queryKey: ["procedimentos"] });
+                    setDetail(ins as Procedimento);
+                  } catch (e: any) {
+                    toast.error(e.message ?? "Erro ao cadastrar POP guiado");
+                  } finally {
+                    setCreatingGuided(null);
+                  }
+                }}
+                className="bg-amber-700 hover:bg-amber-800 text-white whitespace-nowrap"
+              >
+                <Wand2 className="h-4 w-4 mr-2" />
+                {creatingGuided === g.codigo ? "Criando…" : `Cadastrar ${g.codigo}`}
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
         <StatCard label="Total" value={stats.total} icon={<FileCheck2 className="h-4 w-4" />} />
