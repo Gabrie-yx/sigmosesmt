@@ -1144,6 +1144,179 @@ export type Database = {
           },
         ]
       }
+      procedimento_cientes: {
+        Row: {
+          created_at: string
+          data_ciencia: string
+          dds_id: string | null
+          employee_id: string
+          evidencia_path: string | null
+          id: string
+          observacao: string | null
+          origem: string
+          procedimento_id: string
+          registrado_por: string | null
+          revisao_id: string | null
+          versao: string
+        }
+        Insert: {
+          created_at?: string
+          data_ciencia?: string
+          dds_id?: string | null
+          employee_id: string
+          evidencia_path?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string
+          procedimento_id: string
+          registrado_por?: string | null
+          revisao_id?: string | null
+          versao: string
+        }
+        Update: {
+          created_at?: string
+          data_ciencia?: string
+          dds_id?: string | null
+          employee_id?: string
+          evidencia_path?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string
+          procedimento_id?: string
+          registrado_por?: string | null
+          revisao_id?: string | null
+          versao?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedimento_cientes_procedimento_id_fkey"
+            columns: ["procedimento_id"]
+            isOneToOne: false
+            referencedRelation: "procedimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedimento_cientes_revisao_id_fkey"
+            columns: ["revisao_id"]
+            isOneToOne: false
+            referencedRelation: "procedimento_revisoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procedimento_revisoes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_emissao: string
+          data_homologacao: string | null
+          homologado_por: string | null
+          id: string
+          motivo_revisao: string | null
+          pdf_path: string | null
+          procedimento_id: string
+          responsavel: string | null
+          status: string
+          updated_at: string
+          versao: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_emissao?: string
+          data_homologacao?: string | null
+          homologado_por?: string | null
+          id?: string
+          motivo_revisao?: string | null
+          pdf_path?: string | null
+          procedimento_id: string
+          responsavel?: string | null
+          status?: string
+          updated_at?: string
+          versao: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_emissao?: string
+          data_homologacao?: string | null
+          homologado_por?: string | null
+          id?: string
+          motivo_revisao?: string | null
+          pdf_path?: string | null
+          procedimento_id?: string
+          responsavel?: string | null
+          status?: string
+          updated_at?: string
+          versao?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedimento_revisoes_procedimento_id_fkey"
+            columns: ["procedimento_id"]
+            isOneToOne: false
+            referencedRelation: "procedimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procedimentos: {
+        Row: {
+          area: string
+          codigo: string
+          created_at: string
+          created_by: string | null
+          criticidade: string
+          escopo: string
+          id: string
+          objetivo: string | null
+          observacoes: string | null
+          periodicidade_revisao_meses: number
+          proxima_revisao: string | null
+          responsavel: string | null
+          status: string
+          titulo: string
+          updated_at: string
+          versao_atual: string
+        }
+        Insert: {
+          area?: string
+          codigo: string
+          created_at?: string
+          created_by?: string | null
+          criticidade?: string
+          escopo?: string
+          id?: string
+          objetivo?: string | null
+          observacoes?: string | null
+          periodicidade_revisao_meses?: number
+          proxima_revisao?: string | null
+          responsavel?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+          versao_atual?: string
+        }
+        Update: {
+          area?: string
+          codigo?: string
+          created_at?: string
+          created_by?: string | null
+          criticidade?: string
+          escopo?: string
+          id?: string
+          objetivo?: string | null
+          observacoes?: string | null
+          periodicidade_revisao_meses?: number
+          proxima_revisao?: string | null
+          responsavel?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+          versao_atual?: string
+        }
+        Relationships: []
+      }
       producao_classes_avaliacao: {
         Row: {
           ativo: boolean
