@@ -726,6 +726,34 @@ function ReqFormDialog({
     setItens((arr) => arr.length > 10 ? arr.slice(0, -1) : arr);
   };
 
+  const pickFromEstoque = (picked: PickedItem) => {
+    setItens((arr) => {
+      const idx = arr.findIndex((it) => !it.descricao.trim());
+      if (idx === -1) {
+        return [
+          ...arr,
+          {
+            item_numero: arr.length + 1,
+            descricao: picked.descricao,
+            quantidade: "",
+            unidade: picked.unidade || "",
+            observacao: picked.ca ? `CA ${picked.ca}` : "",
+          },
+        ];
+      }
+      return arr.map((it, i) =>
+        i === idx
+          ? {
+              ...it,
+              descricao: picked.descricao,
+              unidade: it.unidade || picked.unidade || "",
+              observacao: it.observacao || (picked.ca ? `CA ${picked.ca}` : ""),
+            }
+          : it,
+      );
+    });
+  };
+
   const save = useMutation({
     mutationFn: async () => {
       if (!form.numero.trim() || !form.solicitante.trim()) {
@@ -905,7 +933,10 @@ function ReqFormDialog({
         </div>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">Total de linhas: {itens.length}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">Total de linhas: {itens.length}</span>
+            <EstoqueLookupSheet onPick={pickFromEstoque} triggerLabel="Consultar Estoque / CA" />
+          </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" size="sm" onClick={removeLastItem} disabled={itens.length <= 10}>
               Remover última linha
