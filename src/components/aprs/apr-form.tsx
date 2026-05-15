@@ -13,6 +13,7 @@ import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 import { formatDateBR } from "@/lib/utils-date";
 import dmnLogo from "@/assets/dmn-logo.png";
 import { detectarExigenciaPTE } from "@/lib/apr-pte-rules";
+import { PteLookupSheet } from "@/components/aprs/pte-lookup-sheet";
 
 /* ---------- tipos ---------- */
 type APR = {
@@ -263,6 +264,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const [riscos, setRiscos] = useState<Risco[]>([]);
   const [assinaturas, setAssinaturas] = useState<Assin[]>([]);
   const [tab, setTab] = useState<"p1" | "p2" | "p3" | "p4" | "p5">("p1");
+  const [pteSheetOpen, setPteSheetOpen] = useState(false);
 
   // catálogos
   const { data: cascos = [] } = useQuery({ queryKey: ["cascos-light"], queryFn: async () => (await supabase.from("cascos").select("id,numero,nome,status").eq("status", "ATIVO").order("numero")).data ?? [] });
@@ -596,6 +598,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           </button>
         ))}
         <div className="ml-auto flex gap-2">
+          <Button
+            variant={deteccaoPTE.exige && !apr.pte_id ? "default" : "outline"}
+            size="sm"
+            onClick={() => setPteSheetOpen(true)}
+            className={deteccaoPTE.exige && !apr.pte_id ? "bg-orange-600 hover:bg-orange-700 text-white animate-pulse" : ""}
+            title="Vincular ou criar PTE sem sair da APR"
+          >
+            <FileText className="h-4 w-4 mr-1" />
+            {apr.pte_id ? "Trocar PTE" : "Vincular/Nova PTE"}
+          </Button>
           <Button variant="outline" size="sm" onClick={handleAbrir} disabled={!apr.id}><FileText className="h-4 w-4 mr-1" /> Abrir PDF</Button>
           <Button variant="outline" size="sm" onClick={handleImprimir} disabled={!apr.id}><Printer className="h-4 w-4 mr-1" /> Imprimir</Button>
           <Button variant="outline" size="sm" onClick={() => save.mutate(false)} disabled={save.isPending}><Save className="h-4 w-4 mr-1" /> Salvar Rascunho</Button>
@@ -621,8 +633,12 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                   <ul className="text-[10px] text-amber-800 mt-0.5 list-disc list-inside">
                     {deteccaoPTE.motivos.map((m) => <li key={m}>{m}</li>)}
                   </ul>
-                  <div className="text-[10px] text-amber-700 mt-1">
-                    Salve a APR e use <b>“Gerar PTE vinculada”</b> no menu de ações para emitir a permissão antes do início da atividade.
+                  <div className="text-[10px] text-amber-700 mt-1 flex items-center gap-2 flex-wrap">
+                    <span>Abra o painel ao lado para vincular uma PTE existente ou criar uma nova sem sair desta APR.</span>
+                    <Button size="sm" className="h-6 text-[10px] bg-orange-600 hover:bg-orange-700"
+                      onClick={() => setPteSheetOpen(true)}>
+                      <FileText className="h-3 w-3 mr-1" /> Abrir painel de PTE
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -910,6 +926,20 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           </div>
         )}
       </div>
+
+      <PteLookupSheet
+        open={pteSheetOpen}
+        onOpenChange={setPteSheetOpen}
+        aprId={apr.id ?? null}
+        aprNumero={apr.numero ?? null}
+        aprLocal={apr.local ?? null}
+        empresaId={apr.empresa_id ?? null}
+        riscoSugerido={deteccaoPTE.categoriaPrincipal}
+        onPick={(pteId) => {
+          setApr((a) => ({ ...a, pte_id: pteId, exige_pte: true }));
+          qc.invalidateQueries({ queryKey: ["ptes-light"] });
+        }}
+      />
     </div>
   );
 }
