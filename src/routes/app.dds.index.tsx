@@ -286,26 +286,60 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
   employees: { id: string; nome: string; cpf: string | null }[];
   onSaved: () => void;
 }) {
+  const { user } = useAuth();
   const [data, setData] = useState(today());
   const [hora, setHora] = useState("07:30");
+  const [horaFim, setHoraFim] = useState("07:40");
   const [gestorId, setGestorId] = useState<string>("");
   const [setor, setSetor] = useState("");
+  const [companyId, setCompanyId] = useState<string>("");
+  const [encarregado, setEncarregado] = useState("");
+  const [sesmt, setSesmt] = useState("");
   const [temaIds, setTemaIds] = useState<string[]>([]);
   const [temasLivres, setTemasLivres] = useState<string[]>([]);
   const [temaLivreInput, setTemaLivreInput] = useState("");
   const [temaSearch, setTemaSearch] = useState("");
   const [duracao, setDuracao] = useState(10);
   const [conteudo, setConteudo] = useState("");
-  const [esperados, setEsperados] = useState(employees.length);
+  const [esperados, setEsperados] = useState(0);
   const [presentes, setPresentes] = useState<Set<string>>(new Set());
   const [empSearch, setEmpSearch] = useState("");
   const [saving, setSaving] = useState(false);
+  const [gerarPdf, setGerarPdf] = useState(true);
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies-for-dds-novo"],
+    queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,encarregado1,matriz_nome,matriz_cnpj").order("name")).data ?? [],
+  });
+  const { data: empresaEmployees = [] } = useQuery({
+    queryKey: ["employees-by-company-dds", companyId],
+    enabled: !!companyId,
+    queryFn: async () => (await supabase.from("employees").select("id,nome,cpf,roles(name)").eq("status","ATIVO").eq("company_id", companyId).order("nome")).data ?? [],
+  });
+  const company = companies.find((c: any) => c.id === companyId);
+
+  const empList = companyId ? empresaEmployees as any[] : employees as any[];
+  // ao trocar empresa: pré-marcar todos como presentes e ajustar esperados
+  useMemo(() => {
+    if (companyId && empresaEmployees.length > 0) {
+      setPresentes(new Set(empresaEmployees.map((e: any) => e.id)));
+      setEsperados(empresaEmployees.length);
+      if (company?.encarregado1 && !encarregado) setEncarregado(company.encarregado1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId, empresaEmployees.length]);
+
+  useMemo(() => {
+    if (!sesmt && user?.user_metadata?.full_name) setSesmt(user.user_metadata.full_name as string);
+    else if (!sesmt && user?.email) setSesmt(user.email);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const filteredEmp = useMemo(() => {
     const q = empSearch.toLowerCase().trim();
-    if (!q) return employees;
-    return employees.filter((e) => e.nome.toLowerCase().includes(q));
-  }, [employees, empSearch]);
+    if (!q) return empList;
+    return empList.filter((e: any) => e.nome.toLowerCase().includes(q));
+  }, [empList, empSearch]);
 
   function toggleEmp(id: string) {
     const next = new Set(presentes);
@@ -313,13 +347,56 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
     setPresentes(next);
   }
 
+  function getMonday(s: string) {
+    const d = new Date(s + "T00:00");
+    const day = d.getDay();
+    d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+    return d;
+  }
+  function fmtBR(d: Date) { return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }); }
+  function fmtBRFull(d: Date) { return d.toLocaleDateString("pt-BR"); }
+
+  function gerarPDFSemanal(funcionarios: { nome: string; funcao?: string | null }[]) {
+    const seg = getMonday(data);
+    const sex = new Date(seg); sex.setDate(sex.getDate() + 4);
+    const temasSel = temaIds
+      .map((id) => temas.find((t) => t.id === id))
+      .filter(Boolean)
+      .map((t: any) => `${t!.codigo ? t!.codigo + "- " : ""}${t!.titulo}`)
+      .join(" / ");
+    const assuntos = [temasSel, ...temasLivres].filter(Boolean).join(" / ") || "—";
+    const doc = gerarFormularioSemanalDDS({
+      matrizNome: company?.matriz_nome || company?.name || "—",
+      matrizCnpj: company?.matriz_cnpj || company?.cnpj || "",
+      codigo: "FOR-SEG 06",
+      revisao: "00",
+      dataDocumento: new Date().toLocaleDateString("pt-BR"),
+      pagina: "01/01",
+      empresaNome: company?.name ?? "",
+      empresaCnpj: company?.cnpj ?? "",
+      localSetor: setor || "—",
+      periodoTexto: `${fmtBR(seg)} à ${fmtBRFull(sex)}`,
+      horaTexto: `${(hora || "").replace(":", "h")}min às ${(horaFim || "").replace(":", "h")}min`,
+      assuntos,
+      funcionarios,
+      encarregado, responsavelSesmt: sesmt,
+    });
+    const fname = `DDS_${(company?.name ?? "empresa").replace(/\s+/g, "_")}_${seg.toISOString().slice(0,10)}.pdf`;
+    doc.save(fname);
+  }
+
   async function save() {
     if (!gestorId) return toast.error("Selecione o gestor");
+    if (gerarPdf && !companyId) return toast.error("Selecione a empresa para gerar o PDF semanal");
     if (temaIds.length === 0 && temasLivres.length === 0) return toast.error("Selecione ao menos um tema ou adicione um tema livre");
     setSaving(true);
     try {
       const { data: created, error } = await supabase.from("dds").insert({
-        data, hora, gestor_id: gestorId, setor: setor || null,
+        data, hora, hora_fim: horaFim || null,
+        gestor_id: gestorId, setor: setor || null,
+        company_id: companyId || null,
+        encarregado: encarregado || null,
+        responsavel_sesmt: sesmt || null,
         tema_id: temaIds[0] ?? null,
         tema_livre: temasLivres[0] ?? null,
         temas_ids: temaIds,
@@ -333,6 +410,10 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
         const { error: e2 } = await supabase.from("dds_attendees").insert(rows);
         if (e2) throw e2;
       }
+      if (gerarPdf && companyId) {
+        const funcs = (empresaEmployees as any[]).map((e) => ({ nome: e.nome, funcao: e.roles?.name ?? "" }));
+        try { gerarPDFSemanal(funcs); } catch (err: any) { toast.error("DDS salvo, mas falhou ao gerar PDF: " + err.message); }
+      }
       toast.success("DDS lançado");
       onSaved();
     } catch (e: any) {
@@ -345,13 +426,28 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
-        <DialogHeader><DialogTitle>Novo DDS</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Novo DDS — gera formulário semanal</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div><Label>Data *</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
-            <div><Label>Hora</Label><Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} /></div>
+            <div><Label>Hora início</Label><Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} /></div>
+            <div><Label>Hora fim</Label><Input type="time" value={horaFim} onChange={(e) => setHoraFim(e.target.value)} /></div>
             <div><Label>Duração (min)</Label><Input type="number" value={duracao} onChange={(e) => setDuracao(Number(e.target.value) || 10)} /></div>
             <div><Label>Esperados</Label><Input type="number" value={esperados} onChange={(e) => setEsperados(Number(e.target.value) || 0)} /></div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label>Empresa * (para o PDF)</Label>
+              <Select value={companyId} onValueChange={setCompanyId}>
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>
+                  {companies.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {companyId && <div className="text-xs text-muted-foreground mt-1">{empresaEmployees.length} funcionário(s) ativo(s)</div>}
+            </div>
+            <div><Label>Local / Setor</Label><Input value={setor} onChange={(e) => setSetor(e.target.value)} placeholder="Ex: PRODUÇÃO" /></div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -373,9 +469,15 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
                 </div>
               )}
             </div>
-            <div>
-              <Label>Setor / Local</Label>
-              <Input value={setor} onChange={(e) => setSetor(e.target.value)} placeholder="Ex: PCP, Expedição..." />
+            <div><Label>Encarregado / Designado</Label><Input value={encarregado} onChange={(e) => setEncarregado(e.target.value)} placeholder="Nome do encarregado" /></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div><Label>Responsável SESMT</Label><Input value={sesmt} onChange={(e) => setSesmt(e.target.value)} /></div>
+            <div className="flex items-end">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox checked={gerarPdf} onCheckedChange={(v) => setGerarPdf(Boolean(v))} />
+                <FileDown className="h-4 w-4" /> Gerar formulário semanal (PDF) ao salvar
+              </label>
             </div>
           </div>
 
