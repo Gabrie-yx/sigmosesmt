@@ -210,13 +210,22 @@ function TstPanel() {
       .sort((a, b) => b.qtd - a.qtd).slice(0, 8);
   }, [data]);
 
-  const entregaMensal = useMemo(() => {
-    const m = new Map<string, { mes: string; primeira: number; troca: number; perda: number; devolucao: number; outros: number; valor: number }>();
+  const entregaSerie = useMemo(() => {
+    // bucketize by week (start = Monday) when período > 30 dias, by day otherwise
+    const useWeek = dias > 30;
+    const m = new Map<string, { key: string; label: string; primeira: number; troca: number; perda: number; devolucao: number; outros: number; valor: number }>();
     (data?.deliveries ?? []).forEach((d: any) => {
       const dt = new Date(d.data_entrega + "T00:00");
-      const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
-      const label = `${MONTHS_PT[dt.getMonth()]}/${String(dt.getFullYear()).slice(2)}`;
-      const cur = m.get(key) ?? { mes: label, primeira: 0, troca: 0, perda: 0, devolucao: 0, outros: 0, valor: 0 };
+      let bucket = dt;
+      if (useWeek) {
+        const day = (dt.getDay() + 6) % 7; // 0 = monday
+        bucket = new Date(dt.getTime() - day * dayMs);
+      }
+      const key = fmt(bucket);
+      const label = useWeek
+        ? `${String(bucket.getDate()).padStart(2, "0")}/${MONTHS_PT[bucket.getMonth()]}`
+        : `${String(bucket.getDate()).padStart(2, "0")}/${String(bucket.getMonth() + 1).padStart(2, "0")}`;
+      const cur = m.get(key) ?? { key, label, primeira: 0, troca: 0, perda: 0, devolucao: 0, outros: 0, valor: 0 };
       const q = Number(d.qtd || 0);
       const motivo = String(d.motivo_entrega || "");
       if (motivo === "PRIMEIRA_ENTREGA") cur.primeira += q;
@@ -227,8 +236,8 @@ function TstPanel() {
       cur.valor += q * Number(d.valor_unitario || 0);
       m.set(key, cur);
     });
-    return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v);
-  }, [data]);
+    return Array.from(m.values()).sort((a, b) => a.key.localeCompare(b.key));
+  }, [data, dias]);
 
   const epiRecentes = useMemo(() => {
     const empMap = new Map((data?.employees ?? []).map((e: any) => [e.id, e.nome]));
