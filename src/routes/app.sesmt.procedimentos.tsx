@@ -1178,6 +1178,22 @@ function DetailDialog({
         <Button variant="outline" onClick={onClose}>
           Fechar
         </Button>
+        <Button
+          variant="outline"
+          className="border-red-700 text-red-700 hover:bg-red-50"
+          onClick={() =>
+            gerarAuditoriaPopPdf({
+              proc,
+              revisoes,
+              applicable,
+              cientesAtuais: cientes,
+              companyName,
+              companyType,
+            })
+          }
+        >
+          <FileDown className="h-4 w-4 mr-1" /> Relatório de auditoria (PDF)
+        </Button>
       </DialogFooter>
     </DialogContent>
   );
