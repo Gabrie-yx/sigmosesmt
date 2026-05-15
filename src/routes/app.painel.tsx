@@ -12,7 +12,7 @@ import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  PieChart, Pie, Cell, Legend, ComposedChart, Line,
+  PieChart, Pie, Cell, Legend, ComposedChart, Line, Area,
 } from "recharts";
 // react-grid-layout touches `window` at import — load it client-only via lazy state
 type Layout = { i: string; x: number; y: number; w: number; h: number; minH?: number; minW?: number };
@@ -26,21 +26,20 @@ const today = new Date();
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
 const MONTHS_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-const LS_KEY = "sesmt-painel-layout-v2";
+const LS_KEY = "sesmt-painel-layout-v3";
 const DEFAULT_LAYOUT: Layout[] = [
   { i: "kpis",        x: 0, y: 0,  w: 12, h: 4,  minH: 3, minW: 6 },
-  { i: "search",      x: 0, y: 4,  w: 8,  h: 5,  minH: 4, minW: 4 },
-  { i: "health",      x: 8, y: 4,  w: 4,  h: 5,  minH: 4, minW: 3 },
-  { i: "epi-mensal",  x: 0, y: 9,  w: 8,  h: 8,  minH: 6, minW: 5 },
-  { i: "status-pie",  x: 8, y: 9,  w: 4,  h: 8,  minH: 6, minW: 3 },
-  { i: "epi-recentes",x: 0, y: 17, w: 6,  h: 8,  minH: 5, minW: 4 },
-  { i: "dds-recentes",x: 6, y: 17, w: 6,  h: 8,  minH: 5, minW: 4 },
-  { i: "top-itens",   x: 0, y: 25, w: 8,  h: 8,  minH: 5, minW: 4 },
-  { i: "top-recip",   x: 8, y: 25, w: 4,  h: 8,  minH: 5, minW: 3 },
-  { i: "dds-trend",   x: 0, y: 33, w: 6,  h: 7,  minH: 5, minW: 4 },
-  { i: "conformidade",x: 6, y: 33, w: 6,  h: 7,  minH: 5, minW: 4 },
-  { i: "pendencias",  x: 0, y: 40, w: 12, h: 9,  minH: 5, minW: 6 },
-  { i: "footer",      x: 0, y: 49, w: 12, h: 3,  minH: 2, minW: 6 },
+  { i: "health",      x: 0, y: 4,  w: 4,  h: 5,  minH: 4, minW: 3 },
+  { i: "status-pie",  x: 4, y: 4,  w: 4,  h: 5,  minH: 4, minW: 3 },
+  { i: "footer",      x: 8, y: 4,  w: 4,  h: 5,  minH: 4, minW: 3 },
+  { i: "epi-mensal",  x: 0, y: 9,  w: 12, h: 9,  minH: 7, minW: 6 },
+  { i: "epi-recentes",x: 0, y: 18, w: 6,  h: 8,  minH: 5, minW: 4 },
+  { i: "dds-recentes",x: 6, y: 18, w: 6,  h: 8,  minH: 5, minW: 4 },
+  { i: "top-itens",   x: 0, y: 26, w: 8,  h: 8,  minH: 5, minW: 4 },
+  { i: "top-recip",   x: 8, y: 26, w: 4,  h: 8,  minH: 5, minW: 3 },
+  { i: "dds-trend",   x: 0, y: 34, w: 6,  h: 7,  minH: 5, minW: 4 },
+  { i: "conformidade",x: 6, y: 34, w: 6,  h: 7,  minH: 5, minW: 4 },
+  { i: "pendencias",  x: 0, y: 41, w: 12, h: 9,  minH: 5, minW: 6 },
 ];
 
 function loadLayout(): Layout[] {
@@ -211,13 +210,22 @@ function TstPanel() {
       .sort((a, b) => b.qtd - a.qtd).slice(0, 8);
   }, [data]);
 
-  const entregaMensal = useMemo(() => {
-    const m = new Map<string, { mes: string; primeira: number; troca: number; perda: number; devolucao: number; outros: number; valor: number }>();
+  const entregaSerie = useMemo(() => {
+    // bucketize by week (start = Monday) when período > 30 dias, by day otherwise
+    const useWeek = dias > 30;
+    const m = new Map<string, { key: string; label: string; primeira: number; troca: number; perda: number; devolucao: number; outros: number; valor: number }>();
     (data?.deliveries ?? []).forEach((d: any) => {
       const dt = new Date(d.data_entrega + "T00:00");
-      const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
-      const label = `${MONTHS_PT[dt.getMonth()]}/${String(dt.getFullYear()).slice(2)}`;
-      const cur = m.get(key) ?? { mes: label, primeira: 0, troca: 0, perda: 0, devolucao: 0, outros: 0, valor: 0 };
+      let bucket = dt;
+      if (useWeek) {
+        const day = (dt.getDay() + 6) % 7; // 0 = monday
+        bucket = new Date(dt.getTime() - day * dayMs);
+      }
+      const key = fmt(bucket);
+      const label = useWeek
+        ? `${String(bucket.getDate()).padStart(2, "0")}/${MONTHS_PT[bucket.getMonth()]}`
+        : `${String(bucket.getDate()).padStart(2, "0")}/${String(bucket.getMonth() + 1).padStart(2, "0")}`;
+      const cur = m.get(key) ?? { key, label, primeira: 0, troca: 0, perda: 0, devolucao: 0, outros: 0, valor: 0 };
       const q = Number(d.qtd || 0);
       const motivo = String(d.motivo_entrega || "");
       if (motivo === "PRIMEIRA_ENTREGA") cur.primeira += q;
@@ -228,8 +236,8 @@ function TstPanel() {
       cur.valor += q * Number(d.valor_unitario || 0);
       m.set(key, cur);
     });
-    return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v);
-  }, [data]);
+    return Array.from(m.values()).sort((a, b) => a.key.localeCompare(b.key));
+  }, [data, dias]);
 
   const epiRecentes = useMemo(() => {
     const empMap = new Map((data?.employees ?? []).map((e: any) => [e.id, e.nome]));
@@ -397,23 +405,45 @@ function TstPanel() {
       ),
     },
     "epi-mensal": {
-      title: "EPIs entregues / mês — por motivo + valor R$", icon: TrendingUp,
+      title: "Fluxo de entregas de EPI — por motivo + valor R$", icon: TrendingUp,
       render: () => (
         <div className="h-full min-h-0">
-          {entregaMensal.length === 0 ? <Empty /> : (
+          {entregaSerie.length === 0 ? <Empty /> : (
             <ResponsiveContainer>
-              <ComposedChart data={entregaMensal} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                <YAxis yAxisId="l" tick={{ fontSize: 10 }} />
-                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10 }} tickFormatter={(v) => `R$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`} />
-                <Tooltip formatter={(v: any, n: any) => n === "Valor R$" ? [`R$ ${Number(v).toFixed(2)}`, n] : [v, n]} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar yAxisId="l" dataKey="primeira" stackId="a" fill="#0f766e" name="1ª entrega" radius={[0, 0, 0, 0]} />
-                <Bar yAxisId="l" dataKey="troca" stackId="a" fill="#14b8a6" name="Troca" />
-                <Bar yAxisId="l" dataKey="perda" stackId="a" fill="#ef4444" name="Perda/Extravio" />
-                <Bar yAxisId="l" dataKey="devolucao" stackId="a" fill="#94a3b8" name="Devolução" radius={[4, 4, 0, 0]} />
-                <Line yAxisId="r" type="monotone" dataKey="valor" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 3 }} name="Valor R$" />
+              <ComposedChart data={entregaSerie} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="grad-primeira" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#0f766e" stopOpacity={0.85} />
+                    <stop offset="100%" stopColor="#0f766e" stopOpacity={0.15} />
+                  </linearGradient>
+                  <linearGradient id="grad-troca" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.8} />
+                    <stop offset="100%" stopColor="#14b8a6" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient id="grad-perda" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.85} />
+                    <stop offset="100%" stopColor="#ef4444" stopOpacity={0.15} />
+                  </linearGradient>
+                  <linearGradient id="grad-devolucao" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.7} />
+                    <stop offset="100%" stopColor="#94a3b8" stopOpacity={0.1} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={{ stroke: "#cbd5e1" }} tickLine={false} />
+                <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={32} />
+                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: "#f59e0b" }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1)}k` : `R$${v}`} />
+                <Tooltip
+                  contentStyle={{ background: "rgba(15, 23, 42, 0.95)", border: "none", borderRadius: 8, color: "#fff", fontSize: 11 }}
+                  labelStyle={{ color: "#cbd5e1", fontWeight: 700, marginBottom: 4 }}
+                  formatter={(v: any, n: any) => n === "Valor R$" ? [`R$ ${Number(v).toFixed(2)}`, n] : [v, n]}
+                />
+                <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} iconType="circle" />
+                <Area yAxisId="l" type="monotone" dataKey="primeira" stackId="a" stroke="#0f766e" strokeWidth={2} fill="url(#grad-primeira)" name="1ª entrega" />
+                <Area yAxisId="l" type="monotone" dataKey="troca" stackId="a" stroke="#14b8a6" strokeWidth={2} fill="url(#grad-troca)" name="Troca" />
+                <Area yAxisId="l" type="monotone" dataKey="devolucao" stackId="a" stroke="#94a3b8" strokeWidth={2} fill="url(#grad-devolucao)" name="Devolução" />
+                <Area yAxisId="l" type="monotone" dataKey="perda" stackId="a" stroke="#ef4444" strokeWidth={2} fill="url(#grad-perda)" name="Perda/Extravio" />
+                <Line yAxisId="r" type="monotone" dataKey="valor" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, fill: "#f59e0b", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 6 }} name="Valor R$" />
               </ComposedChart>
             </ResponsiveContainer>
           )}
