@@ -272,6 +272,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const [assinaturas, setAssinaturas] = useState<Assin[]>([]);
   const [tab, setTab] = useState<"p1" | "p2" | "p3" | "p4" | "p5">("p1");
   const [pteSheetOpen, setPteSheetOpen] = useState(false);
+  const [pteSheetRiscoSugerido, setPteSheetRiscoSugerido] = useState<string | null>(null);
 
   // catálogos
   const { data: cascos = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["cascos-light"], queryFn: async () => (await supabase.from("cascos").select("id,numero,nome,status").eq("status", "ATIVO").order("numero")).data ?? [] });
@@ -280,6 +281,18 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const { data: roles = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["roles-light"], queryFn: async () => (await supabase.from("roles").select("id,name").order("name")).data ?? [] });
   const { data: catRiscos = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["catalogo_riscos_form"], queryFn: async () => (await supabase.from("catalogo_riscos").select("*").eq("ativo", true).order("nome")).data ?? [] });
   const { data: ptes = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["ptes-light"], queryFn: async () => (await supabase.from("ptes").select("id,numero,data_emissao,risco").order("data_emissao", { ascending: false }).limit(50)).data ?? [] });
+  // PTEs JÁ vinculadas a esta APR (1 APR ↔ N PTEs, uma por categoria detectada)
+  const { data: linkedPtes = EMPTY_QUERY_LIST } = useQuery({
+    queryKey: ["ptes-linked-apr", aprId],
+    enabled: !!aprId,
+    queryFn: async () =>
+      (await supabase
+        .from("ptes")
+        .select("id,numero,data_emissao,risco,status")
+        .eq("apr_id", aprId!)
+        .order("data_emissao", { ascending: false })
+      ).data ?? [],
+  });
 
   const empresa = useMemo(() => companies.find((c: any) => c.id === apr.empresa_id), [companies, apr.empresa_id]);
   const casco = useMemo(() => cascos.find((c: any) => c.id === apr.casco_id), [cascos, apr.casco_id]);
@@ -291,6 +304,28 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     () => detectarExigenciaPTE(riscos.map((r) => ({ risco_nome: r.risco_nome, nrs: r.nrs }))),
     [riscos],
   );
+  const categoriasDetectadas = useMemo<CategoriaDetectada[]>(
+    () => detectarCategoriasPTE(riscos.map((r) => ({ risco_nome: r.risco_nome, nrs: r.nrs }))),
+    [riscos],
+  );
+  /** Mescla a PTE legada (apr.pte_id) caso ela não esteja na lista de linked. */
+  const todasPtesVinculadas = useMemo(() => {
+    const map = new Map<string, any>();
+    (linkedPtes as any[]).forEach((p) => map.set(p.id, p));
+    if (apr.pte_id && pte && !map.has(apr.pte_id)) map.set(apr.pte_id, pte);
+    return Array.from(map.values());
+  }, [linkedPtes, apr.pte_id, pte]);
+  /** Para cada categoria detectada → PTE que a cobre (match por ptes.risco === riscoLabel) */
+  const coberturaCategorias = useMemo(() => {
+    return categoriasDetectadas.map((cat) => {
+      const cobertura = cat.riscoLabel
+        ? todasPtesVinculadas.find((p: any) => (p.risco ?? "") === cat.riscoLabel)
+        : null;
+      return { ...cat, pte: cobertura ?? null };
+    });
+  }, [categoriasDetectadas, todasPtesVinculadas]);
+  const categoriasPendentes = coberturaCategorias.filter((c) => !c.pte && c.riscoLabel);
+  const categoriasCobertas = coberturaCategorias.filter((c) => !!c.pte);
   const temRiscoGrave = useMemo(() => riscos.some((r) => (r.probabilidade + r.severidade) >= 5), [riscos]);
   useEffect(() => {
     if ((deteccaoPTE.exige || temRiscoGrave) && !apr.exige_pte) {
