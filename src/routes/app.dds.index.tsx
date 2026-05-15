@@ -198,8 +198,8 @@ function DDSPage() {
       )}
 
       <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Detalhes do DDS</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Detalhes do DDS e evidências</DialogTitle></DialogHeader>
           {viewing && <DDSDetail dds={viewing} temaMap={temaMap} gestorMap={gestorMap} />}
         </DialogContent>
       </Dialog>
