@@ -41,8 +41,11 @@ import {
   Clock,
   Search,
   Pencil,
+  Wand2,
+  FileDown,
 } from "lucide-react";
 import { toast } from "sonner";
+import { gerarAuditoriaPopPdf } from "@/lib/pop-auditoria-pdf";
 
 export const Route = createFileRoute("/app/sesmt/procedimentos")({
   component: ProcedimentosPage,
