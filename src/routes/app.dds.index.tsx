@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X, FileDown, Pencil, Upload, ClipboardList, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { DDSEvidencias } from "@/components/dds-evidencias";
+import { DDSAttendeesEditor } from "@/components/dds-attendees-editor";
 import { gerarFormularioSemanalDDS } from "@/lib/dds-formulario-semanal-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
@@ -818,7 +819,13 @@ function EditDDSDialog({ open, dds, temas, gestores, onClose, onSaved }: {
             <Label>Conteúdo / Pontos abordados</Label>
             <Textarea rows={3} value={conteudo} onChange={(e) => setConteudo(e.target.value)} />
           </div>
-          <div className="text-xs text-muted-foreground">Para alterar a lista de presentes, exclua e relance o DDS.</div>
+          <div>
+            <Label>Lista de presentes</Label>
+            <div className="text-[11px] text-muted-foreground mb-1">
+              Marque/desmarque quem realmente participou. Ao salvar aqui, o total de presentes e a aderência são recalculados automaticamente.
+            </div>
+            <DDSAttendeesEditor ddsId={dds.id} esperados={esperados} />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
