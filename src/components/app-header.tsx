@@ -72,6 +72,8 @@ const DDS_SUBMENU = [
 
 const DOCUMENTOS_SUBMENU = [
   { to: "/app/sesmt/docs", label: "Documentos SESMT" },
+  { to: "/app/sesmt/procedimentos", label: "Procedimentos / POPs" },
+  { to: "/app/sesmt/terceiros", label: "Painel de Terceiros" },
   { to: "/app/sesmt/requisicoes", label: "Requisições de Compra" },
 ] as const;
 
