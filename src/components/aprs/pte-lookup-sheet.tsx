@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ShieldAlert, Search, Link2, Plus, FileText } from "lucide-react";
+import { ShieldAlert, Search, Link2, Plus, FileText, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { PTE_RISCOS } from "@/lib/constants";
 import { formatDateBR } from "@/lib/utils-date";
@@ -29,6 +29,7 @@ export function PteLookupSheet({
   const qc = useQueryClient();
   const [tab, setTab] = useState<"buscar" | "nova">("buscar");
   const [search, setSearch] = useState("");
+  const [filtrarPorRisco, setFiltrarPorRisco] = useState(true);
   const today = new Date().toISOString().slice(0, 10);
 
   const defaultRisco = useMemo(() => {
@@ -50,8 +51,9 @@ export function PteLookupSheet({
         risco: defaultRisco,
         local: f.local || aprLocal || "",
       }));
+      setFiltrarPorRisco(!!riscoSugerido);
     }
-  }, [open, defaultRisco, aprLocal]);
+  }, [open, defaultRisco, aprLocal, riscoSugerido]);
 
   const { data: ptes = [] } = useQuery({
     queryKey: ["ptes-lookup"],
@@ -73,13 +75,25 @@ export function PteLookupSheet({
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return ptes;
-    return ptes.filter((p: any) =>
+    let list = ptes as any[];
+    if (filtrarPorRisco && riscoSugerido) {
+      list = list.filter((p) => (p.risco ?? "") === riscoSugerido);
+    }
+    if (!q) return list;
+    return list.filter((p) =>
       `${p.numero ?? ""} ${p.risco ?? ""} ${p.local ?? ""} ${p.employee_name ?? ""}`.toLowerCase().includes(q));
-  }, [ptes, search]);
+  }, [ptes, search, filtrarPorRisco, riscoSugerido]);
 
   const vincular = useMutation({
     mutationFn: async (pteId: string) => {
+      const p = (ptes as any[]).find((x) => x.id === pteId);
+      if (riscoSugerido && p && (p.risco ?? "") !== riscoSugerido) {
+        const ok = window.confirm(
+          `Esta PTE é de "${p.risco ?? "—"}", mas a categoria pendente é "${riscoSugerido}". ` +
+          `Vincular mesmo assim NÃO vai cobrir a categoria pendente. Continuar?`,
+        );
+        if (!ok) throw new Error("Vínculo cancelado");
+      }
       if (aprId) {
         await supabase.from("ptes").update({ apr_id: aprId }).eq("id", pteId);
       }
@@ -144,15 +158,36 @@ export function PteLookupSheet({
           </TabsList>
 
           <TabsContent value="buscar" className="flex-1 overflow-hidden flex flex-col p-5 pt-3 m-0">
+            {riscoSugerido && (
+              <div className="mb-2 flex items-center justify-between gap-2 rounded-md border border-orange-200 bg-orange-50 px-2.5 py-1.5">
+                <div className="text-[11px] text-orange-900">
+                  Categoria pendente: <b>{riscoSugerido}</b>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFiltrarPorRisco((v) => !v)}
+                  className="text-[10px] font-black uppercase text-orange-700 hover:underline"
+                >
+                  {filtrarPorRisco ? "Mostrar todas" : "Filtrar por risco"}
+                </button>
+              </div>
+            )}
             <Input
               placeholder="Buscar por número, risco, local, executante..."
               value={search} onChange={(e) => setSearch(e.target.value)} className="mb-3 shrink-0"
             />
             <div className="flex-1 overflow-y-auto space-y-2 pr-1">
               {filtered.length === 0 ? (
-                <div className="text-center text-xs text-slate-400 py-8">Nenhuma PTE encontrada</div>
-              ) : filtered.map((p: any) => (
-                <div key={p.id} className="border border-slate-200 rounded-lg p-3 hover:border-orange-400 hover:bg-orange-50/40 transition">
+                <div className="text-center text-xs text-slate-400 py-8">
+                  Nenhuma PTE encontrada
+                  {filtrarPorRisco && riscoSugerido && (
+                    <div className="mt-1 text-[10px]">Tente "Mostrar todas" ou crie uma nova na aba ao lado.</div>
+                  )}
+                </div>
+              ) : filtered.map((p: any) => {
+                const mismatch = !!riscoSugerido && (p.risco ?? "") !== riscoSugerido;
+                return (
+                <div key={p.id} className={`border rounded-lg p-3 transition ${mismatch ? "border-amber-300 bg-amber-50/40 hover:border-amber-400" : "border-slate-200 hover:border-orange-400 hover:bg-orange-50/40"}`}>
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="text-xs font-black text-[#991b1b]">{p.numero ?? p.id.slice(0, 8)}</span>
                     <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${p.status === "ATIVA" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>{p.status}</span>
@@ -164,12 +199,18 @@ export function PteLookupSheet({
                   {p.apr_id && p.apr_id !== aprId && (
                     <div className="text-[10px] text-amber-700 mt-0.5">⚠ Já vinculada a outra APR — vínculo será atualizado</div>
                   )}
+                  {mismatch && (
+                    <div className="text-[10px] text-amber-800 mt-0.5 flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" /> Não cobre a categoria pendente "{riscoSugerido}"
+                    </div>
+                  )}
                   <Button size="sm" className="w-full mt-2 bg-orange-600 hover:bg-orange-700 text-xs h-8"
                     onClick={() => vincular.mutate(p.id)} disabled={vincular.isPending}>
                     <Link2 className="h-3.5 w-3.5 mr-1" /> Vincular esta PTE
                   </Button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </TabsContent>
 
