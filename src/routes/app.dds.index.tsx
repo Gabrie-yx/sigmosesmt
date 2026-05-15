@@ -417,13 +417,14 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
         if (e2) throw e2;
       }
       // Upload das evidências
+      const ddsId = created.id;
       async function uploadOne(file: File, tipo: "LISTA_PRESENCA" | "FOTO_DDS") {
         const ext = file.name.split(".").pop() ?? "bin";
-        const path = `${created.id}/${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`;
+        const path = `${ddsId}/${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`;
         const { error: ue } = await supabase.storage.from("dds-anexos").upload(path, file);
         if (ue) throw ue;
         const { error: ie } = await supabase.from("dds_evidencias").insert({
-          dds_id: created.id, file_path: path, tipo, descricao: file.name,
+          dds_id: ddsId, file_path: path, tipo, descricao: file.name,
         });
         if (ie) throw ie;
       }
