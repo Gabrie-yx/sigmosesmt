@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dmnLogo from "@/assets/dmn-logo.png";
+import { EstoqueLookupSheet, type PickedItem } from "@/components/estoque-lookup-sheet";
 
 export const Route = createFileRoute("/app/sesmt/requisicoes")({
   component: RequisicoesPage,
@@ -377,6 +378,7 @@ function RequisicoesPage() {
           <Button variant="outline" onClick={() => gerarRelatorio(filtered, periodoLabel())}>
             <FileDown className="h-4 w-4 mr-2" /> Relatório PDF
           </Button>
+          <EstoqueLookupSheet />
           {isEditor && (
             <Dialog open={openNew} onOpenChange={setOpenNew}>
               <DialogTrigger asChild>
