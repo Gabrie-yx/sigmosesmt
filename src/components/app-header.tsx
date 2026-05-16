@@ -19,6 +19,7 @@ import {
   Lock,
   Users as UsersIcon,
   CalendarCheck2,
+  Search,
 } from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
