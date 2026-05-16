@@ -592,7 +592,7 @@ function EstoqueSesmtPage() {
 
       {/* Barra flutuante do carrinho de requisição */}
       {isEditor && cart.size > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[min(680px,calc(100vw-2rem))]">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(680px,calc(100vw-2rem))] animate-in slide-in-from-top-4 fade-in duration-300">
           <div className="rounded-2xl border border-amber-300 bg-white shadow-2xl shadow-amber-900/20 px-4 py-3 flex items-center gap-3">
             <div className="relative shrink-0">
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
