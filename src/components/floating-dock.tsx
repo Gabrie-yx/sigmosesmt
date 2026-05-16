@@ -93,11 +93,15 @@ export function FloatingDock() {
   const [drawerPath, setDrawerPath] = useState<string | null>(null);
   const [drawerLabel, setDrawerLabel] = useState<string>("");
   const [submenuOpen, setSubmenuOpen] = useState<string | null>(null);
+  const [mobileSheet, setMobileSheet] = useState<DockItem | null>(null);
   const closeTimer = useRef<number | null>(null);
   const navigate = useNavigate();
 
-  // Hover na borda esquerda abre o dock
+  // Hover na borda esquerda abre o dock (apenas em telas com mouse)
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    if (!mq.matches) return;
     const onMove = (e: MouseEvent) => {
       if (e.clientX <= 6) {
         if (closeTimer.current) {
@@ -141,6 +145,7 @@ export function FloatingDock() {
     setDrawerLabel(item.label);
     setSubmenuOpen(null);
     setDockOpen(false);
+    setMobileSheet(null);
   }
 
   function scheduleClose() {
@@ -150,14 +155,14 @@ export function FloatingDock() {
 
   return (
     <>
-      {/* Zona invisível de captura na borda esquerda */}
+      {/* Zona invisível de captura na borda esquerda (desktop) */}
       <div
         aria-hidden
-        className="fixed left-0 top-0 h-screen w-2 z-[60]"
+        className="fixed left-0 top-0 h-screen w-2 z-[60] hidden md:block"
         onMouseEnter={() => setDockOpen(true)}
       />
 
-      {/* Dock flutuante */}
+      {/* Dock flutuante (desktop / tablet ≥ md) */}
       <div
         onMouseEnter={() => {
           if (closeTimer.current) {
@@ -171,7 +176,7 @@ export function FloatingDock() {
           setSubmenuOpen(null);
         }}
         className={cn(
-          "fixed left-2 top-1/2 -translate-y-1/2 z-[70] transition-all duration-200",
+          "fixed left-2 top-1/2 -translate-y-1/2 z-[70] transition-all duration-200 hidden md:block",
           dockOpen ? "translate-x-0 opacity-100" : "-translate-x-[120%] opacity-0 pointer-events-none",
         )}
       >
@@ -233,14 +238,71 @@ export function FloatingDock() {
         </div>
       </div>
 
+      {/* Bottom-nav mobile (< md) */}
+      <nav
+        aria-label="Menu principal"
+        className="md:hidden fixed bottom-0 inset-x-0 z-[70] border-t bg-white/95 backdrop-blur shadow-[0_-4px_16px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]"
+      >
+        <div className="grid grid-cols-6">
+          {ITEMS.map((it) => {
+            const Icon = it.icon;
+            const hasChildren = !!it.children?.length;
+            return (
+              <button
+                key={it.path}
+                onClick={() => (hasChildren ? setMobileSheet(it) : openDrawer(it))}
+                className="flex flex-col items-center justify-center gap-0.5 py-2 px-1 text-slate-600 active:bg-red-50 active:text-red-700"
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-[10px] font-semibold leading-tight text-center line-clamp-1">
+                  {it.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Bottom-sheet mobile com filhos do grupo */}
+      {mobileSheet && (
+        <div className="md:hidden fixed inset-0 z-[75] flex flex-col">
+          <div
+            className="flex-1 bg-black/40 backdrop-blur-sm animate-in fade-in"
+            onClick={() => setMobileSheet(null)}
+          />
+          <div className="bg-white rounded-t-2xl shadow-2xl p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] animate-in slide-in-from-bottom duration-200">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
+            <div className="flex items-center gap-2 mb-3">
+              <mobileSheet.icon className="h-5 w-5 text-red-700" />
+              <div className="text-sm font-bold text-slate-800">{mobileSheet.label}</div>
+            </div>
+            {mobileSheet.hint && (
+              <div className="text-xs text-slate-500 mb-3">{mobileSheet.hint}</div>
+            )}
+            <div className="flex flex-col gap-1">
+              {mobileSheet.children!.map((c) => (
+                <button
+                  key={c.path}
+                  onClick={() => openDrawer(c)}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-3 rounded-lg bg-slate-50 hover:bg-red-50 text-slate-700 hover:text-red-700 text-sm font-semibold"
+                >
+                  <span>{c.label}</span>
+                  <ChevronRight className="h-4 w-4 opacity-60" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Drawer lateral direito 85% com iframe — preserva 100% do estado da tela atual */}
       {drawerPath && (
         <div className="fixed inset-0 z-[80] flex">
           <div
-            className="flex-1 bg-black/40 backdrop-blur-sm animate-in fade-in"
+            className="hidden md:block flex-1 bg-black/40 backdrop-blur-sm animate-in fade-in"
             onClick={() => setDrawerPath(null)}
           />
-          <div className="w-[85vw] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+          <div className="w-full md:w-[85vw] ml-auto h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
             <div className="flex items-center gap-2 border-b px-4 py-2 bg-slate-50">
               <div className="text-xs uppercase font-bold text-slate-500">Visualização rápida</div>
               <div className="text-sm font-bold text-slate-800">· {drawerLabel}</div>
