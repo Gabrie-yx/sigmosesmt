@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import {
   Megaphone, Package, ShoppingCart, ShieldAlert, Stethoscope, CheckCircle2, ArrowRight,
   CalendarClock, FileWarning, Syringe, UserX, ClipboardCheck, GraduationCap, KeyRound, BellOff,
+  FileWarning as TncIcon,
 } from "lucide-react";
 import { Sigla } from "@/components/sigla";
 import { cn } from "@/lib/utils";
@@ -121,6 +122,20 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
   const Icon = meta.icon;
   const snoozed = isSnoozed(item.key);
 
+  // Sugere abrir TNC apenas em pendências críticas concretas
+  const canOpenTnc = !item.ok && item.severity === "critico" && item.count > 0;
+  const tncSearch = canOpenTnc
+    ? {
+        titulo: `[Detectado pelo sistema] ${typeof meta.titulo === "string" ? meta.titulo : item.key}`,
+        descricao: typeof meta.descricaoPend === "function"
+          ? (meta.descricaoPend(item.count) as any)?.toString?.() ?? ""
+          : "",
+        origem: "SISTEMA",
+        severidade: "ALTA",
+        pendencia: item.key,
+      }
+    : null;
+
   return (
     <div className={cn(
       "group relative flex flex-col gap-3 rounded-2xl border bg-gradient-to-br p-5 shadow-sm hover:shadow-lg transition-all ring-1",
@@ -179,6 +194,16 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
           )
         )}
       </div>
+      {canOpenTnc && tncSearch && (
+        <Link
+          to="/app/ncs"
+          search={tncSearch as any}
+          className="inline-flex items-center justify-center gap-1.5 mt-1 px-2 py-1.5 rounded-md bg-red-700 hover:bg-red-800 text-white text-[10px] font-bold uppercase tracking-wider transition"
+          title="Abrir Tratativa de Não Conformidade pré-preenchida"
+        >
+          <TncIcon className="h-3 w-3" /> Abrir TNC
+        </Link>
+      )}
     </div>
   );
 }
