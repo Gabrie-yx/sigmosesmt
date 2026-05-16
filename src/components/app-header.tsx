@@ -18,6 +18,7 @@ import {
   DoorOpen,
   Lock,
   Users as UsersIcon,
+  CalendarCheck2,
 } from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
@@ -26,41 +27,57 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import dmnLogo from "@/assets/dmn-logo.png";
 import { PendenciasBadge } from "@/components/pendencias-badge";
 
-// Menu SESMT reorganizado seguindo o ciclo PDCA da SST
-// (NR-1 GRO/PGR → NR-7 PCMSO → NR-6 EPI → NR-35 etc.)
+// Menu SESMT seguindo o ciclo PDCA (Planejar · Executar · Verificar · Agir)
+// Espelha o dock flutuante para mantê-los consistentes.
 type SesmtItem = { to: string; label: string };
 type SesmtGroup = { title: string; items: SesmtItem[] };
 const SESMT_GROUPS: SesmtGroup[] = [
   {
     title: "Visão Geral",
-    items: [{ to: "/app/painel", label: "Painel SESMT" }],
+    items: [{ to: "/app/painel", label: "Painel de Indicadores" }],
   },
   {
-    title: "Cadastros Base",
+    title: "📘 Planejar",
     items: [
+      { to: "/app/sesmt/procedimentos", label: "Procedimentos / POPs" },
+      { to: "/app/matriz-treinamento", label: "Matriz de Treinamento" },
+      { to: "/app/sesmt/docs", label: "Documentos SESMT" },
+      { to: "/app/sesmt/requisicoes", label: "Requisições de Compra" },
+    ],
+  },
+  {
+    title: "👷 Executar",
+    items: [
+      { to: "/app/dds", label: "DDS — Diálogo de Segurança" },
+      { to: "/app/aprs", label: "APRs — Análise de Risco" },
+      { to: "/app/ptes", label: "PTEs — Permissão de Trabalho" },
+      { to: "/app/trainings", label: "Treinamentos & NRs" },
+    ],
+  },
+  {
+    title: "🔍 Verificar",
+    items: [
+      { to: "/app/sesmt/terceiros", label: "Painel de Terceiros" },
+      { to: "/app/relatorios/reincidencia-epi", label: "Reincidência de EPI" },
+      { to: "/app/audit", label: "Auditoria do Sistema" },
+    ],
+  },
+  {
+    title: "🔧 Agir",
+    items: [
+      { to: "/app/ncs", label: "Não Conformidades" },
+      { to: "/app/incidentes", label: "Incidentes / Investigação" },
+      { to: "/app/acoes", label: "Plano de Ações (5W2H)" },
+    ],
+  },
+  {
+    title: "👥 Pessoas & Cadastros",
+    items: [
+      { to: "/app/employees", label: "Colaboradores" },
+      { to: "/app/cascos", label: "Cascos / Embarcações" },
       { to: "/app/companies", label: "Empresas / Contratadas" },
       { to: "/app/roles", label: "Cargos & Matriz de Riscos" },
-      { to: "/app/employees", label: "Funcionários" },
-      { to: "/app/cascos", label: "Cascos / Embarcações" },
     ],
-  },
-  {
-    title: "Saúde & Capacitação",
-    items: [
-      { to: "/app/trainings", label: "Treinamentos & NRs" },
-      { to: "/app/matriz-treinamento", label: "Matriz de Treinamento" },
-    ],
-  },
-  {
-    title: "Documentos & Permissões",
-    items: [
-      { to: "/app/ptes", label: "Emitir PTE" },
-      { to: "/app/aprs", label: "Emitir APR" },
-    ],
-  },
-  {
-    title: "Indicadores SST",
-    items: [{ to: "/app/relatorios/reincidencia-epi", label: "Reincidência de Perda EPI" }],
   },
 ];
 const SESMT_FLAT: SesmtItem[] = SESMT_GROUPS.flatMap((g) => g.items);
@@ -71,17 +88,9 @@ const DDS_SUBMENU = [
   { to: "/app/dds/painel", label: "Painel de Qualidade" },
 ] as const;
 
-const DOCUMENTOS_SUBMENU = [
-  { to: "/app/sesmt/docs", label: "Documentos SESMT" },
-  { to: "/app/sesmt/procedimentos", label: "Procedimentos / POPs" },
-  { to: "/app/sesmt/terceiros", label: "Painel de Terceiros" },
-  { to: "/app/sesmt/requisicoes", label: "Requisições de Compra" },
-] as const;
-
 const SESMT_PATHS = [
   ...SESMT_FLAT.map((i) => i.to),
   ...DDS_SUBMENU.map((i) => i.to),
-  ...DOCUMENTOS_SUBMENU.map((i) => i.to),
 ];
 
 const OTHER_MODULES = [
@@ -160,6 +169,17 @@ export function AppHeader() {
 
   const DesktopNav = () => (
     <>
+      {/* HOJE — atalho principal do dia */}
+      <Link
+        to="/app/hoje"
+        className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-black uppercase tracking-wide whitespace-nowrap transition-all mr-1 ${
+          isActive("/app/hoje")
+            ? "bg-amber-300 text-red-900 shadow-md ring-1 ring-amber-200"
+            : "bg-white text-red-800 hover:bg-amber-50 shadow-sm ring-1 ring-white/40"
+        }`}
+      >
+        <CalendarCheck2 className="h-4 w-4" /> Hoje
+      </Link>
       {/* SESMT — abre ao passar o mouse */}
       {canSesmt && (<div className="group relative">
         <button type="button" aria-haspopup="true" className={triggerCls(sesmtActive)}>
@@ -167,7 +187,7 @@ export function AppHeader() {
           <ChevronDown className="h-3.5 w-3.5 opacity-70" />
         </button>
         <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-          <div className="w-72 rounded-lg border border-red-100 bg-white shadow-xl py-1">
+          <div className="w-72 rounded-lg border border-red-100 bg-white shadow-xl py-1 max-h-[80vh] overflow-y-auto">
             {SESMT_GROUPS.map((group, gi) => (
               <div key={group.title}>
                 {gi > 0 && <div className="my-1 border-t border-slate-100" />}
@@ -191,7 +211,7 @@ export function AppHeader() {
             ))}
             <div className="my-1 border-t border-slate-100" />
             <div className="px-3 pt-2 pb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">
-              Diálogos & Documentos
+              DDS — Submódulos
             </div>
             <div className="group/sub relative">
               <div
@@ -201,41 +221,12 @@ export function AppHeader() {
                     : "text-slate-700 hover:bg-red-50 hover:text-red-800"
                 }`}
               >
-                DDS
+                Histórico & Painel DDS
                 <ChevronRight className="h-3.5 w-3.5 opacity-60" />
               </div>
               <div className="invisible absolute left-full top-0 z-50 pl-1 opacity-0 transition-all duration-150 group-hover/sub:visible group-hover/sub:opacity-100 group-focus-within/sub:visible group-focus-within/sub:opacity-100">
                 <div className="w-60 rounded-lg border border-red-100 bg-white shadow-xl py-1">
                   {DDS_SUBMENU.map((s) => (
-                    <Link
-                      key={s.to}
-                      to={s.to}
-                      className={`block px-3 py-2 text-sm font-semibold transition-colors ${
-                        isActive(s.to)
-                          ? "bg-red-50 text-red-800"
-                          : "text-slate-700 hover:bg-red-50 hover:text-red-800"
-                      }`}
-                    >
-                      {s.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="group/sub relative">
-              <div
-                className={`flex w-full items-center justify-between px-3 py-2 text-sm font-semibold cursor-default transition-colors ${
-                  DOCUMENTOS_SUBMENU.some((s) => isActive(s.to))
-                    ? "bg-red-50 text-red-800"
-                    : "text-slate-700 hover:bg-red-50 hover:text-red-800"
-                }`}
-              >
-                Documentos
-                <ChevronRight className="h-3.5 w-3.5 opacity-60" />
-              </div>
-              <div className="invisible absolute left-full top-0 z-50 pl-1 opacity-0 transition-all duration-150 group-hover/sub:visible group-hover/sub:opacity-100 group-focus-within/sub:visible group-focus-within/sub:opacity-100">
-                <div className="w-60 rounded-lg border border-red-100 bg-white shadow-xl py-1">
-                  {DOCUMENTOS_SUBMENU.map((s) => (
                     <Link
                       key={s.to}
                       to={s.to}
@@ -410,6 +401,16 @@ export function AppHeader() {
 
   const MobileNav = () => (
     <div className="flex flex-col gap-1 mt-8">
+      <Link
+        to="/app/hoje"
+        className={`flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-black uppercase tracking-wide mb-3 ${
+          isActive("/app/hoje")
+            ? "bg-amber-300 text-red-900"
+            : "bg-white text-red-800 hover:bg-amber-50"
+        }`}
+      >
+        <CalendarCheck2 className="h-4 w-4" /> O que fazer hoje
+      </Link>
       <div className="text-[10px] font-black uppercase tracking-widest text-white/60 px-2 mb-1">
         SESMT
       </div>
@@ -433,18 +434,6 @@ export function AppHeader() {
       ))}
       <div className="text-xs font-bold text-white/70 px-2 mt-2">DDS</div>
       {DDS_SUBMENU.map((s) => (
-        <Link
-          key={s.to}
-          to={s.to}
-          className={`rounded-md px-6 py-2 text-sm font-semibold ${
-            isActive(s.to) ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10"
-          }`}
-        >
-          ↳ {s.label}
-        </Link>
-      ))}
-      <div className="text-xs font-bold text-white/70 px-2 mt-2">Documentos</div>
-      {DOCUMENTOS_SUBMENU.map((s) => (
         <Link
           key={s.to}
           to={s.to}
