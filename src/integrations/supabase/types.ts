@@ -1223,18 +1223,39 @@ export type Database = {
       }
       nao_conformidades: {
         Row: {
+          abrangencia: string | null
           acao_imediata: string | null
+          acoes_corretivas_lista: Json | null
+          acoes_imediatas_lista: Json | null
+          acoes_implementadas: boolean | null
           causa_raiz: string | null
+          classificacao: string | null
+          comentarios_eficacia: string | null
+          comentarios_implementacao: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
           data_conclusao: string | null
+          data_fechamento: string | null
           data_identificacao: string
+          data_implementacao: string | null
           data_limite: string | null
+          departamento: string | null
           descricao: string | null
+          eficaz: boolean | null
+          emitente: string | null
+          enviado_para: string | null
           id: string
+          norma: string | null
+          novo_prazo: string | null
           numero: string | null
           origem: string | null
+          pendencia_origem: string | null
+          porques: Json | null
+          prazo_verificacao_eficacia: string | null
+          reincidente: boolean | null
+          requisito: string | null
+          responsavel_fechamento: string | null
           responsavel_id: string | null
           severidade: string
           status: string
@@ -1242,18 +1263,39 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          abrangencia?: string | null
           acao_imediata?: string | null
+          acoes_corretivas_lista?: Json | null
+          acoes_imediatas_lista?: Json | null
+          acoes_implementadas?: boolean | null
           causa_raiz?: string | null
+          classificacao?: string | null
+          comentarios_eficacia?: string | null
+          comentarios_implementacao?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
+          data_fechamento?: string | null
           data_identificacao?: string
+          data_implementacao?: string | null
           data_limite?: string | null
+          departamento?: string | null
           descricao?: string | null
+          eficaz?: boolean | null
+          emitente?: string | null
+          enviado_para?: string | null
           id?: string
+          norma?: string | null
+          novo_prazo?: string | null
           numero?: string | null
           origem?: string | null
+          pendencia_origem?: string | null
+          porques?: Json | null
+          prazo_verificacao_eficacia?: string | null
+          reincidente?: boolean | null
+          requisito?: string | null
+          responsavel_fechamento?: string | null
           responsavel_id?: string | null
           severidade?: string
           status?: string
@@ -1261,18 +1303,39 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          abrangencia?: string | null
           acao_imediata?: string | null
+          acoes_corretivas_lista?: Json | null
+          acoes_imediatas_lista?: Json | null
+          acoes_implementadas?: boolean | null
           causa_raiz?: string | null
+          classificacao?: string | null
+          comentarios_eficacia?: string | null
+          comentarios_implementacao?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
+          data_fechamento?: string | null
           data_identificacao?: string
+          data_implementacao?: string | null
           data_limite?: string | null
+          departamento?: string | null
           descricao?: string | null
+          eficaz?: boolean | null
+          emitente?: string | null
+          enviado_para?: string | null
           id?: string
+          norma?: string | null
+          novo_prazo?: string | null
           numero?: string | null
           origem?: string | null
+          pendencia_origem?: string | null
+          porques?: Json | null
+          prazo_verificacao_eficacia?: string | null
+          reincidente?: boolean | null
+          requisito?: string | null
+          responsavel_fechamento?: string | null
           responsavel_id?: string | null
           severidade?: string
           status?: string
@@ -2727,6 +2790,7 @@ export type Database = {
       current_aal: { Args: never; Returns: string }
       gerar_numero_apr: { Args: never; Returns: string }
       gerar_numero_ordem_producao: { Args: never; Returns: string }
+      gerar_numero_tnc: { Args: never; Returns: string }
       has_module_access: {
         Args: {
           _module: Database["public"]["Enums"]["app_module"]
