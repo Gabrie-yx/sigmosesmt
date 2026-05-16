@@ -42,7 +42,7 @@ type Item = {
   observacao: string;
 };
 
-type PrintMode = "download" | "print";
+type PrintMode = "download" | "print" | "preview";
 
 type Req = {
   id: string;
