@@ -79,6 +79,20 @@ function NCsPage() {
   const search = useSearch({ from: "/app/ncs" });
   const [busca, setBusca] = useState("");
   const [open, setOpen] = useState(false);
+  const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
+  const [pdfName, setPdfName] = useState<string>("");
+  const [pdfOpen, setPdfOpen] = useState(false);
+
+  async function previewTNC(nc: NCData) {
+    try {
+      const doc = await generateTNCPdf(nc);
+      setPdfDoc(doc);
+      setPdfName(`TNC-${nc.numero ?? "rascunho"}.pdf`);
+      setPdfOpen(true);
+    } catch (e: any) {
+      toast.error("Erro ao gerar PDF: " + (e?.message ?? "desconhecido"));
+    }
+  }
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
@@ -280,11 +294,8 @@ function NCsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 mt-2 pt-2 border-t border-slate-100">
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => downloadTNC(i as NCData)}>
-                      <FileDown className="h-3.5 w-3.5 mr-1" /> PDF
-                    </Button>
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => printTNC(i as NCData)}>
-                      <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => previewTNC(i as NCData)}>
+                      <Eye className="h-3.5 w-3.5 mr-1" /> Visualizar PDF
                     </Button>
                     <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 ml-auto" onClick={() => { if (confirm(`Excluir TNC "${i.titulo}"?`)) del.mutate(i.id); }}>
                       <Trash2 className="h-3.5 w-3.5" />
@@ -518,8 +529,9 @@ function NCsPage() {
           <DialogFooter className="gap-2 sm:gap-2">
             {editing && (
               <>
-                <Button variant="outline" onClick={() => downloadTNC({ ...editing, ...form } as NCData)}><FileDown className="h-4 w-4 mr-1" /> PDF</Button>
-                <Button variant="outline" onClick={() => printTNC({ ...editing, ...form } as NCData)}><Printer className="h-4 w-4 mr-1" /> Imprimir</Button>
+                <Button variant="outline" onClick={() => previewTNC({ ...editing, ...form } as NCData)}>
+                  <Eye className="h-4 w-4 mr-1" /> Visualizar PDF
+                </Button>
               </>
             )}
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
@@ -529,6 +541,14 @@ function NCsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <PDFPreviewDialog
+        open={pdfOpen}
+        onClose={() => setPdfOpen(false)}
+        doc={pdfDoc}
+        fileName={pdfName}
+        title="Visualizar TNC"
+      />
     </div>
   );
 }
