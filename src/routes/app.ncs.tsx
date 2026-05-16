@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertTriangle, Plus, Search, ShieldAlert, CheckCircle2, Clock, XCircle,
-  FileDown, Printer, Trash2, FileText, User, Wrench, ClipboardCheck,
+  FileDown, Printer, Trash2, FileText, User, Wrench, ClipboardCheck, Pencil, Ban,
 } from "lucide-react";
 import { toast } from "sonner";
 import { generateTNCPdf, type NCData } from "@/lib/nc-tnc-pdf";
@@ -209,6 +209,21 @@ function NCsPage() {
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
+  const cancel = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("nao_conformidades")
+        .update({ status: "CANCELADA" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("TNC cancelada (histórico preservado)");
+      qc.invalidateQueries({ queryKey: ["ncs"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro"),
+  });
+
   const filtered = useMemo(() => {
     const s = busca.trim().toLowerCase();
     if (!s) return items;
@@ -294,11 +309,24 @@ function NCsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 mt-2 pt-2 border-t border-slate-100">
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => previewTNC(i as NCData)}>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-blue-700 hover:text-blue-800 hover:bg-blue-50" onClick={() => previewTNC(i as NCData)}>
                       <Eye className="h-3.5 w-3.5 mr-1" /> Visualizar PDF
                     </Button>
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 ml-auto" onClick={() => { if (confirm(`Excluir TNC "${i.titulo}"?`)) del.mutate(i.id); }}>
-                      <Trash2 className="h-3.5 w-3.5" />
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-slate-700 hover:text-slate-900 hover:bg-slate-100" onClick={() => openEdit(i)}>
+                      <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+                    </Button>
+                    {i.status !== "CANCELADA" && i.status !== "CONCLUIDA" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs text-amber-700 hover:text-amber-800 hover:bg-amber-50"
+                        onClick={() => { if (confirm(`Cancelar TNC "${i.titulo}"?\n\nO registro será mantido no histórico marcado como Cancelada.`)) cancel.mutate(i.id); }}
+                      >
+                        <Ban className="h-3.5 w-3.5 mr-1" /> Cancelar
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 ml-auto" onClick={() => { if (confirm(`Excluir definitivamente a TNC "${i.titulo}"?\n\nEsta ação não pode ser desfeita. Para preservar o histórico, prefira "Cancelar".`)) del.mutate(i.id); }}>
+                      <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
                     </Button>
                   </div>
                 </div>
