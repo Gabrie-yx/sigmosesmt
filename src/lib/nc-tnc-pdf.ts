@@ -182,17 +182,25 @@ function drawSideBand(doc: jsPDF, yStart: number, yEnd: number, label: string) {
   doc.setLineWidth(0.25);
   doc.rect(SIDE_X, yStart, SIDE_W, yEnd - yStart, "FD");
   const span = yEnd - yStart;
-  // Fonte adapta ao comprimento da faixa para garantir que caiba.
-  let fs = 9;
-  if (label.length > 10) fs = 8;
-  if (label.length > 16) fs = 7;
-  if (label.length > 22 && span < 70) fs = 6.2;
-  setTextStyle(doc, { bold: true, fontSize: fs });
-  doc.text(label, SIDE_X + SIDE_W / 2 + 0.5, (yStart + yEnd) / 2, {
-    angle: 90,
-    align: "center",
-    baseline: "middle",
-  });
+  // Calcula a fonte para que o texto caiba na altura disponível (com folga).
+  // Largura aproximada do texto em pt: chars * fontSize * 0.5
+  // Em mm: (chars * fontSize * 0.5) / 2.83
+  const maxWidthMm = span - 4;
+  const charFactor = 0.5 / 2.83;
+  let fs = 10;
+  while (fs > 5 && label.length * fs * charFactor > maxWidthMm) fs -= 0.5;
+
+  // Reset de cor para garantir texto preto visível
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(fs);
+  doc.setTextColor(0, 0, 0);
+
+  // Posiciona manualmente para evitar bug do baseline:"middle" com angle:90
+  // Com angle:90 + align:center, o texto se expande verticalmente centrado em y.
+  // Pequeno offset horizontal para centrar visualmente dentro da banda.
+  const cx = SIDE_X + SIDE_W / 2 + fs * 0.18;
+  const cy = (yStart + yEnd) / 2;
+  doc.text(label, cx, cy, { angle: 90, align: "center" });
 }
 
 function drawIdentification(doc: jsPDF, y: number, nc: NCData) {
