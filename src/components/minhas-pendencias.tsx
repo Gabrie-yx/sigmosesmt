@@ -3,6 +3,7 @@ import {
   Megaphone, Package, ShoppingCart, ShieldAlert, Stethoscope, CheckCircle2, ArrowRight,
   CalendarClock, FileWarning, Syringe, UserX, ClipboardCheck, GraduationCap, KeyRound, BellOff,
   FileWarning as TncIcon,
+  HelpCircle, PackageX,
 } from "lucide-react";
 import { Sigla } from "@/components/sigla";
 import { cn } from "@/lib/utils";
@@ -99,6 +100,12 @@ const META: Record<string, CardMeta> = {
     descricaoOk: "Estoque de EPIs saudável.",
     to: "/app/estoque/epi", icon: Package, ctaPend: "Repor estoque",
   },
+  "epi-critico": {
+    titulo: <><Sigla>EPI</Sigla>s críticos (≤5 un / zerados)</>,
+    descricaoPend: (n) => `${n} item(s) com 5 unidades ou menos — risco de ruptura.`,
+    descricaoOk: "Nenhum EPI em nível crítico.",
+    to: "/app/estoque/epi", icon: PackageX, ctaPend: "Repor urgente",
+  },
   "inspecao-epi": {
     titulo: "Inspeção mensal de EPI",
     descricaoPend: () => "Fim de mês: registre a inspeção mensal antes de fechar.",
@@ -112,12 +119,14 @@ const SEV_PALETTE = {
   alto:    { ring: "ring-amber-200", bg: "from-amber-50 to-white", icon: "bg-amber-500 text-white", chip: "bg-amber-100 text-amber-800", cta: "text-amber-700 hover:text-amber-900", label: "Alto" },
   medio:   { ring: "ring-blue-200", bg: "from-blue-50 to-white", icon: "bg-blue-600 text-white", chip: "bg-blue-100 text-blue-800", cta: "text-blue-700 hover:text-blue-900", label: "Médio" },
   ok:      { ring: "ring-emerald-200", bg: "from-emerald-50 to-white", icon: "bg-emerald-600 text-white", chip: "bg-emerald-100 text-emerald-800", cta: "text-emerald-700 hover:text-emerald-900", label: "OK" },
+  neutro:  { ring: "ring-slate-200", bg: "from-slate-50 to-white", icon: "bg-slate-400 text-white", chip: "bg-slate-100 text-slate-700", cta: "text-slate-600 hover:text-slate-900", label: "Sem dados" },
 } as const;
 
 function PendenciaCard({ item }: { item: PendenciaItem }) {
   const meta = META[item.key];
   if (!meta) return null;
-  const sev = item.ok ? "ok" : item.severity;
+  const isNeutral = item.ok && item.noData;
+  const sev: keyof typeof SEV_PALETTE = isNeutral ? "neutro" : item.ok ? "ok" : item.severity;
   const c = SEV_PALETTE[sev];
   const Icon = meta.icon;
   const snoozed = isSnoozed(item.key);
@@ -146,18 +155,26 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
           <Icon className="h-5 w-5" />
         </div>
         <div className={cn("text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full", c.chip)}>
-          {item.ok ? "Tudo certo" : item.loading ? "Verificando…" : c.label}
+          {item.loading ? "Verificando…" : isNeutral ? "Sem dados" : item.ok ? "Tudo certo" : c.label}
         </div>
       </div>
       <div>
         <div className="flex items-baseline gap-2">
           <span className="text-4xl font-black text-slate-900 leading-none tabular-nums">
-            {item.loading ? "—" : item.ok ? <CheckCircle2 className="h-9 w-9 text-emerald-600 inline" /> : item.count}
+            {item.loading
+              ? "—"
+              : isNeutral
+                ? <HelpCircle className="h-9 w-9 text-slate-400 inline" />
+                : item.ok
+                  ? <CheckCircle2 className="h-9 w-9 text-emerald-600 inline" />
+                  : item.count}
           </span>
         </div>
         <div className="mt-1 text-sm font-bold text-slate-900">{meta.titulo}</div>
         <div className="mt-1 text-xs text-slate-600 leading-relaxed">
-          {item.ok ? meta.descricaoOk : meta.descricaoPend(item.count)}
+          {isNeutral
+            ? "Ainda não há dados cadastrados para avaliar este item."
+            : item.ok ? meta.descricaoOk : meta.descricaoPend(item.count)}
         </div>
         {snoozed && (
           <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -210,6 +227,7 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
 
 export function MinhasPendencias() {
   const { items, totalPendencias } = usePendencias();
+  const semDadosCount = items.filter((i) => i.ok && i.noData).length;
   const [, force] = useState(0);
   useEffect(() => {
     const h = () => force((x) => x + 1);
@@ -241,7 +259,9 @@ export function MinhasPendencias() {
           </h2>
           <p className="text-sm text-slate-600 mt-1">
             {totalPendencias === 0
-              ? "Tudo em dia — sem pendências críticas no momento."
+              ? semDadosCount > 0
+                ? `Sistema em configuração — ${semDadosCount} indicador(es) ainda sem dados para avaliar.`
+                : "Tudo em dia — sem pendências críticas no momento."
               : `Você tem ${totalPendencias} ${totalPendencias === 1 ? "pendência" : "pendências"} aguardando.`}
           </p>
         </div>

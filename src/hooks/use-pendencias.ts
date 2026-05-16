@@ -25,6 +25,8 @@ export interface PendenciaItem {
   loading: boolean;
   /** Bloqueia operação? (some no header count quando true para itens críticos) */
   blocking?: boolean;
+  /** Sem dados-base para avaliar (ex.: sistema novo, tabela vazia). Não renderiza verde. */
+  noData?: boolean;
 }
 
 const ORDER: PendenciaSeverity[] = ["critico", "alto", "medio", "ok"];
@@ -74,7 +76,10 @@ export function usePendencias() {
     queryKey: ["pend-epi"],
     queryFn: async () => {
       const { data } = await supabase.from("estoque_epi").select("id, quantidade_atual, estoque_minimo");
-      return (data ?? []).filter((e) => (e.quantidade_atual ?? 0) <= (e.estoque_minimo ?? 0)).length;
+      const rows = data ?? [];
+      const baixo = rows.filter((e) => (e.quantidade_atual ?? 0) <= (e.estoque_minimo ?? 0)).length;
+      const critico = rows.filter((e) => (e.quantidade_atual ?? 0) <= 5).length;
+      return { baixo, critico, total: rows.length };
     },
   });
 
@@ -196,6 +201,35 @@ export function usePendencias() {
   const ultimoDiaMes = new Date(hojeDateObj.getFullYear(), hojeDateObj.getMonth() + 1, 0).getDate();
   const inspecaoEpiPend = ehDiaUtil && (ultimoDiaMes - dia) <= 6 ? 1 : 0;
 
+  // Datasets base — para distinguir "tudo certo" real de "sistema sem dados"
+  const datasets = useQuery({
+    queryKey: ["pend-datasets"],
+    queryFn: async () => {
+      const head = (t: string) => supabase.from(t as any).select("id", { count: "exact", head: true });
+      const [emp, aprs, ptes, exames, vacinas, pops, matriz, epis, reqs, dds] = await Promise.all([
+        supabase.from("employees").select("id", { count: "exact", head: true }).eq("status", "ATIVO"),
+        head("aprs"), head("ptes"), head("employee_exams"), head("employee_vaccinations"),
+        head("procedimentos"), head("training_matrix_entries"), head("estoque_epi"),
+        supabase.from("purchase_requisitions").select("id", { count: "exact", head: true }),
+        supabase.from("dds").select("id", { count: "exact", head: true }),
+      ]);
+      return {
+        employees: emp.count ?? 0,
+        aprs: aprs.count ?? 0,
+        ptes: ptes.count ?? 0,
+        exames: exames.count ?? 0,
+        vacinas: vacinas.count ?? 0,
+        pops: pops.count ?? 0,
+        matriz: matriz.count ?? 0,
+        epis: epis.count ?? 0,
+        reqs: reqs.count ?? 0,
+        dds: dds.count ?? 0,
+      };
+    },
+  });
+  const ds = datasets.data;
+  const has = (n: number | undefined) => (n ?? 0) > 0;
+
   const items: PendenciaItem[] = [
     {
       key: "asos-vencidos",
@@ -204,6 +238,7 @@ export function usePendencias() {
       ok: (examesVencidos.data ?? 0) === 0,
       loading: examesVencidos.isLoading,
       blocking: true,
+      noData: !has(ds?.exames),
     },
     {
       key: "aprs-vencidas",
@@ -212,6 +247,7 @@ export function usePendencias() {
       ok: (aprsVencidas.data ?? 0) === 0,
       loading: aprsVencidas.isLoading,
       blocking: true,
+      noData: !has(ds?.aprs),
     },
     {
       key: "pops-atrasados",
@@ -219,6 +255,7 @@ export function usePendencias() {
       severity: (popsAtrasados.data ?? 0) > 0 ? "critico" : "ok",
       ok: (popsAtrasados.data ?? 0) === 0,
       loading: popsAtrasados.isLoading,
+      noData: !has(ds?.pops),
     },
     {
       key: "vacinas-vencidas",
@@ -226,6 +263,7 @@ export function usePendencias() {
       severity: (vacinasVencidas.data ?? 0) > 0 ? "critico" : "ok",
       ok: (vacinasVencidas.data ?? 0) === 0,
       loading: vacinasVencidas.isLoading,
+      noData: !has(ds?.vacinas),
     },
     {
       key: "colab-sem-docs",
@@ -233,6 +271,7 @@ export function usePendencias() {
       severity: (colabSemDocs.data ?? 0) > 0 ? "critico" : "ok",
       ok: (colabSemDocs.data ?? 0) === 0,
       loading: colabSemDocs.isLoading,
+      noData: !has(ds?.employees),
     },
     {
       key: "dds-hoje",
@@ -240,6 +279,8 @@ export function usePendencias() {
       severity: ehDiaDeDDS && (dds.data ?? 0) === 0 ? "alto" : "ok",
       ok: !ehDiaDeDDS || (dds.data ?? 0) > 0,
       loading: dds.isLoading,
+      // Só pode ser "verde" se DE FATO houve DDS hoje (count>0). Fora do dia de DDS = neutro.
+      noData: !ehDiaDeDDS || (dds.data ?? 0) === 0 ? !ehDiaDeDDS : false,
     },
     {
       key: "aprs-vencendo",
@@ -247,6 +288,7 @@ export function usePendencias() {
       severity: (aprsVencendo.data ?? 0) > 0 ? "alto" : "ok",
       ok: (aprsVencendo.data ?? 0) === 0,
       loading: aprsVencendo.isLoading,
+      noData: !has(ds?.aprs),
     },
     {
       key: "ptes-vencidas",
@@ -254,6 +296,7 @@ export function usePendencias() {
       severity: (ptesVencidas.data ?? 0) > 0 ? "alto" : "ok",
       ok: (ptesVencidas.data ?? 0) === 0,
       loading: ptesVencidas.isLoading,
+      noData: !has(ds?.ptes),
     },
     {
       key: "exames-30",
@@ -261,6 +304,7 @@ export function usePendencias() {
       severity: (exames30.data ?? 0) > 0 ? "alto" : "ok",
       ok: (exames30.data ?? 0) === 0,
       loading: exames30.isLoading,
+      noData: !has(ds?.exames),
     },
     {
       key: "trein-60",
@@ -268,6 +312,7 @@ export function usePendencias() {
       severity: (treinamentos60.data ?? 0) > 0 ? "medio" : "ok",
       ok: (treinamentos60.data ?? 0) === 0,
       loading: treinamentos60.isLoading,
+      noData: !has(ds?.matriz),
     },
     {
       key: "req-pendentes",
@@ -275,13 +320,24 @@ export function usePendencias() {
       severity: (req.data ?? 0) > 0 ? "medio" : "ok",
       ok: (req.data ?? 0) === 0,
       loading: req.isLoading,
+      noData: !has(ds?.reqs),
+    },
+    {
+      key: "epi-critico",
+      count: epi.data?.critico ?? 0,
+      severity: (epi.data?.critico ?? 0) > 0 ? "critico" : "ok",
+      ok: (epi.data?.critico ?? 0) === 0,
+      loading: epi.isLoading,
+      blocking: true,
+      noData: !has(ds?.epis),
     },
     {
       key: "epi-baixo",
-      count: epi.data ?? 0,
-      severity: (epi.data ?? 0) > 0 ? "medio" : "ok",
-      ok: (epi.data ?? 0) === 0,
+      count: epi.data?.baixo ?? 0,
+      severity: (epi.data?.baixo ?? 0) > 0 ? "medio" : "ok",
+      ok: (epi.data?.baixo ?? 0) === 0,
       loading: epi.isLoading,
+      noData: !has(ds?.epis),
     },
     {
       key: "inspecao-epi",
@@ -289,6 +345,8 @@ export function usePendencias() {
       severity: inspecaoEpiPend > 0 ? "medio" : "ok",
       ok: inspecaoEpiPend === 0,
       loading: false,
+      // Sem registro de inspeção: fora da janela de fim de mês fica neutro, não verde.
+      noData: inspecaoEpiPend === 0,
     },
   ];
 
