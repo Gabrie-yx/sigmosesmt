@@ -281,7 +281,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const { data: employees = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["employees-light-apr"], queryFn: async () => (await supabase.from("employees").select("id,nome,cpf,company_id,role_id,status").eq("status", "ATIVO").order("nome")).data ?? [] });
   const { data: roles = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["roles-light"], queryFn: async () => (await supabase.from("roles").select("id,name").order("name")).data ?? [] });
   const { data: catRiscos = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["catalogo_riscos_form"], queryFn: async () => (await supabase.from("catalogo_riscos").select("*").eq("ativo", true).order("nome")).data ?? [] });
-  const { data: ptes = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["ptes-light"], queryFn: async () => (await supabase.from("ptes").select("id,numero,data_emissao,risco").order("data_emissao", { ascending: false }).limit(50)).data ?? [] });
+  const { data: ptes = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["ptes-light"], queryFn: async () => (await supabase.from("ptes").select("id,numero,data_emissao,risco,status").order("data_emissao", { ascending: false }).limit(50)).data ?? [] });
   // PTEs JÁ vinculadas a esta APR (1 APR ↔ N PTEs, uma por categoria detectada)
   const { data: linkedPtes = EMPTY_QUERY_LIST } = useQuery({
     queryKey: ["ptes-linked-apr", currentAprId],
@@ -317,7 +317,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     (linkedPtes as any[])
       .filter((p) => p.status !== "CANCELADA" && p.status !== "ENCERRADA")
       .forEach((p) => map.set(p.id, p));
-    if (apr.pte_id && pte && !map.has(apr.pte_id)) map.set(apr.pte_id, pte);
+    if (apr.pte_id && pte && pte.status !== "CANCELADA" && pte.status !== "ENCERRADA" && !map.has(apr.pte_id)) map.set(apr.pte_id, pte);
     return Array.from(map.values());
   }, [linkedPtes, apr.pte_id, pte]);
   /** Para cada categoria detectada → PTE que a cobre (match por ptes.risco === riscoLabel) */
