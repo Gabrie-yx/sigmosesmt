@@ -640,9 +640,7 @@ function EstoqueSesmtPage() {
         pending={createMut.isPending}
       />
 
-      {/* Barra flutuante do carrinho de requisição */}
-      {isEditor && cart.size > 0 && (
-      {null}
+      {/* Barra do carrinho movida para o topo (sticky) */}
 
       {/* Edit product */}
       <EditItemDialog
