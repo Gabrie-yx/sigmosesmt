@@ -90,9 +90,9 @@ const ITEMS: DockItem[] = [
     label: "Pessoas",
     path: "__group_pessoas",
     icon: Users,
-    hint: "Colaboradores e cascos",
+    hint: "Funcionários e cascos",
     children: [
-      { label: "Colaboradores", path: "/app/employees" },
+      { label: "Funcionários", path: "/app/employees" },
       { label: "Cascos / Embarcações", path: "/app/cascos" },
     ],
   },
