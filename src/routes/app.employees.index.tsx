@@ -22,6 +22,10 @@ function EmployeesPage() {
   const { isEditor } = useAuth();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO">("TODOS");
+  const [companyFilter, setCompanyFilter] = useState<string>("TODAS");
+  const [roleFilter, setRoleFilter] = useState<string>("TODOS");
+  const [visibleCount, setVisibleCount] = useState(48);
   const [form, setForm] = useState<any>({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "" });
 
   const { data: emps, isLoading } = useQuery({
