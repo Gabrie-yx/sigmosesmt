@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Save, FileText, Printer } from "lucide-react";
+import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Save, FileText, Printer, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf";
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
@@ -628,23 +629,102 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   }
 
   /* ---------- render ---------- */
+  const STEPS = [
+    { key: "p1", label: "Identificação & Riscos" },
+    { key: "p2", label: "Gerais" },
+    { key: "p3", label: "Avaliação & Assinaturas" },
+    { key: "p4", label: "Anexo I (Executantes)" },
+  ] as const;
+  const currentStepIdx = STEPS.findIndex((s) => s.key === tab);
+
+  function validateStep(idx: number): string | null {
+    if (idx === 0) {
+      if (!apr.atividade_descricao.trim()) return "Descreva a Atividade Principal";
+      if (!apr.tst_id) return "Selecione o TST (Elaborado por)";
+      if (!apr.empresa_id) return "Selecione a Empresa (Responsável pelo Serviço)";
+      if (riscos.length === 0) return "Adicione ao menos 1 risco";
+      if (riscos.some((r) => !r.risco_nome.trim())) return "Todo risco precisa de um nome";
+      if (categoriasPendentes.length > 0) return `Existem ${categoriasPendentes.length} categoria(s) de PTE pendente(s). Resolva antes de avançar.`;
+      return null;
+    }
+    if (idx === 1) {
+      if (!(apr.texto_gerais ?? "").trim()) return "O texto Gerais não pode ficar em branco";
+      return null;
+    }
+    if (idx === 2) {
+      if (!apr.encarregado_id) return "Selecione o Encarregado Responsável (interno)";
+      return null;
+    }
+    if (idx === 3) {
+      if (execAtuais.length === 0) return "Selecione ao menos 1 executante";
+      return null;
+    }
+    return null;
+  }
+
+  const [stepError, setStepError] = useState<string | null>(null);
+
+  function goNext() {
+    const err = validateStep(currentStepIdx);
+    if (err) { setStepError(err); toast.error(err); return; }
+    setStepError(null);
+    if (currentStepIdx < STEPS.length - 1) setTab(STEPS[currentStepIdx + 1].key as any);
+  }
+  function goBack() {
+    setStepError(null);
+    if (currentStepIdx > 0) setTab(STEPS[currentStepIdx - 1].key as any);
+  }
+
   return (
     <div className="flex flex-col h-full bg-slate-100">
-      {/* Toolbar / abas como páginas */}
-      <div className="flex flex-wrap gap-1 p-2 bg-white border-b border-slate-300">
-        {([
-          ["p1", "Pág 1 — Identificação & Riscos"],
-          ["p2", "Pág 2 — Gerais"],
-          ["p3", "Pág 3 — Avaliação & Assinaturas"],
-          ["p4", "Pág 4 — Anexo I (Executantes)"],
-        ] as const).map(([k, l]) => (
-          <button key={k} onClick={() => setTab(k as any)}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition ${tab === k ? "text-white shadow" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
-            style={tab === k ? { background: APR_RED } : {}}>
-            {l}
-          </button>
-        ))}
-        <div className="ml-auto flex gap-2">
+      {/* Toolbar com stepper linear */}
+      <div className="p-3 bg-white border-b border-slate-300 space-y-2">
+        <div className="flex items-center gap-2">
+          {STEPS.map((s, i) => {
+            const done = i < currentStepIdx;
+            const active = i === currentStepIdx;
+            const locked = i > currentStepIdx;
+            return (
+              <div key={s.key} className="flex items-center flex-1 min-w-0">
+                <button
+                  type="button"
+                  disabled={locked}
+                  onClick={() => { if (!locked) { setStepError(null); setTab(s.key as any); } }}
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1 rounded transition",
+                    locked && "opacity-50 cursor-not-allowed",
+                    !locked && "hover:bg-slate-50",
+                  )}
+                  title={locked ? "Conclua os passos anteriores" : s.label}
+                >
+                  <span
+                    className={cn(
+                      "h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0",
+                      done && "bg-emerald-600 text-white",
+                      active && "text-white",
+                      !done && !active && "bg-slate-200 text-slate-500",
+                    )}
+                    style={active ? { background: APR_RED } : {}}
+                  >
+                    {done ? <Check className="h-3 w-3" /> : i + 1}
+                  </span>
+                  <span className={cn("text-[11px] font-bold truncate", active ? "text-slate-900" : "text-slate-500")}>
+                    {s.label}
+                  </span>
+                </button>
+                {i < STEPS.length - 1 && (
+                  <div className={cn("flex-1 h-0.5 mx-1", i < currentStepIdx ? "bg-emerald-600" : "bg-slate-200")} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+            Passo {currentStepIdx + 1} de {STEPS.length}
+          </span>
+          {stepError && <span className="text-[11px] font-bold text-rose-600">⚠ {stepError}</span>}
+          <div className="ml-auto flex gap-2">
           <Button
             variant={categoriasPendentes.length > 0 ? "default" : "outline"}
             size="sm"
@@ -665,7 +745,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           <Button variant="outline" size="sm" onClick={handleAbrir} disabled={!apr.id}><FileText className="h-4 w-4 mr-1" /> Abrir PDF</Button>
           <Button variant="outline" size="sm" onClick={handleImprimir} disabled={!apr.id}><Printer className="h-4 w-4 mr-1" /> Imprimir</Button>
           <Button variant="outline" size="sm" onClick={() => save.mutate(false)} disabled={save.isPending}><Save className="h-4 w-4 mr-1" /> Salvar Rascunho</Button>
-          <Button size="sm" onClick={() => save.mutate(true)} disabled={save.isPending} style={{ background: APR_RED }}>Emitir APR</Button>
+          </div>
         </div>
       </div>
 
@@ -1031,6 +1111,36 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           qc.invalidateQueries({ queryKey: ["ptes-linked-apr", currentAprId] });
         }}
       />
+
+      {/* Rodapé do wizard */}
+      <div className="flex items-center justify-between gap-2 p-3 bg-white border-t border-slate-300 shrink-0">
+        <Button type="button" variant="outline" onClick={goBack} disabled={currentStepIdx === 0}>
+          <ChevronLeft className="h-4 w-4 mr-1" /> Voltar
+        </Button>
+        <div className="text-[11px] text-slate-500">
+          {STEPS[currentStepIdx].label}
+        </div>
+        {currentStepIdx < STEPS.length - 1 ? (
+          <Button type="button" onClick={goNext} className="bg-[#0f172a] hover:bg-[#7B1E2B] text-white font-black uppercase tracking-widest text-[11px]">
+            Avançar <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={() => {
+              const err = validateStep(currentStepIdx);
+              if (err) { setStepError(err); toast.error(err); return; }
+              setStepError(null);
+              save.mutate(true);
+            }}
+            disabled={save.isPending}
+            style={{ background: APR_RED }}
+            className="text-white font-black uppercase tracking-widest text-[11px]"
+          >
+            <Check className="h-4 w-4 mr-1" /> Emitir APR
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
