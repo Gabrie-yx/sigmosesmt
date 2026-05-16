@@ -6,11 +6,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { maskCPF } from "@/lib/masks";
+import { Wizard, type WizardStep } from "@/components/wizard";
 
 export const Route = createFileRoute("/app/employees/")({
   component: EmployeesPage,
@@ -111,41 +112,95 @@ function EmployeesPage() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Novo funcionário</DialogTitle></DialogHeader>
-              <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); create.mutate(form); }}>
-                <div className="space-y-2"><Label>Nome *</Label><Input required value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2"><Label>CPF</Label><Input inputMode="numeric" placeholder="000.000.000-00" value={form.cpf} onChange={(e) => setForm({ ...form, cpf: maskCPF(e.target.value) })} /></div>
-                  <div className="space-y-2"><Label>Matrícula</Label><Input value={form.matricula} onChange={(e) => setForm({ ...form, matricula: e.target.value })} /></div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label>Empresa</Label>
-                    <Select value={form.company_id} onValueChange={(v) => setForm({ ...form, company_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                      <SelectContent>{(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Cargo</Label>
-                    <Select value={form.role_id} onValueChange={(v) => setForm({ ...form, role_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                      <SelectContent>{(roles ?? []).map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ATIVO">ATIVO</SelectItem>
-                      <SelectItem value="INATIVO">INATIVO</SelectItem>
-                      <SelectItem value="AFASTADO">AFASTADO</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <DialogFooter><Button type="submit" disabled={create.isPending}>Criar</Button></DialogFooter>
-              </form>
+              {(() => {
+                const cName = (companies ?? []).find((c: any) => c.id === form.company_id)?.name ?? "—";
+                const rName = (roles ?? []).find((r: any) => r.id === form.role_id)?.name ?? "—";
+                const steps: WizardStep[] = [
+                  {
+                    id: "dados",
+                    title: "Dados pessoais",
+                    description: "Identificação básica do funcionário.",
+                    isValid: () => form.nome.trim().length > 0,
+                    invalidMessage: "Informe o nome.",
+                    content: (
+                      <div className="space-y-3">
+                        <div className="space-y-2"><Label>Nome *</Label><Input required value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2"><Label>CPF</Label><Input inputMode="numeric" placeholder="000.000.000-00" value={form.cpf} onChange={(e) => setForm({ ...form, cpf: maskCPF(e.target.value) })} /></div>
+                          <div className="space-y-2"><Label>Matrícula</Label><Input value={form.matricula} onChange={(e) => setForm({ ...form, matricula: e.target.value })} /></div>
+                        </div>
+                      </div>
+                    ),
+                  },
+                  {
+                    id: "vinculo",
+                    title: "Vínculo",
+                    description: "Empresa, cargo e situação.",
+                    content: (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label>Empresa</Label>
+                            <Select value={form.company_id} onValueChange={(v) => setForm({ ...form, company_id: v })}>
+                              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                              <SelectContent>{(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Cargo</Label>
+                            <Select value={form.role_id} onValueChange={(v) => setForm({ ...form, role_id: v })}>
+                              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                              <SelectContent>{(roles ?? []).map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Status</Label>
+                          <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ATIVO">ATIVO</SelectItem>
+                              <SelectItem value="INATIVO">INATIVO</SelectItem>
+                              <SelectItem value="AFASTADO">AFASTADO</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    ),
+                  },
+                  {
+                    id: "revisao",
+                    title: "Revisão",
+                    description: "Confirme os dados antes de salvar.",
+                    content: (
+                      <dl className="rounded-xl border border-slate-200 bg-slate-50/60 divide-y divide-slate-200 text-sm">
+                        {[
+                          ["Nome", form.nome || "—"],
+                          ["CPF", form.cpf || "—"],
+                          ["Matrícula", form.matricula || "—"],
+                          ["Empresa", cName],
+                          ["Cargo", rName],
+                          ["Status", form.status],
+                        ].map(([k, v]) => (
+                          <div key={k} className="flex items-center justify-between px-3 py-2">
+                            <dt className="text-[10px] font-black uppercase tracking-widest text-slate-500">{k}</dt>
+                            <dd className="font-semibold text-slate-900 text-right truncate ml-3">{v}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    ),
+                  },
+                ];
+                return (
+                  <Wizard
+                    steps={steps}
+                    isSubmitting={create.isPending}
+                    completeLabel="Criar funcionário"
+                    onCancel={() => setOpen(false)}
+                    onComplete={() => create.mutate(form)}
+                  />
+                );
+              })()}
             </DialogContent>
           </Dialog>
         )}
