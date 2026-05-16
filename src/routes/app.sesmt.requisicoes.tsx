@@ -221,6 +221,14 @@ async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "do
     return;
   }
 
+  if (mode === "preview") {
+    const url = URL.createObjectURL(doc.output("blob"));
+    const win = window.open(url, "_blank");
+    if (!win) doc.save(`requisicao-${req.numero || req.id.slice(0,8)}.pdf`);
+    window.setTimeout(() => URL.revokeObjectURL(url), 120000);
+    return;
+  }
+
   doc.save(`requisicao-${req.numero || req.id.slice(0,8)}.pdf`);
 }
 
