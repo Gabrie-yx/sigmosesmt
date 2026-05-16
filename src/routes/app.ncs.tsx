@@ -310,19 +310,36 @@ function NCsPage() {
           )}
 
           <Tabs defaultValue="emitente" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="emitente"><User className="h-3.5 w-3.5 mr-1.5" /> Emitente</TabsTrigger>
-              <TabsTrigger value="receptor"><Wrench className="h-3.5 w-3.5 mr-1.5" /> Receptor (Tratativa)</TabsTrigger>
-              <TabsTrigger value="sgi"><ClipboardCheck className="h-3.5 w-3.5 mr-1.5" /> SGI (Eficácia)</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-12 bg-slate-100 p-1 rounded-lg">
+              <TabsTrigger
+                value="emitente"
+                className="h-10 gap-2 font-semibold data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-md data-[state=active]:ring-1 data-[state=active]:ring-red-200"
+              >
+                <User className="h-4 w-4" /> Emitente
+              </TabsTrigger>
+              <TabsTrigger
+                value="receptor"
+                className="h-10 gap-2 font-semibold data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-md data-[state=active]:ring-1 data-[state=active]:ring-red-200"
+              >
+                <Wrench className="h-4 w-4" /> Receptor (Tratativa)
+              </TabsTrigger>
+              <TabsTrigger
+                value="sgi"
+                className="h-10 gap-2 font-semibold data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-md data-[state=active]:ring-1 data-[state=active]:ring-red-200"
+              >
+                <ClipboardCheck className="h-4 w-4" /> SGI (Eficácia)
+              </TabsTrigger>
             </TabsList>
 
             {/* ============ ABA EMITENTE ============ */}
             <TabsContent value="emitente" className="pt-4">
-              <div className="flex gap-3">
-              <div className="w-8 bg-blue-700 rounded flex items-start justify-center pt-3 shrink-0">
-                <span className="text-white font-bold text-[10px] tracking-widest [writing-mode:vertical-rl] rotate-180">EMITENTE</span>
-              </div>
-              <div className="flex-1 space-y-3">
+              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/60 p-5 shadow-sm space-y-3">
+                <div className="flex items-center gap-2 pb-3 mb-1 border-b border-slate-100">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold tracking-wide text-blue-700 ring-1 ring-blue-200">
+                    <User className="h-3 w-3" /> EMITENTE
+                  </span>
+                  <span className="text-xs text-slate-500">Identificação e descrição do problema</span>
+                </div>
               <div className="grid grid-cols-3 gap-3">
                 <div><Label>Emitente</Label><Input value={form.emitente} onChange={(e) => setForm({ ...form, emitente: e.target.value })} placeholder="Nome de quem abriu" /></div>
                 <div><Label>Departamento</Label><Input value={form.departamento} onChange={(e) => setForm({ ...form, departamento: e.target.value })} /></div>
@@ -378,16 +395,17 @@ function NCsPage() {
               <div><Label>Título *</Label><Input value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} /></div>
               <div><Label>2 — Descrição do problema</Label><Textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} rows={3} /></div>
               </div>
-              </div>
             </TabsContent>
 
             {/* ============ ABA RECEPTOR ============ */}
             <TabsContent value="receptor" className="pt-4">
-              <div className="flex gap-3">
-              <div className="w-8 bg-orange-700 rounded flex items-start justify-center pt-3 shrink-0">
-                <span className="text-white font-bold text-[10px] tracking-widest [writing-mode:vertical-rl] rotate-180">RECEPTOR</span>
-              </div>
-              <div className="flex-1 space-y-4">
+              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-amber-50/30 p-5 shadow-sm space-y-4">
+                <div className="flex items-center gap-2 pb-3 mb-1 border-b border-slate-100">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold tracking-wide text-amber-700 ring-1 ring-amber-200">
+                    <Wrench className="h-3 w-3" /> RECEPTOR
+                  </span>
+                  <span className="text-xs text-slate-500">Abrangência, ações imediatas e análise da causa raiz</span>
+                </div>
               <div>
                 <Label className="text-sm font-bold">3 — Abrangência da não conformidade</Label>
                 <Textarea className="mt-2" value={form.abrangencia} onChange={(e) => setForm({ ...form, abrangencia: e.target.value })} rows={2} placeholder="Quais áreas/processos são afetados?" />
@@ -418,34 +436,40 @@ function NCsPage() {
                     </div>
                   ))}
                 </div>
-                <p className="text-[11px] text-blue-600 italic mt-1">Observação: pode utilizar anexos e relatórios complementares caso os campos deste formulário não sejam suficientes.</p>
-              </div>
-
-              <div>
-                <Label className="text-sm font-bold">6 — Ações Corretivas</Label>
-                <div className="space-y-2 mt-2">
-                  {form.acoes_corretivas_lista.map((a, idx) => (
-                    <div key={idx} className="grid grid-cols-12 gap-2 items-end">
-                      <div className="col-span-6"><Input placeholder="Ação corretiva" value={a.acao} onChange={(e) => updAcao("acoes_corretivas_lista", idx, { acao: e.target.value })} /></div>
-                      <div className="col-span-3"><Input placeholder="Responsável" value={a.responsavel} onChange={(e) => updAcao("acoes_corretivas_lista", idx, { responsavel: e.target.value })} /></div>
-                      <div className="col-span-2"><Input placeholder="dd/mm/aaaa ou texto" value={a.prazo} onChange={(e) => updAcao("acoes_corretivas_lista", idx, { prazo: e.target.value })} /></div>
-                      <Button size="icon" variant="ghost" className="col-span-1 text-red-600" onClick={() => removeAcao("acoes_corretivas_lista", idx)}><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                  ))}
-                  <Button size="sm" variant="outline" onClick={() => addAcao("acoes_corretivas_lista")}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar ação corretiva</Button>
+                <div className="mt-2 inline-flex items-start gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-medium text-blue-700 ring-1 ring-blue-200">
+                  <span className="font-bold">Obs.:</span>
+                  <span>pode utilizar anexos e relatórios complementares caso os campos deste formulário não sejam suficientes.</span>
                 </div>
               </div>
-              </div>
+
               </div>
             </TabsContent>
 
             {/* ============ ABA SGI ============ */}
             <TabsContent value="sgi" className="pt-4">
-              <div className="flex gap-3">
-              <div className="w-8 bg-green-700 rounded flex items-start justify-center pt-3 shrink-0">
-                <span className="text-white font-bold text-[9px] tracking-widest [writing-mode:vertical-rl] rotate-180">EMITENTE / RECEPTOR / SGI</span>
-              </div>
-              <div className="flex-1 space-y-3">
+              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-emerald-50/30 p-5 shadow-sm space-y-3">
+                <div className="flex items-center gap-2 pb-3 mb-1 border-b border-slate-100">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold tracking-wide text-emerald-700 ring-1 ring-emerald-200">
+                    <ClipboardCheck className="h-3 w-3" /> EMITENTE / RECEPTOR / SGI
+                  </span>
+                  <span className="text-xs text-slate-500">Ações corretivas, verificação da eficácia e fechamento</span>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-bold">6 — Ações Corretivas</Label>
+                  <div className="space-y-2 mt-2">
+                    {form.acoes_corretivas_lista.map((a, idx) => (
+                      <div key={idx} className="grid grid-cols-12 gap-2 items-end">
+                        <div className="col-span-6"><Input placeholder="Ação corretiva" value={a.acao} onChange={(e) => updAcao("acoes_corretivas_lista", idx, { acao: e.target.value })} /></div>
+                        <div className="col-span-3"><Input placeholder="Responsável" value={a.responsavel} onChange={(e) => updAcao("acoes_corretivas_lista", idx, { responsavel: e.target.value })} /></div>
+                        <div className="col-span-2"><Input placeholder="dd/mm/aaaa ou texto" value={a.prazo} onChange={(e) => updAcao("acoes_corretivas_lista", idx, { prazo: e.target.value })} /></div>
+                        <Button size="icon" variant="ghost" className="col-span-1 text-red-600" onClick={() => removeAcao("acoes_corretivas_lista", idx)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    ))}
+                    <Button size="sm" variant="outline" onClick={() => addAcao("acoes_corretivas_lista")}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar ação corretiva</Button>
+                  </div>
+                </div>
+
               <div className="grid grid-cols-3 gap-3">
                 <div><Label>As ações foram implementadas?</Label>
                   <Select value={form.acoes_implementadas == null ? "" : form.acoes_implementadas ? "S" : "N"} onValueChange={(v) => setForm({ ...form, acoes_implementadas: v === "" ? null : v === "S" })}>
@@ -483,7 +507,6 @@ function NCsPage() {
               <div className="grid grid-cols-2 gap-3 pt-2 border-t">
                 <div><Label>Data de fechamento</Label><Input type="date" value={form.data_fechamento} onChange={(e) => setForm({ ...form, data_fechamento: e.target.value })} /></div>
                 <div><Label>Responsável pelo fechamento</Label><Input value={form.responsavel_fechamento} onChange={(e) => setForm({ ...form, responsavel_fechamento: e.target.value })} /></div>
-              </div>
               </div>
               </div>
             </TabsContent>
