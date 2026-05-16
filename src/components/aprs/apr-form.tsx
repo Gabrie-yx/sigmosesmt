@@ -273,6 +273,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const [tab, setTab] = useState<"p1" | "p2" | "p3" | "p4" | "p5">("p1");
   const [pteSheetOpen, setPteSheetOpen] = useState(false);
   const [pteSheetRiscoSugerido, setPteSheetRiscoSugerido] = useState<string | null>(null);
+  const currentAprId = apr.id ?? aprId ?? null;
 
   // catálogos
   const { data: cascos = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["cascos-light"], queryFn: async () => (await supabase.from("cascos").select("id,numero,nome,status").eq("status", "ATIVO").order("numero")).data ?? [] });
@@ -283,15 +284,15 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const { data: ptes = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["ptes-light"], queryFn: async () => (await supabase.from("ptes").select("id,numero,data_emissao,risco").order("data_emissao", { ascending: false }).limit(50)).data ?? [] });
   // PTEs JÁ vinculadas a esta APR (1 APR ↔ N PTEs, uma por categoria detectada)
   const { data: linkedPtes = EMPTY_QUERY_LIST } = useQuery({
-    queryKey: ["ptes-linked-apr", aprId],
-    enabled: !!aprId,
+    queryKey: ["ptes-linked-apr", currentAprId],
+    enabled: !!currentAprId,
     staleTime: 0,
     refetchOnMount: "always",
     queryFn: async () =>
       (await supabase
         .from("ptes")
         .select("id,numero,data_emissao,risco,status")
-        .eq("apr_id", aprId!)
+        .eq("apr_id", currentAprId!)
         .order("data_emissao", { ascending: false })
       ).data ?? [],
   });
