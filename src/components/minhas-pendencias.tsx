@@ -227,6 +227,7 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
 
 export function MinhasPendencias() {
   const { items, totalPendencias } = usePendencias();
+  const semDadosCount = items.filter((i) => i.ok && i.noData).length;
   const [, force] = useState(0);
   useEffect(() => {
     const h = () => force((x) => x + 1);
@@ -258,7 +259,9 @@ export function MinhasPendencias() {
           </h2>
           <p className="text-sm text-slate-600 mt-1">
             {totalPendencias === 0
-              ? "Tudo em dia — sem pendências críticas no momento."
+              ? semDadosCount > 0
+                ? `Sistema em configuração — ${semDadosCount} indicador(es) ainda sem dados para avaliar.`
+                : "Tudo em dia — sem pendências críticas no momento."
               : `Você tem ${totalPendencias} ${totalPendencias === 1 ? "pendência" : "pendências"} aguardando.`}
           </p>
         </div>
