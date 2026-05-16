@@ -44,19 +44,19 @@ const C_HEADER: [number, number, number] = [248, 215, 218];
 const C_BORDER: [number, number, number] = [145, 145, 145];
 const C_BLUE_NOTE: [number, number, number] = [37, 99, 235];
 
-// Modelo homologado em A4 paisagem.
-const PAGE_W = 297;
-const PAGE_H = 210;
-const SIDE_X = 14;
-const SIDE_W = 7;
+// Modelo homologado em A4 retrato (FORCP-SGI-05).
+const PAGE_W = 210;
+const PAGE_H = 297;
+const SIDE_X = 8;
+const SIDE_W = 6;
 const CONTENT_X = SIDE_X + SIDE_W;
-const CONTENT_R = 287;
+const CONTENT_R = 202;
 const CONTENT_W = CONTENT_R - CONTENT_X;
-const HEADER_Y = 5;
-const HEADER_H = 16;
-const GRID_Y = 24;
-const ROW = 5;
-const SECTION_H = 5;
+const HEADER_Y = 6;
+const HEADER_H = 18;
+const GRID_Y = HEADER_Y + HEADER_H;
+const ROW = 5.2;
+const SECTION_H = 5.4;
 
 async function loadLogo(): Promise<string | null> {
   try {
@@ -143,8 +143,8 @@ function sectionBar(doc: jsPDF, y: number, text: string) {
 function drawHeader(doc: jsPDF, logo: string | null) {
   const x = SIDE_X;
   const w = CONTENT_R - SIDE_X;
-  const logoW = 46;
-  const metaW = 70;
+  const logoW = 38;
+  const metaW = 42;
   const titleW = w - logoW - metaW;
 
   doc.setDrawColor(...C_BORDER);
@@ -155,7 +155,7 @@ function drawHeader(doc: jsPDF, logo: string | null) {
 
   if (logo) {
     try {
-      doc.addImage(logo, "PNG", x + 3, HEADER_Y + 1.6, 40, 12.8, undefined, "FAST");
+      doc.addImage(logo, "PNG", x + 3, HEADER_Y + 2, 32, 14, undefined, "FAST");
     } catch {
       setTextStyle(doc, { bold: true, fontSize: 18, color: [190, 20, 25] });
       doc.text("DMN", x + logoW / 2, HEADER_Y + 10.5, { align: "center" });
@@ -165,23 +165,23 @@ function drawHeader(doc: jsPDF, logo: string | null) {
     doc.text("DMN", x + logoW / 2, HEADER_Y + 10.5, { align: "center" });
   }
 
-  setTextStyle(doc, { bold: true, fontSize: 12.5 });
-  doc.text("Tratativa de Não Conformidade - TNC", x + logoW + titleW / 2, HEADER_Y + 10.2, { align: "center" });
+  setTextStyle(doc, { bold: true, fontSize: 13 });
+  doc.text("Tratativa de Não Conformidade - TNC", x + logoW + titleW / 2, HEADER_Y + HEADER_H / 2 + 1.5, { align: "center" });
 
-  setTextStyle(doc, { fontSize: 7.2 });
+  setTextStyle(doc, { fontSize: 7.4 });
   const mx = x + logoW + titleW + 3;
-  doc.text("CÓD.: FORCP-SGI-05", mx, HEADER_Y + 3.4);
-  doc.text("REVISÃO: 00", mx, HEADER_Y + 7.1);
-  doc.text("DATA: 28/05/2025", mx, HEADER_Y + 10.8);
-  doc.text("PÁG.: 1/1", mx, HEADER_Y + 14.5);
+  doc.text("CÓD.: FORCP-SGI-05", mx, HEADER_Y + 4);
+  doc.text("REVISÃO: 00", mx, HEADER_Y + 8.4);
+  doc.text("DATA: 28/05/2025", mx, HEADER_Y + 12.8);
+  doc.text("PÁG.: 1/1", mx, HEADER_Y + 17.2);
 }
 
 function drawSideBand(doc: jsPDF, yStart: number, yEnd: number, label: string) {
-  doc.setFillColor(...C_HEADER);
+  doc.setFillColor(255, 255, 255);
   doc.setDrawColor(...C_BORDER);
   doc.setLineWidth(0.25);
   doc.rect(SIDE_X, yStart, SIDE_W, yEnd - yStart, "FD");
-  setTextStyle(doc, { bold: true, fontSize: label.length > 12 ? 6 : 7.5 });
+  setTextStyle(doc, { bold: true, fontSize: label.length > 14 ? 7 : 9 });
   doc.text(label, SIDE_X + SIDE_W / 2 + 0.5, (yStart + yEnd) / 2, {
     angle: 90,
     align: "center",
@@ -190,11 +190,12 @@ function drawSideBand(doc: jsPDF, yStart: number, yEnd: number, label: string) {
 }
 
 function drawIdentification(doc: jsPDF, y: number, nc: NCData) {
-  const c = [34, 65, 35, 54, 78];
+  // 5 colunas: rótulo, valor, rótulo, valor, NºTNC — somam CONTENT_W (≈188)
+  const c = [28, 52, 28, 38, CONTENT_W - 28 - 52 - 28 - 38];
   const x = CONTENT_X;
 
-  cell(doc, x, y, 88, ROW, "IDENTIFICAÇÃO DA EMPRESA DO GRUPO:", { bold: true });
-  cell(doc, x + 88, y, CONTENT_W - 88, ROW, "DMN Estaleiro");
+  cell(doc, x, y, 70, ROW, "IDENTIFICAÇÃO DA EMPRESA DO GRUPO:", { bold: true, fontSize: 7.4 });
+  cell(doc, x + 70, y, CONTENT_W - 70, ROW, "DMN Estaleiro", { fontSize: 7.4 });
   y += ROW;
 
   cell(doc, x, y, c[0], ROW, "Emitente:", { bold: true });
@@ -222,7 +223,7 @@ function drawIdentification(doc: jsPDF, y: number, nc: NCData) {
   cell(doc, x, y, c[0], ROW, "Reincidente?", { bold: true });
   cell(doc, x + c[0], y, c[1], ROW, nc.reincidente == null ? "" : nc.reincidente ? "Sim" : "Não");
   cell(doc, x + c[0] + c[1], y, c[2], ROW, "Norma:", { bold: true });
-  cell(doc, x + c[0] + c[1] + c[2], y, c[3], ROW, nc.norma ?? "ISO 9001:2015");
+  cell(doc, x + c[0] + c[1] + c[2], y, c[3] + c[4], ROW, nc.norma ?? "ISO 9001:2015");
   y += ROW;
 
   return y;
@@ -241,10 +242,10 @@ function drawActionsTable(
   rows: string[][],
   options: { titleRow?: boolean; rowHeight?: number } = {},
 ) {
-  const actionW = 168;
-  const respW = 62;
+  const actionW = CONTENT_W * 0.66;
+  const respW = CONTENT_W * 0.18;
   const prazoW = CONTENT_W - actionW - respW;
-  const rowH = options.rowHeight ?? 5;
+  const rowH = options.rowHeight ?? ROW;
 
   if (options.titleRow) {
     cell(doc, CONTENT_X, y, CONTENT_W, SECTION_H, title, { fill: C_HEADER, bold: true, align: "center", fontSize: 7.8 });
@@ -268,9 +269,9 @@ function drawActionsTable(
 }
 
 function drawImplementation(doc: jsPDF, y: number, nc: NCData) {
-  const c1 = 80;
-  const c2 = 34;
-  const c3 = 34;
+  const c1 = 64;
+  const c2 = 28;
+  const c3 = 28;
   const c4 = 22;
   const c5 = CONTENT_W - c1 - c2 - c3 - c4;
 
@@ -281,47 +282,53 @@ function drawImplementation(doc: jsPDF, y: number, nc: NCData) {
   cell(doc, CONTENT_X + c1 + c2 + c3 + c4, y, c5, ROW, br(nc.data_implementacao) || nc.data_implementacao || "", { align: "center" });
   y += ROW;
 
-  cell(doc, CONTENT_X, y, c1, 8, "");
-  cell(doc, CONTENT_X + c1, y, c2, 8, nc.acoes_implementadas === true ? "X" : "", { bold: true, align: "center" });
-  cell(doc, CONTENT_X + c1 + c2, y, c3, 8, nc.acoes_implementadas === false ? "X" : "", { bold: true, align: "center" });
-  cell(doc, CONTENT_X + c1 + c2 + c3, y, c4, 8, "Novo\nPrazo:", { bold: true, valign: "middle", fontSize: 7 });
-  cell(doc, CONTENT_X + c1 + c2 + c3 + c4, y, c5, 8, br(nc.novo_prazo) || nc.novo_prazo || "", { align: "center" });
-  y += 8;
+  cell(doc, CONTENT_X, y, c1, 7, "");
+  cell(doc, CONTENT_X + c1, y, c2, 7, nc.acoes_implementadas === true ? "X" : "", { bold: true, align: "center", fontSize: 10 });
+  cell(doc, CONTENT_X + c1 + c2, y, c3, 7, nc.acoes_implementadas === false ? "X" : "", { bold: true, align: "center", fontSize: 10 });
+  cell(doc, CONTENT_X + c1 + c2 + c3, y, c4, 7, "Novo Prazo:", { bold: true, valign: "middle", fontSize: 7 });
+  cell(doc, CONTENT_X + c1 + c2 + c3 + c4, y, c5, 7, br(nc.novo_prazo) || nc.novo_prazo || "", { align: "center" });
+  y += 7;
 
-  cell(doc, CONTENT_X, y, 34, 8, "Comentários:", { bold: true });
-  cell(doc, CONTENT_X + 34, y, CONTENT_W - 34, 8, nc.comentarios_implementacao ?? "", { fontSize: 7, maxLines: 2 });
-  return y + 8;
+  cell(doc, CONTENT_X, y, 30, 9, "Comentários:", { bold: true });
+  cell(doc, CONTENT_X + 30, y, CONTENT_W - 30, 9, nc.comentarios_implementacao ?? "", { fontSize: 7, maxLines: 2, valign: "top" });
+  return y + 9;
 }
 
 function drawEffectiveness(doc: jsPDF, y: number, nc: NCData) {
   y = sectionBar(doc, y, "7- VERIFICAÇÃO DA EFICÁCIA");
 
-  const labelW = 74;
+  const labelW = 62;
   const colW = (CONTENT_W - labelW) / 4;
   cell(doc, CONTENT_X, y, labelW, ROW, "Prazo para verificação da Eficácia:", { bold: true });
   cell(doc, CONTENT_X + labelW, y, CONTENT_W - labelW, ROW, br(nc.prazo_verificacao_eficacia) || nc.prazo_verificacao_eficacia || "");
   y += ROW;
 
+  cell(doc, CONTENT_X, y, labelW, ROW, "Observações:", { bold: true });
+  cell(doc, CONTENT_X + labelW, y, CONTENT_W - labelW, ROW, "", { fontSize: 7 });
+  y += ROW;
+
   cell(doc, CONTENT_X, y, labelW, ROW, "A Ação Corretiva foi eficaz?", { bold: true });
   cell(doc, CONTENT_X + labelW, y, colW, ROW, "SIM", { bold: true, align: "center" });
-  cell(doc, CONTENT_X + labelW + colW, y, colW, ROW, nc.eficaz === true ? "X" : "", { bold: true, align: "center" });
+  cell(doc, CONTENT_X + labelW + colW, y, colW, ROW, nc.eficaz === true ? "X" : "", { bold: true, align: "center", fontSize: 10 });
   cell(doc, CONTENT_X + labelW + colW * 2, y, colW, ROW, "NÃO", { bold: true, align: "center" });
-  cell(doc, CONTENT_X + labelW + colW * 3, y, colW, ROW, nc.eficaz === false ? "X" : "", { bold: true, align: "center" });
+  cell(doc, CONTENT_X + labelW + colW * 3, y, colW, ROW, nc.eficaz === false ? "X" : "", { bold: true, align: "center", fontSize: 10 });
   y += ROW;
 
-  cell(doc, CONTENT_X, y, labelW, ROW, "Comentários:", { bold: true });
-  cell(doc, CONTENT_X + labelW, y, CONTENT_W - labelW, ROW, nc.comentarios_eficacia ?? "", { fontSize: 7, maxLines: 1 });
-  y += ROW;
+  cell(doc, CONTENT_X, y, labelW, ROW * 1.6, "Comentários:", { bold: true, valign: "top" });
+  cell(doc, CONTENT_X + labelW, y, CONTENT_W - labelW, ROW * 1.6, nc.comentarios_eficacia ?? "", { fontSize: 7, maxLines: 2, valign: "top" });
+  y += ROW * 1.6;
 
-  cell(doc, CONTENT_X, y, labelW, ROW, "Data fechamento:", { bold: true });
-  cell(doc, CONTENT_X + labelW, y, 54, ROW, br(nc.data_fechamento));
-  cell(doc, CONTENT_X + labelW + 54, y, 52, ROW, "Responsável:", { bold: true });
-  cell(doc, CONTENT_X + labelW + 106, y, CONTENT_W - labelW - 106, ROW, nc.responsavel_fechamento ?? "");
+  const dataW = 44;
+  const respLabelW = 28;
+  cell(doc, CONTENT_X, y, 32, ROW, "Data fechamento:", { bold: true });
+  cell(doc, CONTENT_X + 32, y, dataW, ROW, br(nc.data_fechamento));
+  cell(doc, CONTENT_X + 32 + dataW, y, respLabelW, ROW, "Responsável:", { bold: true });
+  cell(doc, CONTENT_X + 32 + dataW + respLabelW, y, CONTENT_W - 32 - dataW - respLabelW, ROW, nc.responsavel_fechamento ?? "");
   return y + ROW;
 }
 
 export async function generateTNCPdf(nc: NCData): Promise<jsPDF> {
-  const doc = new jsPDF({ unit: "mm", format: [PAGE_W, PAGE_H], orientation: "landscape" });
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const logo = await loadLogo();
 
   drawHeader(doc, logo);
@@ -333,21 +340,21 @@ export async function generateTNCPdf(nc: NCData): Promise<jsPDF> {
   y = drawIdentification(doc, y, nc);
 
   y = sectionBar(doc, y, "2- DESCRIÇÃO DO PROBLEMA");
-  cell(doc, CONTENT_X, y, CONTENT_W, 13, nc.descricao ?? "", { valign: "middle", fontSize: 7.2, maxLines: 4 });
-  y += 13;
+  cell(doc, CONTENT_X, y, CONTENT_W, 16, nc.descricao ?? "", { valign: "top", fontSize: 7.4, maxLines: 4 });
+  y += 16;
   drawSideBand(doc, emitenteStart, y, "EMITENTE");
 
   // ============ RECEPTOR ============
   const receptorStart = y;
   y = sectionBar(doc, y, "3- ABRANGÊNCIA DA NÃO CONFORMIDADE");
-  cell(doc, CONTENT_X, y, CONTENT_W, 10, nc.abrangencia ?? "", { valign: "top", fontSize: 7.2, maxLines: 3 });
-  y += 10;
+  cell(doc, CONTENT_X, y, CONTENT_W, 12, nc.abrangencia ?? "", { valign: "top", fontSize: 7.4, maxLines: 3 });
+  y += 12;
 
   y = drawActionsTable(
     doc,
     y,
     "4- AÇÕES IMEDIATAS",
-    listRows(nc.acoes_imediatas_lista, 3, (a) => [a.acao, a.responsavel ?? "", br(a.prazo) || a.prazo || ""]),
+    listRows(nc.acoes_imediatas_lista, 8, (a) => [a.acao, a.responsavel ?? "", br(a.prazo) || a.prazo || ""]),
   );
 
   y = sectionBar(doc, y, "5- ANÁLISE DA CAUSA RAIZ");
@@ -361,18 +368,19 @@ export async function generateTNCPdf(nc: NCData): Promise<jsPDF> {
     ["5º Por que?", p.p5 ?? ""],
   ].forEach(([label, value]) => {
     cell(doc, CONTENT_X, y, whyLabelW, ROW, label, { bold: true });
-    cell(doc, CONTENT_X + whyLabelW, y, CONTENT_W - whyLabelW, ROW, value, { fontSize: 7, maxLines: 1 });
+    cell(doc, CONTENT_X + whyLabelW, y, CONTENT_W - whyLabelW, ROW, value, { fontSize: 7, maxLines: 2 });
     y += ROW;
   });
 
-  setTextStyle(doc, { italic: true, fontSize: 6.2, color: C_BLUE_NOTE });
+  setTextStyle(doc, { italic: true, fontSize: 6.4, color: C_BLUE_NOTE });
   doc.text(
     "Observação: pode utilizar anexos e relatórios complementares caso os campos deste formulário não sejam suficientes.",
-    CONTENT_X + 1,
-    y + 2.8,
+    CONTENT_X + CONTENT_W / 2,
+    y + 3,
+    { align: "center" },
   );
   doc.setTextColor(0);
-  y += 4;
+  y += 4.5;
   drawSideBand(doc, receptorStart, y, "RECEPTOR");
 
   // ============ EMITENTE / RECEPTOR / SGI ============
@@ -382,8 +390,8 @@ export async function generateTNCPdf(nc: NCData): Promise<jsPDF> {
     doc,
     y,
     "6- AÇÕES CORRETIVAS",
-    listRows(nc.acoes_corretivas_lista, 1, (a) => [a.acao, a.responsavel ?? "", br(a.prazo) || a.prazo || ""]),
-    { titleRow: true, rowHeight: 5 },
+    listRows(nc.acoes_corretivas_lista, 5, (a) => [a.acao, a.responsavel ?? "", br(a.prazo) || a.prazo || ""]),
+    { titleRow: true, rowHeight: ROW },
   );
 
   y = drawImplementation(doc, y, nc);
@@ -392,8 +400,8 @@ export async function generateTNCPdf(nc: NCData): Promise<jsPDF> {
 
   const pageH = doc.internal.pageSize.getHeight();
   setTextStyle(doc, { fontSize: 6, color: [120, 120, 120] });
-  doc.text("DMN Estaleiro · FORCP-SGI-05 · Revisão 00 · 28/05/2025", SIDE_X, pageH - 3);
-  doc.text(`Emitido em ${new Date().toLocaleString("pt-BR")}`, CONTENT_R, pageH - 3, { align: "right" });
+  doc.text("DMN Estaleiro · FORCP-SGI-05 · Revisão 00 · 28/05/2025", SIDE_X, pageH - 4);
+  doc.text(`Emitido em ${new Date().toLocaleString("pt-BR")}`, CONTENT_R, pageH - 4, { align: "right" });
 
   return doc;
 }
