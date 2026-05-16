@@ -73,7 +73,7 @@ const SESMT_GROUPS: SesmtGroup[] = [
   {
     title: "👥 Pessoas & Cadastros",
     items: [
-      { to: "/app/employees", label: "Colaboradores" },
+      { to: "/app/employees", label: "Funcionários" },
       { to: "/app/cascos", label: "Cascos / Embarcações" },
       { to: "/app/companies", label: "Empresas / Contratadas" },
       { to: "/app/roles", label: "Cargos & Matriz de Riscos" },
