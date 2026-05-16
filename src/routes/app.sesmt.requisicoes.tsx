@@ -833,20 +833,11 @@ function ReqFormDialog({
     onError: (e: any) => toast.error(e.message),
   });
 
-  return (
-    <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-0">
-      <DialogHeader className="px-4 pt-4 pb-2 border-b">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <DialogTitle>{isEdit ? `Editar Requisição Nº ${existing?.numero}` : "Nova Requisição de Compra"}</DialogTitle>
-          <EstoqueLookupSheet onPick={pickFromEstoque} triggerLabel="Consultar Estoque / CA" />
-        </div>
-      </DialogHeader>
-
-      {/* Folha replicando o formulário FOR-COMP 03 */}
-      <div className="px-4 pb-4">
-        <div className="border-2 border-black bg-white text-black font-sans text-[12px] leading-tight">
-          {/* Cabeçalho: logo | título | bloco código */}
-          <div className="grid grid-cols-[110px_1fr_180px] border-b-2 border-black">
+  // === Conteúdo dos passos do wizard ===
+  const stepCabecalho = (
+    <div className="border-2 border-black bg-white text-black font-sans text-[12px] leading-tight">
+      {/* Cabeçalho: logo | título | bloco código */}
+      <div className="grid grid-cols-[110px_1fr_180px] border-b-2 border-black">
             <div className="border-r-2 border-black flex items-center justify-center p-2">
               <img src={dmnLogo} alt="DMN" className="max-h-14 object-contain" />
             </div>
@@ -912,18 +903,22 @@ function ReqFormDialog({
               <FieldRow label="OBRA EM MANUTENÇÃO:" value={form.obra_manutencao} onChange={(v) => setForm({ ...form, obra_manutencao: v })} />
             </div>
           </div>
+    </div>
+  );
 
-          {/* Cabeçalho da tabela de itens */}
-          <div className="grid grid-cols-[40px_1fr_70px_70px_1fr] bg-white font-bold uppercase text-center border-b-2 border-black">
+  const stepItens = (
+    <div className="space-y-3">
+      <div className="border-2 border-black bg-white text-black font-sans text-[12px] leading-tight">
+        {/* Cabeçalho da tabela de itens */}
+        <div className="grid grid-cols-[40px_1fr_70px_70px_1fr] bg-white font-bold uppercase text-center border-b-2 border-black">
             <div className="border-r border-black p-1">Item</div>
             <div className="border-r border-black p-1">Descrição completa do material ou serviço</div>
             <div className="border-r border-black p-1">Qtde</div>
             <div className="border-r border-black p-1">Unid.</div>
             <div className="p-1">Observação</div>
           </div>
-
-          {/* Linhas de itens */}
-          {itens.map((it, idx) => (
+        {/* Linhas de itens */}
+        {itens.map((it, idx) => (
             <div key={idx} className="grid grid-cols-[40px_1fr_70px_70px_1fr] border-b border-black">
               <div className="border-r border-black p-1 text-center font-bold">
                 {String(it.item_numero).padStart(2, "0")}
@@ -942,9 +937,8 @@ function ReqFormDialog({
               </div>
             </div>
           ))}
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground">Total de linhas: {itens.length}</span>
             <EstoqueLookupSheet onPick={pickFromEstoque} triggerLabel="Consultar Estoque / CA" />
@@ -958,9 +952,12 @@ function ReqFormDialog({
             </Button>
           </div>
         </div>
+    </div>
+  );
 
-        {/* Bloco assinaturas */}
-        <div className="mt-4 border-2 border-black bg-white text-black text-[12px]">
+  const stepAssinatura = (
+    <div className="space-y-3">
+      <div className="border-2 border-black bg-white text-black text-[12px]">
           <div className="grid grid-cols-3 font-bold text-center uppercase border-b border-black">
             <div className="border-r border-black p-1.5">Assinatura Solicitante</div>
             <div className="border-r border-black p-1.5">Assinatura Supervisor Geral</div>
@@ -1025,8 +1022,7 @@ function ReqFormDialog({
             <div className="p-1.5">Data:</div>
           </div>
         </div>
-
-        <div className="mt-3">
+      <div>
           <Label className="text-xs">Observações gerais (interno)</Label>
           <Textarea
             value={form.observacoes}
@@ -1034,14 +1030,100 @@ function ReqFormDialog({
             rows={2}
           />
         </div>
-      </div>
+    </div>
+  );
 
-      <DialogFooter className="px-4 pb-4 border-t pt-3">
-        <Button variant="outline" onClick={onClose}>Cancelar</Button>
-        <Button className="bg-red-700 hover:bg-red-800" disabled={save.isPending} onClick={() => save.mutate()}>
-          {save.isPending ? "Salvando..." : isEdit ? "Atualizar Requisição" : "Salvar Requisição"}
-        </Button>
-      </DialogFooter>
+  const itensPreenchidos = itens.filter((i) => i.descricao.trim());
+  const stepRevisao = (
+    <div className="space-y-3 text-sm">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 border rounded-md p-3 bg-slate-50">
+        <div><strong>Nº:</strong> {form.numero}</div>
+        <div><strong>Data:</strong> {fmtBR(form.data_requisicao)}</div>
+        <div><strong>Classificação:</strong> {form.classificacao === "MATERIAL" ? "Material" : "Serviço"}</div>
+        <div><strong>Solicitante:</strong> {form.solicitante || "—"}</div>
+        <div><strong>Setor:</strong> {form.setor || "—"}</div>
+        <div><strong>Fornecedor:</strong> {form.fornecedor || "—"}</div>
+        <div><strong>Obra construção:</strong> {form.obra_construcao || "—"}</div>
+        <div><strong>Obra manutenção:</strong> {form.obra_manutencao || "—"}</div>
+        <div><strong>Assinatura:</strong> {signature ? "Enviada" : "Não enviada"}</div>
+        <div><strong>Itens preenchidos:</strong> {itensPreenchidos.length}</div>
+      </div>
+      {itensPreenchidos.length > 0 && (
+        <div className="border rounded-md overflow-hidden">
+          <table className="w-full text-xs">
+            <thead className="bg-slate-100">
+              <tr>
+                <th className="border p-1">Item</th>
+                <th className="border p-1 text-left">Descrição</th>
+                <th className="border p-1">Qtde</th>
+                <th className="border p-1">Unid.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {itensPreenchidos.map((i) => (
+                <tr key={i.item_numero}>
+                  <td className="border p-1 text-center">{String(i.item_numero).padStart(2, "0")}</td>
+                  <td className="border p-1">{i.descricao}</td>
+                  <td className="border p-1 text-center">{i.quantidade || "—"}</td>
+                  <td className="border p-1 text-center">{i.unidade || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="text-xs text-slate-500">Confirme os dados acima e clique em <strong>{isEdit ? "Atualizar Requisição" : "Salvar Requisição"}</strong>.</p>
+    </div>
+  );
+
+  const steps: WizardStep[] = [
+    {
+      id: "cabecalho",
+      title: "Cabeçalho e dados",
+      description: "Classificação, solicitante, número e obras.",
+      content: stepCabecalho,
+      isValid: () => form.numero.trim() !== "" && form.solicitante.trim() !== "",
+      invalidMessage: "Preencha pelo menos Nº da Requisição e Solicitante.",
+    },
+    {
+      id: "itens",
+      title: "Itens da requisição",
+      description: "Adicione os materiais ou serviços. Use o estoque para preenchimento rápido.",
+      content: stepItens,
+      isValid: () => itens.some((i) => i.descricao.trim() !== ""),
+      invalidMessage: "Adicione pelo menos um item com descrição.",
+    },
+    {
+      id: "assinatura",
+      title: "Assinatura e observações",
+      description: "Anexe a assinatura do solicitante (PNG) e observações internas.",
+      content: stepAssinatura,
+    },
+    {
+      id: "revisao",
+      title: "Revisão final",
+      description: "Confira e salve.",
+      content: stepRevisao,
+    },
+  ];
+
+  return (
+    <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-0">
+      <DialogHeader className="px-4 pt-4 pb-2 border-b">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <DialogTitle>{isEdit ? `Editar Requisição Nº ${existing?.numero}` : "Nova Requisição de Compra"}</DialogTitle>
+          <EstoqueLookupSheet onPick={pickFromEstoque} triggerLabel="Consultar Estoque / CA" />
+        </div>
+      </DialogHeader>
+      <div className="px-4 pb-4 pt-3">
+        <Wizard
+          steps={steps}
+          onComplete={() => save.mutate()}
+          isSubmitting={save.isPending}
+          completeLabel={save.isPending ? "Salvando..." : isEdit ? "Atualizar Requisição" : "Salvar Requisição"}
+          onCancel={onClose}
+        />
+      </div>
     </DialogContent>
   );
 }
