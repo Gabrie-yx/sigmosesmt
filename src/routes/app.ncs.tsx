@@ -317,7 +317,12 @@ function NCsPage() {
             </TabsList>
 
             {/* ============ ABA EMITENTE ============ */}
-            <TabsContent value="emitente" className="space-y-3 pt-4">
+            <TabsContent value="emitente" className="pt-4">
+              <div className="flex gap-3">
+              <div className="w-8 bg-blue-700 rounded flex items-start justify-center pt-3 shrink-0">
+                <span className="text-white font-bold text-[10px] tracking-widest [writing-mode:vertical-rl] rotate-180">EMITENTE</span>
+              </div>
+              <div className="flex-1 space-y-3">
               <div className="grid grid-cols-3 gap-3">
                 <div><Label>Emitente</Label><Input value={form.emitente} onChange={(e) => setForm({ ...form, emitente: e.target.value })} placeholder="Nome de quem abriu" /></div>
                 <div><Label>Departamento</Label><Input value={form.departamento} onChange={(e) => setForm({ ...form, departamento: e.target.value })} /></div>
@@ -374,10 +379,17 @@ function NCsPage() {
               <div><Label>2 — Descrição do problema</Label><Textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} rows={3} /></div>
               <div><Label>3 — Abrangência da não conformidade</Label><Textarea value={form.abrangencia} onChange={(e) => setForm({ ...form, abrangencia: e.target.value })} rows={2} placeholder="Quais áreas/processos são afetados?" /></div>
               <div><Label>Prazo limite</Label><Input type="date" value={form.data_limite} onChange={(e) => setForm({ ...form, data_limite: e.target.value })} /></div>
+              </div>
+              </div>
             </TabsContent>
 
             {/* ============ ABA RECEPTOR ============ */}
-            <TabsContent value="receptor" className="space-y-4 pt-4">
+            <TabsContent value="receptor" className="pt-4">
+              <div className="flex gap-3">
+              <div className="w-8 bg-orange-700 rounded flex items-start justify-center pt-3 shrink-0">
+                <span className="text-white font-bold text-[10px] tracking-widest [writing-mode:vertical-rl] rotate-180">RECEPTOR</span>
+              </div>
+              <div className="flex-1 space-y-4">
               <div>
                 <Label className="text-sm font-bold">4 — Ações Imediatas</Label>
                 <div className="space-y-2 mt-2">
@@ -431,10 +443,17 @@ function NCsPage() {
                 <div><Label>Novo prazo (se houver)</Label><Input type="date" value={form.novo_prazo} onChange={(e) => setForm({ ...form, novo_prazo: e.target.value })} /></div>
               </div>
               <div><Label>Comentários sobre implementação</Label><Textarea value={form.comentarios_implementacao} onChange={(e) => setForm({ ...form, comentarios_implementacao: e.target.value })} rows={2} /></div>
+              </div>
+              </div>
             </TabsContent>
 
             {/* ============ ABA SGI ============ */}
-            <TabsContent value="sgi" className="space-y-3 pt-4">
+            <TabsContent value="sgi" className="pt-4">
+              <div className="flex gap-3">
+              <div className="w-8 bg-green-700 rounded flex items-start justify-center pt-3 shrink-0">
+                <span className="text-white font-bold text-[9px] tracking-widest [writing-mode:vertical-rl] rotate-180">EMITENTE / RECEPTOR / SGI</span>
+              </div>
+              <div className="flex-1 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>7 — Prazo para verificação da eficácia</Label><Input type="date" value={form.prazo_verificacao_eficacia} onChange={(e) => setForm({ ...form, prazo_verificacao_eficacia: e.target.value })} /></div>
                 <div><Label>A ação corretiva foi eficaz?</Label>
@@ -460,6 +479,8 @@ function NCsPage() {
                     <SelectItem value="CANCELADA">Cancelada</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              </div>
               </div>
             </TabsContent>
           </Tabs>
