@@ -264,7 +264,9 @@ export function FloatingDock() {
       </nav>
 
       {/* Bottom-sheet mobile com filhos do grupo */}
-      {mobileSheet && (
+      {mobileSheet && (() => {
+        const SheetIcon = mobileSheet.icon;
+        return (
         <div className="md:hidden fixed inset-0 z-[75] flex flex-col">
           <div
             className="flex-1 bg-black/40 backdrop-blur-sm animate-in fade-in"
@@ -273,7 +275,7 @@ export function FloatingDock() {
           <div className="bg-white rounded-t-2xl shadow-2xl p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] animate-in slide-in-from-bottom duration-200">
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
             <div className="flex items-center gap-2 mb-3">
-              <mobileSheet.icon className="h-5 w-5 text-red-700" />
+              <SheetIcon className="h-5 w-5 text-red-700" />
               <div className="text-sm font-bold text-slate-800">{mobileSheet.label}</div>
             </div>
             {mobileSheet.hint && (
@@ -293,7 +295,8 @@ export function FloatingDock() {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Drawer lateral direito 85% com iframe — preserva 100% do estado da tela atual */}
       {drawerPath && (
