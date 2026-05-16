@@ -1106,9 +1106,23 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
             : null)
         }
         onPick={(pteId) => {
-          setApr((a) => ({ ...a, pte_id: pteId, exige_pte: true }));
-          qc.invalidateQueries({ queryKey: ["ptes-light"] });
-          qc.invalidateQueries({ queryKey: ["ptes-linked-apr", currentAprId] });
+          // NÃO sobrescrever apr.pte_id se já houver uma PTE legada vinculada —
+          // ela é a única referência da PTE anterior (que não tem apr_id próprio).
+          // Sobrescrever causa a PTE antiga "sumir" da cobertura e gerar loop.
+          setApr((a) => ({ ...a, pte_id: a.pte_id ?? pteId, exige_pte: true }));
+          // Migra a PTE legada para o modelo moderno (apr_id na própria linha),
+          // garantindo que apareça em linkedPtes e a cobertura seja estável.
+          (async () => {
+            if (currentAprId && apr.pte_id && apr.pte_id !== pteId) {
+              await supabase
+                .from("ptes")
+                .update({ apr_id: currentAprId })
+                .eq("id", apr.pte_id)
+                .is("apr_id", null);
+            }
+            qc.invalidateQueries({ queryKey: ["ptes-light"] });
+            qc.invalidateQueries({ queryKey: ["ptes-linked-apr", currentAprId] });
+          })();
         }}
       />
 
