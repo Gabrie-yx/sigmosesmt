@@ -12,7 +12,7 @@ import {
   ExternalLink,
   Maximize2,
 } from "lucide-react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 type DockItem = {
