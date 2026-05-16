@@ -433,6 +433,7 @@ function EstoqueSesmtPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50">
+              {isEditor && <TableHead className="w-8"></TableHead>}
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Foto</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Produto</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</TableHead>
@@ -449,13 +450,15 @@ function EstoqueSesmtPage() {
           <TableBody>
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={isEditor ? 10 : 9} className="text-center text-sm text-muted-foreground py-10">
+                <TableCell colSpan={isEditor ? 12 : 10} className="text-center text-sm text-muted-foreground py-10">
                   Nenhum item cadastrado. Clique em "Novo produto" para começar.
                 </TableCell>
               </TableRow>
             )}
             {filtered.map((i) => {
               const low = i.quantidade_atual <= (i.estoque_minimo ?? 0);
+              const needsRepor = (i.quantidade_atual ?? 0) === 0 || ((i.estoque_minimo ?? 0) > 0 && low);
+              const inCart = cart.has(i.id);
               const caDays = i.ca_validade
                 ? Math.floor((new Date(i.ca_validade).getTime() - Date.now()) / 86400000)
                 : null;
@@ -480,9 +483,22 @@ function EstoqueSesmtPage() {
                       ? "bg-rose-50 hover:bg-rose-100"
                       : caSoon
                       ? "bg-slate-200/70 hover:bg-slate-200"
+                      : inCart
+                      ? "bg-amber-50/70 hover:bg-amber-100/70"
                       : "hover:bg-slate-50/50"
                   }
                 >
+                  {isEditor && (
+                    <TableCell className="text-center">
+                      {needsRepor ? (
+                        <Checkbox
+                          checked={inCart}
+                          onCheckedChange={() => toggleCart(i.id)}
+                          aria-label="Adicionar à requisição"
+                        />
+                      ) : null}
+                    </TableCell>
+                  )}
                   <TableCell>
                     {i.imagem_url ? (
                       <img src={i.imagem_url} alt="" className="h-10 w-10 rounded object-cover border border-slate-200" />
