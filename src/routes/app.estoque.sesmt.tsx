@@ -344,6 +344,56 @@ function EstoqueSesmtPage() {
 
   return (
     <div className="p-6 md:p-8 space-y-6 animate-fadeIn">
+      {/* Barra do carrinho — sticky no topo do conteúdo, acompanha o scroll */}
+      {isEditor && cart.size > 0 && (
+        <div className="sticky top-2 z-40 -mx-2 px-2 animate-in slide-in-from-top-4 fade-in duration-300">
+          <div className="mx-auto w-[min(680px,100%)] rounded-2xl border border-amber-300 bg-white shadow-2xl shadow-amber-900/20 px-4 py-3 flex items-center gap-3 backdrop-blur">
+            <div className="relative shrink-0">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                <ShoppingCart className="h-5 w-5 text-white" />
+              </div>
+              <span className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-black flex items-center justify-center">
+                {cart.size}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-black text-slate-800 uppercase tracking-wide">
+                Requisição de Compra
+              </div>
+              <div className="text-xs text-slate-500">
+                {cart.size} de {CART_MAX} itens selecionados — quantidades serão sugeridas automaticamente
+              </div>
+              <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-500 to-orange-600 transition-all"
+                  style={{ width: `${(cart.size / CART_MAX) * 100}%` }}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-slate-500"
+                onClick={() => setCart(new Set())}
+                disabled={gerandoReq}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold shadow-md hover:from-amber-600 hover:to-orange-700"
+                onClick={gerarRequisicao}
+                disabled={gerandoReq}
+              >
+                <ShoppingCart className="h-4 w-4 mr-1.5" />
+                {gerandoReq ? "Gerando..." : "Gerar Requisição"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
