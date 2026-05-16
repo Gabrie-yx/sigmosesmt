@@ -47,8 +47,8 @@ const C_BLUE_NOTE: [number, number, number] = [37, 99, 235];
 // Modelo homologado em A4 retrato (FORCP-SGI-05).
 const PAGE_W = 210;
 const PAGE_H = 297;
-const SIDE_X = 5;
-const SIDE_W = 14;
+const SIDE_X = 6;
+const SIDE_W = 7;
 const CONTENT_X = SIDE_X + SIDE_W;
 const CONTENT_R = 205;
 const CONTENT_W = CONTENT_R - CONTENT_X;
@@ -183,31 +183,22 @@ function drawSideBand(doc: jsPDF, yStart: number, yEnd: number, label: string) {
   doc.rect(SIDE_X, yStart, SIDE_W, yEnd - yStart, "FD");
   const span = yEnd - yStart;
 
+  // Texto rotacionado 90° (lê-se de baixo para cima), como no formulário original
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0, 0, 0);
 
-  // Texto horizontal: quebra por palavra para caber em SIDE_W
-  let fs = 8.2;
+  let fs = 9;
   doc.setFontSize(fs);
-  const words = label.toUpperCase().split(/\s+/).filter(Boolean);
-  let lines = doc.splitTextToSize(words.join("\n"), SIDE_W - 1) as string[];
-  // Garante que cada palavra fique numa linha (sem quebrar palavras grandes)
-  lines = words.flatMap((w) => doc.splitTextToSize(w, SIDE_W - 1) as string[]);
-
-  let lineHeight = fs * 0.42;
-  while (fs > 5.5 && lines.length * lineHeight > span - 2) {
+  const text = label.toUpperCase();
+  // Reduz fonte se o texto for maior que o span vertical disponível
+  while (fs > 6 && doc.getTextWidth(text) > span - 6) {
     fs -= 0.3;
     doc.setFontSize(fs);
-    lineHeight = fs * 0.42;
   }
 
-  const totalH = lines.length * lineHeight;
-  const cx = SIDE_X + SIDE_W / 2;
-  let textY = yStart + (span - totalH) / 2 + lineHeight * 0.8;
-  lines.forEach((ln) => {
-    doc.text(ln, cx, textY, { align: "center", baseline: "alphabetic" });
-    textY += lineHeight;
-  });
+  const cx = SIDE_X + SIDE_W / 2 + fs * 0.18; // pequena correção visual da baseline rotacionada
+  const cy = yStart + span / 2;
+  doc.text(text, cx, cy, { align: "center", angle: 90 });
 }
 
 function drawIdentification(doc: jsPDF, y: number, nc: NCData) {
