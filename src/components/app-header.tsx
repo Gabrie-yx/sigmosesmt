@@ -401,6 +401,16 @@ export function AppHeader() {
 
   const MobileNav = () => (
     <div className="flex flex-col gap-1 mt-8">
+      <Link
+        to="/app/hoje"
+        className={`flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-black uppercase tracking-wide mb-3 ${
+          isActive("/app/hoje")
+            ? "bg-amber-300 text-red-900"
+            : "bg-white text-red-800 hover:bg-amber-50"
+        }`}
+      >
+        <CalendarCheck2 className="h-4 w-4" /> O que fazer hoje
+      </Link>
       <div className="text-[10px] font-black uppercase tracking-widest text-white/60 px-2 mb-1">
         SESMT
       </div>
@@ -424,18 +434,6 @@ export function AppHeader() {
       ))}
       <div className="text-xs font-bold text-white/70 px-2 mt-2">DDS</div>
       {DDS_SUBMENU.map((s) => (
-        <Link
-          key={s.to}
-          to={s.to}
-          className={`rounded-md px-6 py-2 text-sm font-semibold ${
-            isActive(s.to) ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10"
-          }`}
-        >
-          ↳ {s.label}
-        </Link>
-      ))}
-      <div className="text-xs font-bold text-white/70 px-2 mt-2">Documentos</div>
-      {DOCUMENTOS_SUBMENU.map((s) => (
         <Link
           key={s.to}
           to={s.to}
