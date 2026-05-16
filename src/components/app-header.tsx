@@ -561,10 +561,13 @@ export function AppHeader() {
           <div className="flex h-9 items-center justify-center rounded bg-white/95 px-1.5 py-1 shadow-sm">
             <img src={dmnLogo} alt="DMN Estaleiro" className="h-7 w-auto object-contain" />
           </div>
-          <div className="whitespace-nowrap leading-none">
+          <div className="whitespace-nowrap leading-tight">
             <h1 className="text-[15px] font-black uppercase tracking-tight text-white">
-              ESTALEIRO DMN
+              ESTALEIRO DMN — SIGMO
             </h1>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/70 mt-0.5">
+              (Sistema Integrado de Gestão Modular)
+            </p>
           </div>
         </Link>
 
