@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { AppHeader } from "@/components/app-header";
 import { ModuleRouteGuard } from "@/components/module-guard";
 import { FloatingDock } from "@/components/floating-dock";
+import { CommandPalette } from "@/components/command-palette";
 import { ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/app")({
@@ -50,6 +51,7 @@ function AppLayout() {
         Copyright© 2026. Todos os Direitos Reservados. Desenvolvido por Francisco Bandeira e Anderson Soares — Sistema de Gerenciamento de SST.
       </footer>
       <FloatingDock />
+      <CommandPalette />
     </div>
   );
 }
