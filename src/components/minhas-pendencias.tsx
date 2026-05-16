@@ -1,215 +1,205 @@
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
-  Megaphone,
-  Package,
-  ShoppingCart,
-  ShieldAlert,
-  Stethoscope,
-  CheckCircle2,
-  ArrowRight,
-  CalendarClock,
+  Megaphone, Package, ShoppingCart, ShieldAlert, Stethoscope, CheckCircle2, ArrowRight,
+  CalendarClock, FileWarning, Syringe, FileText, UserX, ClipboardCheck, GraduationCap, KeyRound, BellOff,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { Sigla } from "@/components/sigla";
 import { cn } from "@/lib/utils";
-
-// Dias da semana em que o DDS é realizado (1=seg, 3=qua, 5=sex)
-const DIAS_DDS = [1, 3, 5];
-const NOMES_DIAS_DDS = "segundas, quartas e sextas";
-
-function hojeISO() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function daqui(dias: number) {
-  const d = new Date();
-  d.setDate(d.getDate() + dias);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+import { usePendencias, severityRank, type PendenciaItem } from "@/hooks/use-pendencias";
+import { snoozeUntilTomorrow, isSnoozed, clearSnooze } from "@/lib/pendencias-snooze";
+import { useEffect, useState } from "react";
 
 function diaSemanaPt() {
   const nomes = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
   return nomes[new Date().getDay()];
 }
 
-/** Card visual de pendência. */
-function PendenciaCard({
-  icon: Icon,
-  titulo,
-  valor,
-  descricao,
-  to,
-  cor,
-  loading,
-  ok,
-  ctaLabel = "Resolver agora",
-}: {
-  icon: React.ComponentType<{ className?: string }>;
+interface CardMeta {
   titulo: React.ReactNode;
-  valor: number | string;
-  descricao: React.ReactNode;
+  descricaoPend: (n: number) => React.ReactNode;
+  descricaoOk: React.ReactNode;
   to: string;
-  cor: "red" | "amber" | "blue" | "emerald" | "slate";
-  loading?: boolean;
-  ok?: boolean;
-  ctaLabel?: string;
-}) {
-  const palette: Record<string, { ring: string; bg: string; icon: string; chip: string; cta: string }> = {
-    red: {
-      ring: "ring-red-200",
-      bg: "from-red-50 to-white",
-      icon: "bg-red-600 text-white",
-      chip: "bg-red-100 text-red-800",
-      cta: "text-red-700 hover:text-red-900",
-    },
-    amber: {
-      ring: "ring-amber-200",
-      bg: "from-amber-50 to-white",
-      icon: "bg-amber-500 text-white",
-      chip: "bg-amber-100 text-amber-800",
-      cta: "text-amber-700 hover:text-amber-900",
-    },
-    blue: {
-      ring: "ring-blue-200",
-      bg: "from-blue-50 to-white",
-      icon: "bg-blue-600 text-white",
-      chip: "bg-blue-100 text-blue-800",
-      cta: "text-blue-700 hover:text-blue-900",
-    },
-    emerald: {
-      ring: "ring-emerald-200",
-      bg: "from-emerald-50 to-white",
-      icon: "bg-emerald-600 text-white",
-      chip: "bg-emerald-100 text-emerald-800",
-      cta: "text-emerald-700 hover:text-emerald-900",
-    },
-    slate: {
-      ring: "ring-slate-200",
-      bg: "from-slate-50 to-white",
-      icon: "bg-slate-600 text-white",
-      chip: "bg-slate-100 text-slate-800",
-      cta: "text-slate-700 hover:text-slate-900",
-    },
-  };
-  const c = palette[ok ? "emerald" : cor];
+  icon: React.ComponentType<{ className?: string }>;
+  ctaPend: string;
+  ctaOk?: string;
+  snoozable?: boolean;
+}
+
+const META: Record<string, CardMeta> = {
+  "asos-vencidos": {
+    titulo: <><Sigla>ASO</Sigla>s vencidos</>,
+    descricaoPend: (n) => `${n} colaborador(es) com ASO fora da validade — bloqueia acesso.`,
+    descricaoOk: "Todos os ASOs em dia.",
+    to: "/app/employees", icon: Stethoscope, ctaPend: "Renovar urgente",
+  },
+  "aprs-vencidas": {
+    titulo: <><Sigla>APR</Sigla>s vencidas</>,
+    descricaoPend: (n) => `${n} APR(s) já passaram da validade. Renove antes de liberar o trabalho.`,
+    descricaoOk: "Nenhuma APR vencida.",
+    to: "/app/aprs", icon: FileWarning, ctaPend: "Renovar agora",
+  },
+  "pops-atrasados": {
+    titulo: "POPs com revisão atrasada",
+    descricaoPend: (n) => `${n} procedimento(s) com revisão vencida.`,
+    descricaoOk: "Procedimentos em dia.",
+    to: "/app/sesmt/procedimentos", icon: ClipboardCheck, ctaPend: "Revisar POPs",
+  },
+  "vacinas-vencidas": {
+    titulo: "Vacinas vencidas",
+    descricaoPend: (n) => `${n} dose(s) com data ultrapassada.`,
+    descricaoOk: "Esquema vacinal em dia.",
+    to: "/app/employees", icon: Syringe, ctaPend: "Atualizar carteira",
+  },
+  "colab-sem-docs": {
+    titulo: "Colaboradores sem documentação",
+    descricaoPend: (n) => `${n} ativo(s) sem ASO ou integração registrados.`,
+    descricaoOk: "Todos os colaboradores documentados.",
+    to: "/app/employees", icon: UserX, ctaPend: "Completar cadastro",
+  },
+  "dds-hoje": {
+    titulo: <><Sigla>DDS</Sigla> de hoje</>,
+    descricaoPend: () => "Hoje é dia de DDS. Registre o diálogo com a equipe.",
+    descricaoOk: "DDS de hoje já lançado.",
+    to: "/app/dds", icon: Megaphone, ctaPend: "Registrar DDS", snoozable: true,
+  },
+  "aprs-vencendo": {
+    titulo: <><Sigla>APR</Sigla>s vencendo (7 dias)</>,
+    descricaoPend: (n) => `${n} APR(s) perto do vencimento.`,
+    descricaoOk: "Nenhuma APR vencendo nesta semana.",
+    to: "/app/aprs", icon: ShieldAlert, ctaPend: "Renovar antes",
+  },
+  "ptes-vencidas": {
+    titulo: <><Sigla>PTE</Sigla>s antigas (+7 dias)</>,
+    descricaoPend: (n) => `${n} PTE(s) com mais de 7 dias — revise ou reemita.`,
+    descricaoOk: "PTEs em dia.",
+    to: "/app/ptes", icon: KeyRound, ctaPend: "Revisar PTEs",
+  },
+  "exames-30": {
+    titulo: "Exames vencendo (30 dias)",
+    descricaoPend: (n) => `${n} colaborador(es) com exames a vencer.`,
+    descricaoOk: "Nenhum exame vencendo no próximo mês.",
+    to: "/app/employees", icon: Stethoscope, ctaPend: "Agendar exames",
+  },
+  "trein-60": {
+    titulo: "Treinamentos vencendo (60 dias)",
+    descricaoPend: (n) => `${n} reciclagem(ns) próximas do vencimento.`,
+    descricaoOk: "Matriz de treinamento em dia.",
+    to: "/app/matriz-treinamento", icon: GraduationCap, ctaPend: "Programar reciclagem",
+  },
+  "req-pendentes": {
+    titulo: "Requisições pendentes",
+    descricaoPend: (n) => `${n} requisição(ões) aguardando parecer.`,
+    descricaoOk: "Nenhuma requisição em análise.",
+    to: "/app/sesmt/requisicoes", icon: ShoppingCart, ctaPend: "Analisar agora",
+  },
+  "epi-baixo": {
+    titulo: <><Sigla>EPI</Sigla>s em estoque baixo</>,
+    descricaoPend: (n) => `${n} item(s) no/abaixo do mínimo.`,
+    descricaoOk: "Estoque de EPIs saudável.",
+    to: "/app/estoque/epi", icon: Package, ctaPend: "Repor estoque",
+  },
+  "inspecao-epi": {
+    titulo: "Inspeção mensal de EPI",
+    descricaoPend: () => "Fim de mês: registre a inspeção mensal antes de fechar.",
+    descricaoOk: "Inspeção mensal já realizada.",
+    to: "/app/estoque/epi", icon: ClipboardCheck, ctaPend: "Realizar inspeção", snoozable: true,
+  },
+};
+
+const SEV_PALETTE = {
+  critico: { ring: "ring-red-300", bg: "from-red-50 to-white", icon: "bg-red-600 text-white", chip: "bg-red-100 text-red-800", cta: "text-red-700 hover:text-red-900", label: "Crítico" },
+  alto:    { ring: "ring-amber-200", bg: "from-amber-50 to-white", icon: "bg-amber-500 text-white", chip: "bg-amber-100 text-amber-800", cta: "text-amber-700 hover:text-amber-900", label: "Alto" },
+  medio:   { ring: "ring-blue-200", bg: "from-blue-50 to-white", icon: "bg-blue-600 text-white", chip: "bg-blue-100 text-blue-800", cta: "text-blue-700 hover:text-blue-900", label: "Médio" },
+  ok:      { ring: "ring-emerald-200", bg: "from-emerald-50 to-white", icon: "bg-emerald-600 text-white", chip: "bg-emerald-100 text-emerald-800", cta: "text-emerald-700 hover:text-emerald-900", label: "OK" },
+} as const;
+
+function PendenciaCard({ item }: { item: PendenciaItem }) {
+  const meta = META[item.key];
+  if (!meta) return null;
+  const sev = item.ok ? "ok" : item.severity;
+  const c = SEV_PALETTE[sev];
+  const Icon = meta.icon;
+  const snoozed = isSnoozed(item.key);
 
   return (
-    <Link
-      to={to}
-      className={cn(
-        "group relative flex flex-col gap-3 rounded-2xl border bg-gradient-to-br p-5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all ring-1",
-        c.bg,
-        c.ring,
-      )}
-    >
+    <div className={cn(
+      "group relative flex flex-col gap-3 rounded-2xl border bg-gradient-to-br p-5 shadow-sm hover:shadow-lg transition-all ring-1",
+      c.bg, c.ring, snoozed && "opacity-60",
+    )}>
       <div className="flex items-start justify-between gap-3">
         <div className={cn("p-2.5 rounded-xl shadow-sm", c.icon)}>
           <Icon className="h-5 w-5" />
         </div>
         <div className={cn("text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full", c.chip)}>
-          {ok ? "Tudo certo" : loading ? "Verificando…" : "Pendente"}
+          {item.ok ? "Tudo certo" : item.loading ? "Verificando…" : c.label}
         </div>
       </div>
       <div>
         <div className="flex items-baseline gap-2">
           <span className="text-4xl font-black text-slate-900 leading-none tabular-nums">
-            {loading ? "—" : ok ? <CheckCircle2 className="h-9 w-9 text-emerald-600 inline" /> : valor}
+            {item.loading ? "—" : item.ok ? <CheckCircle2 className="h-9 w-9 text-emerald-600 inline" /> : item.count}
           </span>
         </div>
-        <div className="mt-1 text-sm font-bold text-slate-900">{titulo}</div>
-        <div className="mt-1 text-xs text-slate-600 leading-relaxed">{descricao}</div>
+        <div className="mt-1 text-sm font-bold text-slate-900">{meta.titulo}</div>
+        <div className="mt-1 text-xs text-slate-600 leading-relaxed">
+          {item.ok ? meta.descricaoOk : meta.descricaoPend(item.count)}
+        </div>
+        {snoozed && (
+          <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            <BellOff className="h-3 w-3" /> Adiado até amanhã
+          </div>
+        )}
       </div>
-      <div className={cn("mt-auto pt-2 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider", c.cta)}>
-        {ok ? "Ver detalhes" : ctaLabel}
-        <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+      <div className="mt-auto pt-2 flex items-center justify-between gap-2">
+        <Link
+          to={meta.to}
+          className={cn("inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider", c.cta)}
+        >
+          {item.ok ? (meta.ctaOk ?? "Ver detalhes") : meta.ctaPend}
+          <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+        </Link>
+        {!item.ok && (
+          snoozed ? (
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); clearSnooze(item.key); }}
+              className="text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+            >
+              Reativar
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); snoozeUntilTomorrow(item.key); }}
+              className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+              title="Lembrar amanhã"
+            >
+              <BellOff className="h-3 w-3" /> Adiar
+            </button>
+          )
+        )}
       </div>
-    </Link>
+    </div>
   );
 }
 
 export function MinhasPendencias() {
-  const hoje = hojeISO();
-  const limite30 = daqui(30);
-  const limite7 = daqui(7);
-  const diaSem = new Date().getDay();
-  const ehDiaDeDDS = DIAS_DDS.includes(diaSem);
+  const { items, totalPendencias } = usePendencias();
+  const [, force] = useState(0);
+  useEffect(() => {
+    const h = () => force((x) => x + 1);
+    window.addEventListener("sigmo:snooze-changed", h);
+    return () => window.removeEventListener("sigmo:snooze-changed", h);
+  }, []);
 
-  // 1) DDS de hoje (só conta como pendente se hoje for seg/qua/sex)
-  const dds = useQuery({
-    queryKey: ["pendencia-dds", hoje],
-    enabled: ehDiaDeDDS,
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("dds")
-        .select("id", { count: "exact", head: true })
-        .eq("data", hoje);
-      if (error) throw error;
-      return count ?? 0;
-    },
+  // Ordenação automática: severidade > snoozed > ok
+  const sorted = [...items].sort((a, b) => {
+    const aSnoozed = isSnoozed(a.key) && !a.ok ? 1 : 0;
+    const bSnoozed = isSnoozed(b.key) && !b.ok ? 1 : 0;
+    const aRank = a.ok ? 99 : severityRank(a.severity) + aSnoozed * 10;
+    const bRank = b.ok ? 99 : severityRank(b.severity) + bSnoozed * 10;
+    return aRank - bRank;
   });
-
-  // 2) Requisições aguardando aprovação
-  const req = useQuery({
-    queryKey: ["pendencia-requisicoes"],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("purchase_requisitions")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "PENDENTE");
-      if (error) throw error;
-      return count ?? 0;
-    },
-  });
-
-  // 3) EPIs em estoque baixo (quantidade <= mínimo)
-  const epi = useQuery({
-    queryKey: ["pendencia-epi-baixo"],
-    queryFn: async () => {
-      // PostgREST não suporta comparar duas colunas diretamente — busca todos e filtra
-      const { data, error } = await supabase
-        .from("estoque_epi")
-        .select("id, quantidade_atual, estoque_minimo");
-      if (error) throw error;
-      return (data ?? []).filter((e) => (e.quantidade_atual ?? 0) <= (e.estoque_minimo ?? 0)).length;
-    },
-  });
-
-  // 4) Exames vencendo em até 30 dias
-  const exames = useQuery({
-    queryKey: ["pendencia-exames", limite30],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("employee_exams")
-        .select("id", { count: "exact", head: true })
-        .lte("data_vencimento", limite30)
-        .gte("data_vencimento", hoje);
-      if (error) throw error;
-      return count ?? 0;
-    },
-  });
-
-  // 5) APRs vencendo em até 7 dias
-  const aprs = useQuery({
-    queryKey: ["pendencia-aprs", limite7],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("aprs")
-        .select("id", { count: "exact", head: true })
-        .lte("data_validade", limite7)
-        .gte("data_validade", hoje);
-      if (error) throw error;
-      return count ?? 0;
-    },
-  });
-
-  const totalPendencias =
-    (ehDiaDeDDS && (dds.data ?? 0) === 0 ? 1 : 0) +
-    (req.data ?? 0) +
-    (epi.data ?? 0) +
-    (exames.data ?? 0) +
-    (aprs.data ?? 0);
 
   return (
     <section className="px-6 md:px-14 pt-10 pb-6 max-w-7xl mx-auto">
@@ -232,99 +222,8 @@ export function MinhasPendencias() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {ehDiaDeDDS ? (
-          <PendenciaCard
-            icon={Megaphone}
-            titulo={<><Sigla>DDS</Sigla> de hoje</>}
-            valor={(dds.data ?? 0) > 0 ? "OK" : "1"}
-            descricao={
-              (dds.data ?? 0) > 0
-                ? `${dds.data} registro(s) já lançado(s) hoje.`
-                : `Hoje é dia de DDS. Registre o diálogo com a equipe.`
-            }
-            to="/app/dds"
-            cor="red"
-            loading={dds.isLoading}
-            ok={(dds.data ?? 0) > 0}
-            ctaLabel="Registrar DDS"
-          />
-        ) : (
-          <PendenciaCard
-            icon={Megaphone}
-            titulo={<><Sigla>DDS</Sigla></>}
-            valor="—"
-            descricao={`Sem DDS hoje. Próximas datas: ${NOMES_DIAS_DDS}.`}
-            to="/app/dds"
-            cor="slate"
-            ok
-            ctaLabel="Ver histórico"
-          />
-        )}
-
-        <PendenciaCard
-          icon={ShoppingCart}
-          titulo="Requisições pendentes"
-          valor={req.data ?? 0}
-          descricao={
-            (req.data ?? 0) === 0
-              ? "Nenhuma requisição aguardando análise."
-              : `Requisição(ões) aguardando aprovação ou parecer.`
-          }
-          to="/app/sesmt/requisicoes"
-          cor="amber"
-          loading={req.isLoading}
-          ok={(req.data ?? 0) === 0}
-          ctaLabel="Analisar agora"
-        />
-
-        <PendenciaCard
-          icon={Package}
-          titulo={<><Sigla>EPI</Sigla>s em estoque baixo</>}
-          valor={epi.data ?? 0}
-          descricao={
-            (epi.data ?? 0) === 0
-              ? "Todos os EPIs acima do estoque mínimo."
-              : `Item(s) atingiu(ram) o estoque mínimo. Reponha antes que falte.`
-          }
-          to="/app/estoque/epi"
-          cor="blue"
-          loading={epi.isLoading}
-          ok={(epi.data ?? 0) === 0}
-          ctaLabel="Repor estoque"
-        />
-
-        <PendenciaCard
-          icon={Stethoscope}
-          titulo="Exames vencendo (30 dias)"
-          valor={exames.data ?? 0}
-          descricao={
-            (exames.data ?? 0) === 0
-              ? "Nenhum exame periódico vencendo no próximo mês."
-              : `Colaboradores com ASO/exames a vencer.`
-          }
-          to="/app/employees"
-          cor="amber"
-          loading={exames.isLoading}
-          ok={(exames.data ?? 0) === 0}
-          ctaLabel="Agendar exame"
-        />
-
-        <PendenciaCard
-          icon={ShieldAlert}
-          titulo={<><Sigla>APR</Sigla>s vencendo (7 dias)</>}
-          valor={aprs.data ?? 0}
-          descricao={
-            (aprs.data ?? 0) === 0
-              ? "Nenhuma APR vencendo na próxima semana."
-              : `Análise(s) de risco perto do vencimento.`
-          }
-          to="/app/aprs"
-          cor="red"
-          loading={aprs.isLoading}
-          ok={(aprs.data ?? 0) === 0}
-          ctaLabel="Renovar agora"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {sorted.map((item) => <PendenciaCard key={item.key} item={item} />)}
       </div>
     </section>
   );
