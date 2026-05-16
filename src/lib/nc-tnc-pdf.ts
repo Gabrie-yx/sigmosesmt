@@ -190,15 +190,18 @@ function drawSideBand(doc: jsPDF, yStart: number, yEnd: number, label: string) {
   let fs = 9;
   doc.setFontSize(fs);
   const text = label.toUpperCase();
-  // Reduz fonte se o texto for maior que o span vertical disponível
-  while (fs > 6 && doc.getTextWidth(text) > span - 6) {
+  let textW = doc.getTextWidth(text);
+  while (fs > 6 && textW > span - 4) {
     fs -= 0.3;
     doc.setFontSize(fs);
+    textW = doc.getTextWidth(text);
   }
 
-  const cx = SIDE_X + SIDE_W / 2 + fs * 0.18; // pequena correção visual da baseline rotacionada
-  const cy = yStart + span / 2;
-  doc.text(text, cx, cy, { align: "center", angle: 90 });
+  // jsPDF angle:90 = rotação anti-horária → texto cresce de baixo para cima.
+  // Posicionamos no centro do span partindo da extremidade inferior do texto.
+  const cx = SIDE_X + SIDE_W / 2 + fs * 0.35;
+  const cy = yStart + span / 2 + textW / 2;
+  doc.text(text, cx, cy, { angle: 90, baseline: "alphabetic" });
 }
 
 function drawIdentification(doc: jsPDF, y: number, nc: NCData) {
