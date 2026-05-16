@@ -8,9 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, ChevronRight } from "lucide-react";
+import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { maskCPF } from "@/lib/masks";
 
@@ -65,14 +64,31 @@ function EmployeesPage() {
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
-    if (!s) return emps ?? [];
-    return (emps ?? []).filter((e: any) =>
-      e.nome.toLowerCase().includes(s) || (e.cpf ?? "").toLowerCase().includes(s) || (e.matricula ?? "").toLowerCase().includes(s),
-    );
-  }, [emps, q]);
+    return (emps ?? []).filter((e: any) => {
+      if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
+      if (companyFilter !== "TODAS" && e.company_id !== companyFilter) return false;
+      if (roleFilter !== "TODOS" && e.role_id !== roleFilter) return false;
+      if (!s) return true;
+      return (
+        e.nome.toLowerCase().includes(s) ||
+        (e.cpf ?? "").toLowerCase().includes(s) ||
+        (e.matricula ?? "").toLowerCase().includes(s)
+      );
+    });
+  }, [emps, q, statusFilter, companyFilter, roleFilter]);
 
   const cMap = new Map((companies ?? []).map((c: any) => [c.id, c.name]));
   const rMap = new Map((roles ?? []).map((r: any) => [r.id, r.name]));
+
+  const stats = useMemo(() => {
+    const list = emps ?? [];
+    return {
+      total: list.length,
+      ativos: list.filter((e: any) => e.status === "ATIVO").length,
+      inativos: list.filter((e: any) => e.status === "INATIVO").length,
+      afastados: list.filter((e: any) => e.status === "AFASTADO").length,
+    };
+  }, [emps]);
 
   return (
     <div className="p-6 md:p-8 animate-fadeIn">
