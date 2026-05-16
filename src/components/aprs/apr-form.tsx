@@ -314,7 +314,9 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   /** Mescla a PTE legada (apr.pte_id) caso ela não esteja na lista de linked. */
   const todasPtesVinculadas = useMemo(() => {
     const map = new Map<string, any>();
-    (linkedPtes as any[]).forEach((p) => map.set(p.id, p));
+    (linkedPtes as any[])
+      .filter((p) => p.status !== "CANCELADA" && p.status !== "ENCERRADA")
+      .forEach((p) => map.set(p.id, p));
     if (apr.pte_id && pte && !map.has(apr.pte_id)) map.set(apr.pte_id, pte);
     return Array.from(map.values());
   }, [linkedPtes, apr.pte_id, pte]);
@@ -1013,7 +1015,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
       <PteLookupSheet
         open={pteSheetOpen}
         onOpenChange={setPteSheetOpen}
-        aprId={apr.id ?? null}
+        aprId={currentAprId}
         aprNumero={apr.numero ?? null}
         aprLocal={apr.local ?? null}
         empresaId={apr.empresa_id ?? null}
@@ -1026,7 +1028,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         onPick={(pteId) => {
           setApr((a) => ({ ...a, pte_id: pteId, exige_pte: true }));
           qc.invalidateQueries({ queryKey: ["ptes-light"] });
-          qc.invalidateQueries({ queryKey: ["ptes-linked-apr", aprId] });
+          qc.invalidateQueries({ queryKey: ["ptes-linked-apr", currentAprId] });
         }}
       />
     </div>
