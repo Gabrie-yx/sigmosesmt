@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer, X } from "lucide-react";
 import type jsPDF from "jspdf";
 
-export function PDFPreviewDialog({ open, onClose, doc, fileName }: {
+export function PDFPreviewDialog({ open, onClose, doc, fileName, title }: {
   open: boolean;
   onClose: () => void;
   doc: jsPDF | null;
   fileName: string;
+  title?: string;
 }) {
   const [url, setUrl] = useState<string>("");
 
@@ -35,7 +36,7 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName }: {
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Visualizar formulário semanal — {fileName}</DialogTitle>
+          <DialogTitle>{title ?? "Visualizar PDF"} — {fileName}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 min-h-0 border rounded overflow-hidden bg-slate-100">
           {url ? (
