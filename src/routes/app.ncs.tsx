@@ -375,12 +375,12 @@ function NCsPage() {
 
             {/* ============ ABA EMITENTE ============ */}
             <TabsContent value="emitente" className="pt-4">
-              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/60 p-5 shadow-sm space-y-3">
-                <div className="flex items-center gap-2 pb-3 mb-1 border-b border-slate-100">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold tracking-wide text-blue-700 ring-1 ring-blue-200">
+              <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50/70 via-white to-sky-50/50 p-5 shadow-md space-y-3">
+                <div className="flex items-center gap-2 pb-3 mb-1 -mx-5 -mt-5 px-5 pt-4 rounded-t-xl bg-gradient-to-r from-blue-600 to-sky-500 text-white">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold tracking-wide text-blue-700 shadow">
                     <User className="h-3 w-3" /> EMITENTE
                   </span>
-                  <span className="text-xs text-slate-500">Identificação e descrição do problema</span>
+                  <span className="text-xs font-medium text-white/95">Identificação e descrição do problema</span>
                 </div>
               <div className="grid grid-cols-3 gap-3">
                 <div><Label>Emitente</Label><Input value={form.emitente} onChange={(e) => setForm({ ...form, emitente: e.target.value })} placeholder="Nome de quem abriu" /></div>
@@ -441,12 +441,12 @@ function NCsPage() {
 
             {/* ============ ABA RECEPTOR ============ */}
             <TabsContent value="receptor" className="pt-4">
-              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-amber-50/30 p-5 shadow-sm space-y-4">
-                <div className="flex items-center gap-2 pb-3 mb-1 border-b border-slate-100">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold tracking-wide text-amber-700 ring-1 ring-amber-200">
+              <div className="rounded-xl border-2 border-amber-200 bg-gradient-to-br from-amber-50/70 via-white to-orange-50/50 p-5 shadow-md space-y-4">
+                <div className="flex items-center gap-2 pb-3 mb-1 -mx-5 -mt-5 px-5 pt-4 rounded-t-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold tracking-wide text-amber-700 shadow">
                     <Wrench className="h-3 w-3" /> RECEPTOR
                   </span>
-                  <span className="text-xs text-slate-500">Abrangência, ações imediatas e análise da causa raiz</span>
+                  <span className="text-xs font-medium text-white/95">Abrangência, ações imediatas e análise da causa raiz</span>
                 </div>
               <div>
                 <Label className="text-sm font-bold">3 — Abrangência da não conformidade</Label>
@@ -489,12 +489,12 @@ function NCsPage() {
 
             {/* ============ ABA SGI ============ */}
             <TabsContent value="sgi" className="pt-4">
-              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-emerald-50/30 p-5 shadow-sm space-y-3">
-                <div className="flex items-center gap-2 pb-3 mb-1 border-b border-slate-100">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold tracking-wide text-emerald-700 ring-1 ring-emerald-200">
+              <div className="rounded-xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/50 p-5 shadow-md space-y-3">
+                <div className="flex items-center gap-2 pb-3 mb-1 -mx-5 -mt-5 px-5 pt-4 rounded-t-xl bg-gradient-to-r from-emerald-600 to-teal-500 text-white">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold tracking-wide text-emerald-700 shadow">
                     <ClipboardCheck className="h-3 w-3" /> EMITENTE / RECEPTOR / SGI
                   </span>
-                  <span className="text-xs text-slate-500">Ações corretivas, verificação da eficácia e fechamento</span>
+                  <span className="text-xs font-medium text-white/95">Ações corretivas, verificação da eficácia e fechamento</span>
                 </div>
 
                 <div>
