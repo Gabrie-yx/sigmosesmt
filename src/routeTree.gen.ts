@@ -22,6 +22,7 @@ import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppPtesRouteImport } from './routes/app.ptes'
 import { Route as AppPainelRouteImport } from './routes/app.painel'
 import { Route as AppMatrizTreinamentoRouteImport } from './routes/app.matriz-treinamento'
+import { Route as AppHojeRouteImport } from './routes/app.hoje'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppCascosRouteImport } from './routes/app.cascos'
@@ -109,6 +110,11 @@ const AppPainelRoute = AppPainelRouteImport.update({
 const AppMatrizTreinamentoRoute = AppMatrizTreinamentoRouteImport.update({
   id: '/matriz-treinamento',
   path: '/matriz-treinamento',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHojeRoute = AppHojeRouteImport.update({
+  id: '/hoje',
+  path: '/hoje',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEmployeesRoute = AppEmployeesRouteImport.update({
@@ -240,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/hoje': typeof AppHojeRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByTo {
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
+  '/app/hoje': typeof AppHojeRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
@@ -315,6 +323,7 @@ export interface FileRoutesById {
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/hoje': typeof AppHojeRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
@@ -355,6 +364,7 @@ export interface FileRouteTypes {
     | '/app/cascos'
     | '/app/companies'
     | '/app/employees'
+    | '/app/hoje'
     | '/app/matriz-treinamento'
     | '/app/painel'
     | '/app/ptes'
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
+    | '/app/hoje'
     | '/app/matriz-treinamento'
     | '/app/painel'
     | '/app/ptes'
@@ -429,6 +440,7 @@ export interface FileRouteTypes {
     | '/app/cascos'
     | '/app/companies'
     | '/app/employees'
+    | '/app/hoje'
     | '/app/matriz-treinamento'
     | '/app/painel'
     | '/app/ptes'
@@ -556,6 +568,13 @@ declare module '@tanstack/react-router' {
       path: '/matriz-treinamento'
       fullPath: '/app/matriz-treinamento'
       preLoaderRoute: typeof AppMatrizTreinamentoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/hoje': {
+      id: '/app/hoje'
+      path: '/hoje'
+      fullPath: '/app/hoje'
+      preLoaderRoute: typeof AppHojeRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/employees': {
@@ -742,6 +761,7 @@ interface AppRouteChildren {
   AppCascosRoute: typeof AppCascosRoute
   AppCompaniesRoute: typeof AppCompaniesRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
+  AppHojeRoute: typeof AppHojeRoute
   AppMatrizTreinamentoRoute: typeof AppMatrizTreinamentoRoute
   AppPainelRoute: typeof AppPainelRoute
   AppPtesRoute: typeof AppPtesRoute
@@ -773,6 +793,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCascosRoute: AppCascosRoute,
   AppCompaniesRoute: AppCompaniesRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
+  AppHojeRoute: AppHojeRoute,
   AppMatrizTreinamentoRoute: AppMatrizTreinamentoRoute,
   AppPainelRoute: AppPainelRoute,
   AppPtesRoute: AppPtesRoute,
