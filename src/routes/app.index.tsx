@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Anchor, Compass, Gem, ShieldCheck, Leaf, Building2, Award, ArrowRight, Waves, Factory } from "lucide-react";
 import shipyardImg from "@/assets/dmn-shipyard.jpg";
 import isoSeal from "@/assets/iso-9001.png";
-import { MinhasPendencias } from "@/components/minhas-pendencias";
 
 export const Route = createFileRoute("/app/")({
   component: HomePage,
@@ -11,9 +10,6 @@ export const Route = createFileRoute("/app/")({
 function HomePage() {
   return (
     <div className="h-full overflow-y-auto custom-scrollbar bg-[#f1f5f9]">
-      {/* PENDÊNCIAS PESSOAIS — "o que precisa ser feito agora" */}
-      <MinhasPendencias />
-
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div
@@ -40,21 +36,6 @@ function HomePage() {
                 Tecnologia, sustentabilidade e excelência em cada embarcação que
                 navega pelos rios do norte do Brasil.
               </p>
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  to="/app/painel"
-                  className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-[#7f1d1d] text-xs font-black uppercase tracking-widest shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all"
-                >
-                  Acessar Painel SESMT
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <Link
-                  to="/app/employees"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 border border-white/25 backdrop-blur-sm text-white text-xs font-black uppercase tracking-widest hover:bg-white/20 transition-all"
-                >
-                  Colaboradores
-                </Link>
-              </div>
             </div>
 
             {/* ISO 9001 SEAL CARD */}
