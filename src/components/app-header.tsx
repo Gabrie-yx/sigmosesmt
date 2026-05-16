@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { useRef, useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import dmnLogo from "@/assets/dmn-logo.png";
+import { PendenciasBadge } from "@/components/pendencias-badge";
 
 // Menu SESMT reorganizado seguindo o ciclo PDCA da SST
 // (NR-1 GRO/PGR → NR-7 PCMSO → NR-6 EPI → NR-35 etc.)
@@ -576,6 +577,7 @@ export function AppHeader() {
         </nav>
 
         <div className="flex items-center gap-1.5 shrink-0 ml-auto lg:ml-0">
+          <PendenciasBadge />
           <div className="hidden md:flex items-center gap-0.5 border-l border-white/10 pl-2">
             <button
               title="Exportar backup"
