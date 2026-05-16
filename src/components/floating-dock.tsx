@@ -193,12 +193,19 @@ export function FloatingDock() {
                   onClick={() => (hasChildren ? setSubmenuOpen(isSubOpen ? null : it.path) : openDrawer(it))}
                   title={`${it.label} (Alt+${idx + 1})`}
                   className={cn(
-                    "group relative flex w-full items-center gap-2 px-2 py-2 rounded-lg hover:bg-red-50 text-slate-700 hover:text-red-700 transition-colors",
+                    "group relative flex w-full items-center gap-2 px-2 py-2 rounded-lg hover:bg-red-50 text-slate-700 hover:text-red-700 transition-colors min-w-[210px]",
                     isSubOpen && "bg-red-50 text-red-700",
                   )}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
-                  <span className="text-xs font-semibold whitespace-nowrap pr-2">{it.label}</span>
+                  <span className="flex flex-col items-start leading-tight pr-2">
+                    <span className="text-xs font-semibold whitespace-nowrap">{it.label}</span>
+                    {it.hint && (
+                      <span className="text-[10px] font-normal text-slate-400 group-hover:text-red-400 whitespace-nowrap">
+                        {it.hint}
+                      </span>
+                    )}
+                  </span>
                   {hasChildren ? (
                     <ChevronRight className="ml-auto h-3.5 w-3.5 text-slate-400" />
                   ) : (
