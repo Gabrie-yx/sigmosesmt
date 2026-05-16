@@ -8,6 +8,7 @@ import {
   BookOpen,
   GraduationCap,
   Package,
+  FolderOpen,
   X,
   ExternalLink,
   Maximize2,
@@ -30,6 +31,7 @@ const ITEMS: DockItem[] = [
   { label: "POPs", path: "/app/sesmt/procedimentos", icon: BookOpen },
   { label: "Matriz Treinamento", path: "/app/matriz-treinamento", icon: GraduationCap },
   { label: "Estoque", path: "/app/estoque/epi", icon: Package },
+  { label: "Documentos", path: "/app/sesmt/docs", icon: FolderOpen },
 ];
 
 export function FloatingDock() {
