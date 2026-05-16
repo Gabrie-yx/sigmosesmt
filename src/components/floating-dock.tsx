@@ -2,14 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import {
   LayoutDashboard,
   Sun,
+  CalendarCheck2,
   FolderOpen,
-  ShoppingCart,
   Users,
   Settings,
   X,
   ExternalLink,
   Maximize2,
   ChevronRight,
+  ClipboardList,
+  HardHat,
+  SearchCheck,
+  Wrench,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
@@ -24,66 +28,82 @@ type DockItem = {
 
 const ITEMS: DockItem[] = [
   {
+    label: "O que fazer hoje",
+    path: "/app/hoje",
+    icon: CalendarCheck2,
+    hint: "Pendências e alertas do dia",
+  },
+  {
     label: "Painel",
     path: "/app/painel",
     icon: LayoutDashboard,
-    hint: "Visão geral",
+    hint: "Indicadores SESMT",
   },
   {
-    label: "Meu dia",
-    path: "__group_meu_dia",
-    icon: Sun,
-    hint: "O que precisa ser feito hoje",
+    label: "Planejar",
+    path: "__group_plan",
+    icon: ClipboardList,
+    hint: "PLAN · POPs, matriz, docs",
+    children: [
+      { label: "Procedimentos / POPs", path: "/app/sesmt/procedimentos" },
+      { label: "Matriz de Treinamento", path: "/app/matriz-treinamento" },
+      { label: "Documentos SESMT", path: "/app/sesmt/docs" },
+      { label: "Requisições de Compra", path: "/app/sesmt/requisicoes" },
+    ],
+  },
+  {
+    label: "Executar",
+    path: "__group_do",
+    icon: HardHat,
+    hint: "DO · execução diária",
     children: [
       { label: "DDS — Diálogo de Segurança", path: "/app/dds" },
       { label: "APRs — Análise de Risco", path: "/app/aprs" },
       { label: "PTEs — Permissão de Trabalho", path: "/app/ptes" },
-      { label: "Entregar EPI", path: "/app/estoque/epi" },
+      { label: "Treinamentos", path: "/app/trainings" },
+      { label: "Entrega de EPI", path: "/app/estoque/epi" },
     ],
   },
   {
-    label: "Documentos",
-    path: "__group_documentos",
-    icon: FolderOpen,
-    hint: "POPs, docs SESMT e terceiros",
+    label: "Verificar",
+    path: "__group_check",
+    icon: SearchCheck,
+    hint: "CHECK · inspeções e indicadores",
     children: [
-      { label: "Documentos SESMT", path: "/app/sesmt/docs" },
-      { label: "Procedimentos / POPs", path: "/app/sesmt/procedimentos" },
-      { label: "Painel de Terceiros", path: "/app/sesmt/terceiros" },
-    ],
-  },
-  {
-    label: "Pedir / Receber",
-    path: "__group_pedir_receber",
-    icon: ShoppingCart,
-    hint: "Requisições e estoque",
-    children: [
-      { label: "Requisições de Compra", path: "/app/sesmt/requisicoes" },
       { label: "Estoque de EPIs", path: "/app/estoque/epi" },
       { label: "Estoque SESMT", path: "/app/estoque/sesmt" },
+      { label: "Painel de Terceiros", path: "/app/sesmt/terceiros" },
+      { label: "Reincidência de EPI", path: "/app/relatorios/reincidencia-epi" },
+    ],
+  },
+  {
+    label: "Agir",
+    path: "__group_act",
+    icon: Wrench,
+    hint: "ACT · correções e auditoria",
+    children: [
+      { label: "Auditoria", path: "/app/audit" },
     ],
   },
   {
     label: "Pessoas",
     path: "__group_pessoas",
     icon: Users,
-    hint: "Colaboradores e treinamentos",
+    hint: "Colaboradores e cascos",
     children: [
       { label: "Colaboradores", path: "/app/employees" },
-      { label: "Treinamentos", path: "/app/trainings" },
-      { label: "Matriz de Treinamento", path: "/app/matriz-treinamento" },
+      { label: "Cascos / Embarcações", path: "/app/cascos" },
     ],
   },
   {
     label: "Configurar",
     path: "__group_configurar",
     icon: Settings,
-    hint: "Usuários, empresas e auditoria",
+    hint: "Usuários, empresas, papéis",
     children: [
       { label: "Empresas", path: "/app/companies" },
       { label: "Usuários", path: "/app/users" },
       { label: "Papéis e Permissões", path: "/app/roles" },
-      { label: "Auditoria", path: "/app/audit" },
     ],
   },
 ];
@@ -244,7 +264,7 @@ export function FloatingDock() {
         className="md:hidden fixed bottom-0 inset-x-0 z-[70] border-t bg-white/95 backdrop-blur shadow-[0_-4px_16px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]"
       >
         <div className="grid grid-cols-6">
-          {ITEMS.map((it) => {
+          {ITEMS.slice(0, 6).map((it) => {
             const Icon = it.icon;
             const hasChildren = !!it.children?.length;
             return (
