@@ -377,8 +377,6 @@ function NCsPage() {
               </div>
               <div><Label>Título *</Label><Input value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} /></div>
               <div><Label>2 — Descrição do problema</Label><Textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} rows={3} /></div>
-              <div><Label>3 — Abrangência da não conformidade</Label><Textarea value={form.abrangencia} onChange={(e) => setForm({ ...form, abrangencia: e.target.value })} rows={2} placeholder="Quais áreas/processos são afetados?" /></div>
-              <div><Label>Prazo limite</Label><Input type="date" value={form.data_limite} onChange={(e) => setForm({ ...form, data_limite: e.target.value })} /></div>
               </div>
               </div>
             </TabsContent>
@@ -391,13 +389,18 @@ function NCsPage() {
               </div>
               <div className="flex-1 space-y-4">
               <div>
+                <Label className="text-sm font-bold">3 — Abrangência da não conformidade</Label>
+                <Textarea className="mt-2" value={form.abrangencia} onChange={(e) => setForm({ ...form, abrangencia: e.target.value })} rows={2} placeholder="Quais áreas/processos são afetados?" />
+              </div>
+
+              <div>
                 <Label className="text-sm font-bold">4 — Ações Imediatas</Label>
                 <div className="space-y-2 mt-2">
                   {form.acoes_imediatas_lista.map((a, idx) => (
                     <div key={idx} className="grid grid-cols-12 gap-2 items-end">
                       <div className="col-span-6"><Input placeholder="Ação" value={a.acao} onChange={(e) => updAcao("acoes_imediatas_lista", idx, { acao: e.target.value })} /></div>
                       <div className="col-span-3"><Input placeholder="Responsável" value={a.responsavel} onChange={(e) => updAcao("acoes_imediatas_lista", idx, { responsavel: e.target.value })} /></div>
-                      <div className="col-span-2"><Input type="date" value={a.prazo} onChange={(e) => updAcao("acoes_imediatas_lista", idx, { prazo: e.target.value })} /></div>
+                      <div className="col-span-2"><Input placeholder="dd/mm/aaaa ou texto" value={a.prazo} onChange={(e) => updAcao("acoes_imediatas_lista", idx, { prazo: e.target.value })} /></div>
                       <Button size="icon" variant="ghost" className="col-span-1 text-red-600" onClick={() => removeAcao("acoes_imediatas_lista", idx)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   ))}
@@ -415,6 +418,7 @@ function NCsPage() {
                     </div>
                   ))}
                 </div>
+                <p className="text-[11px] text-blue-600 italic mt-1">Observação: pode utilizar anexos e relatórios complementares caso os campos deste formulário não sejam suficientes.</p>
               </div>
 
               <div>
@@ -424,25 +428,13 @@ function NCsPage() {
                     <div key={idx} className="grid grid-cols-12 gap-2 items-end">
                       <div className="col-span-6"><Input placeholder="Ação corretiva" value={a.acao} onChange={(e) => updAcao("acoes_corretivas_lista", idx, { acao: e.target.value })} /></div>
                       <div className="col-span-3"><Input placeholder="Responsável" value={a.responsavel} onChange={(e) => updAcao("acoes_corretivas_lista", idx, { responsavel: e.target.value })} /></div>
-                      <div className="col-span-2"><Input type="date" value={a.prazo} onChange={(e) => updAcao("acoes_corretivas_lista", idx, { prazo: e.target.value })} /></div>
+                      <div className="col-span-2"><Input placeholder="dd/mm/aaaa ou texto" value={a.prazo} onChange={(e) => updAcao("acoes_corretivas_lista", idx, { prazo: e.target.value })} /></div>
                       <Button size="icon" variant="ghost" className="col-span-1 text-red-600" onClick={() => removeAcao("acoes_corretivas_lista", idx)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   ))}
                   <Button size="sm" variant="outline" onClick={() => addAcao("acoes_corretivas_lista")}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar ação corretiva</Button>
                 </div>
               </div>
-
-              <div className="grid grid-cols-3 gap-3 pt-2 border-t">
-                <div><Label>Implementadas?</Label>
-                  <Select value={form.acoes_implementadas == null ? "" : form.acoes_implementadas ? "S" : "N"} onValueChange={(v) => setForm({ ...form, acoes_implementadas: v === "" ? null : v === "S" })}>
-                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                    <SelectContent><SelectItem value="S">Sim</SelectItem><SelectItem value="N">Não</SelectItem></SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Data implementação</Label><Input type="date" value={form.data_implementacao} onChange={(e) => setForm({ ...form, data_implementacao: e.target.value })} /></div>
-                <div><Label>Novo prazo (se houver)</Label><Input type="date" value={form.novo_prazo} onChange={(e) => setForm({ ...form, novo_prazo: e.target.value })} /></div>
-              </div>
-              <div><Label>Comentários sobre implementação</Label><Textarea value={form.comentarios_implementacao} onChange={(e) => setForm({ ...form, comentarios_implementacao: e.target.value })} rows={2} /></div>
               </div>
               </div>
             </TabsContent>
@@ -454,8 +446,20 @@ function NCsPage() {
                 <span className="text-white font-bold text-[9px] tracking-widest [writing-mode:vertical-rl] rotate-180">EMITENTE / RECEPTOR / SGI</span>
               </div>
               <div className="flex-1 space-y-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>As ações foram implementadas?</Label>
+                  <Select value={form.acoes_implementadas == null ? "" : form.acoes_implementadas ? "S" : "N"} onValueChange={(v) => setForm({ ...form, acoes_implementadas: v === "" ? null : v === "S" })}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent><SelectItem value="S">Sim</SelectItem><SelectItem value="N">Não</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Data implementação</Label><Input placeholder="dd/mm/aaaa ou texto" value={form.data_implementacao} onChange={(e) => setForm({ ...form, data_implementacao: e.target.value })} /></div>
+                <div><Label>Novo prazo (se houver)</Label><Input placeholder="dd/mm/aaaa ou texto" value={form.novo_prazo} onChange={(e) => setForm({ ...form, novo_prazo: e.target.value })} /></div>
+              </div>
+              <div><Label>Comentários sobre implementação</Label><Textarea value={form.comentarios_implementacao} onChange={(e) => setForm({ ...form, comentarios_implementacao: e.target.value })} rows={2} /></div>
+
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>7 — Prazo para verificação da eficácia</Label><Input type="date" value={form.prazo_verificacao_eficacia} onChange={(e) => setForm({ ...form, prazo_verificacao_eficacia: e.target.value })} /></div>
+                <div><Label>7 — Prazo para verificação da eficácia</Label><Input placeholder="dd/mm/aaaa ou texto" value={form.prazo_verificacao_eficacia} onChange={(e) => setForm({ ...form, prazo_verificacao_eficacia: e.target.value })} /></div>
                 <div><Label>A ação corretiva foi eficaz?</Label>
                   <Select value={form.eficaz == null ? "" : form.eficaz ? "S" : "N"} onValueChange={(v) => setForm({ ...form, eficaz: v === "" ? null : v === "S" })}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
@@ -464,10 +468,6 @@ function NCsPage() {
                 </div>
               </div>
               <div><Label>Comentários da verificação</Label><Textarea value={form.comentarios_eficacia} onChange={(e) => setForm({ ...form, comentarios_eficacia: e.target.value })} rows={3} /></div>
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t">
-                <div><Label>Data de fechamento</Label><Input type="date" value={form.data_fechamento} onChange={(e) => setForm({ ...form, data_fechamento: e.target.value })} /></div>
-                <div><Label>Responsável pelo fechamento</Label><Input value={form.responsavel_fechamento} onChange={(e) => setForm({ ...form, responsavel_fechamento: e.target.value })} /></div>
-              </div>
               <div><Label>Status final</Label>
                 <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -479,6 +479,10 @@ function NCsPage() {
                     <SelectItem value="CANCELADA">Cancelada</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                <div><Label>Data de fechamento</Label><Input type="date" value={form.data_fechamento} onChange={(e) => setForm({ ...form, data_fechamento: e.target.value })} /></div>
+                <div><Label>Responsável pelo fechamento</Label><Input value={form.responsavel_fechamento} onChange={(e) => setForm({ ...form, responsavel_fechamento: e.target.value })} /></div>
               </div>
               </div>
               </div>
