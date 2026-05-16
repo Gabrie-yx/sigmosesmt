@@ -273,6 +273,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const [tab, setTab] = useState<"p1" | "p2" | "p3" | "p4" | "p5">("p1");
   const [pteSheetOpen, setPteSheetOpen] = useState(false);
   const [pteSheetRiscoSugerido, setPteSheetRiscoSugerido] = useState<string | null>(null);
+  const currentAprId = apr.id ?? aprId ?? null;
 
   // catálogos
   const { data: cascos = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["cascos-light"], queryFn: async () => (await supabase.from("cascos").select("id,numero,nome,status").eq("status", "ATIVO").order("numero")).data ?? [] });
@@ -280,18 +281,18 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const { data: employees = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["employees-light-apr"], queryFn: async () => (await supabase.from("employees").select("id,nome,cpf,company_id,role_id,status").eq("status", "ATIVO").order("nome")).data ?? [] });
   const { data: roles = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["roles-light"], queryFn: async () => (await supabase.from("roles").select("id,name").order("name")).data ?? [] });
   const { data: catRiscos = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["catalogo_riscos_form"], queryFn: async () => (await supabase.from("catalogo_riscos").select("*").eq("ativo", true).order("nome")).data ?? [] });
-  const { data: ptes = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["ptes-light"], queryFn: async () => (await supabase.from("ptes").select("id,numero,data_emissao,risco").order("data_emissao", { ascending: false }).limit(50)).data ?? [] });
+  const { data: ptes = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["ptes-light"], queryFn: async () => (await supabase.from("ptes").select("id,numero,data_emissao,risco,status").order("data_emissao", { ascending: false }).limit(50)).data ?? [] });
   // PTEs JÁ vinculadas a esta APR (1 APR ↔ N PTEs, uma por categoria detectada)
   const { data: linkedPtes = EMPTY_QUERY_LIST } = useQuery({
-    queryKey: ["ptes-linked-apr", aprId],
-    enabled: !!aprId,
+    queryKey: ["ptes-linked-apr", currentAprId],
+    enabled: !!currentAprId,
     staleTime: 0,
     refetchOnMount: "always",
     queryFn: async () =>
       (await supabase
         .from("ptes")
         .select("id,numero,data_emissao,risco,status")
-        .eq("apr_id", aprId!)
+        .eq("apr_id", currentAprId!)
         .order("data_emissao", { ascending: false })
       ).data ?? [],
   });
@@ -313,8 +314,10 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   /** Mescla a PTE legada (apr.pte_id) caso ela não esteja na lista de linked. */
   const todasPtesVinculadas = useMemo(() => {
     const map = new Map<string, any>();
-    (linkedPtes as any[]).forEach((p) => map.set(p.id, p));
-    if (apr.pte_id && pte && !map.has(apr.pte_id)) map.set(apr.pte_id, pte);
+    (linkedPtes as any[])
+      .filter((p) => p.status !== "CANCELADA" && p.status !== "ENCERRADA")
+      .forEach((p) => map.set(p.id, p));
+    if (apr.pte_id && pte && pte.status !== "CANCELADA" && pte.status !== "ENCERRADA" && !map.has(apr.pte_id)) map.set(apr.pte_id, pte);
     return Array.from(map.values());
   }, [linkedPtes, apr.pte_id, pte]);
   /** Para cada categoria detectada → PTE que a cobre (match por ptes.risco === riscoLabel) */
@@ -1012,7 +1015,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
       <PteLookupSheet
         open={pteSheetOpen}
         onOpenChange={setPteSheetOpen}
-        aprId={apr.id ?? null}
+        aprId={currentAprId}
         aprNumero={apr.numero ?? null}
         aprLocal={apr.local ?? null}
         empresaId={apr.empresa_id ?? null}
@@ -1025,7 +1028,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         onPick={(pteId) => {
           setApr((a) => ({ ...a, pte_id: pteId, exige_pte: true }));
           qc.invalidateQueries({ queryKey: ["ptes-light"] });
-          qc.invalidateQueries({ queryKey: ["ptes-linked-apr", aprId] });
+          qc.invalidateQueries({ queryKey: ["ptes-linked-apr", currentAprId] });
         }}
       />
     </div>
