@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
@@ -21,8 +21,9 @@ import {
 import {
   Search, Download, Plus, History,
   Trash2, ExternalLink, AlertTriangle, Pencil, X, Upload, ImageIcon, Copy,
-  ArrowDownToLine,
+  ArrowDownToLine, ShoppingCart, CheckSquare,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import protectiveClothingIcon from "@/assets/protective-clothing.png";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
@@ -56,7 +57,11 @@ export const Route = createFileRoute("/app/estoque/sesmt")({
 function EstoqueSesmtPage() {
   const qc = useQueryClient();
   const { isAdmin, isEditor } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [cart, setCart] = useState<Set<string>>(new Set());
+  const [gerandoReq, setGerandoReq] = useState(false);
+  const CART_MAX = 15;
 
   const { data: items = [] } = useQuery({
     queryKey: ["estoque_epi"],
@@ -153,6 +158,109 @@ function EstoqueSesmtPage() {
     });
     return { zerados, criticos };
   }, [items]);
+
+  const reposicaoItems = useMemo(
+    () => items.filter((i) => {
+      const qtd = i.quantidade_atual ?? 0;
+      const min = i.estoque_minimo ?? 0;
+      return qtd === 0 || (min > 0 && qtd <= min);
+    }),
+    [items],
+  );
+
+  const toggleCart = (id: string) => {
+    setCart((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else {
+        if (next.size >= CART_MAX) {
+          toast.error(`Máximo de ${CART_MAX} itens por requisição`);
+          return prev;
+        }
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const selecionarTodosReposicao = () => {
+    const ids = reposicaoItems.slice(0, CART_MAX).map((i) => i.id);
+    setCart(new Set(ids));
+    if (reposicaoItems.length > CART_MAX) {
+      toast.info(`Selecionados os primeiros ${CART_MAX} de ${reposicaoItems.length} itens.`);
+    }
+  };
+
+  async function gerarRequisicao() {
+    if (cart.size === 0) return;
+    setGerandoReq(true);
+    try {
+      // 1) Número automático: NNN/MM/AAAA
+      const now = new Date();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const yyyy = String(now.getFullYear());
+      const start = `${yyyy}-${mm}-01`;
+      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const end = endDate.toISOString().slice(0, 10);
+      const { count } = await supabase
+        .from("purchase_requisitions")
+        .select("id", { count: "exact", head: true })
+        .gte("data_requisicao", start)
+        .lt("data_requisicao", end);
+      const seq = String((count ?? 0) + 1).padStart(3, "0");
+      const numero = `${seq}/${mm}/${yyyy}`;
+
+      // 2) Cria a requisição (PENDENTE)
+      const cartItems = items.filter((i) => cart.has(i.id));
+      const { data: created, error: e1 } = await supabase
+        .from("purchase_requisitions")
+        .insert({
+          numero,
+          data_requisicao: now.toISOString().slice(0, 10),
+          classificacao: "MATERIAL",
+          solicitante: "SESMT",
+          setor: "SESMT",
+          status: "PENDENTE",
+          observacoes: `Requisição gerada automaticamente pelo Estoque SESMT — reposição de ${cartItems.length} item(ns).`,
+          codigo_formulario: "FOR-COMP: 03",
+          revisao: "01",
+          data_revisao: now.toISOString().slice(0, 10),
+          pagina: "01/01",
+        } as any)
+        .select("id")
+        .single();
+      if (e1) throw e1;
+
+      // 3) Insere os itens (qtd sugerida = min*2 - atual, mínimo 1)
+      const itensPayload = cartItems.map((i, idx) => {
+        const min = i.estoque_minimo ?? 0;
+        const atual = i.quantidade_atual ?? 0;
+        const sug = Math.max(min * 2 - atual, min > 0 ? min : 1, 1);
+        const ca = i.ca ? ` — CA ${i.ca}` : "";
+        return {
+          requisition_id: created!.id,
+          item_numero: idx + 1,
+          descricao: `${i.nome_material}${ca}`.trim(),
+          quantidade: sug,
+          unidade: "UN",
+          observacao: `Cód. ${i.codigo_material} · estoque atual: ${atual} · mín.: ${min}`,
+        };
+      });
+      const { error: e2 } = await supabase
+        .from("purchase_requisition_items")
+        .insert(itensPayload);
+      if (e2) throw e2;
+
+      toast.success(`Requisição ${numero} criada com ${cartItems.length} item(ns).`);
+      setCart(new Set());
+      qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
+      navigate({ to: "/app/sesmt/requisicoes" });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao gerar requisição");
+    } finally {
+      setGerandoReq(false);
+    }
+  }
 
   /* ---------- Mutations ---------- */
   const createMut = useMutation({
