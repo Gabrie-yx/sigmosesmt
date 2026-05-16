@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
@@ -21,8 +21,9 @@ import {
 import {
   Search, Download, Plus, History,
   Trash2, ExternalLink, AlertTriangle, Pencil, X, Upload, ImageIcon, Copy,
-  ArrowDownToLine,
+  ArrowDownToLine, ShoppingCart, CheckSquare,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import protectiveClothingIcon from "@/assets/protective-clothing.png";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
@@ -56,7 +57,11 @@ export const Route = createFileRoute("/app/estoque/sesmt")({
 function EstoqueSesmtPage() {
   const qc = useQueryClient();
   const { isAdmin, isEditor } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [cart, setCart] = useState<Set<string>>(new Set());
+  const [gerandoReq, setGerandoReq] = useState(false);
+  const CART_MAX = 15;
 
   const { data: items = [] } = useQuery({
     queryKey: ["estoque_epi"],
@@ -153,6 +158,109 @@ function EstoqueSesmtPage() {
     });
     return { zerados, criticos };
   }, [items]);
+
+  const reposicaoItems = useMemo(
+    () => items.filter((i) => {
+      const qtd = i.quantidade_atual ?? 0;
+      const min = i.estoque_minimo ?? 0;
+      return qtd === 0 || (min > 0 && qtd <= min);
+    }),
+    [items],
+  );
+
+  const toggleCart = (id: string) => {
+    setCart((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else {
+        if (next.size >= CART_MAX) {
+          toast.error(`Máximo de ${CART_MAX} itens por requisição`);
+          return prev;
+        }
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const selecionarTodosReposicao = () => {
+    const ids = reposicaoItems.slice(0, CART_MAX).map((i) => i.id);
+    setCart(new Set(ids));
+    if (reposicaoItems.length > CART_MAX) {
+      toast.info(`Selecionados os primeiros ${CART_MAX} de ${reposicaoItems.length} itens.`);
+    }
+  };
+
+  async function gerarRequisicao() {
+    if (cart.size === 0) return;
+    setGerandoReq(true);
+    try {
+      // 1) Número automático: NNN/MM/AAAA
+      const now = new Date();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const yyyy = String(now.getFullYear());
+      const start = `${yyyy}-${mm}-01`;
+      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const end = endDate.toISOString().slice(0, 10);
+      const { count } = await supabase
+        .from("purchase_requisitions")
+        .select("id", { count: "exact", head: true })
+        .gte("data_requisicao", start)
+        .lt("data_requisicao", end);
+      const seq = String((count ?? 0) + 1).padStart(3, "0");
+      const numero = `${seq}/${mm}/${yyyy}`;
+
+      // 2) Cria a requisição (PENDENTE)
+      const cartItems = items.filter((i) => cart.has(i.id));
+      const { data: created, error: e1 } = await supabase
+        .from("purchase_requisitions")
+        .insert({
+          numero,
+          data_requisicao: now.toISOString().slice(0, 10),
+          classificacao: "MATERIAL",
+          solicitante: "SESMT",
+          setor: "SESMT",
+          status: "PENDENTE",
+          observacoes: `Requisição gerada automaticamente pelo Estoque SESMT — reposição de ${cartItems.length} item(ns).`,
+          codigo_formulario: "FOR-COMP: 03",
+          revisao: "01",
+          data_revisao: now.toISOString().slice(0, 10),
+          pagina: "01/01",
+        } as any)
+        .select("id")
+        .single();
+      if (e1) throw e1;
+
+      // 3) Insere os itens (qtd sugerida = min*2 - atual, mínimo 1)
+      const itensPayload = cartItems.map((i, idx) => {
+        const min = i.estoque_minimo ?? 0;
+        const atual = i.quantidade_atual ?? 0;
+        const sug = Math.max(min * 2 - atual, min > 0 ? min : 1, 1);
+        const ca = i.ca ? ` — CA ${i.ca}` : "";
+        return {
+          requisition_id: created!.id,
+          item_numero: idx + 1,
+          descricao: `${i.nome_material}${ca}`.trim(),
+          quantidade: sug,
+          unidade: "UN",
+          observacao: `Cód. ${i.codigo_material} · estoque atual: ${atual} · mín.: ${min}`,
+        };
+      });
+      const { error: e2 } = await supabase
+        .from("purchase_requisition_items")
+        .insert(itensPayload);
+      if (e2) throw e2;
+
+      toast.success(`Requisição ${numero} criada com ${cartItems.length} item(ns).`);
+      setCart(new Set());
+      qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
+      navigate({ to: "/app/sesmt/requisicoes" });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao gerar requisição");
+    } finally {
+      setGerandoReq(false);
+    }
+  }
 
   /* ---------- Mutations ---------- */
   const createMut = useMutation({
@@ -275,6 +383,30 @@ function EstoqueSesmtPage() {
         <MovStatCard entradas={totals.entradas} saidas={totals.saidas} />
       </div>
 
+      {/* Banner de reposição */}
+      {isEditor && reposicaoItems.length > 0 && (
+        <div className="rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 px-4 py-3 flex flex-wrap items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-700 shrink-0" />
+          <div className="flex-1 min-w-[200px]">
+            <div className="text-sm font-bold text-amber-900">
+              {reposicaoItems.length} {reposicaoItems.length === 1 ? "item precisa" : "itens precisam"} de reposição
+            </div>
+            <div className="text-xs text-amber-800/80">
+              {stockAlerts.zerados} zerado(s) · {stockAlerts.criticos} abaixo do mínimo. Marque os que deseja comprar e gere a requisição em um clique.
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-amber-500 text-amber-900 hover:bg-amber-100"
+            onClick={selecionarTodosReposicao}
+          >
+            <CheckSquare className="h-4 w-4 mr-1.5" />
+            Selecionar até {CART_MAX}
+          </Button>
+        </div>
+      )}
+
       {/* Search */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[260px] max-w-md">
@@ -301,6 +433,7 @@ function EstoqueSesmtPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50">
+              {isEditor && <TableHead className="w-8"></TableHead>}
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Foto</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Produto</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">CA</TableHead>
@@ -317,13 +450,15 @@ function EstoqueSesmtPage() {
           <TableBody>
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={isEditor ? 10 : 9} className="text-center text-sm text-muted-foreground py-10">
+                <TableCell colSpan={isEditor ? 12 : 10} className="text-center text-sm text-muted-foreground py-10">
                   Nenhum item cadastrado. Clique em "Novo produto" para começar.
                 </TableCell>
               </TableRow>
             )}
             {filtered.map((i) => {
               const low = i.quantidade_atual <= (i.estoque_minimo ?? 0);
+              const needsRepor = (i.quantidade_atual ?? 0) === 0 || ((i.estoque_minimo ?? 0) > 0 && low);
+              const inCart = cart.has(i.id);
               const caDays = i.ca_validade
                 ? Math.floor((new Date(i.ca_validade).getTime() - Date.now()) / 86400000)
                 : null;
@@ -348,9 +483,22 @@ function EstoqueSesmtPage() {
                       ? "bg-rose-50 hover:bg-rose-100"
                       : caSoon
                       ? "bg-slate-200/70 hover:bg-slate-200"
+                      : inCart
+                      ? "bg-amber-50/70 hover:bg-amber-100/70"
                       : "hover:bg-slate-50/50"
                   }
                 >
+                  {isEditor && (
+                    <TableCell className="text-center">
+                      {needsRepor ? (
+                        <Checkbox
+                          checked={inCart}
+                          onCheckedChange={() => toggleCart(i.id)}
+                          aria-label="Adicionar à requisição"
+                        />
+                      ) : null}
+                    </TableCell>
+                  )}
                   <TableCell>
                     {i.imagem_url ? (
                       <img src={i.imagem_url} alt="" className="h-10 w-10 rounded object-cover border border-slate-200" />
@@ -441,6 +589,56 @@ function EstoqueSesmtPage() {
         onSubmit={(rows: any[]) => createMut.mutate(rows, { onSuccess: () => setShowNew(false) })}
         pending={createMut.isPending}
       />
+
+      {/* Barra flutuante do carrinho de requisição */}
+      {isEditor && cart.size > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[min(680px,calc(100vw-2rem))]">
+          <div className="rounded-2xl border border-amber-300 bg-white shadow-2xl shadow-amber-900/20 px-4 py-3 flex items-center gap-3">
+            <div className="relative shrink-0">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                <ShoppingCart className="h-5 w-5 text-white" />
+              </div>
+              <span className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-black flex items-center justify-center">
+                {cart.size}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-black text-slate-800 uppercase tracking-wide">
+                Requisição de Compra
+              </div>
+              <div className="text-xs text-slate-500">
+                {cart.size} de {CART_MAX} itens selecionados — quantidades serão sugeridas automaticamente
+              </div>
+              <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-500 to-orange-600 transition-all"
+                  style={{ width: `${(cart.size / CART_MAX) * 100}%` }}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-slate-500"
+                onClick={() => setCart(new Set())}
+                disabled={gerandoReq}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold shadow-md hover:from-amber-600 hover:to-orange-700"
+                onClick={gerarRequisicao}
+                disabled={gerandoReq}
+              >
+                <ShoppingCart className="h-4 w-4 mr-1.5" />
+                {gerandoReq ? "Gerando..." : "Gerar Requisição"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit product */}
       <EditItemDialog
