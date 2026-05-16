@@ -1111,6 +1111,36 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           qc.invalidateQueries({ queryKey: ["ptes-linked-apr", currentAprId] });
         }}
       />
+
+      {/* Rodapé do wizard */}
+      <div className="flex items-center justify-between gap-2 p-3 bg-white border-t border-slate-300 shrink-0">
+        <Button type="button" variant="outline" onClick={goBack} disabled={currentStepIdx === 0}>
+          <ChevronLeft className="h-4 w-4 mr-1" /> Voltar
+        </Button>
+        <div className="text-[11px] text-slate-500">
+          {STEPS[currentStepIdx].label}
+        </div>
+        {currentStepIdx < STEPS.length - 1 ? (
+          <Button type="button" onClick={goNext} className="bg-[#0f172a] hover:bg-[#7B1E2B] text-white font-black uppercase tracking-widest text-[11px]">
+            Avançar <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={() => {
+              const err = validateStep(currentStepIdx);
+              if (err) { setStepError(err); toast.error(err); return; }
+              setStepError(null);
+              save.mutate(true);
+            }}
+            disabled={save.isPending}
+            style={{ background: APR_RED }}
+            className="text-white font-black uppercase tracking-widest text-[11px]"
+          >
+            <Check className="h-4 w-4 mr-1" /> Emitir APR
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
