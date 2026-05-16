@@ -1144,6 +1144,239 @@ export type Database = {
           },
         ]
       }
+      incidentes: {
+        Row: {
+          acoes_corretivas: string | null
+          cat_emitida: boolean | null
+          cat_numero: string | null
+          causa_raiz: string | null
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          data_investigacao: string | null
+          data_ocorrencia: string
+          descricao: string
+          envolvidos: Json | null
+          gravidade: string
+          id: string
+          investigador_id: string | null
+          local: string | null
+          numero: string | null
+          status: string
+          testemunhas: Json | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          acoes_corretivas?: string | null
+          cat_emitida?: boolean | null
+          cat_numero?: string | null
+          causa_raiz?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_investigacao?: string | null
+          data_ocorrencia?: string
+          descricao: string
+          envolvidos?: Json | null
+          gravidade?: string
+          id?: string
+          investigador_id?: string | null
+          local?: string | null
+          numero?: string | null
+          status?: string
+          testemunhas?: Json | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          acoes_corretivas?: string | null
+          cat_emitida?: boolean | null
+          cat_numero?: string | null
+          causa_raiz?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_investigacao?: string | null
+          data_ocorrencia?: string
+          descricao?: string
+          envolvidos?: Json | null
+          gravidade?: string
+          id?: string
+          investigador_id?: string | null
+          local?: string | null
+          numero?: string | null
+          status?: string
+          testemunhas?: Json | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidentes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nao_conformidades: {
+        Row: {
+          acao_imediata: string | null
+          causa_raiz: string | null
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          data_conclusao: string | null
+          data_identificacao: string
+          data_limite: string | null
+          descricao: string | null
+          id: string
+          numero: string | null
+          origem: string | null
+          responsavel_id: string | null
+          severidade: string
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          acao_imediata?: string | null
+          causa_raiz?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_identificacao?: string
+          data_limite?: string | null
+          descricao?: string | null
+          id?: string
+          numero?: string | null
+          origem?: string | null
+          responsavel_id?: string | null
+          severidade?: string
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          acao_imediata?: string | null
+          causa_raiz?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_identificacao?: string
+          data_limite?: string | null
+          descricao?: string | null
+          id?: string
+          numero?: string | null
+          origem?: string | null
+          responsavel_id?: string | null
+          severidade?: string
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nao_conformidades_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plano_acoes: {
+        Row: {
+          como: string | null
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          custo: number | null
+          data_conclusao: string | null
+          descricao: string | null
+          evidencias: Json | null
+          id: string
+          incidente_id: string | null
+          nc_id: string | null
+          observacoes: string | null
+          onde: string | null
+          prioridade: string
+          quando: string | null
+          responsavel_id: string | null
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          como?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          custo?: number | null
+          data_conclusao?: string | null
+          descricao?: string | null
+          evidencias?: Json | null
+          id?: string
+          incidente_id?: string | null
+          nc_id?: string | null
+          observacoes?: string | null
+          onde?: string | null
+          prioridade?: string
+          quando?: string | null
+          responsavel_id?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          como?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          custo?: number | null
+          data_conclusao?: string | null
+          descricao?: string | null
+          evidencias?: Json | null
+          id?: string
+          incidente_id?: string | null
+          nc_id?: string | null
+          observacoes?: string | null
+          onde?: string | null
+          prioridade?: string
+          quando?: string | null
+          responsavel_id?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plano_acoes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_acoes_incidente_id_fkey"
+            columns: ["incidente_id"]
+            isOneToOne: false
+            referencedRelation: "incidentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_acoes_nc_id_fkey"
+            columns: ["nc_id"]
+            isOneToOne: false
+            referencedRelation: "nao_conformidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       procedimento_cientes: {
         Row: {
           created_at: string

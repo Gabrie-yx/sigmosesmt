@@ -21,13 +21,16 @@ import { Route as AppTrainingsRouteImport } from './routes/app.trainings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppPtesRouteImport } from './routes/app.ptes'
 import { Route as AppPainelRouteImport } from './routes/app.painel'
+import { Route as AppNcsRouteImport } from './routes/app.ncs'
 import { Route as AppMatrizTreinamentoRouteImport } from './routes/app.matriz-treinamento'
+import { Route as AppIncidentesRouteImport } from './routes/app.incidentes'
 import { Route as AppHojeRouteImport } from './routes/app.hoje'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppCascosRouteImport } from './routes/app.cascos'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppAprsRouteImport } from './routes/app.aprs'
+import { Route as AppAcoesRouteImport } from './routes/app.acoes'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
 import { Route as AppSesmtTerceirosRouteImport } from './routes/app.sesmt.terceiros'
@@ -107,9 +110,19 @@ const AppPainelRoute = AppPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AppRoute,
 } as any)
+const AppNcsRoute = AppNcsRouteImport.update({
+  id: '/ncs',
+  path: '/ncs',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMatrizTreinamentoRoute = AppMatrizTreinamentoRouteImport.update({
   id: '/matriz-treinamento',
   path: '/matriz-treinamento',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIncidentesRoute = AppIncidentesRouteImport.update({
+  id: '/incidentes',
+  path: '/incidentes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppHojeRoute = AppHojeRouteImport.update({
@@ -140,6 +153,11 @@ const AppAuditRoute = AppAuditRouteImport.update({
 const AppAprsRoute = AppAprsRouteImport.update({
   id: '/aprs',
   path: '/aprs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAcoesRoute = AppAcoesRouteImport.update({
+  id: '/acoes',
+  path: '/acoes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEmployeesIndexRoute = AppEmployeesIndexRouteImport.update({
@@ -241,13 +259,16 @@ export interface FileRoutesByFullPath {
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
+  '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/hoje': typeof AppHojeRoute
+  '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
+  '/app/ncs': typeof AppNcsRoute
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -279,12 +300,15 @@ export interface FileRoutesByTo {
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
+  '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/hoje': typeof AppHojeRoute
+  '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
+  '/app/ncs': typeof AppNcsRoute
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -318,13 +342,16 @@ export interface FileRoutesById {
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
+  '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/hoje': typeof AppHojeRoute
+  '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
+  '/app/ncs': typeof AppNcsRoute
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -359,13 +386,16 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/reset-password'
     | '/termos'
+    | '/app/acoes'
     | '/app/aprs'
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
     | '/app/employees'
     | '/app/hoje'
+    | '/app/incidentes'
     | '/app/matriz-treinamento'
+    | '/app/ncs'
     | '/app/painel'
     | '/app/ptes'
     | '/app/roles'
@@ -397,12 +427,15 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/reset-password'
     | '/termos'
+    | '/app/acoes'
     | '/app/aprs'
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
     | '/app/hoje'
+    | '/app/incidentes'
     | '/app/matriz-treinamento'
+    | '/app/ncs'
     | '/app/painel'
     | '/app/ptes'
     | '/app/roles'
@@ -435,13 +468,16 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/reset-password'
     | '/termos'
+    | '/app/acoes'
     | '/app/aprs'
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
     | '/app/employees'
     | '/app/hoje'
+    | '/app/incidentes'
     | '/app/matriz-treinamento'
+    | '/app/ncs'
     | '/app/painel'
     | '/app/ptes'
     | '/app/roles'
@@ -563,11 +599,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPainelRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/ncs': {
+      id: '/app/ncs'
+      path: '/ncs'
+      fullPath: '/app/ncs'
+      preLoaderRoute: typeof AppNcsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/matriz-treinamento': {
       id: '/app/matriz-treinamento'
       path: '/matriz-treinamento'
       fullPath: '/app/matriz-treinamento'
       preLoaderRoute: typeof AppMatrizTreinamentoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/incidentes': {
+      id: '/app/incidentes'
+      path: '/incidentes'
+      fullPath: '/app/incidentes'
+      preLoaderRoute: typeof AppIncidentesRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/hoje': {
@@ -610,6 +660,13 @@ declare module '@tanstack/react-router' {
       path: '/aprs'
       fullPath: '/app/aprs'
       preLoaderRoute: typeof AppAprsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/acoes': {
+      id: '/app/acoes'
+      path: '/acoes'
+      fullPath: '/app/acoes'
+      preLoaderRoute: typeof AppAcoesRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/employees/': {
@@ -756,13 +813,16 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAcoesRoute: typeof AppAcoesRoute
   AppAprsRoute: typeof AppAprsRoute
   AppAuditRoute: typeof AppAuditRoute
   AppCascosRoute: typeof AppCascosRoute
   AppCompaniesRoute: typeof AppCompaniesRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppHojeRoute: typeof AppHojeRoute
+  AppIncidentesRoute: typeof AppIncidentesRoute
   AppMatrizTreinamentoRoute: typeof AppMatrizTreinamentoRoute
+  AppNcsRoute: typeof AppNcsRoute
   AppPainelRoute: typeof AppPainelRoute
   AppPtesRoute: typeof AppPtesRoute
   AppRolesRoute: typeof AppRolesRoute
@@ -788,13 +848,16 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAcoesRoute: AppAcoesRoute,
   AppAprsRoute: AppAprsRoute,
   AppAuditRoute: AppAuditRoute,
   AppCascosRoute: AppCascosRoute,
   AppCompaniesRoute: AppCompaniesRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppHojeRoute: AppHojeRoute,
+  AppIncidentesRoute: AppIncidentesRoute,
   AppMatrizTreinamentoRoute: AppMatrizTreinamentoRoute,
+  AppNcsRoute: AppNcsRoute,
   AppPainelRoute: AppPainelRoute,
   AppPtesRoute: AppPtesRoute,
   AppRolesRoute: AppRolesRoute,

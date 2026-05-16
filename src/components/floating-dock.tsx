@@ -80,6 +80,9 @@ const ITEMS: DockItem[] = [
     icon: Wrench,
     hint: "ACT · correções e auditoria",
     children: [
+      { label: "Não Conformidades", path: "/app/ncs" },
+      { label: "Incidentes / Investigação", path: "/app/incidentes" },
+      { label: "Plano de Ações (5W2H)", path: "/app/acoes" },
       { label: "Auditoria", path: "/app/audit" },
     ],
   },
