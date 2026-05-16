@@ -139,7 +139,7 @@ export function calculateSafetyStatus(
   if (role.req_integra) checkLegacy(emp.data_integracao, "Integração");
 
   const empNrs = emp.nrs || {};
-  role.req_nrs.forEach((nr) => {
+  (role.req_nrs ?? []).forEach((nr) => {
     const date = empNrs[nr];
     if (!date) {
       isRed = true;
