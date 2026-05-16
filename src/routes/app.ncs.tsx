@@ -441,9 +441,9 @@ function NCsPage() {
 
             {/* ============ ABA RECEPTOR ============ */}
             <TabsContent value="receptor" className="pt-4">
-              <div className="rounded-xl border-2 border-amber-200 bg-gradient-to-br from-amber-50/70 via-white to-orange-50/50 p-5 shadow-md space-y-4">
-                <div className="flex items-center gap-2 pb-3 mb-1 -mx-5 -mt-5 px-5 pt-4 rounded-t-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold tracking-wide text-amber-700 shadow">
+              <div className="rounded-xl border-2 border-rose-200 bg-gradient-to-br from-rose-50/70 via-white to-rose-50/50 p-5 shadow-md space-y-4">
+                <div className="flex items-center gap-2 pb-3 mb-1 -mx-5 -mt-5 px-5 pt-4 rounded-t-xl bg-gradient-to-r from-[#7B1E2B] to-[#A03344] text-white">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold tracking-wide text-[#7B1E2B] shadow">
                     <Wrench className="h-3 w-3" /> RECEPTOR
                   </span>
                   <span className="text-xs font-medium text-white/95">Abrangência, ações imediatas e análise da causa raiz</span>
@@ -489,9 +489,9 @@ function NCsPage() {
 
             {/* ============ ABA SGI ============ */}
             <TabsContent value="sgi" className="pt-4">
-              <div className="rounded-xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/50 p-5 shadow-md space-y-3">
-                <div className="flex items-center gap-2 pb-3 mb-1 -mx-5 -mt-5 px-5 pt-4 rounded-t-xl bg-gradient-to-r from-emerald-600 to-teal-500 text-white">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold tracking-wide text-emerald-700 shadow">
+              <div className="rounded-xl border-2 border-rose-200 bg-gradient-to-br from-rose-50/70 via-white to-rose-50/50 p-5 shadow-md space-y-3">
+                <div className="flex items-center gap-2 pb-3 mb-1 -mx-5 -mt-5 px-5 pt-4 rounded-t-xl bg-gradient-to-r from-[#7B1E2B] to-[#A03344] text-white">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold tracking-wide text-[#7B1E2B] shadow">
                     <ClipboardCheck className="h-3 w-3" /> EMITENTE / RECEPTOR / SGI
                   </span>
                   <span className="text-xs font-medium text-white/95">Ações corretivas, verificação da eficácia e fechamento</span>
