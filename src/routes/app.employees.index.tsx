@@ -97,9 +97,9 @@ function EmployeesPage() {
     <div className="p-6 md:p-8 animate-fadeIn">
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div>
-          <h2 className="heading-display text-3xl md:text-4xl text-brand">Colaboradores</h2>
+          <h2 className="heading-display text-3xl md:text-4xl text-brand">Funcionários</h2>
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">
-            Cadastro de colaboradores
+            Cadastro de funcionários
           </p>
         </div>
         {isEditor && (
