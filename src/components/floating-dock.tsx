@@ -12,6 +12,7 @@ import {
   X,
   ExternalLink,
   Maximize2,
+  ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ type DockItem = {
   label: string;
   path: string;
   icon: React.ComponentType<{ className?: string }>;
+  children?: { label: string; path: string }[];
 };
 
 const ITEMS: DockItem[] = [
@@ -31,13 +33,24 @@ const ITEMS: DockItem[] = [
   { label: "POPs", path: "/app/sesmt/procedimentos", icon: BookOpen },
   { label: "Matriz Treinamento", path: "/app/matriz-treinamento", icon: GraduationCap },
   { label: "Estoque", path: "/app/estoque/epi", icon: Package },
-  { label: "Documentos", path: "/app/sesmt/docs", icon: FolderOpen },
+  {
+    label: "Documentos",
+    path: "/app/sesmt/docs",
+    icon: FolderOpen,
+    children: [
+      { label: "Documentos SESMT", path: "/app/sesmt/docs" },
+      { label: "Procedimentos / POPs", path: "/app/sesmt/procedimentos" },
+      { label: "Painel de Terceiros", path: "/app/sesmt/terceiros" },
+      { label: "Requisições de Compra", path: "/app/sesmt/requisicoes" },
+    ],
+  },
 ];
 
 export function FloatingDock() {
   const [dockOpen, setDockOpen] = useState(false);
   const [drawerPath, setDrawerPath] = useState<string | null>(null);
   const [drawerLabel, setDrawerLabel] = useState<string>("");
+  const [submenuOpen, setSubmenuOpen] = useState<string | null>(null);
   const closeTimer = useRef<number | null>(null);
   const navigate = useNavigate();
 
@@ -69,16 +82,22 @@ export function FloatingDock() {
       if (Number.isInteger(n) && n >= 1 && n <= ITEMS.length) {
         e.preventDefault();
         const item = ITEMS[n - 1];
-        openDrawer(item);
+        if (item.children?.length) {
+          setSubmenuOpen(item.path);
+          setDockOpen(true);
+        } else {
+          openDrawer(item);
+        }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [drawerPath]);
 
-  function openDrawer(item: DockItem) {
+  function openDrawer(item: { label: string; path: string }) {
     setDrawerPath(item.path);
     setDrawerLabel(item.label);
+    setSubmenuOpen(null);
     setDockOpen(false);
   }
 
@@ -105,31 +124,61 @@ export function FloatingDock() {
           }
           setDockOpen(true);
         }}
-        onMouseLeave={scheduleClose}
+        onMouseLeave={() => {
+          scheduleClose();
+          setSubmenuOpen(null);
+        }}
         className={cn(
           "fixed left-2 top-1/2 -translate-y-1/2 z-[70] transition-all duration-200",
           dockOpen ? "translate-x-0 opacity-100" : "-translate-x-[120%] opacity-0 pointer-events-none",
         )}
       >
-        <div className="flex flex-col gap-1 rounded-2xl border bg-white/95 backdrop-blur shadow-2xl p-2">
+        <div className="relative flex flex-col gap-1 rounded-2xl border bg-white/95 backdrop-blur shadow-2xl p-2">
           <div className="text-[10px] uppercase font-bold text-slate-400 text-center px-1 pb-1 border-b">
             Atalhos
           </div>
           {ITEMS.map((it, idx) => {
             const Icon = it.icon;
+            const hasChildren = !!it.children?.length;
+            const isSubOpen = submenuOpen === it.path;
             return (
-              <button
+              <div
                 key={it.path}
-                onClick={() => openDrawer(it)}
-                title={`${it.label} (Alt+${idx + 1})`}
-                className="group relative flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-red-50 text-slate-700 hover:text-red-700 transition-colors"
+                className="relative"
+                onMouseEnter={() => hasChildren && setSubmenuOpen(it.path)}
               >
-                <Icon className="h-5 w-5 shrink-0" />
-                <span className="text-xs font-semibold whitespace-nowrap pr-2">{it.label}</span>
-                <kbd className="ml-auto text-[9px] font-mono bg-slate-100 group-hover:bg-white border rounded px-1">
-                  ⌥{idx + 1}
-                </kbd>
-              </button>
+                <button
+                  onClick={() => (hasChildren ? setSubmenuOpen(isSubOpen ? null : it.path) : openDrawer(it))}
+                  title={`${it.label} (Alt+${idx + 1})`}
+                  className={cn(
+                    "group relative flex w-full items-center gap-2 px-2 py-2 rounded-lg hover:bg-red-50 text-slate-700 hover:text-red-700 transition-colors",
+                    isSubOpen && "bg-red-50 text-red-700",
+                  )}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  <span className="text-xs font-semibold whitespace-nowrap pr-2">{it.label}</span>
+                  {hasChildren ? (
+                    <ChevronRight className="ml-auto h-3.5 w-3.5 text-slate-400" />
+                  ) : (
+                    <kbd className="ml-auto text-[9px] font-mono bg-slate-100 group-hover:bg-white border rounded px-1">
+                      ⌥{idx + 1}
+                    </kbd>
+                  )}
+                </button>
+                {hasChildren && isSubOpen && (
+                  <div className="absolute left-full top-0 ml-2 min-w-[220px] rounded-2xl border bg-white/95 backdrop-blur shadow-2xl p-2 z-[71] animate-in fade-in slide-in-from-left-2 duration-150">
+                    {it.children!.map((c) => (
+                      <button
+                        key={c.path}
+                        onClick={() => openDrawer(c)}
+                        className="flex w-full items-center gap-2 px-2 py-2 rounded-lg hover:bg-red-50 text-slate-700 hover:text-red-700 transition-colors text-xs font-semibold whitespace-nowrap"
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
