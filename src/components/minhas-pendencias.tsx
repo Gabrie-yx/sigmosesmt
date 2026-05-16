@@ -235,8 +235,12 @@ export function MinhasPendencias() {
     return () => window.removeEventListener("sigmo:snooze-changed", h);
   }, []);
 
-  // Ordenação automática: severidade > snoozed > ok
-  const sorted = [...items].sort((a, b) => {
+  // Esconde "Tudo certo" — só faz sentido mostrar pendências reais e "Sem dados"
+  // (que sinalizam rotinas ainda não configuradas).
+  const visible = items.filter((i) => !(i.ok && !i.noData));
+
+  // Ordenação automática: severidade > snoozed > sem dados
+  const sorted = [...visible].sort((a, b) => {
     const aSnoozed = isSnoozed(a.key) && !a.ok ? 1 : 0;
     const bSnoozed = isSnoozed(b.key) && !b.ok ? 1 : 0;
     const aRank = a.ok ? 99 : severityRank(a.severity) + aSnoozed * 10;
@@ -267,9 +271,21 @@ export function MinhasPendencias() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {sorted.map((item) => <PendenciaCard key={item.key} item={item} />)}
-      </div>
+      {sorted.length === 0 ? (
+        <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-8 text-center shadow-sm">
+          <div className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-emerald-600 text-white mb-3">
+            <CheckCircle2 className="h-7 w-7" />
+          </div>
+          <div className="text-lg font-black text-emerald-900">Tudo em dia</div>
+          <div className="text-sm text-emerald-700 mt-1">
+            Nenhuma pendência detectada. Bom trabalho!
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {sorted.map((item) => <PendenciaCard key={item.key} item={item} />)}
+        </div>
+      )}
     </section>
   );
 }
