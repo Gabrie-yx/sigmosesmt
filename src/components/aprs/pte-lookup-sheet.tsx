@@ -95,14 +95,17 @@ export function PteLookupSheet({
         if (!ok) throw new Error("Vínculo cancelado");
       }
       if (aprId) {
-        await supabase.from("ptes").update({ apr_id: aprId }).eq("id", pteId);
+        const { error } = await supabase.from("ptes").update({ apr_id: aprId }).eq("id", pteId);
+        if (error) throw error;
       }
       return pteId;
     },
     onSuccess: (pteId) => {
       qc.invalidateQueries({ queryKey: ["ptes"] });
       qc.invalidateQueries({ queryKey: ["ptes-light"] });
+      qc.invalidateQueries({ queryKey: ["ptes-lookup"] });
       qc.invalidateQueries({ queryKey: ["ptes-by-apr"] });
+      qc.invalidateQueries({ queryKey: ["ptes-linked-apr", aprId] });
       onPick(pteId);
       toast.success("PTE vinculada à APR");
       onOpenChange(false);
@@ -131,6 +134,7 @@ export function PteLookupSheet({
       qc.invalidateQueries({ queryKey: ["ptes-light"] });
       qc.invalidateQueries({ queryKey: ["ptes-lookup"] });
       qc.invalidateQueries({ queryKey: ["ptes-by-apr"] });
+      qc.invalidateQueries({ queryKey: ["ptes-linked-apr", aprId] });
       onPick(pteId);
       toast.success("PTE criada e vinculada");
       onOpenChange(false);
