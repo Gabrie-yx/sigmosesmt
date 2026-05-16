@@ -47,10 +47,10 @@ const C_BLUE_NOTE: [number, number, number] = [37, 99, 235];
 // Modelo homologado em A4 retrato (FORCP-SGI-05).
 const PAGE_W = 210;
 const PAGE_H = 297;
-const SIDE_X = 14;
-const SIDE_W = 6;
+const SIDE_X = 5;
+const SIDE_W = 14;
 const CONTENT_X = SIDE_X + SIDE_W;
-const CONTENT_R = 200;
+const CONTENT_R = 205;
 const CONTENT_W = CONTENT_R - CONTENT_X;
 const HEADER_Y = 6;
 const HEADER_H = 18;
@@ -182,23 +182,30 @@ function drawSideBand(doc: jsPDF, yStart: number, yEnd: number, label: string) {
   doc.setLineWidth(0.25);
   doc.rect(SIDE_X, yStart, SIDE_W, yEnd - yStart, "FD");
   const span = yEnd - yStart;
-  const glyphs = Array.from(label.toUpperCase());
-  let fs = 7.4;
-  let lineHeight = fs * 0.36;
-  while (fs > 4.8 && glyphs.length * lineHeight > span - 6) {
-    fs -= 0.2;
-    lineHeight = fs * 0.36;
-  }
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(fs);
   doc.setTextColor(0, 0, 0);
 
-  const totalH = glyphs.length * lineHeight;
-  let textY = yStart + (span - totalH) / 2 + lineHeight * 0.78;
-  const textX = SIDE_X + SIDE_W / 2;
-  glyphs.forEach((glyph) => {
-    if (glyph !== " ") doc.text(glyph, textX, textY, { align: "center", baseline: "middle" });
+  // Texto horizontal: quebra por palavra para caber em SIDE_W
+  let fs = 8.2;
+  doc.setFontSize(fs);
+  const words = label.toUpperCase().split(/\s+/).filter(Boolean);
+  let lines = doc.splitTextToSize(words.join("\n"), SIDE_W - 1) as string[];
+  // Garante que cada palavra fique numa linha (sem quebrar palavras grandes)
+  lines = words.flatMap((w) => doc.splitTextToSize(w, SIDE_W - 1) as string[]);
+
+  let lineHeight = fs * 0.42;
+  while (fs > 5.5 && lines.length * lineHeight > span - 2) {
+    fs -= 0.3;
+    doc.setFontSize(fs);
+    lineHeight = fs * 0.42;
+  }
+
+  const totalH = lines.length * lineHeight;
+  const cx = SIDE_X + SIDE_W / 2;
+  let textY = yStart + (span - totalH) / 2 + lineHeight * 0.8;
+  lines.forEach((ln) => {
+    doc.text(ln, cx, textY, { align: "center", baseline: "alphabetic" });
     textY += lineHeight;
   });
 }
