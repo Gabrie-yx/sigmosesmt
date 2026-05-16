@@ -383,6 +383,30 @@ function EstoqueSesmtPage() {
         <MovStatCard entradas={totals.entradas} saidas={totals.saidas} />
       </div>
 
+      {/* Banner de reposição */}
+      {isEditor && reposicaoItems.length > 0 && (
+        <div className="rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 px-4 py-3 flex flex-wrap items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-700 shrink-0" />
+          <div className="flex-1 min-w-[200px]">
+            <div className="text-sm font-bold text-amber-900">
+              {reposicaoItems.length} {reposicaoItems.length === 1 ? "item precisa" : "itens precisam"} de reposição
+            </div>
+            <div className="text-xs text-amber-800/80">
+              {stockAlerts.zerados} zerado(s) · {stockAlerts.criticos} abaixo do mínimo. Marque os que deseja comprar e gere a requisição em um clique.
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-amber-500 text-amber-900 hover:bg-amber-100"
+            onClick={selecionarTodosReposicao}
+          >
+            <CheckSquare className="h-4 w-4 mr-1.5" />
+            Selecionar até {CART_MAX}
+          </Button>
+        </div>
+      )}
+
       {/* Search */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[260px] max-w-md">
