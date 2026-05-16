@@ -41,7 +41,7 @@ function AppLayout() {
           <Link to="/app/conta/seguranca" className="font-bold underline">Configurar MFA</Link>
         </div>
       )}
-      <main className="flex-1">
+      <main className="flex-1 pb-16 md:pb-0">
         <ModuleRouteGuard>
           <Outlet />
         </ModuleRouteGuard>
