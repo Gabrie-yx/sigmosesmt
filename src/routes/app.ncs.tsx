@@ -352,32 +352,32 @@ function NCsPage() {
           )}
 
           <Tabs defaultValue="emitente" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 h-12 bg-slate-100 p-1 rounded-lg">
+            <TabsList className="grid w-full grid-cols-3 h-14 bg-gradient-to-r from-rose-50 via-white to-rose-50 p-1.5 rounded-xl border border-rose-200/70 shadow-inner">
               <TabsTrigger
                 value="emitente"
-                className="h-10 gap-2 font-semibold data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-md data-[state=active]:ring-1 data-[state=active]:ring-red-200"
+                className="group h-11 gap-2 font-semibold text-slate-600 transition-all duration-300 rounded-lg hover:text-[#7B1E2B] data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#7B1E2B] data-[state=active]:to-[#A03344] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-900/30 data-[state=active]:scale-[1.02]"
               >
-                <User className="h-4 w-4" /> Emitente
+                <User className="h-4 w-4 transition-transform group-data-[state=active]:scale-110" /> Emitente
               </TabsTrigger>
               <TabsTrigger
                 value="receptor"
-                className="h-10 gap-2 font-semibold data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-md data-[state=active]:ring-1 data-[state=active]:ring-red-200"
+                className="group h-11 gap-2 font-semibold text-slate-600 transition-all duration-300 rounded-lg hover:text-[#7B1E2B] data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#7B1E2B] data-[state=active]:to-[#A03344] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-900/30 data-[state=active]:scale-[1.02]"
               >
-                <Wrench className="h-4 w-4" /> Receptor (Tratativa)
+                <Wrench className="h-4 w-4 transition-transform group-data-[state=active]:scale-110" /> Receptor (Tratativa)
               </TabsTrigger>
               <TabsTrigger
                 value="sgi"
-                className="h-10 gap-2 font-semibold data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-md data-[state=active]:ring-1 data-[state=active]:ring-red-200"
+                className="group h-11 gap-2 font-semibold text-slate-600 transition-all duration-300 rounded-lg hover:text-[#7B1E2B] data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#7B1E2B] data-[state=active]:to-[#A03344] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-900/30 data-[state=active]:scale-[1.02]"
               >
-                <ClipboardCheck className="h-4 w-4" /> SGI (Eficácia)
+                <ClipboardCheck className="h-4 w-4 transition-transform group-data-[state=active]:scale-110" /> SGI (Eficácia)
               </TabsTrigger>
             </TabsList>
 
             {/* ============ ABA EMITENTE ============ */}
             <TabsContent value="emitente" className="pt-4">
-              <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50/70 via-white to-sky-50/50 p-5 shadow-md space-y-3">
-                <div className="flex items-center gap-2 pb-3 mb-1 -mx-5 -mt-5 px-5 pt-4 rounded-t-xl bg-gradient-to-r from-blue-600 to-sky-500 text-white">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold tracking-wide text-blue-700 shadow">
+              <div className="rounded-xl border-2 border-rose-200 bg-gradient-to-br from-rose-50/70 via-white to-rose-50/50 p-5 shadow-md space-y-3">
+                <div className="flex items-center gap-2 pb-3 mb-1 -mx-5 -mt-5 px-5 pt-4 rounded-t-xl bg-gradient-to-r from-[#7B1E2B] to-[#A03344] text-white">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold tracking-wide text-[#7B1E2B] shadow">
                     <User className="h-3 w-3" /> EMITENTE
                   </span>
                   <span className="text-xs font-medium text-white/95">Identificação e descrição do problema</span>
