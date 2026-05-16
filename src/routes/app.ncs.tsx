@@ -17,7 +17,10 @@ import {
   FileDown, Printer, Trash2, FileText, User, Wrench, ClipboardCheck,
 } from "lucide-react";
 import { toast } from "sonner";
-import { downloadTNC, printTNC, type NCData } from "@/lib/nc-tnc-pdf";
+import { generateTNCPdf, type NCData } from "@/lib/nc-tnc-pdf";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import type jsPDF from "jspdf";
+import { Eye } from "lucide-react";
 
 type Search = { titulo?: string; origem?: string; severidade?: string; descricao?: string; pendencia?: string };
 
