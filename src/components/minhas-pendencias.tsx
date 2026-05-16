@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import {
   Megaphone, Package, ShoppingCart, ShieldAlert, Stethoscope, CheckCircle2, ArrowRight,
-  CalendarClock, FileWarning, Syringe, FileText, UserX, ClipboardCheck, GraduationCap, KeyRound, BellOff,
+  CalendarClock, FileWarning, Syringe, UserX, ClipboardCheck, GraduationCap, KeyRound, BellOff,
 } from "lucide-react";
 import { Sigla } from "@/components/sigla";
 import { cn } from "@/lib/utils";
