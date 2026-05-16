@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Anchor, Compass, Gem, ShieldCheck, Leaf, Building2, Award, ArrowRight, Waves, Factory } from "lucide-react";
 import shipyardImg from "@/assets/dmn-shipyard.jpg";
 import isoSeal from "@/assets/iso-9001.png";
+import { MinhasPendencias } from "@/components/minhas-pendencias";
 
 export const Route = createFileRoute("/app/")({
   component: HomePage,
@@ -10,6 +11,9 @@ export const Route = createFileRoute("/app/")({
 function HomePage() {
   return (
     <div className="h-full overflow-y-auto custom-scrollbar bg-[#f1f5f9]">
+      {/* PENDÊNCIAS PESSOAIS — "o que precisa ser feito agora" */}
+      <MinhasPendencias />
+
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div
