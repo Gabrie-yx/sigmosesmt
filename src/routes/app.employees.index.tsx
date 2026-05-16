@@ -152,50 +152,193 @@ function EmployeesPage() {
         )}
       </div>
 
-      <div className="relative mb-4">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-        <Input
-          className="pl-11 h-12 rounded-2xl border-slate-200 bg-white shadow-sm text-sm"
-          placeholder="Buscar por nome, CPF, matrícula…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+        <KpiCard icon={Users} label="Total" value={stats.total} tone="slate" />
+        <KpiCard icon={UserCheck} label="Ativos" value={stats.ativos} tone="emerald" />
+        <KpiCard icon={UserMinus} label="Afastados" value={stats.afastados} tone="amber" />
+        <KpiCard icon={UserX} label="Inativos" value={stats.inativos} tone="rose" />
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50 hover:bg-slate-50">
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Nome</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Empresa</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Cargo</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">CPF</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-600">Status</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={6} className="text-center text-slate-400 py-10 text-xs font-bold uppercase tracking-widest">Carregando…</TableCell></TableRow>}
-            {!isLoading && filtered.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-slate-400 py-10 text-xs font-bold uppercase tracking-widest">Nenhum colaborador</TableCell></TableRow>
-            )}
-            {filtered.map((e: any) => (
-              <TableRow key={e.id} className="hover:bg-slate-50/60">
-                <TableCell className="font-black uppercase text-sm text-slate-900">{e.nome}</TableCell>
-                <TableCell>{cMap.get(e.company_id) ?? "—"}</TableCell>
-                <TableCell>{rMap.get(e.role_id) ?? "—"}</TableCell>
-                <TableCell>{e.cpf ?? "—"}</TableCell>
-                <TableCell><Badge variant={e.status === "ATIVO" ? "default" : "secondary"} className="text-[10px] font-black uppercase tracking-widest">{e.status}</Badge></TableCell>
-                <TableCell className="text-right">
-                  <Button asChild size="sm" variant="ghost">
-                    <Link to="/app/employees/$id" params={{ id: e.id }}>Abrir <ChevronRight className="h-4 w-4 ml-1" /></Link>
-                  </Button>
-                </TableCell>
-              </TableRow>
+      {/* Busca + filtros */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4">
+        <div className="relative md:col-span-6">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            className="pl-11 h-12 rounded-2xl border-slate-200 bg-white shadow-sm text-sm"
+            placeholder="Buscar por nome, CPF, matrícula…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
+        <Select value={companyFilter} onValueChange={setCompanyFilter}>
+          <SelectTrigger className="md:col-span-3 h-12 rounded-2xl bg-white"><SelectValue placeholder="Empresa" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="TODAS">Todas as empresas</SelectItem>
+            {(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="md:col-span-3 h-12 rounded-2xl bg-white"><SelectValue placeholder="Cargo" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="TODOS">Todos os cargos</SelectItem>
+            {(roles ?? []).map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Chips de status */}
+      <div className="flex flex-wrap gap-2 mb-5">
+        {(["TODOS", "ATIVO", "AFASTADO", "INATIVO"] as const).map((s) => {
+          const active = statusFilter === s;
+          const count = s === "TODOS" ? stats.total : s === "ATIVO" ? stats.ativos : s === "AFASTADO" ? stats.afastados : stats.inativos;
+          return (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest border transition-all ${
+                active ? "bg-[#7B1E2B] text-white border-[#7B1E2B] shadow" : "bg-white text-slate-600 border-slate-200 hover:border-[#7B1E2B] hover:text-[#7B1E2B]"
+              }`}
+            >
+              {s} <span className={`ml-1 ${active ? "text-white/80" : "text-slate-400"}`}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Grid de cards */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-36 rounded-2xl bg-slate-100 animate-pulse" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+          <Users className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+          <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Nenhum colaborador encontrado</p>
+          <p className="text-xs text-slate-400 mt-1">Ajuste a busca ou os filtros.</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filtered.slice(0, visibleCount).map((e: any) => (
+              <EmployeeCard
+                key={e.id}
+                emp={e}
+                company={cMap.get(e.company_id) ?? undefined}
+                role={rMap.get(e.role_id) ?? undefined}
+              />
             ))}
-          </TableBody>
-        </Table>
+          </div>
+          {filtered.length > visibleCount && (
+            <div className="mt-6 flex justify-center">
+              <Button variant="outline" onClick={() => setVisibleCount((c) => c + 48)} className="rounded-full px-6">
+                Carregar mais ({filtered.length - visibleCount} restantes)
+              </Button>
+            </div>
+          )}
+          <p className="mt-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            Mostrando {Math.min(visibleCount, filtered.length)} de {filtered.length}
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ============ Sub-componentes ============
+
+const TONES = {
+  slate: { bg: "bg-slate-50", text: "text-slate-700", ring: "ring-slate-200", icon: "bg-slate-900 text-white" },
+  emerald: { bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-200", icon: "bg-emerald-600 text-white" },
+  amber: { bg: "bg-amber-50", text: "text-amber-700", ring: "ring-amber-200", icon: "bg-amber-500 text-white" },
+  rose: { bg: "bg-rose-50", text: "text-rose-700", ring: "ring-rose-200", icon: "bg-rose-600 text-white" },
+} as const;
+
+function KpiCard({ icon: Icon, label, value, tone }: { icon: any; label: string; value: number; tone: keyof typeof TONES }) {
+  const t = TONES[tone];
+  return (
+    <div className={`rounded-2xl ${t.bg} ring-1 ${t.ring} p-4 flex items-center gap-3 shadow-sm`}>
+      <div className={`h-11 w-11 rounded-xl ${t.icon} flex items-center justify-center shadow`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <p className={`text-[10px] font-black uppercase tracking-widest ${t.text}`}>{label}</p>
+        <p className="text-2xl font-black text-slate-900 leading-none mt-1">{value}</p>
       </div>
     </div>
+  );
+}
+
+function avatarGradient(name: string) {
+  const palettes = [
+    "from-rose-500 to-pink-600",
+    "from-amber-500 to-orange-600",
+    "from-emerald-500 to-teal-600",
+    "from-sky-500 to-indigo-600",
+    "from-violet-500 to-fuchsia-600",
+    "from-cyan-500 to-blue-600",
+    "from-lime-500 to-emerald-600",
+    "from-red-500 to-rose-700",
+  ];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return palettes[h % palettes.length];
+}
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (first + last).toUpperCase();
+}
+
+function EmployeeCard({ emp, company, role }: { emp: any; company?: string; role?: string }) {
+  const statusStyle =
+    emp.status === "ATIVO"
+      ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
+      : emp.status === "AFASTADO"
+      ? "bg-amber-100 text-amber-700 ring-amber-200"
+      : "bg-rose-100 text-rose-700 ring-rose-200";
+
+  return (
+    <Link
+      to="/app/employees/$id"
+      params={{ id: emp.id }}
+      className="group relative block rounded-2xl bg-white border border-slate-200 p-4 shadow-sm hover:shadow-xl hover:-translate-y-0.5 hover:border-[#7B1E2B]/40 transition-all duration-200 overflow-hidden"
+    >
+      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${avatarGradient(emp.nome)}`} />
+      <div className="flex items-start gap-3">
+        <div className={`h-12 w-12 rounded-full bg-gradient-to-br ${avatarGradient(emp.nome)} text-white font-black text-sm flex items-center justify-center shadow ring-2 ring-white`}>
+          {initials(emp.nome)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-black text-sm text-slate-900 uppercase leading-tight truncate group-hover:text-[#7B1E2B] transition-colors">
+            {emp.nome}
+          </h3>
+          <span className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ring-1 ${statusStyle}`}>
+            {emp.status}
+          </span>
+        </div>
+        <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-[#7B1E2B] group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+      </div>
+
+      <div className="mt-3 space-y-1.5">
+        <div className="flex items-center gap-2 text-xs text-slate-600">
+          <Building2 className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+          <span className="truncate">{company ?? "—"}</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-slate-600">
+          <Briefcase className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+          <span className="truncate">{role ?? "—"}</span>
+        </div>
+        {emp.cpf && (
+          <div className="text-[10px] font-mono text-slate-400 pt-1 border-t border-slate-100 mt-2">
+            CPF {emp.cpf}{emp.matricula ? ` · MAT ${emp.matricula}` : ""}
+          </div>
+        )}
+      </div>
+    </Link>
   );
 }
