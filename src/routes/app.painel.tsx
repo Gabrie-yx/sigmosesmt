@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
-import { MinhasPendencias } from "@/components/minhas-pendencias";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell, Legend, ComposedChart, Line, Area,
@@ -670,7 +669,6 @@ function TstPanel() {
 
   return (
     <div className="p-4 md:p-6 animate-fadeIn h-full flex flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-white overflow-y-auto custom-scrollbar">
-      <MinhasPendencias />
       <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
         <div>
           <div className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-1">SGI · ISO 9001 · NRs · Dashboard</div>
