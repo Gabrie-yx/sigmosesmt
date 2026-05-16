@@ -478,7 +478,7 @@ function NCsPage() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-2 inline-flex items-start gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-medium text-blue-700 ring-1 ring-blue-200">
+                <div className="mt-2 inline-flex items-start gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-[11px] font-medium text-[#7B1E2B] ring-1 ring-rose-200">
                   <span className="font-bold">Obs.:</span>
                   <span>pode utilizar anexos e relatórios complementares caso os campos deste formulário não sejam suficientes.</span>
                 </div>
