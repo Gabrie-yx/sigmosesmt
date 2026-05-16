@@ -26,6 +26,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dmnLogo from "@/assets/dmn-logo.png";
 import { EstoqueLookupSheet, type PickedItem } from "@/components/estoque-lookup-sheet";
+import { Wizard, type WizardStep } from "@/components/wizard";
 
 export const Route = createFileRoute("/app/sesmt/requisicoes")({
   component: RequisicoesPage,
