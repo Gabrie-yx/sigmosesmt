@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   LayoutDashboard,
-  Sun,
   CalendarCheck2,
-  FolderOpen,
   Users,
   Settings,
   X,
