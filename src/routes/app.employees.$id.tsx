@@ -12,12 +12,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText, Camera, X, AlertTriangle, Undo2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText, Camera, X, AlertTriangle, Undo2, CheckCircle2, User, ShieldCheck, FileText as FileIcon, HardHat, HeartPulse, GraduationCap } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { SafetyOverridePanel } from "@/components/safety-override-panel";
+import { AnimatedTabsBar } from "@/components/animated-tabs-bar";
 import type { SafetyOverride } from "@/lib/safety-overrides";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
 import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, NATUREZA_KEY_MAP, UFS, VACINAS_LIST, BAIRROS_MANAUS } from "@/lib/constants";
@@ -266,24 +267,18 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
       <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="grid grid-cols-6 w-full h-auto p-1.5 bg-gradient-to-r from-red-50 via-white to-red-50 border border-red-200/60 rounded-xl shadow-sm gap-1">
-          {[
-            { v: "profile", l: "Perfil" },
-            { v: "nrs", l: "NRs" },
-            { v: "docs", l: "Docs" },
-            { v: "epi", l: "EPI" },
-            { v: "health", l: "Saúde" },
-            { v: "matriz", l: "Matriz" },
-          ].map((t) => (
-            <TabsTrigger
-              key={t.v}
-              value={t.v}
-              className="rounded-lg py-2.5 text-sm font-bold uppercase tracking-wider text-slate-600 transition-all hover:text-red-700 data-[state=active]:bg-gradient-to-br data-[state=active]:from-red-600 data-[state=active]:to-red-800 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-red-500/30"
-            >
-              {t.l}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <AnimatedTabsBar
+          value={tab}
+          onChange={setTab}
+          tabs={[
+            { value: "profile", label: "Perfil", icon: User },
+            { value: "nrs", label: "NRs", icon: ShieldCheck },
+            { value: "docs", label: "Docs", icon: FileIcon },
+            { value: "epi", label: "EPI", icon: HardHat },
+            { value: "health", label: "Saúde", icon: HeartPulse },
+            { value: "matriz", label: "Matriz", icon: GraduationCap },
+          ]}
+        />
 
         <TabsContent value="profile" className="mt-4">
           <ProfileTab emp={emp} companies={companies ?? []} roles={roles ?? []} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
