@@ -182,25 +182,25 @@ function drawSideBand(doc: jsPDF, yStart: number, yEnd: number, label: string) {
   doc.setLineWidth(0.25);
   doc.rect(SIDE_X, yStart, SIDE_W, yEnd - yStart, "FD");
   const span = yEnd - yStart;
-  // Calcula a fonte para que o texto caiba na altura disponível (com folga).
-  // Largura aproximada do texto em pt: chars * fontSize * 0.5
-  // Em mm: (chars * fontSize * 0.5) / 2.83
-  const maxWidthMm = span - 4;
-  const charFactor = 0.5 / 2.83;
-  let fs = 10;
-  while (fs > 5 && label.length * fs * charFactor > maxWidthMm) fs -= 0.5;
+  const glyphs = Array.from(label.toUpperCase());
+  let fs = 7.4;
+  let lineHeight = fs * 0.36;
+  while (fs > 4.8 && glyphs.length * lineHeight > span - 6) {
+    fs -= 0.2;
+    lineHeight = fs * 0.36;
+  }
 
-  // Reset de cor para garantir texto preto visível
   doc.setFont("helvetica", "bold");
   doc.setFontSize(fs);
   doc.setTextColor(0, 0, 0);
 
-  // Posiciona manualmente para evitar bug do baseline:"middle" com angle:90
-  // Com angle:90 + align:center, o texto se expande verticalmente centrado em y.
-  // Pequeno offset horizontal para centrar visualmente dentro da banda.
-  const cx = SIDE_X + SIDE_W / 2 + fs * 0.18;
-  const cy = (yStart + yEnd) / 2;
-  doc.text(label, cx, cy, { angle: 90, align: "center" });
+  const totalH = glyphs.length * lineHeight;
+  let textY = yStart + (span - totalH) / 2 + lineHeight * 0.78;
+  const textX = SIDE_X + SIDE_W / 2;
+  glyphs.forEach((glyph) => {
+    if (glyph !== " ") doc.text(glyph, textX, textY, { align: "center", baseline: "middle" });
+    textY += lineHeight;
+  });
 }
 
 function drawIdentification(doc: jsPDF, y: number, nc: NCData) {
