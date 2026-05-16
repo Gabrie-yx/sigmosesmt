@@ -60,7 +60,7 @@ function EmployeesPage() {
       qc.invalidateQueries({ queryKey: ["employees"] });
       setOpen(false);
       setForm({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "" });
-      toast.success("Colaborador criado");
+      toast.success("Funcionário criado");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -106,11 +106,11 @@ function EmployeesPage() {
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
-                <Plus className="h-4 w-4 mr-2" />Novo colaborador
+                <Plus className="h-4 w-4 mr-2" />Novo funcionário
               </Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Novo colaborador</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>Novo funcionário</DialogTitle></DialogHeader>
               <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); create.mutate(form); }}>
                 <div className="space-y-2"><Label>Nome *</Label><Input required value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
@@ -151,12 +151,16 @@ function EmployeesPage() {
         )}
       </div>
 
-      {/* KPIs */}
+      {/* KPIs (clicáveis = filtro de status) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        <KpiCard icon={Users} label="Total" value={stats.total} tone="slate" />
-        <KpiCard icon={UserCheck} label="Ativos" value={stats.ativos} tone="emerald" />
-        <KpiCard icon={UserMinus} label="Afastados" value={stats.afastados} tone="amber" />
-        <KpiCard icon={UserX} label="Inativos" value={stats.inativos} tone="rose" />
+        <KpiCard icon={Users} label="Total" value={stats.total} tone="slate"
+          active={statusFilter === "TODOS"} onClick={() => setStatusFilter("TODOS")} />
+        <KpiCard icon={UserCheck} label="Ativos" value={stats.ativos} tone="emerald"
+          active={statusFilter === "ATIVO"} onClick={() => setStatusFilter("ATIVO")} />
+        <KpiCard icon={UserMinus} label="Afastados" value={stats.afastados} tone="amber"
+          active={statusFilter === "AFASTADO"} onClick={() => setStatusFilter("AFASTADO")} />
+        <KpiCard icon={UserX} label="Inativos" value={stats.inativos} tone="rose"
+          active={statusFilter === "INATIVO"} onClick={() => setStatusFilter("INATIVO")} />
       </div>
 
       {/* Busca + filtros */}
@@ -186,25 +190,6 @@ function EmployeesPage() {
         </Select>
       </div>
 
-      {/* Chips de status */}
-      <div className="flex flex-wrap gap-2 mb-5">
-        {(["TODOS", "ATIVO", "AFASTADO", "INATIVO"] as const).map((s) => {
-          const active = statusFilter === s;
-          const count = s === "TODOS" ? stats.total : s === "ATIVO" ? stats.ativos : s === "AFASTADO" ? stats.afastados : stats.inativos;
-          return (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest border transition-all ${
-                active ? "bg-[#7B1E2B] text-white border-[#7B1E2B] shadow" : "bg-white text-slate-600 border-slate-200 hover:border-[#7B1E2B] hover:text-[#7B1E2B]"
-              }`}
-            >
-              {s} <span className={`ml-1 ${active ? "text-white/80" : "text-slate-400"}`}>{count}</span>
-            </button>
-          );
-        })}
-      </div>
-
       {/* Grid de cards */}
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -215,7 +200,7 @@ function EmployeesPage() {
       ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
           <Users className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Nenhum colaborador encontrado</p>
+          <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Nenhum funcionário encontrado</p>
           <p className="text-xs text-slate-400 mt-1">Ajuste a busca ou os filtros.</p>
         </div>
       ) : (
@@ -255,10 +240,14 @@ const TONES = {
   rose: { bg: "bg-rose-50", text: "text-rose-700", ring: "ring-rose-200", icon: "bg-rose-600 text-white" },
 } as const;
 
-function KpiCard({ icon: Icon, label, value, tone }: { icon: any; label: string; value: number; tone: keyof typeof TONES }) {
+function KpiCard({ icon: Icon, label, value, tone, active, onClick }: { icon: any; label: string; value: number; tone: keyof typeof TONES; active?: boolean; onClick?: () => void }) {
   const t = TONES[tone];
   return (
-    <div className={`rounded-2xl ${t.bg} ring-1 ${t.ring} p-4 flex items-center gap-3 shadow-sm`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-left rounded-2xl ${t.bg} ring-1 ${active ? "ring-2 ring-[#7B1E2B] shadow-md -translate-y-0.5" : t.ring} p-4 flex items-center gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all`}
+    >
       <div className={`h-11 w-11 rounded-xl ${t.icon} flex items-center justify-center shadow`}>
         <Icon className="h-5 w-5" />
       </div>
@@ -266,7 +255,7 @@ function KpiCard({ icon: Icon, label, value, tone }: { icon: any; label: string;
         <p className={`text-[10px] font-black uppercase tracking-widest ${t.text}`}>{label}</p>
         <p className="text-2xl font-black text-slate-900 leading-none mt-1">{value}</p>
       </div>
-    </div>
+    </button>
   );
 }
 
