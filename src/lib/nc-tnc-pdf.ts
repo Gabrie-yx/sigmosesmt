@@ -47,10 +47,10 @@ const C_BLUE_NOTE: [number, number, number] = [37, 99, 235];
 // Modelo homologado em A4 retrato (FORCP-SGI-05).
 const PAGE_W = 210;
 const PAGE_H = 297;
-const SIDE_X = 8;
+const SIDE_X = 14;
 const SIDE_W = 6;
 const CONTENT_X = SIDE_X + SIDE_W;
-const CONTENT_R = 202;
+const CONTENT_R = 200;
 const CONTENT_W = CONTENT_R - CONTENT_X;
 const HEADER_Y = 6;
 const HEADER_H = 18;
@@ -177,11 +177,17 @@ function drawHeader(doc: jsPDF, logo: string | null) {
 }
 
 function drawSideBand(doc: jsPDF, yStart: number, yEnd: number, label: string) {
-  doc.setFillColor(255, 255, 255);
+  doc.setFillColor(...C_HEADER);
   doc.setDrawColor(...C_BORDER);
   doc.setLineWidth(0.25);
   doc.rect(SIDE_X, yStart, SIDE_W, yEnd - yStart, "FD");
-  setTextStyle(doc, { bold: true, fontSize: label.length > 14 ? 7 : 9 });
+  const span = yEnd - yStart;
+  // Fonte adapta ao comprimento da faixa para garantir que caiba.
+  let fs = 9;
+  if (label.length > 10) fs = 8;
+  if (label.length > 16) fs = 7;
+  if (label.length > 22 && span < 70) fs = 6.2;
+  setTextStyle(doc, { bold: true, fontSize: fs });
   doc.text(label, SIDE_X + SIDE_W / 2 + 0.5, (yStart + yEnd) / 2, {
     angle: 90,
     align: "center",
