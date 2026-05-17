@@ -229,17 +229,21 @@ function MatrizPage() {
     );
   }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, roleCourses, scheduledMap, hoje]);
 
-  // cursos visíveis: cursos exigidos pelos funcionários filtrados (união setor+função) + cursos com lançamentos
+  // Cursos visíveis: apenas os exigidos pela função dos funcionários filtrados
+  // (+ cursos que tenham lançamento ou turma agendada para algum deles).
+  // Assim a matriz não polui com NRs N/A que não se aplicam a ninguém.
   const cursosVisiveis = useMemo(() => {
-    if (filtroSetor !== "ALL") {
-      const ids = new Set<string>();
-      empsFiltrados.forEach((e) => {
-        requiredCourseIds(e, roleCourses).forEach((id) => ids.add(id));
+    const ids = new Set<string>();
+    empsFiltrados.forEach((e) => {
+      requiredCourseIds(e, roleCourses).forEach((id) => ids.add(id));
+      courses.forEach((c) => {
+        if (entryMap.has(`${e.id}|${c.id}`) || scheduledMap.has(`${e.id}|${c.id}`)) {
+          ids.add(c.id);
+        }
       });
-      return courses.filter((c) => ids.has(c.id));
-    }
-    return courses;
-  }, [courses, roleCourses, filtroSetor, empsFiltrados]);
+    });
+    return courses.filter((c) => ids.has(c.id));
+  }, [courses, roleCourses, empsFiltrados, entryMap, scheduledMap]);
 
   return (
     <div className="p-4 md:p-6 animate-fadeIn h-full bg-[#f1f5f9]">
