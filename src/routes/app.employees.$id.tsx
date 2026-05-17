@@ -234,6 +234,18 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               </span>
             </span>
           </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <QuickTabBtn icon={HeartPulse} label="ASO" tone="rose" active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
+            <QuickTabBtn icon={Award} label="NR" tone="rose" active={tab === "nrs"} onClick={() => setTab("nrs")} />
+            <QuickTabBtn icon={FolderOpen} label="Docs" tone="rose" active={tab === "docs"} onClick={() => setTab("docs")} />
+            <QuickTabBtn icon={HardHat} label="EPI" tone="slate" active={tab === "epi"} onClick={() => setTab("epi")} />
+            <Link
+              to="/app/audit"
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-[#991b1b] to-[#7B1E2B] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+            >
+              <ClipboardCheck className="h-3.5 w-3.5" /> Auditar
+            </Link>
+          </div>
         </div>
         {status && (
           <div className="flex items-center gap-2">
