@@ -94,16 +94,12 @@ export function computeStatus(entry: MatrizEntry | undefined, course: MatrizCour
   return { label: "REALIZADO", color: "bg-emerald-100 text-emerald-700 border-emerald-300", expira };
 }
 
-/** Cursos exigidos para um funcionário (união setor + função). */
+/** Cursos exigidos para um funcionário (por função — NR-01). */
 export function requiredCourseIds(
-  emp: { setor: string | null; role_id: string | null },
-  sectorCourses: SectorCourse[],
+  emp: { role_id: string | null },
   roleCourses: RoleCourse[],
 ): Set<string> {
   const ids = new Set<string>();
-  sectorCourses.forEach((sc) => {
-    if (sc.setor === (emp.setor ?? "")) ids.add(sc.course_id);
-  });
   roleCourses.forEach((rc) => {
     if (emp.role_id && rc.role_id === emp.role_id) ids.add(rc.course_id);
   });
