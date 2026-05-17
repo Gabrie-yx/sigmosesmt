@@ -354,7 +354,7 @@ function MatrizPage() {
                     const required = requiredCourseIds(emp, roleCourses).has(c.id);
                     const entry = entryMap.get(`${emp.id}|${c.id}`);
                     const sched = scheduledMap.get(`${emp.id}|${c.id}`);
-                    if (!required && !entry && !sched) {
+                    if (!required) {
                       return (
                         <td key={c.id} className="p-0 border-b border-r border-slate-200 text-center bg-slate-50/40" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
                           <button disabled={!isEditor} onClick={() => setEditing({ emp, course: c })}
