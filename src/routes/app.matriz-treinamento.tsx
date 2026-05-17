@@ -619,27 +619,10 @@ function CourseRow({ c, onSave, onDel, canDelete }: { c: Course; onSave: (c: Cou
   );
 }
 
-function VinculosDialog({ onClose, courses, sectorMapping, roleMapping, roles }:
-  { onClose: () => void; courses: Course[]; sectorMapping: SectorCourse[]; roleMapping: RoleCourse[]; roles: Role[] }) {
+function VinculosDialog({ onClose, courses, roleMapping, roles }:
+  { onClose: () => void; courses: Course[]; roleMapping: RoleCourse[]; roles: Role[] }) {
   const qc = useQueryClient();
-  const setores = SETORES_PADRAO;
-
-  const hasSetor = (setor: string, courseId: string) => sectorMapping.some((m) => m.setor === setor && m.course_id === courseId);
   const hasRole = (roleId: string, courseId: string) => roleMapping.some((m) => m.role_id === roleId && m.course_id === courseId);
-
-  const toggleSetor = useMutation({
-    mutationFn: async ({ setor, courseId, on }: { setor: string; courseId: string; on: boolean }) => {
-      if (on) {
-        const { error } = await supabase.from("training_matrix_sector_courses").insert({ setor, course_id: courseId });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("training_matrix_sector_courses").delete().eq("setor", setor).eq("course_id", courseId);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["matriz-sector-courses"] }),
-    onError: (e: any) => toast.error(e.message),
-  });
 
   const toggleRole = useMutation({
     mutationFn: async ({ roleId, courseId, on }: { roleId: string; courseId: string; on: boolean }) => {
@@ -678,8 +661,8 @@ function VinculosDialog({ onClose, courses, sectorMapping, roleMapping, roles }:
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0">
         <DialogHeader className="p-4 pb-2 border-b">
-          <DialogTitle className="text-base">Vincular Cursos a Setor / Função</DialogTitle>
-          <p className="text-[11px] text-slate-500 mt-1">As alterações são salvas automaticamente. Clique em uma NR para vincular setores e funções.</p>
+          <DialogTitle className="text-base">Vincular Cursos por Função</DialogTitle>
+          <p className="text-[11px] text-slate-500 mt-1">Conforme NR-01, os treinamentos são definidos por função. As alterações são salvas automaticamente.</p>
         </DialogHeader>
 
         <div className="px-4 py-2 border-b bg-slate-50/50 sticky top-0 z-10">{TopBar}</div>
@@ -690,7 +673,6 @@ function VinculosDialog({ onClose, courses, sectorMapping, roleMapping, roles }:
           )}
           {cursosFiltrados.map((c) => {
             const open = openId === c.id;
-            const nSetores = setores.filter((s) => hasSetor(s, c.id)).length;
             const nRoles = roles.filter((r) => hasRole(r.id, c.id)).length;
             return (
               <div key={c.id} className="border rounded-md bg-white">
@@ -704,32 +686,12 @@ function VinculosDialog({ onClose, courses, sectorMapping, roleMapping, roles }:
                     <div className="text-xs font-bold truncate">{c.codigo} — <span className="font-normal text-slate-700">{c.nome}</span></div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">{nSetores} setor{nSetores === 1 ? "" : "es"}</span>
                     <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-violet-50 text-violet-700">{nRoles} função{nRoles === 1 ? "" : "ões"}</span>
                   </div>
                 </button>
                 {open && (
                   <div className="border-t p-3 bg-slate-50/40">
-                    <Tabs defaultValue="setor">
-                      <TabsList className="h-8">
-                        <TabsTrigger value="setor" className="text-xs h-7">Setores</TabsTrigger>
-                        <TabsTrigger value="funcao" className="text-xs h-7">Funções</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="setor" className="mt-2">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                          {setores.map((s) => {
-                            const checked = hasSetor(s, c.id);
-                            return (
-                              <label key={s} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded border cursor-pointer transition ${checked ? "bg-blue-50 border-blue-300" : "bg-white border-slate-200 hover:bg-slate-50"}`}>
-                                <input type="checkbox" checked={checked} onChange={(e) => toggleSetor.mutate({ setor: s, courseId: c.id, on: e.target.checked })} />
-                                <span className="truncate">{s}</span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="funcao" className="mt-2">
-                        {roles.length === 0 ? (
+                    {roles.length === 0 ? (
                           <div className="text-center text-slate-400 text-xs py-6 uppercase font-bold">Cadastre funções em Cargos / Funções primeiro.</div>
                         ) : (
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-64 overflow-y-auto pr-1">
@@ -744,8 +706,6 @@ function VinculosDialog({ onClose, courses, sectorMapping, roleMapping, roles }:
                             })}
                           </div>
                         )}
-                      </TabsContent>
-                    </Tabs>
                   </div>
                 )}
               </div>
