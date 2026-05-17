@@ -259,7 +259,7 @@ function MatrizPage() {
               <Settings2 className="h-3.5 w-3.5 mr-1" /> Cursos / NRs
             </Button>
             <Button variant="outline" size="sm" onClick={() => setOpenSetores(true)}>
-              <Settings2 className="h-3.5 w-3.5 mr-1" /> Cursos por Setor
+              <Settings2 className="h-3.5 w-3.5 mr-1" /> Vincular por Função
             </Button>
           </div>
         )}
