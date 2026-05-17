@@ -47,7 +47,12 @@ function EmployeeDetail() {
           <Link to="/app/employees"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
         </Button>
       </div>
-      <EmployeeDetailContent id={id} showHeader initialTab={tab} />
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+        <div className="min-w-0">
+          <EmployeeDetailContent id={id} showHeader initialTab={tab} />
+        </div>
+        <EmployeeContextSidebar id={id} />
+      </div>
     </div>
   );
 }
