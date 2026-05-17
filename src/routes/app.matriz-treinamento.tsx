@@ -220,26 +220,26 @@ function MatrizPage() {
       courses.some((c) => {
         const en = entryMap.get(`${e.id}|${c.id}`);
         const sched = scheduledMap.get(`${e.id}|${c.id}`);
-        const required = requiredCourseIds(e, sectorCourses, roleCourses).has(c.id);
+        const required = requiredCourseIds(e, roleCourses).has(c.id);
         if (!required && !en && !sched) return false;
         const showAIniciar = Boolean(sched) || Boolean(en?.data_realizacao && en.data_realizacao >= hoje);
         const statusLabel = showAIniciar ? "A INICIAR" : computeStatus(en, c).label;
         return wanted.has(statusLabel);
       }),
     );
-  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, sectorCourses, roleCourses, scheduledMap, hoje]);
+  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, roleCourses, scheduledMap, hoje]);
 
   // cursos visíveis: cursos exigidos pelos funcionários filtrados (união setor+função) + cursos com lançamentos
   const cursosVisiveis = useMemo(() => {
     if (filtroSetor !== "ALL") {
       const ids = new Set<string>();
       empsFiltrados.forEach((e) => {
-        requiredCourseIds(e, sectorCourses, roleCourses).forEach((id) => ids.add(id));
+        requiredCourseIds(e, roleCourses).forEach((id) => ids.add(id));
       });
       return courses.filter((c) => ids.has(c.id));
     }
     return courses;
-  }, [courses, sectorCourses, roleCourses, filtroSetor, empsFiltrados]);
+  }, [courses, roleCourses, filtroSetor, empsFiltrados]);
 
   return (
     <div className="p-4 md:p-6 animate-fadeIn h-full bg-[#f1f5f9]">
@@ -351,7 +351,7 @@ function MatrizPage() {
                     )}
                   </td>
                   {cursosVisiveis.map((c) => {
-                    const required = requiredCourseIds(emp, sectorCourses, roleCourses).has(c.id);
+                    const required = requiredCourseIds(emp, roleCourses).has(c.id);
                     const entry = entryMap.get(`${emp.id}|${c.id}`);
                     const sched = scheduledMap.get(`${emp.id}|${c.id}`);
                     if (!required && !entry && !sched) {
@@ -413,7 +413,7 @@ function MatrizPage() {
         />
       )}
       {openCatalog && <CatalogDialog onClose={() => setOpenCatalog(false)} courses={courses} isAdmin={isAdmin} />}
-      {openSetores && <VinculosDialog onClose={() => setOpenSetores(false)} courses={courses} sectorMapping={sectorCourses} roleMapping={roleCourses} roles={roles} />}
+      {openSetores && <VinculosDialog onClose={() => setOpenSetores(false)} courses={courses} roleMapping={roleCourses} roles={roles} />}
       {openEmp !== null && <EmpDialog emp={openEmp === "new" ? null : openEmp} companies={companies} roles={roles} onClose={() => setOpenEmp(null)} isAdmin={isAdmin} />}
       {openBulk && <BulkEmpDialog companies={companies} employees={employees} onClose={() => setOpenBulk(false)} />}
     </div>
