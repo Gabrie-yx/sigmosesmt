@@ -593,6 +593,24 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
             <SelectContent>{roles.map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
+        <Field label="Setor">
+          <Input
+            list="setor-options"
+            value={f.setor ?? ""}
+            onChange={(e) => setF({ ...f, setor: e.target.value.toUpperCase() })}
+            placeholder="Ex.: ALMOXARIFADO, PRODUCAO"
+            disabled={!canEdit}
+            maxLength={50}
+          />
+          <datalist id="setor-options">
+            <option value="ALMOXARIFADO" />
+            <option value="PRODUCAO" />
+            <option value="ADMINISTRATIVO" />
+            <option value="SESMT" />
+            <option value="MANUTENCAO" />
+            <option value="QUALIDADE" />
+          </datalist>
+        </Field>
         <Field label="CPF"><Input inputMode="numeric" maxLength={14} placeholder="000.000.000-00" value={maskCPF(f.cpf ?? "")} onChange={(e) => setF({ ...f, cpf: maskCPF(e.target.value) })} disabled={!canEdit} /></Field>
         <Field label="Matrícula"><Input value={f.matricula ?? ""} onChange={(e) => setF({ ...f, matricula: e.target.value })} disabled={!canEdit} /></Field>
         <Field label="RG"><Input placeholder="0000000" maxLength={12} value={maskRG(f.rg ?? "")} onChange={(e) => setF({ ...f, rg: maskRG(e.target.value) })} disabled={!canEdit} /></Field>
