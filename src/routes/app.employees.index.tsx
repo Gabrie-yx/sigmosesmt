@@ -229,13 +229,19 @@ function EmployeesPage() {
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-        <Select value={companyFilter} onValueChange={setCompanyFilter}>
-          <SelectTrigger className="md:col-span-3 h-12 rounded-2xl bg-white"><SelectValue placeholder="Empresa" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="TODAS">Todas as empresas</SelectItem>
-            {(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="md:col-span-3 relative">
+          <Select value={companyFilter} onValueChange={setCompanyFilter}>
+            <SelectTrigger className="h-12 rounded-2xl bg-white pr-20"><SelectValue placeholder="Empresa" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TODAS">Todas as empresas</SelectItem>
+              {(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <span className="pointer-events-none absolute right-10 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded-full bg-[#991b1b] text-white text-[11px] font-black px-2.5 py-1 shadow-sm">
+            {filtered.length}
+            <span className="font-bold opacity-80 normal-case">func.</span>
+          </span>
+        </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
           <SelectTrigger className="md:col-span-3 h-12 rounded-2xl bg-white"><SelectValue placeholder="Cargo" /></SelectTrigger>
           <SelectContent>
