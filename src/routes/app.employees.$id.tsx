@@ -29,7 +29,7 @@ import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban } from "lucide-react";
 import { GraduationCap } from "lucide-react";
-import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type SectorCourse, type RoleCourse } from "@/lib/matriz-status";
+import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -2115,10 +2115,6 @@ function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
       return data as MatrizCourse[];
     },
   });
-  const { data: sectorCourses = [] } = useQuery<SectorCourse[]>({
-    queryKey: ["matriz-sector-courses"],
-    queryFn: async () => (await supabase.from("training_matrix_sector_courses").select("*")).data as SectorCourse[] ?? [],
-  });
   const { data: roleCourses = [] } = useQuery<RoleCourse[]>({
     queryKey: ["matriz-role-courses"],
     queryFn: async () => (await supabase.from("training_matrix_role_courses").select("*")).data as RoleCourse[] ?? [],
@@ -2133,8 +2129,8 @@ function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
   });
 
   const requiredIds = useMemo(
-    () => requiredCourseIds({ setor: emp.setor, role_id: emp.role_id }, sectorCourses, roleCourses),
-    [emp.setor, emp.role_id, sectorCourses, roleCourses],
+    () => requiredCourseIds({ role_id: emp.role_id }, roleCourses),
+    [emp.role_id, roleCourses],
   );
   const entryByCourse = useMemo(() => {
     const m = new Map<string, MatrizEntry>();
