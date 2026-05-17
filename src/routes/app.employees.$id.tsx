@@ -47,7 +47,12 @@ function EmployeeDetail() {
           <Link to="/app/employees"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
         </Button>
       </div>
-      <EmployeeDetailContent id={id} showHeader initialTab={tab} />
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+        <div className="min-w-0">
+          <EmployeeDetailContent id={id} showHeader initialTab={tab} />
+        </div>
+        <EmployeeContextSidebar id={id} />
+      </div>
     </div>
   );
 }
@@ -312,6 +317,142 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
       </Tabs>
       <FileViewerHost />
     </div>
+  );
+}
+
+/* ============ CONTEXT SIDEBAR (empresa + colegas) ============ */
+function EmployeeContextSidebar({ id }: { id: string }) {
+  const { data: emp } = useQuery({
+    queryKey: ["employee-sidebar", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, company_id")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const companyId = emp?.company_id ?? null;
+
+  const { data: company } = useQuery({
+    queryKey: ["company-sidebar", companyId],
+    enabled: !!companyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, name, type, cnpj, encarregado1, encarregado2, email")
+        .eq("id", companyId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: coworkers } = useQuery({
+    queryKey: ["coworkers-sidebar", companyId, id],
+    enabled: !!companyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, nome, status, role_id, foto_url")
+        .eq("company_id", companyId!)
+        .neq("id", id)
+        .order("nome");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: rolesMap } = useQuery({
+    queryKey: ["roles-map"],
+    queryFn: async () => {
+      const { data } = await supabase.from("roles").select("id, name");
+      const m = new Map<string, string>();
+      (data ?? []).forEach((r: any) => m.set(r.id, r.name));
+      return m;
+    },
+  });
+
+  if (!companyId) {
+    return (
+      <aside className="space-y-4 lg:sticky lg:top-6">
+        <Card className="p-4 rounded-2xl border-dashed text-center text-xs text-slate-500">
+          Funcionário sem empresa vinculada.
+        </Card>
+      </aside>
+    );
+  }
+
+  return (
+    <aside className="space-y-4 lg:sticky lg:top-6">
+      <Card className="p-4 rounded-2xl border-slate-200 shadow-sm">
+        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Empresa</div>
+        {company ? (
+          <div className="space-y-2">
+            <div className="text-sm font-black text-brand uppercase leading-tight">{company.name}</div>
+            {company.type && (
+              <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest">{company.type}</Badge>
+            )}
+            <div className="text-[11px] text-slate-600 space-y-0.5 pt-1 border-t border-slate-100">
+              {company.cnpj && <div><span className="font-black uppercase text-[9px] tracking-widest text-slate-400">CNPJ </span><span className="font-mono">{company.cnpj}</span></div>}
+              {company.encarregado1 && <div><span className="font-black uppercase text-[9px] tracking-widest text-slate-400">Encarregado </span>{company.encarregado1}</div>}
+              {company.encarregado2 && <div><span className="font-black uppercase text-[9px] tracking-widest text-slate-400">Encarregado 2 </span>{company.encarregado2}</div>}
+              {company.email && <div className="truncate"><span className="font-black uppercase text-[9px] tracking-widest text-slate-400">Email </span>{company.email}</div>}
+            </div>
+          </div>
+        ) : (
+          <div className="text-xs text-slate-400">Carregando…</div>
+        )}
+      </Card>
+
+      <Card className="p-4 rounded-2xl border-slate-200 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Demais funcionários</div>
+          <span className="text-[10px] font-black text-slate-500">{coworkers?.length ?? 0}</span>
+        </div>
+        {!coworkers ? (
+          <div className="text-xs text-slate-400">Carregando…</div>
+        ) : coworkers.length === 0 ? (
+          <div className="text-xs text-slate-400">Nenhum outro funcionário nesta empresa.</div>
+        ) : (
+          <ul className="space-y-1 max-h-[480px] overflow-y-auto -mx-1 pr-1">
+            {coworkers.map((c: any) => {
+              const statusDot =
+                c.status === "ATIVO" ? "bg-emerald-500"
+                : c.status === "AFASTADO" ? "bg-amber-500"
+                : "bg-rose-500";
+              const initials = (() => {
+                const parts = (c.nome ?? "").trim().split(/\s+/);
+                const a = parts[0]?.[0] ?? "";
+                const b = parts.length > 1 ? parts[parts.length - 1][0] : "";
+                return (a + b).toUpperCase();
+              })();
+              return (
+                <li key={c.id}>
+                  <Link
+                    to="/app/employees/$id"
+                    params={{ id: c.id }}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-50 transition-colors group"
+                  >
+                    <div className="h-7 w-7 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-brand/70 to-brand text-white text-[10px] font-black flex items-center justify-center">
+                      {c.foto_url ? <img src={c.foto_url} alt="" className="h-full w-full object-cover" /> : initials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-800 truncate group-hover:text-brand">{c.nome}</div>
+                      <div className="text-[10px] text-slate-500 truncate">{rolesMap?.get(c.role_id) ?? "—"}</div>
+                    </div>
+                    <span className={`h-2 w-2 rounded-full ${statusDot}`} title={c.status} />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+    </aside>
   );
 }
 
