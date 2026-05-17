@@ -2138,9 +2138,16 @@ function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
     return m;
   }, [entries]);
 
-  // Cursos exibidos: obrigatórios pelo setor/função + os que já têm lançamento manual
+  // Cursos exibidos: obrigatórios pela função + lançamentos relevantes.
+  // Esconde cursos não-exigidos cujo único lançamento é "NAO_SE_APLICA".
   const cursosExibidos = useMemo(
-    () => courses.filter((c) => requiredIds.has(c.id) || entryByCourse.has(c.id)),
+    () => courses.filter((c) => {
+      if (requiredIds.has(c.id)) return true;
+      const en = entryByCourse.get(c.id);
+      if (!en) return false;
+      if (en.status_override === "NAO_SE_APLICA") return false;
+      return true;
+    }),
     [courses, requiredIds, entryByCourse],
   );
 
