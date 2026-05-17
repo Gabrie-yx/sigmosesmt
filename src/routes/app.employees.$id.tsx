@@ -333,6 +333,21 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
 }
 
 /* ============ CONTEXT SIDEBAR (empresa + colegas) ============ */
+function QuickTabBtn({ icon: Icon, label, tone = "rose", active, onClick }: { icon: any; label: string; tone?: "rose" | "slate"; active?: boolean; onClick: () => void }) {
+  const palette = tone === "slate"
+    ? "bg-slate-100 text-slate-600 hover:bg-slate-200 ring-slate-200"
+    : "bg-gradient-to-br from-rose-500 to-[#991b1b] text-white hover:from-rose-600 hover:to-[#7B1E2B] ring-rose-300/40";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-widest shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all ring-1 ${palette} ${active ? "ring-2 ring-offset-1 ring-[#7B1E2B]" : ""}`}
+    >
+      <Icon className="h-3.5 w-3.5" /> {label}
+    </button>
+  );
+}
+
 function EmployeeContextSidebar({ id }: { id: string }) {
   const { data: emp } = useQuery({
     queryKey: ["employee-sidebar", id],
@@ -355,7 +370,7 @@ function EmployeeContextSidebar({ id }: { id: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("companies")
-        .select("id, name, type, cnpj, encarregado1, encarregado2, email")
+        .select("id, name, type, cnpj, encarregado1, encarregado2, email, data_entrada")
         .eq("id", companyId!)
         .single();
       if (error) throw error;
@@ -398,27 +413,73 @@ function EmployeeContextSidebar({ id }: { id: string }) {
     );
   }
 
+  const totalVinculos = (coworkers?.length ?? 0) + 1;
+  const entrada = company?.data_entrada
+    ? new Date(company.data_entrada + "T00:00:00").toLocaleDateString("pt-BR")
+    : "N/A";
+
   return (
     <aside className="space-y-4 lg:sticky lg:top-6">
-      <Card className="p-4 rounded-2xl border-slate-200 shadow-sm">
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Empresa</div>
-        {company ? (
-          <div className="space-y-2">
-            <div className="text-sm font-black text-brand uppercase leading-tight">{company.name}</div>
-            {company.type && (
-              <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest">{company.type}</Badge>
-            )}
-            <div className="text-[11px] text-slate-600 space-y-0.5 pt-1 border-t border-slate-100">
-              {company.cnpj && <div><span className="font-black uppercase text-[9px] tracking-widest text-slate-400">CNPJ </span><span className="font-mono">{company.cnpj}</span></div>}
-              {company.encarregado1 && <div><span className="font-black uppercase text-[9px] tracking-widest text-slate-400">Encarregado </span>{company.encarregado1}</div>}
-              {company.encarregado2 && <div><span className="font-black uppercase text-[9px] tracking-widest text-slate-400">Encarregado 2 </span>{company.encarregado2}</div>}
-              {company.email && <div className="truncate"><span className="font-black uppercase text-[9px] tracking-widest text-slate-400">Email </span>{company.email}</div>}
+      {/* CARD DA EMPRESA — estilo gradiente */}
+      {company ? (
+        <div className="relative p-5 rounded-2xl border border-white/10 text-white overflow-hidden shadow-lg"
+             style={{ background: "linear-gradient(135deg, #991b1b 0%, #7B1E2B 60%, #4a0e15 100%)" }}>
+          <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-12 -left-8 w-32 h-32 rounded-full bg-red-300/20 blur-2xl pointer-events-none" />
+
+          <div className="relative flex justify-between items-start mb-3">
+            <div className="text-[9px] font-black px-2 py-1 rounded inline-flex items-center gap-1 text-white bg-white/15 backdrop-blur ring-1 ring-white/20">
+              <Briefcase className="h-3 w-3" /> {company.type ?? "—"}
+            </div>
+            <div className="flex items-center gap-2 rounded-full bg-white/15 ring-1 ring-white/30 backdrop-blur pl-1 pr-3 py-1 shadow-md shadow-black/20">
+              <span className="h-8 w-8 rounded-full bg-white/25 ring-1 ring-white/40 flex items-center justify-center">
+                <Users className="h-4 w-4 text-white" />
+              </span>
+              <div className="leading-none">
+                <div className="text-base font-black text-white tabular-nums">{totalVinculos}</div>
+                <div className="text-[8px] font-black uppercase tracking-widest text-white/80">Vínculos</div>
+              </div>
             </div>
           </div>
-        ) : (
-          <div className="text-xs text-slate-400">Carregando…</div>
-        )}
-      </Card>
+
+          <div className="relative flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-white/15 ring-1 ring-white/25 flex items-center justify-center backdrop-blur shrink-0">
+              <Building2 className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-lg font-black uppercase text-white leading-tight">{company.name}</h3>
+          </div>
+
+          <p className="relative text-[10px] font-bold uppercase mt-2 text-white/70 flex items-center gap-1">
+            <IdCard className="h-3 w-3" /> CNPJ: {company.cnpj || "Não informado"} <span className="mx-1">|</span> ENTRADA: {entrada}
+          </p>
+
+          <div className="relative mt-4 pt-4 border-t border-white/20 text-xs font-bold text-white/90">
+            <div className="flex items-center gap-2"><User className="h-3.5 w-3.5 text-white" /> {company.encarregado1 ? `Empreiteiro: ${company.encarregado1}` : "S/ Empreiteiro"}</div>
+            <div className="flex items-center gap-2 mt-1"><UserCog className="h-3.5 w-3.5 text-white" /> {company.encarregado2 ? `Encarregado: ${company.encarregado2}` : "S/ Encarregado"}</div>
+          </div>
+        </div>
+      ) : (
+        <Card className="p-4 rounded-2xl text-xs text-slate-400">Carregando empresa…</Card>
+      )}
+
+      {/* AÇÕES — paleta coesa com o sistema */}
+      <div className="grid grid-cols-2 gap-2">
+        <Link to="/app/employees" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
+          <UserPlus className="h-3.5 w-3.5" /> Novo Colab.
+        </Link>
+        <Link to="/app/companies" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
+          <Upload className="h-3.5 w-3.5" /> Importar CSV
+        </Link>
+        <Link to="/app/companies" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
+          <Download className="h-3.5 w-3.5" /> Exportar CSV
+        </Link>
+        <Link to="/app/companies" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0f172a] hover:bg-brand text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
+          <Pencil className="h-3.5 w-3.5" /> Editar Empr.
+        </Link>
+        <Link to="/app/companies" className="col-span-2 inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all ring-1 ring-slate-200">
+          <Plus className="h-3.5 w-3.5" /> Nova Empresa
+        </Link>
+      </div>
 
       <Card className="p-4 rounded-2xl border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-3">
