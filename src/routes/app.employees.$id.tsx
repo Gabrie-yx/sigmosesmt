@@ -503,6 +503,19 @@ function EmployeeContextSidebar({ id }: { id: string }) {
                 const b = parts.length > 1 ? parts[parts.length - 1][0] : "";
                 return (a + b).toUpperCase();
               })();
+              const palettes = [
+                "from-rose-500 to-pink-600",
+                "from-amber-500 to-orange-600",
+                "from-emerald-500 to-teal-600",
+                "from-sky-500 to-indigo-600",
+                "from-violet-500 to-fuchsia-600",
+                "from-cyan-500 to-blue-600",
+                "from-lime-500 to-emerald-600",
+                "from-red-500 to-rose-700",
+              ];
+              let h = 0;
+              for (let i = 0; i < (c.nome ?? "").length; i++) h = (h * 31 + c.nome.charCodeAt(i)) >>> 0;
+              const grad = palettes[h % palettes.length];
               return (
                 <li key={c.id}>
                   <Link
@@ -510,14 +523,18 @@ function EmployeeContextSidebar({ id }: { id: string }) {
                     params={{ id: c.id }}
                     className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-50 transition-colors group"
                   >
-                    <div className="h-7 w-7 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-brand/70 to-brand text-white text-[10px] font-black flex items-center justify-center">
-                      {c.foto_url ? <img src={c.foto_url} alt="" className="h-full w-full object-cover" /> : initials}
+                    <div className={`relative h-9 w-9 shrink-0 rounded-full overflow-hidden bg-gradient-to-br ${grad} text-white text-[11px] font-black flex items-center justify-center ring-2 ring-white shadow-sm`}>
+                      {c.foto_url ? (
+                        <img src={c.foto_url} alt={c.nome} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="select-none">{initials}</span>
+                      )}
+                      <span className={`absolute -bottom-0 -right-0 h-2.5 w-2.5 rounded-full ring-2 ring-white ${statusDot}`} title={c.status} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-xs font-bold text-slate-800 truncate group-hover:text-brand">{c.nome}</div>
                       <div className="text-[10px] text-slate-500 truncate">{rolesMap?.get(c.role_id) ?? "—"}</div>
                     </div>
-                    <span className={`h-2 w-2 rounded-full ${statusDot}`} title={c.status} />
                   </Link>
                 </li>
               );
