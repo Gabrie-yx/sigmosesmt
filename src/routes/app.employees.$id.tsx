@@ -462,21 +462,21 @@ function EmployeeContextSidebar({ id }: { id: string }) {
         <Card className="p-4 rounded-2xl text-xs text-slate-400">Carregando empresa…</Card>
       )}
 
-      {/* AÇÕES — paleta coesa com o sistema */}
+      {/* AÇÕES — paleta coesa (brand + navy + outlines) */}
       <div className="grid grid-cols-2 gap-2">
-        <Link to="/app/employees" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
+        <Link to="/app/employees" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-[#991b1b] to-[#7B1E2B] hover:from-[#7B1E2B] hover:to-[#4a0e15] text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
           <UserPlus className="h-3.5 w-3.5" /> Novo Colab.
         </Link>
-        <Link to="/app/companies" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
+        <Link to="/app/companies" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0f172a] hover:bg-[#1e293b] text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
           <Upload className="h-3.5 w-3.5" /> Importar CSV
         </Link>
-        <Link to="/app/companies" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
+        <Link to="/app/companies" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white hover:bg-slate-50 text-[#0f172a] text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all ring-1 ring-slate-200 hover:ring-[#991b1b]/40">
           <Download className="h-3.5 w-3.5" /> Exportar CSV
         </Link>
-        <Link to="/app/companies" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0f172a] hover:bg-brand text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
+        <Link to="/app/companies" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white hover:bg-rose-50 text-[#991b1b] text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all ring-1 ring-[#991b1b]/30 hover:ring-[#991b1b]/60">
           <Pencil className="h-3.5 w-3.5" /> Editar Empr.
         </Link>
-        <Link to="/app/companies" className="col-span-2 inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all ring-1 ring-slate-200">
+        <Link to="/app/companies" className="col-span-2 inline-flex items-center justify-center gap-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-600 text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all ring-1 ring-dashed ring-slate-300 hover:ring-[#991b1b]/40 hover:text-[#991b1b]">
           <Plus className="h-3.5 w-3.5" /> Nova Empresa
         </Link>
       </div>
