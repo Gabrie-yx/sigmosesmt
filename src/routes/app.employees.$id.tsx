@@ -2138,17 +2138,11 @@ function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
     return m;
   }, [entries]);
 
-  // Cursos exibidos: obrigatórios pela função + lançamentos relevantes.
-  // Esconde cursos não-exigidos cujo único lançamento é "NAO_SE_APLICA".
+  // Cursos exibidos: somente os obrigatórios pela função.
+  // Histórico/manual fora da função não entra na matriz do funcionário.
   const cursosExibidos = useMemo(
-    () => courses.filter((c) => {
-      if (requiredIds.has(c.id)) return true;
-      const en = entryByCourse.get(c.id);
-      if (!en) return false;
-      if (en.status_override === "NAO_SE_APLICA") return false;
-      return true;
-    }),
-    [courses, requiredIds, entryByCourse],
+    () => courses.filter((c) => requiredIds.has(c.id)),
+    [courses, requiredIds],
   );
 
   const stats = useMemo(() => {

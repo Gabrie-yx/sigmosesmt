@@ -207,13 +207,15 @@ function MatrizPage() {
     });
     if (filtroStatus === "ALL") return base;
     if (filtroStatus === "A_INICIAR") {
-      return base.filter((e) =>
-        courses.some((c) => {
+      return base.filter((e) => {
+        const requiredIds = requiredCourseIds(e, roleCourses);
+        return courses.some((c) => {
+          if (!requiredIds.has(c.id)) return false;
           const en = entryMap.get(`${e.id}|${c.id}`);
           const sched = scheduledMap.get(`${e.id}|${c.id}`);
           return Boolean(sched) || Boolean(en?.data_realizacao && en.data_realizacao >= hoje);
-        }),
-      );
+        });
+      });
     }
     const wanted = new Set(STATUS_CELL_MAP[filtroStatus] ?? []);
     return base.filter((e) =>
@@ -221,7 +223,7 @@ function MatrizPage() {
         const en = entryMap.get(`${e.id}|${c.id}`);
         const sched = scheduledMap.get(`${e.id}|${c.id}`);
         const required = requiredCourseIds(e, roleCourses).has(c.id);
-        if (!required && !en && !sched) return false;
+        if (!required) return false;
         const showAIniciar = Boolean(sched) || Boolean(en?.data_realizacao && en.data_realizacao >= hoje);
         const statusLabel = showAIniciar ? "A INICIAR" : computeStatus(en, c).label;
         return wanted.has(statusLabel);
@@ -229,23 +231,15 @@ function MatrizPage() {
     );
   }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, roleCourses, scheduledMap, hoje]);
 
-  // Cursos visíveis: apenas os exigidos pela função dos funcionários filtrados
-  // (+ cursos que tenham lançamento ou turma agendada para algum deles).
-  // Assim a matriz não polui com NRs N/A que não se aplicam a ninguém.
+  // Cursos visíveis: somente os exigidos pela função dos funcionários filtrados.
+  // Lançamentos manuais ou históricos fora da função não criam coluna na matriz.
   const cursosVisiveis = useMemo(() => {
     const ids = new Set<string>();
     empsFiltrados.forEach((e) => {
       requiredCourseIds(e, roleCourses).forEach((id) => ids.add(id));
-      courses.forEach((c) => {
-        const en = entryMap.get(`${e.id}|${c.id}`);
-        const sched = scheduledMap.has(`${e.id}|${c.id}`);
-        // Não trazer coluna por lançamento N/A: só conta se tem realização, override útil ou turma
-        const hasRelevantEntry = !!en && en.status_override !== "NAO_SE_APLICA";
-        if (hasRelevantEntry || sched) ids.add(c.id);
-      });
     });
     return courses.filter((c) => ids.has(c.id));
-  }, [courses, roleCourses, empsFiltrados, entryMap, scheduledMap]);
+  }, [courses, roleCourses, empsFiltrados]);
 
   return (
     <div className="p-4 md:p-6 animate-fadeIn h-full bg-[#f1f5f9]">
@@ -360,7 +354,7 @@ function MatrizPage() {
                     const required = requiredCourseIds(emp, roleCourses).has(c.id);
                     const entry = entryMap.get(`${emp.id}|${c.id}`);
                     const sched = scheduledMap.get(`${emp.id}|${c.id}`);
-                    if (!required && !entry && !sched) {
+                    if (!required) {
                       return (
                         <td key={c.id} className="p-0 border-b border-r border-slate-200 text-center bg-slate-50/40" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
                           <button disabled={!isEditor} onClick={() => setEditing({ emp, course: c })}
