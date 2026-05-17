@@ -23,7 +23,6 @@ import {
   CATEGORIA_COLOR,
   type MatrizCourse as Course,
   type MatrizEntry as Entry,
-  type SectorCourse,
   type RoleCourse,
 } from "@/lib/matriz-status";
 
@@ -101,14 +100,6 @@ function MatrizPage() {
       const { data, error } = await supabase.from("training_matrix_courses")
         .select("*").eq("ativo", true).order("ordem");
       if (error) throw error; return data as Course[];
-    },
-  });
-
-  const { data: sectorCourses = [] } = useQuery<SectorCourse[]>({
-    queryKey: ["matriz-sector-courses"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("training_matrix_sector_courses").select("*");
-      if (error) throw error; return data as SectorCourse[];
     },
   });
 
