@@ -237,9 +237,11 @@ function MatrizPage() {
     empsFiltrados.forEach((e) => {
       requiredCourseIds(e, roleCourses).forEach((id) => ids.add(id));
       courses.forEach((c) => {
-        if (entryMap.has(`${e.id}|${c.id}`) || scheduledMap.has(`${e.id}|${c.id}`)) {
-          ids.add(c.id);
-        }
+        const en = entryMap.get(`${e.id}|${c.id}`);
+        const sched = scheduledMap.has(`${e.id}|${c.id}`);
+        // Não trazer coluna por lançamento N/A: só conta se tem realização, override útil ou turma
+        const hasRelevantEntry = !!en && en.status_override !== "NAO_SE_APLICA";
+        if (hasRelevantEntry || sched) ids.add(c.id);
       });
     });
     return courses.filter((c) => ids.has(c.id));
