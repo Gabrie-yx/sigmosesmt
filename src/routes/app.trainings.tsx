@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
 import { CursosMinistradosPanel } from "@/components/cursos/cursos-ministrados-panel";
+import { sortMatrixCourses } from "@/lib/nr-order";
 
 export const Route = createFileRoute("/app/trainings")({
   component: TrainingsPage,
@@ -73,7 +74,7 @@ function TrainingsPage() {
         .eq("ativo", true)
         .order("ordem");
       if (error) throw error;
-      return data ?? [];
+      return sortMatrixCourses(data ?? []);
     },
   });
 
@@ -90,6 +91,9 @@ function TrainingsPage() {
 
   const save = useMutation({
     mutationFn: async () => {
+      if (!f.course_id) {
+        throw new Error("Selecione o Curso da Matriz — o vínculo é obrigatório para atualizar a Matriz de Treinamento.");
+      }
       let anexo_path: string | null = null;
       if (file) {
         const path = `${Date.now()}_${file.name.replace(/[^\w.-]/g, "_")}`;
@@ -282,9 +286,6 @@ function TrainingsPage() {
                     <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {TIPOS_FIXOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                      {matrixCourses.map((c: any) => (
-                        <SelectItem key={c.id} value={`${c.codigo} — ${c.nome}`}>{c.codigo} — {c.nome}</SelectItem>
-                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -296,16 +297,14 @@ function TrainingsPage() {
 
               <div>
                 <Label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-1">
-                  <Link2 className="h-3 w-3" /> Curso da Matriz (vínculo automático)
+                  <Link2 className="h-3 w-3" /> Curso da Matriz (vínculo automático) <span className="text-red-600">*</span>
                 </Label>
-                <Select value={f.course_id || "__none__"} onValueChange={(v) => {
-                  if (v === "__none__") { setF({ ...f, course_id: "" }); return; }
+                <Select value={f.course_id || ""} onValueChange={(v) => {
                   const c = matrixCourses.find((x: any) => x.id === v);
                   setF({ ...f, course_id: v, tipo: c ? `${c.codigo} — ${c.nome}` : f.tipo });
                 }}>
-                  <SelectTrigger className="mt-2"><SelectValue placeholder="— sem vínculo —" /></SelectTrigger>
+                  <SelectTrigger className="mt-2"><SelectValue placeholder="Selecione o curso da matriz..." /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none__">— sem vínculo —</SelectItem>
                     {matrixCourses.map((c: any) => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.codigo} — {c.nome} ({c.periodicidade})
@@ -314,7 +313,7 @@ function TrainingsPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-[10px] text-slate-500 mt-1">
-                  Ao vincular um curso, todo participante marcado como <b>APROVADO</b> ou <b>PRESENTE</b> recebe automaticamente a data deste evento na sua Matriz de Treinamento.
+                  <b>Obrigatório.</b> Todo participante marcado como <b>APROVADO</b> ou <b>PRESENTE</b> recebe automaticamente a data deste evento na sua Matriz de Treinamento.
                 </p>
               </div>
 

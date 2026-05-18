@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { CATEGORIA_COLOR, CATEGORIA_LABEL } from "@/lib/matriz-status";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
+import { sortMatrixCourses } from "@/lib/nr-order";
 
 const MODALIDADES = ["PRESENCIAL", "ONLINE", "HIBRIDA"] as const;
 const TIPOS_REALIZACAO = ["INTERNO", "EXTERNO", "IN_COMPANY"] as const;
@@ -46,10 +47,10 @@ export function CursosMinistradosPanel() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("training_matrix_courses")
-        .select("id,codigo,nome,categoria,periodicidade,carga_horaria_h,ativo")
+        .select("id,codigo,nome,categoria,periodicidade,carga_horaria_h,ativo,ordem")
         .order("ordem");
       if (error) throw error;
-      return data ?? [];
+      return sortMatrixCourses(data ?? []);
     },
   });
 
@@ -62,6 +63,50 @@ export function CursosMinistradosPanel() {
         .order("data_realizacao", { ascending: false });
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  const { data: aderencia = {} } = useQuery({
+    queryKey: ["cursos-aderencia"],
+    queryFn: async () => {
+      const [empRes, rcRes, scRes, entRes] = await Promise.all([
+        supabase.from("employees").select("id,role_id,setor,status").eq("status", "ATIVO"),
+        supabase.from("training_matrix_role_courses").select("role_id,course_id"),
+        supabase.from("training_matrix_sector_courses").select("setor,course_id"),
+        supabase.from("training_matrix_entries").select("employee_id,course_id,data_realizacao,status_override"),
+      ]);
+      const employees = empRes.data ?? [];
+      const rcByCourse: Record<string, Set<string>> = {};
+      (rcRes.data ?? []).forEach((r: any) => { (rcByCourse[r.course_id] ??= new Set()).add(r.role_id); });
+      const scByCourse: Record<string, Set<string>> = {};
+      (scRes.data ?? []).forEach((s: any) => { (scByCourse[s.course_id] ??= new Set()).add(s.setor); });
+      const allCourseIds = new Set<string>([...Object.keys(rcByCourse), ...Object.keys(scByCourse)]);
+      const required: Record<string, Set<string>> = {};
+      allCourseIds.forEach((cid) => {
+        const set = (required[cid] = new Set<string>());
+        const roles = rcByCourse[cid];
+        const setores = scByCourse[cid];
+        employees.forEach((e: any) => {
+          if ((roles && e.role_id && roles.has(e.role_id)) || (setores && e.setor && setores.has(e.setor))) {
+            set.add(e.id);
+          }
+        });
+      });
+      const trained: Record<string, Set<string>> = {};
+      (entRes.data ?? []).forEach((e: any) => {
+        const ok = e.data_realizacao || e.status_override === "REALIZADO";
+        if (!ok) return;
+        (trained[e.course_id] ??= new Set()).add(e.employee_id);
+      });
+      const result: Record<string, { precisam: number; treinados: number; faltam: number }> = {};
+      allCourseIds.forEach((cid) => {
+        const req = required[cid] ?? new Set();
+        const tr = trained[cid] ?? new Set();
+        let count = 0;
+        req.forEach((empId) => { if (tr.has(empId)) count++; });
+        result[cid] = { precisam: req.size, treinados: count, faltam: Math.max(0, req.size - count) };
+      });
+      return result;
     },
   });
 
@@ -126,6 +171,8 @@ export function CursosMinistradosPanel() {
             const turmas = turmasPorCurso[c.id] ?? [];
             const ultima = turmas[0];
             const catColor = CATEGORIA_COLOR[c.categoria] ?? CATEGORIA_COLOR.OUTRO;
+            const ad = (aderencia as any)[c.id];
+            const pct = ad && ad.precisam > 0 ? Math.round((ad.treinados / ad.precisam) * 100) : null;
             return (
               <button
                 key={c.id}
@@ -149,6 +196,26 @@ export function CursosMinistradosPanel() {
                     {ultima ? formatDateBR(ultima.data_realizacao) : "—"}
                   </div>
                 </div>
+                {ad && ad.precisam > 0 && pct !== null && (
+                  <div className="mt-3 pt-3 border-t border-slate-100">
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase mb-1">
+                      <span className="text-slate-500">Aderência</span>
+                      <span className={pct === 100 ? "text-emerald-600" : pct >= 70 ? "text-amber-600" : "text-red-600"}>
+                        {pct}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${pct === 100 ? "bg-emerald-500" : pct >= 70 ? "bg-amber-500" : "bg-red-500"}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] mt-1.5 font-bold text-slate-500">
+                      <span>{ad.treinados}/{ad.precisam} treinados</span>
+                      {ad.faltam > 0 && <span className="text-red-600">{ad.faltam} faltam</span>}
+                    </div>
+                  </div>
+                )}
               </button>
             );
           })}
@@ -277,6 +344,30 @@ function TurmaRow({ turma, course, expanded, onToggle }: { turma: any; course: a
     },
   });
 
+  // Quantos participantes desta turma já estão refletidos na Matriz de Treinamento.
+  const { data: matrizSync = { sincronizados: 0, total: 0 } } = useQuery({
+    queryKey: ["training-matriz-sync", turma.id, turma.course_id, turma.data_realizacao],
+    queryFn: async () => {
+      if (!turma.course_id) return { sincronizados: 0, total: 0 };
+      const { data: atts } = await supabase
+        .from("training_attendees")
+        .select("employee_id, situacao")
+        .eq("training_id", turma.id);
+      const elegiveis = (atts ?? []).filter((a: any) => ["APROVADO", "PRESENTE"].includes(a.situacao));
+      if (elegiveis.length === 0) return { sincronizados: 0, total: 0 };
+      const empIds = elegiveis.map((a: any) => a.employee_id);
+      const { data: entries } = await supabase
+        .from("training_matrix_entries")
+        .select("employee_id, data_realizacao")
+        .eq("course_id", turma.course_id)
+        .in("employee_id", empIds);
+      const sync = (entries ?? []).filter(
+        (e: any) => e.data_realizacao === turma.data_realizacao,
+      ).length;
+      return { sincronizados: sync, total: elegiveis.length };
+    },
+  });
+
   const uploadAnexo = useMutation({
     mutationFn: async ({ file, tipo, descricao }: { file: File; tipo: string; descricao?: string }) => {
       const ext = file.name.split(".").pop() ?? "bin";
@@ -395,6 +486,23 @@ function TurmaRow({ turma, course, expanded, onToggle }: { turma: any; course: a
             )}
             {turma.instrutor && <span>👤 {turma.instrutor}</span>}
             <span><Users className="h-3 w-3 inline mr-1" />{participantesCount} part.</span>
+            {turma.course_id && matrizSync.total > 0 && (
+              <Badge
+                variant="outline"
+                className={`text-[9px] py-0 h-4 ${
+                  matrizSync.sincronizados === matrizSync.total
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-amber-50 text-amber-700 border-amber-200"
+                }`}
+              >
+                Matriz: {matrizSync.sincronizados}/{matrizSync.total}
+              </Badge>
+            )}
+            {!turma.course_id && (
+              <Badge variant="outline" className="text-[9px] py-0 h-4 bg-red-50 text-red-700 border-red-200">
+                Sem vínculo c/ matriz
+              </Badge>
+            )}
           </div>
         </div>
         <ChevronRight className={`h-5 w-5 text-slate-400 transition-transform ${expanded ? "rotate-90" : ""}`} />
