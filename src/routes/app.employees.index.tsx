@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,12 +15,23 @@ import { Wizard, type WizardStep } from "@/components/wizard";
 
 export const Route = createFileRoute("/app/employees/")({
   component: EmployeesPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    new: search.new === 1 || search.new === "1" ? 1 : undefined,
+  }),
 });
 
 function EmployeesPage() {
   const qc = useQueryClient();
   const { isEditor } = useAuth();
+  const navigate = useNavigate();
+  const { new: openNew } = Route.useSearch();
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (openNew && isEditor) {
+      setOpen(true);
+      navigate({ to: "/app/employees", search: {}, replace: true });
+    }
+  }, [openNew, isEditor, navigate]);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO">("TODOS");
   const [companyFilter, setCompanyFilter] = useState<string>("TODAS");
