@@ -9,10 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { GraduationCap, Plus, Pencil, Trash2, Users, Paperclip, Download, X, FileText, Clock, Link2, Building2, ClipboardList, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
+import { CursosMinistradosPanel } from "@/components/cursos/cursos-ministrados-panel";
 
 export const Route = createFileRoute("/app/trainings")({
   component: TrainingsPage,
@@ -21,6 +23,8 @@ export const Route = createFileRoute("/app/trainings")({
 const TIPOS_FIXOS = ["Integração", "Reciclagem", "DDS", "Palestra", "Outro"];
 
 const SITUACOES = ["APROVADO", "REPROVADO", "PRESENTE", "AUSENTE"] as const;
+const MODALIDADES = ["PRESENCIAL", "ONLINE", "HIBRIDA"] as const;
+const MOD_LABEL: Record<string, string> = { PRESENCIAL: "Presencial", ONLINE: "Online", HIBRIDA: "Híbrida" };
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -46,6 +50,7 @@ function TrainingsPage() {
     validade_meses: 12,
     observacoes: "",
     course_id: "" as string,
+    modalidade: "PRESENCIAL" as typeof MODALIDADES[number],
   });
   const [file, setFile] = useState<File | null>(null);
   const [assinaturaFile, setAssinaturaFile] = useState<File | null>(null);
@@ -106,6 +111,7 @@ function TrainingsPage() {
         observacoes: f.observacoes || null,
         course_id: f.course_id || null,
         local: f.local || null,
+        modalidade: f.modalidade,
       };
       if (anexo_path) payload.anexo_path = anexo_path;
       if (assinatura_path) payload.assinatura_path = assinatura_path;
@@ -149,7 +155,7 @@ function TrainingsPage() {
     setF({
       tipo: TIPOS_FIXOS[0], titulo: "", instrutor: "", instituicao: "", local: "",
       data_realizacao: today(), carga_horaria_h: 8, validade_meses: 12, observacoes: "",
-      course_id: "",
+      course_id: "", modalidade: "PRESENCIAL",
     });
   }
 
@@ -161,6 +167,7 @@ function TrainingsPage() {
       carga_horaria_h: Number(t.carga_horaria_h), validade_meses: t.validade_meses,
       observacoes: t.observacoes ?? "",
       course_id: t.course_id ?? "",
+      modalidade: (t.modalidade as any) ?? "PRESENCIAL",
     });
     setFile(null);
     setAssinaturaFile(null);
@@ -236,6 +243,21 @@ function TrainingsPage() {
         <GraduationCap className="h-8 w-8" /> Treinamentos &amp; Integrações
       </h2>
 
+      <Tabs defaultValue="cursos" className="w-full">
+        <TabsList className="bg-white border border-slate-200 mb-6">
+          <TabsTrigger value="cursos" className="text-xs font-black uppercase tracking-wider">
+            Cursos Ministrados
+          </TabsTrigger>
+          <TabsTrigger value="grade" className="text-xs font-black uppercase tracking-wider">
+            Grade Atual
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="cursos">
+          <CursosMinistradosPanel />
+        </TabsContent>
+
+        <TabsContent value="grade">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* FORM */}
         {isEditor && (
@@ -315,6 +337,16 @@ function TrainingsPage() {
               <div>
                 <Label className="text-[10px] font-black text-slate-500 uppercase">Local</Label>
                 <Input value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex.: Auditório DMN" className="mt-2" />
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-black text-slate-500 uppercase">Modalidade</Label>
+                <Select value={f.modalidade} onValueChange={(v) => setF({ ...f, modalidade: v as any })}>
+                  <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MODALIDADES.map((m) => <SelectItem key={m} value={m}>{MOD_LABEL[m]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -412,7 +444,9 @@ function TrainingsPage() {
             ))}
           </div>
         </div>
-      </div>
+        </div>
+        </TabsContent>
+      </Tabs>
 
       {openAttendees && (
         <AttendeesDialog
