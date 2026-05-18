@@ -151,6 +151,12 @@ export function AppSidebar() {
   const estoqueOpen = anyActive(ESTOQUE_ITEMS);
   const producaoOpen = anyActive(PRODUCAO_SUBMENU);
 
+  // Quando a sidebar está colapsada (icon mode), o label clicável some, então
+  // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
+  // visíveis e acessíveis. No modo expandido, mantém o Collapsible normal.
+  const Body = ({ children }: { children: React.ReactNode }) =>
+    collapsed ? <>{children}</> : <CollapsibleContent>{children}</CollapsibleContent>;
+
   return (
     <Sidebar collapsible="icon" className="border-r border-white/10">
       <SidebarHeader className="bg-gradient-to-b from-[#a01818] to-[#7f1212] text-white">
@@ -203,7 +209,7 @@ export function AppSidebar() {
                   <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]/sesmt:rotate-90" />
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
-              <CollapsibleContent>
+              <Body>
                 {SESMT_GROUPS.map((group) => (
                   <SidebarGroup key={group.title} className="py-0">
                     <SidebarGroupLabel className="text-[9px] tracking-widest">
@@ -243,7 +249,7 @@ export function AppSidebar() {
                     </SidebarGroupContent>
                   </SidebarGroup>
                 ))}
-              </CollapsibleContent>
+              </Body>
             </SidebarGroup>
           </Collapsible>
         )}
@@ -260,7 +266,7 @@ export function AppSidebar() {
                   <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]/estoque:rotate-90" />
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
-              <CollapsibleContent>
+              <Body>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {ESTOQUE_ITEMS.map((s) => (
@@ -288,7 +294,7 @@ export function AppSidebar() {
                     ))}
                   </SidebarMenu>
                 </SidebarGroupContent>
-              </CollapsibleContent>
+              </Body>
             </SidebarGroup>
           </Collapsible>
         )}
@@ -305,7 +311,7 @@ export function AppSidebar() {
                   <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]/producao:rotate-90" />
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
-              <CollapsibleContent>
+              <Body>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {PRODUCAO_SUBMENU.map((s) => (
@@ -320,7 +326,7 @@ export function AppSidebar() {
                     ))}
                   </SidebarMenu>
                 </SidebarGroupContent>
-              </CollapsibleContent>
+              </Body>
             </SidebarGroup>
           </Collapsible>
         )}
