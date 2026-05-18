@@ -409,33 +409,50 @@ function PainelListaTecnicaPage() {
                 <Card className="shadow-sm">
                   <CardHeader className="pb-1 pt-3 px-4 flex flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-xs text-muted-foreground font-medium">
-                      Evolução de consumo — <span className="font-bold" style={{ color: cor }}>{cat}</span>
+                      Top itens — <span className="font-bold" style={{ color: cor }}>{cat}</span>
                     </CardTitle>
                     {serie.length > 0 && (
-                      <span className="text-[10px] text-muted-foreground">{serie.length} mês(es)</span>
+                      <span className="text-[10px] text-muted-foreground">{serie.length} código(s)</span>
                     )}
                   </CardHeader>
                   <CardContent className="h-44 p-2">
                     {serie.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem série temporal</div>
+                      <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem itens nessa categoria</div>
                     ) : (
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={serie} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
-                          <defs>
-                            <linearGradient id={`grad-${cat}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={cor} stopOpacity={0.55} />
-                              <stop offset="100%" stopColor={cor} stopOpacity={0.05} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                          <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                          <YAxis hide />
+                        <BarChart data={serie} layout="vertical" margin={{ left: 4, right: 32, top: 4, bottom: 4 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                          <XAxis type="number" hide />
+                          <YAxis type="category" dataKey="mes" width={78} stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontFamily: "monospace" }} />
                           <Tooltip
+                            cursor={{ fill: `${cor}15` }}
                             contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                            formatter={(v: any) => `${fmt(Number(v), 0)} kg`}
+                            formatter={(v: any, _n: any, p: any) => [`${fmt(Number(v), 0)} kg`, p?.payload?.desc ?? "Peso"]}
+                            labelFormatter={(l: any) => `Código ${l}`}
                           />
-                          <Area type="monotone" dataKey="valor" stroke={cor} strokeWidth={2.2} fill={`url(#grad-${cat})`} />
-                        </AreaChart>
+                          <Bar
+                            dataKey="valor"
+                            radius={[0, 4, 4, 0]}
+                            onClick={(d: any) => setCodigoSel((p) => (p === d.mes ? null : d.mes))}
+                            className="cursor-pointer"
+                          >
+                            {serie.map((s: any, i: number) => (
+                              <Cell
+                                key={i}
+                                fill={codigoSel && codigoSel !== s.mes ? `${cor}40` : cor}
+                                stroke={codigoSel === s.mes ? "#000" : "transparent"}
+                                strokeWidth={codigoSel === s.mes ? 1.5 : 0}
+                              />
+                            ))}
+                            <LabelList
+                              dataKey="valor"
+                              position="right"
+                              fontSize={10}
+                              fill={cor}
+                              formatter={(v: any) => fmt(Number(v), 0)}
+                            />
+                          </Bar>
+                        </BarChart>
                       </ResponsiveContainer>
                     )}
                   </CardContent>
