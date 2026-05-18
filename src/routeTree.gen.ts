@@ -31,6 +31,7 @@ import { Route as AppCascosRouteImport } from './routes/app.cascos'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppAprsRouteImport } from './routes/app.aprs'
 import { Route as AppAcoesRouteImport } from './routes/app.acoes'
+import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
 import { Route as AppSesmtTerceirosRouteImport } from './routes/app.sesmt.terceiros'
@@ -158,6 +159,11 @@ const AppAprsRoute = AppAprsRouteImport.update({
 const AppAcoesRoute = AppAcoesRouteImport.update({
   id: '/acoes',
   path: '/acoes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEstoqueIndexRoute = AppEstoqueIndexRouteImport.update({
+  id: '/estoque/',
+  path: '/estoque/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEmployeesIndexRoute = AppEmployeesIndexRouteImport.update({
@@ -293,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
+  '/app/estoque/': typeof AppEstoqueIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -333,6 +340,7 @@ export interface FileRoutesByTo {
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
   '/app/dds': typeof AppDdsIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
+  '/app/estoque': typeof AppEstoqueIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -376,6 +384,7 @@ export interface FileRoutesById {
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
+  '/app/estoque/': typeof AppEstoqueIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -420,6 +429,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/terceiros'
     | '/app/dds/'
     | '/app/employees/'
+    | '/app/estoque/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -460,6 +470,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/terceiros'
     | '/app/dds'
     | '/app/employees'
+    | '/app/estoque'
   id:
     | '__root__'
     | '/'
@@ -502,6 +513,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/terceiros'
     | '/app/dds/'
     | '/app/employees/'
+    | '/app/estoque/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -667,6 +679,13 @@ declare module '@tanstack/react-router' {
       path: '/acoes'
       fullPath: '/app/acoes'
       preLoaderRoute: typeof AppAcoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/estoque/': {
+      id: '/app/estoque/'
+      path: '/estoque'
+      fullPath: '/app/estoque/'
+      preLoaderRoute: typeof AppEstoqueIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/employees/': {
@@ -845,6 +864,7 @@ interface AppRouteChildren {
   AppSesmtRequisicoesRoute: typeof AppSesmtRequisicoesRoute
   AppSesmtTerceirosRoute: typeof AppSesmtTerceirosRoute
   AppDdsIndexRoute: typeof AppDdsIndexRoute
+  AppEstoqueIndexRoute: typeof AppEstoqueIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -880,6 +900,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtRequisicoesRoute: AppSesmtRequisicoesRoute,
   AppSesmtTerceirosRoute: AppSesmtTerceirosRoute,
   AppDdsIndexRoute: AppDdsIndexRoute,
+  AppEstoqueIndexRoute: AppEstoqueIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
