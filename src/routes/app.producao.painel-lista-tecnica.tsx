@@ -161,7 +161,7 @@ function PainelListaTecnicaPage() {
   const itensVisiveis = useMemo(() => {
     return itensFiltrados.filter((it) => {
       if (codigoSel && String(it.codigo_sap) !== codigoSel) return false;
-      if (unidadeSel && String(it.unidade ?? "—") !== unidadeSel) return false;
+      if (unidadeSel && String(it.unidade ?? "—").toUpperCase() !== unidadeSel) return false;
       if (catSel && it.categoria !== catSel) return false;
       return true;
     });
@@ -189,7 +189,7 @@ function PainelListaTecnicaPage() {
       // ignora o filtro de categoria para mostrar a categoria em si
       const baseItens = itensFiltrados.filter((it) => {
         if (codigoSel && String(it.codigo_sap) !== codigoSel) return false;
-        if (unidadeSel && String(it.unidade ?? "—") !== unidadeSel) return false;
+        if (unidadeSel && String(it.unidade ?? "—").toUpperCase() !== unidadeSel) return false;
         return it.categoria === cat;
       });
       // Barras agrupadas por UME (igual ao Power BI: CT, MT, PC, UN, M, KG)
@@ -204,15 +204,19 @@ function PainelListaTecnicaPage() {
         .sort((a, b) => Math.abs(b.valor) - Math.abs(a.valor))
         .slice(0, 8);
 
-      const serieMap = new Map<string, number>();
+      // "Série" = top itens da categoria por peso (mais útil que temporal com 1 importação)
+      const itemMap = new Map<string, { codigo: string; desc: string; peso: number }>();
       baseItens.forEach((it) => {
-        if (!it.lista_created_at) return;
-        const d = new Date(it.lista_created_at);
-        const k = mesKey(d);
-        const valor = Number(it.peso_real ?? it.peso_total_estimado ?? 0);
-        serieMap.set(k, (serieMap.get(k) ?? 0) + valor);
+        const cod = String(it.codigo_sap ?? "");
+        if (!cod) return;
+        const cur = itemMap.get(cod) ?? { codigo: cod, desc: String(it.descricao_sap ?? ""), peso: 0 };
+        cur.peso += Math.abs(Number(it.peso_real ?? it.peso_total_estimado ?? 0));
+        itemMap.set(cod, cur);
       });
-      const serie = Array.from(serieMap.entries()).map(([mes, valor]) => ({ mes, valor }));
+      const serie = Array.from(itemMap.values())
+        .sort((a, b) => b.peso - a.peso)
+        .slice(0, 10)
+        .map((i) => ({ mes: i.codigo, valor: i.peso, desc: i.desc }));
       const totalPeso = baseItens.reduce(
         (s, it) => s + Number(it.peso_real ?? it.peso_total_estimado ?? 0), 0,
       );
@@ -405,33 +409,50 @@ function PainelListaTecnicaPage() {
                 <Card className="shadow-sm">
                   <CardHeader className="pb-1 pt-3 px-4 flex flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-xs text-muted-foreground font-medium">
-                      Evolução de consumo — <span className="font-bold" style={{ color: cor }}>{cat}</span>
+                      Top itens — <span className="font-bold" style={{ color: cor }}>{cat}</span>
                     </CardTitle>
                     {serie.length > 0 && (
-                      <span className="text-[10px] text-muted-foreground">{serie.length} mês(es)</span>
+                      <span className="text-[10px] text-muted-foreground">{serie.length} código(s)</span>
                     )}
                   </CardHeader>
                   <CardContent className="h-44 p-2">
                     {serie.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem série temporal</div>
+                      <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem itens nessa categoria</div>
                     ) : (
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={serie} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
-                          <defs>
-                            <linearGradient id={`grad-${cat}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={cor} stopOpacity={0.55} />
-                              <stop offset="100%" stopColor={cor} stopOpacity={0.05} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                          <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                          <YAxis hide />
+                        <BarChart data={serie} layout="vertical" margin={{ left: 4, right: 32, top: 4, bottom: 4 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                          <XAxis type="number" hide />
+                          <YAxis type="category" dataKey="mes" width={78} stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontFamily: "monospace" }} />
                           <Tooltip
+                            cursor={{ fill: `${cor}15` }}
                             contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                            formatter={(v: any) => `${fmt(Number(v), 0)} kg`}
+                            formatter={(v: any, _n: any, p: any) => [`${fmt(Number(v), 0)} kg`, p?.payload?.desc ?? "Peso"]}
+                            labelFormatter={(l: any) => `Código ${l}`}
                           />
-                          <Area type="monotone" dataKey="valor" stroke={cor} strokeWidth={2.2} fill={`url(#grad-${cat})`} />
-                        </AreaChart>
+                          <Bar
+                            dataKey="valor"
+                            radius={[0, 4, 4, 0]}
+                            onClick={(d: any) => setCodigoSel((p) => (p === d.mes ? null : d.mes))}
+                            className="cursor-pointer"
+                          >
+                            {serie.map((s: any, i: number) => (
+                              <Cell
+                                key={i}
+                                fill={codigoSel && codigoSel !== s.mes ? `${cor}40` : cor}
+                                stroke={codigoSel === s.mes ? "#000" : "transparent"}
+                                strokeWidth={codigoSel === s.mes ? 1.5 : 0}
+                              />
+                            ))}
+                            <LabelList
+                              dataKey="valor"
+                              position="right"
+                              fontSize={10}
+                              fill={cor}
+                              formatter={(v: any) => fmt(Number(v), 0)}
+                            />
+                          </Bar>
+                        </BarChart>
                       </ResponsiveContainer>
                     )}
                   </CardContent>
