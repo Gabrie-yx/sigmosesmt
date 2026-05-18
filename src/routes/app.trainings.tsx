@@ -243,6 +243,21 @@ function TrainingsPage() {
         <GraduationCap className="h-8 w-8" /> Treinamentos &amp; Integrações
       </h2>
 
+      <Tabs defaultValue="cursos" className="w-full">
+        <TabsList className="bg-white border border-slate-200 mb-6">
+          <TabsTrigger value="cursos" className="text-xs font-black uppercase tracking-wider">
+            Cursos Ministrados
+          </TabsTrigger>
+          <TabsTrigger value="grade" className="text-xs font-black uppercase tracking-wider">
+            Grade Atual
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="cursos">
+          <CursosMinistradosPanel />
+        </TabsContent>
+
+        <TabsContent value="grade">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* FORM */}
         {isEditor && (
