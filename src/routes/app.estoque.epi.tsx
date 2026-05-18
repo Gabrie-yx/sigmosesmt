@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,7 @@ import {
   ShieldCheck,
   Upload,
   User,
+  Warehouse,
 } from "lucide-react";
 
 export const Route = createFileRoute("/app/estoque/epi")({
@@ -162,7 +163,15 @@ function EstoqueEpiPage() {
             Inventário visual, baixa atômica por entrega e histórico completo de movimentações.
           </p>
         </div>
-        <NewEpiDialog onCreated={() => qc.invalidateQueries({ queryKey: ["estoque_epi"] })} />
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link to="/app/estoque/sesmt">
+              <Warehouse className="h-4 w-4" />
+              Painel de Estoque SESMT
+            </Link>
+          </Button>
+          <NewEpiDialog onCreated={() => qc.invalidateQueries({ queryKey: ["estoque_epi"] })} />
+        </div>
       </div>
 
       {/* Resumo */}
