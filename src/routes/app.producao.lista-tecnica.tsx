@@ -197,7 +197,7 @@ function ListaTecnicaPage() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <FileSpreadsheet className="h-6 w-6 text-primary" />
-            Lista Técnica — SAP B51
+            Lista Técnica
           </h1>
           <p className="text-sm text-muted-foreground">
             Importa o arquivo da transação SAP B51 e consolida o material previsto por casco.
