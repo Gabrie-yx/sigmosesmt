@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  AreaChart, Area, LabelList,
+  AreaChart, Area, LabelList, Cell,
 } from "recharts";
-import { LayoutDashboard, RefreshCw } from "lucide-react";
+import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers } from "lucide-react";
 import {
   CATEGORIAS, CATEGORIA_CLASSE, classificarMaterial, type CategoriaMaterial,
 } from "@/lib/lista-tecnica-categorias";
@@ -23,10 +23,28 @@ const fmt = (n: number, d = 2) =>
 const MES_LABEL = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const mesKey = (d: Date) => `${MES_LABEL[d.getMonth()]} ${d.getFullYear()}`;
 
+const CAT_COLOR: Record<CategoriaMaterial, string> = {
+  FERRO: "hsl(0 72% 45%)",
+  SOLDA: "hsl(28 90% 55%)",
+  "GÁS": "hsl(200 85% 50%)",
+  TINTA: "hsl(265 70% 55%)",
+  OUTROS: "hsl(150 50% 45%)",
+};
+
+const CAT_ICON: Record<CategoriaMaterial, string> = {
+  FERRO: "▮",
+  SOLDA: "⚡",
+  "GÁS": "◉",
+  TINTA: "✦",
+  OUTROS: "◆",
+};
+
 function PainelListaTecnicaPage() {
   const qc = useQueryClient();
   const [cascoSel, setCascoSel] = useState<string | null>(null);
   const [codigoSel, setCodigoSel] = useState<string | null>(null);
+  const [unidadeSel, setUnidadeSel] = useState<string | null>(null);
+  const [catSel, setCatSel] = useState<CategoriaMaterial | null>(null);
 
   const { data: cascos = [] } = useQuery({
     queryKey: ["cascos-list"],
