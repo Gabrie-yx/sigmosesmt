@@ -141,52 +141,71 @@ function PainelListaTecnicaPage() {
     [itensEnriq, cascoAtivoId],
   );
 
-  // Top códigos FERT/HALB (SAP geralmente começa com 7)
+  // Top códigos por peso (mais consumidos no casco ativo)
   const topCodigos = useMemo(() => {
-    const acc = new Map<string, number>();
-    itensEnriq.forEach((it) => {
+    const acc = new Map<string, { peso: number; desc: string }>();
+    itensFiltrados.forEach((it) => {
       const cod = String(it.codigo_sap ?? "");
-      if (!/^7\d{5}/.test(cod)) return;
+      if (!cod) return;
       const peso = Math.abs(Number(it.peso_real ?? it.peso_total_estimado ?? 0));
-      acc.set(cod, (acc.get(cod) ?? 0) + peso);
+      const cur = acc.get(cod) ?? { peso: 0, desc: String(it.descricao_sap ?? "") };
+      cur.peso += peso;
+      acc.set(cod, cur);
     });
     return Array.from(acc.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([cod]) => cod);
-  }, [itensEnriq]);
+      .sort((a, b) => b[1].peso - a[1].peso)
+      .slice(0, 8)
+      .map(([cod, v]) => ({ cod, peso: v.peso, desc: v.desc }));
+  }, [itensFiltrados]);
 
-  const itensVisiveis = useMemo(
-    () => codigoSel ? itensFiltrados.filter((it) => String(it.codigo_sap) === codigoSel) : itensFiltrados,
-    [itensFiltrados, codigoSel],
-  );
+  const itensVisiveis = useMemo(() => {
+    return itensFiltrados.filter((it) => {
+      if (codigoSel && String(it.codigo_sap) !== codigoSel) return false;
+      if (unidadeSel && String(it.unidade ?? "—") !== unidadeSel) return false;
+      if (catSel && it.categoria !== catSel) return false;
+      return true;
+    });
+  }, [itensFiltrados, codigoSel, unidadeSel, catSel]);
+
+  // KPIs globais (sobre itens visíveis)
+  const kpi = useMemo(() => {
+    const pesoReal = itensVisiveis.reduce((s, it) => s + Number(it.peso_real ?? 0), 0);
+    const pesoEst = itensVisiveis.reduce((s, it) => s + Number(it.peso_total_estimado ?? 0), 0);
+    const pecas = itensVisiveis.reduce((s, it) => s + Number(it.qtd_pecas ?? 0), 0);
+    const distintos = new Set(itensVisiveis.map((it) => String(it.codigo_sap))).size;
+    const desvio = pesoEst > 0 ? ((pesoReal - pesoEst) / pesoEst) * 100 : 0;
+    return { pesoReal, pesoEst, pecas, distintos, desvio };
+  }, [itensVisiveis]);
 
   const dadosPorCategoria = useMemo(() => {
-    const result: Record<CategoriaMaterial, { barras: any[]; serie: any[]; totalPeso: number }> = {
-      FERRO: { barras: [], serie: [], totalPeso: 0 },
-      SOLDA: { barras: [], serie: [], totalPeso: 0 },
-      "GÁS": { barras: [], serie: [], totalPeso: 0 },
-      TINTA: { barras: [], serie: [], totalPeso: 0 },
-      OUTROS: { barras: [], serie: [], totalPeso: 0 },
+    const result: Record<CategoriaMaterial, { barras: any[]; serie: any[]; totalPeso: number; totalItens: number }> = {
+      FERRO: { barras: [], serie: [], totalPeso: 0, totalItens: 0 },
+      SOLDA: { barras: [], serie: [], totalPeso: 0, totalItens: 0 },
+      "GÁS": { barras: [], serie: [], totalPeso: 0, totalItens: 0 },
+      TINTA: { barras: [], serie: [], totalPeso: 0, totalItens: 0 },
+      OUTROS: { barras: [], serie: [], totalPeso: 0, totalItens: 0 },
     };
     CATEGORIAS.forEach((cat) => {
-      const itensCat = itensVisiveis.filter((it) => it.categoria === cat);
-      const barMap = new Map<string, { label: string; valor: number }>();
-      itensCat.forEach((it) => {
-        const label = cat === "FERRO" || cat === "OUTROS"
-          ? String(it.unidade ?? "—")
-          : String(it.descricao_sap ?? it.codigo_sap ?? "—").slice(0, 14);
-        const valor = Number(it.peso_real ?? it.peso_total_estimado ?? it.quantidade ?? 0);
-        const cur = barMap.get(label) ?? { label, valor: 0 };
-        cur.valor += valor;
-        barMap.set(label, cur);
+      // ignora o filtro de categoria para mostrar a categoria em si
+      const baseItens = itensFiltrados.filter((it) => {
+        if (codigoSel && String(it.codigo_sap) !== codigoSel) return false;
+        if (unidadeSel && String(it.unidade ?? "—") !== unidadeSel) return false;
+        return it.categoria === cat;
       });
-      const barras = Array.from(barMap.values())
+      // Barras agrupadas por UME (igual ao Power BI: CT, MT, PC, UN, M, KG)
+      const barMap = new Map<string, number>();
+      baseItens.forEach((it) => {
+        const u = String(it.unidade ?? "—").toUpperCase();
+        const valor = Number(it.peso_real ?? it.peso_total_estimado ?? it.quantidade ?? 0);
+        barMap.set(u, (barMap.get(u) ?? 0) + valor);
+      });
+      const barras = Array.from(barMap.entries())
+        .map(([label, valor]) => ({ label, valor }))
         .sort((a, b) => Math.abs(b.valor) - Math.abs(a.valor))
         .slice(0, 8);
 
       const serieMap = new Map<string, number>();
-      itensCat.forEach((it) => {
+      baseItens.forEach((it) => {
         if (!it.lista_created_at) return;
         const d = new Date(it.lista_created_at);
         const k = mesKey(d);
@@ -194,24 +213,47 @@ function PainelListaTecnicaPage() {
         serieMap.set(k, (serieMap.get(k) ?? 0) + valor);
       });
       const serie = Array.from(serieMap.entries()).map(([mes, valor]) => ({ mes, valor }));
-      const totalPeso = itensCat.reduce(
+      const totalPeso = baseItens.reduce(
         (s, it) => s + Number(it.peso_real ?? it.peso_total_estimado ?? 0), 0,
       );
-      result[cat] = { barras, serie, totalPeso };
+      result[cat] = { barras, serie, totalPeso, totalItens: baseItens.length };
     });
     return result;
+  }, [itensFiltrados, codigoSel, unidadeSel]);
+
+  // Tabela de materiais (estilo Power BI à direita)
+  const tabelaMateriais = useMemo(() => {
+    const acc = new Map<string, { codigo: string; nome: string; qtd: number; ume: string; peso: number }>();
+    itensVisiveis.forEach((it) => {
+      const key = String(it.codigo_sap);
+      const cur = acc.get(key) ?? {
+        codigo: key,
+        nome: String(it.descricao_sap ?? ""),
+        qtd: 0,
+        ume: String(it.unidade ?? "—"),
+        peso: 0,
+      };
+      cur.qtd += Number(it.quantidade ?? 0);
+      cur.peso += Number(it.peso_real ?? it.peso_total_estimado ?? 0);
+      acc.set(key, cur);
+    });
+    return Array.from(acc.values()).sort((a, b) => Math.abs(b.peso) - Math.abs(a.peso));
   }, [itensVisiveis]);
 
+  const limparFiltros = () => { setCodigoSel(null); setUnidadeSel(null); setCatSel(null); };
+  const algumFiltro = Boolean(codigoSel || unidadeSel || catSel);
+
   return (
-    <div className="space-y-3 p-4 bg-muted/30 min-h-screen">
+    <div className="space-y-3 p-4 bg-gradient-to-br from-muted/40 via-background to-muted/20 min-h-screen">
+      {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <LayoutDashboard className="h-6 w-6 text-primary" />
-            Dashboard Dinâmico
+          <h1 className="text-2xl font-bold flex items-center gap-2 tracking-tight">
+            <LayoutDashboard className="h-7 w-7 text-primary" />
+            Dashboard Dinâmico — Consumo de Insumos
           </h1>
           <p className="text-xs text-muted-foreground">
-            Clique em um código FERT/HALB para filtrar todo o painel. Atualiza em tempo real.
+            Acompanhamento em tempo real de matéria-prima e insumos aplicados no casco. Clique em qualquer elemento para filtrar.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => {
@@ -222,37 +264,43 @@ function PainelListaTecnicaPage() {
         </Button>
       </div>
 
-      {/* Barra superior estilo Power BI: códigos + casco ativo */}
-      <Card className="shadow-sm">
+      {/* Barra de códigos + casco */}
+      <Card className="shadow-sm border-primary/10">
         <CardContent className="p-3 flex items-center gap-3 flex-wrap">
-          <div className="flex flex-wrap gap-2 flex-1">
+          <div className="flex flex-wrap gap-2 flex-1 items-center">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold pr-1">
+              Top códigos:
+            </span>
             {topCodigos.length === 0 && (
-              <span className="text-xs text-muted-foreground">Sem códigos FERT/HALB detectados.</span>
+              <span className="text-xs text-muted-foreground">Sem códigos detectados.</span>
             )}
-            {topCodigos.map((cod) => {
+            {topCodigos.map(({ cod, peso, desc }) => {
               const ativo = codigoSel === cod;
               return (
                 <button
                   key={cod}
+                  title={`${desc}\n${fmt(peso, 0)} kg acumulado`}
                   onClick={() => setCodigoSel((prev) => (prev === cod ? null : cod))}
-                  className={`px-4 py-2 rounded-md text-sm font-mono font-medium border transition shadow-sm ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-mono font-semibold border transition shadow-sm ${
                     ativo
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card text-foreground border-border hover:bg-accent/40"
+                      ? "bg-primary text-primary-foreground border-primary shadow-md scale-105"
+                      : "bg-card text-foreground border-border hover:bg-primary/5 hover:border-primary/30"
                   }`}
                 >
                   {cod}
                 </button>
               );
             })}
-            {codigoSel && (
-              <Button variant="ghost" size="sm" onClick={() => setCodigoSel(null)}>Limpar filtro</Button>
+            {algumFiltro && (
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={limparFiltros}>
+                <Filter className="h-3 w-3 mr-1" /> Limpar filtros
+              </Button>
             )}
           </div>
           <select
             value={cascoAtivoId ?? ""}
-            onChange={(e) => setCascoSel(e.target.value || null)}
-            className="px-4 py-2 rounded-md text-sm font-semibold border border-border bg-card shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            onChange={(e) => { setCascoSel(e.target.value || null); limparFiltros(); }}
+            className="px-4 py-2 rounded-md text-sm font-bold border border-primary/30 bg-primary/5 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
           >
             {cascosComDados.length === 0 && <option value="">Nenhum casco</option>}
             {cascosComDados.map((c: any) => (
@@ -264,83 +312,193 @@ function PainelListaTecnicaPage() {
         </CardContent>
       </Card>
 
-      {/* Linhas: 1 por categoria, barras + série temporal */}
-      <div className="space-y-3">
-        {(["FERRO", "SOLDA", "GÁS", "OUTROS"] as CategoriaMaterial[]).map((cat) => {
-          const { barras, serie, totalPeso } = dadosPorCategoria[cat];
-          const vazio = barras.length === 0;
-          return (
-            <div key={cat} className="grid gap-3 grid-cols-1 lg:grid-cols-2">
-              <Card className="shadow-sm">
-                <CardHeader className="pb-1 pt-3 px-4 flex flex-row items-center justify-between">
-                  <CardTitle className="text-sm font-bold tracking-wide flex items-center gap-2">
-                    <span className={`inline-block h-3 w-3 rounded-sm ${CATEGORIA_CLASSE[cat]}`} />
-                    {cat}
-                  </CardTitle>
-                  <span className="text-xs text-muted-foreground">{fmt(totalPeso, 0)} kg</span>
-                </CardHeader>
-                <CardContent className="h-44 p-2">
-                  {vazio ? (
-                    <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem dados</div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={barras} margin={{ left: 4, right: 8, top: 18, bottom: 4 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                        <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={0} />
-                        <YAxis hide />
-                        <Tooltip
-                          contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                          formatter={(v: any) => fmt(Number(v), 2)}
-                        />
-                        <Bar dataKey="valor" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]}>
-                          <LabelList dataKey="valor" position="top" fontSize={10} formatter={(v: any) => fmt(Number(v), 0)} />
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {[
+          { label: "Peso Real Aplicado", value: `${fmt(kpi.pesoReal, 0)} kg`, icon: Package, accent: "from-primary/20 to-primary/5", textCls: "text-primary" },
+          { label: "Peso Estimado", value: `${fmt(kpi.pesoEst, 0)} kg`, icon: Layers, accent: "from-accent/20 to-accent/5", textCls: "text-accent-foreground" },
+          { label: "Desvio Real vs Est.", value: `${kpi.desvio >= 0 ? "+" : ""}${fmt(kpi.desvio, 2)}%`, icon: TrendingUp, accent: kpi.desvio > 0 ? "from-red-500/20 to-red-500/5" : "from-green-500/20 to-green-500/5", textCls: kpi.desvio > 0 ? "text-red-600" : "text-green-600" },
+          { label: "Códigos Distintos", value: fmt(kpi.distintos, 0), icon: Filter, accent: "from-blue-500/15 to-blue-500/5", textCls: "text-blue-600" },
+          { label: "Total de Peças", value: fmt(kpi.pecas, 0), icon: Package, accent: "from-amber-500/15 to-amber-500/5", textCls: "text-amber-700" },
+        ].map((k) => (
+          <Card key={k.label} className={`shadow-sm bg-gradient-to-br ${k.accent} border-0`}>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{k.label}</span>
+                <k.icon className={`h-4 w-4 ${k.textCls}`} />
+              </div>
+              <div className={`text-xl font-bold mt-1 ${k.textCls}`}>{k.value}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-              <Card className="shadow-sm">
-                <CardHeader className="pb-1 pt-3 px-4">
-                  <CardTitle className="text-xs text-muted-foreground font-medium">
-                    Evolução de importações — {cat}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="h-44 p-2">
-                  {serie.length === 0 ? (
-                    <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem série temporal</div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={serie} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
-                        <defs>
-                          <linearGradient id={`grad-${cat}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
-                            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                        <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                        <YAxis hide />
-                        <Tooltip
-                          contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                          formatter={(v: any) => `${fmt(Number(v), 0)} kg`}
-                        />
-                        <Area type="monotone" dataKey="valor" stroke="hsl(var(--primary))" strokeWidth={2} fill={`url(#grad-${cat})`} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          );
-        })}
+      {/* Layout principal: esquerda (categorias) + direita (tabela de materiais) */}
+      <div className="grid gap-3 grid-cols-1 xl:grid-cols-[1fr_380px]">
+        <div className="space-y-3">
+          {(["FERRO", "SOLDA", "GÁS", "TINTA", "OUTROS"] as CategoriaMaterial[]).map((cat) => {
+            const { barras, serie, totalPeso, totalItens } = dadosPorCategoria[cat];
+            const vazio = barras.length === 0;
+            const cor = CAT_COLOR[cat];
+            const ativoCat = catSel === cat;
+            return (
+              <div key={cat} className="grid gap-3 grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
+                {/* Card de barras por UME */}
+                <Card
+                  className={`shadow-sm cursor-pointer transition ${ativoCat ? "ring-2 ring-offset-1" : "hover:shadow-md"}`}
+                  style={ativoCat ? { boxShadow: `0 0 0 2px ${cor}` } : undefined}
+                  onClick={() => setCatSel((p) => (p === cat ? null : cat))}
+                >
+                  <CardHeader className="pb-1 pt-3 px-4 flex flex-row items-center justify-between space-y-0">
+                    <CardTitle className="text-sm font-bold tracking-wide flex items-center gap-2">
+                      <span className="inline-block h-3 w-3 rounded-sm" style={{ background: cor }} />
+                      <span style={{ color: cor }}>{CAT_ICON[cat]}</span> {cat}
+                    </CardTitle>
+                    <div className="text-right">
+                      <div className="text-sm font-bold" style={{ color: cor }}>{fmt(totalPeso, 0)} kg</div>
+                      <div className="text-[10px] text-muted-foreground">{totalItens} itens</div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="h-44 p-2">
+                    {vazio ? (
+                      <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem dados</div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={barras} margin={{ left: 4, right: 8, top: 18, bottom: 4 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                          <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={0} />
+                          <YAxis hide />
+                          <Tooltip
+                            cursor={{ fill: `${cor}15` }}
+                            contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                            formatter={(v: any) => fmt(Number(v), 2)}
+                          />
+                          <Bar
+                            dataKey="valor"
+                            radius={[4, 4, 0, 0]}
+                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
+                            className="cursor-pointer"
+                          >
+                            {barras.map((b, i) => (
+                              <Cell
+                                key={i}
+                                fill={unidadeSel && unidadeSel !== b.label ? `${cor}40` : cor}
+                                stroke={unidadeSel === b.label ? "#000" : "transparent"}
+                                strokeWidth={unidadeSel === b.label ? 1.5 : 0}
+                              />
+                            ))}
+                            <LabelList
+                              dataKey="valor"
+                              position="top"
+                              fontSize={10}
+                              fill={cor}
+                              formatter={(v: any) => fmt(Number(v), 0)}
+                            />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Card de série temporal */}
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-1 pt-3 px-4 flex flex-row items-center justify-between space-y-0">
+                    <CardTitle className="text-xs text-muted-foreground font-medium">
+                      Evolução de consumo — <span className="font-bold" style={{ color: cor }}>{cat}</span>
+                    </CardTitle>
+                    {serie.length > 0 && (
+                      <span className="text-[10px] text-muted-foreground">{serie.length} mês(es)</span>
+                    )}
+                  </CardHeader>
+                  <CardContent className="h-44 p-2">
+                    {serie.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem série temporal</div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={serie} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
+                          <defs>
+                            <linearGradient id={`grad-${cat}`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor={cor} stopOpacity={0.55} />
+                              <stop offset="100%" stopColor={cor} stopOpacity={0.05} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                          <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                          <YAxis hide />
+                          <Tooltip
+                            contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                            formatter={(v: any) => `${fmt(Number(v), 0)} kg`}
+                          />
+                          <Area type="monotone" dataKey="valor" stroke={cor} strokeWidth={2.2} fill={`url(#grad-${cat})`} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Painel lateral: tabela de materiais */}
+        <Card className="shadow-sm xl:sticky xl:top-3 self-start h-fit max-h-[calc(100vh-100px)] overflow-hidden flex flex-col">
+          <CardHeader className="pb-2 pt-3 px-4 border-b">
+            <CardTitle className="text-sm font-bold flex items-center justify-between">
+              <span className="flex items-center gap-2"><Package className="h-4 w-4 text-primary" /> Materiais aplicados</span>
+              <span className="text-[10px] text-muted-foreground font-normal">{tabelaMateriais.length} itens</span>
+            </CardTitle>
+          </CardHeader>
+          <div className="overflow-auto flex-1">
+            <table className="w-full text-xs">
+              <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+                <tr className="text-left">
+                  <th className="px-3 py-2 font-semibold">Código</th>
+                  <th className="px-2 py-2 font-semibold">Nome do Material</th>
+                  <th className="px-2 py-2 font-semibold text-right">Qtd</th>
+                  <th className="px-2 py-2 font-semibold text-right">Peso (kg)</th>
+                  <th className="px-2 py-2 font-semibold">UME</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tabelaMateriais.length === 0 && (
+                  <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">Nenhum item</td></tr>
+                )}
+                {tabelaMateriais.map((m) => {
+                  const ativo = codigoSel === m.codigo;
+                  return (
+                    <tr
+                      key={m.codigo}
+                      onClick={() => setCodigoSel((p) => (p === m.codigo ? null : m.codigo))}
+                      className={`cursor-pointer border-b border-border/50 transition ${ativo ? "bg-primary/10 font-semibold" : "hover:bg-muted/50"}`}
+                    >
+                      <td className="px-3 py-1.5 font-mono">{m.codigo}</td>
+                      <td className="px-2 py-1.5 truncate max-w-[180px]" title={m.nome}>{m.nome}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums">{fmt(m.qtd, 2)}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums font-semibold">{fmt(m.peso, 0)}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground uppercase">{m.ume}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot className="sticky bottom-0 bg-primary text-primary-foreground font-bold">
+                <tr>
+                  <td className="px-3 py-2" colSpan={3}>TOTAL KG</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{fmt(kpi.pesoReal, 0)}</td>
+                  <td className="px-2 py-2">kg</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </Card>
       </div>
 
       {cascoAtivo && (
         <p className="text-xs text-muted-foreground text-center pt-2">
-          Exibindo dados de {cascoAtivo.nome ?? ""} — Casco {cascoAtivo.numero}
-          {codigoSel ? ` • filtrado por ${codigoSel}` : ""}
+          Exibindo dados de <span className="font-semibold">{cascoAtivo.nome ?? ""} — Casco {cascoAtivo.numero}</span>
+          {codigoSel ? ` • código ${codigoSel}` : ""}
+          {unidadeSel ? ` • UME ${unidadeSel}` : ""}
+          {catSel ? ` • categoria ${catSel}` : ""}
         </p>
       )}
     </div>
