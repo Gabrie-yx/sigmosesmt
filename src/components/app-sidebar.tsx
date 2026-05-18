@@ -125,6 +125,7 @@ const PRODUCAO_SUBMENU: LeafItem[] = [
   { to: "/app/producao/criar-ordem", label: "Criar Nova Ordem" },
   { to: "/app/producao/tipos-produto", label: "Tipos de Produto" },
   { to: "/app/producao/lista-tecnica", label: "Lista Técnica (SAP B51)" },
+  { to: "/app/producao/painel-lista-tecnica", label: "Painel Lista Técnica" },
 ];
 
 const MANUTENCAO_LOCKED: LockedItem[] = [
