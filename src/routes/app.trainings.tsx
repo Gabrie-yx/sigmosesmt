@@ -458,7 +458,7 @@ function TrainingsPage() {
   );
 }
 
-function AttendeesDialog({ trainingId, training, onClose }: { trainingId: string; training: any; onClose: () => void }) {
+export function AttendeesDialog({ trainingId, training, onClose }: { trainingId: string; training: any; onClose: () => void }) {
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
   const [selectedEmp, setSelectedEmp] = useState("");
