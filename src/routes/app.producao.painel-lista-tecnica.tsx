@@ -3,16 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  AreaChart, Area, LabelList,
 } from "recharts";
-import { Search, LayoutDashboard, RefreshCw } from "lucide-react";
+import { LayoutDashboard, RefreshCw } from "lucide-react";
 import {
   CATEGORIAS, CATEGORIA_CLASSE, classificarMaterial, type CategoriaMaterial,
 } from "@/lib/lista-tecnica-categorias";
@@ -23,13 +19,14 @@ export const Route = createFileRoute("/app/producao/painel-lista-tecnica")({
 
 const fmt = (n: number, d = 2) =>
   Number(n || 0).toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
-const fmtInt = (n: number) => Number(n || 0).toLocaleString("pt-BR");
+
+const MES_LABEL = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const mesKey = (d: Date) => `${MES_LABEL[d.getMonth()]} ${d.getFullYear()}`;
 
 function PainelListaTecnicaPage() {
   const qc = useQueryClient();
-  const [cascosSel, setCascosSel] = useState<Set<string>>(new Set());
-  const [catSel, setCatSel] = useState<CategoriaMaterial | "TODAS">("TODAS");
-  const [busca, setBusca] = useState("");
+  const [cascoSel, setCascoSel] = useState<string | null>(null);
+  const [codigoSel, setCodigoSel] = useState<string | null>(null);
 
   const { data: cascos = [] } = useQuery({
     queryKey: ["cascos-list"],
@@ -41,7 +38,6 @@ function PainelListaTecnicaPage() {
     },
   });
 
-  // Última versão por casco
   const { data: listasAtuais = [] } = useQuery({
     queryKey: ["listas-tecnicas-latest"],
     queryFn: async () => {
@@ -73,7 +69,6 @@ function PainelListaTecnicaPage() {
     },
   });
 
-  // Inscrição realtime: invalida queries quando a tabela mudar
   useEffect(() => {
     const ch = supabase
       .channel("painel-lista-tecnica")
@@ -87,32 +82,30 @@ function PainelListaTecnicaPage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
-  // Mapas auxiliares
   const cascoById = useMemo(() => {
     const m = new Map<string, any>();
     (cascos as any[]).forEach((c) => m.set(c.id, c));
     return m;
   }, [cascos]);
 
-  const listaIdToCasco = useMemo(() => {
-    const m = new Map<string, string>();
-    (listasAtuais as any[]).forEach((l) => m.set(l.id, l.casco_id));
+  const listaById = useMemo(() => {
+    const m = new Map<string, any>();
+    (listasAtuais as any[]).forEach((l) => m.set(l.id, l));
     return m;
   }, [listasAtuais]);
 
-  // Itens enriquecidos
   const itensEnriq = useMemo(() => {
     return (itens as any[]).map((it) => {
-      const cascoId = listaIdToCasco.get(it.lista_id) ?? "";
+      const l = listaById.get(it.lista_id);
       return {
         ...it,
-        casco_id: cascoId,
+        casco_id: l?.casco_id ?? "",
+        lista_created_at: l?.created_at ?? null,
         categoria: classificarMaterial(it.descricao_sap, it.codigo_sap) as CategoriaMaterial,
       };
     });
-  }, [itens, listaIdToCasco]);
+  }, [itens, listaById]);
 
-  // Cascos com dados (para listar como chips)
   const cascosComDados = useMemo(
     () =>
       (listasAtuais as any[])
@@ -122,91 +115,85 @@ function PainelListaTecnicaPage() {
     [listasAtuais, cascoById],
   );
 
-  const cascosFiltro = cascosSel.size === 0
-    ? new Set(cascosComDados.map((c: any) => c.id))
-    : cascosSel;
+  const cascoAtivoId = cascoSel ?? cascosComDados[0]?.id ?? null;
+  const cascoAtivo = cascoAtivoId ? cascoById.get(cascoAtivoId) : null;
 
   const itensFiltrados = useMemo(
-    () => itensEnriq.filter((it) => cascosFiltro.has(it.casco_id)),
-    [itensEnriq, cascosFiltro],
+    () => itensEnriq.filter((it) => it.casco_id === cascoAtivoId),
+    [itensEnriq, cascoAtivoId],
   );
 
-  // KPI por categoria (peso real)
-  const totaisPorCategoria = useMemo(() => {
-    const m: Record<CategoriaMaterial, { peso: number; pecas: number; linhas: number }> = {
-      FERRO: { peso: 0, pecas: 0, linhas: 0 },
-      SOLDA: { peso: 0, pecas: 0, linhas: 0 },
-      "GÁS": { peso: 0, pecas: 0, linhas: 0 },
-      TINTA: { peso: 0, pecas: 0, linhas: 0 },
-      OUTROS: { peso: 0, pecas: 0, linhas: 0 },
+  // Top códigos FERT/HALB (SAP geralmente começa com 7)
+  const topCodigos = useMemo(() => {
+    const acc = new Map<string, number>();
+    itensEnriq.forEach((it) => {
+      const cod = String(it.codigo_sap ?? "");
+      if (!/^7\d{5}/.test(cod)) return;
+      const peso = Math.abs(Number(it.peso_real ?? it.peso_total_estimado ?? 0));
+      acc.set(cod, (acc.get(cod) ?? 0) + peso);
+    });
+    return Array.from(acc.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([cod]) => cod);
+  }, [itensEnriq]);
+
+  const itensVisiveis = useMemo(
+    () => codigoSel ? itensFiltrados.filter((it) => String(it.codigo_sap) === codigoSel) : itensFiltrados,
+    [itensFiltrados, codigoSel],
+  );
+
+  const dadosPorCategoria = useMemo(() => {
+    const result: Record<CategoriaMaterial, { barras: any[]; serie: any[]; totalPeso: number }> = {
+      FERRO: { barras: [], serie: [], totalPeso: 0 },
+      SOLDA: { barras: [], serie: [], totalPeso: 0 },
+      "GÁS": { barras: [], serie: [], totalPeso: 0 },
+      TINTA: { barras: [], serie: [], totalPeso: 0 },
+      OUTROS: { barras: [], serie: [], totalPeso: 0 },
     };
-    itensFiltrados.forEach((it) => {
-      const cat = it.categoria as CategoriaMaterial;
-      m[cat].peso += Number(it.peso_real ?? it.peso_total_estimado ?? 0);
-      m[cat].pecas += Number(it.qtd_pecas ?? 0);
-      m[cat].linhas += 1;
-    });
-    return m;
-  }, [itensFiltrados]);
-
-  // Dados do gráfico: categoria x casco (peso)
-  const dadosGrafico = useMemo(() => {
-    return CATEGORIAS.map((cat) => {
-      const row: any = { categoria: cat };
-      cascosComDados.forEach((c: any) => {
-        if (!cascosFiltro.has(c.id)) return;
-        const peso = itensFiltrados
-          .filter((it) => it.casco_id === c.id && it.categoria === cat)
-          .reduce((s, it) => s + Number(it.peso_real ?? it.peso_total_estimado ?? 0), 0);
-        row[c.numero] = Math.round(peso);
+    CATEGORIAS.forEach((cat) => {
+      const itensCat = itensVisiveis.filter((it) => it.categoria === cat);
+      const barMap = new Map<string, { label: string; valor: number }>();
+      itensCat.forEach((it) => {
+        const label = cat === "FERRO" || cat === "OUTROS"
+          ? String(it.unidade ?? "—")
+          : String(it.descricao_sap ?? it.codigo_sap ?? "—").slice(0, 14);
+        const valor = Number(it.peso_real ?? it.peso_total_estimado ?? it.quantidade ?? 0);
+        const cur = barMap.get(label) ?? { label, valor: 0 };
+        cur.valor += valor;
+        barMap.set(label, cur);
       });
-      return row;
+      const barras = Array.from(barMap.values())
+        .sort((a, b) => Math.abs(b.valor) - Math.abs(a.valor))
+        .slice(0, 8);
+
+      const serieMap = new Map<string, number>();
+      itensCat.forEach((it) => {
+        if (!it.lista_created_at) return;
+        const d = new Date(it.lista_created_at);
+        const k = mesKey(d);
+        const valor = Number(it.peso_real ?? it.peso_total_estimado ?? 0);
+        serieMap.set(k, (serieMap.get(k) ?? 0) + valor);
+      });
+      const serie = Array.from(serieMap.entries()).map(([mes, valor]) => ({ mes, valor }));
+      const totalPeso = itensCat.reduce(
+        (s, it) => s + Number(it.peso_real ?? it.peso_total_estimado ?? 0), 0,
+      );
+      result[cat] = { barras, serie, totalPeso };
     });
-  }, [itensFiltrados, cascosComDados, cascosFiltro]);
-
-  // Tabela consolidada de materiais
-  const materiaisConsolidados = useMemo(() => {
-    const map = new Map<string, any>();
-    itensFiltrados.forEach((it) => {
-      if (catSel !== "TODAS" && it.categoria !== catSel) return;
-      const k = it.codigo_sap;
-      const cur = map.get(k) ?? {
-        codigo: it.codigo_sap,
-        descricao: it.descricao_sap ?? "",
-        unidade: it.unidade ?? "",
-        categoria: it.categoria,
-        quantidade: 0,
-        peso: 0,
-        pecas: 0,
-      };
-      cur.quantidade += Number(it.quantidade ?? 0);
-      cur.peso += Number(it.peso_real ?? it.peso_total_estimado ?? 0);
-      cur.pecas += Number(it.qtd_pecas ?? 0);
-      map.set(k, cur);
-    });
-    let arr = Array.from(map.values());
-    if (busca.trim()) {
-      const q = busca.toLowerCase();
-      arr = arr.filter((r) => [r.codigo, r.descricao].some((v) => String(v).toLowerCase().includes(q)));
-    }
-    return arr.sort((a, b) => b.peso - a.peso);
-  }, [itensFiltrados, catSel, busca]);
-
-  const totalGeralPeso = Object.values(totaisPorCategoria).reduce((s, v) => s + v.peso, 0);
-
-  // Paleta usando tokens semânticos
-  const paletaCasco = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--secondary))", "hsl(var(--destructive))", "hsl(var(--muted-foreground))"];
+    return result;
+  }, [itensVisiveis]);
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-3 p-4 bg-muted/30 min-h-screen">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="text-xl font-bold flex items-center gap-2">
             <LayoutDashboard className="h-6 w-6 text-primary" />
             Painel Dinâmico — Lista Técnica
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Consolida a última versão importada de cada casco. Atualiza automaticamente quando há novas importações.
+          <p className="text-xs text-muted-foreground">
+            Clique em um código FERT/HALB para filtrar todo o painel. Atualiza em tempo real.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => {
@@ -217,140 +204,127 @@ function PainelListaTecnicaPage() {
         </Button>
       </div>
 
-      {/* Chips de cascos */}
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Cascos</CardTitle></CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          {cascosComDados.length === 0 && (
-            <p className="text-sm text-muted-foreground">Nenhum casco com lista técnica importada.</p>
-          )}
-          {cascosComDados.map((c: any) => {
-            const ativo = cascosSel.size === 0 || cascosSel.has(c.id);
-            return (
-              <button
-                key={c.id}
-                onClick={() => {
-                  setCascosSel((prev) => {
-                    const n = new Set(prev);
-                    if (n.has(c.id)) n.delete(c.id);
-                    else n.add(c.id);
-                    return n;
-                  });
-                }}
-                className={`px-3 py-1.5 rounded-md text-sm border transition ${
-                  ativo
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-muted text-muted-foreground border-border hover:bg-muted/70"
-                }`}
-              >
-                {c.numero}{c.nome ? ` — ${c.nome}` : ""}
-              </button>
-            );
-          })}
-          {cascosSel.size > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => setCascosSel(new Set())}>Limpar</Button>
-          )}
+      {/* Barra superior estilo Power BI: códigos + casco ativo */}
+      <Card className="shadow-sm">
+        <CardContent className="p-3 flex items-center gap-3 flex-wrap">
+          <div className="flex flex-wrap gap-2 flex-1">
+            {topCodigos.length === 0 && (
+              <span className="text-xs text-muted-foreground">Sem códigos FERT/HALB detectados.</span>
+            )}
+            {topCodigos.map((cod) => {
+              const ativo = codigoSel === cod;
+              return (
+                <button
+                  key={cod}
+                  onClick={() => setCodigoSel((prev) => (prev === cod ? null : cod))}
+                  className={`px-4 py-2 rounded-md text-sm font-mono font-medium border transition shadow-sm ${
+                    ativo
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card text-foreground border-border hover:bg-accent/40"
+                  }`}
+                >
+                  {cod}
+                </button>
+              );
+            })}
+            {codigoSel && (
+              <Button variant="ghost" size="sm" onClick={() => setCodigoSel(null)}>Limpar filtro</Button>
+            )}
+          </div>
+          <select
+            value={cascoAtivoId ?? ""}
+            onChange={(e) => setCascoSel(e.target.value || null)}
+            className="px-4 py-2 rounded-md text-sm font-semibold border border-border bg-card shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          >
+            {cascosComDados.length === 0 && <option value="">Nenhum casco</option>}
+            {cascosComDados.map((c: any) => (
+              <option key={c.id} value={c.id}>
+                {c.nome ? `${String(c.nome).toUpperCase()} - ` : ""}CASCO {c.numero}
+              </option>
+            ))}
+          </select>
         </CardContent>
       </Card>
 
-      {/* KPIs por categoria */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-5">
-        {CATEGORIAS.map((cat) => {
-          const v = totaisPorCategoria[cat];
-          const pct = totalGeralPeso > 0 ? (v.peso / totalGeralPeso) * 100 : 0;
-          const ativo = catSel === cat;
+      {/* Linhas: 1 por categoria, barras + série temporal */}
+      <div className="space-y-3">
+        {(["FERRO", "SOLDA", "GÁS", "OUTROS"] as CategoriaMaterial[]).map((cat) => {
+          const { barras, serie, totalPeso } = dadosPorCategoria[cat];
+          const vazio = barras.length === 0;
           return (
-            <button
-              key={cat}
-              onClick={() => setCatSel((prev) => (prev === cat ? "TODAS" : cat))}
-              className="text-left"
-            >
-              <Card className={`transition ${ativo ? "ring-2 ring-primary" : "hover:bg-muted/40"}`}>
-                <CardContent className="py-3">
-                  <div className="flex items-center gap-2">
+            <div key={cat} className="grid gap-3 grid-cols-1 lg:grid-cols-2">
+              <Card className="shadow-sm">
+                <CardHeader className="pb-1 pt-3 px-4 flex flex-row items-center justify-between">
+                  <CardTitle className="text-sm font-bold tracking-wide flex items-center gap-2">
                     <span className={`inline-block h-3 w-3 rounded-sm ${CATEGORIA_CLASSE[cat]}`} />
-                    <span className="text-xs font-medium uppercase tracking-wide">{cat}</span>
-                  </div>
-                  <div className="text-xl font-semibold mt-1">{fmt(v.peso, 0)} <span className="text-xs font-normal text-muted-foreground">kg</span></div>
-                  <div className="text-xs text-muted-foreground">{fmtInt(v.pecas)} peças • {v.linhas} linhas • {pct.toFixed(1)}%</div>
+                    {cat}
+                  </CardTitle>
+                  <span className="text-xs text-muted-foreground">{fmt(totalPeso, 0)} kg</span>
+                </CardHeader>
+                <CardContent className="h-44 p-2">
+                  {vazio ? (
+                    <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem dados</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={barras} margin={{ left: 4, right: 8, top: 18, bottom: 4 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                        <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={0} />
+                        <YAxis hide />
+                        <Tooltip
+                          contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                          formatter={(v: any) => fmt(Number(v), 2)}
+                        />
+                        <Bar dataKey="valor" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]}>
+                          <LabelList dataKey="valor" position="top" fontSize={10} formatter={(v: any) => fmt(Number(v), 0)} />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </CardContent>
               </Card>
-            </button>
+
+              <Card className="shadow-sm">
+                <CardHeader className="pb-1 pt-3 px-4">
+                  <CardTitle className="text-xs text-muted-foreground font-medium">
+                    Evolução de importações — {cat}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="h-44 p-2">
+                  {serie.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem série temporal</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={serie} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
+                        <defs>
+                          <linearGradient id={`grad-${cat}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                        <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                        <YAxis hide />
+                        <Tooltip
+                          contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                          formatter={(v: any) => `${fmt(Number(v), 0)} kg`}
+                        />
+                        <Area type="monotone" dataKey="valor" stroke="hsl(var(--primary))" strokeWidth={2} fill={`url(#grad-${cat})`} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           );
         })}
       </div>
 
-      {/* Gráfico por categoria x casco */}
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Peso (kg) por categoria × casco</CardTitle></CardHeader>
-        <CardContent className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dadosGrafico} margin={{ left: 10, right: 10, top: 8, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="categoria" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => Intl.NumberFormat("pt-BR", { notation: "compact" }).format(v)} />
-              <Tooltip
-                contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--popover-foreground))" }}
-                formatter={(v: any) => `${fmt(Number(v), 0)} kg`}
-              />
-              {cascosComDados
-                .filter((c: any) => cascosFiltro.has(c.id))
-                .map((c: any, i: number) => (
-                  <Bar key={c.id} dataKey={c.numero} fill={paletaCasco[i % paletaCasco.length]} radius={[4, 4, 0, 0]} />
-                ))}
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Tabela de materiais */}
-      <Card>
-        <CardHeader className="pb-2 flex flex-row items-center justify-between flex-wrap gap-2">
-          <CardTitle className="text-sm">
-            Materiais consolidados {catSel !== "TODAS" && <Badge variant="secondary" className="ml-2">{catSel}</Badge>}
-          </CardTitle>
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input className="pl-8 h-9" placeholder="Buscar código ou descrição…" value={busca} onChange={(e) => setBusca(e.target.value)} />
-          </div>
-        </CardHeader>
-        <CardContent className="overflow-auto max-h-[480px]">
-          <Table>
-            <TableHeader className="sticky top-0 bg-background z-10">
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Material</TableHead>
-                <TableHead>Cat.</TableHead>
-                <TableHead className="text-right">Quantidade</TableHead>
-                <TableHead>UM</TableHead>
-                <TableHead className="text-right">Peças</TableHead>
-                <TableHead className="text-right">Peso (kg)</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {materiaisConsolidados.map((r) => (
-                <TableRow key={r.codigo}>
-                  <TableCell className="font-mono text-xs">{r.codigo}</TableCell>
-                  <TableCell className="max-w-md truncate" title={r.descricao}>{r.descricao}</TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center gap-1.5 text-xs">
-                      <span className={`inline-block h-2.5 w-2.5 rounded-sm ${CATEGORIA_CLASSE[r.categoria as CategoriaMaterial]}`} />
-                      {r.categoria}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">{fmt(r.quantidade)}</TableCell>
-                  <TableCell>{r.unidade}</TableCell>
-                  <TableCell className="text-right">{fmtInt(r.pecas)}</TableCell>
-                  <TableCell className="text-right font-medium">{fmt(r.peso, 0)}</TableCell>
-                </TableRow>
-              ))}
-              {materiaisConsolidados.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-6">Sem materiais para os filtros atuais.</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {cascoAtivo && (
+        <p className="text-xs text-muted-foreground text-center pt-2">
+          Exibindo dados de {cascoAtivo.nome ?? ""} — Casco {cascoAtivo.numero}
+          {codigoSel ? ` • filtrado por ${codigoSel}` : ""}
+        </p>
+      )}
     </div>
   );
 }
