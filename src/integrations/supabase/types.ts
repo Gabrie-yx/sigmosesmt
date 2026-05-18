@@ -1721,6 +1721,143 @@ export type Database = {
         }
         Relationships: []
       }
+      producao_lista_tecnica: {
+        Row: {
+          arquivo_nome: string | null
+          casco_id: string
+          created_at: string
+          id: string
+          importado_por: string | null
+          observacoes: string | null
+          origem: string
+          peso_total_estimado: number | null
+          peso_total_real: number | null
+          qtd_codigos_distintos: number
+          qtd_itens: number
+          qtd_pecas_total: number
+          tipo_embarcacao: string | null
+          updated_at: string
+          versao: number
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          casco_id: string
+          created_at?: string
+          id?: string
+          importado_por?: string | null
+          observacoes?: string | null
+          origem?: string
+          peso_total_estimado?: number | null
+          peso_total_real?: number | null
+          qtd_codigos_distintos?: number
+          qtd_itens?: number
+          qtd_pecas_total?: number
+          tipo_embarcacao?: string | null
+          updated_at?: string
+          versao?: number
+        }
+        Update: {
+          arquivo_nome?: string | null
+          casco_id?: string
+          created_at?: string
+          id?: string
+          importado_por?: string | null
+          observacoes?: string | null
+          origem?: string
+          peso_total_estimado?: number | null
+          peso_total_real?: number | null
+          qtd_codigos_distintos?: number
+          qtd_itens?: number
+          qtd_pecas_total?: number
+          tipo_embarcacao?: string | null
+          updated_at?: string
+          versao?: number
+        }
+        Relationships: []
+      }
+      producao_lista_tecnica_itens: {
+        Row: {
+          codigo_sap: string
+          comprimento_m: number | null
+          comprimento_txt: string | null
+          created_at: string
+          descricao_sap: string | null
+          elemento: string | null
+          espessura_mm: number | null
+          id: string
+          largura_m: number | null
+          largura_txt: string | null
+          linha: number
+          lista_id: string
+          medida: string | null
+          obs_dobra: string | null
+          peso_chapa: number | null
+          peso_real: number | null
+          peso_total_estimado: number | null
+          peso_unit_real: number | null
+          peso_unit_ref: number | null
+          qtd_pecas: number | null
+          quantidade: number | null
+          unidade: string | null
+        }
+        Insert: {
+          codigo_sap: string
+          comprimento_m?: number | null
+          comprimento_txt?: string | null
+          created_at?: string
+          descricao_sap?: string | null
+          elemento?: string | null
+          espessura_mm?: number | null
+          id?: string
+          largura_m?: number | null
+          largura_txt?: string | null
+          linha: number
+          lista_id: string
+          medida?: string | null
+          obs_dobra?: string | null
+          peso_chapa?: number | null
+          peso_real?: number | null
+          peso_total_estimado?: number | null
+          peso_unit_real?: number | null
+          peso_unit_ref?: number | null
+          qtd_pecas?: number | null
+          quantidade?: number | null
+          unidade?: string | null
+        }
+        Update: {
+          codigo_sap?: string
+          comprimento_m?: number | null
+          comprimento_txt?: string | null
+          created_at?: string
+          descricao_sap?: string | null
+          elemento?: string | null
+          espessura_mm?: number | null
+          id?: string
+          largura_m?: number | null
+          largura_txt?: string | null
+          linha?: number
+          lista_id?: string
+          medida?: string | null
+          obs_dobra?: string | null
+          peso_chapa?: number | null
+          peso_real?: number | null
+          peso_total_estimado?: number | null
+          peso_unit_real?: number | null
+          peso_unit_ref?: number | null
+          qtd_pecas?: number | null
+          quantidade?: number | null
+          unidade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producao_lista_tecnica_itens_lista_id_fkey"
+            columns: ["lista_id"]
+            isOneToOne: false
+            referencedRelation: "producao_lista_tecnica"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       producao_materiais: {
         Row: {
           canal_distribuicao: string | null
