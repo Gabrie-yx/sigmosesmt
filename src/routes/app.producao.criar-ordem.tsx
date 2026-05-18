@@ -202,6 +202,7 @@ function CriarOrdemPage() {
     setValues((v) => ({
       ...v,
       ...(m === "FERT" ? FERT_DEFAULTS : HALB_DEFAULTS),
+      tipo_produto: "",
     }));
   }
   const [Grid, setGrid] = useState<any>(null);
@@ -578,6 +579,15 @@ function CriarOrdemPage() {
     []
   );
 
+  // Filtra Tipos de Produto pela aba ativa:
+  //  HALB  → "em construção"
+  //  FERT  → "Acabado"
+  // Se o registro não tem mtart definido, mantém visível (compatibilidade).
+  const tiposFiltrados = useMemo(
+    () => (tipos as any[]).filter((t) => !t.mtart || t.mtart === mtart),
+    [tipos, mtart]
+  );
+
   const renderField = (f: FieldDef) => {
     const v = values[f.key] ?? "";
     switch (f.kind) {
@@ -648,7 +658,7 @@ function CriarOrdemPage() {
             <Select value={v} onValueChange={(val) => setVal(f.key, val)}>
               <SelectTrigger><SelectValue placeholder="Tipo de produto…" /></SelectTrigger>
               <SelectContent>
-                {tipos.map((t: any) => (
+                {tiposFiltrados.map((t: any) => (
                   <SelectItem key={t.id} value={t.nome}>{t.nome}</SelectItem>
                 ))}
               </SelectContent>
