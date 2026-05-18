@@ -50,6 +50,7 @@ function TrainingsPage() {
     validade_meses: 12,
     observacoes: "",
     course_id: "" as string,
+    modalidade: "PRESENCIAL" as typeof MODALIDADES[number],
   });
   const [file, setFile] = useState<File | null>(null);
   const [assinaturaFile, setAssinaturaFile] = useState<File | null>(null);
@@ -110,6 +111,7 @@ function TrainingsPage() {
         observacoes: f.observacoes || null,
         course_id: f.course_id || null,
         local: f.local || null,
+        modalidade: f.modalidade,
       };
       if (anexo_path) payload.anexo_path = anexo_path;
       if (assinatura_path) payload.assinatura_path = assinatura_path;
@@ -153,7 +155,7 @@ function TrainingsPage() {
     setF({
       tipo: TIPOS_FIXOS[0], titulo: "", instrutor: "", instituicao: "", local: "",
       data_realizacao: today(), carga_horaria_h: 8, validade_meses: 12, observacoes: "",
-      course_id: "",
+      course_id: "", modalidade: "PRESENCIAL",
     });
   }
 
@@ -165,6 +167,7 @@ function TrainingsPage() {
       carga_horaria_h: Number(t.carga_horaria_h), validade_meses: t.validade_meses,
       observacoes: t.observacoes ?? "",
       course_id: t.course_id ?? "",
+      modalidade: (t.modalidade as any) ?? "PRESENCIAL",
     });
     setFile(null);
     setAssinaturaFile(null);
