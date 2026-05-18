@@ -16,6 +16,7 @@ import {
   ClipboardList, GripVertical, Lock, Unlock, RotateCcw, Plus, Save, ListOrdered,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/app/producao/criar-ordem")({
   validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
@@ -155,7 +156,8 @@ function CriarOrdemPage() {
   const { id: editId } = Route.useSearch();
   const [layout, setLayout] = useState<Layout[]>(() => loadLayout());
   const [locked, setLocked] = useState(false);
-  const [values, setValues] = useState<Record<string, string>>({
+  const [mtart, setMtart] = useState<"HALB" | "FERT">("HALB");
+  const HALB_DEFAULTS: Record<string, string> = {
     data: new Date().toISOString().slice(0, 10),
     grupo_compradores: "Não tem",
     centro: "C020",
@@ -166,7 +168,32 @@ function CriarOrdemPage() {
     controle_preco: "S",
     origem_material: "NACIONAL",
     utilizacao_material: "1 - INDUSTRIALIZAÇÃO",
-  });
+  };
+  const FERT_DEFAULTS: Record<string, string> = {
+    data: new Date().toISOString().slice(0, 10),
+    unidade_medida: "UN",
+    grupo_compradores: "",
+    centro: "C020",
+    deposito: "DE01",
+    org_vendas: "1002",
+    canal_distribuicao: "",
+    setor_atividade: "NORM",
+    classificacao_fiscal: "Z5",
+    grupo_classif_contabil: "NORM",
+    grupo_categ_item: "KP - Sem verificação",
+    classe_avaliacao: "S",
+    controle_preco: "3",
+    determ_preco: "",
+  };
+  const [values, setValues] = useState<Record<string, string>>(HALB_DEFAULTS);
+
+  function switchMtart(m: "HALB" | "FERT") {
+    setMtart(m);
+    setValues((v) => ({
+      ...v,
+      ...(m === "FERT" ? FERT_DEFAULTS : HALB_DEFAULTS),
+    }));
+  }
   const [Grid, setGrid] = useState<any>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [gridWidth, setGridWidth] = useState(0);
@@ -453,6 +480,7 @@ function CriarOrdemPage() {
         solicitante: v.solicitante || null,
         qtde_itens: v.qtde_itens ? parseInt(v.qtde_itens, 10) : null,
         data_solicitacao: v.data || new Date().toISOString().slice(0, 10),
+        mtart,
       };
       const itemBase = {
         item: 1,
@@ -471,6 +499,10 @@ function CriarOrdemPage() {
         origem_material: v.origem_material || null,
         utilizacao_material: v.utilizacao_material || null,
         data_solicitacao: v.data || new Date().toISOString().slice(0, 10),
+        org_vendas: v.org_vendas || null,
+        canal_distribuicao: v.canal_distribuicao || null,
+        classificacao_fiscal: v.classificacao_fiscal || null,
+        grupo_classif_contabil: v.grupo_classif_contabil || null,
       };
 
       if (editId) {
@@ -689,7 +721,7 @@ function CriarOrdemPage() {
               {editId ? "Editar Ordem de Produção" : "Nova Ordem de Produção"}
             </h1>
             <p className="text-[11px] text-muted-foreground font-medium">
-              FORMULÁRIO – MATERIAIS HALB · widgets arrastáveis e redimensionáveis
+              FORMULÁRIO – MATERIAIS {mtart === "FERT" ? "FERT (PRODUTO ACABADO)" : "HALB (PRODUTO SEMIACABADO)"} · widgets arrastáveis e redimensionáveis
             </p>
           </div>
         </div>
@@ -717,6 +749,14 @@ function CriarOrdemPage() {
           </Button>
         </div>
       </div>
+
+      {/* Tabs HALB / FERT */}
+      <Tabs value={mtart} onValueChange={(v) => switchMtart(v as "HALB" | "FERT")}>
+        <TabsList className="grid grid-cols-2 w-full max-w-md">
+          <TabsTrigger value="HALB">HALB — Semiacabado</TabsTrigger>
+          <TabsTrigger value="FERT">FERT — Produto Acabado</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Grid */}
       <div ref={wrapRef} className="min-w-0 rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50/40 to-white p-3">
@@ -753,6 +793,33 @@ function CriarOrdemPage() {
           <div className="text-center text-xs text-slate-400 py-12">Carregando layout…</div>
         )}
       </div>
+
+      {/* Campos FERT (SAP) — só no modo FERT */}
+      {mtart === "FERT" && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/30 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-3">
+            Campos FERT (SAP) — pré-preenchidos, editáveis
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
+              <Label className="text-xs">Organização de Vendas</Label>
+              <Input value={values.org_vendas ?? ""} onChange={(e) => setVal("org_vendas", e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Canal de Distribuição</Label>
+              <Input value={values.canal_distribuicao ?? ""} onChange={(e) => setVal("canal_distribuicao", e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Classificação Fiscal</Label>
+              <Input value={values.classificacao_fiscal ?? ""} onChange={(e) => setVal("classificacao_fiscal", e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Gr. Classif. Contábil Material</Label>
+              <Input value={values.grupo_classif_contabil ?? ""} onChange={(e) => setVal("grupo_classif_contabil", e.target.value)} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Assinatura */}
       <div className="rounded-xl border-2 border-dashed border-slate-300 bg-white p-6 text-center">
