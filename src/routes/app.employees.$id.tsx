@@ -349,6 +349,17 @@ function QuickTabBtn({ icon: Icon, label, tone = "rose", active, onClick }: { ic
 }
 
 function EmployeeContextSidebar({ id }: { id: string }) {
+  const qc = useQueryClient();
+  const { isEditor } = useAuth();
+  const [openNewEmployee, setOpenNewEmployee] = useState(false);
+  const [newEmployeeForm, setNewEmployeeForm] = useState<any>({
+    nome: "",
+    cpf: "",
+    matricula: "",
+    status: "ATIVO",
+    company_id: "",
+    role_id: "",
+  });
   const { data: emp } = useQuery({
     queryKey: ["employee-sidebar", id],
     queryFn: async () => {
@@ -402,6 +413,33 @@ function EmployeeContextSidebar({ id }: { id: string }) {
       return m;
     },
   });
+
+  const createEmployee = useMutation({
+    mutationFn: async (v: any) => {
+      const { error } = await supabase.from("employees").insert({
+        nome: v.nome,
+        cpf: v.cpf || null,
+        matricula: v.matricula || null,
+        status: v.status,
+        company_id: v.company_id || companyId,
+        role_id: v.role_id || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["employees"] });
+      qc.invalidateQueries({ queryKey: ["coworkers-sidebar", companyId, id] });
+      setOpenNewEmployee(false);
+      setNewEmployeeForm({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: companyId ?? "", role_id: "" });
+      toast.success("Funcionário criado");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  function openNewEmployeeDialog() {
+    setNewEmployeeForm({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: companyId ?? "", role_id: "" });
+    setOpenNewEmployee(true);
+  }
 
   if (!companyId) {
     return (
