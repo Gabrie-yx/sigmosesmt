@@ -19,6 +19,15 @@ import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
+function FieldBox({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-600">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/app/producao/criar-ordem")({
   validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
   component: CriarOrdemPage,
