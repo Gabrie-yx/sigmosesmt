@@ -141,9 +141,10 @@ function PainelListaTecnicaPage() {
       OUTROS: { peso: 0, pecas: 0, linhas: 0 },
     };
     itensFiltrados.forEach((it) => {
-      m[it.categoria].peso += Number(it.peso_real ?? it.peso_total_estimado ?? 0);
-      m[it.categoria].pecas += Number(it.qtd_pecas ?? 0);
-      m[it.categoria].linhas += 1;
+      const cat = it.categoria as CategoriaMaterial;
+      m[cat].peso += Number(it.peso_real ?? it.peso_total_estimado ?? 0);
+      m[cat].pecas += Number(it.qtd_pecas ?? 0);
+      m[cat].linhas += 1;
     });
     return m;
   }, [itensFiltrados]);

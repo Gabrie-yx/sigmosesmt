@@ -40,6 +40,7 @@ import { Route as AppSesmtProcedimentosRouteImport } from './routes/app.sesmt.pr
 import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
 import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.relatorios.reincidencia-epi'
 import { Route as AppProducaoTiposProdutoRouteImport } from './routes/app.producao.tipos-produto'
+import { Route as AppProducaoPainelListaTecnicaRouteImport } from './routes/app.producao.painel-lista-tecnica'
 import { Route as AppProducaoOrdensRouteImport } from './routes/app.producao.ordens'
 import { Route as AppProducaoListaTecnicaRouteImport } from './routes/app.producao.lista-tecnica'
 import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
@@ -208,6 +209,12 @@ const AppProducaoTiposProdutoRoute = AppProducaoTiposProdutoRouteImport.update({
   path: '/producao/tipos-produto',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProducaoPainelListaTecnicaRoute =
+  AppProducaoPainelListaTecnicaRouteImport.update({
+    id: '/producao/painel-lista-tecnica',
+    path: '/producao/painel-lista-tecnica',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppProducaoOrdensRoute = AppProducaoOrdensRouteImport.update({
   id: '/producao/ordens',
   path: '/producao/ordens',
@@ -298,6 +305,7 @@ export interface FileRoutesByFullPath {
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/lista-tecnica': typeof AppProducaoListaTecnicaRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
+  '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
@@ -340,6 +348,7 @@ export interface FileRoutesByTo {
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/lista-tecnica': typeof AppProducaoListaTecnicaRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
+  '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
@@ -385,6 +394,7 @@ export interface FileRoutesById {
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/lista-tecnica': typeof AppProducaoListaTecnicaRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
+  '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
@@ -431,6 +441,7 @@ export interface FileRouteTypes {
     | '/app/producao/criar-ordem'
     | '/app/producao/lista-tecnica'
     | '/app/producao/ordens'
+    | '/app/producao/painel-lista-tecnica'
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
@@ -473,6 +484,7 @@ export interface FileRouteTypes {
     | '/app/producao/criar-ordem'
     | '/app/producao/lista-tecnica'
     | '/app/producao/ordens'
+    | '/app/producao/painel-lista-tecnica'
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
@@ -517,6 +529,7 @@ export interface FileRouteTypes {
     | '/app/producao/criar-ordem'
     | '/app/producao/lista-tecnica'
     | '/app/producao/ordens'
+    | '/app/producao/painel-lista-tecnica'
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
@@ -756,6 +769,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoTiposProdutoRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/producao/painel-lista-tecnica': {
+      id: '/app/producao/painel-lista-tecnica'
+      path: '/producao/painel-lista-tecnica'
+      fullPath: '/app/producao/painel-lista-tecnica'
+      preLoaderRoute: typeof AppProducaoPainelListaTecnicaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/producao/ordens': {
       id: '/app/producao/ordens'
       path: '/producao/ordens'
@@ -877,6 +897,7 @@ interface AppRouteChildren {
   AppProducaoCriarOrdemRoute: typeof AppProducaoCriarOrdemRoute
   AppProducaoListaTecnicaRoute: typeof AppProducaoListaTecnicaRoute
   AppProducaoOrdensRoute: typeof AppProducaoOrdensRoute
+  AppProducaoPainelListaTecnicaRoute: typeof AppProducaoPainelListaTecnicaRoute
   AppProducaoTiposProdutoRoute: typeof AppProducaoTiposProdutoRoute
   AppRelatoriosReincidenciaEpiRoute: typeof AppRelatoriosReincidenciaEpiRoute
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
@@ -914,6 +935,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProducaoCriarOrdemRoute: AppProducaoCriarOrdemRoute,
   AppProducaoListaTecnicaRoute: AppProducaoListaTecnicaRoute,
   AppProducaoOrdensRoute: AppProducaoOrdensRoute,
+  AppProducaoPainelListaTecnicaRoute: AppProducaoPainelListaTecnicaRoute,
   AppProducaoTiposProdutoRoute: AppProducaoTiposProdutoRoute,
   AppRelatoriosReincidenciaEpiRoute: AppRelatoriosReincidenciaEpiRoute,
   AppSesmtDocsRoute: AppSesmtDocsRoute,
