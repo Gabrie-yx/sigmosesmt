@@ -635,19 +635,20 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
 // Form: nova turma
 // ============================================================================
 
-function NovaTurmaForm({ courseId, course, onClose, onSaved }: { courseId: string; course: any; onClose: () => void; onSaved: () => void }) {
+function NovaTurmaForm({ courseId, course, turma, onClose, onSaved }: { courseId: string; course: any; turma?: any | null; onClose: () => void; onSaved: () => void }) {
+  const isEdit = !!turma?.id;
   const [f, setF] = useState({
-    titulo: "",
-    data_realizacao: today(),
-    data_fim: today(),
-    carga_horaria_h: Number(course?.carga_horaria_h ?? 8),
-    validade_meses: 12,
-    instrutor: "",
-    instituicao: "",
-    local: "",
-    modalidade: "PRESENCIAL" as typeof MODALIDADES[number],
-    tipo_realizacao: "INTERNO" as typeof TIPOS_REALIZACAO[number],
-    observacoes: "",
+    titulo: turma?.titulo ?? "",
+    data_realizacao: turma?.data_realizacao ?? today(),
+    data_fim: turma?.data_fim ?? today(),
+    carga_horaria_h: Number(turma?.carga_horaria_h ?? course?.carga_horaria_h ?? 8),
+    validade_meses: Number(turma?.validade_meses ?? 12),
+    instrutor: turma?.instrutor ?? "",
+    instituicao: turma?.instituicao ?? "",
+    local: turma?.local ?? "",
+    modalidade: (turma?.modalidade ?? "PRESENCIAL") as typeof MODALIDADES[number],
+    tipo_realizacao: (turma?.tipo_realizacao ?? "INTERNO") as typeof TIPOS_REALIZACAO[number],
+    observacoes: turma?.observacoes ?? "",
   });
 
   const save = useMutation({
@@ -667,11 +668,16 @@ function NovaTurmaForm({ courseId, course, onClose, onSaved }: { courseId: strin
         tipo_realizacao: f.tipo_realizacao,
         observacoes: f.observacoes || null,
       };
-      const { error } = await supabase.from("trainings").insert(payload);
-      if (error) throw error;
+      if (isEdit) {
+        const { error } = await supabase.from("trainings").update(payload).eq("id", turma.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("trainings").insert(payload);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Turma cadastrada");
+      toast.success(isEdit ? "Turma atualizada" : "Turma cadastrada");
       onSaved();
     },
     onError: (e: any) => toast.error(e.message),
@@ -681,7 +687,7 @@ function NovaTurmaForm({ courseId, course, onClose, onSaved }: { courseId: strin
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova Turma — {course?.codigo}</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar Turma" : "Nova Turma"} — {course?.codigo}</DialogTitle>
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="space-y-4">
           <div>
@@ -756,11 +762,14 @@ function NovaTurmaForm({ courseId, course, onClose, onSaved }: { courseId: strin
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
             <Button type="submit" disabled={save.isPending} className="bg-[#991b1b] hover:bg-[#7f1d1d]">
-              <Plus className="h-4 w-4 mr-2" /> Cadastrar Turma
+              {isEdit ? <Pencil className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              {isEdit ? "Salvar alterações" : "Cadastrar Turma"}
             </Button>
           </div>
           <p className="text-[10px] text-slate-500 italic">
-            Após cadastrar a turma você poderá adicionar participantes pela aba <b>Grade Atual</b> e enviar os anexos homologados (lista de presença, fotos, eficácia, reação) na própria turma.
+            {isEdit
+              ? "Ao alterar a data, a matriz dos participantes APROVADOS/PRESENTES é atualizada automaticamente para a nova data."
+              : "Após cadastrar a turma você poderá adicionar participantes pela aba Grade Atual e enviar os anexos homologados na própria turma."}
           </p>
         </form>
       </DialogContent>
