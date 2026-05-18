@@ -339,6 +339,16 @@ function TrainingsPage() {
                 <Input value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex.: Auditório DMN" className="mt-2" />
               </div>
 
+              <div>
+                <Label className="text-[10px] font-black text-slate-500 uppercase">Modalidade</Label>
+                <Select value={f.modalidade} onValueChange={(v) => setF({ ...f, modalidade: v as any })}>
+                  <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MODALIDADES.map((m) => <SelectItem key={m} value={m}>{MOD_LABEL[m]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-[10px] font-black text-slate-500 uppercase">Carga Horária (h)</Label>
