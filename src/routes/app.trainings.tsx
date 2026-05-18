@@ -9,10 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { GraduationCap, Plus, Pencil, Trash2, Users, Paperclip, Download, X, FileText, Clock, Link2, Building2, ClipboardList, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
+import { CursosMinistradosPanel } from "@/components/cursos/cursos-ministrados-panel";
 
 export const Route = createFileRoute("/app/trainings")({
   component: TrainingsPage,
@@ -21,6 +23,8 @@ export const Route = createFileRoute("/app/trainings")({
 const TIPOS_FIXOS = ["Integração", "Reciclagem", "DDS", "Palestra", "Outro"];
 
 const SITUACOES = ["APROVADO", "REPROVADO", "PRESENTE", "AUSENTE"] as const;
+const MODALIDADES = ["PRESENCIAL", "ONLINE", "HIBRIDA"] as const;
+const MOD_LABEL: Record<string, string> = { PRESENCIAL: "Presencial", ONLINE: "Online", HIBRIDA: "Híbrida" };
 
 const today = () => new Date().toISOString().slice(0, 10);
 
