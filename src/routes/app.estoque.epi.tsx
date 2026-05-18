@@ -133,7 +133,7 @@ const TIPO_LABEL: Record<Tipo, string> = {
 
 // ───────────────────────── page ─────────────────────────
 
-function EstoqueEpiPage() {
+export function EstoqueEpiPage() {
   const qc = useQueryClient();
 
   const { data: epis = [], isLoading } = useQuery({
