@@ -184,6 +184,21 @@ async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "do
   }
   const colW = (W - 2 * M) / 3;
   const sigH = 22;
+  // Pré-carrega a assinatura para usar a proporção real (sem distorcer)
+  let sigDims: { w: number; h: number } | null = null;
+  if (req.signature_solicitante) {
+    try {
+      sigDims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        img.onerror = reject;
+        img.src = req.signature_solicitante as string;
+      });
+    } catch (e) {
+      console.warn("Falha ao carregar assinatura:", e);
+    }
+  }
+
   ["ASSINATURA SOLICITANTE","ASSINATURA SUPERVISOR GERAL","ASSINATURA ANALISTA DE COMPRAS"].forEach((label, idx) => {
     const x = M + idx * colW;
     doc.rect(x, finalY, colW, sigH);
@@ -196,11 +211,29 @@ async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "do
       doc.text(fmtBR(req.data_requisicao), x + 13, finalY + sigH - 1);
       if (req.signature_solicitante) {
         try {
-          const hMm = Math.max(6, Math.min(sigH - 8, ((req.signature_solicitante_height ?? 80) / 96) * 25.4));
-          const wMm = colW - 4;
-          const yImg = finalY + 5 + ((sigH - 11 - hMm) / 2);
-          doc.addImage(req.signature_solicitante, "PNG", x + 2, yImg, wMm, hMm, undefined, "FAST");
-        } catch { /* noop */ }
+          // Área disponível para a assinatura (entre o título e a linha "DATA")
+          const areaX = x + 2;
+          const areaY = finalY + 5;
+          const areaW = colW - 4;
+          const areaH = sigH - 11; // ~11mm
+          let drawW = areaW;
+          let drawH = areaH;
+          if (sigDims && sigDims.w > 0 && sigDims.h > 0) {
+            const ratio = sigDims.w / sigDims.h;
+            // Ajusta preservando proporção dentro da área
+            drawH = areaH;
+            drawW = drawH * ratio;
+            if (drawW > areaW) {
+              drawW = areaW;
+              drawH = drawW / ratio;
+            }
+          }
+          const drawX = areaX + (areaW - drawW) / 2;
+          const drawY = areaY + (areaH - drawH) / 2;
+          doc.addImage(req.signature_solicitante, "PNG", drawX, drawY, drawW, drawH, undefined, "FAST");
+        } catch (e) {
+          console.warn("Falha ao desenhar assinatura no PDF:", e);
+        }
       }
     }
   });
