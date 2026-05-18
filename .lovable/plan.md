@@ -1,76 +1,99 @@
-## Objetivo
+## Painel de Cursos Ministrados
 
-1. Refletir a Matriz de Treinamento na ficha de cada funcionário.
-2. Remodelar a página **Treinamentos & NR** com visual premium e organização intuitiva.
-3. Catálogo de tipos cobrindo **todas as NRs + categorias** (Curso, Palestra, Workshop, Oficina, Integração, Reciclagem, Outro) com opção de inclusão livre.
-4. Vincular cursos à **função (role)** do funcionário, não só ao setor.
+Nova aba **"Cursos Ministrados"** dentro de `/app/trainings` (ao lado da grade atual). Foco: card mestre por curso/NR, dentro dele as turmas históricas, e em cada turma os anexos homologados.
 
----
+### 1. Tipos de atividade + modalidade
 
-## 1. Banco — migration única
+Categorias do card mestre (já existe `CATEGORIA` em `matriz-status.ts` — adiciono "PALESTRA" se faltar e garanto o label):
 
-**Estender `training_matrix_courses`:**
-- `categoria text` default `'NR'` (`NR | CURSO | PALESTRA | WORKSHOP | OFICINA | INTEGRACAO | RECICLAGEM | OUTRO`)
-- `descricao text` (opcional)
-- `carga_horaria_h numeric` (opcional)
+- NR · Curso · **Palestra** · Workshop · Oficina · Integração · Reciclagem
 
-**Nova tabela `training_matrix_role_courses`:**
-- `role_id uuid`, `course_id uuid` (PK composta) — define cursos obrigatórios por função (em adição a setor).
+Modalidade (campo novo do form de turma):
+- **Presencial** · **Online** · **Híbrida**
 
-**Seed do catálogo:**
-- Inserir NR-01 a NR-38 (apenas as faltantes), categoria `NR`, periodicidade `NA` por padrão (admin ajusta as obrigatórias).
-- Manter cursos já existentes.
+Tipo (existente, mantenho):
+- Interno · Externo · In Company
 
-RLS: mesmas policies do padrão (`is_editor` / select público a autenticados).
+### 2. Estrutura visual
 
----
+```text
+ABA "Cursos Ministrados"
+┌─────────────────────────────────────────────────┐
+│ [+ Novo Card]   busca: ___   filtro: categoria  │
+├─────────────────────────────────────────────────┤
+│  ┌── Card NR-06 ───┐  ┌── Card NR-17 ───┐  ...  │
+│  │ 🛡 NR-06        │  │ 🪑 NR-17        │       │
+│  │ 12 turmas       │  │ 3 turmas        │       │
+│  │ última: 25/08   │  │ última: 10/09   │       │
+│  │ [Ver turmas]    │  │ [Ver turmas]    │       │
+│  └─────────────────┘  └─────────────────┘       │
+└─────────────────────────────────────────────────┘
 
-## 2. Ficha do funcionário (`app.employees.$id.tsx`)
+Click em "Ver turmas" → dialog com:
+  - botão "+ Nova turma"
+  - lista de turmas (data, instrutor, carga, modalidade, status anexos)
+  - cada linha expande pra mostrar: lista de presença, fotos, eficácia, reação
+```
 
-Adicionar nova aba **"Matriz de Treinamento"** ao lado das abas existentes:
-- Lista de cursos obrigatórios para o funcionário, derivados da união de `sector_courses` (pelo `setor`) + `role_courses` (pela `role_id`).
-- Para cada curso: status colorido (REALIZADO / A VENCER / VENCIDO / PENDENTE / EM ANDAMENTO / N/A) usando a mesma `computeStatus` da matriz.
-- Data de realização + data de vencimento calculada.
-- Botão **Editar** que abre o mesmo modal de edição (data, override, observação) usado na matriz, gravando em `training_matrix_entries`.
-- Resumo no topo: % de aderência, contagem por status.
+### 3. Schema (migration)
 
-`computeStatus` será extraída de `app.matriz-treinamento.tsx` para `src/lib/matriz-status.ts` e reutilizada nas duas telas.
+Reaproveito `trainings` + `training_attendees` (já existem e já sincronizam com a matriz via trigger). Adiciono apenas:
 
----
+- `trainings.modalidade` text (PRESENCIAL/ONLINE/HIBRIDA)
+- `training_anexos` (id, training_id, tipo enum: LISTA_PRESENCA | FOTO | EFICACIA | REACAO, file_path, descricao, uploaded_by, uploaded_at) — até 5 FOTOs por turma
+- `training_eficacia` (1:1 com training, JSON com os 10 itens pontuados + plano de ação)
+- `training_reacao` (1:N por participante, JSON com fatores 1-4 + textos)
+- bucket `training-docs` já existe → uso ele
 
-## 3. Remodelar página `app.trainings.tsx` (Treinamentos & NR)
+O card mestre = `matriz_courses` (já existe, com categoria). Turma = `trainings` apontando pra `course_id`. Nada se sobrescreve: cada turma é uma linha nova.
 
-Layout premium:
-- **Header** com título grande, métricas resumo (total de eventos no ano, próximos a vencer, taxa de presença média).
-- **Filtros** topo: categoria (NR/Curso/Palestra/...), período, busca.
-- **Lista** em cards com agrupamento por mês, badges de categoria coloridas, ícone por categoria, indicador de validade.
-- **Botão "Novo Treinamento"** abre dialog (em vez do form ocupar metade da tela).
-- Dialog usa o **catálogo unificado** (`training_matrix_courses`) como dropdown de tipo, com opção "+ Cadastrar novo tipo" inline (que insere no catálogo).
-- Categoria selecionável para tipos novos: Curso, Palestra, Workshop, Oficina, Integração, Reciclagem, Outro.
+### 4. PDFs homologados (idênticos aos enviados)
 
----
+Três geradores em `src/lib/`:
 
-## 4. Cruzamento curso × função
+- `lista-presenca-pdf.ts` — **já existe**, reaproveito
+- `eficacia-treinamento-pdf.ts` — **novo**, FORCP-GP-12, com os 10 itens, pontuação 1-5, totalizador, plano de ação, assinaturas Superior/RH
+- `reacao-treinamento-pdf.ts` — **novo**, FORCP-GP-16, com fatores 1-4 (Conteúdo/Instrutor/Recursos), 3 perguntas abertas, escala final
 
-Na página da Matriz de Treinamento:
-- No diálogo "Cursos / NRs" (catálogo): adicionar campo categoria + carga horária.
-- No diálogo "Setores": renomear para **"Vincular Cursos"** com 2 abas: **Por Setor** e **Por Função**.
-- Na tabela da matriz: cursos obrigatórios = união de setor + função do funcionário.
+Fluxo: usuário preenche o form no app → gera PDF pré-preenchido → imprime, colhe assinatura, escaneia, faz upload do PDF assinado em `training_anexos`.
 
-Na ficha do funcionário: idem — união setor + função.
+### 5. Fluxo de cadastro de turma
 
----
+Dialog "Nova turma" (parte do que já existe + 2 campos novos):
 
-## Arquivos afetados
+- Curso/NR (select do card mestre)
+- Título/Assunto
+- Data início · Data fim · Carga horária
+- Instrutor (texto + assinatura opcional)
+- Tipo: Interno / Externo / In Company
+- **Modalidade: Presencial / Online / Híbrida** ← novo
+- Instituição · Local
+- Participantes (multi-select de funcionários)
 
-- Nova migration (estende catálogo + cria `training_matrix_role_courses` + seed NRs).
-- `src/lib/matriz-status.ts` (novo) — helper extraído.
-- `src/routes/app.matriz-treinamento.tsx` — usar helper, união setor+função, dialog catálogo com categoria, dialog vínculos com aba função.
-- `src/routes/app.employees.$id.tsx` — nova aba "Matriz de Treinamento".
-- `src/routes/app.trainings.tsx` — redesign completo (dialog form, cards, filtros, métricas, catálogo unificado).
+Após salvar → card da turma aparece dentro do card mestre, com 4 botões:
+1. **Lista de Presença** → gera PDF, permite upload do assinado
+2. **Fotos (até 5)** → upload múltiplo
+3. **Avaliação de Eficácia** → form + gera PDF + upload assinado
+4. **Avaliação de Reação** → form + gera PDF + upload assinado
 
----
+### 6. Ordem de entrega (pra prova de fogo dia 26)
 
-## Fora do escopo (confirmar se quiser)
+**Mínimo viável dia 26 (NR-06 + NR-17):**
+1. Migration (modalidade + training_anexos)
+2. Aba "Cursos Ministrados" com cards mestre + dialog de turmas
+3. Form de nova turma com modalidade
+4. Lista de presença (já pronta) + upload do assinado
+5. Upload genérico de fotos/anexos
 
-- Importar histórico de `trainings`/`training_attendees` para `training_matrix_entries` automaticamente — hoje são tabelas separadas (eventos x matriz). Posso unificar depois se desejar.
+**Pós-26 (incremental):**
+6. PDF + form da Eficácia
+7. PDF + form da Reação
+8. Dashboard de aderência por curso
+
+### Detalhes técnicos
+
+- Aba implementada como `<Tabs>` no topo de `app.trainings.tsx`: "Grade Atual" (conteúdo atual) | "Cursos Ministrados" (novo componente `CursosMinistradosPanel`)
+- Sem nova rota — tudo dentro de `/app/trainings`
+- Cards usam `matriz_courses.categoria` pra agrupar e colorir (já existe `CATEGORIA_COLOR`)
+- Uploads vão pro bucket `training-docs` já existente, paths `training_anexos/{training_id}/{tipo}/{uuid}.pdf`
+- Geradores PDF seguem o mesmo padrão do `lista-presenca-pdf.ts` (jsPDF + preview dialog)
