@@ -13,7 +13,7 @@ import { formatDateBR } from "@/lib/utils-date";
 import {
   GraduationCap, Plus, Search, Layers, Calendar, Clock, Users,
   ClipboardList, Image as ImageIcon, FileCheck2, MessageSquare,
-  Upload, Download, Trash2, ChevronRight,
+  Upload, Download, Trash2, ChevronRight, Pencil,
 } from "lucide-react";
 import { CATEGORIA_COLOR, CATEGORIA_LABEL } from "@/lib/matriz-status";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
@@ -241,6 +241,7 @@ function TurmasDialog({ courseId, course, onClose }: { courseId: string; course:
   const qc = useQueryClient();
   const { isEditor } = useAuth();
   const [novaOpen, setNovaOpen] = useState(false);
+  const [editTurma, setEditTurma] = useState<any | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { data: turmas = [] } = useQuery({
@@ -288,21 +289,24 @@ function TurmasDialog({ courseId, course, onClose }: { courseId: string; course:
                 course={course}
                 expanded={expandedId === t.id}
                 onToggle={() => setExpandedId(expandedId === t.id ? null : t.id)}
+                onEdit={() => setEditTurma(t)}
               />
             ))
           )}
         </div>
 
-        {novaOpen && (
+        {(novaOpen || editTurma) && (
           <NovaTurmaForm
             courseId={courseId}
             course={course}
-            onClose={() => setNovaOpen(false)}
+            turma={editTurma}
+            onClose={() => { setNovaOpen(false); setEditTurma(null); }}
             onSaved={() => {
               qc.invalidateQueries({ queryKey: ["turmas-do-curso", courseId] });
               qc.invalidateQueries({ queryKey: ["cursos-ministrados-trainings"] });
               qc.invalidateQueries({ queryKey: ["trainings"] });
               setNovaOpen(false);
+              setEditTurma(null);
             }}
           />
         )}
@@ -315,7 +319,7 @@ function TurmasDialog({ courseId, course, onClose }: { courseId: string; course:
 // Linha de turma (resumo + expansão com anexos)
 // ============================================================================
 
-function TurmaRow({ turma, course, expanded, onToggle }: { turma: any; course: any; expanded: boolean; onToggle: () => void }) {
+function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; course: any; expanded: boolean; onToggle: () => void; onEdit: () => void }) {
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
 
@@ -398,6 +402,26 @@ function TurmaRow({ turma, course, expanded, onToggle }: { turma: any; course: a
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["training-anexos", turma.id] });
       toast.success("Anexo removido");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const excluirTurma = useMutation({
+    mutationFn: async () => {
+      const { data: anx } = await supabase
+        .from("training_anexos").select("file_path").eq("training_id", turma.id);
+      const paths = (anx ?? []).map((a: any) => a.file_path).filter(Boolean);
+      if (paths.length) await supabase.storage.from("training-docs").remove(paths);
+      await supabase.from("training_anexos").delete().eq("training_id", turma.id);
+      await supabase.from("training_attendees").delete().eq("training_id", turma.id);
+      const { error } = await supabase.from("trainings").delete().eq("id", turma.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["turmas-do-curso", turma.course_id] });
+      qc.invalidateQueries({ queryKey: ["cursos-ministrados-trainings"] });
+      qc.invalidateQueries({ queryKey: ["trainings"] });
+      toast.success("Turma excluída");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -510,6 +534,27 @@ function TurmaRow({ turma, course, expanded, onToggle }: { turma: any; course: a
 
       {expanded && (
         <div className="p-4 border-t border-slate-200 bg-white space-y-4">
+          {isEditor && (
+            <div className="flex flex-wrap gap-2 justify-end">
+              <Button size="sm" variant="outline" onClick={onEdit}>
+                <Pencil className="h-4 w-4 mr-1" /> Editar dados da turma
+              </Button>
+              {isAdmin && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                  onClick={() => {
+                    if (confirm("Excluir esta turma? Anexos e participantes vinculados também serão removidos. A matriz NÃO é revertida automaticamente.")) {
+                      excluirTurma.mutate();
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" /> Excluir turma
+                </Button>
+              )}
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" onClick={gerarLista}>
               <ClipboardList className="h-4 w-4 mr-1" /> Gerar Lista de Presença (PDF)
