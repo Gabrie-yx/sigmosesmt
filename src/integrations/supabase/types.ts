@@ -2463,6 +2463,44 @@ export type Database = {
         }
         Relationships: []
       }
+      training_anexos: {
+        Row: {
+          descricao: string | null
+          file_path: string
+          id: string
+          tipo: string
+          training_id: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          descricao?: string | null
+          file_path: string
+          id?: string
+          tipo: string
+          training_id: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          descricao?: string | null
+          file_path?: string
+          id?: string
+          tipo?: string
+          training_id?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_anexos_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_attendees: {
         Row: {
           certificado_path: string | null
@@ -2655,13 +2693,16 @@ export type Database = {
           course_id: string | null
           created_at: string
           created_by: string | null
+          data_fim: string | null
           data_realizacao: string
           id: string
           instituicao: string | null
           instrutor: string | null
           local: string | null
+          modalidade: string | null
           observacoes: string | null
           tipo: string
+          tipo_realizacao: string | null
           titulo: string | null
           updated_at: string
           validade_meses: number
@@ -2673,13 +2714,16 @@ export type Database = {
           course_id?: string | null
           created_at?: string
           created_by?: string | null
+          data_fim?: string | null
           data_realizacao: string
           id?: string
           instituicao?: string | null
           instrutor?: string | null
           local?: string | null
+          modalidade?: string | null
           observacoes?: string | null
           tipo: string
+          tipo_realizacao?: string | null
           titulo?: string | null
           updated_at?: string
           validade_meses?: number
@@ -2691,13 +2735,16 @@ export type Database = {
           course_id?: string | null
           created_at?: string
           created_by?: string | null
+          data_fim?: string | null
           data_realizacao?: string
           id?: string
           instituicao?: string | null
           instrutor?: string | null
           local?: string | null
+          modalidade?: string | null
           observacoes?: string | null
           tipo?: string
+          tipo_realizacao?: string | null
           titulo?: string | null
           updated_at?: string
           validade_meses?: number
