@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,13 +15,19 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ClipboardList, Eye, Pencil, Trash2, Printer, FileDown, Plus, Search } from "lucide-react";
+import { ClipboardList, Eye, Pencil, Trash2, Printer, FileDown, Plus, Search, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { gerarPdfOrdem, imprimirOrdem, type OrdemFull } from "@/lib/producao-pdf";
+import { parseListaTecnicaXlsx } from "@/lib/lista-tecnica-parser";
 
 export const Route = createFileRoute("/app/producao/ordens")({
   component: OrdensListPage,
 });
+
+function extractCascoNumero(casco?: string | null) {
+  const m = String(casco ?? "").match(/(\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+}
 
 function OrdensListPage() {
   const qc = useQueryClient();
@@ -29,18 +35,38 @@ function OrdensListPage() {
   const [busca, setBusca] = useState("");
   const [viewing, setViewing] = useState<OrdemFull | null>(null);
   const [deleting, setDeleting] = useState<{ id: string; numero: string } | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const inputsRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   const { data: ordens = [], isLoading } = useQuery({
-    queryKey: ["producao-ordens"],
+    queryKey: ["producao-ordens-halb"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("producao_ordens")
         .select("*, itens:producao_ordem_itens(*)")
+        .eq("mtart", "HALB")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as any[];
     },
   });
+
+  const { data: cascos = [] } = useQuery({
+    queryKey: ["cascos-min-ordens"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("cascos").select("id, numero");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const cascoIdByNumero = useMemo(() => {
+    const m = new Map<number, string>();
+    (cascos as any[]).forEach((c) => {
+      const n = extractCascoNumero(c.numero);
+      if (n != null) m.set(n, c.id);
+    });
+    return m;
+  }, [cascos]);
 
   // Lookup MTART por nome do tipo de produto (para o cabeçalho do PDF)
   const { data: tipos = [] } = useQuery({
@@ -79,13 +105,76 @@ function OrdensListPage() {
     },
     onSuccess: () => {
       toast.success("Ordem excluída");
-      qc.invalidateQueries({ queryKey: ["producao-ordens"] });
+      qc.invalidateQueries({ queryKey: ["producao-ordens-halb"] });
       qc.invalidateQueries({ queryKey: ["cascos-min"] });
       qc.invalidateQueries({ queryKey: ["cascos-em-ordens"] });
       setDeleting(null);
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const uploadMut = useMutation({
+    mutationFn: async ({ ordem, file }: { ordem: any; file: File }) => {
+      const numero = extractCascoNumero(ordem.casco);
+      if (numero == null) throw new Error("Ordem sem número de casco válido.");
+      const cascoId = cascoIdByNumero.get(numero);
+      if (!cascoId) {
+        throw new Error(`Casco "${ordem.casco}" não está cadastrado em Cascos/Embarcações.`);
+      }
+      const parsed = await parseListaTecnicaXlsx(file);
+      const { data: existentes } = await supabase
+        .from("producao_lista_tecnica")
+        .select("versao")
+        .eq("casco_id", cascoId)
+        .order("versao", { ascending: false })
+        .limit(1);
+      const proxVersao = ((existentes?.[0] as any)?.versao ?? 0) + 1;
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: lista, error: e1 } = await supabase
+        .from("producao_lista_tecnica")
+        .insert({
+          casco_id: cascoId,
+          tipo_embarcacao: ordem.tipo_produto ?? null,
+          origem: "B51",
+          arquivo_nome: file.name,
+          versao: proxVersao,
+          peso_total_estimado: parsed.peso_total_estimado,
+          peso_total_real: parsed.peso_total_real,
+          qtd_itens: parsed.itens.length,
+          qtd_codigos_distintos: parsed.qtd_codigos_distintos,
+          qtd_pecas_total: parsed.qtd_pecas_total,
+          importado_por: user?.id ?? null,
+        })
+        .select("*")
+        .single();
+      if (e1) throw e1;
+      const payload = parsed.itens.map((it) => ({ ...it, lista_id: (lista as any).id }));
+      for (let i = 0; i < payload.length; i += 200) {
+        const { error: e2 } = await supabase
+          .from("producao_lista_tecnica_itens")
+          .insert(payload.slice(i, i + 200));
+        if (e2) throw e2;
+      }
+      return lista as any;
+    },
+    onSuccess: (l) => {
+      toast.success(`Lista técnica v${l.versao} importada (${l.qtd_itens} itens). Histórico preservado.`);
+      qc.invalidateQueries({ queryKey: ["listas-tecnicas-latest"] });
+      qc.invalidateQueries({ queryKey: ["listas-tecnicas"] });
+      setUploadingId(null);
+    },
+    onError: (e: any) => {
+      toast.error(e?.message ?? "Falha ao importar planilha");
+      setUploadingId(null);
+    },
+  });
+
+  const handleFile = (ordem: any, files: FileList | null) => {
+    const f = files?.[0];
+    if (!f) return;
+    setUploadingId(ordem.id);
+    uploadMut.mutate({ ordem, file: f });
+  };
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-5 max-w-[1400px]">
@@ -97,7 +186,7 @@ function OrdensListPage() {
           <div>
             <h1 className="text-2xl font-black tracking-tight">Ordens de Produção</h1>
             <p className="text-[11px] text-muted-foreground font-medium">
-              Visualize, edite, imprima ou faça download das ordens cadastradas
+              Ordens de <strong>Casco em construção (HALB)</strong> — visualize, edite, imprima ou importe a Lista Técnica
             </p>
           </div>
         </div>
@@ -137,7 +226,9 @@ function OrdensListPage() {
                 Nenhuma ordem cadastrada ainda.
               </TableCell></TableRow>
             )}
-            {filtradas.map((o) => (
+            {filtradas.map((o) => {
+              const isUp = uploadingId === o.id && uploadMut.isPending;
+              return (
               <TableRow key={o.id}>
                 <TableCell className="font-bold text-amber-700">{o.numero}</TableCell>
                 <TableCell>{o.data_solicitacao ? new Date(o.data_solicitacao).toLocaleDateString("pt-BR") : "—"}</TableCell>
@@ -151,6 +242,21 @@ function OrdensListPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
+                    <input
+                      ref={(el) => { inputsRef.current[o.id] = el; }}
+                      type="file"
+                      accept=".xlsx,.xls"
+                      className="hidden"
+                      onChange={(e) => { handleFile(o, e.target.files); e.target.value = ""; }}
+                    />
+                    <Button size="sm" variant="outline"
+                      className="gap-1.5 text-amber-700 border-amber-300 hover:bg-amber-50"
+                      disabled={isUp}
+                      onClick={() => inputsRef.current[o.id]?.click()}
+                      title="Importar Lista Técnica (SAP B51) — gera nova versão preservando o histórico">
+                      {isUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      {isUp ? "Importando…" : "Upload B51"}
+                    </Button>
                     <Button size="icon" variant="ghost" title="Visualizar"
                       onClick={() => setViewing(o)}>
                       <Eye className="h-4 w-4" />
@@ -175,7 +281,8 @@ function OrdensListPage() {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </div>
