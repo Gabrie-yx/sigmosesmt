@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
 import { CursosMinistradosPanel } from "@/components/cursos/cursos-ministrados-panel";
+import { sortMatrixCourses } from "@/lib/nr-order";
 
 export const Route = createFileRoute("/app/trainings")({
   component: TrainingsPage,
@@ -73,7 +74,7 @@ function TrainingsPage() {
         .eq("ativo", true)
         .order("ordem");
       if (error) throw error;
-      return data ?? [];
+      return sortMatrixCourses(data ?? []);
     },
   });
 
@@ -90,6 +91,9 @@ function TrainingsPage() {
 
   const save = useMutation({
     mutationFn: async () => {
+      if (!f.course_id) {
+        throw new Error("Selecione o Curso da Matriz — o vínculo é obrigatório para atualizar a Matriz de Treinamento.");
+      }
       let anexo_path: string | null = null;
       if (file) {
         const path = `${Date.now()}_${file.name.replace(/[^\w.-]/g, "_")}`;
