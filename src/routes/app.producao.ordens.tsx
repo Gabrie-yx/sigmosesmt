@@ -133,6 +133,7 @@ function OrdensListPage() {
         cascoId = (novo as any).id;
         toast.success(`Casco ${numeroFmt} cadastrado automaticamente.`);
       }
+      if (!cascoId) throw new Error("Casco não pôde ser resolvido.");
       const parsed = await parseListaTecnicaXlsx(file);
       const { data: existentes } = await supabase
         .from("producao_lista_tecnica")
