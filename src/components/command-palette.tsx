@@ -51,8 +51,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/app/cascos", label: "Cascos / Embarcações", group: "Navegar", icon: Compass },
   { to: "/app/companies", label: "Empresas / Contratadas", group: "Navegar", icon: Building2 },
   { to: "/app/roles", label: "Cargos & Matriz de Riscos", group: "Navegar", icon: Users },
-  { to: "/app/estoque/sesmt", label: "Estoque SESMT", group: "Navegar", icon: Boxes },
-  { to: "/app/estoque/epi", label: "Estoque EPI (Cards)", group: "Navegar", icon: Boxes },
+  { to: "/app/estoque", label: "Estoque de EPIs", group: "Navegar", icon: Boxes },
 ];
 
 const QUICK_ACTIONS: NavItem[] = [
