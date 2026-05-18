@@ -747,7 +747,7 @@ function NewEpiDialog({ onCreated }: { onCreated: () => void }) {
 
 // ───────────────────────── Consulta por Colaborador (Dossiê) ─────────────────────────
 
-function ConsultaColaborador() {
+export function ConsultaColaborador() {
   const [cpfBusca, setCpfBusca] = useState("");
   const cpfDigits = cpfBusca.replace(/\D/g, "");
   const cpfValido = validaCpf(cpfBusca);
