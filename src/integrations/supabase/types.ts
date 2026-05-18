@@ -310,42 +310,60 @@ export type Database = {
       }
       cascos: {
         Row: {
+          armador: string | null
+          comprimento_total: number | null
           created_at: string
           data_fim: string | null
           data_inicio: string | null
           empresa_responsavel_id: string | null
           encarregado_id: string | null
           id: string
+          inicio_obra: string | null
+          licenca_provisoria: string | null
           nome: string | null
           numero: string
           observacoes: string | null
+          prazo_dias: number | null
           status: string
+          tipo_embarcacao: string | null
           updated_at: string
         }
         Insert: {
+          armador?: string | null
+          comprimento_total?: number | null
           created_at?: string
           data_fim?: string | null
           data_inicio?: string | null
           empresa_responsavel_id?: string | null
           encarregado_id?: string | null
           id?: string
+          inicio_obra?: string | null
+          licenca_provisoria?: string | null
           nome?: string | null
           numero: string
           observacoes?: string | null
+          prazo_dias?: number | null
           status?: string
+          tipo_embarcacao?: string | null
           updated_at?: string
         }
         Update: {
+          armador?: string | null
+          comprimento_total?: number | null
           created_at?: string
           data_fim?: string | null
           data_inicio?: string | null
           empresa_responsavel_id?: string | null
           encarregado_id?: string | null
           id?: string
+          inicio_obra?: string | null
+          licenca_provisoria?: string | null
           nome?: string | null
           numero?: string
           observacoes?: string | null
+          prazo_dias?: number | null
           status?: string
+          tipo_embarcacao?: string | null
           updated_at?: string
         }
         Relationships: [

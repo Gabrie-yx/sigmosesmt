@@ -19,6 +19,12 @@ export interface CascoRecord {
   data_fim: string | null;
   status: string;
   observacoes: string | null;
+  armador: string | null;
+  tipo_embarcacao: string | null;
+  comprimento_total: number | null;
+  inicio_obra: string | null;
+  prazo_dias: number | null;
+  licenca_provisoria: string | null;
 }
 
 interface Props {
@@ -37,6 +43,16 @@ export function CascoForm({ initial, companies, employees, onDone }: Props) {
   const [dataFim, setDataFim] = useState(initial?.data_fim ?? "");
   const [status, setStatus] = useState(initial?.status ?? "ATIVO");
   const [obs, setObs] = useState(initial?.observacoes ?? "");
+  const [armador, setArmador] = useState(initial?.armador ?? "");
+  const [tipoEmb, setTipoEmb] = useState(initial?.tipo_embarcacao ?? "");
+  const [comprimento, setComprimento] = useState<string>(
+    initial?.comprimento_total != null ? String(initial.comprimento_total) : "",
+  );
+  const [inicioObra, setInicioObra] = useState(initial?.inicio_obra ?? "");
+  const [prazoDias, setPrazoDias] = useState<string>(
+    initial?.prazo_dias != null ? String(initial.prazo_dias) : "",
+  );
+  const [licenca, setLicenca] = useState(initial?.licenca_provisoria ?? "");
   const [saving, setSaving] = useState(false);
 
   async function save() {
@@ -55,6 +71,14 @@ export function CascoForm({ initial, companies, employees, onDone }: Props) {
         data_fim: dataFim || null,
         status,
         observacoes: obs.trim() || null,
+        armador: armador.trim() || null,
+        tipo_embarcacao: tipoEmb.trim() || null,
+        comprimento_total: comprimento.trim()
+          ? Number(comprimento.replace(",", "."))
+          : null,
+        inicio_obra: inicioObra.trim() || null,
+        prazo_dias: prazoDias.trim() ? Number(prazoDias) : null,
+        licenca_provisoria: licenca.trim() || null,
       };
       if (initial) {
         const { error } = await supabase.from("cascos").update(payload).eq("id", initial.id);
@@ -84,6 +108,64 @@ export function CascoForm({ initial, companies, employees, onDone }: Props) {
           <Label className="text-[10px] font-black uppercase">Nome / Identificação</Label>
           <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Embarcação Atlântico" />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <Label className="text-[10px] font-black uppercase">Armador</Label>
+          <Input
+            value={armador}
+            onChange={(e) => setArmador(e.target.value)}
+            placeholder="Ex: LM NAVEGAÇÃO E TRANSPORTE LTDA"
+          />
+        </div>
+        <div>
+          <Label className="text-[10px] font-black uppercase">Tipo de Embarcação</Label>
+          <Input
+            value={tipoEmb}
+            onChange={(e) => setTipoEmb(e.target.value)}
+            placeholder="Ex: BALSA GRANELEIRA"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <Label className="text-[10px] font-black uppercase">Comprimento Total (m)</Label>
+          <Input
+            value={comprimento}
+            onChange={(e) => setComprimento(e.target.value)}
+            placeholder="Ex: 60,96"
+            inputMode="decimal"
+          />
+        </div>
+        <div>
+          <Label className="text-[10px] font-black uppercase">Início da Obra</Label>
+          <Input
+            value={inicioObra}
+            onChange={(e) => setInicioObra(e.target.value)}
+            placeholder="Ex: NOVEMBRO"
+          />
+        </div>
+        <div>
+          <Label className="text-[10px] font-black uppercase">Prazo (dias)</Label>
+          <Input
+            type="number"
+            min={0}
+            value={prazoDias}
+            onChange={(e) => setPrazoDias(e.target.value)}
+            placeholder="Ex: 180"
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-[10px] font-black uppercase">Licença Provisória</Label>
+        <Input
+          value={licenca}
+          onChange={(e) => setLicenca(e.target.value)}
+          placeholder="Ex: 612LP98054/25"
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
