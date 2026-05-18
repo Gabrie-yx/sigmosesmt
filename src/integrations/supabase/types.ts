@@ -1631,6 +1631,36 @@ export type Database = {
         }
         Relationships: []
       }
+      producao_base_materia_prima: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       producao_classes_avaliacao: {
         Row: {
           ativo: boolean
@@ -1949,6 +1979,112 @@ export type Database = {
             columns: ["embarcacao_id"]
             isOneToOne: false
             referencedRelation: "producao_embarcacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      producao_mb51_movimentos: {
+        Row: {
+          classificacao_mb51: string | null
+          created_at: string
+          data_lancamento: string | null
+          descricao: string | null
+          id: string
+          material: string
+          numero_sap: string
+          ordem_id: string
+          quantidade: number
+          tipo_movimento: string | null
+          tipo_resolvido: string
+          unidade: string | null
+        }
+        Insert: {
+          classificacao_mb51?: string | null
+          created_at?: string
+          data_lancamento?: string | null
+          descricao?: string | null
+          id?: string
+          material: string
+          numero_sap: string
+          ordem_id: string
+          quantidade?: number
+          tipo_movimento?: string | null
+          tipo_resolvido?: string
+          unidade?: string | null
+        }
+        Update: {
+          classificacao_mb51?: string | null
+          created_at?: string
+          data_lancamento?: string | null
+          descricao?: string | null
+          id?: string
+          material?: string
+          numero_sap?: string
+          ordem_id?: string
+          quantidade?: number
+          tipo_movimento?: string | null
+          tipo_resolvido?: string
+          unidade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producao_mb51_movimentos_ordem_id_fkey"
+            columns: ["ordem_id"]
+            isOneToOne: false
+            referencedRelation: "producao_mb51_ordens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      producao_mb51_ordens: {
+        Row: {
+          arquivo_nome: string | null
+          casco_id: string | null
+          created_at: string
+          data_primeiro_movimento: string | null
+          data_ultimo_movimento: string | null
+          id: string
+          importado_por: string | null
+          numero_sap: string
+          qtd_consumo_liquido: number
+          qtd_movimentos: number
+          texto_documento: string | null
+          updated_at: string
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          casco_id?: string | null
+          created_at?: string
+          data_primeiro_movimento?: string | null
+          data_ultimo_movimento?: string | null
+          id?: string
+          importado_por?: string | null
+          numero_sap: string
+          qtd_consumo_liquido?: number
+          qtd_movimentos?: number
+          texto_documento?: string | null
+          updated_at?: string
+        }
+        Update: {
+          arquivo_nome?: string | null
+          casco_id?: string | null
+          created_at?: string
+          data_primeiro_movimento?: string | null
+          data_ultimo_movimento?: string | null
+          id?: string
+          importado_por?: string | null
+          numero_sap?: string
+          qtd_consumo_liquido?: number
+          qtd_movimentos?: number
+          texto_documento?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producao_mb51_ordens_casco_id_fkey"
+            columns: ["casco_id"]
+            isOneToOne: false
+            referencedRelation: "cascos"
             referencedColumns: ["id"]
           },
         ]

@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  AreaChart, Area, LabelList, Cell,
+  LabelList, Cell,
 } from "recharts";
 import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers } from "lucide-react";
-import {
-  CATEGORIAS, CATEGORIA_CLASSE, classificarMaterial, type CategoriaMaterial,
-} from "@/lib/lista-tecnica-categorias";
+import { resolveTipo } from "@/lib/mb51-parser";
+import type { TipoMP } from "@/lib/base-mp-parser";
+
+const CATEGORIAS: TipoMP[] = ["FERRO", "SOLDA", "GÁS", "TINTA", "OUTROS"];
+type CategoriaMaterial = TipoMP;
 
 export const Route = createFileRoute("/app/producao/painel-lista-tecnica")({
   component: PainelListaTecnicaPage,
@@ -41,7 +43,7 @@ const CAT_ICON: Record<CategoriaMaterial, string> = {
 
 function PainelListaTecnicaPage() {
   const qc = useQueryClient();
-  const [cascoSel, setCascoSel] = useState<string | null>(null);
+  const [ordemSel, setOrdemSel] = useState<string | null>(null);
   const [codigoSel, setCodigoSel] = useState<string | null>(null);
   const [unidadeSel, setUnidadeSel] = useState<string | null>(null);
   const [catSel, setCatSel] = useState<CategoriaMaterial | null>(null);
@@ -56,6 +58,37 @@ function PainelListaTecnicaPage() {
     },
   });
 
+  // ===== MB51: Ordens importadas (cada Ordem SAP = uma OP do painel) =====
+  const { data: mb51Ordens = [] } = useQuery({
+    queryKey: ["mb51-ordens"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("producao_mb51_ordens")
+        .select("*")
+        .order("numero_sap");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // ===== Base MP (fonte da verdade para tipo) =====
+  const { data: baseMp = [] } = useQuery({
+    queryKey: ["mb51-base-mp-map"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("producao_base_materia_prima")
+        .select("codigo, tipo");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const baseMpMap = useMemo(() => {
+    const m = new Map<string, TipoMP>();
+    (baseMp as any[]).forEach((b) => m.set(String(b.codigo), b.tipo));
+    return m;
+  }, [baseMp]);
+
+  // ===== Listas técnicas (planejado) — para KPI plan × real =====
   const { data: listasAtuais = [] } = useQuery({
     queryKey: ["listas-tecnicas-latest"],
     queryFn: async () => {
@@ -72,16 +105,18 @@ function PainelListaTecnicaPage() {
     },
   });
 
-  const listaIds = useMemo(() => (listasAtuais as any[]).map((l) => l.id), [listasAtuais]);
+  // ===== Movimentos MB51 da Ordem selecionada =====
+  const ordemAtivaId = ordemSel ?? (mb51Ordens as any[])[0]?.id ?? null;
+  const ordemAtiva = (mb51Ordens as any[]).find((o) => o.id === ordemAtivaId) ?? null;
 
-  const { data: itens = [], isFetching } = useQuery({
-    queryKey: ["lista-tecnica-itens-painel", listaIds.sort().join(",")],
-    enabled: listaIds.length > 0,
+  const { data: movimentos = [], isFetching } = useQuery({
+    queryKey: ["mb51-movimentos", ordemAtivaId],
+    enabled: !!ordemAtivaId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("producao_lista_tecnica_itens")
+      const { data, error } = await (supabase as any)
+        .from("producao_mb51_movimentos")
         .select("*")
-        .in("lista_id", listaIds);
+        .eq("ordem_id", ordemAtivaId);
       if (error) throw error;
       return data ?? [];
     },
@@ -89,12 +124,15 @@ function PainelListaTecnicaPage() {
 
   useEffect(() => {
     const ch = supabase
-      .channel("painel-lista-tecnica")
-      .on("postgres_changes", { event: "*", schema: "public", table: "producao_lista_tecnica" }, () => {
-        qc.invalidateQueries({ queryKey: ["listas-tecnicas-latest"] });
+      .channel("painel-mb51")
+      .on("postgres_changes", { event: "*", schema: "public", table: "producao_mb51_ordens" }, () => {
+        qc.invalidateQueries({ queryKey: ["mb51-ordens"] });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "producao_lista_tecnica_itens" }, () => {
-        qc.invalidateQueries({ queryKey: ["lista-tecnica-itens-painel"] });
+      .on("postgres_changes", { event: "*", schema: "public", table: "producao_mb51_movimentos" }, () => {
+        qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "producao_base_materia_prima" }, () => {
+        qc.invalidateQueries({ queryKey: ["mb51-base-mp-map"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
@@ -106,40 +144,31 @@ function PainelListaTecnicaPage() {
     return m;
   }, [cascos]);
 
-  const listaById = useMemo(() => {
+  // Lista técnica (planejado) para o casco da ordem ativa
+  const listaPorCasco = useMemo(() => {
     const m = new Map<string, any>();
-    (listasAtuais as any[]).forEach((l) => m.set(l.id, l));
+    (listasAtuais as any[]).forEach((l) => m.set(l.casco_id, l));
     return m;
   }, [listasAtuais]);
 
+  // Enriquece movimentos: tipo resolvido pela Base MP, consumo positivo (líquido = -quantidade)
   const itensEnriq = useMemo(() => {
-    return (itens as any[]).map((it) => {
-      const l = listaById.get(it.lista_id);
+    return (movimentos as any[]).map((m) => {
+      const tipo = resolveTipo(String(m.material), m.classificacao_mb51, baseMpMap);
       return {
-        ...it,
-        casco_id: l?.casco_id ?? "",
-        lista_created_at: l?.created_at ?? null,
-        categoria: classificarMaterial(it.descricao_sap, it.codigo_sap) as CategoriaMaterial,
+        ...m,
+        codigo_sap: String(m.material),
+        descricao_sap: m.descricao,
+        consumo: -Number(m.quantidade ?? 0), // consumo positivo
+        categoria: tipo,
       };
     });
-  }, [itens, listaById]);
+  }, [movimentos, baseMpMap]);
 
-  const cascosComDados = useMemo(
-    () =>
-      (listasAtuais as any[])
-        .map((l) => cascoById.get(l.casco_id))
-        .filter(Boolean)
-        .sort((a: any, b: any) => String(a.numero).localeCompare(String(b.numero))),
-    [listasAtuais, cascoById],
-  );
+  const cascoAtivo = ordemAtiva?.casco_id ? cascoById.get(ordemAtiva.casco_id) : null;
+  const listaPlan = ordemAtiva?.casco_id ? listaPorCasco.get(ordemAtiva.casco_id) : null;
 
-  const cascoAtivoId = cascoSel ?? cascosComDados[0]?.id ?? null;
-  const cascoAtivo = cascoAtivoId ? cascoById.get(cascoAtivoId) : null;
-
-  const itensFiltrados = useMemo(
-    () => itensEnriq.filter((it) => it.casco_id === cascoAtivoId),
-    [itensEnriq, cascoAtivoId],
-  );
+  const itensFiltrados = itensEnriq;
 
   const itensVisiveis = useMemo(() => {
     return itensFiltrados.filter((it) => {
@@ -150,15 +179,15 @@ function PainelListaTecnicaPage() {
     });
   }, [itensFiltrados, codigoSel, unidadeSel, catSel]);
 
-  // KPIs globais (sobre itens visíveis)
+  // KPIs: realizado (MB51 consumo líquido) × planejado (Lista Técnica)
   const kpi = useMemo(() => {
-    const pesoReal = itensVisiveis.reduce((s, it) => s + Number(it.peso_real ?? 0), 0);
-    const pesoEst = itensVisiveis.reduce((s, it) => s + Number(it.peso_total_estimado ?? 0), 0);
-    const pecas = itensVisiveis.reduce((s, it) => s + Number(it.qtd_pecas ?? 0), 0);
+    const consumo = itensVisiveis.reduce((s, it) => s + (it.consumo ?? 0), 0);
+    const pesoEst = Number(listaPlan?.peso_total_estimado ?? 0);
+    const linhas = itensVisiveis.length;
     const distintos = new Set(itensVisiveis.map((it) => String(it.codigo_sap))).size;
-    const desvio = pesoEst > 0 ? ((pesoReal - pesoEst) / pesoEst) * 100 : 0;
-    return { pesoReal, pesoEst, pecas, distintos, desvio };
-  }, [itensVisiveis]);
+    const desvio = pesoEst > 0 ? ((consumo - pesoEst) / pesoEst) * 100 : 0;
+    return { pesoReal: consumo, pesoEst, pecas: linhas, distintos, desvio };
+  }, [itensVisiveis, listaPlan]);
 
   const dadosPorCategoria = useMemo(() => {
     const result: Record<CategoriaMaterial, { barras: any[]; serie: any[]; totalPeso: number; totalItens: number }> = {
@@ -169,17 +198,15 @@ function PainelListaTecnicaPage() {
       OUTROS: { barras: [], serie: [], totalPeso: 0, totalItens: 0 },
     };
     CATEGORIAS.forEach((cat) => {
-      // ignora o filtro de categoria para mostrar a categoria em si
       const baseItens = itensFiltrados.filter((it) => {
         if (codigoSel && String(it.codigo_sap) !== codigoSel) return false;
         if (unidadeSel && String(it.unidade ?? "—").toUpperCase() !== unidadeSel) return false;
         return it.categoria === cat;
       });
-      // Barras agrupadas por UME (igual ao Power BI: CT, MT, PC, UN, M, KG)
       const barMap = new Map<string, number>();
       baseItens.forEach((it) => {
         const u = String(it.unidade ?? "—").toUpperCase();
-        const valor = Number(it.peso_real ?? it.peso_total_estimado ?? it.quantidade ?? 0);
+        const valor = Math.abs(Number(it.consumo ?? 0));
         barMap.set(u, (barMap.get(u) ?? 0) + valor);
       });
       const barras = Array.from(barMap.entries())
@@ -187,28 +214,24 @@ function PainelListaTecnicaPage() {
         .sort((a, b) => Math.abs(b.valor) - Math.abs(a.valor))
         .slice(0, 8);
 
-      // "Série" = top itens da categoria por peso (mais útil que temporal com 1 importação)
       const itemMap = new Map<string, { codigo: string; desc: string; peso: number }>();
       baseItens.forEach((it) => {
         const cod = String(it.codigo_sap ?? "");
         if (!cod) return;
         const cur = itemMap.get(cod) ?? { codigo: cod, desc: String(it.descricao_sap ?? ""), peso: 0 };
-        cur.peso += Math.abs(Number(it.peso_real ?? it.peso_total_estimado ?? 0));
+        cur.peso += Math.abs(Number(it.consumo ?? 0));
         itemMap.set(cod, cur);
       });
       const serie = Array.from(itemMap.values())
         .sort((a, b) => b.peso - a.peso)
         .slice(0, 10)
         .map((i) => ({ mes: i.codigo, valor: i.peso, desc: i.desc }));
-      const totalPeso = baseItens.reduce(
-        (s, it) => s + Number(it.peso_real ?? it.peso_total_estimado ?? 0), 0,
-      );
+      const totalPeso = baseItens.reduce((s, it) => s + Math.abs(Number(it.consumo ?? 0)), 0);
       result[cat] = { barras, serie, totalPeso, totalItens: baseItens.length };
     });
     return result;
   }, [itensFiltrados, codigoSel, unidadeSel]);
 
-  // Tabela de materiais (estilo Power BI à direita)
   const tabelaMateriais = useMemo(() => {
     const acc = new Map<string, { codigo: string; nome: string; qtd: number; ume: string; peso: number }>();
     itensVisiveis.forEach((it) => {
@@ -220,8 +243,8 @@ function PainelListaTecnicaPage() {
         ume: String(it.unidade ?? "—"),
         peso: 0,
       };
-      cur.qtd += Number(it.quantidade ?? 0);
-      cur.peso += Number(it.peso_real ?? it.peso_total_estimado ?? 0);
+      cur.qtd += Math.abs(Number(it.consumo ?? 0));
+      cur.peso += Math.abs(Number(it.consumo ?? 0));
       acc.set(key, cur);
     });
     return Array.from(acc.values()).sort((a, b) => Math.abs(b.peso) - Math.abs(a.peso));
@@ -244,31 +267,37 @@ function PainelListaTecnicaPage() {
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => {
+          qc.invalidateQueries({ queryKey: ["mb51-ordens"] });
+          qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
+          qc.invalidateQueries({ queryKey: ["mb51-base-mp-map"] });
           qc.invalidateQueries({ queryKey: ["listas-tecnicas-latest"] });
-          qc.invalidateQueries({ queryKey: ["lista-tecnica-itens-painel"] });
         }}>
           <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
         </Button>
       </div>
 
-      {/* Seletor de casco + filtros ativos */}
+      {/* Seletor de Ordem SAP (cada Ordem SAP = um casco com consumo MB51) */}
       <Card className="shadow-sm border-primary/10">
         <CardContent className="p-3 flex items-center gap-3 flex-wrap justify-between">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold pr-1">
-              Casco:
+              Ordem SAP / Casco:
             </span>
             <select
-              value={cascoAtivoId ?? ""}
-              onChange={(e) => { setCascoSel(e.target.value || null); limparFiltros(); }}
-              className="px-4 py-2 rounded-md text-sm font-bold border border-primary/30 bg-primary/5 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 min-w-[260px]"
+              value={ordemAtivaId ?? ""}
+              onChange={(e) => { setOrdemSel(e.target.value || null); limparFiltros(); }}
+              className="px-4 py-2 rounded-md text-sm font-bold border border-primary/30 bg-primary/5 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 min-w-[340px]"
             >
-              {cascosComDados.length === 0 && <option value="">Nenhum casco com lista técnica</option>}
-              {cascosComDados.map((c: any) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome ? `${String(c.nome).toUpperCase()} - ` : ""}CASCO {c.numero}
-                </option>
-              ))}
+              {(mb51Ordens as any[]).length === 0 && <option value="">Nenhuma MB51 importada — faça upload em Ordens de Produção</option>}
+              {(mb51Ordens as any[]).map((o) => {
+                const c = o.casco_id ? cascoById.get(o.casco_id) : null;
+                const label = c ? `${c.nome ? String(c.nome).toUpperCase() + " - " : ""}CASCO ${c.numero}` : (o.texto_documento ?? "—");
+                return (
+                  <option key={o.id} value={o.id}>
+                    SAP {o.numero_sap} · {label}
+                  </option>
+                );
+              })}
             </select>
             {algumFiltro && (
               <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={limparFiltros}>
@@ -289,11 +318,11 @@ function PainelListaTecnicaPage() {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "Peso Real Aplicado", value: `${fmt(kpi.pesoReal, 0)} kg`, icon: Package, accent: "from-primary/20 to-primary/5", textCls: "text-primary" },
-          { label: "Peso Estimado", value: `${fmt(kpi.pesoEst, 0)} kg`, icon: Layers, accent: "from-accent/20 to-accent/5", textCls: "text-accent-foreground" },
-          { label: "Desvio Real vs Est.", value: `${kpi.desvio >= 0 ? "+" : ""}${fmt(kpi.desvio, 2)}%`, icon: TrendingUp, accent: kpi.desvio > 0 ? "from-red-500/20 to-red-500/5" : "from-green-500/20 to-green-500/5", textCls: kpi.desvio > 0 ? "text-red-600" : "text-green-600" },
+          { label: "Realizado (MB51)", value: `${fmt(kpi.pesoReal, 0)}`, icon: Package, accent: "from-primary/20 to-primary/5", textCls: "text-primary" },
+          { label: "Planejado (B51)", value: `${fmt(kpi.pesoEst, 0)} kg`, icon: Layers, accent: "from-accent/20 to-accent/5", textCls: "text-accent-foreground" },
+          { label: "Desvio Real vs Plan.", value: kpi.pesoEst > 0 ? `${kpi.desvio >= 0 ? "+" : ""}${fmt(kpi.desvio, 2)}%` : "—", icon: TrendingUp, accent: kpi.desvio > 0 ? "from-red-500/20 to-red-500/5" : "from-green-500/20 to-green-500/5", textCls: kpi.desvio > 0 ? "text-red-600" : "text-green-600" },
           { label: "Códigos Distintos", value: fmt(kpi.distintos, 0), icon: Filter, accent: "from-blue-500/15 to-blue-500/5", textCls: "text-blue-600" },
-          { label: "Total de Peças", value: fmt(kpi.pecas, 0), icon: Package, accent: "from-amber-500/15 to-amber-500/5", textCls: "text-amber-700" },
+          { label: "Movimentos MB51", value: fmt(kpi.pecas, 0), icon: Package, accent: "from-amber-500/15 to-amber-500/5", textCls: "text-amber-700" },
         ].map((k) => (
           <Card key={k.label} className={`shadow-sm bg-gradient-to-br ${k.accent} border-0`}>
             <CardContent className="p-3">
@@ -486,10 +515,15 @@ function PainelListaTecnicaPage() {
 
       {cascoAtivo && (
         <p className="text-xs text-muted-foreground text-center pt-2">
-          Exibindo dados de <span className="font-semibold">{cascoAtivo.nome ?? ""} — Casco {cascoAtivo.numero}</span>
+          Exibindo MB51 da Ordem SAP <span className="font-semibold">{ordemAtiva?.numero_sap}</span> · {cascoAtivo.nome ?? ""} — Casco {cascoAtivo.numero}
           {codigoSel ? ` • código ${codigoSel}` : ""}
           {unidadeSel ? ` • UME ${unidadeSel}` : ""}
           {catSel ? ` • categoria ${catSel}` : ""}
+        </p>
+      )}
+      {!cascoAtivo && ordemAtiva && (
+        <p className="text-xs text-muted-foreground text-center pt-2">
+          Exibindo Ordem SAP <span className="font-semibold">{ordemAtiva.numero_sap}</span> · sem casco vinculado (texto: "{ordemAtiva.texto_documento ?? "—"}")
         </p>
       )}
     </div>

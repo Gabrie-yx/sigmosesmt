@@ -126,6 +126,7 @@ const PRODUCAO_SUBMENU: LeafItem[] = [
   { to: "/app/producao/expedicao", label: "Expedição" },
   { to: "/app/producao/lista-tecnica", label: "Lista Técnica" },
   { to: "/app/producao/painel-lista-tecnica", label: "Dashboard Dinâmico" },
+  { to: "/app/producao/base-materia-prima", label: "Base Matéria-Prima" },
   { to: "/app/producao/tipos-produto", label: "Tipos de Produto" },
 ];
 
