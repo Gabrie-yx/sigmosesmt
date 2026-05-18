@@ -141,23 +141,6 @@ function PainelListaTecnicaPage() {
     [itensEnriq, cascoAtivoId],
   );
 
-  // Top códigos por peso (mais consumidos no casco ativo)
-  const topCodigos = useMemo(() => {
-    const acc = new Map<string, { peso: number; desc: string }>();
-    itensFiltrados.forEach((it) => {
-      const cod = String(it.codigo_sap ?? "");
-      if (!cod) return;
-      const peso = Math.abs(Number(it.peso_real ?? it.peso_total_estimado ?? 0));
-      const cur = acc.get(cod) ?? { peso: 0, desc: String(it.descricao_sap ?? "") };
-      cur.peso += peso;
-      acc.set(cod, cur);
-    });
-    return Array.from(acc.entries())
-      .sort((a, b) => b[1].peso - a[1].peso)
-      .slice(0, 8)
-      .map(([cod, v]) => ({ cod, peso: v.peso, desc: v.desc }));
-  }, [itensFiltrados]);
-
   const itensVisiveis = useMemo(() => {
     return itensFiltrados.filter((it) => {
       if (codigoSel && String(it.codigo_sap) !== codigoSel) return false;
@@ -268,51 +251,38 @@ function PainelListaTecnicaPage() {
         </Button>
       </div>
 
-      {/* Barra de códigos + casco */}
+      {/* Seletor de casco + filtros ativos */}
       <Card className="shadow-sm border-primary/10">
-        <CardContent className="p-3 flex items-center gap-3 flex-wrap">
-          <div className="flex flex-wrap gap-2 flex-1 items-center">
+        <CardContent className="p-3 flex items-center gap-3 flex-wrap justify-between">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold pr-1">
-              Top códigos:
+              Casco:
             </span>
-            {topCodigos.length === 0 && (
-              <span className="text-xs text-muted-foreground">Sem códigos detectados.</span>
-            )}
-            {topCodigos.map(({ cod, peso, desc }) => {
-              const ativo = codigoSel === cod;
-              return (
-                <button
-                  key={cod}
-                  title={`${desc}\n${fmt(peso, 0)} kg acumulado`}
-                  onClick={() => setCodigoSel((prev) => (prev === cod ? null : cod))}
-                  className={`px-3 py-1.5 rounded-md text-xs font-mono font-semibold border transition shadow-sm ${
-                    ativo
-                      ? "bg-primary text-primary-foreground border-primary shadow-md scale-105"
-                      : "bg-card text-foreground border-border hover:bg-primary/5 hover:border-primary/30"
-                  }`}
-                >
-                  {cod}
-                </button>
-              );
-            })}
+            <select
+              value={cascoAtivoId ?? ""}
+              onChange={(e) => { setCascoSel(e.target.value || null); limparFiltros(); }}
+              className="px-4 py-2 rounded-md text-sm font-bold border border-primary/30 bg-primary/5 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 min-w-[260px]"
+            >
+              {cascosComDados.length === 0 && <option value="">Nenhum casco com lista técnica</option>}
+              {cascosComDados.map((c: any) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome ? `${String(c.nome).toUpperCase()} - ` : ""}CASCO {c.numero}
+                </option>
+              ))}
+            </select>
             {algumFiltro && (
               <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={limparFiltros}>
                 <Filter className="h-3 w-3 mr-1" /> Limpar filtros
               </Button>
             )}
           </div>
-          <select
-            value={cascoAtivoId ?? ""}
-            onChange={(e) => { setCascoSel(e.target.value || null); limparFiltros(); }}
-            className="px-4 py-2 rounded-md text-sm font-bold border border-primary/30 bg-primary/5 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-          >
-            {cascosComDados.length === 0 && <option value="">Nenhum casco</option>}
-            {cascosComDados.map((c: any) => (
-              <option key={c.id} value={c.id}>
-                {c.nome ? `${String(c.nome).toUpperCase()} - ` : ""}CASCO {c.numero}
-              </option>
-            ))}
-          </select>
+          {algumFiltro && (
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
+              {codigoSel && <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-mono">cód {codigoSel}</span>}
+              {unidadeSel && <span className="px-2 py-0.5 rounded bg-primary/10 text-primary">UME {unidadeSel}</span>}
+              {catSel && <span className="px-2 py-0.5 rounded bg-primary/10 text-primary">{catSel}</span>}
+            </div>
+          )}
         </CardContent>
       </Card>
 
