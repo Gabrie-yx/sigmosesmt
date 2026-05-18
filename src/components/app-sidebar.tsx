@@ -48,6 +48,7 @@ import {
   Anchor,
   ListChecks,
   BarChart3,
+  PackageCheck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -121,11 +122,15 @@ const ESTOQUE_LOCKED: LockedItem[] = [
 ];
 
 const PRODUCAO_SUBMENU: LeafItem[] = [
-  { to: "/app/producao/ordens", label: "Ordens de Produção" },
   { to: "/app/producao/criar-ordem", label: "Criar Nova Ordem" },
+  { to: "/app/producao/ordens", label: "Ordens de Produção" },
+  { to: "/app/producao/lista-tecnica", label: "Lista Técnica" },
+  { to: "/app/producao/painel-lista-tecnica", label: "Dashboard Dinâmico" },
   { to: "/app/producao/tipos-produto", label: "Tipos de Produto" },
-  { to: "/app/producao/lista-tecnica", label: "Lista Técnica (SAP B51)" },
-  { to: "/app/producao/painel-lista-tecnica", label: "Painel Lista Técnica" },
+];
+
+const EXPEDICAO_SUBMENU: LeafItem[] = [
+  { to: "/app/producao/expedicao", label: "Ordens Acabadas (FERT)", icon: PackageCheck },
 ];
 
 const MANUTENCAO_LOCKED: LockedItem[] = [
@@ -152,6 +157,7 @@ export function AppSidebar() {
   const sesmtOpen = anyActive(sesmtAllItems);
   const estoqueOpen = anyActive(ESTOQUE_ITEMS);
   const producaoOpen = anyActive(PRODUCAO_SUBMENU);
+  const expedicaoOpen = anyActive(EXPEDICAO_SUBMENU);
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
@@ -326,6 +332,41 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </Body>
+            </SidebarGroup>
+          </Collapsible>
+        )}
+
+        {/* EXPEDIÇÃO */}
+        {canProducao && (
+          <Collapsible defaultOpen={expedicaoOpen} className="group/expedicao">
+            <SidebarGroup>
+              <SidebarGroupLabel asChild>
+                <CollapsibleTrigger className="flex w-full items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <PackageCheck className="h-3.5 w-3.5" /> Expedição
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]/expedicao:rotate-90" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <Body>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {EXPEDICAO_SUBMENU.map((s) => {
+                      const Icon = s.icon ?? PackageCheck;
+                      return (
+                        <SidebarMenuItem key={s.to}>
+                          <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
+                            <Link to={s.to}>
+                              <Icon />
+                              <span>{s.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </Body>
