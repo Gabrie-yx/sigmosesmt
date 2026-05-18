@@ -1726,7 +1726,6 @@ export type Database = {
           canal_distribuicao: string | null
           centro: string | null
           classe_avaliacao: string | null
-          classificacao_fiscal: string | null
           codigo_material: string
           controle_preco: string | null
           created_at: string
@@ -1737,7 +1736,6 @@ export type Database = {
           determ_preco: string | null
           embarcacao_id: string | null
           grupo_categ_item: string | null
-          grupo_classif_contabil: string | null
           grupo_compradores: string | null
           grupo_mercadorias: string | null
           id: string
@@ -1756,7 +1754,6 @@ export type Database = {
           canal_distribuicao?: string | null
           centro?: string | null
           classe_avaliacao?: string | null
-          classificacao_fiscal?: string | null
           codigo_material: string
           controle_preco?: string | null
           created_at?: string
@@ -1767,7 +1764,6 @@ export type Database = {
           determ_preco?: string | null
           embarcacao_id?: string | null
           grupo_categ_item?: string | null
-          grupo_classif_contabil?: string | null
           grupo_compradores?: string | null
           grupo_mercadorias?: string | null
           id?: string
@@ -1786,7 +1782,6 @@ export type Database = {
           canal_distribuicao?: string | null
           centro?: string | null
           classe_avaliacao?: string | null
-          classificacao_fiscal?: string | null
           codigo_material?: string
           controle_preco?: string | null
           created_at?: string
@@ -1797,7 +1792,6 @@ export type Database = {
           determ_preco?: string | null
           embarcacao_id?: string | null
           grupo_categ_item?: string | null
-          grupo_classif_contabil?: string | null
           grupo_compradores?: string | null
           grupo_mercadorias?: string | null
           id?: string
@@ -1824,8 +1818,10 @@ export type Database = {
       }
       producao_ordem_itens: {
         Row: {
+          canal_distribuicao: string | null
           centro: string | null
           classe_avaliacao: string | null
+          classificacao_fiscal: string | null
           codigo_sap: string | null
           controle_preco: string | null
           created_at: string
@@ -1834,6 +1830,7 @@ export type Database = {
           descricao_material: string
           determ_preco: string | null
           grupo_categ_item_ger: string | null
+          grupo_classif_contabil: string | null
           grupo_compradores: string | null
           grupo_mercadorias: string | null
           id: string
@@ -1842,6 +1839,7 @@ export type Database = {
           ncm: string | null
           ocorrencia: string | null
           ordem_id: string
+          org_vendas: string | null
           origem_material: string | null
           setor_atividade: string | null
           unidade_medida: string | null
@@ -1849,8 +1847,10 @@ export type Database = {
           utilizacao_material: string | null
         }
         Insert: {
+          canal_distribuicao?: string | null
           centro?: string | null
           classe_avaliacao?: string | null
+          classificacao_fiscal?: string | null
           codigo_sap?: string | null
           controle_preco?: string | null
           created_at?: string
@@ -1859,6 +1859,7 @@ export type Database = {
           descricao_material: string
           determ_preco?: string | null
           grupo_categ_item_ger?: string | null
+          grupo_classif_contabil?: string | null
           grupo_compradores?: string | null
           grupo_mercadorias?: string | null
           id?: string
@@ -1867,6 +1868,7 @@ export type Database = {
           ncm?: string | null
           ocorrencia?: string | null
           ordem_id: string
+          org_vendas?: string | null
           origem_material?: string | null
           setor_atividade?: string | null
           unidade_medida?: string | null
@@ -1874,8 +1876,10 @@ export type Database = {
           utilizacao_material?: string | null
         }
         Update: {
+          canal_distribuicao?: string | null
           centro?: string | null
           classe_avaliacao?: string | null
+          classificacao_fiscal?: string | null
           codigo_sap?: string | null
           controle_preco?: string | null
           created_at?: string
@@ -1884,6 +1888,7 @@ export type Database = {
           descricao_material?: string
           determ_preco?: string | null
           grupo_categ_item_ger?: string | null
+          grupo_classif_contabil?: string | null
           grupo_compradores?: string | null
           grupo_mercadorias?: string | null
           id?: string
@@ -1892,6 +1897,7 @@ export type Database = {
           ncm?: string | null
           ocorrencia?: string | null
           ordem_id?: string
+          org_vendas?: string | null
           origem_material?: string | null
           setor_atividade?: string | null
           unidade_medida?: string | null
@@ -1924,6 +1930,7 @@ export type Database = {
           data_solicitacao: string
           embarcacao_id: string | null
           id: string
+          mtart: string | null
           numero: string
           observacoes: string | null
           pagina: string
@@ -1943,6 +1950,7 @@ export type Database = {
           data_solicitacao?: string
           embarcacao_id?: string | null
           id?: string
+          mtart?: string | null
           numero: string
           observacoes?: string | null
           pagina?: string
@@ -1962,6 +1970,7 @@ export type Database = {
           data_solicitacao?: string
           embarcacao_id?: string | null
           id?: string
+          mtart?: string | null
           numero?: string
           observacoes?: string | null
           pagina?: string

@@ -35,13 +35,18 @@ export type OrdemFull = {
     utilizacao_material: string | null;
     codigo_sap?: string | null;
     ocorrencia?: string | null;
+    org_vendas?: string | null;
+    canal_distribuicao?: string | null;
+    classificacao_fiscal?: string | null;
+    grupo_classif_contabil?: string | null;
   }>;
 };
 
 // Cabeçalhos das colunas conforme formulário homologado FOR-PROD 01
 // Cores: Y = amarelo, B = azul, G = cinza padrão
 type ColTone = "Y" | "B" | "G";
-const COLS: { label: string; key: keyof NonNullable<OrdemFull["itens"]>[number] | "item" | "data_solicitacao"; tone: ColTone; w: number }[] = [
+type ColDef = { label: string; key: string; tone: ColTone; w: number };
+const COLS_HALB: ColDef[] = [
   { label: "ITEM",                 key: "item",                  tone: "G", w: 10 },
   { label: "DATA\nSOLICITAÇÃO",    key: "data_solicitacao",      tone: "Y", w: 22 },
   { label: "DESCRIÇÃO DO MATERIAL",key: "descricao_material",    tone: "Y", w: 50 },
@@ -58,8 +63,32 @@ const COLS: { label: string; key: keyof NonNullable<OrdemFull["itens"]>[number] 
   { label: "CONTROLE\nPREÇO",      key: "controle_preco",        tone: "G", w: 16 },
   { label: "ORIGEM DO\nMATERIAL",  key: "origem_material",       tone: "Y", w: 20 },
   { label: "UTILIZAÇÃO DO\nMATERIAL", key: "utilizacao_material",tone: "Y", w: 26 },
-  { label: "CÓDIGO SAP",           key: "codigo_sap" as any,     tone: "G", w: 18 },
-  { label: "OCORRÊNCIA",           key: "ocorrencia" as any,     tone: "G", w: 22 },
+  { label: "CÓDIGO SAP",           key: "codigo_sap",            tone: "G", w: 18 },
+  { label: "OCORRÊNCIA",           key: "ocorrencia",            tone: "G", w: 22 },
+];
+
+const COLS_FERT: ColDef[] = [
+  { label: "ITEM",                 key: "item",                  tone: "G", w: 8 },
+  { label: "DATA\nSOLICITAÇÃO",    key: "data_solicitacao",      tone: "Y", w: 18 },
+  { label: "DESCRIÇÃO DO MATERIAL",key: "descricao_material",    tone: "Y", w: 42 },
+  { label: "UNIDADE\nMEDIDA",      key: "unidade_medida",        tone: "G", w: 14 },
+  { label: "GRUPO\nCOMPRADORES",   key: "grupo_compradores",     tone: "G", w: 16 },
+  { label: "ORG.\nVENDAS",         key: "org_vendas",            tone: "B", w: 14 },
+  { label: "CANAL\nDISTRIB.",      key: "canal_distribuicao",    tone: "B", w: 14 },
+  { label: "NCM",                  key: "ncm",                   tone: "G", w: 16 },
+  { label: "CENTRO",               key: "centro",                tone: "G", w: 12 },
+  { label: "DEPÓSITO",             key: "deposito",              tone: "G", w: 12 },
+  { label: "GRUPO DE\nMERCADORIAS",key: "grupo_mercadorias",     tone: "B", w: 18 },
+  { label: "SETOR DE\nATIVIDADE",  key: "setor_atividade",       tone: "G", w: 14 },
+  { label: "CLASSIF.\nFISCAL",     key: "classificacao_fiscal",  tone: "B", w: 14 },
+  { label: "GR. CLASSIF.\nCONTÁBIL", key: "grupo_classif_contabil", tone: "B", w: 16 },
+  { label: "GR. CATEG.\nITEM",     key: "grupo_categ_item_ger",  tone: "G", w: 16 },
+  { label: "CLASSE DE\nAVALIAÇÃO", key: "classe_avaliacao",      tone: "B", w: 14 },
+  { label: "CONTROLE\nPREÇO",      key: "controle_preco",        tone: "G", w: 14 },
+  { label: "ORIGEM DO\nMATERIAL",  key: "origem_material",       tone: "Y", w: 18 },
+  { label: "UTILIZAÇÃO DO\nMATERIAL", key: "utilizacao_material",tone: "Y", w: 22 },
+  { label: "CÓDIGO SAP",           key: "codigo_sap",            tone: "G", w: 16 },
+  { label: "OCORRÊNCIA",           key: "ocorrencia",            tone: "G", w: 18 },
 ];
 
 const TONE_FILL: Record<ColTone, [number, number, number]> = {
@@ -79,6 +108,7 @@ function build(ordem: OrdemFull): jsPDF {
   const isHalb = (ordem.mtart ?? "").toUpperCase() === "HALB";
   const tituloProduto = isHalb ? "HALB ( PRODUTO SEMIACABADO)" : "FERT ( PRODUTO ACABADO)";
   const titulo = `MATERIAIS - ${tituloProduto}`;
+  const COLS = isHalb ? COLS_HALB : COLS_FERT;
 
   // ===== Cabeçalho institucional =====
   const headerH = 18;
