@@ -1726,6 +1726,7 @@ export type Database = {
           canal_distribuicao: string | null
           centro: string | null
           classe_avaliacao: string | null
+          classificacao_fiscal: string | null
           codigo_material: string
           controle_preco: string | null
           created_at: string
@@ -1736,6 +1737,7 @@ export type Database = {
           determ_preco: string | null
           embarcacao_id: string | null
           grupo_categ_item: string | null
+          grupo_classif_contabil: string | null
           grupo_compradores: string | null
           grupo_mercadorias: string | null
           id: string
@@ -1754,6 +1756,7 @@ export type Database = {
           canal_distribuicao?: string | null
           centro?: string | null
           classe_avaliacao?: string | null
+          classificacao_fiscal?: string | null
           codigo_material: string
           controle_preco?: string | null
           created_at?: string
@@ -1764,6 +1767,7 @@ export type Database = {
           determ_preco?: string | null
           embarcacao_id?: string | null
           grupo_categ_item?: string | null
+          grupo_classif_contabil?: string | null
           grupo_compradores?: string | null
           grupo_mercadorias?: string | null
           id?: string
@@ -1782,6 +1786,7 @@ export type Database = {
           canal_distribuicao?: string | null
           centro?: string | null
           classe_avaliacao?: string | null
+          classificacao_fiscal?: string | null
           codigo_material?: string
           controle_preco?: string | null
           created_at?: string
@@ -1792,6 +1797,7 @@ export type Database = {
           determ_preco?: string | null
           embarcacao_id?: string | null
           grupo_categ_item?: string | null
+          grupo_classif_contabil?: string | null
           grupo_compradores?: string | null
           grupo_mercadorias?: string | null
           id?: string
