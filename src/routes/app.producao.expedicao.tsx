@@ -9,10 +9,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  PackageCheck, Pencil, Upload, Search, FileSpreadsheet, Loader2,
+  PackageCheck, Pencil, Search, FileSpreadsheet,
 } from "lucide-react";
-import { toast } from "sonner";
-import { parseListaTecnicaXlsx } from "@/lib/lista-tecnica-parser";
 
 export const Route = createFileRoute("/app/producao/expedicao")({
   component: ExpedicaoPage,
@@ -24,11 +22,8 @@ function extractCascoNumero(casco?: string | null) {
 }
 
 function ExpedicaoPage() {
-  const qc = useQueryClient();
   const navigate = useNavigate();
   const [busca, setBusca] = useState("");
-  const [uploadingId, setUploadingId] = useState<string | null>(null);
-  const inputsRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Apenas ordens cujo Tipo de Produto é "Acabado" (mtart = FERT)
   const { data: ordens = [], isLoading } = useQuery({
