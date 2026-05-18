@@ -48,7 +48,6 @@ import {
   Anchor,
   ListChecks,
   BarChart3,
-  PackageCheck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
