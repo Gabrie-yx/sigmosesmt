@@ -13,10 +13,20 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  ClipboardList, GripVertical, Lock, Unlock, RotateCcw, Plus, Save, ListOrdered,
+  ClipboardList, Plus, Save, ListOrdered,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+
+function FieldBox({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-600">{label}</Label>
+      {children}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/app/producao/criar-ordem")({
   validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
@@ -717,11 +727,18 @@ function CriarOrdemPage() {
             <ClipboardList className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight">
-              {editId ? "Editar Ordem de Produção" : "Nova Ordem de Produção"}
-            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-black tracking-tight">
+                {editId ? "Editar Ordem de Produção" : "Nova Ordem de Produção"}
+              </h1>
+              {mtart === "FERT" ? (
+                <Badge className="bg-amber-600 hover:bg-amber-600 text-white border-0">FERT · Produto Acabado</Badge>
+              ) : (
+                <Badge className="bg-sky-600 hover:bg-sky-600 text-white border-0">HALB · Semiacabado</Badge>
+              )}
+            </div>
             <p className="text-[11px] text-muted-foreground font-medium">
-              FORMULÁRIO – MATERIAIS {mtart === "FERT" ? "FERT (PRODUTO ACABADO)" : "HALB (PRODUTO SEMIACABADO)"} · widgets arrastáveis e redimensionáveis
+              FORMULÁRIO – MATERIAIS {mtart === "FERT" ? "FERT (PRODUTO ACABADO)" : "HALB (PRODUTO SEMIACABADO)"}
             </p>
           </div>
         </div>
@@ -732,16 +749,6 @@ function CriarOrdemPage() {
               <ListOrdered className="h-3.5 w-3.5" /> Ver Ordens
             </Button>
           </Link>
-          <Button
-            variant="outline" size="sm"
-            onClick={() => setLocked((v) => !v)}
-            className="gap-1.5"
-          >
-            {locked ? <><Lock className="h-3.5 w-3.5" /> Bloqueado</> : <><Unlock className="h-3.5 w-3.5" /> Editar layout</>}
-          </Button>
-          <Button variant="outline" size="sm" onClick={resetLayout} className="gap-1.5">
-            <RotateCcw className="h-3.5 w-3.5" /> Resetar
-          </Button>
           <Button size="sm" className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white"
             disabled={salvar.isPending}
             onClick={() => salvar.mutate()}>
@@ -750,76 +757,77 @@ function CriarOrdemPage() {
         </div>
       </div>
 
-      {/* Tabs HALB / FERT */}
-      <Tabs value={mtart} onValueChange={(v) => switchMtart(v as "HALB" | "FERT")}>
-        <TabsList className="grid grid-cols-2 w-full max-w-md">
-          <TabsTrigger value="HALB">HALB — Semiacabado</TabsTrigger>
-          <TabsTrigger value="FERT">FERT — Produto Acabado</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* Tabs HALB / FERT + painel FERT no topo */}
+      <div className="space-y-3">
+        <Tabs value={mtart} onValueChange={(v) => switchMtart(v as "HALB" | "FERT")}>
+          <TabsList className="grid grid-cols-2 w-full max-w-md">
+            <TabsTrigger value="HALB" className="data-[state=active]:bg-sky-600 data-[state=active]:text-white">
+              HALB — Semiacabado
+            </TabsTrigger>
+            <TabsTrigger value="FERT" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+              FERT — Produto Acabado
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-      {/* Grid */}
-      <div ref={wrapRef} className="min-w-0 rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50/40 to-white p-3">
-        {Grid && gridWidth > 0 ? (
-          <Grid
-            className="layout"
-            layout={layout}
-            width={gridWidth}
-            gridConfig={{ cols: 12, rowHeight: 32, margin: [12, 12], containerPadding: [0, 0] }}
-            onLayoutChange={(l: Layout[]) => setLayout(autoFitRows(l))}
-            dragConfig={{ enabled: !locked, handle: ".widget-drag-handle" }}
-            resizeConfig={{ enabled: !locked }}
-          >
-            {layout.map((l) => {
-              const f = fieldByKey[l.i];
-              if (!f) return null;
-              return (
-                <div key={l.i}
-                  className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden hover:border-amber-300 transition-colors">
-                  <div className={`widget-drag-handle ${locked ? "cursor-default" : "cursor-grab active:cursor-grabbing"} flex items-center justify-between px-3 py-1.5 border-b border-slate-100 bg-gradient-to-b from-white to-slate-50`}>
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-700">
-                      {f.label}
-                    </Label>
-                    {!locked && <GripVertical className="h-3.5 w-3.5 text-slate-300" />}
-                  </div>
-                  <div className="flex-1 p-3 min-h-0 overflow-hidden">
-                    {renderField(f)}
-                  </div>
-                </div>
-              );
-            })}
-          </Grid>
-        ) : (
-          <div className="text-center text-xs text-slate-400 py-12">Carregando layout…</div>
+        {mtart === "FERT" && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50/40 p-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-3">
+              Campos FERT (SAP) — pré-preenchidos, editáveis
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <FieldBox label="Organização de Vendas">
+                <Input value={values.org_vendas ?? ""} onChange={(e) => setVal("org_vendas", e.target.value)} />
+              </FieldBox>
+              <FieldBox label="Canal de Distribuição">
+                <Input value={values.canal_distribuicao ?? ""} onChange={(e) => setVal("canal_distribuicao", e.target.value)} />
+              </FieldBox>
+              <FieldBox label="Classificação Fiscal">
+                <Input value={values.classificacao_fiscal ?? ""} onChange={(e) => setVal("classificacao_fiscal", e.target.value)} />
+              </FieldBox>
+              <FieldBox label="Gr. Classif. Contábil">
+                <Input value={values.grupo_classif_contabil ?? ""} onChange={(e) => setVal("grupo_classif_contabil", e.target.value)} />
+              </FieldBox>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Campos FERT (SAP) — só no modo FERT */}
-      {mtart === "FERT" && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50/30 p-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-3">
-            Campos FERT (SAP) — pré-preenchidos, editáveis
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div>
-              <Label className="text-xs">Organização de Vendas</Label>
-              <Input value={values.org_vendas ?? ""} onChange={(e) => setVal("org_vendas", e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Canal de Distribuição</Label>
-              <Input value={values.canal_distribuicao ?? ""} onChange={(e) => setVal("canal_distribuicao", e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Classificação Fiscal</Label>
-              <Input value={values.classificacao_fiscal ?? ""} onChange={(e) => setVal("classificacao_fiscal", e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Gr. Classif. Contábil Material</Label>
-              <Input value={values.grupo_classif_contabil ?? ""} onChange={(e) => setVal("grupo_classif_contabil", e.target.value)} />
-            </div>
-          </div>
+      {/* Formulário estruturado (12 colunas) */}
+      <div className={`rounded-2xl border ${mtart === "FERT" ? "border-amber-200" : "border-sky-200"} bg-white p-4`}>
+        <div className="grid grid-cols-12 gap-3">
+          {/* linha 1 — identificação */}
+          <div className="col-span-6 md:col-span-3"><FieldBox label="Casco">{renderField(fieldByKey.casco)}</FieldBox></div>
+          <div className="col-span-6 md:col-span-4"><FieldBox label="Tipo de Produto">{renderField(fieldByKey.tipo_produto)}</FieldBox></div>
+          <div className="col-span-6 md:col-span-2"><FieldBox label="Qtde. Itens">{renderField(fieldByKey.qtde_itens)}</FieldBox></div>
+          <div className="col-span-6 md:col-span-3"><FieldBox label="Data">{renderField(fieldByKey.data)}</FieldBox></div>
+
+          {/* linha 2 — descrição */}
+          <div className="col-span-12"><FieldBox label="Descrição do Material">{renderField(fieldByKey.descricao_material)}</FieldBox></div>
+
+          {/* linha 3 — codificação SAP */}
+          <div className="col-span-6 md:col-span-2"><FieldBox label="Unidade de Medida">{renderField(fieldByKey.unidade_medida)}</FieldBox></div>
+          <div className="col-span-6 md:col-span-3"><FieldBox label="NCM">{renderField(fieldByKey.ncm)}</FieldBox></div>
+          <div className="col-span-4 md:col-span-2"><FieldBox label="Centro">{renderField(fieldByKey.centro)}</FieldBox></div>
+          <div className="col-span-4 md:col-span-2"><FieldBox label="Depósito">{renderField(fieldByKey.deposito)}</FieldBox></div>
+          <div className="col-span-4 md:col-span-3"><FieldBox label="Setor de Atividade">{renderField(fieldByKey.setor_atividade)}</FieldBox></div>
+
+          {/* linha 4 — grupos */}
+          <div className="col-span-12 md:col-span-6"><FieldBox label="Grupo de Mercadorias">{renderField(fieldByKey.grupo_mercadorias)}</FieldBox></div>
+          <div className="col-span-6 md:col-span-3"><FieldBox label="Grupo Compradores">{renderField(fieldByKey.grupo_compradores)}</FieldBox></div>
+          <div className="col-span-6 md:col-span-3"><FieldBox label="Grupo Categ. Item Ger.">{renderField(fieldByKey.grupo_categ_item)}</FieldBox></div>
+
+          {/* linha 5 — avaliação/preço */}
+          <div className="col-span-6 md:col-span-3"><FieldBox label="Classe de Avaliação">{renderField(fieldByKey.classe_avaliacao)}</FieldBox></div>
+          <div className="col-span-6 md:col-span-3"><FieldBox label="Determ. de Preço">{renderField(fieldByKey.determ_preco)}</FieldBox></div>
+          <div className="col-span-6 md:col-span-3"><FieldBox label="Controle de Preço">{renderField(fieldByKey.controle_preco)}</FieldBox></div>
+          <div className="col-span-6 md:col-span-3"><FieldBox label="Origem do Material">{renderField(fieldByKey.origem_material)}</FieldBox></div>
+
+          {/* linha 6 — utilização/solicitante */}
+          <div className="col-span-12 md:col-span-6"><FieldBox label="Utilização do Material">{renderField(fieldByKey.utilizacao_material)}</FieldBox></div>
+          <div className="col-span-12 md:col-span-6"><FieldBox label="Solicitante">{renderField(fieldByKey.solicitante)}</FieldBox></div>
         </div>
-      )}
+      </div>
 
       {/* Assinatura */}
       <div className="rounded-xl border-2 border-dashed border-slate-300 bg-white p-6 text-center">
