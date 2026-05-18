@@ -434,7 +434,9 @@ function TrainingsPage() {
             ))}
           </div>
         </div>
-      </div>
+        </div>
+        </TabsContent>
+      </Tabs>
 
       {openAttendees && (
         <AttendeesDialog
