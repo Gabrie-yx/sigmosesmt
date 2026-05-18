@@ -161,7 +161,7 @@ function PainelListaTecnicaPage() {
   const itensVisiveis = useMemo(() => {
     return itensFiltrados.filter((it) => {
       if (codigoSel && String(it.codigo_sap) !== codigoSel) return false;
-      if (unidadeSel && String(it.unidade ?? "—") !== unidadeSel) return false;
+      if (unidadeSel && String(it.unidade ?? "—").toUpperCase() !== unidadeSel) return false;
       if (catSel && it.categoria !== catSel) return false;
       return true;
     });
@@ -189,7 +189,7 @@ function PainelListaTecnicaPage() {
       // ignora o filtro de categoria para mostrar a categoria em si
       const baseItens = itensFiltrados.filter((it) => {
         if (codigoSel && String(it.codigo_sap) !== codigoSel) return false;
-        if (unidadeSel && String(it.unidade ?? "—") !== unidadeSel) return false;
+        if (unidadeSel && String(it.unidade ?? "—").toUpperCase() !== unidadeSel) return false;
         return it.categoria === cat;
       });
       // Barras agrupadas por UME (igual ao Power BI: CT, MT, PC, UN, M, KG)
@@ -204,15 +204,19 @@ function PainelListaTecnicaPage() {
         .sort((a, b) => Math.abs(b.valor) - Math.abs(a.valor))
         .slice(0, 8);
 
-      const serieMap = new Map<string, number>();
+      // "Série" = top itens da categoria por peso (mais útil que temporal com 1 importação)
+      const itemMap = new Map<string, { codigo: string; desc: string; peso: number }>();
       baseItens.forEach((it) => {
-        if (!it.lista_created_at) return;
-        const d = new Date(it.lista_created_at);
-        const k = mesKey(d);
-        const valor = Number(it.peso_real ?? it.peso_total_estimado ?? 0);
-        serieMap.set(k, (serieMap.get(k) ?? 0) + valor);
+        const cod = String(it.codigo_sap ?? "");
+        if (!cod) return;
+        const cur = itemMap.get(cod) ?? { codigo: cod, desc: String(it.descricao_sap ?? ""), peso: 0 };
+        cur.peso += Math.abs(Number(it.peso_real ?? it.peso_total_estimado ?? 0));
+        itemMap.set(cod, cur);
       });
-      const serie = Array.from(serieMap.entries()).map(([mes, valor]) => ({ mes, valor }));
+      const serie = Array.from(itemMap.values())
+        .sort((a, b) => b.peso - a.peso)
+        .slice(0, 10)
+        .map((i) => ({ mes: i.codigo, valor: i.peso, desc: i.desc }));
       const totalPeso = baseItens.reduce(
         (s, it) => s + Number(it.peso_real ?? it.peso_total_estimado ?? 0), 0,
       );
