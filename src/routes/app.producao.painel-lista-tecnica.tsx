@@ -141,23 +141,6 @@ function PainelListaTecnicaPage() {
     [itensEnriq, cascoAtivoId],
   );
 
-  // Top códigos por peso (mais consumidos no casco ativo)
-  const topCodigos = useMemo(() => {
-    const acc = new Map<string, { peso: number; desc: string }>();
-    itensFiltrados.forEach((it) => {
-      const cod = String(it.codigo_sap ?? "");
-      if (!cod) return;
-      const peso = Math.abs(Number(it.peso_real ?? it.peso_total_estimado ?? 0));
-      const cur = acc.get(cod) ?? { peso: 0, desc: String(it.descricao_sap ?? "") };
-      cur.peso += peso;
-      acc.set(cod, cur);
-    });
-    return Array.from(acc.entries())
-      .sort((a, b) => b[1].peso - a[1].peso)
-      .slice(0, 8)
-      .map(([cod, v]) => ({ cod, peso: v.peso, desc: v.desc }));
-  }, [itensFiltrados]);
-
   const itensVisiveis = useMemo(() => {
     return itensFiltrados.filter((it) => {
       if (codigoSel && String(it.codigo_sap) !== codigoSel) return false;
