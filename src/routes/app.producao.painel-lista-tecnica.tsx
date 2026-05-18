@@ -190,7 +190,7 @@ function PainelListaTecnicaPage() {
         <div>
           <h1 className="text-xl font-bold flex items-center gap-2">
             <LayoutDashboard className="h-6 w-6 text-primary" />
-            Painel Dinâmico — Lista Técnica
+            Dashboard Dinâmico
           </h1>
           <p className="text-xs text-muted-foreground">
             Clique em um código FERT/HALB para filtrar todo o painel. Atualiza em tempo real.
