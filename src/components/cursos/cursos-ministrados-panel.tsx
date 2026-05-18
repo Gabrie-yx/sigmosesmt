@@ -344,6 +344,30 @@ function TurmaRow({ turma, course, expanded, onToggle }: { turma: any; course: a
     },
   });
 
+  // Quantos participantes desta turma já estão refletidos na Matriz de Treinamento.
+  const { data: matrizSync = { sincronizados: 0, total: 0 } } = useQuery({
+    queryKey: ["training-matriz-sync", turma.id, turma.course_id, turma.data_realizacao],
+    queryFn: async () => {
+      if (!turma.course_id) return { sincronizados: 0, total: 0 };
+      const { data: atts } = await supabase
+        .from("training_attendees")
+        .select("employee_id, situacao")
+        .eq("training_id", turma.id);
+      const elegiveis = (atts ?? []).filter((a: any) => ["APROVADO", "PRESENTE"].includes(a.situacao));
+      if (elegiveis.length === 0) return { sincronizados: 0, total: 0 };
+      const empIds = elegiveis.map((a: any) => a.employee_id);
+      const { data: entries } = await supabase
+        .from("training_matrix_entries")
+        .select("employee_id, data_realizacao")
+        .eq("course_id", turma.course_id)
+        .in("employee_id", empIds);
+      const sync = (entries ?? []).filter(
+        (e: any) => e.data_realizacao === turma.data_realizacao,
+      ).length;
+      return { sincronizados: sync, total: elegiveis.length };
+    },
+  });
+
   const uploadAnexo = useMutation({
     mutationFn: async ({ file, tipo, descricao }: { file: File; tipo: string; descricao?: string }) => {
       const ext = file.name.split(".").pop() ?? "bin";
@@ -462,6 +486,23 @@ function TurmaRow({ turma, course, expanded, onToggle }: { turma: any; course: a
             )}
             {turma.instrutor && <span>👤 {turma.instrutor}</span>}
             <span><Users className="h-3 w-3 inline mr-1" />{participantesCount} part.</span>
+            {turma.course_id && matrizSync.total > 0 && (
+              <Badge
+                variant="outline"
+                className={`text-[9px] py-0 h-4 ${
+                  matrizSync.sincronizados === matrizSync.total
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-amber-50 text-amber-700 border-amber-200"
+                }`}
+              >
+                Matriz: {matrizSync.sincronizados}/{matrizSync.total}
+              </Badge>
+            )}
+            {!turma.course_id && (
+              <Badge variant="outline" className="text-[9px] py-0 h-4 bg-red-50 text-red-700 border-red-200">
+                Sem vínculo c/ matriz
+              </Badge>
+            )}
           </div>
         </div>
         <ChevronRight className={`h-5 w-5 text-slate-400 transition-transform ${expanded ? "rotate-90" : ""}`} />
