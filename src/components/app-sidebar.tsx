@@ -113,8 +113,7 @@ const DDS_SUBMENU: LeafItem[] = [
 ];
 
 const ESTOQUE_ITEMS: LeafItem[] = [
-  { to: "/app/estoque/sesmt", label: "SESMT" },
-  { to: "/app/estoque/epi", label: "EPIs (Cards)" },
+  { to: "/app/estoque", label: "Estoque de EPIs" },
 ];
 const ESTOQUE_LOCKED: LockedItem[] = [
   { key: "estoque-eletrica", label: "Elétrica" },
