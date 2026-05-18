@@ -18,6 +18,7 @@ import {
 import { CATEGORIA_COLOR, CATEGORIA_LABEL } from "@/lib/matriz-status";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
 import { sortMatrixCourses } from "@/lib/nr-order";
+import { AttendeesDialog } from "@/routes/app.trainings";
 
 const MODALIDADES = ["PRESENCIAL", "ONLINE", "HIBRIDA"] as const;
 const TIPOS_REALIZACAO = ["INTERNO", "EXTERNO", "IN_COMPANY"] as const;
@@ -322,6 +323,7 @@ function TurmasDialog({ courseId, course, onClose }: { courseId: string; course:
 function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; course: any; expanded: boolean; onToggle: () => void; onEdit: () => void }) {
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
+  const [participantesOpen, setParticipantesOpen] = useState(false);
 
   const { data: anexos = [] } = useQuery({
     queryKey: ["training-anexos", turma.id],
@@ -536,6 +538,9 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
         <div className="p-4 border-t border-slate-200 bg-white space-y-4">
           {isEditor && (
             <div className="flex flex-wrap gap-2 justify-end">
+              <Button size="sm" variant="outline" onClick={() => setParticipantesOpen(true)}>
+                <Users className="h-4 w-4 mr-1" /> Participantes
+              </Button>
               <Button size="sm" variant="outline" onClick={onEdit}>
                 <Pencil className="h-4 w-4 mr-1" /> Editar dados da turma
               </Button>
@@ -623,9 +628,21 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
           </div>
 
           <div className="text-[10px] text-slate-400 italic">
-            Para gerenciar participantes desta turma, use a aba <b>Grade Atual</b>.
+            Dica: o botão <b>Participantes</b> permite adicionar individualmente ou em massa por empresa.
           </div>
         </div>
+      )}
+      {participantesOpen && (
+        <AttendeesDialog
+          trainingId={turma.id}
+          training={turma}
+          onClose={() => {
+            setParticipantesOpen(false);
+            qc.invalidateQueries({ queryKey: ["training-participantes-count", turma.id] });
+            qc.invalidateQueries({ queryKey: ["training-matriz-sync", turma.id, turma.course_id, turma.data_realizacao] });
+            qc.invalidateQueries({ queryKey: ["cursos-aderencia"] });
+          }}
+        />
       )}
     </div>
   );
