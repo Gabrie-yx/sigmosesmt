@@ -44,10 +44,11 @@ function OrdensListPage() {
       const { data, error } = await supabase
         .from("producao_ordens")
         .select("*, itens:producao_ordem_itens(*)")
-        .eq("mtart", "HALB")
+        .or("mtart.eq.HALB,mtart.is.null")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as any[];
+      // Garante exclusão de qualquer FERT que escape (defensivo) e mantém HALB + legado sem MTART
+      return ((data ?? []) as any[]).filter((o) => o.mtart !== "FERT");
     },
   });
 
