@@ -59,7 +59,7 @@ const ITEMS: DockItem[] = [
       { label: "APRs — Análise de Risco", path: "/app/aprs" },
       { label: "PTEs — Permissão de Trabalho", path: "/app/ptes" },
       { label: "Treinamentos", path: "/app/trainings" },
-      { label: "Entrega de EPI", path: "/app/estoque/epi" },
+      { label: "Entrega de EPI", path: "/app/estoque" },
     ],
   },
   {
@@ -68,8 +68,7 @@ const ITEMS: DockItem[] = [
     icon: SearchCheck,
     hint: "CHECK · inspeções e indicadores",
     children: [
-      { label: "Estoque de EPIs", path: "/app/estoque/epi" },
-      { label: "Estoque SESMT", path: "/app/estoque/sesmt" },
+      { label: "Estoque de EPIs", path: "/app/estoque" },
       { label: "Painel de Terceiros", path: "/app/sesmt/terceiros" },
       { label: "Reincidência de EPI", path: "/app/relatorios/reincidencia-epi" },
     ],

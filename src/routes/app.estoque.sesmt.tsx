@@ -54,7 +54,7 @@ export const Route = createFileRoute("/app/estoque/sesmt")({
   component: EstoqueSesmtPage,
 });
 
-function EstoqueSesmtPage() {
+export function EstoqueSesmtPage() {
   const qc = useQueryClient();
   const { isAdmin, isEditor } = useAuth();
   const navigate = useNavigate();

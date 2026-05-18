@@ -133,7 +133,7 @@ const TIPO_LABEL: Record<Tipo, string> = {
 
 // ───────────────────────── page ─────────────────────────
 
-function EstoqueEpiPage() {
+export function EstoqueEpiPage() {
   const qc = useQueryClient();
 
   const { data: epis = [], isLoading } = useQuery({
@@ -747,7 +747,7 @@ function NewEpiDialog({ onCreated }: { onCreated: () => void }) {
 
 // ───────────────────────── Consulta por Colaborador (Dossiê) ─────────────────────────
 
-function ConsultaColaborador() {
+export function ConsultaColaborador() {
   const [cpfBusca, setCpfBusca] = useState("");
   const cpfDigits = cpfBusca.replace(/\D/g, "");
   const cpfValido = validaCpf(cpfBusca);
