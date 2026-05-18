@@ -1,0 +1,7 @@
+ALTER TABLE public.cascos
+  ADD COLUMN IF NOT EXISTS armador TEXT,
+  ADD COLUMN IF NOT EXISTS tipo_embarcacao TEXT,
+  ADD COLUMN IF NOT EXISTS comprimento_total NUMERIC(8,2),
+  ADD COLUMN IF NOT EXISTS inicio_obra TEXT,
+  ADD COLUMN IF NOT EXISTS prazo_dias INTEGER,
+  ADD COLUMN IF NOT EXISTS licenca_provisoria TEXT;
