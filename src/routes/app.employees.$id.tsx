@@ -464,7 +464,7 @@ function EmployeeContextSidebar({ id }: { id: string }) {
 
       {/* AÇÕES — paleta coesa (brand + navy + outlines) */}
       <div className="grid grid-cols-2 gap-2">
-        <Link to="/app/employees" search={{ new: 1 }} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-[#991b1b] to-[#7B1E2B] hover:from-[#7B1E2B] hover:to-[#4a0e15] text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
+        <Link to="/app/employees" search={{ new: 1, company: companyId ?? undefined }} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-[#991b1b] to-[#7B1E2B] hover:from-[#7B1E2B] hover:to-[#4a0e15] text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
           <UserPlus className="h-3.5 w-3.5" /> Novo Colab.
         </Link>
         <Link to="/app/companies" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0f172a] hover:bg-[#1e293b] text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
