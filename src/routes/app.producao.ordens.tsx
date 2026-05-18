@@ -118,9 +118,20 @@ function OrdensListPage() {
     mutationFn: async ({ ordem, file }: { ordem: any; file: File }) => {
       const numero = extractCascoNumero(ordem.casco);
       if (numero == null) throw new Error("Ordem sem número de casco válido.");
-      const cascoId = cascoIdByNumero.get(numero);
+      let cascoId = cascoIdByNumero.get(numero);
       if (!cascoId) {
-        throw new Error(`Casco "${ordem.casco}" não está cadastrado em Cascos/Embarcações.`);
+        // Auto-cadastra o casco em Cascos/Embarcações usando o número da OP
+        const numeroFmt = `CASCO ${String(numero).padStart(3, "0")}`;
+        const { data: novo, error: eCasco } = await supabase
+          .from("cascos")
+          .insert({ numero: numeroFmt, status: "ATIVO" })
+          .select("id")
+          .maybeSingle();
+        if (eCasco || !novo) {
+          throw new Error(eCasco?.message ?? "Falha ao cadastrar o casco automaticamente.");
+        }
+        cascoId = (novo as any).id;
+        toast.success(`Casco ${numeroFmt} cadastrado automaticamente.`);
       }
       const parsed = await parseListaTecnicaXlsx(file);
       const { data: existentes } = await supabase
