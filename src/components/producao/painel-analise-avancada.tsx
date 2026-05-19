@@ -393,7 +393,7 @@ function AbaComparativo({
   );
 
   const { data: todosItensB51 = [] } = useQuery({
-    queryKey: ["comp-b51-itens", listaIds.join(",")],
+    queryKey: ["comparativo-lista-tecnica-itens", listaIds.join(",")],
     enabled: listaIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -408,7 +408,7 @@ function AbaComparativo({
 
   // Fetch de TODOS os movimentos MB51 (até 10k)
   const { data: todosMovs = [] } = useQuery({
-    queryKey: ["comp-mb51-movs"],
+    queryKey: ["comparativo-mb51-movimentos"],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("producao_mb51_movimentos")
