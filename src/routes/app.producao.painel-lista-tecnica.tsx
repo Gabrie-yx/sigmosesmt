@@ -289,14 +289,14 @@ function PainelListaTecnicaPage() {
     const linhas = itensVisiveis.length;
     const distintos = new Set(itensVisiveis.map((it) => String(it.codigo_sap))).size;
     const desvio = pesoEst > 0 ? ((consumo - pesoEst) / pesoEst) * 100 : 0;
-    // Consumo Ferro/Aço da Ordem: usa a coluna "Classificação" da própria MB51
-    // (Ferro / Gás / Solda / Tinta / Outros). Soma só os movimentos de consumo
-    // (Qtd. UM registro negativa → consumo > 0 após inversão), ignorando estornos.
+    // Consumo Ferro/Aço da Ordem: usa a coluna "Classificação" da MB51
+    // restrito a UM = KG e LÍQUIDO (consumo − estornos), mesma base do
+    // card "PESO REAL (B51)" para serem comparáveis.
     const consumoOrdem = itensEnriq
       .filter((it) => {
         const cls = String(it.classificacao_mb51 ?? "")
           .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-        return cls.startsWith("ferr") && Number(it.consumo ?? 0) > 0;
+        return cls.startsWith("ferr") && String(it.unidade ?? "").toUpperCase() === "KG";
       })
       .reduce((s, it) => s + Number(it.consumo ?? 0), 0);
     return { pesoReal: consumo, pesoEst, pecas: linhas, distintos, desvio, consumoOrdem };
