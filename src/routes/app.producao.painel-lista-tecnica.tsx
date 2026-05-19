@@ -1207,20 +1207,24 @@ function PainelListaTecnicaPage() {
                 <Card className="shadow-sm">
                   <CardHeader className="pb-1 pt-3 px-4 flex flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-xs text-muted-foreground font-medium">
-                      Top itens — <span className="font-bold" style={{ color: cor }}>{cat}</span>
+                      {focoItem ? (
+                        <>Consumo mensal — <span className="font-mono font-bold" style={{ color: cor }}>{focoItem.codigo}</span></>
+                      ) : (
+                        <>Consumo mensal — <span className="font-bold" style={{ color: cor }}>{cat}</span></>
+                      )}
                     </CardTitle>
-                    {serie.length > 0 && (
-                      <span className="text-[10px] text-muted-foreground">{serie.length} código(s)</span>
+                    {serieMensal.length > 0 && (
+                      <span className="text-[10px] text-muted-foreground">{serieMensal.length} mês(es)</span>
                     )}
                   </CardHeader>
                   <CardContent className="h-44 p-2">
-                    {serie.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem itens nessa categoria</div>
+                    {serieMensal.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem movimentos com data</div>
                     ) : (
                       (() => {
                         const topKind = CAT_TOP[cat];
                         const palette = variantPalette(cor);
-                        const dadosBase = serie.map((s: any, i: number) => ({
+                        const dadosBase = serieMensal.map((s: any, i: number) => ({
                           mes: s.mes,
                           valor: s.valor,
                           desc: s.desc,
