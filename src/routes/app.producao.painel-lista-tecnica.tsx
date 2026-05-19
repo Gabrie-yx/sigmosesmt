@@ -591,7 +591,7 @@ function PainelListaTecnicaPage() {
             const dv = plan > 0 ? ((real - plan) / plan) * 100 : 0;
             return { label: "Desvio Real vs Plan.", value: plan > 0 ? `${dv >= 0 ? "+" : ""}${fmt(dv, 2)}%` : "—", icon: TrendingUp, accent: dv > 0 ? "from-red-500/20 to-red-500/5" : "from-green-500/20 to-green-500/5", textCls: dv > 0 ? "text-red-600" : "text-green-600" };
           })(),
-          { label: "Consumo MB51 (Ordem)", value: fmt(kpi.consumoOrdem, 0), icon: TrendingUp, accent: "from-primary/20 to-primary/5", textCls: "text-primary" },
+          { label: "Consumo MB51 (Ordem)", value: `${fmt(kpi.consumoOrdem, 0)} kg`, icon: TrendingUp, accent: "from-primary/20 to-primary/5", textCls: "text-primary" },
           { label: "Códigos Distintos", value: fmt(kpi.distintos, 0), icon: Filter, accent: "from-blue-500/15 to-blue-500/5", textCls: "text-blue-600" },
           { label: "Movimentos MB51", value: fmt(kpi.pecas, 0), icon: Package, accent: "from-amber-500/15 to-amber-500/5", textCls: "text-amber-700" },
         ].map((k) => (
