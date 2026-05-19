@@ -50,20 +50,20 @@ const CAT_ICON: Record<CategoriaMaterial, string> = {
 type ChartKind = "stacked" | "donut2" | "radial" | "gauge" | "radar";
 const CAT_CHART: Record<CategoriaMaterial, ChartKind> = {
   FERRO: "stacked",
-  SOLDA: "radar",
-  "GÁS": "radial",
-  TINTA: "gauge",
-  OUTROS: "radar",
+  SOLDA: "stacked",
+  "GÁS": "stacked",
+  TINTA: "stacked",
+  OUTROS: "stacked",
 };
 
 // Variação do gráfico de FOCO (quando um item do painel lateral é selecionado)
 type FocusKind = "bullet" | "donut" | "slope" | "gauge-h" | "radial-single" | "radar";
 const CAT_FOCUS: Record<CategoriaMaterial, FocusKind> = {
   FERRO: "bullet",
-  SOLDA: "radar",
-  "GÁS": "slope",
-  TINTA: "gauge-h",
-  OUTROS: "radial-single",
+  SOLDA: "bullet",
+  "GÁS": "bullet",
+  TINTA: "bullet",
+  OUTROS: "bullet",
 };
 
 // Variação do gráfico "Top itens" por categoria
