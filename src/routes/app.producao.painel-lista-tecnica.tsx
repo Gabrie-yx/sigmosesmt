@@ -408,36 +408,40 @@ function PainelListaTecnicaPage() {
                   <CardContent className="h-44 p-2">
                     {vazio ? (
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem dados</div>
-                    ) : CAT_CHART[cat] === "donut" || CAT_CHART[cat] === "pie" ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Tooltip content={<FancyTooltip accent={cor} />} />
-                          <Pie
-                            data={barras}
-                            dataKey="valor"
-                            nameKey="label"
-                            innerRadius={CAT_CHART[cat] === "donut" ? 32 : 0}
-                            outerRadius={62}
-                            paddingAngle={2}
-                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
-                            className="cursor-pointer focus:outline-none"
-                            label={(e: any) => `${e.label} · ${fmt(Number(e.value), 0)}`}
-                            labelLine={false}
-                            style={{ fontSize: 10, fill: "hsl(var(--foreground))" }}
-                          >
-                            {barras.map((b, i) => (
-                              <Cell
-                                key={i}
-                                fill={unidadeSel && unidadeSel !== b.label
-                                  ? `color-mix(in oklch, ${cor} 30%, transparent)`
-                                  : `color-mix(in oklch, ${cor} ${95 - i * 10}%, white)`}
-                                stroke={unidadeSel === b.label ? cor : "hsl(var(--background))"}
-                                strokeWidth={unidadeSel === b.label ? 2 : 1}
-                              />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
+                    ) : CAT_CHART[cat] === "donut2" ? (
+                      (() => {
+                        // donut 2-cores: topo (maior UME) vs restante
+                        const top = barras[0];
+                        const restoVal = barras.slice(1).reduce((s, b) => s + b.valor, 0);
+                        const data2 = restoVal > 0
+                          ? [top, { label: "Outros", valor: restoVal }]
+                          : [top];
+                        const cor2 = `color-mix(in oklch, ${cor} 35%, white)`;
+                        return (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Tooltip content={<FancyTooltip accent={cor} />} />
+                              <Pie
+                                data={data2}
+                                dataKey="valor"
+                                nameKey="label"
+                                innerRadius={36}
+                                outerRadius={64}
+                                paddingAngle={2}
+                                onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
+                                className="cursor-pointer focus:outline-none"
+                                label={(e: any) => `${e.label} · ${fmt(Number(e.value), 0)}`}
+                                labelLine={false}
+                                style={{ fontSize: 10, fill: "hsl(var(--foreground))" }}
+                              >
+                                {data2.map((b, i) => (
+                                  <Cell key={i} fill={i === 0 ? cor : cor2} stroke="hsl(var(--background))" strokeWidth={1} />
+                                ))}
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                        );
+                      })()
                     ) : CAT_CHART[cat] === "radial" ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <RadialBarChart
@@ -458,50 +462,80 @@ function PainelListaTecnicaPage() {
                           <Legend iconSize={8} layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: 10 }} formatter={(_v, e: any) => e?.payload?.label} />
                         </RadialBarChart>
                       </ResponsiveContainer>
-                    ) : CAT_CHART[cat] === "bar-h" ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={barras} layout="vertical" margin={{ left: 4, right: 28, top: 4, bottom: 4 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                          <XAxis type="number" hide />
-                          <YAxis type="category" dataKey="label" width={36} stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                          <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 10%, transparent)` }} content={<FancyTooltip accent={cor} />} />
-                          <Bar
-                            dataKey="valor"
-                            radius={[0, 4, 4, 0]}
-                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
-                            className="cursor-pointer"
-                          >
-                            {barras.map((b, i) => (
-                              <Cell key={i} fill={unidadeSel && unidadeSel !== b.label ? `color-mix(in oklch, ${cor} 30%, transparent)` : cor} />
-                            ))}
-                            <LabelList dataKey="valor" position="right" fontSize={10} fill={cor} formatter={(v: any) => fmt(Number(v), 0)} />
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+                    ) : CAT_CHART[cat] === "stacked" ? (
+                      (() => {
+                        // Barras empilhadas: uma única barra de composição com cada UME virando uma série
+                        const row: any = { name: cat };
+                        barras.forEach((b) => { row[b.label] = b.valor; });
+                        return (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={[row]} layout="vertical" margin={{ left: 4, right: 12, top: 18, bottom: 4 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                              <XAxis type="number" hide />
+                              <YAxis type="category" dataKey="name" hide />
+                              <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} />} />
+                              <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                              {barras.map((b, i) => (
+                                <Bar
+                                  key={b.label}
+                                  dataKey={b.label}
+                                  stackId="a"
+                                  fill={unidadeSel && unidadeSel !== b.label
+                                    ? `color-mix(in oklch, ${cor} 25%, transparent)`
+                                    : `color-mix(in oklch, ${cor} ${95 - i * 14}%, white)`}
+                                  onClick={() => setUnidadeSel((p) => (p === b.label ? null : b.label))}
+                                  className="cursor-pointer"
+                                />
+                              ))}
+                            </BarChart>
+                          </ResponsiveContainer>
+                        );
+                      })()
+                    ) : CAT_CHART[cat] === "gauge" ? (
+                      (() => {
+                        // Gauge: semicírculo mostrando totalPeso vs meta (max entre categorias × 1.1)
+                        const meta = Math.max(totalPeso * 1.25, 1);
+                        const pct = Math.min(100, (totalPeso / meta) * 100);
+                        const data = [{ name: cat, value: pct, fill: cor }];
+                        return (
+                          <div className="relative h-full w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <RadialBarChart
+                                data={data}
+                                innerRadius="70%"
+                                outerRadius="100%"
+                                startAngle={180}
+                                endAngle={0}
+                                cy="75%"
+                              >
+                                <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+                                <RadialBar background={{ fill: `color-mix(in oklch, ${cor} 12%, transparent)` }} dataKey="value" cornerRadius={8} />
+                              </RadialBarChart>
+                            </ResponsiveContainer>
+                            <div className="absolute inset-0 flex flex-col items-center justify-end pb-2 pointer-events-none">
+                              <div className="text-base font-bold" style={{ color: cor }}>{fmt(totalPeso, 0)}</div>
+                              <div className="text-[10px] text-muted-foreground">{fmt(pct, 0)}% da meta</div>
+                            </div>
+                          </div>
+                        );
+                      })()
                     ) : (
+                      // radar
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={barras} margin={{ left: 4, right: 8, top: 18, bottom: 4 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                          <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={0} />
-                          <YAxis hide />
-                          <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 10%, transparent)` }} content={<FancyTooltip accent={cor} />} />
-                          <Bar
+                        <RadarChart data={barras} margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
+                          <PolarGrid stroke="hsl(var(--border))" />
+                          <PolarAngleAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                          <PolarRadiusAxis tick={false} axisLine={false} />
+                          <Tooltip content={<FancyTooltip accent={cor} />} />
+                          <Radar
                             dataKey="valor"
-                            radius={[4, 4, 0, 0]}
-                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
+                            stroke={cor}
+                            fill={cor}
+                            fillOpacity={0.35}
+                            onClick={(d: any) => setUnidadeSel((p) => (p === d?.payload?.label ? null : d?.payload?.label))}
                             className="cursor-pointer"
-                          >
-                            {barras.map((b, i) => (
-                              <Cell
-                                key={i}
-                                fill={unidadeSel && unidadeSel !== b.label ? `color-mix(in oklch, ${cor} 30%, transparent)` : cor}
-                                stroke={unidadeSel === b.label ? cor : "transparent"}
-                                strokeWidth={unidadeSel === b.label ? 2 : 0}
-                              />
-                            ))}
-                            <LabelList dataKey="valor" position="top" fontSize={10} fill={cor} formatter={(v: any) => fmt(Number(v), 0)} />
-                          </Bar>
-                        </BarChart>
+                          />
+                        </RadarChart>
                       </ResponsiveContainer>
                     )}
                   </CardContent>
