@@ -1256,7 +1256,9 @@ function PainelListaTecnicaPage() {
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem movimentos com data</div>
                     ) : (
                       (() => {
-                        const topKind = CAT_TOP[cat];
+                        // Forçado para LINE em todos os cards de Consumo Mensal (preferência do usuário)
+                        const topKind: string = "line";
+                        void CAT_TOP;
                         const palette = variantPalette(cor);
                         const dadosBase = serieMensal.map((s: any, i: number) => ({
                           mes: s.mes,
