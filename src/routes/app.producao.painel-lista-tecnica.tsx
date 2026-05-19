@@ -30,12 +30,13 @@ const fmt = (n: number, d = 2) =>
 const MES_LABEL = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const mesKey = (d: Date) => `${MES_LABEL[d.getMonth()]} ${d.getFullYear()}`;
 
+// Paleta padronizada do design system (tokens --chart-1..5 de src/styles.css)
 const CAT_COLOR: Record<CategoriaMaterial, string> = {
-  FERRO: "hsl(0 72% 45%)",
-  SOLDA: "hsl(28 90% 55%)",
-  "GÁS": "hsl(200 85% 50%)",
-  TINTA: "hsl(265 70% 55%)",
-  OUTROS: "hsl(150 50% 45%)",
+  FERRO: "oklch(0.646 0.222 41.116)",   // --chart-1
+  SOLDA: "oklch(0.828 0.189 84.429)",   // --chart-4
+  "GÁS": "oklch(0.6 0.118 184.704)",    // --chart-2
+  TINTA: "oklch(0.398 0.07 227.392)",   // --chart-3
+  OUTROS: "oklch(0.769 0.188 70.08)",   // --chart-5
 };
 
 const CAT_ICON: Record<CategoriaMaterial, string> = {
@@ -1318,28 +1319,36 @@ function PainelListaTecnicaPage() {
                         }
 
                         if (topKind === "line") {
+                          const gradLineId = `grad-line-${cat}`;
                           return (
                             <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={dadosBase} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
+                              <AreaChart data={dadosBase} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
+                                <defs>
+                                  <linearGradient id={gradLineId} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor={cor} stopOpacity={0.45} />
+                                    <stop offset="100%" stopColor={cor} stopOpacity={0.04} />
+                                  </linearGradient>
+                                </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                                 <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
                                 <YAxis hide />
                                 <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
-                                <Line
+                                <Area
                                   type="linear"
                                   dataKey="valor"
                                   stroke={cor}
                                   strokeWidth={2}
+                                  fill={`url(#${gradLineId})`}
                                   dot={(props: any) => {
                                     const d = props.payload;
                                     const isFoco = focoItem?.codigo === d.mes;
                                     return <circle cx={props.cx} cy={props.cy} r={isFoco ? 6 : 4} fill={d.fill} stroke="hsl(var(--background))" strokeWidth={isFoco ? 2 : 1} />;
                                   }}
-                                  activeDot={{ r: 6 }}
+                                  activeDot={{ r: 6, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 2 }}
                                   
                                   className="cursor-pointer"
                                 />
-                              </LineChart>
+                              </AreaChart>
                             </ResponsiveContainer>
                           );
                         }
