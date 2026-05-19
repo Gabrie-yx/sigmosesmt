@@ -356,9 +356,8 @@ function PainelListaTecnicaPage() {
 
   const alertasAtivos = alertasCategoria.filter((a) => a.status === "warn" || a.status === "crit");
 
-  // ===== Curva S: consumo acumulado ao longo do tempo =====
-  // Agrupa movimentos por dia, acumula por categoria + total, e compara com o previsto total (B51).
-  const [curvaModo, setCurvaModo] = useState<"total" | "categoria">("total");
+  // ===== Curva S: consumo acumulado ao longo do tempo (Total) =====
+  // Agrupa movimentos por dia e compara com o previsto total (B51).
   const curvaS = useMemo(() => {
     // Agrega consumo por dia/categoria
     const porDia = new Map<string, Record<CategoriaMaterial, number>>();
@@ -622,18 +621,6 @@ function PainelListaTecnicaPage() {
                   </span>
                 )}
               </div>
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  onClick={() => setCurvaModo("total")}
-                  className={`text-[10px] px-2 py-1 rounded border ${curvaModo === "total" ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted"}`}
-                >Total</button>
-                <button
-                  type="button"
-                  onClick={() => setCurvaModo("categoria")}
-                  className={`text-[10px] px-2 py-1 rounded border ${curvaModo === "categoria" ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted"}`}
-                >Por categoria</button>
-              </div>
             </div>
             <div style={{ width: "100%", height: 220 }}>
               <ResponsiveContainer>
@@ -652,8 +639,7 @@ function PainelListaTecnicaPage() {
                     labelFormatter={(l) => `Data: ${l}`}
                     contentStyle={{ fontSize: 11, borderRadius: 6 }}
                   />
-                  {curvaModo === "total" ? (
-                    <Area
+                  <Area
                       type="monotone"
                       dataKey="TOTAL"
                       stroke="hsl(var(--primary))"
@@ -661,17 +647,7 @@ function PainelListaTecnicaPage() {
                       fill="url(#grad-total)"
                       name="Realizado acumulado"
                     />
-                  ) : (
-                    <>
-                      <Area type="monotone" dataKey="FERRO" stackId="1" stroke={CAT_COLOR.FERRO} fill={CAT_COLOR.FERRO} fillOpacity={0.55} />
-                      <Area type="monotone" dataKey="SOLDA" stackId="1" stroke={CAT_COLOR.SOLDA} fill={CAT_COLOR.SOLDA} fillOpacity={0.55} />
-                      <Area type="monotone" dataKey="GAS" stackId="1" stroke={CAT_COLOR["GÁS"]} fill={CAT_COLOR["GÁS"]} fillOpacity={0.55} name="GÁS" />
-                      <Area type="monotone" dataKey="TINTA" stackId="1" stroke={CAT_COLOR.TINTA} fill={CAT_COLOR.TINTA} fillOpacity={0.55} />
-                      <Area type="monotone" dataKey="OUTROS" stackId="1" stroke={CAT_COLOR.OUTROS} fill={CAT_COLOR.OUTROS} fillOpacity={0.55} />
-                      <Legend wrapperStyle={{ fontSize: 10 }} iconType="square" />
-                    </>
-                  )}
-                  {curvaModo === "total" && previstoTotal > 0 && (
+                  {previstoTotal > 0 && (
                     <ReferenceLine
                       y={previstoTotal}
                       stroke="hsl(0 72% 50%)"
@@ -694,12 +670,6 @@ function PainelListaTecnicaPage() {
             const cor = CAT_COLOR[cat];
             const ativoCat = catSel === cat;
             const focoItem = itemSelInfo && itemSelInfo.categoria === cat ? itemSelInfo : null;
-            const alertaCat = alertasCategoria.find((a) => a.cat === cat);
-            const statusCor =
-              alertaCat?.status === "crit" ? "hsl(0 72% 50%)"
-              : alertaCat?.status === "warn" ? "hsl(38 92% 50%)"
-              : alertaCat?.status === "ok" ? "hsl(142 70% 40%)"
-              : "hsl(var(--muted-foreground))";
             return (
               <div key={cat} className="grid gap-3 grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
                 {/* Card de barras por UME */}
@@ -715,17 +685,8 @@ function PainelListaTecnicaPage() {
                     </CardTitle>
                     <div className="text-right">
                       <div className="text-sm font-bold" style={{ color: cor }}>{fmt(totalPeso, 0)} kg</div>
-                      <div className="text-[10px] text-muted-foreground flex items-center justify-end gap-1.5">
-                        <span>{totalItens} itens</span>
-                        {alertaCat && alertaCat.status !== "na" && (
-                          <span
-                            className="font-bold tabular-nums px-1 rounded"
-                            style={{ color: statusCor, background: `color-mix(in oklch, ${statusCor} 12%, transparent)` }}
-                            title={`Previsto: ${fmt(alertaCat.prev, 0)} · Realizado: ${fmt(alertaCat.real, 0)}`}
-                          >
-                            {alertaCat.pct >= 0 ? "+" : ""}{fmt(alertaCat.pct, 1)}%
-                          </span>
-                        )}
+                      <div className="text-[10px] text-muted-foreground">
+                        {totalItens} itens
                       </div>
                     </div>
                   </CardHeader>
