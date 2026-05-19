@@ -481,6 +481,78 @@ function PainelListaTecnicaPage() {
         ))}
       </div>
 
+      {/* Alertas: Realizado vs. Orçado por categoria */}
+      {listaAtivaId && (
+        <Card className="shadow-sm border-0 bg-gradient-to-r from-muted/30 via-background to-muted/30">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              {alertasAtivos.length > 0 ? (
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+              )}
+              <span className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
+                Realizado vs. Orçado (B51)
+              </span>
+              {alertasAtivos.length > 0 ? (
+                <span className="text-[10px] text-amber-700 font-medium">
+                  {alertasAtivos.length} categoria(s) acima do previsto
+                </span>
+              ) : (
+                <span className="text-[10px] text-green-700 font-medium">Dentro do previsto</span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              {alertasCategoria.map((a) => {
+                const cor = CAT_COLOR[a.cat];
+                const semPlano = a.status === "na";
+                const statusCor =
+                  a.status === "crit" ? "hsl(0 72% 50%)"
+                  : a.status === "warn" ? "hsl(38 92% 50%)"
+                  : a.status === "ok" ? "hsl(142 70% 40%)"
+                  : "hsl(var(--muted-foreground))";
+                const ratio = a.prev > 0 ? Math.min(150, (a.real / a.prev) * 100) : 0;
+                return (
+                  <button
+                    key={a.cat}
+                    type="button"
+                    onClick={() => setCatSel((p) => (p === a.cat ? null : a.cat))}
+                    className={`text-left rounded-md border bg-card/60 px-2 py-1.5 hover:bg-card transition ${catSel === a.cat ? "ring-2 ring-offset-1" : ""}`}
+                    style={catSel === a.cat ? { boxShadow: `0 0 0 2px ${cor}` } : undefined}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold tracking-wide flex items-center gap-1" style={{ color: cor }}>
+                        <span className="inline-block h-2 w-2 rounded-sm" style={{ background: cor }} />
+                        {a.cat}
+                      </span>
+                      <span
+                        className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded"
+                        style={{ color: statusCor, background: `color-mix(in oklch, ${statusCor} 12%, transparent)` }}
+                      >
+                        {semPlano ? "s/ plano" : `${a.pct >= 0 ? "+" : ""}${fmt(a.pct, 1)}%`}
+                      </span>
+                    </div>
+                    <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: `color-mix(in oklch, ${cor} 12%, hsl(var(--muted)))` }}>
+                      <div
+                        className="absolute inset-y-0 left-0 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, ratio)}%`, background: statusCor }}
+                      />
+                      {a.prev > 0 && (
+                        <div className="absolute inset-y-0" style={{ left: "100%", width: 2, background: "hsl(var(--foreground))", opacity: 0.4 }} title="Previsto (100%)" />
+                      )}
+                    </div>
+                    <div className="mt-1 text-[9px] text-muted-foreground tabular-nums flex justify-between">
+                      <span>real <span className="font-semibold text-foreground">{fmt(a.real, 0)}</span></span>
+                      <span>prev {semPlano ? "—" : fmt(a.prev, 0)}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Layout principal: esquerda (categorias) + direita (tabela de materiais) */}
       <div className="grid gap-3 grid-cols-1 xl:grid-cols-[1fr_380px]">
         <div className="space-y-3">
