@@ -773,52 +773,165 @@ function PainelListaTecnicaPage() {
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem itens nessa categoria</div>
                     ) : (
                       (() => {
-                        // Área com variação acumulada: ordena Top itens e plota soma cumulativa
-                        let acc = 0;
-                        const dados = serie.map((s: any) => {
-                          acc += s.valor;
-                          return { mes: s.mes, valor: s.valor, acumulado: acc, desc: s.desc };
-                        });
-                        const gradId = `grad-${cat}`;
+                        const topKind = CAT_TOP[cat];
+                        const palette = variantPalette(cor);
+                        const dadosBase = serie.map((s: any, i: number) => ({
+                          mes: s.mes,
+                          valor: s.valor,
+                          desc: s.desc,
+                          fill: palette[i % palette.length],
+                        }));
+
+                        if (topKind === "vbar") {
+                          return (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={dadosBase} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                                <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                                <YAxis hide />
+                                <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Bar
+                                  dataKey="valor"
+                                  radius={[6, 6, 0, 0]}
+                                  onClick={(d: any) => setCodigoSel((p) => (p === d?.mes ? null : d?.mes))}
+                                  className="cursor-pointer"
+                                >
+                                  {dadosBase.map((d: any, i: number) => {
+                                    const isFoco = focoItem?.codigo === d.mes;
+                                    const dim = focoItem && !isFoco;
+                                    return <Cell key={i} fill={d.fill} fillOpacity={dim ? 0.35 : 1} stroke={isFoco ? cor : "transparent"} strokeWidth={isFoco ? 2 : 0} />;
+                                  })}
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          );
+                        }
+
+                        if (topKind === "hbar") {
+                          return (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={dadosBase} layout="vertical" margin={{ left: 6, right: 28, top: 4, bottom: 4 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                                <XAxis type="number" hide />
+                                <YAxis type="category" dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} width={70} />
+                                <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Bar
+                                  dataKey="valor"
+                                  radius={[0, 6, 6, 0]}
+                                  barSize={12}
+                                  onClick={(d: any) => setCodigoSel((p) => (p === d?.mes ? null : d?.mes))}
+                                  className="cursor-pointer"
+                                >
+                                  {dadosBase.map((d: any, i: number) => {
+                                    const isFoco = focoItem?.codigo === d.mes;
+                                    const dim = focoItem && !isFoco;
+                                    return <Cell key={i} fill={d.fill} fillOpacity={dim ? 0.35 : 1} />;
+                                  })}
+                                  <LabelList dataKey="valor" position="right" formatter={(v: any) => fmt(Number(v), 0)} style={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          );
+                        }
+
+                        if (topKind === "line") {
+                          return (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={dadosBase} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                                <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                                <YAxis hide />
+                                <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Line
+                                  type="monotone"
+                                  dataKey="valor"
+                                  stroke={cor}
+                                  strokeWidth={2}
+                                  dot={(props: any) => {
+                                    const d = props.payload;
+                                    const isFoco = focoItem?.codigo === d.mes;
+                                    return <circle cx={props.cx} cy={props.cy} r={isFoco ? 6 : 4} fill={d.fill} stroke="hsl(var(--background))" strokeWidth={isFoco ? 2 : 1} />;
+                                  }}
+                                  activeDot={{ r: 6 }}
+                                  onClick={(d: any) => setCodigoSel((p) => (p === d?.payload?.mes ? null : d?.payload?.mes))}
+                                  className="cursor-pointer"
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          );
+                        }
+
+                        if (topKind === "area") {
+                          let acc = 0;
+                          const dados = dadosBase.map((s: any) => {
+                            acc += s.valor;
+                            return { ...s, acumulado: acc };
+                          });
+                          const gradId = `grad-${cat}`;
+                          return (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <AreaChart data={dados} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
+                                <defs>
+                                  <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor={cor} stopOpacity={0.55} />
+                                    <stop offset="100%" stopColor={cor} stopOpacity={0.05} />
+                                  </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                                <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                                <YAxis hide />
+                                <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Area
+                                  type="monotone"
+                                  dataKey="acumulado"
+                                  stroke={cor}
+                                  strokeWidth={2}
+                                  fill={`url(#${gradId})`}
+                                  dot={(props: any) => {
+                                    const d = props.payload;
+                                    return <circle cx={props.cx} cy={props.cy} r={3} fill={d.fill} stroke="hsl(var(--background))" strokeWidth={1} />;
+                                  }}
+                                  activeDot={{ r: 5, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 2 }}
+                                  onClick={(d: any) => setCodigoSel((p) => (p === d?.payload?.mes ? null : d?.payload?.mes))}
+                                  className="cursor-pointer"
+                                />
+                                {focoItem && dados.some((d: any) => d.mes === focoItem.codigo) && (
+                                  <ReferenceDot
+                                    x={focoItem.codigo}
+                                    y={(dados.find((d: any) => d.mes === focoItem.codigo) as any).acumulado}
+                                    r={7}
+                                    fill={cor}
+                                    stroke="hsl(var(--background))"
+                                    strokeWidth={2}
+                                    label={{ value: `${fmt(focoItem.peso, 0)}`, position: "top", fontSize: 10, fill: cor, fontWeight: 700 }}
+                                  />
+                                )}
+                              </AreaChart>
+                            </ResponsiveContainer>
+                          );
+                        }
+
+                        // scatter
                         return (
                           <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={dados} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
-                              <defs>
-                                <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="0%" stopColor={cor} stopOpacity={0.55} />
-                                  <stop offset="100%" stopColor={cor} stopOpacity={0.05} />
-                                </linearGradient>
-                              </defs>
-                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                              <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
-                              <YAxis hide />
-                              <Tooltip
-                                cursor={{ stroke: cor, strokeWidth: 1, strokeDasharray: "3 3" }}
-                                content={<FancyTooltip accent={cor} unit="kg" />}
-                              />
-                              <Area
-                                type="monotone"
-                                dataKey="acumulado"
-                                stroke={cor}
-                                strokeWidth={2}
-                                fill={`url(#${gradId})`}
-                                dot={{ r: 3, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 1 }}
-                                activeDot={{ r: 5, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 2 }}
-                                onClick={(d: any) => setCodigoSel((p) => (p === d?.payload?.mes ? null : d?.payload?.mes))}
+                            <ScatterChart margin={{ left: 4, right: 12, top: 8, bottom: 28 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                              <XAxis dataKey="mes" type="category" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                              <YAxis dataKey="valor" hide />
+                              <ZAxis dataKey="valor" range={[60, 360]} />
+                              <Tooltip cursor={{ strokeDasharray: "3 3", stroke: cor }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                              <Scatter
+                                data={dadosBase}
+                                onClick={(d: any) => setCodigoSel((p) => (p === d?.mes ? null : d?.mes))}
                                 className="cursor-pointer"
-                              />
-                              {focoItem && dados.some((d: any) => d.mes === focoItem.codigo) && (
-                                <ReferenceDot
-                                  x={focoItem.codigo}
-                                  y={(dados.find((d: any) => d.mes === focoItem.codigo) as any).acumulado}
-                                  r={7}
-                                  fill={cor}
-                                  stroke="hsl(var(--background))"
-                                  strokeWidth={2}
-                                  label={{ value: `${fmt(focoItem.peso, 0)}`, position: "top", fontSize: 10, fill: cor, fontWeight: 700 }}
-                                />
-                              )}
-                            </AreaChart>
+                              >
+                                {dadosBase.map((d: any, i: number) => {
+                                  const isFoco = focoItem?.codigo === d.mes;
+                                  const dim = focoItem && !isFoco;
+                                  return <Cell key={i} fill={d.fill} fillOpacity={dim ? 0.35 : 0.85} stroke={isFoco ? cor : "hsl(var(--background))"} strokeWidth={isFoco ? 2 : 1} />;
+                                })}
+                              </Scatter>
+                            </ScatterChart>
                           </ResponsiveContainer>
                         );
                       })()
