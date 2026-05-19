@@ -406,17 +406,83 @@ function PainelListaTecnicaPage() {
                   <CardContent className="h-44 p-2">
                     {vazio ? (
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem dados</div>
+                    ) : CAT_CHART[cat] === "donut" || CAT_CHART[cat] === "pie" ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Tooltip content={<FancyTooltip accent={cor} />} />
+                          <Pie
+                            data={barras}
+                            dataKey="valor"
+                            nameKey="label"
+                            innerRadius={CAT_CHART[cat] === "donut" ? 32 : 0}
+                            outerRadius={62}
+                            paddingAngle={2}
+                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
+                            className="cursor-pointer focus:outline-none"
+                            label={(e: any) => `${e.label} · ${fmt(Number(e.value), 0)}`}
+                            labelLine={false}
+                            style={{ fontSize: 10, fill: "hsl(var(--foreground))" }}
+                          >
+                            {barras.map((b, i) => (
+                              <Cell
+                                key={i}
+                                fill={unidadeSel && unidadeSel !== b.label
+                                  ? `color-mix(in oklch, ${cor} 30%, transparent)`
+                                  : `color-mix(in oklch, ${cor} ${95 - i * 10}%, white)`}
+                                stroke={unidadeSel === b.label ? cor : "hsl(var(--background))"}
+                                strokeWidth={unidadeSel === b.label ? 2 : 1}
+                              />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : CAT_CHART[cat] === "radial" ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadialBarChart
+                          data={barras.map((b, i) => ({ ...b, fill: `color-mix(in oklch, ${cor} ${90 - i * 12}%, white)` }))}
+                          innerRadius="25%"
+                          outerRadius="100%"
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          <Tooltip content={<FancyTooltip accent={cor} />} />
+                          <RadialBar
+                            background={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }}
+                            dataKey="valor"
+                            cornerRadius={6}
+                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
+                            className="cursor-pointer"
+                          />
+                          <Legend iconSize={8} layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: 10 }} formatter={(_v, e: any) => e?.payload?.label} />
+                        </RadialBarChart>
+                      </ResponsiveContainer>
+                    ) : CAT_CHART[cat] === "bar-h" ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={barras} layout="vertical" margin={{ left: 4, right: 28, top: 4, bottom: 4 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                          <XAxis type="number" hide />
+                          <YAxis type="category" dataKey="label" width={36} stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                          <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 10%, transparent)` }} content={<FancyTooltip accent={cor} />} />
+                          <Bar
+                            dataKey="valor"
+                            radius={[0, 4, 4, 0]}
+                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
+                            className="cursor-pointer"
+                          >
+                            {barras.map((b, i) => (
+                              <Cell key={i} fill={unidadeSel && unidadeSel !== b.label ? `color-mix(in oklch, ${cor} 30%, transparent)` : cor} />
+                            ))}
+                            <LabelList dataKey="valor" position="right" fontSize={10} fill={cor} formatter={(v: any) => fmt(Number(v), 0)} />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
                     ) : (
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={barras} margin={{ left: 4, right: 8, top: 18, bottom: 4 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                           <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={0} />
                           <YAxis hide />
-                          <Tooltip
-                            cursor={{ fill: `${cor}15` }}
-                            contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                            formatter={(v: any) => fmt(Number(v), 2)}
-                          />
+                          <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 10%, transparent)` }} content={<FancyTooltip accent={cor} />} />
                           <Bar
                             dataKey="valor"
                             radius={[4, 4, 0, 0]}
@@ -426,18 +492,12 @@ function PainelListaTecnicaPage() {
                             {barras.map((b, i) => (
                               <Cell
                                 key={i}
-                                fill={unidadeSel && unidadeSel !== b.label ? `${cor}40` : cor}
-                                stroke={unidadeSel === b.label ? "#000" : "transparent"}
-                                strokeWidth={unidadeSel === b.label ? 1.5 : 0}
+                                fill={unidadeSel && unidadeSel !== b.label ? `color-mix(in oklch, ${cor} 30%, transparent)` : cor}
+                                stroke={unidadeSel === b.label ? cor : "transparent"}
+                                strokeWidth={unidadeSel === b.label ? 2 : 0}
                               />
                             ))}
-                            <LabelList
-                              dataKey="valor"
-                              position="top"
-                              fontSize={10}
-                              fill={cor}
-                              formatter={(v: any) => fmt(Number(v), 0)}
-                            />
+                            <LabelList dataKey="valor" position="top" fontSize={10} fill={cor} formatter={(v: any) => fmt(Number(v), 0)} />
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
