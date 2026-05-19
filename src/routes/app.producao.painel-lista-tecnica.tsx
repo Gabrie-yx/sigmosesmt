@@ -14,6 +14,8 @@ import {
 import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
 import type { TipoMP } from "@/lib/base-mp-parser";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PainelAnaliseAvancada } from "@/components/producao/painel-analise-avancada";
 
 const CATEGORIAS: TipoMP[] = ["FERRO", "SOLDA", "GÁS", "TINTA", "OUTROS"];
 type CategoriaMaterial = TipoMP;
@@ -499,6 +501,12 @@ function PainelListaTecnicaPage() {
         </CardContent>
       </Card>
 
+      <Tabs defaultValue="visao" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="visao">Visão geral</TabsTrigger>
+          <TabsTrigger value="avancada">Análise avançada</TabsTrigger>
+        </TabsList>
+        <TabsContent value="visao" className="space-y-3 mt-3">
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
@@ -1363,6 +1371,21 @@ function PainelListaTecnicaPage() {
           </div>
         </Card>
       </div>
+        </TabsContent>
+        <TabsContent value="avancada" className="mt-3">
+          <PainelAnaliseAvancada
+            ordemAtivaId={ordemAtivaId}
+            cascoAtivoId={ordemAtiva?.casco_id ?? null}
+            itensEnriq={itensEnriq}
+            listaItens={listaItens as any[]}
+            previstoPorCategoria={previstoPorCategoria}
+            baseMpMap={baseMpMap}
+            mb51Ordens={mb51Ordens as any[]}
+            listasAtuais={listasAtuais as any[]}
+            cascoById={cascoById}
+          />
+        </TabsContent>
+      </Tabs>
 
       {cascoAtivo && (
         <p className="text-xs text-muted-foreground text-center pt-2">
