@@ -593,6 +593,91 @@ function PainelListaTecnicaPage() {
       )}
 
       {/* Layout principal: esquerda (categorias) + direita (tabela de materiais) */}
+      {/* Curva S — consumo acumulado ao longo do tempo */}
+      {curvaS.length > 0 && (
+        <Card className="shadow-sm border-0 bg-gradient-to-r from-muted/30 via-background to-muted/30">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <span className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
+                  Curva S — Consumo acumulado
+                </span>
+                {previstoTotal > 0 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    previsto total: <span className="font-semibold text-foreground tabular-nums">{fmt(previstoTotal, 0)}</span>
+                    {" · "}realizado: <span className="font-semibold text-foreground tabular-nums">{fmt(curvaS[curvaS.length - 1]?.TOTAL ?? 0, 0)}</span>
+                    {" · "}
+                    <span className="font-semibold tabular-nums" style={{ color: (curvaS[curvaS.length - 1]?.TOTAL ?? 0) > previstoTotal ? "hsl(0 72% 50%)" : "hsl(142 70% 40%)" }}>
+                      {fmt(((curvaS[curvaS.length - 1]?.TOTAL ?? 0) / previstoTotal) * 100, 1)}%
+                    </span>
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setCurvaModo("total")}
+                  className={`text-[10px] px-2 py-1 rounded border ${curvaModo === "total" ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted"}`}
+                >Total</button>
+                <button
+                  type="button"
+                  onClick={() => setCurvaModo("categoria")}
+                  className={`text-[10px] px-2 py-1 rounded border ${curvaModo === "categoria" ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted"}`}
+                >Por categoria</button>
+              </div>
+            </div>
+            <div style={{ width: "100%", height: 220 }}>
+              <ResponsiveContainer>
+                <AreaChart data={curvaS} margin={{ top: 6, right: 12, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="grad-total" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={20} />
+                  <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => fmt(Number(v), 0)} width={55} />
+                  <Tooltip
+                    formatter={(v: any, name: any) => [fmt(Number(v), 1), String(name)]}
+                    labelFormatter={(l) => `Data: ${l}`}
+                    contentStyle={{ fontSize: 11, borderRadius: 6 }}
+                  />
+                  {curvaModo === "total" ? (
+                    <Area
+                      type="monotone"
+                      dataKey="TOTAL"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      fill="url(#grad-total)"
+                      name="Realizado acumulado"
+                    />
+                  ) : (
+                    <>
+                      <Area type="monotone" dataKey="FERRO" stackId="1" stroke={CAT_COLOR.FERRO} fill={CAT_COLOR.FERRO} fillOpacity={0.55} />
+                      <Area type="monotone" dataKey="SOLDA" stackId="1" stroke={CAT_COLOR.SOLDA} fill={CAT_COLOR.SOLDA} fillOpacity={0.55} />
+                      <Area type="monotone" dataKey="GAS" stackId="1" stroke={CAT_COLOR["GÁS"]} fill={CAT_COLOR["GÁS"]} fillOpacity={0.55} name="GÁS" />
+                      <Area type="monotone" dataKey="TINTA" stackId="1" stroke={CAT_COLOR.TINTA} fill={CAT_COLOR.TINTA} fillOpacity={0.55} />
+                      <Area type="monotone" dataKey="OUTROS" stackId="1" stroke={CAT_COLOR.OUTROS} fill={CAT_COLOR.OUTROS} fillOpacity={0.55} />
+                      <Legend wrapperStyle={{ fontSize: 10 }} iconType="square" />
+                    </>
+                  )}
+                  {curvaModo === "total" && previstoTotal > 0 && (
+                    <ReferenceLine
+                      y={previstoTotal}
+                      stroke="hsl(0 72% 50%)"
+                      strokeDasharray="4 4"
+                      label={{ value: `Previsto ${fmt(previstoTotal, 0)}`, position: "insideTopRight", fontSize: 10, fill: "hsl(0 72% 50%)" }}
+                    />
+                  )}
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-3 grid-cols-1 xl:grid-cols-[1fr_380px]">
         <div className="space-y-3">
           {(["FERRO", "SOLDA", "GÁS", "TINTA", "OUTROS"] as CategoriaMaterial[]).map((cat) => {
