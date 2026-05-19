@@ -666,6 +666,17 @@ function PainelListaTecnicaPage() {
                                 onClick={(d: any) => setCodigoSel((p) => (p === d?.payload?.mes ? null : d?.payload?.mes))}
                                 className="cursor-pointer"
                               />
+                              {focoItem && dados.some((d: any) => d.mes === focoItem.codigo) && (
+                                <ReferenceDot
+                                  x={focoItem.codigo}
+                                  y={(dados.find((d: any) => d.mes === focoItem.codigo) as any).acumulado}
+                                  r={7}
+                                  fill={cor}
+                                  stroke="hsl(var(--background))"
+                                  strokeWidth={2}
+                                  label={{ value: `${fmt(focoItem.peso, 0)}`, position: "top", fontSize: 10, fill: cor, fontWeight: 700 }}
+                                />
+                              )}
                             </AreaChart>
                           </ResponsiveContainer>
                         );
