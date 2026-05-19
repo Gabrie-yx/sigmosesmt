@@ -11,7 +11,7 @@ import {
   AreaChart, Area, ReferenceDot, ReferenceLine,
   LineChart, Line, ScatterChart, Scatter, ZAxis,
 } from "recharts";
-import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers } from "lucide-react";
+import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
 import type { TipoMP } from "@/lib/base-mp-parser";
 
@@ -224,6 +224,26 @@ function PainelListaTecnicaPage() {
     return m;
   }, [listasAtuais]);
 
+  // Itens da lista técnica (planejado por código) — base para Realizado vs. Orçado
+  const listaAtivaId = (() => {
+    const ord = (mb51Ordens as any[]).find((o) => o.id === (ordemSel ?? (mb51Ordens as any[])[0]?.id));
+    if (!ord?.casco_id) return null;
+    const l = (listasAtuais as any[]).find((x) => x.casco_id === ord.casco_id);
+    return l?.id ?? null;
+  })();
+  const { data: listaItens = [] } = useQuery({
+    queryKey: ["lista-tecnica-itens", listaAtivaId],
+    enabled: !!listaAtivaId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("producao_lista_tecnica_itens")
+        .select("codigo_sap, quantidade, unidade")
+        .eq("lista_id", listaAtivaId);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   // Enriquece movimentos: tipo resolvido pela Base MP, consumo positivo (líquido = -quantidade)
   const itensEnriq = useMemo(() => {
     return (movimentos as any[]).map((m) => {
@@ -304,6 +324,36 @@ function PainelListaTecnicaPage() {
     return result;
   }, [itensFiltrados]);
 
+  // Previsto por categoria a partir da Lista Técnica (B51) do casco da ordem ativa
+  const previstoPorCategoria = useMemo(() => {
+    const r: Record<CategoriaMaterial, number> = {
+      FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0,
+    };
+    (listaItens as any[]).forEach((it) => {
+      const cat = resolveTipo(String(it.codigo_sap ?? ""), null, baseMpMap);
+      r[cat] += Math.abs(Number(it.quantidade ?? 0));
+    });
+    return r;
+  }, [listaItens, baseMpMap]);
+
+  // Alertas: por categoria, comparar realizado (MB51) × previsto (B51)
+  const alertasCategoria = useMemo(() => {
+    return CATEGORIAS.map((cat) => {
+      const prev = previstoPorCategoria[cat] || 0;
+      const real = dadosPorCategoria[cat].totalPeso || 0;
+      const pct = prev > 0 ? ((real - prev) / prev) * 100 : 0;
+      let status: "ok" | "warn" | "crit" | "na" = "na";
+      if (prev > 0) {
+        if (real > prev * 1.10) status = "crit";
+        else if (real > prev) status = "warn";
+        else status = "ok";
+      }
+      return { cat, prev, real, pct, status };
+    });
+  }, [previstoPorCategoria, dadosPorCategoria]);
+
+  const alertasAtivos = alertasCategoria.filter((a) => a.status === "warn" || a.status === "crit");
+
   const tabelaMateriais = useMemo(() => {
     const acc = new Map<string, { codigo: string; nome: string; qtd: number; ume: string; peso: number }>();
     // Não filtra por codigoSel — mantemos a lista completa e apenas destacamos o item selecionado.
@@ -366,6 +416,7 @@ function PainelListaTecnicaPage() {
           qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
           qc.invalidateQueries({ queryKey: ["mb51-base-mp-map"] });
           qc.invalidateQueries({ queryKey: ["listas-tecnicas-latest"] });
+          qc.invalidateQueries({ queryKey: ["lista-tecnica-itens"] });
         }}>
           <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
         </Button>
@@ -431,6 +482,78 @@ function PainelListaTecnicaPage() {
         ))}
       </div>
 
+      {/* Alertas: Realizado vs. Orçado por categoria */}
+      {listaAtivaId && (
+        <Card className="shadow-sm border-0 bg-gradient-to-r from-muted/30 via-background to-muted/30">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              {alertasAtivos.length > 0 ? (
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+              )}
+              <span className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
+                Realizado vs. Orçado (B51)
+              </span>
+              {alertasAtivos.length > 0 ? (
+                <span className="text-[10px] text-amber-700 font-medium">
+                  {alertasAtivos.length} categoria(s) acima do previsto
+                </span>
+              ) : (
+                <span className="text-[10px] text-green-700 font-medium">Dentro do previsto</span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              {alertasCategoria.map((a) => {
+                const cor = CAT_COLOR[a.cat];
+                const semPlano = a.status === "na";
+                const statusCor =
+                  a.status === "crit" ? "hsl(0 72% 50%)"
+                  : a.status === "warn" ? "hsl(38 92% 50%)"
+                  : a.status === "ok" ? "hsl(142 70% 40%)"
+                  : "hsl(var(--muted-foreground))";
+                const ratio = a.prev > 0 ? Math.min(150, (a.real / a.prev) * 100) : 0;
+                return (
+                  <button
+                    key={a.cat}
+                    type="button"
+                    onClick={() => setCatSel((p) => (p === a.cat ? null : a.cat))}
+                    className={`text-left rounded-md border bg-card/60 px-2 py-1.5 hover:bg-card transition ${catSel === a.cat ? "ring-2 ring-offset-1" : ""}`}
+                    style={catSel === a.cat ? { boxShadow: `0 0 0 2px ${cor}` } : undefined}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold tracking-wide flex items-center gap-1" style={{ color: cor }}>
+                        <span className="inline-block h-2 w-2 rounded-sm" style={{ background: cor }} />
+                        {a.cat}
+                      </span>
+                      <span
+                        className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded"
+                        style={{ color: statusCor, background: `color-mix(in oklch, ${statusCor} 12%, transparent)` }}
+                      >
+                        {semPlano ? "s/ plano" : `${a.pct >= 0 ? "+" : ""}${fmt(a.pct, 1)}%`}
+                      </span>
+                    </div>
+                    <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: `color-mix(in oklch, ${cor} 12%, hsl(var(--muted)))` }}>
+                      <div
+                        className="absolute inset-y-0 left-0 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, ratio)}%`, background: statusCor }}
+                      />
+                      {a.prev > 0 && (
+                        <div className="absolute inset-y-0" style={{ left: "100%", width: 2, background: "hsl(var(--foreground))", opacity: 0.4 }} title="Previsto (100%)" />
+                      )}
+                    </div>
+                    <div className="mt-1 text-[9px] text-muted-foreground tabular-nums flex justify-between">
+                      <span>real <span className="font-semibold text-foreground">{fmt(a.real, 0)}</span></span>
+                      <span>prev {semPlano ? "—" : fmt(a.prev, 0)}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Layout principal: esquerda (categorias) + direita (tabela de materiais) */}
       <div className="grid gap-3 grid-cols-1 xl:grid-cols-[1fr_380px]">
         <div className="space-y-3">
@@ -440,6 +563,12 @@ function PainelListaTecnicaPage() {
             const cor = CAT_COLOR[cat];
             const ativoCat = catSel === cat;
             const focoItem = itemSelInfo && itemSelInfo.categoria === cat ? itemSelInfo : null;
+            const alertaCat = alertasCategoria.find((a) => a.cat === cat);
+            const statusCor =
+              alertaCat?.status === "crit" ? "hsl(0 72% 50%)"
+              : alertaCat?.status === "warn" ? "hsl(38 92% 50%)"
+              : alertaCat?.status === "ok" ? "hsl(142 70% 40%)"
+              : "hsl(var(--muted-foreground))";
             return (
               <div key={cat} className="grid gap-3 grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
                 {/* Card de barras por UME */}
@@ -455,7 +584,18 @@ function PainelListaTecnicaPage() {
                     </CardTitle>
                     <div className="text-right">
                       <div className="text-sm font-bold" style={{ color: cor }}>{fmt(totalPeso, 0)} kg</div>
-                      <div className="text-[10px] text-muted-foreground">{totalItens} itens</div>
+                      <div className="text-[10px] text-muted-foreground flex items-center justify-end gap-1.5">
+                        <span>{totalItens} itens</span>
+                        {alertaCat && alertaCat.status !== "na" && (
+                          <span
+                            className="font-bold tabular-nums px-1 rounded"
+                            style={{ color: statusCor, background: `color-mix(in oklch, ${statusCor} 12%, transparent)` }}
+                            title={`Previsto: ${fmt(alertaCat.prev, 0)} · Realizado: ${fmt(alertaCat.real, 0)}`}
+                          >
+                            {alertaCat.pct >= 0 ? "+" : ""}{fmt(alertaCat.pct, 1)}%
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="h-44 p-2">
