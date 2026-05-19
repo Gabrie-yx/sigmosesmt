@@ -48,7 +48,7 @@ const CAT_ICON: Record<CategoriaMaterial, string> = {
 type ChartKind = "stacked" | "donut2" | "radial" | "gauge" | "radar";
 const CAT_CHART: Record<CategoriaMaterial, ChartKind> = {
   FERRO: "stacked",
-  SOLDA: "donut2",
+  SOLDA: "radar",
   "GÁS": "radial",
   TINTA: "gauge",
   OUTROS: "radar",
