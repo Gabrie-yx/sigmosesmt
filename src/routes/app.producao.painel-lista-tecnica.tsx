@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LabelList, Cell, PieChart, Pie, RadialBarChart, RadialBar, Legend,
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
+  AreaChart, Area,
 } from "recharts";
 import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
@@ -42,13 +44,13 @@ const CAT_ICON: Record<CategoriaMaterial, string> = {
 };
 
 // Tipo de gráfico por categoria (diversificação visual)
-type ChartKind = "bar-v" | "donut" | "radial" | "pie" | "bar-h";
+type ChartKind = "stacked" | "donut2" | "radial" | "gauge" | "radar";
 const CAT_CHART: Record<CategoriaMaterial, ChartKind> = {
-  FERRO: "bar-v",
-  SOLDA: "donut",
+  FERRO: "stacked",
+  SOLDA: "donut2",
   "GÁS": "radial",
-  TINTA: "pie",
-  OUTROS: "bar-h",
+  TINTA: "gauge",
+  OUTROS: "radar",
 };
 
 // Tooltip customizado — usa tokens semânticos, sem preto pesado
@@ -68,9 +70,9 @@ const FancyTooltip = ({ active, payload, label, accent, unit = "" }: any) => {
         maxWidth: 220,
       }}
     >
-      <div className="font-semibold tracking-wide" style={{ color: accent }}>{titulo}</div>
+      <div className="font-medium tracking-wide" style={{ color: accent }}>{titulo}</div>
       {desc && <div className="text-[10px] text-muted-foreground truncate">{desc}</div>}
-      <div className="font-mono tabular-nums mt-0.5">
+      <div className="font-mono tabular-nums mt-0.5 font-normal">
         {fmt(Number(p.value), 0)} {unit}
       </div>
     </div>
