@@ -1245,11 +1245,7 @@ function PainelListaTecnicaPage() {
                 <Card className="shadow-sm">
                   <CardHeader className="pb-1 pt-3 px-4 flex flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-xs text-muted-foreground font-medium">
-                      {focoItem ? (
-                        <>Consumo mensal — <span className="font-mono font-bold" style={{ color: cor }}>{focoItem.codigo}</span></>
-                      ) : (
-                        <>Consumo mensal — <span className="font-bold" style={{ color: cor }}>{cat}</span></>
-                      )}
+                      <>Consumo mensal — <span className="font-bold" style={{ color: cor }}>{cat}</span></>
                     </CardTitle>
                     {serieMensal.length > 0 && (
                       <span className="text-[10px] text-muted-foreground">{serieMensal.length} mês(es)</span>
@@ -1283,11 +1279,9 @@ function PainelListaTecnicaPage() {
                                   
                                   className="cursor-pointer"
                                 >
-                                  {dadosBase.map((d: any, i: number) => {
-                                    const isFoco = focoItem?.codigo === d.mes;
-                                    const dim = focoItem && !isFoco;
-                                    return <Cell key={i} fill={d.fill} fillOpacity={dim ? 0.35 : 1} stroke={isFoco ? cor : "transparent"} strokeWidth={isFoco ? 2 : 0} />;
-                                  })}
+                                  {dadosBase.map((d: any, i: number) => (
+                                    <Cell key={i} fill={d.fill} fillOpacity={1} stroke="transparent" strokeWidth={0} />
+                                  ))}
                                 </Bar>
                               </BarChart>
                             </ResponsiveContainer>
