@@ -779,38 +779,6 @@ function PainelListaTecnicaPage() {
                       <span className="inline-block h-3 w-3 rounded-sm" style={{ background: cor }} />
                       <span style={{ color: cor }}>{CAT_ICON[cat]}</span> {cat}
                     </CardTitle>
-                    <div className="text-right">
-                      {umsExibidas.length === 0 ? (
-                        <div className="text-sm font-bold" style={{ color: cor }}>—</div>
-                      ) : (
-                        <div className="flex flex-col items-end gap-0.5">
-                          {umsExibidas.map((u) => (
-                            <button
-                              key={u.um}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setUnidadeSel((p) => (p === u.um ? null : u.um));
-                              }}
-                              className={`text-sm font-bold tabular-nums leading-tight transition hover:opacity-80 ${
-                                unidadeSel === u.um ? "underline underline-offset-2" : ""
-                              }`}
-                              style={{
-                                color: cor,
-                                opacity: unidadeSel && unidadeSel !== u.um ? 0.4 : 1,
-                              }}
-                              title={`Filtrar por ${u.um}`}
-                            >
-                              {fmt(u.valor, 0)}{" "}
-                              <span className="text-[10px] font-semibold opacity-80">{u.um}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      <div className="text-[10px] text-muted-foreground">
-                        {totalItens} itens
-                      </div>
-                    </div>
                   </CardHeader>
                   <CardContent className="h-44 p-2">
                     {vazio ? (
