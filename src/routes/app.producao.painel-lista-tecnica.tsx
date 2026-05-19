@@ -110,7 +110,7 @@ const FancyTooltip = ({ active, payload, label, accent, unit = "" }: any) => {
       <div className="font-medium tracking-wide" style={{ color: accent }}>{titulo}</div>
       {desc && <div className="text-[10px] text-muted-foreground truncate">{desc}</div>}
       <div className="font-mono tabular-nums mt-0.5 font-normal">
-        {fmt(Number(p.value), 0)} {unit}
+        {fmt(Number(p.value), 0)}{unit ? ` ${unit}` : ""}
       </div>
     </div>
   );
