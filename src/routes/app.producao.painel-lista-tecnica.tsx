@@ -426,6 +426,64 @@ function PainelListaTecnicaPage() {
                   <CardContent className="h-44 p-2">
                     {vazio ? (
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem dados</div>
+                    ) : focoItem ? (
+                      (() => {
+                        // Foco: item selecionado vs restante da categoria — donut com variação %
+                        const sel = focoItem.peso;
+                        const resto = Math.max(0, totalPeso - sel);
+                        const pct = totalPeso > 0 ? (sel / totalPeso) * 100 : 0;
+                        const media = totalItens > 0 ? totalPeso / totalItens : 0;
+                        const varPct = media > 0 ? ((sel - media) / media) * 100 : 0;
+                        const data = [
+                          { label: focoItem.codigo, valor: sel, desc: focoItem.nome },
+                          { label: "Demais", valor: resto },
+                        ];
+                        const cor2 = `color-mix(in oklch, ${cor} 18%, hsl(var(--muted)))`;
+                        return (
+                          <div className="relative h-full w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Tooltip content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Pie
+                                  data={data}
+                                  dataKey="valor"
+                                  nameKey="label"
+                                  innerRadius={42}
+                                  outerRadius={64}
+                                  paddingAngle={2}
+                                  startAngle={90}
+                                  endAngle={-270}
+                                  stroke="hsl(var(--background))"
+                                  strokeWidth={1}
+                                >
+                                  <Cell fill={cor} />
+                                  <Cell fill={cor2} />
+                                </Pie>
+                              </PieChart>
+                            </ResponsiveContainer>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                              <div className="text-base font-bold leading-none" style={{ color: cor }}>{fmt(pct, 1)}%</div>
+                              <div className="text-[9px] text-muted-foreground mt-0.5">do total</div>
+                            </div>
+                            <div className="absolute top-1 left-2 right-2 flex items-center justify-between text-[10px]">
+                              <span className="font-mono truncate max-w-[60%]" style={{ color: cor }}>{focoItem.codigo}</span>
+                              <span
+                                className="font-semibold tabular-nums px-1.5 py-0.5 rounded"
+                                style={{
+                                  color: varPct >= 0 ? "hsl(142 70% 35%)" : "hsl(0 72% 45%)",
+                                  background: `color-mix(in oklch, ${varPct >= 0 ? "hsl(142 70% 45%)" : "hsl(0 72% 50%)"} 12%, transparent)`,
+                                }}
+                                title="Variação vs média da categoria"
+                              >
+                                {varPct >= 0 ? "▲" : "▼"} {fmt(Math.abs(varPct), 1)}%
+                              </span>
+                            </div>
+                            <div className="absolute bottom-1 left-2 right-2 text-center text-[10px] text-muted-foreground tabular-nums">
+                              <span className="font-semibold" style={{ color: cor }}>{fmt(sel, 0)}</span> / {fmt(totalPeso, 0)} {focoItem.ume}
+                            </div>
+                          </div>
+                        );
+                      })()
                     ) : CAT_CHART[cat] === "donut2" ? (
                       (() => {
                         // donut 2-cores: topo (maior UME) vs restante
