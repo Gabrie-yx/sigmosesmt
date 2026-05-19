@@ -497,10 +497,19 @@ function PainelListaTecnicaPage() {
 
                         if (kind === "radar") {
                           // Teia: cada eixo é um código do top-N da categoria.
-                          // Item selecionado ganha um ponto destacado no eixo correspondente.
-                          const data = (serie.length ? serie : [{ mes: focoItem.codigo, valor: sel }]).map((s: any) => ({
+                          // Garantimos que o item selecionado SEMPRE apareça como eixo,
+                          // e normalizamos os valores em % do máximo para a teia ficar
+                          // visível mesmo quando há discrepância enorme entre valores.
+                          const base: Array<{ mes: string; valor: number }> =
+                            serie.length ? [...serie] : [{ mes: focoItem.codigo, valor: sel }];
+                          if (!base.some((s) => s.mes === focoItem.codigo)) {
+                            base.push({ mes: focoItem.codigo, valor: sel });
+                          }
+                          const maxVal = Math.max(1, ...base.map((s) => s.valor));
+                          const data = base.map((s) => ({
                             label: s.mes,
                             valor: s.valor,
+                            pct: (s.valor / maxVal) * 100,
                             isFoco: s.mes === focoItem.codigo,
                           }));
                           const FocoDot = (props: any) => {
@@ -508,15 +517,15 @@ function PainelListaTecnicaPage() {
                             if (!payload?.isFoco || cx == null || cy == null) return <g />;
                             return (
                               <g>
-                                <circle cx={cx} cy={cy} r={7} fill={cor} fillOpacity={0.25} />
-                                <circle cx={cx} cy={cy} r={4} fill={cor} stroke="hsl(var(--background))" strokeWidth={1.5} />
+                                <circle cx={cx} cy={cy} r={9} fill={cor} fillOpacity={0.2} />
+                                <circle cx={cx} cy={cy} r={5} fill={cor} stroke="hsl(var(--background))" strokeWidth={1.5} />
                               </g>
                             );
                           };
                           return (
                             <div className="relative h-full w-full">
                               <ResponsiveContainer width="100%" height="100%">
-                                <RadarChart data={data} margin={{ top: 16, right: 22, bottom: 18, left: 22 }}>
+                                <RadarChart data={data} margin={{ top: 18, right: 28, bottom: 20, left: 28 }} outerRadius="72%">
                                   <PolarGrid stroke="hsl(var(--border))" />
                                   <PolarAngleAxis
                                     dataKey="label"
@@ -537,14 +546,25 @@ function PainelListaTecnicaPage() {
                                       );
                                     }}
                                   />
-                                  <PolarRadiusAxis tick={false} axisLine={false} />
-                                  <Tooltip content={<FancyTooltip accent={cor} unit="kg" />} />
+                                  <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+                                  <Tooltip
+                                    content={({ active, payload }: any) => {
+                                      if (!active || !payload?.length) return null;
+                                      const p = payload[0].payload;
+                                      return (
+                                        <div className="rounded-md border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+                                          <div className="font-mono" style={{ color: cor }}>{p.label}</div>
+                                          <div className="tabular-nums text-foreground font-medium">{fmt(p.valor, 0)} kg</div>
+                                        </div>
+                                      );
+                                    }}
+                                  />
                                   <Radar
-                                    dataKey="valor"
+                                    dataKey="pct"
                                     stroke={cor}
                                     strokeWidth={2}
                                     fill={cor}
-                                    fillOpacity={0.25}
+                                    fillOpacity={0.3}
                                     dot={FocoDot}
                                     isAnimationActive={false}
                                   />
