@@ -750,11 +750,12 @@ function PainelListaTecnicaPage() {
             const cor = CAT_COLOR[cat];
             const ativoCat = catSel === cat;
             const focoItem = itemSelInfo && itemSelInfo.categoria === cat ? itemSelInfo : null;
-            // Quebra dinâmica por UM no header. Se houver UME selecionada
-            // que existe nessa categoria, mostra somente aquela linha.
-            const umsExibidas = unidadeSel
-              ? porUnidade.filter((u) => u.um === unidadeSel)
-              : porUnidade;
+            // Quebra dinâmica por UM no header. SEMPRE mostra todas as
+            // unidades da categoria; quando uma UME está selecionada,
+            // apenas destacamos a linha correspondente (as outras ficam
+            // esmaecidas, mas continuam visíveis).
+            const umsExibidas = porUnidade;
+            const umeUnica = porUnidade.length === 1 ? porUnidade[0].um : "";
             return (
               <div key={cat} className="grid gap-3 grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
                 {/* Card de barras por UME */}
@@ -784,7 +785,10 @@ function PainelListaTecnicaPage() {
                               className={`text-sm font-bold tabular-nums leading-tight transition hover:opacity-80 ${
                                 unidadeSel === u.um ? "underline underline-offset-2" : ""
                               }`}
-                              style={{ color: cor }}
+                              style={{
+                                color: cor,
+                                opacity: unidadeSel && unidadeSel !== u.um ? 0.4 : 1,
+                              }}
                               title={`Filtrar por ${u.um}`}
                             >
                               {fmt(u.valor, 0)}{" "}
