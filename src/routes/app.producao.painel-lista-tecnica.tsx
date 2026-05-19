@@ -296,6 +296,23 @@ function PainelListaTecnicaPage() {
   const limparFiltros = () => { setCodigoSel(null); setUnidadeSel(null); setCatSel(null); };
   const algumFiltro = Boolean(codigoSel || unidadeSel || catSel);
 
+  // Info do item selecionado na tabela lateral (para projetar dentro do card da sua categoria)
+  const itemSelInfo = useMemo(() => {
+    if (!codigoSel) return null;
+    const it = itensFiltrados.find((x) => String(x.codigo_sap) === codigoSel);
+    if (!it) return null;
+    const peso = itensFiltrados
+      .filter((x) => String(x.codigo_sap) === codigoSel)
+      .reduce((s, x) => s + Math.abs(Number(x.consumo ?? 0)), 0);
+    return {
+      codigo: codigoSel,
+      categoria: it.categoria as CategoriaMaterial,
+      nome: String(it.descricao_sap ?? ""),
+      ume: String(it.unidade ?? "—").toUpperCase(),
+      peso,
+    };
+  }, [codigoSel, itensFiltrados]);
+
   return (
     <div className="space-y-3 p-4 bg-gradient-to-br from-muted/40 via-background to-muted/20 min-h-screen">
       {/* Header */}
