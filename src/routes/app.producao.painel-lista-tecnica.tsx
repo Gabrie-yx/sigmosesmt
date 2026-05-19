@@ -234,7 +234,13 @@ function PainelListaTecnicaPage() {
 
   const tabelaMateriais = useMemo(() => {
     const acc = new Map<string, { codigo: string; nome: string; qtd: number; ume: string; peso: number }>();
-    itensVisiveis.forEach((it) => {
+    // Não filtra por codigoSel — mantemos a lista completa e apenas destacamos o item selecionado.
+    const baseTab = itensFiltrados.filter((it) => {
+      if (unidadeSel && String(it.unidade ?? "—").toUpperCase() !== unidadeSel) return false;
+      if (catSel && it.categoria !== catSel) return false;
+      return true;
+    });
+    baseTab.forEach((it) => {
       const key = String(it.codigo_sap);
       const cur = acc.get(key) ?? {
         codigo: key,
@@ -248,7 +254,7 @@ function PainelListaTecnicaPage() {
       acc.set(key, cur);
     });
     return Array.from(acc.values()).sort((a, b) => Math.abs(b.peso) - Math.abs(a.peso));
-  }, [itensVisiveis]);
+  }, [itensFiltrados, unidadeSel, catSel]);
 
   const limparFiltros = () => { setCodigoSel(null); setUnidadeSel(null); setCatSel(null); };
   const algumFiltro = Boolean(codigoSel || unidadeSel || catSel);
@@ -469,20 +475,19 @@ function PainelListaTecnicaPage() {
               <span className="text-[10px] text-muted-foreground font-normal">{tabelaMateriais.length} itens</span>
             </CardTitle>
           </CardHeader>
-          <div className="overflow-auto flex-1">
-            <table className="w-full text-xs">
+          <div className="overflow-y-auto overflow-x-hidden flex-1">
+            <table className="w-full text-xs table-fixed">
               <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
                 <tr className="text-left">
-                  <th className="px-3 py-2 font-semibold">Código</th>
-                  <th className="px-2 py-2 font-semibold">Nome do Material</th>
-                  <th className="px-2 py-2 font-semibold text-right">Qtd</th>
-                  <th className="px-2 py-2 font-semibold text-right">Peso (kg)</th>
-                  <th className="px-2 py-2 font-semibold">UME</th>
+                  <th className="px-2 py-2 font-semibold w-[170px]">Nome do Material</th>
+                  <th className="px-1 py-2 font-semibold text-right w-[70px]">Qtd</th>
+                  <th className="px-1 py-2 font-semibold text-right w-[70px]">Peso<br/>(kg)</th>
+                  <th className="px-1 py-2 font-semibold w-[40px]">UM</th>
                 </tr>
               </thead>
               <tbody>
                 {tabelaMateriais.length === 0 && (
-                  <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">Nenhum item</td></tr>
+                  <tr><td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">Nenhum item</td></tr>
                 )}
                 {tabelaMateriais.map((m) => {
                   const ativo = codigoSel === m.codigo;
@@ -490,22 +495,24 @@ function PainelListaTecnicaPage() {
                     <tr
                       key={m.codigo}
                       onClick={() => setCodigoSel((p) => (p === m.codigo ? null : m.codigo))}
-                      className={`cursor-pointer border-b border-border/50 transition ${ativo ? "bg-primary/10 font-semibold" : "hover:bg-muted/50"}`}
+                      className={`cursor-pointer border-b border-border/50 transition ${ativo ? "bg-primary/15 ring-2 ring-primary ring-inset font-semibold" : "hover:bg-muted/50"}`}
                     >
-                      <td className="px-3 py-1.5 font-mono">{m.codigo}</td>
-                      <td className="px-2 py-1.5 truncate max-w-[180px]" title={m.nome}>{m.nome}</td>
-                      <td className="px-2 py-1.5 text-right tabular-nums">{fmt(m.qtd, 2)}</td>
-                      <td className="px-2 py-1.5 text-right tabular-nums font-semibold">{fmt(m.peso, 0)}</td>
-                      <td className="px-2 py-1.5 text-muted-foreground uppercase">{m.ume}</td>
+                      <td className="px-2 py-1.5 truncate" title={`${m.codigo} · ${m.nome}`}>
+                        <div className="truncate font-medium">{m.nome}</div>
+                        <div className="truncate font-mono text-[10px] text-muted-foreground">{m.codigo}</div>
+                      </td>
+                      <td className="px-1 py-1.5 text-right tabular-nums">{fmt(m.qtd, 0)}</td>
+                      <td className="px-1 py-1.5 text-right tabular-nums font-semibold">{fmt(m.peso, 0)}</td>
+                      <td className="px-1 py-1.5 text-muted-foreground uppercase text-[10px]">{m.ume}</td>
                     </tr>
                   );
                 })}
               </tbody>
               <tfoot className="sticky bottom-0 bg-primary text-primary-foreground font-bold">
                 <tr>
-                  <td className="px-3 py-2" colSpan={3}>TOTAL KG</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{fmt(kpi.pesoReal, 0)}</td>
-                  <td className="px-2 py-2">kg</td>
+                  <td className="px-2 py-2" colSpan={2}>TOTAL KG</td>
+                  <td className="px-1 py-2 text-right tabular-nums">{fmt(kpi.pesoReal, 0)}</td>
+                  <td className="px-1 py-2 text-[10px]">kg</td>
                 </tr>
               </tfoot>
             </table>
