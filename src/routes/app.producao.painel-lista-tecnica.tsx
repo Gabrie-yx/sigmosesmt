@@ -1120,9 +1120,12 @@ function PainelListaTecnicaPage() {
                     ) : CAT_CHART[cat] === "stacked" ? (
                       (() => {
                         // Uma barra horizontal dinâmica por UME (KG, M, PC, UN…).
-                        // Cada barra usa sua própria escala (largura = valor / max(barras)),
-                        // já que somar KG + M + PC não faz sentido.
+                        // Ao clicar numa barra, ela vira referência (100%) e as demais
+                        // se reescalam proporcionalmente, animando simultaneamente.
                         const data = barras.map((b) => ({ label: b.label, valor: b.valor }));
+                        const maxAll = Math.max(...data.map((d) => d.valor), 1);
+                        const selVal = unidadeSel ? data.find((d) => d.label === unidadeSel)?.valor : undefined;
+                        const referencia = selVal && selVal > 0 ? selVal : maxAll;
                         return (
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart
@@ -1132,7 +1135,7 @@ function PainelListaTecnicaPage() {
                               barCategoryGap={4}
                             >
                               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                              <XAxis type="number" hide />
+                              <XAxis type="number" hide domain={[0, referencia]} allowDataOverflow />
                               <YAxis
                                 type="category"
                                 dataKey="label"
@@ -1147,14 +1150,19 @@ function PainelListaTecnicaPage() {
                                 radius={[3, 3, 3, 3]}
                                 onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
                                 className="cursor-pointer"
+                                isAnimationActive
+                                animationDuration={550}
+                                animationEasing="ease-in-out"
                               >
                                 {data.map((b, i) => (
                                   <Cell
                                     key={b.label}
                                     fill={
-                                      unidadeSel && unidadeSel !== b.label
-                                        ? `color-mix(in oklch, ${cor} 22%, transparent)`
-                                        : `color-mix(in oklch, ${cor} ${92 - i * 10}%, white)`
+                                      unidadeSel === b.label
+                                        ? cor
+                                        : unidadeSel
+                                          ? `color-mix(in oklch, ${cor} 28%, transparent)`
+                                          : `color-mix(in oklch, ${cor} ${92 - i * 10}%, white)`
                                     }
                                   />
                                 ))}
