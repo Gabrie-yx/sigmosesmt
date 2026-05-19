@@ -235,7 +235,6 @@ function PainelListaTecnicaPage() {
     };
     CATEGORIAS.forEach((cat) => {
       const baseItens = itensFiltrados.filter((it) => {
-        if (codigoSel && String(it.codigo_sap) !== codigoSel) return false;
         if (unidadeSel && String(it.unidade ?? "—").toUpperCase() !== unidadeSel) return false;
         return it.categoria === cat;
       });
@@ -266,7 +265,7 @@ function PainelListaTecnicaPage() {
       result[cat] = { barras, serie, totalPeso, totalItens: baseItens.length };
     });
     return result;
-  }, [itensFiltrados, codigoSel, unidadeSel]);
+  }, [itensFiltrados, unidadeSel]);
 
   const tabelaMateriais = useMemo(() => {
     const acc = new Map<string, { codigo: string; nome: string; qtd: number; ume: string; peso: number }>();
