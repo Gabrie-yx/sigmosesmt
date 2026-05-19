@@ -404,6 +404,7 @@ function PainelListaTecnicaPage() {
             const vazio = barras.length === 0;
             const cor = CAT_COLOR[cat];
             const ativoCat = catSel === cat;
+            const focoItem = itemSelInfo && itemSelInfo.categoria === cat ? itemSelInfo : null;
             return (
               <div key={cat} className="grid gap-3 grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
                 {/* Card de barras por UME */}
