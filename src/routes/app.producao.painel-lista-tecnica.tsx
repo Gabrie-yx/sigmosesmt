@@ -783,7 +783,7 @@ function PainelListaTecnicaPage() {
                   <CardContent className="h-44 p-2">
                     {vazio ? (
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem dados</div>
-                    ) : focoItem ? (
+                    ) : focoItem && (false as boolean) ? (
                       (() => {
                         // Foco: item selecionado vs restante da categoria
                         // Cada categoria usa um gráfico diferente, com cor própria.
