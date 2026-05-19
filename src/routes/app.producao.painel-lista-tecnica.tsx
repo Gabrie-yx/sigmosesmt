@@ -1092,8 +1092,10 @@ function PainelListaTecnicaPage() {
                         // se reescalam proporcionalmente, animando simultaneamente.
                         const data = barras.map((b) => ({ label: b.label, valor: b.valor }));
                         const maxAll = Math.max(...data.map((d) => d.valor), 1);
-                        const selVal = unidadeSel ? data.find((d) => d.label === unidadeSel)?.valor : undefined;
-                        const referencia = selVal && selVal > 0 ? selVal : maxAll;
+                        // Referência fixa: o maior valor da categoria. Assim cada barra
+                        // sempre exibe sua altura proporcional real — o clique apenas
+                        // destaca a UME selecionada (sem distorcer o eixo).
+                        const referencia = maxAll;
                         return (
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart
