@@ -30,12 +30,13 @@ const fmt = (n: number, d = 2) =>
 const MES_LABEL = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const mesKey = (d: Date) => `${MES_LABEL[d.getMonth()]} ${d.getFullYear()}`;
 
+// Paleta padronizada do design system (tokens --chart-1..5 de src/styles.css)
 const CAT_COLOR: Record<CategoriaMaterial, string> = {
-  FERRO: "hsl(0 72% 45%)",
-  SOLDA: "hsl(28 90% 55%)",
-  "GÁS": "hsl(200 85% 50%)",
-  TINTA: "hsl(265 70% 55%)",
-  OUTROS: "hsl(150 50% 45%)",
+  FERRO: "oklch(0.646 0.222 41.116)",   // --chart-1
+  SOLDA: "oklch(0.828 0.189 84.429)",   // --chart-4
+  "GÁS": "oklch(0.6 0.118 184.704)",    // --chart-2
+  TINTA: "oklch(0.398 0.07 227.392)",   // --chart-3
+  OUTROS: "oklch(0.769 0.188 70.08)",   // --chart-5
 };
 
 const CAT_ICON: Record<CategoriaMaterial, string> = {
