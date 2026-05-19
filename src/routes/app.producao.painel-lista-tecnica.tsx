@@ -276,7 +276,11 @@ function PainelListaTecnicaPage() {
 
   // KPIs: realizado (MB51 consumo líquido) × planejado (Lista Técnica)
   const kpi = useMemo(() => {
-    const consumo = itensVisiveis.reduce((s, it) => s + (it.consumo ?? 0), 0);
+    // Realizado (kg estimado): somente movimentos com UM = KG, para comparar
+    // de forma honesta com o Planejado (B51), que também é em kg.
+    const consumo = itensVisiveis
+      .filter((it) => String(it.unidade ?? "").toUpperCase() === "KG")
+      .reduce((s, it) => s + (it.consumo ?? 0), 0);
     const pesoEst = Number(listaPlan?.peso_total_estimado ?? 0);
     const linhas = itensVisiveis.length;
     const distintos = new Set(itensVisiveis.map((it) => String(it.codigo_sap))).size;
@@ -285,12 +289,16 @@ function PainelListaTecnicaPage() {
   }, [itensVisiveis, listaPlan]);
 
   const dadosPorCategoria = useMemo(() => {
-    const result: Record<CategoriaMaterial, { barras: any[]; serie: any[]; totalPeso: number; totalItens: number }> = {
-      FERRO: { barras: [], serie: [], totalPeso: 0, totalItens: 0 },
-      SOLDA: { barras: [], serie: [], totalPeso: 0, totalItens: 0 },
-      "GÁS": { barras: [], serie: [], totalPeso: 0, totalItens: 0 },
-      TINTA: { barras: [], serie: [], totalPeso: 0, totalItens: 0 },
-      OUTROS: { barras: [], serie: [], totalPeso: 0, totalItens: 0 },
+    const empty = () => ({
+      barras: [] as any[],
+      serie: [] as any[],
+      serieMensal: [] as any[],
+      totalPeso: 0,
+      totalItens: 0,
+      porUnidade: [] as { um: string; valor: number }[],
+    });
+    const result: Record<CategoriaMaterial, ReturnType<typeof empty>> = {
+      FERRO: empty(), SOLDA: empty(), "GÁS": empty(), TINTA: empty(), OUTROS: empty(),
     };
     CATEGORIAS.forEach((cat) => {
       // IMPORTANTE: não filtrar por `unidadeSel` aqui — uma UME selecionada
@@ -320,11 +328,33 @@ function PainelListaTecnicaPage() {
         .sort((a, b) => b.peso - a.peso)
         .slice(0, 10)
         .map((i) => ({ mes: i.codigo, valor: i.peso, desc: i.desc }));
+
+      // Série MENSAL: consumo agregado por mês (YYYY-MM) — quando há
+      // codigoSel pertencente à categoria, restringe àquele código.
+      const mesMap = new Map<string, number>();
+      const baseMensal = codigoSel
+        ? baseItens.filter((it) => String(it.codigo_sap) === codigoSel)
+        : baseItens;
+      baseMensal.forEach((it) => {
+        const d = it.data_lancamento ? String(it.data_lancamento).slice(0, 7) : null;
+        if (!d) return;
+        mesMap.set(d, (mesMap.get(d) ?? 0) + Math.abs(Number(it.consumo ?? 0)));
+      });
+      const serieMensal = Array.from(mesMap.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([k, v]) => {
+          const [y, m] = k.split("-");
+          return { mes: `${MES_LABEL[Number(m) - 1]}/${y.slice(2)}`, valor: v, desc: k };
+        });
+
       const totalPeso = baseItens.reduce((s, it) => s + Math.abs(Number(it.consumo ?? 0)), 0);
-      result[cat] = { barras, serie, totalPeso, totalItens: baseItens.length };
+      const porUnidade = Array.from(barMap.entries())
+        .map(([um, valor]) => ({ um, valor }))
+        .sort((a, b) => b.valor - a.valor);
+      result[cat] = { barras, serie, serieMensal, totalPeso, totalItens: baseItens.length, porUnidade };
     });
     return result;
-  }, [itensFiltrados]);
+  }, [itensFiltrados, codigoSel]);
 
   // Previsto por categoria a partir da Lista Técnica (B51) do casco da ordem ativa
   const previstoPorCategoria = useMemo(() => {
@@ -357,28 +387,28 @@ function PainelListaTecnicaPage() {
   const alertasAtivos = alertasCategoria.filter((a) => a.status === "warn" || a.status === "crit");
 
   // ===== Curva S: consumo acumulado ao longo do tempo (Total) =====
-  // Agrupa movimentos por dia e compara com o previsto total (B51).
+  // Agrupa movimentos por mês e compara com o previsto total (B51).
   const curvaS = useMemo(() => {
-    // Agrega consumo por dia/categoria
-    const porDia = new Map<string, Record<CategoriaMaterial, number>>();
+    // Agrega consumo por mês/categoria (YYYY-MM)
+    const porMes = new Map<string, Record<CategoriaMaterial, number>>();
     itensEnriq.forEach((it) => {
-      const d = it.data_lancamento ? String(it.data_lancamento).slice(0, 10) : null;
+      const d = it.data_lancamento ? String(it.data_lancamento).slice(0, 7) : null;
       if (!d) return;
-      const cur = porDia.get(d) ?? { FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0 };
+      const cur = porMes.get(d) ?? { FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0 };
       cur[it.categoria as CategoriaMaterial] += Math.abs(Number(it.consumo ?? 0));
-      porDia.set(d, cur);
+      porMes.set(d, cur);
     });
-    const dias = Array.from(porDia.keys()).sort();
+    const meses = Array.from(porMes.keys()).sort();
     const acc: Record<CategoriaMaterial, number> = { FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0 };
-    const totalDias = Math.max(dias.length - 1, 1);
-    return dias.map((d, idx) => {
-      const dia = porDia.get(d)!;
-      CATEGORIAS.forEach((c) => { acc[c] += dia[c]; });
+    const totalMeses = Math.max(meses.length - 1, 1);
+    return meses.map((d, idx) => {
+      const mes = porMes.get(d)!;
+      CATEGORIAS.forEach((c) => { acc[c] += mes[c]; });
       const total = CATEGORIAS.reduce((s, c) => s + acc[c], 0);
-      const [y, m, dd] = d.split("-");
+      const [y, m] = d.split("-");
       return {
         data: d,
-        label: `${dd}/${m}`,
+        label: `${MES_LABEL[Number(m) - 1]}/${y.slice(2)}`,
         FERRO: acc.FERRO,
         SOLDA: acc.SOLDA,
         GAS: acc["GÁS"],
@@ -386,7 +416,7 @@ function PainelListaTecnicaPage() {
         OUTROS: acc.OUTROS,
         TOTAL: total,
         // posição linear no eixo do tempo (0 → 1) — usado para a curva ideal
-        _frac: idx / totalDias,
+        _frac: idx / totalMeses,
       };
     });
   }, [itensEnriq]);
