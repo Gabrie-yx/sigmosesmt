@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  LabelList, Cell,
+  LabelList, Cell, PieChart, Pie, RadialBarChart, RadialBar, Legend,
 } from "recharts";
 import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
@@ -39,6 +39,42 @@ const CAT_ICON: Record<CategoriaMaterial, string> = {
   "GÁS": "◉",
   TINTA: "✦",
   OUTROS: "◆",
+};
+
+// Tipo de gráfico por categoria (diversificação visual)
+type ChartKind = "bar-v" | "donut" | "radial" | "pie" | "bar-h";
+const CAT_CHART: Record<CategoriaMaterial, ChartKind> = {
+  FERRO: "bar-v",
+  SOLDA: "donut",
+  "GÁS": "radial",
+  TINTA: "pie",
+  OUTROS: "bar-h",
+};
+
+// Tooltip customizado — usa tokens semânticos, sem preto pesado
+const FancyTooltip = ({ active, payload, label, accent, unit = "" }: any) => {
+  if (!active || !payload || !payload.length) return null;
+  const p = payload[0];
+  const titulo = p?.payload?.label ?? p?.payload?.mes ?? label ?? "";
+  const desc = p?.payload?.desc;
+  return (
+    <div
+      className="rounded-lg border shadow-lg backdrop-blur-md px-3 py-2 text-xs pointer-events-none"
+      style={{
+        background: "color-mix(in oklch, hsl(var(--popover)) 92%, transparent)",
+        borderColor: accent ?? "hsl(var(--border))",
+        borderLeftWidth: 3,
+        color: "hsl(var(--popover-foreground))",
+        maxWidth: 220,
+      }}
+    >
+      <div className="font-semibold tracking-wide" style={{ color: accent }}>{titulo}</div>
+      {desc && <div className="text-[10px] text-muted-foreground truncate">{desc}</div>}
+      <div className="font-mono tabular-nums mt-0.5">
+        {fmt(Number(p.value), 0)} {unit}
+      </div>
+    </div>
+  );
 };
 
 function PainelListaTecnicaPage() {
