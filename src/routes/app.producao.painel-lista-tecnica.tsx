@@ -202,9 +202,12 @@ function PainelListaTecnicaPage() {
       .channel("painel-mb51")
       .on("postgres_changes", { event: "*", schema: "public", table: "producao_mb51_ordens" }, () => {
         qc.invalidateQueries({ queryKey: ["mb51-ordens"] });
+        qc.invalidateQueries({ queryKey: ["comp-mb51-movs"] });
+        qc.invalidateQueries({ queryKey: ["comp-b51-itens"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "producao_mb51_movimentos" }, () => {
         qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
+        qc.invalidateQueries({ queryKey: ["comp-mb51-movs"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "producao_base_materia_prima" }, () => {
         qc.invalidateQueries({ queryKey: ["mb51-base-mp-map"] });
@@ -506,6 +509,8 @@ function PainelListaTecnicaPage() {
           qc.invalidateQueries({ queryKey: ["mb51-base-mp-map"] });
           qc.invalidateQueries({ queryKey: ["listas-tecnicas-latest"] });
           qc.invalidateQueries({ queryKey: ["lista-tecnica-itens"] });
+          qc.invalidateQueries({ queryKey: ["comp-mb51-movs"] });
+          qc.invalidateQueries({ queryKey: ["comp-b51-itens"] });
         }}>
           <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
         </Button>
