@@ -555,39 +555,45 @@ function PainelListaTecnicaPage() {
                     {serie.length === 0 ? (
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem itens nessa categoria</div>
                     ) : (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={serie} layout="vertical" margin={{ left: 4, right: 32, top: 4, bottom: 4 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                          <XAxis type="number" hide />
-                          <YAxis type="category" dataKey="mes" width={78} stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontFamily: "monospace" }} />
-                          <Tooltip
-                            cursor={{ fill: `color-mix(in oklch, ${cor} 10%, transparent)` }}
-                            content={<FancyTooltip accent={cor} unit="kg" />}
-                          />
-                          <Bar
-                            dataKey="valor"
-                            radius={[0, 4, 4, 0]}
-                            onClick={(d: any) => setCodigoSel((p) => (p === d.mes ? null : d.mes))}
-                            className="cursor-pointer"
-                          >
-                            {serie.map((s: any, i: number) => (
-                              <Cell
-                                key={i}
-                                fill={codigoSel && codigoSel !== s.mes ? `color-mix(in oklch, ${cor} 30%, transparent)` : cor}
-                                stroke={codigoSel === s.mes ? cor : "transparent"}
-                                strokeWidth={codigoSel === s.mes ? 2 : 0}
+                      (() => {
+                        // Área com variação acumulada: ordena Top itens e plota soma cumulativa
+                        let acc = 0;
+                        const dados = serie.map((s: any) => {
+                          acc += s.valor;
+                          return { mes: s.mes, valor: s.valor, acumulado: acc, desc: s.desc };
+                        });
+                        const gradId = `grad-${cat}`;
+                        return (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={dados} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
+                              <defs>
+                                <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor={cor} stopOpacity={0.55} />
+                                  <stop offset="100%" stopColor={cor} stopOpacity={0.05} />
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                              <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                              <YAxis hide />
+                              <Tooltip
+                                cursor={{ stroke: cor, strokeWidth: 1, strokeDasharray: "3 3" }}
+                                content={<FancyTooltip accent={cor} unit="kg" />}
                               />
-                            ))}
-                            <LabelList
-                              dataKey="valor"
-                              position="right"
-                              fontSize={10}
-                              fill={cor}
-                              formatter={(v: any) => fmt(Number(v), 0)}
-                            />
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+                              <Area
+                                type="monotone"
+                                dataKey="acumulado"
+                                stroke={cor}
+                                strokeWidth={2}
+                                fill={`url(#${gradId})`}
+                                dot={{ r: 3, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 1 }}
+                                activeDot={{ r: 5, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 2 }}
+                                onClick={(d: any) => setCodigoSel((p) => (p === d?.payload?.mes ? null : d?.payload?.mes))}
+                                className="cursor-pointer"
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        );
+                      })()
                     )}
                   </CardContent>
                 </Card>
