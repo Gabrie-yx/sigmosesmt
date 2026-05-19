@@ -205,12 +205,12 @@ export function AppSidebar() {
         {canSesmt && (
           <Collapsible defaultOpen={sesmtOpen} className="group/sesmt">
             <SidebarGroup>
-              <SidebarGroupLabel asChild>
+              <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <ShieldCheck className="h-3.5 w-3.5" /> SESMT
+                    <ShieldCheck className="h-5 w-5 text-red-700" /> SESMT
                   </span>
-                  <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]/sesmt:rotate-90" />
+                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/sesmt:rotate-90" />
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
               <Body>
@@ -262,12 +262,12 @@ export function AppSidebar() {
         {canEstoque && (
           <Collapsible defaultOpen={estoqueOpen} className="group/estoque">
             <SidebarGroup>
-              <SidebarGroupLabel asChild>
+              <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <Boxes className="h-3.5 w-3.5" /> Estoque
+                    <Boxes className="h-5 w-5 text-red-700" /> Estoque
                   </span>
-                  <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]/estoque:rotate-90" />
+                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/estoque:rotate-90" />
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
               <Body>
@@ -307,12 +307,12 @@ export function AppSidebar() {
         {canProducao && (
           <Collapsible defaultOpen={producaoOpen} className="group/producao">
             <SidebarGroup>
-              <SidebarGroupLabel asChild>
+              <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <Factory className="h-3.5 w-3.5" /> Produção
+                    <Factory className="h-5 w-5 text-red-700" /> Produção
                   </span>
-                  <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]/producao:rotate-90" />
+                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/producao:rotate-90" />
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
               <Body>
@@ -337,8 +337,8 @@ export function AppSidebar() {
 
         {/* MANUTENÇÃO (locked) */}
         <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2">
-            <Wrench className="h-3.5 w-3.5" /> Manutenção
+          <SidebarGroupLabel className="flex items-center gap-2 h-9 text-sm font-bold text-slate-700">
+            <Wrench className="h-5 w-5 text-red-700" /> Manutenção
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
