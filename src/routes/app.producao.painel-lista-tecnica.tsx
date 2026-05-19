@@ -370,7 +370,8 @@ function PainelListaTecnicaPage() {
     });
     const dias = Array.from(porDia.keys()).sort();
     const acc: Record<CategoriaMaterial, number> = { FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0 };
-    return dias.map((d) => {
+    const totalDias = Math.max(dias.length - 1, 1);
+    return dias.map((d, idx) => {
       const dia = porDia.get(d)!;
       CATEGORIAS.forEach((c) => { acc[c] += dia[c]; });
       const total = CATEGORIAS.reduce((s, c) => s + acc[c], 0);
@@ -384,6 +385,8 @@ function PainelListaTecnicaPage() {
         TINTA: acc.TINTA,
         OUTROS: acc.OUTROS,
         TOTAL: total,
+        // posição linear no eixo do tempo (0 → 1) — usado para a curva ideal
+        _frac: idx / totalDias,
       };
     });
   }, [itensEnriq]);
@@ -392,6 +395,23 @@ function PainelListaTecnicaPage() {
     () => CATEGORIAS.reduce((s, c) => s + (previstoPorCategoria[c] || 0), 0),
     [previstoPorCategoria],
   );
+
+  // Curva S com a linha "ideal" (planejamento linear: 0 → previstoTotal ao longo dos dias)
+  const curvaSPlot = useMemo(() => {
+    if (curvaS.length === 0) return [];
+    return curvaS.map((d) => ({
+      ...d,
+      IDEAL: previstoTotal > 0 ? d._frac * previstoTotal : null,
+    }));
+  }, [curvaS, previstoTotal]);
+
+  // Aderência ao plano no último ponto: realizado / ideal-naquele-momento
+  const aderenciaPct = useMemo(() => {
+    if (curvaSPlot.length === 0 || previstoTotal === 0) return null;
+    const ult = curvaSPlot[curvaSPlot.length - 1];
+    if (!ult.IDEAL || ult.IDEAL === 0) return null;
+    return (ult.TOTAL / ult.IDEAL) * 100;
+  }, [curvaSPlot, previstoTotal]);
 
   const tabelaMateriais = useMemo(() => {
     const acc = new Map<string, { codigo: string; nome: string; qtd: number; ume: string; peso: number }>();
@@ -601,7 +621,7 @@ function PainelListaTecnicaPage() {
 
       {/* Layout principal: esquerda (categorias) + direita (tabela de materiais) */}
       {/* Curva S — consumo acumulado ao longo do tempo */}
-      {curvaS.length > 0 && (
+      {curvaSPlot.length > 0 && (
         <Card className="shadow-sm border-0 bg-gradient-to-r from-muted/30 via-background to-muted/30">
           <CardContent className="p-3">
             <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
@@ -613,18 +633,36 @@ function PainelListaTecnicaPage() {
                 {previstoTotal > 0 && (
                   <span className="text-[10px] text-muted-foreground">
                     previsto total: <span className="font-semibold text-foreground tabular-nums">{fmt(previstoTotal, 0)}</span>
-                    {" · "}realizado: <span className="font-semibold text-foreground tabular-nums">{fmt(curvaS[curvaS.length - 1]?.TOTAL ?? 0, 0)}</span>
+                    {" · "}realizado: <span className="font-semibold text-foreground tabular-nums">{fmt(curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0, 0)}</span>
                     {" · "}
-                    <span className="font-semibold tabular-nums" style={{ color: (curvaS[curvaS.length - 1]?.TOTAL ?? 0) > previstoTotal ? "hsl(0 72% 50%)" : "hsl(142 70% 40%)" }}>
-                      {fmt(((curvaS[curvaS.length - 1]?.TOTAL ?? 0) / previstoTotal) * 100, 1)}%
+                    <span className="font-semibold tabular-nums" style={{ color: (curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0) > previstoTotal ? "hsl(0 72% 50%)" : "hsl(142 70% 40%)" }}>
+                      {fmt(((curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0) / previstoTotal) * 100, 1)}% do total
                     </span>
+                    {aderenciaPct != null && (
+                      <>
+                        {" · aderência ao plano: "}
+                        <span
+                          className="font-semibold tabular-nums"
+                          style={{
+                            color:
+                              aderenciaPct > 110 ? "hsl(0 72% 50%)"
+                              : aderenciaPct > 100 ? "hsl(28 90% 45%)"
+                              : aderenciaPct >= 90 ? "hsl(142 70% 40%)"
+                              : "hsl(200 85% 45%)",
+                          }}
+                          title="Realizado ÷ ideal-no-momento. >100% = adiantado/sobreconsumo; <100% = atrasado/abaixo do plano."
+                        >
+                          {fmt(aderenciaPct, 0)}%
+                        </span>
+                      </>
+                    )}
                   </span>
                 )}
               </div>
             </div>
             <div style={{ width: "100%", height: 220 }}>
               <ResponsiveContainer>
-                <AreaChart data={curvaS} margin={{ top: 6, right: 12, left: 0, bottom: 0 }}>
+                <AreaChart data={curvaSPlot} margin={{ top: 6, right: 12, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="grad-total" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
@@ -647,6 +685,18 @@ function PainelListaTecnicaPage() {
                       fill="url(#grad-total)"
                       name="Realizado acumulado"
                     />
+                  {previstoTotal > 0 && (
+                    <Area
+                      type="linear"
+                      dataKey="IDEAL"
+                      stroke="hsl(142 70% 40%)"
+                      strokeWidth={1.5}
+                      strokeDasharray="5 4"
+                      fill="transparent"
+                      dot={false}
+                      name="Plano linear (ideal)"
+                    />
+                  )}
                   {previstoTotal > 0 && (
                     <ReferenceLine
                       y={previstoTotal}
