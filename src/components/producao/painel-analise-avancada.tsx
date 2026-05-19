@@ -568,6 +568,40 @@ function AbaComparativo({
  *   busca, ordenação, filtro por tipo de movimento, marcação de estornos,
  *   exportação CSV.
  * ========================================================================= */
+function AbaMovimentacoes({
+  movs, listaItens, baseMpMap, cascoAtivoId,
+}: {
+  movs: Mov[];
+  listaItens: any[];
+  baseMpMap: Map<string, TipoMP>;
+  cascoAtivoId: string | null;
+}) {
+  const [modo, setModo] = useState<"codigo" | "lista">("codigo");
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-1">
+        <button
+          type="button"
+          onClick={() => setModo("codigo")}
+          className={`text-xs px-3 py-1.5 rounded border ${modo === "codigo" ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted"}`}
+        >
+          <Eye className="h-3 w-3 inline mr-1" /> Por código (drill-down)
+        </button>
+        <button
+          type="button"
+          onClick={() => setModo("lista")}
+          className={`text-xs px-3 py-1.5 rounded border ${modo === "lista" ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted"}`}
+        >
+          <Search className="h-3 w-3 inline mr-1" /> Lista completa (histórico)
+        </button>
+      </div>
+      {modo === "codigo"
+        ? <AbaDrillDown movs={movs} listaItens={listaItens} baseMpMap={baseMpMap} />
+        : <AbaHistorico movs={movs} cascoAtivoId={cascoAtivoId} />}
+    </div>
+  );
+}
+
 function AbaHistorico({
   movs, cascoAtivoId,
 }: { movs: Mov[]; cascoAtivoId: string | null }) {
