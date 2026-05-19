@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  LabelList, Cell,
+  LabelList, Cell, PieChart, Pie, RadialBarChart, RadialBar, Legend,
 } from "recharts";
 import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
@@ -39,6 +39,42 @@ const CAT_ICON: Record<CategoriaMaterial, string> = {
   "GÁS": "◉",
   TINTA: "✦",
   OUTROS: "◆",
+};
+
+// Tipo de gráfico por categoria (diversificação visual)
+type ChartKind = "bar-v" | "donut" | "radial" | "pie" | "bar-h";
+const CAT_CHART: Record<CategoriaMaterial, ChartKind> = {
+  FERRO: "bar-v",
+  SOLDA: "donut",
+  "GÁS": "radial",
+  TINTA: "pie",
+  OUTROS: "bar-h",
+};
+
+// Tooltip customizado — usa tokens semânticos, sem preto pesado
+const FancyTooltip = ({ active, payload, label, accent, unit = "" }: any) => {
+  if (!active || !payload || !payload.length) return null;
+  const p = payload[0];
+  const titulo = p?.payload?.label ?? p?.payload?.mes ?? label ?? "";
+  const desc = p?.payload?.desc;
+  return (
+    <div
+      className="rounded-lg border shadow-lg backdrop-blur-md px-3 py-2 text-xs pointer-events-none"
+      style={{
+        background: "color-mix(in oklch, hsl(var(--popover)) 92%, transparent)",
+        borderColor: accent ?? "hsl(var(--border))",
+        borderLeftWidth: 3,
+        color: "hsl(var(--popover-foreground))",
+        maxWidth: 220,
+      }}
+    >
+      <div className="font-semibold tracking-wide" style={{ color: accent }}>{titulo}</div>
+      {desc && <div className="text-[10px] text-muted-foreground truncate">{desc}</div>}
+      <div className="font-mono tabular-nums mt-0.5">
+        {fmt(Number(p.value), 0)} {unit}
+      </div>
+    </div>
+  );
 };
 
 function PainelListaTecnicaPage() {
@@ -199,7 +235,6 @@ function PainelListaTecnicaPage() {
     };
     CATEGORIAS.forEach((cat) => {
       const baseItens = itensFiltrados.filter((it) => {
-        if (codigoSel && String(it.codigo_sap) !== codigoSel) return false;
         if (unidadeSel && String(it.unidade ?? "—").toUpperCase() !== unidadeSel) return false;
         return it.categoria === cat;
       });
@@ -230,7 +265,7 @@ function PainelListaTecnicaPage() {
       result[cat] = { barras, serie, totalPeso, totalItens: baseItens.length };
     });
     return result;
-  }, [itensFiltrados, codigoSel, unidadeSel]);
+  }, [itensFiltrados, unidadeSel]);
 
   const tabelaMateriais = useMemo(() => {
     const acc = new Map<string, { codigo: string; nome: string; qtd: number; ume: string; peso: number }>();
@@ -371,17 +406,83 @@ function PainelListaTecnicaPage() {
                   <CardContent className="h-44 p-2">
                     {vazio ? (
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem dados</div>
+                    ) : CAT_CHART[cat] === "donut" || CAT_CHART[cat] === "pie" ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Tooltip content={<FancyTooltip accent={cor} />} />
+                          <Pie
+                            data={barras}
+                            dataKey="valor"
+                            nameKey="label"
+                            innerRadius={CAT_CHART[cat] === "donut" ? 32 : 0}
+                            outerRadius={62}
+                            paddingAngle={2}
+                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
+                            className="cursor-pointer focus:outline-none"
+                            label={(e: any) => `${e.label} · ${fmt(Number(e.value), 0)}`}
+                            labelLine={false}
+                            style={{ fontSize: 10, fill: "hsl(var(--foreground))" }}
+                          >
+                            {barras.map((b, i) => (
+                              <Cell
+                                key={i}
+                                fill={unidadeSel && unidadeSel !== b.label
+                                  ? `color-mix(in oklch, ${cor} 30%, transparent)`
+                                  : `color-mix(in oklch, ${cor} ${95 - i * 10}%, white)`}
+                                stroke={unidadeSel === b.label ? cor : "hsl(var(--background))"}
+                                strokeWidth={unidadeSel === b.label ? 2 : 1}
+                              />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : CAT_CHART[cat] === "radial" ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadialBarChart
+                          data={barras.map((b, i) => ({ ...b, fill: `color-mix(in oklch, ${cor} ${90 - i * 12}%, white)` }))}
+                          innerRadius="25%"
+                          outerRadius="100%"
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          <Tooltip content={<FancyTooltip accent={cor} />} />
+                          <RadialBar
+                            background={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }}
+                            dataKey="valor"
+                            cornerRadius={6}
+                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
+                            className="cursor-pointer"
+                          />
+                          <Legend iconSize={8} layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: 10 }} formatter={(_v, e: any) => e?.payload?.label} />
+                        </RadialBarChart>
+                      </ResponsiveContainer>
+                    ) : CAT_CHART[cat] === "bar-h" ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={barras} layout="vertical" margin={{ left: 4, right: 28, top: 4, bottom: 4 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                          <XAxis type="number" hide />
+                          <YAxis type="category" dataKey="label" width={36} stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                          <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 10%, transparent)` }} content={<FancyTooltip accent={cor} />} />
+                          <Bar
+                            dataKey="valor"
+                            radius={[0, 4, 4, 0]}
+                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
+                            className="cursor-pointer"
+                          >
+                            {barras.map((b, i) => (
+                              <Cell key={i} fill={unidadeSel && unidadeSel !== b.label ? `color-mix(in oklch, ${cor} 30%, transparent)` : cor} />
+                            ))}
+                            <LabelList dataKey="valor" position="right" fontSize={10} fill={cor} formatter={(v: any) => fmt(Number(v), 0)} />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
                     ) : (
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={barras} margin={{ left: 4, right: 8, top: 18, bottom: 4 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                           <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={0} />
                           <YAxis hide />
-                          <Tooltip
-                            cursor={{ fill: `${cor}15` }}
-                            contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                            formatter={(v: any) => fmt(Number(v), 2)}
-                          />
+                          <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 10%, transparent)` }} content={<FancyTooltip accent={cor} />} />
                           <Bar
                             dataKey="valor"
                             radius={[4, 4, 0, 0]}
@@ -391,18 +492,12 @@ function PainelListaTecnicaPage() {
                             {barras.map((b, i) => (
                               <Cell
                                 key={i}
-                                fill={unidadeSel && unidadeSel !== b.label ? `${cor}40` : cor}
-                                stroke={unidadeSel === b.label ? "#000" : "transparent"}
-                                strokeWidth={unidadeSel === b.label ? 1.5 : 0}
+                                fill={unidadeSel && unidadeSel !== b.label ? `color-mix(in oklch, ${cor} 30%, transparent)` : cor}
+                                stroke={unidadeSel === b.label ? cor : "transparent"}
+                                strokeWidth={unidadeSel === b.label ? 2 : 0}
                               />
                             ))}
-                            <LabelList
-                              dataKey="valor"
-                              position="top"
-                              fontSize={10}
-                              fill={cor}
-                              formatter={(v: any) => fmt(Number(v), 0)}
-                            />
+                            <LabelList dataKey="valor" position="top" fontSize={10} fill={cor} formatter={(v: any) => fmt(Number(v), 0)} />
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
@@ -430,10 +525,8 @@ function PainelListaTecnicaPage() {
                           <XAxis type="number" hide />
                           <YAxis type="category" dataKey="mes" width={78} stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontFamily: "monospace" }} />
                           <Tooltip
-                            cursor={{ fill: `${cor}15` }}
-                            contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                            formatter={(v: any, _n: any, p: any) => [`${fmt(Number(v), 0)} kg`, p?.payload?.desc ?? "Peso"]}
-                            labelFormatter={(l: any) => `Código ${l}`}
+                            cursor={{ fill: `color-mix(in oklch, ${cor} 10%, transparent)` }}
+                            content={<FancyTooltip accent={cor} unit="kg" />}
                           />
                           <Bar
                             dataKey="valor"
@@ -444,9 +537,9 @@ function PainelListaTecnicaPage() {
                             {serie.map((s: any, i: number) => (
                               <Cell
                                 key={i}
-                                fill={codigoSel && codigoSel !== s.mes ? `${cor}40` : cor}
-                                stroke={codigoSel === s.mes ? "#000" : "transparent"}
-                                strokeWidth={codigoSel === s.mes ? 1.5 : 0}
+                                fill={codigoSel && codigoSel !== s.mes ? `color-mix(in oklch, ${cor} 30%, transparent)` : cor}
+                                stroke={codigoSel === s.mes ? cor : "transparent"}
+                                strokeWidth={codigoSel === s.mes ? 2 : 0}
                               />
                             ))}
                             <LabelList
