@@ -8,7 +8,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LabelList, Cell, PieChart, Pie, RadialBarChart, RadialBar, Legend,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  AreaChart, Area,
+  AreaChart, Area, ReferenceDot,
 } from "recharts";
 import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
