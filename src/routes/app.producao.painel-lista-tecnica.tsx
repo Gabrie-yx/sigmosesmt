@@ -55,10 +55,10 @@ const CAT_CHART: Record<CategoriaMaterial, ChartKind> = {
 };
 
 // Variação do gráfico de FOCO (quando um item do painel lateral é selecionado)
-type FocusKind = "bullet" | "donut" | "slope" | "gauge-h" | "radial-single";
+type FocusKind = "bullet" | "donut" | "slope" | "gauge-h" | "radial-single" | "radar";
 const CAT_FOCUS: Record<CategoriaMaterial, FocusKind> = {
   FERRO: "bullet",
-  SOLDA: "donut",
+  SOLDA: "radar",
   "GÁS": "slope",
   TINTA: "gauge-h",
   OUTROS: "radial-single",
@@ -494,6 +494,66 @@ function PainelListaTecnicaPage() {
                             </div>
                           </>
                         );
+
+                        if (kind === "radar") {
+                          // Teia: cada eixo é um código do top-N da categoria.
+                          // Item selecionado ganha um ponto destacado no eixo correspondente.
+                          const data = (serie.length ? serie : [{ mes: focoItem.codigo, valor: sel }]).map((s: any) => ({
+                            label: s.mes,
+                            valor: s.valor,
+                            isFoco: s.mes === focoItem.codigo,
+                          }));
+                          const FocoDot = (props: any) => {
+                            const { cx, cy, payload } = props;
+                            if (!payload?.isFoco || cx == null || cy == null) return <g />;
+                            return (
+                              <g>
+                                <circle cx={cx} cy={cy} r={7} fill={cor} fillOpacity={0.25} />
+                                <circle cx={cx} cy={cy} r={4} fill={cor} stroke="hsl(var(--background))" strokeWidth={1.5} />
+                              </g>
+                            );
+                          };
+                          return (
+                            <div className="relative h-full w-full">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <RadarChart data={data} margin={{ top: 16, right: 22, bottom: 18, left: 22 }}>
+                                  <PolarGrid stroke="hsl(var(--border))" />
+                                  <PolarAngleAxis
+                                    dataKey="label"
+                                    tick={(props: any) => {
+                                      const { x, y, payload, textAnchor } = props;
+                                      const ativo = payload.value === focoItem.codigo;
+                                      return (
+                                        <text
+                                          x={x}
+                                          y={y}
+                                          textAnchor={textAnchor}
+                                          fontSize={9}
+                                          fontWeight={ativo ? 700 : 400}
+                                          fill={ativo ? cor : "hsl(var(--muted-foreground))"}
+                                        >
+                                          {payload.value}
+                                        </text>
+                                      );
+                                    }}
+                                  />
+                                  <PolarRadiusAxis tick={false} axisLine={false} />
+                                  <Tooltip content={<FancyTooltip accent={cor} unit="kg" />} />
+                                  <Radar
+                                    dataKey="valor"
+                                    stroke={cor}
+                                    strokeWidth={2}
+                                    fill={cor}
+                                    fillOpacity={0.25}
+                                    dot={FocoDot}
+                                    isAnimationActive={false}
+                                  />
+                                </RadarChart>
+                              </ResponsiveContainer>
+                              {Overlay}
+                            </div>
+                          );
+                        }
 
                         if (kind === "donut") {
                           const data = [
