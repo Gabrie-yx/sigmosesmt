@@ -501,6 +501,12 @@ function PainelListaTecnicaPage() {
         </CardContent>
       </Card>
 
+      <Tabs defaultValue="visao" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="visao">Visão geral</TabsTrigger>
+          <TabsTrigger value="avancada">Análise avançada</TabsTrigger>
+        </TabsList>
+        <TabsContent value="visao" className="space-y-3 mt-3">
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
