@@ -1119,29 +1119,52 @@ function PainelListaTecnicaPage() {
                       </ResponsiveContainer>
                     ) : CAT_CHART[cat] === "stacked" ? (
                       (() => {
-                        // Barras empilhadas: uma única barra de composição com cada UME virando uma série
-                        const row: any = { name: cat };
-                        barras.forEach((b) => { row[b.label] = b.valor; });
+                        // Uma barra horizontal dinâmica por UME (KG, M, PC, UN…).
+                        // Cada barra usa sua própria escala (largura = valor / max(barras)),
+                        // já que somar KG + M + PC não faz sentido.
+                        const data = barras.map((b) => ({ label: b.label, valor: b.valor }));
                         return (
                           <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={[row]} layout="vertical" margin={{ left: 4, right: 12, top: 18, bottom: 4 }}>
+                            <BarChart
+                              data={data}
+                              layout="vertical"
+                              margin={{ left: 4, right: 48, top: 6, bottom: 4 }}
+                              barCategoryGap={4}
+                            >
                               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                               <XAxis type="number" hide />
-                              <YAxis type="category" dataKey="name" hide />
+                              <YAxis
+                                type="category"
+                                dataKey="label"
+                                width={36}
+                                tickLine={false}
+                                axisLine={false}
+                                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontWeight: 600 }}
+                              />
                               <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} />} />
-                              <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
-                              {barras.map((b, i) => (
-                                <Bar
-                                  key={b.label}
-                                  dataKey={b.label}
-                                  stackId="a"
-                                  fill={unidadeSel && unidadeSel !== b.label
-                                    ? `color-mix(in oklch, ${cor} 25%, transparent)`
-                                    : `color-mix(in oklch, ${cor} ${95 - i * 14}%, white)`}
-                                  onClick={() => setUnidadeSel((p) => (p === b.label ? null : b.label))}
-                                  className="cursor-pointer"
+                              <Bar
+                                dataKey="valor"
+                                radius={[3, 3, 3, 3]}
+                                onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
+                                className="cursor-pointer"
+                              >
+                                {data.map((b, i) => (
+                                  <Cell
+                                    key={b.label}
+                                    fill={
+                                      unidadeSel && unidadeSel !== b.label
+                                        ? `color-mix(in oklch, ${cor} 22%, transparent)`
+                                        : `color-mix(in oklch, ${cor} ${92 - i * 10}%, white)`
+                                    }
+                                  />
+                                ))}
+                                <LabelList
+                                  dataKey="valor"
+                                  position="right"
+                                  formatter={(v: any) => fmt(Number(v), 0)}
+                                  style={{ fontSize: 10, fill: cor, fontWeight: 700 }}
                                 />
-                              ))}
+                              </Bar>
                             </BarChart>
                           </ResponsiveContainer>
                         );
