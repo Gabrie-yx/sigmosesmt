@@ -224,6 +224,26 @@ function PainelListaTecnicaPage() {
     return m;
   }, [listasAtuais]);
 
+  // Itens da lista técnica (planejado por código) — base para Realizado vs. Orçado
+  const listaAtivaId = (() => {
+    const ord = (mb51Ordens as any[]).find((o) => o.id === (ordemSel ?? (mb51Ordens as any[])[0]?.id));
+    if (!ord?.casco_id) return null;
+    const l = (listasAtuais as any[]).find((x) => x.casco_id === ord.casco_id);
+    return l?.id ?? null;
+  })();
+  const { data: listaItens = [] } = useQuery({
+    queryKey: ["lista-tecnica-itens", listaAtivaId],
+    enabled: !!listaAtivaId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("producao_lista_tecnica_itens")
+        .select("codigo_sap, quantidade, unidade")
+        .eq("lista_id", listaAtivaId);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   // Enriquece movimentos: tipo resolvido pela Base MP, consumo positivo (líquido = -quantidade)
   const itensEnriq = useMemo(() => {
     return (movimentos as any[]).map((m) => {
