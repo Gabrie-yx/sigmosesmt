@@ -798,22 +798,43 @@ function PainelListaTecnicaPage() {
                       })()
                     ) : (
                       // radar
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart data={barras} margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
-                          <PolarGrid stroke="hsl(var(--border))" />
-                          <PolarAngleAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                          <PolarRadiusAxis tick={false} axisLine={false} />
-                          <Tooltip content={<FancyTooltip accent={cor} />} />
-                          <Radar
-                            dataKey="valor"
-                            stroke={cor}
-                            fill={cor}
-                            fillOpacity={0.35}
-                            onClick={(d: any) => setUnidadeSel((p) => (p === d?.payload?.label ? null : d?.payload?.label))}
-                            className="cursor-pointer"
-                          />
-                        </RadarChart>
-                      </ResponsiveContainer>
+                      (() => {
+                        // Para SOLDA usamos os códigos (serie) como eixos da teia,
+                        // assim ao clicar um item na barra lateral a teia destaca
+                        // o eixo correspondente. Para OUTROS mantemos UMEs (barras).
+                        const useCodigos = cat === "SOLDA" && serie.length > 0;
+                        const data = (useCodigos ? serie : barras).map((s: any) =>
+                          useCodigos
+                            ? { label: s.mes, valor: s.valor }
+                            : { label: s.label, valor: s.valor }
+                        );
+                        return (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <RadarChart data={data} margin={{ top: 16, right: 22, bottom: 16, left: 22 }}>
+                              <PolarGrid stroke="hsl(var(--border))" />
+                              <PolarAngleAxis
+                                dataKey="label"
+                                tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                              />
+                              <PolarRadiusAxis tick={false} axisLine={false} />
+                              <Tooltip content={<FancyTooltip accent={cor} />} />
+                              <Radar
+                                dataKey="valor"
+                                stroke={cor}
+                                strokeWidth={2}
+                                fill={cor}
+                                fillOpacity={0.3}
+                                isAnimationActive={false}
+                                onClick={(d: any) =>
+                                  !useCodigos &&
+                                  setUnidadeSel((p) => (p === d?.payload?.label ? null : d?.payload?.label))
+                                }
+                                className={useCodigos ? "" : "cursor-pointer"}
+                              />
+                            </RadarChart>
+                          </ResponsiveContainer>
+                        );
+                      })()
                     )}
                   </CardContent>
                 </Card>
