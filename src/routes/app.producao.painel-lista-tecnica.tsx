@@ -497,21 +497,25 @@ function PainelListaTecnicaPage() {
 
                         if (kind === "radar") {
                           // Teia: cada eixo é um código do top-N da categoria.
-                          // Garantimos que o item selecionado SEMPRE apareça como eixo,
-                          // e normalizamos os valores em % do máximo para a teia ficar
-                          // visível mesmo quando há discrepância enorme entre valores.
+                          // O item selecionado sempre fica no vértice máximo (100%)
+                          // e os demais são escalados proporcionalmente em relação a
+                          // ele — assim, ao trocar a seleção, o polígono se deforma
+                          // "apontando" para o eixo escolhido (igual ao exemplo).
                           const base: Array<{ mes: string; valor: number }> =
                             serie.length ? [...serie] : [{ mes: focoItem.codigo, valor: sel }];
                           if (!base.some((s) => s.mes === focoItem.codigo)) {
                             base.push({ mes: focoItem.codigo, valor: sel });
                           }
-                          const maxVal = Math.max(1, ...base.map((s) => s.valor));
-                          const data = base.map((s) => ({
-                            label: s.mes,
-                            valor: s.valor,
-                            pct: (s.valor / maxVal) * 100,
-                            isFoco: s.mes === focoItem.codigo,
-                          }));
+                          const selVal = Math.max(1, sel);
+                          const data = base.map((s) => {
+                            const isFoco = s.mes === focoItem.codigo;
+                            // base mínima de 18% para os outros eixos manterem a teia
+                            // visível, mesmo se o item selecionado for muito maior.
+                            const rel = isFoco
+                              ? 100
+                              : Math.min(85, 18 + (s.valor / selVal) * 65);
+                            return { label: s.mes, valor: s.valor, pct: rel, isFoco };
+                          });
                           const FocoDot = (props: any) => {
                             const { cx, cy, payload } = props;
                             if (!payload?.isFoco || cx == null || cy == null) return <g />;
