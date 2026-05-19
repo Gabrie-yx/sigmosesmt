@@ -1098,20 +1098,18 @@ function PainelListaTecnicaPage() {
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart
                               data={data}
-                              layout="vertical"
-                              margin={{ left: 4, right: 48, top: 6, bottom: 4 }}
-                              barCategoryGap={4}
+                              margin={{ left: 4, right: 8, top: 18, bottom: 4 }}
+                              barCategoryGap={6}
                             >
-                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                              <XAxis type="number" hide domain={[0, referencia]} allowDataOverflow />
-                              <YAxis
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                              <XAxis
                                 type="category"
                                 dataKey="label"
-                                width={36}
                                 tickLine={false}
                                 axisLine={false}
                                 tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontWeight: 600 }}
                               />
+                              <YAxis type="number" hide domain={[0, referencia]} allowDataOverflow />
                               <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} />} />
                               <Bar
                                 dataKey="valor"
@@ -1136,7 +1134,7 @@ function PainelListaTecnicaPage() {
                                 ))}
                                 <LabelList
                                   dataKey="valor"
-                                  position="right"
+                                  position="top"
                                   formatter={(v: any) => fmt(Number(v), 0)}
                                   style={{ fontSize: 10, fill: cor, fontWeight: 700 }}
                                 />
