@@ -325,7 +325,7 @@ export function FloatingDock() {
             className="hidden md:block flex-1 bg-black/40 backdrop-blur-sm animate-in fade-in"
             onClick={() => setDrawerPath(null)}
           />
-          <div className="w-full md:w-[85vw] ml-auto h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+          <div className="w-full md:w-[90vw] ml-auto h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
             <div className="flex items-center gap-2 border-b px-4 py-2 bg-slate-50">
               <div className="text-xs uppercase font-bold text-slate-500">Visualização rápida</div>
               <div className="text-sm font-bold text-slate-800">· {drawerLabel}</div>
