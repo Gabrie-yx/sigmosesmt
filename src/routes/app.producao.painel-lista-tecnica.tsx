@@ -289,10 +289,11 @@ function PainelListaTecnicaPage() {
     const linhas = itensVisiveis.length;
     const distintos = new Set(itensVisiveis.map((it) => String(it.codigo_sap))).size;
     const desvio = pesoEst > 0 ? ((consumo - pesoEst) / pesoEst) * 100 : 0;
-    // Consumo total da Ordem conforme MB51 — soma de "Qtd. UM registro" (líquido,
-    // negativos = consumo, positivos = estorno) de TODOS os movimentos da ordem,
-    // independente de UME. Reflete a coluna Ordem + Qtd. UM registro pedida.
-    const consumoOrdem = itensEnriq.reduce((s, it) => s + (it.consumo ?? 0), 0);
+    // Consumo total da Ordem conforme MB51 — soma líquida de "Qtd. UM registro"
+    // (negativos = consumo, positivos = estorno) APENAS para itens em KG.
+    const consumoOrdem = itensEnriq
+      .filter((it) => String(it.unidade ?? "").toUpperCase() === "KG")
+      .reduce((s, it) => s + (it.consumo ?? 0), 0);
     return { pesoReal: consumo, pesoEst, pecas: linhas, distintos, desvio, consumoOrdem };
   }, [itensVisiveis, itensEnriq, listaPlan]);
 
