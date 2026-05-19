@@ -324,6 +324,36 @@ function PainelListaTecnicaPage() {
     return result;
   }, [itensFiltrados]);
 
+  // Previsto por categoria a partir da Lista Técnica (B51) do casco da ordem ativa
+  const previstoPorCategoria = useMemo(() => {
+    const r: Record<CategoriaMaterial, number> = {
+      FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0,
+    };
+    (listaItens as any[]).forEach((it) => {
+      const cat = resolveTipo(String(it.codigo_sap ?? ""), null, baseMpMap);
+      r[cat] += Math.abs(Number(it.quantidade ?? 0));
+    });
+    return r;
+  }, [listaItens, baseMpMap]);
+
+  // Alertas: por categoria, comparar realizado (MB51) × previsto (B51)
+  const alertasCategoria = useMemo(() => {
+    return CATEGORIAS.map((cat) => {
+      const prev = previstoPorCategoria[cat] || 0;
+      const real = dadosPorCategoria[cat].totalPeso || 0;
+      const pct = prev > 0 ? ((real - prev) / prev) * 100 : 0;
+      let status: "ok" | "warn" | "crit" | "na" = "na";
+      if (prev > 0) {
+        if (real > prev * 1.10) status = "crit";
+        else if (real > prev) status = "warn";
+        else status = "ok";
+      }
+      return { cat, prev, real, pct, status };
+    });
+  }, [previstoPorCategoria, dadosPorCategoria]);
+
+  const alertasAtivos = alertasCategoria.filter((a) => a.status === "warn" || a.status === "crit");
+
   const tabelaMateriais = useMemo(() => {
     const acc = new Map<string, { codigo: string; nome: string; qtd: number; ume: string; peso: number }>();
     // Não filtra por codigoSel — mantemos a lista completa e apenas destacamos o item selecionado.
