@@ -110,7 +110,7 @@ const FancyTooltip = ({ active, payload, label, accent, unit = "" }: any) => {
       <div className="font-medium tracking-wide" style={{ color: accent }}>{titulo}</div>
       {desc && <div className="text-[10px] text-muted-foreground truncate">{desc}</div>}
       <div className="font-mono tabular-nums mt-0.5 font-normal">
-        {fmt(Number(p.value), 0)} {unit}
+        {fmt(Number(p.value), 0)}{unit ? ` ${unit}` : ""}
       </div>
     </div>
   );
@@ -557,10 +557,11 @@ function PainelListaTecnicaPage() {
         </TabsList>
         <TabsContent value="visao" className="space-y-3 mt-3">
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         {[
           { label: "Realizado (kg estimado)", value: `${fmt(kpi.pesoReal, 0)} kg`, icon: Package, accent: "from-primary/20 to-primary/5", textCls: "text-primary" },
           { label: "Planejado (B51)", value: `${fmt(kpi.pesoEst, 0)} kg`, icon: Layers, accent: "from-accent/20 to-accent/5", textCls: "text-accent-foreground" },
+          { label: "Peso Real (B51)", value: `${fmt(Number(listaPlan?.peso_total_real ?? 0), 0)} kg`, icon: Layers, accent: "from-emerald-500/20 to-emerald-500/5", textCls: "text-emerald-700" },
           { label: "Desvio Real vs Plan.", value: kpi.pesoEst > 0 ? `${kpi.desvio >= 0 ? "+" : ""}${fmt(kpi.desvio, 2)}%` : "—", icon: TrendingUp, accent: kpi.desvio > 0 ? "from-red-500/20 to-red-500/5" : "from-green-500/20 to-green-500/5", textCls: kpi.desvio > 0 ? "text-red-600" : "text-green-600" },
           { label: "Códigos Distintos", value: fmt(kpi.distintos, 0), icon: Filter, accent: "from-blue-500/15 to-blue-500/5", textCls: "text-blue-600" },
           { label: "Movimentos MB51", value: fmt(kpi.pecas, 0), icon: Package, accent: "from-amber-500/15 to-amber-500/5", textCls: "text-amber-700" },
@@ -750,11 +751,12 @@ function PainelListaTecnicaPage() {
             const cor = CAT_COLOR[cat];
             const ativoCat = catSel === cat;
             const focoItem = itemSelInfo && itemSelInfo.categoria === cat ? itemSelInfo : null;
-            // Quebra dinâmica por UM no header. Se houver UME selecionada
-            // que existe nessa categoria, mostra somente aquela linha.
-            const umsExibidas = unidadeSel
-              ? porUnidade.filter((u) => u.um === unidadeSel)
-              : porUnidade;
+            // Quebra dinâmica por UM no header. SEMPRE mostra todas as
+            // unidades da categoria; quando uma UME está selecionada,
+            // apenas destacamos a linha correspondente (as outras ficam
+            // esmaecidas, mas continuam visíveis).
+            const umsExibidas = porUnidade;
+            const umeUnica = porUnidade.length === 1 ? porUnidade[0].um : "";
             return (
               <div key={cat} className="grid gap-3 grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
                 {/* Card de barras por UME */}
@@ -784,7 +786,10 @@ function PainelListaTecnicaPage() {
                               className={`text-sm font-bold tabular-nums leading-tight transition hover:opacity-80 ${
                                 unidadeSel === u.um ? "underline underline-offset-2" : ""
                               }`}
-                              style={{ color: cor }}
+                              style={{
+                                color: cor,
+                                opacity: unidadeSel && unidadeSel !== u.um ? 0.4 : 1,
+                              }}
                               title={`Filtrar por ${u.um}`}
                             >
                               {fmt(u.valor, 0)}{" "}
@@ -928,7 +933,7 @@ function PainelListaTecnicaPage() {
                             <div className="relative h-full w-full">
                               <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
-                                  <Tooltip content={<FancyTooltip accent={cor} unit="kg" />} />
+                                  <Tooltip content={<FancyTooltip accent={cor} unit={focoItem.ume} />} />
                                   <Pie data={data} dataKey="valor" nameKey="label" innerRadius={42} outerRadius={64} paddingAngle={2} startAngle={90} endAngle={-270} stroke="hsl(var(--background))" strokeWidth={1}>
                                     <Cell fill={cor} />
                                     <Cell fill={cor2} />
@@ -953,7 +958,7 @@ function PainelListaTecnicaPage() {
                                 <BarChart data={data} layout="vertical" margin={{ left: 4, right: 16, top: 4, bottom: 4 }}>
                                   <XAxis type="number" domain={[0, totalPeso]} hide />
                                   <YAxis type="category" dataKey="name" hide />
-                                  <Tooltip cursor={{ fill: "transparent" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                  <Tooltip cursor={{ fill: "transparent" }} content={<FancyTooltip accent={cor} unit={focoItem.ume} />} />
                                   <Bar dataKey="sel" stackId="b" fill={cor} radius={[6, 0, 0, 6]} barSize={22} />
                                   <Bar dataKey="resto" stackId="b" fill={cor2} radius={[0, 6, 6, 0]} barSize={22} />
                                   <ReferenceLine x={media} stroke={trendCor} strokeWidth={2} strokeDasharray="2 2" label={{ value: "média", position: "top", fontSize: 9, fill: trendCor }} />
@@ -983,7 +988,7 @@ function PainelListaTecnicaPage() {
                                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                                   <XAxis dataKey="x" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                                   <YAxis domain={[0, maxY]} hide />
-                                  <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                  <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit={focoItem.ume} />} />
                                   <Line
                                     type="linear"
                                     dataKey="v"
@@ -1238,7 +1243,7 @@ function PainelListaTecnicaPage() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                                 <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
                                 <YAxis hide />
-                                <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Bar
                                   dataKey="valor"
                                   radius={[6, 6, 0, 0]}
@@ -1263,7 +1268,7 @@ function PainelListaTecnicaPage() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                                 <XAxis type="number" hide />
                                 <YAxis type="category" dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} width={70} />
-                                <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Bar
                                   dataKey="valor"
                                   radius={[0, 6, 6, 0]}
@@ -1290,7 +1295,7 @@ function PainelListaTecnicaPage() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                                 <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
                                 <YAxis hide />
-                                <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Line
                                   type="monotone"
                                   dataKey="valor"
@@ -1329,7 +1334,7 @@ function PainelListaTecnicaPage() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                                 <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
                                 <YAxis hide />
-                                <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Area
                                   type="monotone"
                                   dataKey="acumulado"
@@ -1368,7 +1373,7 @@ function PainelListaTecnicaPage() {
                               <XAxis dataKey="mes" type="category" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
                               <YAxis dataKey="valor" hide />
                               <ZAxis dataKey="valor" range={[60, 360]} />
-                              <Tooltip cursor={{ strokeDasharray: "3 3", stroke: cor }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                              <Tooltip cursor={{ strokeDasharray: "3 3", stroke: cor }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                               <Scatter
                                 data={dadosBase}
                                 
