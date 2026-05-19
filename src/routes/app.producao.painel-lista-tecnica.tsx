@@ -1108,6 +1108,12 @@ function PainelListaTecnicaPage() {
                                 tickLine={false}
                                 axisLine={false}
                                 tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontWeight: 600 }}
+                                interval={0}
+                                onClick={(e: any) => {
+                                  const lbl = e?.value;
+                                  if (lbl) setUnidadeSel((p) => (p === lbl ? null : lbl));
+                                }}
+                                style={{ cursor: "pointer" }}
                               />
                               <YAxis type="number" hide domain={[0, referencia]} allowDataOverflow />
                               <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} />} />
@@ -1123,6 +1129,8 @@ function PainelListaTecnicaPage() {
                                 {data.map((b, i) => (
                                   <Cell
                                     key={b.label}
+                                    cursor="pointer"
+                                    onClick={() => setUnidadeSel((p) => (p === b.label ? null : b.label))}
                                     fill={
                                       unidadeSel === b.label
                                         ? cor
