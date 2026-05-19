@@ -557,12 +557,16 @@ function PainelListaTecnicaPage() {
         </TabsList>
         <TabsContent value="visao" className="space-y-3 mt-3">
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "Realizado (kg estimado)", value: `${fmt(kpi.pesoReal, 0)} kg`, icon: Package, accent: "from-primary/20 to-primary/5", textCls: "text-primary" },
           { label: "Planejado (B51)", value: `${fmt(kpi.pesoEst, 0)} kg`, icon: Layers, accent: "from-accent/20 to-accent/5", textCls: "text-accent-foreground" },
           { label: "Peso Real (B51)", value: `${fmt(Number(listaPlan?.peso_total_real ?? 0), 0)} kg`, icon: Layers, accent: "from-emerald-500/20 to-emerald-500/5", textCls: "text-emerald-700" },
-          { label: "Desvio Real vs Plan.", value: kpi.pesoEst > 0 ? `${kpi.desvio >= 0 ? "+" : ""}${fmt(kpi.desvio, 2)}%` : "—", icon: TrendingUp, accent: kpi.desvio > 0 ? "from-red-500/20 to-red-500/5" : "from-green-500/20 to-green-500/5", textCls: kpi.desvio > 0 ? "text-red-600" : "text-green-600" },
+          (() => {
+            const real = Number(listaPlan?.peso_total_real ?? 0);
+            const plan = kpi.pesoEst;
+            const dv = plan > 0 ? ((real - plan) / plan) * 100 : 0;
+            return { label: "Desvio Real vs Plan.", value: plan > 0 ? `${dv >= 0 ? "+" : ""}${fmt(dv, 2)}%` : "—", icon: TrendingUp, accent: dv > 0 ? "from-red-500/20 to-red-500/5" : "from-green-500/20 to-green-500/5", textCls: dv > 0 ? "text-red-600" : "text-green-600" };
+          })(),
           { label: "Códigos Distintos", value: fmt(kpi.distintos, 0), icon: Filter, accent: "from-blue-500/15 to-blue-500/5", textCls: "text-blue-600" },
           { label: "Movimentos MB51", value: fmt(kpi.pecas, 0), icon: Package, accent: "from-amber-500/15 to-amber-500/5", textCls: "text-amber-700" },
         ].map((k) => (
