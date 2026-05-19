@@ -1098,7 +1098,7 @@ function PainelListaTecnicaPage() {
                             dataKey="valor"
                             cornerRadius={6}
                             onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
-                            className=""
+                            className="cursor-pointer"
                           />
                           <Legend iconSize={8} layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: 10 }} formatter={(_v, e: any) => e?.payload?.label} />
                         </RadialBarChart>
@@ -1125,7 +1125,7 @@ function PainelListaTecnicaPage() {
                                     ? `color-mix(in oklch, ${cor} 25%, transparent)`
                                     : `color-mix(in oklch, ${cor} ${95 - i * 14}%, white)`}
                                   onClick={() => setUnidadeSel((p) => (p === b.label ? null : b.label))}
-                                  className=""
+                                  className="cursor-pointer"
                                 />
                               ))}
                             </BarChart>
@@ -1243,7 +1243,7 @@ function PainelListaTecnicaPage() {
                                   dataKey="valor"
                                   radius={[6, 6, 0, 0]}
                                   
-                                  className=""
+                                  className="cursor-pointer"
                                 >
                                   {dadosBase.map((d: any, i: number) => {
                                     const isFoco = focoItem?.codigo === d.mes;
@@ -1269,7 +1269,7 @@ function PainelListaTecnicaPage() {
                                   radius={[0, 6, 6, 0]}
                                   barSize={12}
                                   
-                                  className=""
+                                  className="cursor-pointer"
                                 >
                                   {dadosBase.map((d: any, i: number) => {
                                     const isFoco = focoItem?.codigo === d.mes;
@@ -1303,7 +1303,7 @@ function PainelListaTecnicaPage() {
                                   }}
                                   activeDot={{ r: 6 }}
                                   
-                                  className=""
+                                  className="cursor-pointer"
                                 />
                               </LineChart>
                             </ResponsiveContainer>
@@ -1342,7 +1342,7 @@ function PainelListaTecnicaPage() {
                                   }}
                                   activeDot={{ r: 5, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 2 }}
                                   
-                                  className=""
+                                  className="cursor-pointer"
                                 />
                                 {focoItem && dados.some((d: any) => d.mes === focoItem.codigo) && (
                                   <ReferenceDot
@@ -1372,7 +1372,7 @@ function PainelListaTecnicaPage() {
                               <Scatter
                                 data={dadosBase}
                                 
-                                className=""
+                                className="cursor-pointer"
                               >
                                 {dadosBase.map((d: any, i: number) => {
                                   const isFoco = focoItem?.codigo === d.mes;
