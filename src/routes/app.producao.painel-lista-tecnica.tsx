@@ -70,10 +70,10 @@ const CAT_FOCUS: Record<CategoriaMaterial, FocusKind> = {
 type TopKind = "vbar" | "hbar" | "line" | "area" | "scatter";
 const CAT_TOP: Record<CategoriaMaterial, TopKind> = {
   FERRO: "vbar",
-  SOLDA: "hbar",
-  "GÁS": "line",
-  TINTA: "area",
-  OUTROS: "scatter",
+  SOLDA: "vbar",
+  "GÁS": "vbar",
+  TINTA: "vbar",
+  OUTROS: "vbar",
 };
 
 // Paleta com variação de matiz a partir de uma cor base — para colorir itens distintos
@@ -332,12 +332,11 @@ function PainelListaTecnicaPage() {
         .slice(0, 10)
         .map((i) => ({ mes: i.codigo, valor: i.peso, desc: i.desc }));
 
-      // Série MENSAL: consumo agregado por mês (YYYY-MM) — quando há
-      // codigoSel pertencente à categoria, restringe àquele código.
+      // Série MENSAL: consumo agregado por mês (YYYY-MM).
+      // Selecionar um item no painel lateral não pode reduzir/ocultar a série;
+      // a seleção apenas destaca a linha na tabela lateral.
       const mesMap = new Map<string, number>();
-      const baseMensal = codigoSel
-        ? baseItens.filter((it) => String(it.codigo_sap) === codigoSel)
-        : baseItens;
+      const baseMensal = baseItens;
       baseMensal.forEach((it) => {
         const d = it.data_lancamento ? String(it.data_lancamento).slice(0, 7) : null;
         if (!d) return;
@@ -357,7 +356,7 @@ function PainelListaTecnicaPage() {
       result[cat] = { barras, serie, serieMensal, totalPeso, totalItens: baseItens.length, porUnidade };
     });
     return result;
-  }, [itensFiltrados, codigoSel]);
+  }, [itensFiltrados]);
 
   // Previsto por categoria a partir da Lista Técnica (B51) do casco da ordem ativa
   const previstoPorCategoria = useMemo(() => {
@@ -1246,11 +1245,7 @@ function PainelListaTecnicaPage() {
                 <Card className="shadow-sm">
                   <CardHeader className="pb-1 pt-3 px-4 flex flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-xs text-muted-foreground font-medium">
-                      {focoItem ? (
-                        <>Consumo mensal — <span className="font-mono font-bold" style={{ color: cor }}>{focoItem.codigo}</span></>
-                      ) : (
-                        <>Consumo mensal — <span className="font-bold" style={{ color: cor }}>{cat}</span></>
-                      )}
+                      <>Consumo mensal — <span className="font-bold" style={{ color: cor }}>{cat}</span></>
                     </CardTitle>
                     {serieMensal.length > 0 && (
                       <span className="text-[10px] text-muted-foreground">{serieMensal.length} mês(es)</span>
@@ -1284,11 +1279,9 @@ function PainelListaTecnicaPage() {
                                   
                                   className="cursor-pointer"
                                 >
-                                  {dadosBase.map((d: any, i: number) => {
-                                    const isFoco = focoItem?.codigo === d.mes;
-                                    const dim = focoItem && !isFoco;
-                                    return <Cell key={i} fill={d.fill} fillOpacity={dim ? 0.35 : 1} stroke={isFoco ? cor : "transparent"} strokeWidth={isFoco ? 2 : 0} />;
-                                  })}
+                                  {dadosBase.map((d: any, i: number) => (
+                                    <Cell key={i} fill={d.fill} fillOpacity={1} stroke="transparent" strokeWidth={0} />
+                                  ))}
                                 </Bar>
                               </BarChart>
                             </ResponsiveContainer>
