@@ -11,7 +11,7 @@ import {
   AreaChart, Area, ReferenceDot, ReferenceLine,
   LineChart, Line, ScatterChart, Scatter, ZAxis,
 } from "recharts";
-import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers } from "lucide-react";
+import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
 import type { TipoMP } from "@/lib/base-mp-parser";
 
