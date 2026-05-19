@@ -1371,6 +1371,21 @@ function PainelListaTecnicaPage() {
           </div>
         </Card>
       </div>
+        </TabsContent>
+        <TabsContent value="avancada" className="mt-3">
+          <PainelAnaliseAvancada
+            ordemAtivaId={ordemAtivaId}
+            cascoAtivoId={ordemAtiva?.casco_id ?? null}
+            itensEnriq={itensEnriq}
+            listaItens={listaItens as any[]}
+            previstoPorCategoria={previstoPorCategoria}
+            baseMpMap={baseMpMap}
+            mb51Ordens={mb51Ordens as any[]}
+            listasAtuais={listasAtuais as any[]}
+            cascoById={cascoById}
+          />
+        </TabsContent>
+      </Tabs>
 
       {cascoAtivo && (
         <p className="text-xs text-muted-foreground text-center pt-2">
