@@ -365,6 +365,9 @@ function PainelListaTecnicaPage() {
       FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0,
     };
     (listaItens as any[]).forEach((it) => {
+      // Comparação justa com o Realizado (PESO REAL B51): apenas itens em KG.
+      const um = String(it.unidade ?? "").toUpperCase();
+      if (um !== "KG") return;
       const cat = resolveTipo(String(it.codigo_sap ?? ""), null, baseMpMap);
       r[cat] += Math.abs(Number(it.quantidade ?? 0));
     });
@@ -373,9 +376,20 @@ function PainelListaTecnicaPage() {
 
   // Alertas: por categoria, comparar realizado (MB51) × previsto (B51)
   const alertasCategoria = useMemo(() => {
+    // Realizado por categoria = consumo LÍQUIDO em KG (mesma base do KPI "PESO REAL B51").
+    // Usar Math.abs do totalPeso somava todas as UMEs (KG, PC, M, L) e incluía estornos
+    // como se fossem consumo — inflando o "real" para valores irreais (ex.: FERRO 598.703).
+    const realPorCat: Record<CategoriaMaterial, number> = {
+      FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0,
+    };
+    itensEnriq.forEach((it) => {
+      const um = String(it.unidade ?? "").toUpperCase();
+      if (um !== "KG") return;
+      realPorCat[it.categoria as CategoriaMaterial] += Number(it.consumo ?? 0);
+    });
     return CATEGORIAS.map((cat) => {
       const prev = previstoPorCategoria[cat] || 0;
-      const real = dadosPorCategoria[cat].totalPeso || 0;
+      const real = Math.max(0, realPorCat[cat] || 0);
       const pct = prev > 0 ? ((real - prev) / prev) * 100 : 0;
       let status: "ok" | "warn" | "crit" | "na" = "na";
       if (prev > 0) {
@@ -385,7 +399,7 @@ function PainelListaTecnicaPage() {
       }
       return { cat, prev, real, pct, status };
     });
-  }, [previstoPorCategoria, dadosPorCategoria]);
+  }, [previstoPorCategoria, itensEnriq]);
 
   const alertasAtivos = alertasCategoria.filter((a) => a.status === "warn" || a.status === "crit");
 
