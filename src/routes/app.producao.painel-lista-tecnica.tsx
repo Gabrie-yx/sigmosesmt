@@ -525,10 +525,8 @@ function PainelListaTecnicaPage() {
                           <XAxis type="number" hide />
                           <YAxis type="category" dataKey="mes" width={78} stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontFamily: "monospace" }} />
                           <Tooltip
-                            cursor={{ fill: `${cor}15` }}
-                            contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                            formatter={(v: any, _n: any, p: any) => [`${fmt(Number(v), 0)} kg`, p?.payload?.desc ?? "Peso"]}
-                            labelFormatter={(l: any) => `Código ${l}`}
+                            cursor={{ fill: `color-mix(in oklch, ${cor} 10%, transparent)` }}
+                            content={<FancyTooltip accent={cor} unit="kg" />}
                           />
                           <Bar
                             dataKey="valor"
@@ -539,9 +537,9 @@ function PainelListaTecnicaPage() {
                             {serie.map((s: any, i: number) => (
                               <Cell
                                 key={i}
-                                fill={codigoSel && codigoSel !== s.mes ? `${cor}40` : cor}
-                                stroke={codigoSel === s.mes ? "#000" : "transparent"}
-                                strokeWidth={codigoSel === s.mes ? 1.5 : 0}
+                                fill={codigoSel && codigoSel !== s.mes ? `color-mix(in oklch, ${cor} 30%, transparent)` : cor}
+                                stroke={codigoSel === s.mes ? cor : "transparent"}
+                                strokeWidth={codigoSel === s.mes ? 2 : 0}
                               />
                             ))}
                             <LabelList
