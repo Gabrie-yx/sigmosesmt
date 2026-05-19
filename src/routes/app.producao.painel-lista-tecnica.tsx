@@ -370,7 +370,8 @@ function PainelListaTecnicaPage() {
     });
     const dias = Array.from(porDia.keys()).sort();
     const acc: Record<CategoriaMaterial, number> = { FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0 };
-    return dias.map((d) => {
+    const totalDias = Math.max(dias.length - 1, 1);
+    return dias.map((d, idx) => {
       const dia = porDia.get(d)!;
       CATEGORIAS.forEach((c) => { acc[c] += dia[c]; });
       const total = CATEGORIAS.reduce((s, c) => s + acc[c], 0);
@@ -384,6 +385,8 @@ function PainelListaTecnicaPage() {
         TINTA: acc.TINTA,
         OUTROS: acc.OUTROS,
         TOTAL: total,
+        // posição linear no eixo do tempo (0 → 1) — usado para a curva ideal
+        _frac: idx / totalDias,
       };
     });
   }, [itensEnriq]);
