@@ -236,10 +236,10 @@ function PainelListaTecnicaPage() {
       OUTROS: { barras: [], serie: [], totalPeso: 0, totalItens: 0 },
     };
     CATEGORIAS.forEach((cat) => {
-      const baseItens = itensFiltrados.filter((it) => {
-        if (unidadeSel && String(it.unidade ?? "—").toUpperCase() !== unidadeSel) return false;
-        return it.categoria === cat;
-      });
+      // IMPORTANTE: não filtrar por `unidadeSel` aqui — uma UME selecionada
+      // pode não existir em outras categorias e zerar todos os outros cards.
+      // A seleção de UME apenas destaca a fatia/barra e filtra a tabela lateral.
+      const baseItens = itensFiltrados.filter((it) => it.categoria === cat);
       const barMap = new Map<string, number>();
       baseItens.forEach((it) => {
         const u = String(it.unidade ?? "—").toUpperCase();
@@ -267,7 +267,7 @@ function PainelListaTecnicaPage() {
       result[cat] = { barras, serie, totalPeso, totalItens: baseItens.length };
     });
     return result;
-  }, [itensFiltrados, unidadeSel]);
+  }, [itensFiltrados]);
 
   const tabelaMateriais = useMemo(() => {
     const acc = new Map<string, { codigo: string; nome: string; qtd: number; ume: string; peso: number }>();
