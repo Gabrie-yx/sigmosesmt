@@ -1098,7 +1098,7 @@ function PainelListaTecnicaPage() {
                             dataKey="valor"
                             cornerRadius={6}
                             onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
-                            className="cursor-pointer"
+                            className=""
                           />
                           <Legend iconSize={8} layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: 10 }} formatter={(_v, e: any) => e?.payload?.label} />
                         </RadialBarChart>
@@ -1125,7 +1125,7 @@ function PainelListaTecnicaPage() {
                                     ? `color-mix(in oklch, ${cor} 25%, transparent)`
                                     : `color-mix(in oklch, ${cor} ${95 - i * 14}%, white)`}
                                   onClick={() => setUnidadeSel((p) => (p === b.label ? null : b.label))}
-                                  className="cursor-pointer"
+                                  className=""
                                 />
                               ))}
                             </BarChart>
@@ -1242,8 +1242,8 @@ function PainelListaTecnicaPage() {
                                 <Bar
                                   dataKey="valor"
                                   radius={[6, 6, 0, 0]}
-                                  onClick={(d: any) => setCodigoSel((p) => (p === d?.mes ? null : d?.mes))}
-                                  className="cursor-pointer"
+                                  
+                                  className=""
                                 >
                                   {dadosBase.map((d: any, i: number) => {
                                     const isFoco = focoItem?.codigo === d.mes;
@@ -1268,8 +1268,8 @@ function PainelListaTecnicaPage() {
                                   dataKey="valor"
                                   radius={[0, 6, 6, 0]}
                                   barSize={12}
-                                  onClick={(d: any) => setCodigoSel((p) => (p === d?.mes ? null : d?.mes))}
-                                  className="cursor-pointer"
+                                  
+                                  className=""
                                 >
                                   {dadosBase.map((d: any, i: number) => {
                                     const isFoco = focoItem?.codigo === d.mes;
@@ -1302,8 +1302,8 @@ function PainelListaTecnicaPage() {
                                     return <circle cx={props.cx} cy={props.cy} r={isFoco ? 6 : 4} fill={d.fill} stroke="hsl(var(--background))" strokeWidth={isFoco ? 2 : 1} />;
                                   }}
                                   activeDot={{ r: 6 }}
-                                  onClick={(d: any) => setCodigoSel((p) => (p === d?.payload?.mes ? null : d?.payload?.mes))}
-                                  className="cursor-pointer"
+                                  
+                                  className=""
                                 />
                               </LineChart>
                             </ResponsiveContainer>
@@ -1341,8 +1341,8 @@ function PainelListaTecnicaPage() {
                                     return <circle cx={props.cx} cy={props.cy} r={3} fill={d.fill} stroke="hsl(var(--background))" strokeWidth={1} />;
                                   }}
                                   activeDot={{ r: 5, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 2 }}
-                                  onClick={(d: any) => setCodigoSel((p) => (p === d?.payload?.mes ? null : d?.payload?.mes))}
-                                  className="cursor-pointer"
+                                  
+                                  className=""
                                 />
                                 {focoItem && dados.some((d: any) => d.mes === focoItem.codigo) && (
                                   <ReferenceDot
@@ -1371,8 +1371,8 @@ function PainelListaTecnicaPage() {
                               <Tooltip cursor={{ strokeDasharray: "3 3", stroke: cor }} content={<FancyTooltip accent={cor} unit="kg" />} />
                               <Scatter
                                 data={dadosBase}
-                                onClick={(d: any) => setCodigoSel((p) => (p === d?.mes ? null : d?.mes))}
-                                className="cursor-pointer"
+                                
+                                className=""
                               >
                                 {dadosBase.map((d: any, i: number) => {
                                   const isFoco = focoItem?.codigo === d.mes;
