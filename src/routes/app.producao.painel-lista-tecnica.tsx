@@ -267,7 +267,7 @@ function PainelListaTecnicaPage() {
       result[cat] = { barras, serie, totalPeso, totalItens: baseItens.length };
     });
     return result;
-  }, [itensFiltrados, unidadeSel]);
+  }, [itensFiltrados]);
 
   const tabelaMateriais = useMemo(() => {
     const acc = new Map<string, { codigo: string; nome: string; qtd: number; ume: string; peso: number }>();
