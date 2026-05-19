@@ -562,6 +562,12 @@ function PainelListaTecnicaPage() {
             const cor = CAT_COLOR[cat];
             const ativoCat = catSel === cat;
             const focoItem = itemSelInfo && itemSelInfo.categoria === cat ? itemSelInfo : null;
+            const alertaCat = alertasCategoria.find((a) => a.cat === cat);
+            const statusCor =
+              alertaCat?.status === "crit" ? "hsl(0 72% 50%)"
+              : alertaCat?.status === "warn" ? "hsl(38 92% 50%)"
+              : alertaCat?.status === "ok" ? "hsl(142 70% 40%)"
+              : "hsl(var(--muted-foreground))";
             return (
               <div key={cat} className="grid gap-3 grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
                 {/* Card de barras por UME */}
@@ -577,7 +583,18 @@ function PainelListaTecnicaPage() {
                     </CardTitle>
                     <div className="text-right">
                       <div className="text-sm font-bold" style={{ color: cor }}>{fmt(totalPeso, 0)} kg</div>
-                      <div className="text-[10px] text-muted-foreground">{totalItens} itens</div>
+                      <div className="text-[10px] text-muted-foreground flex items-center justify-end gap-1.5">
+                        <span>{totalItens} itens</span>
+                        {alertaCat && alertaCat.status !== "na" && (
+                          <span
+                            className="font-bold tabular-nums px-1 rounded"
+                            style={{ color: statusCor, background: `color-mix(in oklch, ${statusCor} 12%, transparent)` }}
+                            title={`Previsto: ${fmt(alertaCat.prev, 0)} · Realizado: ${fmt(alertaCat.real, 0)}`}
+                          >
+                            {alertaCat.pct >= 0 ? "+" : ""}{fmt(alertaCat.pct, 1)}%
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="h-44 p-2">
