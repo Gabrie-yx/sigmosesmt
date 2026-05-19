@@ -8,7 +8,8 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LabelList, Cell, PieChart, Pie, RadialBarChart, RadialBar, Legend,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  AreaChart, Area, ReferenceDot,
+  AreaChart, Area, ReferenceDot, ReferenceLine,
+  LineChart, Line, ScatterChart, Scatter, ZAxis,
 } from "recharts";
 import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
@@ -52,6 +53,40 @@ const CAT_CHART: Record<CategoriaMaterial, ChartKind> = {
   TINTA: "gauge",
   OUTROS: "radar",
 };
+
+// Variação do gráfico de FOCO (quando um item do painel lateral é selecionado)
+type FocusKind = "bullet" | "donut" | "slope" | "gauge-h" | "radial-single";
+const CAT_FOCUS: Record<CategoriaMaterial, FocusKind> = {
+  FERRO: "bullet",
+  SOLDA: "donut",
+  "GÁS": "slope",
+  TINTA: "gauge-h",
+  OUTROS: "radial-single",
+};
+
+// Variação do gráfico "Top itens" por categoria
+type TopKind = "vbar" | "hbar" | "line" | "area" | "scatter";
+const CAT_TOP: Record<CategoriaMaterial, TopKind> = {
+  FERRO: "vbar",
+  SOLDA: "hbar",
+  "GÁS": "line",
+  TINTA: "area",
+  OUTROS: "scatter",
+};
+
+// Paleta com variação de matiz a partir de uma cor base — para colorir itens distintos
+const variantPalette = (base: string) => [
+  base,
+  `color-mix(in oklch, ${base} 60%, hsl(45 90% 55%))`,
+  `color-mix(in oklch, ${base} 60%, hsl(195 80% 50%))`,
+  `color-mix(in oklch, ${base} 55%, hsl(280 70% 55%))`,
+  `color-mix(in oklch, ${base} 60%, hsl(150 65% 45%))`,
+  `color-mix(in oklch, ${base} 55%, hsl(330 75% 55%))`,
+  `color-mix(in oklch, ${base} 65%, hsl(20 85% 55%))`,
+  `color-mix(in oklch, ${base} 55%, hsl(220 70% 55%))`,
+  `color-mix(in oklch, ${base} 70%, hsl(95 60% 45%))`,
+  `color-mix(in oklch, ${base} 50%, hsl(0 0% 35%))`,
+];
 
 // Tooltip customizado — usa tokens semânticos, sem preto pesado
 const FancyTooltip = ({ active, payload, label, accent, unit = "" }: any) => {
@@ -428,59 +463,165 @@ function PainelListaTecnicaPage() {
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem dados</div>
                     ) : focoItem ? (
                       (() => {
-                        // Foco: item selecionado vs restante da categoria — donut com variação %
+                        // Foco: item selecionado vs restante da categoria
+                        // Cada categoria usa um gráfico diferente, com cor própria.
                         const sel = focoItem.peso;
                         const resto = Math.max(0, totalPeso - sel);
                         const pct = totalPeso > 0 ? (sel / totalPeso) * 100 : 0;
                         const media = totalItens > 0 ? totalPeso / totalItens : 0;
                         const varPct = media > 0 ? ((sel - media) / media) * 100 : 0;
-                        const data = [
-                          { label: focoItem.codigo, valor: sel, desc: focoItem.nome },
-                          { label: "Demais", valor: resto },
-                        ];
                         const cor2 = `color-mix(in oklch, ${cor} 18%, hsl(var(--muted)))`;
-                        return (
-                          <div className="relative h-full w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
-                                <Tooltip content={<FancyTooltip accent={cor} unit="kg" />} />
-                                <Pie
-                                  data={data}
-                                  dataKey="valor"
-                                  nameKey="label"
-                                  innerRadius={42}
-                                  outerRadius={64}
-                                  paddingAngle={2}
-                                  startAngle={90}
-                                  endAngle={-270}
-                                  stroke="hsl(var(--background))"
-                                  strokeWidth={1}
-                                >
-                                  <Cell fill={cor} />
-                                  <Cell fill={cor2} />
-                                </Pie>
-                              </PieChart>
-                            </ResponsiveContainer>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                              <div className="text-base font-bold leading-none" style={{ color: cor }}>{fmt(pct, 1)}%</div>
-                              <div className="text-[9px] text-muted-foreground mt-0.5">do total</div>
-                            </div>
-                            <div className="absolute top-1 left-2 right-2 flex items-center justify-between text-[10px]">
-                              <span className="font-mono truncate max-w-[60%]" style={{ color: cor }}>{focoItem.codigo}</span>
+                        const trendCor = varPct >= 0 ? "hsl(142 70% 40%)" : "hsl(0 72% 50%)";
+                        const kind = CAT_FOCUS[cat];
+
+                        const Overlay = (
+                          <>
+                            <div className="absolute top-1 left-2 right-2 flex items-center justify-between text-[10px] pointer-events-none">
+                              <span className="font-mono truncate max-w-[55%]" style={{ color: cor }}>{focoItem.codigo}</span>
                               <span
                                 className="font-semibold tabular-nums px-1.5 py-0.5 rounded"
                                 style={{
-                                  color: varPct >= 0 ? "hsl(142 70% 35%)" : "hsl(0 72% 45%)",
-                                  background: `color-mix(in oklch, ${varPct >= 0 ? "hsl(142 70% 45%)" : "hsl(0 72% 50%)"} 12%, transparent)`,
+                                  color: trendCor,
+                                  background: `color-mix(in oklch, ${trendCor} 12%, transparent)`,
                                 }}
                                 title="Variação vs média da categoria"
                               >
                                 {varPct >= 0 ? "▲" : "▼"} {fmt(Math.abs(varPct), 1)}%
                               </span>
                             </div>
-                            <div className="absolute bottom-1 left-2 right-2 text-center text-[10px] text-muted-foreground tabular-nums">
+                            <div className="absolute bottom-1 left-2 right-2 text-center text-[10px] text-muted-foreground tabular-nums pointer-events-none">
                               <span className="font-semibold" style={{ color: cor }}>{fmt(sel, 0)}</span> / {fmt(totalPeso, 0)} {focoItem.ume}
                             </div>
+                          </>
+                        );
+
+                        if (kind === "donut") {
+                          const data = [
+                            { label: focoItem.codigo, valor: sel, desc: focoItem.nome },
+                            { label: "Demais", valor: resto },
+                          ];
+                          return (
+                            <div className="relative h-full w-full">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                  <Tooltip content={<FancyTooltip accent={cor} unit="kg" />} />
+                                  <Pie data={data} dataKey="valor" nameKey="label" innerRadius={42} outerRadius={64} paddingAngle={2} startAngle={90} endAngle={-270} stroke="hsl(var(--background))" strokeWidth={1}>
+                                    <Cell fill={cor} />
+                                    <Cell fill={cor2} />
+                                  </Pie>
+                                </PieChart>
+                              </ResponsiveContainer>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                <div className="text-base font-bold leading-none" style={{ color: cor }}>{fmt(pct, 1)}%</div>
+                                <div className="text-[9px] text-muted-foreground mt-0.5">do total</div>
+                              </div>
+                              {Overlay}
+                            </div>
+                          );
+                        }
+
+                        if (kind === "bullet") {
+                          // Bullet: barra horizontal mostrando "sel" dentro do total, com marcador da média
+                          const data = [{ name: focoItem.codigo, sel, resto }];
+                          return (
+                            <div className="relative h-full w-full pt-5 pb-4">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={data} layout="vertical" margin={{ left: 4, right: 16, top: 4, bottom: 4 }}>
+                                  <XAxis type="number" domain={[0, totalPeso]} hide />
+                                  <YAxis type="category" dataKey="name" hide />
+                                  <Tooltip cursor={{ fill: "transparent" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                  <Bar dataKey="sel" stackId="b" fill={cor} radius={[6, 0, 0, 6]} barSize={22} />
+                                  <Bar dataKey="resto" stackId="b" fill={cor2} radius={[0, 6, 6, 0]} barSize={22} />
+                                  <ReferenceLine x={media} stroke={trendCor} strokeWidth={2} strokeDasharray="2 2" label={{ value: "média", position: "top", fontSize: 9, fill: trendCor }} />
+                                </BarChart>
+                              </ResponsiveContainer>
+                              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                                <div className="text-[11px] font-bold px-2 py-0.5 rounded-md backdrop-blur-sm" style={{ color: cor, background: "color-mix(in oklch, hsl(var(--background)) 70%, transparent)" }}>
+                                  {fmt(pct, 1)}% do total
+                                </div>
+                              </div>
+                              {Overlay}
+                            </div>
+                          );
+                        }
+
+                        if (kind === "slope") {
+                          // Slope: linha de "média da categoria" → "item selecionado"
+                          const data = [
+                            { x: "média", v: media },
+                            { x: focoItem.codigo, v: sel },
+                          ];
+                          const maxY = Math.max(media, sel) * 1.15 || 1;
+                          return (
+                            <div className="relative h-full w-full">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={data} margin={{ left: 8, right: 16, top: 20, bottom: 18 }}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                                  <XAxis dataKey="x" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                  <YAxis domain={[0, maxY]} hide />
+                                  <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                  <Line
+                                    type="linear"
+                                    dataKey="v"
+                                    stroke={trendCor}
+                                    strokeWidth={3}
+                                    dot={{ r: 5, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 2 }}
+                                    activeDot={{ r: 7 }}
+                                  >
+                                    <LabelList dataKey="v" position="top" formatter={(v: any) => fmt(Number(v), 0)} style={{ fontSize: 10, fill: cor, fontWeight: 700 }} />
+                                  </Line>
+                                </LineChart>
+                              </ResponsiveContainer>
+                              {Overlay}
+                            </div>
+                          );
+                        }
+
+                        if (kind === "gauge-h") {
+                          // Barra horizontal de progresso, segmentada por marcas
+                          return (
+                            <div className="relative h-full w-full flex flex-col items-center justify-center px-3">
+                              <div className="w-full flex items-end justify-between mb-1.5 text-[10px] text-muted-foreground">
+                                <span>0</span><span>{fmt(totalPeso, 0)} {focoItem.ume}</span>
+                              </div>
+                              <div className="relative w-full h-5 rounded-full overflow-hidden" style={{ background: cor2 }}>
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{
+                                    width: `${pct}%`,
+                                    background: `linear-gradient(90deg, ${cor}, color-mix(in oklch, ${cor} 60%, white))`,
+                                  }}
+                                />
+                                {[25, 50, 75].map((t) => (
+                                  <div key={t} className="absolute top-0 bottom-0 w-px" style={{ left: `${t}%`, background: "color-mix(in oklch, hsl(var(--background)) 60%, transparent)" }} />
+                                ))}
+                                <div className="absolute top-1/2 -translate-y-1/2 text-[10px] font-bold px-1.5 rounded" style={{ left: `min(${pct}%, calc(100% - 40px))`, color: cor }}>
+                                  {fmt(pct, 1)}%
+                                </div>
+                              </div>
+                              <div className="mt-2 text-[10px] text-muted-foreground">
+                                <span className="font-semibold" style={{ color: cor }}>{fmt(sel, 0)}</span> de {fmt(totalPeso, 0)} {focoItem.ume}
+                              </div>
+                              {Overlay}
+                            </div>
+                          );
+                        }
+
+                        // radial-single
+                        const data = [{ name: focoItem.codigo, value: pct, fill: cor }];
+                        return (
+                          <div className="relative h-full w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <RadialBarChart data={data} innerRadius="65%" outerRadius="100%" startAngle={90} endAngle={90 - (360 * pct) / 100}>
+                                <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+                                <RadialBar background={{ fill: cor2 }} dataKey="value" cornerRadius={10} />
+                              </RadialBarChart>
+                            </ResponsiveContainer>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                              <div className="text-base font-bold leading-none" style={{ color: cor }}>{fmt(pct, 1)}%</div>
+                              <div className="text-[9px] text-muted-foreground mt-0.5">do total</div>
+                            </div>
+                            {Overlay}
                           </div>
                         );
                       })()
@@ -632,52 +773,165 @@ function PainelListaTecnicaPage() {
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem itens nessa categoria</div>
                     ) : (
                       (() => {
-                        // Área com variação acumulada: ordena Top itens e plota soma cumulativa
-                        let acc = 0;
-                        const dados = serie.map((s: any) => {
-                          acc += s.valor;
-                          return { mes: s.mes, valor: s.valor, acumulado: acc, desc: s.desc };
-                        });
-                        const gradId = `grad-${cat}`;
+                        const topKind = CAT_TOP[cat];
+                        const palette = variantPalette(cor);
+                        const dadosBase = serie.map((s: any, i: number) => ({
+                          mes: s.mes,
+                          valor: s.valor,
+                          desc: s.desc,
+                          fill: palette[i % palette.length],
+                        }));
+
+                        if (topKind === "vbar") {
+                          return (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={dadosBase} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                                <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                                <YAxis hide />
+                                <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Bar
+                                  dataKey="valor"
+                                  radius={[6, 6, 0, 0]}
+                                  onClick={(d: any) => setCodigoSel((p) => (p === d?.mes ? null : d?.mes))}
+                                  className="cursor-pointer"
+                                >
+                                  {dadosBase.map((d: any, i: number) => {
+                                    const isFoco = focoItem?.codigo === d.mes;
+                                    const dim = focoItem && !isFoco;
+                                    return <Cell key={i} fill={d.fill} fillOpacity={dim ? 0.35 : 1} stroke={isFoco ? cor : "transparent"} strokeWidth={isFoco ? 2 : 0} />;
+                                  })}
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          );
+                        }
+
+                        if (topKind === "hbar") {
+                          return (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={dadosBase} layout="vertical" margin={{ left: 6, right: 28, top: 4, bottom: 4 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                                <XAxis type="number" hide />
+                                <YAxis type="category" dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} width={70} />
+                                <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Bar
+                                  dataKey="valor"
+                                  radius={[0, 6, 6, 0]}
+                                  barSize={12}
+                                  onClick={(d: any) => setCodigoSel((p) => (p === d?.mes ? null : d?.mes))}
+                                  className="cursor-pointer"
+                                >
+                                  {dadosBase.map((d: any, i: number) => {
+                                    const isFoco = focoItem?.codigo === d.mes;
+                                    const dim = focoItem && !isFoco;
+                                    return <Cell key={i} fill={d.fill} fillOpacity={dim ? 0.35 : 1} />;
+                                  })}
+                                  <LabelList dataKey="valor" position="right" formatter={(v: any) => fmt(Number(v), 0)} style={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          );
+                        }
+
+                        if (topKind === "line") {
+                          return (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={dadosBase} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                                <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                                <YAxis hide />
+                                <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Line
+                                  type="monotone"
+                                  dataKey="valor"
+                                  stroke={cor}
+                                  strokeWidth={2}
+                                  dot={(props: any) => {
+                                    const d = props.payload;
+                                    const isFoco = focoItem?.codigo === d.mes;
+                                    return <circle cx={props.cx} cy={props.cy} r={isFoco ? 6 : 4} fill={d.fill} stroke="hsl(var(--background))" strokeWidth={isFoco ? 2 : 1} />;
+                                  }}
+                                  activeDot={{ r: 6 }}
+                                  onClick={(d: any) => setCodigoSel((p) => (p === d?.payload?.mes ? null : d?.payload?.mes))}
+                                  className="cursor-pointer"
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          );
+                        }
+
+                        if (topKind === "area") {
+                          let acc = 0;
+                          const dados = dadosBase.map((s: any) => {
+                            acc += s.valor;
+                            return { ...s, acumulado: acc };
+                          });
+                          const gradId = `grad-${cat}`;
+                          return (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <AreaChart data={dados} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
+                                <defs>
+                                  <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor={cor} stopOpacity={0.55} />
+                                    <stop offset="100%" stopColor={cor} stopOpacity={0.05} />
+                                  </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                                <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                                <YAxis hide />
+                                <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Area
+                                  type="monotone"
+                                  dataKey="acumulado"
+                                  stroke={cor}
+                                  strokeWidth={2}
+                                  fill={`url(#${gradId})`}
+                                  dot={(props: any) => {
+                                    const d = props.payload;
+                                    return <circle cx={props.cx} cy={props.cy} r={3} fill={d.fill} stroke="hsl(var(--background))" strokeWidth={1} />;
+                                  }}
+                                  activeDot={{ r: 5, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 2 }}
+                                  onClick={(d: any) => setCodigoSel((p) => (p === d?.payload?.mes ? null : d?.payload?.mes))}
+                                  className="cursor-pointer"
+                                />
+                                {focoItem && dados.some((d: any) => d.mes === focoItem.codigo) && (
+                                  <ReferenceDot
+                                    x={focoItem.codigo}
+                                    y={(dados.find((d: any) => d.mes === focoItem.codigo) as any).acumulado}
+                                    r={7}
+                                    fill={cor}
+                                    stroke="hsl(var(--background))"
+                                    strokeWidth={2}
+                                    label={{ value: `${fmt(focoItem.peso, 0)}`, position: "top", fontSize: 10, fill: cor, fontWeight: 700 }}
+                                  />
+                                )}
+                              </AreaChart>
+                            </ResponsiveContainer>
+                          );
+                        }
+
+                        // scatter
                         return (
                           <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={dados} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
-                              <defs>
-                                <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="0%" stopColor={cor} stopOpacity={0.55} />
-                                  <stop offset="100%" stopColor={cor} stopOpacity={0.05} />
-                                </linearGradient>
-                              </defs>
-                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                              <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
-                              <YAxis hide />
-                              <Tooltip
-                                cursor={{ stroke: cor, strokeWidth: 1, strokeDasharray: "3 3" }}
-                                content={<FancyTooltip accent={cor} unit="kg" />}
-                              />
-                              <Area
-                                type="monotone"
-                                dataKey="acumulado"
-                                stroke={cor}
-                                strokeWidth={2}
-                                fill={`url(#${gradId})`}
-                                dot={{ r: 3, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 1 }}
-                                activeDot={{ r: 5, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 2 }}
-                                onClick={(d: any) => setCodigoSel((p) => (p === d?.payload?.mes ? null : d?.payload?.mes))}
+                            <ScatterChart margin={{ left: 4, right: 12, top: 8, bottom: 28 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                              <XAxis dataKey="mes" type="category" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                              <YAxis dataKey="valor" hide />
+                              <ZAxis dataKey="valor" range={[60, 360]} />
+                              <Tooltip cursor={{ strokeDasharray: "3 3", stroke: cor }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                              <Scatter
+                                data={dadosBase}
+                                onClick={(d: any) => setCodigoSel((p) => (p === d?.mes ? null : d?.mes))}
                                 className="cursor-pointer"
-                              />
-                              {focoItem && dados.some((d: any) => d.mes === focoItem.codigo) && (
-                                <ReferenceDot
-                                  x={focoItem.codigo}
-                                  y={(dados.find((d: any) => d.mes === focoItem.codigo) as any).acumulado}
-                                  r={7}
-                                  fill={cor}
-                                  stroke="hsl(var(--background))"
-                                  strokeWidth={2}
-                                  label={{ value: `${fmt(focoItem.peso, 0)}`, position: "top", fontSize: 10, fill: cor, fontWeight: 700 }}
-                                />
-                              )}
-                            </AreaChart>
+                              >
+                                {dadosBase.map((d: any, i: number) => {
+                                  const isFoco = focoItem?.codigo === d.mes;
+                                  const dim = focoItem && !isFoco;
+                                  return <Cell key={i} fill={d.fill} fillOpacity={dim ? 0.35 : 0.85} stroke={isFoco ? cor : "hsl(var(--background))"} strokeWidth={isFoco ? 2 : 1} />;
+                                })}
+                              </Scatter>
+                            </ScatterChart>
                           </ResponsiveContainer>
                         );
                       })()
