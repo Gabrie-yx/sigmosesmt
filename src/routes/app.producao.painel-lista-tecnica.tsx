@@ -1326,7 +1326,7 @@ function PainelListaTecnicaPage() {
                                 <YAxis hide />
                                 <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Line
-                                  type="monotone"
+                                  type="linear"
                                   dataKey="valor"
                                   stroke={cor}
                                   strokeWidth={2}
