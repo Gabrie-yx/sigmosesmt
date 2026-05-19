@@ -416,6 +416,7 @@ function PainelListaTecnicaPage() {
           qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
           qc.invalidateQueries({ queryKey: ["mb51-base-mp-map"] });
           qc.invalidateQueries({ queryKey: ["listas-tecnicas-latest"] });
+          qc.invalidateQueries({ queryKey: ["lista-tecnica-itens"] });
         }}>
           <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
         </Button>
