@@ -354,6 +354,44 @@ function PainelListaTecnicaPage() {
 
   const alertasAtivos = alertasCategoria.filter((a) => a.status === "warn" || a.status === "crit");
 
+  // ===== Curva S: consumo acumulado ao longo do tempo =====
+  // Agrupa movimentos por dia, acumula por categoria + total, e compara com o previsto total (B51).
+  const [curvaModo, setCurvaModo] = useState<"total" | "categoria">("total");
+  const curvaS = useMemo(() => {
+    // Agrega consumo por dia/categoria
+    const porDia = new Map<string, Record<CategoriaMaterial, number>>();
+    itensEnriq.forEach((it) => {
+      const d = it.data_lancamento ? String(it.data_lancamento).slice(0, 10) : null;
+      if (!d) return;
+      const cur = porDia.get(d) ?? { FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0 };
+      cur[it.categoria as CategoriaMaterial] += Math.abs(Number(it.consumo ?? 0));
+      porDia.set(d, cur);
+    });
+    const dias = Array.from(porDia.keys()).sort();
+    const acc: Record<CategoriaMaterial, number> = { FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0 };
+    return dias.map((d) => {
+      const dia = porDia.get(d)!;
+      CATEGORIAS.forEach((c) => { acc[c] += dia[c]; });
+      const total = CATEGORIAS.reduce((s, c) => s + acc[c], 0);
+      const [y, m, dd] = d.split("-");
+      return {
+        data: d,
+        label: `${dd}/${m}`,
+        FERRO: acc.FERRO,
+        SOLDA: acc.SOLDA,
+        GAS: acc["GÁS"],
+        TINTA: acc.TINTA,
+        OUTROS: acc.OUTROS,
+        TOTAL: total,
+      };
+    });
+  }, [itensEnriq]);
+
+  const previstoTotal = useMemo(
+    () => CATEGORIAS.reduce((s, c) => s + (previstoPorCategoria[c] || 0), 0),
+    [previstoPorCategoria],
+  );
+
   const tabelaMateriais = useMemo(() => {
     const acc = new Map<string, { codigo: string; nome: string; qtd: number; ume: string; peso: number }>();
     // Não filtra por codigoSel — mantemos a lista completa e apenas destacamos o item selecionado.
