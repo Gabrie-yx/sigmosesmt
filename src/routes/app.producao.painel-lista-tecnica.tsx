@@ -8,7 +8,8 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LabelList, Cell, PieChart, Pie, RadialBarChart, RadialBar, Legend,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  AreaChart, Area, ReferenceDot,
+  AreaChart, Area, ReferenceDot, ReferenceLine,
+  LineChart, Line, ScatterChart, Scatter, ZAxis,
 } from "recharts";
 import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
@@ -52,6 +53,40 @@ const CAT_CHART: Record<CategoriaMaterial, ChartKind> = {
   TINTA: "gauge",
   OUTROS: "radar",
 };
+
+// Variação do gráfico de FOCO (quando um item do painel lateral é selecionado)
+type FocusKind = "bullet" | "donut" | "slope" | "gauge-h" | "radial-single";
+const CAT_FOCUS: Record<CategoriaMaterial, FocusKind> = {
+  FERRO: "bullet",
+  SOLDA: "donut",
+  "GÁS": "slope",
+  TINTA: "gauge-h",
+  OUTROS: "radial-single",
+};
+
+// Variação do gráfico "Top itens" por categoria
+type TopKind = "vbar" | "hbar" | "line" | "area" | "scatter";
+const CAT_TOP: Record<CategoriaMaterial, TopKind> = {
+  FERRO: "vbar",
+  SOLDA: "hbar",
+  "GÁS": "line",
+  TINTA: "area",
+  OUTROS: "scatter",
+};
+
+// Paleta com variação de matiz a partir de uma cor base — para colorir itens distintos
+const variantPalette = (base: string) => [
+  base,
+  `color-mix(in oklch, ${base} 60%, hsl(45 90% 55%))`,
+  `color-mix(in oklch, ${base} 60%, hsl(195 80% 50%))`,
+  `color-mix(in oklch, ${base} 55%, hsl(280 70% 55%))`,
+  `color-mix(in oklch, ${base} 60%, hsl(150 65% 45%))`,
+  `color-mix(in oklch, ${base} 55%, hsl(330 75% 55%))`,
+  `color-mix(in oklch, ${base} 65%, hsl(20 85% 55%))`,
+  `color-mix(in oklch, ${base} 55%, hsl(220 70% 55%))`,
+  `color-mix(in oklch, ${base} 70%, hsl(95 60% 45%))`,
+  `color-mix(in oklch, ${base} 50%, hsl(0 0% 35%))`,
+];
 
 // Tooltip customizado — usa tokens semânticos, sem preto pesado
 const FancyTooltip = ({ active, payload, label, accent, unit = "" }: any) => {
