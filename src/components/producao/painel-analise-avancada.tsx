@@ -114,11 +114,10 @@ export function PainelAnaliseAvancada({
       </Card>
 
       <Tabs defaultValue="perda" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="perda"><TrendingDown className="h-4 w-4 mr-1" /> Perda/desperdício</TabsTrigger>
           <TabsTrigger value="comparativo"><Layers className="h-4 w-4 mr-1" /> Comparativo cascos</TabsTrigger>
-          <TabsTrigger value="historico"><Search className="h-4 w-4 mr-1" /> Histórico MB51</TabsTrigger>
-          <TabsTrigger value="drilldown"><Eye className="h-4 w-4 mr-1" /> Drill-down</TabsTrigger>
+          <TabsTrigger value="movs"><Search className="h-4 w-4 mr-1" /> Movimentações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="perda">
@@ -130,11 +129,13 @@ export function PainelAnaliseAvancada({
             baseMpMap={baseMpMap} cascoById={cascoById} dtIni={dtIni} dtFim={dtFim}
           />
         </TabsContent>
-        <TabsContent value="historico">
-          <AbaHistorico movs={movsPeriodo} cascoAtivoId={cascoAtivoId} />
-        </TabsContent>
-        <TabsContent value="drilldown">
-          <AbaDrillDown movs={movsPeriodo} listaItens={listaItens} baseMpMap={baseMpMap} />
+        <TabsContent value="movs">
+          <AbaMovimentacoes
+            movs={movsPeriodo}
+            listaItens={listaItens}
+            baseMpMap={baseMpMap}
+            cascoAtivoId={cascoAtivoId}
+          />
         </TabsContent>
       </Tabs>
     </div>
