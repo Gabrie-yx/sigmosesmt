@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LabelList, Cell, PieChart, Pie, RadialBarChart, RadialBar, Legend,
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
+  AreaChart, Area,
 } from "recharts";
 import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
@@ -42,13 +44,13 @@ const CAT_ICON: Record<CategoriaMaterial, string> = {
 };
 
 // Tipo de gráfico por categoria (diversificação visual)
-type ChartKind = "bar-v" | "donut" | "radial" | "pie" | "bar-h";
+type ChartKind = "stacked" | "donut2" | "radial" | "gauge" | "radar";
 const CAT_CHART: Record<CategoriaMaterial, ChartKind> = {
-  FERRO: "bar-v",
-  SOLDA: "donut",
+  FERRO: "stacked",
+  SOLDA: "donut2",
   "GÁS": "radial",
-  TINTA: "pie",
-  OUTROS: "bar-h",
+  TINTA: "gauge",
+  OUTROS: "radar",
 };
 
 // Tooltip customizado — usa tokens semânticos, sem preto pesado
@@ -68,9 +70,9 @@ const FancyTooltip = ({ active, payload, label, accent, unit = "" }: any) => {
         maxWidth: 220,
       }}
     >
-      <div className="font-semibold tracking-wide" style={{ color: accent }}>{titulo}</div>
+      <div className="font-medium tracking-wide" style={{ color: accent }}>{titulo}</div>
       {desc && <div className="text-[10px] text-muted-foreground truncate">{desc}</div>}
-      <div className="font-mono tabular-nums mt-0.5">
+      <div className="font-mono tabular-nums mt-0.5 font-normal">
         {fmt(Number(p.value), 0)} {unit}
       </div>
     </div>
@@ -406,36 +408,40 @@ function PainelListaTecnicaPage() {
                   <CardContent className="h-44 p-2">
                     {vazio ? (
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem dados</div>
-                    ) : CAT_CHART[cat] === "donut" || CAT_CHART[cat] === "pie" ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Tooltip content={<FancyTooltip accent={cor} />} />
-                          <Pie
-                            data={barras}
-                            dataKey="valor"
-                            nameKey="label"
-                            innerRadius={CAT_CHART[cat] === "donut" ? 32 : 0}
-                            outerRadius={62}
-                            paddingAngle={2}
-                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
-                            className="cursor-pointer focus:outline-none"
-                            label={(e: any) => `${e.label} · ${fmt(Number(e.value), 0)}`}
-                            labelLine={false}
-                            style={{ fontSize: 10, fill: "hsl(var(--foreground))" }}
-                          >
-                            {barras.map((b, i) => (
-                              <Cell
-                                key={i}
-                                fill={unidadeSel && unidadeSel !== b.label
-                                  ? `color-mix(in oklch, ${cor} 30%, transparent)`
-                                  : `color-mix(in oklch, ${cor} ${95 - i * 10}%, white)`}
-                                stroke={unidadeSel === b.label ? cor : "hsl(var(--background))"}
-                                strokeWidth={unidadeSel === b.label ? 2 : 1}
-                              />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
+                    ) : CAT_CHART[cat] === "donut2" ? (
+                      (() => {
+                        // donut 2-cores: topo (maior UME) vs restante
+                        const top = barras[0];
+                        const restoVal = barras.slice(1).reduce((s, b) => s + b.valor, 0);
+                        const data2 = restoVal > 0
+                          ? [top, { label: "Outros", valor: restoVal }]
+                          : [top];
+                        const cor2 = `color-mix(in oklch, ${cor} 35%, white)`;
+                        return (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Tooltip content={<FancyTooltip accent={cor} />} />
+                              <Pie
+                                data={data2}
+                                dataKey="valor"
+                                nameKey="label"
+                                innerRadius={36}
+                                outerRadius={64}
+                                paddingAngle={2}
+                                onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
+                                className="cursor-pointer focus:outline-none"
+                                label={(e: any) => `${e.label} · ${fmt(Number(e.value), 0)}`}
+                                labelLine={false}
+                                style={{ fontSize: 10, fill: "hsl(var(--foreground))" }}
+                              >
+                                {data2.map((b, i) => (
+                                  <Cell key={i} fill={i === 0 ? cor : cor2} stroke="hsl(var(--background))" strokeWidth={1} />
+                                ))}
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                        );
+                      })()
                     ) : CAT_CHART[cat] === "radial" ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <RadialBarChart
@@ -456,50 +462,80 @@ function PainelListaTecnicaPage() {
                           <Legend iconSize={8} layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: 10 }} formatter={(_v, e: any) => e?.payload?.label} />
                         </RadialBarChart>
                       </ResponsiveContainer>
-                    ) : CAT_CHART[cat] === "bar-h" ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={barras} layout="vertical" margin={{ left: 4, right: 28, top: 4, bottom: 4 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                          <XAxis type="number" hide />
-                          <YAxis type="category" dataKey="label" width={36} stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                          <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 10%, transparent)` }} content={<FancyTooltip accent={cor} />} />
-                          <Bar
-                            dataKey="valor"
-                            radius={[0, 4, 4, 0]}
-                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
-                            className="cursor-pointer"
-                          >
-                            {barras.map((b, i) => (
-                              <Cell key={i} fill={unidadeSel && unidadeSel !== b.label ? `color-mix(in oklch, ${cor} 30%, transparent)` : cor} />
-                            ))}
-                            <LabelList dataKey="valor" position="right" fontSize={10} fill={cor} formatter={(v: any) => fmt(Number(v), 0)} />
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+                    ) : CAT_CHART[cat] === "stacked" ? (
+                      (() => {
+                        // Barras empilhadas: uma única barra de composição com cada UME virando uma série
+                        const row: any = { name: cat };
+                        barras.forEach((b) => { row[b.label] = b.valor; });
+                        return (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={[row]} layout="vertical" margin={{ left: 4, right: 12, top: 18, bottom: 4 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                              <XAxis type="number" hide />
+                              <YAxis type="category" dataKey="name" hide />
+                              <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} />} />
+                              <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                              {barras.map((b, i) => (
+                                <Bar
+                                  key={b.label}
+                                  dataKey={b.label}
+                                  stackId="a"
+                                  fill={unidadeSel && unidadeSel !== b.label
+                                    ? `color-mix(in oklch, ${cor} 25%, transparent)`
+                                    : `color-mix(in oklch, ${cor} ${95 - i * 14}%, white)`}
+                                  onClick={() => setUnidadeSel((p) => (p === b.label ? null : b.label))}
+                                  className="cursor-pointer"
+                                />
+                              ))}
+                            </BarChart>
+                          </ResponsiveContainer>
+                        );
+                      })()
+                    ) : CAT_CHART[cat] === "gauge" ? (
+                      (() => {
+                        // Gauge: semicírculo mostrando totalPeso vs meta (max entre categorias × 1.1)
+                        const meta = Math.max(totalPeso * 1.25, 1);
+                        const pct = Math.min(100, (totalPeso / meta) * 100);
+                        const data = [{ name: cat, value: pct, fill: cor }];
+                        return (
+                          <div className="relative h-full w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <RadialBarChart
+                                data={data}
+                                innerRadius="70%"
+                                outerRadius="100%"
+                                startAngle={180}
+                                endAngle={0}
+                                cy="75%"
+                              >
+                                <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+                                <RadialBar background={{ fill: `color-mix(in oklch, ${cor} 12%, transparent)` }} dataKey="value" cornerRadius={8} />
+                              </RadialBarChart>
+                            </ResponsiveContainer>
+                            <div className="absolute inset-0 flex flex-col items-center justify-end pb-2 pointer-events-none">
+                              <div className="text-base font-bold" style={{ color: cor }}>{fmt(totalPeso, 0)}</div>
+                              <div className="text-[10px] text-muted-foreground">{fmt(pct, 0)}% da meta</div>
+                            </div>
+                          </div>
+                        );
+                      })()
                     ) : (
+                      // radar
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={barras} margin={{ left: 4, right: 8, top: 18, bottom: 4 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                          <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={0} />
-                          <YAxis hide />
-                          <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 10%, transparent)` }} content={<FancyTooltip accent={cor} />} />
-                          <Bar
+                        <RadarChart data={barras} margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
+                          <PolarGrid stroke="hsl(var(--border))" />
+                          <PolarAngleAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                          <PolarRadiusAxis tick={false} axisLine={false} />
+                          <Tooltip content={<FancyTooltip accent={cor} />} />
+                          <Radar
                             dataKey="valor"
-                            radius={[4, 4, 0, 0]}
-                            onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
+                            stroke={cor}
+                            fill={cor}
+                            fillOpacity={0.35}
+                            onClick={(d: any) => setUnidadeSel((p) => (p === d?.payload?.label ? null : d?.payload?.label))}
                             className="cursor-pointer"
-                          >
-                            {barras.map((b, i) => (
-                              <Cell
-                                key={i}
-                                fill={unidadeSel && unidadeSel !== b.label ? `color-mix(in oklch, ${cor} 30%, transparent)` : cor}
-                                stroke={unidadeSel === b.label ? cor : "transparent"}
-                                strokeWidth={unidadeSel === b.label ? 2 : 0}
-                              />
-                            ))}
-                            <LabelList dataKey="valor" position="top" fontSize={10} fill={cor} formatter={(v: any) => fmt(Number(v), 0)} />
-                          </Bar>
-                        </BarChart>
+                          />
+                        </RadarChart>
                       </ResponsiveContainer>
                     )}
                   </CardContent>
@@ -519,39 +555,45 @@ function PainelListaTecnicaPage() {
                     {serie.length === 0 ? (
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem itens nessa categoria</div>
                     ) : (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={serie} layout="vertical" margin={{ left: 4, right: 32, top: 4, bottom: 4 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                          <XAxis type="number" hide />
-                          <YAxis type="category" dataKey="mes" width={78} stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontFamily: "monospace" }} />
-                          <Tooltip
-                            cursor={{ fill: `color-mix(in oklch, ${cor} 10%, transparent)` }}
-                            content={<FancyTooltip accent={cor} unit="kg" />}
-                          />
-                          <Bar
-                            dataKey="valor"
-                            radius={[0, 4, 4, 0]}
-                            onClick={(d: any) => setCodigoSel((p) => (p === d.mes ? null : d.mes))}
-                            className="cursor-pointer"
-                          >
-                            {serie.map((s: any, i: number) => (
-                              <Cell
-                                key={i}
-                                fill={codigoSel && codigoSel !== s.mes ? `color-mix(in oklch, ${cor} 30%, transparent)` : cor}
-                                stroke={codigoSel === s.mes ? cor : "transparent"}
-                                strokeWidth={codigoSel === s.mes ? 2 : 0}
+                      (() => {
+                        // Área com variação acumulada: ordena Top itens e plota soma cumulativa
+                        let acc = 0;
+                        const dados = serie.map((s: any) => {
+                          acc += s.valor;
+                          return { mes: s.mes, valor: s.valor, acumulado: acc, desc: s.desc };
+                        });
+                        const gradId = `grad-${cat}`;
+                        return (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={dados} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
+                              <defs>
+                                <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor={cor} stopOpacity={0.55} />
+                                  <stop offset="100%" stopColor={cor} stopOpacity={0.05} />
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                              <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                              <YAxis hide />
+                              <Tooltip
+                                cursor={{ stroke: cor, strokeWidth: 1, strokeDasharray: "3 3" }}
+                                content={<FancyTooltip accent={cor} unit="kg" />}
                               />
-                            ))}
-                            <LabelList
-                              dataKey="valor"
-                              position="right"
-                              fontSize={10}
-                              fill={cor}
-                              formatter={(v: any) => fmt(Number(v), 0)}
-                            />
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+                              <Area
+                                type="monotone"
+                                dataKey="acumulado"
+                                stroke={cor}
+                                strokeWidth={2}
+                                fill={`url(#${gradId})`}
+                                dot={{ r: 3, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 1 }}
+                                activeDot={{ r: 5, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 2 }}
+                                onClick={(d: any) => setCodigoSel((p) => (p === d?.payload?.mes ? null : d?.payload?.mes))}
+                                className="cursor-pointer"
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        );
+                      })()
                     )}
                   </CardContent>
                 </Card>
