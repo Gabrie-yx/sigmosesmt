@@ -396,6 +396,23 @@ function PainelListaTecnicaPage() {
     [previstoPorCategoria],
   );
 
+  // Curva S com a linha "ideal" (planejamento linear: 0 → previstoTotal ao longo dos dias)
+  const curvaSPlot = useMemo(() => {
+    if (curvaS.length === 0) return [];
+    return curvaS.map((d) => ({
+      ...d,
+      IDEAL: previstoTotal > 0 ? d._frac * previstoTotal : null,
+    }));
+  }, [curvaS, previstoTotal]);
+
+  // Aderência ao plano no último ponto: realizado / ideal-naquele-momento
+  const aderenciaPct = useMemo(() => {
+    if (curvaSPlot.length === 0 || previstoTotal === 0) return null;
+    const ult = curvaSPlot[curvaSPlot.length - 1];
+    if (!ult.IDEAL || ult.IDEAL === 0) return null;
+    return (ult.TOTAL / ult.IDEAL) * 100;
+  }, [curvaSPlot, previstoTotal]);
+
   const tabelaMateriais = useMemo(() => {
     const acc = new Map<string, { codigo: string; nome: string; qtd: number; ume: string; peso: number }>();
     // Não filtra por codigoSel — mantemos a lista completa e apenas destacamos o item selecionado.
