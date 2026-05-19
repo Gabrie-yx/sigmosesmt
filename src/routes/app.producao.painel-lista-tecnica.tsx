@@ -783,8 +783,12 @@ function PainelListaTecnicaPage() {
                   <CardContent className="h-44 p-2">
                     {vazio ? (
                       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem dados</div>
-                    ) : false && focoItem ? (
+                    ) : focoItem ? (
                       (() => {
+                        // Mantemos sempre o gráfico de barras por UME, mesmo
+                        // quando há um item focado — o destaque do item fica
+                        // no card "Consumo mensal" ao lado e na lista lateral.
+                        if (focoItem) return null as any;
                         // Foco: item selecionado vs restante da categoria
                         // Cada categoria usa um gráfico diferente, com cor própria.
                         const sel = focoItem.peso;
