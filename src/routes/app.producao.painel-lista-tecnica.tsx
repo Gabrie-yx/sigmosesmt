@@ -14,6 +14,8 @@ import {
 import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
 import type { TipoMP } from "@/lib/base-mp-parser";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PainelAnaliseAvancada } from "@/components/producao/painel-analise-avancada";
 
 const CATEGORIAS: TipoMP[] = ["FERRO", "SOLDA", "GÁS", "TINTA", "OUTROS"];
 type CategoriaMaterial = TipoMP;
