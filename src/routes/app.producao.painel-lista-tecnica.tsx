@@ -559,7 +559,7 @@ function PainelListaTecnicaPage() {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "Realizado (MB51)", value: `${fmt(kpi.pesoReal, 0)}`, icon: Package, accent: "from-primary/20 to-primary/5", textCls: "text-primary" },
+          { label: "Realizado (kg estimado)", value: `${fmt(kpi.pesoReal, 0)} kg`, icon: Package, accent: "from-primary/20 to-primary/5", textCls: "text-primary" },
           { label: "Planejado (B51)", value: `${fmt(kpi.pesoEst, 0)} kg`, icon: Layers, accent: "from-accent/20 to-accent/5", textCls: "text-accent-foreground" },
           { label: "Desvio Real vs Plan.", value: kpi.pesoEst > 0 ? `${kpi.desvio >= 0 ? "+" : ""}${fmt(kpi.desvio, 2)}%` : "—", icon: TrendingUp, accent: kpi.desvio > 0 ? "from-red-500/20 to-red-500/5" : "from-green-500/20 to-green-500/5", textCls: kpi.desvio > 0 ? "text-red-600" : "text-green-600" },
           { label: "Códigos Distintos", value: fmt(kpi.distintos, 0), icon: Filter, accent: "from-blue-500/15 to-blue-500/5", textCls: "text-blue-600" },
