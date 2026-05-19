@@ -1319,28 +1319,36 @@ function PainelListaTecnicaPage() {
                         }
 
                         if (topKind === "line") {
+                          const gradLineId = `grad-line-${cat}`;
                           return (
                             <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={dadosBase} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
+                              <AreaChart data={dadosBase} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
+                                <defs>
+                                  <linearGradient id={gradLineId} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor={cor} stopOpacity={0.45} />
+                                    <stop offset="100%" stopColor={cor} stopOpacity={0.04} />
+                                  </linearGradient>
+                                </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                                 <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
                                 <YAxis hide />
                                 <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
-                                <Line
+                                <Area
                                   type="linear"
                                   dataKey="valor"
                                   stroke={cor}
                                   strokeWidth={2}
+                                  fill={`url(#${gradLineId})`}
                                   dot={(props: any) => {
                                     const d = props.payload;
                                     const isFoco = focoItem?.codigo === d.mes;
                                     return <circle cx={props.cx} cy={props.cy} r={isFoco ? 6 : 4} fill={d.fill} stroke="hsl(var(--background))" strokeWidth={isFoco ? 2 : 1} />;
                                   }}
-                                  activeDot={{ r: 6 }}
+                                  activeDot={{ r: 6, fill: cor, stroke: "hsl(var(--background))", strokeWidth: 2 }}
                                   
                                   className="cursor-pointer"
                                 />
-                              </LineChart>
+                              </AreaChart>
                             </ResponsiveContainer>
                           );
                         }
