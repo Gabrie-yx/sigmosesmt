@@ -670,12 +670,6 @@ function PainelListaTecnicaPage() {
             const cor = CAT_COLOR[cat];
             const ativoCat = catSel === cat;
             const focoItem = itemSelInfo && itemSelInfo.categoria === cat ? itemSelInfo : null;
-            const alertaCat = alertasCategoria.find((a) => a.cat === cat);
-            const statusCor =
-              alertaCat?.status === "crit" ? "hsl(0 72% 50%)"
-              : alertaCat?.status === "warn" ? "hsl(38 92% 50%)"
-              : alertaCat?.status === "ok" ? "hsl(142 70% 40%)"
-              : "hsl(var(--muted-foreground))";
             return (
               <div key={cat} className="grid gap-3 grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
                 {/* Card de barras por UME */}
