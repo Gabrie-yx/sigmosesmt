@@ -76,7 +76,19 @@ export async function parseListaTecnicaXlsx(file: File): Promise<ListaTecnicaPar
   const rows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, raw: true, defval: null });
   if (rows.length < 2) throw new Error("Planilha vazia ou sem cabeçalho.");
 
-  const headers = (rows[0] as any[]).map((h) => (h == null ? "" : String(h)));
+  // Detecta a linha do cabeçalho: procura nas primeiras 20 linhas uma
+  // que contenha uma célula igual a "CÓDIGO" / "CODIGO".
+  let headerRowIdx = -1;
+  const maxScan = Math.min(rows.length, 20);
+  for (let i = 0; i < maxScan; i++) {
+    const r = (rows[i] as any[]) ?? [];
+    const hasCodigo = r.some((c) => c != null && norm(String(c)) === "codigo");
+    if (hasCodigo) { headerRowIdx = i; break; }
+  }
+  if (headerRowIdx === -1) {
+    throw new Error("Coluna 'CÓDIGO' não encontrada nas primeiras 20 linhas. Verifique o layout do arquivo SAP B51.");
+  }
+  const headers = (rows[headerRowIdx] as any[]).map((h) => (h == null ? "" : String(h)));
 
   const C = {
     codigo: findCol(headers, "CÓDIGO", "CODIGO"),
@@ -109,7 +121,7 @@ export async function parseListaTecnicaXlsx(file: File): Promise<ListaTecnicaPar
   let pesoReal = 0;
   let qtdPecas = 0;
 
-  for (let i = 1; i < rows.length; i++) {
+  for (let i = headerRowIdx + 1; i < rows.length; i++) {
     const row = rows[i] as any[];
     const codigo = txt(row[C.codigo]);
     if (!codigo) continue;
