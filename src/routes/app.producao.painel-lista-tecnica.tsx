@@ -927,24 +927,42 @@ function PainelListaTecnicaPage() {
                         }
 
                         if (kind === "bullet") {
-                          // Bullet: barra horizontal mostrando "sel" dentro do total, com marcador da média
-                          const data = [{ name: focoItem.codigo, sel, resto }];
+                          // Duas barras VERTICAIS lado a lado: item selecionado vs demais
+                          const data = [
+                            { label: focoItem.codigo, valor: sel, tipo: "sel" as const },
+                            { label: "Demais", valor: resto, tipo: "resto" as const },
+                          ];
+                          const maxY = Math.max(sel, resto, 1);
                           return (
-                            <div className="relative h-full w-full pt-5 pb-4">
+                            <div className="relative h-full w-full">
                               <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={data} layout="vertical" margin={{ left: 4, right: 16, top: 4, bottom: 4 }}>
-                                  <XAxis type="number" domain={[0, totalPeso]} hide />
-                                  <YAxis type="category" dataKey="name" hide />
-                                  <Tooltip cursor={{ fill: "transparent" }} content={<FancyTooltip accent={cor} unit={focoItem.ume} />} />
-                                  <Bar dataKey="sel" stackId="b" fill={cor} radius={[6, 0, 0, 6]} barSize={22} />
-                                  <Bar dataKey="resto" stackId="b" fill={cor2} radius={[0, 6, 6, 0]} barSize={22} />
-                                  <ReferenceLine x={media} stroke={trendCor} strokeWidth={2} strokeDasharray="2 2" label={{ value: "média", position: "top", fontSize: 9, fill: trendCor }} />
+                                <BarChart data={data} margin={{ left: 4, right: 8, top: 22, bottom: 4 }} barCategoryGap={24}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                                  <XAxis
+                                    type="category"
+                                    dataKey="label"
+                                    tickLine={false}
+                                    axisLine={false}
+                                    interval={0}
+                                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontWeight: 600 }}
+                                  />
+                                  <YAxis type="number" hide domain={[0, maxY]} />
+                                  <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit={focoItem.ume} />} />
+                                  <ReferenceLine y={media} stroke={trendCor} strokeWidth={1.5} strokeDasharray="3 3" label={{ value: "média", position: "right", fontSize: 9, fill: trendCor }} />
+                                  <Bar dataKey="valor" radius={[4, 4, 0, 0]} isAnimationActive animationDuration={550} animationEasing="ease-in-out">
+                                    <Cell fill={cor} />
+                                    <Cell fill={cor2} />
+                                    <LabelList
+                                      dataKey="valor"
+                                      position="top"
+                                      formatter={(v: any) => fmt(Number(v), 0)}
+                                      style={{ fontSize: 10, fill: cor, fontWeight: 700 }}
+                                    />
+                                  </Bar>
                                 </BarChart>
                               </ResponsiveContainer>
-                              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
-                                <div className="text-[11px] font-bold px-2 py-0.5 rounded-md backdrop-blur-sm" style={{ color: cor, background: "color-mix(in oklch, hsl(var(--background)) 70%, transparent)" }}>
-                                  {fmt(pct, 1)}% do total
-                                </div>
+                              <div className="absolute top-1 right-2 text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: cor, background: `color-mix(in oklch, ${cor} 10%, transparent)` }}>
+                                {fmt(pct, 1)}% do total
                               </div>
                               {Overlay}
                             </div>
