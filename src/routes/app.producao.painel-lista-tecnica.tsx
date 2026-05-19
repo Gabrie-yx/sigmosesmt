@@ -779,38 +779,6 @@ function PainelListaTecnicaPage() {
                       <span className="inline-block h-3 w-3 rounded-sm" style={{ background: cor }} />
                       <span style={{ color: cor }}>{CAT_ICON[cat]}</span> {cat}
                     </CardTitle>
-                    <div className="text-right">
-                      {umsExibidas.length === 0 ? (
-                        <div className="text-sm font-bold" style={{ color: cor }}>—</div>
-                      ) : (
-                        <div className="flex flex-col items-end gap-0.5">
-                          {umsExibidas.map((u) => (
-                            <button
-                              key={u.um}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setUnidadeSel((p) => (p === u.um ? null : u.um));
-                              }}
-                              className={`text-sm font-bold tabular-nums leading-tight transition hover:opacity-80 ${
-                                unidadeSel === u.um ? "underline underline-offset-2" : ""
-                              }`}
-                              style={{
-                                color: cor,
-                                opacity: unidadeSel && unidadeSel !== u.um ? 0.4 : 1,
-                              }}
-                              title={`Filtrar por ${u.um}`}
-                            >
-                              {fmt(u.valor, 0)}{" "}
-                              <span className="text-[10px] font-semibold opacity-80">{u.um}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      <div className="text-[10px] text-muted-foreground">
-                        {totalItens} itens
-                      </div>
-                    </div>
                   </CardHeader>
                   <CardContent className="h-44 p-2">
                     {vazio ? (
@@ -1130,20 +1098,18 @@ function PainelListaTecnicaPage() {
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart
                               data={data}
-                              layout="vertical"
-                              margin={{ left: 4, right: 48, top: 6, bottom: 4 }}
-                              barCategoryGap={4}
+                              margin={{ left: 4, right: 8, top: 18, bottom: 4 }}
+                              barCategoryGap={6}
                             >
-                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                              <XAxis type="number" hide domain={[0, referencia]} allowDataOverflow />
-                              <YAxis
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                              <XAxis
                                 type="category"
                                 dataKey="label"
-                                width={36}
                                 tickLine={false}
                                 axisLine={false}
                                 tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontWeight: 600 }}
                               />
+                              <YAxis type="number" hide domain={[0, referencia]} allowDataOverflow />
                               <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} />} />
                               <Bar
                                 dataKey="valor"
@@ -1168,7 +1134,7 @@ function PainelListaTecnicaPage() {
                                 ))}
                                 <LabelList
                                   dataKey="valor"
-                                  position="right"
+                                  position="top"
                                   formatter={(v: any) => fmt(Number(v), 0)}
                                   style={{ fontSize: 10, fill: cor, fontWeight: 700 }}
                                 />
