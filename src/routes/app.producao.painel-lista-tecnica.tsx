@@ -932,7 +932,7 @@ function PainelListaTecnicaPage() {
                             <div className="relative h-full w-full">
                               <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
-                                  <Tooltip content={<FancyTooltip accent={cor} unit="kg" />} />
+                                  <Tooltip content={<FancyTooltip accent={cor} unit={focoItem.ume} />} />
                                   <Pie data={data} dataKey="valor" nameKey="label" innerRadius={42} outerRadius={64} paddingAngle={2} startAngle={90} endAngle={-270} stroke="hsl(var(--background))" strokeWidth={1}>
                                     <Cell fill={cor} />
                                     <Cell fill={cor2} />
@@ -957,7 +957,7 @@ function PainelListaTecnicaPage() {
                                 <BarChart data={data} layout="vertical" margin={{ left: 4, right: 16, top: 4, bottom: 4 }}>
                                   <XAxis type="number" domain={[0, totalPeso]} hide />
                                   <YAxis type="category" dataKey="name" hide />
-                                  <Tooltip cursor={{ fill: "transparent" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                  <Tooltip cursor={{ fill: "transparent" }} content={<FancyTooltip accent={cor} unit={focoItem.ume} />} />
                                   <Bar dataKey="sel" stackId="b" fill={cor} radius={[6, 0, 0, 6]} barSize={22} />
                                   <Bar dataKey="resto" stackId="b" fill={cor2} radius={[0, 6, 6, 0]} barSize={22} />
                                   <ReferenceLine x={media} stroke={trendCor} strokeWidth={2} strokeDasharray="2 2" label={{ value: "média", position: "top", fontSize: 9, fill: trendCor }} />
@@ -987,7 +987,7 @@ function PainelListaTecnicaPage() {
                                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                                   <XAxis dataKey="x" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                                   <YAxis domain={[0, maxY]} hide />
-                                  <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                  <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit={focoItem.ume} />} />
                                   <Line
                                     type="linear"
                                     dataKey="v"
@@ -1242,7 +1242,7 @@ function PainelListaTecnicaPage() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                                 <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
                                 <YAxis hide />
-                                <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Bar
                                   dataKey="valor"
                                   radius={[6, 6, 0, 0]}
@@ -1267,7 +1267,7 @@ function PainelListaTecnicaPage() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                                 <XAxis type="number" hide />
                                 <YAxis type="category" dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} width={70} />
-                                <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Bar
                                   dataKey="valor"
                                   radius={[0, 6, 6, 0]}
@@ -1294,7 +1294,7 @@ function PainelListaTecnicaPage() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                                 <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
                                 <YAxis hide />
-                                <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Line
                                   type="monotone"
                                   dataKey="valor"
@@ -1333,7 +1333,7 @@ function PainelListaTecnicaPage() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                                 <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
                                 <YAxis hide />
-                                <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                                <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Area
                                   type="monotone"
                                   dataKey="acumulado"
@@ -1372,7 +1372,7 @@ function PainelListaTecnicaPage() {
                               <XAxis dataKey="mes" type="category" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
                               <YAxis dataKey="valor" hide />
                               <ZAxis dataKey="valor" range={[60, 360]} />
-                              <Tooltip cursor={{ strokeDasharray: "3 3", stroke: cor }} content={<FancyTooltip accent={cor} unit="kg" />} />
+                              <Tooltip cursor={{ strokeDasharray: "3 3", stroke: cor }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                               <Scatter
                                 data={dadosBase}
                                 
