@@ -745,11 +745,16 @@ function PainelListaTecnicaPage() {
       <div className="grid gap-3 grid-cols-1 xl:grid-cols-[1fr_380px]">
         <div className="space-y-3">
           {(["FERRO", "SOLDA", "GÁS", "TINTA", "OUTROS"] as CategoriaMaterial[]).map((cat) => {
-            const { barras, serie, totalPeso, totalItens } = dadosPorCategoria[cat];
+            const { barras, serie, serieMensal, totalPeso, totalItens, porUnidade } = dadosPorCategoria[cat];
             const vazio = barras.length === 0;
             const cor = CAT_COLOR[cat];
             const ativoCat = catSel === cat;
             const focoItem = itemSelInfo && itemSelInfo.categoria === cat ? itemSelInfo : null;
+            // Quebra dinâmica por UM no header. Se houver UME selecionada
+            // que existe nessa categoria, mostra somente aquela linha.
+            const umsExibidas = unidadeSel
+              ? porUnidade.filter((u) => u.um === unidadeSel)
+              : porUnidade;
             return (
               <div key={cat} className="grid gap-3 grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
                 {/* Card de barras por UME */}
@@ -764,7 +769,30 @@ function PainelListaTecnicaPage() {
                       <span style={{ color: cor }}>{CAT_ICON[cat]}</span> {cat}
                     </CardTitle>
                     <div className="text-right">
-                      <div className="text-sm font-bold" style={{ color: cor }}>{fmt(totalPeso, 0)} kg</div>
+                      {umsExibidas.length === 0 ? (
+                        <div className="text-sm font-bold" style={{ color: cor }}>—</div>
+                      ) : (
+                        <div className="flex flex-col items-end gap-0.5">
+                          {umsExibidas.map((u) => (
+                            <button
+                              key={u.um}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setUnidadeSel((p) => (p === u.um ? null : u.um));
+                              }}
+                              className={`text-sm font-bold tabular-nums leading-tight transition hover:opacity-80 ${
+                                unidadeSel === u.um ? "underline underline-offset-2" : ""
+                              }`}
+                              style={{ color: cor }}
+                              title={`Filtrar por ${u.um}`}
+                            >
+                              {fmt(u.valor, 0)}{" "}
+                              <span className="text-[10px] font-semibold opacity-80">{u.um}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       <div className="text-[10px] text-muted-foreground">
                         {totalItens} itens
                       </div>
