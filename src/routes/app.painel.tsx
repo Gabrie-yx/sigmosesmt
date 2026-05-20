@@ -349,7 +349,7 @@ function TstPanel() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onMouseDown={(e) => e.stopPropagation()}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e] transition-all placeholder:text-slate-400 placeholder:font-normal"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E] transition-all placeholder:text-slate-400 placeholder:font-normal"
           />
           {search && (
             <div className="mt-3 space-y-1.5 max-h-64 overflow-y-auto">
