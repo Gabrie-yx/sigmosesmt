@@ -706,7 +706,7 @@ function PainelListaTecnicaPage() {
                   : (o.texto_documento ?? "—");
                 return (
                   <option key={o.id} value={o.id}>
-                    SAP {o.numero_sap} · {label}
+                    SAP {String(o.numero_sap).startsWith("PEND") ? "PEND" : o.numero_sap} · {label}
                   </option>
                 );
               })}
