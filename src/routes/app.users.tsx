@@ -22,6 +22,7 @@ import {
   deleteUser,
   listUsersAdmin,
 } from "@/lib/users.functions";
+import { createInvestorAccess } from "@/lib/temp-investors.functions";
 
 export const Route = createFileRoute("/app/users")({
   component: UsersPage,
@@ -69,6 +70,10 @@ function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [investorOpen, setInvestorOpen] = useState(false);
+  const [investorCreds, setInvestorCreds] = useState<{ email: string; password: string; expires_at: string; link: string } | null>(null);
+  const [investorLoading, setInvestorLoading] = useState(false);
+  const createInvestorFn = useServerFn(createInvestorAccess);
 
   // form state
   const [fName, setFName] = useState("");
@@ -167,6 +172,29 @@ function UsersPage() {
         </div>
         <Button onClick={() => setInviteOpen(true)}>
           <Plus className="h-4 w-4 mr-1" /> Convidar usuário
+        </Button>
+        <Button
+          variant="secondary"
+          className="ml-2"
+          disabled={investorLoading}
+          onClick={async () => {
+            setInvestorLoading(true);
+            try {
+              const res = await createInvestorFn();
+              setInvestorCreds({
+                email: res.email,
+                password: res.password,
+                expires_at: res.expires_at,
+                link: `${window.location.origin}/login`,
+              });
+              setInvestorOpen(true);
+              toast.success("Acesso de investidor criado (válido por 48h)");
+            } catch (e: any) {
+              toast.error(e.message ?? "Falha ao gerar acesso");
+            } finally { setInvestorLoading(false); }
+          }}
+        >
+          {investorLoading ? "Gerando..." : "Gerar acesso de investidor (48h)"}
         </Button>
       </div>
 
@@ -393,6 +421,49 @@ function UsersPage() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancelar</Button>
             <Button onClick={handleSaveEdit} disabled={submitting}>{submitting ? "Salvando..." : "Salvar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={investorOpen} onOpenChange={setInvestorOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Acesso de investidor gerado</DialogTitle>
+            <DialogDescription>
+              Somente leitura · expira em {investorCreds ? new Date(investorCreds.expires_at).toLocaleString("pt-BR") : "—"}
+            </DialogDescription>
+          </DialogHeader>
+          {investorCreds && (
+            <div className="space-y-3 text-sm">
+              <div>
+                <Label className="text-xs">Link</Label>
+                <Input readOnly value={investorCreds.link} onFocus={(e) => e.currentTarget.select()} />
+              </div>
+              <div>
+                <Label className="text-xs">E-mail</Label>
+                <Input readOnly value={investorCreds.email} onFocus={(e) => e.currentTarget.select()} />
+              </div>
+              <div>
+                <Label className="text-xs">Senha</Label>
+                <Input readOnly value={investorCreds.password} onFocus={(e) => e.currentTarget.select()} />
+              </div>
+              <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                Copie as credenciais agora — a senha não será exibida novamente. O acesso é revogado automaticamente após 48 horas.
+              </div>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  const txt = `Acesso ao SIGMO (48h)\nLink: ${investorCreds.link}\nE-mail: ${investorCreds.email}\nSenha: ${investorCreds.password}`;
+                  navigator.clipboard.writeText(txt);
+                  toast.success("Credenciais copiadas");
+                }}
+              >
+                Copiar tudo
+              </Button>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setInvestorOpen(false)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
