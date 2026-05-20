@@ -119,16 +119,35 @@ function OrdensListPage() {
   });
 
   const sapMut = useMutation({
-    mutationFn: async ({ id, codigo_sap }: { id: string; codigo_sap: string }) => {
+    mutationFn: async ({ id, codigo_sap, casco }: { id: string; codigo_sap: string; casco: string | null }) => {
       const { error } = await supabase
         .from("producao_ordens")
         .update({ codigo_sap: codigo_sap || null })
         .eq("id", id);
       if (error) throw error;
+
+      // Propaga o SAP para o registro MB51 (DD) do mesmo casco
+      if (casco) {
+        const { data: c } = await supabase
+          .from("cascos")
+          .select("id")
+          .eq("numero", casco)
+          .maybeSingle();
+        if (c?.id) {
+          const sapLimpo = (codigo_sap || "").replace(/^SAP\s*/i, "").trim();
+          if (sapLimpo) {
+            await supabase
+              .from("producao_mb51_ordens")
+              .update({ numero_sap: sapLimpo })
+              .eq("casco_id", c.id);
+          }
+        }
+      }
     },
     onSuccess: () => {
       toast.success("Código SAP salvo");
       qc.invalidateQueries({ queryKey: ["producao-ordens-halb"] });
+      qc.invalidateQueries({ queryKey: ["mb51-ordens"] });
       setSavingSapId(null);
     },
     onError: (e: any) => { toast.error(e?.message ?? "Falha ao salvar"); setSavingSapId(null); },
@@ -140,7 +159,7 @@ function OrdensListPage() {
     const next = (draft ?? current).trim();
     if (next === (current ?? "").trim()) return;
     setSavingSapId(o.id);
-    sapMut.mutate({ id: o.id, codigo_sap: next });
+    sapMut.mutate({ id: o.id, codigo_sap: next, casco: o.casco ?? null });
   };
 
   const uploadMut = useMutation({
