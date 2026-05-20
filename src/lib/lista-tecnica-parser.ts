@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { assertSheetKind } from "./sheet-detect";
 
 export interface ListaTecnicaItem {
   linha: number;
@@ -70,6 +71,7 @@ const findCol = (headers: string[], ...candidates: string[]): number => {
 };
 
 export async function parseListaTecnicaXlsx(file: File): Promise<ListaTecnicaParseResult> {
+  await assertSheetKind(file, "B51");
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
   const sheet = wb.Sheets[wb.SheetNames[0]];
