@@ -308,10 +308,10 @@ function OrdensListPage() {
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
             )}
             {!isLoading && filtradas.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                 Nenhuma ordem cadastrada ainda.
               </TableCell></TableRow>
             )}
