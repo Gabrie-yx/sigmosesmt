@@ -2198,6 +2198,7 @@ export type Database = {
         Row: {
           casco: string | null
           codigo_formulario: string
+          codigo_sap: string | null
           created_at: string
           created_by: string | null
           data_solicitacao: string
@@ -2218,6 +2219,7 @@ export type Database = {
         Insert: {
           casco?: string | null
           codigo_formulario?: string
+          codigo_sap?: string | null
           created_at?: string
           created_by?: string | null
           data_solicitacao?: string
@@ -2238,6 +2240,7 @@ export type Database = {
         Update: {
           casco?: string | null
           codigo_formulario?: string
+          codigo_sap?: string | null
           created_at?: string
           created_by?: string | null
           data_solicitacao?: string
