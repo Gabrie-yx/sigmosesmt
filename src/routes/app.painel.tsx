@@ -197,7 +197,7 @@ function TstPanel() {
   const statusPie = [
     { name: "Aptos", value: aptos, color: "#10b981" },
     { name: "Alerta", value: alertas, color: "#f59e0b" },
-    { name: "Bloqueados", value: bloqueados, color: "#ef4444" },
+    { name: "Bloqueados", value: bloqueados, color: "#C8102E" },
   ].filter((x) => x.value > 0);
 
   const topItens = useMemo(() => {
