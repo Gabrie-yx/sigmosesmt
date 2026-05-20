@@ -540,10 +540,10 @@ function TstPanel() {
             const isFirst = i === 0;
             return (
               <div key={r.nome + i}
-                className={`flex items-center gap-3 p-2 rounded-lg ${isFirst ? "bg-slate-50 border-l-4 border-[#0f766e]" : ""}`}>
+                className={`flex items-center gap-3 p-2 rounded-lg ${isFirst ? "bg-slate-50 border-l-4 border-[#C8102E]" : ""}`}>
                 <div className="relative shrink-0">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-xs ${
-                    isFirst ? "bg-teal-100 text-[#0f766e] border-2 border-teal-200" : "bg-slate-100 text-slate-600"
+                    isFirst ? "bg-red-100 text-[#C8102E] border-2 border-red-200" : "bg-slate-100 text-slate-600"
                   }`}>{initials}</div>
                   {medal && <span className={`absolute -bottom-1 -right-1 ${medal.bg} text-[8px] px-1 rounded font-black`}>{medal.label}</span>}
                 </div>
@@ -622,7 +622,7 @@ function TstPanel() {
               value={filterCompany}
               onChange={(e) => setFilterCompany(e.target.value)}
               onMouseDown={(e) => e.stopPropagation()}
-              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase outline-none focus:ring-2 focus:border-[#0f766e] max-w-[240px] truncate"
+              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase outline-none focus:ring-2 focus:border-[#C8102E] max-w-[240px] truncate"
             >
               <option value="ALL">Todas as empresas</option>
               {(data?.companies ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -634,10 +634,10 @@ function TstPanel() {
             ) : pendencias.map((p) => (
               <div key={p.emp.id}
                 onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
-                className="p-3 border border-slate-100 rounded-xl bg-slate-50 hover:bg-white hover:border-[#0f766e] hover:shadow-sm cursor-pointer transition-all group">
+                className="p-3 border border-slate-100 rounded-xl bg-slate-50 hover:bg-white hover:border-[#C8102E] hover:shadow-sm cursor-pointer transition-all group">
                 <div className="flex items-center justify-between mb-1">
                   <div className="text-xs font-black uppercase text-slate-900 truncate">{p.emp.nome}</div>
-                  <ArrowUpRight className="h-3 w-3 text-slate-300 group-hover:text-[#0f766e]" />
+                  <ArrowUpRight className="h-3 w-3 text-slate-300 group-hover:text-[#C8102E]" />
                 </div>
                 <div className="text-[9px] font-bold uppercase text-slate-500 mb-1.5 truncate">{p.company}</div>
                 <div className="flex items-center justify-between gap-2">
@@ -682,12 +682,12 @@ function TstPanel() {
             <button key={p} onClick={() => setPeriodo(p)}
               className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
                 periodo === p
-                  ? "bg-gradient-to-br from-[#0f766e] to-[#134e4a] text-white shadow-md"
-                  : "bg-white text-slate-500 border border-slate-200 hover:border-[#0f766e]"
+                  ? "bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white shadow-md"
+                  : "bg-white text-slate-500 border border-slate-200 hover:border-[#C8102E]"
               }`}>{p} dias</button>
           ))}
           <button onClick={() => setLocked((v) => !v)}
-            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white text-slate-600 border border-slate-200 hover:border-[#0f766e] flex items-center gap-1.5">
+            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white text-slate-600 border border-slate-200 hover:border-[#C8102E] flex items-center gap-1.5">
             {locked ? <><Lock className="h-3 w-3" /> Bloqueado</> : <><Unlock className="h-3 w-3" /> Editar</>}
           </button>
           <button onClick={resetLayout}
@@ -712,7 +712,7 @@ function TstPanel() {
           const w = widgets[l.i];
           if (!w) return null;
           const Icon = w.icon;
-          const accentCls = w.accent === "amber" ? "text-amber-600" : w.accent === "red" ? "text-red-600" : "text-[#0f766e]";
+          const accentCls = w.accent === "amber" ? "text-amber-600" : w.accent === "red" ? "text-red-600" : "text-[#C8102E]";
           const borderCls = w.accent === "red" ? "border-red-200" : "border-slate-200";
           return (
             <div key={l.i} className={`bg-white rounded-2xl shadow-sm border ${borderCls} flex flex-col overflow-hidden`}>
