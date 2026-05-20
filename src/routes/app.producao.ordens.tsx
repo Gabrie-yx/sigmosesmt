@@ -15,7 +15,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ClipboardList, Eye, Pencil, Trash2, Printer, FileDown, Plus, Search, Upload, Loader2 } from "lucide-react";
+import { ClipboardList, Eye, Pencil, Trash2, Printer, FileDown, Plus, Search, Upload, Loader2, Info } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { gerarPdfOrdem, imprimirOrdem, type OrdemFull } from "@/lib/producao-pdf";
 import { parseListaTecnicaXlsx } from "@/lib/lista-tecnica-parser";
@@ -209,6 +210,18 @@ function OrdensListPage() {
               <Plus className="h-4 w-4" /> Nova Ordem
             </Button>
           </Link>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="icon" className="h-9 w-9" title="Sobre o botão Lista Técnica">
+                <Info className="h-4 w-4 text-amber-600" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 text-xs space-y-2">
+              <p className="font-bold text-sm text-amber-700">📐 Lista Técnica (botão por ordem)</p>
+              <p>O botão <strong>"Lista Técnica"</strong> em cada ordem importa o <strong>B51 do SAP</strong> — lista de peças/itens planejados daquele casco. Gera uma nova versão preservando o histórico.</p>
+              <p className="text-red-700"><strong>⚠️ NÃO envie aqui:</strong> MB51 (consumo) — esse vai no Dashboard Dinâmico. Nem a Base de Matéria-Prima — essa vai no menu próprio.</p>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
