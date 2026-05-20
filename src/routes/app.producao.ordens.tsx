@@ -299,7 +299,6 @@ function OrdensListPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Número</TableHead>
               <TableHead>Código SAP</TableHead>
               <TableHead>Casco</TableHead>
               <TableHead>Tipo</TableHead>
@@ -309,10 +308,10 @@ function OrdensListPage() {
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
             )}
             {!isLoading && filtradas.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                 Nenhuma ordem cadastrada ainda.
               </TableCell></TableRow>
             )}
@@ -322,7 +321,6 @@ function OrdensListPage() {
               const sapVal = sapDrafts[o.id] ?? (o.codigo_sap ?? "");
               return (
               <TableRow key={o.id}>
-                <TableCell className="font-bold text-amber-700">{o.numero}</TableCell>
                 <TableCell>
                   <Input
                     value={sapVal}
