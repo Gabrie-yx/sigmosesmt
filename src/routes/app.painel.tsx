@@ -570,8 +570,8 @@ function TstPanel() {
                 <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10 }} />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar yAxisId="l" dataKey="qtd" fill="#0f766e" name="DDS realizados" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="r" dataKey="aderencia" fill="#14b8a6" name="% aderência" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="l" dataKey="qtd" fill="#C8102E" name="DDS realizados" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="r" dataKey="aderencia" fill="#94a3b8" name="% aderência" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
