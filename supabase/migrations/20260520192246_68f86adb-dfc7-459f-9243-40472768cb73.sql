@@ -1,0 +1,1 @@
+UPDATE public.producao_ordens SET mtart = 'HALB', tipo_produto = 'BALSA (Casco em construção)' WHERE numero IN ('OP-0003/2026','OP-0004/2026','OP-0005/2026','OP-0006/2026');
