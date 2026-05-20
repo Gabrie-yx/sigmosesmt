@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { parseMb51Xlsx, normalizeCascoName } from "@/lib/mb51-parser";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LabelList, Cell, PieChart, Pie, RadialBarChart, RadialBar, Legend,
@@ -11,7 +13,7 @@ import {
   AreaChart, Area, ReferenceDot, ReferenceLine,
   LineChart, Line, ScatterChart, Scatter, ZAxis,
 } from "recharts";
-import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers, AlertTriangle, CheckCircle2, Upload, Loader2 } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
 import type { TipoMP } from "@/lib/base-mp-parser";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -123,6 +125,8 @@ function PainelListaTecnicaPage() {
   const [codigoSel, setCodigoSel] = useState<string | null>(null);
   const [unidadeSel, setUnidadeSel] = useState<string | null>(null);
   const [catSel, setCatSel] = useState<CategoriaMaterial | null>(null);
+  const [mb51Loading, setMb51Loading] = useState(false);
+  const mb51Ref = useRef<HTMLInputElement>(null);
 
   const { data: cascos = [] } = useQuery({
     queryKey: ["cascos-list"],
@@ -527,6 +531,16 @@ function PainelListaTecnicaPage() {
             Acompanhamento em tempo real de matéria-prima e insumos aplicados no casco. Clique em qualquer elemento para filtrar.
           </p>
         </div>
+        <div className="flex items-center gap-2">
+        <input ref={mb51Ref} type="file" accept=".xlsx,.xls" className="hidden"
+          onChange={(e) => { handleMb51(e.target.files); e.target.value = ""; }} />
+        <Button size="sm" disabled={mb51Loading}
+          onClick={() => mb51Ref.current?.click()}
+          className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+          title="Upload da MB51 (consumo real). Cada Ordem SAP vira uma OP deste dashboard.">
+          {mb51Loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          {mb51Loading ? "Importando MB51…" : "Upload MB51 (Consumo Real)"}
+        </Button>
         <Button variant="outline" size="sm" onClick={() => {
           qc.invalidateQueries({ queryKey: ["mb51-ordens"] });
           qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
@@ -538,6 +552,7 @@ function PainelListaTecnicaPage() {
         }}>
           <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
         </Button>
+        </div>
       </div>
 
       {/* Seletor de Ordem SAP (cada Ordem SAP = um casco com consumo MB51) */}
