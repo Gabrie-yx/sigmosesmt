@@ -42,11 +42,6 @@ function formatTipoComAgro(tipo?: string | null, casco?: string | null) {
     : `${base} - ${cascoFmt}`;
 }
 
-function _extractCascoNumeroLegacy(casco?: string | null) {
-  const m = String(casco ?? "").match(/(\d+)/);
-  return m ? parseInt(m[1], 10) : null;
-}
-
 function OrdensListPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
