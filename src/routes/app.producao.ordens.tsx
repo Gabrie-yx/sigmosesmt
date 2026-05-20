@@ -27,6 +27,23 @@ export const Route = createFileRoute("/app/producao/ordens")({
 
 function extractCascoNumero(casco?: string | null) {
   const m = String(casco ?? "").match(/(\d+)/);
+  return m ? Number(m[1]) : null;
+}
+
+/** Mapeia CASCO N → AMAZON AGRO (N - 130). Ex: CASCO 134 → AMAZON AGRO 4. */
+function formatTipoComAgro(tipo?: string | null, casco?: string | null) {
+  const n = extractCascoNumero(casco);
+  const base = (tipo ?? "").replace(/\s*\(Casco em constru[cç][aã]o\)\s*/i, "").trim() || "—";
+  if (n == null) return base;
+  const agro = n - 130;
+  const cascoFmt = `CASCO ${String(n).padStart(3, "0")}`;
+  return agro > 0
+    ? `${base} AMAZON AGRO ${agro} - ${cascoFmt}`
+    : `${base} - ${cascoFmt}`;
+}
+
+function _extractCascoNumeroLegacy(casco?: string | null) {
+  const m = String(casco ?? "").match(/(\d+)/);
   return m ? parseInt(m[1], 10) : null;
 }
 
