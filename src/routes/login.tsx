@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import dmnLogo from "@/assets/dmn-logo.png";
+import sigmoLogo from "@/assets/sigmo-logo.png";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -111,15 +111,16 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-white to-red-50 px-4 py-10">
       <Card className="w-full max-w-md shadow-xl border-slate-200">
         <CardHeader className="text-center space-y-3 pb-4">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-white shadow-lg ring-1 ring-slate-200">
-            <img src={dmnLogo} alt="Estaleiro DMN" className="h-14 w-auto object-contain" />
+          <div className="mx-auto relative h-24 w-24 overflow-hidden">
+            <img src={sigmoLogo} alt="SIGMO" className="h-24 w-24 object-contain" />
+            <span aria-hidden className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/70 to-transparent animate-[shimmer_2.8s_ease-in-out_infinite]" />
           </div>
+          <CardDescription className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
+            Sistema Integrado de Gestão Modular
+          </CardDescription>
           <CardTitle className="text-2xl font-black uppercase tracking-tight text-slate-900">
             {mode === "signin" ? "Entrar" : "Criar conta"}
           </CardTitle>
-          <CardDescription className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
-            Acesso ao Sistema de Gestão · Estaleiro DMN
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {mfaChallengeId ? (
