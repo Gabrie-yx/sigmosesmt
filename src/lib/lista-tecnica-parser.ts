@@ -152,6 +152,26 @@ export async function parseListaTecnicaXlsx(file: File): Promise<ListaTecnicaPar
     };
     if (item.qtd_pecas != null) item.qtd_pecas = Math.round(item.qtd_pecas);
 
+    // Calcula PESO UNT REAL e PESO REAL quando faltarem (mesma lógica usada na planilha modelo)
+    if (item.peso_unit_real == null) {
+      if (item.largura_m != null && item.comprimento_m != null && item.peso_chapa != null) {
+        // m²: Largura × Comprimento × Peso Atual
+        item.peso_unit_real = Math.round(item.largura_m * item.comprimento_m * item.peso_chapa * 100) / 100;
+      } else if (item.peso_unit_ref != null && item.comprimento_m != null) {
+        // linear "m": Peso (kgf/m) × Comprimento (m)
+        item.peso_unit_real = Math.round(item.peso_unit_ref * item.comprimento_m * 100) / 100;
+      } else if (item.peso_unit_ref != null) {
+        // fallback: peso unitário = peso de referência
+        item.peso_unit_real = item.peso_unit_ref;
+      }
+    }
+    if (item.peso_real == null && item.peso_unit_real != null) {
+      const mult = item.qtd_pecas ?? item.quantidade;
+      if (mult != null) {
+        item.peso_real = Math.round(item.peso_unit_real * mult * 100) / 100;
+      }
+    }
+
     itens.push(item);
     codigosDistintos.add(codigoStr);
     pesoEst += item.peso_total_estimado ?? 0;
