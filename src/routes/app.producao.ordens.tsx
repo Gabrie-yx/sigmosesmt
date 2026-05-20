@@ -312,7 +312,6 @@ function OrdensListPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Código SAP</TableHead>
-              <TableHead>Casco</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Solicitante</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -320,10 +319,10 @@ function OrdensListPage() {
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
             )}
             {!isLoading && filtradas.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                 Nenhuma ordem cadastrada ainda.
               </TableCell></TableRow>
             )}
@@ -344,8 +343,7 @@ function OrdensListPage() {
                     className="h-8 w-40 font-mono text-xs"
                   />
                 </TableCell>
-                <TableCell>{o.casco ?? "—"}</TableCell>
-                <TableCell>{o.tipo_produto ?? "—"}</TableCell>
+                <TableCell className="font-medium">{formatTipoComAgro(o.tipo_produto, o.casco)}</TableCell>
                 <TableCell>{o.solicitante ?? "—"}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
