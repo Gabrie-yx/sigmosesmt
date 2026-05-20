@@ -172,21 +172,38 @@ export async function parseMb51Xlsx(file: File): Promise<Mb51ParseResult> {
 }
 
 /** Resolve o tipo do material usando a Base MP. Faz fallback para a classificação inline da MB51. */
+/** Heurística por descrição/classificação — usada como reforço quando a Base MP
+ * traz tipo genérico ("OUTROS") ou quando o material não está cadastrado. */
+export function inferTipoByText(...textos: (string | null | undefined)[]): TipoMP | null {
+  const t = textos
+    .filter(Boolean)
+    .map((s) => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase())
+    .join(" | ");
+  if (!t) return null;
+  // GÁS — antes de SOLDA (oxigênio, acetileno, argônio, mistura, CO2)
+  if (/\b(gas|oxig|acetilen|argo[nm]|nitrog|co2|mistura|cilindro)\b/.test(t)) return "GÁS";
+  // SOLDA — eletrodos, arames de solda, fluxos, varetas
+  if (/\b(eletrod|arame.*(?:weld|tubular|mig|solda)|denver|inox.*solda|fluxo.*sold|vareta|tig|mig)\b/.test(t)) return "SOLDA";
+  if (/\b(weld|7018|6013|e71t|er70|er-?70)\b/.test(t)) return "SOLDA";
+  // TINTA — primer, esmalte, epóxi, thinner, diluente, solvente
+  if (/\b(tinta|primer|esmalte|epox|thinner|diluen|solvent|verniz|fundo)\b/.test(t)) return "TINTA";
+  // FERRO/AÇO — chapas, perfis, cantoneiras, barras, tubos, vergalhão
+  if (/\b(chapa|cantone|perfil|barra|vergalh|tubo|tarugo|trefilad|aco|a36|laminad|redondo|quadrado|sextavad|cantonei)\b/.test(t)) return "FERRO";
+  return null;
+}
+
 export function resolveTipo(
   material: string,
   classificacaoMb51: string | null,
   baseMp: Map<string, TipoMP>,
+  descricao?: string | null,
 ): TipoMP {
   const t = baseMp.get(material);
-  if (t) return t;
-  const c = String(classificacaoMb51 ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
-  if (c.startsWith("ferr")) return "FERRO";
-  if (c.startsWith("gas")) return "GÁS";
-  if (c.startsWith("sold")) return "SOLDA";
-  if (c.startsWith("tint")) return "TINTA";
-  return "OUTROS";
+  // Se Base MP traz algo específico (não "OUTROS"), confia.
+  if (t && t !== "OUTROS") return t;
+  // Se for "OUTROS" ou ausente, tenta inferir pela classificação + descrição.
+  const inferido = inferTipoByText(classificacaoMb51, descricao);
+  if (inferido) return inferido;
+  // Mantém o que a Base MP disse ("OUTROS") ou cai no fallback "OUTROS".
+  return t ?? "OUTROS";
 }

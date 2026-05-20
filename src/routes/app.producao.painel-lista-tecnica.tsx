@@ -258,7 +258,7 @@ function PainelListaTecnicaPage() {
   // Enriquece movimentos: tipo resolvido pela Base MP, consumo positivo (líquido = -quantidade)
   const itensEnriq = useMemo(() => {
     return (movimentos as any[]).map((m) => {
-      const tipo = resolveTipo(String(m.material), m.classificacao_mb51, baseMpMap);
+      const tipo = resolveTipo(String(m.material), m.classificacao_mb51, baseMpMap, m.descricao);
       return {
         ...m,
         codigo_sap: String(m.material),
