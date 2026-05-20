@@ -183,12 +183,12 @@ export function inferTipoByText(...textos: (string | null | undefined)[]): TipoM
   // GÁS — antes de SOLDA (oxigênio, acetileno, argônio, mistura, CO2)
   if (/\b(gas|oxig|acetilen|argo[nm]|nitrog|co2|mistura|cilindro)\b/.test(t)) return "GÁS";
   // SOLDA — eletrodos, arames de solda, fluxos, varetas
-  if (/\b(eletrod|arame.*(?:weld|tubular|mig|solda)|denver|inox.*solda|fluxo.*sold|vareta|tig|mig)\b/.test(t)) return "SOLDA";
+  if (/\b(solda|eletrod|arame.*(?:weld|tubular|mig|solda)|denver|inox.*solda|fluxo.*sold|vareta|tig|mig)\b/.test(t)) return "SOLDA";
   if (/\b(weld|7018|6013|e71t|er70|er-?70)\b/.test(t)) return "SOLDA";
   // TINTA — primer, esmalte, epóxi, thinner, diluente, solvente
   if (/\b(tinta|primer|esmalte|epox|thinner|diluen|solvent|verniz|fundo)\b/.test(t)) return "TINTA";
   // FERRO/AÇO — chapas, perfis, cantoneiras, barras, tubos, vergalhão
-  if (/\b(chapa|cantone|perfil|barra|vergalh|tubo|tarugo|trefilad|aco|a36|laminad|redondo|quadrado|sextavad|cantonei)\b/.test(t)) return "FERRO";
+  if (/\b(ferro|chapa|cantone|perfil|barra|vergalh|tubo|tarugo|trefilad|aco|a36|laminad|redondo|quadrado|sextavad|cantonei)\b/.test(t)) return "FERRO";
   return null;
 }
 
