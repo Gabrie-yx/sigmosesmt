@@ -739,11 +739,11 @@ function TstPanel() {
 
 function KpiTile({ icon: Icon, label, value, hint, tone }: {
   icon: any; label: string; value: string | number; hint?: string;
-  tone: "dark" | "teal" | "green" | "amber" | "red";
+  tone: "dark" | "brand" | "green" | "amber" | "red";
 }) {
   const styles: Record<string, string> = {
     dark: "from-slate-800 to-slate-900 text-white",
-    teal: "from-[#0f766e] to-[#134e4a] text-white",
+    brand: "from-[#C8102E] to-[#8B0A1E] text-white",
     green: "from-emerald-500 to-emerald-700 text-white",
     amber: "from-amber-400 to-amber-600 text-white",
     red: "from-red-500 to-red-700 text-white",
