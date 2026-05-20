@@ -19,7 +19,6 @@ import { ClipboardList, Eye, Pencil, Trash2, Printer, FileDown, Plus, Search, Up
 import { toast } from "sonner";
 import { gerarPdfOrdem, imprimirOrdem, type OrdemFull } from "@/lib/producao-pdf";
 import { parseListaTecnicaXlsx } from "@/lib/lista-tecnica-parser";
-import { parseMb51Xlsx, normalizeCascoName } from "@/lib/mb51-parser";
 
 export const Route = createFileRoute("/app/producao/ordens")({
   component: OrdensListPage,
@@ -38,8 +37,6 @@ function OrdensListPage() {
   const [deleting, setDeleting] = useState<{ id: string; numero: string } | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const inputsRef = useRef<Record<string, HTMLInputElement | null>>({});
-  const [mb51Loading, setMb51Loading] = useState(false);
-  const mb51Ref = useRef<HTMLInputElement>(null);
 
   const { data: ordens = [], isLoading } = useQuery({
     queryKey: ["producao-ordens-halb"],
@@ -302,15 +299,6 @@ function OrdensListPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <input ref={mb51Ref} type="file" accept=".xlsx,.xls" className="hidden"
-            onChange={(e) => { handleMb51(e.target.files); e.target.value = ""; }} />
-          <Button size="sm" variant="outline" disabled={mb51Loading}
-            onClick={() => mb51Ref.current?.click()}
-            className="gap-1.5 text-blue-700 border-blue-300 hover:bg-blue-50"
-            title="Importa o consumo real (MB51). Cada Ordem SAP vira uma OP do Dashboard Dinâmico.">
-            {mb51Loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {mb51Loading ? "Importando MB51…" : "Upload MB51 (Consumo Real)"}
-          </Button>
           <Link to="/app/producao/criar-ordem">
             <Button size="sm" className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white">
               <Plus className="h-4 w-4" /> Nova Ordem
