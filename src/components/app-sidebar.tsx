@@ -121,12 +121,12 @@ const ESTOQUE_LOCKED: LockedItem[] = [
 ];
 
 const PRODUCAO_SUBMENU: LeafItem[] = [
+  { to: "/app/producao/painel-lista-tecnica", label: "Dashboard Dinâmico" },
+  { to: "/app/producao/criar-ordem", label: "Criar Nova Ordem" },
+  { to: "/app/producao/ordens", label: "Ordens de Produção" },
   { to: "/app/producao/base-materia-prima", label: "Base Matéria-Prima" },
   { to: "/app/producao/tipos-produto", label: "Tipos de Produto" },
   { to: "/app/producao/lista-tecnica", label: "Lista Técnica" },
-  { to: "/app/producao/criar-ordem", label: "Criar Nova Ordem" },
-  { to: "/app/producao/ordens", label: "Ordens de Produção" },
-  { to: "/app/producao/painel-lista-tecnica", label: "Dashboard Dinâmico" },
   { to: "/app/producao/expedicao", label: "Expedição" },
 ];
 
