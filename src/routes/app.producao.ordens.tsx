@@ -268,9 +268,9 @@ function OrdensListPage() {
                       className="gap-1.5 text-amber-700 border-amber-300 hover:bg-amber-50"
                       disabled={isUp}
                       onClick={() => inputsRef.current[o.id]?.click()}
-                      title="Importar Lista Técnica (SAP B51) — gera nova versão preservando o histórico">
+                      title="Importar Lista Técnica (SAP) — gera nova versão preservando o histórico">
                       {isUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                      {isUp ? "Importando…" : "Upload B51"}
+                      {isUp ? "Importando…" : "Lista Técnica"}
                     </Button>
                     <Button size="icon" variant="ghost" title="Visualizar"
                       onClick={() => setViewing(o)}>
