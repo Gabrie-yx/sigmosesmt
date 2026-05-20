@@ -197,8 +197,8 @@ function DDSPainelPage() {
               <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
               <Tooltip />
               <Legend />
-              <Line yAxisId="left" type="monotone" dataKey="qtd" stroke="#6366f1" name="Qtd DDS" strokeWidth={2} />
-              <Line yAxisId="right" type="monotone" dataKey="aderencia" stroke="#10b981" name="% Aderência" strokeWidth={2} />
+              <Line yAxisId="left" type="monotone" dataKey="qtd" stroke="#C8102E" name="Qtd DDS" strokeWidth={2} />
+              <Line yAxisId="right" type="monotone" dataKey="aderencia" stroke="#64748b" name="% Aderência" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </div>
