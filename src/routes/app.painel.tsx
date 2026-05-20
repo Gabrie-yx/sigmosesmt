@@ -432,18 +432,18 @@ function TstPanel() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={{ stroke: "#cbd5e1" }} tickLine={false} />
                 <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={32} />
-                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: "#f59e0b" }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1)}k` : `R$${v}`} />
+                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1)}k` : `R$${v}`} />
                 <Tooltip
                   contentStyle={{ background: "rgba(15, 23, 42, 0.95)", border: "none", borderRadius: 8, color: "#fff", fontSize: 11 }}
                   labelStyle={{ color: "#cbd5e1", fontWeight: 700, marginBottom: 4 }}
                   formatter={(v: any, n: any) => n === "Valor R$" ? [`R$ ${Number(v).toFixed(2)}`, n] : [v, n]}
                 />
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} iconType="circle" />
-                <Area yAxisId="l" type="monotone" dataKey="primeira" stackId="a" stroke="#0f766e" strokeWidth={2} fill="url(#grad-primeira)" name="1ª entrega" />
-                <Area yAxisId="l" type="monotone" dataKey="troca" stackId="a" stroke="#14b8a6" strokeWidth={2} fill="url(#grad-troca)" name="Troca" />
+                <Area yAxisId="l" type="monotone" dataKey="primeira" stackId="a" stroke="#C8102E" strokeWidth={2} fill="url(#grad-primeira)" name="1ª entrega" />
+                <Area yAxisId="l" type="monotone" dataKey="troca" stackId="a" stroke="#E85D5D" strokeWidth={2} fill="url(#grad-troca)" name="Troca" />
                 <Area yAxisId="l" type="monotone" dataKey="devolucao" stackId="a" stroke="#94a3b8" strokeWidth={2} fill="url(#grad-devolucao)" name="Devolução" />
-                <Area yAxisId="l" type="monotone" dataKey="perda" stackId="a" stroke="#ef4444" strokeWidth={2} fill="url(#grad-perda)" name="Perda/Extravio" />
-                <Line yAxisId="r" type="monotone" dataKey="valor" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, fill: "#f59e0b", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 6 }} name="Valor R$" />
+                <Area yAxisId="l" type="monotone" dataKey="perda" stackId="a" stroke="#64748b" strokeWidth={2} fill="url(#grad-perda)" name="Perda/Extravio" />
+                <Line yAxisId="r" type="monotone" dataKey="valor" stroke="#C8102E" strokeWidth={3} dot={{ r: 4, fill: "#C8102E", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 6 }} name="Valor R$" />
               </ComposedChart>
             </ResponsiveContainer>
           )}
