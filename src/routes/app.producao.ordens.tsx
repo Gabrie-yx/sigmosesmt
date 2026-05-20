@@ -281,20 +281,19 @@ function OrdensListPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Número</TableHead>
-              <TableHead>Data</TableHead>
+              <TableHead>Código SAP</TableHead>
               <TableHead>Casco</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Solicitante</TableHead>
-              <TableHead>Código SAP</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
             )}
             {!isLoading && filtradas.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                 Nenhuma ordem cadastrada ainda.
               </TableCell></TableRow>
             )}
@@ -305,10 +304,6 @@ function OrdensListPage() {
               return (
               <TableRow key={o.id}>
                 <TableCell className="font-bold text-amber-700">{o.numero}</TableCell>
-                <TableCell>{o.data_solicitacao ? new Date(o.data_solicitacao).toLocaleDateString("pt-BR") : "—"}</TableCell>
-                <TableCell>{o.casco ?? "—"}</TableCell>
-                <TableCell>{o.tipo_produto ?? "—"}</TableCell>
-                <TableCell>{o.solicitante ?? "—"}</TableCell>
                 <TableCell>
                   <Input
                     value={sapVal}
@@ -320,6 +315,9 @@ function OrdensListPage() {
                     className="h-8 w-40 font-mono text-xs"
                   />
                 </TableCell>
+                <TableCell>{o.casco ?? "—"}</TableCell>
+                <TableCell>{o.tipo_produto ?? "—"}</TableCell>
+                <TableCell>{o.solicitante ?? "—"}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     <input
