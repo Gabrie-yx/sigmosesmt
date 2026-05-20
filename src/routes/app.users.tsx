@@ -424,6 +424,49 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={investorOpen} onOpenChange={setInvestorOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Acesso de investidor gerado</DialogTitle>
+            <DialogDescription>
+              Somente leitura · expira em {investorCreds ? new Date(investorCreds.expires_at).toLocaleString("pt-BR") : "—"}
+            </DialogDescription>
+          </DialogHeader>
+          {investorCreds && (
+            <div className="space-y-3 text-sm">
+              <div>
+                <Label className="text-xs">Link</Label>
+                <Input readOnly value={investorCreds.link} onFocus={(e) => e.currentTarget.select()} />
+              </div>
+              <div>
+                <Label className="text-xs">E-mail</Label>
+                <Input readOnly value={investorCreds.email} onFocus={(e) => e.currentTarget.select()} />
+              </div>
+              <div>
+                <Label className="text-xs">Senha</Label>
+                <Input readOnly value={investorCreds.password} onFocus={(e) => e.currentTarget.select()} />
+              </div>
+              <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                Copie as credenciais agora — a senha não será exibida novamente. O acesso é revogado automaticamente após 48 horas.
+              </div>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  const txt = `Acesso ao SIGMO (48h)\nLink: ${investorCreds.link}\nE-mail: ${investorCreds.email}\nSenha: ${investorCreds.password}`;
+                  navigator.clipboard.writeText(txt);
+                  toast.success("Credenciais copiadas");
+                }}
+              >
+                Copiar tudo
+              </Button>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setInvestorOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
