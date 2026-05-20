@@ -413,16 +413,16 @@ function TstPanel() {
               <ComposedChart data={entregaSerie} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="grad-primeira" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0f766e" stopOpacity={0.85} />
-                    <stop offset="100%" stopColor="#0f766e" stopOpacity={0.15} />
+                    <stop offset="0%" stopColor="#C8102E" stopOpacity={0.85} />
+                    <stop offset="100%" stopColor="#C8102E" stopOpacity={0.15} />
                   </linearGradient>
                   <linearGradient id="grad-troca" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#14b8a6" stopOpacity={0.1} />
+                    <stop offset="0%" stopColor="#E85D5D" stopOpacity={0.8} />
+                    <stop offset="100%" stopColor="#E85D5D" stopOpacity={0.1} />
                   </linearGradient>
                   <linearGradient id="grad-perda" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.85} />
-                    <stop offset="100%" stopColor="#ef4444" stopOpacity={0.15} />
+                    <stop offset="0%" stopColor="#64748b" stopOpacity={0.85} />
+                    <stop offset="100%" stopColor="#64748b" stopOpacity={0.15} />
                   </linearGradient>
                   <linearGradient id="grad-devolucao" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.7} />
