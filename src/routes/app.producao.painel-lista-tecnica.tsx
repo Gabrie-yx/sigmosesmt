@@ -654,7 +654,7 @@ function PainelListaTecnicaPage() {
               onChange={(e) => { setOrdemSel(e.target.value || null); limparFiltros(); }}
               className="px-4 py-2 rounded-md text-sm font-bold border border-primary/30 bg-primary/5 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 min-w-[340px]"
             >
-              {(mb51Ordens as any[]).length === 0 && <option value="">Nenhuma MB51 importada — faça upload em Ordens de Produção</option>}
+              {(mb51Ordens as any[]).length === 0 && <option value="">Nenhuma MB51 importada — use o botão "Upload MB51" acima</option>}
               {(mb51Ordens as any[]).map((o) => {
                 const c = o.casco_id ? cascoById.get(o.casco_id) : null;
                 const label = c ? `${c.nome ? String(c.nome).toUpperCase() + " - " : ""}CASCO ${c.numero}` : (o.texto_documento ?? "—");
