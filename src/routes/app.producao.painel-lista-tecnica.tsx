@@ -629,6 +629,19 @@ function PainelListaTecnicaPage() {
           {mb51Loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
           {mb51Loading ? "Importando MB51…" : "Upload MB51 (Consumo Real)"}
         </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9" title="O que enviar aqui?">
+              <Info className="h-4 w-4 text-blue-600" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 text-xs space-y-2">
+            <p className="font-bold text-sm text-blue-700">📊 MB51 — Consumo Real (.xlsx)</p>
+            <p>Envie aqui o relatório <strong>MB51 do SAP</strong> — movimentos de saída de materiais para as Ordens SAP (consumo real do casco).</p>
+            <p className="text-red-700"><strong>⚠️ NÃO envie aqui:</strong> Base de Matéria-Prima nem Lista Técnica (B51).</p>
+            <p className="text-muted-foreground">Cada Ordem SAP vira uma OP neste dashboard.</p>
+          </PopoverContent>
+        </Popover>
         <Button variant="outline" size="sm" onClick={() => {
           qc.invalidateQueries({ queryKey: ["mb51-ordens"] });
           qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
