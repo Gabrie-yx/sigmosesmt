@@ -111,9 +111,8 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-white to-red-50 px-4 py-10">
       <Card className="w-full max-w-md shadow-xl border-slate-200">
         <CardHeader className="text-center space-y-3 pb-4">
-          <div className="mx-auto relative h-24 w-24 overflow-hidden">
-            <img src={sigmoLogo} alt="SIGMO" className="h-24 w-24 object-contain" />
-            <span aria-hidden className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/70 to-transparent animate-[shimmer_2.8s_ease-in-out_infinite]" />
+          <div className="mx-auto relative h-36 w-36">
+            <img src={sigmoLogo} alt="SIGMO" className="h-36 w-36 object-contain" />
           </div>
           <CardDescription className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
             Sistema Integrado de Gestão Modular
