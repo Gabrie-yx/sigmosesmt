@@ -9,7 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Database, Upload, Loader2, Search } from "lucide-react";
+import { Database, Upload, Loader2, Search, Info } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { parseBaseMpXlsx } from "@/lib/base-mp-parser";
 
@@ -106,7 +107,7 @@ function BaseMpPage() {
             </p>
           </div>
         </div>
-        <div>
+        <div className="flex items-center gap-2">
           <input
             ref={fileRef}
             type="file"
@@ -119,6 +120,19 @@ function BaseMpPage() {
             {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             {importing ? "Importando…" : "Importar Base MP (.xlsx)"}
           </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="icon" className="h-9 w-9" title="O que enviar aqui?">
+                <Info className="h-4 w-4 text-slate-600" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 text-xs space-y-2">
+              <p className="font-bold text-sm text-slate-800">📋 Base de Matéria-Prima (.xlsx)</p>
+              <p>Envie aqui APENAS o <strong>cadastro oficial de materiais</strong> exportado do SAP — a planilha que classifica cada código em <strong>Ferro / Gás / Solda / Tinta / Outros</strong>.</p>
+              <p className="text-red-700"><strong>⚠️ NÃO envie aqui:</strong> MB51 (consumo) nem Lista Técnica (B51). Isso polui o catálogo.</p>
+              <p className="text-muted-foreground">Colunas esperadas: <code>Código</code>, <code>Descrição</code>, <code>Tipo</code>.</p>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
