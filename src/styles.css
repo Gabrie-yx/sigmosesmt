@@ -252,4 +252,9 @@
     50%      { box-shadow: 0 0 0 8px hsl(var(--destructive) / 0); }
   }
   .animate-pulse-critical { animation: pulse-critical 1.8s ease-in-out infinite; }
+  @keyframes shimmer {
+    0%   { transform: translateX(-100%); }
+    60%  { transform: translateX(100%); }
+    100% { transform: translateX(100%); }
+  }
 }
