@@ -22,6 +22,7 @@ import {
   deleteUser,
   listUsersAdmin,
 } from "@/lib/users.functions";
+import { createInvestorAccess } from "@/lib/temp-investors.functions";
 
 export const Route = createFileRoute("/app/users")({
   component: UsersPage,
@@ -69,6 +70,10 @@ function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [investorOpen, setInvestorOpen] = useState(false);
+  const [investorCreds, setInvestorCreds] = useState<{ email: string; password: string; expires_at: string; link: string } | null>(null);
+  const [investorLoading, setInvestorLoading] = useState(false);
+  const createInvestorFn = useServerFn(createInvestorAccess);
 
   // form state
   const [fName, setFName] = useState("");
@@ -167,6 +172,29 @@ function UsersPage() {
         </div>
         <Button onClick={() => setInviteOpen(true)}>
           <Plus className="h-4 w-4 mr-1" /> Convidar usuário
+        </Button>
+        <Button
+          variant="secondary"
+          className="ml-2"
+          disabled={investorLoading}
+          onClick={async () => {
+            setInvestorLoading(true);
+            try {
+              const res = await createInvestorFn();
+              setInvestorCreds({
+                email: res.email,
+                password: res.password,
+                expires_at: res.expires_at,
+                link: `${window.location.origin}/login`,
+              });
+              setInvestorOpen(true);
+              toast.success("Acesso de investidor criado (válido por 48h)");
+            } catch (e: any) {
+              toast.error(e.message ?? "Falha ao gerar acesso");
+            } finally { setInvestorLoading(false); }
+          }}
+        >
+          {investorLoading ? "Gerando..." : "Gerar acesso de investidor (48h)"}
         </Button>
       </div>
 
