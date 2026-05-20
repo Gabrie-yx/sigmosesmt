@@ -281,11 +281,10 @@ function OrdensListPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Número</TableHead>
-              <TableHead>Data</TableHead>
+              <TableHead>Código SAP</TableHead>
               <TableHead>Casco</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Solicitante</TableHead>
-              <TableHead>Código SAP</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
