@@ -74,8 +74,8 @@ export async function downloadListaTecnicaCalculadaPorCasco(
     it.espessura_mm != null ? `${it.espessura_mm} mm` : null,
     it.qtd_pecas,
     it.obs_dobra,
-    it.peso_unit_real,
-    it.peso_real,
+    calcPesoUnitReal(it),
+    calcPesoReal(it),
   ]);
 
   // Linha em branco + TOTAL
@@ -109,4 +109,25 @@ export async function downloadListaTecnicaCalculadaPorCasco(
   XLSX.writeFile(wb, `${baseNome}.xlsx`);
 
   return { totalItens: rows.length, versao: (lista as any).versao, totalRowIdx };
+}
+
+function calcPesoUnitReal(it: any): number | null {
+  if (it.peso_unit_real != null) return it.peso_unit_real;
+  if (it.largura_m != null && it.comprimento_m != null && it.peso_chapa != null) {
+    return Math.round(it.largura_m * it.comprimento_m * it.peso_chapa * 100) / 100;
+  }
+  if (it.peso_unit_ref != null && it.comprimento_m != null) {
+    return Math.round(it.peso_unit_ref * it.comprimento_m * 100) / 100;
+  }
+  if (it.peso_unit_ref != null) return it.peso_unit_ref;
+  return null;
+}
+
+function calcPesoReal(it: any): number | null {
+  if (it.peso_real != null) return it.peso_real;
+  const unit = calcPesoUnitReal(it);
+  if (unit == null) return null;
+  const mult = it.qtd_pecas ?? it.quantidade;
+  if (mult == null) return null;
+  return Math.round(unit * mult * 100) / 100;
 }
