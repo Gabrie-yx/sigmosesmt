@@ -19,7 +19,6 @@ import { ClipboardList, Eye, Pencil, Trash2, Printer, FileDown, Plus, Search, Up
 import { toast } from "sonner";
 import { gerarPdfOrdem, imprimirOrdem, type OrdemFull } from "@/lib/producao-pdf";
 import { parseListaTecnicaXlsx } from "@/lib/lista-tecnica-parser";
-import { parseMb51Xlsx, normalizeCascoName } from "@/lib/mb51-parser";
 
 export const Route = createFileRoute("/app/producao/ordens")({
   component: OrdensListPage,
@@ -38,8 +37,6 @@ function OrdensListPage() {
   const [deleting, setDeleting] = useState<{ id: string; numero: string } | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const inputsRef = useRef<Record<string, HTMLInputElement | null>>({});
-  const [mb51Loading, setMb51Loading] = useState(false);
-  const mb51Ref = useRef<HTMLInputElement>(null);
 
   const { data: ordens = [], isLoading } = useQuery({
     queryKey: ["producao-ordens-halb"],
@@ -192,101 +189,6 @@ function OrdensListPage() {
     uploadMut.mutate({ ordem, file: f });
   };
 
-  // ====== Upload MB51 (consumo real para o Dashboard Dinâmico) ======
-  const mb51Mut = useMutation({
-    mutationFn: async (file: File) => {
-      const parsed = await parseMb51Xlsx(file);
-      // mapa de cascos por nome normalizado
-      const { data: cascosAll } = await supabase.from("cascos").select("id, numero, nome");
-      const cascoMap = new Map<string, string>();
-      (cascosAll ?? []).forEach((c: any) => {
-        const candidates = [c.nome, c.numero].filter(Boolean).map(normalizeCascoName);
-        candidates.forEach((k) => k && cascoMap.set(k, c.id));
-      });
-      const matchCasco = (texto: string | null): string | null => {
-        if (!texto) return null;
-        const n = normalizeCascoName(texto);
-        if (cascoMap.has(n)) return cascoMap.get(n)!;
-        // procura por substring: ex. "AMAZON AGRO 1" dentro de "AMAZON AGRO 1 CASCO 142"
-        for (const [key, id] of cascoMap) {
-          if (key && (n.includes(key) || key.includes(n))) return id;
-        }
-        return null;
-      };
-
-      const { data: { user } } = await supabase.auth.getUser();
-
-      for (const ord of parsed.ordens) {
-        const casco_id = matchCasco(ord.texto_documento);
-        // upsert ordem
-        const { data: ordRow, error: e1 } = await (supabase as any)
-          .from("producao_mb51_ordens")
-          .upsert({
-            numero_sap: ord.numero_sap,
-            texto_documento: ord.texto_documento,
-            casco_id,
-            arquivo_nome: file.name,
-            qtd_movimentos: ord.movimentos.length,
-            qtd_consumo_liquido: ord.qtd_consumo_liquido,
-            data_primeiro_movimento: ord.data_primeiro_movimento,
-            data_ultimo_movimento: ord.data_ultimo_movimento,
-            importado_por: user?.id ?? null,
-          }, { onConflict: "numero_sap" })
-          .select("id")
-          .single();
-        if (e1 || !ordRow) throw new Error(e1?.message ?? "Falha ao gravar ordem MB51");
-        const ordemId = (ordRow as any).id;
-        // limpa movimentos antigos para reimportar limpo
-        await (supabase as any).from("producao_mb51_movimentos").delete().eq("ordem_id", ordemId);
-        // insere lotes
-        const payload = ord.movimentos.map((m) => ({
-          ordem_id: ordemId,
-          numero_sap: ord.numero_sap,
-          material: m.material,
-          descricao: m.descricao,
-          quantidade: m.quantidade,
-          unidade: m.unidade,
-          data_lancamento: m.data_lancamento,
-          tipo_movimento: m.tipo_movimento,
-          classificacao_mb51: m.classificacao_mb51,
-          // tipo_resolvido será corrigido a cada leitura usando Base MP (pega aqui um fallback inicial)
-          tipo_resolvido: (() => {
-            const c = String(m.classificacao_mb51 ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-            if (c.startsWith("ferr")) return "FERRO";
-            if (c.startsWith("gas")) return "GÁS";
-            if (c.startsWith("sold")) return "SOLDA";
-            if (c.startsWith("tint")) return "TINTA";
-            return "OUTROS";
-          })(),
-        }));
-        for (let i = 0; i < payload.length; i += 300) {
-          const { error: e2 } = await (supabase as any)
-            .from("producao_mb51_movimentos")
-            .insert(payload.slice(i, i + 300));
-          if (e2) throw e2;
-        }
-      }
-      return { ordens: parsed.ordens.length, linhas: parsed.total_linhas };
-    },
-    onSuccess: ({ ordens: nOrd, linhas }) => {
-      toast.success(`MB51 importada: ${nOrd} ordens, ${linhas} movimentos.`);
-      qc.invalidateQueries({ queryKey: ["mb51-ordens"] });
-      qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
-      setMb51Loading(false);
-    },
-    onError: (e: any) => {
-      toast.error(e?.message ?? "Falha ao importar MB51");
-      setMb51Loading(false);
-    },
-  });
-
-  const handleMb51 = (files: FileList | null) => {
-    const f = files?.[0];
-    if (!f) return;
-    setMb51Loading(true);
-    mb51Mut.mutate(f);
-  };
-
   return (
     <div className="container mx-auto px-4 py-6 space-y-5 max-w-[1400px]">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -302,15 +204,6 @@ function OrdensListPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <input ref={mb51Ref} type="file" accept=".xlsx,.xls" className="hidden"
-            onChange={(e) => { handleMb51(e.target.files); e.target.value = ""; }} />
-          <Button size="sm" variant="outline" disabled={mb51Loading}
-            onClick={() => mb51Ref.current?.click()}
-            className="gap-1.5 text-blue-700 border-blue-300 hover:bg-blue-50"
-            title="Importa o consumo real (MB51). Cada Ordem SAP vira uma OP do Dashboard Dinâmico.">
-            {mb51Loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {mb51Loading ? "Importando MB51…" : "Upload MB51 (Consumo Real)"}
-          </Button>
           <Link to="/app/producao/criar-ordem">
             <Button size="sm" className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white">
               <Plus className="h-4 w-4" /> Nova Ordem

@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { parseMb51Xlsx, normalizeCascoName } from "@/lib/mb51-parser";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LabelList, Cell, PieChart, Pie, RadialBarChart, RadialBar, Legend,
@@ -11,7 +13,7 @@ import {
   AreaChart, Area, ReferenceDot, ReferenceLine,
   LineChart, Line, ScatterChart, Scatter, ZAxis,
 } from "recharts";
-import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers, AlertTriangle, CheckCircle2, Upload, Loader2 } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
 import type { TipoMP } from "@/lib/base-mp-parser";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -123,6 +125,8 @@ function PainelListaTecnicaPage() {
   const [codigoSel, setCodigoSel] = useState<string | null>(null);
   const [unidadeSel, setUnidadeSel] = useState<string | null>(null);
   const [catSel, setCatSel] = useState<CategoriaMaterial | null>(null);
+  const [mb51Loading, setMb51Loading] = useState(false);
+  const mb51Ref = useRef<HTMLInputElement>(null);
 
   const { data: cascos = [] } = useQuery({
     queryKey: ["cascos-list"],
@@ -514,6 +518,93 @@ function PainelListaTecnicaPage() {
     };
   }, [codigoSel, itensFiltrados]);
 
+  // ====== Upload MB51 (consumo real) ======
+  const mb51Mut = useMutation({
+    mutationFn: async (file: File) => {
+      const parsed = await parseMb51Xlsx(file);
+      const { data: cascosAll } = await supabase.from("cascos").select("id, numero, nome");
+      const cascoMap = new Map<string, string>();
+      (cascosAll ?? []).forEach((c: any) => {
+        const candidates = [c.nome, c.numero].filter(Boolean).map(normalizeCascoName);
+        candidates.forEach((k) => k && cascoMap.set(k, c.id));
+      });
+      const matchCasco = (texto: string | null): string | null => {
+        if (!texto) return null;
+        const n = normalizeCascoName(texto);
+        if (cascoMap.has(n)) return cascoMap.get(n)!;
+        for (const [key, id] of cascoMap) {
+          if (key && (n.includes(key) || key.includes(n))) return id;
+        }
+        return null;
+      };
+      const { data: { user } } = await supabase.auth.getUser();
+      for (const ord of parsed.ordens) {
+        const casco_id = matchCasco(ord.texto_documento);
+        const { data: ordRow, error: e1 } = await (supabase as any)
+          .from("producao_mb51_ordens")
+          .upsert({
+            numero_sap: ord.numero_sap,
+            texto_documento: ord.texto_documento,
+            casco_id,
+            arquivo_nome: file.name,
+            qtd_movimentos: ord.movimentos.length,
+            qtd_consumo_liquido: ord.qtd_consumo_liquido,
+            data_primeiro_movimento: ord.data_primeiro_movimento,
+            data_ultimo_movimento: ord.data_ultimo_movimento,
+            importado_por: user?.id ?? null,
+          }, { onConflict: "numero_sap" })
+          .select("id")
+          .single();
+        if (e1 || !ordRow) throw new Error(e1?.message ?? "Falha ao gravar ordem MB51");
+        const ordemId = (ordRow as any).id;
+        await (supabase as any).from("producao_mb51_movimentos").delete().eq("ordem_id", ordemId);
+        const payload = ord.movimentos.map((m) => ({
+          ordem_id: ordemId,
+          numero_sap: ord.numero_sap,
+          material: m.material,
+          descricao: m.descricao,
+          quantidade: m.quantidade,
+          unidade: m.unidade,
+          data_lancamento: m.data_lancamento,
+          tipo_movimento: m.tipo_movimento,
+          classificacao_mb51: m.classificacao_mb51,
+          tipo_resolvido: (() => {
+            const c = String(m.classificacao_mb51 ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            if (c.startsWith("ferr")) return "FERRO";
+            if (c.startsWith("gas")) return "GÁS";
+            if (c.startsWith("sold")) return "SOLDA";
+            if (c.startsWith("tint")) return "TINTA";
+            return "OUTROS";
+          })(),
+        }));
+        for (let i = 0; i < payload.length; i += 300) {
+          const { error: e2 } = await (supabase as any)
+            .from("producao_mb51_movimentos")
+            .insert(payload.slice(i, i + 300));
+          if (e2) throw e2;
+        }
+      }
+      return { ordens: parsed.ordens.length, linhas: parsed.total_linhas };
+    },
+    onSuccess: ({ ordens: nOrd, linhas }) => {
+      toast.success(`MB51 importada: ${nOrd} ordens, ${linhas} movimentos.`);
+      qc.invalidateQueries({ queryKey: ["mb51-ordens"] });
+      qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
+      setMb51Loading(false);
+    },
+    onError: (e: any) => {
+      toast.error(e?.message ?? "Falha ao importar MB51");
+      setMb51Loading(false);
+    },
+  });
+
+  const handleMb51 = (files: FileList | null) => {
+    const f = files?.[0];
+    if (!f) return;
+    setMb51Loading(true);
+    mb51Mut.mutate(f);
+  };
+
   return (
     <div className="space-y-3 p-4 bg-gradient-to-br from-muted/40 via-background to-muted/20 min-h-screen">
       {/* Header */}
@@ -527,6 +618,16 @@ function PainelListaTecnicaPage() {
             Acompanhamento em tempo real de matéria-prima e insumos aplicados no casco. Clique em qualquer elemento para filtrar.
           </p>
         </div>
+        <div className="flex items-center gap-2">
+        <input ref={mb51Ref} type="file" accept=".xlsx,.xls" className="hidden"
+          onChange={(e) => { handleMb51(e.target.files); e.target.value = ""; }} />
+        <Button size="sm" disabled={mb51Loading}
+          onClick={() => mb51Ref.current?.click()}
+          className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+          title="Upload da MB51 (consumo real). Cada Ordem SAP vira uma OP deste dashboard.">
+          {mb51Loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          {mb51Loading ? "Importando MB51…" : "Upload MB51 (Consumo Real)"}
+        </Button>
         <Button variant="outline" size="sm" onClick={() => {
           qc.invalidateQueries({ queryKey: ["mb51-ordens"] });
           qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
@@ -538,6 +639,7 @@ function PainelListaTecnicaPage() {
         }}>
           <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
         </Button>
+        </div>
       </div>
 
       {/* Seletor de Ordem SAP (cada Ordem SAP = um casco com consumo MB51) */}
@@ -552,7 +654,7 @@ function PainelListaTecnicaPage() {
               onChange={(e) => { setOrdemSel(e.target.value || null); limparFiltros(); }}
               className="px-4 py-2 rounded-md text-sm font-bold border border-primary/30 bg-primary/5 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 min-w-[340px]"
             >
-              {(mb51Ordens as any[]).length === 0 && <option value="">Nenhuma MB51 importada — faça upload em Ordens de Produção</option>}
+              {(mb51Ordens as any[]).length === 0 && <option value="">Nenhuma MB51 importada — use o botão "Upload MB51" acima</option>}
               {(mb51Ordens as any[]).map((o) => {
                 const c = o.casco_id ? cascoById.get(o.casco_id) : null;
                 const label = c ? `${c.nome ? String(c.nome).toUpperCase() + " - " : ""}CASCO ${c.numero}` : (o.texto_documento ?? "—");
