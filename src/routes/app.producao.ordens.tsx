@@ -27,7 +27,19 @@ export const Route = createFileRoute("/app/producao/ordens")({
 
 function extractCascoNumero(casco?: string | null) {
   const m = String(casco ?? "").match(/(\d+)/);
-  return m ? parseInt(m[1], 10) : null;
+  return m ? Number(m[1]) : null;
+}
+
+/** Mapeia CASCO N → AMAZON AGRO (N - 130). Ex: CASCO 134 → AMAZON AGRO 4. */
+function formatTipoComAgro(tipo?: string | null, casco?: string | null) {
+  const n = extractCascoNumero(casco);
+  const base = (tipo ?? "").replace(/\s*\(Casco em constru[cç][aã]o\)\s*/i, "").trim() || "—";
+  if (n == null) return base;
+  const agro = n - 130;
+  const cascoFmt = `CASCO ${String(n).padStart(3, "0")}`;
+  return agro > 0
+    ? `${base} AMAZON AGRO ${agro} - ${cascoFmt}`
+    : `${base} - ${cascoFmt}`;
 }
 
 function OrdensListPage() {
@@ -300,7 +312,6 @@ function OrdensListPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Código SAP</TableHead>
-              <TableHead>Casco</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Solicitante</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -308,10 +319,10 @@ function OrdensListPage() {
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
             )}
             {!isLoading && filtradas.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                 Nenhuma ordem cadastrada ainda.
               </TableCell></TableRow>
             )}
@@ -332,8 +343,7 @@ function OrdensListPage() {
                     className="h-8 w-40 font-mono text-xs"
                   />
                 </TableCell>
-                <TableCell>{o.casco ?? "—"}</TableCell>
-                <TableCell>{o.tipo_produto ?? "—"}</TableCell>
+                <TableCell className="font-medium">{formatTipoComAgro(o.tipo_produto, o.casco)}</TableCell>
                 <TableCell>{o.solicitante ?? "—"}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
