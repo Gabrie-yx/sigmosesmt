@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import { assertSheetKind } from "./sheet-detect";
+import { inferTipoByText } from "./mb51-parser";
 
 export type TipoMP = "FERRO" | "GÁS" | "SOLDA" | "TINTA" | "OUTROS";
 
@@ -63,10 +64,14 @@ export async function parseBaseMpXlsx(file: File): Promise<BaseMpItem[]> {
     const cod = r[cCod];
     if (cod == null || String(cod).trim() === "") continue;
     const codigo = String(cod).replace(/\.0$/, "").trim();
+    const descricao = cDesc !== -1 && r[cDesc] != null ? String(r[cDesc]).trim() : null;
+    const tipoCol = mapTipo(r[cTipo]);
+    // Se a coluna Tipo cair em OUTROS, tenta refinar pela descrição
+    const tipoFinal: TipoMP = tipoCol === "OUTROS" ? (inferTipoByText(descricao) ?? "OUTROS") : tipoCol;
     dedup.set(codigo, {
       codigo,
-      descricao: cDesc !== -1 && r[cDesc] != null ? String(r[cDesc]).trim() : null,
-      tipo: mapTipo(r[cTipo]),
+      descricao,
+      tipo: tipoFinal,
     });
   }
   return Array.from(dedup.values());
