@@ -321,7 +321,6 @@ function OrdensListPage() {
               const sapVal = sapDrafts[o.id] ?? (o.codigo_sap ?? "");
               return (
               <TableRow key={o.id}>
-                <TableCell className="font-bold text-amber-700">{o.numero}</TableCell>
                 <TableCell>
                   <Input
                     value={sapVal}
