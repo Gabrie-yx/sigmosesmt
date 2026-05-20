@@ -518,6 +518,93 @@ function PainelListaTecnicaPage() {
     };
   }, [codigoSel, itensFiltrados]);
 
+  // ====== Upload MB51 (consumo real) ======
+  const mb51Mut = useMutation({
+    mutationFn: async (file: File) => {
+      const parsed = await parseMb51Xlsx(file);
+      const { data: cascosAll } = await supabase.from("cascos").select("id, numero, nome");
+      const cascoMap = new Map<string, string>();
+      (cascosAll ?? []).forEach((c: any) => {
+        const candidates = [c.nome, c.numero].filter(Boolean).map(normalizeCascoName);
+        candidates.forEach((k) => k && cascoMap.set(k, c.id));
+      });
+      const matchCasco = (texto: string | null): string | null => {
+        if (!texto) return null;
+        const n = normalizeCascoName(texto);
+        if (cascoMap.has(n)) return cascoMap.get(n)!;
+        for (const [key, id] of cascoMap) {
+          if (key && (n.includes(key) || key.includes(n))) return id;
+        }
+        return null;
+      };
+      const { data: { user } } = await supabase.auth.getUser();
+      for (const ord of parsed.ordens) {
+        const casco_id = matchCasco(ord.texto_documento);
+        const { data: ordRow, error: e1 } = await (supabase as any)
+          .from("producao_mb51_ordens")
+          .upsert({
+            numero_sap: ord.numero_sap,
+            texto_documento: ord.texto_documento,
+            casco_id,
+            arquivo_nome: file.name,
+            qtd_movimentos: ord.movimentos.length,
+            qtd_consumo_liquido: ord.qtd_consumo_liquido,
+            data_primeiro_movimento: ord.data_primeiro_movimento,
+            data_ultimo_movimento: ord.data_ultimo_movimento,
+            importado_por: user?.id ?? null,
+          }, { onConflict: "numero_sap" })
+          .select("id")
+          .single();
+        if (e1 || !ordRow) throw new Error(e1?.message ?? "Falha ao gravar ordem MB51");
+        const ordemId = (ordRow as any).id;
+        await (supabase as any).from("producao_mb51_movimentos").delete().eq("ordem_id", ordemId);
+        const payload = ord.movimentos.map((m) => ({
+          ordem_id: ordemId,
+          numero_sap: ord.numero_sap,
+          material: m.material,
+          descricao: m.descricao,
+          quantidade: m.quantidade,
+          unidade: m.unidade,
+          data_lancamento: m.data_lancamento,
+          tipo_movimento: m.tipo_movimento,
+          classificacao_mb51: m.classificacao_mb51,
+          tipo_resolvido: (() => {
+            const c = String(m.classificacao_mb51 ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            if (c.startsWith("ferr")) return "FERRO";
+            if (c.startsWith("gas")) return "GÁS";
+            if (c.startsWith("sold")) return "SOLDA";
+            if (c.startsWith("tint")) return "TINTA";
+            return "OUTROS";
+          })(),
+        }));
+        for (let i = 0; i < payload.length; i += 300) {
+          const { error: e2 } = await (supabase as any)
+            .from("producao_mb51_movimentos")
+            .insert(payload.slice(i, i + 300));
+          if (e2) throw e2;
+        }
+      }
+      return { ordens: parsed.ordens.length, linhas: parsed.total_linhas };
+    },
+    onSuccess: ({ ordens: nOrd, linhas }) => {
+      toast.success(`MB51 importada: ${nOrd} ordens, ${linhas} movimentos.`);
+      qc.invalidateQueries({ queryKey: ["mb51-ordens"] });
+      qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
+      setMb51Loading(false);
+    },
+    onError: (e: any) => {
+      toast.error(e?.message ?? "Falha ao importar MB51");
+      setMb51Loading(false);
+    },
+  });
+
+  const handleMb51 = (files: FileList | null) => {
+    const f = files?.[0];
+    if (!f) return;
+    setMb51Loading(true);
+    mb51Mut.mutate(f);
+  };
+
   return (
     <div className="space-y-3 p-4 bg-gradient-to-br from-muted/40 via-background to-muted/20 min-h-screen">
       {/* Header */}
