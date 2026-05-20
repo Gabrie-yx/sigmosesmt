@@ -539,6 +539,8 @@ function PainelListaTecnicaPage() {
         return null;
       };
       const { data: { user } } = await supabase.auth.getUser();
+      let totalInseridos = 0;
+      let totalIgnorados = 0;
       for (const ord of parsed.ordens) {
         const casco_id = matchCasco(ord.texto_documento);
         const { data: ordRow, error: e1 } = await (supabase as any)
@@ -558,8 +560,10 @@ function PainelListaTecnicaPage() {
           .single();
         if (e1 || !ordRow) throw new Error(e1?.message ?? "Falha ao gravar ordem MB51");
         const ordemId = (ordRow as any).id;
-        await (supabase as any).from("producao_mb51_movimentos").delete().eq("ordem_id", ordemId);
-        const payload = ord.movimentos.map((m) => ({
+        // Dedup local pela mesma chave do índice único (evita duplicatas dentro do próprio arquivo)
+        const seen = new Set<string>();
+        const payload = ord.movimentos
+          .map((m) => ({
           ordem_id: ordemId,
           numero_sap: ord.numero_sap,
           material: m.material,
@@ -577,18 +581,44 @@ function PainelListaTecnicaPage() {
             if (c.startsWith("tint")) return "TINTA";
             return "OUTROS";
           })(),
-        }));
+          }))
+          .filter((p) => {
+            const key = [p.numero_sap, p.material, p.data_lancamento, p.quantidade, p.unidade, p.tipo_movimento, p.classificacao_mb51 ?? ""].join("|");
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
         for (let i = 0; i < payload.length; i += 300) {
-          const { error: e2 } = await (supabase as any)
+          const slice = payload.slice(i, i + 300);
+          const { data: ins, error: e2 } = await (supabase as any)
             .from("producao_mb51_movimentos")
-            .insert(payload.slice(i, i + 300));
+            .upsert(slice, {
+              onConflict: "numero_sap,material,data_lancamento,quantidade,unidade,tipo_movimento,classificacao_mb51",
+              ignoreDuplicates: true,
+            })
+            .select("id");
           if (e2) throw e2;
+          const inseridos = Array.isArray(ins) ? ins.length : 0;
+          totalInseridos += inseridos;
+          totalIgnorados += slice.length - inseridos;
         }
       }
-      return { ordens: parsed.ordens.length, linhas: parsed.total_linhas };
+      return { ordens: parsed.ordens.length, linhas: parsed.total_linhas, inseridos: totalInseridos, ignorados: totalIgnorados };
     },
-    onSuccess: ({ ordens: nOrd, linhas }) => {
-      toast.success(`MB51 importada: ${nOrd} ordens, ${linhas} movimentos.`);
+    onSuccess: ({ ordens: nOrd, linhas, inseridos, ignorados }) => {
+      if (ignorados > 0 && inseridos === 0) {
+        toast.info(
+          `Nenhum movimento novo. Esta planilha já havia sido importada (${ignorados} linhas já existiam).`,
+          { duration: 6000 },
+        );
+      } else if (ignorados > 0) {
+        toast.success(
+          `MB51 importada: ${nOrd} ordens, ${inseridos} movimentos novos inseridos, ${ignorados} já existentes ignorados (de ${linhas} no arquivo).`,
+          { duration: 6000 },
+        );
+      } else {
+        toast.success(`MB51 importada: ${nOrd} ordens, ${inseridos} movimentos.`);
+      }
       qc.invalidateQueries({ queryKey: ["mb51-ordens"] });
       qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
       setMb51Loading(false);
