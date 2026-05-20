@@ -357,7 +357,7 @@ function TstPanel() {
                 <div className="text-center text-slate-400 py-3 text-xs font-bold uppercase">Nenhum resultado</div>
               ) : searchResults.map((r) => (
                 <Link key={r.emp.id} to="/app/employees/$id" params={{ id: r.emp.id }}
-                  className="flex items-center justify-between p-3 border border-slate-100 rounded-lg bg-slate-50 hover:border-[#0f766e] hover:bg-white transition-all">
+                  className="flex items-center justify-between p-3 border border-slate-100 rounded-lg bg-slate-50 hover:border-[#C8102E] hover:bg-white transition-all">
                   <div className="min-w-0">
                     <div className="text-xs font-black uppercase text-slate-900 truncate">{r.emp.nome}</div>
                     <div className="text-[9px] font-bold uppercase text-slate-500 mt-0.5 truncate">{r.company} · {r.role?.name ?? "Sem cargo"}</div>
@@ -373,7 +373,7 @@ function TstPanel() {
     health: {
       title: "Saúde do SESMT", icon: ShieldCheck,
       render: () => (
-        <div className="bg-gradient-to-br from-[#0f766e] to-[#134e4a] -m-2 p-4 rounded-xl text-white h-full flex flex-col justify-between">
+        <div className="bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] -m-2 p-4 rounded-xl text-white h-full flex flex-col justify-between">
           <div>
             <div className="text-4xl font-black leading-none">{conformidadeGeral}<span className="text-xl opacity-70">%</span></div>
             <div className="text-[10px] uppercase tracking-wide opacity-80 mt-1">conformidade geral</div>
@@ -465,8 +465,8 @@ function TstPanel() {
               : "bg-teal-100 text-teal-700";
             return (
               <Link key={e.id} to="/app/employees/$id" params={{ id: e.employee_id }}
-                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#0f766e] transition-all">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#0f766e] to-[#134e4a] text-white flex items-center justify-center font-black text-sm shrink-0">{e.qtd}</div>
+                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#C8102E] transition-all">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white flex items-center justify-center font-black text-sm shrink-0">{e.qtd}</div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[11px] font-black uppercase text-slate-900 truncate">{e.item}</div>
                   <div className="text-[9px] font-bold uppercase text-slate-500 truncate">{e.colaborador}</div>
@@ -490,7 +490,7 @@ function TstPanel() {
             const adCls = ad >= 90 ? "bg-emerald-500" : ad >= 70 ? "bg-amber-400" : ad > 0 ? "bg-red-500" : "bg-slate-300";
             return (
               <Link key={d.id} to="/app/dds/historico"
-                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#0f766e] transition-all">
+                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#C8102E] transition-all">
                 <div className={`w-9 h-9 rounded-lg ${adCls} text-white flex items-center justify-center font-black text-[10px] shrink-0`}>{ad}%</div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[11px] font-black uppercase text-slate-900 truncate" title={d.tema}>{d.tema}</div>
