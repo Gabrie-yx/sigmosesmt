@@ -42,7 +42,7 @@ function SecurityPage() {
       }
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        friendlyName: `EnviCorp ${new Date().toLocaleDateString("pt-BR")}`,
+        friendlyName: `SIGMO ${new Date().toLocaleDateString("pt-BR")}`,
       });
       if (error) throw error;
       setFactorId(data.id);
