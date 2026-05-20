@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -40,6 +39,8 @@ function OrdensListPage() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const inputsRef = useRef<Record<string, HTMLInputElement | null>>({});
+  const [sapDrafts, setSapDrafts] = useState<Record<string, string>>({});
+  const [savingSapId, setSavingSapId] = useState<string | null>(null);
 
   const { data: ordens = [], isLoading } = useQuery({
     queryKey: ["producao-ordens-halb"],
@@ -116,6 +117,31 @@ function OrdensListPage() {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const sapMut = useMutation({
+    mutationFn: async ({ id, codigo_sap }: { id: string; codigo_sap: string }) => {
+      const { error } = await supabase
+        .from("producao_ordens")
+        .update({ codigo_sap: codigo_sap || null })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Código SAP salvo");
+      qc.invalidateQueries({ queryKey: ["producao-ordens-halb"] });
+      setSavingSapId(null);
+    },
+    onError: (e: any) => { toast.error(e?.message ?? "Falha ao salvar"); setSavingSapId(null); },
+  });
+
+  const saveSap = (o: any) => {
+    const draft = sapDrafts[o.id];
+    const current = (o.codigo_sap ?? "") as string;
+    const next = (draft ?? current).trim();
+    if (next === (current ?? "").trim()) return;
+    setSavingSapId(o.id);
+    sapMut.mutate({ id: o.id, codigo_sap: next });
+  };
 
   const uploadMut = useMutation({
     mutationFn: async ({ ordem, file }: { ordem: any; file: File }) => {
@@ -259,7 +285,7 @@ function OrdensListPage() {
               <TableHead>Casco</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Solicitante</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Código SAP</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -275,6 +301,7 @@ function OrdensListPage() {
             {filtradas.map((o) => {
               const isUp = uploadingId === o.id && uploadMut.isPending;
               const isDn = downloadingId === o.id;
+              const sapVal = sapDrafts[o.id] ?? (o.codigo_sap ?? "");
               return (
               <TableRow key={o.id}>
                 <TableCell className="font-bold text-amber-700">{o.numero}</TableCell>
@@ -283,9 +310,15 @@ function OrdensListPage() {
                 <TableCell>{o.tipo_produto ?? "—"}</TableCell>
                 <TableCell>{o.solicitante ?? "—"}</TableCell>
                 <TableCell>
-                  <Badge variant={o.status === "FINALIZADA" ? "default" : "secondary"}>
-                    {o.status}
-                  </Badge>
+                  <Input
+                    value={sapVal}
+                    onChange={(e) => setSapDrafts((s) => ({ ...s, [o.id]: e.target.value }))}
+                    onBlur={() => saveSap(o)}
+                    onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                    disabled={savingSapId === o.id}
+                    placeholder="Ex: SAP 700662"
+                    className="h-8 w-40 font-mono text-xs"
+                  />
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">

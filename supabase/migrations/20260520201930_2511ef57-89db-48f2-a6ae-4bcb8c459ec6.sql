@@ -1,0 +1,1 @@
+ALTER TABLE public.producao_ordens ADD COLUMN IF NOT EXISTS codigo_sap text;
