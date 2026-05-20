@@ -15,11 +15,12 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ClipboardList, Eye, Pencil, Trash2, Printer, FileDown, Plus, Search, Upload, Loader2, Info } from "lucide-react";
+import { ClipboardList, Eye, Pencil, Trash2, Printer, FileDown, Plus, Search, Upload, Loader2, Info, Download } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { gerarPdfOrdem, imprimirOrdem, type OrdemFull } from "@/lib/producao-pdf";
 import { parseListaTecnicaXlsx } from "@/lib/lista-tecnica-parser";
+import { downloadListaTecnicaCalculadaPorCasco } from "@/lib/lista-tecnica-export";
 
 export const Route = createFileRoute("/app/producao/ordens")({
   component: OrdensListPage,
@@ -37,6 +38,7 @@ function OrdensListPage() {
   const [viewing, setViewing] = useState<OrdemFull | null>(null);
   const [deleting, setDeleting] = useState<{ id: string; numero: string } | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const inputsRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   const { data: ordens = [], isLoading } = useQuery({
@@ -190,6 +192,22 @@ function OrdensListPage() {
     uploadMut.mutate({ ordem, file: f });
   };
 
+  const handleDownloadCalculada = async (ordem: any) => {
+    const numero = extractCascoNumero(ordem.casco);
+    if (numero == null) { toast.error("Ordem sem número de casco válido."); return; }
+    const cascoId = cascoIdByNumero.get(numero);
+    if (!cascoId) { toast.error("Casco ainda não cadastrado. Importe a Lista Técnica primeiro."); return; }
+    try {
+      setDownloadingId(ordem.id);
+      const { totalItens, versao } = await downloadListaTecnicaCalculadaPorCasco(cascoId, ordem.casco ?? undefined);
+      toast.success(`Lista Técnica v${versao} baixada com ${totalItens} itens calculados.`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao gerar planilha calculada.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 space-y-5 max-w-[1400px]">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -256,6 +274,7 @@ function OrdensListPage() {
             )}
             {filtradas.map((o) => {
               const isUp = uploadingId === o.id && uploadMut.isPending;
+              const isDn = downloadingId === o.id;
               return (
               <TableRow key={o.id}>
                 <TableCell className="font-bold text-amber-700">{o.numero}</TableCell>
@@ -284,6 +303,14 @@ function OrdensListPage() {
                       title="Importar Lista Técnica (SAP) — gera nova versão preservando o histórico">
                       {isUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                       {isUp ? "Importando…" : "Lista Técnica"}
+                    </Button>
+                    <Button size="sm" variant="outline"
+                      className="gap-1.5 text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                      disabled={isDn}
+                      onClick={() => handleDownloadCalculada(o)}
+                      title="Baixar Lista Técnica com PESO UNT REAL e PESO REAL calculados">
+                      {isDn ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                      {isDn ? "Gerando…" : "LT Calculada"}
                     </Button>
                     <Button size="icon" variant="ghost" title="Visualizar"
                       onClick={() => setViewing(o)}>
