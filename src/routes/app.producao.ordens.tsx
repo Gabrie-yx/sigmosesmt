@@ -30,16 +30,15 @@ function extractCascoNumero(casco?: string | null) {
   return m ? Number(m[1]) : null;
 }
 
-/** Mapeia CASCO N → AMAZON AGRO (N - 130). Ex: CASCO 134 → AMAZON AGRO 4. */
+/** Mapeia CASCO N → AMAZON AGRO (N - 129). Ex: CASCO 130 → AMAZON AGRO 1. */
 function formatTipoComAgro(tipo?: string | null, casco?: string | null) {
   const n = extractCascoNumero(casco);
   const base = (tipo ?? "").replace(/\s*\(Casco em constru[cç][aã]o\)\s*/i, "").trim() || "—";
   if (n == null) return base;
-  const agro = n - 130;
-  const cascoFmt = `CASCO ${String(n).padStart(3, "0")}`;
+  const agro = n - 129;
   return agro > 0
-    ? `${base} AMAZON AGRO ${agro} - ${cascoFmt}`
-    : `${base} - ${cascoFmt}`;
+    ? `${base} AMAZON AGRO ${agro} - ${n}`
+    : `${base} - ${n}`;
 }
 
 function OrdensListPage() {
