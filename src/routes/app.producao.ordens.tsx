@@ -49,7 +49,7 @@ function OrdensListPage() {
         .from("producao_ordens")
         .select("*, itens:producao_ordem_itens(*)")
         .or("mtart.eq.HALB,mtart.is.null")
-        .order("created_at", { ascending: false });
+        .order("numero", { ascending: false });
       if (error) throw error;
       // Garante exclusão de qualquer FERT que escape (defensivo) e mantém HALB + legado sem MTART
       return ((data ?? []) as any[]).filter((o) => o.mtart !== "FERT");
