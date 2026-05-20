@@ -701,7 +701,9 @@ function PainelListaTecnicaPage() {
               {(mb51Ordens as any[]).length === 0 && <option value="">Nenhuma MB51 importada — use o botão "Upload MB51" acima</option>}
               {(mb51Ordens as any[]).map((o) => {
                 const c = o.casco_id ? cascoById.get(o.casco_id) : null;
-                const label = c ? `${c.nome ? String(c.nome).toUpperCase() + " - " : ""}CASCO ${c.numero}` : (o.texto_documento ?? "—");
+                const label = c
+                  ? (c.nome ? String(c.nome).toUpperCase() : String(c.numero).replace(/^CASCO\s*/i, ""))
+                  : (o.texto_documento ?? "—");
                 return (
                   <option key={o.id} value={o.id}>
                     SAP {o.numero_sap} · {label}
