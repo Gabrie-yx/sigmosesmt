@@ -515,9 +515,9 @@ function TstPanel() {
                 return (
                   <div key={it.item + idx} className="p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:shadow-md transition-all">
                     <div className="text-[9px] text-slate-500 font-black uppercase mb-1 truncate" title={it.item}>{it.item}</div>
-                    <div className="text-xl font-black text-[#0f766e]">{it.qtd}</div>
+                    <div className="text-xl font-black text-[#C8102E]">{it.qtd}</div>
                     <div className="mt-2 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-[#0f766e] to-[#14b8a6]" style={{ width: `${perc}%` }} />
+                      <div className="h-full bg-gradient-to-r from-[#C8102E] to-[#E85D5D]" style={{ width: `${perc}%` }} />
                     </div>
                   </div>
                 );
