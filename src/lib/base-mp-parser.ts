@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { assertSheetKind } from "./sheet-detect";
 
 export type TipoMP = "FERRO" | "GÁS" | "SOLDA" | "TINTA" | "OUTROS";
 
@@ -40,6 +41,7 @@ const findCol = (headers: string[], ...cands: string[]) => {
 };
 
 export async function parseBaseMpXlsx(file: File): Promise<BaseMpItem[]> {
+  await assertSheetKind(file, "BASE_MP");
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
   const sheet = wb.Sheets[wb.SheetNames[0]];

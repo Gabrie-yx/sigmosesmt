@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import type { TipoMP } from "./base-mp-parser";
+import { assertSheetKind } from "./sheet-detect";
 
 export interface Mb51Movimento {
   material: string;
@@ -87,6 +88,7 @@ export function normalizeCascoName(s: string | null | undefined): string {
 }
 
 export async function parseMb51Xlsx(file: File): Promise<Mb51ParseResult> {
+  await assertSheetKind(file, "MB51");
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array", cellDates: true });
   const sheet = wb.Sheets[wb.SheetNames[0]];
