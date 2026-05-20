@@ -197,7 +197,7 @@ function TstPanel() {
   const statusPie = [
     { name: "Aptos", value: aptos, color: "#10b981" },
     { name: "Alerta", value: alertas, color: "#f59e0b" },
-    { name: "Bloqueados", value: bloqueados, color: "#ef4444" },
+    { name: "Bloqueados", value: bloqueados, color: "#C8102E" },
   ].filter((x) => x.value > 0);
 
   const topItens = useMemo(() => {
@@ -333,8 +333,8 @@ function TstPanel() {
           <KpiTile icon={ShieldCheck} label="Conformidade" value={`${conformidadeGeral}%`} hint={`${aptos} aptos`} tone={conformidadeGeral >= 90 ? "green" : conformidadeGeral >= 70 ? "amber" : "red"} />
           <KpiTile icon={Stethoscope} label="ASOs vencendo" value={asoVencendo30} hint={`${asoVencidos} vencidos`} tone={asoVencidos > 0 ? "red" : "amber"} />
           <KpiTile icon={Package} label="EPIs em estoque" value={estoqueTotal} hint={`${estoqueBaixo} baixo`} tone="dark" />
-          <KpiTile icon={HardHat} label="EPIs entregues" value={totalEntregas} hint={`R$ ${valorEntregas.toFixed(0)}`} tone="teal" />
-          <KpiTile icon={ClipboardCheck} label="DDS no período" value={ddsCount} hint={`${ddsAderencia}% aderência`} tone="teal" />
+          <KpiTile icon={HardHat} label="EPIs entregues" value={totalEntregas} hint={`R$ ${valorEntregas.toFixed(0)}`} tone="brand" />
+          <KpiTile icon={ClipboardCheck} label="DDS no período" value={ddsCount} hint={`${ddsAderencia}% aderência`} tone="brand" />
           <KpiTile icon={FileWarning} label="APRs · PTEs" value={`${aprsAtivas} · ${ptesAtivas}`} hint="abertos" tone="dark" />
         </div>
       ),
@@ -349,7 +349,7 @@ function TstPanel() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onMouseDown={(e) => e.stopPropagation()}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e] transition-all placeholder:text-slate-400 placeholder:font-normal"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E] transition-all placeholder:text-slate-400 placeholder:font-normal"
           />
           {search && (
             <div className="mt-3 space-y-1.5 max-h-64 overflow-y-auto">
@@ -357,7 +357,7 @@ function TstPanel() {
                 <div className="text-center text-slate-400 py-3 text-xs font-bold uppercase">Nenhum resultado</div>
               ) : searchResults.map((r) => (
                 <Link key={r.emp.id} to="/app/employees/$id" params={{ id: r.emp.id }}
-                  className="flex items-center justify-between p-3 border border-slate-100 rounded-lg bg-slate-50 hover:border-[#0f766e] hover:bg-white transition-all">
+                  className="flex items-center justify-between p-3 border border-slate-100 rounded-lg bg-slate-50 hover:border-[#C8102E] hover:bg-white transition-all">
                   <div className="min-w-0">
                     <div className="text-xs font-black uppercase text-slate-900 truncate">{r.emp.nome}</div>
                     <div className="text-[9px] font-bold uppercase text-slate-500 mt-0.5 truncate">{r.company} · {r.role?.name ?? "Sem cargo"}</div>
@@ -373,7 +373,7 @@ function TstPanel() {
     health: {
       title: "Saúde do SESMT", icon: ShieldCheck,
       render: () => (
-        <div className="bg-gradient-to-br from-[#0f766e] to-[#134e4a] -m-2 p-4 rounded-xl text-white h-full flex flex-col justify-between">
+        <div className="bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] -m-2 p-4 rounded-xl text-white h-full flex flex-col justify-between">
           <div>
             <div className="text-4xl font-black leading-none">{conformidadeGeral}<span className="text-xl opacity-70">%</span></div>
             <div className="text-[10px] uppercase tracking-wide opacity-80 mt-1">conformidade geral</div>
@@ -413,16 +413,16 @@ function TstPanel() {
               <ComposedChart data={entregaSerie} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="grad-primeira" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0f766e" stopOpacity={0.85} />
-                    <stop offset="100%" stopColor="#0f766e" stopOpacity={0.15} />
+                    <stop offset="0%" stopColor="#C8102E" stopOpacity={0.85} />
+                    <stop offset="100%" stopColor="#C8102E" stopOpacity={0.15} />
                   </linearGradient>
                   <linearGradient id="grad-troca" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#14b8a6" stopOpacity={0.1} />
+                    <stop offset="0%" stopColor="#E85D5D" stopOpacity={0.8} />
+                    <stop offset="100%" stopColor="#E85D5D" stopOpacity={0.1} />
                   </linearGradient>
                   <linearGradient id="grad-perda" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.85} />
-                    <stop offset="100%" stopColor="#ef4444" stopOpacity={0.15} />
+                    <stop offset="0%" stopColor="#64748b" stopOpacity={0.85} />
+                    <stop offset="100%" stopColor="#64748b" stopOpacity={0.15} />
                   </linearGradient>
                   <linearGradient id="grad-devolucao" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.7} />
@@ -432,18 +432,18 @@ function TstPanel() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={{ stroke: "#cbd5e1" }} tickLine={false} />
                 <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={32} />
-                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: "#f59e0b" }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1)}k` : `R$${v}`} />
+                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1)}k` : `R$${v}`} />
                 <Tooltip
                   contentStyle={{ background: "rgba(15, 23, 42, 0.95)", border: "none", borderRadius: 8, color: "#fff", fontSize: 11 }}
                   labelStyle={{ color: "#cbd5e1", fontWeight: 700, marginBottom: 4 }}
                   formatter={(v: any, n: any) => n === "Valor R$" ? [`R$ ${Number(v).toFixed(2)}`, n] : [v, n]}
                 />
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} iconType="circle" />
-                <Area yAxisId="l" type="monotone" dataKey="primeira" stackId="a" stroke="#0f766e" strokeWidth={2} fill="url(#grad-primeira)" name="1ª entrega" />
-                <Area yAxisId="l" type="monotone" dataKey="troca" stackId="a" stroke="#14b8a6" strokeWidth={2} fill="url(#grad-troca)" name="Troca" />
+                <Area yAxisId="l" type="monotone" dataKey="primeira" stackId="a" stroke="#C8102E" strokeWidth={2} fill="url(#grad-primeira)" name="1ª entrega" />
+                <Area yAxisId="l" type="monotone" dataKey="troca" stackId="a" stroke="#E85D5D" strokeWidth={2} fill="url(#grad-troca)" name="Troca" />
                 <Area yAxisId="l" type="monotone" dataKey="devolucao" stackId="a" stroke="#94a3b8" strokeWidth={2} fill="url(#grad-devolucao)" name="Devolução" />
-                <Area yAxisId="l" type="monotone" dataKey="perda" stackId="a" stroke="#ef4444" strokeWidth={2} fill="url(#grad-perda)" name="Perda/Extravio" />
-                <Line yAxisId="r" type="monotone" dataKey="valor" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, fill: "#f59e0b", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 6 }} name="Valor R$" />
+                <Area yAxisId="l" type="monotone" dataKey="perda" stackId="a" stroke="#64748b" strokeWidth={2} fill="url(#grad-perda)" name="Perda/Extravio" />
+                <Line yAxisId="r" type="monotone" dataKey="valor" stroke="#C8102E" strokeWidth={3} dot={{ r: 4, fill: "#C8102E", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 6 }} name="Valor R$" />
               </ComposedChart>
             </ResponsiveContainer>
           )}
@@ -462,11 +462,11 @@ function TstPanel() {
             const motivoCls = e.motivo === "PERDA_EXTRAVIO" ? "bg-red-100 text-red-700"
               : e.motivo === "PRIMEIRA_ENTREGA" ? "bg-emerald-100 text-emerald-700"
               : e.motivo === "DEVOLUCAO" ? "bg-slate-200 text-slate-700"
-              : "bg-teal-100 text-teal-700";
+              : "bg-red-100 text-red-700";
             return (
               <Link key={e.id} to="/app/employees/$id" params={{ id: e.employee_id }}
-                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#0f766e] transition-all">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#0f766e] to-[#134e4a] text-white flex items-center justify-center font-black text-sm shrink-0">{e.qtd}</div>
+                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#C8102E] transition-all">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white flex items-center justify-center font-black text-sm shrink-0">{e.qtd}</div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[11px] font-black uppercase text-slate-900 truncate">{e.item}</div>
                   <div className="text-[9px] font-bold uppercase text-slate-500 truncate">{e.colaborador}</div>
@@ -490,7 +490,7 @@ function TstPanel() {
             const adCls = ad >= 90 ? "bg-emerald-500" : ad >= 70 ? "bg-amber-400" : ad > 0 ? "bg-red-500" : "bg-slate-300";
             return (
               <Link key={d.id} to="/app/dds/historico"
-                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#0f766e] transition-all">
+                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#C8102E] transition-all">
                 <div className={`w-9 h-9 rounded-lg ${adCls} text-white flex items-center justify-center font-black text-[10px] shrink-0`}>{ad}%</div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[11px] font-black uppercase text-slate-900 truncate" title={d.tema}>{d.tema}</div>
@@ -515,9 +515,9 @@ function TstPanel() {
                 return (
                   <div key={it.item + idx} className="p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:shadow-md transition-all">
                     <div className="text-[9px] text-slate-500 font-black uppercase mb-1 truncate" title={it.item}>{it.item}</div>
-                    <div className="text-xl font-black text-[#0f766e]">{it.qtd}</div>
+                    <div className="text-xl font-black text-[#C8102E]">{it.qtd}</div>
                     <div className="mt-2 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-[#0f766e] to-[#14b8a6]" style={{ width: `${perc}%` }} />
+                      <div className="h-full bg-gradient-to-r from-[#C8102E] to-[#E85D5D]" style={{ width: `${perc}%` }} />
                     </div>
                   </div>
                 );
@@ -540,10 +540,10 @@ function TstPanel() {
             const isFirst = i === 0;
             return (
               <div key={r.nome + i}
-                className={`flex items-center gap-3 p-2 rounded-lg ${isFirst ? "bg-slate-50 border-l-4 border-[#0f766e]" : ""}`}>
+                className={`flex items-center gap-3 p-2 rounded-lg ${isFirst ? "bg-slate-50 border-l-4 border-[#C8102E]" : ""}`}>
                 <div className="relative shrink-0">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-xs ${
-                    isFirst ? "bg-teal-100 text-[#0f766e] border-2 border-teal-200" : "bg-slate-100 text-slate-600"
+                    isFirst ? "bg-red-100 text-[#C8102E] border-2 border-red-200" : "bg-slate-100 text-slate-600"
                   }`}>{initials}</div>
                   {medal && <span className={`absolute -bottom-1 -right-1 ${medal.bg} text-[8px] px-1 rounded font-black`}>{medal.label}</span>}
                 </div>
@@ -570,8 +570,8 @@ function TstPanel() {
                 <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10 }} />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar yAxisId="l" dataKey="qtd" fill="#0f766e" name="DDS realizados" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="r" dataKey="aderencia" fill="#14b8a6" name="% aderência" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="l" dataKey="qtd" fill="#C8102E" name="DDS realizados" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="r" dataKey="aderencia" fill="#94a3b8" name="% aderência" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -622,7 +622,7 @@ function TstPanel() {
               value={filterCompany}
               onChange={(e) => setFilterCompany(e.target.value)}
               onMouseDown={(e) => e.stopPropagation()}
-              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase outline-none focus:ring-2 focus:border-[#0f766e] max-w-[240px] truncate"
+              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase outline-none focus:ring-2 focus:border-[#C8102E] max-w-[240px] truncate"
             >
               <option value="ALL">Todas as empresas</option>
               {(data?.companies ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -634,10 +634,10 @@ function TstPanel() {
             ) : pendencias.map((p) => (
               <div key={p.emp.id}
                 onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
-                className="p-3 border border-slate-100 rounded-xl bg-slate-50 hover:bg-white hover:border-[#0f766e] hover:shadow-sm cursor-pointer transition-all group">
+                className="p-3 border border-slate-100 rounded-xl bg-slate-50 hover:bg-white hover:border-[#C8102E] hover:shadow-sm cursor-pointer transition-all group">
                 <div className="flex items-center justify-between mb-1">
                   <div className="text-xs font-black uppercase text-slate-900 truncate">{p.emp.nome}</div>
-                  <ArrowUpRight className="h-3 w-3 text-slate-300 group-hover:text-[#0f766e]" />
+                  <ArrowUpRight className="h-3 w-3 text-slate-300 group-hover:text-[#C8102E]" />
                 </div>
                 <div className="text-[9px] font-bold uppercase text-slate-500 mb-1.5 truncate">{p.company}</div>
                 <div className="flex items-center justify-between gap-2">
@@ -682,12 +682,12 @@ function TstPanel() {
             <button key={p} onClick={() => setPeriodo(p)}
               className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
                 periodo === p
-                  ? "bg-gradient-to-br from-[#0f766e] to-[#134e4a] text-white shadow-md"
-                  : "bg-white text-slate-500 border border-slate-200 hover:border-[#0f766e]"
+                  ? "bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white shadow-md"
+                  : "bg-white text-slate-500 border border-slate-200 hover:border-[#C8102E]"
               }`}>{p} dias</button>
           ))}
           <button onClick={() => setLocked((v) => !v)}
-            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white text-slate-600 border border-slate-200 hover:border-[#0f766e] flex items-center gap-1.5">
+            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white text-slate-600 border border-slate-200 hover:border-[#C8102E] flex items-center gap-1.5">
             {locked ? <><Lock className="h-3 w-3" /> Bloqueado</> : <><Unlock className="h-3 w-3" /> Editar</>}
           </button>
           <button onClick={resetLayout}
@@ -712,7 +712,7 @@ function TstPanel() {
           const w = widgets[l.i];
           if (!w) return null;
           const Icon = w.icon;
-          const accentCls = w.accent === "amber" ? "text-amber-600" : w.accent === "red" ? "text-red-600" : "text-[#0f766e]";
+          const accentCls = w.accent === "amber" ? "text-amber-600" : w.accent === "red" ? "text-red-600" : "text-[#C8102E]";
           const borderCls = w.accent === "red" ? "border-red-200" : "border-slate-200";
           return (
             <div key={l.i} className={`bg-white rounded-2xl shadow-sm border ${borderCls} flex flex-col overflow-hidden`}>
@@ -739,11 +739,11 @@ function TstPanel() {
 
 function KpiTile({ icon: Icon, label, value, hint, tone }: {
   icon: any; label: string; value: string | number; hint?: string;
-  tone: "dark" | "teal" | "green" | "amber" | "red";
+  tone: "dark" | "brand" | "green" | "amber" | "red";
 }) {
   const styles: Record<string, string> = {
     dark: "from-slate-800 to-slate-900 text-white",
-    teal: "from-[#0f766e] to-[#134e4a] text-white",
+    brand: "from-[#C8102E] to-[#8B0A1E] text-white",
     green: "from-emerald-500 to-emerald-700 text-white",
     amber: "from-amber-400 to-amber-600 text-white",
     red: "from-red-500 to-red-700 text-white",
