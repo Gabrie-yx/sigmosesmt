@@ -462,7 +462,7 @@ function TstPanel() {
             const motivoCls = e.motivo === "PERDA_EXTRAVIO" ? "bg-red-100 text-red-700"
               : e.motivo === "PRIMEIRA_ENTREGA" ? "bg-emerald-100 text-emerald-700"
               : e.motivo === "DEVOLUCAO" ? "bg-slate-200 text-slate-700"
-              : "bg-teal-100 text-teal-700";
+              : "bg-red-100 text-red-700";
             return (
               <Link key={e.id} to="/app/employees/$id" params={{ id: e.employee_id }}
                 className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#C8102E] transition-all">
