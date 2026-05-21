@@ -48,7 +48,7 @@ function ChecklistExecPage() {
     enabled: !!equip.data?.modelo_checklist_id,
     queryKey: ["modelo-completo", equip.data?.modelo_checklist_id],
     queryFn: async () => {
-      const modId = equip.data!.modelo_checklist_id;
+      const modId = equip.data!.modelo_checklist_id as string;
       const [{ data: m }, { data: secoes }, { data: itens }] = await Promise.all([
         supabase.from("checklist_modelos").select("*").eq("id", modId).single(),
         supabase.from("checklist_modelo_secoes").select("*").eq("modelo_id", modId).order("ordem"),
@@ -70,7 +70,7 @@ function ChecklistExecPage() {
 
   // Init horimetro com o atual do equipamento
   useMemo(() => {
-    if (equip.data?.horimetro_atual != null && !state.horimetro_inicial) {
+    if (equip.data && equip.data.horimetro_atual != null && !state.horimetro_inicial) {
       setState((s) => ({ ...s, horimetro_inicial: String(equip.data.horimetro_atual) }));
     }
   }, [equip.data?.horimetro_atual]);
@@ -116,7 +116,7 @@ function ChecklistExecPage() {
 
       const { data: exec, error: e1 } = await supabase.from("checklist_execucoes").insert({
         equipamento_id: equipamentoId,
-        modelo_id: modelo.data!.modelo.id,
+        modelo_id: modelo.data!.modelo!.id,
         data: today,
         horimetro_inicial: state.horimetro_inicial ? parseFloat(state.horimetro_inicial) : null,
         horimetro_final: state.horimetro_final ? parseFloat(state.horimetro_final) : null,
@@ -169,6 +169,7 @@ function ChecklistExecPage() {
   }
 
   const { modelo: m, secoes, itens } = modelo.data!;
+  if (!m) return null;
 
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
