@@ -306,6 +306,13 @@ function ExtintoresPage() {
           onCreated={onInvalidate}
         />
       )}
+      <PDFPreviewDialog
+        open={pdfOpen}
+        onClose={() => setPdfOpen(false)}
+        doc={pdfDoc}
+        fileName={`planilha-inspecao-extintores-${new Date().toISOString().slice(0, 10)}.pdf`}
+        title="Planilha de Inspeção de Extintores"
+      />
     </div>
   );
 }
