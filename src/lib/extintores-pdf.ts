@@ -152,12 +152,24 @@ export async function gerarPdfPlanilhaExtintores(
         img.src = assinatura.dataUrl;
       });
       const cx = 148.5;
-      const maxW = 70;
-      const maxH = Math.max(8, Math.min(22, (assinatura.height ?? 80) * 0.18));
-      const ratio = Math.min(maxW / dims.w, maxH / dims.h);
+      // Caixa de assinatura: 64mm de largura por até 14mm de altura,
+      // ancorada DIRETO acima da linha do TST.
+      const boxW = 64;
+      const boxH = Math.max(6, Math.min(14, (assinatura.height ?? 80) * 0.14));
+      const ratio = Math.min(boxW / dims.w, boxH / dims.h);
       const drawW = dims.w * ratio;
       const drawH = dims.h * ratio;
-      doc.addImage(assinatura.dataUrl, "PNG", cx - drawW / 2, sigY - drawH - 0.5, drawW, drawH, undefined, "FAST");
+      // Encosta a base da imagem na linha (sigY) com 0.3mm de respiro.
+      doc.addImage(
+        assinatura.dataUrl,
+        "PNG",
+        cx - drawW / 2,
+        sigY - drawH - 0.3,
+        drawW,
+        drawH,
+        undefined,
+        "FAST",
+      );
     } catch {}
   }
 
