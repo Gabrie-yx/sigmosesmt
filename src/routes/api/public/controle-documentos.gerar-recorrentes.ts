@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/public/controle-documentos/gerar-reco
             responsavel_id: r.responsavel_id,
             recorrente_id: r.id,
             status: "RECEBIDO",
-          });
+          } as any);
           criados++;
         }
 
