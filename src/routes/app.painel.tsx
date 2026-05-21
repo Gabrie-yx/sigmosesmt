@@ -663,6 +663,23 @@ function TstPanel() {
         </div>
       ),
     },
+    "doc-controle": {
+      title: "Controle de Documentos", icon: FolderOpen,
+      render: () => (
+        <div className="h-full flex flex-col justify-between">
+          <div className="grid grid-cols-2 gap-2">
+            <DocStat label="Abertos" value={docMetrics.abertos} tone="amber" />
+            <DocStat label="Vencidos" value={docMetrics.vencidos} tone="red" />
+            <DocStat label="Críticos" value={docMetrics.criticos} tone="red" />
+            <DocStat label="Resolvidos" value={docMetrics.resolvidos} tone="green" />
+          </div>
+          <Link to="/app/controle-documentos"
+            className="mt-3 flex items-center justify-center gap-2 w-full bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white rounded-xl py-2.5 text-[10px] font-black uppercase tracking-wider hover:shadow-md transition-all">
+            <FolderOpen className="h-3.5 w-3.5" /> Acessar módulo
+          </Link>
+        </div>
+      ),
+    },
     footer: {
       title: "Alertas operacionais", icon: AlertTriangle,
       render: () => (
