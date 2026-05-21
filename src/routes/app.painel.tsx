@@ -700,6 +700,23 @@ function TstPanel() {
         </div>
       ),
     },
+    extintores: {
+      title: "Controle de Extintores", icon: Flame,
+      render: () => (
+        <div className="h-full flex flex-col justify-between">
+          <div className="grid grid-cols-2 gap-2">
+            <DocStat label="Ativos" value={extMetrics.ativos} tone="green" />
+            <DocStat label="Recarga vencida" value={extMetrics.vencidos} tone="red" />
+            <DocStat label="Vencendo 30d" value={extMetrics.vencendo} tone="amber" />
+            <DocStat label="Sem inspeção/mês" value={extMetrics.semInspecao} tone={extMetrics.semInspecao > 0 ? "amber" : "green"} />
+          </div>
+          <Link to="/app/extintores"
+            className="mt-3 flex items-center justify-center gap-2 w-full bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white rounded-xl py-2.5 text-[10px] font-black uppercase tracking-wider hover:shadow-md transition-all">
+            <Flame className="h-3.5 w-3.5" /> Acessar módulo
+          </Link>
+        </div>
+      ),
+    },
     footer: {
       title: "Alertas operacionais", icon: AlertTriangle,
       render: () => (
