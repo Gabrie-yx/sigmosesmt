@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { EXTINTORES_CHECKLIST_NC as CHECKLIST_NC, gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
+import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/extintores")({
   component: ExtintoresPage,
@@ -37,21 +40,6 @@ const STATUS_STYLES: Record<string, string> = {
   BAIXADO: "bg-slate-100 text-slate-500 border-slate-200",
   VENCIDO: "bg-red-100 text-red-700 border-red-300",
 };
-
-export const CHECKLIST_NC = [
-  { id: 1, label: "Pintura" },
-  { id: 2, label: "Gatilho" },
-  { id: 3, label: "Trava de segurança" },
-  { id: 4, label: "Lacre quebrado" },
-  { id: 5, label: "Bico quebrado/entupido" },
-  { id: 6, label: "Mangote" },
-  { id: 7, label: "Difusor (extintor CO₂)" },
-  { id: 8, label: "Obstruído por objetos" },
-  { id: 9, label: "Sinalização horizontal (piso)" },
-  { id: 10, label: "Sinalização vertical (parede)" },
-  { id: 11, label: "Carga vencida" },
-  { id: 12, label: "Teste hidrostático vencido" },
-];
 
 type Extintor = any;
 type Inspecao = any;
