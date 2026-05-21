@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AppHeader } from "@/components/app-header";
 import { ModuleRouteGuard } from "@/components/module-guard";
-import { FloatingDock } from "@/components/floating-dock";
 import { CommandPalette } from "@/components/command-palette";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -33,7 +32,7 @@ function AppLayout() {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-muted/30">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
@@ -47,7 +46,7 @@ function AppLayout() {
               <Link to="/app/conta/seguranca" className="font-bold underline">Configurar MFA</Link>
             </div>
           )}
-          <main className="flex-1 pb-16 md:pb-0">
+          <main className="flex-1">
             <ModuleRouteGuard>
               <Outlet />
             </ModuleRouteGuard>
@@ -55,7 +54,6 @@ function AppLayout() {
           <footer className="border-t bg-white/60 backdrop-blur py-3 px-4 text-center text-[11px] text-muted-foreground">
             Copyright© 2026. Todos os Direitos Reservados. Desenvolvido por Francisco Bandeira e Anderson Soares — Sistema de Gerenciamento de SST.
           </footer>
-          <FloatingDock />
           <CommandPalette />
         </div>
       </div>
