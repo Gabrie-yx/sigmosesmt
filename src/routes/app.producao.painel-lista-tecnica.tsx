@@ -19,6 +19,7 @@ import { resolveTipo } from "@/lib/mb51-parser";
 import type { TipoMP } from "@/lib/base-mp-parser";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PainelAnaliseAvancada } from "@/components/producao/painel-analise-avancada";
+import { focusScale } from "@/lib/chart-focus";
 
 const CATEGORIAS: TipoMP[] = ["FERRO", "SOLDA", "GÁS", "TINTA", "OUTROS"];
 type CategoriaMaterial = TipoMP;
