@@ -13,8 +13,9 @@ import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  PieChart, Pie, Cell, Legend, ComposedChart, Line, Area,
+  PieChart, Pie, Cell, Legend, ComposedChart, Line, Area, LabelList,
 } from "recharts";
+import { focusScale } from "@/lib/chart-focus";
 // react-grid-layout touches `window` at import — load it client-only via lazy state
 type Layout = { i: string; x: number; y: number; w: number; h: number; minH?: number; minW?: number };
 
