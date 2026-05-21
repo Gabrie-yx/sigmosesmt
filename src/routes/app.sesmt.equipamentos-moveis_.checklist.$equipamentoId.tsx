@@ -13,7 +13,7 @@ import { CheckCircle2, XCircle, MinusCircle, ArrowLeft, Save, ClipboardCheck } f
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/app/sesmt/equipamentos-moveis/checklist/$equipamentoId")({
+export const Route = createFileRoute("/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId")({
   component: ChecklistExecPage,
   head: () => ({ meta: [{ title: "Executar Checklist · SIGMO" }] }),
 });
