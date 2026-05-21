@@ -319,8 +319,8 @@ function ExtintoresPage() {
         onClose={() => setSigOpen(false)}
         defaultNome={(user as any)?.user_metadata?.full_name ?? ""}
         title="Assinar planilha de inspeção"
-        onConfirm={({ dataUrl, nome }) => {
-          setPdfDoc(gerarPdfPlanilhaExtintores(extintores.data ?? [], inspecoes.data ?? [], { dataUrl, nome }));
+        onConfirm={(sig) => {
+          setPdfDoc(gerarPdfPlanilhaExtintores(extintores.data ?? [], inspecoes.data ?? [], sig));
           setSigOpen(false);
           setPdfOpen(true);
         }}
