@@ -331,6 +331,20 @@ function TstPanel() {
     return { abertos, vencidos, criticos, resolvidos, total: all.length };
   }, [data]);
 
+  const extMetrics = useMemo(() => {
+    const all = (data as any)?.extintores ?? [];
+    const insp = (data as any)?.extInspecoes ?? [];
+    const hojeISO = today.toISOString().slice(0, 10);
+    const em30 = new Date(today.getTime() + 30 * dayMs).toISOString().slice(0, 10);
+    const ativos = all.filter((e: any) => e.status === "ATIVO");
+    const vencidos = ativos.filter((e: any) => e.proxima_recarga && e.proxima_recarga < hojeISO).length;
+    const vencendo = ativos.filter((e: any) => e.proxima_recarga && e.proxima_recarga >= hojeISO && e.proxima_recarga <= em30).length;
+    const inicioMes = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+    const inspMes = new Set(insp.filter((i: any) => i.data_inspecao >= inicioMes).map((i: any) => i.extintor_id));
+    const semInspecao = ativos.filter((e: any) => !inspMes.has(e.id)).length;
+    return { total: all.length, ativos: ativos.length, vencidos, vencendo, semInspecao };
+  }, [data]);
+
   const search = q.trim().toLowerCase();
   const searchResults = useMemo(() => {
     if (!search) return [];
