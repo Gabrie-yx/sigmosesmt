@@ -195,6 +195,31 @@ export function usePendencias() {
     },
   });
 
+  // Extintores: recarga vencida (crítico) e inspeção mensal pendente (médio)
+  const extintoresVencidos = useQuery({
+    queryKey: ["pend-extintores-vencidos", hoje],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("extintores").select("id", { count: "exact", head: true })
+        .eq("status", "ATIVO").lt("proxima_recarga", hoje);
+      return count ?? 0;
+    },
+  });
+
+  const extintoresSemInspecao = useQuery({
+    queryKey: ["pend-extintores-insp"],
+    queryFn: async () => {
+      const inicio = new Date(); inicio.setDate(1);
+      const inicioISO = `${inicio.getFullYear()}-${String(inicio.getMonth() + 1).padStart(2, "0")}-01`;
+      const [{ data: exts }, { data: insps }] = await Promise.all([
+        supabase.from("extintores").select("id").eq("status", "ATIVO"),
+        supabase.from("extintor_inspecoes").select("extintor_id, data_inspecao").gte("data_inspecao", inicioISO),
+      ]);
+      const feitos = new Set((insps ?? []).map((i: any) => i.extintor_id));
+      return (exts ?? []).filter((e: any) => !feitos.has(e.id)).length;
+    },
+  });
+
   // Inspeção mensal de EPI — dia útil ≥ 25 do mês, sem registro no mês
   // Sem tabela própria: marca como pendente nos últimos 5 dias úteis do mês
   const dia = hojeDateObj.getDate();
@@ -347,6 +372,21 @@ export function usePendencias() {
       loading: false,
       // Sem registro de inspeção: fora da janela de fim de mês fica neutro, não verde.
       noData: inspecaoEpiPend === 0,
+    },
+    {
+      key: "extintores-vencidos",
+      count: extintoresVencidos.data ?? 0,
+      severity: (extintoresVencidos.data ?? 0) > 0 ? "critico" : "ok",
+      ok: (extintoresVencidos.data ?? 0) === 0,
+      loading: extintoresVencidos.isLoading,
+      blocking: true,
+    },
+    {
+      key: "extintores-sem-inspecao",
+      count: extintoresSemInspecao.data ?? 0,
+      severity: (extintoresSemInspecao.data ?? 0) > 0 ? "medio" : "ok",
+      ok: (extintoresSemInspecao.data ?? 0) === 0,
+      loading: extintoresSemInspecao.isLoading,
     },
   ];
 
