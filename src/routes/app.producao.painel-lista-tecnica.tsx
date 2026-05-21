@@ -637,7 +637,7 @@ function PainelListaTecnicaPage() {
   };
 
   return (
-    <div className="space-y-3 p-4 bg-gradient-to-br from-muted/40 via-background to-muted/20 min-h-screen">
+    <div className="dashboard-3d space-y-3 p-4 bg-gradient-to-br from-muted/40 via-background to-muted/20 min-h-screen">
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>

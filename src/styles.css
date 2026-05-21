@@ -253,3 +253,57 @@
   }
   .animate-pulse-critical { animation: pulse-critical 1.8s ease-in-out infinite; }
 }
+
+/* ============================================================
+   Dashboard Dinâmico — efeito 3D nos gráficos (CSS-only)
+   Aplica profundidade, sombras e brilho às formas SVG do Recharts
+   sem alterar a lógica dos gráficos.
+   ============================================================ */
+.dashboard-3d .recharts-wrapper {
+  perspective: 1100px;
+}
+.dashboard-3d .recharts-surface {
+  transform: rotateX(8deg) translateZ(0);
+  transform-origin: 50% 80%;
+  transition: transform 350ms ease;
+}
+.dashboard-3d .recharts-wrapper:hover .recharts-surface {
+  transform: rotateX(4deg) translateZ(0);
+}
+/* Barras com sombra projetada + leve highlight */
+.dashboard-3d .recharts-bar-rectangle path,
+.dashboard-3d .recharts-rectangle {
+  filter:
+    drop-shadow(0 6px 6px rgba(0,0,0,0.22))
+    drop-shadow(0 2px 0 rgba(255,255,255,0.18));
+}
+/* Setores de pie / donut / radial com profundidade */
+.dashboard-3d .recharts-pie-sector path,
+.dashboard-3d .recharts-radial-bar-sectors path {
+  filter:
+    drop-shadow(0 8px 10px rgba(0,0,0,0.28))
+    drop-shadow(0 1px 0 rgba(255,255,255,0.25));
+}
+/* Áreas: leve glow inferior */
+.dashboard-3d .recharts-area-area {
+  filter: drop-shadow(0 10px 14px rgba(0,0,0,0.18));
+}
+/* Linhas: glow suave */
+.dashboard-3d .recharts-line-curve {
+  filter:
+    drop-shadow(0 4px 6px rgba(0,0,0,0.28))
+    drop-shadow(0 0 4px rgba(255,255,255,0.35));
+}
+/* Pontos / dots elevados */
+.dashboard-3d .recharts-dot,
+.dashboard-3d .recharts-reference-dot circle {
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,0.35));
+}
+/* Scatter: bolhas com profundidade */
+.dashboard-3d .recharts-scatter-symbol path {
+  filter: drop-shadow(0 5px 6px rgba(0,0,0,0.3));
+}
+/* Cards do dashboard recebem leve elevação 3D */
+.dashboard-3d [class*="rounded"][class*="border"]:not(.recharts-wrapper *) {
+  transition: transform 300ms ease, box-shadow 300ms ease;
+}
