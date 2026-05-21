@@ -794,6 +794,18 @@ function Empty() {
   return <div className="h-full w-full flex items-center justify-center text-[10px] font-bold uppercase text-slate-400">Sem dados no período</div>;
 }
 
+function DocStat({ label, value, tone }: { label: string; value: number; tone: "red" | "amber" | "green" }) {
+  const cls = tone === "red" ? "border-red-200 bg-red-50 text-red-700"
+    : tone === "amber" ? "border-amber-200 bg-amber-50 text-amber-700"
+    : "border-emerald-200 bg-emerald-50 text-emerald-700";
+  return (
+    <div className={`border-2 rounded-xl p-2.5 flex flex-col items-center justify-center text-center ${cls}`}>
+      <div className="text-xl font-black leading-none">{value}</div>
+      <div className="text-[8px] font-black uppercase tracking-wider mt-1 opacity-80">{label}</div>
+    </div>
+  );
+}
+
 function FootStat({ label, value, tone }: { label: string; value: number; tone: "red" | "amber" | "green" }) {
   const cls = tone === "red" ? "border-red-200 bg-red-50 text-red-700"
     : tone === "amber" ? "border-amber-200 bg-amber-50 text-amber-700"
