@@ -746,24 +746,32 @@ function TstPanel() {
     },
     conformidade: {
       title: "Conformidade por empresa", icon: Building2,
-      render: () => (
+      render: () => {
+        const sel = focus["conformidade"] ?? null;
+        const onPick = toggleFocusFor("conformidade");
+        const dataView = focusScale(conformity as any[], { labelKey: "name", valueKeys: ["perc"], selected: sel });
+        return (
         <div className="h-full min-h-0">
           {conformity.length === 0 ? <Empty /> : (
             <ResponsiveContainer>
-              <BarChart data={conformity} margin={{ top: 14, right: 16, left: 0, bottom: 0 }} layout="vertical">
+              <BarChart data={dataView} margin={{ top: 14, right: 48, left: 0, bottom: 0 }} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
-                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#475569", fontWeight: 700 }} axisLine={false} tickLine={false} width={110} />
-                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(16,185,129,0.06)" }} formatter={(v: any, _n: any, p: any) => [`${v}% (${p.payload.oks}/${p.payload.total})`, "Conformidade"]} />
-                <Bar dataKey="perc" name="Conformidade" radius={[0, 8, 8, 0]} shape={(props: any) => {
-                  const c = props.payload.perc;
+                <XAxis type="number" domain={[0, sel ? (dataView.find((d:any)=>d.name===sel)?.perc ?? 100) : 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${Math.round(Number(v))}%`} allowDataOverflow />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#475569", fontWeight: 700 }} axisLine={false} tickLine={false} width={110} onClick={(e: any) => e?.value && onPick(e.value)} style={{ cursor: "pointer" }} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(16,185,129,0.06)" }} formatter={(_v: any, _n: any, p: any) => {
+                  const real = p.payload.__real_perc ?? _v;
+                  return [`${real}% (${p.payload.oks}/${p.payload.total})`, "Conformidade"];
+                }} />
+                <Bar dataKey="perc" name="Conformidade" radius={[0, 8, 8, 0]} onClick={(d: any) => onPick(d?.name)} className="cursor-pointer" shape={(props: any) => {
+                  const c = props.payload.__real_perc ?? props.payload.perc;
                   const fill = c === 100 ? "#10b981" : c > 80 ? "#f59e0b" : c > 0 ? "#ef4444" : "#94a3b8";
                   const { x, y, width, height } = props;
                   if (!isFinite(width) || width <= 0) return <g />;
                   const depth = Math.min(8, height * 0.35);
                   const id = `cf3d-${Math.round((x ?? 0) * 100 + (y ?? 0))}`;
+                  const dim = sel && props.payload.name !== sel;
                   return (
-                    <g>
+                    <g opacity={dim ? 0.45 : 1}>
                       <defs>
                         <linearGradient id={`${id}-f`} x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={fill} stopOpacity={1} />
@@ -775,12 +783,21 @@ function TstPanel() {
                       <rect x={x} y={y} width={width} height={height} fill={`url(#${id}-f)`} rx={2} />
                     </g>
                   );
-                }} />
+                }}>
+                  <LabelList dataKey="perc" position="right" content={(props: any) => {
+                    const { x, y, width, height, index } = props;
+                    const row: any = dataView[index]; if (!row) return null;
+                    if (sel && row.name !== sel) return null;
+                    const real = row.__real_perc ?? row.perc;
+                    return <text x={Number(x)+Number(width)+6} y={Number(y)+Number(height)/2+4} fontSize={11} fontWeight={800} fill="#0f172a">{real}%</text>;
+                  }} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
-      ),
+        );
+      },
     },
     pendencias: {
       title: "Pendências por empresa · alerta vs bloqueado", icon: AlertTriangle, accent: "amber",
