@@ -18,6 +18,8 @@ const LABELS: Record<string, { titulo: string; sub: string }> = {
   "req-pendentes": { titulo: "Requisições de compra pendentes", sub: "Aguardando aprovação" },
   "epi-baixo": { titulo: "EPIs com estoque baixo", sub: "Repor antes da falta" },
   "inspecao-epi": { titulo: "Inspeção mensal de EPI", sub: "Rotina do mês" },
+  "extintores-vencidos": { titulo: "Extintores com recarga vencida", sub: "Bloqueia uso — NR-23" },
+  "extintores-sem-inspecao": { titulo: "Extintores sem inspeção no mês", sub: "Checklist FOR-SFG 08" },
 };
 
 function severityCor(s: PendenciaItem["severity"]) {
