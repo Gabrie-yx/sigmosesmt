@@ -41,6 +41,7 @@ const DEFAULT_LAYOUT: Layout[] = [
   { i: "dds-trend",   x: 0, y: 34, w: 6,  h: 7,  minH: 5, minW: 4 },
   { i: "conformidade",x: 6, y: 34, w: 6,  h: 7,  minH: 5, minW: 4 },
   { i: "pendencias",  x: 0, y: 41, w: 12, h: 9,  minH: 5, minW: 6 },
+  { i: "doc-controle",x: 0, y: 50, w: 12, h: 5,  minH: 4, minW: 6 },
 ];
 
 function loadLayout(): Layout[] {
