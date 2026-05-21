@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArquivosLegadosPanel } from "@/components/equipamentos/ArquivosLegadosPanel";
 
-export const Route = createFileRoute("/app/sesmt/equipamentos-moveis/historico/$equipamentoId")({
+export const Route = createFileRoute("/app/sesmt/equipamentos-moveis_/historico/$equipamentoId")({
   component: HistoricoPage,
   head: () => ({ meta: [{ title: "Histórico de Checklist · SIGMO" }] }),
 });
