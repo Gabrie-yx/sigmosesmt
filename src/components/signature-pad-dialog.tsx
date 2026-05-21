@@ -1,203 +1,79 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Eraser, Check, X, Upload } from "lucide-react";
+import { Check, X } from "lucide-react";
+import { toast } from "sonner";
 
-export type AssinaturaResult = {
-  dataUrl: string;
-  nome: string;
-  cargo?: string;
-  registro?: string;
-  cbo?: string;
-};
+export type AssinaturaResult = { dataUrl: string; height: number };
 
 export function SignaturePadDialog({
   open,
   onClose,
   onConfirm,
-  title = "Assinar documento",
-  defaultNome = "",
-  defaultCargo = "TÉCNICO EM SEGURANÇA DO TRABALHO / BOMBEIRO PROFISSIONAL CIVIL",
-  defaultRegistro = "0016640/MTE-AM",
-  defaultCbo = "3516-05",
+  title = "Assinatura do responsável",
 }: {
   open: boolean;
   onClose: () => void;
   onConfirm: (r: AssinaturaResult) => void;
   title?: string;
-  defaultNome?: string;
-  defaultCargo?: string;
-  defaultRegistro?: string;
-  defaultCbo?: string;
 }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const drawing = useRef(false);
-  const lastPt = useRef<{ x: number; y: number } | null>(null);
-  const hasInk = useRef(false);
-  const [nome, setNome] = useState(defaultNome);
-  const [cargo, setCargo] = useState(defaultCargo);
-  const [registro, setRegistro] = useState(defaultRegistro);
-  const [cbo, setCbo] = useState(defaultCbo);
-  const [empty, setEmpty] = useState(true);
+  const [signature, setSignature] = useState<string | null>(null);
+  const [height, setHeight] = useState(80);
 
-  useEffect(() => {
-    if (open) {
-      setNome(defaultNome);
-      setCargo(defaultCargo);
-      setRegistro(defaultRegistro);
-      setCbo(defaultCbo);
-    }
-  }, [open, defaultNome, defaultCargo, defaultRegistro, defaultCbo]);
+  useEffect(() => { if (open) { setSignature(null); setHeight(80); } }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const c = canvasRef.current;
-    if (!c) return;
-    const ratio = window.devicePixelRatio || 1;
-    const rect = c.getBoundingClientRect();
-    c.width = Math.floor(rect.width * ratio);
-    c.height = Math.floor(rect.height * ratio);
-    const ctx = c.getContext("2d")!;
-    ctx.scale(ratio, ratio);
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, rect.width, rect.height);
-    ctx.strokeStyle = "#0f172a";
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    hasInk.current = false;
-    setEmpty(true);
-  }, [open]);
-
-  function getPt(e: React.PointerEvent) {
-    const c = canvasRef.current!;
-    const r = c.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
-  }
-  function down(e: React.PointerEvent) {
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    drawing.current = true;
-    lastPt.current = getPt(e);
-  }
-  function move(e: React.PointerEvent) {
-    if (!drawing.current) return;
-    const ctx = canvasRef.current!.getContext("2d")!;
-    const p = getPt(e);
-    ctx.beginPath();
-    ctx.moveTo(lastPt.current!.x, lastPt.current!.y);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-    lastPt.current = p;
-    hasInk.current = true;
-    if (empty) setEmpty(false);
-  }
-  function up() { drawing.current = false; lastPt.current = null; }
-
-  function clear() {
-    const c = canvasRef.current;
-    if (!c) return;
-    const ctx = c.getContext("2d")!;
-    const ratio = window.devicePixelRatio || 1;
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, c.width, c.height);
-    ctx.restore();
-    ctx.scale(ratio, ratio);
-    ctx.strokeStyle = "#0f172a";
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    hasInk.current = false;
-    setEmpty(true);
-  }
-
-  function uploadFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  const onUpload = (file: File | null) => {
     if (!file) return;
+    if (file.type !== "image/png") { toast.error("A assinatura deve estar no formato PNG"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error("Arquivo muito grande (máx. 2MB)"); return; }
     const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const c = canvasRef.current!;
-        const ctx = c.getContext("2d")!;
-        const rect = c.getBoundingClientRect();
-        clear();
-        const ratio = Math.min(rect.width / img.width, rect.height / img.height);
-        const w = img.width * ratio;
-        const h = img.height * ratio;
-        ctx.drawImage(img, (rect.width - w) / 2, (rect.height - h) / 2, w, h);
-        hasInk.current = true;
-        setEmpty(false);
-      };
-      img.src = String(reader.result);
-    };
+    reader.onload = () => setSignature(reader.result as string);
     reader.readAsDataURL(file);
-  }
-
-  function confirm() {
-    if (empty) return;
-    const dataUrl = canvasRef.current!.toDataURL("image/png");
-    onConfirm({
-      dataUrl,
-      nome: nome.trim(),
-      cargo: cargo.trim(),
-      registro: registro.trim(),
-      cbo: cbo.trim(),
-    });
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <Label htmlFor="sig-nome">Nome completo</Label>
-            <Input id="sig-nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Francisco Bandeira ALMEIDA" />
+        <div className="border-2 border-black bg-white text-black">
+          <div className="font-bold text-center uppercase border-b border-black p-1.5 text-[12px]">
+            Assinatura do Técnico em Segurança do Trabalho
           </div>
-          <div>
-            <Label htmlFor="sig-cargo">Cargo / função</Label>
-            <Input id="sig-cargo" value={cargo} onChange={(e) => setCargo(e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label htmlFor="sig-reg">Registro (CRP/MTE)</Label>
-              <Input id="sig-reg" value={registro} onChange={(e) => setRegistro(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="sig-cbo">CBO</Label>
-              <Input id="sig-cbo" value={cbo} onChange={(e) => setCbo(e.target.value)} />
-            </div>
-          </div>
-          <div>
-            <Label>Assine no quadro abaixo</Label>
-            <canvas
-              ref={canvasRef}
-              onPointerDown={down}
-              onPointerMove={move}
-              onPointerUp={up}
-              onPointerLeave={up}
-              className="mt-1 w-full h-56 rounded-md border border-slate-300 bg-white touch-none cursor-crosshair"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={clear}>
-              <Eraser className="h-4 w-4 mr-1" /> Limpar
-            </Button>
-            <label className="inline-flex items-center gap-1 text-xs text-slate-600 cursor-pointer border rounded-md px-3 py-1.5 hover:bg-slate-50">
-              <Upload className="h-4 w-4" /> Carregar imagem
-              <input type="file" accept="image/*" className="hidden" onChange={uploadFile} />
-            </label>
+          <div className="min-h-32 flex items-center justify-center p-3">
+            {signature ? (
+              <div className="flex flex-col items-center gap-1 w-full">
+                <img src={signature} alt="Assinatura" style={{ height: `${height}px` }} className="object-contain max-w-full" />
+                <div className="flex items-center gap-2 w-full px-2 pt-2">
+                  <span className="text-[10px] text-muted-foreground">Tamanho</span>
+                  <input
+                    type="range" min={20} max={140} step={2}
+                    value={height}
+                    onChange={(e) => setHeight(Number(e.target.value))}
+                    className="flex-1 accent-red-700"
+                  />
+                  <button type="button" onClick={() => setSignature(null)} className="text-[10px] text-red-700 hover:underline">
+                    Remover
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <label className="cursor-pointer text-[12px] text-red-700 hover:underline px-3 py-2 border border-dashed border-red-700/50 rounded">
+                Enviar assinatura (PNG)
+                <input type="file" accept="image/png" className="hidden" onChange={(e) => onUpload(e.target.files?.[0] ?? null)} />
+              </label>
+            )}
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}><X className="h-4 w-4 mr-1" />Cancelar</Button>
-          <Button onClick={confirm} disabled={empty}><Check className="h-4 w-4 mr-1" />Inserir assinatura no PDF</Button>
+          <Button
+            onClick={() => signature && onConfirm({ dataUrl: signature, height })}
+            disabled={!signature}
+          >
+            <Check className="h-4 w-4 mr-1" />Inserir no PDF
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
