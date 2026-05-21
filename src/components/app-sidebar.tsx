@@ -81,6 +81,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
       { to: "/app/aprs", label: "APRs — Análise de Risco", icon: AlertTriangle },
       { to: "/app/ptes", label: "PTEs — Permissão de Trabalho", icon: FileCheck2 },
       { to: "/app/trainings", label: "Treinamentos & NRs", icon: HardHat },
+      { to: "/app/sesmt/equipamentos-moveis", label: "Checklist de Equipamentos", icon: Wrench },
     ],
   },
   {
