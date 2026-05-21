@@ -6,7 +6,8 @@ import {
   Search, AlertTriangle, Building2, Users, ShieldCheck, Package,
   HardHat, FileWarning, Activity, TrendingUp, Boxes, ClipboardCheck,
   ArrowUpRight, Stethoscope, GripVertical, RotateCcw, Lock, Unlock,
-  ShoppingBag, MessageSquare,
+  ShoppingBag, MessageSquare, FolderOpen,
+
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
@@ -40,6 +41,7 @@ const DEFAULT_LAYOUT: Layout[] = [
   { i: "dds-trend",   x: 0, y: 34, w: 6,  h: 7,  minH: 5, minW: 4 },
   { i: "conformidade",x: 6, y: 34, w: 6,  h: 7,  minH: 5, minW: 4 },
   { i: "pendencias",  x: 0, y: 41, w: 12, h: 9,  minH: 5, minW: 6 },
+  { i: "doc-controle",x: 0, y: 50, w: 12, h: 5,  minH: 4, minW: 6 },
 ];
 
 function loadLayout(): Layout[] {
@@ -101,7 +103,7 @@ function TstPanel() {
   const { data } = useQuery({
     queryKey: ["sesmt-painel", since],
     queryFn: async () => {
-      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs, ddsTemas] = await Promise.all([
+      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs, ddsTemas, controleDocs] = await Promise.all([
         supabase.from("employees").select("*").order("nome"),
         supabase.from("companies").select("id,name").order("name"),
         supabase.from("roles").select("*"),
@@ -115,6 +117,7 @@ function TstPanel() {
         supabase.from("ptes").select("id,status,data,risco").gte("data", since),
         supabase.from("employee_docs").select("id,employee_id,tipo"),
         supabase.from("dds_temas").select("id,titulo"),
+        supabase.from("controle_documentos").select("*"),
       ]);
       return {
         employees: emps.data ?? [],
@@ -130,6 +133,7 @@ function TstPanel() {
         ptes: ptes.data ?? [],
         docs: docs.data ?? [],
         ddsTemas: ddsTemas.data ?? [],
+        controleDocs: controleDocs.data ?? [],
       };
     },
   });
@@ -311,6 +315,16 @@ function TstPanel() {
       return { name: c.name, perc, color, total, oks };
     }).filter(Boolean) as { name: string; perc: number; color: string; total: number; oks: number }[];
   }, [data, rows]);
+
+  const docMetrics = useMemo(() => {
+    const all = data?.controleDocs ?? [];
+    const unresolved = (d: any) => d.status !== "RESOLVIDO" && d.status !== "FECHADO";
+    const abertos = all.filter(unresolved).length;
+    const vencidos = all.filter((d: any) => unresolved(d) && d.prazo && new Date(d.prazo + "T00:00").getTime() < today.getTime()).length;
+    const criticos = all.filter((d: any) => unresolved(d) && d.criticidade === "ALTA").length;
+    const resolvidos = all.filter((d: any) => d.status === "RESOLVIDO" || d.status === "FECHADO").length;
+    return { abertos, vencidos, criticos, resolvidos, total: all.length };
+  }, [data]);
 
   const search = q.trim().toLowerCase();
   const searchResults = useMemo(() => {
@@ -650,6 +664,23 @@ function TstPanel() {
         </div>
       ),
     },
+    "doc-controle": {
+      title: "Controle de Documentos", icon: FolderOpen,
+      render: () => (
+        <div className="h-full flex flex-col justify-between">
+          <div className="grid grid-cols-2 gap-2">
+            <DocStat label="Abertos" value={docMetrics.abertos} tone="amber" />
+            <DocStat label="Vencidos" value={docMetrics.vencidos} tone="red" />
+            <DocStat label="Críticos" value={docMetrics.criticos} tone="red" />
+            <DocStat label="Resolvidos" value={docMetrics.resolvidos} tone="green" />
+          </div>
+          <Link to="/app/controle-documentos"
+            className="mt-3 flex items-center justify-center gap-2 w-full bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white rounded-xl py-2.5 text-[10px] font-black uppercase tracking-wider hover:shadow-md transition-all">
+            <FolderOpen className="h-3.5 w-3.5" /> Acessar módulo
+          </Link>
+        </div>
+      ),
+    },
     footer: {
       title: "Alertas operacionais", icon: AlertTriangle,
       render: () => (
@@ -762,6 +793,18 @@ function KpiTile({ icon: Icon, label, value, hint, tone }: {
 
 function Empty() {
   return <div className="h-full w-full flex items-center justify-center text-[10px] font-bold uppercase text-slate-400">Sem dados no período</div>;
+}
+
+function DocStat({ label, value, tone }: { label: string; value: number; tone: "red" | "amber" | "green" }) {
+  const cls = tone === "red" ? "border-red-200 bg-red-50 text-red-700"
+    : tone === "amber" ? "border-amber-200 bg-amber-50 text-amber-700"
+    : "border-emerald-200 bg-emerald-50 text-emerald-700";
+  return (
+    <div className={`border-2 rounded-xl p-2.5 flex flex-col items-center justify-center text-center ${cls}`}>
+      <div className="text-xl font-black leading-none">{value}</div>
+      <div className="text-[8px] font-black uppercase tracking-wider mt-1 opacity-80">{label}</div>
+    </div>
+  );
 }
 
 function FootStat({ label, value, tone }: { label: string; value: number; tone: "red" | "amber" | "green" }) {
