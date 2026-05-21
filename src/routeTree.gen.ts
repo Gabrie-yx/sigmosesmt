@@ -48,7 +48,7 @@ import { Route as AppProducaoListaTecnicaRouteImport } from './routes/app.produc
 import { Route as AppProducaoExpedicaoRouteImport } from './routes/app.producao.expedicao'
 import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
 import { Route as AppProducaoBaseMateriaPrimaRouteImport } from './routes/app.producao.base-materia-prima'
-import { Route as AppExtintoresImprimirRouteImport } from './routes/app.extintores.imprimir'
+import { Route as AppExtintoresImprimirRouteImport } from './routes/app.extintores_.imprimir'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
@@ -258,9 +258,9 @@ const AppProducaoBaseMateriaPrimaRoute =
     getParentRoute: () => AppRoute,
   } as any)
 const AppExtintoresImprimirRoute = AppExtintoresImprimirRouteImport.update({
-  id: '/imprimir',
-  path: '/imprimir',
-  getParentRoute: () => AppExtintoresRoute,
+  id: '/extintores_/imprimir',
+  path: '/extintores/imprimir',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
   id: '/estoque/sesmt',
@@ -323,7 +323,7 @@ export interface FileRoutesByFullPath {
   '/app/companies': typeof AppCompaniesRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
-  '/app/extintores': typeof AppExtintoresRouteWithChildren
+  '/app/extintores': typeof AppExtintoresRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
@@ -372,7 +372,7 @@ export interface FileRoutesByTo {
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
-  '/app/extintores': typeof AppExtintoresRouteWithChildren
+  '/app/extintores': typeof AppExtintoresRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
@@ -424,7 +424,7 @@ export interface FileRoutesById {
   '/app/companies': typeof AppCompaniesRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
-  '/app/extintores': typeof AppExtintoresRouteWithChildren
+  '/app/extintores': typeof AppExtintoresRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
@@ -443,7 +443,7 @@ export interface FileRoutesById {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
-  '/app/extintores/imprimir': typeof AppExtintoresImprimirRoute
+  '/app/extintores_/imprimir': typeof AppExtintoresImprimirRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -596,7 +596,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
-    | '/app/extintores/imprimir'
+    | '/app/extintores_/imprimir'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -900,12 +900,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoBaseMateriaPrimaRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/extintores/imprimir': {
-      id: '/app/extintores/imprimir'
-      path: '/imprimir'
+    '/app/extintores_/imprimir': {
+      id: '/app/extintores_/imprimir'
+      path: '/extintores/imprimir'
       fullPath: '/app/extintores/imprimir'
       preLoaderRoute: typeof AppExtintoresImprimirRouteImport
-      parentRoute: typeof AppExtintoresRoute
+      parentRoute: typeof AppRoute
     }
     '/app/estoque/sesmt': {
       id: '/app/estoque/sesmt'
@@ -987,18 +987,6 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
   AppEmployeesRouteChildren,
 )
 
-interface AppExtintoresRouteChildren {
-  AppExtintoresImprimirRoute: typeof AppExtintoresImprimirRoute
-}
-
-const AppExtintoresRouteChildren: AppExtintoresRouteChildren = {
-  AppExtintoresImprimirRoute: AppExtintoresImprimirRoute,
-}
-
-const AppExtintoresRouteWithChildren = AppExtintoresRoute._addFileChildren(
-  AppExtintoresRouteChildren,
-)
-
 interface AppRouteChildren {
   AppAcoesRoute: typeof AppAcoesRoute
   AppAprsRoute: typeof AppAprsRoute
@@ -1007,7 +995,7 @@ interface AppRouteChildren {
   AppCompaniesRoute: typeof AppCompaniesRoute
   AppControleDocumentosRoute: typeof AppControleDocumentosRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
-  AppExtintoresRoute: typeof AppExtintoresRouteWithChildren
+  AppExtintoresRoute: typeof AppExtintoresRoute
   AppHojeRoute: typeof AppHojeRoute
   AppIncidentesRoute: typeof AppIncidentesRoute
   AppMatrizTreinamentoRoute: typeof AppMatrizTreinamentoRoute
@@ -1025,6 +1013,7 @@ interface AppRouteChildren {
   AppDdsTemasRoute: typeof AppDdsTemasRoute
   AppEstoqueEpiRoute: typeof AppEstoqueEpiRoute
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
+  AppExtintoresImprimirRoute: typeof AppExtintoresImprimirRoute
   AppProducaoBaseMateriaPrimaRoute: typeof AppProducaoBaseMateriaPrimaRoute
   AppProducaoCriarOrdemRoute: typeof AppProducaoCriarOrdemRoute
   AppProducaoExpedicaoRoute: typeof AppProducaoExpedicaoRoute
@@ -1049,7 +1038,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCompaniesRoute: AppCompaniesRoute,
   AppControleDocumentosRoute: AppControleDocumentosRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
-  AppExtintoresRoute: AppExtintoresRouteWithChildren,
+  AppExtintoresRoute: AppExtintoresRoute,
   AppHojeRoute: AppHojeRoute,
   AppIncidentesRoute: AppIncidentesRoute,
   AppMatrizTreinamentoRoute: AppMatrizTreinamentoRoute,
@@ -1067,6 +1056,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDdsTemasRoute: AppDdsTemasRoute,
   AppEstoqueEpiRoute: AppEstoqueEpiRoute,
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
+  AppExtintoresImprimirRoute: AppExtintoresImprimirRoute,
   AppProducaoBaseMateriaPrimaRoute: AppProducaoBaseMateriaPrimaRoute,
   AppProducaoCriarOrdemRoute: AppProducaoCriarOrdemRoute,
   AppProducaoExpedicaoRoute: AppProducaoExpedicaoRoute,
@@ -1098,3 +1088,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

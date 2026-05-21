@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CHECKLIST_NC } from "./app.extintores";
 import dmnLogo from "@/assets/dmn-logo.png";
 
-export const Route = createFileRoute("/app/extintores/imprimir")({
+export const Route = createFileRoute("/app/extintores_/imprimir")({
   component: ImprimirPlanilhaExtintores,
   head: () => ({ meta: [{ title: "Planilha de Inspeção de Extintores · FOR-SFG 08" }] }),
 });
