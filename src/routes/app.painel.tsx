@@ -75,6 +75,12 @@ function TstPanel() {
   const [Grid, setGrid] = useState<any>(null);
   const gridWrapRef = useRef<HTMLDivElement>(null);
   const [gridWidth, setGridWidth] = useState(0);
+  // Focus mode por widget: clique numa barra a "promove" a referência visual,
+  // as demais encolhem. Clique de novo (ou em outra) alterna. Sem seleção,
+  // todos os valores aparecem reais.
+  const [focus, setFocus] = useState<Record<string, string | null>>({});
+  const toggleFocusFor = (id: string) => (label: string) =>
+    setFocus((p) => ({ ...p, [id]: p[id] === label ? null : label }));
 
   useEffect(() => {
     let mounted = true;
