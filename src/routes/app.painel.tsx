@@ -7,7 +7,7 @@ import {
   HardHat, FileWarning, Activity, TrendingUp, Boxes, ClipboardCheck,
   ArrowUpRight, Stethoscope, GripVertical, RotateCcw, Lock, Unlock,
   ShoppingBag, MessageSquare, FolderOpen,
-
+  Flame,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
@@ -42,6 +42,7 @@ const DEFAULT_LAYOUT: Layout[] = [
   { i: "conformidade",x: 6, y: 34, w: 6,  h: 7,  minH: 5, minW: 4 },
   { i: "pendencias",  x: 0, y: 41, w: 12, h: 9,  minH: 5, minW: 6 },
   { i: "doc-controle",x: 0, y: 50, w: 12, h: 5,  minH: 4, minW: 6 },
+  { i: "extintores",  x: 0, y: 55, w: 12, h: 5,  minH: 4, minW: 6 },
 ];
 
 function loadLayout(): Layout[] {
@@ -103,7 +104,7 @@ function TstPanel() {
   const { data } = useQuery({
     queryKey: ["sesmt-painel", since],
     queryFn: async () => {
-      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs, ddsTemas, controleDocs] = await Promise.all([
+      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs, ddsTemas, controleDocs, extintores, extInspecoes] = await Promise.all([
         supabase.from("employees").select("*").order("nome"),
         supabase.from("companies").select("id,name").order("name"),
         supabase.from("roles").select("*"),
@@ -118,6 +119,8 @@ function TstPanel() {
         supabase.from("employee_docs").select("id,employee_id,tipo"),
         supabase.from("dds_temas").select("id,titulo"),
         supabase.from("controle_documentos").select("*"),
+        supabase.from("extintores").select("id,status,proxima_recarga,proximo_teste_hidrostatico"),
+        supabase.from("extintor_inspecoes").select("extintor_id,data_inspecao,conforme"),
       ]);
       return {
         employees: emps.data ?? [],
