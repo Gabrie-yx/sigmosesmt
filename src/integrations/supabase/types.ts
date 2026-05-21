@@ -491,6 +491,281 @@ export type Database = {
         }
         Relationships: []
       }
+      controle_doc_anexos: {
+        Row: {
+          descricao: string | null
+          documento_id: string
+          file_path: string
+          id: string
+          nome_original: string | null
+          tipo: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          descricao?: string | null
+          documento_id: string
+          file_path: string
+          id?: string
+          nome_original?: string | null
+          tipo?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          descricao?: string | null
+          documento_id?: string
+          file_path?: string
+          id?: string
+          nome_original?: string | null
+          tipo?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "controle_doc_anexos_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "controle_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      controle_doc_categorias: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          criticidade_sugerida: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          criticidade_sugerida?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          criticidade_sugerida?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      controle_doc_historico: {
+        Row: {
+          alterado_em: string
+          alterado_por: string | null
+          alterado_por_email: string | null
+          campo: string
+          documento_id: string
+          id: string
+          valor_anterior: string | null
+          valor_novo: string | null
+        }
+        Insert: {
+          alterado_em?: string
+          alterado_por?: string | null
+          alterado_por_email?: string | null
+          campo: string
+          documento_id: string
+          id?: string
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Update: {
+          alterado_em?: string
+          alterado_por?: string | null
+          alterado_por_email?: string | null
+          campo?: string
+          documento_id?: string
+          id?: string
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "controle_doc_historico_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "controle_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      controle_doc_recorrentes: {
+        Row: {
+          ativo: boolean
+          categoria_id: string | null
+          created_at: string
+          created_by: string | null
+          criticidade: string
+          dias_aviso_previo: number
+          id: string
+          nome: string
+          observacoes: string | null
+          periodicidade_meses: number
+          proxima_validade: string | null
+          responsavel_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          criticidade?: string
+          dias_aviso_previo?: number
+          id?: string
+          nome: string
+          observacoes?: string | null
+          periodicidade_meses?: number
+          proxima_validade?: string | null
+          responsavel_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          criticidade?: string
+          dias_aviso_previo?: number
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          periodicidade_meses?: number
+          proxima_validade?: string | null
+          responsavel_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "controle_doc_recorrentes_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "controle_doc_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "controle_doc_recorrentes_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      controle_documentos: {
+        Row: {
+          categoria_id: string | null
+          created_at: string
+          created_by: string | null
+          criticidade: string
+          data_recebimento: string
+          data_resolucao: string | null
+          descricao: string | null
+          id: string
+          numero: string
+          observacao_fechamento: string | null
+          origem: string
+          prazo: string | null
+          recorrente_id: string | null
+          remetente_contato: string | null
+          remetente_nome: string | null
+          responsavel_id: string | null
+          status: string
+          tags: string[]
+          terceiro_followup_em: string | null
+          terceiro_nome: string | null
+          titulo: string
+          tratativa: string | null
+          updated_at: string
+        }
+        Insert: {
+          categoria_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          criticidade?: string
+          data_recebimento?: string
+          data_resolucao?: string | null
+          descricao?: string | null
+          id?: string
+          numero: string
+          observacao_fechamento?: string | null
+          origem?: string
+          prazo?: string | null
+          recorrente_id?: string | null
+          remetente_contato?: string | null
+          remetente_nome?: string | null
+          responsavel_id?: string | null
+          status?: string
+          tags?: string[]
+          terceiro_followup_em?: string | null
+          terceiro_nome?: string | null
+          titulo: string
+          tratativa?: string | null
+          updated_at?: string
+        }
+        Update: {
+          categoria_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          criticidade?: string
+          data_recebimento?: string
+          data_resolucao?: string | null
+          descricao?: string | null
+          id?: string
+          numero?: string
+          observacao_fechamento?: string | null
+          origem?: string
+          prazo?: string | null
+          recorrente_id?: string | null
+          remetente_contato?: string | null
+          remetente_nome?: string | null
+          responsavel_id?: string | null
+          status?: string
+          tags?: string[]
+          terceiro_followup_em?: string | null
+          terceiro_nome?: string | null
+          titulo?: string
+          tratativa?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "controle_documentos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "controle_doc_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "controle_documentos_recorrente_id_fkey"
+            columns: ["recorrente_id"]
+            isOneToOne: false
+            referencedRelation: "controle_doc_recorrentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "controle_documentos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dds: {
         Row: {
           aderencia: number | null
@@ -3172,6 +3447,7 @@ export type Database = {
       }
       current_aal: { Args: never; Returns: string }
       gerar_numero_apr: { Args: never; Returns: string }
+      gerar_numero_controle_doc: { Args: never; Returns: string }
       gerar_numero_ordem_producao: { Args: never; Returns: string }
       gerar_numero_tnc: { Args: never; Returns: string }
       has_module_access: {

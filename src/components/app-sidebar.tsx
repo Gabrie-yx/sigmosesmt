@@ -48,6 +48,7 @@ import {
   Anchor,
   ListChecks,
   BarChart3,
+  FolderOpen,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -67,6 +68,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
       { to: "/app/sesmt/procedimentos", label: "Procedimentos / POPs", icon: ClipboardList },
       { to: "/app/matriz-treinamento", label: "Matriz de Treinamento", icon: GraduationCap },
       { to: "/app/sesmt/docs", label: "Documentos SESMT", icon: FileText },
+      { to: "/app/controle-documentos", label: "Controle de Documentos", icon: FolderOpen },
       { to: "/app/sesmt/requisicoes", label: "Requisições de Compra", icon: ShoppingCart },
     ],
   },
