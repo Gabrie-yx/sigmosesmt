@@ -58,8 +58,8 @@ import { Route as AppDdsHistoricoRouteImport } from './routes/app.dds.historico'
 import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
 import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
 import { Route as ApiPublicControleDocumentosGerarRecorrentesRouteImport } from './routes/api/public/controle-documentos.gerar-recorrentes'
-import { Route as AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis.historico.$equipamentoId'
-import { Route as AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis.checklist.$equipamentoId'
+import { Route as AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.historico.$equipamentoId'
+import { Route as AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.checklist.$equipamentoId'
 
 const TermosRoute = TermosRouteImport.update({
   id: '/termos',
@@ -313,15 +313,15 @@ const ApiPublicControleDocumentosGerarRecorrentesRoute =
   } as any)
 const AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute =
   AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport.update({
-    id: '/historico/$equipamentoId',
-    path: '/historico/$equipamentoId',
-    getParentRoute: () => AppSesmtEquipamentosMoveisRoute,
+    id: '/sesmt/equipamentos-moveis_/historico/$equipamentoId',
+    path: '/sesmt/equipamentos-moveis/historico/$equipamentoId',
+    getParentRoute: () => AppRoute,
   } as any)
 const AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute =
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport.update({
-    id: '/checklist/$equipamentoId',
-    path: '/checklist/$equipamentoId',
-    getParentRoute: () => AppSesmtEquipamentosMoveisRoute,
+    id: '/sesmt/equipamentos-moveis_/checklist/$equipamentoId',
+    path: '/sesmt/equipamentos-moveis/checklist/$equipamentoId',
+    getParentRoute: () => AppRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -366,7 +366,7 @@ export interface FileRoutesByFullPath {
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
-  '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRouteWithChildren
+  '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
@@ -417,7 +417,7 @@ export interface FileRoutesByTo {
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
-  '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRouteWithChildren
+  '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
@@ -471,7 +471,7 @@ export interface FileRoutesById {
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
-  '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRouteWithChildren
+  '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
@@ -479,8 +479,8 @@ export interface FileRoutesById {
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/api/public/controle-documentos/gerar-recorrentes': typeof ApiPublicControleDocumentosGerarRecorrentesRoute
-  '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
-  '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
+  '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
+  '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -638,8 +638,8 @@ export interface FileRouteTypes {
     | '/app/employees/'
     | '/app/estoque/'
     | '/api/public/controle-documentos/gerar-recorrentes'
-    | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
-    | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
+    | '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
+    | '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -997,19 +997,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicControleDocumentosGerarRecorrentesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': {
-      id: '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
-      path: '/historico/$equipamentoId'
+    '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': {
+      id: '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
+      path: '/sesmt/equipamentos-moveis/historico/$equipamentoId'
       fullPath: '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
       preLoaderRoute: typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport
-      parentRoute: typeof AppSesmtEquipamentosMoveisRoute
+      parentRoute: typeof AppRoute
     }
-    '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': {
-      id: '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
-      path: '/checklist/$equipamentoId'
+    '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': {
+      id: '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
+      path: '/sesmt/equipamentos-moveis/checklist/$equipamentoId'
       fullPath: '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
       preLoaderRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport
-      parentRoute: typeof AppSesmtEquipamentosMoveisRoute
+      parentRoute: typeof AppRoute
     }
   }
 }
@@ -1027,24 +1027,6 @@ const AppEmployeesRouteChildren: AppEmployeesRouteChildren = {
 const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
   AppEmployeesRouteChildren,
 )
-
-interface AppSesmtEquipamentosMoveisRouteChildren {
-  AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
-  AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
-}
-
-const AppSesmtEquipamentosMoveisRouteChildren: AppSesmtEquipamentosMoveisRouteChildren =
-  {
-    AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute:
-      AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute,
-    AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute:
-      AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute,
-  }
-
-const AppSesmtEquipamentosMoveisRouteWithChildren =
-  AppSesmtEquipamentosMoveisRoute._addFileChildren(
-    AppSesmtEquipamentosMoveisRouteChildren,
-  )
 
 interface AppRouteChildren {
   AppAcoesRoute: typeof AppAcoesRoute
@@ -1081,12 +1063,14 @@ interface AppRouteChildren {
   AppProducaoTiposProdutoRoute: typeof AppProducaoTiposProdutoRoute
   AppRelatoriosReincidenciaEpiRoute: typeof AppRelatoriosReincidenciaEpiRoute
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
-  AppSesmtEquipamentosMoveisRoute: typeof AppSesmtEquipamentosMoveisRouteWithChildren
+  AppSesmtEquipamentosMoveisRoute: typeof AppSesmtEquipamentosMoveisRoute
   AppSesmtProcedimentosRoute: typeof AppSesmtProcedimentosRoute
   AppSesmtRequisicoesRoute: typeof AppSesmtRequisicoesRoute
   AppSesmtTerceirosRoute: typeof AppSesmtTerceirosRoute
   AppDdsIndexRoute: typeof AppDdsIndexRoute
   AppEstoqueIndexRoute: typeof AppEstoqueIndexRoute
+  AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
+  AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -1124,12 +1108,16 @@ const AppRouteChildren: AppRouteChildren = {
   AppProducaoTiposProdutoRoute: AppProducaoTiposProdutoRoute,
   AppRelatoriosReincidenciaEpiRoute: AppRelatoriosReincidenciaEpiRoute,
   AppSesmtDocsRoute: AppSesmtDocsRoute,
-  AppSesmtEquipamentosMoveisRoute: AppSesmtEquipamentosMoveisRouteWithChildren,
+  AppSesmtEquipamentosMoveisRoute: AppSesmtEquipamentosMoveisRoute,
   AppSesmtProcedimentosRoute: AppSesmtProcedimentosRoute,
   AppSesmtRequisicoesRoute: AppSesmtRequisicoesRoute,
   AppSesmtTerceirosRoute: AppSesmtTerceirosRoute,
   AppDdsIndexRoute: AppDdsIndexRoute,
   AppEstoqueIndexRoute: AppEstoqueIndexRoute,
+  AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute:
+    AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute,
+  AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute:
+    AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -1147,3 +1135,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
