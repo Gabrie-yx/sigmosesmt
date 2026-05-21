@@ -104,7 +104,7 @@ export function gerarPdfPlanilhaExtintores(extintores: ExtintorPdf[], inspecoes:
 
   autoTable(doc, {
     startY: margin + 24,
-    margin: { left: margin, right: margin, bottom: 28 },
+    margin: { top: margin + 24, left: margin, right: margin, bottom: 28 },
     theme: "grid",
     tableWidth: contentW,
     head: [["Nº", "Nº do\nExtintor", "ÁREA", "LOCALIZAÇÃO", "TIPO\nAGENTE", "CARGA\nNOMINAL\nKg/L", "PESO -\nCapac.\nExtintora", "Nº SELO\nDO\nINMETRO", "Recarga", "Próx.\nRecarga", "Teste\nHidrostático", "Não Conformidade", "OBSERVAÇÕES"]],
