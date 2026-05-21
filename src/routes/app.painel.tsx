@@ -7,7 +7,7 @@ import {
   HardHat, FileWarning, Activity, TrendingUp, Boxes, ClipboardCheck,
   ArrowUpRight, Stethoscope, GripVertical, RotateCcw, Lock, Unlock,
   ShoppingBag, MessageSquare, FolderOpen,
-
+  Flame,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
@@ -42,6 +42,7 @@ const DEFAULT_LAYOUT: Layout[] = [
   { i: "conformidade",x: 6, y: 34, w: 6,  h: 7,  minH: 5, minW: 4 },
   { i: "pendencias",  x: 0, y: 41, w: 12, h: 9,  minH: 5, minW: 6 },
   { i: "doc-controle",x: 0, y: 50, w: 12, h: 5,  minH: 4, minW: 6 },
+  { i: "extintores",  x: 0, y: 55, w: 12, h: 5,  minH: 4, minW: 6 },
 ];
 
 function loadLayout(): Layout[] {
@@ -103,7 +104,7 @@ function TstPanel() {
   const { data } = useQuery({
     queryKey: ["sesmt-painel", since],
     queryFn: async () => {
-      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs, ddsTemas, controleDocs] = await Promise.all([
+      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs, ddsTemas, controleDocs, extintores, extInspecoes] = await Promise.all([
         supabase.from("employees").select("*").order("nome"),
         supabase.from("companies").select("id,name").order("name"),
         supabase.from("roles").select("*"),
@@ -118,6 +119,8 @@ function TstPanel() {
         supabase.from("employee_docs").select("id,employee_id,tipo"),
         supabase.from("dds_temas").select("id,titulo"),
         supabase.from("controle_documentos").select("*"),
+        supabase.from("extintores").select("id,status,proxima_recarga,proximo_teste_hidrostatico"),
+        supabase.from("extintor_inspecoes").select("extintor_id,data_inspecao,conforme"),
       ]);
       return {
         employees: emps.data ?? [],
@@ -134,6 +137,8 @@ function TstPanel() {
         docs: docs.data ?? [],
         ddsTemas: ddsTemas.data ?? [],
         controleDocs: controleDocs.data ?? [],
+        extintores: extintores.data ?? [],
+        extInspecoes: extInspecoes.data ?? [],
       };
     },
   });
@@ -324,6 +329,20 @@ function TstPanel() {
     const criticos = all.filter((d: any) => unresolved(d) && d.criticidade === "ALTA").length;
     const resolvidos = all.filter((d: any) => d.status === "RESOLVIDO" || d.status === "FECHADO").length;
     return { abertos, vencidos, criticos, resolvidos, total: all.length };
+  }, [data]);
+
+  const extMetrics = useMemo(() => {
+    const all = (data as any)?.extintores ?? [];
+    const insp = (data as any)?.extInspecoes ?? [];
+    const hojeISO = today.toISOString().slice(0, 10);
+    const em30 = new Date(today.getTime() + 30 * dayMs).toISOString().slice(0, 10);
+    const ativos = all.filter((e: any) => e.status === "ATIVO");
+    const vencidos = ativos.filter((e: any) => e.proxima_recarga && e.proxima_recarga < hojeISO).length;
+    const vencendo = ativos.filter((e: any) => e.proxima_recarga && e.proxima_recarga >= hojeISO && e.proxima_recarga <= em30).length;
+    const inicioMes = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+    const inspMes = new Set(insp.filter((i: any) => i.data_inspecao >= inicioMes).map((i: any) => i.extintor_id));
+    const semInspecao = ativos.filter((e: any) => !inspMes.has(e.id)).length;
+    return { total: all.length, ativos: ativos.length, vencidos, vencendo, semInspecao };
   }, [data]);
 
   const search = q.trim().toLowerCase();
@@ -677,6 +696,23 @@ function TstPanel() {
           <Link to="/app/controle-documentos"
             className="mt-3 flex items-center justify-center gap-2 w-full bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white rounded-xl py-2.5 text-[10px] font-black uppercase tracking-wider hover:shadow-md transition-all">
             <FolderOpen className="h-3.5 w-3.5" /> Acessar módulo
+          </Link>
+        </div>
+      ),
+    },
+    extintores: {
+      title: "Controle de Extintores", icon: Flame,
+      render: () => (
+        <div className="h-full flex flex-col justify-between">
+          <div className="grid grid-cols-2 gap-2">
+            <DocStat label="Ativos" value={extMetrics.ativos} tone="green" />
+            <DocStat label="Recarga vencida" value={extMetrics.vencidos} tone="red" />
+            <DocStat label="Vencendo 30d" value={extMetrics.vencendo} tone="amber" />
+            <DocStat label="Sem inspeção/mês" value={extMetrics.semInspecao} tone={extMetrics.semInspecao > 0 ? "amber" : "green"} />
+          </div>
+          <Link to="/app/extintores"
+            className="mt-3 flex items-center justify-center gap-2 w-full bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white rounded-xl py-2.5 text-[10px] font-black uppercase tracking-wider hover:shadow-md transition-all">
+            <Flame className="h-3.5 w-3.5" /> Acessar módulo
           </Link>
         </div>
       ),
