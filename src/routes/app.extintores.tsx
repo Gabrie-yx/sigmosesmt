@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Plus, Printer, Search, ClipboardCheck, Flame, AlertTriangle, CheckCircle2,
-  Pencil, Camera, Upload, ShieldCheck, CalendarClock, Activity, X,
+  Pencil, Camera, Upload, ShieldCheck, CalendarClock, Activity, X, Sparkles, CalendarDays, Droplet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
