@@ -446,6 +446,47 @@ export type Database = {
         }
         Relationships: []
       }
+      checklist_arquivos_legados: {
+        Row: {
+          ano: number
+          equipamento_id: string
+          id: string
+          mes: number
+          observacao: string | null
+          pdf_path: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          ano: number
+          equipamento_id: string
+          id?: string
+          mes: number
+          observacao?: string | null
+          pdf_path: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          ano?: number
+          equipamento_id?: string
+          id?: string
+          mes?: number
+          observacao?: string | null
+          pdf_path?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_arquivos_legados_equipamento_id_fkey"
+            columns: ["equipamento_id"]
+            isOneToOne: false
+            referencedRelation: "equipamentos_moveis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_execucoes: {
         Row: {
           assinatura_path: string | null

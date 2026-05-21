@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, History, Printer, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArquivosLegadosPanel } from "@/components/equipamentos/ArquivosLegadosPanel";
 
 export const Route = createFileRoute("/app/sesmt/equipamentos-moveis/historico/$equipamentoId")({
   component: HistoricoPage,
@@ -135,7 +137,14 @@ function HistoricoPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Tabs defaultValue="matriz" className="w-full">
+        <TabsList>
+          <TabsTrigger value="matriz">Matriz Diária</TabsTrigger>
+          <TabsTrigger value="arquivos">Arquivos Mensais</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="matriz" className="space-y-4 mt-3">
+          <Card>
         <CardContent className="p-0 overflow-auto">
           <table className="w-full text-[10px] border-collapse">
             <thead className="bg-slate-100 sticky top-0">
@@ -204,6 +213,12 @@ function HistoricoPage() {
           <Info label="Status atual" v={equip.data?.status ?? "—"} />
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="arquivos" className="mt-3">
+          <ArquivosLegadosPanel equipamentoId={equipamentoId} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
