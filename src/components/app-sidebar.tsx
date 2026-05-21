@@ -240,20 +240,20 @@ export function AppSidebar() {
                                   <span>{item.label}</span>
                                 </Link>
                               </SidebarMenuButton>
+                              {group.title === "Executar" && item.to === "/app/dds" && (
+                                <SidebarMenuSub>
+                                  {DDS_SUBMENU.slice(1).map((s) => (
+                                    <SidebarMenuSubItem key={s.to}>
+                                      <SidebarMenuSubButton asChild isActive={isActive(s.to)}>
+                                        <Link to={s.to}>{s.label}</Link>
+                                      </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                  ))}
+                                </SidebarMenuSub>
+                              )}
                             </SidebarMenuItem>
                           );
                         })}
-                        {group.title === "Executar" && (
-                          <SidebarMenuSub>
-                            {DDS_SUBMENU.slice(1).map((s) => (
-                              <SidebarMenuSubItem key={s.to}>
-                                <SidebarMenuSubButton asChild isActive={isActive(s.to)}>
-                                  <Link to={s.to}>{s.label}</Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            ))}
-                          </SidebarMenuSub>
-                        )}
                       </SidebarMenu>
                     </SidebarGroupContent>
                   </SidebarGroup>
