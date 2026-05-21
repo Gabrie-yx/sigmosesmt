@@ -6,7 +6,8 @@ import {
   Search, AlertTriangle, Building2, Users, ShieldCheck, Package,
   HardHat, FileWarning, Activity, TrendingUp, Boxes, ClipboardCheck,
   ArrowUpRight, Stethoscope, GripVertical, RotateCcw, Lock, Unlock,
-  ShoppingBag, MessageSquare,
+  ShoppingBag, MessageSquare, FolderOpen,
+
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
