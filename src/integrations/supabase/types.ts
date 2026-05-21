@@ -446,6 +446,259 @@ export type Database = {
         }
         Relationships: []
       }
+      checklist_execucoes: {
+        Row: {
+          assinatura_path: string | null
+          created_at: string
+          created_by: string | null
+          data: string
+          encarregado_id: string | null
+          encarregado_nome: string | null
+          equipamento_id: string
+          horimetro_final: number | null
+          horimetro_inicial: number | null
+          id: string
+          mecanico_id: string | null
+          mecanico_nome: string | null
+          modelo_id: string
+          observacoes: string | null
+          operador_id: string | null
+          operador_nome: string | null
+          status: string
+          total_itens: number | null
+          total_na: number | null
+          total_nc: number | null
+          total_ok: number | null
+          updated_at: string
+        }
+        Insert: {
+          assinatura_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          encarregado_id?: string | null
+          encarregado_nome?: string | null
+          equipamento_id: string
+          horimetro_final?: number | null
+          horimetro_inicial?: number | null
+          id?: string
+          mecanico_id?: string | null
+          mecanico_nome?: string | null
+          modelo_id: string
+          observacoes?: string | null
+          operador_id?: string | null
+          operador_nome?: string | null
+          status?: string
+          total_itens?: number | null
+          total_na?: number | null
+          total_nc?: number | null
+          total_ok?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assinatura_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          encarregado_id?: string | null
+          encarregado_nome?: string | null
+          equipamento_id?: string
+          horimetro_final?: number | null
+          horimetro_inicial?: number | null
+          id?: string
+          mecanico_id?: string | null
+          mecanico_nome?: string | null
+          modelo_id?: string
+          observacoes?: string | null
+          operador_id?: string | null
+          operador_nome?: string | null
+          status?: string
+          total_itens?: number | null
+          total_na?: number | null
+          total_nc?: number | null
+          total_ok?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_execucoes_equipamento_id_fkey"
+            columns: ["equipamento_id"]
+            isOneToOne: false
+            referencedRelation: "equipamentos_moveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_execucoes_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_modelos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_modelo_itens: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          criticidade: string
+          descricao: string
+          id: string
+          numero: string
+          ordem: number
+          secao_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          criticidade?: string
+          descricao: string
+          id?: string
+          numero: string
+          ordem?: number
+          secao_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          criticidade?: string
+          descricao?: string
+          id?: string
+          numero?: string
+          ordem?: number
+          secao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_modelo_itens_secao_id_fkey"
+            columns: ["secao_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_modelo_secoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_modelo_secoes: {
+        Row: {
+          created_at: string
+          id: string
+          modelo_id: string
+          numero: number
+          ordem: number
+          subgrupo: string | null
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          modelo_id: string
+          numero: number
+          ordem?: number
+          subgrupo?: string | null
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          modelo_id?: string
+          numero?: number
+          ordem?: number
+          subgrupo?: string | null
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_modelo_secoes_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_modelos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_modelos: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          data_revisao: string | null
+          id: string
+          nome: string
+          revisao: string | null
+          tipo_equipamento: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          data_revisao?: string | null
+          id?: string
+          nome: string
+          revisao?: string | null
+          tipo_equipamento: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          data_revisao?: string | null
+          id?: string
+          nome?: string
+          revisao?: string | null
+          tipo_equipamento?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      checklist_respostas: {
+        Row: {
+          created_at: string
+          execucao_id: string
+          foto_path: string | null
+          id: string
+          item_id: string
+          observacao: string | null
+          os_numero: string | null
+          resposta: string
+        }
+        Insert: {
+          created_at?: string
+          execucao_id: string
+          foto_path?: string | null
+          id?: string
+          item_id: string
+          observacao?: string | null
+          os_numero?: string | null
+          resposta: string
+        }
+        Update: {
+          created_at?: string
+          execucao_id?: string
+          foto_path?: string | null
+          id?: string
+          item_id?: string
+          observacao?: string | null
+          os_numero?: string | null
+          resposta?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_respostas_execucao_id_fkey"
+            columns: ["execucao_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_execucoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_respostas_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_modelo_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           cnpj: string | null
@@ -1291,6 +1544,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      equipamentos_moveis: {
+        Row: {
+          ano: number | null
+          created_at: string
+          created_by: string | null
+          empresa_responsavel_id: string | null
+          fabricante: string | null
+          foto_path: string | null
+          horimetro_atual: number | null
+          id: string
+          modelo: string | null
+          modelo_checklist_id: string | null
+          nome: string
+          numero_patrimonio: string | null
+          numero_serie: string | null
+          observacoes: string | null
+          status: string
+          tag: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ano?: number | null
+          created_at?: string
+          created_by?: string | null
+          empresa_responsavel_id?: string | null
+          fabricante?: string | null
+          foto_path?: string | null
+          horimetro_atual?: number | null
+          id?: string
+          modelo?: string | null
+          modelo_checklist_id?: string | null
+          nome: string
+          numero_patrimonio?: string | null
+          numero_serie?: string | null
+          observacoes?: string | null
+          status?: string
+          tag: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ano?: number | null
+          created_at?: string
+          created_by?: string | null
+          empresa_responsavel_id?: string | null
+          fabricante?: string | null
+          foto_path?: string | null
+          horimetro_atual?: number | null
+          id?: string
+          modelo?: string | null
+          modelo_checklist_id?: string | null
+          nome?: string
+          numero_patrimonio?: string | null
+          numero_serie?: string | null
+          observacoes?: string | null
+          status?: string
+          tag?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       estoque_epi: {
         Row: {
