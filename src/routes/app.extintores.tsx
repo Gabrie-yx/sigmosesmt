@@ -256,7 +256,7 @@ function ExtintoresPage() {
                         <Badge variant="outline" className={insp.conforme ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-red-50 text-red-700 border-red-300"}>
                           {insp.conforme ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
                           {formatDateBR(insp.data_inspecao)}
-                          {insp.foto_url && <Camera className="h-3 w-3 ml-1" />}
+                          {insp.foto_path && <Camera className="h-3 w-3 ml-1" />}
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Pendente</Badge>
