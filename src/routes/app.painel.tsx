@@ -978,3 +978,131 @@ function FootStat({ label, value, tone }: { label: string; value: number; tone: 
     </div>
   );
 }
+
+// === Componentes 3D ===
+
+// Barra 3D vertical: forma customizada para Recharts <Bar shape={...} />
+function Bar3DShape(props: any) {
+  const { x, y, width, height, fill } = props;
+  if (!isFinite(height) || height <= 0 || !isFinite(width) || width <= 0) return null;
+  const depth = Math.max(4, Math.min(10, width * 0.28));
+  const id = `b3d-${Math.round((x ?? 0) * 100 + (y ?? 0))}`;
+  return (
+    <g>
+      <defs>
+        <linearGradient id={`${id}-front`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={fill} stopOpacity={1} />
+          <stop offset="100%" stopColor={fill} stopOpacity={0.55} />
+        </linearGradient>
+        <linearGradient id={`${id}-side`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={fill} stopOpacity={0.7} />
+          <stop offset="100%" stopColor="#0f172a" stopOpacity={0.45} />
+        </linearGradient>
+      </defs>
+      {/* lateral direita */}
+      <polygon
+        points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`}
+        fill={`url(#${id}-side)`}
+      />
+      {/* topo */}
+      <polygon
+        points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`}
+        fill={fill}
+        opacity={0.92}
+      />
+      {/* frente */}
+      <rect x={x} y={y} width={width} height={height} fill={`url(#${id}-front)`} rx={1.5} />
+    </g>
+  );
+}
+
+// Barra 3D horizontal
+function Bar3DHorizontal({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  const perc = max > 0 ? Math.max(4, Math.round((value / max) * 100)) : 4;
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 items-center">
+      <div className="min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 truncate" title={label}>{label}</span>
+          <span className="text-[10px] font-black text-slate-900">{value}</span>
+        </div>
+        <div className="relative h-5" style={{ perspective: "600px" }}>
+          <div className="absolute inset-0 bg-slate-100 rounded-md" />
+          <div
+            className="absolute top-0 left-0 h-full rounded-md transition-all"
+            style={{
+              width: `${perc}%`,
+              background: `linear-gradient(180deg, ${color} 0%, ${color}cc 50%, ${color}88 100%)`,
+              transform: "rotateX(18deg)",
+              transformOrigin: "bottom",
+              boxShadow: `0 3px 0 -1px ${color}55, 0 8px 18px -6px ${color}66, inset 0 1px 0 rgba(255,255,255,0.4)`,
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Donut 3D isométrico
+function Donut3D({ data, total, label }: { data: { name: string; value: number; color: string }[]; total: number; label?: string }) {
+  if (data.length === 0) return <Empty />;
+  return (
+    <div className="h-full grid grid-cols-5 gap-3 min-h-0">
+      <div className="col-span-3 relative">
+        <div
+          className="absolute inset-0"
+          style={{ transform: "perspective(900px) rotateX(58deg)", transformStyle: "preserve-3d" }}
+        >
+          <ResponsiveContainer>
+            <PieChart>
+              <defs>
+                <filter id="donut3d-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="4" result="b" />
+                  <feOffset dy="6" result="o" />
+                  <feComponentTransfer in="o" result="o2"><feFuncA type="linear" slope="0.35" /></feComponentTransfer>
+                  <feMerge><feMergeNode in="o2" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+              </defs>
+              <Pie
+                data={data}
+                dataKey="value"
+                nameKey="name"
+                innerRadius="55%"
+                outerRadius="92%"
+                paddingAngle={2}
+                cornerRadius={4}
+                stroke="#fff"
+                strokeWidth={2}
+                filter="url(#donut3d-shadow)"
+              >
+                {data.map((s, i) => <Cell key={i} fill={s.color} />)}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div className="text-3xl font-black text-slate-900 leading-none drop-shadow-sm">{total}</div>
+          {label && <div className="text-[8px] font-black uppercase tracking-widest text-slate-400 mt-1">{label}</div>}
+        </div>
+      </div>
+      <div className="col-span-2 flex flex-col justify-center gap-1.5">
+        {data.map((s) => {
+          const pct = total > 0 ? Math.round((s.value / total) * 100) : 0;
+          return (
+            <div key={s.name} className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: s.color, boxShadow: `0 2px 4px ${s.color}80` }} />
+              <div className="min-w-0 flex-1">
+                <div className="text-[9px] font-black uppercase tracking-wider text-slate-600 truncate">{s.name}</div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-sm font-black text-slate-900">{s.value}</span>
+                  <span className="text-[9px] font-bold text-slate-400">{pct}%</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
