@@ -132,6 +132,7 @@ function TstPanel() {
         ptes: ptes.data ?? [],
         docs: docs.data ?? [],
         ddsTemas: ddsTemas.data ?? [],
+        controleDocs: controleDocs.data ?? [],
       };
     },
   });
