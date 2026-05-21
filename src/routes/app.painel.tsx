@@ -648,26 +648,41 @@ function TstPanel() {
     },
     "top-itens": {
       title: "Top equipamentos entregues", icon: Boxes,
-      render: () => (
+      render: () => {
+        const sel = focus["top-itens"] ?? null;
+        const onPick = toggleFocusFor("top-itens");
+        const dataView = focusScale(topItens as any[], { labelKey: "item", valueKeys: ["qtd"], selected: sel });
+        return (
         <div className="h-full min-h-0">
           {topItens.length === 0 ? <Empty /> : (
             <ResponsiveContainer>
-              <BarChart data={topItens} margin={{ top: 18, right: 14, left: 0, bottom: 0 }}>
+              <BarChart data={dataView} margin={{ top: 22, right: 14, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="grad-top-itens" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#C8102E" /><stop offset="100%" stopColor="#fb7185" />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="item" tick={{ fontSize: 9, fill: "#64748b" }} axisLine={false} tickLine={false} interval={0} angle={-15} textAnchor="end" height={50} />
+                <XAxis dataKey="item" tick={{ fontSize: 9, fill: "#64748b" }} axisLine={false} tickLine={false} interval={0} angle={-15} textAnchor="end" height={50} onClick={(e: any) => e?.value && onPick(e.value)} style={{ cursor: "pointer" }} />
                 <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={28} />
-                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(200,16,46,0.08)" }} />
-                <Bar dataKey="qtd" fill="#C8102E" shape={<Bar3DShape />} name="Quantidade" />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(200,16,46,0.08)" }} formatter={(_v: any, _n: any, p: any) => [p.payload.__real_qtd ?? _v, "Quantidade"]} />
+                <Bar dataKey="qtd" shape={<Bar3DShape />} name="Quantidade" onClick={(d: any) => onPick(d?.item)} className="cursor-pointer">
+                  {dataView.map((d: any) => (
+                    <Cell key={d.item} fill={sel ? (d.item === sel ? "#C8102E" : "rgba(200,16,46,0.35)") : "#C8102E"} />
+                  ))}
+                  <LabelList dataKey="qtd" position="top" content={(props: any) => {
+                    const { x, y, width, index } = props;
+                    const row: any = dataView[index]; if (!row) return null;
+                    if (sel && row.item !== sel) return null;
+                    return <text x={Number(x)+Number(width)/2} y={Number(y)-4} textAnchor="middle" fontSize={11} fontWeight={800} fill="#C8102E">{row.__real_qtd ?? row.qtd}</text>;
+                  }} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
-      ),
+        );
+      },
     },
     "top-recip": {
       title: "Top recebedores de EPI", icon: HardHat,
