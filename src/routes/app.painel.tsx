@@ -612,24 +612,39 @@ function TstPanel() {
     },
     "dds-recentes": {
       title: "DDS por setor · volume × aderência", icon: MessageSquare,
-      render: () => (
+      render: () => {
+        const sel = focus["dds-recentes"] ?? null;
+        const onPick = toggleFocusFor("dds-recentes");
+        const dataView = focusScale(ddsPorSetor as any[], { labelKey: "setor", valueKeys: ["qtd"], selected: sel });
+        return (
         <div className="h-full min-h-0">
           {ddsPorSetor.length === 0 ? <Empty /> : (
             <ResponsiveContainer>
-              <ComposedChart data={ddsPorSetor} margin={{ top: 14, right: 10, left: 0, bottom: 0 }}>
+              <ComposedChart data={dataView} margin={{ top: 18, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="setor" tick={{ fontSize: 9, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="setor" tick={{ fontSize: 9, fill: "#64748b" }} axisLine={false} tickLine={false} onClick={(e: any) => e?.value && onPick(e.value)} style={{ cursor: "pointer" }} />
                 <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={26} />
                 <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={32} tickFormatter={(v) => `${v}%`} />
-                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(167,139,250,0.08)" }} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(167,139,250,0.08)" }} formatter={(_v: any, n: any, p: any) => [n === "DDS" ? (p.payload.__real_qtd ?? _v) : _v, n]} />
                 <Legend wrapperStyle={{ fontSize: 10 }} iconType="circle" />
-                <Bar yAxisId="l" dataKey="qtd" fill="#a78bfa" name="DDS" shape={<Bar3DShape />} />
+                <Bar yAxisId="l" dataKey="qtd" fill="#a78bfa" name="DDS" shape={<Bar3DShape />} onClick={(d: any) => onPick(d?.setor)} className="cursor-pointer">
+                  {dataView.map((d: any) => (
+                    <Cell key={d.setor} fill={sel ? (d.setor === sel ? "#a78bfa" : "rgba(167,139,250,0.35)") : "#a78bfa"} />
+                  ))}
+                  <LabelList dataKey="qtd" position="top" content={(props: any) => {
+                    const { x, y, width, index } = props;
+                    const row: any = dataView[index]; if (!row) return null;
+                    if (sel && row.setor !== sel) return null;
+                    return <text x={Number(x)+Number(width)/2} y={Number(y)-4} textAnchor="middle" fontSize={10} fontWeight={800} fill="#7c3aed">{row.__real_qtd ?? row.qtd}</text>;
+                  }} />
+                </Bar>
                 <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }} name="% aderência" />
               </ComposedChart>
             </ResponsiveContainer>
           )}
         </div>
-      ),
+        );
+      },
     },
     "top-itens": {
       title: "Top equipamentos entregues", icon: Boxes,
