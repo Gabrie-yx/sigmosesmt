@@ -317,10 +317,10 @@ function ExtintoresPage() {
       <SignaturePadDialog
         open={sigOpen}
         onClose={() => setSigOpen(false)}
-        defaultNome={(user as any)?.user_metadata?.full_name ?? ""}
         title="Assinar planilha de inspeção"
-        onConfirm={(sig) => {
-          setPdfDoc(gerarPdfPlanilhaExtintores(extintores.data ?? [], inspecoes.data ?? [], sig));
+        onConfirm={async (sig) => {
+          const doc = await gerarPdfPlanilhaExtintores(extintores.data ?? [], inspecoes.data ?? [], sig);
+          setPdfDoc(doc);
           setSigOpen(false);
           setPdfOpen(true);
         }}
