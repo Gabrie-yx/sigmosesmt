@@ -300,6 +300,73 @@ function TstPanel() {
     }));
   }, [data]);
 
+  // === Agregações para gráficos 3D ===
+  const epiPorMotivo = useMemo(() => {
+    const m = new Map<string, number>();
+    (data?.deliveries ?? []).forEach((d: any) => {
+      const k = String(d.motivo_entrega || "OUTROS");
+      m.set(k, (m.get(k) ?? 0) + Number(d.qtd || 0));
+    });
+    const labels: Record<string, string> = {
+      PRIMEIRA_ENTREGA: "1ª entrega", TROCA: "Troca", TROCA_DESGASTE: "Desgaste",
+      PERDA_EXTRAVIO: "Perda", DEVOLUCAO: "Devolução", OUTROS: "Outros",
+    };
+    const colors: Record<string, string> = {
+      PRIMEIRA_ENTREGA: "#22d3ee", TROCA: "#a78bfa", TROCA_DESGASTE: "#8b5cf6",
+      PERDA_EXTRAVIO: "#fb7185", DEVOLUCAO: "#facc15", OUTROS: "#94a3b8",
+    };
+    return Array.from(m.entries())
+      .map(([k, v]) => ({ name: labels[k] ?? k, value: v, color: colors[k] ?? "#94a3b8" }))
+      .sort((a, b) => b.value - a.value);
+  }, [data]);
+
+  const ddsPorSetor = useMemo(() => {
+    const m = new Map<string, { setor: string; qtd: number; ad: number; n: number }>();
+    (data?.dds ?? []).forEach((d: any) => {
+      const s = (d.setor || "N/D").toString().slice(0, 14);
+      const cur = m.get(s) ?? { setor: s, qtd: 0, ad: 0, n: 0 };
+      cur.qtd += 1; cur.ad += Number(d.aderencia || 0); cur.n += 1;
+      m.set(s, cur);
+    });
+    return Array.from(m.values())
+      .map((v) => ({ setor: v.setor, qtd: v.qtd, aderencia: v.n > 0 ? Math.round(v.ad / v.n) : 0 }))
+      .sort((a, b) => b.qtd - a.qtd).slice(0, 8);
+  }, [data]);
+
+  const pendPorEmpresa = useMemo(() => {
+    const m = new Map<string, { name: string; alerta: number; bloq: number }>();
+    rows.forEach((r) => {
+      const name = (r.company || "—").toString().slice(0, 16);
+      const cur = m.get(name) ?? { name, alerta: 0, bloq: 0 };
+      if (r.status.label === "ALERTA") cur.alerta += 1;
+      else if (r.status.label === "BLOQUEADO" || r.status.label === "SEM CARGO") cur.bloq += 1;
+      m.set(name, cur);
+    });
+    return Array.from(m.values()).filter((v) => v.alerta + v.bloq > 0)
+      .sort((a, b) => b.alerta + b.bloq - (a.alerta + a.bloq));
+  }, [rows]);
+
+  const docDonut = useMemo(() => {
+    const d = docMetrics;
+    return [
+      { name: "Resolvidos", value: d.resolvidos, color: "#10b981" },
+      { name: "Abertos", value: d.abertos - d.criticos - d.vencidos, color: "#f59e0b" },
+      { name: "Críticos", value: d.criticos, color: "#fb923c" },
+      { name: "Vencidos", value: d.vencidos, color: "#ef4444" },
+    ].filter((x) => x.value > 0);
+  }, [docMetrics]);
+
+  const extDonut = useMemo(() => {
+    const e = extMetrics;
+    const ok = Math.max(0, e.ativos - e.vencidos - e.vencendo);
+    return [
+      { name: "Conformes", value: ok, color: "#10b981" },
+      { name: "Vencendo 30d", value: e.vencendo, color: "#f59e0b" },
+      { name: "Recarga vencida", value: e.vencidos, color: "#ef4444" },
+      { name: "Sem inspeção", value: e.semInspecao, color: "#a78bfa" },
+    ].filter((x) => x.value > 0);
+  }, [extMetrics]);
+
   const pendencias = useMemo(() => {
     let list = rows.filter((r) => r.status.label === "ALERTA" || r.status.label === "BLOQUEADO" || r.status.label === "SEM CARGO");
     if (filterCompany !== "ALL") list = list.filter((r) => r.emp.company_id === filterCompany);
