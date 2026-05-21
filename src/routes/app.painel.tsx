@@ -13,8 +13,9 @@ import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  PieChart, Pie, Cell, Legend, ComposedChart, Line, Area,
+  PieChart, Pie, Cell, Legend, ComposedChart, Line, Area, LabelList,
 } from "recharts";
+import { focusScale } from "@/lib/chart-focus";
 // react-grid-layout touches `window` at import — load it client-only via lazy state
 type Layout = { i: string; x: number; y: number; w: number; h: number; minH?: number; minW?: number };
 
@@ -74,6 +75,12 @@ function TstPanel() {
   const [Grid, setGrid] = useState<any>(null);
   const gridWrapRef = useRef<HTMLDivElement>(null);
   const [gridWidth, setGridWidth] = useState(0);
+  // Focus mode por widget: clique numa barra a "promove" a referência visual,
+  // as demais encolhem. Clique de novo (ou em outra) alterna. Sem seleção,
+  // todos os valores aparecem reais.
+  const [focus, setFocus] = useState<Record<string, string | null>>({});
+  const toggleFocusFor = (id: string) => (label: string) =>
+    setFocus((p) => ({ ...p, [id]: p[id] === label ? null : label }));
 
   useEffect(() => {
     let mounted = true;
@@ -605,47 +612,77 @@ function TstPanel() {
     },
     "dds-recentes": {
       title: "DDS por setor · volume × aderência", icon: MessageSquare,
-      render: () => (
+      render: () => {
+        const sel = focus["dds-recentes"] ?? null;
+        const onPick = toggleFocusFor("dds-recentes");
+        const dataView = focusScale(ddsPorSetor as any[], { labelKey: "setor", valueKeys: ["qtd"], selected: sel });
+        return (
         <div className="h-full min-h-0">
           {ddsPorSetor.length === 0 ? <Empty /> : (
             <ResponsiveContainer>
-              <ComposedChart data={ddsPorSetor} margin={{ top: 14, right: 10, left: 0, bottom: 0 }}>
+              <ComposedChart data={dataView} margin={{ top: 18, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="setor" tick={{ fontSize: 9, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="setor" tick={{ fontSize: 9, fill: "#64748b" }} axisLine={false} tickLine={false} onClick={(e: any) => e?.value && onPick(e.value)} style={{ cursor: "pointer" }} />
                 <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={26} />
                 <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={32} tickFormatter={(v) => `${v}%`} />
-                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(167,139,250,0.08)" }} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(167,139,250,0.08)" }} formatter={(_v: any, n: any, p: any) => [n === "DDS" ? (p.payload.__real_qtd ?? _v) : _v, n]} />
                 <Legend wrapperStyle={{ fontSize: 10 }} iconType="circle" />
-                <Bar yAxisId="l" dataKey="qtd" fill="#a78bfa" name="DDS" shape={<Bar3DShape />} />
+                <Bar yAxisId="l" dataKey="qtd" fill="#a78bfa" name="DDS" shape={<Bar3DShape />} onClick={(d: any) => onPick(d?.setor)} className="cursor-pointer">
+                  {dataView.map((d: any) => (
+                    <Cell key={d.setor} fill={sel ? (d.setor === sel ? "#a78bfa" : "rgba(167,139,250,0.35)") : "#a78bfa"} />
+                  ))}
+                  <LabelList dataKey="qtd" position="top" content={(props: any) => {
+                    const { x, y, width, index } = props;
+                    const row: any = dataView[index]; if (!row) return null;
+                    if (sel && row.setor !== sel) return null;
+                    return <text x={Number(x)+Number(width)/2} y={Number(y)-4} textAnchor="middle" fontSize={10} fontWeight={800} fill="#7c3aed">{row.__real_qtd ?? row.qtd}</text>;
+                  }} />
+                </Bar>
                 <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }} name="% aderência" />
               </ComposedChart>
             </ResponsiveContainer>
           )}
         </div>
-      ),
+        );
+      },
     },
     "top-itens": {
       title: "Top equipamentos entregues", icon: Boxes,
-      render: () => (
+      render: () => {
+        const sel = focus["top-itens"] ?? null;
+        const onPick = toggleFocusFor("top-itens");
+        const dataView = focusScale(topItens as any[], { labelKey: "item", valueKeys: ["qtd"], selected: sel });
+        return (
         <div className="h-full min-h-0">
           {topItens.length === 0 ? <Empty /> : (
             <ResponsiveContainer>
-              <BarChart data={topItens} margin={{ top: 18, right: 14, left: 0, bottom: 0 }}>
+              <BarChart data={dataView} margin={{ top: 22, right: 14, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="grad-top-itens" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#C8102E" /><stop offset="100%" stopColor="#fb7185" />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="item" tick={{ fontSize: 9, fill: "#64748b" }} axisLine={false} tickLine={false} interval={0} angle={-15} textAnchor="end" height={50} />
+                <XAxis dataKey="item" tick={{ fontSize: 9, fill: "#64748b" }} axisLine={false} tickLine={false} interval={0} angle={-15} textAnchor="end" height={50} onClick={(e: any) => e?.value && onPick(e.value)} style={{ cursor: "pointer" }} />
                 <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={28} />
-                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(200,16,46,0.08)" }} />
-                <Bar dataKey="qtd" fill="#C8102E" shape={<Bar3DShape />} name="Quantidade" />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(200,16,46,0.08)" }} formatter={(_v: any, _n: any, p: any) => [p.payload.__real_qtd ?? _v, "Quantidade"]} />
+                <Bar dataKey="qtd" shape={<Bar3DShape />} name="Quantidade" onClick={(d: any) => onPick(d?.item)} className="cursor-pointer">
+                  {dataView.map((d: any) => (
+                    <Cell key={d.item} fill={sel ? (d.item === sel ? "#C8102E" : "rgba(200,16,46,0.35)") : "#C8102E"} />
+                  ))}
+                  <LabelList dataKey="qtd" position="top" content={(props: any) => {
+                    const { x, y, width, index } = props;
+                    const row: any = dataView[index]; if (!row) return null;
+                    if (sel && row.item !== sel) return null;
+                    return <text x={Number(x)+Number(width)/2} y={Number(y)-4} textAnchor="middle" fontSize={11} fontWeight={800} fill="#C8102E">{row.__real_qtd ?? row.qtd}</text>;
+                  }} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
-      ),
+        );
+      },
     },
     "top-recip": {
       title: "Top recebedores de EPI", icon: HardHat,
@@ -664,11 +701,15 @@ function TstPanel() {
     },
     "dds-trend": {
       title: "DDS · evolução & aderência", icon: ClipboardCheck,
-      render: () => (
+      render: () => {
+        const sel = focus["dds-trend"] ?? null;
+        const onPick = toggleFocusFor("dds-trend");
+        const dataView = focusScale(ddsTrend as any[], { labelKey: "mes", valueKeys: ["qtd"], selected: sel });
+        return (
         <div className="h-full min-h-0">
           {ddsTrend.length === 0 ? <Empty /> : (
             <ResponsiveContainer>
-              <ComposedChart data={ddsTrend} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+              <ComposedChart data={dataView} margin={{ top: 22, right: 12, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="grad-dds-bar" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#C8102E" /><stop offset="100%" stopColor="#8B0A1E" stopOpacity={0.85} />
@@ -679,39 +720,58 @@ function TstPanel() {
                   <filter id="dds-glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} onClick={(e: any) => e?.value && onPick(e.value)} style={{ cursor: "pointer" }} />
                 <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={28} />
                 <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={32} tickFormatter={(v) => `${v}%`} />
-                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(200,16,46,0.06)" }} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(200,16,46,0.06)" }} formatter={(_v: any, n: any, p: any) => [n === "DDS realizados" ? (p.payload.__real_qtd ?? _v) : _v, n]} />
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} iconType="circle" />
-                <Bar yAxisId="l" dataKey="qtd" fill="url(#grad-dds-bar)" name="DDS realizados" radius={[8, 8, 0, 0]} barSize={28} />
+                <Bar yAxisId="l" dataKey="qtd" name="DDS realizados" radius={[8, 8, 0, 0]} barSize={28} onClick={(d: any) => onPick(d?.mes)} className="cursor-pointer">
+                  {dataView.map((d: any) => (
+                    <Cell key={d.mes} fill={sel ? (d.mes === sel ? "url(#grad-dds-bar)" : "rgba(200,16,46,0.25)") : "url(#grad-dds-bar)"} />
+                  ))}
+                  <LabelList dataKey="qtd" position="top" content={(props: any) => {
+                    const { x, y, width, index } = props;
+                    const row: any = dataView[index]; if (!row) return null;
+                    if (sel && row.mes !== sel) return null;
+                    return <text x={Number(x)+Number(width)/2} y={Number(y)-4} textAnchor="middle" fontSize={11} fontWeight={800} fill="#C8102E">{row.__real_qtd ?? row.qtd}</text>;
+                  }} />
+                </Bar>
                 <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="url(#grad-dds-line)" strokeWidth={3.5} dot={{ r: 4, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 7 }} name="% aderência" filter="url(#dds-glow)" />
               </ComposedChart>
             </ResponsiveContainer>
           )}
         </div>
-      ),
+        );
+      },
     },
     conformidade: {
       title: "Conformidade por empresa", icon: Building2,
-      render: () => (
+      render: () => {
+        const sel = focus["conformidade"] ?? null;
+        const onPick = toggleFocusFor("conformidade");
+        const dataView = focusScale(conformity as any[], { labelKey: "name", valueKeys: ["perc"], selected: sel });
+        return (
         <div className="h-full min-h-0">
           {conformity.length === 0 ? <Empty /> : (
             <ResponsiveContainer>
-              <BarChart data={conformity} margin={{ top: 14, right: 16, left: 0, bottom: 0 }} layout="vertical">
+              <BarChart data={dataView} margin={{ top: 14, right: 48, left: 0, bottom: 0 }} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
-                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#475569", fontWeight: 700 }} axisLine={false} tickLine={false} width={110} />
-                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(16,185,129,0.06)" }} formatter={(v: any, _n: any, p: any) => [`${v}% (${p.payload.oks}/${p.payload.total})`, "Conformidade"]} />
-                <Bar dataKey="perc" name="Conformidade" radius={[0, 8, 8, 0]} shape={(props: any) => {
-                  const c = props.payload.perc;
+                <XAxis type="number" domain={[0, sel ? (dataView.find((d:any)=>d.name===sel)?.perc ?? 100) : 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${Math.round(Number(v))}%`} allowDataOverflow />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#475569", fontWeight: 700 }} axisLine={false} tickLine={false} width={110} onClick={(e: any) => e?.value && onPick(e.value)} style={{ cursor: "pointer" }} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(16,185,129,0.06)" }} formatter={(_v: any, _n: any, p: any) => {
+                  const real = p.payload.__real_perc ?? _v;
+                  return [`${real}% (${p.payload.oks}/${p.payload.total})`, "Conformidade"];
+                }} />
+                <Bar dataKey="perc" name="Conformidade" radius={[0, 8, 8, 0]} onClick={(d: any) => onPick(d?.name)} className="cursor-pointer" shape={(props: any) => {
+                  const c = props.payload.__real_perc ?? props.payload.perc;
                   const fill = c === 100 ? "#10b981" : c > 80 ? "#f59e0b" : c > 0 ? "#ef4444" : "#94a3b8";
                   const { x, y, width, height } = props;
                   if (!isFinite(width) || width <= 0) return <g />;
                   const depth = Math.min(8, height * 0.35);
                   const id = `cf3d-${Math.round((x ?? 0) * 100 + (y ?? 0))}`;
+                  const dim = sel && props.payload.name !== sel;
                   return (
-                    <g>
+                    <g opacity={dim ? 0.45 : 1}>
                       <defs>
                         <linearGradient id={`${id}-f`} x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={fill} stopOpacity={1} />
@@ -723,34 +783,66 @@ function TstPanel() {
                       <rect x={x} y={y} width={width} height={height} fill={`url(#${id}-f)`} rx={2} />
                     </g>
                   );
-                }} />
+                }}>
+                  <LabelList dataKey="perc" position="right" content={(props: any) => {
+                    const { x, y, width, height, index } = props;
+                    const row: any = dataView[index]; if (!row) return null;
+                    if (sel && row.name !== sel) return null;
+                    const real = row.__real_perc ?? row.perc;
+                    return <text x={Number(x)+Number(width)+6} y={Number(y)+Number(height)/2+4} fontSize={11} fontWeight={800} fill="#0f172a">{real}%</text>;
+                  }} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
-      ),
+        );
+      },
     },
     pendencias: {
       title: "Pendências por empresa · alerta vs bloqueado", icon: AlertTriangle, accent: "amber",
-      render: () => (
+      render: () => {
+        const sel = focus["pendencias"] ?? null;
+        const onPick = toggleFocusFor("pendencias");
+        const dataView = focusScale(pendPorEmpresa as any[], { labelKey: "name", valueKeys: ["alerta", "bloq"], selected: sel });
+        return (
         <div className="h-full min-h-0">
           {pendPorEmpresa.length === 0 ? (
             <div className="h-full flex items-center justify-center text-emerald-600 font-black uppercase text-xs">✓ Nenhuma pendência</div>
           ) : (
             <ResponsiveContainer>
-              <BarChart data={pendPorEmpresa} margin={{ top: 16, right: 18, left: 0, bottom: 0 }}>
+              <BarChart data={dataView} margin={{ top: 22, right: 18, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} interval={0} angle={-12} textAnchor="end" height={56} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} interval={0} angle={-12} textAnchor="end" height={56} onClick={(e: any) => e?.value && onPick(e.value)} style={{ cursor: "pointer" }} />
                 <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={28} />
-                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(239,68,68,0.06)" }} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(239,68,68,0.06)" }} formatter={(_v: any, n: any, p: any) => {
+                  const realKey = n === "Alerta" ? "__real_alerta" : "__real_bloq";
+                  return [p.payload[realKey] ?? _v, n];
+                }} />
                 <Legend wrapperStyle={{ fontSize: 10 }} iconType="circle" />
-                <Bar dataKey="alerta" stackId="p" fill="#f59e0b" name="Alerta" shape={<Bar3DShape />} />
-                <Bar dataKey="bloq" stackId="p" fill="#ef4444" name="Bloqueado" shape={<Bar3DShape />} />
+                <Bar dataKey="alerta" stackId="p" fill="#f59e0b" name="Alerta" shape={<Bar3DShape />} onClick={(d: any) => onPick(d?.name)} className="cursor-pointer">
+                  {dataView.map((d: any) => (
+                    <Cell key={"a-"+d.name} fill={sel ? (d.name === sel ? "#f59e0b" : "rgba(245,158,11,0.3)") : "#f59e0b"} />
+                  ))}
+                </Bar>
+                <Bar dataKey="bloq" stackId="p" fill="#ef4444" name="Bloqueado" shape={<Bar3DShape />} onClick={(d: any) => onPick(d?.name)} className="cursor-pointer">
+                  {dataView.map((d: any) => (
+                    <Cell key={"b-"+d.name} fill={sel ? (d.name === sel ? "#ef4444" : "rgba(239,68,68,0.3)") : "#ef4444"} />
+                  ))}
+                  <LabelList dataKey="bloq" position="top" content={(props: any) => {
+                    const { x, y, width, index } = props;
+                    const row: any = dataView[index]; if (!row) return null;
+                    if (sel && row.name !== sel) return null;
+                    const total = (row.__real_alerta ?? 0) + (row.__real_bloq ?? 0);
+                    return <text x={Number(x)+Number(width)/2} y={Number(y)-4} textAnchor="middle" fontSize={11} fontWeight={800} fill="#ef4444">{total}</text>;
+                  }} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
-      ),
+        );
+      },
     },
     "doc-controle": {
       title: "Controle de Documentos", icon: FolderOpen,
