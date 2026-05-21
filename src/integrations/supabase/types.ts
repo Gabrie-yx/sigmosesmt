@@ -1396,6 +1396,134 @@ export type Database = {
         }
         Relationships: []
       }
+      extintor_inspecoes: {
+        Row: {
+          conforme: boolean
+          created_at: string
+          created_by: string | null
+          data_inspecao: string
+          extintor_id: string
+          foto_path: string | null
+          id: string
+          nao_conformidade: string | null
+          nc_codigos: number[]
+          observacoes: string | null
+          responsavel_nome: string
+          responsavel_registro: string | null
+        }
+        Insert: {
+          conforme?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_inspecao?: string
+          extintor_id: string
+          foto_path?: string | null
+          id?: string
+          nao_conformidade?: string | null
+          nc_codigos?: number[]
+          observacoes?: string | null
+          responsavel_nome: string
+          responsavel_registro?: string | null
+        }
+        Update: {
+          conforme?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_inspecao?: string
+          extintor_id?: string
+          foto_path?: string | null
+          id?: string
+          nao_conformidade?: string | null
+          nc_codigos?: number[]
+          observacoes?: string | null
+          responsavel_nome?: string
+          responsavel_registro?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extintor_inspecoes_extintor_id_fkey"
+            columns: ["extintor_id"]
+            isOneToOne: false
+            referencedRelation: "extintores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extintores: {
+        Row: {
+          ano_teste_hidrostatico: number | null
+          area: string
+          capacidade_extintora: string | null
+          carga_nominal: number | null
+          carga_unidade: string | null
+          created_at: string
+          created_by: string | null
+          data_fabricacao: string | null
+          data_ultima_recarga: string | null
+          empresa_responsavel: string | null
+          fabricante: string | null
+          foto_path: string | null
+          id: string
+          localizacao: string
+          numero: string
+          numero_selo_inmetro: string | null
+          observacoes: string | null
+          proxima_recarga: string | null
+          proximo_teste_hidrostatico: number | null
+          status: Database["public"]["Enums"]["extintor_status"]
+          tipo_agente: Database["public"]["Enums"]["extintor_tipo_agente"]
+          updated_at: string
+        }
+        Insert: {
+          ano_teste_hidrostatico?: number | null
+          area: string
+          capacidade_extintora?: string | null
+          carga_nominal?: number | null
+          carga_unidade?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fabricacao?: string | null
+          data_ultima_recarga?: string | null
+          empresa_responsavel?: string | null
+          fabricante?: string | null
+          foto_path?: string | null
+          id?: string
+          localizacao: string
+          numero: string
+          numero_selo_inmetro?: string | null
+          observacoes?: string | null
+          proxima_recarga?: string | null
+          proximo_teste_hidrostatico?: number | null
+          status?: Database["public"]["Enums"]["extintor_status"]
+          tipo_agente: Database["public"]["Enums"]["extintor_tipo_agente"]
+          updated_at?: string
+        }
+        Update: {
+          ano_teste_hidrostatico?: number | null
+          area?: string
+          capacidade_extintora?: string | null
+          carga_nominal?: number | null
+          carga_unidade?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fabricacao?: string | null
+          data_ultima_recarga?: string | null
+          empresa_responsavel?: string | null
+          fabricante?: string | null
+          foto_path?: string | null
+          id?: string
+          localizacao?: string
+          numero?: string
+          numero_selo_inmetro?: string | null
+          observacoes?: string | null
+          proxima_recarga?: string | null
+          proximo_teste_hidrostatico?: number | null
+          status?: Database["public"]["Enums"]["extintor_status"]
+          tipo_agente?: Database["public"]["Enums"]["extintor_tipo_agente"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       historico_entregas: {
         Row: {
           cpf_colaborador: string
@@ -3448,6 +3576,7 @@ export type Database = {
       current_aal: { Args: never; Returns: string }
       gerar_numero_apr: { Args: never; Returns: string }
       gerar_numero_controle_doc: { Args: never; Returns: string }
+      gerar_numero_extintor: { Args: never; Returns: string }
       gerar_numero_ordem_producao: { Args: never; Returns: string }
       gerar_numero_tnc: { Args: never; Returns: string }
       has_module_access: {
@@ -3496,6 +3625,16 @@ export type Database = {
         | "portaria"
         | "usuarios"
       app_role: "admin" | "tst" | "viewer" | "moderador" | "editor"
+      extintor_status: "ATIVO" | "EM_MANUTENCAO" | "BAIXADO" | "VENCIDO"
+      extintor_tipo_agente:
+        | "ABC"
+        | "BC"
+        | "A"
+        | "AP"
+        | "CO2"
+        | "PQS"
+        | "PQS_K"
+        | "OUTRO"
       purchase_req_class: "MATERIAL" | "SERVICO"
       purchase_req_status: "PENDENTE" | "APROVADA" | "INDEFERIDA"
       tipo_movimentacao_epi: "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO"
@@ -3635,6 +3774,17 @@ export const Constants = {
         "usuarios",
       ],
       app_role: ["admin", "tst", "viewer", "moderador", "editor"],
+      extintor_status: ["ATIVO", "EM_MANUTENCAO", "BAIXADO", "VENCIDO"],
+      extintor_tipo_agente: [
+        "ABC",
+        "BC",
+        "A",
+        "AP",
+        "CO2",
+        "PQS",
+        "PQS_K",
+        "OUTRO",
+      ],
       purchase_req_class: ["MATERIAL", "SERVICO"],
       purchase_req_status: ["PENDENTE", "APROVADA", "INDEFERIDA"],
       tipo_movimentacao_epi: [
