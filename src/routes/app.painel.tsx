@@ -701,11 +701,15 @@ function TstPanel() {
     },
     "dds-trend": {
       title: "DDS · evolução & aderência", icon: ClipboardCheck,
-      render: () => (
+      render: () => {
+        const sel = focus["dds-trend"] ?? null;
+        const onPick = toggleFocusFor("dds-trend");
+        const dataView = focusScale(ddsTrend as any[], { labelKey: "mes", valueKeys: ["qtd"], selected: sel });
+        return (
         <div className="h-full min-h-0">
           {ddsTrend.length === 0 ? <Empty /> : (
             <ResponsiveContainer>
-              <ComposedChart data={ddsTrend} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+              <ComposedChart data={dataView} margin={{ top: 22, right: 12, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="grad-dds-bar" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#C8102E" /><stop offset="100%" stopColor="#8B0A1E" stopOpacity={0.85} />
@@ -716,18 +720,29 @@ function TstPanel() {
                   <filter id="dds-glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} onClick={(e: any) => e?.value && onPick(e.value)} style={{ cursor: "pointer" }} />
                 <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={28} />
                 <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={32} tickFormatter={(v) => `${v}%`} />
-                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(200,16,46,0.06)" }} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(200,16,46,0.06)" }} formatter={(_v: any, n: any, p: any) => [n === "DDS realizados" ? (p.payload.__real_qtd ?? _v) : _v, n]} />
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} iconType="circle" />
-                <Bar yAxisId="l" dataKey="qtd" fill="url(#grad-dds-bar)" name="DDS realizados" radius={[8, 8, 0, 0]} barSize={28} />
+                <Bar yAxisId="l" dataKey="qtd" name="DDS realizados" radius={[8, 8, 0, 0]} barSize={28} onClick={(d: any) => onPick(d?.mes)} className="cursor-pointer">
+                  {dataView.map((d: any) => (
+                    <Cell key={d.mes} fill={sel ? (d.mes === sel ? "url(#grad-dds-bar)" : "rgba(200,16,46,0.25)") : "url(#grad-dds-bar)"} />
+                  ))}
+                  <LabelList dataKey="qtd" position="top" content={(props: any) => {
+                    const { x, y, width, index } = props;
+                    const row: any = dataView[index]; if (!row) return null;
+                    if (sel && row.mes !== sel) return null;
+                    return <text x={Number(x)+Number(width)/2} y={Number(y)-4} textAnchor="middle" fontSize={11} fontWeight={800} fill="#C8102E">{row.__real_qtd ?? row.qtd}</text>;
+                  }} />
+                </Bar>
                 <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="url(#grad-dds-line)" strokeWidth={3.5} dot={{ r: 4, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 7 }} name="% aderência" filter="url(#dds-glow)" />
               </ComposedChart>
             </ResponsiveContainer>
           )}
         </div>
-      ),
+        );
+      },
     },
     conformidade: {
       title: "Conformidade por empresa", icon: Building2,
