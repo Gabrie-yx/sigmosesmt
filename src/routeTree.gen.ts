@@ -39,6 +39,7 @@ import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
 import { Route as AppSesmtTerceirosRouteImport } from './routes/app.sesmt.terceiros'
 import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requisicoes'
 import { Route as AppSesmtProcedimentosRouteImport } from './routes/app.sesmt.procedimentos'
+import { Route as AppSesmtEquipamentosMoveisRouteImport } from './routes/app.sesmt.equipamentos-moveis'
 import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
 import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.relatorios.reincidencia-epi'
 import { Route as AppProducaoTiposProdutoRouteImport } from './routes/app.producao.tipos-produto'
@@ -208,6 +209,12 @@ const AppSesmtProcedimentosRoute = AppSesmtProcedimentosRouteImport.update({
   path: '/sesmt/procedimentos',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSesmtEquipamentosMoveisRoute =
+  AppSesmtEquipamentosMoveisRouteImport.update({
+    id: '/sesmt/equipamentos-moveis',
+    path: '/sesmt/equipamentos-moveis',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppSesmtDocsRoute = AppSesmtDocsRouteImport.update({
   id: '/sesmt/docs',
   path: '/sesmt/docs',
@@ -345,6 +352,7 @@ export interface FileRoutesByFullPath {
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
+  '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
@@ -393,6 +401,7 @@ export interface FileRoutesByTo {
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
+  '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
@@ -444,6 +453,7 @@ export interface FileRoutesById {
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
+  '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
@@ -496,6 +506,7 @@ export interface FileRouteTypes {
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
+    | '/app/sesmt/equipamentos-moveis'
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
     | '/app/sesmt/terceiros'
@@ -544,6 +555,7 @@ export interface FileRouteTypes {
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
+    | '/app/sesmt/equipamentos-moveis'
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
     | '/app/sesmt/terceiros'
@@ -594,6 +606,7 @@ export interface FileRouteTypes {
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/docs'
+    | '/app/sesmt/equipamentos-moveis'
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
     | '/app/sesmt/terceiros'
@@ -825,6 +838,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtProcedimentosRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/sesmt/equipamentos-moveis': {
+      id: '/app/sesmt/equipamentos-moveis'
+      path: '/sesmt/equipamentos-moveis'
+      fullPath: '/app/sesmt/equipamentos-moveis'
+      preLoaderRoute: typeof AppSesmtEquipamentosMoveisRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/sesmt/docs': {
       id: '/app/sesmt/docs'
       path: '/sesmt/docs'
@@ -1003,6 +1023,7 @@ interface AppRouteChildren {
   AppProducaoTiposProdutoRoute: typeof AppProducaoTiposProdutoRoute
   AppRelatoriosReincidenciaEpiRoute: typeof AppRelatoriosReincidenciaEpiRoute
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
+  AppSesmtEquipamentosMoveisRoute: typeof AppSesmtEquipamentosMoveisRoute
   AppSesmtProcedimentosRoute: typeof AppSesmtProcedimentosRoute
   AppSesmtRequisicoesRoute: typeof AppSesmtRequisicoesRoute
   AppSesmtTerceirosRoute: typeof AppSesmtTerceirosRoute
@@ -1045,6 +1066,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProducaoTiposProdutoRoute: AppProducaoTiposProdutoRoute,
   AppRelatoriosReincidenciaEpiRoute: AppRelatoriosReincidenciaEpiRoute,
   AppSesmtDocsRoute: AppSesmtDocsRoute,
+  AppSesmtEquipamentosMoveisRoute: AppSesmtEquipamentosMoveisRoute,
   AppSesmtProcedimentosRoute: AppSesmtProcedimentosRoute,
   AppSesmtRequisicoesRoute: AppSesmtRequisicoesRoute,
   AppSesmtTerceirosRoute: AppSesmtTerceirosRoute,
