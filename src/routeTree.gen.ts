@@ -25,6 +25,7 @@ import { Route as AppNcsRouteImport } from './routes/app.ncs'
 import { Route as AppMatrizTreinamentoRouteImport } from './routes/app.matriz-treinamento'
 import { Route as AppIncidentesRouteImport } from './routes/app.incidentes'
 import { Route as AppHojeRouteImport } from './routes/app.hoje'
+import { Route as AppExtintoresRouteImport } from './routes/app.extintores'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppControleDocumentosRouteImport } from './routes/app.controle-documentos'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
@@ -135,6 +136,11 @@ const AppIncidentesRoute = AppIncidentesRouteImport.update({
 const AppHojeRoute = AppHojeRouteImport.update({
   id: '/hoje',
   path: '/hoje',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExtintoresRoute = AppExtintoresRouteImport.update({
+  id: '/extintores',
+  path: '/extintores',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEmployeesRoute = AppEmployeesRouteImport.update({
@@ -311,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/app/companies': typeof AppCompaniesRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/extintores': typeof AppExtintoresRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
@@ -358,6 +365,7 @@ export interface FileRoutesByTo {
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
+  '/app/extintores': typeof AppExtintoresRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
@@ -408,6 +416,7 @@ export interface FileRoutesById {
   '/app/companies': typeof AppCompaniesRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/extintores': typeof AppExtintoresRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
@@ -459,6 +468,7 @@ export interface FileRouteTypes {
     | '/app/companies'
     | '/app/controle-documentos'
     | '/app/employees'
+    | '/app/extintores'
     | '/app/hoje'
     | '/app/incidentes'
     | '/app/matriz-treinamento'
@@ -506,6 +516,7 @@ export interface FileRouteTypes {
     | '/app/cascos'
     | '/app/companies'
     | '/app/controle-documentos'
+    | '/app/extintores'
     | '/app/hoje'
     | '/app/incidentes'
     | '/app/matriz-treinamento'
@@ -555,6 +566,7 @@ export interface FileRouteTypes {
     | '/app/companies'
     | '/app/controle-documentos'
     | '/app/employees'
+    | '/app/extintores'
     | '/app/hoje'
     | '/app/incidentes'
     | '/app/matriz-treinamento'
@@ -713,6 +725,13 @@ declare module '@tanstack/react-router' {
       path: '/hoje'
       fullPath: '/app/hoje'
       preLoaderRoute: typeof AppHojeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/extintores': {
+      id: '/app/extintores'
+      path: '/extintores'
+      fullPath: '/app/extintores'
+      preLoaderRoute: typeof AppExtintoresRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/employees': {
@@ -957,6 +976,7 @@ interface AppRouteChildren {
   AppCompaniesRoute: typeof AppCompaniesRoute
   AppControleDocumentosRoute: typeof AppControleDocumentosRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
+  AppExtintoresRoute: typeof AppExtintoresRoute
   AppHojeRoute: typeof AppHojeRoute
   AppIncidentesRoute: typeof AppIncidentesRoute
   AppMatrizTreinamentoRoute: typeof AppMatrizTreinamentoRoute
@@ -998,6 +1018,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCompaniesRoute: AppCompaniesRoute,
   AppControleDocumentosRoute: AppControleDocumentosRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
+  AppExtintoresRoute: AppExtintoresRoute,
   AppHojeRoute: AppHojeRoute,
   AppIncidentesRoute: AppIncidentesRoute,
   AppMatrizTreinamentoRoute: AppMatrizTreinamentoRoute,
