@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Plus, Printer, Search, ClipboardCheck, Flame, AlertTriangle, CheckCircle2,
-  Pencil, Camera, Upload, ShieldCheck, CalendarClock, Activity, X,
+  Pencil, Camera, Upload, ShieldCheck, CalendarClock, Activity, X, Sparkles, CalendarDays, Droplet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
@@ -184,6 +184,49 @@ function ExtintoresPage() {
         <Kpi icon={AlertTriangle} label="Recarga vencida" value={stats.vencidos} tone="red" pulse={stats.vencidos > 0} />
         <Kpi icon={CalendarClock} label="Vencendo 30d" value={stats.vencendo} tone="amber" />
         <Kpi icon={ClipboardCheck} label="Sem inspeção" value={stats.semInspecao} tone={stats.semInspecao > 0 ? "amber" : "green"} />
+      </div>
+
+      {/* Banner normativa NBR 12962 */}
+      <div className="relative overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 via-white to-rose-50 shadow-sm">
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-amber-500 via-orange-500 to-red-600" />
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-200/40 blur-2xl" />
+        <div className="relative flex flex-wrap items-center gap-4 p-4 pl-6">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-400 to-red-600 blur-md opacity-60" />
+            <div className="relative h-12 w-12 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-600 flex items-center justify-center ring-2 ring-white shadow-lg">
+              <Sparkles className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="flex-1 min-w-[240px]">
+            <div className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-700">Normativa · ABNT NBR 12962</div>
+            <div className="text-sm font-semibold text-slate-800 leading-snug">
+              Rotina recomendada para extintores de incêndio
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 shadow-sm">
+              <ClipboardCheck className="h-4 w-4 text-emerald-700" />
+              <div className="text-[11px] leading-tight">
+                <div className="font-bold text-emerald-800 uppercase tracking-wide">Inspeção visual</div>
+                <div className="text-emerald-700">Mensal</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50/80 px-3 py-2 shadow-sm">
+              <CalendarDays className="h-4 w-4 text-sky-700" />
+              <div className="text-[11px] leading-tight">
+                <div className="font-bold text-sky-800 uppercase tracking-wide">Recarga</div>
+                <div className="text-sky-700">Anual (12 meses)</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50/80 px-3 py-2 shadow-sm">
+              <Droplet className="h-4 w-4 text-violet-700" />
+              <div className="text-[11px] leading-tight">
+                <div className="font-bold text-violet-800 uppercase tracking-wide">Teste hidrostático</div>
+                <div className="text-violet-700">A cada 5 anos</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filtros */}

@@ -66,6 +66,11 @@ export function SignaturePadDialog({
             )}
           </div>
         </div>
+        <div className="rounded-md bg-amber-50 border border-amber-200 p-2 text-[11px] text-amber-900 leading-snug">
+          <strong>Dica:</strong> envie um <strong>PNG com fundo transparente</strong> contendo
+          <strong> apenas o desenho da sua assinatura</strong> (sem moldura, sem prints da tela).
+          O sistema centraliza e posiciona logo acima da linha “Técnico em Segurança do Trabalho”.
+        </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}><X className="h-4 w-4 mr-1" />Cancelar</Button>
           <Button
