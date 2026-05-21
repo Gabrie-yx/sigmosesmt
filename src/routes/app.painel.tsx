@@ -346,27 +346,6 @@ function TstPanel() {
       .sort((a, b) => b.alerta + b.bloq - (a.alerta + a.bloq));
   }, [rows]);
 
-  const docDonut = useMemo(() => {
-    const d = docMetrics;
-    return [
-      { name: "Resolvidos", value: d.resolvidos, color: "#10b981" },
-      { name: "Abertos", value: d.abertos - d.criticos - d.vencidos, color: "#f59e0b" },
-      { name: "Críticos", value: d.criticos, color: "#fb923c" },
-      { name: "Vencidos", value: d.vencidos, color: "#ef4444" },
-    ].filter((x) => x.value > 0);
-  }, [docMetrics]);
-
-  const extDonut = useMemo(() => {
-    const e = extMetrics;
-    const ok = Math.max(0, e.ativos - e.vencidos - e.vencendo);
-    return [
-      { name: "Conformes", value: ok, color: "#10b981" },
-      { name: "Vencendo 30d", value: e.vencendo, color: "#f59e0b" },
-      { name: "Recarga vencida", value: e.vencidos, color: "#ef4444" },
-      { name: "Sem inspeção", value: e.semInspecao, color: "#a78bfa" },
-    ].filter((x) => x.value > 0);
-  }, [extMetrics]);
-
   const pendencias = useMemo(() => {
     let list = rows.filter((r) => r.status.label === "ALERTA" || r.status.label === "BLOQUEADO" || r.status.label === "SEM CARGO");
     if (filterCompany !== "ALL") list = list.filter((r) => r.emp.company_id === filterCompany);
@@ -411,6 +390,27 @@ function TstPanel() {
     const semInspecao = ativos.filter((e: any) => !inspMes.has(e.id)).length;
     return { total: all.length, ativos: ativos.length, vencidos, vencendo, semInspecao };
   }, [data]);
+
+  const docDonut = useMemo(() => {
+    const d = docMetrics;
+    return [
+      { name: "Resolvidos", value: d.resolvidos, color: "#10b981" },
+      { name: "Abertos", value: Math.max(0, d.abertos - d.criticos - d.vencidos), color: "#f59e0b" },
+      { name: "Críticos", value: d.criticos, color: "#fb923c" },
+      { name: "Vencidos", value: d.vencidos, color: "#ef4444" },
+    ].filter((x) => x.value > 0);
+  }, [docMetrics]);
+
+  const extDonut = useMemo(() => {
+    const e = extMetrics;
+    const ok = Math.max(0, e.ativos - e.vencidos - e.vencendo);
+    return [
+      { name: "Conformes", value: ok, color: "#10b981" },
+      { name: "Vencendo 30d", value: e.vencendo, color: "#f59e0b" },
+      { name: "Recarga vencida", value: e.vencidos, color: "#ef4444" },
+      { name: "Sem inspeção", value: e.semInspecao, color: "#a78bfa" },
+    ].filter((x) => x.value > 0);
+  }, [extMetrics]);
 
   const search = q.trim().toLowerCase();
   const searchResults = useMemo(() => {
