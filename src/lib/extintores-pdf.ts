@@ -34,7 +34,13 @@ function fmtMesAno(d?: string | null) {
   return `${meses[dt.getMonth()]}/${String(dt.getFullYear()).slice(-2)}`;
 }
 
-export function gerarPdfPlanilhaExtintores(extintores: ExtintorPdf[], inspecoes: InspecaoPdf[]) {
+export type AssinaturaExtintor = { dataUrl: string; nome?: string };
+
+export function gerarPdfPlanilhaExtintores(
+  extintores: ExtintorPdf[],
+  inspecoes: InspecaoPdf[],
+  assinatura?: AssinaturaExtintor | null,
+) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const pageW = 297;
   const margin = 6;
@@ -131,6 +137,20 @@ export function gerarPdfPlanilhaExtintores(extintores: ExtintorPdf[], inspecoes:
     doc.line(Number(x) - 34, sigY, Number(x) + 34, sigY);
     doc.text(String(label), Number(x), sigY + 4, { align: "center" });
   });
+
+  if (assinatura?.dataUrl) {
+    try {
+      const cx = 148.5;
+      const w = 60;
+      const h = 16;
+      doc.addImage(assinatura.dataUrl, "PNG", cx - w / 2, sigY - h, w, h, undefined, "FAST");
+      if (assinatura.nome) {
+        doc.setFont("helvetica", "bold").setFontSize(7);
+        doc.text(assinatura.nome, cx, sigY + 8, { align: "center" });
+        doc.setFont("helvetica", "normal");
+      }
+    } catch {}
+  }
 
   return doc;
 }

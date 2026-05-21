@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { EXTINTORES_CHECKLIST_NC as CHECKLIST_NC, gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
 import type jsPDF from "jspdf";
 
@@ -55,6 +56,7 @@ function ExtintoresPage() {
   const [inspecaoExt, setInspecaoExt] = useState<Extintor | null>(null);
   const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
+  const [sigOpen, setSigOpen] = useState(false);
 
   const extintores = useQuery({
     queryKey: ["extintores"],
@@ -128,8 +130,7 @@ function ExtintoresPage() {
       toast.info("Aguarde carregar os dados da planilha");
       return;
     }
-    setPdfDoc(gerarPdfPlanilhaExtintores(extintores.data ?? [], inspecoes.data ?? []));
-    setPdfOpen(true);
+    setSigOpen(true);
   };
 
   return (
@@ -312,6 +313,17 @@ function ExtintoresPage() {
         doc={pdfDoc}
         fileName={`planilha-inspecao-extintores-${new Date().toISOString().slice(0, 10)}.pdf`}
         title="Planilha de Inspeção de Extintores"
+      />
+      <SignaturePadDialog
+        open={sigOpen}
+        onClose={() => setSigOpen(false)}
+        defaultNome={(user as any)?.user_metadata?.full_name ?? ""}
+        title="Assinar planilha de inspeção"
+        onConfirm={({ dataUrl, nome }) => {
+          setPdfDoc(gerarPdfPlanilhaExtintores(extintores.data ?? [], inspecoes.data ?? [], { dataUrl, nome }));
+          setSigOpen(false);
+          setPdfOpen(true);
+        }}
       />
     </div>
   );
