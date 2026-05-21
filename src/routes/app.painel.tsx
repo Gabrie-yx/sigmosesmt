@@ -137,6 +137,8 @@ function TstPanel() {
         docs: docs.data ?? [],
         ddsTemas: ddsTemas.data ?? [],
         controleDocs: controleDocs.data ?? [],
+        extintores: extintores.data ?? [],
+        extInspecoes: extInspecoes.data ?? [],
       };
     },
   });
