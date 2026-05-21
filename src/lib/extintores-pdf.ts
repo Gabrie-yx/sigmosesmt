@@ -36,13 +36,11 @@ function fmtMesAno(d?: string | null) {
 
 export type AssinaturaExtintor = {
   dataUrl: string;
-  nome?: string;
-  cargo?: string;
-  registro?: string;
-  cbo?: string;
+  /** Altura em pixels selecionada no preview; usada para derivar altura em mm. */
+  height?: number;
 };
 
-export function gerarPdfPlanilhaExtintores(
+export async function gerarPdfPlanilhaExtintores(
   extintores: ExtintorPdf[],
   inspecoes: InspecaoPdf[],
   assinatura?: AssinaturaExtintor | null,
@@ -146,26 +144,20 @@ export function gerarPdfPlanilhaExtintores(
 
   if (assinatura?.dataUrl) {
     try {
+      // Carrega imagem para obter proporção real (não distorce)
+      const dims = await new Promise<{ w: number; h: number }>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        img.onerror = () => resolve({ w: 200, h: 80 });
+        img.src = assinatura.dataUrl;
+      });
       const cx = 148.5;
-      const w = 60;
-      const h = 16;
-      doc.addImage(assinatura.dataUrl, "PNG", cx - w / 2, sigY - h, w, h, undefined, "FAST");
-      let ty = sigY + 7.5;
-      if (assinatura.nome) {
-        doc.setFont("helvetica", "bold").setFontSize(7);
-        doc.text(assinatura.nome.toUpperCase(), cx, ty, { align: "center" });
-        ty += 3;
-      }
-      doc.setFont("helvetica", "normal").setFontSize(6);
-      if (assinatura.cargo) {
-        doc.text(assinatura.cargo.toUpperCase(), cx, ty, { align: "center", maxWidth: 80 });
-        ty += 3;
-      }
-      const extras: string[] = [];
-      if (assinatura.registro) extras.push(`CRP: ${assinatura.registro}`);
-      if (assinatura.cbo) extras.push(`CBO: ${assinatura.cbo}`);
-      if (extras.length) doc.text(extras.join("    "), cx, ty, { align: "center" });
-      doc.setFont("helvetica", "normal");
+      const maxW = 70;
+      const maxH = Math.max(8, Math.min(22, (assinatura.height ?? 80) * 0.18));
+      const ratio = Math.min(maxW / dims.w, maxH / dims.h);
+      const drawW = dims.w * ratio;
+      const drawH = dims.h * ratio;
+      doc.addImage(assinatura.dataUrl, "PNG", cx - drawW / 2, sigY - drawH - 0.5, drawW, drawH, undefined, "FAST");
     } catch {}
   }
 
