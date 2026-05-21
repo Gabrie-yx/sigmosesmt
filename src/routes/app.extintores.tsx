@@ -256,7 +256,7 @@ function ExtintoresPage() {
                         <Badge variant="outline" className={insp.conforme ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-red-50 text-red-700 border-red-300"}>
                           {insp.conforme ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
                           {formatDateBR(insp.data_inspecao)}
-                          {insp.foto_url && <Camera className="h-3 w-3 ml-1" />}
+                          {insp.foto_path && <Camera className="h-3 w-3 ml-1" />}
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Pendente</Badge>
@@ -481,7 +481,7 @@ function InspecaoDialog({
 
   const save = useMutation({
     mutationFn: async () => {
-      let foto_url: string | null = null;
+      let foto_path: string | null = null;
       if (foto) {
         setUploading(true);
         const ext = foto.name.split(".").pop() || "jpg";
@@ -491,7 +491,7 @@ function InspecaoDialog({
         });
         setUploading(false);
         if (up.error) throw up.error;
-        foto_url = up.data.path;
+        foto_path = up.data.path;
       }
       const conforme = ncs.length === 0;
       const { error } = await supabase.from("extintor_inspecoes").insert({
@@ -503,7 +503,7 @@ function InspecaoDialog({
         nao_conformidade: nc || null,
         observacoes: obs || null,
         conforme,
-        foto_url,
+        foto_path,
         created_by: userId ?? null,
       });
       if (error) throw error;
