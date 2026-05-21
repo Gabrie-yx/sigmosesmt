@@ -26,6 +26,7 @@ import { Route as AppMatrizTreinamentoRouteImport } from './routes/app.matriz-tr
 import { Route as AppIncidentesRouteImport } from './routes/app.incidentes'
 import { Route as AppHojeRouteImport } from './routes/app.hoje'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
+import { Route as AppControleDocumentosRouteImport } from './routes/app.controle-documentos'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppCascosRouteImport } from './routes/app.cascos'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
@@ -54,6 +55,7 @@ import { Route as AppDdsPainelRouteImport } from './routes/app.dds.painel'
 import { Route as AppDdsHistoricoRouteImport } from './routes/app.dds.historico'
 import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
 import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
+import { Route as ApiPublicControleDocumentosGerarRecorrentesRouteImport } from './routes/api/public/controle-documentos.gerar-recorrentes'
 
 const TermosRoute = TermosRouteImport.update({
   id: '/termos',
@@ -138,6 +140,11 @@ const AppHojeRoute = AppHojeRouteImport.update({
 const AppEmployeesRoute = AppEmployeesRouteImport.update({
   id: '/employees',
   path: '/employees',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppControleDocumentosRoute = AppControleDocumentosRouteImport.update({
+  id: '/controle-documentos',
+  path: '/controle-documentos',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCompaniesRoute = AppCompaniesRouteImport.update({
@@ -283,6 +290,12 @@ const AppContaSegurancaRoute = AppContaSegurancaRouteImport.update({
   path: '/conta/seguranca',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicControleDocumentosGerarRecorrentesRoute =
+  ApiPublicControleDocumentosGerarRecorrentesRouteImport.update({
+    id: '/api/public/controle-documentos/gerar-recorrentes',
+    path: '/api/public/controle-documentos/gerar-recorrentes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -296,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
+  '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
@@ -330,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
+  '/api/public/controle-documentos/gerar-recorrentes': typeof ApiPublicControleDocumentosGerarRecorrentesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -342,6 +357,7 @@ export interface FileRoutesByTo {
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
+  '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
@@ -375,6 +391,7 @@ export interface FileRoutesByTo {
   '/app/dds': typeof AppDdsIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
   '/app/estoque': typeof AppEstoqueIndexRoute
+  '/api/public/controle-documentos/gerar-recorrentes': typeof ApiPublicControleDocumentosGerarRecorrentesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -389,6 +406,7 @@ export interface FileRoutesById {
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
+  '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
@@ -423,6 +441,7 @@ export interface FileRoutesById {
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
+  '/api/public/controle-documentos/gerar-recorrentes': typeof ApiPublicControleDocumentosGerarRecorrentesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -438,6 +457,7 @@ export interface FileRouteTypes {
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
+    | '/app/controle-documentos'
     | '/app/employees'
     | '/app/hoje'
     | '/app/incidentes'
@@ -472,6 +492,7 @@ export interface FileRouteTypes {
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
+    | '/api/public/controle-documentos/gerar-recorrentes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -484,6 +505,7 @@ export interface FileRouteTypes {
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
+    | '/app/controle-documentos'
     | '/app/hoje'
     | '/app/incidentes'
     | '/app/matriz-treinamento'
@@ -517,6 +539,7 @@ export interface FileRouteTypes {
     | '/app/dds'
     | '/app/employees'
     | '/app/estoque'
+    | '/api/public/controle-documentos/gerar-recorrentes'
   id:
     | '__root__'
     | '/'
@@ -530,6 +553,7 @@ export interface FileRouteTypes {
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
+    | '/app/controle-documentos'
     | '/app/employees'
     | '/app/hoje'
     | '/app/incidentes'
@@ -564,6 +588,7 @@ export interface FileRouteTypes {
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
+    | '/api/public/controle-documentos/gerar-recorrentes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -573,6 +598,7 @@ export interface RootRouteChildren {
   PrivacidadeRoute: typeof PrivacidadeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
+  ApiPublicControleDocumentosGerarRecorrentesRoute: typeof ApiPublicControleDocumentosGerarRecorrentesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -694,6 +720,13 @@ declare module '@tanstack/react-router' {
       path: '/employees'
       fullPath: '/app/employees'
       preLoaderRoute: typeof AppEmployeesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/controle-documentos': {
+      id: '/app/controle-documentos'
+      path: '/controle-documentos'
+      fullPath: '/app/controle-documentos'
+      preLoaderRoute: typeof AppControleDocumentosRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/companies': {
@@ -892,6 +925,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContaSegurancaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/controle-documentos/gerar-recorrentes': {
+      id: '/api/public/controle-documentos/gerar-recorrentes'
+      path: '/api/public/controle-documentos/gerar-recorrentes'
+      fullPath: '/api/public/controle-documentos/gerar-recorrentes'
+      preLoaderRoute: typeof ApiPublicControleDocumentosGerarRecorrentesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -915,6 +955,7 @@ interface AppRouteChildren {
   AppAuditRoute: typeof AppAuditRoute
   AppCascosRoute: typeof AppCascosRoute
   AppCompaniesRoute: typeof AppCompaniesRoute
+  AppControleDocumentosRoute: typeof AppControleDocumentosRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppHojeRoute: typeof AppHojeRoute
   AppIncidentesRoute: typeof AppIncidentesRoute
@@ -955,6 +996,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAuditRoute: AppAuditRoute,
   AppCascosRoute: AppCascosRoute,
   AppCompaniesRoute: AppCompaniesRoute,
+  AppControleDocumentosRoute: AppControleDocumentosRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppHojeRoute: AppHojeRoute,
   AppIncidentesRoute: AppIncidentesRoute,
@@ -998,7 +1040,19 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacidadeRoute: PrivacidadeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
+  ApiPublicControleDocumentosGerarRecorrentesRoute:
+    ApiPublicControleDocumentosGerarRecorrentesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
