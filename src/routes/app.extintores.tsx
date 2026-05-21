@@ -481,7 +481,7 @@ function InspecaoDialog({
 
   const save = useMutation({
     mutationFn: async () => {
-      let foto_url: string | null = null;
+      let foto_path: string | null = null;
       if (foto) {
         setUploading(true);
         const ext = foto.name.split(".").pop() || "jpg";
@@ -491,7 +491,7 @@ function InspecaoDialog({
         });
         setUploading(false);
         if (up.error) throw up.error;
-        foto_url = up.data.path;
+        foto_path = up.data.path;
       }
       const conforme = ncs.length === 0;
       const { error } = await supabase.from("extintor_inspecoes").insert({
@@ -503,7 +503,7 @@ function InspecaoDialog({
         nao_conformidade: nc || null,
         observacoes: obs || null,
         conforme,
-        foto_url,
+        foto_path,
         created_by: userId ?? null,
       });
       if (error) throw error;
