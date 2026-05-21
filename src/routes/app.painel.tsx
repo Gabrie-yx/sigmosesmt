@@ -102,7 +102,7 @@ function TstPanel() {
   const { data } = useQuery({
     queryKey: ["sesmt-painel", since],
     queryFn: async () => {
-      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs, ddsTemas] = await Promise.all([
+      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, ddsAtt, aprs, ptes, docs, ddsTemas, controleDocs] = await Promise.all([
         supabase.from("employees").select("*").order("nome"),
         supabase.from("companies").select("id,name").order("name"),
         supabase.from("roles").select("*"),
@@ -116,6 +116,7 @@ function TstPanel() {
         supabase.from("ptes").select("id,status,data,risco").gte("data", since),
         supabase.from("employee_docs").select("id,employee_id,tipo"),
         supabase.from("dds_temas").select("id,titulo"),
+        supabase.from("controle_documentos").select("*"),
       ]);
       return {
         employees: emps.data ?? [],
