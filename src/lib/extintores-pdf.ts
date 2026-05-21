@@ -34,7 +34,13 @@ function fmtMesAno(d?: string | null) {
   return `${meses[dt.getMonth()]}/${String(dt.getFullYear()).slice(-2)}`;
 }
 
-export type AssinaturaExtintor = { dataUrl: string; nome?: string };
+export type AssinaturaExtintor = {
+  dataUrl: string;
+  nome?: string;
+  cargo?: string;
+  registro?: string;
+  cbo?: string;
+};
 
 export function gerarPdfPlanilhaExtintores(
   extintores: ExtintorPdf[],
@@ -144,11 +150,22 @@ export function gerarPdfPlanilhaExtintores(
       const w = 60;
       const h = 16;
       doc.addImage(assinatura.dataUrl, "PNG", cx - w / 2, sigY - h, w, h, undefined, "FAST");
+      let ty = sigY + 7.5;
       if (assinatura.nome) {
         doc.setFont("helvetica", "bold").setFontSize(7);
-        doc.text(assinatura.nome, cx, sigY + 8, { align: "center" });
-        doc.setFont("helvetica", "normal");
+        doc.text(assinatura.nome.toUpperCase(), cx, ty, { align: "center" });
+        ty += 3;
       }
+      doc.setFont("helvetica", "normal").setFontSize(6);
+      if (assinatura.cargo) {
+        doc.text(assinatura.cargo.toUpperCase(), cx, ty, { align: "center", maxWidth: 80 });
+        ty += 3;
+      }
+      const extras: string[] = [];
+      if (assinatura.registro) extras.push(`CRP: ${assinatura.registro}`);
+      if (assinatura.cbo) extras.push(`CBO: ${assinatura.cbo}`);
+      if (extras.length) doc.text(extras.join("    "), cx, ty, { align: "center" });
+      doc.setFont("helvetica", "normal");
     } catch {}
   }
 
