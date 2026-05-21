@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, Printer, X } from "lucide-react";
@@ -12,6 +12,7 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title }: {
   title?: string;
 }) {
   const [url, setUrl] = useState<string>("");
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (!doc || !open) { setUrl(""); return; }
@@ -26,9 +27,11 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title }: {
   }
   function print() {
     if (!url) return;
-    const w = window.open(url, "_blank");
-    if (w) {
-      w.addEventListener("load", () => { try { w.focus(); w.print(); } catch {} });
+    try {
+      iframeRef.current?.contentWindow?.focus();
+      iframeRef.current?.contentWindow?.print();
+    } catch {
+      window.open(url, "_blank");
     }
   }
 
@@ -40,7 +43,7 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title }: {
         </DialogHeader>
         <div className="flex-1 min-h-0 border rounded overflow-hidden bg-slate-100">
           {url ? (
-            <iframe src={url} title="Pré-visualização do PDF" className="w-full h-full" />
+            <iframe ref={iframeRef} src={url} title="Pré-visualização do PDF" className="w-full h-full" />
           ) : (
             <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Carregando...</div>
           )}

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { EXTINTORES_CHECKLIST_NC as CHECKLIST_NC, gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
+import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/extintores")({
   component: ExtintoresPage,
@@ -38,21 +41,6 @@ const STATUS_STYLES: Record<string, string> = {
   VENCIDO: "bg-red-100 text-red-700 border-red-300",
 };
 
-export const CHECKLIST_NC = [
-  { id: 1, label: "Pintura" },
-  { id: 2, label: "Gatilho" },
-  { id: 3, label: "Trava de segurança" },
-  { id: 4, label: "Lacre quebrado" },
-  { id: 5, label: "Bico quebrado/entupido" },
-  { id: 6, label: "Mangote" },
-  { id: 7, label: "Difusor (extintor CO₂)" },
-  { id: 8, label: "Obstruído por objetos" },
-  { id: 9, label: "Sinalização horizontal (piso)" },
-  { id: 10, label: "Sinalização vertical (parede)" },
-  { id: 11, label: "Carga vencida" },
-  { id: 12, label: "Teste hidrostático vencido" },
-];
-
 type Extintor = any;
 type Inspecao = any;
 
@@ -65,6 +53,8 @@ function ExtintoresPage() {
   const [novoOpen, setNovoOpen] = useState(false);
   const [editExt, setEditExt] = useState<Extintor | null>(null);
   const [inspecaoExt, setInspecaoExt] = useState<Extintor | null>(null);
+  const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
 
   const extintores = useQuery({
     queryKey: ["extintores"],
@@ -133,6 +123,15 @@ function ExtintoresPage() {
     qc.invalidateQueries({ queryKey: ["extintor-inspecoes"] });
   };
 
+  const abrirPdfPlanilha = () => {
+    if (extintores.isLoading || inspecoes.isLoading) {
+      toast.info("Aguarde carregar os dados da planilha");
+      return;
+    }
+    setPdfDoc(gerarPdfPlanilhaExtintores(extintores.data ?? [], inspecoes.data ?? []));
+    setPdfOpen(true);
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-5 animate-fadeIn">
       {/* HERO HEADER */}
@@ -151,11 +150,9 @@ function ExtintoresPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link to="/app/extintores_/imprimir" target="_blank" rel="noopener noreferrer">
-              <Button variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90">
-                <Printer className="h-4 w-4" /> Imprimir planilha
-              </Button>
-            </Link>
+            <Button variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90" onClick={abrirPdfPlanilha}>
+              <Printer className="h-4 w-4" /> Visualizar PDF
+            </Button>
             <Button onClick={() => setNovoOpen(true)} className="gap-2 bg-slate-900 hover:bg-slate-800 text-white">
               <Plus className="h-4 w-4" /> Novo extintor
             </Button>
@@ -309,6 +306,13 @@ function ExtintoresPage() {
           onCreated={onInvalidate}
         />
       )}
+      <PDFPreviewDialog
+        open={pdfOpen}
+        onClose={() => setPdfOpen(false)}
+        doc={pdfDoc}
+        fileName={`planilha-inspecao-extintores-${new Date().toISOString().slice(0, 10)}.pdf`}
+        title="Planilha de Inspeção de Extintores"
+      />
     </div>
   );
 }
