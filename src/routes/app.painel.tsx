@@ -423,17 +423,58 @@ function TstPanel() {
     "status-pie": {
       title: "Status dos colaboradores", icon: Activity,
       render: () => (
-        <div className="h-full min-h-0">
-          {statusPie.length === 0 ? <Empty /> : (
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie data={statusPie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
-                  {statusPie.map((s) => <Cell key={s.name} fill={s.color} />)}
-                </Pie>
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-              </PieChart>
-            </ResponsiveContainer>
+        <div className="h-full min-h-0 grid grid-cols-5 gap-2">
+          {statusPie.length === 0 ? <div className="col-span-5"><Empty /></div> : (
+            <>
+              <div className="col-span-3 relative">
+                <ResponsiveContainer>
+                  <PieChart>
+                    <defs>
+                      <linearGradient id="pie-apto" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#34d399" /><stop offset="100%" stopColor="#059669" />
+                      </linearGradient>
+                      <linearGradient id="pie-alerta" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#fcd34d" /><stop offset="100%" stopColor="#d97706" />
+                      </linearGradient>
+                      <linearGradient id="pie-bloq" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#fb7185" /><stop offset="100%" stopColor="#9f1239" />
+                      </linearGradient>
+                      <filter id="pie-glow"><feGaussianBlur stdDeviation="2.5" result="b" /><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                    </defs>
+                    <Pie data={statusPie} dataKey="value" nameKey="name" innerRadius="62%" outerRadius="92%" paddingAngle={4} cornerRadius={6} stroke="none" filter="url(#pie-glow)">
+                      {statusPie.map((s) => (
+                        <Cell key={s.name} fill={s.name === "Aptos" ? "url(#pie-apto)" : s.name === "Alerta" ? "url(#pie-alerta)" : "url(#pie-bloq)"} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ background: "rgba(15,23,42,0.95)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <div className="text-3xl font-black text-slate-900 leading-none">{conformidadeGeral}<span className="text-base text-slate-400">%</span></div>
+                  <div className="text-[8px] font-black uppercase tracking-widest text-slate-400 mt-1">conformes</div>
+                </div>
+              </div>
+              <div className="col-span-2 flex flex-col justify-center gap-2">
+                {statusPie.map((s) => {
+                  const pct = totalEmp > 0 ? Math.round((s.value / totalEmp) * 100) : 0;
+                  const grad = s.name === "Aptos" ? "from-emerald-400 to-emerald-600"
+                    : s.name === "Alerta" ? "from-amber-300 to-amber-600"
+                    : "from-rose-400 to-rose-700";
+                  return (
+                    <div key={s.name} className="rounded-xl border border-slate-100 bg-slate-50/60 p-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-600">{s.name}</span>
+                        <span className="text-[9px] font-black text-slate-500">{pct}%</span>
+                      </div>
+                      <div className="text-lg font-black text-slate-900 leading-none mt-0.5">{s.value}</div>
+                      <div className="mt-1.5 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                        <div className={`h-full rounded-full bg-gradient-to-r ${grad}`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       ),
@@ -447,37 +488,44 @@ function TstPanel() {
               <ComposedChart data={entregaSerie} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="grad-primeira" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#C8102E" stopOpacity={0.85} />
-                    <stop offset="100%" stopColor="#C8102E" stopOpacity={0.15} />
+                    <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#0891b2" stopOpacity={0.1} />
                   </linearGradient>
                   <linearGradient id="grad-troca" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#E85D5D" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#E85D5D" stopOpacity={0.1} />
+                    <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#6d28d9" stopOpacity={0.1} />
                   </linearGradient>
                   <linearGradient id="grad-perda" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#64748b" stopOpacity={0.85} />
-                    <stop offset="100%" stopColor="#64748b" stopOpacity={0.15} />
+                    <stop offset="0%" stopColor="#fb7185" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#9f1239" stopOpacity={0.1} />
                   </linearGradient>
                   <linearGradient id="grad-devolucao" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.7} />
-                    <stop offset="100%" stopColor="#94a3b8" stopOpacity={0.1} />
+                    <stop offset="0%" stopColor="#facc15" stopOpacity={0.85} />
+                    <stop offset="100%" stopColor="#a16207" stopOpacity={0.1} />
                   </linearGradient>
+                  <linearGradient id="grad-valor-line" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#C8102E" /><stop offset="100%" stopColor="#fb7185" />
+                  </linearGradient>
+                  <filter id="line-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="b" />
+                    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={{ stroke: "#cbd5e1" }} tickLine={false} />
                 <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={32} />
                 <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1)}k` : `R$${v}`} />
                 <Tooltip
-                  contentStyle={{ background: "rgba(15, 23, 42, 0.95)", border: "none", borderRadius: 8, color: "#fff", fontSize: 11 }}
+                  contentStyle={{ background: "rgba(15, 23, 42, 0.96)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#fff", fontSize: 11, boxShadow: "0 12px 32px -8px rgba(0,0,0,0.4)" }}
                   labelStyle={{ color: "#cbd5e1", fontWeight: 700, marginBottom: 4 }}
                   formatter={(v: any, n: any) => n === "Valor R$" ? [`R$ ${Number(v).toFixed(2)}`, n] : [v, n]}
                 />
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} iconType="circle" />
-                <Area yAxisId="l" type="monotone" dataKey="primeira" stackId="a" stroke="#C8102E" strokeWidth={2} fill="url(#grad-primeira)" name="1ª entrega" />
-                <Area yAxisId="l" type="monotone" dataKey="troca" stackId="a" stroke="#E85D5D" strokeWidth={2} fill="url(#grad-troca)" name="Troca" />
-                <Area yAxisId="l" type="monotone" dataKey="devolucao" stackId="a" stroke="#94a3b8" strokeWidth={2} fill="url(#grad-devolucao)" name="Devolução" />
-                <Area yAxisId="l" type="monotone" dataKey="perda" stackId="a" stroke="#64748b" strokeWidth={2} fill="url(#grad-perda)" name="Perda/Extravio" />
-                <Line yAxisId="r" type="monotone" dataKey="valor" stroke="#C8102E" strokeWidth={3} dot={{ r: 4, fill: "#C8102E", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 6 }} name="Valor R$" />
+                <Area yAxisId="l" type="monotone" dataKey="primeira" stackId="a" stroke="#22d3ee" strokeWidth={2} fill="url(#grad-primeira)" name="1ª entrega" />
+                <Area yAxisId="l" type="monotone" dataKey="troca" stackId="a" stroke="#a78bfa" strokeWidth={2} fill="url(#grad-troca)" name="Troca" />
+                <Area yAxisId="l" type="monotone" dataKey="devolucao" stackId="a" stroke="#facc15" strokeWidth={2} fill="url(#grad-devolucao)" name="Devolução" />
+                <Area yAxisId="l" type="monotone" dataKey="perda" stackId="a" stroke="#fb7185" strokeWidth={2} fill="url(#grad-perda)" name="Perda/Extravio" />
+                <Line yAxisId="r" type="monotone" dataKey="valor" stroke="url(#grad-valor-line)" strokeWidth={3.5} dot={{ r: 4, fill: "#C8102E", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 7 }} name="Valor R$" filter="url(#line-glow)" />
               </ComposedChart>
             </ResponsiveContainer>
           )}
@@ -597,16 +645,25 @@ function TstPanel() {
         <div className="h-full min-h-0">
           {ddsTrend.length === 0 ? <Empty /> : (
             <ResponsiveContainer>
-              <BarChart data={ddsTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                <YAxis yAxisId="l" tick={{ fontSize: 10 }} />
-                <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar yAxisId="l" dataKey="qtd" fill="#C8102E" name="DDS realizados" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="r" dataKey="aderencia" fill="#94a3b8" name="% aderência" radius={[4, 4, 0, 0]} />
-              </BarChart>
+              <ComposedChart data={ddsTrend} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="grad-dds-bar" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#C8102E" /><stop offset="100%" stopColor="#8B0A1E" stopOpacity={0.85} />
+                  </linearGradient>
+                  <linearGradient id="grad-dds-line" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#34d399" />
+                  </linearGradient>
+                  <filter id="dds-glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={28} />
+                <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={32} tickFormatter={(v) => `${v}%`} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(200,16,46,0.06)" }} />
+                <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} iconType="circle" />
+                <Bar yAxisId="l" dataKey="qtd" fill="url(#grad-dds-bar)" name="DDS realizados" radius={[8, 8, 0, 0]} barSize={28} />
+                <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="url(#grad-dds-line)" strokeWidth={3.5} dot={{ r: 4, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 7 }} name="% aderência" filter="url(#dds-glow)" />
+              </ComposedChart>
             </ResponsiveContainer>
           )}
         </div>
