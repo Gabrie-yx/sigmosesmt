@@ -1274,14 +1274,21 @@ function PainelListaTecnicaPage() {
                     ) : CAT_CHART[cat] === "stacked" ? (
                       (() => {
                         // Uma barra horizontal dinâmica por UME (KG, M, PC, UN…).
-                        // Ao clicar numa barra, ela vira referência (100%) e as demais
-                        // se reescalam proporcionalmente, animando simultaneamente.
-                        const data = barras.map((b) => ({ label: b.label, valor: b.valor }));
-                        const maxAll = Math.max(...data.map((d) => d.valor), 1);
-                        // Referência fixa: o maior valor da categoria. Assim cada barra
-                        // sempre exibe sua altura proporcional real — o clique apenas
-                        // destaca a UME selecionada (sem distorcer o eixo).
-                        const referencia = maxAll;
+                        // FOCUS MODE: sem seleção, as barras exibem altura real
+                        // (a maior fica 100%). Com uma UME selecionada, ELA vira a
+                        // referência visual e as outras encolhem para ficarem
+                        // menores que ela, mesmo que seu valor real seja maior.
+                        const dataReal = barras.map((b) => ({ label: b.label, valor: b.valor }));
+                        const data = focusScale(dataReal, {
+                          labelKey: "label",
+                          valueKeys: ["valor"],
+                          selected: unidadeSel,
+                          cap: 0.55,
+                        });
+                        const maxAll = Math.max(...dataReal.map((d) => d.valor), 1);
+                        const referencia = unidadeSel
+                          ? (dataReal.find((d) => d.label === unidadeSel)?.valor ?? maxAll)
+                          : maxAll;
                         return (
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart
@@ -1304,7 +1311,20 @@ function PainelListaTecnicaPage() {
                                 style={{ cursor: "pointer" }}
                               />
                               <YAxis type="number" hide domain={[0, referencia]} allowDataOverflow />
-                              <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} />} />
+                              <Tooltip
+                                cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }}
+                                content={({ active, payload }: any) => {
+                                  if (!active || !payload?.length) return null;
+                                  const p = payload[0].payload;
+                                  const real = p.__real_valor ?? p.valor;
+                                  return (
+                                    <div className="rounded-md border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+                                      <div className="font-semibold" style={{ color: cor }}>{p.label}</div>
+                                      <div className="tabular-nums text-foreground font-medium">{fmt(real, 0)}</div>
+                                    </div>
+                                  );
+                                }}
+                              />
                               <Bar
                                 dataKey="valor"
                                 radius={[3, 3, 3, 3]}
@@ -1331,8 +1351,26 @@ function PainelListaTecnicaPage() {
                                 <LabelList
                                   dataKey="valor"
                                   position="top"
-                                  formatter={(v: any) => fmt(Number(v), 0)}
-                                  style={{ fontSize: 10, fill: cor, fontWeight: 700 }}
+                                  content={(props: any) => {
+                                    const { x, y, width, value, index } = props;
+                                    const row: any = (data as any)[index];
+                                    if (!row) return null;
+                                    // Sem seleção: mostra todas. Com seleção: só a selecionada.
+                                    if (unidadeSel && row.label !== unidadeSel) return null;
+                                    const real = row.__real_valor ?? value;
+                                    return (
+                                      <text
+                                        x={Number(x) + Number(width) / 2}
+                                        y={Number(y) - 4}
+                                        textAnchor="middle"
+                                        fontSize={11}
+                                        fontWeight={800}
+                                        fill={cor}
+                                      >
+                                        {fmt(Number(real), 0)}
+                                      </text>
+                                    );
+                                  }}
                                 />
                               </Bar>
                             </BarChart>
