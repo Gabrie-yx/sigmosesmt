@@ -48,6 +48,7 @@ import { Route as AppProducaoListaTecnicaRouteImport } from './routes/app.produc
 import { Route as AppProducaoExpedicaoRouteImport } from './routes/app.producao.expedicao'
 import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
 import { Route as AppProducaoBaseMateriaPrimaRouteImport } from './routes/app.producao.base-materia-prima'
+import { Route as AppExtintoresImprimirRouteImport } from './routes/app.extintores.imprimir'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
@@ -256,6 +257,11 @@ const AppProducaoBaseMateriaPrimaRoute =
     path: '/producao/base-materia-prima',
     getParentRoute: () => AppRoute,
   } as any)
+const AppExtintoresImprimirRoute = AppExtintoresImprimirRouteImport.update({
+  id: '/imprimir',
+  path: '/imprimir',
+  getParentRoute: () => AppExtintoresRoute,
+} as any)
 const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
   id: '/estoque/sesmt',
   path: '/estoque/sesmt',
@@ -317,7 +323,7 @@ export interface FileRoutesByFullPath {
   '/app/companies': typeof AppCompaniesRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
-  '/app/extintores': typeof AppExtintoresRoute
+  '/app/extintores': typeof AppExtintoresRouteWithChildren
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
@@ -336,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/extintores/imprimir': typeof AppExtintoresImprimirRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -365,7 +372,7 @@ export interface FileRoutesByTo {
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
-  '/app/extintores': typeof AppExtintoresRoute
+  '/app/extintores': typeof AppExtintoresRouteWithChildren
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/extintores/imprimir': typeof AppExtintoresImprimirRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -416,7 +424,7 @@ export interface FileRoutesById {
   '/app/companies': typeof AppCompaniesRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
-  '/app/extintores': typeof AppExtintoresRoute
+  '/app/extintores': typeof AppExtintoresRouteWithChildren
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
@@ -435,6 +443,7 @@ export interface FileRoutesById {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/extintores/imprimir': typeof AppExtintoresImprimirRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -487,6 +496,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/extintores/imprimir'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -535,6 +545,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/extintores/imprimir'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -585,6 +596,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/extintores/imprimir'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -888,6 +900,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoBaseMateriaPrimaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/extintores/imprimir': {
+      id: '/app/extintores/imprimir'
+      path: '/imprimir'
+      fullPath: '/app/extintores/imprimir'
+      preLoaderRoute: typeof AppExtintoresImprimirRouteImport
+      parentRoute: typeof AppExtintoresRoute
+    }
     '/app/estoque/sesmt': {
       id: '/app/estoque/sesmt'
       path: '/estoque/sesmt'
@@ -968,6 +987,18 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
   AppEmployeesRouteChildren,
 )
 
+interface AppExtintoresRouteChildren {
+  AppExtintoresImprimirRoute: typeof AppExtintoresImprimirRoute
+}
+
+const AppExtintoresRouteChildren: AppExtintoresRouteChildren = {
+  AppExtintoresImprimirRoute: AppExtintoresImprimirRoute,
+}
+
+const AppExtintoresRouteWithChildren = AppExtintoresRoute._addFileChildren(
+  AppExtintoresRouteChildren,
+)
+
 interface AppRouteChildren {
   AppAcoesRoute: typeof AppAcoesRoute
   AppAprsRoute: typeof AppAprsRoute
@@ -976,7 +1007,7 @@ interface AppRouteChildren {
   AppCompaniesRoute: typeof AppCompaniesRoute
   AppControleDocumentosRoute: typeof AppControleDocumentosRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
-  AppExtintoresRoute: typeof AppExtintoresRoute
+  AppExtintoresRoute: typeof AppExtintoresRouteWithChildren
   AppHojeRoute: typeof AppHojeRoute
   AppIncidentesRoute: typeof AppIncidentesRoute
   AppMatrizTreinamentoRoute: typeof AppMatrizTreinamentoRoute
@@ -1018,7 +1049,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCompaniesRoute: AppCompaniesRoute,
   AppControleDocumentosRoute: AppControleDocumentosRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
-  AppExtintoresRoute: AppExtintoresRoute,
+  AppExtintoresRoute: AppExtintoresRouteWithChildren,
   AppHojeRoute: AppHojeRoute,
   AppIncidentesRoute: AppIncidentesRoute,
   AppMatrizTreinamentoRoute: AppMatrizTreinamentoRoute,
