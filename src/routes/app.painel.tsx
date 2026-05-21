@@ -315,6 +315,16 @@ function TstPanel() {
     }).filter(Boolean) as { name: string; perc: number; color: string; total: number; oks: number }[];
   }, [data, rows]);
 
+  const docMetrics = useMemo(() => {
+    const all = data?.controleDocs ?? [];
+    const unresolved = (d: any) => d.status !== "RESOLVIDO" && d.status !== "FECHADO";
+    const abertos = all.filter(unresolved).length;
+    const vencidos = all.filter((d: any) => unresolved(d) && d.prazo && new Date(d.prazo + "T00:00").getTime() < today.getTime()).length;
+    const criticos = all.filter((d: any) => unresolved(d) && d.criticidade === "ALTA").length;
+    const resolvidos = all.filter((d: any) => d.status === "RESOLVIDO" || d.status === "FECHADO").length;
+    return { abertos, vencidos, criticos, resolvidos, total: all.length };
+  }, [data]);
+
   const search = q.trim().toLowerCase();
   const searchResults = useMemo(() => {
     if (!search) return [];
