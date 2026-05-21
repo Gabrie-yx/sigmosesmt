@@ -801,25 +801,48 @@ function TstPanel() {
     },
     pendencias: {
       title: "Pendências por empresa · alerta vs bloqueado", icon: AlertTriangle, accent: "amber",
-      render: () => (
+      render: () => {
+        const sel = focus["pendencias"] ?? null;
+        const onPick = toggleFocusFor("pendencias");
+        const dataView = focusScale(pendPorEmpresa as any[], { labelKey: "name", valueKeys: ["alerta", "bloq"], selected: sel });
+        return (
         <div className="h-full min-h-0">
           {pendPorEmpresa.length === 0 ? (
             <div className="h-full flex items-center justify-center text-emerald-600 font-black uppercase text-xs">✓ Nenhuma pendência</div>
           ) : (
             <ResponsiveContainer>
-              <BarChart data={pendPorEmpresa} margin={{ top: 16, right: 18, left: 0, bottom: 0 }}>
+              <BarChart data={dataView} margin={{ top: 22, right: 18, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} interval={0} angle={-12} textAnchor="end" height={56} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} interval={0} angle={-12} textAnchor="end" height={56} onClick={(e: any) => e?.value && onPick(e.value)} style={{ cursor: "pointer" }} />
                 <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={28} />
-                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(239,68,68,0.06)" }} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(239,68,68,0.06)" }} formatter={(_v: any, n: any, p: any) => {
+                  const realKey = n === "Alerta" ? "__real_alerta" : "__real_bloq";
+                  return [p.payload[realKey] ?? _v, n];
+                }} />
                 <Legend wrapperStyle={{ fontSize: 10 }} iconType="circle" />
-                <Bar dataKey="alerta" stackId="p" fill="#f59e0b" name="Alerta" shape={<Bar3DShape />} />
-                <Bar dataKey="bloq" stackId="p" fill="#ef4444" name="Bloqueado" shape={<Bar3DShape />} />
+                <Bar dataKey="alerta" stackId="p" fill="#f59e0b" name="Alerta" shape={<Bar3DShape />} onClick={(d: any) => onPick(d?.name)} className="cursor-pointer">
+                  {dataView.map((d: any) => (
+                    <Cell key={"a-"+d.name} fill={sel ? (d.name === sel ? "#f59e0b" : "rgba(245,158,11,0.3)") : "#f59e0b"} />
+                  ))}
+                </Bar>
+                <Bar dataKey="bloq" stackId="p" fill="#ef4444" name="Bloqueado" shape={<Bar3DShape />} onClick={(d: any) => onPick(d?.name)} className="cursor-pointer">
+                  {dataView.map((d: any) => (
+                    <Cell key={"b-"+d.name} fill={sel ? (d.name === sel ? "#ef4444" : "rgba(239,68,68,0.3)") : "#ef4444"} />
+                  ))}
+                  <LabelList dataKey="bloq" position="top" content={(props: any) => {
+                    const { x, y, width, index } = props;
+                    const row: any = dataView[index]; if (!row) return null;
+                    if (sel && row.name !== sel) return null;
+                    const total = (row.__real_alerta ?? 0) + (row.__real_bloq ?? 0);
+                    return <text x={Number(x)+Number(width)/2} y={Number(y)-4} textAnchor="middle" fontSize={11} fontWeight={800} fill="#ef4444">{total}</text>;
+                  }} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
-      ),
+        );
+      },
     },
     "doc-controle": {
       title: "Controle de Documentos", icon: FolderOpen,
