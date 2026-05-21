@@ -599,111 +599,67 @@ function TstPanel() {
       ),
     },
     "epi-recentes": {
-      title: "Últimas entregas de EPI", icon: ShoppingBag,
-      render: () => (
-        <div className="h-full overflow-y-auto pr-1 space-y-1.5">
-          {epiRecentes.length === 0 ? <Empty /> : epiRecentes.map((e) => {
-            const motivoLabel = e.motivo === "PRIMEIRA_ENTREGA" ? "1ª entrega"
-              : e.motivo === "PERDA_EXTRAVIO" ? "Perda"
-              : e.motivo === "DEVOLUCAO" ? "Devolução"
-              : e.motivo.replace(/_/g, " ").toLowerCase();
-            const motivoCls = e.motivo === "PERDA_EXTRAVIO" ? "bg-red-100 text-red-700"
-              : e.motivo === "PRIMEIRA_ENTREGA" ? "bg-emerald-100 text-emerald-700"
-              : e.motivo === "DEVOLUCAO" ? "bg-slate-200 text-slate-700"
-              : "bg-red-100 text-red-700";
-            return (
-              <Link key={e.id} to="/app/employees/$id" params={{ id: e.employee_id }}
-                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#C8102E] transition-all">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white flex items-center justify-center font-black text-sm shrink-0">{e.qtd}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-black uppercase text-slate-900 truncate">{e.item}</div>
-                  <div className="text-[9px] font-bold uppercase text-slate-500 truncate">{e.colaborador}</div>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${motivoCls}`}>{motivoLabel}</span>
-                  <div className="text-[9px] text-slate-400 font-bold mt-0.5">{new Date(e.data + "T00:00").toLocaleDateString("pt-BR")}</div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      ),
+      title: "Entregas de EPI · por motivo", icon: ShoppingBag,
+      render: () => <Donut3D data={epiPorMotivo} total={totalEntregas} label="EPIs" />,
     },
     "dds-recentes": {
-      title: "Últimos DDS realizados", icon: MessageSquare,
+      title: "DDS por setor · volume × aderência", icon: MessageSquare,
       render: () => (
-        <div className="h-full overflow-y-auto pr-1 space-y-1.5">
-          {ddsRecentes.length === 0 ? <Empty /> : ddsRecentes.map((d) => {
-            const ad = d.aderencia || (d.esperados > 0 ? Math.round((d.presentes / d.esperados) * 100) : 0);
-            const adCls = ad >= 90 ? "bg-emerald-500" : ad >= 70 ? "bg-amber-400" : ad > 0 ? "bg-red-500" : "bg-slate-300";
-            return (
-              <Link key={d.id} to="/app/dds/historico"
-                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#C8102E] transition-all">
-                <div className={`w-9 h-9 rounded-lg ${adCls} text-white flex items-center justify-center font-black text-[10px] shrink-0`}>{ad}%</div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-black uppercase text-slate-900 truncate" title={d.tema}>{d.tema}</div>
-                  <div className="text-[9px] font-bold uppercase text-slate-500 truncate">{d.setor} · {d.presentes}/{d.esperados} presentes</div>
-                </div>
-                <div className="text-[9px] text-slate-400 font-bold shrink-0">{new Date(d.data + "T00:00").toLocaleDateString("pt-BR")}</div>
-              </Link>
-            );
-          })}
+        <div className="h-full min-h-0">
+          {ddsPorSetor.length === 0 ? <Empty /> : (
+            <ResponsiveContainer>
+              <ComposedChart data={ddsPorSetor} margin={{ top: 14, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                <XAxis dataKey="setor" tick={{ fontSize: 9, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={26} />
+                <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={32} tickFormatter={(v) => `${v}%`} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(167,139,250,0.08)" }} />
+                <Legend wrapperStyle={{ fontSize: 10 }} iconType="circle" />
+                <Bar yAxisId="l" dataKey="qtd" fill="#a78bfa" name="DDS" shape={<Bar3DShape />} />
+                <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }} name="% aderência" />
+              </ComposedChart>
+            </ResponsiveContainer>
+          )}
         </div>
       ),
     },
     "top-itens": {
       title: "Top equipamentos entregues", icon: Boxes,
       render: () => (
-        <div className="h-full min-h-0 overflow-y-auto pr-1">
+        <div className="h-full min-h-0">
           {topItens.length === 0 ? <Empty /> : (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-              {topItens.map((it, idx) => {
-                const max = topItens[0].qtd || 1;
-                const perc = Math.max(6, Math.round((it.qtd / max) * 100));
-                return (
-                  <div key={it.item + idx} className="p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:shadow-md transition-all">
-                    <div className="text-[9px] text-slate-500 font-black uppercase mb-1 truncate" title={it.item}>{it.item}</div>
-                    <div className="text-xl font-black text-[#C8102E]">{it.qtd}</div>
-                    <div className="mt-2 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-[#C8102E] to-[#E85D5D]" style={{ width: `${perc}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <ResponsiveContainer>
+              <BarChart data={topItens} margin={{ top: 18, right: 14, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="grad-top-itens" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#C8102E" /><stop offset="100%" stopColor="#fb7185" />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                <XAxis dataKey="item" tick={{ fontSize: 9, fill: "#64748b" }} axisLine={false} tickLine={false} interval={0} angle={-15} textAnchor="end" height={50} />
+                <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={28} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(200,16,46,0.08)" }} />
+                <Bar dataKey="qtd" fill="#C8102E" shape={<Bar3DShape />} name="Quantidade" />
+              </BarChart>
+            </ResponsiveContainer>
           )}
         </div>
       ),
     },
     "top-recip": {
       title: "Top recebedores de EPI", icon: HardHat,
-      render: () => (
-        <div className="space-y-2 overflow-auto h-full">
-          {topRecip.length === 0 ? <Empty /> : topRecip.map((r, i) => {
-            const initials = r.nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("") || "?";
-            const medal = i === 0 ? { bg: "bg-yellow-400", label: "1º" }
-              : i === 1 ? { bg: "bg-slate-300", label: "2º" }
-              : i === 2 ? { bg: "bg-orange-300", label: "3º" }
-              : null;
-            const isFirst = i === 0;
-            return (
-              <div key={r.nome + i}
-                className={`flex items-center gap-3 p-2 rounded-lg ${isFirst ? "bg-slate-50 border-l-4 border-[#C8102E]" : ""}`}>
-                <div className="relative shrink-0">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-xs ${
-                    isFirst ? "bg-red-100 text-[#C8102E] border-2 border-red-200" : "bg-slate-100 text-slate-600"
-                  }`}>{initials}</div>
-                  {medal && <span className={`absolute -bottom-1 -right-1 ${medal.bg} text-[8px] px-1 rounded font-black`}>{medal.label}</span>}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-slate-800 truncate">{r.nome}</div>
-                  <div className="text-[10px] text-slate-500 font-medium">{r.qtd} {r.qtd === 1 ? "item" : "itens"}</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ),
+      render: () => {
+        if (topRecip.length === 0) return <Empty />;
+        const max = topRecip[0].qtd || 1;
+        const palette = ["#C8102E", "#fb7185", "#f59e0b", "#a78bfa", "#22d3ee"];
+        return (
+          <div className="h-full flex flex-col justify-center gap-3">
+            {topRecip.map((r, i) => (
+              <Bar3DHorizontal key={r.nome + i} label={r.nome} value={r.qtd} max={max} color={palette[i % palette.length]} />
+            ))}
+          </div>
+        );
+      },
     },
     "dds-trend": {
       title: "DDS · evolução & aderência", icon: ClipboardCheck,
@@ -738,87 +694,72 @@ function TstPanel() {
     conformidade: {
       title: "Conformidade por empresa", icon: Building2,
       render: () => (
-        <div className="overflow-y-auto pr-1 h-full">
+        <div className="h-full min-h-0">
           {conformity.length === 0 ? <Empty /> : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {conformity.map((c) => {
-                const stroke = c.perc === 100 ? "#10b981"
-                  : c.perc > 80 ? "#f59e0b"
-                  : c.perc > 0 ? "#ef4444"
-                  : "#94a3b8";
-                const dash = 150;
-                const offset = dash - (dash * c.perc) / 100;
-                return (
-                  <div key={c.name} className="flex flex-col items-center gap-2 p-2 rounded-xl border border-slate-100 bg-slate-50/40 hover:bg-white hover:shadow-sm transition-all">
-                    <div className="relative flex items-center justify-center">
-                      <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
-                        <circle cx="28" cy="28" r="24" stroke="#e2e8f0" strokeWidth="4" fill="transparent" />
-                        <circle cx="28" cy="28" r="24" stroke={stroke} strokeWidth="4" fill="transparent"
-                          strokeDasharray={dash} strokeDashoffset={offset} strokeLinecap="round" />
-                      </svg>
-                      <span className="absolute text-[10px] font-black text-slate-700">{c.perc}%</span>
-                    </div>
-                    <div className="text-center w-full">
-                      <div className="text-[9px] font-black text-slate-700 uppercase truncate" title={c.name}>{c.name}</div>
-                      <div className="text-[9px] text-slate-400 font-bold">{c.oks}/{c.total}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <ResponsiveContainer>
+              <BarChart data={conformity} margin={{ top: 14, right: 16, left: 0, bottom: 0 }} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#475569", fontWeight: 700 }} axisLine={false} tickLine={false} width={110} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(16,185,129,0.06)" }} formatter={(v: any, _n: any, p: any) => [`${v}% (${p.payload.oks}/${p.payload.total})`, "Conformidade"]} />
+                <Bar dataKey="perc" name="Conformidade" radius={[0, 8, 8, 0]} shape={(props: any) => {
+                  const c = props.payload.perc;
+                  const fill = c === 100 ? "#10b981" : c > 80 ? "#f59e0b" : c > 0 ? "#ef4444" : "#94a3b8";
+                  const { x, y, width, height } = props;
+                  if (!isFinite(width) || width <= 0) return <g />;
+                  const depth = Math.min(8, height * 0.35);
+                  const id = `cf3d-${Math.round((x ?? 0) * 100 + (y ?? 0))}`;
+                  return (
+                    <g>
+                      <defs>
+                        <linearGradient id={`${id}-f`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={fill} stopOpacity={1} />
+                          <stop offset="100%" stopColor={fill} stopOpacity={0.55} />
+                        </linearGradient>
+                      </defs>
+                      <polygon points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`} fill={fill} opacity={0.9} />
+                      <polygon points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`} fill={fill} opacity={0.55} />
+                      <rect x={x} y={y} width={width} height={height} fill={`url(#${id}-f)`} rx={2} />
+                    </g>
+                  );
+                }} />
+              </BarChart>
+            </ResponsiveContainer>
           )}
         </div>
       ),
     },
     pendencias: {
-      title: "Vencimentos & pendências", icon: AlertTriangle, accent: "amber",
+      title: "Pendências por empresa · alerta vs bloqueado", icon: AlertTriangle, accent: "amber",
       render: () => (
-        <div className="h-full flex flex-col min-h-0">
-          <div className="mb-2">
-            <select
-              value={filterCompany}
-              onChange={(e) => setFilterCompany(e.target.value)}
-              onMouseDown={(e) => e.stopPropagation()}
-              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase outline-none focus:ring-2 focus:border-[#C8102E] max-w-[240px] truncate"
-            >
-              <option value="ALL">Todas as empresas</option>
-              {(data?.companies ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 overflow-y-auto pr-1 flex-1">
-            {pendencias.length === 0 ? (
-              <div className="col-span-full text-center text-emerald-600 py-8 font-black uppercase text-xs">✓ Nenhuma pendência</div>
-            ) : pendencias.map((p) => (
-              <div key={p.emp.id}
-                onClick={() => navigate({ to: "/app/employees/$id", params: { id: p.emp.id } })}
-                className="p-3 border border-slate-100 rounded-xl bg-slate-50 hover:bg-white hover:border-[#C8102E] hover:shadow-sm cursor-pointer transition-all group">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="text-xs font-black uppercase text-slate-900 truncate">{p.emp.nome}</div>
-                  <ArrowUpRight className="h-3 w-3 text-slate-300 group-hover:text-[#C8102E]" />
-                </div>
-                <div className="text-[9px] font-bold uppercase text-slate-500 mb-1.5 truncate">{p.company}</div>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-[9px] font-bold text-slate-600 line-clamp-1">{p.status.msgs.join(" · ") || "—"}</div>
-                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${p.status.colorClass} text-white shrink-0`}>{p.status.label}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="h-full min-h-0">
+          {pendPorEmpresa.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-emerald-600 font-black uppercase text-xs">✓ Nenhuma pendência</div>
+          ) : (
+            <ResponsiveContainer>
+              <BarChart data={pendPorEmpresa} margin={{ top: 16, right: 18, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} interval={0} angle={-12} textAnchor="end" height={56} />
+                <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={28} />
+                <Tooltip contentStyle={{ background: "rgba(15,23,42,0.96)", border: "none", borderRadius: 10, color: "#fff", fontSize: 11 }} cursor={{ fill: "rgba(239,68,68,0.06)" }} />
+                <Legend wrapperStyle={{ fontSize: 10 }} iconType="circle" />
+                <Bar dataKey="alerta" stackId="p" fill="#f59e0b" name="Alerta" shape={<Bar3DShape />} />
+                <Bar dataKey="bloq" stackId="p" fill="#ef4444" name="Bloqueado" shape={<Bar3DShape />} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       ),
     },
     "doc-controle": {
       title: "Controle de Documentos", icon: FolderOpen,
       render: () => (
-        <div className="h-full flex flex-col justify-between">
-          <div className="grid grid-cols-2 gap-2">
-            <DocStat label="Abertos" value={docMetrics.abertos} tone="amber" />
-            <DocStat label="Vencidos" value={docMetrics.vencidos} tone="red" />
-            <DocStat label="Críticos" value={docMetrics.criticos} tone="red" />
-            <DocStat label="Resolvidos" value={docMetrics.resolvidos} tone="green" />
+        <div className="h-full flex flex-col">
+          <div className="flex-1 min-h-0">
+            <Donut3D data={docDonut} total={docMetrics.total} label="docs" />
           </div>
           <Link to="/app/controle-documentos"
-            className="mt-3 flex items-center justify-center gap-2 w-full bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white rounded-xl py-2.5 text-[10px] font-black uppercase tracking-wider hover:shadow-md transition-all">
+            className="mt-2 flex items-center justify-center gap-2 w-full bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white rounded-xl py-2 text-[10px] font-black uppercase tracking-wider hover:shadow-md transition-all">
             <FolderOpen className="h-3.5 w-3.5" /> Acessar módulo
           </Link>
         </div>
@@ -827,15 +768,12 @@ function TstPanel() {
     extintores: {
       title: "Controle de Extintores", icon: Flame,
       render: () => (
-        <div className="h-full flex flex-col justify-between">
-          <div className="grid grid-cols-2 gap-2">
-            <DocStat label="Ativos" value={extMetrics.ativos} tone="green" />
-            <DocStat label="Recarga vencida" value={extMetrics.vencidos} tone="red" />
-            <DocStat label="Vencendo 30d" value={extMetrics.vencendo} tone="amber" />
-            <DocStat label="Sem inspeção/mês" value={extMetrics.semInspecao} tone={extMetrics.semInspecao > 0 ? "amber" : "green"} />
+        <div className="h-full flex flex-col">
+          <div className="flex-1 min-h-0">
+            <Donut3D data={extDonut} total={extMetrics.ativos} label="ativos" />
           </div>
           <Link to="/app/extintores"
-            className="mt-3 flex items-center justify-center gap-2 w-full bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white rounded-xl py-2.5 text-[10px] font-black uppercase tracking-wider hover:shadow-md transition-all">
+            className="mt-2 flex items-center justify-center gap-2 w-full bg-gradient-to-br from-[#C8102E] to-[#8B0A1E] text-white rounded-xl py-2 text-[10px] font-black uppercase tracking-wider hover:shadow-md transition-all">
             <Flame className="h-3.5 w-3.5" /> Acessar módulo
           </Link>
         </div>
