@@ -360,7 +360,10 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
 
   const paginas = p.paginas.length > 0 ? p.paginas : [{ empresaNome: "—", funcionarios: [] }];
   // Estima capacidade por página (deixa folga para cabeçalho + cards + assinatura)
-  const ROWS_PER_PAGE = 22;
+  // Capacidade real por folha A4 com nosso layout é ~17 linhas (rowH=9mm,
+  // reservando 42mm para o bloco de assinatura). Usamos 16 para deixar
+  // folga para a observação e qualquer drift de layout.
+  const ROWS_PER_PAGE = 16;
   // Pré-divide cada empresa em sub-páginas
   type SubPagina = { pag: HoraExtraPaginaEmpresa; parte: number; partes: number };
   const subs: SubPagina[] = [];
