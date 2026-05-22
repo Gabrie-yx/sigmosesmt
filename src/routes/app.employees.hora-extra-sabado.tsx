@@ -77,7 +77,7 @@ function HoraExtraSabadoPage() {
     if (!rec) return toast.error("Registro não encontrado");
     const { data: list } = await supabase
       .from("hora_extra_sabado_funcionarios")
-      .select("*")
+      .select("*, employees(company_id, companies(name))")
       .eq("hora_extra_id", id)
       .order("ordem");
 
@@ -88,6 +88,26 @@ function HoraExtraSabadoPage() {
 
     const logo = await imageToDataUrl(dmnLogo);
 
+    const empresaPadrao = (rec as any).companies?.name ?? "EXTERNOS";
+    const grupos = new Map<string, any[]>();
+    (list ?? []).forEach((f: any) => {
+      const empNome =
+        f.employees?.companies?.name ??
+        (f.externo ? "EXTERNOS" : empresaPadrao);
+      if (!grupos.has(empNome)) grupos.set(empNome, []);
+      grupos.get(empNome)!.push(f);
+    });
+    const paginas = Array.from(grupos.entries()).map(([empresaNome, fs]) => ({
+      empresaNome,
+      funcionarios: fs.map((f: any) => ({
+        nome: f.nome,
+        transporte: f.transporte,
+        alimentacao: f.alimentacao,
+        presenca: f.presenca,
+      })),
+    }));
+    const empresasEnvolvidas = Array.from(grupos.keys());
+
     const doc = gerarHoraExtraSabadoPDF({
       data: ddmmyyyy,
       diaSemana: dia,
@@ -96,7 +116,6 @@ function HoraExtraSabadoPage() {
       setor: rec.setor,
       centroCusto: rec.centro_custo,
       tipoEfetivo: rec.tipo_efetivo as any,
-      empresaNome: (rec as any).companies?.name,
       observacao: rec.observacao,
       logoDataUrl: logo,
       assinaturaDataUrl: assinatura?.dataUrl ?? null,
@@ -105,12 +124,8 @@ function HoraExtraSabadoPage() {
         (user as any)?.user_metadata?.full_name ??
         (user as any)?.email?.split("@")[0] ??
         null,
-      funcionarios: (list ?? []).map((f: any) => ({
-        nome: f.nome,
-        transporte: f.transporte,
-        alimentacao: f.alimentacao,
-        presenca: f.presenca,
-      })),
+      empresasEnvolvidas,
+      paginas,
     });
     doc.save(`hora-extra-${rec.data}.pdf`);
   }
