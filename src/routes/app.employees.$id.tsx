@@ -4,6 +4,7 @@ import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { toTitleCasePT } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -417,7 +418,7 @@ function EmployeeContextSidebar({ id }: { id: string }) {
   const createEmployee = useMutation({
     mutationFn: async (v: any) => {
       const { error } = await supabase.from("employees").insert({
-        nome: v.nome,
+        nome: toTitleCasePT(v.nome),
         cpf: v.cpf || null,
         matricula: v.matricula || null,
         status: v.status,
@@ -622,7 +623,8 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
   const save = useMutation({
     mutationFn: async () => {
       const { id: _id, created_at, updated_at, ...rest } = f;
-      const { error } = await supabase.from("employees").update(rest).eq("id", emp.id);
+      const payload = { ...rest, nome: toTitleCasePT(rest.nome) };
+      const { error } = await supabase.from("employees").update(payload).eq("id", emp.id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["employee", emp.id] }); qc.invalidateQueries({ queryKey: ["employees"] }); toast.success("Salvo"); },
