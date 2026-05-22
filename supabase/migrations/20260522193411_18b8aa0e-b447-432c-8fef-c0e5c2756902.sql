@@ -1,0 +1,1 @@
+INSERT INTO public.companies (name, type) VALUES ('MEI - Prestadores', 'TERCEIRIZADO') ON CONFLICT DO NOTHING;
