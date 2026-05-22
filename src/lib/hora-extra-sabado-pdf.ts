@@ -256,15 +256,42 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         doc.setTextColor(...brand);
         doc.setFont("helvetica", "bold").setFontSize(8);
         const nomeFmt = toTitleCase(f.nome);
-        const nome = nomeFmt.length > 42 ? nomeFmt.substring(0, 40) + "…" : nomeFmt;
+        // Espaço disponível para nome + tag de empresa dentro da coluna NOME
+        const nomeColAvail = colNome - 6; // 3 de padding em cada lado
+        // Mapeia razão social para sigla curta quando possível
+        const siglaEmpresa = (e: string): string => {
+          const up = e.toUpperCase();
+          if (up.includes("M2")) return "M2";
+          if (up.includes("DMN")) return "DMN";
+          if (up.includes("EXTERN")) return "EXT";
+          // Fallback: pega as iniciais das primeiras palavras significativas
+          const ignor = new Set(["DE", "DA", "DO", "E", "LTDA", "S.A.", "SA", "ME", "EPP", "EIRELI"]);
+          const ini = up
+            .split(/\s+/)
+            .filter((w) => w && !ignor.has(w))
+            .slice(0, 3)
+            .map((w) => w[0])
+            .join("");
+          return ini || up.slice(0, 4);
+        };
+        const tagText = f.empresa ? ` · ${siglaEmpresa(f.empresa)}` : "";
+        // Mede a tag e ajusta o nome para caber junto
+        doc.setFont("helvetica", "normal").setFontSize(6.5);
+        const tagW = tagText ? doc.getTextWidth(tagText) : 0;
+        doc.setFont("helvetica", "bold").setFontSize(8);
+        const maxNomeW = nomeColAvail - tagW;
+        let nome = nomeFmt;
+        while (nome.length > 4 && doc.getTextWidth(nome) > maxNomeW) {
+          nome = nome.slice(0, -1);
+        }
+        if (nome !== nomeFmt) nome = nome.slice(0, -1) + "…";
         doc.text(nome, margin + colIt + 3, ty);
 
-        // Tag de empresa após o nome (quando múltiplas empresas na mesma folha)
-        if (f.empresa) {
+        if (tagText) {
           const nomeW = doc.getTextWidth(nome);
           doc.setTextColor(...muted);
           doc.setFont("helvetica", "normal").setFontSize(6.5);
-          doc.text(`· ${f.empresa.toUpperCase()}`, margin + colIt + 3 + nomeW + 2, ty);
+          doc.text(tagText, margin + colIt + 3 + nomeW, ty);
         }
 
         // Badge helper — outline clean
