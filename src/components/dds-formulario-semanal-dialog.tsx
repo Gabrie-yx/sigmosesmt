@@ -145,16 +145,34 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
                   type="file"
                   accept="image/png,image/jpeg"
                   className="hidden"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const f = e.target.files?.[0];
                     if (!f) return;
-                    if (f.size > 2 * 1024 * 1024) {
-                      toast.error("Imagem muito grande (máx 2MB)");
+                    if (f.size > 5 * 1024 * 1024) {
+                      toast.error("Imagem muito grande (máx 5MB)");
                       return;
                     }
-                    const reader = new FileReader();
-                    reader.onload = () => setAssinaturaUrl(String(reader.result || ""));
-                    reader.readAsDataURL(f);
+                    try {
+                      // Normaliza orientação (EXIF) e re-codifica como PNG.
+                      // createImageBitmap respeita EXIF com imageOrientation:'from-image'.
+                      const bitmap = await createImageBitmap(f, { imageOrientation: "from-image" } as any);
+                      const maxW = 800;
+                      const scale = Math.min(1, maxW / bitmap.width);
+                      const w = Math.round(bitmap.width * scale);
+                      const h = Math.round(bitmap.height * scale);
+                      const canvas = document.createElement("canvas");
+                      canvas.width = w; canvas.height = h;
+                      const ctx = canvas.getContext("2d")!;
+                      ctx.drawImage(bitmap, 0, 0, w, h);
+                      setAssinaturaUrl(canvas.toDataURL("image/png"));
+                    } catch (err) {
+                      // Fallback simples (sem normalização)
+                      const reader = new FileReader();
+                      reader.onload = () => setAssinaturaUrl(String(reader.result || ""));
+                      reader.readAsDataURL(f);
+                    } finally {
+                      e.target.value = "";
+                    }
                   }}
                 />
               </label>
