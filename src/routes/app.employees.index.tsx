@@ -225,6 +225,7 @@ function EmployeesPage() {
               })()}
             </DialogContent>
           </Dialog>
+          </>
         )}
       </div>
 
