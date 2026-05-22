@@ -44,7 +44,12 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const line: [number, number, number] = [226, 232, 240];     // slate-200 (linhas/bordas)
   const zebra: [number, number, number] = [255, 255, 255];    // branco
 
-  const drawPagina = (pagina: HoraExtraPaginaEmpresa, idx: number, total: number) => {
+  const drawPagina = (
+    pagina: HoraExtraPaginaEmpresa,
+    idx: number,
+    total: number,
+    parte?: { atual: number; total: number },
+  ) => {
     // ===== HEADER clean =====
     // Fundo branco com borda sutil
     doc.setFillColor(255, 255, 255);
@@ -89,7 +94,10 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.text(empTrim, pillX + 4, margin + 16);
     doc.setFont("helvetica", "normal").setFontSize(7);
     doc.setTextColor(...muted);
-    doc.text(`${idx + 1}/${total}`, pillX + pillW - 4, margin + 16, { align: "right" });
+    const pageLabel = parte && parte.total > 1
+      ? `${idx + 1}/${total} · pt ${parte.atual}/${parte.total}`
+      : `${idx + 1}/${total}`;
+    doc.text(pageLabel, pillX + pillW - 4, margin + 16, { align: "right" });
 
     let y = margin + 28;
 
@@ -186,11 +194,10 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     // Linhas
     const rowH = 9;
     const sigReserve = 42;
-    const maxRows = Math.floor((pageH - margin - sigReserve - y) / rowH);
-    const rowsToDraw = Math.max(pagina.funcionarios.length, Math.min(15, maxRows));
+    const maxRows = Math.max(1, Math.floor((pageH - margin - sigReserve - y) / rowH));
+    const rowsToDraw = Math.min(pagina.funcionarios.length, maxRows);
 
     for (let i = 0; i < rowsToDraw; i++) {
-      if (y + rowH > pageH - margin - sigReserve) break;
       const f = pagina.funcionarios[i];
 
       // Zebra: slate-50 / branco
@@ -348,12 +355,34 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       pageH - 4,
     );
     doc.text("Documento interno · não homologado", margin + contentW, pageH - 4, { align: "right" });
+    return rowsToDraw;
   };
 
   const paginas = p.paginas.length > 0 ? p.paginas : [{ empresaNome: "—", funcionarios: [] }];
-  paginas.forEach((pag, i) => {
+  // Estima capacidade por página (deixa folga para cabeçalho + cards + assinatura)
+  const ROWS_PER_PAGE = 22;
+  // Pré-divide cada empresa em sub-páginas
+  type SubPagina = { pag: HoraExtraPaginaEmpresa; parte: number; partes: number };
+  const subs: SubPagina[] = [];
+  paginas.forEach((pag) => {
+    const total = pag.funcionarios.length;
+    if (total === 0) {
+      subs.push({ pag, parte: 1, partes: 1 });
+      return;
+    }
+    const partes = Math.max(1, Math.ceil(total / ROWS_PER_PAGE));
+    for (let i = 0; i < partes; i++) {
+      const slice = pag.funcionarios.slice(i * ROWS_PER_PAGE, (i + 1) * ROWS_PER_PAGE);
+      subs.push({
+        pag: { empresaNome: pag.empresaNome, funcionarios: slice },
+        parte: i + 1,
+        partes,
+      });
+    }
+  });
+  subs.forEach((s, i) => {
     if (i > 0) doc.addPage();
-    drawPagina(pag, i, paginas.length);
+    drawPagina(s.pag, i, subs.length, { atual: s.parte, total: s.partes });
   });
 
   return doc;
