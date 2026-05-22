@@ -502,6 +502,7 @@ function CompaniesPage() {
           <p className="text-xs font-bold uppercase tracking-widest">Selecione uma empresa</p>
         </div>
       )}
+      <NewEmployeeDialog open={newEmpOpen} onOpenChange={setNewEmpOpen} defaultCompanyId={selected?.id} />
     </div>
   );
 }
