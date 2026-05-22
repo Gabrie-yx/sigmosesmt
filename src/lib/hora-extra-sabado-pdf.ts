@@ -10,6 +10,8 @@ export type HoraExtraFuncionario = {
 export type HoraExtraPaginaEmpresa = {
   empresaNome: string;
   funcionarios: HoraExtraFuncionario[];
+  totalFuncionarios?: number;
+  linhaInicial?: number;
 };
 
 export type HoraExtraPdfParams = {
@@ -36,13 +38,12 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const margin = 10;
   const contentW = pageW - margin * 2;
 
-  // Paleta leve e clean
-  const brand: [number, number, number] = [51, 65, 85];       // slate-700 (texto principal)
-  const accent: [number, number, number] = [59, 130, 246];    // blue-500 (destaques)
-  const muted: [number, number, number] = [148, 163, 184];    // slate-400 (texto secundário)
-  const soft: [number, number, number] = [248, 250, 252];     // slate-50 (fundo suave)
-  const line: [number, number, number] = [226, 232, 240];     // slate-200 (linhas/bordas)
-  const zebra: [number, number, number] = [255, 255, 255];    // branco
+  // Paleta leve: cinzas limpos + vermelho suave para marcações pontuais
+  const brand: [number, number, number] = [31, 41, 55];       // gray/slate-800
+  const accent: [number, number, number] = [185, 84, 84];     // vermelho suave
+  const muted: [number, number, number] = [100, 116, 139];
+  const soft: [number, number, number] = [249, 250, 251];
+  const line: [number, number, number] = [229, 231, 235];
 
   const drawPagina = (
     pagina: HoraExtraPaginaEmpresa,
@@ -57,7 +58,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.setDrawColor(...line);
     doc.setLineWidth(0.3);
     doc.roundedRect(margin, margin, contentW, 24, 2, 2, "S");
-    // Linha de acento azul no topo
+    // Linha de acento sutil no topo
     doc.setFillColor(...accent);
     doc.rect(margin + 2, margin, contentW - 4, 1.5, "F");
 
@@ -78,20 +79,22 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.setTextColor(...muted);
     doc.text("Controle interno · não homologado", margin + 42, margin + 16.5);
 
-    // Badge empresa (direita, estilo outline)
-    const pillW = 70;
+    // Identificação da empresa (direita, limpa e sem sobrepor o título)
+    const pillW = 62;
     const pillX = margin + contentW - pillW - 4;
-    doc.setDrawColor(...accent);
-    doc.setLineWidth(0.5);
+    doc.setFillColor(...soft);
+    doc.roundedRect(pillX, margin + 5, pillW, 14, 2, 2, "F");
+    doc.setDrawColor(...line);
+    doc.setLineWidth(0.3);
     doc.roundedRect(pillX, margin + 5, pillW, 14, 2, 2, "S");
-    doc.setTextColor(...accent);
+    doc.setTextColor(...muted);
     doc.setFont("helvetica", "bold").setFontSize(7);
-    doc.text("EMPRESA", pillX + 4, margin + 10);
+    doc.text("EMPRESA", pillX + 3, margin + 10);
     doc.setTextColor(...brand);
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     const empName = pagina.empresaNome.toUpperCase();
-    const empTrim = empName.length > 28 ? empName.slice(0, 27) + "…" : empName;
-    doc.text(empTrim, pillX + 4, margin + 16);
+    const empTrim = empName.length > 24 ? empName.slice(0, 23) + "…" : empName;
+    doc.text(empTrim, pillX + 3, margin + 16);
     doc.setFont("helvetica", "normal").setFontSize(7);
     doc.setTextColor(...muted);
     const pageLabel = parte && parte.total > 1
@@ -118,7 +121,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       doc.setDrawColor(...line);
       doc.setLineWidth(0.25);
       doc.roundedRect(cx, y, cardW, cardH, 2, 2, "S");
-      // Barra lateral azul
+      // Barra lateral discreta
       doc.setFillColor(...accent);
       doc.rect(cx, y, 1.5, cardH, "F");
       doc.setTextColor(...muted);
@@ -136,21 +139,21 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     });
     y += cardH + 4;
 
-    // ===== Faixa "EMPRESAS ENVOLVIDAS" clean =====
+    // ===== Faixa de identificação da folha =====
     const envH = 8;
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(margin, y, contentW, envH, 2, 2, "F");
-    doc.setDrawColor(...accent);
-    doc.setLineWidth(0.4);
+    doc.setDrawColor(...line);
+    doc.setLineWidth(0.3);
     doc.roundedRect(margin, y, contentW, envH, 2, 2, "S");
     doc.setTextColor(...accent);
     doc.setFont("helvetica", "bold").setFontSize(7);
-    doc.text("EMPRESAS ENVOLVIDAS", margin + 4, y + 5.2);
+    doc.text("EMPRESA DA FOLHA", margin + 4, y + 5.2);
     doc.setTextColor(...brand);
-    doc.setFont("helvetica", "normal").setFontSize(8);
-    const envText = p.empresasEnvolvidas.join("  •  ");
-    const envClipped = doc.splitTextToSize(envText, contentW - 54)[0] ?? envText;
-    doc.text(envClipped, margin + 52, y + 5.2);
+    doc.setFont("helvetica", "bold").setFontSize(8);
+    const envText = pagina.empresaNome.toUpperCase();
+    const envClipped = doc.splitTextToSize(envText, contentW - 52)[0] ?? envText;
+    doc.text(envClipped, margin + 49, y + 5.2);
     y += envH + 5;
 
     // ===== Título da equipe =====
@@ -163,7 +166,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.line(margin, y + 5.5, margin + titleW, y + 5.5);
     doc.setTextColor(...muted);
     doc.setFont("helvetica", "normal").setFontSize(8);
-    doc.text(`${pagina.funcionarios.length} colaborador(es)`, margin + contentW, y + 3, { align: "right" });
+    doc.text(`${pagina.totalFuncionarios ?? pagina.funcionarios.length} colaborador(es)`, margin + contentW, y + 3, { align: "right" });
     y += 8.5;
 
     // ===== TABELA =====
@@ -175,8 +178,8 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     const colPres = 20;
     const colAss = contentW - colIt - colNome - colTrans - colAlim - colPres;
 
-    // Cabeçalho — azul suave em vez de preto
-    doc.setFillColor(239, 246, 255); // blue-50
+    // Cabeçalho — cinza suave
+    doc.setFillColor(...soft);
     doc.roundedRect(margin, y, contentW, headRowH, 1.5, 1.5, "F");
     doc.setDrawColor(...accent);
     doc.setLineWidth(0.4);
@@ -213,7 +216,8 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         // #
         doc.setTextColor(...muted);
         doc.setFont("helvetica", "bold").setFontSize(8);
-        doc.text(String(i + 1).padStart(2, "0"), margin + colIt / 2, y + 5.8, { align: "center" });
+        const linhaNumero = (pagina.linhaInicial ?? 1) + i;
+        doc.text(String(linhaNumero).padStart(2, "0"), margin + colIt / 2, y + 5.8, { align: "center" });
 
         // Nome
         doc.setTextColor(...brand);
@@ -359,11 +363,9 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   };
 
   const paginas = p.paginas.length > 0 ? p.paginas : [{ empresaNome: "—", funcionarios: [] }];
-  // Estima capacidade por página (deixa folga para cabeçalho + cards + assinatura)
-  // Capacidade real por folha A4 com nosso layout é ~17 linhas (rowH=9mm,
-  // reservando 42mm para o bloco de assinatura). Usamos 16 para deixar
-  // folga para a observação e qualquer drift de layout.
-  const ROWS_PER_PAGE = 16;
+  // Capacidade real da folha com este layout: 17 linhas. A divisão precisa
+  // ser menor ou igual ao que o desenho comporta para nenhuma linha sumir.
+  const ROWS_PER_PAGE = 17;
   // Pré-divide cada empresa em sub-páginas
   type SubPagina = { pag: HoraExtraPaginaEmpresa; parte: number; partes: number };
   const subs: SubPagina[] = [];
@@ -377,7 +379,12 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     for (let i = 0; i < partes; i++) {
       const slice = pag.funcionarios.slice(i * ROWS_PER_PAGE, (i + 1) * ROWS_PER_PAGE);
       subs.push({
-        pag: { empresaNome: pag.empresaNome, funcionarios: slice },
+        pag: {
+          empresaNome: pag.empresaNome,
+          funcionarios: slice,
+          totalFuncionarios: total,
+          linhaInicial: i * ROWS_PER_PAGE + 1,
+        },
         parte: i + 1,
         partes,
       });
