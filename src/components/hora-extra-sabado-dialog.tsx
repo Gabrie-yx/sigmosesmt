@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Search, Plus, X, Users, CheckSquare, Square, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { toTitleCasePT } from "@/lib/utils";
 
 type FuncRow = {
   key: string;
@@ -71,7 +73,14 @@ export function HoraExtraSabadoDialog({
       const fromDb = (data ?? [])
         .flatMap((d: any) => String(d.setor ?? "").split(",").map((s) => s.trim()))
         .filter(Boolean);
-      return Array.from(new Set([...defaults, ...fromDb])).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      const siglas = new Set(["SESMT", "CIPA", "RH", "TI", "PCP", "QSMS"]);
+      const normalize = (s: string) => {
+        const up = s.trim().toUpperCase();
+        if (siglas.has(up)) return up;
+        return toTitleCasePT(s);
+      };
+      const all = [...defaults, ...fromDb].map(normalize).filter(Boolean);
+      return Array.from(new Set(all)).sort((a, b) => a.localeCompare(b, "pt-BR"));
     },
   });
   const { data: employees } = useQuery({
@@ -247,27 +256,59 @@ export function HoraExtraSabadoDialog({
 
           <div className="space-y-1">
             <Label>Setor</Label>
-            <div className="rounded-md border bg-white p-2 max-h-32 overflow-y-auto space-y-1">
-              {(setores ?? []).length === 0 && <p className="text-[11px] text-slate-400 italic">Nenhum setor cadastrado</p>}
-              {(setores ?? []).map((s) => {
-                const checked = setoresSel.includes(s);
-                return (
-                  <label key={s} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 rounded px-1 py-0.5">
-                    <Checkbox
-                      checked={checked}
-                      onCheckedChange={(v) =>
-                        setSetoresSel((prev) => (v ? [...prev, s] : prev.filter((x) => x !== s)))
-                      }
-                    />
-                    <span>{s}</span>
-                  </label>
-                );
-              })}
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm hover:bg-accent/30 focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <span className="truncate text-left">
+                    {setoresSel.length === 0
+                      ? <span className="text-muted-foreground">Selecionar…</span>
+                      : setoresSel.length === 1
+                        ? setoresSel[0]
+                        : `${setoresSel.length} setores`}
+                  </span>
+                  <span className="ml-2 text-muted-foreground text-xs">▾</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-64 p-0">
+                <div className="max-h-56 overflow-y-auto py-1">
+                  {(setores ?? []).length === 0 && (
+                    <p className="px-3 py-2 text-xs text-muted-foreground italic">Nenhum setor cadastrado</p>
+                  )}
+                  {(setores ?? []).map((s) => {
+                    const checked = setoresSel.includes(s);
+                    return (
+                      <label
+                        key={s}
+                        className="flex items-center gap-2 text-sm cursor-pointer hover:bg-accent/40 px-3 py-1.5"
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={(v) =>
+                            setSetoresSel((prev) => (v ? [...prev, s] : prev.filter((x) => x !== s)))
+                          }
+                        />
+                        <span>{s}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="border-t p-2">
+                  <Input
+                    className="h-8 text-xs"
+                    placeholder="novo setor (vírgula p/ vários)"
+                    value={setorNovo}
+                    onChange={(e) => setSetorNovo(e.target.value)}
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
             {setoresSel.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {setoresSel.map((s) => (
-                  <span key={s} className="text-[10px] font-bold uppercase tracking-wide bg-slate-900 text-white px-1.5 py-0.5 rounded inline-flex items-center gap-1">
+                  <span key={s} className="text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200 px-1.5 py-0.5 rounded inline-flex items-center gap-1">
                     {s}
                     <button type="button" onClick={() => setSetoresSel((p) => p.filter((x) => x !== s))}>
                       <X className="h-2.5 w-2.5" />
@@ -276,7 +317,6 @@ export function HoraExtraSabadoDialog({
                 ))}
               </div>
             )}
-            <Input className="mt-1" placeholder="adicionar novo(s), separe por vírgula" value={setorNovo} onChange={(e) => setSetorNovo(e.target.value)} />
           </div>
           <div className="space-y-1"><Label>C.C.</Label><Input value={centroCusto} onChange={(e) => setCentroCusto(e.target.value)} /></div>
           <div className="space-y-1">
