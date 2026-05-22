@@ -84,12 +84,12 @@ export function gerarPdfListagemFuncionarios(
     columnStyles: {
       0: { cellWidth: 10, halign: "center" },
       1: { cellWidth: 18, halign: "center" },
-      2: { cellWidth: 55 },
-      3: { cellWidth: 26, halign: "center" },
-      4: { cellWidth: 30 },
-      5: { cellWidth: 28 },
-      6: { cellWidth: 18, halign: "center" },
-      7: { cellWidth: 15, halign: "center" },
+      2: { cellWidth: 50 },
+      3: { cellWidth: 24, halign: "center" },
+      4: { cellWidth: 28 },
+      5: { cellWidth: 30 },
+      6: { cellWidth: 16, halign: "center" },
+      7: { cellWidth: 14, halign: "center" },
     },
     didDrawPage: (data) => {
       drawHeader();
