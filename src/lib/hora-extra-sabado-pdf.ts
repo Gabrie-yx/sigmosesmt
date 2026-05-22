@@ -36,60 +36,66 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const margin = 10;
   const contentW = pageW - margin * 2;
 
-  // Paleta
-  const brand: [number, number, number] = [15, 23, 42];      // slate-900
-  const accent: [number, number, number] = [190, 18, 60];    // rose-700
-  const muted: [number, number, number] = [100, 116, 139];   // slate-500
-  const soft: [number, number, number] = [241, 245, 249];    // slate-100
-  const line: [number, number, number] = [203, 213, 225];    // slate-300
-  const zebra: [number, number, number] = [248, 250, 252];   // slate-50
+  // Paleta leve e clean
+  const brand: [number, number, number] = [51, 65, 85];       // slate-700 (texto principal)
+  const accent: [number, number, number] = [59, 130, 246];    // blue-500 (destaques)
+  const muted: [number, number, number] = [148, 163, 184];    // slate-400 (texto secundário)
+  const soft: [number, number, number] = [248, 250, 252];     // slate-50 (fundo suave)
+  const line: [number, number, number] = [226, 232, 240];     // slate-200 (linhas/bordas)
+  const zebra: [number, number, number] = [255, 255, 255];    // branco
 
   const drawPagina = (pagina: HoraExtraPaginaEmpresa, idx: number, total: number) => {
-    // ===== HEADER =====
-    // Faixa de marca no topo
-    doc.setFillColor(...brand);
-    doc.rect(margin, margin, contentW, 22, "F");
-    // Faixa de acento (rosé) abaixo
+    // ===== HEADER clean =====
+    // Fundo branco com borda sutil
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(margin, margin, contentW, 24, 2, 2, "F");
+    doc.setDrawColor(...line);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(margin, margin, contentW, 24, 2, 2, "S");
+    // Linha de acento azul no topo
     doc.setFillColor(...accent);
-    doc.rect(margin, margin + 22, contentW, 2, "F");
+    doc.rect(margin + 2, margin, contentW - 4, 1.5, "F");
 
-    // Logo (fundo branco arredondado visual)
+    // Logo
     if (p.logoDataUrl) {
       try {
         doc.setFillColor(255, 255, 255);
-        doc.roundedRect(margin + 3, margin + 3, 34, 16, 1.5, 1.5, "F");
-        doc.addImage(p.logoDataUrl, "PNG", margin + 5, margin + 4.5, 30, 13, undefined, "FAST");
+        doc.roundedRect(margin + 4, margin + 4, 34, 16, 1.5, 1.5, "F");
+        doc.addImage(p.logoDataUrl, "PNG", margin + 6, margin + 5.5, 30, 13, undefined, "FAST");
       } catch {}
     }
 
     // Título
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold").setFontSize(15);
-    doc.text("FORMULÁRIO DE HORA EXTRA", margin + 42, margin + 10);
-    doc.setFont("helvetica", "normal").setFontSize(8);
-    doc.setTextColor(203, 213, 225);
-    doc.text("Controle interno · não homologado", margin + 42, margin + 15);
+    doc.setTextColor(...brand);
+    doc.setFont("helvetica", "bold").setFontSize(14);
+    doc.text("FORMULÁRIO DE HORA EXTRA", margin + 42, margin + 11);
+    doc.setFont("helvetica", "normal").setFontSize(7.5);
+    doc.setTextColor(...muted);
+    doc.text("Controle interno · não homologado", margin + 42, margin + 16.5);
 
-    // Pílula da empresa (direita)
+    // Badge empresa (direita, estilo outline)
     const pillW = 70;
     const pillX = margin + contentW - pillW - 4;
-    doc.setFillColor(...accent);
-    doc.roundedRect(pillX, margin + 5, pillW, 12, 2, 2, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold").setFontSize(8);
-    doc.text("EMPRESA", pillX + 4, margin + 9);
+    doc.setDrawColor(...accent);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(pillX, margin + 5, pillW, 14, 2, 2, "S");
+    doc.setTextColor(...accent);
+    doc.setFont("helvetica", "bold").setFontSize(7);
+    doc.text("EMPRESA", pillX + 4, margin + 10);
+    doc.setTextColor(...brand);
     doc.setFontSize(9);
     const empName = pagina.empresaNome.toUpperCase();
     const empTrim = empName.length > 28 ? empName.slice(0, 27) + "…" : empName;
-    doc.text(empTrim, pillX + 4, margin + 14);
+    doc.text(empTrim, pillX + 4, margin + 16);
     doc.setFont("helvetica", "normal").setFontSize(7);
-    doc.text(`${idx + 1}/${total}`, pillX + pillW - 4, margin + 14, { align: "right" });
+    doc.setTextColor(...muted);
+    doc.text(`${idx + 1}/${total}`, pillX + pillW - 4, margin + 16, { align: "right" });
 
     let y = margin + 28;
 
-    // ===== INFO CARDS (4 mini-cards horizontais) =====
+    // ===== INFO CARDS (4 mini-cards) =====
     const cardH = 14;
-    const cardGap = 2;
+    const cardGap = 2.5;
     const cardW = (contentW - cardGap * 3) / 4;
     const cards = [
       { label: "DATA", value: p.data, sub: p.diaSemana.toUpperCase() },
@@ -99,55 +105,58 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     ];
     cards.forEach((c, i) => {
       const cx = margin + i * (cardW + cardGap);
-      doc.setFillColor(...soft);
-      doc.roundedRect(cx, y, cardW, cardH, 1.5, 1.5, "F");
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(cx, y, cardW, cardH, 2, 2, "F");
       doc.setDrawColor(...line);
-      doc.setLineWidth(0.2);
-      doc.roundedRect(cx, y, cardW, cardH, 1.5, 1.5, "S");
-      // Barra lateral de acento
+      doc.setLineWidth(0.25);
+      doc.roundedRect(cx, y, cardW, cardH, 2, 2, "S");
+      // Barra lateral azul
       doc.setFillColor(...accent);
-      doc.rect(cx, y, 1.2, cardH, "F");
+      doc.rect(cx, y, 1.5, cardH, "F");
       doc.setTextColor(...muted);
       doc.setFont("helvetica", "bold").setFontSize(6.5);
-      doc.text(c.label, cx + 3, y + 4);
+      doc.text(c.label, cx + 4, y + 4.5);
       doc.setTextColor(...brand);
       doc.setFont("helvetica", "bold").setFontSize(10);
       const val = c.value.length > 18 ? c.value.slice(0, 17) + "…" : c.value;
-      doc.text(val, cx + 3, y + 9);
+      doc.text(val, cx + 4, y + 9.5);
       if (c.sub) {
         doc.setTextColor(...muted);
         doc.setFont("helvetica", "normal").setFontSize(6.5);
-        doc.text(c.sub, cx + 3, y + 12.5);
+        doc.text(c.sub, cx + 4, y + 13);
       }
     });
-    y += cardH + 3;
+    y += cardH + 4;
 
-    // ===== Faixa "EMPRESAS ENVOLVIDAS" =====
+    // ===== Faixa "EMPRESAS ENVOLVIDAS" clean =====
     const envH = 8;
-    doc.setFillColor(...brand);
-    doc.roundedRect(margin, y, contentW, envH, 1, 1, "F");
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(margin, y, contentW, envH, 2, 2, "F");
+    doc.setDrawColor(...accent);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(margin, y, contentW, envH, 2, 2, "S");
     doc.setTextColor(...accent);
     doc.setFont("helvetica", "bold").setFontSize(7);
-    doc.text("EMPRESAS ENVOLVIDAS", margin + 3, y + 5);
-    doc.setTextColor(255, 255, 255);
+    doc.text("EMPRESAS ENVOLVIDAS", margin + 4, y + 5.2);
+    doc.setTextColor(...brand);
     doc.setFont("helvetica", "normal").setFontSize(8);
     const envText = p.empresasEnvolvidas.join("  •  ");
-    const envClipped = doc.splitTextToSize(envText, contentW - 50)[0] ?? envText;
-    doc.text(envClipped, margin + 48, y + 5);
-    y += envH + 4;
+    const envClipped = doc.splitTextToSize(envText, contentW - 54)[0] ?? envText;
+    doc.text(envClipped, margin + 52, y + 5.2);
+    y += envH + 5;
 
-    // ===== Title da equipe =====
+    // ===== Título da equipe =====
     doc.setTextColor(...brand);
     doc.setFont("helvetica", "bold").setFontSize(11);
     doc.text(`EQUIPE · ${pagina.empresaNome.toUpperCase()}`, margin, y + 3);
     doc.setDrawColor(...accent);
-    doc.setLineWidth(0.6);
+    doc.setLineWidth(0.5);
     const titleW = doc.getTextWidth(`EQUIPE · ${pagina.empresaNome.toUpperCase()}`);
-    doc.line(margin, y + 5, margin + titleW, y + 5);
+    doc.line(margin, y + 5.5, margin + titleW, y + 5.5);
     doc.setTextColor(...muted);
     doc.setFont("helvetica", "normal").setFontSize(8);
     doc.text(`${pagina.funcionarios.length} colaborador(es)`, margin + contentW, y + 3, { align: "right" });
-    y += 8;
+    y += 8.5;
 
     // ===== TABELA =====
     const headRowH = 9;
@@ -158,10 +167,13 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     const colPres = 20;
     const colAss = contentW - colIt - colNome - colTrans - colAlim - colPres;
 
-    // Cabeçalho
-    doc.setFillColor(...brand);
-    doc.roundedRect(margin, y, contentW, headRowH, 1, 1, "F");
-    doc.setTextColor(255, 255, 255);
+    // Cabeçalho — azul suave em vez de preto
+    doc.setFillColor(239, 246, 255); // blue-50
+    doc.roundedRect(margin, y, contentW, headRowH, 1.5, 1.5, "F");
+    doc.setDrawColor(...accent);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(margin, y, contentW, headRowH, 1.5, 1.5, "S");
+    doc.setTextColor(...brand);
     doc.setFont("helvetica", "bold").setFontSize(7.5);
     doc.text("#", margin + colIt / 2, y + 5.8, { align: "center" });
     doc.text("NOME COMPLETO", margin + colIt + 2, y + 5.8);
@@ -181,14 +193,13 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       if (y + rowH > pageH - margin - sigReserve) break;
       const f = pagina.funcionarios[i];
 
-      // Zebra
-      if (i % 2 === 1) {
-        doc.setFillColor(...zebra);
+      // Zebra: slate-50 / branco
+      if (i % 2 === 0) {
+        doc.setFillColor(...soft);
         doc.rect(margin, y, contentW, rowH, "F");
       }
-      // Linha inferior fina
       doc.setDrawColor(...line);
-      doc.setLineWidth(0.15);
+      doc.setLineWidth(0.12);
       doc.line(margin, y + rowH, margin + contentW, y + rowH);
 
       if (f) {
@@ -203,7 +214,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         const nome = f.nome.length > 42 ? f.nome.substring(0, 40) + "…" : f.nome;
         doc.text(nome.toUpperCase(), margin + colIt + 3, y + 5.8);
 
-        // Badge helper
+        // Badge helper — outline clean
         const drawBadge = (
           on: boolean,
           xCenter: number,
@@ -213,14 +224,15 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
           const bx = xCenter - bw / 2;
           const by = y + rowH / 2 - bh / 2;
           if (on) {
-            doc.setFillColor(...accent);
-            doc.roundedRect(bx, by, bw, bh, 1, 1, "F");
-            doc.setTextColor(255, 255, 255);
+            doc.setDrawColor(...accent);
+            doc.setLineWidth(0.4);
+            doc.roundedRect(bx, by, bw, bh, 1, 1, "S");
+            doc.setTextColor(...accent);
             doc.setFont("helvetica", "bold").setFontSize(6.5);
             doc.text("SIM", xCenter, by + 3.2, { align: "center" });
           } else {
             doc.setDrawColor(...line);
-            doc.setLineWidth(0.3);
+            doc.setLineWidth(0.25);
             doc.roundedRect(bx, by, bw, bh, 1, 1, "S");
             doc.setTextColor(...muted);
             doc.setFont("helvetica", "normal").setFontSize(6.5);
@@ -245,7 +257,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
 
         // Linha de assinatura
         doc.setDrawColor(...line);
-        doc.setLineWidth(0.3);
+        doc.setLineWidth(0.25);
         const sx1 = margin + colIt + colNome + colTrans + colAlim + colPres + 3;
         const sx2 = margin + contentW - 3;
         doc.line(sx1, y + rowH - 2, sx2, y + rowH - 2);
@@ -256,28 +268,34 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     // ===== OBSERVAÇÃO =====
     if (p.observacao && y + 18 < pageH - margin - sigReserve) {
       y += 4;
-      doc.setFillColor(...soft);
+      doc.setFillColor(255, 255, 255);
       const obsLines = doc.splitTextToSize(p.observacao, contentW - 10);
       const obsH = Math.min(18, 6 + obsLines.length * 3.6);
-      doc.roundedRect(margin, y, contentW, obsH, 1.5, 1.5, "F");
+      doc.roundedRect(margin, y, contentW, obsH, 2, 2, "F");
+      doc.setDrawColor(...line);
+      doc.setLineWidth(0.25);
+      doc.roundedRect(margin, y, contentW, obsH, 2, 2, "S");
       doc.setFillColor(...accent);
-      doc.rect(margin, y, 1.2, obsH, "F");
+      doc.rect(margin, y, 1.5, obsH, "F");
       doc.setTextColor(...accent);
       doc.setFont("helvetica", "bold").setFontSize(7);
-      doc.text("OBSERVAÇÃO", margin + 3, y + 4);
+      doc.text("OBSERVAÇÃO", margin + 4, y + 4.5);
       doc.setTextColor(...brand);
       doc.setFont("helvetica", "normal").setFontSize(8);
-      doc.text(obsLines.slice(0, 3), margin + 3, y + 8);
+      doc.text(obsLines.slice(0, 3), margin + 4, y + 8.5);
       y += obsH;
     }
 
     // ===== RODAPÉ COM ASSINATURA =====
     const sigBlockH = 36;
     const sigY = pageH - margin - sigBlockH;
-    doc.setFillColor(...soft);
+    doc.setFillColor(255, 255, 255);
     doc.roundedRect(margin, sigY, contentW, sigBlockH, 2, 2, "F");
-    doc.setFillColor(...brand);
-    doc.rect(margin, sigY, contentW, 1.5, "F");
+    doc.setDrawColor(...line);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(margin, sigY, contentW, sigBlockH, 2, 2, "S");
+    doc.setFillColor(...accent);
+    doc.rect(margin + 2, sigY, contentW - 4, 1.2, "F");
 
     // Coluna esquerda: assinatura
     const sigColW = contentW * 0.55;
@@ -290,7 +308,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       } catch {}
     }
     doc.setDrawColor(...brand);
-    doc.setLineWidth(0.5);
+    doc.setLineWidth(0.4);
     doc.line(margin + 12, sigY + 25, margin + sigColW - 12, sigY + 25);
     doc.setTextColor(...brand);
     doc.setFont("helvetica", "bold").setFontSize(8);
@@ -306,7 +324,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
 
     // Divisor vertical
     doc.setDrawColor(...line);
-    doc.setLineWidth(0.3);
+    doc.setLineWidth(0.25);
     doc.line(margin + sigColW, sigY + 4, margin + sigColW, sigY + sigBlockH - 4);
 
     // Coluna direita: gestor/aprovação
