@@ -17,6 +17,9 @@ export type HoraExtraPdfParams = {
     presenca?: string | null;
   }[];
   logoDataUrl?: string | null;
+  assinaturaDataUrl?: string | null;
+  assinaturaHeight?: number;
+  solicitanteNome?: string | null;
 };
 
 export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
@@ -176,7 +179,47 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.setFont("helvetica", "normal");
     const lines = doc.splitTextToSize(p.observacao, contentW - 4);
     doc.text(lines, margin, y + 8);
+    y += 8 + lines.length * 4;
   }
+
+  // Bloco de assinatura (solicitante) — sempre no rodapé
+  const sigBlockH = 32;
+  let sigY = pageH - margin - sigBlockH;
+  if (sigY < y + 4) sigY = y + 4;
+  doc.setDrawColor(0, 0, 0);
+  doc.rect(margin, sigY, contentW, sigBlockH);
+
+  const sigCenterX = margin + contentW / 2;
+  // Assinatura (imagem)
+  if (p.assinaturaDataUrl) {
+    try {
+      const h = Math.min(p.assinaturaHeight ?? 16, 20);
+      const w = h * 2.5;
+      doc.addImage(
+        p.assinaturaDataUrl,
+        "PNG",
+        sigCenterX - w / 2,
+        sigY + 4,
+        w,
+        h,
+        undefined,
+        "FAST",
+      );
+    } catch {}
+  }
+  // Linha de assinatura
+  const lineY = sigY + 22;
+  doc.line(margin + 30, lineY, margin + contentW - 30, lineY);
+  doc.setFont("helvetica", "bold").setFontSize(8);
+  doc.setTextColor(0, 0, 0);
+  doc.text(
+    `SOLICITANTE${p.solicitanteNome ? ": " + p.solicitanteNome.toUpperCase() : ""}`,
+    sigCenterX,
+    lineY + 4,
+    { align: "center" },
+  );
+  doc.setFont("helvetica", "normal").setFontSize(8);
+  doc.text(`Data: ${p.data}`, sigCenterX, lineY + 8.5, { align: "center" });
 
   return doc;
 }
