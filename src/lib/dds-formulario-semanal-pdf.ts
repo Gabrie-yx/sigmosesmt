@@ -17,6 +17,7 @@ export type DDSFormParams = {
   funcionarios: { nome: string; funcao?: string | null }[];
   encarregado?: string | null;
   responsavelSesmt?: string | null;
+  assinaturaResponsavelDataUrl?: string | null;
 };
 
 export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF): jsPDF {
@@ -166,6 +167,17 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
       doc.setFont("helvetica", "normal").setFontSize(8);
       doc.text(p.encarregado ?? "", margin + 65, sigY - 1, { align: "center" });
       doc.text(p.responsavelSesmt ?? "", pageW - margin - 65, sigY - 1, { align: "center" });
+      // Assinatura do responsável (SESMT) — imagem por cima da linha
+      if (p.assinaturaResponsavelDataUrl) {
+        try {
+          const imgW = 50;
+          const imgH = 18;
+          const cx = pageW - margin - 65;
+          doc.addImage(p.assinaturaResponsavelDataUrl, "PNG", cx - imgW / 2, sigY - imgH, imgW, imgH);
+        } catch {
+          // ignora se imagem inválida
+        }
+      }
       doc.setFont("helvetica", "bold");
       doc.text("ENCARREGADO / DESIGNADO", margin + 65, sigY + 4, { align: "center" });
       doc.text("SESMT", pageW - margin - 65, sigY + 4, { align: "center" });
