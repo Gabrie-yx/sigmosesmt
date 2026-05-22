@@ -195,10 +195,8 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     y += headRowH;
 
     // Linhas
-    const rowH = 9;
-    const sigReserve = 42;
-    const maxRows = Math.max(1, Math.floor((pageH - margin - sigReserve - y) / rowH));
-    const rowsToDraw = Math.min(pagina.funcionarios.length, maxRows);
+    const rowH = 8.2;
+    const rowsToDraw = pagina.funcionarios.length;
 
     for (let i = 0; i < rowsToDraw; i++) {
       const f = pagina.funcionarios[i];
@@ -277,7 +275,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     }
 
     // ===== OBSERVAÇÃO =====
-    if (p.observacao && y + 18 < pageH - margin - sigReserve) {
+    if (p.observacao && y + 18 < pageH - margin - 40) {
       y += 4;
       doc.setFillColor(255, 255, 255);
       const obsLines = doc.splitTextToSize(p.observacao, contentW - 10);
@@ -363,9 +361,9 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   };
 
   const paginas = p.paginas.length > 0 ? p.paginas : [{ empresaNome: "—", funcionarios: [] }];
-  // Capacidade real da folha com este layout: 17 linhas. A divisão precisa
+    // Capacidade real da folha com este layout: 16 linhas. A divisão precisa
   // ser menor ou igual ao que o desenho comporta para nenhuma linha sumir.
-  const ROWS_PER_PAGE = 17;
+  const ROWS_PER_PAGE = 16;
   // Pré-divide cada empresa em sub-páginas
   type SubPagina = { pag: HoraExtraPaginaEmpresa; parte: number; partes: number };
   const subs: SubPagina[] = [];
