@@ -18,6 +18,7 @@ export type DDSFormParams = {
   encarregado?: string | null;
   responsavelSesmt?: string | null;
   assinaturaResponsavelDataUrl?: string | null;
+  assinaturaEncarregadoDataUrl?: string | null;
 };
 
 export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF): jsPDF {
@@ -180,6 +181,16 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
       const imgH = 18;
       const cx = pageW - margin - 65;
       doc.addImage(p.assinaturaResponsavelDataUrl, "PNG", cx - imgW / 2, sigY - imgH, imgW, imgH);
+    } catch {
+      // ignora se imagem inválida
+    }
+  }
+  if (p.assinaturaEncarregadoDataUrl) {
+    try {
+      const imgW = 50;
+      const imgH = 18;
+      const cx = margin + 65;
+      doc.addImage(p.assinaturaEncarregadoDataUrl, "PNG", cx - imgW / 2, sigY - imgH, imgW, imgH);
     } catch {
       // ignora se imagem inválida
     }

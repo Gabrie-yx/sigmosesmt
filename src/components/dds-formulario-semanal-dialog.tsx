@@ -40,6 +40,27 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
   const [revisao, setRevisao] = useState("00");
   const [dataDoc, setDataDoc] = useState("30/08/2025");
   const [assinaturaUrl, setAssinaturaUrl] = useState<string>("");
+  const [assinaturaEncUrl, setAssinaturaEncUrl] = useState<string>("");
+
+  async function processarAssinatura(f: File, setter: (s: string) => void) {
+    if (f.size > 5 * 1024 * 1024) { toast.error("Imagem muito grande (máx 5MB)"); return; }
+    try {
+      const bitmap = await createImageBitmap(f, { imageOrientation: "from-image" } as any);
+      const maxW = 800;
+      const scale = Math.min(1, maxW / bitmap.width);
+      const w = Math.round(bitmap.width * scale);
+      const h = Math.round(bitmap.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(bitmap, 0, 0, w, h);
+      setter(canvas.toDataURL("image/png"));
+    } catch {
+      const reader = new FileReader();
+      reader.onload = () => setter(String(reader.result || ""));
+      reader.readAsDataURL(f);
+    }
+  }
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-for-dds"],
@@ -100,6 +121,7 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
       funcionarios: employees.map((e: any) => ({ nome: e.nome, funcao: e.roles?.name ?? "" })),
       encarregado, responsavelSesmt: sesmt,
       assinaturaResponsavelDataUrl: assinaturaUrl || null,
+      assinaturaEncarregadoDataUrl: assinaturaEncUrl || null,
     });
     const fname = `DDS_${(company?.name ?? "empresa").replace(/\s+/g, "_")}_${semanaSegunda}.pdf`;
     doc.save(fname);
@@ -136,54 +158,40 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
           </div>
 
           <div>
-            <Label>Assinatura do responsável (PNG, fundo transparente recomendado)</Label>
-            <div className="flex items-center gap-3 mt-1">
-              <label className="inline-flex items-center gap-2 cursor-pointer bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg px-3 py-2">
-                <ImagePlus className="h-4 w-4" />
-                {assinaturaUrl ? "Trocar imagem" : "Selecionar imagem"}
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (!f) return;
-                    if (f.size > 5 * 1024 * 1024) {
-                      toast.error("Imagem muito grande (máx 5MB)");
-                      return;
-                    }
-                    try {
-                      // Normaliza orientação (EXIF) e re-codifica como PNG.
-                      // createImageBitmap respeita EXIF com imageOrientation:'from-image'.
-                      const bitmap = await createImageBitmap(f, { imageOrientation: "from-image" } as any);
-                      const maxW = 800;
-                      const scale = Math.min(1, maxW / bitmap.width);
-                      const w = Math.round(bitmap.width * scale);
-                      const h = Math.round(bitmap.height * scale);
-                      const canvas = document.createElement("canvas");
-                      canvas.width = w; canvas.height = h;
-                      const ctx = canvas.getContext("2d")!;
-                      ctx.drawImage(bitmap, 0, 0, w, h);
-                      setAssinaturaUrl(canvas.toDataURL("image/png"));
-                    } catch (err) {
-                      // Fallback simples (sem normalização)
-                      const reader = new FileReader();
-                      reader.onload = () => setAssinaturaUrl(String(reader.result || ""));
-                      reader.readAsDataURL(f);
-                    } finally {
-                      e.target.value = "";
-                    }
-                  }}
-                />
-              </label>
-              {assinaturaUrl && (
-                <>
-                  <img src={assinaturaUrl} alt="Assinatura" className="h-12 border rounded bg-white object-contain px-2" />
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setAssinaturaUrl("")}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
+            <Label>Assinaturas (PNG, fundo transparente recomendado)</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
+              {([
+                { label: "Encarregado / Designado", val: assinaturaEncUrl, set: setAssinaturaEncUrl },
+                { label: "Responsável SESMT", val: assinaturaUrl, set: setAssinaturaUrl },
+              ] as const).map((s) => (
+                <div key={s.label} className="border rounded p-2">
+                  <div className="text-[11px] font-bold uppercase text-slate-600 mb-1">{s.label}</div>
+                  <div className="flex items-center gap-2">
+                    <label className="inline-flex items-center gap-2 cursor-pointer bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg px-3 py-2">
+                      <ImagePlus className="h-4 w-4" />
+                      {s.val ? "Trocar" : "Assinar"}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const f = e.target.files?.[0];
+                          if (f) await processarAssinatura(f, s.set);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    {s.val && (
+                      <>
+                        <img src={s.val} alt="Assinatura" className="h-12 border rounded bg-white object-contain px-2" />
+                        <Button type="button" variant="ghost" size="sm" onClick={() => s.set("")}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
