@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, Trash2, Image as ImageIcon, ClipboardList } from "lucide-react";
+import { Upload, FileText, Trash2, Image as ImageIcon, ClipboardList, PenLine } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DDSAttendeesEditor } from "@/components/dds-attendees-editor";
+import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { PDFDocument } from "pdf-lib";
 
 export function DDSEvidencias({ ddsId }: { ddsId: string }) {
   const qc = useQueryClient();
@@ -15,6 +17,7 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
   const fotosRef = useRef<HTMLInputElement>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [esperados, setEsperados] = useState(0);
+  const [signTarget, setSignTarget] = useState<any | null>(null);
 
   const { data: itens = [] } = useQuery({
     queryKey: ["dds-evid", ddsId],
@@ -60,6 +63,43 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
   }
 
+  async function assinarPdf(item: any, dataUrl: string, height: number) {
+    try {
+      const path: string = item.file_path;
+      if (!path.toLowerCase().endsWith(".pdf")) {
+        toast.error("Só dá pra carimbar assinatura em arquivos PDF");
+        return;
+      }
+      const { data: signed } = await supabase.storage.from("dds-anexos").createSignedUrl(path, 60);
+      if (!signed?.signedUrl) throw new Error("Não consegui baixar o PDF");
+      const pdfBytes = await fetch(signed.signedUrl).then((r) => r.arrayBuffer());
+      const pdf = await PDFDocument.load(pdfBytes);
+      const pngBytes = Uint8Array.from(atob(dataUrl.split(",")[1]), (c) => c.charCodeAt(0));
+      const png = await pdf.embedPng(pngBytes);
+      const page = pdf.getPages()[pdf.getPageCount() - 1];
+      const { width: pw, height: ph } = page.getSize();
+      // height vem em "px UI" (20..140). Converte pra pt mantendo proporção do PNG.
+      const targetH = Math.max(40, Math.min(180, height * 1.2));
+      const ratio = png.width / png.height;
+      const targetW = targetH * ratio;
+      const x = (pw - targetW) / 2;
+      const y = Math.max(40, ph * 0.08);
+      page.drawImage(png, { x, y, width: targetW, height: targetH });
+      const out = await pdf.save();
+      const blob = new Blob([out], { type: "application/pdf" });
+      const { error } = await supabase.storage.from("dds-anexos").update(path, blob, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+      if (error) throw error;
+      toast.success("Assinatura aplicada no PDF");
+      setSignTarget(null);
+      qc.invalidateQueries({ queryKey: ["dds-evid", ddsId] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao assinar PDF");
+    }
+  }
+
   const lista = itens.filter((i: any) => i.tipo === "LISTA_PRESENCA");
   const fotos = itens.filter((i: any) => i.tipo === "FOTO_DDS");
   const outros = itens.filter((i: any) => i.tipo !== "LISTA_PRESENCA" && i.tipo !== "FOTO_DDS");
@@ -101,6 +141,11 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
               <FileText className="h-4 w-4 text-slate-400" />
               <button className="flex-1 text-left truncate hover:underline" onClick={() => abrir(it.file_path)}>{it.descricao ?? it.file_path}</button>
               <span className="text-[10px] text-muted-foreground">{new Date(it.uploaded_at).toLocaleDateString("pt-BR")}</span>
+              {isEditor && it.file_path.toLowerCase().endsWith(".pdf") && (
+                <Button size="sm" variant="outline" onClick={() => setSignTarget(it)} title="Carimbar assinatura no PDF">
+                  <PenLine className="h-3.5 w-3.5 mr-1" />Assinar
+                </Button>
+              )}
               {isAdmin && (
                 <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover evidência?")) del.mutate(it); }}>
                   <Trash2 className="h-3.5 w-3.5 text-red-600" />
@@ -184,6 +229,12 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
           <DDSAttendeesEditor ddsId={ddsId} esperados={esperados} onSaved={() => setConfirmOpen(false)} />
         </DialogContent>
       </Dialog>
+      <SignaturePadDialog
+        open={!!signTarget}
+        onClose={() => setSignTarget(null)}
+        onConfirm={(r) => signTarget && assinarPdf(signTarget, r.dataUrl, r.height)}
+        title="Carimbar assinatura no PDF"
+      />
     </div>
   );
 }
