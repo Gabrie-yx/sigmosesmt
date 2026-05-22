@@ -131,8 +131,11 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
     body,
     startY: y,
     theme: "grid",
-    margin: { left: margin, right: margin },
-    styles: { fontSize: 8, cellPadding: 1.2, lineColor: [0, 0, 0], lineWidth: 0.2, minCellHeight: 6 },
+    // Reserva ~30mm no rodapé para o bloco de assinatura — evita que o autoTable
+    // crie uma página extra só para acomodar 1-2 linhas que não couberam.
+    margin: { left: margin, right: margin, bottom: 32 },
+    pageBreak: "avoid",
+    styles: { fontSize: 8, cellPadding: 1, lineColor: [0, 0, 0], lineWidth: 0.2, minCellHeight: 5.5 },
     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: "bold", halign: "center", lineColor: [0, 0, 0], lineWidth: 0.2 },
     columnStyles: {
       0: { cellWidth: 8, halign: "center" },
