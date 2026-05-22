@@ -5,11 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowLeft, FileDown, Pencil, Trash2, Calendar } from "lucide-react";
+import { Plus, ArrowLeft, FileDown, Pencil, Trash2, Calendar, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
 import { gerarHoraExtraSabadoPDF } from "@/lib/hora-extra-sabado-pdf";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import type jsPDF from "jspdf";
 import dmnLogo from "@/assets/dmn-logo.png";
 
 export const Route = createFileRoute("/app/employees/hora-extra-sabado")({
@@ -40,6 +42,8 @@ function HoraExtraSabadoPage() {
   const [busca, setBusca] = useState("");
   const [sigOpen, setSigOpen] = useState(false);
   const [pendingPdfId, setPendingPdfId] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
+  const [previewFileName, setPreviewFileName] = useState("hora-extra.pdf");
 
   const { data: fichas, isLoading } = useQuery({
     queryKey: ["hora-extra-sabado"],
@@ -149,7 +153,8 @@ function HoraExtraSabadoPage() {
       empresasEnvolvidas,
       paginas,
     });
-    doc.save(`hora-extra-${rec.data}.pdf`);
+    setPreviewFileName(`hora-extra-${rec.data}.pdf`);
+    setPreviewDoc(doc);
   }
 
   function abrirAssinatura(id: string) {
@@ -229,7 +234,7 @@ function HoraExtraSabadoPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <Button size="sm" variant="outline" onClick={() => gerarPdf(f.id)}>
-                      <FileDown className="h-3.5 w-3.5 mr-1.5" />PDF
+                      <Eye className="h-3.5 w-3.5 mr-1.5" />Prévia PDF
                     </Button>
                     <Button size="sm" onClick={() => abrirAssinatura(f.id)} className="bg-rose-700 hover:bg-rose-800 text-white">
                       <FileDown className="h-3.5 w-3.5 mr-1.5" />Assinar + PDF
@@ -253,6 +258,13 @@ function HoraExtraSabadoPage() {
       )}
 
       <HoraExtraSabadoDialog open={open} onOpenChange={setOpen} editId={editId} />
+      <PDFPreviewDialog
+        open={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        doc={previewDoc}
+        fileName={previewFileName}
+        title="Prévia da ficha de hora extra"
+      />
       <SignaturePadDialog
         open={sigOpen}
         onClose={() => { setSigOpen(false); setPendingPdfId(null); }}

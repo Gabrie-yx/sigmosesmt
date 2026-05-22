@@ -256,9 +256,9 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         doc.setTextColor(...brand);
         doc.setFont("helvetica", "bold").setFontSize(8);
         const nomeFmt = toTitleCase(f.nome);
-        // Espaço disponível para nome + tag de empresa dentro da coluna NOME
-        // Margem de segurança maior pra nunca encostar nos badges
-        const nomeColAvail = colNome - 10;
+        // Espaço disponível real dentro da coluna NOME, com folga antes da coluna TRANSP.
+        const nomeX = margin + colIt + 3;
+        const nomeColAvail = colNome - 15;
         // Mapeia razão social para sigla curta quando possível
         const siglaEmpresa = (e: string): string => {
           const up = e.toUpperCase();
@@ -275,25 +275,20 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
             .join("");
           return ini || up.slice(0, 4);
         };
-        const tagText = f.empresa ? ` · ${siglaEmpresa(f.empresa)}` : "";
-        // Mede a tag e ajusta o nome para caber junto
-        doc.setFont("helvetica", "normal").setFontSize(6.5);
-        const tagW = tagText ? doc.getTextWidth(tagText) : 0;
-        doc.setFont("helvetica", "bold").setFontSize(8);
-        const maxNomeW = nomeColAvail - tagW;
-        let nome = nomeFmt;
-        while (nome.length > 4 && doc.getTextWidth(nome) > maxNomeW) {
-          nome = nome.slice(0, -1);
-        }
-        if (nome !== nomeFmt) nome = nome.slice(0, -1) + "…";
-        doc.text(nome, margin + colIt + 3, ty);
-
-        if (tagText) {
-          const nomeW = doc.getTextWidth(nome);
-          doc.setTextColor(...muted);
-          doc.setFont("helvetica", "normal").setFontSize(6.5);
-          doc.text(tagText, margin + colIt + 3 + nomeW, ty);
-        }
+        const nomeComEmpresa = f.empresa ? `${siglaEmpresa(f.empresa)} · ${nomeFmt}` : nomeFmt;
+        const fitText = (text: string, maxW: number): string => {
+          if (doc.getTextWidth(text) <= maxW) return text;
+          let lo = 1;
+          let hi = text.length;
+          while (lo < hi) {
+            const mid = Math.floor((lo + hi) / 2);
+            if (doc.getTextWidth(text.slice(0, mid) + "…") <= maxW) lo = mid + 1;
+            else hi = mid;
+          }
+          return text.slice(0, Math.max(1, lo - 1)).trimEnd() + "…";
+        };
+        const nome = fitText(nomeComEmpresa, nomeColAvail);
+        doc.text(nome, nomeX, ty, { maxWidth: nomeColAvail });
 
         // Badge helper — outline clean
         const drawBadge = (
