@@ -240,13 +240,36 @@ export function HoraExtraSabadoDialog({
 
           <div className="space-y-1">
             <Label>Setor</Label>
-            <Select value={setor} onValueChange={(v) => { setSetor(v); setSetorNovo(""); }}>
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>
-                {(setores ?? []).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Input className="mt-1" placeholder="ou digite um novo setor" value={setorNovo} onChange={(e) => { setSetorNovo(e.target.value); setSetor(""); }} />
+            <div className="rounded-md border bg-white p-2 max-h-32 overflow-y-auto space-y-1">
+              {(setores ?? []).length === 0 && <p className="text-[11px] text-slate-400 italic">Nenhum setor cadastrado</p>}
+              {(setores ?? []).map((s) => {
+                const checked = setoresSel.includes(s);
+                return (
+                  <label key={s} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 rounded px-1 py-0.5">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={(v) =>
+                        setSetoresSel((prev) => (v ? [...prev, s] : prev.filter((x) => x !== s)))
+                      }
+                    />
+                    <span>{s}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {setoresSel.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {setoresSel.map((s) => (
+                  <span key={s} className="text-[10px] font-bold uppercase tracking-wide bg-slate-900 text-white px-1.5 py-0.5 rounded inline-flex items-center gap-1">
+                    {s}
+                    <button type="button" onClick={() => setSetoresSel((p) => p.filter((x) => x !== s))}>
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <Input className="mt-1" placeholder="adicionar novo(s), separe por vírgula" value={setorNovo} onChange={(e) => setSetorNovo(e.target.value)} />
           </div>
           <div className="space-y-1"><Label>C.C.</Label><Input value={centroCusto} onChange={(e) => setCentroCusto(e.target.value)} /></div>
           <div className="space-y-1">
