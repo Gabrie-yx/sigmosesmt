@@ -316,6 +316,13 @@ function EmployeesPage() {
           </p>
         </>
       )}
+      <EmployeeListagemDialog
+        open={listagemOpen}
+        onClose={() => setListagemOpen(false)}
+        emps={emps ?? []}
+        companies={companies ?? []}
+        roles={roles ?? []}
+      />
     </div>
   );
 }
