@@ -150,9 +150,11 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
       7: { cellWidth: "auto" },
     },
     didDrawPage: (data) => {
-      // rodapé de assinatura na última página
-      const isLast = data.pageNumber === doc.getNumberOfPages();
-      if (!isLast) return;
+      // Rodapé de assinatura na última página DESTE autoTable.
+      // OBS: data.pageNumber é relativo à invocação atual do autoTable
+      // (não ao doc inteiro), então NÃO comparar com doc.getNumberOfPages().
+      const pageCount = (data as any).pageCount ?? data.pageNumber;
+      if (data.pageNumber !== pageCount) return;
       // Ancora o bloco de assinaturas em posição fixa no rodapé da última página,
       // independente de quanto a tabela ocupou — garante que SEMPRE apareça.
       const bannerY = pageH - 24;
