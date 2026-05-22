@@ -498,8 +498,32 @@ function RequisicoesPage() {
                         {r.status === "INDEFERIDA" && r.motivo_indeferimento && (
                           <div className="text-xs text-rose-700 mt-1">Motivo: {r.motivo_indeferimento}</div>
                         )}
+                        {(r.status === "COTADA" || r.status === "APROVADA") && r.cotacao_fornecedor && (
+                          <div className="text-xs text-blue-700 mt-1">
+                            Cotada por <strong>{r.cotador_nome ?? "—"}</strong> · {r.cotacao_fornecedor}
+                            {r.cotacao_valor != null && (
+                              <> · {Number(r.cotacao_valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-1">
+                        {r.status_token && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            title="Copiar link público de status"
+                            onClick={() => {
+                              const url = `${window.location.origin}/rc/${r.status_token}`;
+                              navigator.clipboard.writeText(url).then(
+                                () => toast.success("Link copiado! Cole no WhatsApp."),
+                                () => toast.error("Não foi possível copiar"),
+                              );
+                            }}
+                          >
+                            <Link2 className="h-3.5 w-3.5 mr-1" /> Link
+                          </Button>
+                        )}
                         <Button size="sm" variant="outline" onClick={() => emitirPdf(r, "print")}>
                           <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
                         </Button>
@@ -508,7 +532,7 @@ function RequisicoesPage() {
                         </Button>
                         <ViewBtn req={r} />
                         {isEditor && <EditReqBtn req={r} userId={user?.id} />}
-                        {isEditor && r.status === "PENDENTE" && (
+                        {isEditor && (r.status === "PENDENTE" || r.status === "COTADA") && (
                           <>
                             <Button
                               size="sm"
@@ -520,7 +544,7 @@ function RequisicoesPage() {
                             <IndeferBtn onConfirm={(motivo) => updateStatus.mutate({ id: r.id, status: "INDEFERIDA", motivo })} />
                           </>
                         )}
-                        {isEditor && r.status !== "PENDENTE" && (
+                        {isEditor && r.status !== "PENDENTE" && r.status !== "COTADA" && (
                           <Button size="sm" variant="ghost" onClick={() => updateStatus.mutate({ id: r.id, status: "PENDENTE" })}>
                             Reabrir
                           </Button>
