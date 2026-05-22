@@ -134,7 +134,7 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
     // Reserva ~30mm no rodapé para o bloco de assinatura — evita que o autoTable
     // crie uma página extra só para acomodar 1-2 linhas que não couberam.
     margin: { left: margin, right: margin, bottom: 32 },
-    pageBreak: "avoid",
+    rowPageBreak: "avoid",
     styles: { fontSize: 8, cellPadding: 1, lineColor: [0, 0, 0], lineWidth: 0.2, minCellHeight: 5.5 },
     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: "bold", halign: "center", lineColor: [0, 0, 0], lineWidth: 0.2 },
     columnStyles: {
