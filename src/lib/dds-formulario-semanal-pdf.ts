@@ -149,44 +149,39 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
       6: { cellWidth: "auto" },
       7: { cellWidth: "auto" },
     },
-    didDrawPage: (data) => {
-      // Rodapé de assinatura na última página DESTE autoTable.
-      // OBS: data.pageNumber é relativo à invocação atual do autoTable
-      // (não ao doc inteiro), então NÃO comparar com doc.getNumberOfPages().
-      const pageCount = (data as any).pageCount ?? data.pageNumber;
-      if (data.pageNumber !== pageCount) return;
-      // Ancora o bloco de assinaturas em posição fixa no rodapé da última página,
-      // independente de quanto a tabela ocupou — garante que SEMPRE apareça.
-      const bannerY = pageH - 24;
-      doc.setFillColor(220, 220, 220);
-      doc.rect(margin, bannerY, pageW - margin * 2, 5, "FD");
-      doc.setFont("helvetica", "bold").setFontSize(8);
-      doc.setTextColor(0, 0, 0);
-      doc.text("CONVERSEI COM OS EMPREGADOS ACIMA, A RESPEITO DOS ASSUNTOS CONFORME INDICADOS PELOS CÓDIGOS E TEMAS NO FORMULÁRIO.",
-        pageW / 2, bannerY + 3.5, { align: "center" });
-      const sigY = bannerY + 14;
-      doc.setLineWidth(0.3);
-      doc.line(margin + 20, sigY, margin + 110, sigY);
-      doc.line(pageW - margin - 110, sigY, pageW - margin - 20, sigY);
-      doc.setFont("helvetica", "normal").setFontSize(8);
-      doc.text(p.encarregado ?? "", margin + 65, sigY - 1, { align: "center" });
-      doc.text(p.responsavelSesmt ?? "", pageW - margin - 65, sigY - 1, { align: "center" });
-      // Assinatura do responsável (SESMT) — imagem por cima da linha
-      if (p.assinaturaResponsavelDataUrl) {
-        try {
-          const imgW = 50;
-          const imgH = 18;
-          const cx = pageW - margin - 65;
-          doc.addImage(p.assinaturaResponsavelDataUrl, "PNG", cx - imgW / 2, sigY - imgH, imgW, imgH);
-        } catch {
-          // ignora se imagem inválida
-        }
-      }
-      doc.setFont("helvetica", "bold");
-      doc.text("ENCARREGADO / DESIGNADO", margin + 65, sigY + 4, { align: "center" });
-      doc.text("SESMT", pageW - margin - 65, sigY + 4, { align: "center" });
-    },
   });
+
+  // Desenha o rodapé de assinatura SEMPRE na última página gerada pelo autoTable
+  // desta empresa (funciona tanto pra tabela de 1 página quanto pra multi-páginas).
+  const lastPage = doc.getNumberOfPages();
+  doc.setPage(lastPage);
+  const bannerY = pageH - 24;
+  doc.setFillColor(220, 220, 220);
+  doc.rect(margin, bannerY, pageW - margin * 2, 5, "FD");
+  doc.setFont("helvetica", "bold").setFontSize(8);
+  doc.setTextColor(0, 0, 0);
+  doc.text("CONVERSEI COM OS EMPREGADOS ACIMA, A RESPEITO DOS ASSUNTOS CONFORME INDICADOS PELOS CÓDIGOS E TEMAS NO FORMULÁRIO.",
+    pageW / 2, bannerY + 3.5, { align: "center" });
+  const sigY = bannerY + 14;
+  doc.setLineWidth(0.3);
+  doc.line(margin + 20, sigY, margin + 110, sigY);
+  doc.line(pageW - margin - 110, sigY, pageW - margin - 20, sigY);
+  doc.setFont("helvetica", "normal").setFontSize(8);
+  doc.text(p.encarregado ?? "", margin + 65, sigY - 1, { align: "center" });
+  doc.text(p.responsavelSesmt ?? "", pageW - margin - 65, sigY - 1, { align: "center" });
+  if (p.assinaturaResponsavelDataUrl) {
+    try {
+      const imgW = 50;
+      const imgH = 18;
+      const cx = pageW - margin - 65;
+      doc.addImage(p.assinaturaResponsavelDataUrl, "PNG", cx - imgW / 2, sigY - imgH, imgW, imgH);
+    } catch {
+      // ignora se imagem inválida
+    }
+  }
+  doc.setFont("helvetica", "bold");
+  doc.text("ENCARREGADO / DESIGNADO", margin + 65, sigY + 4, { align: "center" });
+  doc.text("SESMT", pageW - margin - 65, sigY + 4, { align: "center" });
 
   return doc;
 }
