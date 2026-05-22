@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { EmployeeDetailContent } from "./app.employees.$id";
 import { maskCNPJ } from "@/lib/masks";
+import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 
 export const Route = createFileRoute("/app/companies")({
   component: CompaniesPage,
@@ -53,6 +54,7 @@ function CompaniesPage() {
   const [editing, setEditing] = useState<Partial<Company> | null>(null);
   const [showForm, setShowForm] = useState(true);
   const [empSearch, setEmpSearch] = useState("");
+  const [newEmpOpen, setNewEmpOpen] = useState(false);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -357,7 +359,7 @@ function CompaniesPage() {
             </div>
             <div className="flex gap-2">
               {isEditor && (
-                <Button onClick={() => navigate({ to: "/app/employees", search: { new: 1, company: selected.id } })} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
+                <Button onClick={() => setNewEmpOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
                   <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Novo Colaborador
                 </Button>
               )}
@@ -500,6 +502,7 @@ function CompaniesPage() {
           <p className="text-xs font-bold uppercase tracking-widest">Selecione uma empresa</p>
         </div>
       )}
+      <NewEmployeeDialog open={newEmpOpen} onOpenChange={setNewEmpOpen} defaultCompanyId={selected?.id} />
     </div>
   );
 }
