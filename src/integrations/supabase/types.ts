@@ -1922,6 +1922,119 @@ export type Database = {
           },
         ]
       }
+      hora_extra_sabado: {
+        Row: {
+          centro_custo: string | null
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          data: string
+          horario_fim: string | null
+          horario_inicio: string | null
+          id: string
+          observacao: string | null
+          setor: string | null
+          tipo_efetivo: string
+          turno: string | null
+          updated_at: string
+        }
+        Insert: {
+          centro_custo?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data: string
+          horario_fim?: string | null
+          horario_inicio?: string | null
+          id?: string
+          observacao?: string | null
+          setor?: string | null
+          tipo_efetivo?: string
+          turno?: string | null
+          updated_at?: string
+        }
+        Update: {
+          centro_custo?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          horario_fim?: string | null
+          horario_inicio?: string | null
+          id?: string
+          observacao?: string | null
+          setor?: string | null
+          tipo_efetivo?: string
+          turno?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hora_extra_sabado_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hora_extra_sabado_funcionarios: {
+        Row: {
+          alimentacao: boolean
+          created_at: string
+          employee_id: string | null
+          externo: boolean
+          funcao: string | null
+          hora_extra_id: string
+          id: string
+          nome: string
+          ordem: number
+          presenca: string | null
+          transporte: boolean
+        }
+        Insert: {
+          alimentacao?: boolean
+          created_at?: string
+          employee_id?: string | null
+          externo?: boolean
+          funcao?: string | null
+          hora_extra_id: string
+          id?: string
+          nome: string
+          ordem?: number
+          presenca?: string | null
+          transporte?: boolean
+        }
+        Update: {
+          alimentacao?: boolean
+          created_at?: string
+          employee_id?: string | null
+          externo?: boolean
+          funcao?: string | null
+          hora_extra_id?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          presenca?: string | null
+          transporte?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hora_extra_sabado_funcionarios_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hora_extra_sabado_funcionarios_hora_extra_id_fkey"
+            columns: ["hora_extra_id"]
+            isOneToOne: false
+            referencedRelation: "hora_extra_sabado"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidentes: {
         Row: {
           acoes_corretivas: string | null
