@@ -395,7 +395,17 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
         </div>
       </div>
       <DDSEvidencias ddsId={dds.id} />
-      <PDFPreviewDialog open={!!pdfDoc} onClose={() => setPdfDoc(null)} doc={pdfDoc} fileName={pdfName} />
+      <PDFPreviewDialog
+        open={!!pdfDoc}
+        onClose={() => { setPdfDoc(null); setEncSig(null); setSesmtSig(null); }}
+        doc={pdfDoc}
+        fileName={pdfName}
+        signable
+        encSig={encSig}
+        sesmtSig={sesmtSig}
+        onChangeEncSig={(v) => { setEncSig(v); if (lastBuildArgs.current) setTimeout(() => buildAndShow(lastBuildArgs.current!.companies, lastBuildArgs.current!.funcs), 0); }}
+        onChangeSesmtSig={(v) => { setSesmtSig(v); if (lastBuildArgs.current) setTimeout(() => buildAndShow(lastBuildArgs.current!.companies, lastBuildArgs.current!.funcs), 0); }}
+      />
       <Dialog open={prepOpen} onOpenChange={(o) => !o && setPrepOpen(false)}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Selecione as empresas para o PDF semanal</DialogTitle></DialogHeader>
