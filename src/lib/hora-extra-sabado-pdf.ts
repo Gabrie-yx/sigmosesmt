@@ -10,6 +10,8 @@ export type HoraExtraFuncionario = {
 export type HoraExtraPaginaEmpresa = {
   empresaNome: string;
   funcionarios: HoraExtraFuncionario[];
+  totalFuncionarios?: number;
+  linhaInicial?: number;
 };
 
 export type HoraExtraPdfParams = {
@@ -36,13 +38,14 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const margin = 10;
   const contentW = pageW - margin * 2;
 
-  // Paleta leve e clean
-  const brand: [number, number, number] = [51, 65, 85];       // slate-700 (texto principal)
-  const accent: [number, number, number] = [59, 130, 246];    // blue-500 (destaques)
-  const muted: [number, number, number] = [148, 163, 184];    // slate-400 (texto secundário)
-  const soft: [number, number, number] = [248, 250, 252];     // slate-50 (fundo suave)
-  const line: [number, number, number] = [226, 232, 240];     // slate-200 (linhas/bordas)
-  const zebra: [number, number, number] = [255, 255, 255];    // branco
+  // Paleta leve: cinzas limpos + vermelho suave para marcações pontuais
+  const brand: [number, number, number] = [31, 41, 55];       // gray/slate-800
+  const accent: [number, number, number] = [185, 84, 84];     // vermelho suave
+  const accentSoft: [number, number, number] = [254, 242, 242];
+  const muted: [number, number, number] = [100, 116, 139];
+  const soft: [number, number, number] = [249, 250, 251];
+  const line: [number, number, number] = [229, 231, 235];
+  const zebra: [number, number, number] = [255, 255, 255];
 
   const drawPagina = (
     pagina: HoraExtraPaginaEmpresa,
