@@ -258,6 +258,13 @@ function HoraExtraSabadoPage() {
       )}
 
       <HoraExtraSabadoDialog open={open} onOpenChange={setOpen} editId={editId} />
+      <PDFPreviewDialog
+        open={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        doc={previewDoc}
+        fileName={previewFileName}
+        title="Prévia da ficha de hora extra"
+      />
       <SignaturePadDialog
         open={sigOpen}
         onClose={() => { setSigOpen(false); setPendingPdfId(null); }}
