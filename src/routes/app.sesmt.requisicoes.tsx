@@ -19,7 +19,7 @@ import {
   Tabs, TabsList, TabsTrigger, TabsContent,
 } from "@/components/ui/tabs";
 import {
-  ShoppingCart, Plus, FileDown, Printer, Check, X as XIcon, Trash2, Eye, Filter, Pencil,
+  ShoppingCart, Plus, FileDown, Printer, Check, X as XIcon, Trash2, Eye, Filter, Pencil, Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/app/sesmt/requisicoes")({
   component: RequisicoesPage,
 });
 
-type Status = "PENDENTE" | "APROVADA" | "INDEFERIDA";
+type Status = "PENDENTE" | "COTADA" | "APROVADA" | "INDEFERIDA";
 type Classe = "MATERIAL" | "SERVICO";
 
 type Item = {
@@ -67,10 +67,16 @@ type Req = {
   created_at: string;
   signature_solicitante: string | null;
   signature_solicitante_height: number | null;
+  status_token?: string | null;
+  cotacao_at?: string | null;
+  cotador_nome?: string | null;
+  cotacao_fornecedor?: string | null;
+  cotacao_valor?: number | null;
 };
 
 const STATUS_BADGE: Record<Status, string> = {
   PENDENTE: "bg-amber-100 text-amber-800 border-amber-300",
+  COTADA: "bg-blue-100 text-blue-800 border-blue-300",
   APROVADA: "bg-emerald-100 text-emerald-800 border-emerald-300",
   INDEFERIDA: "bg-rose-100 text-rose-800 border-rose-300",
 };

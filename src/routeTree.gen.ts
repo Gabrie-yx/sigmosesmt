@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as RcTokenRouteImport } from './routes/rc.$token'
 import { Route as AppUsersRouteImport } from './routes/app.users'
 import { Route as AppTrainingsRouteImport } from './routes/app.trainings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
@@ -96,6 +97,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
+} as any)
+const RcTokenRoute = RcTokenRouteImport.update({
+  id: '/rc/$token',
+  path: '/rc/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppUsersRoute = AppUsersRouteImport.update({
   id: '/users',
@@ -355,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/app/roles': typeof AppRolesRoute
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
+  '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
@@ -407,6 +414,7 @@ export interface FileRoutesByTo {
   '/app/roles': typeof AppRolesRoute
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
+  '/rc/$token': typeof RcTokenRoute
   '/app': typeof AppIndexRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
@@ -462,6 +470,7 @@ export interface FileRoutesById {
   '/app/roles': typeof AppRolesRoute
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
+  '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
@@ -518,6 +527,7 @@ export interface FileRouteTypes {
     | '/app/roles'
     | '/app/trainings'
     | '/app/users'
+    | '/rc/$token'
     | '/app/'
     | '/app/conta/seguranca'
     | '/app/dds/gestores'
@@ -570,6 +580,7 @@ export interface FileRouteTypes {
     | '/app/roles'
     | '/app/trainings'
     | '/app/users'
+    | '/rc/$token'
     | '/app'
     | '/app/conta/seguranca'
     | '/app/dds/gestores'
@@ -624,6 +635,7 @@ export interface FileRouteTypes {
     | '/app/roles'
     | '/app/trainings'
     | '/app/users'
+    | '/rc/$token'
     | '/app/'
     | '/app/conta/seguranca'
     | '/app/dds/gestores'
@@ -662,6 +674,7 @@ export interface RootRouteChildren {
   PrivacidadeRoute: typeof PrivacidadeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
+  RcTokenRoute: typeof RcTokenRoute
   ApiPublicControleDocumentosGerarRecorrentesRoute: typeof ApiPublicControleDocumentosGerarRecorrentesRoute
 }
 
@@ -715,6 +728,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/rc/$token': {
+      id: '/rc/$token'
+      path: '/rc/$token'
+      fullPath: '/rc/$token'
+      preLoaderRoute: typeof RcTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/users': {
       id: '/app/users'
@@ -1152,6 +1172,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacidadeRoute: PrivacidadeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
+  RcTokenRoute: RcTokenRoute,
   ApiPublicControleDocumentosGerarRecorrentesRoute:
     ApiPublicControleDocumentosGerarRecorrentesRoute,
 }
