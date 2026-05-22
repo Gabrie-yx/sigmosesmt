@@ -18,6 +18,7 @@ export type DDSFormParams = {
   encarregado?: string | null;
   responsavelSesmt?: string | null;
   assinaturaResponsavelDataUrl?: string | null;
+  assinaturaEncarregadoDataUrl?: string | null;
 };
 
 export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF): jsPDF {
