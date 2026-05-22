@@ -45,6 +45,22 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const soft: [number, number, number] = [249, 250, 251];
   const line: [number, number, number] = [229, 231, 235];
 
+  // Title Case PT-BR: mantém preposições minúsculas e siglas (2-3 letras) em maiúsculas.
+  const toTitleCase = (s: string): string => {
+    const minusc = new Set(["de", "da", "do", "das", "dos", "e", "di", "du", "del", "la", "le", "von", "van"]);
+    const partes = s.toLowerCase().trim().split(/\s+/);
+    return partes
+      .map((w, i) => {
+        if (i > 0 && minusc.has(w)) return w;
+        // Trata hifenizados (ex.: Maria-Clara)
+        return w
+          .split("-")
+          .map((p) => (p.length === 0 ? p : p[0].toUpperCase() + p.slice(1)))
+          .join("-");
+      })
+      .join(" ");
+  };
+
   const drawPagina = (
     pagina: HoraExtraPaginaEmpresa,
     idx: number,
@@ -222,8 +238,9 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         // Nome
         doc.setTextColor(...brand);
         doc.setFont("helvetica", "bold").setFontSize(8);
-        const nome = f.nome.length > 42 ? f.nome.substring(0, 40) + "…" : f.nome;
-        doc.text(nome.toUpperCase(), margin + colIt + 3, ty);
+        const nomeFmt = toTitleCase(f.nome);
+        const nome = nomeFmt.length > 42 ? nomeFmt.substring(0, 40) + "…" : nomeFmt;
+        doc.text(nome, margin + colIt + 3, ty);
 
         // Badge helper — outline clean
         const drawBadge = (
@@ -324,7 +341,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.setTextColor(...brand);
     doc.setFont("helvetica", "bold").setFontSize(7.5);
     doc.text(
-      `SOLICITANTE${p.solicitanteNome ? " · " + p.solicitanteNome.toUpperCase() : ""}`,
+      `SOLICITANTE${p.solicitanteNome ? " · " + toTitleCase(p.solicitanteNome) : ""}`,
       sigCenterX,
       sigY + 21,
       { align: "center" },
