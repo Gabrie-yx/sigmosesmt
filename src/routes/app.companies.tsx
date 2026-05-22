@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { EmployeeDetailContent } from "./app.employees.$id";
 import { maskCNPJ } from "@/lib/masks";
+import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 
 export const Route = createFileRoute("/app/companies")({
   component: CompaniesPage,
