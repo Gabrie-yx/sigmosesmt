@@ -60,7 +60,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.setDrawColor(...line);
     doc.setLineWidth(0.3);
     doc.roundedRect(margin, margin, contentW, 24, 2, 2, "S");
-    // Linha de acento azul no topo
+    // Linha de acento sutil no topo
     doc.setFillColor(...accent);
     doc.rect(margin + 2, margin, contentW - 4, 1.5, "F");
 
@@ -81,20 +81,22 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.setTextColor(...muted);
     doc.text("Controle interno · não homologado", margin + 42, margin + 16.5);
 
-    // Badge empresa (direita, estilo outline)
-    const pillW = 70;
+    // Identificação da empresa (direita, limpa e sem sobrepor o título)
+    const pillW = 62;
     const pillX = margin + contentW - pillW - 4;
-    doc.setDrawColor(...accent);
-    doc.setLineWidth(0.5);
+    doc.setFillColor(...soft);
+    doc.roundedRect(pillX, margin + 5, pillW, 14, 2, 2, "F");
+    doc.setDrawColor(...line);
+    doc.setLineWidth(0.3);
     doc.roundedRect(pillX, margin + 5, pillW, 14, 2, 2, "S");
-    doc.setTextColor(...accent);
+    doc.setTextColor(...muted);
     doc.setFont("helvetica", "bold").setFontSize(7);
-    doc.text("EMPRESA", pillX + 4, margin + 10);
+    doc.text("EMPRESA", pillX + 3, margin + 10);
     doc.setTextColor(...brand);
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     const empName = pagina.empresaNome.toUpperCase();
-    const empTrim = empName.length > 28 ? empName.slice(0, 27) + "…" : empName;
-    doc.text(empTrim, pillX + 4, margin + 16);
+    const empTrim = empName.length > 24 ? empName.slice(0, 23) + "…" : empName;
+    doc.text(empTrim, pillX + 3, margin + 16);
     doc.setFont("helvetica", "normal").setFontSize(7);
     doc.setTextColor(...muted);
     const pageLabel = parte && parte.total > 1
@@ -139,21 +141,21 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     });
     y += cardH + 4;
 
-    // ===== Faixa "EMPRESAS ENVOLVIDAS" clean =====
+    // ===== Faixa de identificação da folha =====
     const envH = 8;
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(margin, y, contentW, envH, 2, 2, "F");
-    doc.setDrawColor(...accent);
-    doc.setLineWidth(0.4);
+    doc.setDrawColor(...line);
+    doc.setLineWidth(0.3);
     doc.roundedRect(margin, y, contentW, envH, 2, 2, "S");
     doc.setTextColor(...accent);
     doc.setFont("helvetica", "bold").setFontSize(7);
-    doc.text("EMPRESAS ENVOLVIDAS", margin + 4, y + 5.2);
+    doc.text("EMPRESA DA FOLHA", margin + 4, y + 5.2);
     doc.setTextColor(...brand);
-    doc.setFont("helvetica", "normal").setFontSize(8);
-    const envText = p.empresasEnvolvidas.join("  •  ");
-    const envClipped = doc.splitTextToSize(envText, contentW - 54)[0] ?? envText;
-    doc.text(envClipped, margin + 52, y + 5.2);
+    doc.setFont("helvetica", "bold").setFontSize(8);
+    const envText = pagina.empresaNome.toUpperCase();
+    const envClipped = doc.splitTextToSize(envText, contentW - 52)[0] ?? envText;
+    doc.text(envClipped, margin + 49, y + 5.2);
     y += envH + 5;
 
     // ===== Título da equipe =====
@@ -166,7 +168,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.line(margin, y + 5.5, margin + titleW, y + 5.5);
     doc.setTextColor(...muted);
     doc.setFont("helvetica", "normal").setFontSize(8);
-    doc.text(`${pagina.funcionarios.length} colaborador(es)`, margin + contentW, y + 3, { align: "right" });
+    doc.text(`${pagina.totalFuncionarios ?? pagina.funcionarios.length} colaborador(es)`, margin + contentW, y + 3, { align: "right" });
     y += 8.5;
 
     // ===== TABELA =====
