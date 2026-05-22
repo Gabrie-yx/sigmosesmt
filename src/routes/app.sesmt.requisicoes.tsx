@@ -474,6 +474,7 @@ function RequisicoesPage() {
             <TabsList>
               <TabsTrigger value="todas">Todas</TabsTrigger>
               <TabsTrigger value="PENDENTE">Em andamento</TabsTrigger>
+              <TabsTrigger value="COTADA">Cotadas</TabsTrigger>
               <TabsTrigger value="APROVADA">Deferidas</TabsTrigger>
               <TabsTrigger value="INDEFERIDA">Indeferidas</TabsTrigger>
             </TabsList>
