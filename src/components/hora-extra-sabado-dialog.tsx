@@ -73,7 +73,14 @@ export function HoraExtraSabadoDialog({
       const fromDb = (data ?? [])
         .flatMap((d: any) => String(d.setor ?? "").split(",").map((s) => s.trim()))
         .filter(Boolean);
-      return Array.from(new Set([...defaults, ...fromDb])).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      const siglas = new Set(["SESMT", "CIPA", "RH", "TI", "PCP", "QSMS"]);
+      const normalize = (s: string) => {
+        const up = s.trim().toUpperCase();
+        if (siglas.has(up)) return up;
+        return toTitleCasePT(s);
+      };
+      const all = [...defaults, ...fromDb].map(normalize).filter(Boolean);
+      return Array.from(new Set(all)).sort((a, b) => a.localeCompare(b, "pt-BR"));
     },
   });
   const { data: employees } = useQuery({
