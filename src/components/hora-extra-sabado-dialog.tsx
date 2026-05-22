@@ -87,11 +87,8 @@ export function HoraExtraSabadoDialog({
       if (!rec) return;
       setData(rec.data);
       setTurno(rec.turno ?? "1º");
-      const [hi, hf] = (rec.horario_inicio || "").split("-").length === 2
-        ? rec.horario_inicio.split("-")
-        : [rec.horario_inicio || "07:30", rec.horario_fim || "15:00"];
-      setHoraIni(hi);
-      setHoraFim(hf);
+      setHoraIni(rec.horario_inicio ?? "07:30");
+      setHoraFim(rec.horario_fim ?? "15:00");
       setSetor(rec.setor ?? "");
       setCentroCusto(rec.centro_custo ?? "");
       setTipoEfetivo((rec.tipo_efetivo as any) ?? "DMN");
@@ -191,7 +188,7 @@ export function HoraExtraSabadoDialog({
         company_id: companyId || null,
         observacao: observacao || null,
       };
-      let id = editId;
+      let id: string = editId ?? "";
       if (editId) {
         const { error } = await supabase.from("hora_extra_sabado").update(payload).eq("id", editId);
         if (error) throw error;
@@ -206,7 +203,7 @@ export function HoraExtraSabadoDialog({
         employee_id: f.employee_id,
         nome: f.nome,
         externo: f.externo,
-        funcao: f.funcao || null,
+        funcao: f.funcao ? f.funcao : null,
         transporte: f.transporte,
         alimentacao: f.alimentacao,
         presenca: f.presenca,
