@@ -4083,6 +4083,7 @@ export type Database = {
       is_viewer_or_above: { Args: { _user_id: string }; Returns: boolean }
       mfa_ok: { Args: never; Returns: boolean }
       peek_proximo_numero_apr: { Args: never; Returns: string }
+      pt_title_case: { Args: { s: string }; Returns: string }
       registrar_entrega_epi: {
         Args: { _cpf: string; _epi_id: string; _nome: string; _qtd: number }
         Returns: string
