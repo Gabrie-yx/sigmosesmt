@@ -144,9 +144,25 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       doc.setFont("helvetica", "bold").setFontSize(6);
       doc.text(c.label, cx + 3.5, y + 3.5);
       doc.setTextColor(...brand);
-      doc.setFont("helvetica", "bold").setFontSize(9);
-      const val = c.value.length > 18 ? c.value.slice(0, 17) + "…" : c.value;
-      doc.text(val, cx + 3.5, y + 7.5);
+      // Quebra em até 2 linhas, reduzindo a fonte se necessário p/ caber.
+      const maxValW = cardW - 5;
+      let valSize = 9;
+      doc.setFont("helvetica", "bold").setFontSize(valSize);
+      let valLines = doc.splitTextToSize(c.value, maxValW) as string[];
+      while (valLines.length > 2 && valSize > 6.5) {
+        valSize -= 0.5;
+        doc.setFontSize(valSize);
+        valLines = doc.splitTextToSize(c.value, maxValW) as string[];
+      }
+      if (valLines.length > 2) {
+        valLines = [valLines[0], (valLines[1] ?? "").replace(/.{1,3}$/, "…")];
+      }
+      if (valLines.length === 1) {
+        doc.text(valLines[0], cx + 3.5, y + 7.5);
+      } else {
+        doc.text(valLines[0], cx + 3.5, y + 6.6);
+        doc.text(valLines[1], cx + 3.5, y + 6.6 + valSize * 0.42);
+      }
       if (c.sub) {
         doc.setTextColor(...muted);
         doc.setFont("helvetica", "normal").setFontSize(6);
