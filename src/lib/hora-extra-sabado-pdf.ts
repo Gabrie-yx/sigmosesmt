@@ -218,7 +218,8 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         // #
         doc.setTextColor(...muted);
         doc.setFont("helvetica", "bold").setFontSize(8);
-        doc.text(String(i + 1).padStart(2, "0"), margin + colIt / 2, y + 5.8, { align: "center" });
+        const linhaNumero = (pagina.linhaInicial ?? 1) + i;
+        doc.text(String(linhaNumero).padStart(2, "0"), margin + colIt / 2, y + 5.8, { align: "center" });
 
         // Nome
         doc.setTextColor(...brand);
@@ -364,11 +365,9 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   };
 
   const paginas = p.paginas.length > 0 ? p.paginas : [{ empresaNome: "—", funcionarios: [] }];
-  // Estima capacidade por página (deixa folga para cabeçalho + cards + assinatura)
-  // Capacidade real por folha A4 com nosso layout é ~17 linhas (rowH=9mm,
-  // reservando 42mm para o bloco de assinatura). Usamos 16 para deixar
-  // folga para a observação e qualquer drift de layout.
-  const ROWS_PER_PAGE = 16;
+  // Capacidade real da folha com este layout: 17 linhas. A divisão precisa
+  // ser menor ou igual ao que o desenho comporta para nenhuma linha sumir.
+  const ROWS_PER_PAGE = 17;
   // Pré-divide cada empresa em sub-páginas
   type SubPagina = { pag: HoraExtraPaginaEmpresa; parte: number; partes: number };
   const subs: SubPagina[] = [];
@@ -382,7 +381,12 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     for (let i = 0; i < partes; i++) {
       const slice = pag.funcionarios.slice(i * ROWS_PER_PAGE, (i + 1) * ROWS_PER_PAGE);
       subs.push({
-        pag: { empresaNome: pag.empresaNome, funcionarios: slice },
+        pag: {
+          empresaNome: pag.empresaNome,
+          funcionarios: slice,
+          totalFuncionarios: total,
+          linhaInicial: i * ROWS_PER_PAGE + 1,
+        },
         parte: i + 1,
         partes,
       });
