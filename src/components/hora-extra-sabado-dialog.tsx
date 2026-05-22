@@ -172,6 +172,9 @@ export function HoraExtraSabadoDialog({
   function marcarTodos(field: "transporte" | "alimentacao", v: boolean) {
     setFuncs((prev) => prev.map((f) => ({ ...f, [field]: v })));
   }
+  function removerTodos() {
+    setFuncs([]);
+  }
 
   const save = useMutation({
     mutationFn: async () => {
