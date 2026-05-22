@@ -40,6 +40,7 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
   const [revisao, setRevisao] = useState("00");
   const [dataDoc, setDataDoc] = useState("30/08/2025");
   const [assinaturaUrl, setAssinaturaUrl] = useState<string>("");
+  const [assinaturaEncUrl, setAssinaturaEncUrl] = useState<string>("");
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-for-dds"],
@@ -100,6 +101,7 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
       funcionarios: employees.map((e: any) => ({ nome: e.nome, funcao: e.roles?.name ?? "" })),
       encarregado, responsavelSesmt: sesmt,
       assinaturaResponsavelDataUrl: assinaturaUrl || null,
+      assinaturaEncarregadoDataUrl: assinaturaEncUrl || null,
     });
     const fname = `DDS_${(company?.name ?? "empresa").replace(/\s+/g, "_")}_${semanaSegunda}.pdf`;
     doc.save(fname);
