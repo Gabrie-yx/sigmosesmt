@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -257,6 +257,11 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
   const [pdfName, setPdfName] = useState("");
   const [prepOpen, setPrepOpen] = useState(false);
   const [prepCompanyIds, setPrepCompanyIds] = useState<string[]>([]);
+  const [encSig, setEncSig] = useState<string | null>(null);
+  const [sesmtSig, setSesmtSig] = useState<string | null>(null);
+  const encSigRef = useRef<string | null>(null);
+  const sesmtSigRef = useRef<string | null>(null);
+  const lastBuildArgs = useRef<{ companies: any[]; funcs: any[] } | null>(null);
 
   const { data: allCompanies = [] } = useQuery({
     queryKey: ["companies-for-dds-prep"],
@@ -265,6 +270,7 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
   });
 
   function buildAndShow(companies: any[], funcs: { nome: string; funcao?: string | null }[]) {
+    lastBuildArgs.current = { companies, funcs };
     const c: any = companies[0] ?? company ?? {};
     const seg = (() => { const d = new Date(dds.data + "T00:00"); const day = d.getDay(); d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day)); return d; })();
     const sex = new Date(seg); sex.setDate(sex.getDate() + 4);
@@ -292,6 +298,8 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
         funcionarios: coFuncs,
         encarregado: f?.encarregado ?? co.encarregado1 ?? null,
         responsavelSesmt: f?.responsavel_sesmt ?? null,
+        assinaturaEncarregadoDataUrl: encSigRef.current,
+        assinaturaResponsavelDataUrl: sesmtSigRef.current,
       }, doc);
     });
     if (!doc) return;
@@ -389,7 +397,17 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
         </div>
       </div>
       <DDSEvidencias ddsId={dds.id} />
-      <PDFPreviewDialog open={!!pdfDoc} onClose={() => setPdfDoc(null)} doc={pdfDoc} fileName={pdfName} />
+      <PDFPreviewDialog
+        open={!!pdfDoc}
+        onClose={() => { setPdfDoc(null); setEncSig(null); setSesmtSig(null); encSigRef.current = null; sesmtSigRef.current = null; }}
+        doc={pdfDoc}
+        fileName={pdfName}
+        signable
+        encSig={encSig}
+        sesmtSig={sesmtSig}
+        onChangeEncSig={(v) => { encSigRef.current = v; setEncSig(v); if (lastBuildArgs.current) buildAndShow(lastBuildArgs.current.companies, lastBuildArgs.current.funcs); }}
+        onChangeSesmtSig={(v) => { sesmtSigRef.current = v; setSesmtSig(v); if (lastBuildArgs.current) buildAndShow(lastBuildArgs.current.companies, lastBuildArgs.current.funcs); }}
+      />
       <Dialog open={prepOpen} onOpenChange={(o) => !o && setPrepOpen(false)}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Selecione as empresas para o PDF semanal</DialogTitle></DialogHeader>
