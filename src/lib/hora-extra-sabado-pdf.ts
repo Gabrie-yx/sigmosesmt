@@ -123,7 +123,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       doc.setDrawColor(...line);
       doc.setLineWidth(0.25);
       doc.roundedRect(cx, y, cardW, cardH, 2, 2, "S");
-      // Barra lateral azul
+      // Barra lateral discreta
       doc.setFillColor(...accent);
       doc.rect(cx, y, 1.5, cardH, "F");
       doc.setTextColor(...muted);
@@ -180,8 +180,8 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     const colPres = 20;
     const colAss = contentW - colIt - colNome - colTrans - colAlim - colPres;
 
-    // Cabeçalho — azul suave em vez de preto
-    doc.setFillColor(239, 246, 255); // blue-50
+    // Cabeçalho — cinza suave
+    doc.setFillColor(...soft);
     doc.roundedRect(margin, y, contentW, headRowH, 1.5, 1.5, "F");
     doc.setDrawColor(...accent);
     doc.setLineWidth(0.4);
