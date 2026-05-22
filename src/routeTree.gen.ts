@@ -52,6 +52,7 @@ import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao
 import { Route as AppProducaoBaseMateriaPrimaRouteImport } from './routes/app.producao.base-materia-prima'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
+import { Route as AppEmployeesListagemRouteImport } from './routes/app.employees.listagem'
 import { Route as AppEmployeesHoraExtraSabadoRouteImport } from './routes/app.employees.hora-extra-sabado'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 import { Route as AppDdsTemasRouteImport } from './routes/app.dds.temas'
@@ -283,6 +284,11 @@ const AppEstoqueEpiRoute = AppEstoqueEpiRouteImport.update({
   path: '/estoque/epi',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEmployeesListagemRoute = AppEmployeesListagemRouteImport.update({
+  id: '/listagem',
+  path: '/listagem',
+  getParentRoute: () => AppEmployeesRoute,
+} as any)
 const AppEmployeesHoraExtraSabadoRoute =
   AppEmployeesHoraExtraSabadoRouteImport.update({
     id: '/hora-extra-sabado',
@@ -377,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
+  '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
@@ -431,6 +438,7 @@ export interface FileRoutesByTo {
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
+  '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
@@ -488,6 +496,7 @@ export interface FileRoutesById {
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
+  '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
@@ -546,6 +555,7 @@ export interface FileRouteTypes {
     | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/employees/hora-extra-sabado'
+    | '/app/employees/listagem'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
     | '/app/producao/base-materia-prima'
@@ -600,6 +610,7 @@ export interface FileRouteTypes {
     | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/employees/hora-extra-sabado'
+    | '/app/employees/listagem'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
     | '/app/producao/base-materia-prima'
@@ -656,6 +667,7 @@ export interface FileRouteTypes {
     | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/employees/hora-extra-sabado'
+    | '/app/employees/listagem'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
     | '/app/producao/base-materia-prima'
@@ -994,6 +1006,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEstoqueEpiRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/employees/listagem': {
+      id: '/app/employees/listagem'
+      path: '/listagem'
+      fullPath: '/app/employees/listagem'
+      preLoaderRoute: typeof AppEmployeesListagemRouteImport
+      parentRoute: typeof AppEmployeesRoute
+    }
     '/app/employees/hora-extra-sabado': {
       id: '/app/employees/hora-extra-sabado'
       path: '/hora-extra-sabado'
@@ -1077,12 +1096,14 @@ declare module '@tanstack/react-router' {
 interface AppEmployeesRouteChildren {
   AppEmployeesIdRoute: typeof AppEmployeesIdRoute
   AppEmployeesHoraExtraSabadoRoute: typeof AppEmployeesHoraExtraSabadoRoute
+  AppEmployeesListagemRoute: typeof AppEmployeesListagemRoute
   AppEmployeesIndexRoute: typeof AppEmployeesIndexRoute
 }
 
 const AppEmployeesRouteChildren: AppEmployeesRouteChildren = {
   AppEmployeesIdRoute: AppEmployeesIdRoute,
   AppEmployeesHoraExtraSabadoRoute: AppEmployeesHoraExtraSabadoRoute,
+  AppEmployeesListagemRoute: AppEmployeesListagemRoute,
   AppEmployeesIndexRoute: AppEmployeesIndexRoute,
 }
 
