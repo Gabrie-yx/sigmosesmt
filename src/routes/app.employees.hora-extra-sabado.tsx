@@ -77,9 +77,24 @@ function HoraExtraSabadoPage() {
     if (!rec) return toast.error("Registro não encontrado");
     const { data: list } = await supabase
       .from("hora_extra_sabado_funcionarios")
-      .select("*, employees(company_id, companies(name))")
+      .select("*")
       .eq("hora_extra_id", id)
       .order("ordem");
+
+    // Busca empresas dos employees (sem FK no schema, precisa join manual)
+    const employeeIds = Array.from(
+      new Set((list ?? []).map((f: any) => f.employee_id).filter(Boolean)),
+    );
+    const empresaPorEmployee = new Map<string, string>();
+    if (employeeIds.length > 0) {
+      const { data: emps } = await supabase
+        .from("employees")
+        .select("id, company_id, companies(name)")
+        .in("id", employeeIds);
+      (emps ?? []).forEach((e: any) => {
+        if (e.companies?.name) empresaPorEmployee.set(e.id, e.companies.name);
+      });
+    }
 
     const d = new Date(rec.data + "T12:00:00");
     const ddmmyyyy = d.toLocaleDateString("pt-BR");
@@ -92,7 +107,7 @@ function HoraExtraSabadoPage() {
     const grupos = new Map<string, any[]>();
     (list ?? []).forEach((f: any) => {
       const empNome =
-        f.employees?.companies?.name ??
+        (f.employee_id && empresaPorEmployee.get(f.employee_id)) ??
         (f.externo ? "EXTERNOS" : empresaPadrao);
       if (!grupos.has(empNome)) grupos.set(empNome, []);
       grupos.get(empNome)!.push(f);
