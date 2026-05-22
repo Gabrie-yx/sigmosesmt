@@ -48,7 +48,7 @@ export function HoraExtraSabadoDialog({
   const [turno, setTurno] = useState("1º");
   const [horaIni, setHoraIni] = useState("07:30");
   const [horaFim, setHoraFim] = useState("15:00");
-  const [setor, setSetor] = useState<string>("");
+  const [setoresSel, setSetoresSel] = useState<string[]>([]);
   const [setorNovo, setSetorNovo] = useState("");
   const [centroCusto, setCentroCusto] = useState("");
   const [tipoEfetivo, setTipoEfetivo] = useState<"DMN" | "MEI" | "TERCEIRIZADO">("DMN");
@@ -89,7 +89,7 @@ export function HoraExtraSabadoDialog({
       setTurno(rec.turno ?? "1º");
       setHoraIni(rec.horario_inicio ?? "07:30");
       setHoraFim(rec.horario_fim ?? "15:00");
-      setSetor(rec.setor ?? "");
+      setSetoresSel(rec.setor ? String(rec.setor).split(",").map((s: string) => s.trim()).filter(Boolean) : []);
       setCentroCusto(rec.centro_custo ?? "");
       setTipoEfetivo((rec.tipo_efetivo as any) ?? "DMN");
       setCompanyId(rec.company_id ?? "");
@@ -119,7 +119,7 @@ export function HoraExtraSabadoDialog({
     if (!open) {
       setData(proximoSabado);
       setTurno("1º"); setHoraIni("07:30"); setHoraFim("15:00");
-      setSetor(""); setSetorNovo(""); setCentroCusto(""); setTipoEfetivo("DMN");
+      setSetoresSel([]); setSetorNovo(""); setCentroCusto(""); setTipoEfetivo("DMN");
       setCompanyId(""); setObservacao(""); setBusca(""); setFuncs([]);
       setNovoExternoNome(""); setNovoExternoFuncao("");
     }
@@ -176,7 +176,10 @@ export function HoraExtraSabadoDialog({
   const save = useMutation({
     mutationFn: async () => {
       if (funcs.length === 0) throw new Error("Adicione pelo menos um funcionário");
-      const setorFinal = setorNovo.trim() || setor || null;
+      const todosSetores = [...setoresSel];
+      const extras = setorNovo.split(",").map((s) => s.trim()).filter(Boolean);
+      for (const e of extras) if (!todosSetores.includes(e)) todosSetores.push(e);
+      const setorFinal = todosSetores.length ? todosSetores.join(", ") : null;
       const payload = {
         data,
         turno: turno || null,
@@ -237,13 +240,36 @@ export function HoraExtraSabadoDialog({
 
           <div className="space-y-1">
             <Label>Setor</Label>
-            <Select value={setor} onValueChange={(v) => { setSetor(v); setSetorNovo(""); }}>
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>
-                {(setores ?? []).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Input className="mt-1" placeholder="ou digite um novo setor" value={setorNovo} onChange={(e) => { setSetorNovo(e.target.value); setSetor(""); }} />
+            <div className="rounded-md border bg-white p-2 max-h-32 overflow-y-auto space-y-1">
+              {(setores ?? []).length === 0 && <p className="text-[11px] text-slate-400 italic">Nenhum setor cadastrado</p>}
+              {(setores ?? []).map((s) => {
+                const checked = setoresSel.includes(s);
+                return (
+                  <label key={s} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 rounded px-1 py-0.5">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={(v) =>
+                        setSetoresSel((prev) => (v ? [...prev, s] : prev.filter((x) => x !== s)))
+                      }
+                    />
+                    <span>{s}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {setoresSel.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {setoresSel.map((s) => (
+                  <span key={s} className="text-[10px] font-bold uppercase tracking-wide bg-slate-900 text-white px-1.5 py-0.5 rounded inline-flex items-center gap-1">
+                    {s}
+                    <button type="button" onClick={() => setSetoresSel((p) => p.filter((x) => x !== s))}>
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <Input className="mt-1" placeholder="adicionar novo(s), separe por vírgula" value={setorNovo} onChange={(e) => setSetorNovo(e.target.value)} />
           </div>
           <div className="space-y-1"><Label>C.C.</Label><Input value={centroCusto} onChange={(e) => setCentroCusto(e.target.value)} /></div>
           <div className="space-y-1">
