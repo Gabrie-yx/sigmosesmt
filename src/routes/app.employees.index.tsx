@@ -12,6 +12,7 @@ import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Buildin
 import { toast } from "sonner";
 import { maskCPF } from "@/lib/masks";
 import { Wizard, type WizardStep } from "@/components/wizard";
+import { EmployeeListagemDialog } from "@/components/employees/employee-listagem-dialog";
 
 export const Route = createFileRoute("/app/employees/")({
   component: EmployeesPage,
@@ -43,6 +44,7 @@ function EmployeesPage() {
   const [roleFilter, setRoleFilter] = useState<string>("TODOS");
   const [visibleCount, setVisibleCount] = useState(48);
   const [form, setForm] = useState<any>({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "" });
+  const [listagemOpen, setListagemOpen] = useState(false);
 
   const { data: emps, isLoading } = useQuery({
     queryKey: ["employees"],
@@ -121,11 +123,9 @@ function EmployeesPage() {
         </div>
         {isEditor && (
           <>
-          <Link to="/app/employees/listagem">
-            <Button variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-slate-300 text-slate-700 hover:bg-slate-100">
-              <FileText className="h-4 w-4 mr-2" />Listagem (PDF)
-            </Button>
-          </Link>
+          <Button variant="outline" onClick={() => setListagemOpen(true)} className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-slate-300 text-slate-700 hover:bg-slate-100">
+            <FileText className="h-4 w-4 mr-2" />Listagem (PDF)
+          </Button>
           <Link to="/app/employees/hora-extra-sabado">
             <Button variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-[#7B1E2B]/30 text-[#7B1E2B] hover:bg-[#7B1E2B]/5">
               <CalendarClock className="h-4 w-4 mr-2" />Hora extra (sábado)
@@ -316,6 +316,13 @@ function EmployeesPage() {
           </p>
         </>
       )}
+      <EmployeeListagemDialog
+        open={listagemOpen}
+        onClose={() => setListagemOpen(false)}
+        emps={emps ?? []}
+        companies={companies ?? []}
+        roles={roles ?? []}
+      />
     </div>
   );
 }
