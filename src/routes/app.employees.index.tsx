@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock } from "lucide-react";
+import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { maskCPF } from "@/lib/masks";
 import { Wizard, type WizardStep } from "@/components/wizard";
@@ -121,6 +121,11 @@ function EmployeesPage() {
         </div>
         {isEditor && (
           <>
+          <Link to="/app/employees/listagem">
+            <Button variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-slate-300 text-slate-700 hover:bg-slate-100">
+              <FileText className="h-4 w-4 mr-2" />Listagem (PDF)
+            </Button>
+          </Link>
           <Link to="/app/employees/hora-extra-sabado">
             <Button variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-[#7B1E2B]/30 text-[#7B1E2B] hover:bg-[#7B1E2B]/5">
               <CalendarClock className="h-4 w-4 mr-2" />Hora extra (sábado)
