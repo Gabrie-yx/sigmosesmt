@@ -83,6 +83,7 @@ const STATUS_BADGE: Record<Status, string> = {
 
 const STATUS_LABEL: Record<Status, string> = {
   PENDENTE: "Em andamento",
+  COTADA: "Cotada",
   APROVADA: "Deferida",
   INDEFERIDA: "Indeferida",
 };
