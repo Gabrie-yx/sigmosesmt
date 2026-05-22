@@ -259,6 +259,8 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
   const [prepCompanyIds, setPrepCompanyIds] = useState<string[]>([]);
   const [encSig, setEncSig] = useState<string | null>(null);
   const [sesmtSig, setSesmtSig] = useState<string | null>(null);
+  const encSigRef = useRef<string | null>(null);
+  const sesmtSigRef = useRef<string | null>(null);
   const lastBuildArgs = useRef<{ companies: any[]; funcs: any[] } | null>(null);
 
   const { data: allCompanies = [] } = useQuery({
@@ -296,8 +298,8 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
         funcionarios: coFuncs,
         encarregado: f?.encarregado ?? co.encarregado1 ?? null,
         responsavelSesmt: f?.responsavel_sesmt ?? null,
-        assinaturaEncarregadoDataUrl: encSig,
-        assinaturaResponsavelDataUrl: sesmtSig,
+        assinaturaEncarregadoDataUrl: encSigRef.current,
+        assinaturaResponsavelDataUrl: sesmtSigRef.current,
       }, doc);
     });
     if (!doc) return;
@@ -403,8 +405,8 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
         signable
         encSig={encSig}
         sesmtSig={sesmtSig}
-        onChangeEncSig={(v) => { setEncSig(v); if (lastBuildArgs.current) setTimeout(() => buildAndShow(lastBuildArgs.current!.companies, lastBuildArgs.current!.funcs), 0); }}
-        onChangeSesmtSig={(v) => { setSesmtSig(v); if (lastBuildArgs.current) setTimeout(() => buildAndShow(lastBuildArgs.current!.companies, lastBuildArgs.current!.funcs), 0); }}
+        onChangeEncSig={(v) => { encSigRef.current = v; setEncSig(v); if (lastBuildArgs.current) buildAndShow(lastBuildArgs.current.companies, lastBuildArgs.current.funcs); }}
+        onChangeSesmtSig={(v) => { sesmtSigRef.current = v; setSesmtSig(v); if (lastBuildArgs.current) buildAndShow(lastBuildArgs.current.companies, lastBuildArgs.current.funcs); }}
       />
       <Dialog open={prepOpen} onOpenChange={(o) => !o && setPrepOpen(false)}>
         <DialogContent className="max-w-lg">
