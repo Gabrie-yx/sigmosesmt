@@ -12,6 +12,7 @@ import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Buildin
 import { toast } from "sonner";
 import { maskCPF } from "@/lib/masks";
 import { Wizard, type WizardStep } from "@/components/wizard";
+import { EmployeeListagemDialog } from "@/components/employees/employee-listagem-dialog";
 
 export const Route = createFileRoute("/app/employees/")({
   component: EmployeesPage,
