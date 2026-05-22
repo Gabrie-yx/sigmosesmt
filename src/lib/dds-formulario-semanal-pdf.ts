@@ -153,14 +153,16 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
       // rodapé de assinatura na última página
       const isLast = data.pageNumber === doc.getNumberOfPages();
       if (!isLast) return;
-      const finalY = (data.cursor?.y ?? pageH - 30) + 4;
-      if (finalY > pageH - 25) return;
+      // Ancora o bloco de assinaturas em posição fixa no rodapé da última página,
+      // independente de quanto a tabela ocupou — garante que SEMPRE apareça.
+      const bannerY = pageH - 24;
       doc.setFillColor(220, 220, 220);
-      doc.rect(margin, finalY, pageW - margin * 2, 5, "FD");
+      doc.rect(margin, bannerY, pageW - margin * 2, 5, "FD");
       doc.setFont("helvetica", "bold").setFontSize(8);
+      doc.setTextColor(0, 0, 0);
       doc.text("CONVERSEI COM OS EMPREGADOS ACIMA, A RESPEITO DOS ASSUNTOS CONFORME INDICADOS PELOS CÓDIGOS E TEMAS NO FORMULÁRIO.",
-        pageW / 2, finalY + 3.5, { align: "center" });
-      const sigY = finalY + 18;
+        pageW / 2, bannerY + 3.5, { align: "center" });
+      const sigY = bannerY + 14;
       doc.setLineWidth(0.3);
       doc.line(margin + 20, sigY, margin + 110, sigY);
       doc.line(pageW - margin - 110, sigY, pageW - margin - 20, sigY);
