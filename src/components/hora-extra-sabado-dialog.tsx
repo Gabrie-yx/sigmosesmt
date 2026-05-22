@@ -67,7 +67,11 @@ export function HoraExtraSabadoDialog({
     queryKey: ["he-setores"],
     queryFn: async () => {
       const { data } = await supabase.from("employees").select("setor").not("setor", "is", null);
-      return Array.from(new Set((data ?? []).map((d: any) => d.setor).filter(Boolean))).sort();
+      const defaults = ["Produção", "Almoxarifado", "SESMT", "Manutenção", "Administrativo", "Qualidade"];
+      const fromDb = (data ?? [])
+        .flatMap((d: any) => String(d.setor ?? "").split(",").map((s) => s.trim()))
+        .filter(Boolean);
+      return Array.from(new Set([...defaults, ...fromDb])).sort((a, b) => a.localeCompare(b, "pt-BR"));
     },
   });
   const { data: employees } = useQuery({
