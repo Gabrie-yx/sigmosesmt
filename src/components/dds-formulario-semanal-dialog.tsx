@@ -42,6 +42,26 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
   const [assinaturaUrl, setAssinaturaUrl] = useState<string>("");
   const [assinaturaEncUrl, setAssinaturaEncUrl] = useState<string>("");
 
+  async function processarAssinatura(f: File, setter: (s: string) => void) {
+    if (f.size > 5 * 1024 * 1024) { toast.error("Imagem muito grande (máx 5MB)"); return; }
+    try {
+      const bitmap = await createImageBitmap(f, { imageOrientation: "from-image" } as any);
+      const maxW = 800;
+      const scale = Math.min(1, maxW / bitmap.width);
+      const w = Math.round(bitmap.width * scale);
+      const h = Math.round(bitmap.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(bitmap, 0, 0, w, h);
+      setter(canvas.toDataURL("image/png"));
+    } catch {
+      const reader = new FileReader();
+      reader.onload = () => setter(String(reader.result || ""));
+      reader.readAsDataURL(f);
+    }
+  }
+
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-for-dds"],
     queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,encarregado1,encarregado2,matriz_nome,matriz_cnpj").order("name")).data ?? [],
