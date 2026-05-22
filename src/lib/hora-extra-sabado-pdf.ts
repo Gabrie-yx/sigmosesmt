@@ -5,6 +5,7 @@ export type HoraExtraFuncionario = {
   transporte: boolean;
   alimentacao: boolean;
   presenca?: string | null;
+  empresa?: string | null;
 };
 
 export type HoraExtraPaginaEmpresa = {
@@ -257,6 +258,14 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         const nomeFmt = toTitleCase(f.nome);
         const nome = nomeFmt.length > 42 ? nomeFmt.substring(0, 40) + "…" : nomeFmt;
         doc.text(nome, margin + colIt + 3, ty);
+
+        // Tag de empresa após o nome (quando múltiplas empresas na mesma folha)
+        if (f.empresa) {
+          const nomeW = doc.getTextWidth(nome);
+          doc.setTextColor(...muted);
+          doc.setFont("helvetica", "normal").setFontSize(6.5);
+          doc.text(`· ${f.empresa.toUpperCase()}`, margin + colIt + 3 + nomeW + 2, ty);
+        }
 
         // Badge helper — outline clean
         const drawBadge = (

@@ -98,16 +98,37 @@ function HoraExtraSabadoPage() {
       if (!grupos.has(empNome)) grupos.set(empNome, []);
       grupos.get(empNome)!.push(f);
     });
-    const paginas = Array.from(grupos.entries()).map(([empresaNome, fs]) => ({
-      empresaNome,
-      funcionarios: fs.map((f: any) => ({
-        nome: f.nome,
-        transporte: f.transporte,
-        alimentacao: f.alimentacao,
-        presenca: f.presenca,
-      })),
-    }));
     const empresasEnvolvidas = Array.from(grupos.keys());
+    const totalFunc = (list ?? []).length;
+    // Limite seguro do layout em uma única página
+    const ROWS_SINGLE_PAGE = 24;
+    let paginas;
+    if (totalFunc <= ROWS_SINGLE_PAGE && empresasEnvolvidas.length > 1) {
+      // Consolida tudo numa única página, mantendo a empresa visível em cada linha
+      const todos = Array.from(grupos.entries()).flatMap(([emp, fs]) =>
+        fs.map((f: any) => ({
+          nome: f.nome,
+          transporte: f.transporte,
+          alimentacao: f.alimentacao,
+          presenca: f.presenca,
+          empresa: emp,
+        })),
+      );
+      paginas = [{
+        empresaNome: empresasEnvolvidas.join(" + "),
+        funcionarios: todos,
+      }];
+    } else {
+      paginas = Array.from(grupos.entries()).map(([empresaNome, fs]) => ({
+        empresaNome,
+        funcionarios: fs.map((f: any) => ({
+          nome: f.nome,
+          transporte: f.transporte,
+          alimentacao: f.alimentacao,
+          presenca: f.presenca,
+        })),
+      }));
+    }
 
     const doc = gerarHoraExtraSabadoPDF({
       data: ddmmyyyy,
