@@ -111,10 +111,13 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
     { content: "SEXTA" },
   ]];
 
-  // garantir mínimo de linhas (28 por página, como no modelo)
-  const minRows = 28;
+  // Linhas mínimas para preencher visualmente a página, sem estourar para uma página em branco.
+  // Em A4 paisagem, descontando cabeçalho (~50mm) e rodapé de assinatura (~30mm), cabem ~18 linhas de 6mm.
+  const MAX_ROWS_PER_PAGE = 18;
   const rows = [...p.funcionarios];
-  while (rows.length < minRows) rows.push({ nome: "", funcao: "" });
+  if (rows.length < MAX_ROWS_PER_PAGE) {
+    while (rows.length < MAX_ROWS_PER_PAGE) rows.push({ nome: "", funcao: "" });
+  }
 
   const body = rows.map((f, i) => [
     String(i + 1),
