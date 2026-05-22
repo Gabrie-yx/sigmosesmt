@@ -399,7 +399,7 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
       <DDSEvidencias ddsId={dds.id} />
       <PDFPreviewDialog
         open={!!pdfDoc}
-        onClose={() => { setPdfDoc(null); setEncSig(null); setSesmtSig(null); }}
+        onClose={() => { setPdfDoc(null); setEncSig(null); setSesmtSig(null); encSigRef.current = null; sesmtSigRef.current = null; }}
         doc={pdfDoc}
         fileName={pdfName}
         signable
