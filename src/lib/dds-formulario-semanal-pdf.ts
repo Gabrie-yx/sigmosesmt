@@ -185,6 +185,16 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
       // ignora se imagem inválida
     }
   }
+  if (p.assinaturaEncarregadoDataUrl) {
+    try {
+      const imgW = 50;
+      const imgH = 18;
+      const cx = margin + 65;
+      doc.addImage(p.assinaturaEncarregadoDataUrl, "PNG", cx - imgW / 2, sigY - imgH, imgW, imgH);
+    } catch {
+      // ignora se imagem inválida
+    }
+  }
   doc.setFont("helvetica", "bold");
   doc.text("ENCARREGADO / DESIGNADO", margin + 65, sigY + 4, { align: "center" });
   doc.text("SESMT", pageW - margin - 65, sigY + 4, { align: "center" });
