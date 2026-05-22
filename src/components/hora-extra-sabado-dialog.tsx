@@ -48,7 +48,7 @@ export function HoraExtraSabadoDialog({
   const [turno, setTurno] = useState("1º");
   const [horaIni, setHoraIni] = useState("07:30");
   const [horaFim, setHoraFim] = useState("15:00");
-  const [setor, setSetor] = useState<string>("");
+  const [setoresSel, setSetoresSel] = useState<string[]>([]);
   const [setorNovo, setSetorNovo] = useState("");
   const [centroCusto, setCentroCusto] = useState("");
   const [tipoEfetivo, setTipoEfetivo] = useState<"DMN" | "MEI" | "TERCEIRIZADO">("DMN");
@@ -89,7 +89,7 @@ export function HoraExtraSabadoDialog({
       setTurno(rec.turno ?? "1º");
       setHoraIni(rec.horario_inicio ?? "07:30");
       setHoraFim(rec.horario_fim ?? "15:00");
-      setSetor(rec.setor ?? "");
+      setSetoresSel(rec.setor ? String(rec.setor).split(",").map((s: string) => s.trim()).filter(Boolean) : []);
       setCentroCusto(rec.centro_custo ?? "");
       setTipoEfetivo((rec.tipo_efetivo as any) ?? "DMN");
       setCompanyId(rec.company_id ?? "");
@@ -119,7 +119,7 @@ export function HoraExtraSabadoDialog({
     if (!open) {
       setData(proximoSabado);
       setTurno("1º"); setHoraIni("07:30"); setHoraFim("15:00");
-      setSetor(""); setSetorNovo(""); setCentroCusto(""); setTipoEfetivo("DMN");
+      setSetoresSel([]); setSetorNovo(""); setCentroCusto(""); setTipoEfetivo("DMN");
       setCompanyId(""); setObservacao(""); setBusca(""); setFuncs([]);
       setNovoExternoNome(""); setNovoExternoFuncao("");
     }
@@ -176,7 +176,10 @@ export function HoraExtraSabadoDialog({
   const save = useMutation({
     mutationFn: async () => {
       if (funcs.length === 0) throw new Error("Adicione pelo menos um funcionário");
-      const setorFinal = setorNovo.trim() || setor || null;
+      const todosSetores = [...setoresSel];
+      const extras = setorNovo.split(",").map((s) => s.trim()).filter(Boolean);
+      for (const e of extras) if (!todosSetores.includes(e)) todosSetores.push(e);
+      const setorFinal = todosSetores.length ? todosSetores.join(", ") : null;
       const payload = {
         data,
         turno: turno || null,
