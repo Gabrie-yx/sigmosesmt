@@ -48,6 +48,7 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId }: Prop
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["employees"] });
+      qc.invalidateQueries({ queryKey: ["employees-light"] });
       onOpenChange(false);
       toast.success("Funcionário criado");
     },
