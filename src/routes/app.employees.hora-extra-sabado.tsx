@@ -9,6 +9,7 @@ import { Plus, ArrowLeft, FileDown, Pencil, Trash2, Calendar } from "lucide-reac
 import { toast } from "sonner";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
 import { gerarHoraExtraSabadoPDF } from "@/lib/hora-extra-sabado-pdf";
+import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import dmnLogo from "@/assets/dmn-logo.png";
 
 export const Route = createFileRoute("/app/employees/hora-extra-sabado")({
@@ -33,10 +34,12 @@ async function imageToDataUrl(src: string): Promise<string | null> {
 
 function HoraExtraSabadoPage() {
   const qc = useQueryClient();
-  const { isEditor, isAdmin } = useAuth();
+  const { user, isEditor, isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  const [sigOpen, setSigOpen] = useState(false);
+  const [pendingPdfId, setPendingPdfId] = useState<string | null>(null);
 
   const { data: fichas, isLoading } = useQuery({
     queryKey: ["hora-extra-sabado"],
@@ -62,7 +65,10 @@ function HoraExtraSabadoPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  async function gerarPdf(id: string) {
+  async function gerarPdf(
+    id: string,
+    assinatura?: { dataUrl: string; height: number } | null,
+  ) {
     const { data: rec } = await supabase
       .from("hora_extra_sabado")
       .select("*, companies(name)")
@@ -93,6 +99,12 @@ function HoraExtraSabadoPage() {
       empresaNome: (rec as any).companies?.name,
       observacao: rec.observacao,
       logoDataUrl: logo,
+      assinaturaDataUrl: assinatura?.dataUrl ?? null,
+      assinaturaHeight: assinatura?.height,
+      solicitanteNome:
+        (user as any)?.user_metadata?.full_name ??
+        (user as any)?.email?.split("@")[0] ??
+        null,
       funcionarios: (list ?? []).map((f: any) => ({
         nome: f.nome,
         transporte: f.transporte,
@@ -101,6 +113,11 @@ function HoraExtraSabadoPage() {
       })),
     });
     doc.save(`hora-extra-${rec.data}.pdf`);
+  }
+
+  function abrirAssinatura(id: string) {
+    setPendingPdfId(id);
+    setSigOpen(true);
   }
 
   const filtradas = (fichas ?? []).filter((f: any) => {
@@ -177,6 +194,9 @@ function HoraExtraSabadoPage() {
                     <Button size="sm" variant="outline" onClick={() => gerarPdf(f.id)}>
                       <FileDown className="h-3.5 w-3.5 mr-1.5" />PDF
                     </Button>
+                    <Button size="sm" onClick={() => abrirAssinatura(f.id)} className="bg-rose-700 hover:bg-rose-800 text-white">
+                      <FileDown className="h-3.5 w-3.5 mr-1.5" />Assinar + PDF
+                    </Button>
                     {isEditor && (
                       <Button size="icon" variant="ghost" onClick={() => { setEditId(f.id); setOpen(true); }}>
                         <Pencil className="h-4 w-4" />
@@ -196,6 +216,16 @@ function HoraExtraSabadoPage() {
       )}
 
       <HoraExtraSabadoDialog open={open} onOpenChange={setOpen} editId={editId} />
+      <SignaturePadDialog
+        open={sigOpen}
+        onClose={() => { setSigOpen(false); setPendingPdfId(null); }}
+        onConfirm={async (r) => {
+          const id = pendingPdfId;
+          setSigOpen(false); setPendingPdfId(null);
+          if (id) await gerarPdf(id, r);
+        }}
+        title="Assinatura do solicitante"
+      />
     </div>
   );
 }
