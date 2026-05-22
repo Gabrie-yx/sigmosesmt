@@ -52,60 +52,60 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     parte?: { atual: number; total: number },
   ) => {
     // ===== HEADER clean =====
-    // Fundo branco com borda sutil
+    const headerH = 19;
     doc.setFillColor(255, 255, 255);
-    doc.roundedRect(margin, margin, contentW, 24, 2, 2, "F");
+    doc.roundedRect(margin, margin, contentW, headerH, 2, 2, "F");
     doc.setDrawColor(...line);
     doc.setLineWidth(0.3);
-    doc.roundedRect(margin, margin, contentW, 24, 2, 2, "S");
+    doc.roundedRect(margin, margin, contentW, headerH, 2, 2, "S");
     // Linha de acento sutil no topo
     doc.setFillColor(...accent);
-    doc.rect(margin + 2, margin, contentW - 4, 1.5, "F");
+    doc.rect(margin + 2, margin, contentW - 4, 1.2, "F");
 
     // Logo
     if (p.logoDataUrl) {
       try {
-        doc.setFillColor(255, 255, 255);
-        doc.roundedRect(margin + 4, margin + 4, 34, 16, 1.5, 1.5, "F");
-        doc.addImage(p.logoDataUrl, "PNG", margin + 6, margin + 5.5, 30, 13, undefined, "FAST");
+        doc.addImage(p.logoDataUrl, "PNG", margin + 5, margin + 3.5, 28, 12, undefined, "FAST");
       } catch {}
     }
 
     // Título
     doc.setTextColor(...brand);
-    doc.setFont("helvetica", "bold").setFontSize(14);
-    doc.text("FORMULÁRIO DE HORA EXTRA", margin + 42, margin + 11);
-    doc.setFont("helvetica", "normal").setFontSize(7.5);
+    doc.setFont("helvetica", "bold").setFontSize(12.5);
+    doc.text("FORMULÁRIO DE HORA EXTRA", margin + 38, margin + 9);
+    doc.setFont("helvetica", "normal").setFontSize(7);
     doc.setTextColor(...muted);
-    doc.text("Controle interno · não homologado", margin + 42, margin + 16.5);
+    doc.text("Controle interno · não homologado", margin + 38, margin + 13.5);
 
     // Identificação da empresa (direita, limpa e sem sobrepor o título)
-    const pillW = 62;
+    const pillW = 60;
+    const pillH = 11;
     const pillX = margin + contentW - pillW - 4;
+    const pillY = margin + (headerH - pillH) / 2;
     doc.setFillColor(...soft);
-    doc.roundedRect(pillX, margin + 5, pillW, 14, 2, 2, "F");
+    doc.roundedRect(pillX, pillY, pillW, pillH, 1.5, 1.5, "F");
     doc.setDrawColor(...line);
     doc.setLineWidth(0.3);
-    doc.roundedRect(pillX, margin + 5, pillW, 14, 2, 2, "S");
+    doc.roundedRect(pillX, pillY, pillW, pillH, 1.5, 1.5, "S");
     doc.setTextColor(...muted);
-    doc.setFont("helvetica", "bold").setFontSize(7);
-    doc.text("EMPRESA", pillX + 3, margin + 10);
+    doc.setFont("helvetica", "bold").setFontSize(6.5);
+    doc.text("EMPRESA", pillX + 3, pillY + 4);
     doc.setTextColor(...brand);
-    doc.setFontSize(8.5);
+    doc.setFontSize(8);
     const empName = pagina.empresaNome.toUpperCase();
     const empTrim = empName.length > 24 ? empName.slice(0, 23) + "…" : empName;
-    doc.text(empTrim, pillX + 3, margin + 16);
-    doc.setFont("helvetica", "normal").setFontSize(7);
+    doc.text(empTrim, pillX + 3, pillY + 9);
+    doc.setFont("helvetica", "normal").setFontSize(6.5);
     doc.setTextColor(...muted);
     const pageLabel = parte && parte.total > 1
       ? `${idx + 1}/${total} · pt ${parte.atual}/${parte.total}`
       : `${idx + 1}/${total}`;
-    doc.text(pageLabel, pillX + pillW - 4, margin + 16, { align: "right" });
+    doc.text(pageLabel, pillX + pillW - 3, pillY + 9, { align: "right" });
 
-    let y = margin + 28;
+    let y = margin + headerH + 3;
 
     // ===== INFO CARDS (4 mini-cards) =====
-    const cardH = 14;
+    const cardH = 11;
     const cardGap = 2.5;
     const cardW = (contentW - cardGap * 3) / 4;
     const cards = [
@@ -125,52 +125,52 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       doc.setFillColor(...accent);
       doc.rect(cx, y, 1.5, cardH, "F");
       doc.setTextColor(...muted);
-      doc.setFont("helvetica", "bold").setFontSize(6.5);
-      doc.text(c.label, cx + 4, y + 4.5);
+      doc.setFont("helvetica", "bold").setFontSize(6);
+      doc.text(c.label, cx + 3.5, y + 3.5);
       doc.setTextColor(...brand);
-      doc.setFont("helvetica", "bold").setFontSize(10);
+      doc.setFont("helvetica", "bold").setFontSize(9);
       const val = c.value.length > 18 ? c.value.slice(0, 17) + "…" : c.value;
-      doc.text(val, cx + 4, y + 9.5);
+      doc.text(val, cx + 3.5, y + 7.5);
       if (c.sub) {
         doc.setTextColor(...muted);
-        doc.setFont("helvetica", "normal").setFontSize(6.5);
-        doc.text(c.sub, cx + 4, y + 13);
+        doc.setFont("helvetica", "normal").setFontSize(6);
+        doc.text(c.sub, cx + 3.5, y + 10.3);
       }
     });
-    y += cardH + 4;
+    y += cardH + 3;
 
     // ===== Faixa de identificação da folha =====
-    const envH = 8;
+    const envH = 6.5;
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(margin, y, contentW, envH, 2, 2, "F");
     doc.setDrawColor(...line);
     doc.setLineWidth(0.3);
     doc.roundedRect(margin, y, contentW, envH, 2, 2, "S");
     doc.setTextColor(...accent);
-    doc.setFont("helvetica", "bold").setFontSize(7);
-    doc.text("EMPRESA DA FOLHA", margin + 4, y + 5.2);
+    doc.setFont("helvetica", "bold").setFontSize(6.5);
+    doc.text("EMPRESA DA FOLHA", margin + 4, y + 4.3);
     doc.setTextColor(...brand);
-    doc.setFont("helvetica", "bold").setFontSize(8);
+    doc.setFont("helvetica", "bold").setFontSize(7.5);
     const envText = pagina.empresaNome.toUpperCase();
     const envClipped = doc.splitTextToSize(envText, contentW - 52)[0] ?? envText;
-    doc.text(envClipped, margin + 49, y + 5.2);
-    y += envH + 5;
+    doc.text(envClipped, margin + 46, y + 4.3);
+    y += envH + 3;
 
     // ===== Título da equipe =====
     doc.setTextColor(...brand);
-    doc.setFont("helvetica", "bold").setFontSize(11);
-    doc.text(`EQUIPE · ${pagina.empresaNome.toUpperCase()}`, margin, y + 3);
+    doc.setFont("helvetica", "bold").setFontSize(9.5);
+    doc.text(`EQUIPE · ${pagina.empresaNome.toUpperCase()}`, margin, y + 2.5);
     doc.setDrawColor(...accent);
-    doc.setLineWidth(0.5);
+    doc.setLineWidth(0.4);
     const titleW = doc.getTextWidth(`EQUIPE · ${pagina.empresaNome.toUpperCase()}`);
-    doc.line(margin, y + 5.5, margin + titleW, y + 5.5);
+    doc.line(margin, y + 4.3, margin + titleW, y + 4.3);
     doc.setTextColor(...muted);
-    doc.setFont("helvetica", "normal").setFontSize(8);
-    doc.text(`${pagina.totalFuncionarios ?? pagina.funcionarios.length} colaborador(es)`, margin + contentW, y + 3, { align: "right" });
-    y += 8.5;
+    doc.setFont("helvetica", "normal").setFontSize(7.5);
+    doc.text(`${pagina.totalFuncionarios ?? pagina.funcionarios.length} colaborador(es)`, margin + contentW, y + 2.5, { align: "right" });
+    y += 6;
 
     // ===== TABELA =====
-    const headRowH = 9;
+    const headRowH = 7;
     const colIt = 9;
     const colNome = 72;
     const colTrans = 22;
@@ -185,17 +185,18 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.setLineWidth(0.4);
     doc.roundedRect(margin, y, contentW, headRowH, 1.5, 1.5, "S");
     doc.setTextColor(...brand);
-    doc.setFont("helvetica", "bold").setFontSize(7.5);
-    doc.text("#", margin + colIt / 2, y + 5.8, { align: "center" });
-    doc.text("NOME COMPLETO", margin + colIt + 2, y + 5.8);
-    doc.text("TRANSP.", margin + colIt + colNome + colTrans / 2, y + 5.8, { align: "center" });
-    doc.text("ALIM.", margin + colIt + colNome + colTrans + colAlim / 2, y + 5.8, { align: "center" });
-    doc.text("PRES.", margin + colIt + colNome + colTrans + colAlim + colPres / 2, y + 5.8, { align: "center" });
-    doc.text("ASSINATURA", margin + colIt + colNome + colTrans + colAlim + colPres + colAss / 2, y + 5.8, { align: "center" });
+    doc.setFont("helvetica", "bold").setFontSize(7);
+    const hy = y + 4.6;
+    doc.text("#", margin + colIt / 2, hy, { align: "center" });
+    doc.text("NOME COMPLETO", margin + colIt + 2, hy);
+    doc.text("TRANSP.", margin + colIt + colNome + colTrans / 2, hy, { align: "center" });
+    doc.text("ALIM.", margin + colIt + colNome + colTrans + colAlim / 2, hy, { align: "center" });
+    doc.text("PRES.", margin + colIt + colNome + colTrans + colAlim + colPres / 2, hy, { align: "center" });
+    doc.text("ASSINATURA", margin + colIt + colNome + colTrans + colAlim + colPres + colAss / 2, hy, { align: "center" });
     y += headRowH;
 
     // Linhas
-    const rowH = 8.2;
+    const rowH = 6.6;
     const rowsToDraw = pagina.funcionarios.length;
 
     for (let i = 0; i < rowsToDraw; i++) {
@@ -211,25 +212,26 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       doc.line(margin, y + rowH, margin + contentW, y + rowH);
 
       if (f) {
+        const ty = y + rowH / 2 + 1.4;
         // #
         doc.setTextColor(...muted);
-        doc.setFont("helvetica", "bold").setFontSize(8);
+        doc.setFont("helvetica", "bold").setFontSize(7.5);
         const linhaNumero = (pagina.linhaInicial ?? 1) + i;
-        doc.text(String(linhaNumero).padStart(2, "0"), margin + colIt / 2, y + 5.8, { align: "center" });
+        doc.text(String(linhaNumero).padStart(2, "0"), margin + colIt / 2, ty, { align: "center" });
 
         // Nome
         doc.setTextColor(...brand);
-        doc.setFont("helvetica", "bold").setFontSize(8.5);
+        doc.setFont("helvetica", "bold").setFontSize(8);
         const nome = f.nome.length > 42 ? f.nome.substring(0, 40) + "…" : f.nome;
-        doc.text(nome.toUpperCase(), margin + colIt + 3, y + 5.8);
+        doc.text(nome.toUpperCase(), margin + colIt + 3, ty);
 
         // Badge helper — outline clean
         const drawBadge = (
           on: boolean,
           xCenter: number,
         ) => {
-          const bw = 7;
-          const bh = 4.5;
+          const bw = 6.5;
+          const bh = 4;
           const bx = xCenter - bw / 2;
           const by = y + rowH / 2 - bh / 2;
           if (on) {
@@ -256,12 +258,12 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         if (f.presenca) {
           const isP = f.presenca.toUpperCase().startsWith("P");
           doc.setTextColor(...(isP ? brand : accent));
-          doc.setFont("helvetica", "bold").setFontSize(9);
-          doc.text(f.presenca.toUpperCase(), margin + colIt + colNome + colTrans + colAlim + colPres / 2, y + 5.8, { align: "center" });
+          doc.setFont("helvetica", "bold").setFontSize(8.5);
+          doc.text(f.presenca.toUpperCase(), margin + colIt + colNome + colTrans + colAlim + colPres / 2, ty, { align: "center" });
         } else {
           doc.setTextColor(...line);
-          doc.setFont("helvetica", "normal").setFontSize(9);
-          doc.text("·", margin + colIt + colNome + colTrans + colAlim + colPres / 2, y + 5.8, { align: "center" });
+          doc.setFont("helvetica", "normal").setFontSize(8.5);
+          doc.text("·", margin + colIt + colNome + colTrans + colAlim + colPres / 2, ty, { align: "center" });
         }
 
         // Linha de assinatura
@@ -269,17 +271,17 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         doc.setLineWidth(0.25);
         const sx1 = margin + colIt + colNome + colTrans + colAlim + colPres + 3;
         const sx2 = margin + contentW - 3;
-        doc.line(sx1, y + rowH - 2, sx2, y + rowH - 2);
+        doc.line(sx1, y + rowH - 1.6, sx2, y + rowH - 1.6);
       }
       y += rowH;
     }
 
     // ===== OBSERVAÇÃO =====
-    if (p.observacao && y + 18 < pageH - margin - 40) {
-      y += 4;
+    if (p.observacao && y + 16 < pageH - margin - 30) {
+      y += 3;
       doc.setFillColor(255, 255, 255);
       const obsLines = doc.splitTextToSize(p.observacao, contentW - 10);
-      const obsH = Math.min(18, 6 + obsLines.length * 3.6);
+      const obsH = Math.min(15, 5.5 + obsLines.length * 3.4);
       doc.roundedRect(margin, y, contentW, obsH, 2, 2, "F");
       doc.setDrawColor(...line);
       doc.setLineWidth(0.25);
@@ -287,16 +289,16 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       doc.setFillColor(...accent);
       doc.rect(margin, y, 1.5, obsH, "F");
       doc.setTextColor(...accent);
-      doc.setFont("helvetica", "bold").setFontSize(7);
-      doc.text("OBSERVAÇÃO", margin + 4, y + 4.5);
+      doc.setFont("helvetica", "bold").setFontSize(6.5);
+      doc.text("OBSERVAÇÃO", margin + 4, y + 3.8);
       doc.setTextColor(...brand);
-      doc.setFont("helvetica", "normal").setFontSize(8);
-      doc.text(obsLines.slice(0, 3), margin + 4, y + 8.5);
+      doc.setFont("helvetica", "normal").setFontSize(7.5);
+      doc.text(obsLines.slice(0, 3), margin + 4, y + 7.5);
       y += obsH;
     }
 
     // ===== RODAPÉ COM ASSINATURA =====
-    const sigBlockH = 36;
+    const sigBlockH = 26;
     const sigY = pageH - margin - sigBlockH;
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(margin, sigY, contentW, sigBlockH, 2, 2, "F");
@@ -304,32 +306,32 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.setLineWidth(0.25);
     doc.roundedRect(margin, sigY, contentW, sigBlockH, 2, 2, "S");
     doc.setFillColor(...accent);
-    doc.rect(margin + 2, sigY, contentW - 4, 1.2, "F");
+    doc.rect(margin + 2, sigY, contentW - 4, 1, "F");
 
     // Coluna esquerda: assinatura
     const sigColW = contentW * 0.55;
     const sigCenterX = margin + sigColW / 2;
     if (p.assinaturaDataUrl) {
       try {
-        const h = Math.min(p.assinaturaHeight ?? 16, 18);
+        const h = Math.min(p.assinaturaHeight ?? 12, 13);
         const w = h * 2.5;
-        doc.addImage(p.assinaturaDataUrl, "PNG", sigCenterX - w / 2, sigY + 5, w, h, undefined, "FAST");
+        doc.addImage(p.assinaturaDataUrl, "PNG", sigCenterX - w / 2, sigY + 3, w, h, undefined, "FAST");
       } catch {}
     }
     doc.setDrawColor(...brand);
     doc.setLineWidth(0.4);
-    doc.line(margin + 12, sigY + 25, margin + sigColW - 12, sigY + 25);
+    doc.line(margin + 12, sigY + 17, margin + sigColW - 12, sigY + 17);
     doc.setTextColor(...brand);
-    doc.setFont("helvetica", "bold").setFontSize(8);
+    doc.setFont("helvetica", "bold").setFontSize(7.5);
     doc.text(
       `SOLICITANTE${p.solicitanteNome ? " · " + p.solicitanteNome.toUpperCase() : ""}`,
       sigCenterX,
-      sigY + 29,
+      sigY + 21,
       { align: "center" },
     );
-    doc.setFont("helvetica", "normal").setFontSize(7);
+    doc.setFont("helvetica", "normal").setFontSize(6.5);
     doc.setTextColor(...muted);
-    doc.text(`Emitido em ${p.data}`, sigCenterX, sigY + 33, { align: "center" });
+    doc.text(`Emitido em ${p.data}`, sigCenterX, sigY + 24.5, { align: "center" });
 
     // Divisor vertical
     doc.setDrawColor(...line);
@@ -340,13 +342,13 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     const apvX = margin + sigColW;
     const apvW = contentW - sigColW;
     const apvCenter = apvX + apvW / 2;
-    doc.line(apvX + 12, sigY + 25, apvX + apvW - 12, sigY + 25);
+    doc.line(apvX + 12, sigY + 17, apvX + apvW - 12, sigY + 17);
     doc.setTextColor(...brand);
-    doc.setFont("helvetica", "bold").setFontSize(8);
-    doc.text("APROVAÇÃO / GESTOR", apvCenter, sigY + 29, { align: "center" });
-    doc.setFont("helvetica", "normal").setFontSize(7);
+    doc.setFont("helvetica", "bold").setFontSize(7.5);
+    doc.text("APROVAÇÃO / GESTOR", apvCenter, sigY + 21, { align: "center" });
+    doc.setFont("helvetica", "normal").setFontSize(6.5);
     doc.setTextColor(...muted);
-    doc.text("Assinatura e data", apvCenter, sigY + 33, { align: "center" });
+    doc.text("Assinatura e data", apvCenter, sigY + 24.5, { align: "center" });
 
     // Rodapé inferior — paginação
     doc.setTextColor(...muted);
@@ -363,7 +365,8 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const paginas = p.paginas.length > 0 ? p.paginas : [{ empresaNome: "—", funcionarios: [] }];
     // Capacidade real da folha com este layout: 16 linhas. A divisão precisa
   // ser menor ou igual ao que o desenho comporta para nenhuma linha sumir.
-  const ROWS_PER_PAGE = 16;
+  // Layout compacto: cabe até ~26 linhas com folga para observação e rodapé.
+  const ROWS_PER_PAGE = 24;
   // Pré-divide cada empresa em sub-páginas
   type SubPagina = { pag: HoraExtraPaginaEmpresa; parte: number; partes: number };
   const subs: SubPagina[] = [];
