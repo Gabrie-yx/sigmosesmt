@@ -334,10 +334,11 @@ export function HoraExtraSabadoDialog({
           <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
             <p className="text-xs font-black uppercase tracking-widest text-slate-600">Selecionados ({funcs.length})</p>
             {funcs.length > 0 && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button size="sm" variant="ghost" onClick={() => marcarTodos("transporte", true)}><CheckSquare className="h-3.5 w-3.5 mr-1" />Todos transporte</Button>
                 <Button size="sm" variant="ghost" onClick={() => marcarTodos("transporte", false)}><Square className="h-3.5 w-3.5 mr-1" />Nenhum transp.</Button>
                 <Button size="sm" variant="ghost" onClick={() => marcarTodos("alimentacao", true)}><CheckSquare className="h-3.5 w-3.5 mr-1" />Todos alim.</Button>
+                <Button size="sm" variant="ghost" className="text-rose-600 hover:text-rose-700 hover:bg-rose-50" onClick={removerTodos}><Trash2 className="h-3.5 w-3.5 mr-1" />Remover todos</Button>
               </div>
             )}
           </div>
