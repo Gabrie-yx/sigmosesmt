@@ -257,6 +257,9 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
   const [pdfName, setPdfName] = useState("");
   const [prepOpen, setPrepOpen] = useState(false);
   const [prepCompanyIds, setPrepCompanyIds] = useState<string[]>([]);
+  const [encSig, setEncSig] = useState<string | null>(null);
+  const [sesmtSig, setSesmtSig] = useState<string | null>(null);
+  const lastBuildArgs = useRef<{ companies: any[]; funcs: any[] } | null>(null);
 
   const { data: allCompanies = [] } = useQuery({
     queryKey: ["companies-for-dds-prep"],
@@ -265,6 +268,7 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
   });
 
   function buildAndShow(companies: any[], funcs: { nome: string; funcao?: string | null }[]) {
+    lastBuildArgs.current = { companies, funcs };
     const c: any = companies[0] ?? company ?? {};
     const seg = (() => { const d = new Date(dds.data + "T00:00"); const day = d.getDay(); d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day)); return d; })();
     const sex = new Date(seg); sex.setDate(sex.getDate() + 4);
@@ -292,6 +296,8 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
         funcionarios: coFuncs,
         encarregado: f?.encarregado ?? co.encarregado1 ?? null,
         responsavelSesmt: f?.responsavel_sesmt ?? null,
+        assinaturaEncarregadoDataUrl: encSig,
+        assinaturaResponsavelDataUrl: sesmtSig,
       }, doc);
     });
     if (!doc) return;
