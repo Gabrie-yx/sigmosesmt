@@ -238,8 +238,9 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         // Nome
         doc.setTextColor(...brand);
         doc.setFont("helvetica", "bold").setFontSize(8);
-        const nome = f.nome.length > 42 ? f.nome.substring(0, 40) + "…" : f.nome;
-        doc.text(nome.toUpperCase(), margin + colIt + 3, ty);
+        const nomeFmt = toTitleCase(f.nome);
+        const nome = nomeFmt.length > 42 ? nomeFmt.substring(0, 40) + "…" : nomeFmt;
+        doc.text(nome, margin + colIt + 3, ty);
 
         // Badge helper — outline clean
         const drawBadge = (
@@ -340,7 +341,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.setTextColor(...brand);
     doc.setFont("helvetica", "bold").setFontSize(7.5);
     doc.text(
-      `SOLICITANTE${p.solicitanteNome ? " · " + p.solicitanteNome.toUpperCase() : ""}`,
+      `SOLICITANTE${p.solicitanteNome ? " · " + toTitleCase(p.solicitanteNome) : ""}`,
       sigCenterX,
       sigY + 21,
       { align: "center" },
