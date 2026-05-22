@@ -160,7 +160,7 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
   // chegou perto do fim da página.
   const finalY = (doc as any).lastAutoTable?.finalY ?? (pageH - 24);
   const anchoredY = pageH - 24;
-  const bannerY = Math.min(finalY + 4, anchoredY);
+  const bannerY = Math.min(finalY + 4 + 15, anchoredY);
   doc.setFillColor(220, 220, 220);
   doc.rect(margin, bannerY, pageW - margin * 2, 5, "FD");
   doc.setFont("helvetica", "bold").setFontSize(8);
