@@ -113,7 +113,8 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
 
   // Linhas mínimas para preencher visualmente a página, sem estourar para uma página em branco.
   // Em A4 paisagem, descontando cabeçalho (~50mm) e rodapé de assinatura (~30mm), cabem ~18 linhas de 6mm.
-  const MAX_ROWS_PER_PAGE = 18;
+  // Aperta o layout para caber mais linhas em uma única página A4 paisagem.
+  const MAX_ROWS_PER_PAGE = 22;
   const rows = [...p.funcionarios];
   if (rows.length < MAX_ROWS_PER_PAGE) {
     while (rows.length < MAX_ROWS_PER_PAGE) rows.push({ nome: "", funcao: "" });
@@ -133,9 +134,9 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
     theme: "grid",
     // Reserva ~30mm no rodapé para o bloco de assinatura — evita que o autoTable
     // crie uma página extra só para acomodar 1-2 linhas que não couberam.
-    margin: { left: margin, right: margin, bottom: 32 },
+    margin: { left: margin, right: margin, bottom: 28 },
     rowPageBreak: "avoid",
-    styles: { fontSize: 8, cellPadding: 1, lineColor: [0, 0, 0], lineWidth: 0.2, minCellHeight: 5.5 },
+    styles: { fontSize: 7.5, cellPadding: 0.6, lineColor: [0, 0, 0], lineWidth: 0.2, minCellHeight: 4.6 },
     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: "bold", halign: "center", lineColor: [0, 0, 0], lineWidth: 0.2 },
     columnStyles: {
       0: { cellWidth: 8, halign: "center" },
