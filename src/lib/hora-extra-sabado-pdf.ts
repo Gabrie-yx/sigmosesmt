@@ -275,7 +275,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     }
 
     // ===== OBSERVAÇÃO =====
-    if (p.observacao && y + 18 < pageH - margin - sigReserve) {
+    if (p.observacao && y + 18 < pageH - margin - 40) {
       y += 4;
       doc.setFillColor(255, 255, 255);
       const obsLines = doc.splitTextToSize(p.observacao, contentW - 10);
