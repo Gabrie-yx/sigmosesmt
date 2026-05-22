@@ -5,6 +5,7 @@ export type HoraExtraFuncionario = {
   transporte: boolean;
   alimentacao: boolean;
   presenca?: string | null;
+  empresa?: string | null;
 };
 
 export type HoraExtraPaginaEmpresa = {
