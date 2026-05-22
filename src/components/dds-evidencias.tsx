@@ -86,7 +86,7 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
       const y = Math.max(40, ph * 0.08);
       page.drawImage(png, { x, y, width: targetW, height: targetH });
       const out = await pdf.save();
-      const blob = new Blob([out], { type: "application/pdf" });
+      const blob = new Blob([out.buffer as ArrayBuffer], { type: "application/pdf" });
       const { error } = await supabase.storage.from("dds-anexos").update(path, blob, {
         contentType: "application/pdf",
         upsert: true,
