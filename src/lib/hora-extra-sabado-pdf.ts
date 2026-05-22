@@ -205,10 +205,10 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     // ===== TABELA =====
     const headRowH = 7;
     const colIt = 9;
-    const colNome = 72;
-    const colTrans = 22;
-    const colAlim = 22;
-    const colPres = 20;
+    const colNome = 78;
+    const colTrans = 20;
+    const colAlim = 20;
+    const colPres = 18;
     const colAss = contentW - colIt - colNome - colTrans - colAlim - colPres;
 
     // Cabeçalho — cinza suave
@@ -257,7 +257,8 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         doc.setFont("helvetica", "bold").setFontSize(8);
         const nomeFmt = toTitleCase(f.nome);
         // Espaço disponível para nome + tag de empresa dentro da coluna NOME
-        const nomeColAvail = colNome - 6; // 3 de padding em cada lado
+        // Margem de segurança maior pra nunca encostar nos badges
+        const nomeColAvail = colNome - 10;
         // Mapeia razão social para sigla curta quando possível
         const siglaEmpresa = (e: string): string => {
           const up = e.toUpperCase();
