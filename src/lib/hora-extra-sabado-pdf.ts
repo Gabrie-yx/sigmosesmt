@@ -45,6 +45,22 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const soft: [number, number, number] = [249, 250, 251];
   const line: [number, number, number] = [229, 231, 235];
 
+  // Title Case PT-BR: mantém preposições minúsculas e siglas (2-3 letras) em maiúsculas.
+  const toTitleCase = (s: string): string => {
+    const minusc = new Set(["de", "da", "do", "das", "dos", "e", "di", "du", "del", "la", "le", "von", "van"]);
+    const partes = s.toLowerCase().trim().split(/\s+/);
+    return partes
+      .map((w, i) => {
+        if (i > 0 && minusc.has(w)) return w;
+        // Trata hifenizados (ex.: Maria-Clara)
+        return w
+          .split("-")
+          .map((p) => (p.length === 0 ? p : p[0].toUpperCase() + p.slice(1)))
+          .join("-");
+      })
+      .join(" ");
+  };
+
   const drawPagina = (
     pagina: HoraExtraPaginaEmpresa,
     idx: number,
