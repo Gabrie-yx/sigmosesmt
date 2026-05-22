@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { gerarFormularioSemanalDDS } from "@/lib/dds-formulario-semanal-pdf";
 import { toast } from "sonner";
 import { FileDown } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 
 function getMonday(d: Date) {
   const x = new Date(d);
@@ -38,6 +39,7 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
   const [codigo, setCodigo] = useState("FOR-SEG 06");
   const [revisao, setRevisao] = useState("00");
   const [dataDoc, setDataDoc] = useState("30/08/2025");
+  const [assinaturaUrl, setAssinaturaUrl] = useState<string>("");
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-for-dds"],
@@ -97,6 +99,7 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
       assuntos: assuntos || "—",
       funcionarios: employees.map((e: any) => ({ nome: e.nome, funcao: e.roles?.name ?? "" })),
       encarregado, responsavelSesmt: sesmt,
+      assinaturaResponsavelDataUrl: assinaturaUrl || null,
     });
     const fname = `DDS_${(company?.name ?? "empresa").replace(/\s+/g, "_")}_${semanaSegunda}.pdf`;
     doc.save(fname);
@@ -130,6 +133,40 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div><Label>Encarregado / Designado</Label><Input value={encarregado} onChange={(e) => setEncarregado(e.target.value)} /></div>
             <div><Label>Responsável SESMT</Label><Input value={sesmt} onChange={(e) => setSesmt(e.target.value)} /></div>
+          </div>
+
+          <div>
+            <Label>Assinatura do responsável (PNG, fundo transparente recomendado)</Label>
+            <div className="flex items-center gap-3 mt-1">
+              <label className="inline-flex items-center gap-2 cursor-pointer bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg px-3 py-2">
+                <ImagePlus className="h-4 w-4" />
+                {assinaturaUrl ? "Trocar imagem" : "Selecionar imagem"}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    if (f.size > 2 * 1024 * 1024) {
+                      toast.error("Imagem muito grande (máx 2MB)");
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = () => setAssinaturaUrl(String(reader.result || ""));
+                    reader.readAsDataURL(f);
+                  }}
+                />
+              </label>
+              {assinaturaUrl && (
+                <>
+                  <img src={assinaturaUrl} alt="Assinatura" className="h-12 border rounded bg-white object-contain px-2" />
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setAssinaturaUrl("")}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
           <div>
