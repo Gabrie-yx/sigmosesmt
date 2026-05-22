@@ -155,7 +155,12 @@ export function gerarFormularioSemanalDDS(p: DDSFormParams, existingDoc?: jsPDF)
   // desta empresa (funciona tanto pra tabela de 1 página quanto pra multi-páginas).
   const lastPage = doc.getNumberOfPages();
   doc.setPage(lastPage);
-  const bannerY = pageH - 24;
+  // Posiciona o bloco logo abaixo da tabela (evita espaço gigante em páginas
+  // de continuação com poucas linhas). Cai pro rodapé fixo se a tabela
+  // chegou perto do fim da página.
+  const finalY = (doc as any).lastAutoTable?.finalY ?? (pageH - 24);
+  const anchoredY = pageH - 24;
+  const bannerY = Math.min(finalY + 4, anchoredY);
   doc.setFillColor(220, 220, 220);
   doc.rect(margin, bannerY, pageW - margin * 2, 5, "FD");
   doc.setFont("helvetica", "bold").setFontSize(8);
