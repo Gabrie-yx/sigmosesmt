@@ -44,6 +44,7 @@ function EmployeesPage() {
   const [roleFilter, setRoleFilter] = useState<string>("TODOS");
   const [visibleCount, setVisibleCount] = useState(48);
   const [form, setForm] = useState<any>({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "" });
+  const [listagemOpen, setListagemOpen] = useState(false);
 
   const { data: emps, isLoading } = useQuery({
     queryKey: ["employees"],
