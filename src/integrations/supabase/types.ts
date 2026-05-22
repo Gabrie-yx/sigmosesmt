@@ -3224,6 +3224,10 @@ export type Database = {
           approved_by: string | null
           classificacao: Database["public"]["Enums"]["purchase_req_class"]
           codigo_formulario: string | null
+          cotacao_at: string | null
+          cotacao_fornecedor: string | null
+          cotacao_valor: number | null
+          cotador_nome: string | null
           created_at: string
           created_by: string | null
           data_requisicao: string
@@ -3242,6 +3246,7 @@ export type Database = {
           signature_solicitante_height: number | null
           solicitante: string
           status: Database["public"]["Enums"]["purchase_req_status"]
+          status_token: string
           updated_at: string
         }
         Insert: {
@@ -3249,6 +3254,10 @@ export type Database = {
           approved_by?: string | null
           classificacao?: Database["public"]["Enums"]["purchase_req_class"]
           codigo_formulario?: string | null
+          cotacao_at?: string | null
+          cotacao_fornecedor?: string | null
+          cotacao_valor?: number | null
+          cotador_nome?: string | null
           created_at?: string
           created_by?: string | null
           data_requisicao?: string
@@ -3267,6 +3276,7 @@ export type Database = {
           signature_solicitante_height?: number | null
           solicitante: string
           status?: Database["public"]["Enums"]["purchase_req_status"]
+          status_token?: string
           updated_at?: string
         }
         Update: {
@@ -3274,6 +3284,10 @@ export type Database = {
           approved_by?: string | null
           classificacao?: Database["public"]["Enums"]["purchase_req_class"]
           codigo_formulario?: string | null
+          cotacao_at?: string | null
+          cotacao_fornecedor?: string | null
+          cotacao_valor?: number | null
+          cotador_nome?: string | null
           created_at?: string
           created_by?: string | null
           data_requisicao?: string
@@ -3292,6 +3306,7 @@ export type Database = {
           signature_solicitante_height?: number | null
           solicitante?: string
           status?: Database["public"]["Enums"]["purchase_req_status"]
+          status_token?: string
           updated_at?: string
         }
         Relationships: []
@@ -3993,7 +4008,7 @@ export type Database = {
         | "PQS_K"
         | "OUTRO"
       purchase_req_class: "MATERIAL" | "SERVICO"
-      purchase_req_status: "PENDENTE" | "APROVADA" | "INDEFERIDA"
+      purchase_req_status: "PENDENTE" | "COTADA" | "APROVADA" | "INDEFERIDA"
       tipo_movimentacao_epi: "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO"
     }
     CompositeTypes: {
@@ -4143,7 +4158,7 @@ export const Constants = {
         "OUTRO",
       ],
       purchase_req_class: ["MATERIAL", "SERVICO"],
-      purchase_req_status: ["PENDENTE", "APROVADA", "INDEFERIDA"],
+      purchase_req_status: ["PENDENTE", "COTADA", "APROVADA", "INDEFERIDA"],
       tipo_movimentacao_epi: [
         "SAIDA_ENTREGA",
         "ENTRADA_REPOSICAO",
