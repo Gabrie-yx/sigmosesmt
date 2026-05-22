@@ -1,5 +1,17 @@
 import jsPDF from "jspdf";
 
+export type HoraExtraFuncionario = {
+  nome: string;
+  transporte: boolean;
+  alimentacao: boolean;
+  presenca?: string | null;
+};
+
+export type HoraExtraPaginaEmpresa = {
+  empresaNome: string;
+  funcionarios: HoraExtraFuncionario[];
+};
+
 export type HoraExtraPdfParams = {
   data: string; // dd/mm/yyyy
   diaSemana: string;
@@ -8,14 +20,9 @@ export type HoraExtraPdfParams = {
   setor?: string | null;
   centroCusto?: string | null;
   tipoEfetivo: "DMN" | "MEI" | "TERCEIRIZADO";
-  empresaNome?: string | null;
   observacao?: string | null;
-  funcionarios: {
-    nome: string;
-    transporte: boolean;
-    alimentacao: boolean;
-    presenca?: string | null;
-  }[];
+  empresasEnvolvidas: string[];
+  paginas: HoraExtraPaginaEmpresa[];
   logoDataUrl?: string | null;
   assinaturaDataUrl?: string | null;
   assinaturaHeight?: number;
@@ -29,6 +36,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const margin = 8;
   const contentW = pageW - margin * 2;
 
+  const drawPagina = (pagina: HoraExtraPaginaEmpresa, idx: number, total: number) => {
   // Header: logo | título
   const headerH = 18;
   doc.setLineWidth(0.3);
@@ -46,11 +54,20 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   }
 
   doc.setFont("helvetica", "bold").setFontSize(14);
-  doc.text("FORMULÁRIO DE HORA EXTRA", margin + logoColW + (contentW - logoColW) / 2, margin + headerH / 2 + 1.5, { align: "center" });
+  doc.text("FORMULÁRIO DE HORA EXTRA", margin + logoColW + (contentW - logoColW) / 2, margin + headerH / 2 - 1, { align: "center" });
+  doc.setFont("helvetica", "bold").setFontSize(9);
+  doc.setTextColor(220, 38, 38);
+  doc.text(
+    `EMPRESA: ${pagina.empresaNome.toUpperCase()}   (${idx + 1}/${total})`,
+    margin + logoColW + (contentW - logoColW) / 2,
+    margin + headerH / 2 + 5,
+    { align: "center" },
+  );
+  doc.setTextColor(0, 0, 0);
 
   // Info block
   let y = margin + headerH;
-  const infoH = 26;
+  const infoH = 30;
   doc.rect(margin, y, contentW, infoH);
   const infoColW = contentW / 2;
   doc.line(margin + infoColW, y, margin + infoColW, y + infoH);
@@ -63,8 +80,13 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   doc.text(p.diaSemana.toUpperCase(), margin + 2, y + 10);
   doc.text(`Turno: ${p.turno ?? "—"}`, margin + 2, y + 15);
   doc.text(`Horário: ${p.horario ?? "—"}`, margin + 2, y + 20);
+  doc.setFont("helvetica", "normal").setFontSize(7.5);
+  const empresasTxt = `EMPRESAS ENVOLVIDAS: ${p.empresasEnvolvidas.join(" • ")}`;
+  const empresasLines = doc.splitTextToSize(empresasTxt, infoColW - 4);
+  doc.text(empresasLines.slice(0, 2), margin + 2, y + 25);
 
   // Right column
+  doc.setFont("helvetica", "bold").setFontSize(9);
   doc.text(`SETOR: ${p.setor ?? "—"}`, margin + infoColW + 2, y + 5);
   doc.text(`C.C.: ${p.centroCusto ?? "—"}`, margin + infoColW + 2, y + 10);
 
@@ -79,7 +101,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const labelH = 7;
   doc.rect(margin, y, contentW, labelH);
   doc.setFont("helvetica", "bold").setFontSize(9);
-  doc.text("FUNCIONÁRIO(S):", margin + 2, y + 5);
+  doc.text(`FUNCIONÁRIO(S) — ${pagina.empresaNome.toUpperCase()}`, margin + 2, y + 5);
 
   // EQUIPE banner
   y += labelH;
@@ -123,17 +145,15 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
 
   // Rows
   const rowH = 9;
-  const maxRows = Math.floor((pageH - margin - y) / rowH);
-  const rowsToDraw = Math.max(p.funcionarios.length, Math.min(20, maxRows));
+  const sigReserve = 40; // reservado para bloco assinatura
+  const maxRows = Math.floor((pageH - margin - sigReserve - y) / rowH);
+  const rowsToDraw = Math.max(pagina.funcionarios.length, Math.min(15, maxRows));
 
   doc.setFont("helvetica", "normal").setFontSize(9);
 
   for (let i = 0; i < rowsToDraw; i++) {
-    if (y + rowH > pageH - margin) {
-      doc.addPage();
-      y = margin;
-    }
-    const f = p.funcionarios[i];
+    if (y + rowH > pageH - margin - sigReserve) break;
+    const f = pagina.funcionarios[i];
     // Borders
     doc.rect(margin, y, contentW, rowH);
     let xx = margin;
@@ -220,6 +240,13 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   );
   doc.setFont("helvetica", "normal").setFontSize(8);
   doc.text(`Data: ${p.data}`, sigCenterX, lineY + 8.5, { align: "center" });
+  };
+
+  const paginas = p.paginas.length > 0 ? p.paginas : [{ empresaNome: "—", funcionarios: [] }];
+  paginas.forEach((pag, i) => {
+    if (i > 0) doc.addPage();
+    drawPagina(pag, i, paginas.length);
+  });
 
   return doc;
 }
