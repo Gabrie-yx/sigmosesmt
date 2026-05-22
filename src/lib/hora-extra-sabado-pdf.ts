@@ -389,7 +389,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.setTextColor(...brand);
     doc.setFont("helvetica", "bold").setFontSize(7.5);
     doc.text(
-      `SOLICITANTE${p.solicitanteNome ? " · " + toTitleCase(p.solicitanteNome) : ""}`,
+      "TÉCNICO EM SEGURANÇA DO TRABALHO",
       sigCenterX,
       sigY + 21,
       { align: "center" },
