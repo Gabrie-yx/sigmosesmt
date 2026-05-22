@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Wrench, ClipboardCheck, History, Pencil, Search } from "lucide-react";
+import { Plus, Wrench, ClipboardCheck, History, Pencil, Search, FolderArchive } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/sesmt/equipamentos-moveis")({
@@ -100,9 +100,16 @@ function EquipamentosMoveisPage() {
           </h1>
           <p className="text-sm text-slate-500">Frota mecânica · Pá Carregadeira, Guindaste, Compressor, Draga, Guincho.</p>
         </div>
-        <Button onClick={() => { setEdit(null); setOpenNovo(true); }} className="bg-[#7B1E2B] hover:bg-[#5a1620] text-white font-black uppercase tracking-widest text-[11px]">
-          <Plus className="h-4 w-4 mr-1" /> Novo Equipamento
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" className="font-black uppercase tracking-widest text-[11px]">
+            <Link to="/app/sesmt/equipamentos-moveis/arquivos-mensais">
+              <FolderArchive className="h-4 w-4 mr-1" /> Arquivos Mensais
+            </Link>
+          </Button>
+          <Button onClick={() => { setEdit(null); setOpenNovo(true); }} className="bg-[#7B1E2B] hover:bg-[#5a1620] text-white font-black uppercase tracking-widest text-[11px]">
+            <Plus className="h-4 w-4 mr-1" /> Novo Equipamento
+          </Button>
+        </div>
       </header>
 
       <Card>
