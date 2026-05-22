@@ -41,11 +41,9 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   // Paleta leve: cinzas limpos + vermelho suave para marcações pontuais
   const brand: [number, number, number] = [31, 41, 55];       // gray/slate-800
   const accent: [number, number, number] = [185, 84, 84];     // vermelho suave
-  const accentSoft: [number, number, number] = [254, 242, 242];
   const muted: [number, number, number] = [100, 116, 139];
   const soft: [number, number, number] = [249, 250, 251];
   const line: [number, number, number] = [229, 231, 235];
-  const zebra: [number, number, number] = [255, 255, 255];
 
   const drawPagina = (
     pagina: HoraExtraPaginaEmpresa,
