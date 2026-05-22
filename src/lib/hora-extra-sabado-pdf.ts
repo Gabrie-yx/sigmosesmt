@@ -33,213 +33,303 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const margin = 8;
+  const margin = 10;
   const contentW = pageW - margin * 2;
 
+  // Paleta
+  const brand: [number, number, number] = [15, 23, 42];      // slate-900
+  const accent: [number, number, number] = [190, 18, 60];    // rose-700
+  const muted: [number, number, number] = [100, 116, 139];   // slate-500
+  const soft: [number, number, number] = [241, 245, 249];    // slate-100
+  const line: [number, number, number] = [203, 213, 225];    // slate-300
+  const zebra: [number, number, number] = [248, 250, 252];   // slate-50
+
   const drawPagina = (pagina: HoraExtraPaginaEmpresa, idx: number, total: number) => {
-  // Header: logo | título
-  const headerH = 18;
-  doc.setLineWidth(0.3);
-  doc.rect(margin, margin, contentW, headerH);
-  const logoColW = 45;
-  doc.line(margin + logoColW, margin, margin + logoColW, margin + headerH);
+    // ===== HEADER =====
+    // Faixa de marca no topo
+    doc.setFillColor(...brand);
+    doc.rect(margin, margin, contentW, 22, "F");
+    // Faixa de acento (rosé) abaixo
+    doc.setFillColor(...accent);
+    doc.rect(margin, margin + 22, contentW, 2, "F");
 
-  if (p.logoDataUrl) {
-    try {
-      doc.addImage(p.logoDataUrl, "PNG", margin + 4, margin + 2, logoColW - 8, headerH - 4, undefined, "FAST");
-    } catch {}
-  } else {
-    doc.setFont("helvetica", "bold").setFontSize(14);
-    doc.text("DMN", margin + logoColW / 2, margin + headerH / 2 + 2, { align: "center" });
-  }
-
-  doc.setFont("helvetica", "bold").setFontSize(14);
-  doc.text("FORMULÁRIO DE HORA EXTRA", margin + logoColW + (contentW - logoColW) / 2, margin + headerH / 2 - 1, { align: "center" });
-  doc.setFont("helvetica", "bold").setFontSize(9);
-  doc.setTextColor(220, 38, 38);
-  doc.text(
-    `EMPRESA: ${pagina.empresaNome.toUpperCase()}   (${idx + 1}/${total})`,
-    margin + logoColW + (contentW - logoColW) / 2,
-    margin + headerH / 2 + 5,
-    { align: "center" },
-  );
-  doc.setTextColor(0, 0, 0);
-
-  // Info block
-  let y = margin + headerH;
-  const infoH = 30;
-  doc.rect(margin, y, contentW, infoH);
-  const infoColW = contentW / 2;
-  doc.line(margin + infoColW, y, margin + infoColW, y + infoH);
-
-  // Left column
-  doc.setFont("helvetica", "bold").setFontSize(9);
-  doc.setTextColor(220, 38, 38);
-  doc.text(`Data: ${p.data}`, margin + 2, y + 5);
-  doc.setTextColor(0, 0, 0);
-  doc.text(p.diaSemana.toUpperCase(), margin + 2, y + 10);
-  doc.text(`Turno: ${p.turno ?? "—"}`, margin + 2, y + 15);
-  doc.text(`Horário: ${p.horario ?? "—"}`, margin + 2, y + 20);
-  doc.setFont("helvetica", "normal").setFontSize(7.5);
-  const empresasTxt = `EMPRESAS ENVOLVIDAS: ${p.empresasEnvolvidas.join(" • ")}`;
-  const empresasLines = doc.splitTextToSize(empresasTxt, infoColW - 4);
-  doc.text(empresasLines.slice(0, 2), margin + 2, y + 25);
-
-  // Right column
-  doc.setFont("helvetica", "bold").setFontSize(9);
-  doc.text(`SETOR: ${p.setor ?? "—"}`, margin + infoColW + 2, y + 5);
-  doc.text(`C.C.: ${p.centroCusto ?? "—"}`, margin + infoColW + 2, y + 10);
-
-  doc.setFont("helvetica", "normal").setFontSize(9);
-  const mark = (b: boolean) => (b ? "X" : " ");
-  doc.text(`EFETIVO     ( ${mark(p.tipoEfetivo === "DMN")} ) DMN`, margin + infoColW + 2, y + 16);
-  doc.text(`MEI                ( ${mark(p.tipoEfetivo === "MEI")} )`, margin + infoColW + 2, y + 20);
-  doc.text(`PRESTADOR DE SERVIÇO ( ${mark(p.tipoEfetivo === "TERCEIRIZADO")} ) TERCERIZADOS`, margin + infoColW + 2, y + 24);
-
-  // FUNCIONÁRIO(S) label row
-  y += infoH;
-  const labelH = 7;
-  doc.rect(margin, y, contentW, labelH);
-  doc.setFont("helvetica", "bold").setFontSize(9);
-  doc.text(`FUNCIONÁRIO(S) — ${pagina.empresaNome.toUpperCase()}`, margin + 2, y + 5);
-
-  // EQUIPE banner
-  y += labelH;
-  const bannerH = 7;
-  doc.setFillColor(180, 198, 220);
-  doc.rect(margin, y, contentW, bannerH, "F");
-  doc.rect(margin, y, contentW, bannerH);
-  doc.setTextColor(0, 0, 0);
-  doc.text(`EQUIPE ${p.tipoEfetivo === "DMN" ? "EFETIVO" : p.tipoEfetivo} - ${p.diaSemana.toUpperCase()}`, margin + contentW / 2, y + 5, { align: "center" });
-
-  // Table header
-  y += bannerH;
-  const headRowH = 9;
-  const colIt = 10;
-  const colNome = 70;
-  const colTrans = 26;
-  const colAlim = 24;
-  const colPres = 26;
-  const colAss = contentW - colIt - colNome - colTrans - colAlim - colPres;
-
-  doc.rect(margin, y, contentW, headRowH);
-  let x = margin;
-  doc.line(x + colIt, y, x + colIt, y + headRowH); x += colIt;
-  doc.line(x + colNome, y, x + colNome, y + headRowH); x += colNome;
-  doc.line(x + colTrans, y, x + colTrans, y + headRowH); x += colTrans;
-  doc.line(x + colAlim, y, x + colAlim, y + headRowH); x += colAlim;
-  doc.line(x + colPres, y, x + colPres, y + headRowH);
-
-  doc.setFont("helvetica", "bold").setFontSize(8);
-  doc.text("IT", margin + colIt / 2, y + 6, { align: "center" });
-  doc.text("NOME COMPLETO", margin + colIt + colNome / 2, y + 6, { align: "center" });
-  doc.text("TRANSPORTE", margin + colIt + colNome + colTrans / 2, y + 6, { align: "center" });
-  doc.text("ALIMENTAÇÃO", margin + colIt + colNome + colTrans + colAlim / 2, y + 6, { align: "center" });
-  doc.setFontSize(7);
-  doc.text("(P) Presente (F)", margin + colIt + colNome + colTrans + colAlim + colPres / 2, y + 4, { align: "center" });
-  doc.text("Faltou", margin + colIt + colNome + colTrans + colAlim + colPres / 2, y + 7.5, { align: "center" });
-  doc.setFontSize(8);
-  doc.text("ASSINATURA", margin + colIt + colNome + colTrans + colAlim + colPres + colAss / 2, y + 6, { align: "center" });
-
-  y += headRowH;
-
-  // Rows
-  const rowH = 9;
-  const sigReserve = 40; // reservado para bloco assinatura
-  const maxRows = Math.floor((pageH - margin - sigReserve - y) / rowH);
-  const rowsToDraw = Math.max(pagina.funcionarios.length, Math.min(15, maxRows));
-
-  doc.setFont("helvetica", "normal").setFontSize(9);
-
-  for (let i = 0; i < rowsToDraw; i++) {
-    if (y + rowH > pageH - margin - sigReserve) break;
-    const f = pagina.funcionarios[i];
-    // Borders
-    doc.rect(margin, y, contentW, rowH);
-    let xx = margin;
-    doc.line(xx + colIt, y, xx + colIt, y + rowH); xx += colIt;
-    doc.line(xx + colNome, y, xx + colNome, y + rowH); xx += colNome;
-    doc.line(xx + colTrans, y, xx + colTrans, y + rowH); xx += colTrans;
-    doc.line(xx + colAlim, y, xx + colAlim, y + rowH); xx += colAlim;
-    doc.line(xx + colPres, y, xx + colPres, y + rowH);
-
-    if (f) {
-      doc.setTextColor(0, 0, 0);
-      doc.text(String(i + 1), margin + colIt / 2, y + 6, { align: "center" });
-      const nome = f.nome.length > 38 ? f.nome.substring(0, 36) + "…" : f.nome;
-      doc.text(nome.toUpperCase(), margin + colIt + 2, y + 6);
-      // Transporte: line for "no" or X
-      if (f.transporte) {
-        doc.setTextColor(220, 38, 38);
-        doc.text("X", margin + colIt + colNome + colTrans / 2, y + 6, { align: "center" });
-      } else {
-        doc.setDrawColor(0, 0, 0);
-        doc.line(margin + colIt + colNome + 5, y + 6, margin + colIt + colNome + colTrans - 5, y + 6);
-      }
-      // Alimentação
-      if (f.alimentacao) {
-        doc.setTextColor(220, 38, 38);
-        doc.text("X", margin + colIt + colNome + colTrans + colAlim / 2, y + 6, { align: "center" });
-      }
-      // Presença
-      if (f.presenca) {
-        doc.setTextColor(0, 0, 0);
-        doc.text(f.presenca, margin + colIt + colNome + colTrans + colAlim + colPres / 2, y + 6, { align: "center" });
-      }
-      doc.setTextColor(0, 0, 0);
+    // Logo (fundo branco arredondado visual)
+    if (p.logoDataUrl) {
+      try {
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(margin + 3, margin + 3, 34, 16, 1.5, 1.5, "F");
+        doc.addImage(p.logoDataUrl, "PNG", margin + 5, margin + 4.5, 30, 13, undefined, "FAST");
+      } catch {}
     }
-    y += rowH;
-  }
 
-  // Observação
-  if (p.observacao && y + 20 < pageH - margin) {
-    y += 3;
+    // Título
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold").setFontSize(15);
+    doc.text("FORMULÁRIO DE HORA EXTRA", margin + 42, margin + 10);
+    doc.setFont("helvetica", "normal").setFontSize(8);
+    doc.setTextColor(203, 213, 225);
+    doc.text("Controle interno · não homologado", margin + 42, margin + 15);
+
+    // Pílula da empresa (direita)
+    const pillW = 70;
+    const pillX = margin + contentW - pillW - 4;
+    doc.setFillColor(...accent);
+    doc.roundedRect(pillX, margin + 5, pillW, 12, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold").setFontSize(8);
-    doc.text("OBSERVAÇÃO:", margin, y + 4);
-    doc.setFont("helvetica", "normal");
-    const lines = doc.splitTextToSize(p.observacao, contentW - 4);
-    doc.text(lines, margin, y + 8);
-    y += 8 + lines.length * 4;
-  }
+    doc.text("EMPRESA", pillX + 4, margin + 9);
+    doc.setFontSize(9);
+    const empName = pagina.empresaNome.toUpperCase();
+    const empTrim = empName.length > 28 ? empName.slice(0, 27) + "…" : empName;
+    doc.text(empTrim, pillX + 4, margin + 14);
+    doc.setFont("helvetica", "normal").setFontSize(7);
+    doc.text(`${idx + 1}/${total}`, pillX + pillW - 4, margin + 14, { align: "right" });
 
-  // Bloco de assinatura (solicitante) — sempre no rodapé
-  const sigBlockH = 32;
-  let sigY = pageH - margin - sigBlockH;
-  if (sigY < y + 4) sigY = y + 4;
-  doc.setDrawColor(0, 0, 0);
-  doc.rect(margin, sigY, contentW, sigBlockH);
+    let y = margin + 28;
 
-  const sigCenterX = margin + contentW / 2;
-  // Assinatura (imagem)
-  if (p.assinaturaDataUrl) {
-    try {
-      const h = Math.min(p.assinaturaHeight ?? 16, 20);
-      const w = h * 2.5;
-      doc.addImage(
-        p.assinaturaDataUrl,
-        "PNG",
-        sigCenterX - w / 2,
-        sigY + 4,
-        w,
-        h,
-        undefined,
-        "FAST",
-      );
-    } catch {}
-  }
-  // Linha de assinatura
-  const lineY = sigY + 22;
-  doc.line(margin + 30, lineY, margin + contentW - 30, lineY);
-  doc.setFont("helvetica", "bold").setFontSize(8);
-  doc.setTextColor(0, 0, 0);
-  doc.text(
-    `SOLICITANTE${p.solicitanteNome ? ": " + p.solicitanteNome.toUpperCase() : ""}`,
-    sigCenterX,
-    lineY + 4,
-    { align: "center" },
-  );
-  doc.setFont("helvetica", "normal").setFontSize(8);
-  doc.text(`Data: ${p.data}`, sigCenterX, lineY + 8.5, { align: "center" });
+    // ===== INFO CARDS (4 mini-cards horizontais) =====
+    const cardH = 14;
+    const cardGap = 2;
+    const cardW = (contentW - cardGap * 3) / 4;
+    const cards = [
+      { label: "DATA", value: p.data, sub: p.diaSemana.toUpperCase() },
+      { label: "TURNO", value: p.turno ?? "—", sub: p.horario ?? "" },
+      { label: "SETOR", value: p.setor ?? "—", sub: p.centroCusto ? `C.C. ${p.centroCusto}` : "" },
+      { label: "REGIME", value: p.tipoEfetivo, sub: p.tipoEfetivo === "DMN" ? "EFETIVO" : p.tipoEfetivo === "MEI" ? "MEI" : "TERCEIRIZADO" },
+    ];
+    cards.forEach((c, i) => {
+      const cx = margin + i * (cardW + cardGap);
+      doc.setFillColor(...soft);
+      doc.roundedRect(cx, y, cardW, cardH, 1.5, 1.5, "F");
+      doc.setDrawColor(...line);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(cx, y, cardW, cardH, 1.5, 1.5, "S");
+      // Barra lateral de acento
+      doc.setFillColor(...accent);
+      doc.rect(cx, y, 1.2, cardH, "F");
+      doc.setTextColor(...muted);
+      doc.setFont("helvetica", "bold").setFontSize(6.5);
+      doc.text(c.label, cx + 3, y + 4);
+      doc.setTextColor(...brand);
+      doc.setFont("helvetica", "bold").setFontSize(10);
+      const val = c.value.length > 18 ? c.value.slice(0, 17) + "…" : c.value;
+      doc.text(val, cx + 3, y + 9);
+      if (c.sub) {
+        doc.setTextColor(...muted);
+        doc.setFont("helvetica", "normal").setFontSize(6.5);
+        doc.text(c.sub, cx + 3, y + 12.5);
+      }
+    });
+    y += cardH + 3;
+
+    // ===== Faixa "EMPRESAS ENVOLVIDAS" =====
+    const envH = 8;
+    doc.setFillColor(...brand);
+    doc.roundedRect(margin, y, contentW, envH, 1, 1, "F");
+    doc.setTextColor(...accent);
+    doc.setFont("helvetica", "bold").setFontSize(7);
+    doc.text("EMPRESAS ENVOLVIDAS", margin + 3, y + 5);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "normal").setFontSize(8);
+    const envText = p.empresasEnvolvidas.join("  •  ");
+    const envClipped = doc.splitTextToSize(envText, contentW - 50)[0] ?? envText;
+    doc.text(envClipped, margin + 48, y + 5);
+    y += envH + 4;
+
+    // ===== Title da equipe =====
+    doc.setTextColor(...brand);
+    doc.setFont("helvetica", "bold").setFontSize(11);
+    doc.text(`EQUIPE · ${pagina.empresaNome.toUpperCase()}`, margin, y + 3);
+    doc.setDrawColor(...accent);
+    doc.setLineWidth(0.6);
+    const titleW = doc.getTextWidth(`EQUIPE · ${pagina.empresaNome.toUpperCase()}`);
+    doc.line(margin, y + 5, margin + titleW, y + 5);
+    doc.setTextColor(...muted);
+    doc.setFont("helvetica", "normal").setFontSize(8);
+    doc.text(`${pagina.funcionarios.length} colaborador(es)`, margin + contentW, y + 3, { align: "right" });
+    y += 8;
+
+    // ===== TABELA =====
+    const headRowH = 9;
+    const colIt = 9;
+    const colNome = 72;
+    const colTrans = 22;
+    const colAlim = 22;
+    const colPres = 20;
+    const colAss = contentW - colIt - colNome - colTrans - colAlim - colPres;
+
+    // Cabeçalho
+    doc.setFillColor(...brand);
+    doc.roundedRect(margin, y, contentW, headRowH, 1, 1, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold").setFontSize(7.5);
+    doc.text("#", margin + colIt / 2, y + 5.8, { align: "center" });
+    doc.text("NOME COMPLETO", margin + colIt + 2, y + 5.8);
+    doc.text("TRANSP.", margin + colIt + colNome + colTrans / 2, y + 5.8, { align: "center" });
+    doc.text("ALIM.", margin + colIt + colNome + colTrans + colAlim / 2, y + 5.8, { align: "center" });
+    doc.text("PRES.", margin + colIt + colNome + colTrans + colAlim + colPres / 2, y + 5.8, { align: "center" });
+    doc.text("ASSINATURA", margin + colIt + colNome + colTrans + colAlim + colPres + colAss / 2, y + 5.8, { align: "center" });
+    y += headRowH;
+
+    // Linhas
+    const rowH = 9;
+    const sigReserve = 42;
+    const maxRows = Math.floor((pageH - margin - sigReserve - y) / rowH);
+    const rowsToDraw = Math.max(pagina.funcionarios.length, Math.min(15, maxRows));
+
+    for (let i = 0; i < rowsToDraw; i++) {
+      if (y + rowH > pageH - margin - sigReserve) break;
+      const f = pagina.funcionarios[i];
+
+      // Zebra
+      if (i % 2 === 1) {
+        doc.setFillColor(...zebra);
+        doc.rect(margin, y, contentW, rowH, "F");
+      }
+      // Linha inferior fina
+      doc.setDrawColor(...line);
+      doc.setLineWidth(0.15);
+      doc.line(margin, y + rowH, margin + contentW, y + rowH);
+
+      if (f) {
+        // #
+        doc.setTextColor(...muted);
+        doc.setFont("helvetica", "bold").setFontSize(8);
+        doc.text(String(i + 1).padStart(2, "0"), margin + colIt / 2, y + 5.8, { align: "center" });
+
+        // Nome
+        doc.setTextColor(...brand);
+        doc.setFont("helvetica", "bold").setFontSize(8.5);
+        const nome = f.nome.length > 42 ? f.nome.substring(0, 40) + "…" : f.nome;
+        doc.text(nome.toUpperCase(), margin + colIt + 3, y + 5.8);
+
+        // Badge helper
+        const drawBadge = (
+          on: boolean,
+          xCenter: number,
+        ) => {
+          const bw = 7;
+          const bh = 4.5;
+          const bx = xCenter - bw / 2;
+          const by = y + rowH / 2 - bh / 2;
+          if (on) {
+            doc.setFillColor(...accent);
+            doc.roundedRect(bx, by, bw, bh, 1, 1, "F");
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold").setFontSize(6.5);
+            doc.text("SIM", xCenter, by + 3.2, { align: "center" });
+          } else {
+            doc.setDrawColor(...line);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(bx, by, bw, bh, 1, 1, "S");
+            doc.setTextColor(...muted);
+            doc.setFont("helvetica", "normal").setFontSize(6.5);
+            doc.text("—", xCenter, by + 3.2, { align: "center" });
+          }
+        };
+
+        drawBadge(f.transporte, margin + colIt + colNome + colTrans / 2);
+        drawBadge(f.alimentacao, margin + colIt + colNome + colTrans + colAlim / 2);
+
+        // Presença
+        if (f.presenca) {
+          const isP = f.presenca.toUpperCase().startsWith("P");
+          doc.setTextColor(...(isP ? brand : accent));
+          doc.setFont("helvetica", "bold").setFontSize(9);
+          doc.text(f.presenca.toUpperCase(), margin + colIt + colNome + colTrans + colAlim + colPres / 2, y + 5.8, { align: "center" });
+        } else {
+          doc.setTextColor(...line);
+          doc.setFont("helvetica", "normal").setFontSize(9);
+          doc.text("·", margin + colIt + colNome + colTrans + colAlim + colPres / 2, y + 5.8, { align: "center" });
+        }
+
+        // Linha de assinatura
+        doc.setDrawColor(...line);
+        doc.setLineWidth(0.3);
+        const sx1 = margin + colIt + colNome + colTrans + colAlim + colPres + 3;
+        const sx2 = margin + contentW - 3;
+        doc.line(sx1, y + rowH - 2, sx2, y + rowH - 2);
+      }
+      y += rowH;
+    }
+
+    // ===== OBSERVAÇÃO =====
+    if (p.observacao && y + 18 < pageH - margin - sigReserve) {
+      y += 4;
+      doc.setFillColor(...soft);
+      const obsLines = doc.splitTextToSize(p.observacao, contentW - 10);
+      const obsH = Math.min(18, 6 + obsLines.length * 3.6);
+      doc.roundedRect(margin, y, contentW, obsH, 1.5, 1.5, "F");
+      doc.setFillColor(...accent);
+      doc.rect(margin, y, 1.2, obsH, "F");
+      doc.setTextColor(...accent);
+      doc.setFont("helvetica", "bold").setFontSize(7);
+      doc.text("OBSERVAÇÃO", margin + 3, y + 4);
+      doc.setTextColor(...brand);
+      doc.setFont("helvetica", "normal").setFontSize(8);
+      doc.text(obsLines.slice(0, 3), margin + 3, y + 8);
+      y += obsH;
+    }
+
+    // ===== RODAPÉ COM ASSINATURA =====
+    const sigBlockH = 36;
+    const sigY = pageH - margin - sigBlockH;
+    doc.setFillColor(...soft);
+    doc.roundedRect(margin, sigY, contentW, sigBlockH, 2, 2, "F");
+    doc.setFillColor(...brand);
+    doc.rect(margin, sigY, contentW, 1.5, "F");
+
+    // Coluna esquerda: assinatura
+    const sigColW = contentW * 0.55;
+    const sigCenterX = margin + sigColW / 2;
+    if (p.assinaturaDataUrl) {
+      try {
+        const h = Math.min(p.assinaturaHeight ?? 16, 18);
+        const w = h * 2.5;
+        doc.addImage(p.assinaturaDataUrl, "PNG", sigCenterX - w / 2, sigY + 5, w, h, undefined, "FAST");
+      } catch {}
+    }
+    doc.setDrawColor(...brand);
+    doc.setLineWidth(0.5);
+    doc.line(margin + 12, sigY + 25, margin + sigColW - 12, sigY + 25);
+    doc.setTextColor(...brand);
+    doc.setFont("helvetica", "bold").setFontSize(8);
+    doc.text(
+      `SOLICITANTE${p.solicitanteNome ? " · " + p.solicitanteNome.toUpperCase() : ""}`,
+      sigCenterX,
+      sigY + 29,
+      { align: "center" },
+    );
+    doc.setFont("helvetica", "normal").setFontSize(7);
+    doc.setTextColor(...muted);
+    doc.text(`Emitido em ${p.data}`, sigCenterX, sigY + 33, { align: "center" });
+
+    // Divisor vertical
+    doc.setDrawColor(...line);
+    doc.setLineWidth(0.3);
+    doc.line(margin + sigColW, sigY + 4, margin + sigColW, sigY + sigBlockH - 4);
+
+    // Coluna direita: gestor/aprovação
+    const apvX = margin + sigColW;
+    const apvW = contentW - sigColW;
+    const apvCenter = apvX + apvW / 2;
+    doc.line(apvX + 12, sigY + 25, apvX + apvW - 12, sigY + 25);
+    doc.setTextColor(...brand);
+    doc.setFont("helvetica", "bold").setFontSize(8);
+    doc.text("APROVAÇÃO / GESTOR", apvCenter, sigY + 29, { align: "center" });
+    doc.setFont("helvetica", "normal").setFontSize(7);
+    doc.setTextColor(...muted);
+    doc.text("Assinatura e data", apvCenter, sigY + 33, { align: "center" });
+
+    // Rodapé inferior — paginação
+    doc.setTextColor(...muted);
+    doc.setFont("helvetica", "normal").setFontSize(6.5);
+    doc.text(
+      `Página ${idx + 1} de ${total} · ${pagina.empresaNome.toUpperCase()}`,
+      margin,
+      pageH - 4,
+    );
+    doc.text("Documento interno · não homologado", margin + contentW, pageH - 4, { align: "right" });
   };
 
   const paginas = p.paginas.length > 0 ? p.paginas : [{ empresaNome: "—", funcionarios: [] }];
