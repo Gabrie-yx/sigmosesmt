@@ -33,7 +33,6 @@ import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppCascosRouteImport } from './routes/app.cascos'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppAprsRouteImport } from './routes/app.aprs'
-import { Route as AppAcoesRouteImport } from './routes/app.acoes'
 import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
@@ -183,11 +182,6 @@ const AppAuditRoute = AppAuditRouteImport.update({
 const AppAprsRoute = AppAprsRouteImport.update({
   id: '/aprs',
   path: '/aprs',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAcoesRoute = AppAcoesRouteImport.update({
-  id: '/acoes',
-  path: '/acoes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEstoqueIndexRoute = AppEstoqueIndexRouteImport.update({
@@ -357,7 +351,6 @@ export interface FileRoutesByFullPath {
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
-  '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
@@ -413,7 +406,6 @@ export interface FileRoutesByTo {
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
-  '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
@@ -470,7 +462,6 @@ export interface FileRoutesById {
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
-  '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
@@ -529,7 +520,6 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/reset-password'
     | '/termos'
-    | '/app/acoes'
     | '/app/aprs'
     | '/app/audit'
     | '/app/cascos'
@@ -585,7 +575,6 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/reset-password'
     | '/termos'
-    | '/app/acoes'
     | '/app/aprs'
     | '/app/audit'
     | '/app/cascos'
@@ -641,7 +630,6 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/reset-password'
     | '/termos'
-    | '/app/acoes'
     | '/app/aprs'
     | '/app/audit'
     | '/app/cascos'
@@ -871,13 +859,6 @@ declare module '@tanstack/react-router' {
       path: '/aprs'
       fullPath: '/app/aprs'
       preLoaderRoute: typeof AppAprsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/acoes': {
-      id: '/app/acoes'
-      path: '/acoes'
-      fullPath: '/app/acoes'
-      preLoaderRoute: typeof AppAcoesRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/estoque/': {
@@ -1112,7 +1093,6 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
-  AppAcoesRoute: typeof AppAcoesRoute
   AppAprsRoute: typeof AppAprsRoute
   AppAuditRoute: typeof AppAuditRoute
   AppCascosRoute: typeof AppCascosRoute
@@ -1158,7 +1138,6 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppAcoesRoute: AppAcoesRoute,
   AppAprsRoute: AppAprsRoute,
   AppAuditRoute: AppAuditRoute,
   AppCascosRoute: AppCascosRoute,
