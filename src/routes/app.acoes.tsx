@@ -466,6 +466,30 @@ function AcoesPage() {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {([
+              ["todas", "Todas", stats.total, "slate"],
+              ["andamento", "Em andamento", stats.pendentes, "blue"],
+              ["atrasadas", "Atrasadas", stats.atrasadas, "red"],
+              ["concluidas", "Concluídas", stats.concluidas, "emerald"],
+              ["eficacia", "Aguardando eficácia", stats.pendenteEficacia, "purple"],
+            ] as const).map(([key, label, count, color]) => {
+              const active = filtro === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setFiltro(key as any)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+                    active
+                      ? `bg-${color}-600 text-white border-${color}-600`
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {label} <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] ${active ? "bg-white/20" : "bg-slate-100 text-slate-600"}`}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
           {isLoading ? (
             <div className="text-sm text-slate-500">Carregando...</div>
           ) : filtered.length === 0 ? (
