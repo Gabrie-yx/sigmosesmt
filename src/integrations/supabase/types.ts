@@ -2119,6 +2119,7 @@ export type Database = {
           acoes_corretivas_lista: Json | null
           acoes_imediatas_lista: Json | null
           acoes_implementadas: boolean | null
+          analise_causa: string | null
           causa_raiz: string | null
           classificacao: string | null
           comentarios_eficacia: string | null
@@ -2159,6 +2160,7 @@ export type Database = {
           acoes_corretivas_lista?: Json | null
           acoes_imediatas_lista?: Json | null
           acoes_implementadas?: boolean | null
+          analise_causa?: string | null
           causa_raiz?: string | null
           classificacao?: string | null
           comentarios_eficacia?: string | null
@@ -2199,6 +2201,7 @@ export type Database = {
           acoes_corretivas_lista?: Json | null
           acoes_imediatas_lista?: Json | null
           acoes_implementadas?: boolean | null
+          analise_causa?: string | null
           causa_raiz?: string | null
           classificacao?: string | null
           comentarios_eficacia?: string | null
@@ -2251,17 +2254,26 @@ export type Database = {
           created_by: string | null
           custo: number | null
           data_conclusao: string | null
+          data_verificacao_eficacia: string | null
           descricao: string | null
+          eficacia_observacao: string | null
+          eficacia_validada_em: string | null
+          eficacia_validada_por: string | null
           evidencias: Json | null
           id: string
           incidente_id: string | null
           nc_id: string | null
           observacoes: string | null
           onde: string | null
+          origem_acao: string | null
           prioridade: string
           quando: string | null
+          responsavel_execucao: string | null
           responsavel_id: string | null
+          responsavel_validacao_id: string | null
           status: string
+          status_eficacia: string | null
+          tipo_registro: string
           titulo: string
           updated_at: string
         }
@@ -2272,17 +2284,26 @@ export type Database = {
           created_by?: string | null
           custo?: number | null
           data_conclusao?: string | null
+          data_verificacao_eficacia?: string | null
           descricao?: string | null
+          eficacia_observacao?: string | null
+          eficacia_validada_em?: string | null
+          eficacia_validada_por?: string | null
           evidencias?: Json | null
           id?: string
           incidente_id?: string | null
           nc_id?: string | null
           observacoes?: string | null
           onde?: string | null
+          origem_acao?: string | null
           prioridade?: string
           quando?: string | null
+          responsavel_execucao?: string | null
           responsavel_id?: string | null
+          responsavel_validacao_id?: string | null
           status?: string
+          status_eficacia?: string | null
+          tipo_registro?: string
           titulo: string
           updated_at?: string
         }
@@ -2293,17 +2314,26 @@ export type Database = {
           created_by?: string | null
           custo?: number | null
           data_conclusao?: string | null
+          data_verificacao_eficacia?: string | null
           descricao?: string | null
+          eficacia_observacao?: string | null
+          eficacia_validada_em?: string | null
+          eficacia_validada_por?: string | null
           evidencias?: Json | null
           id?: string
           incidente_id?: string | null
           nc_id?: string | null
           observacoes?: string | null
           onde?: string | null
+          origem_acao?: string | null
           prioridade?: string
           quando?: string | null
+          responsavel_execucao?: string | null
           responsavel_id?: string | null
+          responsavel_validacao_id?: string | null
           status?: string
+          status_eficacia?: string | null
+          tipo_registro?: string
           titulo?: string
           updated_at?: string
         }
@@ -2313,6 +2343,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_acoes_eficacia_validada_por_fkey"
+            columns: ["eficacia_validada_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -2327,6 +2364,13 @@ export type Database = {
             columns: ["nc_id"]
             isOneToOne: false
             referencedRelation: "nao_conformidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_acoes_responsavel_validacao_id_fkey"
+            columns: ["responsavel_validacao_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4101,6 +4145,10 @@ export type Database = {
       }
       requires_mfa: { Args: { _user_id: string }; Returns: boolean }
       snapshot_estoque_epi_monthly: { Args: never; Returns: undefined }
+      validar_eficacia_acao: {
+        Args: { _eficaz: boolean; _id: string; _obs?: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_module:
