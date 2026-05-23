@@ -69,6 +69,7 @@ function AcoesPage() {
   const { user, isModerator } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [filtro, setFiltro] = useState<"todas" | "andamento" | "atrasadas" | "concluidas" | "eficacia">("todas");
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("identificacao");
   const [form, setForm] = useState(EMPTY_FORM);
@@ -236,12 +237,25 @@ function AcoesPage() {
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    if (!s) return items;
-    return items.filter((i: any) =>
-      i.titulo?.toLowerCase().includes(s) ||
-      i.descricao?.toLowerCase().includes(s) ||
-      i.responsavel_execucao?.toLowerCase().includes(s));
-  }, [items, search]);
+    return items.filter((i: any) => {
+      if (s) {
+        const match =
+          i.titulo?.toLowerCase().includes(s) ||
+          i.descricao?.toLowerCase().includes(s) ||
+          i.responsavel_execucao?.toLowerCase().includes(s);
+        if (!match) return false;
+      }
+      const atrasada = i.quando && i.quando < hoje && i.status !== "CONCLUIDA" && i.status !== "CANCELADA";
+      const efDue = i.status === "CONCLUIDA" && i.status_eficacia === "PENDENTE";
+      switch (filtro) {
+        case "andamento": return i.status === "PENDENTE" || i.status === "EM_ANDAMENTO";
+        case "atrasadas": return atrasada;
+        case "concluidas": return i.status === "CONCLUIDA";
+        case "eficacia": return efDue;
+        default: return true;
+      }
+    });
+  }, [items, search, filtro, hoje]);
 
   const stats = useMemo(() => ({
     total: items.length,
