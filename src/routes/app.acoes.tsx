@@ -516,10 +516,24 @@ function AcoesPage() {
                           {i.quando && <span className={atrasada ? "text-red-600 font-semibold" : ""}>Prazo: {new Date(i.quando).toLocaleDateString("pt-BR")}</span>}
                           {i.custo != null && ` · R$ ${Number(i.custo).toFixed(2)}`}
                           {i.responsavel_execucao && ` · Exec: ${i.responsavel_execucao}`}
-                          {i.data_verificacao_eficacia && i.status === "CONCLUIDA" && (
-                            <span className="text-purple-700"> · Verif. eficácia: {new Date(i.data_verificacao_eficacia).toLocaleDateString("pt-BR")}</span>
-                          )}
                         </div>
+                        {i.data_verificacao_eficacia && i.status === "CONCLUIDA" && i.status_eficacia === "PENDENTE" && (() => {
+                          const dt = new Date(i.data_verificacao_eficacia);
+                          const diffDias = Math.ceil((dt.getTime() - agora.getTime()) / (1000 * 60 * 60 * 24));
+                          const vencida = diffDias <= 0;
+                          return (
+                            <div className={`mt-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium border ${
+                              vencida ? "bg-red-50 text-red-700 border-red-200" : "bg-purple-50 text-purple-700 border-purple-200"
+                            }`}>
+                              <ShieldCheck className="h-3.5 w-3.5" />
+                              {vencida ? (
+                                <>Validação atrasada há {Math.abs(diffDias)}d (era {dt.toLocaleDateString("pt-BR")})</>
+                              ) : (
+                                <>Validar eficácia em {dt.toLocaleDateString("pt-BR")} · faltam {diffDias} {diffDias === 1 ? "dia" : "dias"}</>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div className="flex gap-1 shrink-0 flex-wrap justify-end">
                         <Badge variant="outline" className={PRIO_STYLES[i.prioridade]}>{i.prioridade}</Badge>
