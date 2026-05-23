@@ -220,6 +220,32 @@ export function usePendencias() {
     },
   });
 
+  // Plano de Ações 5W2H — atrasadas (prazo vencido, não concluídas/canceladas)
+  const acoesAtrasadas = useQuery({
+    queryKey: ["pend-acoes-atrasadas", hoje],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("plano_acoes").select("id", { count: "exact", head: true })
+        .lt("quando", hoje)
+        .not("status", "in", "(CONCLUIDA,CANCELADA)");
+      return count ?? 0;
+    },
+  });
+
+  // Plano de Ações — pendentes de verificação de eficácia (prazo da eficácia já chegou)
+  const acoesEficacia = useQuery({
+    queryKey: ["pend-acoes-eficacia", hoje],
+    queryFn: async () => {
+      const nowIso = new Date().toISOString();
+      const { count } = await supabase
+        .from("plano_acoes").select("id", { count: "exact", head: true })
+        .eq("status", "CONCLUIDA")
+        .eq("status_eficacia", "PENDENTE")
+        .lte("data_verificacao_eficacia", nowIso);
+      return count ?? 0;
+    },
+  });
+
   // Inspeção mensal de EPI — dia útil ≥ 25 do mês, sem registro no mês
   // Sem tabela própria: marca como pendente nos últimos 5 dias úteis do mês
   const dia = hojeDateObj.getDate();
@@ -387,6 +413,20 @@ export function usePendencias() {
       severity: (extintoresSemInspecao.data ?? 0) > 0 ? "medio" : "ok",
       ok: (extintoresSemInspecao.data ?? 0) === 0,
       loading: extintoresSemInspecao.isLoading,
+    },
+    {
+      key: "acoes-atrasadas",
+      count: acoesAtrasadas.data ?? 0,
+      severity: (acoesAtrasadas.data ?? 0) > 0 ? "critico" : "ok",
+      ok: (acoesAtrasadas.data ?? 0) === 0,
+      loading: acoesAtrasadas.isLoading,
+    },
+    {
+      key: "acoes-eficacia",
+      count: acoesEficacia.data ?? 0,
+      severity: (acoesEficacia.data ?? 0) > 0 ? "alto" : "ok",
+      ok: (acoesEficacia.data ?? 0) === 0,
+      loading: acoesEficacia.isLoading,
     },
   ];
 
