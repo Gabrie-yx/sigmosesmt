@@ -69,6 +69,7 @@ function AcoesPage() {
   const { user, isModerator } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [filtro, setFiltro] = useState<"todas" | "andamento" | "atrasadas" | "concluidas" | "eficacia">("todas");
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("identificacao");
   const [form, setForm] = useState(EMPTY_FORM);
@@ -236,12 +237,25 @@ function AcoesPage() {
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    if (!s) return items;
-    return items.filter((i: any) =>
-      i.titulo?.toLowerCase().includes(s) ||
-      i.descricao?.toLowerCase().includes(s) ||
-      i.responsavel_execucao?.toLowerCase().includes(s));
-  }, [items, search]);
+    return items.filter((i: any) => {
+      if (s) {
+        const match =
+          i.titulo?.toLowerCase().includes(s) ||
+          i.descricao?.toLowerCase().includes(s) ||
+          i.responsavel_execucao?.toLowerCase().includes(s);
+        if (!match) return false;
+      }
+      const atrasada = i.quando && i.quando < hoje && i.status !== "CONCLUIDA" && i.status !== "CANCELADA";
+      const efDue = i.status === "CONCLUIDA" && i.status_eficacia === "PENDENTE";
+      switch (filtro) {
+        case "andamento": return i.status === "PENDENTE" || i.status === "EM_ANDAMENTO";
+        case "atrasadas": return atrasada;
+        case "concluidas": return i.status === "CONCLUIDA";
+        case "eficacia": return efDue;
+        default: return true;
+      }
+    });
+  }, [items, search, filtro, hoje]);
 
   const stats = useMemo(() => ({
     total: items.length,
@@ -452,6 +466,28 @@ function AcoesPage() {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {([
+              ["todas", "Todas", stats.total, "bg-slate-700 border-slate-700"],
+              ["andamento", "Em andamento", stats.pendentes, "bg-blue-600 border-blue-600"],
+              ["atrasadas", "Atrasadas", stats.atrasadas, "bg-red-600 border-red-600"],
+              ["concluidas", "Concluídas", stats.concluidas, "bg-emerald-600 border-emerald-600"],
+              ["eficacia", "Aguardando eficácia", stats.pendenteEficacia, "bg-purple-600 border-purple-600"],
+            ] as const).map(([key, label, count, activeCls]) => {
+              const active = filtro === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setFiltro(key as any)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+                    active ? `${activeCls} text-white` : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {label} <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] ${active ? "bg-white/25" : "bg-slate-100 text-slate-600"}`}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
           {isLoading ? (
             <div className="text-sm text-slate-500">Carregando...</div>
           ) : filtered.length === 0 ? (
@@ -480,10 +516,24 @@ function AcoesPage() {
                           {i.quando && <span className={atrasada ? "text-red-600 font-semibold" : ""}>Prazo: {new Date(i.quando).toLocaleDateString("pt-BR")}</span>}
                           {i.custo != null && ` · R$ ${Number(i.custo).toFixed(2)}`}
                           {i.responsavel_execucao && ` · Exec: ${i.responsavel_execucao}`}
-                          {i.data_verificacao_eficacia && i.status === "CONCLUIDA" && (
-                            <span className="text-purple-700"> · Verif. eficácia: {new Date(i.data_verificacao_eficacia).toLocaleDateString("pt-BR")}</span>
-                          )}
                         </div>
+                        {i.data_verificacao_eficacia && i.status === "CONCLUIDA" && i.status_eficacia === "PENDENTE" && (() => {
+                          const dt = new Date(i.data_verificacao_eficacia);
+                          const diffDias = Math.ceil((dt.getTime() - agora.getTime()) / (1000 * 60 * 60 * 24));
+                          const vencida = diffDias <= 0;
+                          return (
+                            <div className={`mt-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium border ${
+                              vencida ? "bg-red-50 text-red-700 border-red-200" : "bg-purple-50 text-purple-700 border-purple-200"
+                            }`}>
+                              <ShieldCheck className="h-3.5 w-3.5" />
+                              {vencida ? (
+                                <>Validação atrasada há {Math.abs(diffDias)}d (era {dt.toLocaleDateString("pt-BR")})</>
+                              ) : (
+                                <>Validar eficácia em {dt.toLocaleDateString("pt-BR")} · faltam {diffDias} {diffDias === 1 ? "dia" : "dias"}</>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div className="flex gap-1 shrink-0 flex-wrap justify-end">
                         <Badge variant="outline" className={PRIO_STYLES[i.prioridade]}>{i.prioridade}</Badge>
