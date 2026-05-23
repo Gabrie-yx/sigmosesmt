@@ -113,7 +113,7 @@ function AcoesPage() {
 
   useEffect(() => {
     if (selectedNc?.analise_causa && !form.analise_causa) {
-      setForm((f) => ({ ...f, analise_causa: selectedNc.analise_causa }));
+      setForm((f) => ({ ...f, analise_causa: selectedNc.analise_causa ?? "" }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNc?.id]);
@@ -482,7 +482,7 @@ function AcoesPage() {
             <DialogTitle>Validar Eficácia da Ação</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="text-sm text-slate-600 border-l-2 border-purple-300 pl-3">{eficaciaOpen?.titulo}</div>
+            <div className="text-sm text-slate-600 border-l-2 border-purple-300 pl-3">{eficaciaOpen?.titulo ?? ""}</div>
             <div>
               <Label className="mb-2 block">A ação eliminou definitivamente a causa raiz?</Label>
               <RadioGroup
