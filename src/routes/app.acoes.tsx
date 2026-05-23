@@ -177,7 +177,7 @@ function AcoesPage() {
       const { error } = await supabase.rpc("validar_eficacia_acao", {
         _id: eficaciaOpen.id,
         _eficaz: eficaciaForm.eficaz === "true",
-        _obs: eficaciaForm.obs || null,
+        _obs: eficaciaForm.obs || undefined,
       });
       if (error) throw error;
     },
