@@ -265,12 +265,12 @@ function AcoesPage() {
           </h1>
           <p className="text-sm text-slate-500">Ações corretivas e melhorias — ISO 9001:2015 (PDCA)</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setEditingId(null); setForm(EMPTY_FORM); setTab("identificacao"); } }}>
           <DialogTrigger asChild>
             <Button className="bg-red-700 hover:bg-red-800"><Plus className="h-4 w-4 mr-1" /> Nova ação</Button>
           </DialogTrigger>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Nova Ação · 5W2H</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editingId ? "Editar Ação · 5W2H" : "Nova Ação · 5W2H"}</DialogTitle></DialogHeader>
             <Tabs value={tab} onValueChange={setTab} className="mt-2">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="identificacao">1. Identificação</TabsTrigger>
@@ -496,6 +496,9 @@ function AcoesPage() {
                       </div>
                     </div>
                     <div className="flex gap-2 mt-2 justify-end">
+                      <Button size="sm" variant="outline" onClick={() => openEdit(i)}>
+                        <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+                      </Button>
                       {i.status !== "CONCLUIDA" && i.status !== "CANCELADA" && (
                         <Button size="sm" variant="outline" onClick={() => concluir.mutate(i.id)} disabled={concluir.isPending}>
                           <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Concluir
@@ -508,6 +511,21 @@ function AcoesPage() {
                           onClick={() => { setEficaciaOpen({ id: i.id, titulo: i.titulo }); setEficaciaForm({ eficaz: "true", obs: "" }); }}
                         >
                           <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Validar eficácia
+                        </Button>
+                      )}
+                      {isModerator && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => {
+                            if (confirm(`Excluir a ação "${i.titulo}"? Esta operação não pode ser desfeita.`)) {
+                              excluir.mutate(i.id);
+                            }
+                          }}
+                          disabled={excluir.isPending}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
