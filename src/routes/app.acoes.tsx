@@ -367,9 +367,11 @@ function AcoesPage() {
                       <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none">— Não definido —</SelectItem>
-                        {profiles.map((p: any) => (
-                          <SelectItem key={p.id} value={p.id}>{p.full_name ?? p.id.slice(0, 8)}</SelectItem>
-                        ))}
+                        {profiles
+                          .filter((p: any) => p.id !== user?.id)
+                          .map((p: any) => (
+                            <SelectItem key={p.id} value={p.id}>{p.full_name ?? p.id.slice(0, 8)}</SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
