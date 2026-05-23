@@ -3,7 +3,7 @@ import {
   Megaphone, Package, ShoppingCart, ShieldAlert, Stethoscope, CheckCircle2, ArrowRight,
   CalendarClock, FileWarning, Syringe, UserX, ClipboardCheck, GraduationCap, KeyRound, BellOff,
   FileWarning as TncIcon,
-  HelpCircle, PackageX,
+  HelpCircle, PackageX, Wrench, ShieldCheck,
 } from "lucide-react";
 import { Sigla } from "@/components/sigla";
 import { cn } from "@/lib/utils";
@@ -111,6 +111,18 @@ const META: Record<string, CardMeta> = {
     descricaoPend: () => "Fim de mês: registre a inspeção mensal antes de fechar.",
     descricaoOk: "Inspeção mensal já realizada.",
     to: "/app/estoque/epi", icon: ClipboardCheck, ctaPend: "Realizar inspeção", snoozable: true,
+  },
+  "acoes-atrasadas": {
+    titulo: "Ações 5W2H atrasadas",
+    descricaoPend: (n) => `${n} ação(ões) do plano com prazo vencido — trate antes da auditoria.`,
+    descricaoOk: "Plano de ações em dia.",
+    to: "/app/acoes", icon: Wrench, ctaPend: "Tratar ações",
+  },
+  "acoes-eficacia": {
+    titulo: "Eficácia pendente de validação",
+    descricaoPend: (n) => `${n} ação(ões) concluídas aguardando validação da eficácia (ISO 9001).`,
+    descricaoOk: "Nenhuma eficácia em aberto.",
+    to: "/app/acoes", icon: ShieldCheck, ctaPend: "Validar eficácia",
   },
 };
 
