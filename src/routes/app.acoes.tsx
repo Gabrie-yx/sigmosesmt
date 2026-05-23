@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Wrench, Plus, Search, CheckCircle2, Clock, AlertTriangle, ShieldCheck, Info, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Wrench, Plus, Search, CheckCircle2, Clock, AlertTriangle, ShieldCheck, Info, ThumbsUp, ThumbsDown, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/acoes")({
@@ -72,6 +72,7 @@ function AcoesPage() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("identificacao");
   const [form, setForm] = useState(EMPTY_FORM);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [eficaciaOpen, setEficaciaOpen] = useState<null | { id: string; titulo: string }>(null);
   const [eficaciaForm, setEficaciaForm] = useState<{ eficaz: "true" | "false"; obs: string }>({ eficaz: "true", obs: "" });
 
@@ -129,7 +130,7 @@ function AcoesPage() {
           .eq("id", form.nc_id);
         if (ncErr) throw ncErr;
       }
-      const { error } = await supabase.from("plano_acoes").insert({
+      const payload = {
         titulo: form.titulo,
         descricao: form.descricao || null,
         tipo_registro: form.tipo_registro,
@@ -143,14 +144,20 @@ function AcoesPage() {
         responsavel_execucao: form.responsavel_execucao || null,
         responsavel_validacao_id: form.responsavel_validacao_id || null,
         observacoes: form.observacoes || null,
-        created_by: user?.id ?? null,
-      });
-      if (error) throw error;
+      };
+      if (editingId) {
+        const { error } = await supabase.from("plano_acoes").update(payload).eq("id", editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("plano_acoes").insert({ ...payload, created_by: user?.id ?? null });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Ação adicionada ao plano");
+      toast.success(editingId ? "Ação atualizada" : "Ação adicionada ao plano");
       setOpen(false);
       setForm(EMPTY_FORM);
+      setEditingId(null);
       setTab("identificacao");
       qc.invalidateQueries({ queryKey: ["plano-acoes"] });
       qc.invalidateQueries({ queryKey: ["ncs-min"] });
@@ -170,6 +177,40 @@ function AcoesPage() {
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("plano_acoes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Ação excluída");
+      qc.invalidateQueries({ queryKey: ["plano-acoes"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro"),
+  });
+
+  function openEdit(i: any) {
+    setEditingId(i.id);
+    setForm({
+      tipo_registro: i.tipo_registro ?? "ACAO_CORRETIVA",
+      origem_acao: i.origem_acao ?? "",
+      nc_id: i.nc_id ?? "",
+      titulo: i.titulo ?? "",
+      descricao: i.descricao ?? "",
+      analise_causa: "",
+      como: i.como ?? "",
+      onde: i.onde ?? "",
+      quando: i.quando ? String(i.quando).slice(0, 10) : "",
+      prioridade: i.prioridade ?? "MEDIA",
+      custo: i.custo != null ? String(i.custo) : "",
+      responsavel_execucao: i.responsavel_execucao ?? "",
+      responsavel_validacao_id: i.responsavel_validacao_id ?? "",
+      observacoes: i.observacoes ?? "",
+    });
+    setTab("identificacao");
+    setOpen(true);
+  }
 
   const validarEficacia = useMutation({
     mutationFn: async () => {
