@@ -488,7 +488,6 @@ function AcoesPage() {
               );
             })}
           </div>
-          </div>
           {isLoading ? (
             <div className="text-sm text-slate-500">Carregando...</div>
           ) : filtered.length === 0 ? (
