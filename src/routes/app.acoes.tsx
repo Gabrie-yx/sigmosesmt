@@ -468,27 +468,26 @@ function AcoesPage() {
         <CardContent>
           <div className="flex flex-wrap gap-2 mb-4">
             {([
-              ["todas", "Todas", stats.total, "slate"],
-              ["andamento", "Em andamento", stats.pendentes, "blue"],
-              ["atrasadas", "Atrasadas", stats.atrasadas, "red"],
-              ["concluidas", "Concluídas", stats.concluidas, "emerald"],
-              ["eficacia", "Aguardando eficácia", stats.pendenteEficacia, "purple"],
-            ] as const).map(([key, label, count, color]) => {
+              ["todas", "Todas", stats.total, "bg-slate-700 border-slate-700"],
+              ["andamento", "Em andamento", stats.pendentes, "bg-blue-600 border-blue-600"],
+              ["atrasadas", "Atrasadas", stats.atrasadas, "bg-red-600 border-red-600"],
+              ["concluidas", "Concluídas", stats.concluidas, "bg-emerald-600 border-emerald-600"],
+              ["eficacia", "Aguardando eficácia", stats.pendenteEficacia, "bg-purple-600 border-purple-600"],
+            ] as const).map(([key, label, count, activeCls]) => {
               const active = filtro === key;
               return (
                 <button
                   key={key}
                   onClick={() => setFiltro(key as any)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
-                    active
-                      ? `bg-${color}-600 text-white border-${color}-600`
-                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                    active ? `${activeCls} text-white` : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                   }`}
                 >
-                  {label} <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] ${active ? "bg-white/20" : "bg-slate-100 text-slate-600"}`}>{count}</span>
+                  {label} <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] ${active ? "bg-white/25" : "bg-slate-100 text-slate-600"}`}>{count}</span>
                 </button>
               );
             })}
+          </div>
           </div>
           {isLoading ? (
             <div className="text-sm text-slate-500">Carregando...</div>
