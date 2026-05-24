@@ -269,7 +269,9 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     ...emptyApr,
     ...((qc.getQueryData(["apr-form-draft", "new"]) as Partial<APR> | undefined) ?? {}),
   }));
-  const [riscos, setRiscos] = useState<Risco[]>([]);
+  const [riscos, setRiscos] = useState<Risco[]>(
+    () => (qc.getQueryData(["apr-form-draft", "new-riscos"]) as Risco[] | undefined) ?? [],
+  );
   const [assinaturas, setAssinaturas] = useState<Assin[]>([]);
   const [tab, setTab] = useState<"p1" | "p2" | "p3" | "p4" | "p5">("p1");
   const [pteSheetOpen, setPteSheetOpen] = useState(false);

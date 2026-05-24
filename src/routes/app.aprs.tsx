@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { AprForm } from "@/components/aprs/apr-form";
+import { AprModeloPicker, type AprModelo } from "@/components/aprs/apr-modelo-picker";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { abrirAprPdf, imprimirAprPdf, baixarAprPdf } from "@/lib/apr-pdf-loader";
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
@@ -47,6 +48,7 @@ function AprsPage() {
   const navigate = useNavigate();
   const { isEditor, isAdmin } = useAuth();
   const [editing, setEditing] = useState<string | null | "new">(null);
+  const [modeloPickerOpen, setModeloPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [filterCasco, setFilterCasco] = useState<string>("ALL");
@@ -117,16 +119,27 @@ function AprsPage() {
           <p className="text-sm text-slate-500 mt-1">{filtered.length} APR(s) listadas</p>
         </div>
         {isEditor && (
-          <Button
-            onClick={() => {
-              qc.setQueryData(["apr-form-draft", "new"], newAprDraft);
-              setEditing("new");
-            }}
-            size="lg"
-            className="bg-[#991b1b] hover:bg-[#7f1d1d]"
-          >
-            <Plus className="h-4 w-4 mr-1" /> Nova APR
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setModeloPickerOpen(true)}
+              size="lg"
+              variant="outline"
+              className="border-amber-500 text-amber-700 hover:bg-amber-50"
+            >
+              <Zap className="h-4 w-4 mr-1" /> A partir de modelo
+            </Button>
+            <Button
+              onClick={() => {
+                qc.setQueryData(["apr-form-draft", "new"], newAprDraft);
+                qc.setQueryData(["apr-form-draft", "new-riscos"], []);
+                setEditing("new");
+              }}
+              size="lg"
+              className="bg-[#991b1b] hover:bg-[#7f1d1d]"
+            >
+              <Plus className="h-4 w-4 mr-1" /> Nova APR
+            </Button>
+          </div>
         )}
       </div>
 
@@ -267,6 +280,40 @@ function AprsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AprModeloPicker
+        open={modeloPickerOpen}
+        onOpenChange={setModeloPickerOpen}
+        onSelect={(modelo: AprModelo) => {
+          // Pré-popula APR com campos do modelo
+          qc.setQueryData(["apr-form-draft", "new"], {
+            ...newAprDraft,
+            atividade_descricao: modelo.atividade_descricao,
+            setor: modelo.setor_padrao ?? null,
+            local: modelo.local_padrao ?? null,
+            condicoes_climaticas: modelo.condicoes_climaticas ?? null,
+            observacoes_gerais: modelo.observacoes_gerais ?? null,
+            exige_pte: modelo.exige_pte,
+          });
+          // Pré-popula riscos (adiciona ordem)
+          const riscosComOrdem = (modelo.riscos ?? []).map((r: any, i: number) => ({
+            ordem: i + 1,
+            risco_nome: r.risco_nome ?? "",
+            risco_categoria: r.risco_categoria ?? null,
+            efeitos_danos: r.efeitos_danos ?? null,
+            probabilidade: r.probabilidade ?? 1,
+            severidade: r.severidade ?? 1,
+            acoes_preventivas: r.acoes_preventivas ?? null,
+            epis: Array.isArray(r.epis) ? r.epis : [],
+            nrs: Array.isArray(r.nrs) ? r.nrs : [],
+            responsavel_acoes: r.responsavel_acoes ?? null,
+            passo_a_passo: r.passo_a_passo ?? null,
+          }));
+          qc.setQueryData(["apr-form-draft", "new-riscos"], riscosComOrdem);
+          setEditing("new");
+          toast.success(`Modelo "${modelo.nome}" carregado — ${riscosComOrdem.length} riscos pré-preenchidos`);
+        }}
+      />
     </div>
   );
 }
