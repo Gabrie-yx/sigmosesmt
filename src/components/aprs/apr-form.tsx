@@ -325,8 +325,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
       .filter((p) => p.status !== "CANCELADA" && p.status !== "ENCERRADA")
       .forEach((p) => map.set(p.id, p));
     if (apr.pte_id && pte && pte.status !== "CANCELADA" && pte.status !== "ENCERRADA" && !map.has(apr.pte_id)) map.set(apr.pte_id, pte);
+    // Rascunho: PTEs vinculadas antes do save (apr_id ainda não persistido)
+    for (const draftId of draftPteIds) {
+      if (map.has(draftId)) continue;
+      const draftPte = (ptes as any[]).find((p: any) => p.id === draftId);
+      if (draftPte && draftPte.status !== "CANCELADA" && draftPte.status !== "ENCERRADA") {
+        map.set(draftId, draftPte);
+      }
+    }
     return Array.from(map.values());
-  }, [linkedPtes, apr.pte_id, pte]);
+  }, [linkedPtes, apr.pte_id, pte, draftPteIds, ptes]);
   /** Para cada categoria detectada → PTE que a cobre (match por ptes.risco === riscoLabel) */
   const coberturaCategorias = useMemo(() => {
     return categoriasDetectadas.map((cat) => {
