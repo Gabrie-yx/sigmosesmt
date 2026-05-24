@@ -42,6 +42,7 @@ export function PteLookupSheet({
     risco: defaultRisco,
     local: aprLocal ?? "",
     employee_id: "",
+    company_id: "",
   });
 
   useEffect(() => {
@@ -50,10 +51,11 @@ export function PteLookupSheet({
         ...f,
         risco: defaultRisco,
         local: f.local || aprLocal || "",
+        company_id: f.company_id || empresaId || "",
       }));
       setFiltrarPorRisco(!!riscoSugerido);
     }
-  }, [open, defaultRisco, aprLocal, riscoSugerido]);
+  }, [open, defaultRisco, aprLocal, riscoSugerido, empresaId]);
 
   const { data: ptes = [] } = useQuery({
     queryKey: ["ptes-lookup"],
@@ -63,14 +65,23 @@ export function PteLookupSheet({
     enabled: open,
   });
 
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies-pte-lookup"],
+    queryFn: async () =>
+      (await supabase.from("companies").select("id,name").order("name")).data ?? [],
+    enabled: open && tab === "nova",
+  });
+
+  const selectedCompanyId = form.company_id || empresaId || "";
+
   const { data: emps = [] } = useQuery({
-    queryKey: ["employees-pte-lookup", empresaId],
+    queryKey: ["employees-pte-lookup", selectedCompanyId],
     queryFn: async () => {
       let q = supabase.from("employees").select("id,nome,matricula,company_id,status").eq("status", "ATIVO").order("nome");
-      if (empresaId) q = q.eq("company_id", empresaId);
+      if (selectedCompanyId) q = q.eq("company_id", selectedCompanyId);
       return (await q).data ?? [];
     },
-    enabled: open && tab === "nova",
+    enabled: open && tab === "nova" && !!selectedCompanyId,
   });
 
   const filtered = useMemo(() => {
@@ -123,7 +134,7 @@ export function PteLookupSheet({
         status: "ATIVA", dados: {},
         employee_id: form.employee_id || null,
         employee_name: emp?.nome ?? null,
-        company_id: emp?.company_id ?? empresaId ?? null,
+        company_id: emp?.company_id ?? selectedCompanyId ?? null,
         apr_id: aprId ?? null,
       }).select("id").single();
       if (error) throw error;
@@ -237,10 +248,31 @@ export function PteLookupSheet({
             </div>
             <div>
               <Label className="text-[10px] font-black uppercase text-slate-500">
-                Executante {empresaId ? "(filtrado pela empresa da APR)" : "(opcional)"}
+                Empresa {empresaId ? "(pré-selecionada pela APR)" : ""}
               </Label>
-              <Select value={form.employee_id || "none"} onValueChange={(v) => setForm({ ...form, employee_id: v === "none" ? "" : v })}>
-                <SelectTrigger className="mt-1"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+              <Select
+                value={selectedCompanyId || "none"}
+                onValueChange={(v) => setForm({ ...form, company_id: v === "none" ? "" : v, employee_id: "" })}
+              >
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Selecionar empresa..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Nenhuma —</SelectItem>
+                  {companies.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-[10px] font-black uppercase text-slate-500">
+                Executante {selectedCompanyId ? "(filtrado pela empresa)" : "(selecione uma empresa)"}
+              </Label>
+              <Select
+                value={form.employee_id || "none"}
+                onValueChange={(v) => setForm({ ...form, employee_id: v === "none" ? "" : v })}
+                disabled={!selectedCompanyId}
+              >
+                <SelectTrigger className="mt-1"><SelectValue placeholder={selectedCompanyId ? "Selecionar..." : "Escolha a empresa primeiro"} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Nenhum —</SelectItem>
                   {emps.map((e: any) => (
