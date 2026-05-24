@@ -276,6 +276,10 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const [tab, setTab] = useState<"p1" | "p2" | "p3" | "p4" | "p5">("p1");
   const [pteSheetOpen, setPteSheetOpen] = useState(false);
   const [pteSheetRiscoSugerido, setPteSheetRiscoSugerido] = useState<string | null>(null);
+  // PTEs vinculadas "no rascunho" (APR ainda não salva) — guardamos os IDs aqui
+  // para que a cobertura por categoria funcione antes do save. No save, gravamos
+  // apr_id nessas linhas.
+  const [draftPteIds, setDraftPteIds] = useState<string[]>([]);
   const currentAprId = apr.id ?? aprId ?? null;
 
   // catálogos
@@ -321,8 +325,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
       .filter((p) => p.status !== "CANCELADA" && p.status !== "ENCERRADA")
       .forEach((p) => map.set(p.id, p));
     if (apr.pte_id && pte && pte.status !== "CANCELADA" && pte.status !== "ENCERRADA" && !map.has(apr.pte_id)) map.set(apr.pte_id, pte);
+    // Rascunho: PTEs vinculadas antes do save (apr_id ainda não persistido)
+    for (const draftId of draftPteIds) {
+      if (map.has(draftId)) continue;
+      const draftPte = (ptes as any[]).find((p: any) => p.id === draftId);
+      if (draftPte && draftPte.status !== "CANCELADA" && draftPte.status !== "ENCERRADA") {
+        map.set(draftId, draftPte);
+      }
+    }
     return Array.from(map.values());
-  }, [linkedPtes, apr.pte_id, pte]);
+  }, [linkedPtes, apr.pte_id, pte, draftPteIds, ptes]);
   /** Para cada categoria detectada → PTE que a cobre (match por ptes.risco === riscoLabel) */
   const coberturaCategorias = useMemo(() => {
     return categoriasDetectadas.map((cat) => {
@@ -564,10 +576,21 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         if (e3) throw e3;
       }
 
+      // Persiste apr_id em PTEs vinculadas durante o rascunho (antes do save).
+      if (draftPteIds.length > 0 && id) {
+        await supabase
+          .from("ptes")
+          .update({ apr_id: id })
+          .in("id", draftPteIds)
+          .is("apr_id", null);
+      }
+
       return id!;
     },
     onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["aprs"] });
+      qc.invalidateQueries({ queryKey: ["ptes-linked-apr", id] });
+      qc.invalidateQueries({ queryKey: ["ptes-light"] });
       toast.success("APR salva");
       setApr((a) => ({ ...a, id }));
     },
@@ -1112,6 +1135,9 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           // ela é a única referência da PTE anterior (que não tem apr_id próprio).
           // Sobrescrever causa a PTE antiga "sumir" da cobertura e gerar loop.
           setApr((a) => ({ ...a, pte_id: a.pte_id ?? pteId, exige_pte: true }));
+          // Mantém o registro de TODAS as PTEs vinculadas no rascunho — assim a
+          // cobertura por categoria funciona mesmo antes de salvar a APR.
+          setDraftPteIds((ids) => (ids.includes(pteId) ? ids : [...ids, pteId]));
           // Migra a PTE legada para o modelo moderno (apr_id na própria linha),
           // garantindo que apareça em linkedPtes e a cobertura seja estável.
           (async () => {
@@ -1120,6 +1146,14 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                 .from("ptes")
                 .update({ apr_id: currentAprId })
                 .eq("id", apr.pte_id)
+                .is("apr_id", null);
+            }
+            // Se a APR já existe, vincula imediatamente a nova PTE também.
+            if (currentAprId) {
+              await supabase
+                .from("ptes")
+                .update({ apr_id: currentAprId })
+                .eq("id", pteId)
                 .is("apr_id", null);
             }
             qc.invalidateQueries({ queryKey: ["ptes-light"] });
