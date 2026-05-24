@@ -280,6 +280,40 @@ function AprsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AprModeloPicker
+        open={modeloPickerOpen}
+        onOpenChange={setModeloPickerOpen}
+        onSelect={(modelo: AprModelo) => {
+          // Pré-popula APR com campos do modelo
+          qc.setQueryData(["apr-form-draft", "new"], {
+            ...newAprDraft,
+            atividade_descricao: modelo.atividade_descricao,
+            setor: modelo.setor_padrao ?? null,
+            local: modelo.local_padrao ?? null,
+            condicoes_climaticas: modelo.condicoes_climaticas ?? null,
+            observacoes_gerais: modelo.observacoes_gerais ?? null,
+            exige_pte: modelo.exige_pte,
+          });
+          // Pré-popula riscos (adiciona ordem)
+          const riscosComOrdem = (modelo.riscos ?? []).map((r: any, i: number) => ({
+            ordem: i + 1,
+            risco_nome: r.risco_nome ?? "",
+            risco_categoria: r.risco_categoria ?? null,
+            efeitos_danos: r.efeitos_danos ?? null,
+            probabilidade: r.probabilidade ?? 1,
+            severidade: r.severidade ?? 1,
+            acoes_preventivas: r.acoes_preventivas ?? null,
+            epis: Array.isArray(r.epis) ? r.epis : [],
+            nrs: Array.isArray(r.nrs) ? r.nrs : [],
+            responsavel_acoes: r.responsavel_acoes ?? null,
+            passo_a_passo: r.passo_a_passo ?? null,
+          }));
+          qc.setQueryData(["apr-form-draft", "new-riscos"], riscosComOrdem);
+          setEditing("new");
+          toast.success(`Modelo "${modelo.nome}" carregado — ${riscosComOrdem.length} riscos pré-preenchidos`);
+        }}
+      />
     </div>
   );
 }
