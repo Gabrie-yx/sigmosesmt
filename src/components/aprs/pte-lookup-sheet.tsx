@@ -77,12 +77,20 @@ export function PteLookupSheet({
   const { data: emps = [] } = useQuery({
     queryKey: ["employees-pte-lookup", selectedCompanyId],
     queryFn: async () => {
-      let q = supabase.from("employees").select("id,nome,matricula,company_id,status").eq("status", "ATIVO").order("nome");
+      let q = supabase.from("employees").select("id,nome,matricula,company_id,status,role_id").eq("status", "ATIVO").order("nome");
       if (selectedCompanyId) q = q.eq("company_id", selectedCompanyId);
       return (await q).data ?? [];
     },
     enabled: open && tab === "nova" && !!selectedCompanyId,
   });
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ["roles-pte-lookup"],
+    queryFn: async () =>
+      (await supabase.from("roles").select("id,name")).data ?? [],
+    enabled: open && tab === "nova",
+  });
+  const rolesMap = useMemo(() => new Map((roles as any[]).map((r) => [r.id, r.name])), [roles]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
