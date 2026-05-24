@@ -32,7 +32,7 @@ function PtesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkedAprId, setLinkedAprId] = useState<string | null>(null);
   const [f, setF] = useState<any>({
-    data: today, employee_id: "", risco: PTE_RISCOS[0], local: "",
+    data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "",
   });
 
   const { data: ptes = [] } = useQuery({
@@ -99,7 +99,8 @@ function PtesPage() {
   });
 
   const empOptions = useMemo(() => {
-    return emps.map((e: any) => {
+    const list = f.company_id ? emps.filter((e: any) => e.company_id === f.company_id) : emps;
+    return list.map((e: any) => {
       const role = roles.find((r: any) => r.id === e.role_id) ?? null;
       const empExams = exams.filter((x: any) => x.employee_id === e.id);
       const empVacs = vaccines.filter((x: any) => x.employee_id === e.id);
@@ -108,7 +109,7 @@ function PtesPage() {
       const comp = companies.find((c: any) => c.id === e.company_id);
       return { e, st, compName: comp?.name ?? "S/ EMPRESA" };
     });
-  }, [emps, roles, exams, vaccines, companies, overridesAll]);
+  }, [emps, roles, exams, vaccines, companies, overridesAll, f.company_id]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -196,11 +197,11 @@ function PtesPage() {
 
   function startEdit(p: any) {
     setEditingId(p.id);
-    setF({ data: p.data, employee_id: p.employee_id ?? "", risco: p.risco ?? PTE_RISCOS[0], local: p.local ?? "" });
+    setF({ data: p.data, employee_id: p.employee_id ?? "", risco: p.risco ?? PTE_RISCOS[0], local: p.local ?? "", company_id: p.company_id ?? "" });
   }
   function cancelEdit() {
     setEditingId(null);
-    setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "" });
+    setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "" });
   }
 
   return (
