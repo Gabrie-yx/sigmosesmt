@@ -74,6 +74,66 @@ export type Database = {
           },
         ]
       }
+      apr_modelos: {
+        Row: {
+          atividade_descricao: string
+          ativo: boolean
+          categoria: string
+          codigo: string
+          condicoes_climaticas: string | null
+          created_at: string
+          descricao_curta: string | null
+          exige_pte: boolean
+          id: string
+          local_padrao: string | null
+          nome: string
+          observacoes_gerais: string | null
+          ordem: number
+          ptes_sugeridas: string[]
+          riscos: Json
+          setor_padrao: string | null
+          updated_at: string
+        }
+        Insert: {
+          atividade_descricao: string
+          ativo?: boolean
+          categoria: string
+          codigo: string
+          condicoes_climaticas?: string | null
+          created_at?: string
+          descricao_curta?: string | null
+          exige_pte?: boolean
+          id?: string
+          local_padrao?: string | null
+          nome: string
+          observacoes_gerais?: string | null
+          ordem?: number
+          ptes_sugeridas?: string[]
+          riscos?: Json
+          setor_padrao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          atividade_descricao?: string
+          ativo?: boolean
+          categoria?: string
+          codigo?: string
+          condicoes_climaticas?: string | null
+          created_at?: string
+          descricao_curta?: string | null
+          exige_pte?: boolean
+          id?: string
+          local_padrao?: string | null
+          nome?: string
+          observacoes_gerais?: string | null
+          ordem?: number
+          ptes_sugeridas?: string[]
+          riscos?: Json
+          setor_padrao?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       apr_riscos: {
         Row: {
           acoes_preventivas: string | null
