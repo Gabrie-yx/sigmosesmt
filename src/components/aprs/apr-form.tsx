@@ -576,10 +576,21 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         if (e3) throw e3;
       }
 
+      // Persiste apr_id em PTEs vinculadas durante o rascunho (antes do save).
+      if (draftPteIds.length > 0 && id) {
+        await supabase
+          .from("ptes")
+          .update({ apr_id: id })
+          .in("id", draftPteIds)
+          .is("apr_id", null);
+      }
+
       return id!;
     },
     onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["aprs"] });
+      qc.invalidateQueries({ queryKey: ["ptes-linked-apr", id] });
+      qc.invalidateQueries({ queryKey: ["ptes-light"] });
       toast.success("APR salva");
       setApr((a) => ({ ...a, id }));
     },
