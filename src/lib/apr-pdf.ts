@@ -477,34 +477,15 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   const rowH = 7;
   const bodyH = rowH * linhasExec;
 
-  const tst = p.assinaturas.find((a) => a.papel === "TST");
-  const enc = p.assinaturas.find((a) => a.papel === "ENCARREGADO");
-  const elaborador = tst ?? enc;
-  const exec = p.assinaturas.filter((a) => a.papel === "EXECUTANTE");
-
-  // Caixa Elaborador (lado esquerdo, altura total)
+  // Caixa Elaborador (lado esquerdo, em branco para preenchimento manual)
   doc.rect(MARGIN, y, colLeftW, bodyH);
-  if (elaborador) {
-    doc.setFont("helvetica", "bold").setFontSize(9);
-    doc.text(elaborador.nome ?? "", MARGIN + 2, y + 5);
-    if (elaborador.funcao) {
-      doc.setFont("helvetica", "normal").setFontSize(8);
-      doc.text(elaborador.funcao, MARGIN + 2, y + 10);
-    }
-  }
 
-  // Linhas Executantes (lado direito)
-  doc.setFont("helvetica", "normal").setFontSize(9);
+  // Linhas Executantes (lado direito) — apenas numeradas, em branco
+  doc.setFont("helvetica", "bold").setFontSize(9);
   for (let i = 0; i < linhasExec; i++) {
     const ry = y + i * rowH;
     doc.rect(MARGIN + colLeftW, ry, colRightW, rowH);
-    const nome = exec[i]?.nome ?? "";
-    doc.setFont("helvetica", "bold").setFontSize(9);
     doc.text(`${i + 1} -`, MARGIN + colLeftW + 2, ry + 4.7);
-    if (nome) {
-      doc.setFont("helvetica", "normal").setFontSize(9);
-      doc.text(nome, MARGIN + colLeftW + 9, ry + 4.7);
-    }
   }
 }
 
