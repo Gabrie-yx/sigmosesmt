@@ -165,7 +165,7 @@ function PtesPage() {
       } });
       setEditingId(null);
       setLinkedAprId(null);
-      setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "" });
+      setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "" });
       toast.success(editingId ? "PTE atualizada" : "PTE emitida");
     },
     onError: (e: any) => toast.error(e.message),
@@ -250,6 +250,23 @@ function PtesPage() {
             </div>
 
             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+              <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-3">
+                <HardHat className="h-4 w-4" /> Empresa
+              </Label>
+              <Select
+                value={f.company_id || "none"}
+                onValueChange={(v) => setF({ ...f, company_id: v === "none" ? "" : v, employee_id: "" })}
+              >
+                <SelectTrigger className="bg-white text-xs font-bold uppercase mb-4">
+                  <SelectValue placeholder="-- TODAS AS EMPRESAS --" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— TODAS AS EMPRESAS —</SelectItem>
+                  {companies.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-3">
                 <HardHat className="h-4 w-4" /> Selecionar Executante (Apenas Aptos)
               </Label>
