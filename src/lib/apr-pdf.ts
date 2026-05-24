@@ -462,8 +462,22 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
       doc.text(fnc, x + sigW / 2, y + 28, { align: "center" });
     }
   }
-  caixaAssin(MARGIN, "Técnico em Segurança do Trabalho", tst?.nome ?? "", tst?.funcao);
-  caixaAssin(MARGIN + sigW + 8, "Responsável pelo Serviço", enc?.nome ?? "", enc?.funcao);
+  // Se TST e Responsável pelo Serviço forem a mesma pessoa, mostra um único
+  // bloco centralizado (evita assinatura duplicada do mesmo profissional).
+  const norm = (s?: string | null) => (s ?? "").trim().toLowerCase();
+  const mesmaPessoa =
+    !!tst && !!enc && norm(tst.nome) === norm(enc.nome) && norm(tst.nome) !== "";
+  if (mesmaPessoa) {
+    caixaAssin(
+      MARGIN + (CONTENT_W - sigW) / 2,
+      "Técnico em Segurança do Trabalho / Responsável pelo Serviço",
+      tst!.nome,
+      tst!.funcao,
+    );
+  } else {
+    caixaAssin(MARGIN, "Técnico em Segurança do Trabalho", tst?.nome ?? "", tst?.funcao);
+    caixaAssin(MARGIN + sigW + 8, "Responsável pelo Serviço", enc?.nome ?? "", enc?.funcao);
+  }
 }
 
 function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
