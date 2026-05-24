@@ -32,7 +32,7 @@ function PtesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkedAprId, setLinkedAprId] = useState<string | null>(null);
   const [f, setF] = useState<any>({
-    data: today, employee_id: "", risco: PTE_RISCOS[0], local: "",
+    data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "",
   });
 
   const { data: ptes = [] } = useQuery({
@@ -99,7 +99,8 @@ function PtesPage() {
   });
 
   const empOptions = useMemo(() => {
-    return emps.map((e: any) => {
+    const list = f.company_id ? emps.filter((e: any) => e.company_id === f.company_id) : emps;
+    return list.map((e: any) => {
       const role = roles.find((r: any) => r.id === e.role_id) ?? null;
       const empExams = exams.filter((x: any) => x.employee_id === e.id);
       const empVacs = vaccines.filter((x: any) => x.employee_id === e.id);
@@ -108,7 +109,7 @@ function PtesPage() {
       const comp = companies.find((c: any) => c.id === e.company_id);
       return { e, st, compName: comp?.name ?? "S/ EMPRESA" };
     });
-  }, [emps, roles, exams, vaccines, companies, overridesAll]);
+  }, [emps, roles, exams, vaccines, companies, overridesAll, f.company_id]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -164,7 +165,7 @@ function PtesPage() {
       } });
       setEditingId(null);
       setLinkedAprId(null);
-      setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "" });
+      setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "" });
       toast.success(editingId ? "PTE atualizada" : "PTE emitida");
     },
     onError: (e: any) => toast.error(e.message),
@@ -196,11 +197,11 @@ function PtesPage() {
 
   function startEdit(p: any) {
     setEditingId(p.id);
-    setF({ data: p.data, employee_id: p.employee_id ?? "", risco: p.risco ?? PTE_RISCOS[0], local: p.local ?? "" });
+    setF({ data: p.data, employee_id: p.employee_id ?? "", risco: p.risco ?? PTE_RISCOS[0], local: p.local ?? "", company_id: p.company_id ?? "" });
   }
   function cancelEdit() {
     setEditingId(null);
-    setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "" });
+    setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "" });
   }
 
   return (
@@ -249,6 +250,23 @@ function PtesPage() {
             </div>
 
             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+              <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-3">
+                <HardHat className="h-4 w-4" /> Empresa
+              </Label>
+              <Select
+                value={f.company_id || "none"}
+                onValueChange={(v) => setF({ ...f, company_id: v === "none" ? "" : v, employee_id: "" })}
+              >
+                <SelectTrigger className="bg-white text-xs font-bold uppercase mb-4">
+                  <SelectValue placeholder="-- TODAS AS EMPRESAS --" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— TODAS AS EMPRESAS —</SelectItem>
+                  {companies.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-3">
                 <HardHat className="h-4 w-4" /> Selecionar Executante (Apenas Aptos)
               </Label>
