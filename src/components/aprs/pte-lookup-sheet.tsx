@@ -283,9 +283,14 @@ export function PteLookupSheet({
                 <SelectTrigger className="mt-1"><SelectValue placeholder={selectedCompanyId ? "Selecionar..." : "Escolha a empresa primeiro"} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Nenhum —</SelectItem>
-                  {emps.map((e: any) => (
-                    <SelectItem key={e.id} value={e.id}>{e.nome}{e.matricula ? ` · ${e.matricula}` : ""}</SelectItem>
-                  ))}
+                  {emps.map((e: any) => {
+                    const funcao = rolesMap.get(e.role_id);
+                    return (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.nome}{funcao ? ` — ${funcao}` : ""}{e.matricula ? ` · ${e.matricula}` : ""}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
