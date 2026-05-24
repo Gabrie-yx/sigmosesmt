@@ -276,6 +276,10 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const [tab, setTab] = useState<"p1" | "p2" | "p3" | "p4" | "p5">("p1");
   const [pteSheetOpen, setPteSheetOpen] = useState(false);
   const [pteSheetRiscoSugerido, setPteSheetRiscoSugerido] = useState<string | null>(null);
+  // PTEs vinculadas "no rascunho" (APR ainda não salva) — guardamos os IDs aqui
+  // para que a cobertura por categoria funcione antes do save. No save, gravamos
+  // apr_id nessas linhas.
+  const [draftPteIds, setDraftPteIds] = useState<string[]>([]);
   const currentAprId = apr.id ?? aprId ?? null;
 
   // catálogos
