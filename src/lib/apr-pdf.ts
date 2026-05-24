@@ -433,39 +433,79 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   doc.setTextColor(0, 0, 0);
   y += 12;
 
-  // ASSINATURAS
-  doc.setFont("helvetica", "bold").setFontSize(13);
-  doc.text("A S S I N A T U R A S", PAGE_W / 2, y + 3, { align: "center" });
-  y += 8;
+  // Frase de segurança em vermelho
+  doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(220, 38, 38);
+  doc.text(
+    "“NENHUM TRABALHO É TÃO URGENTE OU IMPORTANTE QUE NÃO POSSA SER PLANEJADO E EXECUTADO COM SEGURANÇA”",
+    PAGE_W / 2,
+    y + 4,
+    { align: "center" },
+  );
+  doc.setTextColor(0, 0, 0);
+  y += 7;
+
+  // Cabeçalho "RELAÇÃO DOS ENVOLVIDOS:"
+  doc.setLineWidth(0.3);
+  doc.rect(MARGIN, y, CONTENT_W, 6);
+  doc.setFont("helvetica", "bold").setFontSize(9);
+  doc.text("RELAÇÃO DOS ENVOLVIDOS:", PAGE_W / 2, y + 4, { align: "center" });
+  y += 6;
+
+  // Tabela: Elaborador (esq) | Executantes da Atividade (dir)
+  const colLeftW = CONTENT_W * 0.42;
+  const colRightW = CONTENT_W - colLeftW;
+  const headerH = 6;
+
+  // Header
+  doc.setFillColor(219, 234, 247);
+  doc.rect(MARGIN, y, colLeftW, headerH, "F");
+  doc.rect(MARGIN + colLeftW, y, colRightW, headerH, "F");
+  doc.rect(MARGIN, y, colLeftW, headerH);
+  doc.rect(MARGIN + colLeftW, y, colRightW, headerH);
+  doc.setFont("helvetica", "bold").setFontSize(9);
+  doc.text("Elaborador", MARGIN + colLeftW / 2, y + 4, { align: "center" });
+  doc.text(
+    "EXECUTANTES DA ATIVIDADE",
+    MARGIN + colLeftW + colRightW / 2,
+    y + 4,
+    { align: "center" },
+  );
+  y += headerH;
+
+  // Corpo: 8 linhas de executantes à direita; bloco único à esquerda
+  const linhasExec = 8;
+  const rowH = 7;
+  const bodyH = rowH * linhasExec;
 
   const tst = p.assinaturas.find((a) => a.papel === "TST");
   const enc = p.assinaturas.find((a) => a.papel === "ENCARREGADO");
-  const sigW = CONTENT_W / 2 - 4;
-  const sigH = 40;
+  const elaborador = tst ?? enc;
+  const exec = p.assinaturas.filter((a) => a.papel === "EXECUTANTE");
 
-  function caixaAssin(x: number, papel: string, nome: string, fnc?: string | null) {
-    doc.setLineWidth(0.4);
-    doc.rect(x, y, sigW, sigH);
-    doc.setFillColor(245, 245, 245);
-    doc.rect(x, y, sigW, 7, "F");
-    doc.rect(x, y, sigW, 7);
-    doc.setFont("helvetica", "bold").setFontSize(10);
-    doc.text(papel, x + sigW / 2, y + 5, { align: "center" });
-    doc.setFont("helvetica", "normal").setFontSize(9);
-    if (nome) doc.text(nome, x + sigW / 2, y + 22, { align: "center" });
-    doc.setLineWidth(0.3);
-    doc.line(x + 6, y + sigH - 8, x + sigW - 6, y + sigH - 8);
-    doc.setFontSize(7).setFont("helvetica", "italic");
-    doc.text("Assinatura", x + sigW / 2, y + sigH - 4, { align: "center" });
-    if (fnc) {
-      doc.setFont("helvetica", "normal").setFontSize(7);
-      doc.text(fnc, x + sigW / 2, y + 28, { align: "center" });
+  // Caixa Elaborador (lado esquerdo, altura total)
+  doc.rect(MARGIN, y, colLeftW, bodyH);
+  if (elaborador) {
+    doc.setFont("helvetica", "bold").setFontSize(9);
+    doc.text(elaborador.nome ?? "", MARGIN + 2, y + 5);
+    if (elaborador.funcao) {
+      doc.setFont("helvetica", "normal").setFontSize(8);
+      doc.text(elaborador.funcao, MARGIN + 2, y + 10);
     }
   }
-  // Documento homologado: sempre exibir os dois blocos lado a lado,
-  // mesmo quando TST e Responsável pelo Serviço forem a mesma pessoa.
-  caixaAssin(MARGIN, "Técnico em Segurança do Trabalho", tst?.nome ?? "", tst?.funcao);
-  caixaAssin(MARGIN + sigW + 8, "Responsável pelo Serviço", enc?.nome ?? "", enc?.funcao);
+
+  // Linhas Executantes (lado direito)
+  doc.setFont("helvetica", "normal").setFontSize(9);
+  for (let i = 0; i < linhasExec; i++) {
+    const ry = y + i * rowH;
+    doc.rect(MARGIN + colLeftW, ry, colRightW, rowH);
+    const nome = exec[i]?.nome ?? "";
+    doc.setFont("helvetica", "bold").setFontSize(9);
+    doc.text(`${i + 1} -`, MARGIN + colLeftW + 2, ry + 4.7);
+    if (nome) {
+      doc.setFont("helvetica", "normal").setFontSize(9);
+      doc.text(nome, MARGIN + colLeftW + 9, ry + 4.7);
+    }
+  }
 }
 
 function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
