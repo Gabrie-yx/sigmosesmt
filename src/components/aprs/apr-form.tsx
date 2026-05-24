@@ -1124,6 +1124,9 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           // ela é a única referência da PTE anterior (que não tem apr_id próprio).
           // Sobrescrever causa a PTE antiga "sumir" da cobertura e gerar loop.
           setApr((a) => ({ ...a, pte_id: a.pte_id ?? pteId, exige_pte: true }));
+          // Mantém o registro de TODAS as PTEs vinculadas no rascunho — assim a
+          // cobertura por categoria funciona mesmo antes de salvar a APR.
+          setDraftPteIds((ids) => (ids.includes(pteId) ? ids : [...ids, pteId]));
           // Migra a PTE legada para o modelo moderno (apr_id na própria linha),
           // garantindo que apareça em linkedPtes e a cobertura seja estável.
           (async () => {
@@ -1132,6 +1135,14 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                 .from("ptes")
                 .update({ apr_id: currentAprId })
                 .eq("id", apr.pte_id)
+                .is("apr_id", null);
+            }
+            // Se a APR já existe, vincula imediatamente a nova PTE também.
+            if (currentAprId) {
+              await supabase
+                .from("ptes")
+                .update({ apr_id: currentAprId })
+                .eq("id", pteId)
                 .is("apr_id", null);
             }
             qc.invalidateQueries({ queryKey: ["ptes-light"] });
