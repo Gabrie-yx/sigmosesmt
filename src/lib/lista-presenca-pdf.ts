@@ -19,6 +19,8 @@ export type ListaPresencaParams = {
 
 const ROWS_FIRST = 15;
 const ROWS_NEXT = 22;
+const FOOTER_TEXT =
+  '"O Grupo Atem se compromete a tratar os dados pessoais nos termos da sua Política de Gestão e Proteção de Dados Pessoais e da Lei Geral de Proteção de Dados (LGPD), sendo que os dados aqui tratados são para cumprimento de obrigação legal trabalhista e previdenciária pelo Grupo Atem."';
 
 export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -31,6 +33,41 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
 
   let pageIdx = 0;
   let participantIdx = 0;
+
+  function getFooterLines() {
+    doc.setFont("helvetica", "italic").setFontSize(5.8);
+    return doc.splitTextToSize(FOOTER_TEXT, contentW - 6) as string[];
+  }
+
+  function getFooterTopY() {
+    const lineHeightMm = 2.5;
+    return pageH - margin - Math.max(7, getFooterLines().length * lineHeightMm + 2);
+  }
+
+  function fitTextToCell(text: string, x: number, y: number, w: number, h: number, options: { align?: "left" | "center"; bold?: boolean } = {}) {
+    const align = options.align ?? "left";
+    const style = options.bold ? "bold" : "normal";
+    const availableW = Math.max(1, w - (align === "center" ? 2 : 3));
+    let value = (text || "").toUpperCase().replace(/\s+/g, " ").trim();
+    let fontSize = 8;
+
+    doc.setFont("helvetica", style).setFontSize(fontSize);
+    while (fontSize > 5.4 && doc.getTextWidth(value) > availableW) {
+      fontSize -= 0.2;
+      doc.setFontSize(fontSize);
+    }
+
+    if (doc.getTextWidth(value) > availableW) {
+      while (value.length > 0 && doc.getTextWidth(`${value}...`) > availableW) {
+        value = value.slice(0, -1).trimEnd();
+      }
+      value = value ? `${value}...` : "";
+    }
+
+    const textX = align === "center" ? x + w / 2 : x + 1.5;
+    const textY = y + h / 2 + fontSize * 0.3528 * 0.35;
+    doc.text(value, textX, textY, { align });
+  }
 
   function drawHeader(pageNum: number) {
     doc.setLineWidth(0.3);
@@ -186,12 +223,10 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
       doc.rect(margin + partW + i * rubCol, subY, rubCol, subH);
     }
 
-    // Body rows — reserva espaço do rodapé LGPD (2 linhas + folga)
-    const footerReserve = 10;
+    // Body rows — a tabela para antes da área real do rodapé LGPD.
     let ry = subY + subH;
-    const availH = pageH - margin - footerReserve - ry;
+    const availH = getFooterTopY() - 2 - ry;
     const rowH = Math.min(8, availH / rowsCount);
-    doc.setFont("helvetica", "normal").setFontSize(9);
     for (let r = 0; r < rowsCount; r++) {
       cx = margin;
       const rowNum = participantIdx + 1;
@@ -199,19 +234,19 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
       participantIdx++;
       // N°
       doc.rect(cx, ry, subCols[0], rowH);
-      doc.text(String(rowNum), cx + subCols[0] / 2, ry + rowH / 2 + 1, { align: "center" });
+      fitTextToCell(String(rowNum), cx, ry, subCols[0], rowH, { align: "center" });
       cx += subCols[0];
       // NOME
       doc.rect(cx, ry, subCols[1], rowH);
-      if (part) doc.text(part.nome.toUpperCase(), cx + 1.5, ry + rowH / 2 + 1, { maxWidth: subCols[1] - 3 });
+      if (part) fitTextToCell(part.nome, cx, ry, subCols[1], rowH);
       cx += subCols[1];
       // EMPRESA
       doc.rect(cx, ry, subCols[2], rowH);
-      if (part) doc.text(part.empresa.toUpperCase(), cx + 1.5, ry + rowH / 2 + 1, { maxWidth: subCols[2] - 3 });
+      if (part) fitTextToCell(part.empresa, cx, ry, subCols[2], rowH);
       cx += subCols[2];
       // CARGO
       doc.rect(cx, ry, subCols[3], rowH);
-      if (part) doc.text(part.cargo.toUpperCase(), cx + 1.5, ry + rowH / 2 + 1, { maxWidth: subCols[3] - 3 });
+      if (part) fitTextToCell(part.cargo, cx, ry, subCols[3], rowH);
       cx += subCols[3];
       // 5 rubrica empty
       for (let i = 0; i < 5; i++) {
@@ -223,12 +258,14 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
   }
 
   function drawFooter() {
-    doc.setFont("helvetica", "italic").setFontSize(7);
-    const footY = pageH - margin - 5;
-    doc.text(
-      '"O Grupo Atem se compromete a tratar os dados pessoais nos termos da sua Política de Gestão e Proteção de Dados Pessoais e da Lei Geral de Proteção de Dados (LGPD), sendo que os dados aqui tratados são para cumprimento de obrigação legal trabalhista e previdenciária pelo Grupo Atem."',
-      pageW / 2, footY, { align: "center", maxWidth: contentW }
-    );
+    doc.setFont("helvetica", "italic").setFontSize(5.8);
+    const lines = getFooterLines();
+    const lineHeightMm = 2.5;
+    lines.forEach((line, index) => {
+      doc.text(line, pageW / 2, getFooterTopY() + 2.6 + index * lineHeightMm, {
+        align: "center",
+      });
+    });
   }
 
   for (pageIdx = 0; pageIdx < totalPages; pageIdx++) {
