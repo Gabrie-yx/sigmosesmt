@@ -3,7 +3,7 @@ import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf
 import { formatDateBR } from "@/lib/utils-date";
 import dmnLogo from "@/assets/dmn-logo.png";
 
-export async function buildAprPdf(aprId: string) {
+export async function buildAprPdf(aprId: string, opts?: { encSig?: string | null; tstSig?: string | null }) {
   const [{ data: a }, { data: rs }, { data: ass }] = await Promise.all([
     supabase.from("aprs").select("*").eq("id", aprId).maybeSingle(),
     supabase.from("apr_riscos").select("*").eq("apr_id", aprId).order("ordem"),
@@ -76,6 +76,8 @@ export async function buildAprPdf(aprId: string) {
     assinaturas: (ass ?? []).map((a: any) => ({
       papel: a.papel, nome: a.nome, cpf: a.cpf, funcao: a.funcao,
     } as APRPdfAssinatura)),
+    encSig: opts?.encSig ?? null,
+    tstSig: opts?.tstSig ?? null,
   });
 }
 

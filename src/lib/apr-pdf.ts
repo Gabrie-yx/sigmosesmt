@@ -61,6 +61,10 @@ export type APRPdfParams = {
   assinaturas: APRPdfAssinatura[];
   exige_pte?: boolean;
   ptes_vinculadas?: string[];
+  /** PNG/JPEG data URL — assinatura do encarregado (opcional) */
+  encSig?: string | null;
+  /** PNG/JPEG data URL — assinatura do TST/SESMT (opcional) */
+  tstSig?: string | null;
 };
 
 // Cores fixas (modelo homologado)
@@ -478,7 +482,41 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   const bodyH = rowH * linhasExec;
 
   // Caixa Elaborador (lado esquerdo, em branco para preenchimento manual)
-  doc.rect(MARGIN, y, colLeftW, bodyH);
+  // Caixa Elaborador — dividida em 2: ENCARREGADO (topo) e TST/SESMT (base)
+  const elabH = bodyH / 2;
+  const drawSigSlot = (sy: number, label: string, sig?: string | null) => {
+    doc.rect(MARGIN, sy, colLeftW, elabH);
+    doc.setFillColor(245, 245, 245);
+    doc.rect(MARGIN, sy, colLeftW, 5, "F");
+    doc.rect(MARGIN, sy, colLeftW, 5);
+    doc.setFont("helvetica", "bold").setFontSize(7.5).setTextColor(0, 0, 0);
+    doc.text(label, MARGIN + colLeftW / 2, sy + 3.5, { align: "center" });
+    // linha de assinatura
+    const lineY = sy + elabH - 6;
+    doc.setLineWidth(0.2);
+    doc.line(MARGIN + 3, lineY, MARGIN + colLeftW - 3, lineY);
+    doc.setFont("helvetica", "normal").setFontSize(6.5).setTextColor(90, 90, 90);
+    doc.text("Assinatura", MARGIN + colLeftW / 2, lineY + 3, { align: "center" });
+    doc.setTextColor(0, 0, 0);
+    if (sig) {
+      try {
+        const areaY = sy + 6;
+        const areaH = lineY - areaY - 0.5;
+        const areaW = colLeftW - 6;
+        const areaX = MARGIN + 3;
+        const fmt = sig.startsWith("data:image/jpeg") ? "JPEG" : "PNG";
+        // dimensiona para caber preservando proporção
+        // jsPDF não dá tamanho original; usa altura disponível como referência
+        const drawH = areaH;
+        const drawW = areaW;
+        doc.addImage(sig, fmt, areaX, areaY, drawW, drawH, undefined, "FAST");
+      } catch {
+        /* noop */
+      }
+    }
+  };
+  drawSigSlot(y, "ENCARREGADO", p.encSig);
+  drawSigSlot(y + elabH, "TÉCNICO DE SEGURANÇA DO TRABALHO (SESMT)", p.tstSig);
 
   // Linhas Executantes (lado direito) — apenas numeradas, em branco
   doc.setFont("helvetica", "bold").setFontSize(9);
