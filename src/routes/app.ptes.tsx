@@ -77,6 +77,11 @@ function PtesPage() {
     queryKey: ["companies"],
     queryFn: async () => (await supabase.from("companies").select("id,name")).data ?? [],
   });
+  const { data: cascos = [] } = useQuery({
+    queryKey: ["cascos-light-for-ptes"],
+    queryFn: async () => (await supabase.from("cascos").select("id,numero,nome").order("numero")).data ?? [],
+  });
+  const cascosMap = useMemo(() => new Map((cascos as any[]).map((c: any) => [c.id, c])), [cascos]);
   const { data: roles = [] } = useQuery({
     queryKey: ["roles"],
     queryFn: async () => (await supabase.from("roles").select("*")).data ?? [],
