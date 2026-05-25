@@ -61,6 +61,10 @@ export type APRPdfParams = {
   assinaturas: APRPdfAssinatura[];
   exige_pte?: boolean;
   ptes_vinculadas?: string[];
+  /** PNG/JPEG data URL — assinatura do encarregado (opcional) */
+  encSig?: string | null;
+  /** PNG/JPEG data URL — assinatura do TST/SESMT (opcional) */
+  tstSig?: string | null;
 };
 
 // Cores fixas (modelo homologado)
