@@ -533,6 +533,10 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         status: publish ? "ATIVA" : (apr.status || "RASCUNHO"),
         exige_pte: apr.exige_pte,
         texto_gerais: apr.texto_gerais ?? null,
+        signature_tst: (apr as any).signature_tst ?? null,
+        signature_tst_height: (apr as any).signature_tst ? ((apr as any).signature_tst_height ?? 80) : null,
+        signature_enc: (apr as any).signature_enc ?? null,
+        signature_enc_height: (apr as any).signature_enc ? ((apr as any).signature_enc_height ?? 80) : null,
       };
 
       let id = apr.id;
