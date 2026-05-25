@@ -282,6 +282,8 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const [draftPteIds, setDraftPteIds] = useState<string[]>([]);
   const currentAprId = apr.id ?? aprId ?? null;
 
+  // (SignatureBox declarado abaixo, fora do componente)
+
   // catálogos
   const { data: cascos = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["cascos-light"], queryFn: async () => (await supabase.from("cascos").select("id,numero,nome,status").eq("status", "ATIVO").order("numero")).data ?? [] });
   const { data: companies = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["companies-light"], queryFn: async () => (await supabase.from("companies").select("id,name,cnpj").order("name")).data ?? [] });
