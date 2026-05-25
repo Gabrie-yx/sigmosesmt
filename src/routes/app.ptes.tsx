@@ -173,7 +173,7 @@ function PtesPage() {
       } });
       setEditingId(null);
       setLinkedAprId(null);
-      setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "" });
+      setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "" });
       toast.success(editingId ? "PTE atualizada" : "PTE emitida");
     },
     onError: (e: any) => toast.error(e.message),
@@ -205,11 +205,11 @@ function PtesPage() {
 
   function startEdit(p: any) {
     setEditingId(p.id);
-    setF({ data: p.data, employee_id: p.employee_id ?? "", risco: p.risco ?? PTE_RISCOS[0], local: p.local ?? "", company_id: p.company_id ?? "" });
+    setF({ data: p.data, employee_id: p.employee_id ?? "", risco: p.risco ?? PTE_RISCOS[0], local: p.local ?? "", company_id: p.company_id ?? "", casco_id: p.casco_id ?? "" });
   }
   function cancelEdit() {
     setEditingId(null);
-    setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "" });
+    setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "" });
   }
 
   return (
