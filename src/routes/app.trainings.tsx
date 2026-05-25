@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -462,6 +462,7 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
   const [selectedEmp, setSelectedEmp] = useState("");
+  const [employeeSearch, setEmployeeSearch] = useState("");
   const [situacao, setSituacao] = useState<typeof SITUACOES[number]>("APROVADO");
   const [nota, setNota] = useState<string>("");
   const [bulkCompany, setBulkCompany] = useState<string>("");
@@ -491,6 +492,18 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
 
   const enrolled = new Set(attendees.map((a: any) => a.employee_id));
   const available = emps.filter((e: any) => !enrolled.has(e.id));
+  const companyById = useMemo(() => new Map(companies.map((c: any) => [c.id, c.name])), [companies]);
+  const selectedEmployee = available.find((e: any) => e.id === selectedEmp) ?? null;
+  const filteredEmployees = useMemo(() => {
+    const q = employeeSearch.trim().toLowerCase();
+    const list = q
+      ? available.filter((e: any) => {
+          const haystack = `${e.nome ?? ""} ${e.matricula ?? ""} ${companyById.get(e.company_id) ?? ""}`.toLowerCase();
+          return haystack.includes(q);
+        })
+      : available;
+    return list.slice(0, 40);
+  }, [available, companyById, employeeSearch]);
 
   const add = useMutation({
     mutationFn: async () => {
@@ -508,7 +521,7 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["training-attendees", trainingId] });
       qc.invalidateQueries({ queryKey: ["training-counts"] });
-      setSelectedEmp(""); setNota(""); setSituacao("APROVADO");
+      setSelectedEmp(""); setEmployeeSearch(""); setNota(""); setSituacao("APROVADO");
       toast.success("Participante adicionado");
     },
     onError: (e: any) => toast.error(e.message),
