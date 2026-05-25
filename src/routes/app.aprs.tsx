@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert, Zap } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert, Zap, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { AprForm } from "@/components/aprs/apr-form";
@@ -59,6 +59,8 @@ function AprsPage() {
   const [pdfAprId, setPdfAprId] = useState<string | null>(null);
   const [encSig, setEncSig] = useState<string | null>(null);
   const [tstSig, setTstSig] = useState<string | null>(null);
+  const [dupSource, setDupSource] = useState<any | null>(null);
+  const [dupCascoId, setDupCascoId] = useState<string>("");
 
   async function openPreview(aprId: string, numero?: string | null, eSig?: string | null, tSig?: string | null) {
     try {
@@ -124,6 +126,62 @@ function AprsPage() {
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["aprs"] }); toast.success("APR excluída"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const duplicate = useMutation({
+    mutationFn: async ({ srcId, novoCascoId }: { srcId: string; novoCascoId: string }) => {
+      const [{ data: a, error: ea }, { data: rs, error: er }, { data: ass, error: eas }] = await Promise.all([
+        supabase.from("aprs").select("*").eq("id", srcId).maybeSingle(),
+        supabase.from("apr_riscos").select("*").eq("apr_id", srcId).order("ordem"),
+        supabase.from("apr_assinaturas").select("*").eq("apr_id", srcId).order("ordem"),
+      ]);
+      if (ea) throw ea;
+      if (er) throw er;
+      if (eas) throw eas;
+      if (!a) throw new Error("APR de origem não encontrada");
+
+      const { data: numero, error: enErr } = await supabase.rpc("gerar_numero_apr");
+      if (enErr) throw enErr;
+
+      const { id: _ignoreId, created_at, updated_at, numero: _oldNum, data_validade, pte_id, ...rest } = a as any;
+      const payload = {
+        ...rest,
+        numero,
+        casco_id: novoCascoId,
+        pte_id: null,
+        status: "RASCUNHO",
+        data_emissao: new Date().toISOString().slice(0, 10),
+      };
+      const { data: novo, error: ein } = await supabase.from("aprs").insert(payload).select("id,numero").single();
+      if (ein) throw ein;
+
+      if (rs && rs.length > 0) {
+        const { error: e2 } = await supabase.from("apr_riscos").insert(
+          rs.map((r: any) => {
+            const { id, created_at, apr_id, ...rr } = r;
+            return { ...rr, apr_id: novo.id };
+          }),
+        );
+        if (e2) throw e2;
+      }
+      if (ass && ass.length > 0) {
+        const { error: e3 } = await supabase.from("apr_assinaturas").insert(
+          ass.map((s: any) => {
+            const { id, created_at, apr_id, ...ss } = s;
+            return { ...ss, apr_id: novo.id };
+          }),
+        );
+        if (e3) throw e3;
+      }
+      return novo;
+    },
+    onSuccess: (novo: any) => {
+      qc.invalidateQueries({ queryKey: ["aprs"] });
+      setDupSource(null);
+      setDupCascoId("");
+      toast.success(`APR ${novo.numero} duplicada — revise e ative quando estiver pronta`);
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -273,6 +331,11 @@ function AprsPage() {
                               <Pencil className="h-4 w-4 mr-2" /> Editar
                             </DropdownMenuItem>
                           )}
+                          {isEditor && (
+                            <DropdownMenuItem onClick={() => { setDupSource(a); setDupCascoId(""); }}>
+                              <Copy className="h-4 w-4 mr-2" /> Duplicar para outro casco
+                            </DropdownMenuItem>
+                          )}
                           {isAdmin && (
                             <DropdownMenuItem
                               className="text-rose-600 focus:text-rose-600"
@@ -348,6 +411,48 @@ function AprsPage() {
         onChangeEncSig={(v) => { setEncSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), v, tstSig); }}
         onChangeSesmtSig={(v) => { setTstSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), encSig, v); }}
       />
+
+      <Dialog open={!!dupSource} onOpenChange={(o) => { if (!o) { setDupSource(null); setDupCascoId(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Duplicar APR {dupSource?.numero}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-slate-600">
+              Será criada uma nova APR (status <b>RASCUNHO</b>) para o casco escolhido, copiando atividade, riscos,
+              EPIs, NRs e assinaturas. O número será novo e a PTE não é copiada.
+            </p>
+            <div>
+              <label className="text-xs font-bold text-slate-700 mb-1 block">Casco destino</label>
+              <Select value={dupCascoId} onValueChange={setDupCascoId}>
+                <SelectTrigger><SelectValue placeholder="Selecione o casco..." /></SelectTrigger>
+                <SelectContent>
+                  {cascos
+                    .filter((c: any) => c.id !== dupSource?.casco_id)
+                    .map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>{c.numero}{c.nome ? ` — ${c.nome}` : ""}</SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              {dupSource?.casco_id && (
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Origem: casco {cascoMap.get(dupSource.casco_id)?.numero ?? "—"}
+                </p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" onClick={() => { setDupSource(null); setDupCascoId(""); }}>Cancelar</Button>
+              <Button
+                className="bg-[#991b1b] hover:bg-[#7f1d1d]"
+                disabled={!dupCascoId || duplicate.isPending}
+                onClick={() => dupSource && duplicate.mutate({ srcId: dupSource.id, novoCascoId: dupCascoId })}
+              >
+                {duplicate.isPending ? "Duplicando..." : "Duplicar APR"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
