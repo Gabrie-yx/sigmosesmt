@@ -694,6 +694,10 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
       assinaturas: assinaturas.map((a) => ({
         papel: a.papel, nome: a.nome, cpf: a.cpf, funcao: a.funcao,
       } as APRPdfAssinatura)),
+      encSig: (apr as any).signature_enc ?? null,
+      tstSig: (apr as any).signature_tst ?? null,
+      encSigHeight: (apr as any).signature_enc_height ?? null,
+      tstSigHeight: (apr as any).signature_tst_height ?? null,
     });
   }
 
