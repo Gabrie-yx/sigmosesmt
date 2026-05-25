@@ -79,7 +79,7 @@ function AprsPage() {
   });
   const { data: ptesLink = [] } = useQuery({
     queryKey: ["ptes-by-apr"],
-    queryFn: async () => (await supabase.from("ptes").select("id,numero,apr_id,status").not("apr_id", "is", null)).data ?? [],
+    queryFn: async () => (await supabase.from("ptes").select("id,numero,apr_id,status")).data ?? [],
   });
   const { data: cascos = [] } = useQuery({
     queryKey: ["cascos-light-list"],
@@ -266,7 +266,12 @@ function AprsPage() {
                 <TableRow><TableCell colSpan={9} className="text-center py-12 text-slate-400">Nenhuma APR encontrada</TableCell></TableRow>
               ) : filtered.map((a: any) => {
                 const casco = a.casco_id ? cascoMap.get(a.casco_id) as any : null;
-                const linkedPtes = ptesByApr.get(a.id) ?? [];
+                 const byApr = ptesByApr.get(a.id) ?? [];
+                 // Fallback legado: APR aponta pte_id mas a PTE ainda não tem apr_id setado.
+                 const legacy = a.pte_id
+                   ? (ptesLink as any[]).filter((p) => p.id === a.pte_id && p.apr_id !== a.id)
+                   : [];
+                 const linkedPtes = [...byApr, ...legacy];
                 return (
                   <TableRow key={a.id} className={a._vencida ? "bg-rose-50/50" : ""}>
                     <TableCell className="font-bold text-[#991b1b]">{a.numero}</TableCell>
