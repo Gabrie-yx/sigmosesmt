@@ -509,17 +509,16 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
         const areaW = colLeftW - 6;
         const areaX = MARGIN + 3;
         const fmt = sig.startsWith("data:image/jpeg") ? "JPEG" : "PNG";
-        // preserva proporção (fit-contain) e centraliza no slot
+        // preserva proporção e centraliza no slot
         const props: any = (doc as any).getImageProperties?.(sig) ?? { width: areaW, height: areaH };
         const ratio = props.width / props.height;
-        let drawW = areaW;
-        let drawH = drawW / ratio;
-        if (drawH > areaH) { drawH = areaH; drawW = drawH * ratio; }
-        // Altura escolhida pelo usuário (px 20–140) → fração do slot.
-        // 140px = ocupa todo o slot. Sem valor, usa 100% do slot.
-        const frac = heightPx ? Math.max(0.15, Math.min(1, heightPx / 140)) : 1;
-        const maxH = areaH * frac;
-        if (drawH > maxH) { drawH = maxH; drawW = drawH * ratio; }
+        // Altura escolhida pelo usuário (px 20–140) vira a altura-alvo no PDF.
+        // Antes era tratada só como limite máximo; em assinaturas largas isso
+        // deixava o desenho com o mesmo tamanho mesmo após mexer no slider.
+        const frac = heightPx == null ? 1 : Math.max(0.15, Math.min(1, heightPx / 140));
+        let drawH = areaH * frac;
+        let drawW = drawH * ratio;
+        if (drawW > areaW) { drawW = areaW; drawH = drawW / ratio; }
         const dx = areaX + (areaW - drawW) / 2;
         const dy = areaY + (areaH - drawH) / 2;
         doc.addImage(sig, fmt, dx, dy, drawW, drawH, undefined, "FAST");
@@ -594,6 +593,46 @@ async function loadImageDataUrl(url: string): Promise<string | null> {
   }
 }
 
+async function trimSignatureImage(dataUrl: string): Promise<string> {
+  if (!dataUrl.startsWith("data:image/") || typeof document === "undefined") return dataUrl;
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = dataUrl;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth || img.width;
+    canvas.height = img.naturalHeight || img.height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx || canvas.width === 0 || canvas.height === 0) return dataUrl;
+    ctx.drawImage(img, 0, 0);
+    const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let minX = canvas.width, minY = canvas.height, maxX = -1, maxY = -1;
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        const i = (y * canvas.width + x) * 4;
+        const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+        const ink = a > 24 && (r < 245 || g < 245 || b < 245) && (r + g + b) / 3 < 238;
+        if (ink) { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); }
+      }
+    }
+    if (maxX < minX || maxY < minY) return dataUrl;
+    const pad = Math.max(4, Math.round(Math.max(maxX - minX, maxY - minY) * 0.06));
+    const sx = Math.max(0, minX - pad), sy = Math.max(0, minY - pad);
+    const sw = Math.min(canvas.width - sx, maxX - minX + 1 + pad * 2);
+    const sh = Math.min(canvas.height - sy, maxY - minY + 1 + pad * 2);
+    const out = document.createElement("canvas");
+    out.width = sw;
+    out.height = sh;
+    out.getContext("2d")?.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+    return out.toDataURL("image/png");
+  } catch {
+    return dataUrl;
+  }
+}
+
 export async function gerarAPR(p: APRPdfParams): Promise<jsPDF> {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
@@ -601,6 +640,8 @@ export async function gerarAPR(p: APRPdfParams): Promise<jsPDF> {
   if (!p.logoDataUrl && p.logoUrl) {
     p.logoDataUrl = await loadImageDataUrl(p.logoUrl);
   }
+  if (p.encSig) p.encSig = await trimSignatureImage(p.encSig);
+  if (p.tstSig) p.tstSig = await trimSignatureImage(p.tstSig);
 
   // Página(s) 1..N: cabeçalho + identificação + tabela de riscos
   drawFullChrome(doc, p);
