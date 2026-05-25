@@ -21,7 +21,7 @@ export const Route = createFileRoute("/app/trainings")({
   component: TrainingsPage,
 });
 
-const TIPOS_FIXOS = ["Integração", "Reciclagem", "DDS", "Palestra", "Outro"];
+const TIPOS_FIXOS = ["NR", "Integração", "Reciclagem", "DDS", "Palestra", "Outro"];
 
 const SITUACOES = ["APROVADO", "REPROVADO", "PRESENTE", "AUSENTE"] as const;
 const MODALIDADES = ["PRESENCIAL", "ONLINE", "HIBRIDA"] as const;
