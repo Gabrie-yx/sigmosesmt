@@ -623,20 +623,20 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
                     Selecionado: {selectedEmployee.nome} {selectedEmployee.matricula ? `(${selectedEmployee.matricula})` : ""}
                   </div>
                 )}
-                <div className="max-h-44 overflow-y-auto rounded-md border border-slate-200 bg-white">
+                <div className="max-h-44 overflow-y-auto rounded-md border border-border bg-background">
                   {filteredEmployees.length === 0 ? (
-                    <div className="px-3 py-3 text-xs font-bold uppercase text-slate-400">Nenhum funcionário disponível.</div>
+                    <div className="px-3 py-3 text-xs font-bold uppercase text-muted-foreground">Nenhum funcionário disponível.</div>
                   ) : (
                     filteredEmployees.map((e: any) => (
                       <button
                         key={e.id}
                         type="button"
                         onClick={() => setSelectedEmp(e.id)}
-                        className={`flex w-full items-start justify-between gap-2 border-b border-slate-100 px-3 py-2 text-left text-xs transition last:border-b-0 hover:bg-slate-50 ${selectedEmp === e.id ? "bg-primary/10" : ""}`}
+                        className={`flex w-full items-start justify-between gap-2 border-b border-border px-3 py-2 text-left text-xs transition last:border-b-0 hover:bg-accent ${selectedEmp === e.id ? "bg-primary/10" : ""}`}
                       >
                         <span className="min-w-0">
-                          <span className="block truncate font-black text-slate-800">{e.nome}</span>
-                          <span className="block truncate font-bold uppercase text-slate-500">
+                          <span className="block truncate font-black text-foreground">{e.nome}</span>
+                          <span className="block truncate font-bold uppercase text-muted-foreground">
                             {e.matricula ? `MAT: ${e.matricula} • ` : ""}{companyById.get(e.company_id) ?? "S/ EMPRESA"}
                           </span>
                         </span>
