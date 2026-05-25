@@ -65,6 +65,10 @@ export type APRPdfParams = {
   encSig?: string | null;
   /** PNG/JPEG data URL — assinatura do TST/SESMT (opcional) */
   tstSig?: string | null;
+  /** Altura visual (px 20–140) escolhida pelo usuário p/ assinatura ENC */
+  encSigHeight?: number | null;
+  /** Altura visual (px 20–140) escolhida pelo usuário p/ assinatura TST */
+  tstSigHeight?: number | null;
 };
 
 // Cores fixas (modelo homologado)
