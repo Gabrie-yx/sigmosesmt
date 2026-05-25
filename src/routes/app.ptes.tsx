@@ -62,6 +62,7 @@ function PtesPage() {
         ...cur,
         risco: riscoSugerido,
         local: apr.local ?? cur.local,
+        casco_id: apr.casco_id ?? cur.casco_id,
       }));
       toast.info(`Vinculando nova PTE à APR ${apr.numero}`);
       // limpa o search para não repetir ao voltar
