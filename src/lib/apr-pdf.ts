@@ -509,17 +509,16 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
         const areaW = colLeftW - 6;
         const areaX = MARGIN + 3;
         const fmt = sig.startsWith("data:image/jpeg") ? "JPEG" : "PNG";
-        // preserva proporção (fit-contain) e centraliza no slot
+        // preserva proporção e centraliza no slot
         const props: any = (doc as any).getImageProperties?.(sig) ?? { width: areaW, height: areaH };
         const ratio = props.width / props.height;
-        let drawW = areaW;
-        let drawH = drawW / ratio;
-        if (drawH > areaH) { drawH = areaH; drawW = drawH * ratio; }
-        // Altura escolhida pelo usuário (px 20–140) → fração do slot.
-        // 140px = ocupa todo o slot. Sem valor, usa 100% do slot.
-        const frac = heightPx ? Math.max(0.15, Math.min(1, heightPx / 140)) : 1;
-        const maxH = areaH * frac;
-        if (drawH > maxH) { drawH = maxH; drawW = drawH * ratio; }
+        // Altura escolhida pelo usuário (px 20–140) vira a altura-alvo no PDF.
+        // Antes era tratada só como limite máximo; em assinaturas largas isso
+        // deixava o desenho com o mesmo tamanho mesmo após mexer no slider.
+        const frac = heightPx == null ? 1 : Math.max(0.15, Math.min(1, heightPx / 140));
+        let drawH = areaH * frac;
+        let drawW = drawH * ratio;
+        if (drawW > areaW) { drawW = areaW; drawH = drawW / ratio; }
         const dx = areaX + (areaW - drawW) / 2;
         const dy = areaY + (areaH - drawH) / 2;
         doc.addImage(sig, fmt, dx, dy, drawW, drawH, undefined, "FAST");
