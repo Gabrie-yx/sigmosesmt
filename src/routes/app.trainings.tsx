@@ -596,51 +596,31 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
               </Button>
             </div>
 
-            <Label className="text-[10px] font-black text-slate-500 uppercase">Adicionar Participante</Label>
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-2 mt-2">
-              <div className="md:col-span-6 space-y-2">
-                <Input
-                  value={employeeSearch}
-                  onChange={(e) => setEmployeeSearch(e.target.value)}
-                  placeholder="Digite nome, matrícula ou empresa"
-                  className="bg-white text-xs font-semibold"
-                />
-                {selectedEmployee && (
-                  <div className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-bold text-primary">
-                    Selecionado: {selectedEmployee.nome} {selectedEmployee.matricula ? `(${selectedEmployee.matricula})` : ""}
-                  </div>
-                )}
-                <div className="max-h-44 overflow-y-auto rounded-md border border-border bg-background">
-                  {filteredEmployees.length === 0 ? (
-                    <div className="px-3 py-3 text-xs font-bold uppercase text-muted-foreground">Nenhum funcionário disponível.</div>
-                  ) : (
-                    filteredEmployees.map((e: any) => (
-                      <button
-                        key={e.id}
-                        type="button"
-                        onClick={() => setSelectedEmp(e.id)}
-                        className={`flex w-full items-start justify-between gap-2 border-b border-border px-3 py-2 text-left text-xs transition last:border-b-0 hover:bg-accent ${selectedEmp === e.id ? "bg-primary/10" : ""}`}
-                      >
-                        <span className="min-w-0">
-                          <span className="block truncate font-black text-foreground">{e.nome}</span>
-                          <span className="block truncate font-bold uppercase text-muted-foreground">
-                            {e.matricula ? `MAT: ${e.matricula} • ` : ""}{companyById.get(e.company_id) ?? "S/ EMPRESA"}
-                          </span>
-                        </span>
-                        {selectedEmp === e.id && <span className="shrink-0 font-black text-primary">OK</span>}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-              <Select value={situacao} onValueChange={(v) => setSituacao(v as any)}>
-                <SelectTrigger className="md:col-span-3"><SelectValue /></SelectTrigger>
-                <SelectContent>{SITUACOES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
-              <Input type="number" min={0} max={10} step={0.1} placeholder="Nota" value={nota} onChange={(e) => setNota(e.target.value)} className="md:col-span-1" />
-              <Button onClick={() => add.mutate()} disabled={add.isPending || !selectedEmp} className="md:col-span-2">
-                <Plus className="h-4 w-4 mr-1" /> Add
-              </Button>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Funcionários da empresa selecionada</Label>
+            <div className="mt-2 max-h-56 overflow-y-auto rounded-md border border-border bg-background">
+              {!bulkCompany ? (
+                <div className="px-3 py-4 text-xs font-bold uppercase text-muted-foreground">Selecione uma empresa acima para carregar os funcionários.</div>
+              ) : companyEmployees.length === 0 ? (
+                <div className="px-3 py-4 text-xs font-bold uppercase text-muted-foreground">Todos os funcionários dessa empresa já estão na lista.</div>
+              ) : (
+                companyEmployees.map((e: any) => (
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => add.mutate(e.id)}
+                    disabled={add.isPending}
+                    className="flex w-full items-start justify-between gap-3 border-b border-border px-3 py-2 text-left text-xs transition last:border-b-0 hover:bg-accent disabled:pointer-events-none disabled:opacity-60"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-black text-foreground">{e.nome}</span>
+                      <span className="block truncate font-bold uppercase text-muted-foreground">
+                        {e.matricula ? `MAT: ${e.matricula} • ` : ""}{companyById.get(e.company_id) ?? "S/ EMPRESA"}
+                      </span>
+                    </span>
+                    <span className="shrink-0 rounded bg-primary px-2 py-1 font-black uppercase text-primary-foreground">Adicionar</span>
+                  </button>
+                ))
+              )}
             </div>
           </div>
         )}
