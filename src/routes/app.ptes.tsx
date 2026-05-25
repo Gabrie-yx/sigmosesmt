@@ -356,6 +356,12 @@ function PtesPage() {
                 <h4 className="text-xs font-black text-[#991b1b] uppercase mb-1">{p.employee_name ?? "—"}</h4>
                 <div className="text-[10px] font-bold text-slate-500 uppercase mt-1">Risco: <span className="font-black text-slate-700">{p.risco}</span></div>
                 <div className="text-[10px] font-bold text-slate-500 uppercase">Local: {p.local ?? "—"}</div>
+                {p.casco_id && (
+                  <div className="text-[10px] font-bold text-indigo-700 uppercase">
+                    Casco: <span className="font-black">{(cascosMap.get(p.casco_id) as any)?.numero ?? "—"}</span>
+                    {(cascosMap.get(p.casco_id) as any)?.nome ? ` — ${(cascosMap.get(p.casco_id) as any).nome}` : ""}
+                  </div>
+                )}
                 {p.apr_id && (
                   <div className="text-[10px] font-bold text-emerald-700 uppercase mt-1 flex items-center gap-1">
                     <Link2 className="h-3 w-3" /> APR {(aprsMap.get(p.apr_id) as any)?.numero ?? p.apr_id.slice(0, 8)}
