@@ -411,6 +411,48 @@ function AprsPage() {
         onChangeEncSig={(v) => { setEncSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), v, tstSig); }}
         onChangeSesmtSig={(v) => { setTstSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), encSig, v); }}
       />
+
+      <Dialog open={!!dupSource} onOpenChange={(o) => { if (!o) { setDupSource(null); setDupCascoId(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Duplicar APR {dupSource?.numero}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-slate-600">
+              Será criada uma nova APR (status <b>RASCUNHO</b>) para o casco escolhido, copiando atividade, riscos,
+              EPIs, NRs e assinaturas. O número será novo e a PTE não é copiada.
+            </p>
+            <div>
+              <label className="text-xs font-bold text-slate-700 mb-1 block">Casco destino</label>
+              <Select value={dupCascoId} onValueChange={setDupCascoId}>
+                <SelectTrigger><SelectValue placeholder="Selecione o casco..." /></SelectTrigger>
+                <SelectContent>
+                  {cascos
+                    .filter((c: any) => c.id !== dupSource?.casco_id)
+                    .map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>{c.numero}{c.nome ? ` — ${c.nome}` : ""}</SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              {dupSource?.casco_id && (
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Origem: casco {cascoMap.get(dupSource.casco_id)?.numero ?? "—"}
+                </p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" onClick={() => { setDupSource(null); setDupCascoId(""); }}>Cancelar</Button>
+              <Button
+                className="bg-[#991b1b] hover:bg-[#7f1d1d]"
+                disabled={!dupCascoId || duplicate.isPending}
+                onClick={() => dupSource && duplicate.mutate({ srcId: dupSource.id, novoCascoId: dupCascoId })}
+              >
+                {duplicate.isPending ? "Duplicando..." : "Duplicar APR"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
