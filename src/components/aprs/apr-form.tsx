@@ -263,6 +263,56 @@ function PaperFullHeader({
 }
 
 /* ---------- componente principal ---------- */
+function SignatureBox({
+  title, nome, value, height, onChange,
+}: {
+  title: string;
+  nome: string;
+  value: string | null;
+  height: number;
+  onChange: (value: string | null, height: number) => void;
+}) {
+  const onUpload = (file: File | null) => {
+    if (!file) return;
+    if (file.type !== "image/png") { toast.error("A assinatura deve estar em PNG"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error("Arquivo muito grande (máx. 2MB)"); return; }
+    const reader = new FileReader();
+    reader.onload = () => onChange(reader.result as string, height || 80);
+    reader.readAsDataURL(file);
+  };
+  return (
+    <div className="border-2 border-black">
+      <div className="bg-slate-100 p-1 text-center font-bold text-xs border-b border-black">{title}</div>
+      <div className="p-3 text-center min-h-[120px] flex flex-col items-center justify-end gap-1">
+        {value ? (
+          <>
+            <img src={value} alt={title} style={{ height: `${height}px` }} className="object-contain max-w-full" />
+            <div className="flex items-center gap-2 w-full px-2 pt-1">
+              <span className="text-[10px] text-slate-500">Tamanho</span>
+              <input
+                type="range" min={20} max={140} step={2} value={height}
+                onChange={(e) => onChange(value, Number(e.target.value))}
+                className="flex-1 accent-red-700"
+              />
+              <button type="button" onClick={() => onChange(null, 80)} className="text-[10px] text-red-700 hover:underline">
+                Remover
+              </button>
+            </div>
+          </>
+        ) : (
+          <label className="cursor-pointer text-[11px] text-red-700 hover:underline px-2 py-1 border border-dashed border-red-700/50 rounded">
+            Enviar assinatura (PNG)
+            <input type="file" accept="image/png" className="hidden"
+              onChange={(e) => onUpload(e.target.files?.[0] ?? null)} />
+          </label>
+        )}
+        <div className="text-sm font-medium mt-1">{nome}</div>
+        <div className="border-t border-black w-full mt-1 pt-1 text-[10px] italic">Assinatura</div>
+      </div>
+    </div>
+  );
+}
+
 export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: () => void }) {
   const qc = useQueryClient();
   const [apr, setApr] = useState<APR>(() => ({
@@ -281,6 +331,8 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   // apr_id nessas linhas.
   const [draftPteIds, setDraftPteIds] = useState<string[]>([]);
   const currentAprId = apr.id ?? aprId ?? null;
+
+  // (SignatureBox declarado abaixo, fora do componente)
 
   // catálogos
   const { data: cascos = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["cascos-light"], queryFn: async () => (await supabase.from("cascos").select("id,numero,nome,status").eq("status", "ATIVO").order("numero")).data ?? [] });
@@ -533,6 +585,10 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         status: publish ? "ATIVA" : (apr.status || "RASCUNHO"),
         exige_pte: apr.exige_pte,
         texto_gerais: apr.texto_gerais ?? null,
+        signature_tst: (apr as any).signature_tst ?? null,
+        signature_tst_height: (apr as any).signature_tst ? ((apr as any).signature_tst_height ?? 80) : null,
+        signature_enc: (apr as any).signature_enc ?? null,
+        signature_enc_height: (apr as any).signature_enc ? ((apr as any).signature_enc_height ?? 80) : null,
       };
 
       let id = apr.id;
@@ -1029,20 +1085,20 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
 
               <h3 className="text-center font-black text-base tracking-widest mt-4">A S S I N A T U R A S</h3>
               <div className="grid grid-cols-2 gap-3">
-                <div className="border-2 border-black">
-                  <div className="bg-slate-100 p-1 text-center font-bold text-xs border-b border-black">Técnico em Segurança do Trabalho</div>
-                  <div className="p-3 text-center min-h-[120px] flex flex-col justify-end">
-                    <div className="text-sm font-medium">{tst?.nome ?? "—"}</div>
-                    <div className="border-t border-black mt-2 pt-1 text-[10px] italic">Assinatura</div>
-                  </div>
-                </div>
-                <div className="border-2 border-black">
-                  <div className="bg-slate-100 p-1 text-center font-bold text-xs border-b border-black">Responsável pelo Serviço</div>
-                  <div className="p-3 text-center min-h-[120px] flex flex-col justify-end">
-                    <div className="text-sm font-medium">{empresa?.name ?? enc?.nome ?? "—"}</div>
-                    <div className="border-t border-black mt-2 pt-1 text-[10px] italic">Assinatura</div>
-                  </div>
-                </div>
+                <SignatureBox
+                  title="Técnico em Segurança do Trabalho"
+                  nome={tst?.nome ?? "—"}
+                  value={(apr as any).signature_tst ?? null}
+                  height={(apr as any).signature_tst_height ?? 80}
+                  onChange={(v, h) => setApr({ ...apr, ...({ signature_tst: v, signature_tst_height: h } as any) })}
+                />
+                <SignatureBox
+                  title="Responsável pelo Serviço"
+                  nome={empresa?.name ?? enc?.nome ?? "—"}
+                  value={(apr as any).signature_enc ?? null}
+                  height={(apr as any).signature_enc_height ?? 80}
+                  onChange={(v, h) => setApr({ ...apr, ...({ signature_enc: v, signature_enc_height: h } as any) })}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2">

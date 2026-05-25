@@ -230,6 +230,10 @@ export type Database = {
           pdf_path: string | null
           pte_id: string | null
           setor: string | null
+          signature_enc: string | null
+          signature_enc_height: number | null
+          signature_tst: string | null
+          signature_tst_height: number | null
           status: string
           texto_gerais: string | null
           tst_id: string | null
@@ -259,6 +263,10 @@ export type Database = {
           pdf_path?: string | null
           pte_id?: string | null
           setor?: string | null
+          signature_enc?: string | null
+          signature_enc_height?: number | null
+          signature_tst?: string | null
+          signature_tst_height?: number | null
           status?: string
           texto_gerais?: string | null
           tst_id?: string | null
@@ -288,6 +296,10 @@ export type Database = {
           pdf_path?: string | null
           pte_id?: string | null
           setor?: string | null
+          signature_enc?: string | null
+          signature_enc_height?: number | null
+          signature_tst?: string | null
+          signature_tst_height?: number | null
           status?: string
           texto_gerais?: string | null
           tst_id?: string | null
