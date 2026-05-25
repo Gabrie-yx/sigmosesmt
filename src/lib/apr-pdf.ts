@@ -511,8 +511,8 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
         let drawW = areaW;
         let drawH = drawW / ratio;
         if (drawH > areaH) { drawH = areaH; drawW = drawH * ratio; }
-        // limita a 70% da altura do slot para não estourar visualmente
-        const maxH = areaH * 0.85;
+        // limita a altura do slot para não estourar visualmente
+        const maxH = areaH * 1.0;
         if (drawH > maxH) { drawH = maxH; drawW = drawH * ratio; }
         const dx = areaX + (areaW - drawW) / 2;
         const dy = areaY + (areaH - drawH) / 2;
