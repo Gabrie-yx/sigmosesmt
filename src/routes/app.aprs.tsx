@@ -308,9 +308,6 @@ function AprsPage() {
                           <DropdownMenuItem onClick={() => abrirAprPdf(a.id).catch((e) => toast.error(e.message))}>
                             <Eye className="h-4 w-4 mr-2" /> Visualizar PDF
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setEncSig(null); setTstSig(null); openPreview(a.id, a.numero); }}>
-                            <Pencil className="h-4 w-4 mr-2" /> Visualizar / Assinar PDF
-                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => imprimirAprPdf(a.id).catch((e) => toast.error(e.message))}>
                             <Printer className="h-4 w-4 mr-2" /> Imprimir
                           </DropdownMenuItem>
