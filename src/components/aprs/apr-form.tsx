@@ -546,6 +546,28 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     }
   }
 
+  function marcarTodosExecutantes() {
+    setAssinaturas((arr) => {
+      const semExec = arr.filter((a) => a.papel !== "EXECUTANTE");
+      const novos = empresaFuncs.map((e: any, i: number) => {
+        const role = roles.find((r: any) => r.id === e.role_id);
+        return {
+          papel: "EXECUTANTE" as const,
+          employee_id: e.id,
+          nome: e.nome,
+          cpf: e.cpf,
+          funcao: role?.name ?? "",
+          ordem: i + 1,
+        };
+      });
+      return [...semExec, ...novos];
+    });
+  }
+
+  function desmarcarTodosExecutantes() {
+    setAssinaturas((arr) => arr.filter((a) => a.papel !== "EXECUTANTE"));
+  }
+
   /* ---------- salvar ---------- */
   const save = useMutation({
     mutationFn: async (publish: boolean) => {
@@ -1166,6 +1188,30 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
               <div className="text-xs text-slate-600">
                 Marque/desmarque quem realmente vai executar este serviço. Por padrão, todos os funcionários ativos da empresa vêm marcados.
               </div>
+
+              {apr.empresa_id && empresaFuncs.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={marcarTodosExecutantes}
+                    className="h-8 text-xs font-bold"
+                  >
+                    ✓ Marcar todos ({empresaFuncs.length})
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={desmarcarTodosExecutantes}
+                    className="h-8 text-xs font-bold"
+                    disabled={execAtuais.length === 0}
+                  >
+                    ✕ Desmarcar todos
+                  </Button>
+                </div>
+              )}
 
               <div className="border-2 border-black">
                 <div className="grid grid-cols-[50px_60px_1fr_120px] bg-slate-100 font-bold text-xs border-b border-black">
