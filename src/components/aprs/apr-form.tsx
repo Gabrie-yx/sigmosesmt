@@ -652,10 +652,21 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           .is("apr_id", null);
       }
 
+      // Sincroniza ponteiro reverso: a PTE escolhida no dropdown (apr.pte_id)
+      // precisa ter seu próprio apr_id apontando para esta APR. Sem isso, a
+      // lista de APRs mostra "Pendente" mesmo com PTE vinculada.
+      if (safePteId && id) {
+        await supabase
+          .from("ptes")
+          .update({ apr_id: id })
+          .eq("id", safePteId);
+      }
+
       return id!;
     },
     onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["aprs"] });
+      qc.invalidateQueries({ queryKey: ["ptes-by-apr"] });
       qc.invalidateQueries({ queryKey: ["ptes-linked-apr", id] });
       qc.invalidateQueries({ queryKey: ["ptes-light"] });
       toast.success("APR salva");
