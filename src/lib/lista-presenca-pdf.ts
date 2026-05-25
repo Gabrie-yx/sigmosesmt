@@ -186,9 +186,10 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
       doc.rect(margin + partW + i * rubCol, subY, rubCol, subH);
     }
 
-    // Body rows
+    // Body rows — reserva espaço do rodapé LGPD (2 linhas + folga)
+    const footerReserve = 10;
     let ry = subY + subH;
-    const availH = pageH - margin - ry;
+    const availH = pageH - margin - footerReserve - ry;
     const rowH = Math.min(8, availH / rowsCount);
     doc.setFont("helvetica", "normal").setFontSize(9);
     for (let r = 0; r < rowsCount; r++) {
