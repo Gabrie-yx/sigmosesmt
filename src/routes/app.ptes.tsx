@@ -32,7 +32,7 @@ function PtesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkedAprId, setLinkedAprId] = useState<string | null>(null);
   const [f, setF] = useState<any>({
-    data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "",
+    data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
   });
 
   const { data: ptes = [] } = useQuery({
