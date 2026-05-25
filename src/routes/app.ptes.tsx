@@ -246,6 +246,22 @@ function PtesPage() {
               <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-slate-50 mt-2 text-xs font-bold uppercase" />
             </div>
             <div>
+              <Label className="text-[10px] font-black text-slate-500 uppercase">Frente de Trabalho (Casco)</Label>
+              <Select value={f.casco_id || "none"} onValueChange={(v) => setF({ ...f, casco_id: v === "none" ? "" : v })}>
+                <SelectTrigger className="bg-slate-50 mt-2 text-xs font-bold uppercase">
+                  <SelectValue placeholder="-- SELECIONE O CASCO --" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— SEM CASCO —</SelectItem>
+                  {(cascos as any[]).map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      CASCO {c.numero}{c.nome ? ` — ${c.nome}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label className="text-[10px] font-black text-slate-500 uppercase">Classificação de Risco (GSI)</Label>
               <Select value={f.risco} onValueChange={(v) => setF({ ...f, risco: v })}>
                 <SelectTrigger className="bg-slate-50 mt-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
