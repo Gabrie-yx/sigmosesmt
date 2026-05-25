@@ -78,6 +78,8 @@ export async function buildAprPdf(aprId: string, opts?: { encSig?: string | null
     } as APRPdfAssinatura)),
     encSig: opts?.encSig ?? (apr.signature_enc ?? null),
     tstSig: opts?.tstSig ?? (apr.signature_tst ?? null),
+    encSigHeight: apr.signature_enc_height ?? null,
+    tstSigHeight: apr.signature_tst_height ?? null,
   });
 }
 

@@ -65,6 +65,10 @@ export type APRPdfParams = {
   encSig?: string | null;
   /** PNG/JPEG data URL — assinatura do TST/SESMT (opcional) */
   tstSig?: string | null;
+  /** Altura visual (px 20–140) escolhida pelo usuário p/ assinatura ENC */
+  encSigHeight?: number | null;
+  /** Altura visual (px 20–140) escolhida pelo usuário p/ assinatura TST */
+  tstSigHeight?: number | null;
 };
 
 // Cores fixas (modelo homologado)
@@ -484,7 +488,7 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   // Caixa Elaborador (lado esquerdo, em branco para preenchimento manual)
   // Caixa Elaborador — dividida em 2: ENCARREGADO (topo) e TST/SESMT (base)
   const elabH = bodyH / 2;
-  const drawSigSlot = (sy: number, label: string, sig?: string | null) => {
+  const drawSigSlot = (sy: number, label: string, sig?: string | null, heightPx?: number | null) => {
     doc.rect(MARGIN, sy, colLeftW, elabH);
     doc.setFillColor(245, 245, 245);
     doc.rect(MARGIN, sy, colLeftW, 5, "F");
@@ -511,8 +515,10 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
         let drawW = areaW;
         let drawH = drawW / ratio;
         if (drawH > areaH) { drawH = areaH; drawW = drawH * ratio; }
-        // limita a altura do slot para não estourar visualmente
-        const maxH = areaH * 1.0;
+        // Altura escolhida pelo usuário (px 20–140) → fração do slot.
+        // 140px = ocupa todo o slot. Sem valor, usa 100% do slot.
+        const frac = heightPx ? Math.max(0.15, Math.min(1, heightPx / 140)) : 1;
+        const maxH = areaH * frac;
         if (drawH > maxH) { drawH = maxH; drawW = drawH * ratio; }
         const dx = areaX + (areaW - drawW) / 2;
         const dy = areaY + (areaH - drawH) / 2;
@@ -522,8 +528,8 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
       }
     }
   };
-  drawSigSlot(y, "ENCARREGADO", p.encSig);
-  drawSigSlot(y + elabH, "TÉCNICO DE SEGURANÇA DO TRABALHO (SESMT)", p.tstSig);
+  drawSigSlot(y, "ENCARREGADO", p.encSig, p.encSigHeight ?? null);
+  drawSigSlot(y + elabH, "TÉCNICO DE SEGURANÇA DO TRABALHO (SESMT)", p.tstSig, p.tstSigHeight ?? null);
 
   // Linhas Executantes (lado direito) — apenas numeradas, em branco
   doc.setFont("helvetica", "bold").setFontSize(9);
