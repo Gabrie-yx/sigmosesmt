@@ -224,7 +224,7 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
 
   function drawFooter() {
     doc.setFont("helvetica", "italic").setFontSize(7);
-    const footY = pageH - margin - 4;
+    const footY = pageH - margin - 5;
     doc.text(
       '"O Grupo Atem se compromete a tratar os dados pessoais nos termos da sua Política de Gestão e Proteção de Dados Pessoais e da Lei Geral de Proteção de Dados (LGPD), sendo que os dados aqui tratados são para cumprimento de obrigação legal trabalhista e previdenciária pelo Grupo Atem."',
       pageW / 2, footY, { align: "center", maxWidth: contentW }
