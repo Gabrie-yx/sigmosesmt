@@ -16,6 +16,9 @@ import { AprForm } from "@/components/aprs/apr-form";
 import { AprModeloPicker, type AprModelo } from "@/components/aprs/apr-modelo-picker";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { abrirAprPdf, imprimirAprPdf, baixarAprPdf } from "@/lib/apr-pdf-loader";
+import { buildAprPdf } from "@/lib/apr-pdf-loader";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import type jsPDF from "jspdf";
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 
 export const Route = createFileRoute("/app/aprs")({
@@ -52,6 +55,22 @@ function AprsPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [filterCasco, setFilterCasco] = useState<string>("ALL");
+  const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
+  const [pdfName, setPdfName] = useState("apr.pdf");
+  const [pdfAprId, setPdfAprId] = useState<string | null>(null);
+  const [encSig, setEncSig] = useState<string | null>(null);
+  const [tstSig, setTstSig] = useState<string | null>(null);
+
+  async function openPreview(aprId: string, numero?: string | null, eSig?: string | null, tSig?: string | null) {
+    try {
+      const doc = await buildAprPdf(aprId, { encSig: eSig ?? null, tstSig: tSig ?? null });
+      setPdfDoc(doc);
+      setPdfName(`${numero ?? "apr"}.pdf`);
+      setPdfAprId(aprId);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  }
 
   const { data: aprs = [], isLoading } = useQuery({
     queryKey: ["aprs"],
@@ -231,6 +250,9 @@ function AprsPage() {
                         <DropdownMenuContent align="end" className="w-52">
                           <DropdownMenuItem onClick={() => abrirAprPdf(a.id).catch((e) => toast.error(e.message))}>
                             <Eye className="h-4 w-4 mr-2" /> Visualizar PDF
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setEncSig(null); setTstSig(null); openPreview(a.id, a.numero); }}>
+                            <Pencil className="h-4 w-4 mr-2" /> Visualizar / Assinar PDF
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => imprimirAprPdf(a.id).catch((e) => toast.error(e.message))}>
                             <Printer className="h-4 w-4 mr-2" /> Imprimir
