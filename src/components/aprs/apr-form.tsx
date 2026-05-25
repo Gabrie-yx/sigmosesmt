@@ -593,8 +593,19 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
 
       let id = apr.id;
       if (id) {
-        const { error } = await supabase.from("aprs").update(payload).eq("id", id);
+        console.log("[APR save] update", id, "casco_id=", payload.casco_id);
+        const { data: updated, error } = await supabase
+          .from("aprs")
+          .update(payload)
+          .eq("id", id)
+          .select("id,casco_id");
         if (error) throw error;
+        if (!updated || updated.length === 0) {
+          throw new Error("Update bloqueado (sem permissão ou sessão expirada). Faça login novamente.");
+        }
+        if (updated[0].casco_id !== payload.casco_id) {
+          throw new Error(`Casco não foi persistido. Esperado ${payload.casco_id}, salvo ${updated[0].casco_id}.`);
+        }
       } else {
         const { data, error } = await supabase.from("aprs").insert(payload).select("id").single();
         if (error) throw error;
