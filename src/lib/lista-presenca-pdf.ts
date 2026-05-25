@@ -69,6 +69,18 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     doc.text(value, textX, textY, { align });
   }
 
+  function drawImageContain(dataUrl: string, x: number, y: number, w: number, h: number) {
+    const props = doc.getImageProperties(dataUrl);
+    const ratio = Math.min(w / props.width, h / props.height);
+    const imgW = props.width * ratio;
+    const imgH = props.height * ratio;
+    const imgX = x + (w - imgW) / 2;
+    const imgY = y + (h - imgH) / 2;
+    const format = dataUrl.toLowerCase().includes("image/jpeg") || dataUrl.toLowerCase().includes("image/jpg") ? "JPEG" : "PNG";
+
+    doc.addImage(dataUrl, format, imgX, imgY, imgW, imgH);
+  }
+
   function drawHeader(pageNum: number) {
     doc.setLineWidth(0.3);
     const headerY = margin;
@@ -129,7 +141,7 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     doc.text(p.instrutor || "", margin + colATitW + 2, y + 9, { maxWidth: colBInsW - 4 });
     if (p.assinaturaDataUrl) {
       try {
-        doc.addImage(p.assinaturaDataUrl, "PNG", margin + colATitW + colBInsW + 2, y + 4, colCAssW - 4, rowH - 5);
+        drawImageContain(p.assinaturaDataUrl, margin + colATitW + colBInsW + 2, y + 4, colCAssW - 4, rowH - 5);
       } catch {}
     }
     y += rowH;
