@@ -611,23 +611,47 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
 
             <Label className="text-[10px] font-black text-slate-500 uppercase">Adicionar Participante</Label>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-2 mt-2">
-              <select
-                value={selectedEmp}
-                onChange={(e) => setSelectedEmp(e.target.value)}
-                className="md:col-span-6 bg-white border border-slate-200 rounded-md px-3 py-2 text-xs font-semibold"
-              >
-                <option value="">-- selecione --</option>
-                {available.map((e: any) => {
-                  const c = companies.find((x: any) => x.id === e.company_id);
-                  return <option key={e.id} value={e.id}>{e.nome} {e.matricula ? `(${e.matricula})` : ""} — {c?.name ?? "S/ EMPRESA"}</option>;
-                })}
-              </select>
+              <div className="md:col-span-6 space-y-2">
+                <Input
+                  value={employeeSearch}
+                  onChange={(e) => setEmployeeSearch(e.target.value)}
+                  placeholder="Digite nome, matrícula ou empresa"
+                  className="bg-white text-xs font-semibold"
+                />
+                {selectedEmployee && (
+                  <div className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-bold text-primary">
+                    Selecionado: {selectedEmployee.nome} {selectedEmployee.matricula ? `(${selectedEmployee.matricula})` : ""}
+                  </div>
+                )}
+                <div className="max-h-44 overflow-y-auto rounded-md border border-slate-200 bg-white">
+                  {filteredEmployees.length === 0 ? (
+                    <div className="px-3 py-3 text-xs font-bold uppercase text-slate-400">Nenhum funcionário disponível.</div>
+                  ) : (
+                    filteredEmployees.map((e: any) => (
+                      <button
+                        key={e.id}
+                        type="button"
+                        onClick={() => setSelectedEmp(e.id)}
+                        className={`flex w-full items-start justify-between gap-2 border-b border-slate-100 px-3 py-2 text-left text-xs transition last:border-b-0 hover:bg-slate-50 ${selectedEmp === e.id ? "bg-primary/10" : ""}`}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate font-black text-slate-800">{e.nome}</span>
+                          <span className="block truncate font-bold uppercase text-slate-500">
+                            {e.matricula ? `MAT: ${e.matricula} • ` : ""}{companyById.get(e.company_id) ?? "S/ EMPRESA"}
+                          </span>
+                        </span>
+                        {selectedEmp === e.id && <span className="shrink-0 font-black text-primary">OK</span>}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
               <Select value={situacao} onValueChange={(v) => setSituacao(v as any)}>
                 <SelectTrigger className="md:col-span-3"><SelectValue /></SelectTrigger>
                 <SelectContent>{SITUACOES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
               <Input type="number" min={0} max={10} step={0.1} placeholder="Nota" value={nota} onChange={(e) => setNota(e.target.value)} className="md:col-span-1" />
-              <Button onClick={() => add.mutate()} disabled={add.isPending} className="md:col-span-2">
+              <Button onClick={() => add.mutate()} disabled={add.isPending || !selectedEmp} className="md:col-span-2">
                 <Plus className="h-4 w-4 mr-1" /> Add
               </Button>
             </div>
