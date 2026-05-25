@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -462,6 +462,7 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
   const [selectedEmp, setSelectedEmp] = useState("");
+  const [employeeSearch, setEmployeeSearch] = useState("");
   const [situacao, setSituacao] = useState<typeof SITUACOES[number]>("APROVADO");
   const [nota, setNota] = useState<string>("");
   const [bulkCompany, setBulkCompany] = useState<string>("");
@@ -491,6 +492,18 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
 
   const enrolled = new Set(attendees.map((a: any) => a.employee_id));
   const available = emps.filter((e: any) => !enrolled.has(e.id));
+  const companyById = useMemo(() => new Map(companies.map((c: any) => [c.id, c.name])), [companies]);
+  const selectedEmployee = available.find((e: any) => e.id === selectedEmp) ?? null;
+  const filteredEmployees = useMemo(() => {
+    const q = employeeSearch.trim().toLowerCase();
+    const list = q
+      ? available.filter((e: any) => {
+          const haystack = `${e.nome ?? ""} ${e.matricula ?? ""} ${companyById.get(e.company_id) ?? ""}`.toLowerCase();
+          return haystack.includes(q);
+        })
+      : available;
+    return list.slice(0, 40);
+  }, [available, companyById, employeeSearch]);
 
   const add = useMutation({
     mutationFn: async () => {
@@ -508,7 +521,7 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["training-attendees", trainingId] });
       qc.invalidateQueries({ queryKey: ["training-counts"] });
-      setSelectedEmp(""); setNota(""); setSituacao("APROVADO");
+      setSelectedEmp(""); setEmployeeSearch(""); setNota(""); setSituacao("APROVADO");
       toast.success("Participante adicionado");
     },
     onError: (e: any) => toast.error(e.message),
@@ -598,23 +611,47 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
 
             <Label className="text-[10px] font-black text-slate-500 uppercase">Adicionar Participante</Label>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-2 mt-2">
-              <select
-                value={selectedEmp}
-                onChange={(e) => setSelectedEmp(e.target.value)}
-                className="md:col-span-6 bg-white border border-slate-200 rounded-md px-3 py-2 text-xs font-semibold"
-              >
-                <option value="">-- selecione --</option>
-                {available.map((e: any) => {
-                  const c = companies.find((x: any) => x.id === e.company_id);
-                  return <option key={e.id} value={e.id}>{e.nome} {e.matricula ? `(${e.matricula})` : ""} — {c?.name ?? "S/ EMPRESA"}</option>;
-                })}
-              </select>
+              <div className="md:col-span-6 space-y-2">
+                <Input
+                  value={employeeSearch}
+                  onChange={(e) => setEmployeeSearch(e.target.value)}
+                  placeholder="Digite nome, matrícula ou empresa"
+                  className="bg-white text-xs font-semibold"
+                />
+                {selectedEmployee && (
+                  <div className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-bold text-primary">
+                    Selecionado: {selectedEmployee.nome} {selectedEmployee.matricula ? `(${selectedEmployee.matricula})` : ""}
+                  </div>
+                )}
+                <div className="max-h-44 overflow-y-auto rounded-md border border-border bg-background">
+                  {filteredEmployees.length === 0 ? (
+                    <div className="px-3 py-3 text-xs font-bold uppercase text-muted-foreground">Nenhum funcionário disponível.</div>
+                  ) : (
+                    filteredEmployees.map((e: any) => (
+                      <button
+                        key={e.id}
+                        type="button"
+                        onClick={() => setSelectedEmp(e.id)}
+                        className={`flex w-full items-start justify-between gap-2 border-b border-border px-3 py-2 text-left text-xs transition last:border-b-0 hover:bg-accent ${selectedEmp === e.id ? "bg-primary/10" : ""}`}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate font-black text-foreground">{e.nome}</span>
+                          <span className="block truncate font-bold uppercase text-muted-foreground">
+                            {e.matricula ? `MAT: ${e.matricula} • ` : ""}{companyById.get(e.company_id) ?? "S/ EMPRESA"}
+                          </span>
+                        </span>
+                        {selectedEmp === e.id && <span className="shrink-0 font-black text-primary">OK</span>}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
               <Select value={situacao} onValueChange={(v) => setSituacao(v as any)}>
                 <SelectTrigger className="md:col-span-3"><SelectValue /></SelectTrigger>
                 <SelectContent>{SITUACOES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
               <Input type="number" min={0} max={10} step={0.1} placeholder="Nota" value={nota} onChange={(e) => setNota(e.target.value)} className="md:col-span-1" />
-              <Button onClick={() => add.mutate()} disabled={add.isPending} className="md:col-span-2">
+              <Button onClick={() => add.mutate()} disabled={add.isPending || !selectedEmp} className="md:col-span-2">
                 <Plus className="h-4 w-4 mr-1" /> Add
               </Button>
             </div>
