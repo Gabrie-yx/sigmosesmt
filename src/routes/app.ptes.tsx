@@ -149,6 +149,7 @@ function PtesPage() {
           data: f.data, local: f.local || null, risco: f.risco,
           employee_id: f.employee_id || null, employee_name: emp?.nome ?? null,
           company_id: emp?.company_id ?? null,
+          casco_id: f.casco_id || null,
         }).eq("id", editingId);
         if (error) throw error;
       } else {
@@ -158,6 +159,7 @@ function PtesPage() {
           employee_id: f.employee_id || null, employee_name: emp?.nome ?? null,
           company_id: emp?.company_id ?? null, dados: {},
           apr_id: linkedAprId,
+          casco_id: f.casco_id || null,
         });
         if (error) throw error;
       }
