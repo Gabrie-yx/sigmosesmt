@@ -125,10 +125,10 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     let y = headerY + headerH;
 
     // Row: TÍTULO | INSTRUTOR | ASSINATURA
-    const rowH = 14;
+    const rowH = 22;
     doc.rect(margin, y, contentW, rowH);
     const colATitW = contentW * 0.40;
-    const colBInsW = contentW * 0.32;
+    const colBInsW = contentW * 0.28;
     const colCAssW = contentW - colATitW - colBInsW;
     doc.line(margin + colATitW, y, margin + colATitW, y + rowH);
     doc.line(margin + colATitW + colBInsW, y, margin + colATitW + colBInsW, y + rowH);
@@ -141,7 +141,7 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     doc.text(p.instrutor || "", margin + colATitW + 2, y + 9, { maxWidth: colBInsW - 4 });
     if (p.assinaturaDataUrl) {
       try {
-        drawImageContain(p.assinaturaDataUrl, margin + colATitW + colBInsW + 2, y + 4, colCAssW - 4, rowH - 5);
+        drawImageContain(p.assinaturaDataUrl, margin + colATitW + colBInsW + 2, y + 5, colCAssW - 4, rowH - 6);
       } catch {}
     }
     y += rowH;
