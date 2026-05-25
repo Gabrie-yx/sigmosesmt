@@ -546,6 +546,28 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     }
   }
 
+  function marcarTodosExecutantes() {
+    setAssinaturas((arr) => {
+      const semExec = arr.filter((a) => a.papel !== "EXECUTANTE");
+      const novos = empresaFuncs.map((e: any, i: number) => {
+        const role = roles.find((r: any) => r.id === e.role_id);
+        return {
+          papel: "EXECUTANTE" as const,
+          employee_id: e.id,
+          nome: e.nome,
+          cpf: e.cpf,
+          funcao: role?.name ?? "",
+          ordem: i + 1,
+        };
+      });
+      return [...semExec, ...novos];
+    });
+  }
+
+  function desmarcarTodosExecutantes() {
+    setAssinaturas((arr) => arr.filter((a) => a.papel !== "EXECUTANTE"));
+  }
+
   /* ---------- salvar ---------- */
   const save = useMutation({
     mutationFn: async (publish: boolean) => {
