@@ -3347,6 +3347,7 @@ export type Database = {
       ptes: {
         Row: {
           apr_id: string | null
+          casco_id: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
@@ -3364,6 +3365,7 @@ export type Database = {
         }
         Insert: {
           apr_id?: string | null
+          casco_id?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -3381,6 +3383,7 @@ export type Database = {
         }
         Update: {
           apr_id?: string | null
+          casco_id?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -3397,6 +3400,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ptes_casco_id_fkey"
+            columns: ["casco_id"]
+            isOneToOne: false
+            referencedRelation: "cascos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ptes_company_id_fkey"
             columns: ["company_id"]

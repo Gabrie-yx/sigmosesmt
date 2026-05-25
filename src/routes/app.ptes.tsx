@@ -32,7 +32,7 @@ function PtesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkedAprId, setLinkedAprId] = useState<string | null>(null);
   const [f, setF] = useState<any>({
-    data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "",
+    data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
   });
 
   const { data: ptes = [] } = useQuery({
@@ -62,6 +62,7 @@ function PtesPage() {
         ...cur,
         risco: riscoSugerido,
         local: apr.local ?? cur.local,
+        casco_id: apr.casco_id ?? cur.casco_id,
       }));
       toast.info(`Vinculando nova PTE à APR ${apr.numero}`);
       // limpa o search para não repetir ao voltar
@@ -77,6 +78,11 @@ function PtesPage() {
     queryKey: ["companies"],
     queryFn: async () => (await supabase.from("companies").select("id,name")).data ?? [],
   });
+  const { data: cascos = [] } = useQuery({
+    queryKey: ["cascos-light-for-ptes"],
+    queryFn: async () => (await supabase.from("cascos").select("id,numero,nome").order("numero")).data ?? [],
+  });
+  const cascosMap = useMemo(() => new Map((cascos as any[]).map((c: any) => [c.id, c])), [cascos]);
   const { data: roles = [] } = useQuery({
     queryKey: ["roles"],
     queryFn: async () => (await supabase.from("roles").select("*")).data ?? [],
@@ -143,6 +149,7 @@ function PtesPage() {
           data: f.data, local: f.local || null, risco: f.risco,
           employee_id: f.employee_id || null, employee_name: emp?.nome ?? null,
           company_id: emp?.company_id ?? null,
+          casco_id: f.casco_id || null,
         }).eq("id", editingId);
         if (error) throw error;
       } else {
@@ -152,6 +159,7 @@ function PtesPage() {
           employee_id: f.employee_id || null, employee_name: emp?.nome ?? null,
           company_id: emp?.company_id ?? null, dados: {},
           apr_id: linkedAprId,
+          casco_id: f.casco_id || null,
         });
         if (error) throw error;
       }
@@ -165,7 +173,7 @@ function PtesPage() {
       } });
       setEditingId(null);
       setLinkedAprId(null);
-      setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "" });
+      setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "" });
       toast.success(editingId ? "PTE atualizada" : "PTE emitida");
     },
     onError: (e: any) => toast.error(e.message),
@@ -197,11 +205,11 @@ function PtesPage() {
 
   function startEdit(p: any) {
     setEditingId(p.id);
-    setF({ data: p.data, employee_id: p.employee_id ?? "", risco: p.risco ?? PTE_RISCOS[0], local: p.local ?? "", company_id: p.company_id ?? "" });
+    setF({ data: p.data, employee_id: p.employee_id ?? "", risco: p.risco ?? PTE_RISCOS[0], local: p.local ?? "", company_id: p.company_id ?? "", casco_id: p.casco_id ?? "" });
   }
   function cancelEdit() {
     setEditingId(null);
-    setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "" });
+    setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "" });
   }
 
   return (
@@ -236,6 +244,22 @@ function PtesPage() {
             <div>
               <Label className="text-[10px] font-black text-slate-500 uppercase">Local do Trabalho / Instalação</Label>
               <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-slate-50 mt-2 text-xs font-bold uppercase" />
+            </div>
+            <div>
+              <Label className="text-[10px] font-black text-slate-500 uppercase">Frente de Trabalho (Casco)</Label>
+              <Select value={f.casco_id || "none"} onValueChange={(v) => setF({ ...f, casco_id: v === "none" ? "" : v })}>
+                <SelectTrigger className="bg-slate-50 mt-2 text-xs font-bold uppercase">
+                  <SelectValue placeholder="-- SELECIONE O CASCO --" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— SEM CASCO —</SelectItem>
+                  {(cascos as any[]).map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      CASCO {c.numero}{c.nome ? ` — ${c.nome}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="text-[10px] font-black text-slate-500 uppercase">Classificação de Risco (GSI)</Label>
@@ -332,6 +356,12 @@ function PtesPage() {
                 <h4 className="text-xs font-black text-[#991b1b] uppercase mb-1">{p.employee_name ?? "—"}</h4>
                 <div className="text-[10px] font-bold text-slate-500 uppercase mt-1">Risco: <span className="font-black text-slate-700">{p.risco}</span></div>
                 <div className="text-[10px] font-bold text-slate-500 uppercase">Local: {p.local ?? "—"}</div>
+                {p.casco_id && (
+                  <div className="text-[10px] font-bold text-indigo-700 uppercase">
+                    Casco: <span className="font-black">{(cascosMap.get(p.casco_id) as any)?.numero ?? "—"}</span>
+                    {(cascosMap.get(p.casco_id) as any)?.nome ? ` — ${(cascosMap.get(p.casco_id) as any).nome}` : ""}
+                  </div>
+                )}
                 {p.apr_id && (
                   <div className="text-[10px] font-bold text-emerald-700 uppercase mt-1 flex items-center gap-1">
                     <Link2 className="h-3 w-3" /> APR {(aprsMap.get(p.apr_id) as any)?.numero ?? p.apr_id.slice(0, 8)}
