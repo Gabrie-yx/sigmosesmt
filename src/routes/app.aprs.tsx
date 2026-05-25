@@ -159,7 +159,7 @@ function AprsPage() {
       if (rs && rs.length > 0) {
         const { error: e2 } = await supabase.from("apr_riscos").insert(
           rs.map((r: any) => {
-            const { id, created_at, apr_id, ...rr } = r;
+            const { id, created_at, apr_id, nivel_risco, ...rr } = r;
             return { ...rr, apr_id: novo.id };
           }),
         );
