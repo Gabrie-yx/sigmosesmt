@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert, Zap } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert, Zap, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { AprForm } from "@/components/aprs/apr-form";
@@ -59,6 +59,8 @@ function AprsPage() {
   const [pdfAprId, setPdfAprId] = useState<string | null>(null);
   const [encSig, setEncSig] = useState<string | null>(null);
   const [tstSig, setTstSig] = useState<string | null>(null);
+  const [dupSource, setDupSource] = useState<any | null>(null);
+  const [dupCascoId, setDupCascoId] = useState<string>("");
 
   async function openPreview(aprId: string, numero?: string | null, eSig?: string | null, tSig?: string | null) {
     try {
@@ -124,6 +126,62 @@ function AprsPage() {
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["aprs"] }); toast.success("APR excluída"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const duplicate = useMutation({
+    mutationFn: async ({ srcId, novoCascoId }: { srcId: string; novoCascoId: string }) => {
+      const [{ data: a, error: ea }, { data: rs, error: er }, { data: ass, error: eas }] = await Promise.all([
+        supabase.from("aprs").select("*").eq("id", srcId).maybeSingle(),
+        supabase.from("apr_riscos").select("*").eq("apr_id", srcId).order("ordem"),
+        supabase.from("apr_assinaturas").select("*").eq("apr_id", srcId).order("ordem"),
+      ]);
+      if (ea) throw ea;
+      if (er) throw er;
+      if (eas) throw eas;
+      if (!a) throw new Error("APR de origem não encontrada");
+
+      const { data: numero, error: enErr } = await supabase.rpc("gerar_numero_apr");
+      if (enErr) throw enErr;
+
+      const { id: _ignoreId, created_at, updated_at, numero: _oldNum, data_validade, pte_id, ...rest } = a as any;
+      const payload = {
+        ...rest,
+        numero,
+        casco_id: novoCascoId,
+        pte_id: null,
+        status: "RASCUNHO",
+        data_emissao: new Date().toISOString().slice(0, 10),
+      };
+      const { data: novo, error: ein } = await supabase.from("aprs").insert(payload).select("id,numero").single();
+      if (ein) throw ein;
+
+      if (rs && rs.length > 0) {
+        const { error: e2 } = await supabase.from("apr_riscos").insert(
+          rs.map((r: any) => {
+            const { id, created_at, apr_id, ...rr } = r;
+            return { ...rr, apr_id: novo.id };
+          }),
+        );
+        if (e2) throw e2;
+      }
+      if (ass && ass.length > 0) {
+        const { error: e3 } = await supabase.from("apr_assinaturas").insert(
+          ass.map((s: any) => {
+            const { id, created_at, apr_id, ...ss } = s;
+            return { ...ss, apr_id: novo.id };
+          }),
+        );
+        if (e3) throw e3;
+      }
+      return novo;
+    },
+    onSuccess: (novo: any) => {
+      qc.invalidateQueries({ queryKey: ["aprs"] });
+      setDupSource(null);
+      setDupCascoId("");
+      toast.success(`APR ${novo.numero} duplicada — revise e ative quando estiver pronta`);
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -271,6 +329,11 @@ function AprsPage() {
                           {isEditor && (
                             <DropdownMenuItem onClick={() => setEditing(a.id)}>
                               <Pencil className="h-4 w-4 mr-2" /> Editar
+                            </DropdownMenuItem>
+                          )}
+                          {isEditor && (
+                            <DropdownMenuItem onClick={() => { setDupSource(a); setDupCascoId(""); }}>
+                              <Copy className="h-4 w-4 mr-2" /> Duplicar para outro casco
                             </DropdownMenuItem>
                           )}
                           {isAdmin && (
