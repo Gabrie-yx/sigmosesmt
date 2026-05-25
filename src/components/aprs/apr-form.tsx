@@ -1033,20 +1033,20 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
 
               <h3 className="text-center font-black text-base tracking-widest mt-4">A S S I N A T U R A S</h3>
               <div className="grid grid-cols-2 gap-3">
-                <div className="border-2 border-black">
-                  <div className="bg-slate-100 p-1 text-center font-bold text-xs border-b border-black">Técnico em Segurança do Trabalho</div>
-                  <div className="p-3 text-center min-h-[120px] flex flex-col justify-end">
-                    <div className="text-sm font-medium">{tst?.nome ?? "—"}</div>
-                    <div className="border-t border-black mt-2 pt-1 text-[10px] italic">Assinatura</div>
-                  </div>
-                </div>
-                <div className="border-2 border-black">
-                  <div className="bg-slate-100 p-1 text-center font-bold text-xs border-b border-black">Responsável pelo Serviço</div>
-                  <div className="p-3 text-center min-h-[120px] flex flex-col justify-end">
-                    <div className="text-sm font-medium">{empresa?.name ?? enc?.nome ?? "—"}</div>
-                    <div className="border-t border-black mt-2 pt-1 text-[10px] italic">Assinatura</div>
-                  </div>
-                </div>
+                <SignatureBox
+                  title="Técnico em Segurança do Trabalho"
+                  nome={tst?.nome ?? "—"}
+                  value={(apr as any).signature_tst ?? null}
+                  height={(apr as any).signature_tst_height ?? 80}
+                  onChange={(v, h) => setApr({ ...apr, ...({ signature_tst: v, signature_tst_height: h } as any) })}
+                />
+                <SignatureBox
+                  title="Responsável pelo Serviço"
+                  nome={empresa?.name ?? enc?.nome ?? "—"}
+                  value={(apr as any).signature_enc ?? null}
+                  height={(apr as any).signature_enc_height ?? 80}
+                  onChange={(v, h) => setApr({ ...apr, ...({ signature_enc: v, signature_enc_height: h } as any) })}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
