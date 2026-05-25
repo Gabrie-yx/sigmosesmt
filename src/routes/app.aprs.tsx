@@ -336,6 +336,19 @@ function AprsPage() {
           toast.success(`Modelo "${modelo.nome}" carregado — ${riscosComOrdem.length} riscos pré-preenchidos`);
         }}
       />
+
+      <PDFPreviewDialog
+        open={!!pdfDoc}
+        onClose={() => { setPdfDoc(null); setPdfAprId(null); setEncSig(null); setTstSig(null); }}
+        doc={pdfDoc}
+        fileName={pdfName}
+        title="Visualizar / Assinar APR"
+        signable
+        encSig={encSig}
+        sesmtSig={tstSig}
+        onChangeEncSig={(v) => { setEncSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), v, tstSig); }}
+        onChangeSesmtSig={(v) => { setTstSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), encSig, v); }}
+      />
     </div>
   );
 }
