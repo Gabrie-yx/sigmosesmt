@@ -748,7 +748,6 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
       return null;
     }
     if (idx === 2) {
-      if (!apr.encarregado_id) return "Selecione o Encarregado Responsável (interno)";
       return null;
     }
     if (idx === 3) {
