@@ -186,9 +186,10 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
       doc.rect(margin + partW + i * rubCol, subY, rubCol, subH);
     }
 
-    // Body rows
+    // Body rows — reserva espaço do rodapé LGPD (2 linhas + folga)
+    const footerReserve = 10;
     let ry = subY + subH;
-    const availH = pageH - margin - ry;
+    const availH = pageH - margin - footerReserve - ry;
     const rowH = Math.min(8, availH / rowsCount);
     doc.setFont("helvetica", "normal").setFontSize(9);
     for (let r = 0; r < rowsCount; r++) {
@@ -223,7 +224,7 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
 
   function drawFooter() {
     doc.setFont("helvetica", "italic").setFontSize(7);
-    const footY = pageH - margin - 4;
+    const footY = pageH - margin - 5;
     doc.text(
       '"O Grupo Atem se compromete a tratar os dados pessoais nos termos da sua Política de Gestão e Proteção de Dados Pessoais e da Lei Geral de Proteção de Dados (LGPD), sendo que os dados aqui tratados são para cumprimento de obrigação legal trabalhista e previdenciária pelo Grupo Atem."',
       pageW / 2, footY, { align: "center", maxWidth: contentW }
