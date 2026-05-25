@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert, Zap, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
@@ -52,8 +53,9 @@ function AprsPage() {
   const [editing, setEditing] = useState<string | null | "new">(null);
   const [modeloPickerOpen, setModeloPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const [filterStatus, setFilterStatus] = useState<string>("ATIVAS");
   const [filterCasco, setFilterCasco] = useState<string>("ALL");
+  const [filterPeriodo, setFilterPeriodo] = useState<string>("30d");
   const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
   const [pdfName, setPdfName] = useState("apr.pdf");
   const [pdfAprId, setPdfAprId] = useState<string | null>(null);
@@ -105,9 +107,19 @@ function AprsPage() {
 
   const filtered = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
+    let cutoff: string | null = null;
+    if (filterPeriodo !== "all") {
+      const days = filterPeriodo === "today" ? 0 : filterPeriodo === "7d" ? 7 : 30;
+      const d = new Date();
+      d.setDate(d.getDate() - days);
+      cutoff = d.toISOString().slice(0, 10);
+    }
     return aprs.filter((a: any) => {
-      if (filterStatus !== "ALL" && a.status !== filterStatus) return false;
+      if (filterStatus === "ATIVAS") {
+        if (a.status === "ENCERRADA" || a.status === "CANCELADA") return false;
+      } else if (filterStatus !== "ALL" && a.status !== filterStatus) return false;
       if (filterCasco !== "ALL" && a.casco_id !== filterCasco) return false;
+      if (cutoff && a.data_emissao && a.data_emissao < cutoff) return false;
       if (search) {
         const q = search.toLowerCase();
         const txt = `${a.numero ?? ""} ${a.atividade_descricao ?? ""} ${a.local ?? ""}`.toLowerCase();
@@ -118,7 +130,42 @@ function AprsPage() {
       ...a,
       _vencida: a.data_validade && a.data_validade < today && a.status === "ATIVA",
     }));
-  }, [aprs, search, filterStatus, filterCasco]);
+  }, [aprs, search, filterStatus, filterCasco, filterPeriodo]);
+
+  const grouped = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const in2 = new Date();
+    in2.setDate(in2.getDate() + 2);
+    const in2Str = in2.toISOString().slice(0, 10);
+    const map = new Map<string, { casco: any; aprs: any[]; ativas: number; vencendo: number; pendentes: number }>();
+    for (const a of filtered) {
+      const key = a.casco_id ?? "__sem_casco__";
+      let g = map.get(key);
+      if (!g) {
+        g = {
+          casco: a.casco_id ? cascoMap.get(a.casco_id) ?? null : null,
+          aprs: [],
+          ativas: 0,
+          vencendo: 0,
+          pendentes: 0,
+        };
+        map.set(key, g);
+      }
+      g.aprs.push(a);
+      if (a.status === "ATIVA") g.ativas++;
+      if (a.data_validade && a.status === "ATIVA" && a.data_validade >= today && a.data_validade <= in2Str) g.vencendo++;
+      const byApr = ptesByApr.get(a.id) ?? [];
+      const legacy = a.pte_id ? (ptesLink as any[]).filter((p) => p.id === a.pte_id && p.apr_id !== a.id) : [];
+      if (a.exige_pte && byApr.length + legacy.length === 0) g.pendentes++;
+    }
+    return Array.from(map.entries())
+      .map(([key, g]) => ({ key, ...g }))
+      .sort((a, b) => {
+        const an = a.casco?.numero ?? "zzz";
+        const bn = b.casco?.numero ?? "zzz";
+        return String(an).localeCompare(String(bn));
+      });
+  }, [filtered, cascoMap, ptesByApr, ptesLink]);
 
   const del = useMutation({
     mutationFn: async (id: string) => {
@@ -227,11 +274,21 @@ function AprsPage() {
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-[160px]"><Filter className="h-3.5 w-3.5 mr-1" /><SelectValue /></SelectTrigger>
           <SelectContent>
+            <SelectItem value="ATIVAS">Ativas (padrão)</SelectItem>
             <SelectItem value="ALL">Todos status</SelectItem>
             <SelectItem value="RASCUNHO">Rascunho</SelectItem>
             <SelectItem value="ATIVA">Ativa</SelectItem>
             <SelectItem value="ENCERRADA">Encerrada</SelectItem>
             <SelectItem value="CANCELADA">Cancelada</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterPeriodo} onValueChange={setFilterPeriodo}>
+          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="today">Hoje</SelectItem>
+            <SelectItem value="7d">Últimos 7 dias</SelectItem>
+            <SelectItem value="30d">Últimos 30 dias</SelectItem>
+            <SelectItem value="all">Todo período</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filterCasco} onValueChange={setFilterCasco}>
@@ -244,115 +301,151 @@ function AprsPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex-1 overflow-hidden flex flex-col min-h-0">
-        <div className="overflow-y-auto flex-1">
-          <Table>
-            <TableHeader className="sticky top-0 bg-white z-10">
-              <TableRow>
-                <TableHead>Número</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Casco</TableHead>
-                <TableHead>Empresa</TableHead>
-                <TableHead>Atividade</TableHead>
-                <TableHead>Validade</TableHead>
-                <TableHead>PTEs</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow><TableCell colSpan={9} className="text-center py-8 text-slate-400">Carregando…</TableCell></TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={9} className="text-center py-12 text-slate-400">Nenhuma APR encontrada</TableCell></TableRow>
-              ) : filtered.map((a: any) => {
-                const casco = a.casco_id ? cascoMap.get(a.casco_id) as any : null;
-                 const byApr = ptesByApr.get(a.id) ?? [];
-                 // Fallback legado: APR aponta pte_id mas a PTE ainda não tem apr_id setado.
-                 const legacy = a.pte_id
-                   ? (ptesLink as any[]).filter((p) => p.id === a.pte_id && p.apr_id !== a.id)
-                   : [];
-                 const linkedPtes = [...byApr, ...legacy];
-                return (
-                  <TableRow key={a.id} className={a._vencida ? "bg-rose-50/50" : ""}>
-                    <TableCell className="font-bold text-[#991b1b]">{a.numero}</TableCell>
-                    <TableCell className="text-sm">{formatDateBR(a.data_emissao)}</TableCell>
-                    <TableCell className="text-sm">{casco ? casco.numero : "—"}</TableCell>
-                    <TableCell className="text-sm">{a.empresa_id ? companyMap.get(a.empresa_id) ?? "—" : "—"}</TableCell>
-                    <TableCell className="text-sm max-w-[280px] truncate" title={a.atividade_descricao}>{a.atividade_descricao}</TableCell>
-                    <TableCell className="text-sm">
-                      {a.data_validade ? formatDateBR(a.data_validade) : "—"}
-                      {a._vencida && <Badge variant="destructive" className="ml-1 text-[9px]">VENCIDA</Badge>}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {a.exige_pte ? (
-                        linkedPtes.length > 0 ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-black"
-                            title={linkedPtes.map((p: any) => p.numero).join(", ")}>
-                            ✓ {linkedPtes.length} emitida{linkedPtes.length > 1 ? "s" : ""}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-black">
-                            <ShieldAlert className="h-3 w-3" /> Pendente
-                          </span>
-                        )
-                      ) : (
-                        <span className="text-slate-400 text-[10px]">N/A</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${STATUS_TONE[a.status] ?? ""}`}>{a.status}</span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button size="icon" variant="ghost" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52">
-                          <DropdownMenuItem onClick={() => abrirAprPdf(a.id).catch((e) => toast.error(e.message))}>
-                            <Eye className="h-4 w-4 mr-2" /> Visualizar PDF
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => imprimirAprPdf(a.id).catch((e) => toast.error(e.message))}>
-                            <Printer className="h-4 w-4 mr-2" /> Imprimir
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => baixarAprPdf(a.id, a.numero).catch((e) => toast.error(e.message))}>
-                            <Download className="h-4 w-4 mr-2" /> Baixar PDF
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {isEditor && a.exige_pte && (
-                            <DropdownMenuItem
-                              className="text-orange-600 focus:text-orange-600"
-                              onClick={() => navigate({ to: "/app/ptes", search: { apr_id: a.id } as any })}
-                            >
-                              <ShieldAlert className="h-4 w-4 mr-2" /> Gerar PTE vinculada
-                            </DropdownMenuItem>
-                          )}
-                          {isEditor && (
-                            <DropdownMenuItem onClick={() => setEditing(a.id)}>
-                              <Pencil className="h-4 w-4 mr-2" /> Editar
-                            </DropdownMenuItem>
-                          )}
-                          {isEditor && (
-                            <DropdownMenuItem onClick={() => { setDupSource(a); setDupCascoId(""); }}>
-                              <Copy className="h-4 w-4 mr-2" /> Duplicar para outro casco
-                            </DropdownMenuItem>
-                          )}
-                          {isAdmin && (
-                            <DropdownMenuItem
-                              className="text-rose-600 focus:text-rose-600"
-                              onClick={() => { if (confirm(`Excluir ${a.numero}?`)) del.mutate(a.id); }}>
-                              <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+        <div className="overflow-y-auto flex-1 p-2">
+          {isLoading ? (
+            <div className="text-center py-8 text-slate-400">Carregando…</div>
+          ) : grouped.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">Nenhuma APR encontrada</div>
+          ) : (
+            <Accordion type="multiple" defaultValue={grouped.map((g) => g.key)} className="space-y-2">
+              {grouped.map((g) => (
+                <AccordionItem key={g.key} value={g.key} className="border border-slate-200 rounded-xl bg-slate-50/50 px-3">
+                  <AccordionTrigger className="hover:no-underline py-3">
+                    <div className="flex flex-wrap items-center gap-3 w-full">
+                      <span className="font-black text-[#991b1b] text-base">
+                        CASCO {g.casco?.numero ?? "—"}
+                      </span>
+                      {g.casco?.nome && <span className="text-xs text-slate-500">{g.casco.nome}</span>}
+                      <span className="ml-auto flex items-center gap-2 mr-3">
+                        <Badge variant="outline" className="bg-white text-[10px] font-black">
+                          {g.aprs.length} APR{g.aprs.length !== 1 ? "s" : ""}
+                        </Badge>
+                        {g.ativas > 0 && (
+                          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] font-black">
+                            {g.ativas} ATIVA{g.ativas !== 1 ? "S" : ""}
+                          </Badge>
+                        )}
+                        {g.vencendo > 0 && (
+                          <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] font-black">
+                            {g.vencendo} vencendo ≤2d
+                          </Badge>
+                        )}
+                        {g.pendentes > 0 && (
+                          <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-[10px] font-black">
+                            {g.pendentes} PTE pendente{g.pendentes !== 1 ? "s" : ""}
+                          </Badge>
+                        )}
+                      </span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-3">
+                    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Número</TableHead>
+                            <TableHead>Data</TableHead>
+                            <TableHead>Empresa</TableHead>
+                            <TableHead>Atividade</TableHead>
+                            <TableHead>Validade</TableHead>
+                            <TableHead>PTEs</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {g.aprs.map((a: any) => {
+                            const byApr = ptesByApr.get(a.id) ?? [];
+                            const legacy = a.pte_id
+                              ? (ptesLink as any[]).filter((p) => p.id === a.pte_id && p.apr_id !== a.id)
+                              : [];
+                            const linkedPtes = [...byApr, ...legacy];
+                            return (
+                              <TableRow key={a.id} className={a._vencida ? "bg-rose-50/50" : ""}>
+                                <TableCell className="font-bold text-[#991b1b]">{a.numero}</TableCell>
+                                <TableCell className="text-sm">{formatDateBR(a.data_emissao)}</TableCell>
+                                <TableCell className="text-sm">{a.empresa_id ? companyMap.get(a.empresa_id) ?? "—" : "—"}</TableCell>
+                                <TableCell className="text-sm max-w-[280px] truncate" title={a.atividade_descricao}>{a.atividade_descricao}</TableCell>
+                                <TableCell className="text-sm">
+                                  {a.data_validade ? formatDateBR(a.data_validade) : "—"}
+                                  {a._vencida && <Badge variant="destructive" className="ml-1 text-[9px]">VENCIDA</Badge>}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  {a.exige_pte ? (
+                                    linkedPtes.length > 0 ? (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-black"
+                                        title={linkedPtes.map((p: any) => p.numero).join(", ")}>
+                                        ✓ {linkedPtes.length} emitida{linkedPtes.length > 1 ? "s" : ""}
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-black">
+                                        <ShieldAlert className="h-3 w-3" /> Pendente
+                                      </span>
+                                    )
+                                  ) : (
+                                    <span className="text-slate-400 text-[10px]">N/A</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${STATUS_TONE[a.status] ?? ""}`}>{a.status}</span>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button size="icon" variant="ghost" className="h-8 w-8">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-52">
+                                      <DropdownMenuItem onClick={() => abrirAprPdf(a.id).catch((e) => toast.error(e.message))}>
+                                        <Eye className="h-4 w-4 mr-2" /> Visualizar PDF
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => imprimirAprPdf(a.id).catch((e) => toast.error(e.message))}>
+                                        <Printer className="h-4 w-4 mr-2" /> Imprimir
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => baixarAprPdf(a.id, a.numero).catch((e) => toast.error(e.message))}>
+                                        <Download className="h-4 w-4 mr-2" /> Baixar PDF
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      {isEditor && a.exige_pte && (
+                                        <DropdownMenuItem
+                                          className="text-orange-600 focus:text-orange-600"
+                                          onClick={() => navigate({ to: "/app/ptes", search: { apr_id: a.id } as any })}
+                                        >
+                                          <ShieldAlert className="h-4 w-4 mr-2" /> Gerar PTE vinculada
+                                        </DropdownMenuItem>
+                                      )}
+                                      {isEditor && (
+                                        <DropdownMenuItem onClick={() => setEditing(a.id)}>
+                                          <Pencil className="h-4 w-4 mr-2" /> Editar
+                                        </DropdownMenuItem>
+                                      )}
+                                      {isEditor && (
+                                        <DropdownMenuItem onClick={() => { setDupSource(a); setDupCascoId(""); }}>
+                                          <Copy className="h-4 w-4 mr-2" /> Duplicar para outro casco
+                                        </DropdownMenuItem>
+                                      )}
+                                      {isAdmin && (
+                                        <DropdownMenuItem
+                                          className="text-rose-600 focus:text-rose-600"
+                                          onClick={() => { if (confirm(`Excluir ${a.numero}?`)) del.mutate(a.id); }}>
+                                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                                        </DropdownMenuItem>
+                                      )}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          )}
         </div>
       </div>
 
