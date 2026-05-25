@@ -505,11 +505,18 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
         const areaW = colLeftW - 6;
         const areaX = MARGIN + 3;
         const fmt = sig.startsWith("data:image/jpeg") ? "JPEG" : "PNG";
-        // dimensiona para caber preservando proporção
-        // jsPDF não dá tamanho original; usa altura disponível como referência
-        const drawH = areaH;
-        const drawW = areaW;
-        doc.addImage(sig, fmt, areaX, areaY, drawW, drawH, undefined, "FAST");
+        // preserva proporção (fit-contain) e centraliza no slot
+        const props: any = (doc as any).getImageProperties?.(sig) ?? { width: areaW, height: areaH };
+        const ratio = props.width / props.height;
+        let drawW = areaW;
+        let drawH = drawW / ratio;
+        if (drawH > areaH) { drawH = areaH; drawW = drawH * ratio; }
+        // limita a 70% da altura do slot para não estourar visualmente
+        const maxH = areaH * 0.85;
+        if (drawH > maxH) { drawH = maxH; drawW = drawH * ratio; }
+        const dx = areaX + (areaW - drawW) / 2;
+        const dy = areaY + (areaH - drawH) / 2;
+        doc.addImage(sig, fmt, dx, dy, drawW, drawH, undefined, "FAST");
       } catch {
         /* noop */
       }
