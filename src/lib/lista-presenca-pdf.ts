@@ -35,13 +35,13 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
   let participantIdx = 0;
 
   function getFooterLines() {
-    doc.setFont("helvetica", "italic").setFontSize(6.2);
-    return doc.splitTextToSize(FOOTER_TEXT, contentW - 8) as string[];
+    doc.setFont("helvetica", "italic").setFontSize(5.8);
+    return doc.splitTextToSize(FOOTER_TEXT, contentW - 6) as string[];
   }
 
   function getFooterTopY() {
-    const lineHeightMm = 6.2 * 0.3528 * 1.15;
-    return pageH - margin - Math.max(6, getFooterLines().length * lineHeightMm + 2);
+    const lineHeightMm = 2.5;
+    return pageH - margin - Math.max(7, getFooterLines().length * lineHeightMm + 2);
   }
 
   function fitTextToCell(text: string, x: number, y: number, w: number, h: number, options: { align?: "left" | "center"; bold?: boolean } = {}) {
@@ -258,11 +258,13 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
   }
 
   function drawFooter() {
-    doc.setFont("helvetica", "italic").setFontSize(6.2);
-    doc.text(getFooterLines(), pageW / 2, getFooterTopY() + 2.6, {
-      align: "center",
-      lineHeightFactor: 1.15,
-      maxWidth: contentW - 8,
+    doc.setFont("helvetica", "italic").setFontSize(5.8);
+    const lines = getFooterLines();
+    const lineHeightMm = 2.5;
+    lines.forEach((line, index) => {
+      doc.text(line, pageW / 2, getFooterTopY() + 2.6 + index * lineHeightMm, {
+        align: "center",
+      });
     });
   }
 
