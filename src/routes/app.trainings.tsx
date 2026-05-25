@@ -461,10 +461,6 @@ function TrainingsPage() {
 export function AttendeesDialog({ trainingId, training, onClose }: { trainingId: string; training: any; onClose: () => void }) {
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
-  const [selectedEmp, setSelectedEmp] = useState("");
-  const [employeeSearch, setEmployeeSearch] = useState("");
-  const [situacao, setSituacao] = useState<typeof SITUACOES[number]>("APROVADO");
-  const [nota, setNota] = useState<string>("");
   const [bulkCompany, setBulkCompany] = useState<string>("");
   const [bulkSituacao, setBulkSituacao] = useState<typeof SITUACOES[number]>("PRESENTE");
 
@@ -493,27 +489,19 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
   const enrolled = new Set(attendees.map((a: any) => a.employee_id));
   const available = emps.filter((e: any) => !enrolled.has(e.id));
   const companyById = useMemo(() => new Map(companies.map((c: any) => [c.id, c.name])), [companies]);
-  const selectedEmployee = available.find((e: any) => e.id === selectedEmp) ?? null;
-  const filteredEmployees = useMemo(() => {
-    const q = employeeSearch.trim().toLowerCase();
-    const list = q
-      ? available.filter((e: any) => {
-          const haystack = `${e.nome ?? ""} ${e.matricula ?? ""} ${companyById.get(e.company_id) ?? ""}`.toLowerCase();
-          return haystack.includes(q);
-        })
-      : available;
-    return list.slice(0, 40);
-  }, [available, companyById, employeeSearch]);
+  const companyEmployees = useMemo(
+    () => (bulkCompany ? available.filter((e: any) => e.company_id === bulkCompany) : []),
+    [available, bulkCompany],
+  );
 
   const add = useMutation({
-    mutationFn: async () => {
-      if (!selectedEmp) throw new Error("Selecione um colaborador");
+    mutationFn: async (employeeId: string) => {
+      if (!employeeId) throw new Error("Selecione um colaborador");
       const data_vencimento = addMonths(training.data_realizacao, training.validade_meses);
       const { error } = await supabase.from("training_attendees").insert({
         training_id: trainingId,
-        employee_id: selectedEmp,
-        situacao,
-        nota: nota ? Number(nota) : null,
+        employee_id: employeeId,
+        situacao: bulkSituacao,
         data_vencimento,
       });
       if (error) throw error;
@@ -521,7 +509,6 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["training-attendees", trainingId] });
       qc.invalidateQueries({ queryKey: ["training-counts"] });
-      setSelectedEmp(""); setEmployeeSearch(""); setNota(""); setSituacao("APROVADO");
       toast.success("Participante adicionado");
     },
     onError: (e: any) => toast.error(e.message),
