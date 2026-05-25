@@ -76,8 +76,8 @@ export async function buildAprPdf(aprId: string, opts?: { encSig?: string | null
     assinaturas: (ass ?? []).map((a: any) => ({
       papel: a.papel, nome: a.nome, cpf: a.cpf, funcao: a.funcao,
     } as APRPdfAssinatura)),
-    encSig: opts?.encSig ?? null,
-    tstSig: opts?.tstSig ?? null,
+    encSig: opts?.encSig ?? (apr.signature_enc ?? null),
+    tstSig: opts?.tstSig ?? (apr.signature_tst ?? null),
   });
 }
 
