@@ -341,6 +341,28 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
     enabled: expanded,
   });
 
+  const imageAnexos = useMemo(
+    () => (anexos as any[]).filter((a) => /\.(png|jpe?g|webp|gif|bmp)$/i.test(a.file_path)),
+    [anexos]
+  );
+
+  const { data: signedUrls = {} } = useQuery({
+    queryKey: ["training-anexos-signed", turma.id, imageAnexos.map((a) => a.id).join(",")],
+    enabled: expanded && imageAnexos.length > 0,
+    queryFn: async () => {
+      const paths = imageAnexos.map((a) => a.file_path);
+      const { data, error } = await supabase.storage.from("training-docs").createSignedUrls(paths, 60 * 30);
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((d, i) => { if (d.signedUrl) map[paths[i]] = d.signedUrl; });
+      return map;
+    },
+  });
+
+  const mediaItems: MediaItem[] = imageAnexos
+    .map((a) => ({ url: signedUrls[a.file_path], name: a.file_path.split("/").pop() ?? "imagem" }))
+    .filter((m) => !!m.url);
+
   const { data: participantesCount = 0 } = useQuery({
     queryKey: ["training-participantes-count", turma.id],
     queryFn: async () => {
