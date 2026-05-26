@@ -550,6 +550,41 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
     onError: (e: any) => toast.error(e.message),
   });
 
+  const bulkRemoveAll = useMutation({
+    mutationFn: async () => {
+      const ids = attendees.map((a: any) => a.id);
+      if (ids.length === 0) throw new Error("Não há participantes para remover");
+      const { error } = await supabase.from("training_attendees").delete().in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (n) => {
+      qc.invalidateQueries({ queryKey: ["training-attendees", trainingId] });
+      qc.invalidateQueries({ queryKey: ["training-counts"] });
+      toast.success(`${n} participantes removidos`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const bulkRemoveCompany = useMutation({
+    mutationFn: async () => {
+      if (!bulkCompany) throw new Error("Selecione uma empresa");
+      const ids = attendees
+        .filter((a: any) => a.employees?.company_id === bulkCompany)
+        .map((a: any) => a.id);
+      if (ids.length === 0) throw new Error("Nenhum participante dessa empresa");
+      const { error } = await supabase.from("training_attendees").delete().in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (n) => {
+      qc.invalidateQueries({ queryKey: ["training-attendees", trainingId] });
+      qc.invalidateQueries({ queryKey: ["training-counts"] });
+      toast.success(`${n} participantes removidos`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   function statusColor(a: any) {
     if (a.situacao === "REPROVADO" || a.situacao === "AUSENTE") return "bg-red-100 text-red-700 border-red-200";
     if (a.data_vencimento) {
@@ -595,6 +630,32 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
                 <Users className="h-4 w-4 mr-1" /> Add Todos
               </Button>
             </div>
+
+            {isAdmin && (
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!bulkCompany || bulkRemoveCompany.isPending}
+                  onClick={() => {
+                    if (confirm(`Remover TODOS os participantes da empresa selecionada?`)) bulkRemoveCompany.mutate();
+                  }}
+                  className="border-red-200 text-red-700 hover:bg-red-50"
+                >
+                  <X className="h-4 w-4 mr-1" /> Excluir da empresa selecionada
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={attendees.length === 0 || bulkRemoveAll.isPending}
+                  onClick={() => {
+                    if (confirm(`Remover TODOS os ${attendees.length} participantes desta turma? Esta ação não pode ser desfeita.`)) bulkRemoveAll.mutate();
+                  }}
+                >
+                  <X className="h-4 w-4 mr-1" /> Excluir todos ({attendees.length})
+                </Button>
+              </div>
+            )}
 
             <Label className="text-[10px] font-black text-slate-500 uppercase">Funcionários da empresa selecionada</Label>
             <div className="mt-2 max-h-56 overflow-y-auto rounded-md border border-border bg-background">
