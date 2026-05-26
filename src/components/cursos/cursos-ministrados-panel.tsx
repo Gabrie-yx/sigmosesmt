@@ -19,6 +19,7 @@ import { CATEGORIA_COLOR, CATEGORIA_LABEL } from "@/lib/matriz-status";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
 import { sortMatrixCourses } from "@/lib/nr-order";
 import { AttendeesDialog } from "@/routes/app.trainings";
+import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
 
 const MODALIDADES = ["PRESENCIAL", "ONLINE", "HIBRIDA"] as const;
 const TIPOS_REALIZACAO = ["INTERNO", "EXTERNO", "IN_COMPANY"] as const;
@@ -324,6 +325,7 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
   const [participantesOpen, setParticipantesOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
   const { data: anexos = [] } = useQuery({
     queryKey: ["training-anexos", turma.id],
@@ -338,6 +340,28 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
     },
     enabled: expanded,
   });
+
+  const imageAnexos = useMemo(
+    () => (anexos as any[]).filter((a) => /\.(png|jpe?g|webp|gif|bmp)$/i.test(a.file_path)),
+    [anexos]
+  );
+
+  const { data: signedUrls = {} } = useQuery({
+    queryKey: ["training-anexos-signed", turma.id, imageAnexos.map((a) => a.id).join(",")],
+    enabled: expanded && imageAnexos.length > 0,
+    queryFn: async () => {
+      const paths = imageAnexos.map((a) => a.file_path);
+      const { data, error } = await supabase.storage.from("training-docs").createSignedUrls(paths, 60 * 30);
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((d, i) => { if (d.signedUrl) map[paths[i]] = d.signedUrl; });
+      return map;
+    },
+  });
+
+  const mediaItems: MediaItem[] = imageAnexos
+    .map((a) => ({ url: signedUrls[a.file_path], name: a.file_path.split("/").pop() ?? "imagem" }))
+    .filter((m) => !!m.url);
 
   const { data: participantesCount = 0 } = useQuery({
     queryKey: ["training-participantes-count", turma.id],
@@ -429,6 +453,13 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
   });
 
   async function abrirAnexo(path: string) {
+    if (/\.(png|jpe?g|webp|gif|bmp)$/i.test(path)) {
+      const idx = imageAnexos.findIndex((a) => a.file_path === path);
+      if (idx >= 0 && mediaItems[idx]) {
+        setViewerIndex(idx);
+        return;
+      }
+    }
     const { data, error } = await supabase.storage.from("training-docs").createSignedUrl(path, 60);
     if (error) return toast.error(error.message);
     window.open(data.signedUrl, "_blank");
@@ -600,6 +631,35 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
             <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">
               Anexos ({anexos.length})
             </div>
+            {imageAnexos.length > 0 && (
+              <div className="mb-3">
+                <div className="text-[10px] font-bold uppercase text-slate-400 mb-1">Fotos ({imageAnexos.length})</div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  {imageAnexos.map((a: any, i: number) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => setViewerIndex(i)}
+                      className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-100 hover:border-[#991b1b] transition"
+                      title="Clique para ampliar"
+                    >
+                      {signedUrls[a.file_path] ? (
+                        <img
+                          src={signedUrls[a.file_path]}
+                          alt={a.file_path.split("/").pop() ?? ""}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          <ImageIcon className="h-6 w-6" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {anexos.length === 0 ? (
               <div className="text-xs text-slate-400 italic py-3 text-center border border-dashed border-slate-200 rounded">
                 Nenhum anexo. Use os botões acima para enviar os documentos homologados.
@@ -638,6 +698,12 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
           </div>
         </div>
       )}
+      <MediaViewerDialog
+        items={mediaItems}
+        index={viewerIndex}
+        onClose={() => setViewerIndex(null)}
+        onIndexChange={setViewerIndex}
+      />
       {participantesOpen && (
         <AttendeesDialog
           trainingId={turma.id}
