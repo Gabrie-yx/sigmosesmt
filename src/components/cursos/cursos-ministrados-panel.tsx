@@ -594,6 +594,16 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
               <Button size="sm" variant="outline" onClick={() => setParticipantesOpen(true)}>
                 <Users className="h-4 w-4 mr-1" /> Participantes
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setExtrairIAOpen(true)}
+                disabled={!(anexos as any[]).some((a) => a.tipo === "LISTA_PRESENCA")}
+                className="border-violet-300 text-violet-700 hover:bg-violet-50 disabled:opacity-50"
+                title={(anexos as any[]).some((a) => a.tipo === "LISTA_PRESENCA") ? "Extrair participantes da Lista de Presença com IA" : "Anexe uma Lista de Presença primeiro"}
+              >
+                <Sparkles className="h-4 w-4 mr-1" /> Extrair da Lista (IA)
+              </Button>
               <Button size="sm" variant="outline" onClick={onEdit}>
                 <Pencil className="h-4 w-4 mr-1" /> Editar dados da turma
               </Button>
