@@ -453,6 +453,13 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
   });
 
   async function abrirAnexo(path: string) {
+    if (/\.(png|jpe?g|webp|gif|bmp)$/i.test(path)) {
+      const idx = imageAnexos.findIndex((a) => a.file_path === path);
+      if (idx >= 0 && mediaItems[idx]) {
+        setViewerIndex(idx);
+        return;
+      }
+    }
     const { data, error } = await supabase.storage.from("training-docs").createSignedUrl(path, 60);
     if (error) return toast.error(error.message);
     window.open(data.signedUrl, "_blank");
