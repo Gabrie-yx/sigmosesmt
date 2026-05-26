@@ -64,6 +64,8 @@ export function ReacaoGerarDialog({ open, onClose, turma, course, participantesC
       tipo: tipoMap[turma.tipo_realizacao] ?? "INTERNO",
       instrutor: turma.instrutor ?? "",
       instituicao: turma.instituicao ?? "",
+      treinamento: course ? `${course.codigo} — ${course.nome}` : "",
+      cargaHoraria: turma.carga_horaria_h ? `${turma.carga_horaria_h}h` : "",
       tstNome: tstNome.trim() || undefined,
       tstAssinaturaDataUrl: tstSig,
     };
@@ -75,7 +77,7 @@ export function ReacaoGerarDialog({ open, onClose, turma, course, participantesC
       const params = buildParams();
       const zip = new JSZip();
       for (let i = 1; i <= qtd; i++) {
-        const doc = gerarAvaliacaoReacao(params);
+        const doc = await gerarAvaliacaoReacao(params);
         const blob = doc.output("blob");
         const nn = String(i).padStart(2, "0");
         zip.file(`reacao_${course.codigo}_${turma.data_realizacao}_${nn}.pdf`, blob);
@@ -95,9 +97,9 @@ export function ReacaoGerarDialog({ open, onClose, turma, course, participantesC
     }
   }
 
-  function gerarUnico() {
+  async function gerarUnico() {
     try {
-      const doc = gerarAvaliacaoReacao(buildParams());
+      const doc = await gerarAvaliacaoReacao(buildParams());
       doc.save(`reacao_${course.codigo}_${turma.data_realizacao}_modelo.pdf`);
     } catch (e: any) {
       toast.error(e.message ?? "Erro");
