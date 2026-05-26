@@ -550,6 +550,41 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
     onError: (e: any) => toast.error(e.message),
   });
 
+  const bulkRemoveAll = useMutation({
+    mutationFn: async () => {
+      const ids = attendees.map((a: any) => a.id);
+      if (ids.length === 0) throw new Error("Não há participantes para remover");
+      const { error } = await supabase.from("training_attendees").delete().in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (n) => {
+      qc.invalidateQueries({ queryKey: ["training-attendees", trainingId] });
+      qc.invalidateQueries({ queryKey: ["training-counts"] });
+      toast.success(`${n} participantes removidos`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const bulkRemoveCompany = useMutation({
+    mutationFn: async () => {
+      if (!bulkCompany) throw new Error("Selecione uma empresa");
+      const ids = attendees
+        .filter((a: any) => a.employees?.company_id === bulkCompany)
+        .map((a: any) => a.id);
+      if (ids.length === 0) throw new Error("Nenhum participante dessa empresa");
+      const { error } = await supabase.from("training_attendees").delete().in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (n) => {
+      qc.invalidateQueries({ queryKey: ["training-attendees", trainingId] });
+      qc.invalidateQueries({ queryKey: ["training-counts"] });
+      toast.success(`${n} participantes removidos`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   function statusColor(a: any) {
     if (a.situacao === "REPROVADO" || a.situacao === "AUSENTE") return "bg-red-100 text-red-700 border-red-200";
     if (a.data_vencimento) {
