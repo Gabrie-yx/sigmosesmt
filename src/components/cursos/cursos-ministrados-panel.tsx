@@ -491,12 +491,18 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
         className="w-full p-4 flex items-center gap-4 hover:bg-white transition-colors text-left"
       >
         <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#991b1b] text-white flex flex-col items-center justify-center">
-          <div className="text-[9px] font-black uppercase">
-            {new Date(turma.data_realizacao).toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")}
-          </div>
-          <div className="text-base font-black leading-none">
-            {new Date(turma.data_realizacao).getDate()}
-          </div>
+          {(() => {
+            const [yy, mm, dd] = String(turma.data_realizacao).split("T")[0].split("-");
+            const localDate = new Date(Number(yy), Number(mm) - 1, Number(dd));
+            return (
+              <>
+                <div className="text-[9px] font-black uppercase">
+                  {localDate.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")}
+                </div>
+                <div className="text-base font-black leading-none">{Number(dd)}</div>
+              </>
+            );
+          })()}
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm font-bold text-slate-800 truncate">
