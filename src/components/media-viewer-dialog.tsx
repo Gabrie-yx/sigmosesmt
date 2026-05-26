@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Download, RotateCw, RotateCcw, ZoomIn, ZoomOut, X } from "lucide-react";
 
-export type MediaItem = { url: string; name: string };
+export type MediaItem = { url: string; name: string; kind?: "image" | "pdf" };
 
 export function MediaViewerDialog({
   items,
@@ -36,6 +36,7 @@ export function MediaViewerDialog({
   if (!open || index === null) return null;
   const item = items[index];
   if (!item) return null;
+  const isPdf = item.kind === "pdf" || /\.pdf($|\?)/i.test(item.url) || /\.pdf$/i.test(item.name);
 
   function prev() { onIndexChange((index! - 1 + items.length) % items.length); }
   function next() { onIndexChange((index! + 1) % items.length); }
@@ -62,19 +63,23 @@ export function MediaViewerDialog({
         <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 text-slate-100">
           <div className="text-xs truncate pr-4">{item.name} <span className="text-slate-400">({index + 1}/{items.length})</span></div>
           <div className="flex items-center gap-1">
-            <Button size="sm" variant="ghost" className="text-slate-100 hover:bg-slate-800" onClick={() => setRotation((r) => (r - 90 + 360) % 360)} title="Girar -90° (R)">
-              <RotateCcw className="h-4 w-4" />
-            </Button>
-            <Button size="sm" variant="ghost" className="text-slate-100 hover:bg-slate-800" onClick={() => setRotation((r) => (r + 90) % 360)} title="Girar +90° (R)">
-              <RotateCw className="h-4 w-4" />
-            </Button>
-            <Button size="sm" variant="ghost" className="text-slate-100 hover:bg-slate-800" onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))} title="Diminuir zoom">
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <span className="text-[10px] w-10 text-center text-slate-300">{Math.round(zoom * 100)}%</span>
-            <Button size="sm" variant="ghost" className="text-slate-100 hover:bg-slate-800" onClick={() => setZoom((z) => Math.min(5, z + 0.25))} title="Aumentar zoom">
-              <ZoomIn className="h-4 w-4" />
-            </Button>
+            {!isPdf && (
+              <>
+                <Button size="sm" variant="ghost" className="text-slate-100 hover:bg-slate-800" onClick={() => setRotation((r) => (r - 90 + 360) % 360)} title="Girar -90° (R)">
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="text-slate-100 hover:bg-slate-800" onClick={() => setRotation((r) => (r + 90) % 360)} title="Girar +90° (R)">
+                  <RotateCw className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="text-slate-100 hover:bg-slate-800" onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))} title="Diminuir zoom">
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <span className="text-[10px] w-10 text-center text-slate-300">{Math.round(zoom * 100)}%</span>
+                <Button size="sm" variant="ghost" className="text-slate-100 hover:bg-slate-800" onClick={() => setZoom((z) => Math.min(5, z + 0.25))} title="Aumentar zoom">
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+              </>
+            )}
             <Button size="sm" variant="ghost" className="text-slate-100 hover:bg-slate-800" onClick={download} title="Baixar">
               <Download className="h-4 w-4" />
             </Button>
@@ -90,13 +95,21 @@ export function MediaViewerDialog({
             </button>
           )}
           <div className="w-full h-full overflow-auto flex items-center justify-center p-4">
-            <img
-              src={item.url}
-              alt={item.name}
-              style={{ transform: `rotate(${rotation}deg) scale(${zoom})`, transition: "transform 0.15s ease" }}
-              className="max-w-full max-h-full object-contain select-none"
-              draggable={false}
-            />
+            {isPdf ? (
+              <iframe
+                src={item.url}
+                title={item.name}
+                className="w-full h-full bg-white rounded"
+              />
+            ) : (
+              <img
+                src={item.url}
+                alt={item.name}
+                style={{ transform: `rotate(${rotation}deg) scale(${zoom})`, transition: "transform 0.15s ease" }}
+                className="max-w-full max-h-full object-contain select-none"
+                draggable={false}
+              />
+            )}
           </div>
           {items.length > 1 && (
             <button onClick={next} className="absolute right-2 z-10 w-10 h-10 rounded-full bg-slate-800/70 text-white flex items-center justify-center hover:bg-slate-700">
