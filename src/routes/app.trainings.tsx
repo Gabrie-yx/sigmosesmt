@@ -631,6 +631,32 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
               </Button>
             </div>
 
+            {isAdmin && (
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!bulkCompany || bulkRemoveCompany.isPending}
+                  onClick={() => {
+                    if (confirm(`Remover TODOS os participantes da empresa selecionada?`)) bulkRemoveCompany.mutate();
+                  }}
+                  className="border-red-200 text-red-700 hover:bg-red-50"
+                >
+                  <X className="h-4 w-4 mr-1" /> Excluir da empresa selecionada
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={attendees.length === 0 || bulkRemoveAll.isPending}
+                  onClick={() => {
+                    if (confirm(`Remover TODOS os ${attendees.length} participantes desta turma? Esta ação não pode ser desfeita.`)) bulkRemoveAll.mutate();
+                  }}
+                >
+                  <X className="h-4 w-4 mr-1" /> Excluir todos ({attendees.length})
+                </Button>
+              </div>
+            )}
+
             <Label className="text-[10px] font-black text-slate-500 uppercase">Funcionários da empresa selecionada</Label>
             <div className="mt-2 max-h-56 overflow-y-auto rounded-md border border-border bg-background">
               {!bulkCompany ? (
