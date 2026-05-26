@@ -347,11 +347,21 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
     [anexos]
   );
 
+  const pdfAnexos = useMemo(
+    () => (anexos as any[]).filter((a) => /\.pdf$/i.test(a.file_path)),
+    [anexos]
+  );
+
+  const viewableAnexos = useMemo(
+    () => [...imageAnexos, ...pdfAnexos],
+    [imageAnexos, pdfAnexos]
+  );
+
   const { data: signedUrls = {} } = useQuery({
-    queryKey: ["training-anexos-signed", turma.id, imageAnexos.map((a) => a.id).join(",")],
-    enabled: expanded && imageAnexos.length > 0,
+    queryKey: ["training-anexos-signed", turma.id, viewableAnexos.map((a) => a.id).join(",")],
+    enabled: expanded && viewableAnexos.length > 0,
     queryFn: async () => {
-      const paths = imageAnexos.map((a) => a.file_path);
+      const paths = viewableAnexos.map((a) => a.file_path);
       const { data, error } = await supabase.storage.from("training-docs").createSignedUrls(paths, 60 * 30);
       if (error) throw error;
       const map: Record<string, string> = {};
@@ -360,8 +370,12 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
     },
   });
 
-  const mediaItems: MediaItem[] = imageAnexos
-    .map((a) => ({ url: signedUrls[a.file_path], name: a.file_path.split("/").pop() ?? "imagem" }))
+  const mediaItems: MediaItem[] = viewableAnexos
+    .map((a) => ({
+      url: signedUrls[a.file_path],
+      name: a.file_path.split("/").pop() ?? "arquivo",
+      kind: /\.pdf$/i.test(a.file_path) ? ("pdf" as const) : ("image" as const),
+    }))
     .filter((m) => !!m.url);
 
   const { data: participantesCount = 0 } = useQuery({
@@ -454,12 +468,10 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
   });
 
   async function abrirAnexo(path: string) {
-    if (/\.(png|jpe?g|webp|gif|bmp)$/i.test(path)) {
-      const idx = imageAnexos.findIndex((a) => a.file_path === path);
-      if (idx >= 0 && mediaItems[idx]) {
-        setViewerIndex(idx);
-        return;
-      }
+    const idx = viewableAnexos.findIndex((a) => a.file_path === path);
+    if (idx >= 0 && mediaItems[idx]) {
+      setViewerIndex(idx);
+      return;
     }
     const { data, error } = await supabase.storage.from("training-docs").createSignedUrl(path, 60);
     if (error) return toast.error(error.message);
