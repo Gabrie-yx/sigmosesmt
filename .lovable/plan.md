@@ -1,66 +1,54 @@
+## Objetivo
 
-## Plano — Plano de Ações 5W2H ISO 9001
+Permitir que o sistema leia a **Lista de Presença digitalizada** (foto/PDF anexado na turma) e gere automaticamente os participantes, cruzando com a base de funcionários. O usuário apenas revisa e confirma.
 
-### 1. Banco de dados (migration única)
+## Como vai funcionar (visão do usuário)
 
-**Tabela `plano_acoes` — novos campos:**
-- `origem_acao` TEXT — enum textual: `AUDITORIA`, `INSPECAO_SST`, `QUASE_ACIDENTE`, `CIPA`, `PGR_APR`, `CHECKLIST`, `OUTRO`
-- `tipo_registro` TEXT — `ACAO_CORRETIVA` | `MELHORIA` (default `ACAO_CORRETIVA`)
-- `responsavel_execucao` TEXT (nome livre — quem executa)
-- `responsavel_validacao_id` UUID → `profiles(id)` (gestor/aprovador)
-- `data_verificacao_eficacia` TIMESTAMPTZ (calculada ao concluir)
-- `status_eficacia` TEXT — `PENDENTE` | `EFICAZ` | `INEFICAZ` (NULL até a conclusão)
-- `eficacia_observacao` TEXT
-- `eficacia_validada_por` UUID, `eficacia_validada_em` TIMESTAMPTZ
+1. Dentro da turma, ao lado do botão "Participantes", aparece um novo botão **"🤖 Extrair da Lista (IA)"**.
+2. Só fica habilitado se houver um anexo do tipo `LISTA_PRESENCA` (imagem ou PDF).
+3. Ao clicar, abre um modal com:
+   - Spinner "Analisando lista com IA..."
+   - Depois, uma tabela com os nomes detectados, em 3 categorias:
+     - ✅ **Match exato** com a base de funcionários (pré-selecionado)
+     - ⚠️ **Match aproximado** (mostra "Detectado: João Sliva → Sugestão: João Silva" — usuário confirma)
+     - ❌ **Não encontrado** (mostra o nome lido, sem match — usuário pode buscar manualmente ou ignorar)
+4. Botão **"Adicionar X participantes"** insere todos os confirmados na turma.
 
-**Tabela `nao_conformidades` — campo novo (causa raiz fica aqui, como combinamos):**
-- `analise_causa` TEXT (5 Porquês — uma vez por NC)
+## Arquitetura técnica
 
-**Triggers:**
-- `plano_acoes_set_eficacia()` — ao mudar status para `CONCLUIDA`, calcula `data_verificacao_eficacia` baseado em `prioridade`: ALTA/CRITICA = 15d, MEDIA = 30d, BAIXA = 60d. Seta `status_eficacia = 'PENDENTE'`.
-- Auto-preenche `origem_acao` quando criada com `nc_id` ou `incidente_id` (deriva de `nao_conformidades.origem`).
+### Backend
+- **Server function** `src/lib/cursos-ocr.functions.ts` → `extrairParticipantesDaLista`
+  - Input: `{ trainingId, anexoPath }`
+  - Lê o arquivo do Storage (bucket de anexos), converte para base64
+  - Chama **Lovable AI Gateway** com `google/gemini-3-flash-preview` usando **tool calling** (structured output)
+  - Prompt: "Extraia todos os nomes presentes nesta lista de presença. Para cada um, retorne {nome, assinou: bool, matricula?, cargo?, empresa?}"
+  - Cruza resultado com `employees` (busca por nome com `ilike` + similaridade via `pg_trgm` se ativo, senão fuzzy match no client)
+  - Retorna `{ detectados: [...], matchExato: [...], matchAproximado: [...], naoEncontrados: [...] }`
 
-**Função RPC:**
-- `validar_eficacia_acao(_id, _eficaz boolean, _obs text)` — só admin/moderador. Se ineficaz, opcionalmente cria nova ação vinculada.
+### Frontend
+- Novo componente `src/components/cursos/extrair-lista-ia-dialog.tsx`
+- Botão no `cursos-ministrados-panel.tsx` (próximo ao "Participantes")
+- Após confirmação, insere em massa via `supabase.from("training_attendees").insert([...])`
 
-### 2. Verificação de eficácia (cron + email)
+## Pré-requisitos
 
-- pg_cron diário às 8h → server route `/api/public/hooks/verificar-eficacia`
-- A rota busca ações com `status='CONCLUIDA'`, `status_eficacia='PENDENTE'`, `data_verificacao_eficacia <= now()` e:
-  - Marca flag visual no dashboard (já fica visível pela query)
-  - Envia email ao `responsavel_validacao_id` via Lovable AI (Resend não está configurado — uso o que estiver disponível; se nenhum estiver, alerto e deixo só o dashboard funcionando)
+- ✅ **Lovable AI Gateway**: já é nativo, só ativar (vou usar o `ai_gateway--enable`). Sem custo de setup, só consumo por uso (~R$ 0,02 por lista).
+- ✅ **Storage**: anexos já estão lá, só preciso baixar via signed URL.
+- ✅ **Tabela `training_attendees`**: já existe, sem migration necessária.
 
-### 3. Formulário (modal com 3 abas)
+## Tratamento de erros
 
-Usando `Tabs` do shadcn já presente no projeto:
+- Arquivo > 20MB → mensagem "Lista muito grande, reduza a resolução"
+- IA não conseguiu ler → "Não foi possível extrair nomes. Verifique se a imagem está legível"
+- 429/402 do gateway → toasts amigáveis ("Limite atingido, tente em 1 min" / "Créditos esgotados")
+- Funcionário já cadastrado na turma → marca como "já adicionado" e pula
 
-- **Aba 1 — Identificação**: tipo_registro (radio), origem_acao (select, auto-preenche se vier de NC), vínculo opcional com NC existente (combobox), título (O Quê), descrição (Por Quê).
-- **Aba 2 — Investigação**: textarea grande "Análise de Causa Raiz" com tooltip dos 5 Porquês. (Se houver `nc_id`, edita `nao_conformidades.analise_causa`; senão, fica no campo `descricao` da ação ou cria NC enxuta — vou usar a primeira opção: só edita quando há NC vinculada, e mostra aviso "vincule uma NC para registrar causa raiz".)
-- **Aba 3 — Planejamento (5W2H)**: como, onde, quando (data), responsavel_execucao, responsavel_validacao (select de usuários), prioridade, custo.
+## O que NÃO faz (limites combinados)
 
-Validações com Zod, navegação entre abas com botões "Próximo/Anterior".
+- Não identifica pessoa pela assinatura em si (grafotécnica)
+- Não dispensa revisão humana — sempre exige confirmação antes de inserir
+- Não funciona bem em listas 100% manuscritas (mas pra modelo impresso fica excelente)
 
-### 4. Dashboard
+## Próximo passo
 
-- Novo card de KPI no topo: **"Pendente de Eficácia"** (roxo) — conta ações com `status_eficacia='PENDENTE'` e `data_verificacao_eficacia <= now()`.
-- Na linha de cada ação `CONCLUIDA` com eficácia pendente: botão **"Validar Eficácia"** visível só pra admin/moderador → abre mini-modal (Sim/Não + observação).
-- Badge de eficácia nas linhas: `Eficaz` (verde), `Ineficaz` (vermelho), `Aguardando` (roxo).
-- Filtro novo: por tipo_registro e origem.
-
-### 5. Permissões / RLS
-
-Mantém o padrão atual de `plano_acoes` (já tem RLS). RPC `validar_eficacia_acao` usa `has_role` para gate de admin/moderador.
-
-### Detalhes técnicos
-- 1 migration única (não dá pra editar migrations antigas)
-- 1 server function pra `validar_eficacia` (chama RPC)
-- 1 server route pública pro cron de eficácia
-- Email: vou checar se há Resend ou outro provider configurado; se não, te aviso e deixo só dashboard + notificação visual
-- ~3 arquivos novos, edição de `src/routes/app.acoes.tsx`
-
-### Fora de escopo (a confirmar depois)
-- Anexos/evidências na validação de eficácia
-- Workflow de aprovação multi-nível
-- Exportação PDF do plano de ação
-
-Posso seguir?
+Se aprovar, eu já implemento na sequência: migration (nenhuma necessária) → server function → componente de dialog → botão no painel. ~10-15 min de trabalho.
