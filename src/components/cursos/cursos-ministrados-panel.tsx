@@ -20,6 +20,7 @@ import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
 import { sortMatrixCourses } from "@/lib/nr-order";
 import { AttendeesDialog } from "@/routes/app.trainings";
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
+import { ReacaoGerarDialog } from "@/components/cursos/reacao-gerar-dialog";
 
 const MODALIDADES = ["PRESENCIAL", "ONLINE", "HIBRIDA"] as const;
 const TIPOS_REALIZACAO = ["INTERNO", "EXTERNO", "IN_COMPANY"] as const;
@@ -33,7 +34,6 @@ const ANEXO_TIPOS = [
   { value: "LISTA_PRESENCA", label: "Lista de Presença", icon: ClipboardList, color: "violet" },
   { value: "FOTO", label: "Foto", icon: ImageIcon, color: "blue" },
   { value: "EFICACIA", label: "Avaliação de Eficácia", icon: FileCheck2, color: "emerald" },
-  { value: "REACAO", label: "Avaliação de Reação", icon: MessageSquare, color: "amber" },
   { value: "CERTIFICADO", label: "Certificado", icon: Download, color: "slate" },
 ] as const;
 
@@ -326,6 +326,7 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
   const { isEditor, isAdmin } = useAuth();
   const [participantesOpen, setParticipantesOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const [reacaoOpen, setReacaoOpen] = useState(false);
 
   const { data: anexos = [] } = useQuery({
     queryKey: ["training-anexos", turma.id],
@@ -601,6 +602,34 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
             <Button size="sm" variant="outline" onClick={gerarLista}>
               <ClipboardList className="h-4 w-4 mr-1" /> Gerar Lista de Presença (PDF)
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setReacaoOpen(true)}
+              className="border-amber-300 text-amber-700 hover:bg-amber-50"
+            >
+              <MessageSquare className="h-4 w-4 mr-1" /> Gerar Avaliações de Reação
+            </Button>
+            {isEditor && (
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,image/*"
+                  multiple
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    files.forEach((file) => uploadAnexo.mutate({ file, tipo: "REACAO" }));
+                    e.target.value = "";
+                  }}
+                />
+                <span className="inline-flex items-center gap-1 text-xs font-bold uppercase px-3 py-2 rounded-md border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 transition">
+                  <Upload className="h-3.5 w-3.5" />
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Anexar Reações Preenchidas
+                </span>
+              </label>
+            )}
             {isEditor && ANEXO_TIPOS.map(({ value, label, icon: Icon }) => (
               <label key={value} className="cursor-pointer">
                 <input
@@ -668,12 +697,13 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {anexos.map((a: any) => {
                   const meta = ANEXO_TIPOS.find((x) => x.value === a.tipo);
-                  const Icon = meta?.icon ?? Upload;
+                  const Icon = a.tipo === "REACAO" ? MessageSquare : meta?.icon ?? Upload;
+                  const label = meta?.label ?? (a.tipo === "REACAO" ? "Avaliação de Reação" : a.tipo);
                   return (
                     <div key={a.id} className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg bg-slate-50">
                       <Icon className="h-4 w-4 text-slate-500" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-slate-700 truncate">{meta?.label ?? a.tipo}</div>
+                        <div className="text-xs font-bold text-slate-700 truncate">{label}</div>
                         <div className="text-[10px] text-slate-500 truncate">
                           {a.file_path.split("/").pop()}
                         </div>
@@ -704,6 +734,15 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
         onClose={() => setViewerIndex(null)}
         onIndexChange={setViewerIndex}
       />
+      {reacaoOpen && (
+        <ReacaoGerarDialog
+          open={reacaoOpen}
+          onClose={() => setReacaoOpen(false)}
+          turma={turma}
+          course={course}
+          participantesCount={participantesCount}
+        />
+      )}
       {participantesOpen && (
         <AttendeesDialog
           trainingId={turma.id}
