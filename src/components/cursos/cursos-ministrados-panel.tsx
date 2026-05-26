@@ -780,6 +780,22 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
           }}
         />
       )}
+      {extrairIAOpen && (() => {
+        const listaAnexo = (anexos as any[]).find((a) => a.tipo === "LISTA_PRESENCA");
+        if (!listaAnexo) return null;
+        return (
+          <ExtrairListaIADialog
+            trainingId={turma.id}
+            anexoPath={listaAnexo.file_path}
+            onClose={() => setExtrairIAOpen(false)}
+            onConfirmado={() => {
+              qc.invalidateQueries({ queryKey: ["training-participantes-count", turma.id] });
+              qc.invalidateQueries({ queryKey: ["training-matriz-sync", turma.id, turma.course_id, turma.data_realizacao] });
+              qc.invalidateQueries({ queryKey: ["cursos-aderencia"] });
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }
