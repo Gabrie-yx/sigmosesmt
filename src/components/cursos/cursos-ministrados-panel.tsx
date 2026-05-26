@@ -20,6 +20,7 @@ import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
 import { sortMatrixCourses } from "@/lib/nr-order";
 import { AttendeesDialog } from "@/routes/app.trainings";
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
+import { ReacaoGerarDialog } from "@/components/cursos/reacao-gerar-dialog";
 
 const MODALIDADES = ["PRESENCIAL", "ONLINE", "HIBRIDA"] as const;
 const TIPOS_REALIZACAO = ["INTERNO", "EXTERNO", "IN_COMPANY"] as const;
@@ -33,7 +34,6 @@ const ANEXO_TIPOS = [
   { value: "LISTA_PRESENCA", label: "Lista de Presença", icon: ClipboardList, color: "violet" },
   { value: "FOTO", label: "Foto", icon: ImageIcon, color: "blue" },
   { value: "EFICACIA", label: "Avaliação de Eficácia", icon: FileCheck2, color: "emerald" },
-  { value: "REACAO", label: "Avaliação de Reação", icon: MessageSquare, color: "amber" },
   { value: "CERTIFICADO", label: "Certificado", icon: Download, color: "slate" },
 ] as const;
 
