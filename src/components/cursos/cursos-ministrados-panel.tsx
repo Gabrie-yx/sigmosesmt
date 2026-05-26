@@ -701,30 +701,6 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
                 </div>
               </div>
             )}
-            {pdfAnexos.length > 0 && (
-              <div className="mb-3">
-                <div className="text-[10px] font-bold uppercase text-slate-400 mb-1">Documentos PDF ({pdfAnexos.length})</div>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                  {pdfAnexos.map((a: any, i: number) => {
-                    const meta = ANEXO_TIPOS.find((x) => x.value === a.tipo);
-                    const label = meta?.label ?? (a.tipo === "REACAO" ? "Reação" : a.tipo);
-                    return (
-                      <button
-                        key={a.id}
-                        type="button"
-                        onClick={() => setViewerIndex(imageAnexos.length + i)}
-                        className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-gradient-to-br from-red-50 to-slate-100 hover:border-[#991b1b] transition flex flex-col items-center justify-center p-2"
-                        title={`Clique para visualizar: ${a.file_path.split("/").pop()}`}
-                      >
-                        <FileText className="h-10 w-10 text-red-600 group-hover:scale-110 transition-transform" />
-                        <div className="text-[9px] font-bold text-slate-600 mt-1 text-center uppercase truncate w-full">{label}</div>
-                        <div className="text-[8px] text-slate-400 truncate w-full text-center">{a.file_path.split("/").pop()}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
             {anexos.length === 0 ? (
               <div className="text-xs text-slate-400 italic py-3 text-center border border-dashed border-slate-200 rounded">
                 Nenhum anexo. Use os botões acima para enviar os documentos homologados.
