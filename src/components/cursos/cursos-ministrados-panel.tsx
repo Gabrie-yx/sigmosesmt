@@ -19,6 +19,7 @@ import { CATEGORIA_COLOR, CATEGORIA_LABEL } from "@/lib/matriz-status";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
 import { sortMatrixCourses } from "@/lib/nr-order";
 import { AttendeesDialog } from "@/routes/app.trainings";
+import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
 
 const MODALIDADES = ["PRESENCIAL", "ONLINE", "HIBRIDA"] as const;
 const TIPOS_REALIZACAO = ["INTERNO", "EXTERNO", "IN_COMPANY"] as const;
