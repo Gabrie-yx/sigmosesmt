@@ -15,12 +15,14 @@ import {
   ClipboardList, Image as ImageIcon, FileCheck2, MessageSquare,
   Upload, Download, Trash2, ChevronRight, Pencil, Eye, FileText,
 } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { CATEGORIA_COLOR, CATEGORIA_LABEL } from "@/lib/matriz-status";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
 import { sortMatrixCourses } from "@/lib/nr-order";
 import { AttendeesDialog } from "@/routes/app.trainings";
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
 import { ReacaoGerarDialog } from "@/components/cursos/reacao-gerar-dialog";
+import { ExtrairListaIADialog } from "@/components/cursos/extrair-lista-ia-dialog";
 
 const MODALIDADES = ["PRESENCIAL", "ONLINE", "HIBRIDA"] as const;
 const TIPOS_REALIZACAO = ["INTERNO", "EXTERNO", "IN_COMPANY"] as const;
@@ -327,6 +329,7 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
   const [participantesOpen, setParticipantesOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [reacaoOpen, setReacaoOpen] = useState(false);
+  const [extrairIAOpen, setExtrairIAOpen] = useState(false);
 
   const { data: anexos = [] } = useQuery({
     queryKey: ["training-anexos", turma.id],
@@ -591,6 +594,16 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
               <Button size="sm" variant="outline" onClick={() => setParticipantesOpen(true)}>
                 <Users className="h-4 w-4 mr-1" /> Participantes
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setExtrairIAOpen(true)}
+                disabled={!(anexos as any[]).some((a) => a.tipo === "LISTA_PRESENCA")}
+                className="border-violet-300 text-violet-700 hover:bg-violet-50 disabled:opacity-50"
+                title={(anexos as any[]).some((a) => a.tipo === "LISTA_PRESENCA") ? "Extrair participantes da Lista de Presença com IA" : "Anexe uma Lista de Presença primeiro"}
+              >
+                <Sparkles className="h-4 w-4 mr-1" /> Extrair da Lista (IA)
+              </Button>
               <Button size="sm" variant="outline" onClick={onEdit}>
                 <Pencil className="h-4 w-4 mr-1" /> Editar dados da turma
               </Button>
@@ -767,6 +780,22 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
           }}
         />
       )}
+      {extrairIAOpen && (() => {
+        const listaAnexo = (anexos as any[]).find((a) => a.tipo === "LISTA_PRESENCA");
+        if (!listaAnexo) return null;
+        return (
+          <ExtrairListaIADialog
+            trainingId={turma.id}
+            anexoPath={listaAnexo.file_path}
+            onClose={() => setExtrairIAOpen(false)}
+            onConfirmado={() => {
+              qc.invalidateQueries({ queryKey: ["training-participantes-count", turma.id] });
+              qc.invalidateQueries({ queryKey: ["training-matriz-sync", turma.id, turma.course_id, turma.data_realizacao] });
+              qc.invalidateQueries({ queryKey: ["cursos-aderencia"] });
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }
