@@ -631,6 +631,35 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
             <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">
               Anexos ({anexos.length})
             </div>
+            {imageAnexos.length > 0 && (
+              <div className="mb-3">
+                <div className="text-[10px] font-bold uppercase text-slate-400 mb-1">Fotos ({imageAnexos.length})</div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  {imageAnexos.map((a: any, i: number) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => setViewerIndex(i)}
+                      className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-100 hover:border-[#991b1b] transition"
+                      title="Clique para ampliar"
+                    >
+                      {signedUrls[a.file_path] ? (
+                        <img
+                          src={signedUrls[a.file_path]}
+                          alt={a.file_path.split("/").pop() ?? ""}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          <ImageIcon className="h-6 w-6" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {anexos.length === 0 ? (
               <div className="text-xs text-slate-400 italic py-3 text-center border border-dashed border-slate-200 rounded">
                 Nenhum anexo. Use os botões acima para enviar os documentos homologados.
@@ -669,6 +698,12 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
           </div>
         </div>
       )}
+      <MediaViewerDialog
+        items={mediaItems}
+        index={viewerIndex}
+        onClose={() => setViewerIndex(null)}
+        onIndexChange={setViewerIndex}
+      />
       {participantesOpen && (
         <AttendeesDialog
           trainingId={turma.id}
