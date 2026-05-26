@@ -3867,7 +3867,22 @@ export type Database = {
           situacao?: string
           training_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "training_attendees_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_attendees_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       training_matrix_courses: {
         Row: {
