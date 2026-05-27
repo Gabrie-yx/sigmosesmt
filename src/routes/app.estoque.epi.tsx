@@ -48,6 +48,8 @@ import {
   Upload,
   User,
   Warehouse,
+  History,
+  Download,
 } from "lucide-react";
 
 export const Route = createFileRoute("/app/estoque/epi")({
@@ -290,6 +292,7 @@ function EpiCard({ epi }: { epi: EpiRow }) {
           <DeliveryDialog epi={epi} />
           <EntradaDialog epi={epi} />
         </div>
+        <HistoricoEpiDialog epi={epi} />
         <div className="pt-2 border-t border-border/60 text-[10px] text-muted-foreground space-y-0.5">
           <div>
             <span className="font-bold">Cód.:</span> {epi.codigo_material}
@@ -1065,5 +1068,171 @@ function HistoricoGeral({ epis }: { epis: EpiRow[] }) {
         )}
       </div>
     </Card>
+  );
+}
+// ───────────────────────── Histórico por EPI ─────────────────────────
+
+function HistoricoEpiDialog({ epi }: { epi: EpiRow }) {
+  const [open, setOpen] = useState(false);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [busca, setBusca] = useState("");
+
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["historico-por-epi", epi.id, from, to],
+    enabled: open,
+    queryFn: async () => {
+      let q = supabase
+        .from("historico_entregas")
+        .select("id, cpf_colaborador, nome_colaborador, quantidade_entregue, data_entrega, tipo_movimentacao, created_by")
+        .eq("epi_id", epi.id)
+        .order("data_entrega", { ascending: false })
+        .limit(1000);
+      if (from) q = q.gte("data_entrega", from);
+      if (to) q = q.lte("data_entrega", to + "T23:59:59");
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const filtradas = useMemo(() => {
+    const t = busca.trim().toLowerCase();
+    if (!t) return data;
+    return data.filter((m: any) =>
+      [m.nome_colaborador, m.cpf_colaborador].filter(Boolean).some((x: string) => x.toLowerCase().includes(t))
+    );
+  }, [data, busca]);
+
+  const totais = useMemo(() => {
+    let entregue = 0, entrada = 0, devolucao = 0;
+    for (const m of filtradas as any[]) {
+      if (m.tipo_movimentacao === "SAIDA_ENTREGA") entregue += m.quantidade_entregue;
+      else if (m.tipo_movimentacao === "ENTRADA_REPOSICAO") entrada += m.quantidade_entregue;
+      else if (m.tipo_movimentacao === "DEVOLUCAO") devolucao += m.quantidade_entregue;
+    }
+    return { entregue, entrada, devolucao };
+  }, [filtradas]);
+
+  function exportCsv() {
+    const linhas = [
+      ["Data", "Tipo", "CPF", "Nome", "Quantidade"].join(";"),
+      ...(filtradas as any[]).map((m) => [
+        new Date(m.data_entrega).toLocaleString("pt-BR"),
+        m.tipo_movimentacao,
+        m.cpf_colaborador ? maskCpf(m.cpf_colaborador) : "",
+        (m.nome_colaborador ?? "").replace(/;/g, ","),
+        m.quantidade_entregue,
+      ].join(";")),
+    ].join("\n");
+    const blob = new Blob(["\uFEFF" + linhas], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `historico_${epi.codigo_material}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const tipoBadge = (t: Tipo) =>
+    t === "SAIDA_ENTREGA"
+      ? <Badge className="bg-blue-100 text-blue-800 border-blue-200">Entrega</Badge>
+      : t === "ENTRADA_REPOSICAO"
+      ? <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">Entrada</Badge>
+      : <Badge className="bg-amber-100 text-amber-800 border-amber-200">Devolução</Badge>;
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs">
+          <History className="h-3.5 w-3.5" /> Ver entregas
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <History className="h-5 w-5 text-blue-600" />
+            Histórico — {epi.nome_material}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <div>
+            <Label className="text-[10px] uppercase">De</Label>
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase">Até</Label>
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          </div>
+          <div className="md:col-span-2">
+            <Label className="text-[10px] uppercase">Buscar colaborador</Label>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input className="pl-8" placeholder="Nome ou CPF…" value={busca} onChange={(e) => setBusca(e.target.value)} />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-md border bg-blue-50 p-2">
+            <div className="text-[10px] uppercase text-blue-700 font-bold">Entregue</div>
+            <div className="text-xl font-black text-blue-800">{totais.entregue}</div>
+          </div>
+          <div className="rounded-md border bg-emerald-50 p-2">
+            <div className="text-[10px] uppercase text-emerald-700 font-bold">Entradas</div>
+            <div className="text-xl font-black text-emerald-800">{totais.entrada}</div>
+          </div>
+          <div className="rounded-md border bg-amber-50 p-2">
+            <div className="text-[10px] uppercase text-amber-700 font-bold">Devoluções</div>
+            <div className="text-xl font-black text-amber-800">{totais.devolucao}</div>
+          </div>
+        </div>
+
+        <div className="max-h-[50vh] overflow-y-auto rounded-md border">
+          {isLoading ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">Carregando…</div>
+          ) : filtradas.length === 0 ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              Nenhuma movimentação encontrada.
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40 sticky top-0">
+                <tr className="text-left text-[11px] uppercase tracking-wider">
+                  <th className="py-2 px-2">Data</th>
+                  <th className="py-2 px-2">Tipo</th>
+                  <th className="py-2 px-2">CPF</th>
+                  <th className="py-2 px-2">Colaborador</th>
+                  <th className="py-2 px-2 text-right">Qtd</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(filtradas as any[]).map((m) => (
+                  <tr key={m.id} className="border-t hover:bg-muted/30">
+                    <td className="py-2 px-2 text-xs">{new Date(m.data_entrega).toLocaleString("pt-BR")}</td>
+                    <td className="py-2 px-2">{tipoBadge(m.tipo_movimentacao)}</td>
+                    <td className="py-2 px-2 font-mono text-xs">
+                      {m.cpf_colaborador ? maskCpf(m.cpf_colaborador) : "—"}
+                    </td>
+                    <td className="py-2 px-2">{m.nome_colaborador || "—"}</td>
+                    <td className="py-2 px-2 text-right font-bold">
+                      {m.tipo_movimentacao === "SAIDA_ENTREGA" ? "−" : "+"}{m.quantidade_entregue}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={exportCsv} disabled={filtradas.length === 0} className="gap-1.5">
+            <Download className="h-4 w-4" /> Exportar CSV
+          </Button>
+          <Button onClick={() => setOpen(false)}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
