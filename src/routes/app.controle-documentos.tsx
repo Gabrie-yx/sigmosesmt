@@ -14,10 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Upload, FileText, CheckCircle2, AlertTriangle, Clock, Trash2, Download, FolderOpen, RefreshCw, History, Paperclip } from "lucide-react";
+import { Plus, Search, Upload, FileText, CheckCircle2, AlertTriangle, Clock, Trash2, Download, FolderOpen, RefreshCw, History, Paperclip, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
-import { openStorageFile } from "@/components/file-viewer";
+import { openStorageFile, FileViewerHost } from "@/components/file-viewer";
 
 export const Route = createFileRoute("/app/controle-documentos")({
   component: ControleDocumentosPage,
@@ -243,6 +243,7 @@ function ControleDocumentosPage() {
         editing={recEdit} setEditing={setRecEdit}
         userId={user?.id}
       />
+      <FileViewerHost />
     </div>
   );
 }
@@ -664,7 +665,10 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
                         <button className="truncate text-left hover:underline" onClick={() => openStorageFile("controle-documentos", a.file_path, a.nome_original)}>{a.nome_original}</button>
                         <Badge variant="secondary" className="text-[9px]">{a.tipo}</Badge>
                       </div>
-                      <Button size="icon" variant="ghost" onClick={() => removerAnexo(a.id, a.file_path)}><Trash2 className="h-3 w-3 text-red-600" /></Button>
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" title="Visualizar" onClick={() => openStorageFile("controle-documentos", a.file_path, a.nome_original)}><Eye className="h-3.5 w-3.5" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => removerAnexo(a.id, a.file_path)}><Trash2 className="h-3 w-3 text-red-600" /></Button>
+                      </div>
                     </div>
                   ))}
                   {(anexos.data ?? []).length === 0 && <div className="text-xs text-muted-foreground text-center py-4">Nenhum anexo</div>}
