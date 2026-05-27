@@ -515,6 +515,8 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
   const [obsFech, setObsFech] = useState("");
   const [tercNome, setTercNome] = useState("");
   const [tercDate, setTercDate] = useState("");
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [edit, setEdit] = useState<any>(null);
 
   // sync form when doc loads
   useMemo(() => {
@@ -526,6 +528,17 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
       setObsFech(doc.data.observacao_fechamento ?? "");
       setTercNome(doc.data.terceiro_nome ?? "");
       setTercDate(doc.data.terceiro_followup_em ?? "");
+      setEdit({
+        titulo: doc.data.titulo ?? "",
+        descricao: doc.data.descricao ?? "",
+        origem: doc.data.origem ?? "EMAIL",
+        categoria_id: doc.data.categoria_id ?? "",
+        criticidade: doc.data.criticidade ?? "MEDIA",
+        remetente_nome: doc.data.remetente_nome ?? "",
+        remetente_contato: doc.data.remetente_contato ?? "",
+        data_recebimento: doc.data.data_recebimento ?? "",
+        tags: (doc.data.tags ?? []).join(", "),
+      });
     }
   }, [doc.data]);
 
@@ -559,6 +572,40 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
     await supabase.storage.from("controle-documentos").remove([path]);
     await supabase.from("controle_doc_anexos").delete().eq("id", anexoId);
     qc.invalidateQueries({ queryKey: ["controle-doc-anexos", id] });
+  }
+
+  async function deletarDoc() {
+    if (!id) return;
+    try {
+      const { data: ax } = await supabase.from("controle_doc_anexos").select("id, file_path").eq("documento_id", id);
+      const paths = (ax ?? []).map((a: any) => a.file_path).filter(Boolean);
+      if (paths.length) await supabase.storage.from("controle-documentos").remove(paths);
+      await supabase.from("controle_doc_anexos").delete().eq("documento_id", id);
+      await supabase.from("controle_doc_historico").delete().eq("documento_id", id);
+      const { error } = await supabase.from("controle_documentos").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Documento excluído");
+      qc.invalidateQueries({ queryKey: ["controle-documentos"] });
+      setConfirmDel(false);
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao excluir");
+    }
+  }
+
+  async function salvarEdicao() {
+    if (!edit?.titulo?.trim()) { toast.error("Título obrigatório"); return; }
+    await updateMut.mutateAsync({
+      titulo: edit.titulo.trim(),
+      descricao: edit.descricao?.trim() || null,
+      origem: edit.origem,
+      categoria_id: edit.categoria_id || null,
+      criticidade: edit.criticidade,
+      remetente_nome: edit.remetente_nome?.trim() || null,
+      remetente_contato: edit.remetente_contato?.trim() || null,
+      data_recebimento: edit.data_recebimento,
+      tags: String(edit.tags || "").split(",").map((s: string) => s.trim()).filter(Boolean),
+    });
   }
 
   async function resolver() {
