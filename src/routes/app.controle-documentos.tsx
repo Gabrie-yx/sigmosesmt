@@ -23,6 +23,16 @@ import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
 import { openStorageFile, FileViewerHost } from "@/components/file-viewer";
 
+function sanitizeFilename(name: string): string {
+  const i = name.lastIndexOf(".");
+  const base = i > 0 ? name.slice(0, i) : name;
+  const ext = i > 0 ? name.slice(i) : "";
+  const clean = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9._-]+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
+  return (clean(base) || "arquivo") + clean(ext);
+}
+
 export const Route = createFileRoute("/app/controle-documentos")({
   component: ControleDocumentosPage,
   head: () => ({ meta: [{ title: "Controle de Documentos · SIGMO" }] }),
