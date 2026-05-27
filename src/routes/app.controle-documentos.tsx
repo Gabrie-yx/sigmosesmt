@@ -14,7 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Upload, FileText, CheckCircle2, AlertTriangle, Clock, Trash2, Download, FolderOpen, RefreshCw, History, Paperclip, Eye } from "lucide-react";
+import { Plus, Search, Upload, FileText, CheckCircle2, AlertTriangle, Clock, Trash2, Download, FolderOpen, RefreshCw, History, Paperclip, Eye, Pencil } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
 import { openStorageFile, FileViewerHost } from "@/components/file-viewer";
@@ -511,6 +515,8 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
   const [obsFech, setObsFech] = useState("");
   const [tercNome, setTercNome] = useState("");
   const [tercDate, setTercDate] = useState("");
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [edit, setEdit] = useState<any>(null);
 
   // sync form when doc loads
   useMemo(() => {
@@ -522,6 +528,17 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
       setObsFech(doc.data.observacao_fechamento ?? "");
       setTercNome(doc.data.terceiro_nome ?? "");
       setTercDate(doc.data.terceiro_followup_em ?? "");
+      setEdit({
+        titulo: doc.data.titulo ?? "",
+        descricao: doc.data.descricao ?? "",
+        origem: doc.data.origem ?? "EMAIL",
+        categoria_id: doc.data.categoria_id ?? "",
+        criticidade: doc.data.criticidade ?? "MEDIA",
+        remetente_nome: doc.data.remetente_nome ?? "",
+        remetente_contato: doc.data.remetente_contato ?? "",
+        data_recebimento: doc.data.data_recebimento ?? "",
+        tags: (doc.data.tags ?? []).join(", "),
+      });
     }
   }, [doc.data]);
 
@@ -555,6 +572,40 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
     await supabase.storage.from("controle-documentos").remove([path]);
     await supabase.from("controle_doc_anexos").delete().eq("id", anexoId);
     qc.invalidateQueries({ queryKey: ["controle-doc-anexos", id] });
+  }
+
+  async function deletarDoc() {
+    if (!id) return;
+    try {
+      const { data: ax } = await supabase.from("controle_doc_anexos").select("id, file_path").eq("documento_id", id);
+      const paths = (ax ?? []).map((a: any) => a.file_path).filter(Boolean);
+      if (paths.length) await supabase.storage.from("controle-documentos").remove(paths);
+      await supabase.from("controle_doc_anexos").delete().eq("documento_id", id);
+      await supabase.from("controle_doc_historico").delete().eq("documento_id", id);
+      const { error } = await supabase.from("controle_documentos").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Documento excluído");
+      qc.invalidateQueries({ queryKey: ["controle-documentos"] });
+      setConfirmDel(false);
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao excluir");
+    }
+  }
+
+  async function salvarEdicao() {
+    if (!edit?.titulo?.trim()) { toast.error("Título obrigatório"); return; }
+    await updateMut.mutateAsync({
+      titulo: edit.titulo.trim(),
+      descricao: edit.descricao?.trim() || null,
+      origem: edit.origem,
+      categoria_id: edit.categoria_id || null,
+      criticidade: edit.criticidade,
+      remetente_nome: edit.remetente_nome?.trim() || null,
+      remetente_contato: edit.remetente_contato?.trim() || null,
+      data_recebimento: edit.data_recebimento,
+      tags: String(edit.tags || "").split(",").map((s: string) => s.trim()).filter(Boolean),
+    });
   }
 
   async function resolver() {
@@ -592,6 +643,9 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
                 <span className="font-mono text-xs text-muted-foreground">{d.numero}</span>
                 <Badge variant="outline" className={CRIT_STYLES[d.criticidade]}>{d.criticidade}</Badge>
                 <Badge variant="outline" className={STATUS_STYLES[d.status]}>{STATUS_LABEL[d.status]}</Badge>
+                <Button size="sm" variant="ghost" className="ml-auto text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setConfirmDel(true)}>
+                  <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                </Button>
               </SheetTitle>
               <div className="text-base font-semibold">{d.titulo}</div>
               {d.descricao && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{d.descricao}</p>}
@@ -608,7 +662,12 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
             </SheetHeader>
 
             <Tabs defaultValue="tratativa" className="mt-4">
-              <TabsList className="w-full"><TabsTrigger value="tratativa" className="flex-1">Tratativa</TabsTrigger><TabsTrigger value="anexos" className="flex-1">Anexos ({anexos.data?.length ?? 0})</TabsTrigger><TabsTrigger value="hist" className="flex-1">Histórico</TabsTrigger></TabsList>
+              <TabsList className="w-full">
+                <TabsTrigger value="tratativa" className="flex-1">Tratativa</TabsTrigger>
+                <TabsTrigger value="editar" className="flex-1"><Pencil className="h-3 w-3 mr-1" />Editar</TabsTrigger>
+                <TabsTrigger value="anexos" className="flex-1">Anexos ({anexos.data?.length ?? 0})</TabsTrigger>
+                <TabsTrigger value="hist" className="flex-1">Histórico</TabsTrigger>
+              </TabsList>
 
               <TabsContent value="tratativa" className="space-y-3 pt-3">
                 <div><Label>Status</Label>
@@ -646,6 +705,43 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
                     <CheckCircle2 className="h-4 w-4 mr-1" /> Marcar como RESOLVIDO
                   </Button>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="editar" className="space-y-3 pt-3">
+                {edit && (
+                  <>
+                    <div><Label>Título *</Label><Input value={edit.titulo} onChange={(e) => setEdit({ ...edit, titulo: e.target.value })} /></div>
+                    <div><Label>Descrição</Label><Textarea rows={3} value={edit.descricao} onChange={(e) => setEdit({ ...edit, descricao: e.target.value })} /></div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><Label>Origem</Label>
+                        <Select value={edit.origem} onValueChange={(v) => setEdit({ ...edit, origem: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{Object.entries(ORIGEM_LABEL).map(([k, v]) => (<SelectItem key={k} value={k}>{v}</SelectItem>))}</SelectContent>
+                        </Select>
+                      </div>
+                      <div><Label>Categoria</Label>
+                        <Select value={edit.categoria_id || "_"} onValueChange={(v) => setEdit({ ...edit, categoria_id: v === "_" ? "" : v })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_">Sem categoria</SelectItem>
+                            {categorias.map((c: any) => (<SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div><Label>Criticidade</Label>
+                        <Select value={edit.criticidade} onValueChange={(v) => setEdit({ ...edit, criticidade: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{["CRITICA", "ALTA", "MEDIA", "BAIXA"].map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}</SelectContent>
+                        </Select>
+                      </div>
+                      <div><Label>Data recebimento</Label><Input type="date" value={edit.data_recebimento} onChange={(e) => setEdit({ ...edit, data_recebimento: e.target.value })} /></div>
+                      <div><Label>Remetente</Label><Input value={edit.remetente_nome} onChange={(e) => setEdit({ ...edit, remetente_nome: e.target.value })} /></div>
+                      <div><Label>Contato</Label><Input value={edit.remetente_contato} onChange={(e) => setEdit({ ...edit, remetente_contato: e.target.value })} /></div>
+                    </div>
+                    <div><Label>Tags (separadas por vírgula)</Label><Input value={edit.tags} onChange={(e) => setEdit({ ...edit, tags: e.target.value })} /></div>
+                    <Button className="w-full" onClick={salvarEdicao}><Pencil className="h-4 w-4 mr-1" /> Salvar dados da entrada</Button>
+                  </>
+                )}
               </TabsContent>
 
               <TabsContent value="anexos" className="space-y-3 pt-3">
@@ -690,6 +786,20 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
           </>
         )}
       </SheetContent>
+      <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir documento {d?.numero}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação remove o documento, todos os anexos e o histórico. Não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={deletarDoc} className="bg-red-600 hover:bg-red-700">Excluir definitivamente</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }
