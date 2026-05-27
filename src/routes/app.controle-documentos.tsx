@@ -14,7 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Upload, FileText, CheckCircle2, AlertTriangle, Clock, Trash2, Download, FolderOpen, RefreshCw, History, Paperclip, Eye } from "lucide-react";
+import { Plus, Search, Upload, FileText, CheckCircle2, AlertTriangle, Clock, Trash2, Download, FolderOpen, RefreshCw, History, Paperclip, Eye, Pencil } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
 import { openStorageFile, FileViewerHost } from "@/components/file-viewer";
