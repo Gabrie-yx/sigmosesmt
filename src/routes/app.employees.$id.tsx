@@ -630,6 +630,25 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
       if (f?.id && emp?.id && f.id !== emp.id) {
         throw new Error("Inconsistência detectada: o formulário não corresponde ao funcionário atual. Recarregue a página antes de salvar.");
       }
+      // Trava anti-sobrescrita: se o NOME mudou em relação ao registro carregado,
+      // exige confirmação. Já tivemos casos do usuário abrir a ficha de um
+      // funcionário, digitar o nome de OUTRA pessoa achando que era um cadastro
+      // novo e gravar — destruindo o registro original. Esse confirm bloqueia
+      // a regravação acidental.
+      const nomeOriginal = (emp?.nome ?? "").trim();
+      const nomeNovo = toTitleCasePT((f?.nome ?? "").trim());
+      if (nomeOriginal && nomeNovo && nomeOriginal.toLowerCase() !== nomeNovo.toLowerCase()) {
+        const ok = confirm(
+          `Você está alterando o NOME deste funcionário:\n\n` +
+          `  De:  ${nomeOriginal}\n` +
+          `  Para: ${nomeNovo}\n\n` +
+          `Se sua intenção era CADASTRAR UM NOVO funcionário, clique em "Cancelar" ` +
+          `e use o botão "Novo funcionário" na lista. Continuar vai sobrescrever ` +
+          `o registro atual e perder os dados de "${nomeOriginal}".\n\n` +
+          `Deseja realmente renomear?`
+        );
+        if (!ok) throw new Error("Alteração de nome cancelada pelo usuário.");
+      }
       const { id: _id, created_at, updated_at, ...rest } = f;
       const payload = { ...rest, nome: toTitleCasePT(rest.nome) };
       const { error } = await supabase.from("employees").update(payload).eq("id", emp.id);
