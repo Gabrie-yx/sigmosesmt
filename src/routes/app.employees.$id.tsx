@@ -299,10 +299,10 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         />
 
         <TabsContent value="profile" className="mt-4">
-          <ProfileTab emp={emp} companies={companies ?? []} roles={roles ?? []} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+          <ProfileTab key={emp.id} emp={emp} companies={companies ?? []} roles={roles ?? []} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
         </TabsContent>
         <TabsContent value="nrs" className="mt-4">
-          <NrsTab emp={emp} role={role} canEdit={isEditor} qc={qc} />
+          <NrsTab key={emp.id} emp={emp} role={role} canEdit={isEditor} qc={qc} />
         </TabsContent>
         <TabsContent value="docs" className="mt-4">
           <DocsTab empId={id} />
@@ -620,8 +620,16 @@ function EmployeeContextSidebar({ id }: { id: string }) {
 /* ============ PROFILE ============ */
 function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
   const [f, setF] = useState<any>(emp);
+  // Re-sincroniza o formulário sempre que o funcionário muda.
+  // Sem isso, navegar de um colaborador pra outro deixava dados antigos
+  // no estado e um Save sobrescrevia o registro errado.
+  useEffect(() => { setF(emp); }, [emp?.id]);
   const save = useMutation({
     mutationFn: async () => {
+      // Trava de segurança: só grava se o id do formulário bater com o id do registro alvo.
+      if (f?.id && emp?.id && f.id !== emp.id) {
+        throw new Error("Inconsistência detectada: o formulário não corresponde ao funcionário atual. Recarregue a página antes de salvar.");
+      }
       const { id: _id, created_at, updated_at, ...rest } = f;
       const payload = { ...rest, nome: toTitleCasePT(rest.nome) };
       const { error } = await supabase.from("employees").update(payload).eq("id", emp.id);
