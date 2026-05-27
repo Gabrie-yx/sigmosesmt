@@ -23,6 +23,16 @@ import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
 import { openStorageFile, FileViewerHost } from "@/components/file-viewer";
 
+function sanitizeFilename(name: string): string {
+  const i = name.lastIndexOf(".");
+  const base = i > 0 ? name.slice(0, i) : name;
+  const ext = i > 0 ? name.slice(i) : "";
+  const clean = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9._-]+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
+  return (clean(base) || "arquivo") + clean(ext);
+}
+
 export const Route = createFileRoute("/app/controle-documentos")({
   component: ControleDocumentosPage,
   head: () => ({ meta: [{ title: "Controle de Documentos · SIGMO" }] }),
@@ -383,7 +393,7 @@ function NovaEntradaDialog({ open, onClose, categorias, employees, userId, onCre
       if (error) throw error;
 
       for (const f of files) {
-        const path = `${doc.id}/${Date.now()}-${f.name}`;
+        const path = `${doc.id}/${Date.now()}-${sanitizeFilename(f.name)}`;
         const { error: upErr } = await supabase.storage.from("controle-documentos").upload(path, f);
         if (upErr) { toast.error(`Upload ${f.name}: ${upErr.message}`); continue; }
         await supabase.from("controle_doc_anexos").insert({
@@ -558,7 +568,7 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
 
   async function uploadAnexo(file: File, tipo: string) {
     if (!id) return;
-    const path = `${id}/${Date.now()}-${file.name}`;
+    const path = `${id}/${Date.now()}-${sanitizeFilename(file.name)}`;
     const { error } = await supabase.storage.from("controle-documentos").upload(path, file);
     if (error) { toast.error(error.message); return; }
     await supabase.from("controle_doc_anexos").insert({
