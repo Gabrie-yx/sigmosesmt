@@ -786,6 +786,20 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
           </>
         )}
       </SheetContent>
+      <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir documento {d?.numero}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação remove o documento, todos os anexos e o histórico. Não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={deletarDoc} className="bg-red-600 hover:bg-red-700">Excluir definitivamente</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }
