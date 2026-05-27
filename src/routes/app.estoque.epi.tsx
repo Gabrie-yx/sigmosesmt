@@ -48,6 +48,8 @@ import {
   Upload,
   User,
   Warehouse,
+  History,
+  Download,
 } from "lucide-react";
 
 export const Route = createFileRoute("/app/estoque/epi")({
@@ -290,6 +292,7 @@ function EpiCard({ epi }: { epi: EpiRow }) {
           <DeliveryDialog epi={epi} />
           <EntradaDialog epi={epi} />
         </div>
+        <HistoricoEpiDialog epi={epi} />
         <div className="pt-2 border-t border-border/60 text-[10px] text-muted-foreground space-y-0.5">
           <div>
             <span className="font-bold">Cód.:</span> {epi.codigo_material}
