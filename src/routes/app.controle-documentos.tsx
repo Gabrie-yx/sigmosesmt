@@ -383,7 +383,7 @@ function NovaEntradaDialog({ open, onClose, categorias, employees, userId, onCre
       if (error) throw error;
 
       for (const f of files) {
-        const path = `${doc.id}/${Date.now()}-${f.name}`;
+        const path = `${doc.id}/${Date.now()}-${sanitizeFilename(f.name)}`;
         const { error: upErr } = await supabase.storage.from("controle-documentos").upload(path, f);
         if (upErr) { toast.error(`Upload ${f.name}: ${upErr.message}`); continue; }
         await supabase.from("controle_doc_anexos").insert({
@@ -558,7 +558,7 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
 
   async function uploadAnexo(file: File, tipo: string) {
     if (!id) return;
-    const path = `${id}/${Date.now()}-${file.name}`;
+    const path = `${id}/${Date.now()}-${sanitizeFilename(file.name)}`;
     const { error } = await supabase.storage.from("controle-documentos").upload(path, file);
     if (error) { toast.error(error.message); return; }
     await supabase.from("controle_doc_anexos").insert({
