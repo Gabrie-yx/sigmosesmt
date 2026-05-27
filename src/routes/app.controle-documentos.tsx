@@ -643,6 +643,9 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
                 <span className="font-mono text-xs text-muted-foreground">{d.numero}</span>
                 <Badge variant="outline" className={CRIT_STYLES[d.criticidade]}>{d.criticidade}</Badge>
                 <Badge variant="outline" className={STATUS_STYLES[d.status]}>{STATUS_LABEL[d.status]}</Badge>
+                <Button size="sm" variant="ghost" className="ml-auto text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setConfirmDel(true)}>
+                  <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                </Button>
               </SheetTitle>
               <div className="text-base font-semibold">{d.titulo}</div>
               {d.descricao && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{d.descricao}</p>}
@@ -659,7 +662,12 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
             </SheetHeader>
 
             <Tabs defaultValue="tratativa" className="mt-4">
-              <TabsList className="w-full"><TabsTrigger value="tratativa" className="flex-1">Tratativa</TabsTrigger><TabsTrigger value="anexos" className="flex-1">Anexos ({anexos.data?.length ?? 0})</TabsTrigger><TabsTrigger value="hist" className="flex-1">Histórico</TabsTrigger></TabsList>
+              <TabsList className="w-full">
+                <TabsTrigger value="tratativa" className="flex-1">Tratativa</TabsTrigger>
+                <TabsTrigger value="editar" className="flex-1"><Pencil className="h-3 w-3 mr-1" />Editar</TabsTrigger>
+                <TabsTrigger value="anexos" className="flex-1">Anexos ({anexos.data?.length ?? 0})</TabsTrigger>
+                <TabsTrigger value="hist" className="flex-1">Histórico</TabsTrigger>
+              </TabsList>
 
               <TabsContent value="tratativa" className="space-y-3 pt-3">
                 <div><Label>Status</Label>
@@ -697,6 +705,43 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
                     <CheckCircle2 className="h-4 w-4 mr-1" /> Marcar como RESOLVIDO
                   </Button>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="editar" className="space-y-3 pt-3">
+                {edit && (
+                  <>
+                    <div><Label>Título *</Label><Input value={edit.titulo} onChange={(e) => setEdit({ ...edit, titulo: e.target.value })} /></div>
+                    <div><Label>Descrição</Label><Textarea rows={3} value={edit.descricao} onChange={(e) => setEdit({ ...edit, descricao: e.target.value })} /></div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><Label>Origem</Label>
+                        <Select value={edit.origem} onValueChange={(v) => setEdit({ ...edit, origem: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{Object.entries(ORIGEM_LABEL).map(([k, v]) => (<SelectItem key={k} value={k}>{v}</SelectItem>))}</SelectContent>
+                        </Select>
+                      </div>
+                      <div><Label>Categoria</Label>
+                        <Select value={edit.categoria_id || "_"} onValueChange={(v) => setEdit({ ...edit, categoria_id: v === "_" ? "" : v })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_">Sem categoria</SelectItem>
+                            {categorias.map((c: any) => (<SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div><Label>Criticidade</Label>
+                        <Select value={edit.criticidade} onValueChange={(v) => setEdit({ ...edit, criticidade: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{["CRITICA", "ALTA", "MEDIA", "BAIXA"].map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}</SelectContent>
+                        </Select>
+                      </div>
+                      <div><Label>Data recebimento</Label><Input type="date" value={edit.data_recebimento} onChange={(e) => setEdit({ ...edit, data_recebimento: e.target.value })} /></div>
+                      <div><Label>Remetente</Label><Input value={edit.remetente_nome} onChange={(e) => setEdit({ ...edit, remetente_nome: e.target.value })} /></div>
+                      <div><Label>Contato</Label><Input value={edit.remetente_contato} onChange={(e) => setEdit({ ...edit, remetente_contato: e.target.value })} /></div>
+                    </div>
+                    <div><Label>Tags (separadas por vírgula)</Label><Input value={edit.tags} onChange={(e) => setEdit({ ...edit, tags: e.target.value })} /></div>
+                    <Button className="w-full" onClick={salvarEdicao}><Pencil className="h-4 w-4 mr-1" /> Salvar dados da entrada</Button>
+                  </>
+                )}
               </TabsContent>
 
               <TabsContent value="anexos" className="space-y-3 pt-3">
