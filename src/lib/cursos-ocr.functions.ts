@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const InputSchema = z.object({
   trainingId: z.string().uuid(),
@@ -39,14 +38,15 @@ function mimeFromPath(p: string): string {
 export const extrairParticipantesDaLista = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => InputSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return { error: "LOVABLE_API_KEY não configurada", detectados: [], matchExato: [], matchAproximado: [], naoEncontrados: [] };
     }
 
     // 1) Baixa o arquivo do storage
-    const dl = await supabaseAdmin.storage.from("training-docs").download(data.anexoPath);
+    const dl = await supabase.storage.from("training-docs").download(data.anexoPath);
     if (dl.error || !dl.data) {
       return { error: `Falha ao baixar arquivo: ${dl.error?.message ?? "desconhecido"}`, detectados: [], matchExato: [], matchAproximado: [], naoEncontrados: [] };
     }
@@ -143,7 +143,7 @@ export const extrairParticipantesDaLista = createServerFn({ method: "POST" })
     }
 
     // 3) Carrega funcionários ATIVOS e tenta match
-    const { data: emps, error: empErr } = await supabaseAdmin
+    const { data: emps, error: empErr } = await supabase
       .from("employees")
       .select("id, nome, matricula, cpf, company_id, status, setor")
       .eq("status", "ATIVO");
@@ -152,7 +152,7 @@ export const extrairParticipantesDaLista = createServerFn({ method: "POST" })
     }
 
     // Excluir quem já está na turma
-    const { data: jaInscritos } = await supabaseAdmin
+    const { data: jaInscritos } = await supabase
       .from("training_attendees")
       .select("employee_id")
       .eq("training_id", data.trainingId);
