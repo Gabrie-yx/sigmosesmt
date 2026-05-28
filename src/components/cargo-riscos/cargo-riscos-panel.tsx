@@ -4,10 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, ShieldCheck, Activity, FlaskConical, Search } from "lucide-react";
+import { AlertTriangle, ShieldCheck, Activity, FlaskConical, Search, Pencil } from "lucide-react";
+import { EditarCargoRiscoDialog } from "./editar-cargo-risco-dialog";
 
 type CargoRisco = {
   id: string;
@@ -48,6 +50,7 @@ const CAT_ICON: Record<string, ReactNode> = {
 export function CargoRiscosPanel({ roleId, lockRole = false }: { roleId?: string | null; lockRole?: boolean }) {
   const [selectedRole, setSelectedRole] = useState<string | "all">(roleId ?? "all");
   const [q, setQ] = useState("");
+  const [editing, setEditing] = useState<CargoRisco | null>(null);
 
   const { data: roles = [] } = useQuery({
     queryKey: ["roles-ativos-min"],
@@ -177,11 +180,25 @@ export function CargoRiscosPanel({ roleId, lockRole = false }: { roleId?: string
                     <p className="text-xs text-slate-500 mt-2 italic border-l-2 border-slate-200 pl-2">{r.observacao}</p>
                   )}
                 </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditing(r)}
+                  className="shrink-0 gap-1.5 border-rose-200 text-rose-700 hover:bg-rose-50"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Validar
+                </Button>
               </div>
             </Card>
           ))}
         </div>
       )}
+      <EditarCargoRiscoDialog
+        row={editing}
+        open={!!editing}
+        onOpenChange={(v) => { if (!v) setEditing(null); }}
+      />
     </div>
   );
 }
