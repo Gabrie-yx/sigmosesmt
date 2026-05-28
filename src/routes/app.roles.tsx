@@ -17,6 +17,8 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CatalogoRiscosPanel } from "@/components/catalogo/catalogo-riscos-panel";
 import { CatalogoNrsPanel } from "@/components/catalogo/catalogo-nrs-panel";
+import { CargoRiscosPanel } from "@/components/cargo-riscos/cargo-riscos-panel";
+
 
 export const Route = createFileRoute("/app/roles")({
   component: RolesPageWithTabs,
@@ -104,8 +106,10 @@ function RolesPage() {
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
   const [editing, setEditing] = useState<Partial<Role> | null>(null);
+  const [innerTab, setInnerTab] = useState<"diretrizes" | "riscos">("diretrizes");
   const [search, setSearch] = useState("");
   const [showInactive, setShowInactive] = useState(false);
+
 
   const { data: roles = [] } = useQuery({
     queryKey: ["roles"],
