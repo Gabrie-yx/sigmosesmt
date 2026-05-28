@@ -380,6 +380,164 @@ export type Database = {
         }
         Relationships: []
       }
+      cargo_riscos: {
+        Row: {
+          aposentadoria_especial_anos: number | null
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          data_avaliacao: string | null
+          epi_atenuacao_db: number | null
+          epi_atenuacao_pct: number | null
+          fonte_geradora: string | null
+          id: string
+          insalubridade_grau: string | null
+          intensidade: number | null
+          limite_referencia: string | null
+          limite_tolerancia: number | null
+          meios_controle: string | null
+          observacao: string | null
+          periculosidade: boolean
+          proxima_avaliacao: string | null
+          responsavel_avaliacao: string | null
+          risco_id: string
+          role_id: string
+          status_avaliacao: string
+          tecnica_medicao: string | null
+          tempo_exposicao_min: number | null
+          trajetoria: string | null
+          unidade: string | null
+          updated_at: string
+        }
+        Insert: {
+          aposentadoria_especial_anos?: number | null
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_avaliacao?: string | null
+          epi_atenuacao_db?: number | null
+          epi_atenuacao_pct?: number | null
+          fonte_geradora?: string | null
+          id?: string
+          insalubridade_grau?: string | null
+          intensidade?: number | null
+          limite_referencia?: string | null
+          limite_tolerancia?: number | null
+          meios_controle?: string | null
+          observacao?: string | null
+          periculosidade?: boolean
+          proxima_avaliacao?: string | null
+          responsavel_avaliacao?: string | null
+          risco_id: string
+          role_id: string
+          status_avaliacao?: string
+          tecnica_medicao?: string | null
+          tempo_exposicao_min?: number | null
+          trajetoria?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aposentadoria_especial_anos?: number | null
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_avaliacao?: string | null
+          epi_atenuacao_db?: number | null
+          epi_atenuacao_pct?: number | null
+          fonte_geradora?: string | null
+          id?: string
+          insalubridade_grau?: string | null
+          intensidade?: number | null
+          limite_referencia?: string | null
+          limite_tolerancia?: number | null
+          meios_controle?: string | null
+          observacao?: string | null
+          periculosidade?: boolean
+          proxima_avaliacao?: string | null
+          responsavel_avaliacao?: string | null
+          risco_id?: string
+          role_id?: string
+          status_avaliacao?: string
+          tecnica_medicao?: string | null
+          tempo_exposicao_min?: number | null
+          trajetoria?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cargo_riscos_risco_id_fkey"
+            columns: ["risco_id"]
+            isOneToOne: false
+            referencedRelation: "catalogo_riscos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cargo_riscos_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cargo_riscos_medicoes: {
+        Row: {
+          anexo_path: string | null
+          art_numero: string | null
+          cargo_risco_id: string
+          created_at: string
+          created_by: string | null
+          data_medicao: string
+          equipamento: string | null
+          id: string
+          observacao: string | null
+          responsavel_tecnico: string | null
+          tecnica: string | null
+          unidade: string
+          valor_medido: number
+        }
+        Insert: {
+          anexo_path?: string | null
+          art_numero?: string | null
+          cargo_risco_id: string
+          created_at?: string
+          created_by?: string | null
+          data_medicao: string
+          equipamento?: string | null
+          id?: string
+          observacao?: string | null
+          responsavel_tecnico?: string | null
+          tecnica?: string | null
+          unidade: string
+          valor_medido: number
+        }
+        Update: {
+          anexo_path?: string | null
+          art_numero?: string | null
+          cargo_risco_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_medicao?: string
+          equipamento?: string | null
+          id?: string
+          observacao?: string | null
+          responsavel_tecnico?: string | null
+          tecnica?: string | null
+          unidade?: string
+          valor_medido?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cargo_riscos_medicoes_cargo_risco_id_fkey"
+            columns: ["cargo_risco_id"]
+            isOneToOne: false
+            referencedRelation: "cargo_riscos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cascos: {
         Row: {
           armador: string | null
