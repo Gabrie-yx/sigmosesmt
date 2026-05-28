@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,7 @@ const STATUS_META: Record<CargoRisco["status_avaliacao"], { label: string; cls: 
   NAO_APLICAVEL:  { label: "Não aplicável",    cls: "bg-slate-100 text-slate-600 border-slate-200" },
 };
 
-const CAT_ICON: Record<string, JSX.Element> = {
+const CAT_ICON: Record<string, ReactNode> = {
   FISICO:     <Activity className="h-3.5 w-3.5" />,
   QUIMICO:    <FlaskConical className="h-3.5 w-3.5" />,
   BIOLOGICO:  <ShieldCheck className="h-3.5 w-3.5" />,
