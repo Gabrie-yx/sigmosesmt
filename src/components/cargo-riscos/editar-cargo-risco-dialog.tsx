@@ -104,7 +104,7 @@ export function EditarCargoRiscoDialog({
           <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 flex gap-2">
             <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>
-              Este risco foi pré-mapeado pela IA. Confirme com o LTCAT/PGR oficial antes de marcar como <b>Avaliado</b>.
+              Este risco foi pré-mapeado. Confirme com o LTCAT/PGR oficial antes de marcar como <b>Avaliado</b>.
             </span>
           </div>
         )}
