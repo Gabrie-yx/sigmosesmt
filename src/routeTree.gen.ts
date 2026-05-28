@@ -24,6 +24,7 @@ import { Route as AppPtesRouteImport } from './routes/app.ptes'
 import { Route as AppPainelRouteImport } from './routes/app.painel'
 import { Route as AppNcsRouteImport } from './routes/app.ncs'
 import { Route as AppMatrizTreinamentoRouteImport } from './routes/app.matriz-treinamento'
+import { Route as AppMatrizRiscosRouteImport } from './routes/app.matriz-riscos'
 import { Route as AppIncidentesRouteImport } from './routes/app.incidentes'
 import { Route as AppHojeRouteImport } from './routes/app.hoje'
 import { Route as AppExtintoresRouteImport } from './routes/app.extintores'
@@ -138,6 +139,11 @@ const AppNcsRoute = AppNcsRouteImport.update({
 const AppMatrizTreinamentoRoute = AppMatrizTreinamentoRouteImport.update({
   id: '/matriz-treinamento',
   path: '/matriz-treinamento',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMatrizRiscosRoute = AppMatrizRiscosRouteImport.update({
+  id: '/matriz-riscos',
+  path: '/matriz-riscos',
   getParentRoute: () => AppRoute,
 } as any)
 const AppIncidentesRoute = AppIncidentesRouteImport.update({
@@ -367,6 +373,7 @@ export interface FileRoutesByFullPath {
   '/app/extintores': typeof AppExtintoresRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
+  '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
   '/app/painel': typeof AppPainelRoute
@@ -422,6 +429,7 @@ export interface FileRoutesByTo {
   '/app/extintores': typeof AppExtintoresRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
+  '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
   '/app/painel': typeof AppPainelRoute
@@ -480,6 +488,7 @@ export interface FileRoutesById {
   '/app/extintores': typeof AppExtintoresRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
+  '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
   '/app/painel': typeof AppPainelRoute
@@ -539,6 +548,7 @@ export interface FileRouteTypes {
     | '/app/extintores'
     | '/app/hoje'
     | '/app/incidentes'
+    | '/app/matriz-riscos'
     | '/app/matriz-treinamento'
     | '/app/ncs'
     | '/app/painel'
@@ -594,6 +604,7 @@ export interface FileRouteTypes {
     | '/app/extintores'
     | '/app/hoje'
     | '/app/incidentes'
+    | '/app/matriz-riscos'
     | '/app/matriz-treinamento'
     | '/app/ncs'
     | '/app/painel'
@@ -651,6 +662,7 @@ export interface FileRouteTypes {
     | '/app/extintores'
     | '/app/hoje'
     | '/app/incidentes'
+    | '/app/matriz-riscos'
     | '/app/matriz-treinamento'
     | '/app/ncs'
     | '/app/painel'
@@ -808,6 +820,13 @@ declare module '@tanstack/react-router' {
       path: '/matriz-treinamento'
       fullPath: '/app/matriz-treinamento'
       preLoaderRoute: typeof AppMatrizTreinamentoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/matriz-riscos': {
+      id: '/app/matriz-riscos'
+      path: '/matriz-riscos'
+      fullPath: '/app/matriz-riscos'
+      preLoaderRoute: typeof AppMatrizRiscosRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/incidentes': {
@@ -1122,6 +1141,7 @@ interface AppRouteChildren {
   AppExtintoresRoute: typeof AppExtintoresRoute
   AppHojeRoute: typeof AppHojeRoute
   AppIncidentesRoute: typeof AppIncidentesRoute
+  AppMatrizRiscosRoute: typeof AppMatrizRiscosRoute
   AppMatrizTreinamentoRoute: typeof AppMatrizTreinamentoRoute
   AppNcsRoute: typeof AppNcsRoute
   AppPainelRoute: typeof AppPainelRoute
@@ -1168,6 +1188,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppExtintoresRoute: AppExtintoresRoute,
   AppHojeRoute: AppHojeRoute,
   AppIncidentesRoute: AppIncidentesRoute,
+  AppMatrizRiscosRoute: AppMatrizRiscosRoute,
   AppMatrizTreinamentoRoute: AppMatrizTreinamentoRoute,
   AppNcsRoute: AppNcsRoute,
   AppPainelRoute: AppPainelRoute,
@@ -1222,13 +1243,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

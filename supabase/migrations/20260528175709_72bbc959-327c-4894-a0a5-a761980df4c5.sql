@@ -1,0 +1,9 @@
+INSERT INTO public.cargo_riscos (role_id, risco_id, intensidade, unidade, limite_tolerancia, tecnica_medicao, fonte_geradora, epi_atenuacao_db, status_avaliacao, insalubridade_grau, aposentadoria_especial_anos, observacao)
+VALUES
+  ('a266c7bc-4896-478a-a136-ddb7f85bf45d','734d6ec2-3f99-4f32-8f4c-51894c04b45f',92,'dB(A)',85,'Dosimetria NHO-01','Esmerilhadeira, processo de soldagem',25,'EM_REVISAO','MEDIO',25,'LTCAT: ruído contínuo acima do LT — protetor auricular tipo concha obrigatório'),
+  ('a266c7bc-4896-478a-a136-ddb7f85bf45d','6cb3f013-3598-42eb-aabb-b16e4837018c',8,'mg/m³',5,'Amostragem gravimétrica NHO-08','Soldagem MIG/MAG e eletrodo revestido',NULL,'EM_REVISAO','MAXIMO',25,'LTCAT: fumos metálicos acima do LT — exige exaustão local + respirador PFF2 com filtro químico'),
+  ('a266c7bc-4896-478a-a136-ddb7f85bf45d','209e7b6c-2386-4c2d-99e2-25201001b4bc',NULL,'qualitativo',NULL,'Avaliação qualitativa NR-15 Anexo 7','Arco voltaico de soldagem',NULL,'EM_REVISAO','MEDIO',NULL,'LTCAT: radiação UV inerente — exige máscara de solda automática'),
+  ('a266c7bc-4896-478a-a136-ddb7f85bf45d','1aeaa108-99c5-4684-a779-1ce0762f578f',NULL,'°C IBUTG',26.7,'IBUTG NHO-06','Trabalho a céu aberto + calor da solda',NULL,'PENDENTE','MEDIO',NULL,'PENDENTE REVISÃO — IBUTG não avaliado no LTCAT atual (apontado na auditoria)'),
+  ('a266c7bc-4896-478a-a136-ddb7f85bf45d','b49326ef-9697-4f01-9c57-32d63685ba9b',NULL,'mg/m³',NULL,'Amostragem gravimétrica NHO-08','Esmerilhamento de cordão de solda',NULL,'EM_REVISAO','MEDIO',NULL,'LTCAT: particulado oriundo de esmerilhamento — uso de respirador PFF2'),
+  ('a266c7bc-4896-478a-a136-ddb7f85bf45d','b3b3a843-17ee-4ff3-99c7-cffdd9c9a706',NULL,'qualitativo',NULL,'Análise Ergonômica do Trabalho NR-17',NULL,NULL,'PENDENTE',NULL,NULL,'PENDENTE — AET deve ser realizada conforme NR-17')
+ON CONFLICT (role_id, risco_id) DO NOTHING;
