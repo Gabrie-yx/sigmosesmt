@@ -394,9 +394,17 @@ function EmployeeCard({ emp, company, role }: { emp: any; company?: string; role
     >
       <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${avatarGradient(emp.nome)}`} />
       <div className="flex items-start gap-3">
-        <div className={`h-12 w-12 rounded-full bg-gradient-to-br ${avatarGradient(emp.nome)} text-white font-black text-sm flex items-center justify-center shadow ring-2 ring-white`}>
-          {initials(emp.nome)}
-        </div>
+        {emp.foto_url ? (
+          <img
+            src={emp.foto_url}
+            alt={emp.nome}
+            className="h-12 w-12 rounded-full object-cover shadow ring-2 ring-white"
+          />
+        ) : (
+          <div className={`h-12 w-12 rounded-full bg-gradient-to-br ${avatarGradient(emp.nome)} text-white font-black text-sm flex items-center justify-center shadow ring-2 ring-white`}>
+            {initials(emp.nome)}
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <h3 className="font-black text-sm text-slate-900 uppercase leading-tight truncate group-hover:text-[#7B1E2B] transition-colors">
             {emp.nome}
