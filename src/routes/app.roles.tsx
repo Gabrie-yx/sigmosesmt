@@ -17,6 +17,8 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CatalogoRiscosPanel } from "@/components/catalogo/catalogo-riscos-panel";
 import { CatalogoNrsPanel } from "@/components/catalogo/catalogo-nrs-panel";
+import { CargoRiscosPanel } from "@/components/cargo-riscos/cargo-riscos-panel";
+
 
 export const Route = createFileRoute("/app/roles")({
   component: RolesPageWithTabs,
@@ -104,8 +106,10 @@ function RolesPage() {
   const qc = useQueryClient();
   const { isEditor, isAdmin } = useAuth();
   const [editing, setEditing] = useState<Partial<Role> | null>(null);
+  const [innerTab, setInnerTab] = useState<"diretrizes" | "riscos">("diretrizes");
   const [search, setSearch] = useState("");
   const [showInactive, setShowInactive] = useState(false);
+
 
   const { data: roles = [] } = useQuery({
     queryKey: ["roles"],
@@ -331,7 +335,7 @@ function RolesPage() {
             return (
               <div
                 key={r.id}
-                onClick={() => setEditing(r)}
+                onClick={() => { setEditing(r); setInnerTab("diretrizes"); }}
                 className={`group relative p-3.5 rounded-2xl border-2 cursor-pointer transition-all hover:-translate-y-0.5 ${
                   isSel
                     ? "border-[#991b1b] bg-gradient-to-r from-rose-100 via-rose-50 to-white shadow-[0_10px_25px_-10px_rgba(153,27,27,0.5)]"
@@ -455,6 +459,35 @@ function RolesPage() {
               </div>
             </div>
 
+            {/* Sub-tabs internas */}
+            {editing.id && (
+              <div className="shrink-0 flex border-b border-rose-100 bg-white/70">
+                <button
+                  type="button"
+                  onClick={() => setInnerTab("diretrizes")}
+                  className={`px-5 py-2.5 text-xs font-black uppercase tracking-wider transition-all border-b-2 ${
+                    innerTab === "diretrizes"
+                      ? "border-[#991b1b] text-[#991b1b] bg-rose-50/60"
+                      : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  Diretrizes (PCMSO/ISO)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInnerTab("riscos")}
+                  className={`px-5 py-2.5 text-xs font-black uppercase tracking-wider transition-all border-b-2 ${
+                    innerTab === "riscos"
+                      ? "border-[#991b1b] text-[#991b1b] bg-rose-50/60"
+                      : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  Riscos Quantitativos (PGR/LTCAT)
+                </button>
+              </div>
+            )}
+
+            {innerTab === "diretrizes" ? (
             <form
               onSubmit={(e) => { e.preventDefault(); save.mutate(editing); }}
               className="flex-1 flex flex-col overflow-hidden"
@@ -637,6 +670,11 @@ function RolesPage() {
                 </div>
               )}
             </form>
+            ) : (
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <CargoRiscosPanel roleId={editing.id ?? null} lockRole={true} />
+              </div>
+            )}
           </>
         )}
       </main>
