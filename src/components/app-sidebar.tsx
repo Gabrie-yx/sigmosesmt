@@ -50,6 +50,7 @@ import {
   BarChart3,
   FolderOpen,
   Flame,
+  BookOpenCheck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
