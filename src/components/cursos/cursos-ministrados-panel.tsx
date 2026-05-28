@@ -589,97 +589,150 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
 
       {expanded && (
         <div className="p-4 border-t border-slate-200 bg-white space-y-4">
+          {/* === 1) GESTÃO DA TURMA === */}
           {isEditor && (
-            <div className="flex flex-wrap gap-2 justify-end">
-              <Button size="sm" variant="outline" onClick={() => setParticipantesOpen(true)}>
-                <Users className="h-4 w-4 mr-1" /> Participantes
+            <section className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
+                <Users className="h-3 w-3" /> 1. Gestão da turma
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => setParticipantesOpen(true)}>
+                  <Users className="h-4 w-4 mr-1" /> Participantes
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setExtrairIAOpen(true)}
+                  disabled={!(anexos as any[]).some((a) => a.tipo === "LISTA_PRESENCA")}
+                  className="border-violet-300 text-violet-700 hover:bg-violet-50 disabled:opacity-50"
+                  title={(anexos as any[]).some((a) => a.tipo === "LISTA_PRESENCA") ? "Extrair participantes da Lista de Presença com IA" : "Anexe uma Lista de Presença primeiro"}
+                >
+                  <Sparkles className="h-4 w-4 mr-1" /> Extrair participantes (IA)
+                </Button>
+                <Button size="sm" variant="outline" onClick={onEdit}>
+                  <Pencil className="h-4 w-4 mr-1" /> Editar turma
+                </Button>
+                {isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-red-600 border-red-200 hover:bg-red-50 ml-auto"
+                    onClick={() => {
+                      if (confirm("Excluir esta turma? Anexos e participantes vinculados também serão removidos. A matriz NÃO é revertida automaticamente.")) {
+                        excluirTurma.mutate();
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" /> Excluir turma
+                  </Button>
+                )}
+              </div>
+              <p className="text-[10px] text-slate-500 mt-2">
+                Adicione participantes manualmente ou extraia automaticamente da Lista de Presença anexada.
+              </p>
+            </section>
+          )}
+
+          {/* === 2) GERAR DOCUMENTOS (PDF em branco) === */}
+          <section className="rounded-lg border border-violet-200 bg-violet-50/40 p-3">
+            <div className="text-[10px] font-black uppercase tracking-widest text-violet-700 mb-2 flex items-center gap-1.5">
+              <Download className="h-3 w-3" /> 2. Gerar documentos (PDF em branco para impressão)
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={gerarLista} className="border-violet-300 text-violet-700 hover:bg-violet-100">
+                <ClipboardList className="h-4 w-4 mr-1" /> Lista de Presença
               </Button>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setExtrairIAOpen(true)}
-                disabled={!(anexos as any[]).some((a) => a.tipo === "LISTA_PRESENCA")}
-                className="border-violet-300 text-violet-700 hover:bg-violet-50 disabled:opacity-50"
-                title={(anexos as any[]).some((a) => a.tipo === "LISTA_PRESENCA") ? "Extrair participantes da Lista de Presença com IA" : "Anexe uma Lista de Presença primeiro"}
+                onClick={() => setReacaoOpen(true)}
+                className="border-violet-300 text-violet-700 hover:bg-violet-100"
               >
-                <Sparkles className="h-4 w-4 mr-1" /> Extrair da Lista (IA)
+                <MessageSquare className="h-4 w-4 mr-1" /> Avaliações de Reação
               </Button>
-              <Button size="sm" variant="outline" onClick={onEdit}>
-                <Pencil className="h-4 w-4 mr-1" /> Editar dados da turma
-              </Button>
-              {isAdmin && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-red-600 border-red-200 hover:bg-red-50"
-                  onClick={() => {
-                    if (confirm("Excluir esta turma? Anexos e participantes vinculados também serão removidos. A matriz NÃO é revertida automaticamente.")) {
-                      excluirTurma.mutate();
-                    }
-                  }}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" /> Excluir turma
-                </Button>
-              )}
             </div>
+            <p className="text-[10px] text-slate-500 mt-2">
+              PDFs prontos para imprimir e os participantes assinarem. Depois, escaneie e anexe abaixo.
+            </p>
+          </section>
+
+          {/* === 3) ANEXAR COMPROVANTES (após o treinamento) === */}
+          {isEditor && (
+            <section className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3">
+              <div className="text-[10px] font-black uppercase tracking-widest text-emerald-700 mb-2 flex items-center gap-1.5">
+                <Upload className="h-3 w-3" /> 3. Anexar comprovantes preenchidos
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {/* Lista de Presença assinada */}
+                {ANEXO_TIPOS.filter((t) => t.value === "LISTA_PRESENCA").map(({ value, label, icon: Icon }) => (
+                  <label key={value} className="cursor-pointer">
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,image/*"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files ?? []);
+                        files.forEach((file) => uploadAnexo.mutate({ file, tipo: value }));
+                        e.target.value = "";
+                      }}
+                    />
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-md border border-slate-300 bg-white hover:bg-slate-50 transition">
+                      <Upload className="h-3.5 w-3.5 text-slate-500" />
+                      <Icon className="h-3.5 w-3.5" />
+                      {label} assinada
+                    </span>
+                  </label>
+                ))}
+                {/* Reações preenchidas */}
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,image/*"
+                    multiple
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files ?? []);
+                      files.forEach((file) => uploadAnexo.mutate({ file, tipo: "REACAO" }));
+                      e.target.value = "";
+                    }}
+                  />
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-md border border-slate-300 bg-white hover:bg-slate-50 transition">
+                    <Upload className="h-3.5 w-3.5 text-slate-500" />
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    Reações preenchidas
+                  </span>
+                </label>
+                {/* Outros: Foto, Eficácia, Certificado */}
+                {ANEXO_TIPOS.filter((t) => t.value !== "LISTA_PRESENCA").map(({ value, label, icon: Icon }) => (
+                  <label key={value} className="cursor-pointer">
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept={value === "FOTO" ? "image/*" : ".pdf,image/*"}
+                      multiple={value === "FOTO"}
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files ?? []);
+                        if (value === "FOTO" && fotosCount + files.length > 5) {
+                          toast.error("Máximo de 5 fotos por turma");
+                          return;
+                        }
+                        files.forEach((file) => uploadAnexo.mutate({ file, tipo: value }));
+                        e.target.value = "";
+                      }}
+                    />
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-md border border-slate-300 bg-white hover:bg-slate-50 transition">
+                      <Upload className="h-3.5 w-3.5 text-slate-500" />
+                      <Icon className="h-3.5 w-3.5" />
+                      {label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-500 mt-2">
+                Envie a lista assinada, as avaliações de reação preenchidas, fotos do treinamento, avaliação de eficácia e certificados.
+              </p>
+            </section>
           )}
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={gerarLista}>
-              <ClipboardList className="h-4 w-4 mr-1" /> Gerar Lista de Presença (PDF)
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setReacaoOpen(true)}
-              className="border-amber-300 text-amber-700 hover:bg-amber-50"
-            >
-              <MessageSquare className="h-4 w-4 mr-1" /> Gerar Avaliações de Reação
-            </Button>
-            {isEditor && (
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,image/*"
-                  multiple
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files ?? []);
-                    files.forEach((file) => uploadAnexo.mutate({ file, tipo: "REACAO" }));
-                    e.target.value = "";
-                  }}
-                />
-                <span className="inline-flex items-center gap-1 text-xs font-bold uppercase px-3 py-2 rounded-md border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 transition">
-                  <Upload className="h-3.5 w-3.5" />
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  Anexar Reações Preenchidas
-                </span>
-              </label>
-            )}
-            {isEditor && ANEXO_TIPOS.map(({ value, label, icon: Icon }) => (
-              <label key={value} className="cursor-pointer">
-                <input
-                  type="file"
-                  className="hidden"
-                  accept={value === "FOTO" ? "image/*" : ".pdf,image/*"}
-                  multiple={value === "FOTO"}
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files ?? []);
-                    if (value === "FOTO" && fotosCount + files.length > 5) {
-                      toast.error("Máximo de 5 fotos por turma");
-                      return;
-                    }
-                    files.forEach((file) => uploadAnexo.mutate({ file, tipo: value }));
-                    e.target.value = "";
-                  }}
-                />
-                <span className="inline-flex items-center gap-1 text-xs font-bold uppercase px-3 py-2 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 transition">
-                  <Upload className="h-3.5 w-3.5" />
-                  <Icon className="h-3.5 w-3.5" />
-                  {label}
-                </span>
-              </label>
-            ))}
-          </div>
 
           <div>
             <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">
@@ -748,9 +801,6 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
             )}
           </div>
 
-          <div className="text-[10px] text-slate-400 italic">
-            Dica: o botão <b>Participantes</b> permite adicionar individualmente ou em massa por empresa.
-          </div>
         </div>
       )}
       <MediaViewerDialog
