@@ -107,6 +107,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
       { to: "/app/cascos", label: "Cascos / Embarcações", icon: Anchor },
       { to: "/app/companies", label: "Empresas / Contratadas", icon: Building2 },
       { to: "/app/roles", label: "Cargos & Matriz de Riscos", icon: ShieldCheck },
+      { to: "/app/matriz-riscos", label: "Matriz de Riscos (PGR/LTCAT)", icon: ShieldCheck },
     ],
   },
 ];
