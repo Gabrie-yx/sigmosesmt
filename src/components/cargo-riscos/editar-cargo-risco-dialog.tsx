@@ -46,26 +46,27 @@ export function EditarCargoRiscoDialog({
   const mut = useMutation({
     mutationFn: async () => {
       if (!row) throw new Error("Sem registro");
-      const patch: Record<string, unknown> = {
-        intensidade: form.intensidade ?? null,
-        unidade: form.unidade?.trim() || null,
-        limite_tolerancia: form.limite_tolerancia ?? null,
-        tecnica_medicao: form.tecnica_medicao?.trim() || null,
-        fonte_geradora: form.fonte_geradora?.trim() || null,
-        epi_atenuacao_db: form.epi_atenuacao_db ?? null,
-        status_avaliacao: form.status_avaliacao,
-        insalubridade_grau: form.insalubridade_grau ?? null,
-        periculosidade: !!form.periculosidade,
-        aposentadoria_especial_anos: form.aposentadoria_especial_anos ?? null,
-        observacao: form.observacao?.trim() || null,
-      };
-      // Quando muda pra AVALIADO, carimba a data se vazia
-      if (form.status_avaliacao === "AVALIADO" && !form.data_avaliacao) {
-        patch.data_avaliacao = new Date().toISOString().slice(0, 10);
-      } else if (form.data_avaliacao) {
-        patch.data_avaliacao = form.data_avaliacao;
-      }
-      const { error } = await supabase.from("cargo_riscos").update(patch).eq("id", row.id);
+      const dataAvaliacao =
+        form.status_avaliacao === "AVALIADO" && !form.data_avaliacao
+          ? new Date().toISOString().slice(0, 10)
+          : form.data_avaliacao ?? null;
+      const { error } = await supabase
+        .from("cargo_riscos")
+        .update({
+          intensidade: form.intensidade ?? null,
+          unidade: form.unidade?.trim() || null,
+          limite_tolerancia: form.limite_tolerancia ?? null,
+          tecnica_medicao: form.tecnica_medicao?.trim() || null,
+          fonte_geradora: form.fonte_geradora?.trim() || null,
+          epi_atenuacao_db: form.epi_atenuacao_db ?? null,
+          status_avaliacao: form.status_avaliacao ?? "EM_REVISAO",
+          insalubridade_grau: form.insalubridade_grau ?? null,
+          periculosidade: !!form.periculosidade,
+          aposentadoria_especial_anos: form.aposentadoria_especial_anos ?? null,
+          observacao: form.observacao?.trim() || null,
+          data_avaliacao: dataAvaliacao,
+        })
+        .eq("id", row.id);
       if (error) throw error;
     },
     onSuccess: () => {
