@@ -250,10 +250,12 @@ function HoraExtraSabadoPage() {
       <HoraExtraSabadoDialog open={open} onOpenChange={setOpen} editId={editId} />
       <PDFPreviewDialog
         open={!!previewDoc}
-        onClose={() => setPreviewDoc(null)}
+        onClose={() => { setPreviewDoc(null); setPreviewFichaId(null); setPreviewAssinado(false); }}
         doc={previewDoc}
         fileName={previewFileName}
         title="Prévia da ficha de hora extra"
+        onRequestSign={() => setSignFromPreview(true)}
+        hasSignature={previewAssinado}
       />
       <SignaturePadDialog
         open={sigOpen}
