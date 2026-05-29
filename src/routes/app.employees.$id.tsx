@@ -719,8 +719,9 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
           <Select value={f.tipo_cadastro} onValueChange={(v) => setF({ ...f, tipo_cadastro: v })} disabled={!canEdit}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="NAO_MEI">CLT/NÃO MEI</SelectItem>
+              <SelectItem value="NAO_MEI">CLT</SelectItem>
               <SelectItem value="MEI">MEI</SelectItem>
+              <SelectItem value="TERCEIRIZADO">TERCEIRIZADO</SelectItem>
             </SelectContent>
           </Select>
         </Field>
