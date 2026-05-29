@@ -44,6 +44,9 @@ function HoraExtraSabadoPage() {
   const [pendingPdfId, setPendingPdfId] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [previewFileName, setPreviewFileName] = useState("hora-extra.pdf");
+  const [previewFichaId, setPreviewFichaId] = useState<string | null>(null);
+  const [previewAssinado, setPreviewAssinado] = useState(false);
+  const [signFromPreview, setSignFromPreview] = useState(false);
 
   const { data: fichas, isLoading } = useQuery({
     queryKey: ["hora-extra-sabado"],
@@ -140,6 +143,8 @@ function HoraExtraSabadoPage() {
     });
     setPreviewFileName(`hora-extra-${rec.data}.pdf`);
     setPreviewDoc(doc);
+    setPreviewFichaId(id);
+    setPreviewAssinado(!!assinatura);
   }
 
   function abrirAssinatura(id: string) {
@@ -245,10 +250,12 @@ function HoraExtraSabadoPage() {
       <HoraExtraSabadoDialog open={open} onOpenChange={setOpen} editId={editId} />
       <PDFPreviewDialog
         open={!!previewDoc}
-        onClose={() => setPreviewDoc(null)}
+        onClose={() => { setPreviewDoc(null); setPreviewFichaId(null); setPreviewAssinado(false); }}
         doc={previewDoc}
         fileName={previewFileName}
         title="Prévia da ficha de hora extra"
+        onRequestSign={() => setSignFromPreview(true)}
+        hasSignature={previewAssinado}
       />
       <SignaturePadDialog
         open={sigOpen}
@@ -257,6 +264,15 @@ function HoraExtraSabadoPage() {
           const id = pendingPdfId;
           setSigOpen(false); setPendingPdfId(null);
           if (id) await gerarPdf(id, r);
+        }}
+        title="Assinatura do solicitante"
+      />
+      <SignaturePadDialog
+        open={signFromPreview}
+        onClose={() => setSignFromPreview(false)}
+        onConfirm={async (r) => {
+          setSignFromPreview(false);
+          if (previewFichaId) await gerarPdf(previewFichaId, r);
         }}
         title="Assinatura do solicitante"
       />
