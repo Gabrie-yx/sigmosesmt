@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -178,6 +178,7 @@ function AddAttendeesDialog({
   const [busca, setBusca] = useState("");
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+  const qc = useQueryClient();
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["dds-add-employees-all"],
@@ -218,7 +219,14 @@ function AddAttendeesDialog({
         .from("dds_attendees").select("id", { count: "exact", head: true })
         .eq("dds_id", ddsId).eq("status", "PRESENTE");
       await supabase.from("dds").update({ participantes_presentes: count ?? 0 }).eq("id", ddsId);
-      toast.success(`${sel.size} funcionário(s) adicionado(s). Reabra o PDF para gerar novamente.`);
+      // Invalida caches que alimentam o PDF semanal e a tela de detalhes,
+      // pra próxima geração já sair com os novos funcionários.
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["dds-att", ddsId] }),
+        qc.invalidateQueries({ queryKey: ["dds-emp-pres", ddsId] }),
+        qc.invalidateQueries({ queryKey: ["dds-historico"] }),
+      ]);
+      toast.success(`${sel.size} funcionário(s) adicionado(s). Gere o PDF novamente — já sai com a lista atualizada.`);
       setSel(new Set());
       setBusca("");
       await onAdded();
