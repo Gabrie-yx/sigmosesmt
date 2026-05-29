@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer, X, PenLine, ImagePlus } from "lucide-react";
 import type jsPDF from "jspdf";
 
-export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, encSig, sesmtSig, onChangeEncSig, onChangeSesmtSig }: {
+export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, encSig, sesmtSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature }: {
   open: boolean;
   onClose: () => void;
   doc: jsPDF | null;
@@ -15,6 +15,8 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
   sesmtSig?: string | null;
   onChangeEncSig?: (v: string | null) => void;
   onChangeSesmtSig?: (v: string | null) => void;
+  onRequestSign?: () => void;
+  hasSignature?: boolean;
 }) {
   const [url, setUrl] = useState<string>("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -103,6 +105,11 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}><X className="h-4 w-4 mr-1" />Fechar</Button>
+          {onRequestSign && (
+            <Button variant="outline" onClick={onRequestSign} className="border-rose-300 text-rose-700 hover:bg-rose-50">
+              <PenLine className="h-4 w-4 mr-1" />{hasSignature ? "Refazer assinatura" : "Assinar agora"}
+            </Button>
+          )}
           <Button variant="outline" onClick={print}><Printer className="h-4 w-4 mr-1" />Imprimir</Button>
           <Button onClick={download}><Download className="h-4 w-4 mr-1" />Baixar PDF</Button>
         </DialogFooter>
