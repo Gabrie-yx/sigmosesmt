@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Trash2, BookOpen, Power, PowerOff } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Search, Pencil, Trash2, BookOpen, Power, PowerOff, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 type NR = {
@@ -17,9 +18,11 @@ type NR = {
   codigo: string;
   titulo: string;
   ativo: boolean;
+  descricao?: string | null;
+  link_oficial?: string | null;
 };
 
-const empty: Partial<NR> = { codigo: "", titulo: "", ativo: true };
+const empty: Partial<NR> = { codigo: "", titulo: "", ativo: true, descricao: "", link_oficial: "" };
 
 export function CatalogoNrsPanel() {
   const qc = useQueryClient();
@@ -54,6 +57,8 @@ export function CatalogoNrsPanel() {
         codigo: v.codigo!.trim(),
         titulo: v.titulo!.trim(),
         ativo: v.ativo ?? true,
+        descricao: v.descricao?.trim() || null,
+        link_oficial: v.link_oficial?.trim() || null,
       };
       if (v.id) {
         const { error } = await supabase.from("catalogo_nrs").update(payload).eq("id", v.id);
@@ -141,7 +146,20 @@ export function CatalogoNrsPanel() {
                   <span className="font-black text-sky-700 text-lg">{n.codigo}</span>
                   {!n.ativo && <span className="text-[10px] font-bold uppercase text-slate-400">inativa</span>}
                 </div>
-                <div className="text-sm text-slate-600 truncate mt-0.5">{n.titulo}</div>
+                <div className="text-sm font-semibold text-slate-700 mt-0.5">{n.titulo}</div>
+                {n.descricao && (
+                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed line-clamp-4">{n.descricao}</p>
+                )}
+                {n.link_oficial && (
+                  <a
+                    href={n.link_oficial}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-sky-600 hover:text-sky-800 mt-2"
+                  >
+                    <ExternalLink className="h-3 w-3" /> Texto oficial (gov.br)
+                  </a>
+                )}
               </div>
               {isEditor && (
                 <div className="flex gap-1 shrink-0">
@@ -167,7 +185,7 @@ export function CatalogoNrsPanel() {
       )}
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editing?.id ? "Editar NR" : "Nova NR"}</DialogTitle>
           </DialogHeader>
@@ -187,6 +205,24 @@ export function CatalogoNrsPanel() {
                   value={editing.titulo ?? ""}
                   onChange={(e) => setEditing({ ...editing, titulo: e.target.value })}
                   placeholder="Ex.: Trabalho em Altura"
+                />
+              </div>
+              <div>
+                <Label>Descrição</Label>
+                <Textarea
+                  rows={6}
+                  value={editing.descricao ?? ""}
+                  onChange={(e) => setEditing({ ...editing, descricao: e.target.value })}
+                  placeholder="Explicação detalhada da NR — objetivo, escopo e principais exigências."
+                />
+              </div>
+              <div>
+                <Label>Link oficial (gov.br)</Label>
+                <Input
+                  type="url"
+                  value={editing.link_oficial ?? ""}
+                  onChange={(e) => setEditing({ ...editing, link_oficial: e.target.value })}
+                  placeholder="https://www.gov.br/trabalho-e-emprego/..."
                 />
               </div>
               <div className="flex items-center gap-2">

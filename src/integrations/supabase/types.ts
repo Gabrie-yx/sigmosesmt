@@ -618,21 +618,27 @@ export type Database = {
           ativo: boolean
           codigo: string
           created_at: string
+          descricao: string | null
           id: string
+          link_oficial: string | null
           titulo: string
         }
         Insert: {
           ativo?: boolean
           codigo: string
           created_at?: string
+          descricao?: string | null
           id?: string
+          link_oficial?: string | null
           titulo: string
         }
         Update: {
           ativo?: boolean
           codigo?: string
           created_at?: string
+          descricao?: string | null
           id?: string
+          link_oficial?: string | null
           titulo?: string
         }
         Relationships: []
