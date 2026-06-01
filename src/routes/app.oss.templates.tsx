@@ -40,6 +40,11 @@ type Template = {
   hash_conteudo: string | null;
   ativo: boolean;
   updated_at: string;
+  risco_fisico: string | null;
+  risco_quimico: string | null;
+  risco_biologico: string | null;
+  risco_ergonomico: string | null;
+  risco_acidente: string | null;
 };
 
 function OssTemplatesPage() {
@@ -173,6 +178,11 @@ const EMPTY: Omit<Template, "id" | "revisao" | "hash_conteudo" | "updated_at"> =
     "Em caso de acidente, incidente ou condição de risco grave e iminente: 1) Interromper a atividade; 2) Comunicar imediatamente o supervisor e o SESMT (ramal/telefone); 3) Acionar a brigada de emergência se necessário; 4) Prestar primeiros socorros conforme treinamento; 5) Acionar SAMU (192) e Bombeiros (193) quando aplicável.",
   validade_meses: 12,
   ativo: true,
+  risco_fisico: "",
+  risco_quimico: "",
+  risco_biologico: "",
+  risco_ergonomico: "",
+  risco_acidente: "",
 };
 
 function TemplateEditorDialog({
@@ -258,7 +268,6 @@ function TemplateEditorDialog({
       revisao: template?.revisao ?? 1,
       emitido_em: new Date().toISOString(),
       expira_em: new Date(Date.now() + form.validade_meses * 30 * 86400000).toISOString(),
-      tipo_emissao: "PERIODICO",
       funcionario: { nome: "[NOME DO FUNCIONÁRIO]", cpf: "[CPF]", matricula: "[MAT]" },
       cargo: form.cargo || "[CARGO]",
       setor: form.setor,
@@ -271,6 +280,13 @@ function TemplateEditorDialog({
         proibicoes: form.proibicoes,
         penalidades: form.penalidades,
         procedimentos_emergencia: form.procedimentos_emergencia,
+        riscos_categorias: {
+          fisico: form.risco_fisico,
+          quimico: form.risco_quimico,
+          biologico: form.risco_biologico,
+          ergonomico: form.risco_ergonomico,
+          acidente: form.risco_acidente,
+        },
       },
     });
     setPreviewDoc(doc);
@@ -339,7 +355,21 @@ function TemplateEditorDialog({
             </div>
 
             <TextoSecao label="1. Descrição das Atividades" value={form.descricao_atividades} onChange={(v) => upd("descricao_atividades", v)} placeholder="Descreva o que o trabalhador faz no dia a dia..." />
-            <TextoSecao label="2. Riscos Ocupacionais" value={form.riscos_texto} onChange={(v) => upd("riscos_texto", v)} placeholder="Use o botão acima para importar da Matriz, ou descreva manualmente." />
+            {/* 2. Riscos Ocupacionais — 5 categorias separadas (NR-09 / PGR) */}
+            <div className="border rounded-md p-3 bg-slate-50 space-y-2">
+              <div className="text-[10px] font-black uppercase text-slate-700">2. Riscos Ocupacionais (por categoria)</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <TextoSecao label="Físico" rows={2} value={form.risco_fisico ?? ""} onChange={(v) => upd("risco_fisico", v)} placeholder="Ex: ruído contínuo ou intermitente, calor, vibração..." />
+                <TextoSecao label="Químico" rows={2} value={form.risco_quimico ?? ""} onChange={(v) => upd("risco_quimico", v)} placeholder="Ex: fumos metálicos (ferro, manganês), solventes..." />
+                <TextoSecao label="Biológico" rows={2} value={form.risco_biologico ?? ""} onChange={(v) => upd("risco_biologico", v)} placeholder="Ex: bactérias, fungos. Ou 'Não exposto a níveis significativos'." />
+                <TextoSecao label="Ergonômico" rows={2} value={form.risco_ergonomico ?? ""} onChange={(v) => upd("risco_ergonomico", v)} placeholder="Ex: postura em pé prolongada, levantamento de peso..." />
+                <TextoSecao label="Acidente / Mecânico" rows={2} value={form.risco_acidente ?? ""} onChange={(v) => upd("risco_acidente", v)} placeholder="Ex: espaço confinado, trabalho em altura, projeção de partículas..." />
+              </div>
+              <details className="text-[10px] text-slate-500">
+                <summary className="cursor-pointer">Texto livre (legado / fallback)</summary>
+                <TextoSecao label="" value={form.riscos_texto} onChange={(v) => upd("riscos_texto", v)} placeholder="Só preencha se quiser substituir todas as categorias acima por um único bloco." />
+              </details>
+            </div>
             <TextoSecao label="3. Medidas Preventivas" value={form.medidas_preventivas} onChange={(v) => upd("medidas_preventivas", v)} placeholder="Procedimentos, EPCs, sinalização, treinamentos..." />
             <TextoSecao label="4. EPIs Obrigatórios" value={form.epis_obrigatorios} onChange={(v) => upd("epis_obrigatorios", v)} placeholder="Liste os EPIs com respectivos CAs (capacete CA 12345, óculos CA 67890...)" />
             <TextoSecao label="5. Proibições" value={form.proibicoes} onChange={(v) => upd("proibicoes", v)} />
