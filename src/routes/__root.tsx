@@ -10,6 +10,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
+import { useEffect } from "react";
 
 function NotFoundComponent() {
   return (
@@ -111,6 +112,23 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Convites e recuperação de senha do Supabase chegam com tokens no hash
+  // (#access_token=...&type=invite|recovery). O supabase-js cria sessão
+  // automaticamente, então precisamos forçar o usuário para a tela de
+  // definição de senha em vez de jogar direto no app.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (!hash) return;
+    const params = new URLSearchParams(hash.replace(/^#/, ""));
+    const type = params.get("type");
+    if (type === "invite" || type === "recovery") {
+      if (window.location.pathname !== "/reset-password") {
+        window.location.replace("/reset-password" + hash);
+      }
+    }
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
