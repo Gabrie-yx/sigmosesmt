@@ -225,6 +225,7 @@ export type Database = {
           hora_inicio_sexta: string | null
           id: string
           local: string | null
+          modelo_id: string | null
           numero: string
           observacoes_gerais: string | null
           pdf_path: string | null
@@ -258,6 +259,7 @@ export type Database = {
           hora_inicio_sexta?: string | null
           id?: string
           local?: string | null
+          modelo_id?: string | null
           numero: string
           observacoes_gerais?: string | null
           pdf_path?: string | null
@@ -291,6 +293,7 @@ export type Database = {
           hora_inicio_sexta?: string | null
           id?: string
           local?: string | null
+          modelo_id?: string | null
           numero?: string
           observacoes_gerais?: string | null
           pdf_path?: string | null
@@ -326,6 +329,13 @@ export type Database = {
             columns: ["encarregado_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprs_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "apr_modelos"
             referencedColumns: ["id"]
           },
           {

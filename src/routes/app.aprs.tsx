@@ -10,11 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert, Zap, Copy } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert, Zap, Copy, LayoutGrid, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { AprForm } from "@/components/aprs/apr-form";
 import { AprModeloPicker, type AprModelo } from "@/components/aprs/apr-modelo-picker";
+import { AplicarModeloLoteDialog } from "@/components/aprs/aplicar-modelo-lote-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { abrirAprPdf, imprimirAprPdf, baixarAprPdf, buildAprPdf } from "@/lib/apr-pdf-loader";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
@@ -52,6 +54,10 @@ function AprsPage() {
   const { isEditor, isAdmin } = useAuth();
   const [editing, setEditing] = useState<string | null | "new">(null);
   const [modeloPickerOpen, setModeloPickerOpen] = useState(false);
+  const [loteOpen, setLoteOpen] = useState(false);
+  const [loteModeloId, setLoteModeloId] = useState<string | null>(null);
+  const [loteCascoId, setLoteCascoId] = useState<string | null>(null);
+  const [matrizOpen, setMatrizOpen] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ATIVAS");
   const [filterCasco, setFilterCasco] = useState<string>("ALL");
@@ -62,7 +68,7 @@ function AprsPage() {
   const [encSig, setEncSig] = useState<string | null>(null);
   const [tstSig, setTstSig] = useState<string | null>(null);
   const [dupSource, setDupSource] = useState<any | null>(null);
-  const [dupCascoId, setDupCascoId] = useState<string>("");
+  const [dupCascoIds, setDupCascoIds] = useState<string[]>([]);
 
   async function openPreview(aprId: string, numero?: string | null, eSig?: string | null, tSig?: string | null) {
     try {
@@ -90,6 +96,10 @@ function AprsPage() {
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-light-aprs"],
     queryFn: async () => (await supabase.from("companies").select("id,name")).data ?? [],
+  });
+  const { data: modelos = [] } = useQuery({
+    queryKey: ["apr-modelos-ativos"],
+    queryFn: async () => (await supabase.from("apr_modelos").select("id,nome,categoria,ordem").eq("ativo", true).order("ordem").order("nome")).data ?? [],
   });
 
   const cascoMap = useMemo(() => new Map(cascos.map((c: any) => [c.id, c])), [cascos]);
@@ -177,7 +187,7 @@ function AprsPage() {
   });
 
   const duplicate = useMutation({
-    mutationFn: async ({ srcId, novoCascoId }: { srcId: string; novoCascoId: string }) => {
+    mutationFn: async ({ srcId, cascoIds }: { srcId: string; cascoIds: string[] }) => {
       const [{ data: a, error: ea }, { data: rs, error: er }, { data: ass, error: eas }] = await Promise.all([
         supabase.from("aprs").select("*").eq("id", srcId).maybeSingle(),
         supabase.from("apr_riscos").select("*").eq("apr_id", srcId).order("ordem"),
@@ -188,46 +198,55 @@ function AprsPage() {
       if (eas) throw eas;
       if (!a) throw new Error("APR de origem não encontrada");
 
-      const { data: numero, error: enErr } = await supabase.rpc("gerar_numero_apr");
-      if (enErr) throw enErr;
-
       const { id: _ignoreId, created_at, updated_at, numero: _oldNum, data_validade, pte_id, ...rest } = a as any;
-      const payload = {
-        ...rest,
-        numero,
-        casco_id: novoCascoId,
-        pte_id: null,
-        status: "RASCUNHO",
-        data_emissao: new Date().toISOString().slice(0, 10),
-      };
-      const { data: novo, error: ein } = await supabase.from("aprs").insert(payload).select("id,numero").single();
-      if (ein) throw ein;
+      const criadas: { id: string; numero: string }[] = [];
 
-      if (rs && rs.length > 0) {
-        const { error: e2 } = await supabase.from("apr_riscos").insert(
-          rs.map((r: any) => {
-            const { id, created_at, apr_id, nivel_risco, ...rr } = r;
-            return { ...rr, apr_id: novo.id };
-          }),
-        );
-        if (e2) throw e2;
+      for (const cascoId of cascoIds) {
+        const { data: numero, error: enErr } = await supabase.rpc("gerar_numero_apr");
+        if (enErr) throw enErr;
+
+        const payload = {
+          ...rest,
+          numero,
+          casco_id: cascoId,
+          pte_id: null,
+          status: "RASCUNHO",
+          data_emissao: new Date().toISOString().slice(0, 10),
+        };
+        const { data: novo, error: ein } = await supabase.from("aprs").insert(payload).select("id,numero").single();
+        if (ein) throw ein;
+
+        if (rs && rs.length > 0) {
+          const { error: e2 } = await supabase.from("apr_riscos").insert(
+            rs.map((r: any) => {
+              const { id, created_at, apr_id, nivel_risco, ...rr } = r;
+              return { ...rr, apr_id: novo.id };
+            }),
+          );
+          if (e2) throw e2;
+        }
+        if (ass && ass.length > 0) {
+          const { error: e3 } = await supabase.from("apr_assinaturas").insert(
+            ass.map((s: any) => {
+              const { id, created_at, apr_id, ...ss } = s;
+              return { ...ss, apr_id: novo.id };
+            }),
+          );
+          if (e3) throw e3;
+        }
+        criadas.push(novo);
       }
-      if (ass && ass.length > 0) {
-        const { error: e3 } = await supabase.from("apr_assinaturas").insert(
-          ass.map((s: any) => {
-            const { id, created_at, apr_id, ...ss } = s;
-            return { ...ss, apr_id: novo.id };
-          }),
-        );
-        if (e3) throw e3;
-      }
-      return novo;
+      return criadas;
     },
-    onSuccess: (novo: any) => {
+    onSuccess: (criadas: { numero: string }[]) => {
       qc.invalidateQueries({ queryKey: ["aprs"] });
       setDupSource(null);
-      setDupCascoId("");
-      toast.success(`APR ${novo.numero} duplicada — revise e ative quando estiver pronta`);
+      setDupCascoIds([]);
+      if (criadas.length === 1) {
+        toast.success(`APR ${criadas[0].numero} duplicada — revise e ative quando estiver pronta`);
+      } else {
+        toast.success(`${criadas.length} APRs criadas como RASCUNHO`);
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -244,12 +263,20 @@ function AprsPage() {
         {isEditor && (
           <div className="flex gap-2">
             <Button
+              onClick={() => { setLoteModeloId(null); setLoteCascoId(null); setLoteOpen(true); }}
+              size="lg"
+              variant="outline"
+              className="border-[#991b1b] text-[#991b1b] hover:bg-[#991b1b]/5"
+            >
+              <LayoutGrid className="h-4 w-4 mr-1" /> Aplicar a vários cascos
+            </Button>
+            <Button
               onClick={() => setModeloPickerOpen(true)}
               size="lg"
               variant="outline"
               className="border-amber-500 text-amber-700 hover:bg-amber-50"
             >
-              <Zap className="h-4 w-4 mr-1" /> A partir de modelo
+              <Zap className="h-4 w-4 mr-1" /> Modelo (editar)
             </Button>
             <Button
               onClick={() => {
@@ -299,6 +326,92 @@ function AprsPage() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Matriz de cobertura: Modelo × Casco */}
+      {cascos.length > 0 && modelos.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-4 shrink-0">
+          <button
+            type="button"
+            onClick={() => setMatrizOpen((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 rounded-t-2xl"
+          >
+            <div className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4 text-[#991b1b]" />
+              <span className="font-black text-sm text-slate-800">Cobertura por casco</span>
+              <span className="text-[11px] text-slate-500">— modelos × cascos. Clique na célula vazia para gerar APR.</span>
+            </div>
+            {matrizOpen ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+          </button>
+          {matrizOpen && (() => {
+            // Set: `${modeloId}::${cascoId}` quando existe APR ATIVA/RASCUNHO
+            const coverage = new Set<string>();
+            for (const a of aprs as any[]) {
+              if (a.modelo_id && a.casco_id && (a.status === "ATIVA" || a.status === "RASCUNHO")) {
+                coverage.add(`${a.modelo_id}::${a.casco_id}`);
+              }
+            }
+            return (
+              <div className="overflow-x-auto border-t">
+                <table className="w-full text-xs">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="text-left font-black text-slate-600 px-3 py-2 sticky left-0 bg-slate-50 z-10 min-w-[180px]">
+                        Modelo
+                      </th>
+                      {cascos.map((c: any) => (
+                        <th key={c.id} className="font-black text-[#991b1b] px-2 py-2 text-center whitespace-nowrap">
+                          {c.numero}
+                          {c.nome && <div className="text-[9px] font-normal text-slate-500 truncate max-w-[80px]">{c.nome}</div>}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modelos.map((m: any) => (
+                      <tr key={m.id} className="border-t hover:bg-slate-50/50">
+                        <td className="px-3 py-1.5 font-bold text-slate-700 sticky left-0 bg-white hover:bg-slate-50/50 z-10">
+                          {m.nome}
+                        </td>
+                        {cascos.map((c: any) => {
+                          const tem = coverage.has(`${m.id}::${c.id}`);
+                          return (
+                            <td key={c.id} className="text-center p-1">
+                              {tem ? (
+                                <button
+                                  type="button"
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-emerald-100 text-emerald-700 border border-emerald-300 hover:bg-emerald-200"
+                                  title="APR já existe — clique pra filtrar"
+                                  onClick={() => {
+                                    setFilterCasco(c.id);
+                                    setSearch(m.nome);
+                                  }}
+                                >
+                                  ✓
+                                </button>
+                              ) : isEditor ? (
+                                <button
+                                  type="button"
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-dashed border-slate-300 text-slate-400 hover:border-[#991b1b] hover:text-[#991b1b] hover:bg-[#991b1b]/5"
+                                  title={`Gerar APR "${m.nome}" para CASCO ${c.numero}`}
+                                  onClick={() => { setLoteModeloId(m.id); setLoteCascoId(c.id); setLoteOpen(true); }}
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                </button>
+                              ) : (
+                                <span className="text-slate-300">—</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex-1 overflow-hidden flex flex-col min-h-0">
         <div className="overflow-y-auto flex-1 p-2">
@@ -421,8 +534,8 @@ function AprsPage() {
                                         </DropdownMenuItem>
                                       )}
                                       {isEditor && (
-                                        <DropdownMenuItem onClick={() => { setDupSource(a); setDupCascoId(""); }}>
-                                          <Copy className="h-4 w-4 mr-2" /> Duplicar para outro casco
+                                        <DropdownMenuItem onClick={() => { setDupSource(a); setDupCascoIds([]); }}>
+                                          <Copy className="h-4 w-4 mr-2" /> Duplicar para outros cascos
                                         </DropdownMenuItem>
                                       )}
                                       {isAdmin && (
@@ -467,6 +580,7 @@ function AprsPage() {
           // Pré-popula APR com campos do modelo
           qc.setQueryData(["apr-form-draft", "new"], {
             ...newAprDraft,
+            modelo_id: modelo.id,
             atividade_descricao: modelo.atividade_descricao,
             setor: modelo.setor_padrao ?? null,
             local: modelo.local_padrao ?? null,
@@ -494,6 +608,13 @@ function AprsPage() {
         }}
       />
 
+      <AplicarModeloLoteDialog
+        open={loteOpen}
+        onOpenChange={setLoteOpen}
+        modeloPreselecionadoId={loteModeloId}
+        cascoPreselecionadoId={loteCascoId}
+      />
+
       <PDFPreviewDialog
         open={!!pdfDoc}
         onClose={() => { setPdfDoc(null); setPdfAprId(null); setEncSig(null); setTstSig(null); }}
@@ -507,42 +628,75 @@ function AprsPage() {
         onChangeSesmtSig={(v) => { setTstSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), encSig, v); }}
       />
 
-      <Dialog open={!!dupSource} onOpenChange={(o) => { if (!o) { setDupSource(null); setDupCascoId(""); } }}>
-        <DialogContent className="max-w-md">
+      <Dialog open={!!dupSource} onOpenChange={(o) => { if (!o) { setDupSource(null); setDupCascoIds([]); } }}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Duplicar APR {dupSource?.numero}</DialogTitle>
+            <DialogTitle>Duplicar APR {dupSource?.numero} para vários cascos</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-slate-600">
-              Será criada uma nova APR (status <b>RASCUNHO</b>) para o casco escolhido, copiando atividade, riscos,
-              EPIs, NRs e assinaturas. O número será novo e a PTE não é copiada.
+              Será criada 1 APR (status <b>RASCUNHO</b>) para <b>cada casco</b> marcado, copiando atividade,
+              riscos, EPIs, NRs e assinaturas. Cada uma recebe número próprio; a PTE não é copiada.
             </p>
             <div>
-              <label className="text-xs font-bold text-slate-700 mb-1 block">Casco destino</label>
-              <Select value={dupCascoId} onValueChange={setDupCascoId}>
-                <SelectTrigger><SelectValue placeholder="Selecione o casco..." /></SelectTrigger>
-                <SelectContent>
-                  {cascos
-                    .filter((c: any) => c.id !== dupSource?.casco_id)
-                    .map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>{c.numero}{c.nome ? ` — ${c.nome}` : ""}</SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-slate-700">Cascos destino</label>
+                {(() => {
+                  const disponiveis = cascos.filter((c: any) => c.id !== dupSource?.casco_id);
+                  const todos = disponiveis.length > 0 && disponiveis.every((c: any) => dupCascoIds.includes(c.id));
+                  return (
+                    <button
+                      type="button"
+                      className="text-[10px] font-bold text-[#991b1b] hover:underline"
+                      onClick={() => setDupCascoIds(todos ? [] : disponiveis.map((c: any) => c.id))}
+                    >
+                      {todos ? "Limpar" : "Marcar todos"}
+                    </button>
+                  );
+                })()}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 max-h-[280px] overflow-y-auto pr-1">
+                {cascos
+                  .filter((c: any) => c.id !== dupSource?.casco_id)
+                  .map((c: any) => {
+                    const marcado = dupCascoIds.includes(c.id);
+                    return (
+                      <label
+                        key={c.id}
+                        className={`flex items-center gap-2 p-2 rounded border text-xs cursor-pointer ${
+                          marcado ? "bg-[#991b1b]/5 border-[#991b1b]/40" : "bg-white border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        <Checkbox
+                          checked={marcado}
+                          onCheckedChange={(v) =>
+                            setDupCascoIds((prev) => (v ? [...prev, c.id] : prev.filter((x) => x !== c.id)))
+                          }
+                        />
+                        <div className="min-w-0">
+                          <div className="font-bold">CASCO {c.numero}</div>
+                          {c.nome && <div className="text-[10px] text-slate-500 truncate">{c.nome}</div>}
+                        </div>
+                      </label>
+                    );
+                  })}
+              </div>
               {dupSource?.casco_id && (
-                <p className="text-[11px] text-slate-400 mt-1">
+                <p className="text-[11px] text-slate-400 mt-2">
                   Origem: casco {cascoMap.get(dupSource.casco_id)?.numero ?? "—"}
                 </p>
               )}
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" onClick={() => { setDupSource(null); setDupCascoId(""); }}>Cancelar</Button>
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <Button variant="ghost" onClick={() => { setDupSource(null); setDupCascoIds([]); }}>Cancelar</Button>
               <Button
                 className="bg-[#991b1b] hover:bg-[#7f1d1d]"
-                disabled={!dupCascoId || duplicate.isPending}
-                onClick={() => dupSource && duplicate.mutate({ srcId: dupSource.id, novoCascoId: dupCascoId })}
+                disabled={dupCascoIds.length === 0 || duplicate.isPending}
+                onClick={() => dupSource && duplicate.mutate({ srcId: dupSource.id, cascoIds: dupCascoIds })}
               >
-                {duplicate.isPending ? "Duplicando..." : "Duplicar APR"}
+                {duplicate.isPending
+                  ? "Duplicando..."
+                  : `Duplicar para ${dupCascoIds.length || ""} casco${dupCascoIds.length !== 1 ? "s" : ""}`}
               </Button>
             </div>
           </div>

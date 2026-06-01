@@ -611,6 +611,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
         signature_tst_height: (apr as any).signature_tst ? ((apr as any).signature_tst_height ?? 80) : null,
         signature_enc: (apr as any).signature_enc ?? null,
         signature_enc_height: (apr as any).signature_enc ? ((apr as any).signature_enc_height ?? 80) : null,
+        modelo_id: (apr as any).modelo_id ?? null,
       };
 
       let id = apr.id;
