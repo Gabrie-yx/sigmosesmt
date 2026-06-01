@@ -308,10 +308,16 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
     queryFn: async () => {
       const { data } = await supabase
         .from("employees")
-        .select("id, nome, cpf, matricula, cargo, admissao, status")
+        .select("id, nome, cpf, matricula, admissao, status, role_id, roles(name)")
         .eq("status", "ATIVO")
         .order("nome");
-      return data ?? [];
+      return (data ?? []).map((e: any) => ({
+        ...e,
+        cargo: e.roles?.name ?? null,
+      })) as Array<{
+        id: string; nome: string; cpf: string | null; matricula: string | null;
+        admissao: string | null; cargo: string | null;
+      }>;
     },
   });
 
@@ -332,7 +338,8 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
   // Auto-selecionar template baseado no cargo do funcionário
   const autoSuggestedTemplate = useMemo(() => {
     if (!selectedEmp?.cargo) return null;
-    return templates.find((t) => t.cargo.toUpperCase() === selectedEmp.cargo.toUpperCase()) ?? null;
+    const cargoUpper = selectedEmp.cargo.toUpperCase();
+    return templates.find((t) => t.cargo.toUpperCase() === cargoUpper) ?? null;
   }, [selectedEmp, templates]);
 
   const effectiveTemplateId = templateId || autoSuggestedTemplate?.id || "";
