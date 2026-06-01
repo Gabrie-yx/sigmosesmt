@@ -222,24 +222,53 @@ function TemplateEditorDialog({
       if (!role) throw new Error("Cargo não encontrado em \"Cargos & Matriz de Riscos\". Cadastre-o lá primeiro.");
       const { data: riscos } = await supabase
         .from("cargo_riscos")
-        .select("*, catalogo_riscos(nome, categoria)")
+        .select("*, catalogo_riscos(nome, categoria, medidas_controle_padrao, epis_sugeridos)")
         .eq("role_id", role.id)
         .eq("ativo", true);
       const lista = (riscos ?? []) as any[];
-      const linhasRiscos = lista
-        .map((r) => {
-          const nome = r.catalogo_riscos?.nome ?? "(risco)";
-          const cat = r.catalogo_riscos?.categoria ?? "";
-          const intens = r.intensidade != null ? ` — ${r.intensidade}${r.unidade ?? ""}` : "";
-          const fonte = r.fonte_geradora ? ` (fonte: ${r.fonte_geradora})` : "";
-          return `• [${cat}] ${nome}${intens}${fonte}`;
-        })
-        .join("\n");
-      return { linhasRiscos, total: lista.length };
+      // Agrupa por categoria (mapeia categoria do catálogo → campo do template)
+      const catMap: Record<string, keyof typeof form> = {
+        FISICO: "risco_fisico",
+        QUIMICO: "risco_quimico",
+        BIOLOGICO: "risco_biologico",
+        ERGONOMICO: "risco_ergonomico",
+        ACIDENTE_MECANICO: "risco_acidente",
+      };
+      const buckets: Record<string, string[]> = {};
+      const medidasSet = new Set<string>();
+      const episSet = new Set<string>();
+      for (const r of lista) {
+        const cat = (r.catalogo_riscos?.categoria ?? "").toUpperCase();
+        const nome = r.catalogo_riscos?.nome ?? "(risco)";
+        const intens = r.intensidade != null ? ` — ${r.intensidade}${r.unidade ?? ""}` : "";
+        const fonte = r.fonte_geradora ? ` (fonte: ${r.fonte_geradora})` : "";
+        (buckets[cat] ||= []).push(`${nome}${intens}${fonte}`);
+        for (const m of r.catalogo_riscos?.medidas_controle_padrao ?? []) medidasSet.add(String(m));
+        for (const e of r.catalogo_riscos?.epis_sugeridos ?? []) episSet.add(String(e));
+      }
+      return { buckets, catMap, medidas: [...medidasSet], epis: [...episSet], total: lista.length };
     },
     onSuccess: (res) => {
-      upd("riscos_texto", res.linhasRiscos || "Nenhum risco cadastrado na Matriz para este cargo.");
-      toast.success(`${res.total} risco(s) importado(s) da Matriz`);
+      // Preenche cada campo categorizado
+      setForm((f) => {
+        const next = { ...f };
+        for (const [cat, field] of Object.entries(res.catMap)) {
+          const items = res.buckets[cat] ?? [];
+          if (items.length) (next as any)[field] = items.map((s) => `• ${s}`).join("\n");
+        }
+        if (res.medidas.length) {
+          const existing = f.medidas_preventivas.trim();
+          const block = res.medidas.map((m) => `• ${m}`).join("\n");
+          next.medidas_preventivas = existing ? `${existing}\n${block}` : block;
+        }
+        if (res.epis.length) {
+          const existing = f.epis_obrigatorios.trim();
+          const block = res.epis.map((e) => `• ${e}`).join("\n");
+          next.epis_obrigatorios = existing ? `${existing}\n${block}` : block;
+        }
+        return next;
+      });
+      toast.success(`${res.total} risco(s) importado(s) da Matriz — categorias, medidas e EPIs preenchidos`);
     },
     onError: (e: any) => toast.error(e.message),
   });
