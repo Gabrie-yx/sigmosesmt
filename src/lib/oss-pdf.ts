@@ -1,14 +1,14 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import dmnLogo from "@/assets/dmn-logo.png";
 
 export type OSSPdfData = {
   numero?: string | null;
   revisao: number;
   emitido_em?: string | null;
   expira_em?: string | null;
-  /** Tipo de emissão — marca um dos checkboxes do bloco superior. */
+  /** (legado — não é mais renderizado no PDF, mantido pra retrocompatibilidade) */
   tipo_emissao?: "ADMISSIONAL" | "PERIODICO" | "TROCA_RISCO" | null;
-  /** Aceita também os enums internos do app (ADMISSAO / PERIODICO / TROCA_RISCO / RECICLAGEM). */
   motivo_emissao?: string | null;
   funcionario: {
     nome: string;
