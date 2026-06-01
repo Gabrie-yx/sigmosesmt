@@ -246,6 +246,17 @@ export function usePendencias() {
     },
   });
 
+  // OSS pendentes (assinatura, substituídas ou vencidas)
+  const ossPendentes = useQuery({
+    queryKey: ["pend-oss"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("oss_emissoes").select("id", { count: "exact", head: true })
+        .in("status", ["PENDENTE_ASSINATURA", "SUBSTITUIDO", "VENCIDO"]);
+      return count ?? 0;
+    },
+  });
+
   // Inspeção mensal de EPI — dia útil ≥ 25 do mês, sem registro no mês
   // Sem tabela própria: marca como pendente nos últimos 5 dias úteis do mês
   const dia = hojeDateObj.getDate();
