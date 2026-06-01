@@ -4,6 +4,7 @@ import {
   CalendarClock, FileWarning, Syringe, UserX, ClipboardCheck, GraduationCap, KeyRound, BellOff,
   FileWarning as TncIcon,
   HelpCircle, PackageX, Wrench, ShieldCheck,
+  FileSignature,
 } from "lucide-react";
 import { Sigla } from "@/components/sigla";
 import { cn } from "@/lib/utils";
@@ -123,6 +124,12 @@ const META: Record<string, CardMeta> = {
     descricaoPend: (n) => `${n} ação(ões) concluídas aguardando validação da eficácia (ISO 9001).`,
     descricaoOk: "Nenhuma eficácia em aberto.",
     to: "/app/acoes", icon: ShieldCheck, ctaPend: "Validar eficácia",
+  },
+  "oss-pendentes": {
+    titulo: "OSS pendentes (NR-01)",
+    descricaoPend: (n) => `${n} Ordem(ns) de Serviço aguardando assinatura, vencidas ou substituídas por mudança de cargo/risco.`,
+    descricaoOk: "Todas as OSS estão em dia.",
+    to: "/app/oss", icon: FileSignature, ctaPend: "Tratar OSS",
   },
 };
 
