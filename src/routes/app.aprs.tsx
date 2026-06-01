@@ -580,6 +580,7 @@ function AprsPage() {
           // Pré-popula APR com campos do modelo
           qc.setQueryData(["apr-form-draft", "new"], {
             ...newAprDraft,
+            modelo_id: modelo.id,
             atividade_descricao: modelo.atividade_descricao,
             setor: modelo.setor_padrao ?? null,
             local: modelo.local_padrao ?? null,
@@ -605,6 +606,13 @@ function AprsPage() {
           setEditing("new");
           toast.success(`Modelo "${modelo.nome}" carregado — ${riscosComOrdem.length} riscos pré-preenchidos`);
         }}
+      />
+
+      <AplicarModeloLoteDialog
+        open={loteOpen}
+        onOpenChange={setLoteOpen}
+        modeloPreselecionadoId={loteModeloId}
+        cascoPreselecionadoId={loteCascoId}
       />
 
       <PDFPreviewDialog
