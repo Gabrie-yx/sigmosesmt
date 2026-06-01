@@ -23,6 +23,27 @@ function LoginPage() {
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaChallengeId, setMfaChallengeId] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    if (!forgotEmail) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Se o email existir, enviaremos um link para redefinir a senha.");
+      setForgotOpen(false);
+      setForgotEmail("");
+    } catch (e: any) {
+      toast.error(e.message ?? "Não foi possível enviar o email");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function verifyMfa(e: React.FormEvent) {
     e.preventDefault();
@@ -126,6 +147,15 @@ function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Aguarde..." : "Entrar"}
             </Button>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => { setForgotEmail(email); setForgotOpen(true); }}
+                className="text-xs font-semibold text-slate-600 hover:text-slate-900 hover:underline"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
             <div className="text-center text-xs text-muted-foreground">
               Sistema interno — novas contas são criadas por convite de um administrador.
             </div>
@@ -140,6 +170,28 @@ function LoginPage() {
           )}
         </CardContent>
       </Card>
+      {forgotOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => !loading && setForgotOpen(false)}>
+          <Card className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle className="text-lg">Recuperar senha</CardTitle>
+              <CardDescription>Informe seu email cadastrado. Enviaremos um link para você criar uma nova senha.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleForgot} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="forgot-email">Email</Label>
+                  <Input id="forgot-email" type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} required autoFocus />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" className="flex-1" disabled={loading} onClick={() => setForgotOpen(false)}>Cancelar</Button>
+                  <Button type="submit" className="flex-1" disabled={loading}>{loading ? "Enviando..." : "Enviar link"}</Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
