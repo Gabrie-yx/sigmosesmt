@@ -43,7 +43,12 @@ type Emissao = {
   pdf_gerado_path: string | null;
   pdf_assinado_path: string | null;
   conteudo_snapshot: any;
-  employees?: { nome: string; cpf: string | null; matricula: string | null; admissao: string | null } | null;
+  employees?: {
+    nome: string; cpf: string | null; matricula: string | null; admissao: string | null;
+    rg?: string | null;
+    companies?: { name: string | null; cnpj: string | null } | null;
+    roles?: { name: string | null; cbo?: string | null } | null;
+  } | null;
   oss_templates?: { titulo: string; setor: string | null } | null;
 };
 
@@ -67,7 +72,7 @@ function OssIndexPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("oss_emissoes")
-        .select("*, employees(nome, cpf, matricula, admissao), oss_templates(titulo, setor)")
+        .select("*, employees(nome, cpf, matricula, admissao, rg, companies(name, cnpj), roles(name)), oss_templates(titulo, setor)")
         .order("emitido_em", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as Emissao[];
@@ -94,15 +99,18 @@ function OssIndexPage() {
       revisao: em.template_revisao,
       emitido_em: em.emitido_em,
       expira_em: em.expira_em,
+      motivo_emissao: em.motivo_emissao,
       funcionario: {
         nome: em.employees?.nome ?? "—",
         cpf: em.employees?.cpf ?? null,
         matricula: em.employees?.matricula ?? null,
         admissao: em.employees?.admissao ?? null,
+        rg: em.employees?.rg ?? null,
       },
       cargo: em.cargo_snapshot,
       setor: em.oss_templates?.setor ?? null,
-      empresa: null,
+      empresa: em.employees?.companies?.name ?? null,
+      empresa_cnpj: em.employees?.companies?.cnpj ?? null,
       conteudo: em.conteudo_snapshot,
     });
     setPreviewDoc({ doc, name: `OSS-${em.cargo_snapshot}-${em.employees?.nome ?? "func"}.pdf` });

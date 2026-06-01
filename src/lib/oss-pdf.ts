@@ -6,6 +6,10 @@ export type OSSPdfData = {
   revisao: number;
   emitido_em?: string | null;
   expira_em?: string | null;
+  /** Tipo de emissão — marca um dos checkboxes do bloco superior. */
+  tipo_emissao?: "ADMISSIONAL" | "PERIODICO" | "TROCA_RISCO" | null;
+  /** Aceita também os enums internos do app (ADMISSAO / PERIODICO / TROCA_RISCO / RECICLAGEM). */
+  motivo_emissao?: string | null;
   funcionario: {
     nome: string;
     cpf?: string | null;
@@ -17,6 +21,7 @@ export type OSSPdfData = {
   cbo?: string | null;
   setor?: string | null;
   empresa?: string | null;
+  empresa_cnpj?: string | null;
   conteudo: {
     descricao_atividades: string;
     riscos_texto: string;
@@ -25,6 +30,16 @@ export type OSSPdfData = {
     proibicoes: string;
     penalidades: string;
     procedimentos_emergencia: string;
+    // Opcional: riscos já estruturados por categoria. Se vier preenchido,
+    // é renderizado rotulado; senão usamos `riscos_texto` (auto-rotula
+    // quando detectar "Físico:", "Químico:" etc).
+    riscos_categorias?: {
+      fisico?: string | null;
+      quimico?: string | null;
+      biologico?: string | null;
+      ergonomico?: string | null;
+      acidente?: string | null;
+    } | null;
   };
 };
 
@@ -94,56 +109,99 @@ function parseEpis(raw: string): Array<{ desc: string; ca: string }> {
     });
 }
 
+/** Tenta extrair categorias de risco a partir de um bloco de texto livre. */
+function parseRiscosTexto(raw: string) {
+  if (!raw) return null;
+  const cats: Record<string, string> = {};
+  const map: Array<[RegExp, string]> = [
+    [/F[íi]sico[s]?\s*[:\-–]\s*(.+)/i, "fisico"],
+    [/Qu[íi]mico[s]?\s*[:\-–]\s*(.+)/i, "quimico"],
+    [/Biol[óo]gico[s]?\s*[:\-–]\s*(.+)/i, "biologico"],
+    [/Ergon[ôo]mico[s]?\s*[:\-–]\s*(.+)/i, "ergonomico"],
+    [/(?:Acidente|Mec[âa]nico|Acidente\/Mec[âa]nico)[s]?\s*[:\-–]\s*(.+)/i, "acidente"],
+  ];
+  for (const line of raw.split(/\r?\n/)) {
+    for (const [rx, key] of map) {
+      const m = line.match(rx);
+      if (m) { cats[key] = (cats[key] ? cats[key] + " " : "") + m[1].trim(); break; }
+    }
+  }
+  return Object.keys(cats).length ? cats : null;
+}
+
 export function buildOssPdf(data: OSSPdfData): jsPDF {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const W = doc.internal.pageSize.getWidth();
-  const H = doc.internal.pageSize.getHeight();
   const margin = 8;
   const innerW = W - margin * 2;
 
   // ====================== CABEÇALHO ======================
-  const hdrTop = margin;
-  const hdrH = 18;
-  // moldura geral do cabeçalho
+  // Cabeçalho enxuto, igual ao modelo do mercado naval: título centralizado,
+  // sem logo nem código de formulário fixo. Revisão fica à direita.
+  let y = margin;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text("Ordens de Serviço", W / 2, y + 5, { align: "center" });
+  doc.setFontSize(10);
+  doc.text("Segurança e Saúde no Trabalho", W / 2, y + 10, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text('NR 1, Item 1.4.1 "c"', W / 2, y + 14.5, { align: "center" });
+  // Revisão (canto sup. direito)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text(`Revisão: ${String(data.revisao ?? 0).padStart(2, "0")}`, W - margin, y + 5, { align: "right" });
+  y += 17;
+
+  // ===================== TIPO DE EMISSÃO ====================
+  // Caixinha com 3 checkboxes (Admissional / Periódico / Troca de Risco Ocupacional)
+  const tipoNorm = (() => {
+    const v = (data.tipo_emissao ?? data.motivo_emissao ?? "").toString().toUpperCase();
+    if (v.startsWith("ADM")) return "ADMISSIONAL";
+    if (v.startsWith("PERI")) return "PERIODICO";
+    if (v.startsWith("TROCA")) return "TROCA_RISCO";
+    if (v.startsWith("RECIC")) return "PERIODICO";
+    return null;
+  })();
+  const tipoBoxH = 14;
   doc.setDrawColor(0);
   doc.setLineWidth(0.3);
-  doc.rect(margin, hdrTop, innerW, hdrH);
-  // 3 colunas: logo | título | metadados
-  const logoW = 30;
-  const metaW = 42;
-  const titleW = innerW - logoW - metaW;
-  doc.line(margin + logoW, hdrTop, margin + logoW, hdrTop + hdrH);
-  doc.line(margin + logoW + titleW, hdrTop, margin + logoW + titleW, hdrTop + hdrH);
-
-  // Logo placeholder (texto estilizado "DMN ESTALEIRO")
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.setTextColor(178, 34, 34);
-  doc.text("DMN", margin + logoW / 2, hdrTop + 9, { align: "center" });
-  doc.setFontSize(6);
-  doc.setTextColor(40);
-  doc.text("ESTALEIRO", margin + logoW / 2, hdrTop + 13, { align: "center" });
-
-  // Título central
-  doc.setTextColor(0);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text("Ordem de Serviço", margin + logoW + titleW / 2, hdrTop + 6, { align: "center" });
-  doc.setFontSize(11);
-  doc.text("Segurança e Saúde no Trabalho", margin + logoW + titleW / 2, hdrTop + 11, { align: "center" });
-  doc.setFontSize(10);
-  doc.text('NR 1, Item 1.4.1 "c"', margin + logoW + titleW / 2, hdrTop + 16, { align: "center" });
-
-  // Metadados direita
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  const metaX = margin + logoW + titleW + 2;
-  doc.text("CÓD.: FOR-SEG 01", metaX, hdrTop + 4);
-  doc.text("REVISÃO: 00", metaX, hdrTop + 8);
-  doc.text("DATA: 30/08/2025", metaX, hdrTop + 12);
-  doc.text("PÁG.:01/01", metaX, hdrTop + 16);
-
-  let y = hdrTop + hdrH;
+  doc.rect(margin, y, innerW, tipoBoxH);
+  const drawCheck = (x: number, yy: number, label: string, checked: boolean) => {
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.3);
+    doc.rect(x, yy - 2.6, 3, 3);
+    if (checked) {
+      doc.setLineWidth(0.5);
+      doc.line(x + 0.4, yy - 1.1, x + 1.3, yy - 0.2);
+      doc.line(x + 1.3, yy - 0.2, x + 2.7, yy - 2.4);
+      doc.setLineWidth(0.3);
+    }
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.text(label, x + 4, yy);
+  };
+  // labels distribuídos em 3 colunas
+  const tx = margin + 4;
+  const colW = (innerW - 8) / 3;
+  drawCheck(tx, y + 5.2, "Admissional", tipoNorm === "ADMISSIONAL");
+  // permite mostrar a data da admissão ao lado do checkbox quando aplicável
+  if (tipoNorm === "ADMISSIONAL" && data.funcionario.admissao) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.text(`Data: ${brDate(data.funcionario.admissao)}`, tx + 28, y + 5.2);
+  }
+  drawCheck(tx + colW, y + 5.2, "Periódico", tipoNorm === "PERIODICO");
+  drawCheck(tx + colW * 2, y + 5.2, "Troca de Risco Ocupacional", tipoNorm === "TROCA_RISCO");
+  // linha de revisão dentro da caixa (compatibilidade visual com modelos do mercado)
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.text(
+    `Documento ${data.numero ? "Nº " + data.numero + "  •  " : ""}Emitido em ${brDate(data.emitido_em)}${data.expira_em ? "  •  Válido até " + brDate(data.expira_em) : ""}`,
+    margin + 4,
+    y + 11.5,
+  );
+  y += tipoBoxH;
 
   // ====================== IDENTIFICAÇÃO ======================
   const rowH = 6;
@@ -160,8 +218,12 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
   };
 
   // Linha 1: Razão Social | CNPJ | Data
-  labelBoldField(margin, y, innerW * 0.55, "Razão Social:", " DMN ESTALEIRO DA AMAZÔNIA LTDA");
-  labelBoldField(margin + innerW * 0.55, y, innerW * 0.27, "CNPJ:", " 13.378.697/0001-80");
+  // Razão Social e CNPJ vêm da empresa do funcionário; fallback para DMN
+  // para não quebrar OSS antigas que ainda eram emitidas só pra DMN.
+  const razao = (data.empresa ?? "").trim() || "DMN ESTALEIRO DA AMAZÔNIA LTDA";
+  const cnpj = (data.empresa_cnpj ?? "").trim() || "13.378.697/0001-80";
+  labelBoldField(margin, y, innerW * 0.55, "Razão Social:", " " + razao);
+  labelBoldField(margin + innerW * 0.55, y, innerW * 0.27, "CNPJ:", " " + cnpj);
   labelBoldField(margin + innerW * 0.82, y, innerW * 0.18, "Data:", " " + brDate(data.emitido_em));
   y += rowH;
 
@@ -210,9 +272,48 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
 
   // ====================== 2. Risco Ocupacional ======================
   sectionBar("2. Risco Ocupacional:");
-  const riscosTxt = [data.conteudo.riscos_texto, data.conteudo.medidas_preventivas]
-    .filter((s) => s && s.trim()).join("\n");
-  textBlock(riscosTxt, { minH: 22 });
+  // Prioridade: campos estruturados > parser do texto livre > texto cru.
+  const cats =
+    data.conteudo.riscos_categorias ??
+    parseRiscosTexto(data.conteudo.riscos_texto || "");
+  if (cats) {
+    const rows: Array<[string, string]> = [
+      ["Físico:", cats.fisico || "—"],
+      ["Químico:", cats.quimico || "—"],
+      ["Biológico:", cats.biologico || "—"],
+      ["Ergonômico:", cats.ergonomico || "—"],
+      ["Acidente/Mecânico:", cats.acidente || "—"],
+    ];
+    // bloco com labels em bold e valor à frente
+    doc.setFontSize(8);
+    const lineH = 4.2;
+    const padding = 1.4;
+    const labelColW = 32;
+    // calcula altura considerando wrap dos valores
+    let totalH = padding * 2;
+    const wrapped = rows.map(([, v]) =>
+      doc.splitTextToSize(v, innerW - labelColW - 4),
+    );
+    wrapped.forEach((w) => { totalH += Math.max(lineH, w.length * lineH); });
+    doc.rect(margin, y, innerW, totalH);
+    let cy = y + padding + 3;
+    rows.forEach(([lab, val], i) => {
+      doc.setFont("helvetica", "bold");
+      doc.text(lab, margin + 1.5, cy);
+      doc.setFont("helvetica", "normal");
+      doc.text(wrapped[i], margin + 1.5 + labelColW, cy);
+      cy += Math.max(lineH, wrapped[i].length * lineH);
+    });
+    y += totalH;
+    // medidas preventivas, se houver, vão num bloco abaixo (mantém compat)
+    if (data.conteudo.medidas_preventivas?.trim()) {
+      textBlock("Medidas preventivas: " + data.conteudo.medidas_preventivas.trim(), { size: 7.5 });
+    }
+  } else {
+    const riscosTxt = [data.conteudo.riscos_texto, data.conteudo.medidas_preventivas]
+      .filter((s) => s && s.trim()).join("\n");
+    textBlock(riscosTxt, { minH: 22 });
+  }
 
   // ====================== 3. EPIs de Uso Obrigatório ======================
   sectionBar("3. EPI's de Uso Obrigatório");
