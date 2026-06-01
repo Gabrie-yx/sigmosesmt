@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { ShieldCheck, ShieldAlert, Trash2, Plus, Mail, RotateCcw, X, Settings2 } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Trash2, Plus, Mail, RotateCcw, X, Settings2, Ban, Play, History as HistoryIcon } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   inviteUser,
@@ -19,10 +20,15 @@ import {
   cancelInvite,
   updateUserRole,
   updateUserModules,
+  updateUserMenus,
+  suspendUser,
+  unsuspendUser,
   deleteUser,
   listUsersAdmin,
+  listUserAuditLogs,
 } from "@/lib/users.functions";
 import { createInvestorAccess } from "@/lib/temp-investors.functions";
+import { MENU_CATALOG, MENU_BY_KEY, menusForModule } from "@/lib/menu-catalog";
 
 export const Route = createFileRoute("/app/users")({
   component: UsersPage,
@@ -64,12 +70,20 @@ function UsersPage() {
   const cancelFn = useServerFn(cancelInvite);
   const updateRoleFn = useServerFn(updateUserRole);
   const updateModulesFn = useServerFn(updateUserModules);
+  const updateMenusFn = useServerFn(updateUserMenus);
+  const suspendFn = useServerFn(suspendUser);
+  const unsuspendFn = useServerFn(unsuspendUser);
   const deleteUserFn = useServerFn(deleteUser);
   const listFn = useServerFn(listUsersAdmin);
+  const listLogsFn = useServerFn(listUserAuditLogs);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [suspendTarget, setSuspendTarget] = useState<any>(null);
+  const [suspendMode, setSuspendMode] = useState<"indef" | "days">("indef");
+  const [suspendDays, setSuspendDays] = useState<number>(30);
   const [investorOpen, setInvestorOpen] = useState(false);
   const [investorCreds, setInvestorCreds] = useState<{ email: string; password: string; expires_at: string; link: string } | null>(null);
   const [investorLoading, setInvestorLoading] = useState(false);
@@ -80,6 +94,7 @@ function UsersPage() {
   const [fEmail, setFEmail] = useState("");
   const [fRole, setFRole] = useState<string>("editor");
   const [fModules, setFModules] = useState<string[]>(["sesmt"]);
+  const [fMenus, setFMenus] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -92,9 +107,28 @@ function UsersPage() {
     queryFn: () => listFn(),
   });
 
+  const { data: logsData, isLoading: logsLoading } = useQuery({
+    queryKey: ["users-audit-logs"],
+    enabled: isAdmin && mfaSatisfied,
+    queryFn: () => listLogsFn({ data: { limit: 200 } }),
+  });
+
   function toggleModule(setter: (m: string[]) => void, current: string[], m: string) {
     if (current.includes(m)) setter(current.filter((x) => x !== m));
     else setter([...current, m]);
+  }
+
+  function toggleMenu(key: string) {
+    setFMenus((prev) => prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]);
+  }
+
+  function toggleAllMenusOfModule(mod: string, on: boolean) {
+    const keys = menusForModule(mod as any).map((m) => m.key);
+    setFMenus((prev) => {
+      const set = new Set(prev);
+      keys.forEach((k) => on ? set.add(k) : set.delete(k));
+      return Array.from(set);
+    });
   }
 
   async function handleInvite() {
@@ -125,9 +159,27 @@ function UsersPage() {
     try {
       await updateRoleFn({ data: { user_id: editing.id, role: fRole as any } });
       await updateModulesFn({ data: { user_id: editing.id, modules: fModules as any } });
+      // Salva também os menus granulares (vazio = libera tudo dentro dos módulos)
+      await updateMenusFn({ data: { user_id: editing.id, menus: fMenus } });
       toast.success("Usuário atualizado");
       setEditOpen(false);
       qc.invalidateQueries({ queryKey: ["users-admin"] });
+      qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally { setSubmitting(false); }
+  }
+
+  async function handleSuspend() {
+    if (!suspendTarget) return;
+    setSubmitting(true);
+    try {
+      const hours = suspendMode === "indef" ? undefined : Math.max(1, suspendDays) * 24;
+      await suspendFn({ data: { user_id: suspendTarget.id, hours } });
+      toast.success(suspendMode === "indef" ? "Usuário suspenso (indefinido)" : `Usuário suspenso por ${suspendDays} dias`);
+      setSuspendOpen(false);
+      qc.invalidateQueries({ queryKey: ["users-admin"] });
+      qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
     } catch (e: any) {
       toast.error(e.message);
     } finally { setSubmitting(false); }
@@ -136,7 +188,11 @@ function UsersPage() {
   const setRoleMut = useMutation({
     mutationFn: async ({ user_id, role }: { user_id: string; role: string }) =>
       updateRoleFn({ data: { user_id, role: role as any } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["users-admin"] }); toast.success("Papel atualizado"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users-admin"] });
+      qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+      toast.success("Papel atualizado");
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
