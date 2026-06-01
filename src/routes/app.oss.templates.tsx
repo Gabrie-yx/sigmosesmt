@@ -17,6 +17,9 @@ import { toast } from "sonner";
 import { buildOssPdf } from "@/lib/oss-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/app/oss/templates")({
   component: OssTemplatesPage,
@@ -210,6 +213,55 @@ function TemplateEditorDialog({
     },
   });
 
+  // Catálogo de riscos (para picker por categoria)
+  const { data: catalogo = [] } = useQuery({
+    queryKey: ["oss-catalogo-riscos"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("catalogo_riscos")
+        .select("id, nome, categoria, medidas_controle_padrao, epis_sugeridos")
+        .eq("ativo", true)
+        .order("nome");
+      return (data ?? []) as Array<{
+        id: string; nome: string; categoria: string;
+        medidas_controle_padrao: string[] | null;
+        epis_sugeridos: string[] | null;
+      }>;
+    },
+  });
+
+  /** Adiciona um item do catálogo no campo de risco daquela categoria,
+   *  e ainda enriquece medidas_preventivas + epis_obrigatorios. */
+  function addFromCatalogo(
+    riscoField: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente",
+    item: { nome: string; medidas_controle_padrao: string[] | null; epis_sugeridos: string[] | null },
+  ) {
+    setForm((f) => {
+      const cur = (f as any)[riscoField] ?? "";
+      const line = `• ${item.nome}`;
+      const already = cur.split(/\r?\n/).some((l: string) => l.trim() === line);
+      const next: any = { ...f };
+      if (!already) next[riscoField] = cur.trim() ? `${cur.trim()}\n${line}` : line;
+      // medidas
+      const medAtual = (f.medidas_preventivas || "").split(/\r?\n/);
+      const novasMed = (item.medidas_controle_padrao ?? [])
+        .filter((m) => !medAtual.some((l) => l.trim() === `• ${m}`))
+        .map((m) => `• ${m}`);
+      if (novasMed.length) {
+        next.medidas_preventivas = (f.medidas_preventivas?.trim() ? f.medidas_preventivas.trim() + "\n" : "") + novasMed.join("\n");
+      }
+      // EPIs
+      const epiAtual = (f.epis_obrigatorios || "").split(/\r?\n/);
+      const novosEpi = (item.epis_sugeridos ?? [])
+        .filter((e) => !epiAtual.some((l) => l.trim() === `• ${e}`))
+        .map((e) => `• ${e}`);
+      if (novosEpi.length) {
+        next.epis_obrigatorios = (f.epis_obrigatorios?.trim() ? f.epis_obrigatorios.trim() + "\n" : "") + novosEpi.join("\n");
+      }
+      return next;
+    });
+  }
+
   // "Gerar a partir da Matriz" — busca cargo_riscos + catalogo_riscos do cargo selecionado
   const gerarFromMatriz = useMutation({
     mutationFn: async () => {
@@ -219,24 +271,53 @@ function TemplateEditorDialog({
       if (!role) throw new Error("Cargo não encontrado em \"Cargos & Matriz de Riscos\". Cadastre-o lá primeiro.");
       const { data: riscos } = await supabase
         .from("cargo_riscos")
-        .select("*, catalogo_riscos(nome, categoria)")
+        .select("*, catalogo_riscos(nome, categoria, medidas_controle_padrao, epis_sugeridos)")
         .eq("role_id", role.id)
         .eq("ativo", true);
       const lista = (riscos ?? []) as any[];
-      const linhasRiscos = lista
-        .map((r) => {
-          const nome = r.catalogo_riscos?.nome ?? "(risco)";
-          const cat = r.catalogo_riscos?.categoria ?? "";
-          const intens = r.intensidade != null ? ` — ${r.intensidade}${r.unidade ?? ""}` : "";
-          const fonte = r.fonte_geradora ? ` (fonte: ${r.fonte_geradora})` : "";
-          return `• [${cat}] ${nome}${intens}${fonte}`;
-        })
-        .join("\n");
-      return { linhasRiscos, total: lista.length };
+      // Agrupa por categoria (mapeia categoria do catálogo → campo do template)
+      const catMap: Record<string, keyof typeof form> = {
+        FISICO: "risco_fisico",
+        QUIMICO: "risco_quimico",
+        BIOLOGICO: "risco_biologico",
+        ERGONOMICO: "risco_ergonomico",
+        ACIDENTE_MECANICO: "risco_acidente",
+      };
+      const buckets: Record<string, string[]> = {};
+      const medidasSet = new Set<string>();
+      const episSet = new Set<string>();
+      for (const r of lista) {
+        const cat = (r.catalogo_riscos?.categoria ?? "").toUpperCase();
+        const nome = r.catalogo_riscos?.nome ?? "(risco)";
+        const intens = r.intensidade != null ? ` — ${r.intensidade}${r.unidade ?? ""}` : "";
+        const fonte = r.fonte_geradora ? ` (fonte: ${r.fonte_geradora})` : "";
+        (buckets[cat] ||= []).push(`${nome}${intens}${fonte}`);
+        for (const m of r.catalogo_riscos?.medidas_controle_padrao ?? []) medidasSet.add(String(m));
+        for (const e of r.catalogo_riscos?.epis_sugeridos ?? []) episSet.add(String(e));
+      }
+      return { buckets, catMap, medidas: [...medidasSet], epis: [...episSet], total: lista.length };
     },
     onSuccess: (res) => {
-      upd("riscos_texto", res.linhasRiscos || "Nenhum risco cadastrado na Matriz para este cargo.");
-      toast.success(`${res.total} risco(s) importado(s) da Matriz`);
+      // Preenche cada campo categorizado
+      setForm((f) => {
+        const next = { ...f };
+        for (const [cat, field] of Object.entries(res.catMap)) {
+          const items = res.buckets[cat] ?? [];
+          if (items.length) (next as any)[field] = items.map((s) => `• ${s}`).join("\n");
+        }
+        if (res.medidas.length) {
+          const existing = f.medidas_preventivas.trim();
+          const block = res.medidas.map((m) => `• ${m}`).join("\n");
+          next.medidas_preventivas = existing ? `${existing}\n${block}` : block;
+        }
+        if (res.epis.length) {
+          const existing = f.epis_obrigatorios.trim();
+          const block = res.epis.map((e) => `• ${e}`).join("\n");
+          next.epis_obrigatorios = existing ? `${existing}\n${block}` : block;
+        }
+        return next;
+      });
+      toast.success(`${res.total} risco(s) importado(s) da Matriz — categorias, medidas e EPIs preenchidos`);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -359,11 +440,36 @@ function TemplateEditorDialog({
             <div className="border rounded-md p-3 bg-slate-50 space-y-2">
               <div className="text-[10px] font-black uppercase text-slate-700">2. Riscos Ocupacionais (por categoria)</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <TextoSecao label="Físico" rows={2} value={form.risco_fisico ?? ""} onChange={(v) => upd("risco_fisico", v)} placeholder="Ex: ruído contínuo ou intermitente, calor, vibração..." />
-                <TextoSecao label="Químico" rows={2} value={form.risco_quimico ?? ""} onChange={(v) => upd("risco_quimico", v)} placeholder="Ex: fumos metálicos (ferro, manganês), solventes..." />
-                <TextoSecao label="Biológico" rows={2} value={form.risco_biologico ?? ""} onChange={(v) => upd("risco_biologico", v)} placeholder="Ex: bactérias, fungos. Ou 'Não exposto a níveis significativos'." />
-                <TextoSecao label="Ergonômico" rows={2} value={form.risco_ergonomico ?? ""} onChange={(v) => upd("risco_ergonomico", v)} placeholder="Ex: postura em pé prolongada, levantamento de peso..." />
-                <TextoSecao label="Acidente / Mecânico" rows={2} value={form.risco_acidente ?? ""} onChange={(v) => upd("risco_acidente", v)} placeholder="Ex: espaço confinado, trabalho em altura, projeção de partículas..." />
+                <RiscoCategoria
+                  label="Físico" catKey="FISICO" field="risco_fisico"
+                  value={form.risco_fisico ?? ""} onChange={(v) => upd("risco_fisico", v)}
+                  placeholder="Ex: ruído, calor, vibração..."
+                  catalogo={catalogo} onAdd={addFromCatalogo}
+                />
+                <RiscoCategoria
+                  label="Químico" catKey="QUIMICO" field="risco_quimico"
+                  value={form.risco_quimico ?? ""} onChange={(v) => upd("risco_quimico", v)}
+                  placeholder="Ex: fumos metálicos, solventes..."
+                  catalogo={catalogo} onAdd={addFromCatalogo}
+                />
+                <RiscoCategoria
+                  label="Biológico" catKey="BIOLOGICO" field="risco_biologico"
+                  value={form.risco_biologico ?? ""} onChange={(v) => upd("risco_biologico", v)}
+                  placeholder="Ex: bactérias, fungos..."
+                  catalogo={catalogo} onAdd={addFromCatalogo}
+                />
+                <RiscoCategoria
+                  label="Ergonômico" catKey="ERGONOMICO" field="risco_ergonomico"
+                  value={form.risco_ergonomico ?? ""} onChange={(v) => upd("risco_ergonomico", v)}
+                  placeholder="Ex: postura prolongada, levantamento de peso..."
+                  catalogo={catalogo} onAdd={addFromCatalogo}
+                />
+                <RiscoCategoria
+                  label="Acidente / Mecânico" catKey="ACIDENTE_MECANICO" field="risco_acidente"
+                  value={form.risco_acidente ?? ""} onChange={(v) => upd("risco_acidente", v)}
+                  placeholder="Ex: espaço confinado, altura, projeção..."
+                  catalogo={catalogo} onAdd={addFromCatalogo}
+                />
               </div>
               <details className="text-[10px] text-slate-500">
                 <summary className="cursor-pointer">Texto livre (legado / fallback)</summary>
@@ -403,6 +509,57 @@ function TextoSecao({ label, value, onChange, placeholder, rows = 4 }: { label: 
     <div>
       {label && <Label className="text-[10px] font-black uppercase">{label}</Label>}
       <Textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows} placeholder={placeholder} className="text-sm" />
+    </div>
+  );
+}
+
+type CatalogoItem = {
+  id: string; nome: string; categoria: string;
+  medidas_controle_padrao: string[] | null;
+  epis_sugeridos: string[] | null;
+};
+
+function RiscoCategoria({
+  label, catKey, field, value, onChange, placeholder, catalogo, onAdd,
+}: {
+  label: string;
+  catKey: "FISICO" | "QUIMICO" | "BIOLOGICO" | "ERGONOMICO" | "ACIDENTE_MECANICO";
+  field: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente";
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  catalogo: CatalogoItem[];
+  onAdd: (
+    field: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente",
+    item: CatalogoItem,
+  ) => void;
+}) {
+  const items = useMemo(
+    () => catalogo.filter((c) => (c.categoria ?? "").toUpperCase() === catKey),
+    [catalogo, catKey],
+  );
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-[10px] font-black uppercase">{label}</Label>
+        <Select
+          value=""
+          onValueChange={(id) => {
+            const it = items.find((i) => i.id === id);
+            if (it) onAdd(field, it);
+          }}
+        >
+          <SelectTrigger className="h-6 w-44 text-[10px] border-amber-300 bg-amber-50 hover:bg-amber-100">
+            <SelectValue placeholder={items.length ? "+ Do catálogo" : "(catálogo vazio)"} />
+          </SelectTrigger>
+          <SelectContent className="max-h-72">
+            {items.map((i) => (
+              <SelectItem key={i.id} value={i.id} className="text-xs">{i.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <Textarea value={value} onChange={(e) => onChange(e.target.value)} rows={2} placeholder={placeholder} className="text-sm" />
     </div>
   );
 }
