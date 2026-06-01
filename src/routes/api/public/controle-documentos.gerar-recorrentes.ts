@@ -1,10 +1,29 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { timingSafeEqual } from "crypto";
 
 export const Route = createFileRoute("/api/public/controle-documentos/gerar-recorrentes")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        // Proteção: exige header X-Cron-Secret igual ao secret configurado no servidor.
+        const expected = process.env.CRON_SECRET;
+        if (!expected) {
+          return new Response(
+            JSON.stringify({ error: "CRON_SECRET não configurado no servidor" }),
+            { status: 503, headers: { "Content-Type": "application/json" } },
+          );
+        }
+        const provided = request.headers.get("x-cron-secret") ?? "";
+        const a = Buffer.from(provided);
+        const b = Buffer.from(expected);
+        if (a.length !== b.length || !timingSafeEqual(a, b)) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
         const hoje = new Date();
         const hojeISO = hoje.toISOString().slice(0, 10);
 
