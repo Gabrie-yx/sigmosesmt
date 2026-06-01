@@ -7,7 +7,10 @@ import type { Database } from './types';
 
 function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Fallback para SERVICE_ROLE_KEY pois o prefixo SUPABASE_ é reservado
+  // no painel de secrets do Lovable e nem sempre está disponível no runtime do Worker.
+  const SUPABASE_SERVICE_ROLE_KEY =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     const missing = [
