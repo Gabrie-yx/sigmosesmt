@@ -440,11 +440,36 @@ function TemplateEditorDialog({
             <div className="border rounded-md p-3 bg-slate-50 space-y-2">
               <div className="text-[10px] font-black uppercase text-slate-700">2. Riscos Ocupacionais (por categoria)</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <TextoSecao label="Físico" rows={2} value={form.risco_fisico ?? ""} onChange={(v) => upd("risco_fisico", v)} placeholder="Ex: ruído contínuo ou intermitente, calor, vibração..." />
-                <TextoSecao label="Químico" rows={2} value={form.risco_quimico ?? ""} onChange={(v) => upd("risco_quimico", v)} placeholder="Ex: fumos metálicos (ferro, manganês), solventes..." />
-                <TextoSecao label="Biológico" rows={2} value={form.risco_biologico ?? ""} onChange={(v) => upd("risco_biologico", v)} placeholder="Ex: bactérias, fungos. Ou 'Não exposto a níveis significativos'." />
-                <TextoSecao label="Ergonômico" rows={2} value={form.risco_ergonomico ?? ""} onChange={(v) => upd("risco_ergonomico", v)} placeholder="Ex: postura em pé prolongada, levantamento de peso..." />
-                <TextoSecao label="Acidente / Mecânico" rows={2} value={form.risco_acidente ?? ""} onChange={(v) => upd("risco_acidente", v)} placeholder="Ex: espaço confinado, trabalho em altura, projeção de partículas..." />
+                <RiscoCategoria
+                  label="Físico" catKey="FISICO" field="risco_fisico"
+                  value={form.risco_fisico ?? ""} onChange={(v) => upd("risco_fisico", v)}
+                  placeholder="Ex: ruído, calor, vibração..."
+                  catalogo={catalogo} onAdd={addFromCatalogo}
+                />
+                <RiscoCategoria
+                  label="Químico" catKey="QUIMICO" field="risco_quimico"
+                  value={form.risco_quimico ?? ""} onChange={(v) => upd("risco_quimico", v)}
+                  placeholder="Ex: fumos metálicos, solventes..."
+                  catalogo={catalogo} onAdd={addFromCatalogo}
+                />
+                <RiscoCategoria
+                  label="Biológico" catKey="BIOLOGICO" field="risco_biologico"
+                  value={form.risco_biologico ?? ""} onChange={(v) => upd("risco_biologico", v)}
+                  placeholder="Ex: bactérias, fungos..."
+                  catalogo={catalogo} onAdd={addFromCatalogo}
+                />
+                <RiscoCategoria
+                  label="Ergonômico" catKey="ERGONOMICO" field="risco_ergonomico"
+                  value={form.risco_ergonomico ?? ""} onChange={(v) => upd("risco_ergonomico", v)}
+                  placeholder="Ex: postura prolongada, levantamento de peso..."
+                  catalogo={catalogo} onAdd={addFromCatalogo}
+                />
+                <RiscoCategoria
+                  label="Acidente / Mecânico" catKey="ACIDENTE_MECANICO" field="risco_acidente"
+                  value={form.risco_acidente ?? ""} onChange={(v) => upd("risco_acidente", v)}
+                  placeholder="Ex: espaço confinado, altura, projeção..."
+                  catalogo={catalogo} onAdd={addFromCatalogo}
+                />
               </div>
               <details className="text-[10px] text-slate-500">
                 <summary className="cursor-pointer">Texto livre (legado / fallback)</summary>
