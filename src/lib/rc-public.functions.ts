@@ -96,14 +96,6 @@ export const decidirRc = createServerFn({ method: "POST" })
       throw new Error("Apenas gerentes (admin/moderador) podem aprovar requisições.");
     }
 
-    // Pega nome real do usuário autenticado (não confia em input do cliente)
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("full_name")
-      .eq("id", userId)
-      .maybeSingle();
-    const aprovador_nome = profile?.full_name ?? (context.claims?.email as string) ?? userId;
-
     const { data: rc, error: e1 } = await supabaseAdmin
       .from("purchase_requisitions")
       .select("id, status")
@@ -123,8 +115,7 @@ export const decidirRc = createServerFn({ method: "POST" })
         status: data.decisao,
         motivo_indeferimento: data.decisao === "INDEFERIDA" ? data.motivo : null,
         approved_at: new Date().toISOString(),
-        aprovador_nome,
-        aprovador_user_id: userId,
+        approved_by: userId,
       })
       .eq("id", rc.id);
     if (error) throw new Error(error.message);
