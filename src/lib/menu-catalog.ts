@@ -21,6 +21,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/dds", label: "DDS — Diálogo de Segurança", module: "sesmt" },
   { key: "/app/aprs", label: "APRs — Análise de Risco", module: "sesmt" },
   { key: "/app/ptes", label: "PTEs — Permissão de Trabalho", module: "sesmt" },
+  { key: "/app/oss", label: "OSS — Ordens de Serviço (NR-01)", module: "sesmt" },
   { key: "/app/trainings", label: "Treinamentos & NRs", module: "sesmt" },
   { key: "/app/sesmt/equipamentos-moveis", label: "Checklist de Equipamentos", module: "sesmt" },
   { key: "/app/sesmt/terceiros", label: "Painel de Terceiros", module: "sesmt" },
