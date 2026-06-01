@@ -145,7 +145,7 @@ const MANUTENCAO_LOCKED: LockedItem[] = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { roles, hasModule } = useAuth();
+  const { roles, hasModule, hasMenu } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
@@ -158,10 +158,18 @@ export function AppSidebar() {
   const canProducao = isAdmin || hasModule("producao");
   const canUsuarios = isAdmin || hasModule("usuarios");
 
-  const sesmtAllItems = SESMT_GROUPS.flatMap((g) => g.items).concat(DDS_SUBMENU);
+  // Filtra grupos/itens pelo controle granular de menus
+  const visibleSesmtGroups = SESMT_GROUPS
+    .map((g) => ({ ...g, items: g.items.filter((i) => hasMenu(i.to)) }))
+    .filter((g) => g.items.length > 0);
+  const visibleDDSSubmenu = DDS_SUBMENU.filter((i) => hasMenu(i.to) || i.to.startsWith("/app/dds"));
+  const visibleEstoque = ESTOQUE_ITEMS.filter((i) => hasMenu(i.to));
+  const visibleProducao = PRODUCAO_SUBMENU.filter((i) => hasMenu(i.to));
+
+  const sesmtAllItems = visibleSesmtGroups.flatMap((g) => g.items).concat(visibleDDSSubmenu);
   const sesmtOpen = anyActive(sesmtAllItems);
-  const estoqueOpen = anyActive(ESTOQUE_ITEMS);
-  const producaoOpen = anyActive(PRODUCAO_SUBMENU);
+  const estoqueOpen = anyActive(visibleEstoque);
+  const producaoOpen = anyActive(visibleProducao);
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
@@ -210,7 +218,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* SESMT */}
-        {canSesmt && (
+        {canSesmt && visibleSesmtGroups.length > 0 && (
           <Collapsible defaultOpen={sesmtOpen} className="group/sesmt">
             <SidebarGroup>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
@@ -222,7 +230,7 @@ export function AppSidebar() {
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
               <Body>
-                {SESMT_GROUPS.map((group) => (
+                {visibleSesmtGroups.map((group) => (
                   <SidebarGroup key={group.title} className="py-0">
                     <SidebarGroupLabel className="text-[9px] tracking-widest">
                       {group.title}
@@ -267,7 +275,7 @@ export function AppSidebar() {
         )}
 
         {/* ESTOQUE */}
-        {canEstoque && (
+        {canEstoque && visibleEstoque.length > 0 && (
           <Collapsible defaultOpen={estoqueOpen} className="group/estoque">
             <SidebarGroup>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
@@ -281,7 +289,7 @@ export function AppSidebar() {
               <Body>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {ESTOQUE_ITEMS.map((s) => (
+                    {visibleEstoque.map((s) => (
                       <SidebarMenuItem key={s.to}>
                         <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={`Estoque · ${s.label}`}>
                           <Link to={s.to}>
@@ -312,7 +320,7 @@ export function AppSidebar() {
         )}
 
         {/* PRODUÇÃO */}
-        {canProducao && (
+        {canProducao && visibleProducao.length > 0 && (
           <Collapsible defaultOpen={producaoOpen} className="group/producao">
             <SidebarGroup>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
@@ -326,7 +334,7 @@ export function AppSidebar() {
               <Body>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {PRODUCAO_SUBMENU.map((s) => (
+                    {visibleProducao.map((s) => (
                       <SidebarMenuItem key={s.to}>
                         <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
                           <Link to={s.to}>

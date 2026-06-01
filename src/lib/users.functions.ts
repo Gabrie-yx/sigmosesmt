@@ -17,6 +17,27 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Apenas administradores podem gerenciar usuários");
 }
 
+async function logAdminEvent(args: {
+  action: string;
+  target_user_id: string;
+  actor_user_id: string;
+  payload?: Record<string, unknown>;
+}) {
+  let actor_email: string | null = null;
+  try {
+    const { data } = await supabaseAdmin.auth.admin.getUserById(args.actor_user_id);
+    actor_email = data.user?.email ?? null;
+  } catch { /* ignore */ }
+  await supabaseAdmin.from("audit_logs").insert({
+    table_name: "users_admin",
+    action: args.action,
+    record_id: args.target_user_id,
+    user_id: args.actor_user_id,
+    user_email: actor_email,
+    new_data: (args.payload ?? null) as any,
+  });
+}
+
 export const inviteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -94,6 +115,12 @@ export const updateUserRole = createServerFn({ method: "POST" })
       .from("user_roles")
       .insert({ user_id: data.user_id, role: data.role });
     if (error) throw new Error(error.message);
+    await logAdminEvent({
+      action: "ROLE_CHANGED",
+      target_user_id: data.user_id,
+      actor_user_id: context.userId,
+      payload: { role: data.role },
+    });
     return { ok: true };
   });
 
@@ -114,6 +141,79 @@ export const updateUserModules = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin.from("user_module_access").insert(rows);
       if (error) throw new Error(error.message);
     }
+    await logAdminEvent({
+      action: "MODULES_UPDATED",
+      target_user_id: data.user_id,
+      actor_user_id: context.userId,
+      payload: { modules: data.modules },
+    });
+    return { ok: true };
+  });
+
+export const updateUserMenus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      user_id: z.string().uuid(),
+      menus: z.array(z.string().min(1).max(200)),
+    })
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    await (supabaseAdmin as any).from("user_menu_access").delete().eq("user_id", data.user_id);
+    if (data.menus.length > 0) {
+      const rows = data.menus.map((k) => ({ user_id: data.user_id, menu_key: k, enabled: true }));
+      const { error } = await (supabaseAdmin as any).from("user_menu_access").insert(rows);
+      if (error) throw new Error(error.message);
+    }
+    await logAdminEvent({
+      action: "MENUS_UPDATED",
+      target_user_id: data.user_id,
+      actor_user_id: context.userId,
+      payload: { menus: data.menus },
+    });
+    return { ok: true };
+  });
+
+export const suspendUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      user_id: z.string().uuid(),
+      hours: z.number().int().positive().max(24 * 365 * 100).optional(), // omitido = indefinido
+    })
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    if (data.user_id === context.userId) throw new Error("Você não pode suspender a si mesmo");
+    const hours = data.hours ?? 24 * 365 * 100; // ~100 anos = "indefinido"
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      ban_duration: `${hours}h`,
+    } as any);
+    if (error) throw new Error(error.message);
+    await logAdminEvent({
+      action: "SUSPENDED",
+      target_user_id: data.user_id,
+      actor_user_id: context.userId,
+      payload: { hours, indefinite: data.hours == null },
+    });
+    return { ok: true };
+  });
+
+export const unsuspendUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ user_id: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      ban_duration: "none",
+    } as any);
+    if (error) throw new Error(error.message);
+    await logAdminEvent({
+      action: "UNSUSPENDED",
+      target_user_id: data.user_id,
+      actor_user_id: context.userId,
+    });
     return { ok: true };
   });
 
@@ -123,13 +223,25 @@ export const deleteUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     if (data.user_id === context.userId) throw new Error("Você não pode remover a si mesmo");
+    let target_email: string | null = null;
+    try {
+      const { data: u } = await supabaseAdmin.auth.admin.getUserById(data.user_id);
+      target_email = u.user?.email ?? null;
+    } catch { /* ignore */ }
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
     await supabaseAdmin.from("user_module_access").delete().eq("user_id", data.user_id);
+    await (supabaseAdmin as any).from("user_menu_access").delete().eq("user_id", data.user_id);
     try {
       await supabaseAdmin.auth.admin.deleteUser(data.user_id);
     } catch (e) {
       console.error("auth.admin.deleteUser falhou", e);
     }
+    await logAdminEvent({
+      action: "DELETED",
+      target_user_id: data.user_id,
+      actor_user_id: context.userId,
+      payload: { email: target_email },
+    });
     return { ok: true };
   });
 
@@ -142,16 +254,20 @@ export const listUsersAdmin = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const ids = list.users.map((u) => u.id);
-    const [{ data: profiles }, { data: roles }, { data: mods }, { data: invites }] = await Promise.all([
+    const [{ data: profiles }, { data: roles }, { data: mods }, menusRes, { data: invites }] = await Promise.all([
       supabaseAdmin.from("profiles").select("id, full_name").in("id", ids),
       supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", ids),
       supabaseAdmin.from("user_module_access").select("user_id, module, enabled").in("user_id", ids),
+      (supabaseAdmin as any).from("user_menu_access").select("user_id, menu_key, enabled").in("user_id", ids),
       supabaseAdmin.from("user_invites").select("*").is("accepted_at", null).order("created_at", { ascending: false }),
     ]);
+    const menus = (menusRes?.data ?? []) as { user_id: string; menu_key: string; enabled: boolean }[];
 
     const users = list.users.map((u) => {
       const factors = (u as any).factors ?? [];
       const mfaActive = factors.some((f: any) => f.status === "verified");
+      const bannedUntil = (u as any).banned_until as string | null | undefined;
+      const isSuspended = !!bannedUntil && new Date(bannedUntil).getTime() > Date.now();
       return {
         id: u.id,
         email: u.email ?? "",
@@ -159,10 +275,37 @@ export const listUsersAdmin = createServerFn({ method: "POST" })
         last_sign_in_at: u.last_sign_in_at ?? null,
         created_at: u.created_at,
         mfa_active: mfaActive,
+        banned_until: bannedUntil ?? null,
+        suspended: isSuspended,
         roles: (roles ?? []).filter((r) => r.user_id === u.id).map((r) => r.role as string),
         modules: (mods ?? []).filter((m) => m.user_id === u.id && m.enabled).map((m) => m.module as string),
+        menus: menus.filter((m) => m.user_id === u.id && m.enabled).map((m) => m.menu_key),
       };
     });
 
     return { users, invites: invites ?? [] };
+  });
+
+export const listUserAuditLogs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      target_user_id: z.string().uuid().optional(),
+      action: z.string().max(60).optional(),
+      limit: z.number().int().min(1).max(500).default(200),
+    })
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    let q = supabaseAdmin
+      .from("audit_logs")
+      .select("*")
+      .in("table_name", ["users_admin", "user_roles", "user_module_access", "user_menu_access", "user_invites"])
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    if (data.target_user_id) q = q.eq("record_id", data.target_user_id);
+    if (data.action) q = q.eq("action", data.action);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return { logs: rows ?? [] };
   });

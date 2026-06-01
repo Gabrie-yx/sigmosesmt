@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { ShieldCheck, ShieldAlert, Trash2, Plus, Mail, RotateCcw, X, Settings2 } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Trash2, Plus, Mail, RotateCcw, X, Settings2, Ban, Play, History as HistoryIcon } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   inviteUser,
@@ -19,10 +20,15 @@ import {
   cancelInvite,
   updateUserRole,
   updateUserModules,
+  updateUserMenus,
+  suspendUser,
+  unsuspendUser,
   deleteUser,
   listUsersAdmin,
+  listUserAuditLogs,
 } from "@/lib/users.functions";
 import { createInvestorAccess } from "@/lib/temp-investors.functions";
+import { MENU_CATALOG, MENU_BY_KEY, menusForModule } from "@/lib/menu-catalog";
 
 export const Route = createFileRoute("/app/users")({
   component: UsersPage,
@@ -64,12 +70,20 @@ function UsersPage() {
   const cancelFn = useServerFn(cancelInvite);
   const updateRoleFn = useServerFn(updateUserRole);
   const updateModulesFn = useServerFn(updateUserModules);
+  const updateMenusFn = useServerFn(updateUserMenus);
+  const suspendFn = useServerFn(suspendUser);
+  const unsuspendFn = useServerFn(unsuspendUser);
   const deleteUserFn = useServerFn(deleteUser);
   const listFn = useServerFn(listUsersAdmin);
+  const listLogsFn = useServerFn(listUserAuditLogs);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [suspendTarget, setSuspendTarget] = useState<any>(null);
+  const [suspendMode, setSuspendMode] = useState<"indef" | "days">("indef");
+  const [suspendDays, setSuspendDays] = useState<number>(30);
   const [investorOpen, setInvestorOpen] = useState(false);
   const [investorCreds, setInvestorCreds] = useState<{ email: string; password: string; expires_at: string; link: string } | null>(null);
   const [investorLoading, setInvestorLoading] = useState(false);
@@ -80,6 +94,7 @@ function UsersPage() {
   const [fEmail, setFEmail] = useState("");
   const [fRole, setFRole] = useState<string>("editor");
   const [fModules, setFModules] = useState<string[]>(["sesmt"]);
+  const [fMenus, setFMenus] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -92,9 +107,28 @@ function UsersPage() {
     queryFn: () => listFn(),
   });
 
+  const { data: logsData, isLoading: logsLoading } = useQuery({
+    queryKey: ["users-audit-logs"],
+    enabled: isAdmin && mfaSatisfied,
+    queryFn: () => listLogsFn({ data: { limit: 200 } }),
+  });
+
   function toggleModule(setter: (m: string[]) => void, current: string[], m: string) {
     if (current.includes(m)) setter(current.filter((x) => x !== m));
     else setter([...current, m]);
+  }
+
+  function toggleMenu(key: string) {
+    setFMenus((prev) => prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]);
+  }
+
+  function toggleAllMenusOfModule(mod: string, on: boolean) {
+    const keys = menusForModule(mod as any).map((m) => m.key);
+    setFMenus((prev) => {
+      const set = new Set(prev);
+      keys.forEach((k) => on ? set.add(k) : set.delete(k));
+      return Array.from(set);
+    });
   }
 
   async function handleInvite() {
@@ -125,9 +159,27 @@ function UsersPage() {
     try {
       await updateRoleFn({ data: { user_id: editing.id, role: fRole as any } });
       await updateModulesFn({ data: { user_id: editing.id, modules: fModules as any } });
+      // Salva também os menus granulares (vazio = libera tudo dentro dos módulos)
+      await updateMenusFn({ data: { user_id: editing.id, menus: fMenus } });
       toast.success("Usuário atualizado");
       setEditOpen(false);
       qc.invalidateQueries({ queryKey: ["users-admin"] });
+      qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally { setSubmitting(false); }
+  }
+
+  async function handleSuspend() {
+    if (!suspendTarget) return;
+    setSubmitting(true);
+    try {
+      const hours = suspendMode === "indef" ? undefined : Math.max(1, suspendDays) * 24;
+      await suspendFn({ data: { user_id: suspendTarget.id, hours } });
+      toast.success(suspendMode === "indef" ? "Usuário suspenso (indefinido)" : `Usuário suspenso por ${suspendDays} dias`);
+      setSuspendOpen(false);
+      qc.invalidateQueries({ queryKey: ["users-admin"] });
+      qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
     } catch (e: any) {
       toast.error(e.message);
     } finally { setSubmitting(false); }
@@ -136,7 +188,11 @@ function UsersPage() {
   const setRoleMut = useMutation({
     mutationFn: async ({ user_id, role }: { user_id: string; role: string }) =>
       updateRoleFn({ data: { user_id, role: role as any } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["users-admin"] }); toast.success("Papel atualizado"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users-admin"] });
+      qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+      toast.success("Papel atualizado");
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -198,6 +254,14 @@ function UsersPage() {
         </Button>
       </div>
 
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList>
+          <TabsTrigger value="users">Usuários</TabsTrigger>
+          <TabsTrigger value="history">
+            <HistoryIcon className="h-3.5 w-3.5 mr-1" /> Histórico
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="users" className="mt-4">
       {/* Convites pendentes */}
       {data?.invites && data.invites.length > 0 && (
         <div className="mb-6 rounded-md border bg-blue-50/60 border-blue-200">
@@ -248,15 +312,16 @@ function UsersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome / Email</TableHead>
+              <TableHead className="w-28">Status</TableHead>
               <TableHead className="w-40">Papel</TableHead>
               <TableHead>Módulos liberados</TableHead>
               <TableHead className="w-24 text-center">MFA</TableHead>
               <TableHead className="w-40">Trocar papel</TableHead>
-              <TableHead className="w-28 text-right">Ações</TableHead>
+              <TableHead className="w-36 text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Carregando...</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Carregando...</TableCell></TableRow>}
             {data?.users.map((u: any) => {
               const role = u.roles[0] ?? "viewer";
               const isAdminUser = role === "admin";
@@ -265,6 +330,18 @@ function UsersPage() {
                   <TableCell>
                     <div className="font-medium">{u.full_name ?? "—"}</div>
                     <div className="text-xs text-muted-foreground">{u.email}</div>
+                  </TableCell>
+                  <TableCell>
+                    {u.suspended ? (
+                      <Badge variant="destructive" className="text-[10px]">
+                        Suspenso
+                        {u.banned_until && new Date(u.banned_until).getFullYear() < 3000 && (
+                          <span className="ml-1">até {new Date(u.banned_until).toLocaleDateString("pt-BR")}</span>
+                        )}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] border-green-500 text-green-700">Ativo</Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     {u.roles.length === 0
@@ -283,6 +360,11 @@ function UsersPage() {
                             {MODULES.find((x) => x.value === m)?.label ?? m}
                           </Badge>
                         ))}
+                        {u.menus && u.menus.length > 0 && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            +{u.menus.length} menus
+                          </Badge>
+                        )}
                       </div>
                     )}
                   </TableCell>
@@ -307,10 +389,34 @@ function UsersPage() {
                         setEditing(u);
                         setFRole(role);
                         setFModules(u.modules);
+                        setFMenus(u.menus ?? []);
                         setEditOpen(true);
                       }}>
                       <Settings2 className="h-3.5 w-3.5" />
                     </Button>
+                    {u.suspended ? (
+                      <Button size="icon" variant="ghost" title="Reativar"
+                        onClick={async () => {
+                          try {
+                            await unsuspendFn({ data: { user_id: u.id } });
+                            toast.success("Usuário reativado");
+                            qc.invalidateQueries({ queryKey: ["users-admin"] });
+                            qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+                          } catch (e: any) { toast.error(e.message); }
+                        }}>
+                        <Play className="h-3.5 w-3.5 text-green-600" />
+                      </Button>
+                    ) : (
+                      <Button size="icon" variant="ghost" title="Suspender"
+                        onClick={() => {
+                          setSuspendTarget(u);
+                          setSuspendMode("indef");
+                          setSuspendDays(30);
+                          setSuspendOpen(true);
+                        }}>
+                        <Ban className="h-3.5 w-3.5 text-amber-600" />
+                      </Button>
+                    )}
                     <Button size="icon" variant="ghost"
                       onClick={async () => {
                         if (!confirm(`Remover ${u.email}?`)) return;
@@ -318,6 +424,7 @@ function UsersPage() {
                           await deleteUserFn({ data: { user_id: u.id } });
                           toast.success("Usuário removido");
                           qc.invalidateQueries({ queryKey: ["users-admin"] });
+                          qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
                         } catch (e: any) { toast.error(e.message); }
                       }}>
                       <Trash2 className="h-3.5 w-3.5 text-red-600" />
@@ -329,6 +436,12 @@ function UsersPage() {
           </TableBody>
         </Table>
       </div>
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-4">
+          <HistoryView logs={logsData?.logs ?? []} loading={logsLoading} users={data?.users ?? []} />
+        </TabsContent>
+      </Tabs>
 
       {/* Modal Convidar */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
@@ -417,10 +530,91 @@ function UsersPage() {
                 </div>
               )}
             </div>
+            {fRole !== "admin" && (
+              <div>
+                <Label>Menus específicos (granular)</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Deixe tudo em branco em um módulo para liberar TODOS os menus daquele módulo. Marque itens específicos para restringir.
+                </p>
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                  {fModules.map((mod) => {
+                    const menus = menusForModule(mod as any);
+                    if (menus.length === 0) return null;
+                    const allOn = menus.every((m) => fMenus.includes(m.key));
+                    return (
+                      <div key={mod} className="border rounded p-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            {MODULES.find((x) => x.value === mod)?.label ?? mod}
+                          </span>
+                          <button type="button" className="text-[11px] underline text-blue-700"
+                            onClick={() => toggleAllMenusOfModule(mod, !allOn)}>
+                            {allOn ? "Limpar (libera todos)" : "Marcar todos"}
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 gap-1">
+                          {menus.map((m) => (
+                            <label key={m.key} className="flex items-center gap-2 text-sm p-1 rounded hover:bg-muted/40 cursor-pointer">
+                              <Checkbox checked={fMenus.includes(m.key)} onCheckedChange={() => toggleMenu(m.key)} />
+                              <span>{m.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancelar</Button>
             <Button onClick={handleSaveEdit} disabled={submitting}>{submitting ? "Salvando..." : "Salvar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Suspender */}
+      <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Suspender usuário</DialogTitle>
+            <DialogDescription>{suspendTarget?.email} ficará impedido de fazer login.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <label className="flex items-start gap-2 p-2 rounded border cursor-pointer hover:bg-muted/40">
+              <input type="radio" name="suspmode" checked={suspendMode === "indef"} onChange={() => setSuspendMode("indef")} className="mt-1" />
+              <div>
+                <div className="text-sm font-medium">Indefinido</div>
+                <div className="text-xs text-muted-foreground">Bloqueia até você reativar manualmente.</div>
+              </div>
+            </label>
+            <label className="flex items-start gap-2 p-2 rounded border cursor-pointer hover:bg-muted/40">
+              <input type="radio" name="suspmode" checked={suspendMode === "days"} onChange={() => setSuspendMode("days")} className="mt-1" />
+              <div className="flex-1">
+                <div className="text-sm font-medium">Por prazo determinado</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input type="number" min={1} max={3650} value={suspendDays}
+                    disabled={suspendMode !== "days"}
+                    onChange={(e) => setSuspendDays(parseInt(e.target.value || "0", 10) || 0)}
+                    className="w-24" />
+                  <span className="text-xs text-muted-foreground">dias</span>
+                </div>
+                <div className="flex gap-1 mt-2">
+                  {[7, 30, 90].map((d) => (
+                    <Button key={d} type="button" size="sm" variant="outline"
+                      disabled={suspendMode !== "days"}
+                      onClick={() => setSuspendDays(d)}>{d}d</Button>
+                  ))}
+                </div>
+              </div>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSuspendOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSuspend} disabled={submitting || (suspendMode === "days" && suspendDays < 1)}>
+              {submitting ? "Suspendendo..." : "Suspender"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -467,6 +661,56 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+const ACTION_LABEL: Record<string, string> = {
+  SUSPENDED: "suspendeu",
+  UNSUSPENDED: "reativou",
+  DELETED: "removeu",
+  ROLE_CHANGED: "alterou papel de",
+  MODULES_UPDATED: "atualizou módulos de",
+  MENUS_UPDATED: "atualizou menus de",
+  INSERT: "criou registro em",
+  UPDATE: "atualizou registro em",
+  DELETE: "apagou registro em",
+};
+
+function HistoryView({ logs, loading, users }: { logs: any[]; loading: boolean; users: any[] }) {
+  const byId = new Map(users.map((u) => [u.id, u]));
+  if (loading) return <div className="text-sm text-muted-foreground p-6">Carregando histórico...</div>;
+  if (logs.length === 0) return <div className="text-sm text-muted-foreground p-6">Nenhum evento registrado ainda.</div>;
+  return (
+    <div className="rounded-md border bg-card divide-y">
+      {logs.map((log) => {
+        const target = byId.get(log.record_id);
+        const actionLabel = ACTION_LABEL[log.action] ?? log.action.toLowerCase();
+        const targetLabel = target ? (target.full_name || target.email) : (log.record_id?.slice(0, 8) ?? "—");
+        const payload = log.new_data ?? log.old_data;
+        return (
+          <div key={log.id} className="px-4 py-3 text-sm flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <div>
+                <span className="font-medium">{log.user_email ?? "Sistema"}</span>{" "}
+                <span className="text-muted-foreground">{actionLabel}</span>{" "}
+                <span className="font-medium">{targetLabel}</span>
+                {log.table_name && log.table_name !== "users_admin" && (
+                  <span className="text-xs text-muted-foreground ml-1">({log.table_name})</span>
+                )}
+              </div>
+              {payload && typeof payload === "object" && (
+                <pre className="text-[11px] text-muted-foreground mt-1 whitespace-pre-wrap break-all">
+                  {JSON.stringify(payload, null, 0)}
+                </pre>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground whitespace-nowrap">
+              {new Date(log.created_at).toLocaleString("pt-BR")}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
