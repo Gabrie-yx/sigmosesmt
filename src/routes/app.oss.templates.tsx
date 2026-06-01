@@ -258,6 +258,7 @@ function TemplateEditorDialog({
       revisao: template?.revisao ?? 1,
       emitido_em: new Date().toISOString(),
       expira_em: new Date(Date.now() + form.validade_meses * 30 * 86400000).toISOString(),
+      tipo_emissao: "PERIODICO",
       funcionario: { nome: "[NOME DO FUNCIONÁRIO]", cpf: "[CPF]", matricula: "[MAT]" },
       cargo: form.cargo || "[CARGO]",
       setor: form.setor,
