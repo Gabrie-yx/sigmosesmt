@@ -53,6 +53,7 @@ import { Route as AppProducaoListaTecnicaRouteImport } from './routes/app.produc
 import { Route as AppProducaoExpedicaoRouteImport } from './routes/app.producao.expedicao'
 import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
 import { Route as AppProducaoBaseMateriaPrimaRouteImport } from './routes/app.producao.base-materia-prima'
+import { Route as AppOssTemplatesRouteImport } from './routes/app.oss.templates'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesListagemRouteImport } from './routes/app.employees.listagem'
@@ -291,6 +292,11 @@ const AppProducaoBaseMateriaPrimaRoute =
     path: '/producao/base-materia-prima',
     getParentRoute: () => AppRoute,
   } as any)
+const AppOssTemplatesRoute = AppOssTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => AppOssRoute,
+} as any)
 const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
   id: '/estoque/sesmt',
   path: '/estoque/sesmt',
@@ -381,7 +387,7 @@ export interface FileRoutesByFullPath {
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
-  '/app/oss': typeof AppOssRoute
+  '/app/oss': typeof AppOssRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -399,6 +405,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -438,7 +445,7 @@ export interface FileRoutesByTo {
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
-  '/app/oss': typeof AppOssRoute
+  '/app/oss': typeof AppOssRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -456,6 +463,7 @@ export interface FileRoutesByTo {
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -498,7 +506,7 @@ export interface FileRoutesById {
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
-  '/app/oss': typeof AppOssRoute
+  '/app/oss': typeof AppOssRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -516,6 +524,7 @@ export interface FileRoutesById {
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -577,6 +586,7 @@ export interface FileRouteTypes {
     | '/app/employees/listagem'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/oss/templates'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -634,6 +644,7 @@ export interface FileRouteTypes {
     | '/app/employees/listagem'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/oss/templates'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -693,6 +704,7 @@ export interface FileRouteTypes {
     | '/app/employees/listagem'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/oss/templates'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -1035,6 +1047,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoBaseMateriaPrimaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/oss/templates': {
+      id: '/app/oss/templates'
+      path: '/templates'
+      fullPath: '/app/oss/templates'
+      preLoaderRoute: typeof AppOssTemplatesRouteImport
+      parentRoute: typeof AppOssRoute
+    }
     '/app/estoque/sesmt': {
       id: '/app/estoque/sesmt'
       path: '/estoque/sesmt'
@@ -1147,6 +1166,17 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
   AppEmployeesRouteChildren,
 )
 
+interface AppOssRouteChildren {
+  AppOssTemplatesRoute: typeof AppOssTemplatesRoute
+}
+
+const AppOssRouteChildren: AppOssRouteChildren = {
+  AppOssTemplatesRoute: AppOssTemplatesRoute,
+}
+
+const AppOssRouteWithChildren =
+  AppOssRoute._addFileChildren(AppOssRouteChildren)
+
 interface AppRouteChildren {
   AppAcoesRoute: typeof AppAcoesRoute
   AppAprsRoute: typeof AppAprsRoute
@@ -1161,7 +1191,7 @@ interface AppRouteChildren {
   AppMatrizRiscosRoute: typeof AppMatrizRiscosRoute
   AppMatrizTreinamentoRoute: typeof AppMatrizTreinamentoRoute
   AppNcsRoute: typeof AppNcsRoute
-  AppOssRoute: typeof AppOssRoute
+  AppOssRoute: typeof AppOssRouteWithChildren
   AppPainelRoute: typeof AppPainelRoute
   AppPtesRoute: typeof AppPtesRoute
   AppRolesRoute: typeof AppRolesRoute
@@ -1210,7 +1240,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMatrizRiscosRoute: AppMatrizRiscosRoute,
   AppMatrizTreinamentoRoute: AppMatrizTreinamentoRoute,
   AppNcsRoute: AppNcsRoute,
-  AppOssRoute: AppOssRoute,
+  AppOssRoute: AppOssRouteWithChildren,
   AppPainelRoute: AppPainelRoute,
   AppPtesRoute: AppPtesRoute,
   AppRolesRoute: AppRolesRoute,
