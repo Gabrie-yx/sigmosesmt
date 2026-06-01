@@ -63,7 +63,6 @@ import { Route as AppDdsHistoricoRouteImport } from './routes/app.dds.historico'
 import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
 import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
-import { Route as ApiPublicControleDocumentosGerarRecorrentesRouteImport } from './routes/api/public/controle-documentos.gerar-recorrentes'
 import { Route as AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.historico.$equipamentoId'
 import { Route as AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.checklist.$equipamentoId'
 
@@ -343,12 +342,6 @@ const AppSesmtEquipamentosMoveisArquivosMensaisRoute =
     path: '/sesmt/equipamentos-moveis/arquivos-mensais',
     getParentRoute: () => AppRoute,
   } as any)
-const ApiPublicControleDocumentosGerarRecorrentesRoute =
-  ApiPublicControleDocumentosGerarRecorrentesRouteImport.update({
-    id: '/api/public/controle-documentos/gerar-recorrentes',
-    path: '/api/public/controle-documentos/gerar-recorrentes',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute =
   AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport.update({
     id: '/sesmt/equipamentos-moveis_/historico/$equipamentoId',
@@ -416,7 +409,6 @@ export interface FileRoutesByFullPath {
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
-  '/api/public/controle-documentos/gerar-recorrentes': typeof ApiPublicControleDocumentosGerarRecorrentesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -473,7 +465,6 @@ export interface FileRoutesByTo {
   '/app/dds': typeof AppDdsIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
   '/app/estoque': typeof AppEstoqueIndexRoute
-  '/api/public/controle-documentos/gerar-recorrentes': typeof ApiPublicControleDocumentosGerarRecorrentesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -533,7 +524,6 @@ export interface FileRoutesById {
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
-  '/api/public/controle-documentos/gerar-recorrentes': typeof ApiPublicControleDocumentosGerarRecorrentesRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -594,7 +584,6 @@ export interface FileRouteTypes {
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
-    | '/api/public/controle-documentos/gerar-recorrentes'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -651,7 +640,6 @@ export interface FileRouteTypes {
     | '/app/dds'
     | '/app/employees'
     | '/app/estoque'
-    | '/api/public/controle-documentos/gerar-recorrentes'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -710,7 +698,6 @@ export interface FileRouteTypes {
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
-    | '/api/public/controle-documentos/gerar-recorrentes'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
@@ -724,7 +711,6 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
   RcTokenRoute: typeof RcTokenRoute
-  ApiPublicControleDocumentosGerarRecorrentesRoute: typeof ApiPublicControleDocumentosGerarRecorrentesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1107,13 +1093,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRouteImport
       parentRoute: typeof AppRoute
     }
-    '/api/public/controle-documentos/gerar-recorrentes': {
-      id: '/api/public/controle-documentos/gerar-recorrentes'
-      path: '/api/public/controle-documentos/gerar-recorrentes'
-      fullPath: '/api/public/controle-documentos/gerar-recorrentes'
-      preLoaderRoute: typeof ApiPublicControleDocumentosGerarRecorrentesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': {
       id: '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
       path: '/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -1258,19 +1237,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
   RcTokenRoute: RcTokenRoute,
-  ApiPublicControleDocumentosGerarRecorrentesRoute:
-    ApiPublicControleDocumentosGerarRecorrentesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
