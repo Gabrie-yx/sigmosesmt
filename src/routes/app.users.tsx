@@ -254,6 +254,14 @@ function UsersPage() {
         </Button>
       </div>
 
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList>
+          <TabsTrigger value="users">Usuários</TabsTrigger>
+          <TabsTrigger value="history">
+            <HistoryIcon className="h-3.5 w-3.5 mr-1" /> Histórico
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="users" className="mt-4">
       {/* Convites pendentes */}
       {data?.invites && data.invites.length > 0 && (
         <div className="mb-6 rounded-md border bg-blue-50/60 border-blue-200">
@@ -304,15 +312,16 @@ function UsersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome / Email</TableHead>
+              <TableHead className="w-28">Status</TableHead>
               <TableHead className="w-40">Papel</TableHead>
               <TableHead>Módulos liberados</TableHead>
               <TableHead className="w-24 text-center">MFA</TableHead>
               <TableHead className="w-40">Trocar papel</TableHead>
-              <TableHead className="w-28 text-right">Ações</TableHead>
+              <TableHead className="w-36 text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Carregando...</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Carregando...</TableCell></TableRow>}
             {data?.users.map((u: any) => {
               const role = u.roles[0] ?? "viewer";
               const isAdminUser = role === "admin";
@@ -321,6 +330,18 @@ function UsersPage() {
                   <TableCell>
                     <div className="font-medium">{u.full_name ?? "—"}</div>
                     <div className="text-xs text-muted-foreground">{u.email}</div>
+                  </TableCell>
+                  <TableCell>
+                    {u.suspended ? (
+                      <Badge variant="destructive" className="text-[10px]">
+                        Suspenso
+                        {u.banned_until && new Date(u.banned_until).getFullYear() < 3000 && (
+                          <span className="ml-1">até {new Date(u.banned_until).toLocaleDateString("pt-BR")}</span>
+                        )}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] border-green-500 text-green-700">Ativo</Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     {u.roles.length === 0
@@ -339,6 +360,11 @@ function UsersPage() {
                             {MODULES.find((x) => x.value === m)?.label ?? m}
                           </Badge>
                         ))}
+                        {u.menus && u.menus.length > 0 && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            +{u.menus.length} menus
+                          </Badge>
+                        )}
                       </div>
                     )}
                   </TableCell>
@@ -363,10 +389,34 @@ function UsersPage() {
                         setEditing(u);
                         setFRole(role);
                         setFModules(u.modules);
+                        setFMenus(u.menus ?? []);
                         setEditOpen(true);
                       }}>
                       <Settings2 className="h-3.5 w-3.5" />
                     </Button>
+                    {u.suspended ? (
+                      <Button size="icon" variant="ghost" title="Reativar"
+                        onClick={async () => {
+                          try {
+                            await unsuspendFn({ data: { user_id: u.id } });
+                            toast.success("Usuário reativado");
+                            qc.invalidateQueries({ queryKey: ["users-admin"] });
+                            qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+                          } catch (e: any) { toast.error(e.message); }
+                        }}>
+                        <Play className="h-3.5 w-3.5 text-green-600" />
+                      </Button>
+                    ) : (
+                      <Button size="icon" variant="ghost" title="Suspender"
+                        onClick={() => {
+                          setSuspendTarget(u);
+                          setSuspendMode("indef");
+                          setSuspendDays(30);
+                          setSuspendOpen(true);
+                        }}>
+                        <Ban className="h-3.5 w-3.5 text-amber-600" />
+                      </Button>
+                    )}
                     <Button size="icon" variant="ghost"
                       onClick={async () => {
                         if (!confirm(`Remover ${u.email}?`)) return;
@@ -374,6 +424,7 @@ function UsersPage() {
                           await deleteUserFn({ data: { user_id: u.id } });
                           toast.success("Usuário removido");
                           qc.invalidateQueries({ queryKey: ["users-admin"] });
+                          qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
                         } catch (e: any) { toast.error(e.message); }
                       }}>
                       <Trash2 className="h-3.5 w-3.5 text-red-600" />
@@ -385,6 +436,12 @@ function UsersPage() {
           </TableBody>
         </Table>
       </div>
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-4">
+          <HistoryView logs={logsData?.logs ?? []} loading={logsLoading} users={data?.users ?? []} />
+        </TabsContent>
+      </Tabs>
 
       {/* Modal Convidar */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
