@@ -439,6 +439,13 @@ export function usePendencias() {
       ok: (acoesEficacia.data ?? 0) === 0,
       loading: acoesEficacia.isLoading,
     },
+    {
+      key: "oss-pendentes",
+      count: ossPendentes.data ?? 0,
+      severity: (ossPendentes.data ?? 0) > 0 ? "alto" : "ok",
+      ok: (ossPendentes.data ?? 0) === 0,
+      loading: ossPendentes.isLoading,
+    },
   ];
 
   const activeItems = items.filter((i) => !i.ok && !isSnoozed(i.key));
