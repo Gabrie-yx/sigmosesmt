@@ -398,11 +398,11 @@ function TemplateEditorDialog({
   );
 }
 
-function TextoSecao({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+function TextoSecao({ label, value, onChange, placeholder, rows = 4 }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; rows?: number }) {
   return (
     <div>
-      <Label className="text-[10px] font-black uppercase">{label}</Label>
-      <Textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} placeholder={placeholder} className="text-sm" />
+      {label && <Label className="text-[10px] font-black uppercase">{label}</Label>}
+      <Textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows} placeholder={placeholder} className="text-sm" />
     </div>
   );
 }
