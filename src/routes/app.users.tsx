@@ -664,3 +664,53 @@ function UsersPage() {
     </div>
   );
 }
+
+const ACTION_LABEL: Record<string, string> = {
+  SUSPENDED: "suspendeu",
+  UNSUSPENDED: "reativou",
+  DELETED: "removeu",
+  ROLE_CHANGED: "alterou papel de",
+  MODULES_UPDATED: "atualizou módulos de",
+  MENUS_UPDATED: "atualizou menus de",
+  INSERT: "criou registro em",
+  UPDATE: "atualizou registro em",
+  DELETE: "apagou registro em",
+};
+
+function HistoryView({ logs, loading, users }: { logs: any[]; loading: boolean; users: any[] }) {
+  const byId = new Map(users.map((u) => [u.id, u]));
+  if (loading) return <div className="text-sm text-muted-foreground p-6">Carregando histórico...</div>;
+  if (logs.length === 0) return <div className="text-sm text-muted-foreground p-6">Nenhum evento registrado ainda.</div>;
+  return (
+    <div className="rounded-md border bg-card divide-y">
+      {logs.map((log) => {
+        const target = byId.get(log.record_id);
+        const actionLabel = ACTION_LABEL[log.action] ?? log.action.toLowerCase();
+        const targetLabel = target ? (target.full_name || target.email) : (log.record_id?.slice(0, 8) ?? "—");
+        const payload = log.new_data ?? log.old_data;
+        return (
+          <div key={log.id} className="px-4 py-3 text-sm flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <div>
+                <span className="font-medium">{log.user_email ?? "Sistema"}</span>{" "}
+                <span className="text-muted-foreground">{actionLabel}</span>{" "}
+                <span className="font-medium">{targetLabel}</span>
+                {log.table_name && log.table_name !== "users_admin" && (
+                  <span className="text-xs text-muted-foreground ml-1">({log.table_name})</span>
+                )}
+              </div>
+              {payload && typeof payload === "object" && (
+                <pre className="text-[11px] text-muted-foreground mt-1 whitespace-pre-wrap break-all">
+                  {JSON.stringify(payload, null, 0)}
+                </pre>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground whitespace-nowrap">
+              {new Date(log.created_at).toLocaleString("pt-BR")}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
