@@ -1,6 +1,7 @@
 import { useLocation, Link } from "@tanstack/react-router";
 import { useAuth, type AppModule } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
+import { menuKeyForPath, MENU_BY_KEY } from "@/lib/menu-catalog";
 
 const PATH_TO_MODULE: { prefix: string; module: AppModule }[] = [
   { prefix: "/app/painel", module: "sesmt" },
@@ -21,7 +22,7 @@ const PATH_TO_MODULE: { prefix: string; module: AppModule }[] = [
 ];
 
 export function ModuleRouteGuard({ children }: { children: React.ReactNode }) {
-  const { hasModule, isAdmin, loading } = useAuth();
+  const { hasModule, hasMenu, isAdmin, loading } = useAuth();
   const location = useLocation();
 
   // Always allow account/security and dashboard root
@@ -42,6 +43,25 @@ export function ModuleRouteGuard({ children }: { children: React.ReactNode }) {
         <p className="text-sm text-muted-foreground mb-4">
           Você não tem permissão para acessar <span className="font-semibold">{match.module}</span>.
           Solicite acesso a um administrador.
+        </p>
+        <Link to="/app" className="text-sm font-bold text-red-700 underline">
+          Voltar ao início
+        </Link>
+      </div>
+    );
+  }
+
+  // Checagem fina por menu (sub-página)
+  const menuKey = menuKeyForPath(location.pathname);
+  if (menuKey && !hasMenu(menuKey)) {
+    const label = MENU_BY_KEY[menuKey]?.label ?? menuKey;
+    return (
+      <div className="max-w-xl mx-auto mt-16 rounded-lg border bg-white p-8 text-center shadow-sm">
+        <Lock className="h-10 w-10 mx-auto text-amber-600 mb-3" />
+        <h2 className="text-lg font-bold mb-2">Acesso negado a este menu</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Você não tem permissão para acessar <span className="font-semibold">{label}</span>.
+          Solicite a liberação a um administrador.
         </p>
         <Link to="/app" className="text-sm font-bold text-red-700 underline">
           Voltar ao início
