@@ -440,8 +440,8 @@ function AprsPage() {
                                         </DropdownMenuItem>
                                       )}
                                       {isEditor && (
-                                        <DropdownMenuItem onClick={() => { setDupSource(a); setDupCascoId(""); }}>
-                                          <Copy className="h-4 w-4 mr-2" /> Duplicar para outro casco
+                                        <DropdownMenuItem onClick={() => { setDupSource(a); setDupCascoIds([]); }}>
+                                          <Copy className="h-4 w-4 mr-2" /> Duplicar para outros cascos
                                         </DropdownMenuItem>
                                       )}
                                       {isAdmin && (
