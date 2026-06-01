@@ -512,3 +512,54 @@ function TextoSecao({ label, value, onChange, placeholder, rows = 4 }: { label: 
     </div>
   );
 }
+
+type CatalogoItem = {
+  id: string; nome: string; categoria: string;
+  medidas_controle_padrao: string[] | null;
+  epis_sugeridos: string[] | null;
+};
+
+function RiscoCategoria({
+  label, catKey, field, value, onChange, placeholder, catalogo, onAdd,
+}: {
+  label: string;
+  catKey: "FISICO" | "QUIMICO" | "BIOLOGICO" | "ERGONOMICO" | "ACIDENTE_MECANICO";
+  field: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente";
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  catalogo: CatalogoItem[];
+  onAdd: (
+    field: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente",
+    item: CatalogoItem,
+  ) => void;
+}) {
+  const items = useMemo(
+    () => catalogo.filter((c) => (c.categoria ?? "").toUpperCase() === catKey),
+    [catalogo, catKey],
+  );
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-[10px] font-black uppercase">{label}</Label>
+        <Select
+          value=""
+          onValueChange={(id) => {
+            const it = items.find((i) => i.id === id);
+            if (it) onAdd(field, it);
+          }}
+        >
+          <SelectTrigger className="h-6 w-44 text-[10px] border-amber-300 bg-amber-50 hover:bg-amber-100">
+            <SelectValue placeholder={items.length ? "+ Do catálogo" : "(catálogo vazio)"} />
+          </SelectTrigger>
+          <SelectContent className="max-h-72">
+            {items.map((i) => (
+              <SelectItem key={i.id} value={i.id} className="text-xs">{i.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <Textarea value={value} onChange={(e) => onChange(e.target.value)} rows={2} placeholder={placeholder} className="text-sm" />
+    </div>
+  );
+}
