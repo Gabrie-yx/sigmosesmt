@@ -361,8 +361,14 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
   // Auto-selecionar template baseado no cargo do funcionário
   const autoSuggestedTemplate = useMemo(() => {
     if (!selectedEmp?.cargo) return null;
-    const cargoUpper = selectedEmp.cargo.toUpperCase();
-    return templates.find((t) => t.cargo.toUpperCase() === cargoUpper) ?? null;
+    const norm = (s: string) =>
+      s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase();
+    const target = norm(selectedEmp.cargo);
+    return (
+      templates.find((t) => norm(t.cargo) === target) ??
+      templates.find((t) => norm(t.cargo).includes(target) || target.includes(norm(t.cargo))) ??
+      null
+    );
   }, [selectedEmp, templates]);
 
   const effectiveTemplateId = templateId || autoSuggestedTemplate?.id || "";
