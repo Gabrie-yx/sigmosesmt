@@ -34,7 +34,7 @@ async function logAdminEvent(args: {
     record_id: args.target_user_id,
     user_id: args.actor_user_id,
     user_email: actor_email,
-    new_data: args.payload ?? null,
+    new_data: (args.payload ?? null) as any,
   });
 }
 
