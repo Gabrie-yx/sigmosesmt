@@ -69,7 +69,7 @@ export function AplicarModeloLoteDialog({
       const { data } = await supabase
         .from("aprs")
         .select("casco_id,status")
-        .eq("modelo_id", modeloId)
+        .eq("modelo_id", modeloId!)
         .in("status", ["RASCUNHO", "ATIVA"]);
       return data ?? [];
     },
