@@ -22,6 +22,7 @@ import { Route as AppTrainingsRouteImport } from './routes/app.trainings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppPtesRouteImport } from './routes/app.ptes'
 import { Route as AppPainelRouteImport } from './routes/app.painel'
+import { Route as AppOssRouteImport } from './routes/app.oss'
 import { Route as AppNcsRouteImport } from './routes/app.ncs'
 import { Route as AppMatrizTreinamentoRouteImport } from './routes/app.matriz-treinamento'
 import { Route as AppMatrizRiscosRouteImport } from './routes/app.matriz-riscos'
@@ -129,6 +130,11 @@ const AppPtesRoute = AppPtesRouteImport.update({
 const AppPainelRoute = AppPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOssRoute = AppOssRouteImport.update({
+  id: '/oss',
+  path: '/oss',
   getParentRoute: () => AppRoute,
 } as any)
 const AppNcsRoute = AppNcsRouteImport.update({
@@ -375,6 +381,7 @@ export interface FileRoutesByFullPath {
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
+  '/app/oss': typeof AppOssRoute
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -431,6 +438,7 @@ export interface FileRoutesByTo {
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
+  '/app/oss': typeof AppOssRoute
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -490,6 +498,7 @@ export interface FileRoutesById {
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
+  '/app/oss': typeof AppOssRoute
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -550,6 +559,7 @@ export interface FileRouteTypes {
     | '/app/matriz-riscos'
     | '/app/matriz-treinamento'
     | '/app/ncs'
+    | '/app/oss'
     | '/app/painel'
     | '/app/ptes'
     | '/app/roles'
@@ -606,6 +616,7 @@ export interface FileRouteTypes {
     | '/app/matriz-riscos'
     | '/app/matriz-treinamento'
     | '/app/ncs'
+    | '/app/oss'
     | '/app/painel'
     | '/app/ptes'
     | '/app/roles'
@@ -664,6 +675,7 @@ export interface FileRouteTypes {
     | '/app/matriz-riscos'
     | '/app/matriz-treinamento'
     | '/app/ncs'
+    | '/app/oss'
     | '/app/painel'
     | '/app/ptes'
     | '/app/roles'
@@ -804,6 +816,13 @@ declare module '@tanstack/react-router' {
       path: '/painel'
       fullPath: '/app/painel'
       preLoaderRoute: typeof AppPainelRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/oss': {
+      id: '/app/oss'
+      path: '/oss'
+      fullPath: '/app/oss'
+      preLoaderRoute: typeof AppOssRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/ncs': {
@@ -1142,6 +1161,7 @@ interface AppRouteChildren {
   AppMatrizRiscosRoute: typeof AppMatrizRiscosRoute
   AppMatrizTreinamentoRoute: typeof AppMatrizTreinamentoRoute
   AppNcsRoute: typeof AppNcsRoute
+  AppOssRoute: typeof AppOssRoute
   AppPainelRoute: typeof AppPainelRoute
   AppPtesRoute: typeof AppPtesRoute
   AppRolesRoute: typeof AppRolesRoute
@@ -1190,6 +1210,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMatrizRiscosRoute: AppMatrizRiscosRoute,
   AppMatrizTreinamentoRoute: AppMatrizTreinamentoRoute,
   AppNcsRoute: AppNcsRoute,
+  AppOssRoute: AppOssRoute,
   AppPainelRoute: AppPainelRoute,
   AppPtesRoute: AppPtesRoute,
   AppRolesRoute: AppRolesRoute,
