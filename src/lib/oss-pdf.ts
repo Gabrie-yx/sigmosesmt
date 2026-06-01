@@ -1,14 +1,14 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import dmnLogo from "@/assets/dmn-logo.png";
 
 export type OSSPdfData = {
   numero?: string | null;
   revisao: number;
   emitido_em?: string | null;
   expira_em?: string | null;
-  /** Tipo de emissão — marca um dos checkboxes do bloco superior. */
+  /** (legado — não é mais renderizado no PDF, mantido pra retrocompatibilidade) */
   tipo_emissao?: "ADMISSIONAL" | "PERIODICO" | "TROCA_RISCO" | null;
-  /** Aceita também os enums internos do app (ADMISSAO / PERIODICO / TROCA_RISCO / RECICLAGEM). */
   motivo_emissao?: string | null;
   funcionario: {
     nome: string;
@@ -135,73 +135,52 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
   const margin = 8;
   const innerW = W - margin * 2;
 
-  // ====================== CABEÇALHO ======================
-  // Cabeçalho enxuto, igual ao modelo do mercado naval: título centralizado,
-  // sem logo nem código de formulário fixo. Revisão fica à direita.
+  // ====================== CABEÇALHO (3 colunas) ======================
+  // [Logo DMN] | [Título centralizado] | [Metadados FOR-SEG / Revisão / Data]
   let y = margin;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text("Ordens de Serviço", W / 2, y + 5, { align: "center" });
-  doc.setFontSize(10);
-  doc.text("Segurança e Saúde no Trabalho", W / 2, y + 10, { align: "center" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text('NR 1, Item 1.4.1 "c"', W / 2, y + 14.5, { align: "center" });
-  // Revisão (canto sup. direito)
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  doc.text(`Revisão: ${String(data.revisao ?? 0).padStart(2, "0")}`, W - margin, y + 5, { align: "right" });
-  y += 17;
-
-  // ===================== TIPO DE EMISSÃO ====================
-  // Caixinha com 3 checkboxes (Admissional / Periódico / Troca de Risco Ocupacional)
-  const tipoNorm = (() => {
-    const v = (data.tipo_emissao ?? data.motivo_emissao ?? "").toString().toUpperCase();
-    if (v.startsWith("ADM")) return "ADMISSIONAL";
-    if (v.startsWith("PERI")) return "PERIODICO";
-    if (v.startsWith("TROCA")) return "TROCA_RISCO";
-    if (v.startsWith("RECIC")) return "PERIODICO";
-    return null;
-  })();
-  const tipoBoxH = 14;
+  const hdrH = 22;
+  const logoW = 38;
+  const metaW = 42;
+  const titleW = innerW - logoW - metaW;
   doc.setDrawColor(0);
   doc.setLineWidth(0.3);
-  doc.rect(margin, y, innerW, tipoBoxH);
-  const drawCheck = (x: number, yy: number, label: string, checked: boolean) => {
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.3);
-    doc.rect(x, yy - 2.6, 3, 3);
-    if (checked) {
-      doc.setLineWidth(0.5);
-      doc.line(x + 0.4, yy - 1.1, x + 1.3, yy - 0.2);
-      doc.line(x + 1.3, yy - 0.2, x + 2.7, yy - 2.4);
-      doc.setLineWidth(0.3);
-    }
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text(label, x + 4, yy);
-  };
-  // labels distribuídos em 3 colunas
-  const tx = margin + 4;
-  const colW = (innerW - 8) / 3;
-  drawCheck(tx, y + 5.2, "Admissional", tipoNorm === "ADMISSIONAL");
-  // permite mostrar a data da admissão ao lado do checkbox quando aplicável
-  if (tipoNorm === "ADMISSIONAL" && data.funcionario.admissao) {
+  doc.rect(margin, y, innerW, hdrH);
+  doc.line(margin + logoW, y, margin + logoW, y + hdrH);
+  doc.line(margin + logoW + titleW, y, margin + logoW + titleW, y + hdrH);
+
+  // Coluna 1 — logo DMN
+  try {
+    doc.addImage(dmnLogo as any, "PNG", margin + 3, y + 3, logoW - 6, hdrH - 6);
+  } catch {
+    // fallback texto se logo não carregar
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.text(`Data: ${brDate(data.funcionario.admissao)}`, tx + 28, y + 5.2);
+    doc.setFontSize(14);
+    doc.setTextColor(178, 34, 34);
+    doc.text("DMN", margin + logoW / 2, y + 11, { align: "center" });
+    doc.setTextColor(0);
   }
-  drawCheck(tx + colW, y + 5.2, "Periódico", tipoNorm === "PERIODICO");
-  drawCheck(tx + colW * 2, y + 5.2, "Troca de Risco Ocupacional", tipoNorm === "TROCA_RISCO");
-  // linha de revisão dentro da caixa (compatibilidade visual com modelos do mercado)
+
+  // Coluna 2 — título centralizado
+  const titleCx = margin + logoW + titleW / 2;
+  doc.setTextColor(0);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text("Ordem de Serviço", titleCx, y + 8, { align: "center" });
+  doc.setFontSize(11);
+  doc.text("Segurança e Saúde no Trabalho", titleCx, y + 14, { align: "center" });
+  doc.setFontSize(10);
+  doc.text('NR 1, Item 1.4.1 "c"', titleCx, y + 19, { align: "center" });
+
+  // Coluna 3 — metadados (FOR-SEG 01 / Revisão / Data / Pág)
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.text(
-    `Documento ${data.numero ? "Nº " + data.numero + "  •  " : ""}Emitido em ${brDate(data.emitido_em)}${data.expira_em ? "  •  Válido até " + brDate(data.expira_em) : ""}`,
-    margin + 4,
-    y + 11.5,
-  );
-  y += tipoBoxH;
+  doc.setFontSize(8);
+  const metaX = margin + logoW + titleW + 2;
+  doc.text("CÓD.: FOR-SEG 01", metaX, y + 5);
+  doc.text(`REVISÃO: ${String(data.revisao ?? 0).padStart(2, "0")}`, metaX, y + 10);
+  doc.text(`DATA: ${brDate(data.emitido_em)}`, metaX, y + 15);
+  doc.text("PÁG.: 01/01", metaX, y + 20);
+
+  y += hdrH;
 
   // ====================== IDENTIFICAÇÃO ======================
   const rowH = 6;

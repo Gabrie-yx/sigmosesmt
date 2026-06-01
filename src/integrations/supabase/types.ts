@@ -2585,6 +2585,11 @@ export type Database = {
           procedimentos_emergencia: string
           proibicoes: string
           revisao: number
+          risco_acidente: string | null
+          risco_biologico: string | null
+          risco_ergonomico: string | null
+          risco_fisico: string | null
+          risco_quimico: string | null
           riscos_texto: string
           setor: string | null
           titulo: string
@@ -2606,6 +2611,11 @@ export type Database = {
           procedimentos_emergencia?: string
           proibicoes?: string
           revisao?: number
+          risco_acidente?: string | null
+          risco_biologico?: string | null
+          risco_ergonomico?: string | null
+          risco_fisico?: string | null
+          risco_quimico?: string | null
           riscos_texto?: string
           setor?: string | null
           titulo: string
@@ -2627,6 +2637,11 @@ export type Database = {
           procedimentos_emergencia?: string
           proibicoes?: string
           revisao?: number
+          risco_acidente?: string | null
+          risco_biologico?: string | null
+          risco_ergonomico?: string | null
+          risco_fisico?: string | null
+          risco_quimico?: string | null
           riscos_texto?: string
           setor?: string | null
           titulo?: string

@@ -307,17 +307,32 @@ function UploadAssinadoButton({ onPick, disabled }: { onPick: (f: File) => void;
 // Emitir OSS Dialog
 // =====================================================
 function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: () => void; onIssued: () => void }) {
+  const [companyId, setCompanyId] = useState<string>("");
   const [employeeId, setEmployeeId] = useState<string>("");
   const [templateId, setTemplateId] = useState<string>("");
   const [motivo, setMotivo] = useState<string>("ADMISSAO");
 
+  // Lista de empresas (ATIVAS)
+  const { data: companies = [] } = useQuery({
+    queryKey: ["oss-emit-companies"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("companies")
+        .select("id, name")
+        .order("name");
+      return data ?? [];
+    },
+  });
+
   const { data: employees = [] } = useQuery({
-    queryKey: ["oss-emit-employees"],
+    queryKey: ["oss-emit-employees", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
       const { data } = await supabase
         .from("employees")
-        .select("id, nome, cpf, matricula, admissao, status, role_id, roles(name)")
+        .select("id, nome, cpf, matricula, admissao, status, role_id, company_id, roles(name)")
         .eq("status", "ATIVO")
+        .eq("company_id", companyId)
         .order("nome");
       return (data ?? []).map((e: any) => ({
         ...e,
@@ -334,7 +349,7 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
     queryFn: async () => {
       const { data } = await supabase
         .from("oss_templates")
-        .select("id, cargo, titulo, setor, revisao, validade_meses, descricao_atividades, riscos_texto, medidas_preventivas, epis_obrigatorios, proibicoes, penalidades, procedimentos_emergencia")
+        .select("id, cargo, titulo, setor, revisao, validade_meses, descricao_atividades, riscos_texto, medidas_preventivas, epis_obrigatorios, proibicoes, penalidades, procedimentos_emergencia, risco_fisico, risco_quimico, risco_biologico, risco_ergonomico, risco_acidente")
         .eq("ativo", true)
         .order("cargo");
       return data ?? [];
@@ -374,6 +389,13 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
           proibicoes: tpl.proibicoes,
           penalidades: tpl.penalidades,
           procedimentos_emergencia: tpl.procedimentos_emergencia,
+          riscos_categorias: {
+            fisico: (tpl as any).risco_fisico ?? null,
+            quimico: (tpl as any).risco_quimico ?? null,
+            biologico: (tpl as any).risco_biologico ?? null,
+            ergonomico: (tpl as any).risco_ergonomico ?? null,
+            acidente: (tpl as any).risco_acidente ?? null,
+          },
         },
       });
       if (error) throw error;
@@ -397,10 +419,29 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label className="text-[10px] font-black uppercase">Funcionário *</Label>
-            <Select value={employeeId} onValueChange={(v) => { setEmployeeId(v); setTemplateId(""); }}>
-              <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+            <Label className="text-[10px] font-black uppercase">Empresa *</Label>
+            <Select
+              value={companyId}
+              onValueChange={(v) => { setCompanyId(v); setEmployeeId(""); setTemplateId(""); }}
+            >
+              <SelectTrigger><SelectValue placeholder="Selecione a empresa..." /></SelectTrigger>
               <SelectContent className="max-h-72">
+                {companies.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[10px] font-black uppercase">Funcionário *</Label>
+            <Select value={employeeId} onValueChange={(v) => { setEmployeeId(v); setTemplateId(""); }} disabled={!companyId}>
+              <SelectTrigger>
+                <SelectValue placeholder={companyId ? "Selecione..." : "Escolha a empresa primeiro"} />
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                {employees.length === 0 && companyId && (
+                  <div className="px-2 py-3 text-xs text-slate-500">Nenhum funcionário ativo nesta empresa.</div>
+                )}
                 {employees.map((e) => (
                   <SelectItem key={e.id} value={e.id}>{e.nome} — {e.cargo ?? "(sem cargo)"}</SelectItem>
                 ))}
