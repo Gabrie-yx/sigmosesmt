@@ -14,12 +14,12 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const nav = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  // Signup público desabilitado por motivos de segurança (LGPD / sistema interno).
+  // Novos usuários só podem ser criados via convite por um admin (inviteUser).
+  const mode: "signin" = "signin";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaChallengeId, setMfaChallengeId] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
@@ -48,25 +48,10 @@ function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (mode === "signup" && !acceptTerms) {
-      toast.error("Você precisa aceitar os Termos de Uso e a Política de Privacidade.");
-      return;
-    }
     setLoading(true);
     try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/app`,
-            data: { full_name: name },
-          },
-        });
-        if (error) throw error;
-        toast.success("Conta criada! Se a confirmação de email estiver ativa, verifique sua caixa de entrada.");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+      {
+        const { error, data } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           if (error.message.toLowerCase().includes("email not confirmed")) {
             throw new Error("Email não confirmado. Desative a confirmação de email no Supabase ou confirme pelo link enviado.");
