@@ -36,6 +36,7 @@ import { Route as AppCascosRouteImport } from './routes/app.cascos'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppAprsRouteImport } from './routes/app.aprs'
 import { Route as AppAcoesRouteImport } from './routes/app.acoes'
+import { Route as AppOssIndexRouteImport } from './routes/app.oss.index'
 import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
@@ -202,6 +203,11 @@ const AppAcoesRoute = AppAcoesRouteImport.update({
   id: '/acoes',
   path: '/acoes',
   getParentRoute: () => AppRoute,
+} as any)
+const AppOssIndexRoute = AppOssIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppOssRoute,
 } as any)
 const AppEstoqueIndexRoute = AppEstoqueIndexRouteImport.update({
   id: '/estoque/',
@@ -423,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
+  '/app/oss/': typeof AppOssIndexRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -445,7 +452,6 @@ export interface FileRoutesByTo {
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
-  '/app/oss': typeof AppOssRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -481,6 +487,7 @@ export interface FileRoutesByTo {
   '/app/dds': typeof AppDdsIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
   '/app/estoque': typeof AppEstoqueIndexRoute
+  '/app/oss': typeof AppOssIndexRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -542,6 +549,7 @@ export interface FileRoutesById {
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
+  '/app/oss/': typeof AppOssIndexRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -604,6 +612,7 @@ export interface FileRouteTypes {
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
+    | '/app/oss/'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -626,7 +635,6 @@ export interface FileRouteTypes {
     | '/app/matriz-riscos'
     | '/app/matriz-treinamento'
     | '/app/ncs'
-    | '/app/oss'
     | '/app/painel'
     | '/app/ptes'
     | '/app/roles'
@@ -662,6 +670,7 @@ export interface FileRouteTypes {
     | '/app/dds'
     | '/app/employees'
     | '/app/estoque'
+    | '/app/oss'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -722,6 +731,7 @@ export interface FileRouteTypes {
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
+    | '/app/oss/'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
@@ -927,6 +937,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/acoes'
       preLoaderRoute: typeof AppAcoesRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/app/oss/': {
+      id: '/app/oss/'
+      path: '/'
+      fullPath: '/app/oss/'
+      preLoaderRoute: typeof AppOssIndexRouteImport
+      parentRoute: typeof AppOssRoute
     }
     '/app/estoque/': {
       id: '/app/estoque/'
@@ -1168,10 +1185,12 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
 
 interface AppOssRouteChildren {
   AppOssTemplatesRoute: typeof AppOssTemplatesRoute
+  AppOssIndexRoute: typeof AppOssIndexRoute
 }
 
 const AppOssRouteChildren: AppOssRouteChildren = {
   AppOssTemplatesRoute: AppOssTemplatesRoute,
+  AppOssIndexRoute: AppOssIndexRoute,
 }
 
 const AppOssRouteWithChildren =
