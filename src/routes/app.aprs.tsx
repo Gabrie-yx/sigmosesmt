@@ -10,11 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert, Zap, Copy } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert, Zap, Copy, LayoutGrid, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { AprForm } from "@/components/aprs/apr-form";
 import { AprModeloPicker, type AprModelo } from "@/components/aprs/apr-modelo-picker";
+import { AplicarModeloLoteDialog } from "@/components/aprs/aplicar-modelo-lote-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { abrirAprPdf, imprimirAprPdf, baixarAprPdf, buildAprPdf } from "@/lib/apr-pdf-loader";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
@@ -52,6 +54,10 @@ function AprsPage() {
   const { isEditor, isAdmin } = useAuth();
   const [editing, setEditing] = useState<string | null | "new">(null);
   const [modeloPickerOpen, setModeloPickerOpen] = useState(false);
+  const [loteOpen, setLoteOpen] = useState(false);
+  const [loteModeloId, setLoteModeloId] = useState<string | null>(null);
+  const [loteCascoId, setLoteCascoId] = useState<string | null>(null);
+  const [matrizOpen, setMatrizOpen] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ATIVAS");
   const [filterCasco, setFilterCasco] = useState<string>("ALL");
@@ -62,7 +68,7 @@ function AprsPage() {
   const [encSig, setEncSig] = useState<string | null>(null);
   const [tstSig, setTstSig] = useState<string | null>(null);
   const [dupSource, setDupSource] = useState<any | null>(null);
-  const [dupCascoId, setDupCascoId] = useState<string>("");
+  const [dupCascoIds, setDupCascoIds] = useState<string[]>([]);
 
   async function openPreview(aprId: string, numero?: string | null, eSig?: string | null, tSig?: string | null) {
     try {
@@ -90,6 +96,10 @@ function AprsPage() {
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-light-aprs"],
     queryFn: async () => (await supabase.from("companies").select("id,name")).data ?? [],
+  });
+  const { data: modelos = [] } = useQuery({
+    queryKey: ["apr-modelos-ativos"],
+    queryFn: async () => (await supabase.from("apr_modelos").select("id,nome,categoria,ordem").eq("ativo", true).order("ordem").order("nome")).data ?? [],
   });
 
   const cascoMap = useMemo(() => new Map(cascos.map((c: any) => [c.id, c])), [cascos]);
