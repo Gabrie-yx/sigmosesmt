@@ -530,10 +530,91 @@ function UsersPage() {
                 </div>
               )}
             </div>
+            {fRole !== "admin" && (
+              <div>
+                <Label>Menus específicos (granular)</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Deixe tudo em branco em um módulo para liberar TODOS os menus daquele módulo. Marque itens específicos para restringir.
+                </p>
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                  {fModules.map((mod) => {
+                    const menus = menusForModule(mod as any);
+                    if (menus.length === 0) return null;
+                    const allOn = menus.every((m) => fMenus.includes(m.key));
+                    return (
+                      <div key={mod} className="border rounded p-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            {MODULES.find((x) => x.value === mod)?.label ?? mod}
+                          </span>
+                          <button type="button" className="text-[11px] underline text-blue-700"
+                            onClick={() => toggleAllMenusOfModule(mod, !allOn)}>
+                            {allOn ? "Limpar (libera todos)" : "Marcar todos"}
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 gap-1">
+                          {menus.map((m) => (
+                            <label key={m.key} className="flex items-center gap-2 text-sm p-1 rounded hover:bg-muted/40 cursor-pointer">
+                              <Checkbox checked={fMenus.includes(m.key)} onCheckedChange={() => toggleMenu(m.key)} />
+                              <span>{m.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancelar</Button>
             <Button onClick={handleSaveEdit} disabled={submitting}>{submitting ? "Salvando..." : "Salvar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Suspender */}
+      <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Suspender usuário</DialogTitle>
+            <DialogDescription>{suspendTarget?.email} ficará impedido de fazer login.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <label className="flex items-start gap-2 p-2 rounded border cursor-pointer hover:bg-muted/40">
+              <input type="radio" name="suspmode" checked={suspendMode === "indef"} onChange={() => setSuspendMode("indef")} className="mt-1" />
+              <div>
+                <div className="text-sm font-medium">Indefinido</div>
+                <div className="text-xs text-muted-foreground">Bloqueia até você reativar manualmente.</div>
+              </div>
+            </label>
+            <label className="flex items-start gap-2 p-2 rounded border cursor-pointer hover:bg-muted/40">
+              <input type="radio" name="suspmode" checked={suspendMode === "days"} onChange={() => setSuspendMode("days")} className="mt-1" />
+              <div className="flex-1">
+                <div className="text-sm font-medium">Por prazo determinado</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input type="number" min={1} max={3650} value={suspendDays}
+                    disabled={suspendMode !== "days"}
+                    onChange={(e) => setSuspendDays(parseInt(e.target.value || "0", 10) || 0)}
+                    className="w-24" />
+                  <span className="text-xs text-muted-foreground">dias</span>
+                </div>
+                <div className="flex gap-1 mt-2">
+                  {[7, 30, 90].map((d) => (
+                    <Button key={d} type="button" size="sm" variant="outline"
+                      disabled={suspendMode !== "days"}
+                      onClick={() => setSuspendDays(d)}>{d}d</Button>
+                  ))}
+                </div>
+              </div>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSuspendOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSuspend} disabled={submitting || (suspendMode === "days" && suspendDays < 1)}>
+              {submitting ? "Suspendendo..." : "Suspender"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
