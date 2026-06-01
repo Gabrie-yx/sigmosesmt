@@ -1,4 +1,5 @@
 import { createStart, createMiddleware } from "@tanstack/react-start";
+import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 import { renderErrorPage } from "./lib/error-page";
 
@@ -19,25 +20,5 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware],
-  serverFns: {
-    fetch: async (url, init) => {
-      if (typeof window !== "undefined") {
-        try {
-          const { supabase } = await import("@/integrations/supabase/client");
-          const { data } = await supabase.auth.getSession();
-          const token = data.session?.access_token;
-          if (token) {
-            const headers = new Headers(init?.headers);
-            if (!headers.has("authorization")) {
-              headers.set("authorization", `Bearer ${token}`);
-            }
-            return fetch(url, { ...init, headers });
-          }
-        } catch (e) {
-          console.error("[serverFns.fetch] failed to attach Supabase token", e);
-        }
-      }
-      return fetch(url, init);
-    },
-  },
+  functionMiddleware: [attachSupabaseAuth],
 }));
