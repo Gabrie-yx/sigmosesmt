@@ -526,42 +526,75 @@ function AprsPage() {
         onChangeSesmtSig={(v) => { setTstSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), encSig, v); }}
       />
 
-      <Dialog open={!!dupSource} onOpenChange={(o) => { if (!o) { setDupSource(null); setDupCascoId(""); } }}>
-        <DialogContent className="max-w-md">
+      <Dialog open={!!dupSource} onOpenChange={(o) => { if (!o) { setDupSource(null); setDupCascoIds([]); } }}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Duplicar APR {dupSource?.numero}</DialogTitle>
+            <DialogTitle>Duplicar APR {dupSource?.numero} para vários cascos</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-slate-600">
-              Será criada uma nova APR (status <b>RASCUNHO</b>) para o casco escolhido, copiando atividade, riscos,
-              EPIs, NRs e assinaturas. O número será novo e a PTE não é copiada.
+              Será criada 1 APR (status <b>RASCUNHO</b>) para <b>cada casco</b> marcado, copiando atividade,
+              riscos, EPIs, NRs e assinaturas. Cada uma recebe número próprio; a PTE não é copiada.
             </p>
             <div>
-              <label className="text-xs font-bold text-slate-700 mb-1 block">Casco destino</label>
-              <Select value={dupCascoId} onValueChange={setDupCascoId}>
-                <SelectTrigger><SelectValue placeholder="Selecione o casco..." /></SelectTrigger>
-                <SelectContent>
-                  {cascos
-                    .filter((c: any) => c.id !== dupSource?.casco_id)
-                    .map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>{c.numero}{c.nome ? ` — ${c.nome}` : ""}</SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-slate-700">Cascos destino</label>
+                {(() => {
+                  const disponiveis = cascos.filter((c: any) => c.id !== dupSource?.casco_id);
+                  const todos = disponiveis.length > 0 && disponiveis.every((c: any) => dupCascoIds.includes(c.id));
+                  return (
+                    <button
+                      type="button"
+                      className="text-[10px] font-bold text-[#991b1b] hover:underline"
+                      onClick={() => setDupCascoIds(todos ? [] : disponiveis.map((c: any) => c.id))}
+                    >
+                      {todos ? "Limpar" : "Marcar todos"}
+                    </button>
+                  );
+                })()}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 max-h-[280px] overflow-y-auto pr-1">
+                {cascos
+                  .filter((c: any) => c.id !== dupSource?.casco_id)
+                  .map((c: any) => {
+                    const marcado = dupCascoIds.includes(c.id);
+                    return (
+                      <label
+                        key={c.id}
+                        className={`flex items-center gap-2 p-2 rounded border text-xs cursor-pointer ${
+                          marcado ? "bg-[#991b1b]/5 border-[#991b1b]/40" : "bg-white border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        <Checkbox
+                          checked={marcado}
+                          onCheckedChange={(v) =>
+                            setDupCascoIds((prev) => (v ? [...prev, c.id] : prev.filter((x) => x !== c.id)))
+                          }
+                        />
+                        <div className="min-w-0">
+                          <div className="font-bold">CASCO {c.numero}</div>
+                          {c.nome && <div className="text-[10px] text-slate-500 truncate">{c.nome}</div>}
+                        </div>
+                      </label>
+                    );
+                  })}
+              </div>
               {dupSource?.casco_id && (
-                <p className="text-[11px] text-slate-400 mt-1">
+                <p className="text-[11px] text-slate-400 mt-2">
                   Origem: casco {cascoMap.get(dupSource.casco_id)?.numero ?? "—"}
                 </p>
               )}
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" onClick={() => { setDupSource(null); setDupCascoId(""); }}>Cancelar</Button>
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <Button variant="ghost" onClick={() => { setDupSource(null); setDupCascoIds([]); }}>Cancelar</Button>
               <Button
                 className="bg-[#991b1b] hover:bg-[#7f1d1d]"
-                disabled={!dupCascoId || duplicate.isPending}
-                onClick={() => dupSource && duplicate.mutate({ srcId: dupSource.id, novoCascoId: dupCascoId })}
+                disabled={dupCascoIds.length === 0 || duplicate.isPending}
+                onClick={() => dupSource && duplicate.mutate({ srcId: dupSource.id, cascoIds: dupCascoIds })}
               >
-                {duplicate.isPending ? "Duplicando..." : "Duplicar APR"}
+                {duplicate.isPending
+                  ? "Duplicando..."
+                  : `Duplicar para ${dupCascoIds.length || ""} casco${dupCascoIds.length !== 1 ? "s" : ""}`}
               </Button>
             </div>
           </div>
