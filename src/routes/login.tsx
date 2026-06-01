@@ -64,15 +64,6 @@ function LoginPage() {
           },
         });
         if (error) throw error;
-        // Tenta atribuir admin se for o primeiro usuário (RLS permite via policy bootstrap)
-        try {
-          const { data: signed } = await supabase.auth.signInWithPassword({ email, password });
-          if (signed.user) {
-            await supabase.from("user_roles").insert({ user_id: signed.user.id, role: "admin" });
-          }
-        } catch {
-          /* ignora — confirmação de email pode estar ativa */
-        }
         toast.success("Conta criada! Se a confirmação de email estiver ativa, verifique sua caixa de entrada.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
