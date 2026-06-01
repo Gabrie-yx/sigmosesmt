@@ -338,7 +338,8 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
   // Auto-selecionar template baseado no cargo do funcionário
   const autoSuggestedTemplate = useMemo(() => {
     if (!selectedEmp?.cargo) return null;
-    return templates.find((t) => t.cargo.toUpperCase() === selectedEmp.cargo.toUpperCase()) ?? null;
+    const cargoUpper = selectedEmp.cargo.toUpperCase();
+    return templates.find((t) => t.cargo.toUpperCase() === cargoUpper) ?? null;
   }, [selectedEmp, templates]);
 
   const effectiveTemplateId = templateId || autoSuggestedTemplate?.id || "";
