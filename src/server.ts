@@ -25,6 +25,32 @@ function brandedErrorResponse(): Response {
   });
 }
 
+function hydrateProcessEnvFromBindings(env: unknown) {
+  if (!env || typeof env !== "object" || typeof process === "undefined" || !process.env) {
+    return;
+  }
+
+  const bindings = env as Record<string, unknown>;
+  const copyBinding = (source: string, target = source) => {
+    const value = bindings[source];
+    if (typeof value === "string" && value.length > 0 && !process.env[target]) {
+      process.env[target] = value;
+    }
+  };
+
+  copyBinding("SUPABASE_URL");
+  copyBinding("SUPABASE_PUBLISHABLE_KEY");
+  copyBinding("SUPABASE_SERVICE_ROLE_KEY");
+  copyBinding("SERVICE_ROLE_KEY");
+
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.SERVICE_ROLE_KEY) {
+    process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SERVICE_ROLE_KEY;
+  }
+  if (!process.env.SERVICE_ROLE_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    process.env.SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  }
+}
+
 function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boolean {
   let payload: unknown;
   try {
@@ -69,6 +95,7 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      hydrateProcessEnvFromBindings(env);
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
