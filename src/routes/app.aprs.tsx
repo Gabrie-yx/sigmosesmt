@@ -187,7 +187,7 @@ function AprsPage() {
   });
 
   const duplicate = useMutation({
-    mutationFn: async ({ srcId, novoCascoId }: { srcId: string; novoCascoId: string }) => {
+    mutationFn: async ({ srcId, cascoIds }: { srcId: string; cascoIds: string[] }) => {
       const [{ data: a, error: ea }, { data: rs, error: er }, { data: ass, error: eas }] = await Promise.all([
         supabase.from("aprs").select("*").eq("id", srcId).maybeSingle(),
         supabase.from("apr_riscos").select("*").eq("apr_id", srcId).order("ordem"),
@@ -198,46 +198,55 @@ function AprsPage() {
       if (eas) throw eas;
       if (!a) throw new Error("APR de origem não encontrada");
 
-      const { data: numero, error: enErr } = await supabase.rpc("gerar_numero_apr");
-      if (enErr) throw enErr;
-
       const { id: _ignoreId, created_at, updated_at, numero: _oldNum, data_validade, pte_id, ...rest } = a as any;
-      const payload = {
-        ...rest,
-        numero,
-        casco_id: novoCascoId,
-        pte_id: null,
-        status: "RASCUNHO",
-        data_emissao: new Date().toISOString().slice(0, 10),
-      };
-      const { data: novo, error: ein } = await supabase.from("aprs").insert(payload).select("id,numero").single();
-      if (ein) throw ein;
+      const criadas: { id: string; numero: string }[] = [];
 
-      if (rs && rs.length > 0) {
-        const { error: e2 } = await supabase.from("apr_riscos").insert(
-          rs.map((r: any) => {
-            const { id, created_at, apr_id, nivel_risco, ...rr } = r;
-            return { ...rr, apr_id: novo.id };
-          }),
-        );
-        if (e2) throw e2;
+      for (const cascoId of cascoIds) {
+        const { data: numero, error: enErr } = await supabase.rpc("gerar_numero_apr");
+        if (enErr) throw enErr;
+
+        const payload = {
+          ...rest,
+          numero,
+          casco_id: cascoId,
+          pte_id: null,
+          status: "RASCUNHO",
+          data_emissao: new Date().toISOString().slice(0, 10),
+        };
+        const { data: novo, error: ein } = await supabase.from("aprs").insert(payload).select("id,numero").single();
+        if (ein) throw ein;
+
+        if (rs && rs.length > 0) {
+          const { error: e2 } = await supabase.from("apr_riscos").insert(
+            rs.map((r: any) => {
+              const { id, created_at, apr_id, nivel_risco, ...rr } = r;
+              return { ...rr, apr_id: novo.id };
+            }),
+          );
+          if (e2) throw e2;
+        }
+        if (ass && ass.length > 0) {
+          const { error: e3 } = await supabase.from("apr_assinaturas").insert(
+            ass.map((s: any) => {
+              const { id, created_at, apr_id, ...ss } = s;
+              return { ...ss, apr_id: novo.id };
+            }),
+          );
+          if (e3) throw e3;
+        }
+        criadas.push(novo);
       }
-      if (ass && ass.length > 0) {
-        const { error: e3 } = await supabase.from("apr_assinaturas").insert(
-          ass.map((s: any) => {
-            const { id, created_at, apr_id, ...ss } = s;
-            return { ...ss, apr_id: novo.id };
-          }),
-        );
-        if (e3) throw e3;
-      }
-      return novo;
+      return criadas;
     },
-    onSuccess: (novo: any) => {
+    onSuccess: (criadas: { numero: string }[]) => {
       qc.invalidateQueries({ queryKey: ["aprs"] });
       setDupSource(null);
-      setDupCascoId("");
-      toast.success(`APR ${novo.numero} duplicada — revise e ative quando estiver pronta`);
+      setDupCascoIds([]);
+      if (criadas.length === 1) {
+        toast.success(`APR ${criadas[0].numero} duplicada — revise e ative quando estiver pronta`);
+      } else {
+        toast.success(`${criadas.length} APRs criadas como RASCUNHO`);
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });
