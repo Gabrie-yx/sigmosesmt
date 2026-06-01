@@ -22,6 +22,7 @@ import { Route as AppTrainingsRouteImport } from './routes/app.trainings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppPtesRouteImport } from './routes/app.ptes'
 import { Route as AppPainelRouteImport } from './routes/app.painel'
+import { Route as AppOssRouteImport } from './routes/app.oss'
 import { Route as AppNcsRouteImport } from './routes/app.ncs'
 import { Route as AppMatrizTreinamentoRouteImport } from './routes/app.matriz-treinamento'
 import { Route as AppMatrizRiscosRouteImport } from './routes/app.matriz-riscos'
@@ -35,6 +36,7 @@ import { Route as AppCascosRouteImport } from './routes/app.cascos'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppAprsRouteImport } from './routes/app.aprs'
 import { Route as AppAcoesRouteImport } from './routes/app.acoes'
+import { Route as AppOssIndexRouteImport } from './routes/app.oss.index'
 import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
@@ -52,6 +54,7 @@ import { Route as AppProducaoListaTecnicaRouteImport } from './routes/app.produc
 import { Route as AppProducaoExpedicaoRouteImport } from './routes/app.producao.expedicao'
 import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
 import { Route as AppProducaoBaseMateriaPrimaRouteImport } from './routes/app.producao.base-materia-prima'
+import { Route as AppOssTemplatesRouteImport } from './routes/app.oss.templates'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesListagemRouteImport } from './routes/app.employees.listagem'
@@ -131,6 +134,11 @@ const AppPainelRoute = AppPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOssRoute = AppOssRouteImport.update({
+  id: '/oss',
+  path: '/oss',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppNcsRoute = AppNcsRouteImport.update({
   id: '/ncs',
   path: '/ncs',
@@ -195,6 +203,11 @@ const AppAcoesRoute = AppAcoesRouteImport.update({
   id: '/acoes',
   path: '/acoes',
   getParentRoute: () => AppRoute,
+} as any)
+const AppOssIndexRoute = AppOssIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppOssRoute,
 } as any)
 const AppEstoqueIndexRoute = AppEstoqueIndexRouteImport.update({
   id: '/estoque/',
@@ -285,6 +298,11 @@ const AppProducaoBaseMateriaPrimaRoute =
     path: '/producao/base-materia-prima',
     getParentRoute: () => AppRoute,
   } as any)
+const AppOssTemplatesRoute = AppOssTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => AppOssRoute,
+} as any)
 const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
   id: '/estoque/sesmt',
   path: '/estoque/sesmt',
@@ -375,6 +393,7 @@ export interface FileRoutesByFullPath {
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
+  '/app/oss': typeof AppOssRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -392,6 +411,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -409,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
+  '/app/oss/': typeof AppOssIndexRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -448,6 +469,7 @@ export interface FileRoutesByTo {
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -465,6 +487,7 @@ export interface FileRoutesByTo {
   '/app/dds': typeof AppDdsIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
   '/app/estoque': typeof AppEstoqueIndexRoute
+  '/app/oss': typeof AppOssIndexRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -490,6 +513,7 @@ export interface FileRoutesById {
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
+  '/app/oss': typeof AppOssRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -507,6 +531,7 @@ export interface FileRoutesById {
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
+  '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -524,6 +549,7 @@ export interface FileRoutesById {
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
+  '/app/oss/': typeof AppOssIndexRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -550,6 +576,7 @@ export interface FileRouteTypes {
     | '/app/matriz-riscos'
     | '/app/matriz-treinamento'
     | '/app/ncs'
+    | '/app/oss'
     | '/app/painel'
     | '/app/ptes'
     | '/app/roles'
@@ -567,6 +594,7 @@ export interface FileRouteTypes {
     | '/app/employees/listagem'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/oss/templates'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -584,6 +612,7 @@ export interface FileRouteTypes {
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
+    | '/app/oss/'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -623,6 +652,7 @@ export interface FileRouteTypes {
     | '/app/employees/listagem'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/oss/templates'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -640,6 +670,7 @@ export interface FileRouteTypes {
     | '/app/dds'
     | '/app/employees'
     | '/app/estoque'
+    | '/app/oss'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -664,6 +695,7 @@ export interface FileRouteTypes {
     | '/app/matriz-riscos'
     | '/app/matriz-treinamento'
     | '/app/ncs'
+    | '/app/oss'
     | '/app/painel'
     | '/app/ptes'
     | '/app/roles'
@@ -681,6 +713,7 @@ export interface FileRouteTypes {
     | '/app/employees/listagem'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
+    | '/app/oss/templates'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -698,6 +731,7 @@ export interface FileRouteTypes {
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
+    | '/app/oss/'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
@@ -806,6 +840,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPainelRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/oss': {
+      id: '/app/oss'
+      path: '/oss'
+      fullPath: '/app/oss'
+      preLoaderRoute: typeof AppOssRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/ncs': {
       id: '/app/ncs'
       path: '/ncs'
@@ -896,6 +937,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/acoes'
       preLoaderRoute: typeof AppAcoesRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/app/oss/': {
+      id: '/app/oss/'
+      path: '/'
+      fullPath: '/app/oss/'
+      preLoaderRoute: typeof AppOssIndexRouteImport
+      parentRoute: typeof AppOssRoute
     }
     '/app/estoque/': {
       id: '/app/estoque/'
@@ -1016,6 +1064,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoBaseMateriaPrimaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/oss/templates': {
+      id: '/app/oss/templates'
+      path: '/templates'
+      fullPath: '/app/oss/templates'
+      preLoaderRoute: typeof AppOssTemplatesRouteImport
+      parentRoute: typeof AppOssRoute
+    }
     '/app/estoque/sesmt': {
       id: '/app/estoque/sesmt'
       path: '/estoque/sesmt'
@@ -1128,6 +1183,19 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
   AppEmployeesRouteChildren,
 )
 
+interface AppOssRouteChildren {
+  AppOssTemplatesRoute: typeof AppOssTemplatesRoute
+  AppOssIndexRoute: typeof AppOssIndexRoute
+}
+
+const AppOssRouteChildren: AppOssRouteChildren = {
+  AppOssTemplatesRoute: AppOssTemplatesRoute,
+  AppOssIndexRoute: AppOssIndexRoute,
+}
+
+const AppOssRouteWithChildren =
+  AppOssRoute._addFileChildren(AppOssRouteChildren)
+
 interface AppRouteChildren {
   AppAcoesRoute: typeof AppAcoesRoute
   AppAprsRoute: typeof AppAprsRoute
@@ -1142,6 +1210,7 @@ interface AppRouteChildren {
   AppMatrizRiscosRoute: typeof AppMatrizRiscosRoute
   AppMatrizTreinamentoRoute: typeof AppMatrizTreinamentoRoute
   AppNcsRoute: typeof AppNcsRoute
+  AppOssRoute: typeof AppOssRouteWithChildren
   AppPainelRoute: typeof AppPainelRoute
   AppPtesRoute: typeof AppPtesRoute
   AppRolesRoute: typeof AppRolesRoute
@@ -1190,6 +1259,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMatrizRiscosRoute: AppMatrizRiscosRoute,
   AppMatrizTreinamentoRoute: AppMatrizTreinamentoRoute,
   AppNcsRoute: AppNcsRoute,
+  AppOssRoute: AppOssRouteWithChildren,
   AppPainelRoute: AppPainelRoute,
   AppPtesRoute: AppPtesRoute,
   AppRolesRoute: AppRolesRoute,
@@ -1241,13 +1311,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

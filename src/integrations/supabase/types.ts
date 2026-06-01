@@ -2492,6 +2492,150 @@ export type Database = {
           },
         ]
       }
+      oss_emissoes: {
+        Row: {
+          assinado_em: string | null
+          cargo_snapshot: string
+          conteudo_snapshot: Json
+          created_at: string
+          emitido_em: string
+          emitido_por: string | null
+          employee_id: string
+          expira_em: string | null
+          id: string
+          motivo_emissao: Database["public"]["Enums"]["oss_motivo"]
+          observacoes: string | null
+          pdf_assinado_path: string | null
+          pdf_gerado_path: string | null
+          status: Database["public"]["Enums"]["oss_status"]
+          template_id: string
+          template_revisao: number
+          updated_at: string
+          validado_por: string | null
+        }
+        Insert: {
+          assinado_em?: string | null
+          cargo_snapshot: string
+          conteudo_snapshot?: Json
+          created_at?: string
+          emitido_em?: string
+          emitido_por?: string | null
+          employee_id: string
+          expira_em?: string | null
+          id?: string
+          motivo_emissao?: Database["public"]["Enums"]["oss_motivo"]
+          observacoes?: string | null
+          pdf_assinado_path?: string | null
+          pdf_gerado_path?: string | null
+          status?: Database["public"]["Enums"]["oss_status"]
+          template_id: string
+          template_revisao: number
+          updated_at?: string
+          validado_por?: string | null
+        }
+        Update: {
+          assinado_em?: string | null
+          cargo_snapshot?: string
+          conteudo_snapshot?: Json
+          created_at?: string
+          emitido_em?: string
+          emitido_por?: string | null
+          employee_id?: string
+          expira_em?: string | null
+          id?: string
+          motivo_emissao?: Database["public"]["Enums"]["oss_motivo"]
+          observacoes?: string | null
+          pdf_assinado_path?: string | null
+          pdf_gerado_path?: string | null
+          status?: Database["public"]["Enums"]["oss_status"]
+          template_id?: string
+          template_revisao?: number
+          updated_at?: string
+          validado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oss_emissoes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oss_emissoes_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "oss_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oss_templates: {
+        Row: {
+          ativo: boolean
+          cargo: string
+          created_at: string
+          created_by: string | null
+          descricao_atividades: string
+          epis_obrigatorios: string
+          hash_conteudo: string | null
+          id: string
+          medidas_preventivas: string
+          penalidades: string
+          procedimentos_emergencia: string
+          proibicoes: string
+          revisao: number
+          riscos_texto: string
+          setor: string | null
+          titulo: string
+          updated_at: string
+          updated_by: string | null
+          validade_meses: number
+        }
+        Insert: {
+          ativo?: boolean
+          cargo: string
+          created_at?: string
+          created_by?: string | null
+          descricao_atividades?: string
+          epis_obrigatorios?: string
+          hash_conteudo?: string | null
+          id?: string
+          medidas_preventivas?: string
+          penalidades?: string
+          procedimentos_emergencia?: string
+          proibicoes?: string
+          revisao?: number
+          riscos_texto?: string
+          setor?: string | null
+          titulo: string
+          updated_at?: string
+          updated_by?: string | null
+          validade_meses?: number
+        }
+        Update: {
+          ativo?: boolean
+          cargo?: string
+          created_at?: string
+          created_by?: string | null
+          descricao_atividades?: string
+          epis_obrigatorios?: string
+          hash_conteudo?: string | null
+          id?: string
+          medidas_preventivas?: string
+          penalidades?: string
+          procedimentos_emergencia?: string
+          proibicoes?: string
+          revisao?: number
+          riscos_texto?: string
+          setor?: string | null
+          titulo?: string
+          updated_at?: string
+          updated_by?: string | null
+          validade_meses?: number
+        }
+        Relationships: []
+      }
       plano_acoes: {
         Row: {
           como: string | null
@@ -4421,6 +4565,7 @@ export type Database = {
       is_moderator: { Args: { _user_id: string }; Returns: boolean }
       is_viewer_or_above: { Args: { _user_id: string }; Returns: boolean }
       mfa_ok: { Args: never; Returns: boolean }
+      oss_marcar_vencidas: { Args: never; Returns: number }
       peek_proximo_numero_apr: { Args: never; Returns: string }
       pt_title_case: { Args: { s: string }; Returns: string }
       registrar_entrega_epi: {
@@ -4464,6 +4609,13 @@ export type Database = {
         | "PQS"
         | "PQS_K"
         | "OUTRO"
+      oss_motivo:
+        | "ADMISSAO"
+        | "MUDANCA_CARGO"
+        | "REVISAO_RISCO"
+        | "RECICLAGEM_ANUAL"
+        | "EMISSAO_MANUAL"
+      oss_status: "PENDENTE_ASSINATURA" | "ASSINADO" | "VENCIDO" | "SUBSTITUIDO"
       purchase_req_class: "MATERIAL" | "SERVICO"
       purchase_req_status: "PENDENTE" | "COTADA" | "APROVADA" | "INDEFERIDA"
       tipo_movimentacao_epi: "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO"
@@ -4614,6 +4766,14 @@ export const Constants = {
         "PQS_K",
         "OUTRO",
       ],
+      oss_motivo: [
+        "ADMISSAO",
+        "MUDANCA_CARGO",
+        "REVISAO_RISCO",
+        "RECICLAGEM_ANUAL",
+        "EMISSAO_MANUAL",
+      ],
+      oss_status: ["PENDENTE_ASSINATURA", "ASSINADO", "VENCIDO", "SUBSTITUIDO"],
       purchase_req_class: ["MATERIAL", "SERVICO"],
       purchase_req_status: ["PENDENTE", "COTADA", "APROVADA", "INDEFERIDA"],
       tipo_movimentacao_epi: [
