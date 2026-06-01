@@ -327,6 +327,92 @@ function AprsPage() {
         </Select>
       </div>
 
+      {/* Matriz de cobertura: Modelo × Casco */}
+      {cascos.length > 0 && modelos.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-4 shrink-0">
+          <button
+            type="button"
+            onClick={() => setMatrizOpen((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 rounded-t-2xl"
+          >
+            <div className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4 text-[#991b1b]" />
+              <span className="font-black text-sm text-slate-800">Cobertura por casco</span>
+              <span className="text-[11px] text-slate-500">— modelos × cascos. Clique na célula vazia para gerar APR.</span>
+            </div>
+            {matrizOpen ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+          </button>
+          {matrizOpen && (() => {
+            // Set: `${modeloId}::${cascoId}` quando existe APR ATIVA/RASCUNHO
+            const coverage = new Set<string>();
+            for (const a of aprs as any[]) {
+              if (a.modelo_id && a.casco_id && (a.status === "ATIVA" || a.status === "RASCUNHO")) {
+                coverage.add(`${a.modelo_id}::${a.casco_id}`);
+              }
+            }
+            return (
+              <div className="overflow-x-auto border-t">
+                <table className="w-full text-xs">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="text-left font-black text-slate-600 px-3 py-2 sticky left-0 bg-slate-50 z-10 min-w-[180px]">
+                        Modelo
+                      </th>
+                      {cascos.map((c: any) => (
+                        <th key={c.id} className="font-black text-[#991b1b] px-2 py-2 text-center whitespace-nowrap">
+                          {c.numero}
+                          {c.nome && <div className="text-[9px] font-normal text-slate-500 truncate max-w-[80px]">{c.nome}</div>}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modelos.map((m: any) => (
+                      <tr key={m.id} className="border-t hover:bg-slate-50/50">
+                        <td className="px-3 py-1.5 font-bold text-slate-700 sticky left-0 bg-white hover:bg-slate-50/50 z-10">
+                          {m.nome}
+                        </td>
+                        {cascos.map((c: any) => {
+                          const tem = coverage.has(`${m.id}::${c.id}`);
+                          return (
+                            <td key={c.id} className="text-center p-1">
+                              {tem ? (
+                                <button
+                                  type="button"
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-emerald-100 text-emerald-700 border border-emerald-300 hover:bg-emerald-200"
+                                  title="APR já existe — clique pra filtrar"
+                                  onClick={() => {
+                                    setFilterCasco(c.id);
+                                    setSearch(m.nome);
+                                  }}
+                                >
+                                  ✓
+                                </button>
+                              ) : isEditor ? (
+                                <button
+                                  type="button"
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-dashed border-slate-300 text-slate-400 hover:border-[#991b1b] hover:text-[#991b1b] hover:bg-[#991b1b]/5"
+                                  title={`Gerar APR "${m.nome}" para CASCO ${c.numero}`}
+                                  onClick={() => { setLoteModeloId(m.id); setLoteCascoId(c.id); setLoteOpen(true); }}
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                </button>
+                              ) : (
+                                <span className="text-slate-300">—</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex-1 overflow-hidden flex flex-col min-h-0">
         <div className="overflow-y-auto flex-1 p-2">
           {isLoading ? (
