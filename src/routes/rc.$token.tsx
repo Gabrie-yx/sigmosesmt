@@ -9,8 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, X as XIcon, FileText, Clock, DollarSign } from "lucide-react";
+import { Check, X as XIcon, FileText, Clock, DollarSign, Lock } from "lucide-react";
 import { getRcByToken, marcarRcCotada, decidirRc } from "@/lib/rc-public.functions";
+import { useAuth } from "@/hooks/use-auth";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/rc/$token")({
   head: () => ({
@@ -49,6 +51,7 @@ function RcStatusPage() {
   const fetchRc = useServerFn(getRcByToken);
   const marcarCotada = useServerFn(marcarRcCotada);
   const decidir = useServerFn(decidirRc);
+  const { isModerator, loading: authLoading } = useAuth();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["rc-public", token],
@@ -67,7 +70,7 @@ function RcStatusPage() {
   });
 
   const decidirMut = useMutation({
-    mutationFn: (p: { decisao: "APROVADA" | "INDEFERIDA"; aprovador_nome: string; motivo?: string }) =>
+    mutationFn: (p: { decisao: "APROVADA" | "INDEFERIDA"; motivo?: string }) =>
       decidir({ data: { token, ...p } }),
     onSuccess: (_d, vars) => {
       toast.success(vars.decisao === "APROVADA" ? "RC deferida!" : "RC indeferida");
@@ -208,8 +211,24 @@ function RcStatusPage() {
         )}
 
         {/* Ação: Decidir */}
-        {rc.status === "COTADA" && (
+        {rc.status === "COTADA" && isModerator && (
           <DecidirForm onSubmit={(p) => decidirMut.mutate(p)} loading={decidirMut.isPending} />
+        )}
+
+        {rc.status === "COTADA" && !isModerator && !authLoading && (
+          <Card className="border-amber-300 bg-amber-50/50">
+            <CardContent className="p-4 text-center space-y-3">
+              <Lock className="h-6 w-6 text-amber-600 mx-auto" />
+              <div className="text-sm text-slate-700">
+                Aprovação ou indeferimento exige login do <strong>gerente</strong> (admin ou moderador).
+              </div>
+              <Button asChild className="bg-amber-600 hover:bg-amber-700">
+                <Link to="/login" search={{ redirect: `/rc/${token}` } as any}>
+                  Fazer login para decidir
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         )}
 
         {(rc.status === "APROVADA" || rc.status === "INDEFERIDA") && (
@@ -302,24 +321,20 @@ function DecidirForm({
   onSubmit,
   loading,
 }: {
-  onSubmit: (p: { decisao: "APROVADA" | "INDEFERIDA"; aprovador_nome: string; motivo?: string }) => void;
+  onSubmit: (p: { decisao: "APROVADA" | "INDEFERIDA"; motivo?: string }) => void;
   loading: boolean;
 }) {
-  const [nome, setNome] = useState("");
   const [motivo, setMotivo] = useState("");
   const [modo, setModo] = useState<"none" | "indef">("none");
 
   return (
     <Card className="border-emerald-300 bg-emerald-50/40">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm">Decisão do gerente</CardTitle>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Check className="h-4 w-4 text-emerald-600" /> Decisão do gerente (autenticado)
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div>
-          <Label className="text-xs">Seu nome</Label>
-          <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Anderson" />
-        </div>
-
         {modo === "indef" && (
           <div>
             <Label className="text-xs">Motivo do indeferimento</Label>
@@ -337,8 +352,7 @@ function DecidirForm({
             <>
               <Button
                 onClick={() => {
-                  if (!nome.trim()) return toast.error("Informe seu nome");
-                  onSubmit({ decisao: "APROVADA", aprovador_nome: nome.trim() });
+                  onSubmit({ decisao: "APROVADA" });
                 }}
                 disabled={loading}
                 className="flex-1 bg-emerald-600 hover:bg-emerald-700"
@@ -357,9 +371,8 @@ function DecidirForm({
             <>
               <Button
                 onClick={() => {
-                  if (!nome.trim()) return toast.error("Informe seu nome");
                   if (!motivo.trim()) return toast.error("Informe o motivo");
-                  onSubmit({ decisao: "INDEFERIDA", aprovador_nome: nome.trim(), motivo: motivo.trim() });
+                  onSubmit({ decisao: "INDEFERIDA", motivo: motivo.trim() });
                 }}
                 disabled={loading}
                 variant="destructive"

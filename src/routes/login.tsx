@@ -14,12 +14,12 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const nav = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  // Signup público desabilitado por motivos de segurança (LGPD / sistema interno).
+  // Novos usuários só podem ser criados via convite por um admin (inviteUser).
+  const mode: "signin" = "signin";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaChallengeId, setMfaChallengeId] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
@@ -48,25 +48,10 @@ function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (mode === "signup" && !acceptTerms) {
-      toast.error("Você precisa aceitar os Termos de Uso e a Política de Privacidade.");
-      return;
-    }
     setLoading(true);
     try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/app`,
-            data: { full_name: name },
-          },
-        });
-        if (error) throw error;
-        toast.success("Conta criada! Se a confirmação de email estiver ativa, verifique sua caixa de entrada.");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+      {
+        const { error, data } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           if (error.message.toLowerCase().includes("email not confirmed")) {
             throw new Error("Email não confirmado. Desative a confirmação de email no Supabase ou confirme pelo link enviado.");
@@ -109,7 +94,7 @@ function LoginPage() {
             Sistema Integrado de Gestão Modular
           </CardDescription>
           <CardTitle className="text-2xl font-black uppercase tracking-tight text-slate-900">
-            {mode === "signin" ? "Entrar" : "Criar conta"}
+            Entrar
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -130,12 +115,6 @@ function LoginPage() {
             </form>
           ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === "signup" && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome completo</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-              </div>
-            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -145,36 +124,11 @@ function LoginPage() {
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Aguarde..." : mode === "signin" ? "Entrar" : "Criar conta"}
+              {loading ? "Aguarde..." : "Entrar"}
             </Button>
-            {mode === "signup" && (
-              <label className="flex items-start gap-2 text-xs text-slate-600 leading-snug">
-                <input
-                  type="checkbox"
-                  checked={acceptTerms}
-                  onChange={(e) => setAcceptTerms(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
-                />
-                <span>
-                  Li e aceito os{" "}
-                  <Link to="/termos" target="_blank" className="font-semibold text-red-600 hover:underline">
-                    Termos de Uso
-                  </Link>{" "}
-                  e a{" "}
-                  <Link to="/privacidade" target="_blank" className="font-semibold text-red-600 hover:underline">
-                    Política de Privacidade
-                  </Link>{" "}
-                  (LGPD).
-                </span>
-              </label>
-            )}
-            <button
-              type="button"
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-              className="w-full text-sm text-muted-foreground hover:text-foreground"
-            >
-              {mode === "signin" ? "Não tem conta? Criar" : "Já tem conta? Entrar"}
-            </button>
+            <div className="text-center text-xs text-muted-foreground">
+              Sistema interno — novas contas são criadas por convite de um administrador.
+            </div>
             <div className="border-t border-slate-200 pt-3 text-center text-[11px] text-muted-foreground space-x-3">
               <Link to="/termos" className="hover:text-slate-900 hover:underline">Termos de Uso</Link>
               <span>·</span>

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const tokenSchema = z.string().uuid();
 
@@ -68,22 +69,33 @@ export const marcarRcCotada = createServerFn({ method: "POST" })
   });
 
 export const decidirRc = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: {
     token: string;
     decisao: "APROVADA" | "INDEFERIDA";
-    aprovador_nome: string;
     motivo?: string;
   }) =>
     z
       .object({
         token: tokenSchema,
         decisao: z.enum(["APROVADA", "INDEFERIDA"]),
-        aprovador_nome: z.string().min(2).max(120),
         motivo: z.string().max(500).optional(),
       })
       .parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Só admin ou moderador pode decidir
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const rolesList = (roles ?? []).map((r: any) => r.role);
+    if (!rolesList.includes("admin") && !rolesList.includes("moderador")) {
+      throw new Error("Apenas gerentes (admin/moderador) podem aprovar requisições.");
+    }
+
     const { data: rc, error: e1 } = await supabaseAdmin
       .from("purchase_requisitions")
       .select("id, status")
@@ -103,6 +115,7 @@ export const decidirRc = createServerFn({ method: "POST" })
         status: data.decisao,
         motivo_indeferimento: data.decisao === "INDEFERIDA" ? data.motivo : null,
         approved_at: new Date().toISOString(),
+        approved_by: userId,
       })
       .eq("id", rc.id);
     if (error) throw new Error(error.message);
