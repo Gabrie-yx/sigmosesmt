@@ -213,6 +213,55 @@ function TemplateEditorDialog({
     },
   });
 
+  // Catálogo de riscos (para picker por categoria)
+  const { data: catalogo = [] } = useQuery({
+    queryKey: ["oss-catalogo-riscos"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("catalogo_riscos")
+        .select("id, nome, categoria, medidas_controle_padrao, epis_sugeridos")
+        .eq("ativo", true)
+        .order("nome");
+      return (data ?? []) as Array<{
+        id: string; nome: string; categoria: string;
+        medidas_controle_padrao: string[] | null;
+        epis_sugeridos: string[] | null;
+      }>;
+    },
+  });
+
+  /** Adiciona um item do catálogo no campo de risco daquela categoria,
+   *  e ainda enriquece medidas_preventivas + epis_obrigatorios. */
+  function addFromCatalogo(
+    riscoField: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente",
+    item: { nome: string; medidas_controle_padrao: string[] | null; epis_sugeridos: string[] | null },
+  ) {
+    setForm((f) => {
+      const cur = (f as any)[riscoField] ?? "";
+      const line = `• ${item.nome}`;
+      const already = cur.split(/\r?\n/).some((l: string) => l.trim() === line);
+      const next: any = { ...f };
+      if (!already) next[riscoField] = cur.trim() ? `${cur.trim()}\n${line}` : line;
+      // medidas
+      const medAtual = (f.medidas_preventivas || "").split(/\r?\n/);
+      const novasMed = (item.medidas_controle_padrao ?? [])
+        .filter((m) => !medAtual.some((l) => l.trim() === `• ${m}`))
+        .map((m) => `• ${m}`);
+      if (novasMed.length) {
+        next.medidas_preventivas = (f.medidas_preventivas?.trim() ? f.medidas_preventivas.trim() + "\n" : "") + novasMed.join("\n");
+      }
+      // EPIs
+      const epiAtual = (f.epis_obrigatorios || "").split(/\r?\n/);
+      const novosEpi = (item.epis_sugeridos ?? [])
+        .filter((e) => !epiAtual.some((l) => l.trim() === `• ${e}`))
+        .map((e) => `• ${e}`);
+      if (novosEpi.length) {
+        next.epis_obrigatorios = (f.epis_obrigatorios?.trim() ? f.epis_obrigatorios.trim() + "\n" : "") + novosEpi.join("\n");
+      }
+      return next;
+    });
+  }
+
   // "Gerar a partir da Matriz" — busca cargo_riscos + catalogo_riscos do cargo selecionado
   const gerarFromMatriz = useMutation({
     mutationFn: async () => {
