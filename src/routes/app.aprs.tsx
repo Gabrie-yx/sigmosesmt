@@ -263,12 +263,20 @@ function AprsPage() {
         {isEditor && (
           <div className="flex gap-2">
             <Button
+              onClick={() => { setLoteModeloId(null); setLoteCascoId(null); setLoteOpen(true); }}
+              size="lg"
+              variant="outline"
+              className="border-[#991b1b] text-[#991b1b] hover:bg-[#991b1b]/5"
+            >
+              <LayoutGrid className="h-4 w-4 mr-1" /> Aplicar a vários cascos
+            </Button>
+            <Button
               onClick={() => setModeloPickerOpen(true)}
               size="lg"
               variant="outline"
               className="border-amber-500 text-amber-700 hover:bg-amber-50"
             >
-              <Zap className="h-4 w-4 mr-1" /> A partir de modelo
+              <Zap className="h-4 w-4 mr-1" /> Modelo (editar)
             </Button>
             <Button
               onClick={() => {
