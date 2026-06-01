@@ -17,6 +17,27 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Apenas administradores podem gerenciar usuários");
 }
 
+async function logAdminEvent(args: {
+  action: string;
+  target_user_id: string;
+  actor_user_id: string;
+  payload?: Record<string, unknown>;
+}) {
+  let actor_email: string | null = null;
+  try {
+    const { data } = await supabaseAdmin.auth.admin.getUserById(args.actor_user_id);
+    actor_email = data.user?.email ?? null;
+  } catch { /* ignore */ }
+  await supabaseAdmin.from("audit_logs").insert({
+    table_name: "users_admin",
+    action: args.action,
+    record_id: args.target_user_id,
+    user_id: args.actor_user_id,
+    user_email: actor_email,
+    new_data: args.payload ?? null,
+  });
+}
+
 export const inviteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
