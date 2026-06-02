@@ -10,6 +10,14 @@ type: feature
 3. PDF: layout MODERNO, elegante, profissional, apresentável (NÃO 1:1 do DMN). Inspiração: design SIGMO atual, headers gradiente, tipografia limpa, tabelas zebra, capa com logo/CNPJ/RT/revisão.
 4. PT exige APR: flag configurável `pt_exige_apr_valida` em `company_settings`. Default = NÃO bloqueia. Quando ligado, bloqueia emissão de PT sem APR válida vinculada à tarefa.
 
+## Status Fase 1 (em construção)
+- [x] Migration: `pgr_ghe`, `pgr_inventario_riscos` (com `risco` calculado P*S), `pgr_plano_acao` (5W2H), flag `company_settings.pt_exige_apr_valida`, `roles.ghe_id`.
+- [x] Helper `src/lib/aiha.ts` — classificação 5×5 (Trivial/Baixo/Moderado/Alto/Muito Alto + priorização).
+- [x] Rota `/app/pgr` com 3 abas: GHEs (CRUD + vincular cargos), Inventário (CRUD + matriz visual 5×5 + KPIs), Plano 5W2H (CRUD + sugestões para riscos Alto/Muito Alto).
+- [ ] Seed automático do PGR DMN (importar 10 GHEs + inventário do PDF).
+- [ ] PDF moderno do PGR (capa, GHEs, inventário, matriz, plano 5W2H, plano de monitoramento).
+- [ ] Flag PT exige APR: aplicar no fluxo de emissão de PT (`src/routes/app.ptes.tsx`).
+
 ## Pergunta aberta do usuário (responder com calma, NÃO codar ainda)
 "O que o SIGMO precisa para gerar qualquer PGR, para qualquer empresa e qualquer segmento?"
 

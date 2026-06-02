@@ -34,6 +34,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/companies", label: "Empresas / Contratadas", module: "sesmt" },
   { key: "/app/roles", label: "Cargos & Matriz de Riscos", module: "sesmt" },
   { key: "/app/matriz-riscos", label: "Matriz de Riscos (PGR/LTCAT)", module: "sesmt" },
+  { key: "/app/pgr", label: "PGR — Programa de Riscos (NR-01)", module: "sesmt" },
 
   // ----- ESTOQUE -----
   { key: "/app/estoque", label: "Estoque de EPIs", module: "estoque" },
