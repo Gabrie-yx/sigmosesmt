@@ -374,6 +374,40 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     const ov = overridesAll.filter((o) => o.employee_id === empId);
     return hasGlobalOverride(ov) || ov.some((o) => o.item_key === "OS");
   }
+  const { user } = useAuth();
+  const liberarOs = useMutation({
+    mutationFn: async ({ empId, nome }: { empId: string; nome: string }) => {
+      if (!user) throw new Error("Sessão expirada");
+      const justificativa = window.prompt(
+        `Justificativa para liberar ${nome} sem OS Assinada (mín. 10 caracteres, ISO 9001):`,
+        "Liberação emergencial via APR — OS será emitida em até 5 dias úteis",
+      );
+      if (justificativa === null) throw new Error("__cancel__");
+      if (justificativa.trim().length < 10) throw new Error("Justificativa muito curta (mín. 10 caracteres)");
+      const expira_em = new Date(Date.now() + 30 * 86400000).toISOString();
+      const { error } = await supabase.from("safety_overrides").insert({
+        employee_id: empId,
+        scope: "ITEM",
+        item_key: "OS",
+        justificativa: justificativa.trim(),
+        liberado_por: user.id,
+        liberado_por_email: user.email ?? null,
+        expira_em,
+        ativo: true,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["safety-overrides-active-apr"] });
+      qc.invalidateQueries({ queryKey: ["safety-overrides-all"] });
+      qc.invalidateQueries({ queryKey: ["safety-overrides"] });
+      toast.success("OS liberada por 30 dias — registre a emissão da OS o quanto antes");
+    },
+    onError: (e: any) => {
+      if (e?.message === "__cancel__") return;
+      toast.error(e.message);
+    },
+  });
   // PTEs JÁ vinculadas a esta APR (1 APR ↔ N PTEs, uma por categoria detectada)
   const { data: linkedPtes = EMPTY_QUERY_LIST } = useQuery({
     queryKey: ["ptes-linked-apr", currentAprId],
