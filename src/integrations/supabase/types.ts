@@ -2875,6 +2875,68 @@ export type Database = {
         }
         Relationships: []
       }
+      pgr_ghe_membros_override: {
+        Row: {
+          acao: string
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          ghe_id: string
+          id: string
+          motivo: string | null
+          updated_at: string
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          ghe_id: string
+          id?: string
+          motivo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          ghe_id?: string
+          id?: string
+          motivo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pgr_ghe_membros_override_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pgr_ghe_membros_override_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "pgr_ghe_membros_override_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_ghe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pgr_ghe_membros_override_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["ghe_id"]
+          },
+        ]
+      }
       pgr_inventario_riscos: {
         Row: {
           agravo: string | null
@@ -5022,6 +5084,14 @@ export type Database = {
       }
     }
     Views: {
+      pgr_ghe_membros_efetivos: {
+        Row: {
+          employee_id: string | null
+          ghe_id: string | null
+          origem: string | null
+        }
+        Relationships: []
+      }
       vw_colaborador_pgr: {
         Row: {
           agravo: string | null
