@@ -231,14 +231,19 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                 accept="image/*"
                 className="hidden"
                 disabled={uploadingHeaderPhoto}
-                onChange={(e) => { const file = e.target.files?.[0]; if (file) handleHeaderPhotoUpload(file); }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  // limpa o value para permitir reescolher o mesmo arquivo depois
+                  e.target.value = "";
+                  if (file) handleHeaderPhotoUpload(file);
+                }}
               />
             )}
           </label>
           {canEditHeader && emp.foto_url && (
             <button
               type="button"
-              onClick={removeHeaderPhoto}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeHeaderPhoto(); }}
               title="Remover foto"
               className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-white border border-slate-200 shadow flex items-center justify-center text-slate-600 hover:text-destructive hover:border-destructive transition-colors"
             >
