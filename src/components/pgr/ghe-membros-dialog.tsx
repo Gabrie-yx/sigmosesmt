@@ -79,13 +79,13 @@ export function GheMembrosDialog({
     queryKey: ["roles_disponiveis_ghe", gheId],
     enabled: open && tab === "cargos",
     queryFn: async () => {
-      // `.neq` em coluna nullable exclui NULL no PostgREST.
-      // Usamos `or` para trazer cargos sem GHE OU em outro GHE.
+      // Traz TODOS os cargos ativos. A UI marca cada um com seu status
+      // (já neste GHE / em outro GHE / disponível) — evita confusão de
+      // "cadê meu cargo?" quando ele já está vinculado.
       const { data } = await sb
         .from("roles")
         .select("id, name, ghe_id")
         .eq("ativo", true)
-        .or(`ghe_id.is.null,ghe_id.neq.${gheId}`)
         .order("name");
       return data ?? [];
     },
@@ -241,11 +241,19 @@ export function GheMembrosDialog({
                   <SelectContent className="max-h-72">
                     {cargosDisponiveis.length === 0 ? (
                       <div className="px-2 py-3 text-xs text-slate-400 text-center">Nenhum cargo disponível.</div>
-                    ) : cargosDisponiveis.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}{c.ghe_id ? " (já em outro GHE)" : ""}
-                      </SelectItem>
-                    ))}
+                    ) : cargosDisponiveis.map((c) => {
+                      const jaAqui = c.ghe_id === gheId;
+                      const emOutro = !!c.ghe_id && !jaAqui;
+                      return (
+                        <SelectItem key={c.id} value={c.id} disabled={jaAqui}>
+                          <span className="flex items-center gap-2">
+                            <span>{c.name}</span>
+                            {jaAqui && <span className="text-[10px] text-emerald-700 font-medium">✓ já neste GHE</span>}
+                            {emOutro && <span className="text-[10px] text-amber-700">já em outro GHE</span>}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 <Button
