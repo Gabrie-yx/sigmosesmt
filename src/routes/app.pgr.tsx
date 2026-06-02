@@ -351,6 +351,8 @@ function RiscoEpisDialog({ risco, onClose }: { risco: InvRow; onClose: () => voi
   const [epiSel, setEpiSel] = useState<string>("");
   const [obrigatorio, setObrigatorio] = useState(true);
   const [obs, setObs] = useState("");
+  const [iaSugestoes, setIaSugestoes] = useState<Array<{ epi_id: string; nome_material: string; obrigatorio: boolean; motivo: string }>>([]);
+  const sugerirIA = useServerFn(sugerirEpisIA);
 
   const { data: vinc = [] } = useQuery<any[]>({
     queryKey: ["pgr_risco_epi", risco.id],
@@ -365,10 +367,10 @@ function RiscoEpisDialog({ risco, onClose }: { risco: InvRow; onClose: () => voi
     },
   });
 
-  const { data: epis = [] } = useQuery<any[]>({
+  const { data: epis = [] } = useQuery<EstoqueEpiLite[]>({
     queryKey: ["estoque_epi_select"],
     queryFn: async () => {
-      const { data, error } = await sb.from("estoque_epi").select("id, nome_material, codigo_material, ca").order("nome_material");
+      const { data, error } = await sb.from("estoque_epi").select("id, nome_material, codigo_material, ca, quantidade_atual").order("nome_material");
       if (error) throw error;
       return data ?? [];
     },
@@ -376,6 +378,22 @@ function RiscoEpisDialog({ risco, onClose }: { risco: InvRow; onClose: () => voi
 
   const epiIdsVinc = new Set(vinc.map((v) => v.epi_id));
   const episDisponiveis = epis.filter((e) => !epiIdsVinc.has(e.id));
+
+  // Heurística local — roda na hora
+  const sugestoesLocais: EpiSugestao[] = useMemo(
+    () => suggestEpisHeuristic(
+      { categoria: risco.categoria, perigo: risco.perigo, agravo: risco.agravo },
+      episDisponiveis,
+    ),
+    [risco, episDisponiveis],
+  );
+  const faltantes = useMemo(
+    () => epiKeywordsFaltantes(
+      { categoria: risco.categoria, perigo: risco.perigo, agravo: risco.agravo },
+      epis,
+    ),
+    [risco, epis],
+  );
 
   const add = useMutation({
     mutationFn: async () => {
@@ -392,6 +410,57 @@ function RiscoEpisDialog({ risco, onClose }: { risco: InvRow; onClose: () => voi
       qc.invalidateQueries({ queryKey: ["pgr_risco_epi", risco.id] });
       setEpiSel(""); setObs(""); setObrigatorio(true);
       toast.success("EPI vinculado");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const addOne = useMutation({
+    mutationFn: async (p: { epi_id: string; obrigatorio: boolean; observacao: string | null }) => {
+      const { error } = await sb.from("pgr_risco_epi").insert({
+        inventario_id: risco.id,
+        epi_id: p.epi_id,
+        obrigatorio: p.obrigatorio,
+        observacao: p.observacao,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pgr_risco_epi", risco.id] });
+      qc.invalidateQueries({ queryKey: ["pgr_risco_epi_counts"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const aplicarTodasLocais = useMutation({
+    mutationFn: async () => {
+      if (sugestoesLocais.length === 0) return;
+      const rows = sugestoesLocais.map((s) => ({
+        inventario_id: risco.id,
+        epi_id: s.epi.id,
+        obrigatorio: s.obrigatorio,
+        observacao: s.motivo,
+      }));
+      const { error } = await sb.from("pgr_risco_epi").insert(rows);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pgr_risco_epi", risco.id] });
+      qc.invalidateQueries({ queryKey: ["pgr_risco_epi_counts"] });
+      toast.success(`${sugestoesLocais.length} EPI(s) vinculado(s) automaticamente`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const callIA = useMutation({
+    mutationFn: async () => {
+      const r = await sugerirIA({ data: { riscoId: risco.id } });
+      if (r.error) throw new Error(r.error);
+      return r.sugestoes;
+    },
+    onSuccess: (s) => {
+      setIaSugestoes(s);
+      if (s.length === 0) toast.info("IA não encontrou EPIs adequados no estoque");
+      else toast.success(`IA sugeriu ${s.length} EPI(s)`);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -417,7 +486,7 @@ function RiscoEpisDialog({ risco, onClose }: { risco: InvRow; onClose: () => voi
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <HardHat className="h-5 w-5 text-amber-700" />
@@ -426,8 +495,113 @@ function RiscoEpisDialog({ risco, onClose }: { risco: InvRow; onClose: () => voi
           <p className="text-xs text-slate-500">
             <b>{risco.perigo}</b>
             {risco.agravo && <> · agravo: {risco.agravo}</>}
+            {" · "}<Badge variant="outline" className="text-[10px]">{risco.categoria}</Badge>
           </p>
         </DialogHeader>
+
+        {/* Painel de sugestões automáticas */}
+        {(sugestoesLocais.length > 0 || faltantes.length > 0) && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2 text-sm font-bold text-amber-900">
+                <Sparkles className="h-4 w-4" />
+                Sugestões automáticas ({sugestoesLocais.length})
+              </div>
+              <div className="flex gap-2">
+                {sugestoesLocais.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs border-amber-400 text-amber-900 hover:bg-amber-100"
+                    onClick={() => aplicarTodasLocais.mutate()}
+                    disabled={aplicarTodasLocais.isPending}
+                  >
+                    {aplicarTodasLocais.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                    Aplicar todas
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  className="h-7 text-xs bg-violet-700 hover:bg-violet-800 gap-1"
+                  onClick={() => callIA.mutate()}
+                  disabled={callIA.isPending}
+                >
+                  {callIA.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
+                  Sugerir com IA
+                </Button>
+              </div>
+            </div>
+            {sugestoesLocais.length === 0 && (
+              <p className="text-xs text-amber-900">
+                Nada com matching automático. Tente o botão <b>Sugerir com IA</b> ou adicione manualmente abaixo.
+              </p>
+            )}
+            {sugestoesLocais.map((s) => (
+              <div key={s.epi.id} className="flex items-center gap-2 bg-white border border-amber-200 rounded p-2">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold truncate">{s.epi.nome_material}</div>
+                  <div className="text-[11px] text-slate-500">
+                    {s.epi.ca && <>CA {s.epi.ca} · </>}
+                    Estoque: {s.epi.quantidade_atual ?? 0} · {s.motivo}
+                  </div>
+                </div>
+                <Badge className={s.obrigatorio ? "bg-rose-100 text-rose-800 border-rose-200" : "bg-slate-100 text-slate-700"} variant="outline">
+                  {s.obrigatorio ? "Obrigatório" : "Recomendado"}
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() => addOne.mutate({ epi_id: s.epi.id, obrigatorio: s.obrigatorio, observacao: s.motivo })}
+                  disabled={addOne.isPending}
+                >
+                  <Plus className="h-3 w-3" /> Vincular
+                </Button>
+              </div>
+            ))}
+            {faltantes.length > 0 && (
+              <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded p-2 flex items-start gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <div>
+                  <b>EPIs esperados que não existem no estoque:</b> {faltantes.join(", ")}.
+                  Cadastre em Estoque → EPI para conseguir vincular.
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Sugestões da IA */}
+        {iaSugestoes.length > 0 && (
+          <div className="rounded-lg border border-violet-200 bg-violet-50/60 p-3 space-y-2">
+            <div className="flex items-center gap-2 text-sm font-bold text-violet-900">
+              <Wand2 className="h-4 w-4" /> Sugestão da IA
+            </div>
+            {iaSugestoes.map((s) => (
+              <div key={s.epi_id} className="flex items-center gap-2 bg-white border border-violet-200 rounded p-2">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold truncate">{s.nome_material}</div>
+                  <div className="text-[11px] text-slate-500 italic">{s.motivo}</div>
+                </div>
+                <Badge className={s.obrigatorio ? "bg-rose-100 text-rose-800 border-rose-200" : "bg-slate-100 text-slate-700"} variant="outline">
+                  {s.obrigatorio ? "Obrigatório" : "Recomendado"}
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    addOne.mutate({ epi_id: s.epi_id, obrigatorio: s.obrigatorio, observacao: s.motivo });
+                    setIaSugestoes((prev) => prev.filter((x) => x.epi_id !== s.epi_id));
+                  }}
+                  disabled={addOne.isPending}
+                >
+                  <Plus className="h-3 w-3" /> Vincular
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Lista de EPIs já vinculados */}
         <div className="space-y-2">
