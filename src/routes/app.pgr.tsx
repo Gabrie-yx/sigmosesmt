@@ -200,6 +200,9 @@ function GheTab() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {ghes.map((g) => {
             const cargosLigados = roles.filter((r: { ghe_id: string | null }) => r.ghe_id === g.id);
+            const membros = membrosPorGhe.get(g.id) ?? [];
+            const visiveis = membros.slice(0, 5);
+            const extras = Math.max(0, membros.length - visiveis.length);
             return (
               <Card key={g.id} className="p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between gap-3">
@@ -212,9 +215,42 @@ function GheTab() {
                       <p className="text-xs text-slate-600 mt-1">{g.descricao_ambiente}</p>
                     )}
                     <div className="flex gap-3 text-xs text-slate-500 mt-2">
-                      <span className="flex items-center gap-1"><Users className="h-3 w-3" />{g.qtd_colaboradores ?? 0} pessoas</span>
+                      <button
+                        type="button"
+                        onClick={() => setMembrosFor(g)}
+                        className="flex items-center gap-1 hover:text-rose-700 hover:underline"
+                        title="Ver / gerenciar membros"
+                      >
+                        <Users className="h-3 w-3" />
+                        <strong className="text-slate-700">{membros.length}</strong> {membros.length === 1 ? "pessoa" : "pessoas"}
+                      </button>
                       {g.jornada && <span>· {g.jornada}</span>}
                     </div>
+                    {membros.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setMembrosFor(g)}
+                        className="flex items-center mt-2 group"
+                        title="Ver membros"
+                      >
+                        <div className="flex -space-x-2">
+                          {visiveis.map((p) => (
+                            <div
+                              key={p.id}
+                              className="h-7 w-7 rounded-full border-2 border-white bg-slate-200 overflow-hidden flex items-center justify-center text-[10px] font-bold text-slate-600"
+                              title={p.nome}
+                            >
+                              {p.foto_url ? <img src={p.foto_url} alt={p.nome} className="h-full w-full object-cover" /> : p.nome.charAt(0)}
+                            </div>
+                          ))}
+                          {extras > 0 && (
+                            <div className="h-7 w-7 rounded-full border-2 border-white bg-slate-700 text-white text-[10px] font-bold flex items-center justify-center">
+                              +{extras}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    )}
                     <div className="mt-2 flex flex-wrap gap-1">
                       {cargosLigados.length === 0 ? (
                         <span className="text-xs text-slate-400 italic">Nenhum cargo vinculado</span>
@@ -224,6 +260,9 @@ function GheTab() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">
+                    <Button size="sm" variant="ghost" title="Membros" onClick={() => setMembrosFor(g)}>
+                      <Users className="h-3.5 w-3.5" />
+                    </Button>
                     <Button size="sm" variant="ghost" onClick={() => { setEdit(g); setOpen(true); }}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -270,6 +309,14 @@ function GheTab() {
       )}
 
       <GheDialog open={open} onOpenChange={setOpen} edit={edit} />
+      {membrosFor && (
+        <GheMembrosDialog
+          open={!!membrosFor}
+          onOpenChange={(v) => { if (!v) setMembrosFor(null); }}
+          gheId={membrosFor.id}
+          gheLabel={`GHE ${membrosFor.numero} — ${membrosFor.setor}`}
+        />
+      )}
     </div>
   );
 }
