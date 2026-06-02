@@ -168,6 +168,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
   const H = doc.internal.pageSize.getHeight();
   const margin = 8;
   const innerW = W - margin * 2;
+  let y = margin;
   const ensureSpace = (needed: number) => {
     if (y + needed > H - margin) {
       doc.addPage();
@@ -177,7 +178,6 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
 
   // ====================== CABEÇALHO (3 colunas) ======================
   // [Logo DMN] | [Título centralizado] | [Metadados FOR-SEG / Revisão / Data]
-  let y = margin;
   const hdrH = 22;
   const logoW = 38;
   const metaW = 42;
