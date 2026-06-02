@@ -1,0 +1,1 @@
+ALTER VIEW public.pgr_ghe_membros_efetivos SET (security_invoker = true);
