@@ -115,6 +115,7 @@ function GheTab() {
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Ghe | null>(null);
   const [membrosFor, setMembrosFor] = useState<Ghe | null>(null);
+  const [fichaFor, setFichaFor] = useState<Ghe | null>(null);
 
   const { data: ghes = [], isLoading } = useQuery<Ghe[]>({
     queryKey: ["pgr_ghe"],
@@ -270,6 +271,9 @@ function GheTab() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">
+                    <Button size="sm" variant="ghost" title="Ficha do GHE" onClick={() => setFichaFor(g)}>
+                      <ClipboardList className="h-3.5 w-3.5 text-rose-700" />
+                    </Button>
                     <Button size="sm" variant="ghost" title="Membros" onClick={() => setMembrosFor(g)}>
                       <Users className="h-3.5 w-3.5" />
                     </Button>
