@@ -22,6 +22,7 @@ import {
 import {
   ShieldAlert, Plus, Pencil, Trash2, Users, Layers, Grid3x3, ListChecks, AlertTriangle, Save, HardHat,
   Sparkles, Wand2, Loader2,
+  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
 import { GheMembrosDialog } from "@/components/pgr/ghe-membros-dialog";
