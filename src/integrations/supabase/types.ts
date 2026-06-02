@@ -1031,6 +1031,27 @@ export type Database = {
         }
         Relationships: []
       }
+      company_settings: {
+        Row: {
+          created_at: string
+          id: string
+          pt_exige_apr_valida: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pt_exige_apr_valida?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pt_exige_apr_valida?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       controle_doc_anexos: {
         Row: {
           descricao: string | null
@@ -2651,6 +2672,196 @@ export type Database = {
         }
         Relationships: []
       }
+      pgr_ghe: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          descricao_ambiente: string | null
+          id: string
+          jornada: string | null
+          numero: number
+          observacao: string | null
+          qtd_colaboradores: number | null
+          setor: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao_ambiente?: string | null
+          id?: string
+          jornada?: string | null
+          numero: number
+          observacao?: string | null
+          qtd_colaboradores?: number | null
+          setor: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao_ambiente?: string | null
+          id?: string
+          jornada?: string | null
+          numero?: number
+          observacao?: string | null
+          qtd_colaboradores?: number | null
+          setor?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pgr_inventario_riscos: {
+        Row: {
+          agravo: string | null
+          ativo: boolean
+          categoria: string
+          classificacao: string | null
+          controles_existentes: string | null
+          created_at: string
+          created_by: string | null
+          exposicao: string | null
+          fonte_geradora: string | null
+          ghe_id: string
+          id: string
+          intensidade: number | null
+          limite_tolerancia: number | null
+          monitoramento: string | null
+          observacao: string | null
+          perigo: string
+          probabilidade: number | null
+          risco: number | null
+          severidade: number | null
+          tipo_avaliacao: string | null
+          unidade: string | null
+          updated_at: string
+        }
+        Insert: {
+          agravo?: string | null
+          ativo?: boolean
+          categoria: string
+          classificacao?: string | null
+          controles_existentes?: string | null
+          created_at?: string
+          created_by?: string | null
+          exposicao?: string | null
+          fonte_geradora?: string | null
+          ghe_id: string
+          id?: string
+          intensidade?: number | null
+          limite_tolerancia?: number | null
+          monitoramento?: string | null
+          observacao?: string | null
+          perigo: string
+          probabilidade?: number | null
+          risco?: number | null
+          severidade?: number | null
+          tipo_avaliacao?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agravo?: string | null
+          ativo?: boolean
+          categoria?: string
+          classificacao?: string | null
+          controles_existentes?: string | null
+          created_at?: string
+          created_by?: string | null
+          exposicao?: string | null
+          fonte_geradora?: string | null
+          ghe_id?: string
+          id?: string
+          intensidade?: number | null
+          limite_tolerancia?: number | null
+          monitoramento?: string | null
+          observacao?: string | null
+          perigo?: string
+          probabilidade?: number | null
+          risco?: number | null
+          severidade?: number | null
+          tipo_avaliacao?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pgr_inventario_riscos_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_ghe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pgr_plano_acao: {
+        Row: {
+          como: string | null
+          created_at: string
+          created_by: string | null
+          data_conclusao: string | null
+          evidencia_url: string | null
+          id: string
+          inventario_id: string
+          o_que: string
+          observacao: string | null
+          onde: string | null
+          por_que: string | null
+          quando: string | null
+          quanto: number | null
+          quem: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          como?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          evidencia_url?: string | null
+          id?: string
+          inventario_id: string
+          o_que: string
+          observacao?: string | null
+          onde?: string | null
+          por_que?: string | null
+          quando?: string | null
+          quanto?: number | null
+          quem?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          como?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          evidencia_url?: string | null
+          id?: string
+          inventario_id?: string
+          o_que?: string
+          observacao?: string | null
+          onde?: string | null
+          por_que?: string | null
+          quando?: string | null
+          quanto?: number | null
+          quem?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pgr_plano_acao_inventario_id_fkey"
+            columns: ["inventario_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_inventario_riscos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plano_acoes: {
         Row: {
           como: string | null
@@ -3890,6 +4101,7 @@ export type Database = {
           created_at: string
           exames_por_natureza: Json
           ghe: string | null
+          ghe_id: string | null
           id: string
           name: string
           req_aso: boolean
@@ -3908,6 +4120,7 @@ export type Database = {
           created_at?: string
           exames_por_natureza?: Json
           ghe?: string | null
+          ghe_id?: string | null
           id?: string
           name: string
           req_aso?: boolean
@@ -3926,6 +4139,7 @@ export type Database = {
           created_at?: string
           exames_por_natureza?: Json
           ghe?: string | null
+          ghe_id?: string | null
           id?: string
           name?: string
           req_aso?: boolean
@@ -3938,7 +4152,15 @@ export type Database = {
           setor?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "roles_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_ghe"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       safety_overrides: {
         Row: {
