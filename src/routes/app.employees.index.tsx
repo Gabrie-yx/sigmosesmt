@@ -38,12 +38,21 @@ function EmployeesPage() {
       navigate({ to: "/app/employees", search: {}, replace: true });
     }
   }, [openNew, openCompany, isEditor, navigate]);
-  const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO">("TODOS");
-  const [companyFilter, setCompanyFilter] = useState<string>("TODAS");
-  const [roleFilter, setRoleFilter] = useState<string>("TODOS");
-  const [vinculoFilter, setVinculoFilter] = useState<"TODOS" | "PROPRIO" | "TERCEIRO" | "MEI">("TODOS");
-  const [visibleCount, setVisibleCount] = useState(48);
+  const FILTERS_KEY = "employees:filters";
+  const initialFilters = (() => {
+    if (typeof window === "undefined") return null;
+    try { return JSON.parse(sessionStorage.getItem(FILTERS_KEY) || "null"); } catch { return null; }
+  })();
+  const [q, setQ] = useState<string>(initialFilters?.q ?? "");
+  const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO">(initialFilters?.statusFilter ?? "TODOS");
+  const [companyFilter, setCompanyFilter] = useState<string>(initialFilters?.companyFilter ?? "TODAS");
+  const [roleFilter, setRoleFilter] = useState<string>(initialFilters?.roleFilter ?? "TODOS");
+  const [vinculoFilter, setVinculoFilter] = useState<"TODOS" | "PROPRIO" | "TERCEIRO" | "MEI">(initialFilters?.vinculoFilter ?? "TODOS");
+  const [visibleCount, setVisibleCount] = useState<number>(initialFilters?.visibleCount ?? 48);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    sessionStorage.setItem(FILTERS_KEY, JSON.stringify({ q, statusFilter, companyFilter, roleFilter, vinculoFilter, visibleCount }));
+  }, [q, statusFilter, companyFilter, roleFilter, vinculoFilter, visibleCount]);
   const [form, setForm] = useState<any>({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "", tipo_cadastro: "NAO_MEI", cnpj: "" });
   const [listagemOpen, setListagemOpen] = useState(false);
 
