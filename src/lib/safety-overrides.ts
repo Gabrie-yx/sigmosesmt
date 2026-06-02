@@ -38,6 +38,7 @@ export function isMessageOverridden(msg: string, overrides: SafetyOverride[]): b
     if (key === "ASO" && (m.startsWith("aso") || m.includes("falta aso") || m.includes("aso "))) return true;
     if (key === "INTEGRACAO" && m.includes("integra")) return true;
     if (key === "PTE" && m.includes("pte")) return true;
+    if (key === "OS" && (m.includes("os assinada") || m.includes("os vencida") || m.includes("ordem de servi"))) return true;
     if (key.startsWith("NR-") && m.includes(key.toLowerCase())) return true;
     if (key.startsWith("EXAME:")) {
       const exame = key.slice(6).toLowerCase();
