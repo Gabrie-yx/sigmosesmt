@@ -21,6 +21,7 @@ import {
 } from "@/lib/apr-pte-rules";
 import { PteLookupSheet } from "@/components/aprs/pte-lookup-sheet";
 import { hasGlobalOverride, type SafetyOverride } from "@/lib/safety-overrides";
+import { useAuth } from "@/hooks/use-auth";
 
 /* ---------- tipos ---------- */
 type APR = {
