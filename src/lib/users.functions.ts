@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const MODULES = ["sesmt", "estoque", "producao", "manutencao", "portaria", "usuarios"] as const;
 const ROLES = ["admin", "moderador", "editor", "viewer"] as const;
@@ -17,7 +16,7 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Apenas administradores podem gerenciar usuários");
 }
 
-async function logAdminEvent(args: {
+async function logAdminEvent(supabaseAdmin: any, args: {
   action: string;
   target_user_id: string;
   actor_user_id: string;
@@ -50,6 +49,7 @@ export const inviteUser = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
 
     // Cria registro de convite (papel + módulos serão aplicados via trigger ao aceitar)
@@ -80,6 +80,7 @@ export const resendInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ invite_id: z.string().uuid(), redirect_to: z.string().url() }))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
     const { data: inv, error } = await supabaseAdmin
       .from("user_invites")
@@ -99,6 +100,7 @@ export const cancelInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ invite_id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
     const { error } = await supabaseAdmin.from("user_invites").delete().eq("id", data.invite_id);
     if (error) throw new Error(error.message);
@@ -109,13 +111,14 @@ export const updateUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ user_id: z.string().uuid(), role: z.enum(ROLES) }))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
     const { error } = await supabaseAdmin
       .from("user_roles")
       .insert({ user_id: data.user_id, role: data.role });
     if (error) throw new Error(error.message);
-    await logAdminEvent({
+    await logAdminEvent(supabaseAdmin, {
       action: "ROLE_CHANGED",
       target_user_id: data.user_id,
       actor_user_id: context.userId,
@@ -133,6 +136,7 @@ export const updateUserModules = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
     // Apaga e reinsere
     await supabaseAdmin.from("user_module_access").delete().eq("user_id", data.user_id);
@@ -141,7 +145,7 @@ export const updateUserModules = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin.from("user_module_access").insert(rows);
       if (error) throw new Error(error.message);
     }
-    await logAdminEvent({
+    await logAdminEvent(supabaseAdmin, {
       action: "MODULES_UPDATED",
       target_user_id: data.user_id,
       actor_user_id: context.userId,
@@ -159,6 +163,7 @@ export const updateUserMenus = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
     await (supabaseAdmin as any).from("user_menu_access").delete().eq("user_id", data.user_id);
     if (data.menus.length > 0) {
@@ -166,7 +171,7 @@ export const updateUserMenus = createServerFn({ method: "POST" })
       const { error } = await (supabaseAdmin as any).from("user_menu_access").insert(rows);
       if (error) throw new Error(error.message);
     }
-    await logAdminEvent({
+    await logAdminEvent(supabaseAdmin, {
       action: "MENUS_UPDATED",
       target_user_id: data.user_id,
       actor_user_id: context.userId,
@@ -184,6 +189,7 @@ export const suspendUser = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
     if (data.user_id === context.userId) throw new Error("Você não pode suspender a si mesmo");
     const hours = data.hours ?? 24 * 365 * 100; // ~100 anos = "indefinido"
@@ -191,7 +197,7 @@ export const suspendUser = createServerFn({ method: "POST" })
       ban_duration: `${hours}h`,
     } as any);
     if (error) throw new Error(error.message);
-    await logAdminEvent({
+    await logAdminEvent(supabaseAdmin, {
       action: "SUSPENDED",
       target_user_id: data.user_id,
       actor_user_id: context.userId,
@@ -204,12 +210,13 @@ export const unsuspendUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ user_id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
       ban_duration: "none",
     } as any);
     if (error) throw new Error(error.message);
-    await logAdminEvent({
+    await logAdminEvent(supabaseAdmin, {
       action: "UNSUSPENDED",
       target_user_id: data.user_id,
       actor_user_id: context.userId,
@@ -221,6 +228,7 @@ export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ user_id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
     if (data.user_id === context.userId) throw new Error("Você não pode remover a si mesmo");
     let target_email: string | null = null;
@@ -236,7 +244,7 @@ export const deleteUser = createServerFn({ method: "POST" })
     } catch (e) {
       console.error("auth.admin.deleteUser falhou", e);
     }
-    await logAdminEvent({
+    await logAdminEvent(supabaseAdmin, {
       action: "DELETED",
       target_user_id: data.user_id,
       actor_user_id: context.userId,
@@ -248,6 +256,7 @@ export const deleteUser = createServerFn({ method: "POST" })
 export const listUsersAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
 
     const { data: list, error } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -296,6 +305,7 @@ export const listUserAuditLogs = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
     let q = supabaseAdmin
       .from("audit_logs")
