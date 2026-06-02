@@ -704,6 +704,26 @@ function InventarioTab() {
     },
   });
 
+  // Conta EPIs vinculados por risco (para badge "Sem EPI")
+  const { data: epiCounts = {} } = useQuery<Record<string, number>>({
+    queryKey: ["pgr_risco_epi_counts", gheSel, inv.length],
+    enabled: inv.length > 0,
+    queryFn: async () => {
+      const ids = inv.map((r) => r.id);
+      if (ids.length === 0) return {};
+      const { data, error } = await sb
+        .from("pgr_risco_epi")
+        .select("inventario_id")
+        .in("inventario_id", ids);
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((row: { inventario_id: string }) => {
+        map[row.inventario_id] = (map[row.inventario_id] ?? 0) + 1;
+      });
+      return map;
+    },
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await sb.from("pgr_inventario_riscos").update({ ativo: false }).eq("id", id);
@@ -791,6 +811,15 @@ function InventarioTab() {
                       <h4 className="font-bold text-slate-900">{r.perigo}</h4>
                       <Badge variant="outline" className="text-xs">{CATEGORIA_LABEL[r.categoria]}</Badge>
                       {ghe && <Badge variant="outline" className="text-xs">GHE {ghe.numero} · {ghe.setor}</Badge>}
+                      {(epiCounts[r.id] ?? 0) === 0 ? (
+                        <Badge className="text-xs bg-rose-100 text-rose-800 border-rose-200" variant="outline">
+                          <AlertTriangle className="h-3 w-3 mr-0.5" /> Sem EPI
+                        </Badge>
+                      ) : (
+                        <Badge className="text-xs bg-emerald-100 text-emerald-800 border-emerald-200" variant="outline">
+                          <HardHat className="h-3 w-3 mr-0.5" /> {epiCounts[r.id]} EPI(s)
+                        </Badge>
+                      )}
                     </div>
                     {r.agravo && <p className="text-xs text-slate-600"><b>Agravo:</b> {r.agravo}</p>}
                     {r.fonte_geradora && <p className="text-xs text-slate-600"><b>Fonte:</b> {r.fonte_geradora}</p>}
