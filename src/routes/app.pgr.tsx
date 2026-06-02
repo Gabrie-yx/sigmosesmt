@@ -112,6 +112,7 @@ function GheTab() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Ghe | null>(null);
+  const [membrosFor, setMembrosFor] = useState<Ghe | null>(null);
 
   const { data: ghes = [], isLoading } = useQuery<Ghe[]>({
     queryKey: ["pgr_ghe"],
@@ -130,6 +131,28 @@ function GheTab() {
       return data ?? [];
     },
   });
+
+  // Membros efetivos de TODOS os GHEs (uma única query) — agrupado client-side
+  const { data: allMembros = [] } = useQuery({
+    queryKey: ["pgr_ghe_membros_all"],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("pgr_ghe_membros_efetivos")
+        .select("ghe_id, employee_id, employees:employee_id(nome, foto_url)");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const membrosPorGhe = useMemo(() => {
+    const map = new Map<string, { id: string; nome: string; foto_url: string | null }[]>();
+    for (const m of allMembros as { ghe_id: string; employee_id: string; employees: { nome: string; foto_url: string | null } | null }[]) {
+      const arr = map.get(m.ghe_id) ?? [];
+      arr.push({ id: m.employee_id, nome: m.employees?.nome ?? "—", foto_url: m.employees?.foto_url ?? null });
+      map.set(m.ghe_id, arr);
+    }
+    return map;
+  }, [allMembros]);
 
   const linkRole = useMutation({
     mutationFn: async ({ role_id, ghe_id }: { role_id: string; ghe_id: string | null }) => {
