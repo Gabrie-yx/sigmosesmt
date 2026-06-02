@@ -72,6 +72,13 @@ export type Database = {
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "apr_assinaturas_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
         ]
       }
       apr_modelos: {
@@ -332,6 +339,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "aprs_encarregado_id_fkey"
+            columns: ["encarregado_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
             foreignKeyName: "aprs_modelo_id_fkey"
             columns: ["modelo_id"]
             isOneToOne: false
@@ -351,6 +365,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprs_tst_id_fkey"
+            columns: ["tst_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
           },
         ]
       }
@@ -620,6 +641,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cascos_encarregado_id_fkey"
+            columns: ["encarregado_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
           },
         ]
       }
@@ -1225,6 +1253,13 @@ export type Database = {
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "controle_doc_recorrentes_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
         ]
       }
       controle_documentos: {
@@ -1324,6 +1359,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "controle_documentos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
           },
         ]
       }
@@ -1589,6 +1631,13 @@ export type Database = {
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "employee_docs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
         ]
       }
       employee_exams: {
@@ -1638,6 +1687,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_exams_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
           },
         ]
       }
@@ -1699,6 +1755,7 @@ export type Database = {
           email: string | null
           endereco: string | null
           foto_url: string | null
+          ghe_id: string | null
           id: string
           matricula: string | null
           nome: string
@@ -1731,6 +1788,7 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           foto_url?: string | null
+          ghe_id?: string | null
           id?: string
           matricula?: string | null
           nome: string
@@ -1763,6 +1821,7 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           foto_url?: string | null
+          ghe_id?: string | null
           id?: string
           matricula?: string | null
           nome?: string
@@ -1787,6 +1846,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_ghe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["ghe_id"]
           },
           {
             foreignKeyName: "employees_role_id_fkey"
@@ -1850,6 +1923,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_deliveries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
           },
         ]
       }
@@ -2294,6 +2374,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "hora_extra_sabado_funcionarios_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
             foreignKeyName: "hora_extra_sabado_funcionarios_hora_extra_id_fkey"
             columns: ["hora_extra_id"]
             isOneToOne: false
@@ -2583,6 +2670,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "oss_emissoes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
             foreignKeyName: "oss_emissoes_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -2795,6 +2889,13 @@ export type Database = {
             referencedRelation: "pgr_ghe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "pgr_inventario_riscos_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["ghe_id"]
+          },
         ]
       }
       pgr_plano_acao: {
@@ -2859,6 +2960,68 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "pgr_inventario_riscos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pgr_plano_acao_inventario_id_fkey"
+            columns: ["inventario_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["risco_id"]
+          },
+        ]
+      }
+      pgr_risco_epi: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          epi_id: string
+          id: string
+          inventario_id: string
+          obrigatorio: boolean
+          observacao: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          epi_id: string
+          id?: string
+          inventario_id: string
+          obrigatorio?: boolean
+          observacao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          epi_id?: string
+          id?: string
+          inventario_id?: string
+          obrigatorio?: boolean
+          observacao?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pgr_risco_epi_epi_id_fkey"
+            columns: ["epi_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_epi"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pgr_risco_epi_inventario_id_fkey"
+            columns: ["inventario_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_inventario_riscos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pgr_risco_epi_inventario_id_fkey"
+            columns: ["inventario_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["risco_id"]
           },
         ]
       }
@@ -4160,6 +4323,13 @@ export type Database = {
             referencedRelation: "pgr_ghe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "roles_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["ghe_id"]
+          },
         ]
       }
       safety_overrides: {
@@ -4431,6 +4601,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "training_attendees_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
             foreignKeyName: "training_attendees_training_id_fkey"
             columns: ["training_id"]
             isOneToOne: false
@@ -4532,6 +4709,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_matrix_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
           },
         ]
       }
@@ -4771,7 +4955,43 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vw_colaborador_pgr: {
+        Row: {
+          agravo: string | null
+          categoria: string | null
+          classificacao: string | null
+          controles_existentes: string | null
+          descricao_ambiente: string | null
+          employee_id: string | null
+          employee_nome: string | null
+          employee_tipo_cadastro: string | null
+          epis: Json | null
+          exposicao: string | null
+          fonte_geradora: string | null
+          ghe_id: string | null
+          ghe_numero: number | null
+          ghe_setor: string | null
+          intensidade: number | null
+          limite_tolerancia: number | null
+          monitoramento: string | null
+          perigo: string | null
+          probabilidade: number | null
+          risco_id: string | null
+          risco_score: number | null
+          role_id: string | null
+          severidade: number | null
+          unidade: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       ajustar_saldo_epi: {
