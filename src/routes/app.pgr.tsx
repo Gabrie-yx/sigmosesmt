@@ -331,6 +331,11 @@ function GheTab() {
           gheLabel={`GHE ${membrosFor.numero} — ${membrosFor.setor}`}
         />
       )}
+      <GheFichaDialog
+        open={!!fichaFor}
+        onOpenChange={(v) => { if (!v) setFichaFor(null); }}
+        ghe={fichaFor}
+      />
     </div>
   );
 }
