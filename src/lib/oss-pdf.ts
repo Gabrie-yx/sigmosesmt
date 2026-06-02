@@ -95,19 +95,50 @@ const TXT_TERMO =
   'Declaro para os devidos fins que tomei conhecimento e irei cumprir o conteúdo destas ordens de serviço. Em conformidade com o Item 1.4.2 "a".';
 
 // Tenta separar "Nome do EPI - CA 12345" / "Nome do EPI (CA 12345)" / "Nome — CA: 12345"
-function parseEpis(raw: string): Array<{ desc: string; ca: string }> {
+function parseEpis(
+  raw: string,
+  catalog?: Array<{ nome: string; ca: string | null }>,
+): Array<{ desc: string; ca: string }> {
   if (!raw) return [];
+  const norm = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+  const lookupCa = (desc: string): string => {
+    if (!catalog?.length) return "";
+    const d = norm(desc);
+    if (!d) return "";
+    // 1) match exato
+    let hit = catalog.find((c) => norm(c.nome) === d);
+    // 2) catálogo contém descrição OU descrição contém catálogo (tokens >= 3 chars)
+    if (!hit) {
+      hit = catalog.find((c) => {
+        const n = norm(c.nome);
+        return n && (n.includes(d) || d.includes(n));
+      });
+    }
+    // 3) primeiro token relevante em comum
+    if (!hit) {
+      const tokens = d.split(" ").filter((t) => t.length >= 4);
+      hit = catalog.find((c) => {
+        const n = norm(c.nome);
+        return tokens.some((t) => n.includes(t));
+      });
+    }
+    return hit?.ca ?? "";
+  };
   return raw
     .split(/\r?\n|;/)
     .map((l) => l.trim())
     .filter(Boolean)
     .map((line) => {
+      // remove marcador de bullet inicial
+      line = line.replace(/^[•\-*·\u2022]\s*/, "");
       const m = line.match(/(.*?)\s*[-–—(:]\s*C\.?A\.?\s*[:nº#]?\s*(\d+)/i);
       if (m) return { desc: m[1].replace(/[\s\-–—(:]+$/, "").trim(), ca: m[2] };
       // tenta achar só número CA no fim
       const m2 = line.match(/(.*?)\s+(\d{3,6})\s*$/);
       if (m2) return { desc: m2[1].trim(), ca: m2[2] };
-      return { desc: line, ca: "" };
+      // sem CA inline — busca no catálogo de estoque
+      return { desc: line, ca: lookupCa(line) };
     });
 }
 
