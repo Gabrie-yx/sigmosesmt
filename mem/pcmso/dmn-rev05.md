@@ -29,6 +29,9 @@ GHE 01, 02, 07 = Administrativo · GHE 03, 04, 05, 08, 09, 10 = Produção · GH
 - Excluído: Encarregado(a) de Manutenção Mecânica
 
 ## Pendências / Ambiguidades
-- Exame Toxicológico (S-2221) mencionado mas nenhum cargo Motorista listado
-- GHE 11/12/13 do histórico (REV.04) sumiram na REV.05 — confirmar com PGR atual
 - Periodicidade de cada exame periódico não consolidada em tabela
+
+## Respostas do usuário (02/06/2026)
+- **GHE 11/12/13**: mantém o que está no PGR atual (DMN). REV.05 do PCMSO é a referência de exames, mas a lista de GHEs segue o PGR vigente.
+- **Motorista profissional**: SIM, DMN tem. Modelar **Exame Toxicológico (S-2221)** como obrigatório para cargos de motorista (CNH C/D/E). Vincular ao evento eSocial S-2221.
+- **Terceirizados**: ATENÇÃO — muitos cargos sensíveis (motorista, soldador, etc.) são **terceirizados** gerenciados pelo SIGMO. O módulo de ASO/PCMSO precisa funcionar tanto para CLT próprios quanto para terceirizados (provavelmente via `employees.tipo_vinculo` ou tabela `terceiros`). Verificar no schema antes de implementar.
