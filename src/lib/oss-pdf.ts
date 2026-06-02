@@ -165,8 +165,15 @@ function parseRiscosTexto(raw: string) {
 export function buildOssPdf(data: OSSPdfData): jsPDF {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
   const margin = 8;
   const innerW = W - margin * 2;
+  const ensureSpace = (needed: number) => {
+    if (y + needed > H - margin) {
+      doc.addPage();
+      y = margin;
+    }
+  };
 
   // ====================== CABEÇALHO (3 colunas) ======================
   // [Logo DMN] | [Título centralizado] | [Metadados FOR-SEG / Revisão / Data]
