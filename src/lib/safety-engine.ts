@@ -51,6 +51,7 @@ export function calculateSafetyStatus(
   exams: EngineExam[],
   vaccines: EngineVaccine[] = [],
   overrides: SafetyOverride[] = [],
+  ossValid: boolean | null = null,
 ): SafetyStatus {
   if (emp.status === "INATIVO")
     return { label: "INATIVO", msgs: [], acessoPermitido: false, colorClass: "bg-status-inativo" };
@@ -137,6 +138,13 @@ export function calculateSafetyStatus(
 
   if (role.req_aso) checkLegacy(emp.data_aso, "ASO", true);
   if (role.req_integra) checkLegacy(emp.data_integracao, "Integração");
+
+  // OS (Ordem de Serviço – NR-01 1.4.1 "c") — só bloqueia se foi explicitamente avaliado (false).
+  // null = check não foi feito pelo chamador (modo legado, não bloqueia).
+  if (ossValid === false) {
+    isRed = true;
+    msgs.push("Falta OS Assinada");
+  }
 
   const empNrs = emp.nrs || {};
   (role.req_nrs ?? []).forEach((nr) => {

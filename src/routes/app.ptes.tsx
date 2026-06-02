@@ -103,6 +103,22 @@ function PtesPage() {
       return (data ?? []) as SafetyOverride[];
     },
   });
+  const { data: ossValidIds = new Set<string>() } = useQuery({
+    queryKey: ["oss-valid-set"],
+    queryFn: async () => {
+      const nowIso = new Date().toISOString();
+      const { data, error } = await supabase
+        .from("oss_emissoes")
+        .select("employee_id,expira_em,status")
+        .eq("status", "ASSINADO");
+      if (error) throw error;
+      const set = new Set<string>();
+      (data ?? []).forEach((r: any) => {
+        if (!r.expira_em || r.expira_em > nowIso) set.add(r.employee_id);
+      });
+      return set;
+    },
+  });
 
   const empOptions = useMemo(() => {
     const list = f.company_id ? emps.filter((e: any) => e.company_id === f.company_id) : emps;
@@ -111,11 +127,12 @@ function PtesPage() {
       const empExams = exams.filter((x: any) => x.employee_id === e.id);
       const empVacs = vaccines.filter((x: any) => x.employee_id === e.id);
       const empOv = overridesAll.filter((o) => o.employee_id === e.id);
-      const st = calculateSafetyStatus(e, role as any, empExams as any, empVacs as any, empOv);
+      const ossOk = ossValidIds.has(e.id);
+      const st = calculateSafetyStatus(e, role as any, empExams as any, empVacs as any, empOv, ossOk);
       const comp = companies.find((c: any) => c.id === e.company_id);
       return { e, st, compName: comp?.name ?? "S/ EMPRESA" };
     });
-  }, [emps, roles, exams, vaccines, companies, overridesAll, f.company_id]);
+  }, [emps, roles, exams, vaccines, companies, overridesAll, ossValidIds, f.company_id]);
 
   const save = useMutation({
     mutationFn: async () => {

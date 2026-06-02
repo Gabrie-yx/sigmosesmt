@@ -20,6 +20,7 @@ import {
   type CategoriaDetectada,
 } from "@/lib/apr-pte-rules";
 import { PteLookupSheet } from "@/components/aprs/pte-lookup-sheet";
+import { hasGlobalOverride, type SafetyOverride } from "@/lib/safety-overrides";
 
 /* ---------- tipos ---------- */
 type APR = {
@@ -341,6 +342,37 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const { data: roles = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["roles-light"], queryFn: async () => (await supabase.from("roles").select("id,name").order("name")).data ?? [] });
   const { data: catRiscos = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["catalogo_riscos_form"], queryFn: async () => (await supabase.from("catalogo_riscos").select("*").eq("ativo", true).order("nome")).data ?? [] });
   const { data: ptes = EMPTY_QUERY_LIST } = useQuery({ queryKey: ["ptes-light"], queryFn: async () => (await supabase.from("ptes").select("id,numero,data_emissao,risco,status").order("data_emissao", { ascending: false }).limit(50)).data ?? [] });
+  const { data: ossValidIds = new Set<string>() } = useQuery({
+    queryKey: ["oss-valid-set-apr"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("oss_emissoes")
+        .select("employee_id,expira_em,status")
+        .eq("status", "ASSINADO");
+      if (error) throw error;
+      const now = Date.now();
+      const s = new Set<string>();
+      (data ?? []).forEach((r: any) => {
+        if (!r.expira_em || new Date(r.expira_em).getTime() > now) s.add(r.employee_id);
+      });
+      return s;
+    },
+  });
+  const { data: overridesAll = [] } = useQuery({
+    queryKey: ["safety-overrides-active-apr"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("safety_overrides")
+        .select("*")
+        .eq("ativo", true);
+      if (error) throw error;
+      return (data ?? []) as SafetyOverride[];
+    },
+  });
+  function hasOsOverride(empId: string) {
+    const ov = overridesAll.filter((o) => o.employee_id === empId);
+    return hasGlobalOverride(ov) || ov.some((o) => o.item_key === "OS");
+  }
   // PTEs JÁ vinculadas a esta APR (1 APR ↔ N PTEs, uma por categoria detectada)
   const { data: linkedPtes = EMPTY_QUERY_LIST } = useQuery({
     queryKey: ["ptes-linked-apr", currentAprId],
@@ -538,6 +570,10 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     } else {
       const e: any = employees.find((x: any) => x.id === empId);
       if (!e) return;
+      if (!ossValidIds.has(empId) && !hasOsOverride(empId)) {
+        toast.error(`${e.nome} sem OS Assinada válida (NR-01 1.4.1 "c"). Emita a OS ou libere manualmente no cadastro do funcionário.`);
+        return;
+      }
       const role = roles.find((r: any) => r.id === e.role_id);
       setAssinaturas((arr) => [...arr, {
         papel: "EXECUTANTE", employee_id: e.id, nome: e.nome, cpf: e.cpf,
@@ -547,9 +583,20 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   }
 
   function marcarTodosExecutantes() {
+    const bloqueados = empresaFuncs.filter(
+      (e: any) => !ossValidIds.has(e.id) && !hasOsOverride(e.id),
+    );
+    if (bloqueados.length) {
+      toast.error(
+        `${bloqueados.length} funcionário(s) sem OS Assinada foram ignorados: ${bloqueados.slice(0, 3).map((e: any) => e.nome).join(", ")}${bloqueados.length > 3 ? "…" : ""}`,
+      );
+    }
+    const elegiveis = empresaFuncs.filter(
+      (e: any) => ossValidIds.has(e.id) || hasOsOverride(e.id),
+    );
     setAssinaturas((arr) => {
       const semExec = arr.filter((a) => a.papel !== "EXECUTANTE");
-      const novos = empresaFuncs.map((e: any, i: number) => {
+      const novos = elegiveis.map((e: any, i: number) => {
         const role = roles.find((r: any) => r.id === e.role_id);
         return {
           papel: "EXECUTANTE" as const,
@@ -1224,13 +1271,17 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                 {empresaFuncs.map((e: any, i: number) => {
                   const checked = !!execAtuais.find((a) => a.employee_id === e.id);
                   const role = roles.find((r: any) => r.id === e.role_id);
+                  const osOk = ossValidIds.has(e.id) || hasOsOverride(e.id);
                   return (
-                    <div key={e.id} className={`grid grid-cols-[50px_60px_1fr_120px] text-xs border-b border-black ${checked ? "" : "bg-slate-50 text-slate-400"}`}>
+                    <div key={e.id} className={`grid grid-cols-[50px_60px_1fr_120px] text-xs border-b border-black ${checked ? "" : osOk ? "bg-slate-50 text-slate-400" : "bg-red-50 text-red-700"}`}>
                       <div className="border-r border-black p-1.5 text-center font-bold">{String(i + 1).padStart(2, "0")}</div>
                       <div className="border-r border-black p-1.5 flex items-center justify-center">
-                        <Checkbox checked={checked} onCheckedChange={() => toggleExecutante(e.id)} />
+                        <Checkbox checked={checked} disabled={!checked && !osOk} onCheckedChange={() => toggleExecutante(e.id)} />
                       </div>
-                      <div className="border-r border-black p-1.5">{e.nome}</div>
+                      <div className="border-r border-black p-1.5">
+                        {e.nome}
+                        {!osOk && <span className="ml-2 text-[10px] font-bold uppercase">🚫 Sem OS Assinada</span>}
+                      </div>
                       <div className="p-1.5">{role?.name ?? "—"}</div>
                     </div>
                   );

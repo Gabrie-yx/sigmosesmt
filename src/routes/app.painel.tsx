@@ -130,6 +130,10 @@ function TstPanel() {
         supabase.from("extintores").select("id,status,proxima_recarga,proximo_teste_hidrostatico"),
         supabase.from("extintor_inspecoes").select("extintor_id,data_inspecao,conforme"),
       ]);
+      const ossRes = await supabase
+        .from("oss_emissoes")
+        .select("employee_id,status,expira_em")
+        .eq("status", "ASSINADO");
       return {
         employees: emps.data ?? [],
         companies: comps.data ?? [],
@@ -147,6 +151,7 @@ function TstPanel() {
         controleDocs: controleDocs.data ?? [],
         extintores: extintores.data ?? [],
         extInspecoes: extInspecoes.data ?? [],
+        oss: ossRes.data ?? [],
       };
     },
   });
@@ -167,11 +172,16 @@ function TstPanel() {
       arr.push(o);
       ovMap.set(o.employee_id, arr);
     });
+    const nowIso = new Date().toISOString();
+    const ossSet = new Set<string>();
+    ((data as any).oss ?? []).forEach((r: any) => {
+      if (!r.expira_em || r.expira_em > nowIso) ossSet.add(r.employee_id);
+    });
     return data.employees.map((e: any) => ({
       emp: e,
       company: e.company_id ? cMap.get(e.company_id) ?? "—" : "—",
       role: e.role_id ? rMap.get(e.role_id) : null,
-      status: calculateSafetyStatus(e, e.role_id ? (rMap.get(e.role_id) as any) : null, exMap.get(e.id) ?? [], [], ovMap.get(e.id) ?? []),
+      status: calculateSafetyStatus(e, e.role_id ? (rMap.get(e.role_id) as any) : null, exMap.get(e.id) ?? [], [], ovMap.get(e.id) ?? [], ossSet.has(e.id)),
     }));
   }, [data]);
 
