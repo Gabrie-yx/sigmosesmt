@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect, useMemo } from "react";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -31,6 +32,7 @@ import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban } from "lucide-react";
 import { GraduationCap } from "lucide-react";
 import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
+import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.functions";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -134,6 +136,8 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   }, [role]);
   const canEditHeader = isEditor || isAdmin;
   const [uploadingHeaderPhoto, setUploadingHeaderPhoto] = useState(false);
+  const uploadEmployeePhotoFn = useServerFn(uploadEmployeePhoto);
+  const removeEmployeePhotoFn = useServerFn(removeEmployeePhoto);
 
   const { data: docsList } = useQuery({
     queryKey: ["docs-summary", id],
@@ -156,20 +160,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
     if (!emp?.foto_url) return;
     if (!confirm("Remover a foto do colaborador?")) return;
     try {
-      try {
-        const url = new URL(emp.foto_url);
-        const marker = "/avatars/";
-        const idx = url.pathname.indexOf(marker);
-        if (idx >= 0) {
-          const path = decodeURIComponent(url.pathname.slice(idx + marker.length));
-          const { error: rmErr } = await supabase.storage.from("avatars").remove([path]);
-          if (rmErr) console.warn("[foto] storage remove falhou:", rmErr);
-        }
-      } catch (parseErr) {
-        console.warn("[foto] não consegui parsear foto_url:", parseErr);
-      }
-      const { error } = await supabase.from("employees").update({ foto_url: null }).eq("id", emp.id);
-      if (error) throw error;
+      await removeEmployeePhotoFn({ data: { employeeId: emp.id } });
       qc.invalidateQueries({ queryKey: ["employee", emp.id] });
       qc.invalidateQueries({ queryKey: ["employees"] });
       toast.success("Foto removida");
@@ -183,24 +174,22 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
     if (!file || !emp) return;
     setUploadingHeaderPhoto(true);
     try {
-      const nameParts = file.name.split(".");
-      const rawExt = nameParts.length > 1 ? nameParts.pop()!.toLowerCase() : "";
-      const mimeExt = file.type?.split("/")?.[1]?.toLowerCase() || "";
-      const ext = (rawExt && rawExt.length <= 5 ? rawExt : mimeExt) || "jpg";
-      const path = `employees/${emp.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("avatars")
-        .upload(path, file, { upsert: true, contentType: file.type || undefined });
-      if (upErr) {
-        console.error("[foto] upload storage falhou:", upErr);
-        throw upErr;
-      }
-      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
-      const { error } = await supabase.from("employees").update({ foto_url: pub.publicUrl }).eq("id", emp.id);
-      if (error) {
-        console.error("[foto] update employees.foto_url falhou:", error);
-        throw error;
-      }
+      if (file.size > 10 * 1024 * 1024) throw new Error("A foto deve ter no máximo 10MB.");
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ""));
+        reader.onerror = () => reject(reader.error ?? new Error("Não foi possível ler a imagem."));
+        reader.readAsDataURL(file);
+      });
+      const base64 = dataUrl.split(",")[1] ?? "";
+      await uploadEmployeePhotoFn({
+        data: {
+          employeeId: emp.id,
+          fileName: file.name || "foto.jpg",
+          contentType: file.type || "image/jpeg",
+          base64,
+        },
+      });
       qc.invalidateQueries({ queryKey: ["employee", emp.id] });
       qc.invalidateQueries({ queryKey: ["employees"] });
       toast.success("Foto atualizada");
