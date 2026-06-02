@@ -344,6 +344,7 @@ function InventarioTab() {
   const [gheSel, setGheSel] = useState<string>("all");
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<InvRow | null>(null);
+  const [episFor, setEpisFor] = useState<InvRow | null>(null);
 
   const { data: ghes = [] } = useQuery<Ghe[]>({
     queryKey: ["pgr_ghe"],
@@ -469,6 +470,9 @@ function InventarioTab() {
                     <Button size="sm" variant="ghost" onClick={() => { setEdit(r); setOpen(true); }}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
+                    <Button size="sm" variant="ghost" className="text-amber-700" title="EPIs do risco" onClick={() => setEpisFor(r)}>
+                      <HardHat className="h-3.5 w-3.5" />
+                    </Button>
                     <Button size="sm" variant="ghost" className="text-rose-700" onClick={() => { if (confirm("Remover risco?")) remove.mutate(r.id); }}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -481,6 +485,7 @@ function InventarioTab() {
       )}
 
       <InvDialog open={open} onOpenChange={setOpen} edit={edit} ghes={ghes} gheDefault={gheSel !== "all" ? gheSel : undefined} />
+      {episFor && <RiscoEpisDialog risco={episFor} onClose={() => setEpisFor(null)} />}
     </div>
   );
 }
