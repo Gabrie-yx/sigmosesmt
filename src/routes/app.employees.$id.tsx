@@ -618,6 +618,30 @@ function EmployeeContextSidebar({ id }: { id: string }) {
 }
 
 /* ============ PROFILE ============ */
+function GheField({ value, onChange, disabled }: { value: string | null; onChange: (v: string | null) => void; disabled?: boolean }) {
+  const { data: ghes } = useQuery({
+    queryKey: ["pgr_ghe_select"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("pgr_ghe").select("id, numero, setor").eq("ativo", true).order("numero");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  return (
+    <Field label="GHE (PGR)">
+      <Select value={value ?? "__none__"} onValueChange={(v) => onChange(v === "__none__" ? null : v)} disabled={disabled}>
+        <SelectTrigger><SelectValue placeholder="— sem GHE —" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__none__">— sem GHE —</SelectItem>
+          {(ghes ?? []).map((g: any) => (
+            <SelectItem key={g.id} value={g.id}>GHE {g.numero} · {g.setor}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </Field>
+  );
+}
+
 function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
   const [f, setF] = useState<any>(emp);
   // Re-sincroniza o formulário sempre que o funcionário muda.
