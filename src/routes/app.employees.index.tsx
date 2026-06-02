@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { maskCPF } from "@/lib/masks";
+import { maskCPF, maskCNPJ } from "@/lib/masks";
 import { Wizard, type WizardStep } from "@/components/wizard";
 import { EmployeeListagemDialog } from "@/components/employees/employee-listagem-dialog";
 
@@ -42,8 +42,9 @@ function EmployeesPage() {
   const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO">("TODOS");
   const [companyFilter, setCompanyFilter] = useState<string>("TODAS");
   const [roleFilter, setRoleFilter] = useState<string>("TODOS");
+  const [vinculoFilter, setVinculoFilter] = useState<"TODOS" | "PROPRIO" | "TERCEIRO" | "MEI">("TODOS");
   const [visibleCount, setVisibleCount] = useState(48);
-  const [form, setForm] = useState<any>({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "" });
+  const [form, setForm] = useState<any>({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "", tipo_cadastro: "NAO_MEI", cnpj: "" });
   const [listagemOpen, setListagemOpen] = useState(false);
 
   const { data: emps, isLoading } = useQuery({
@@ -55,8 +56,8 @@ function EmployeesPage() {
     },
   });
   const { data: companies } = useQuery({
-    queryKey: ["companies"],
-    queryFn: async () => (await supabase.from("companies").select("id,name").order("name")).data ?? [],
+    queryKey: ["companies-with-type"],
+    queryFn: async () => (await supabase.from("companies").select("id,name,type").order("name")).data ?? [],
   });
   const { data: roles } = useQuery({
     queryKey: ["roles"],
@@ -72,13 +73,15 @@ function EmployeesPage() {
         status: v.status,
         company_id: v.company_id || null,
         role_id: v.role_id || null,
+        tipo_cadastro: v.tipo_cadastro || "NAO_MEI",
+        cnpj: v.tipo_cadastro === "MEI" ? (v.cnpj || null) : null,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["employees"] });
       setOpen(false);
-      setForm({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "" });
+      setForm({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "", tipo_cadastro: "NAO_MEI", cnpj: "" });
       toast.success("Funcionário criado");
     },
     onError: (e: any) => toast.error(e.message),
@@ -90,6 +93,9 @@ function EmployeesPage() {
       if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
       if (companyFilter !== "TODAS" && e.company_id !== companyFilter) return false;
       if (roleFilter !== "TODOS" && e.role_id !== roleFilter) return false;
+      if (vinculoFilter === "PROPRIO" && e.tipo_vinculo !== "PROPRIO") return false;
+      if (vinculoFilter === "TERCEIRO" && e.tipo_vinculo !== "TERCEIRO") return false;
+      if (vinculoFilter === "MEI" && e.tipo_cadastro !== "MEI") return false;
       if (!s) return true;
       return (
         e.nome.toLowerCase().includes(s) ||
@@ -97,9 +103,10 @@ function EmployeesPage() {
         (e.matricula ?? "").toLowerCase().includes(s)
       );
     });
-  }, [emps, q, statusFilter, companyFilter, roleFilter]);
+  }, [emps, q, statusFilter, companyFilter, roleFilter, vinculoFilter]);
 
   const cMap = new Map((companies ?? []).map((c: any) => [c.id, c.name]));
+  const cTypeMap = new Map((companies ?? []).map((c: any) => [c.id, c.type]));
   const rMap = new Map((roles ?? []).map((r: any) => [r.id, r.name]));
 
   const stats = useMemo(() => {
@@ -140,7 +147,9 @@ function EmployeesPage() {
             <DialogContent>
               <DialogHeader><DialogTitle>Novo funcionário</DialogTitle></DialogHeader>
               {(() => {
-                const cName = (companies ?? []).find((c: any) => c.id === form.company_id)?.name ?? "—";
+                const selectedCompany = (companies ?? []).find((c: any) => c.id === form.company_id);
+                const cName = selectedCompany?.name ?? "—";
+                const isTerceiro = selectedCompany?.type === "TERCEIRIZADO";
                 const rName = (roles ?? []).find((r: any) => r.id === form.role_id)?.name ?? "—";
                 const steps: WizardStep[] = [
                   {
@@ -170,8 +179,9 @@ function EmployeesPage() {
                             <Label>Empresa</Label>
                             <Select value={form.company_id} onValueChange={(v) => setForm({ ...form, company_id: v })}>
                               <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                              <SelectContent>{(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                              <SelectContent>{(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}{c.type === "TERCEIRIZADO" ? " · TERCEIRO" : ""}</SelectItem>)}</SelectContent>
                             </Select>
+                            {isTerceiro && <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Vínculo: TERCEIRO</p>}
                           </div>
                           <div className="space-y-2">
                             <Label>Cargo</Label>
@@ -192,6 +202,24 @@ function EmployeesPage() {
                             </SelectContent>
                           </Select>
                         </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label>Tipo de cadastro</Label>
+                            <Select value={form.tipo_cadastro} onValueChange={(v) => setForm({ ...form, tipo_cadastro: v, cnpj: v === "MEI" ? form.cnpj : "" })}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="NAO_MEI">CLT</SelectItem>
+                                <SelectItem value="MEI">MEI</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {form.tipo_cadastro === "MEI" && (
+                            <div className="space-y-2">
+                              <Label>CNPJ (MEI)</Label>
+                              <Input inputMode="numeric" maxLength={18} placeholder="00.000.000/0000-00" value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: maskCNPJ(e.target.value) })} />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ),
                   },
@@ -208,6 +236,9 @@ function EmployeesPage() {
                           ["Empresa", cName],
                           ["Cargo", rName],
                           ["Status", form.status],
+                          ["Vínculo", isTerceiro ? "TERCEIRO" : "PRÓPRIO (DMN)"],
+                          ["Tipo", form.tipo_cadastro === "MEI" ? "MEI" : "CLT"],
+                          ...(form.tipo_cadastro === "MEI" ? [["CNPJ MEI", form.cnpj || "—"]] : []),
                         ].map(([k, v]) => (
                           <div key={k} className="flex items-center justify-between px-3 py-2">
                             <dt className="text-[10px] font-black uppercase tracking-widest text-slate-500">{k}</dt>
@@ -271,10 +302,19 @@ function EmployeesPage() {
           </span>
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="md:col-span-3 h-12 rounded-2xl bg-white"><SelectValue placeholder="Cargo" /></SelectTrigger>
+          <SelectTrigger className="md:col-span-2 h-12 rounded-2xl bg-white"><SelectValue placeholder="Cargo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="TODOS">Todos os cargos</SelectItem>
             {(roles ?? []).map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={vinculoFilter} onValueChange={(v: any) => setVinculoFilter(v)}>
+          <SelectTrigger className="md:col-span-1 h-12 rounded-2xl bg-white"><SelectValue placeholder="Vínculo" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="TODOS">Todos os vínculos</SelectItem>
+            <SelectItem value="PROPRIO">Próprios (DMN)</SelectItem>
+            <SelectItem value="TERCEIRO">Terceiros</SelectItem>
+            <SelectItem value="MEI">Apenas MEI</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -300,6 +340,7 @@ function EmployeesPage() {
                 key={e.id}
                 emp={e}
                 company={cMap.get(e.company_id) ?? undefined}
+                companyType={cTypeMap.get(e.company_id) ?? undefined}
                 role={rMap.get(e.role_id) ?? undefined}
               />
             ))}
@@ -378,13 +419,15 @@ function initials(name: string) {
   return (first + last).toUpperCase();
 }
 
-function EmployeeCard({ emp, company, role }: { emp: any; company?: string; role?: string }) {
+function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?: string; companyType?: string; role?: string }) {
   const statusStyle =
     emp.status === "ATIVO"
       ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
       : emp.status === "AFASTADO"
       ? "bg-amber-100 text-amber-700 ring-amber-200"
       : "bg-rose-100 text-rose-700 ring-rose-200";
+  const isTerceiro = companyType === "TERCEIRIZADO" || emp.tipo_vinculo === "TERCEIRO";
+  const isMei = emp.tipo_cadastro === "MEI";
 
   return (
     <Link
@@ -412,6 +455,18 @@ function EmployeeCard({ emp, company, role }: { emp: any; company?: string; role
           <span className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ring-1 ${statusStyle}`}>
             {emp.status}
           </span>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {isTerceiro && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 ring-1 ring-amber-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+                TERCEIRO
+              </span>
+            )}
+            {isMei && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 text-violet-800 ring-1 ring-violet-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+                MEI
+              </span>
+            )}
+          </div>
         </div>
         <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-[#7B1E2B] group-hover:translate-x-0.5 transition-all flex-shrink-0" />
       </div>
