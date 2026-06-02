@@ -136,11 +136,19 @@ function GheTab() {
   const { data: allMembros = [] } = useQuery({
     queryKey: ["pgr_ghe_membros_all"],
     queryFn: async () => {
-      const { data, error } = await sb
+      const { data: rows, error } = await sb
         .from("pgr_ghe_membros_efetivos")
-        .select("ghe_id, employee_id, employees:employee_id(nome, foto_url)");
+        .select("ghe_id, employee_id");
       if (error) throw error;
-      return data ?? [];
+      const ids = Array.from(new Set((rows ?? []).map((r: any) => r.employee_id))).filter(Boolean);
+      if (ids.length === 0) return [];
+      const { data: emps } = await sb.from("employees").select("id, nome, foto_url").in("id", ids);
+      const m = new Map<string, { nome: string; foto_url: string | null }>((emps ?? []).map((e: any) => [e.id, e]));
+      return (rows ?? []).map((r: any) => ({
+        ghe_id: r.ghe_id,
+        employee_id: r.employee_id,
+        employees: m.get(r.employee_id) ?? null,
+      }));
     },
   });
 
