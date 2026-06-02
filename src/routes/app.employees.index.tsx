@@ -419,13 +419,15 @@ function initials(name: string) {
   return (first + last).toUpperCase();
 }
 
-function EmployeeCard({ emp, company, role }: { emp: any; company?: string; role?: string }) {
+function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?: string; companyType?: string; role?: string }) {
   const statusStyle =
     emp.status === "ATIVO"
       ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
       : emp.status === "AFASTADO"
       ? "bg-amber-100 text-amber-700 ring-amber-200"
       : "bg-rose-100 text-rose-700 ring-rose-200";
+  const isTerceiro = companyType === "TERCEIRIZADO" || emp.tipo_vinculo === "TERCEIRO";
+  const isMei = emp.tipo_cadastro === "MEI";
 
   return (
     <Link
@@ -453,6 +455,18 @@ function EmployeeCard({ emp, company, role }: { emp: any; company?: string; role
           <span className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ring-1 ${statusStyle}`}>
             {emp.status}
           </span>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {isTerceiro && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 ring-1 ring-amber-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+                TERCEIRO
+              </span>
+            )}
+            {isMei && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 text-violet-800 ring-1 ring-violet-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+                MEI
+              </span>
+            )}
+          </div>
         </div>
         <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-[#7B1E2B] group-hover:translate-x-0.5 transition-all flex-shrink-0" />
       </div>
