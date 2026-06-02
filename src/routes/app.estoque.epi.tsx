@@ -50,7 +50,12 @@ import {
   Warehouse,
   History,
   Download,
+  FileText,
+  Printer,
 } from "lucide-react";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { gerarPdfEntregasEpi, type EntregaRow } from "@/lib/epi-entregas-pdf";
+import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/estoque/epi")({
   component: EstoqueEpiPage,
