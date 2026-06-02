@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect, useMemo } from "react";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -31,6 +32,7 @@ import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban } from "lucide-react";
 import { GraduationCap } from "lucide-react";
 import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
+import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.functions";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -134,6 +136,8 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   }, [role]);
   const canEditHeader = isEditor || isAdmin;
   const [uploadingHeaderPhoto, setUploadingHeaderPhoto] = useState(false);
+  const uploadEmployeePhotoFn = useServerFn(uploadEmployeePhoto);
+  const removeEmployeePhotoFn = useServerFn(removeEmployeePhoto);
 
   const { data: docsList } = useQuery({
     queryKey: ["docs-summary", id],
