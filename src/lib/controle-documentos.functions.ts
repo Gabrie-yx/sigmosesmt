@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
  * Gera entradas em controle_documentos para recorrentes próximos do vencimento.
@@ -9,6 +8,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const gerarRecorrentes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const hoje = new Date();
     const hojeISO = hoje.toISOString().slice(0, 10);
 

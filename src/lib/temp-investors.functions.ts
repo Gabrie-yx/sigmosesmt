@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const TTL_HOURS = 48;
 const ALL_MODULES = ["sesmt", "estoque", "producao", "manutencao", "portaria", "usuarios"] as const;
@@ -16,7 +15,7 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Apenas administradores podem gerar acessos de investidor");
 }
 
-async function cleanupExpired() {
+async function cleanupExpired(supabaseAdmin: any) {
   const nowIso = new Date().toISOString();
   const { data: expired } = await supabaseAdmin
     .from("temp_investors")
@@ -48,8 +47,9 @@ function genEmail(): string {
 export const createInvestorAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
-    await cleanupExpired();
+    await cleanupExpired(supabaseAdmin);
 
     const email = genEmail();
     const password = genPassword(14);

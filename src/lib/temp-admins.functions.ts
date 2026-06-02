@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const TTL_MS = 60 * 60 * 1000; // 1 hour
 
@@ -16,7 +15,7 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Apenas administradores podem gerenciar admins temporários");
 }
 
-async function cleanup() {
+async function cleanup(supabaseAdmin: any) {
   const nowIso = new Date().toISOString();
   const { data: expired } = await supabaseAdmin
     .from("temp_admins")
@@ -43,8 +42,9 @@ export const createTempAdmin = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
-    await cleanup();
+    await cleanup(supabaseAdmin);
 
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
@@ -83,14 +83,16 @@ export const createTempAdmin = createServerFn({ method: "POST" })
 export const cleanupExpiredTempAdmins = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
-    return cleanup();
+    return cleanup(supabaseAdmin);
   });
 
 export const revokeTempAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
     const { data: row } = await supabaseAdmin
       .from("temp_admins")
