@@ -4391,6 +4391,7 @@ export type Database = {
           ativo: boolean
           cbo: string | null
           created_at: string
+          descricao_atividades: string | null
           exames_por_natureza: Json
           ghe: string | null
           ghe_id: string | null
@@ -4410,6 +4411,7 @@ export type Database = {
           ativo?: boolean
           cbo?: string | null
           created_at?: string
+          descricao_atividades?: string | null
           exames_por_natureza?: Json
           ghe?: string | null
           ghe_id?: string | null
@@ -4429,6 +4431,7 @@ export type Database = {
           ativo?: boolean
           cbo?: string | null
           created_at?: string
+          descricao_atividades?: string | null
           exames_por_natureza?: Json
           ghe?: string | null
           ghe_id?: string | null
