@@ -162,16 +162,20 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         const idx = url.pathname.indexOf(marker);
         if (idx >= 0) {
           const path = decodeURIComponent(url.pathname.slice(idx + marker.length));
-          await supabase.storage.from("avatars").remove([path]);
+          const { error: rmErr } = await supabase.storage.from("avatars").remove([path]);
+          if (rmErr) console.warn("[foto] storage remove falhou:", rmErr);
         }
-      } catch { /* ignore parse errors */ }
+      } catch (parseErr) {
+        console.warn("[foto] não consegui parsear foto_url:", parseErr);
+      }
       const { error } = await supabase.from("employees").update({ foto_url: null }).eq("id", emp.id);
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["employee", emp.id] });
       qc.invalidateQueries({ queryKey: ["employees"] });
       toast.success("Foto removida");
     } catch (e: any) {
-      toast.error(e.message);
+      console.error("[foto] erro ao remover:", e);
+      toast.error("Erro ao remover foto: " + (e?.message || "desconhecido"));
     }
   }
 
@@ -179,18 +183,30 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
     if (!file || !emp) return;
     setUploadingHeaderPhoto(true);
     try {
-      const ext = file.name.split(".").pop();
+      const nameParts = file.name.split(".");
+      const rawExt = nameParts.length > 1 ? nameParts.pop()!.toLowerCase() : "";
+      const mimeExt = file.type?.split("/")?.[1]?.toLowerCase() || "";
+      const ext = (rawExt && rawExt.length <= 5 ? rawExt : mimeExt) || "jpg";
       const path = `${emp.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
-      if (upErr) throw upErr;
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, contentType: file.type || undefined });
+      if (upErr) {
+        console.error("[foto] upload storage falhou:", upErr);
+        throw upErr;
+      }
       const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
       const { error } = await supabase.from("employees").update({ foto_url: pub.publicUrl }).eq("id", emp.id);
-      if (error) throw error;
+      if (error) {
+        console.error("[foto] update employees.foto_url falhou:", error);
+        throw error;
+      }
       qc.invalidateQueries({ queryKey: ["employee", emp.id] });
       qc.invalidateQueries({ queryKey: ["employees"] });
       toast.success("Foto atualizada");
     } catch (e: any) {
-      toast.error(e.message);
+      console.error("[foto] erro ao enviar:", e);
+      toast.error("Erro ao enviar foto: " + (e?.message || "desconhecido"));
     } finally {
       setUploadingHeaderPhoto(false);
     }
