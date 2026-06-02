@@ -211,6 +211,7 @@ export function EstoqueEpiPage() {
           <TabsTrigger value="inventario">Inventário</TabsTrigger>
           <TabsTrigger value="colaborador">Consulta por Colaborador</TabsTrigger>
           <TabsTrigger value="historico">Histórico Geral</TabsTrigger>
+          <TabsTrigger value="entregas">Ficha de Entregas (NR-06)</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inventario" className="mt-4">
@@ -235,6 +236,10 @@ export function EstoqueEpiPage() {
 
         <TabsContent value="colaborador" className="mt-4">
           <ConsultaColaborador />
+        </TabsContent>
+
+        <TabsContent value="entregas" className="mt-4">
+          <EntregasFichaReport />
         </TabsContent>
       </Tabs>
     </div>
