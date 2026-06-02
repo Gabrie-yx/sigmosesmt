@@ -1753,6 +1753,7 @@ export type Database = {
           data_aso: string | null
           data_integracao: string | null
           email: string | null
+          empresa_terceira_id: string | null
           endereco: string | null
           foto_url: string | null
           ghe_id: string | null
@@ -1767,6 +1768,7 @@ export type Database = {
           setor: string | null
           status: string
           tipo_cadastro: string
+          tipo_vinculo: string
           titulo: string | null
           uf: string | null
           updated_at: string
@@ -1786,6 +1788,7 @@ export type Database = {
           data_aso?: string | null
           data_integracao?: string | null
           email?: string | null
+          empresa_terceira_id?: string | null
           endereco?: string | null
           foto_url?: string | null
           ghe_id?: string | null
@@ -1800,6 +1803,7 @@ export type Database = {
           setor?: string | null
           status?: string
           tipo_cadastro?: string
+          tipo_vinculo?: string
           titulo?: string | null
           uf?: string | null
           updated_at?: string
@@ -1819,6 +1823,7 @@ export type Database = {
           data_aso?: string | null
           data_integracao?: string | null
           email?: string | null
+          empresa_terceira_id?: string | null
           endereco?: string | null
           foto_url?: string | null
           ghe_id?: string | null
@@ -1833,6 +1838,7 @@ export type Database = {
           setor?: string | null
           status?: string
           tipo_cadastro?: string
+          tipo_vinculo?: string
           titulo?: string | null
           uf?: string | null
           updated_at?: string
@@ -1845,6 +1851,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_empresa_terceira_fk"
+            columns: ["empresa_terceira_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_terceiras"
             referencedColumns: ["id"]
           },
           {
@@ -1869,6 +1882,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      empresas_terceiras: {
+        Row: {
+          ativo: boolean
+          cnpj: string | null
+          contato_email: string | null
+          contato_nome: string | null
+          contato_telefone: string | null
+          contrato_fim: string | null
+          contrato_inicio: string | null
+          contrato_numero: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          nome_fantasia: string | null
+          observacoes: string | null
+          razao_social: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj?: string | null
+          contato_email?: string | null
+          contato_nome?: string | null
+          contato_telefone?: string | null
+          contrato_fim?: string | null
+          contrato_inicio?: string | null
+          contrato_numero?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          observacoes?: string | null
+          razao_social: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cnpj?: string | null
+          contato_email?: string | null
+          contato_nome?: string | null
+          contato_telefone?: string | null
+          contrato_fim?: string | null
+          contrato_inicio?: string | null
+          contrato_numero?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          observacoes?: string | null
+          razao_social?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       epi_deliveries: {
         Row: {
