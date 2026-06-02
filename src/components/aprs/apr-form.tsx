@@ -1271,13 +1271,17 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                 {empresaFuncs.map((e: any, i: number) => {
                   const checked = !!execAtuais.find((a) => a.employee_id === e.id);
                   const role = roles.find((r: any) => r.id === e.role_id);
+                  const osOk = ossValidIds.has(e.id) || hasOsOverride(e.id);
                   return (
-                    <div key={e.id} className={`grid grid-cols-[50px_60px_1fr_120px] text-xs border-b border-black ${checked ? "" : "bg-slate-50 text-slate-400"}`}>
+                    <div key={e.id} className={`grid grid-cols-[50px_60px_1fr_120px] text-xs border-b border-black ${checked ? "" : osOk ? "bg-slate-50 text-slate-400" : "bg-red-50 text-red-700"}`}>
                       <div className="border-r border-black p-1.5 text-center font-bold">{String(i + 1).padStart(2, "0")}</div>
                       <div className="border-r border-black p-1.5 flex items-center justify-center">
-                        <Checkbox checked={checked} onCheckedChange={() => toggleExecutante(e.id)} />
+                        <Checkbox checked={checked} disabled={!checked && !osOk} onCheckedChange={() => toggleExecutante(e.id)} />
                       </div>
-                      <div className="border-r border-black p-1.5">{e.nome}</div>
+                      <div className="border-r border-black p-1.5">
+                        {e.nome}
+                        {!osOk && <span className="ml-2 text-[10px] font-bold uppercase">🚫 Sem OS Assinada</span>}
+                      </div>
                       <div className="p-1.5">{role?.name ?? "—"}</div>
                     </div>
                   );
