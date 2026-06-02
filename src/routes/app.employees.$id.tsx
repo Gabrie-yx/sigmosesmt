@@ -692,6 +692,7 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
             <SelectContent>{roles.map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
+        <GheField value={f.ghe_id ?? null} onChange={(v) => setF({ ...f, ghe_id: v })} disabled={!canEdit} />
         <Field label="Setor">
           <Input
             list="setor-options"
