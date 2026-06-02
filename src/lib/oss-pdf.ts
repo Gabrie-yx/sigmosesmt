@@ -41,6 +41,8 @@ export type OSSPdfData = {
       acidente?: string | null;
     } | null;
   };
+  /** Catálogo de EPIs do estoque (nome → CA) para enriquecer linhas que vierem sem CA. */
+  episCatalog?: Array<{ nome: string; ca: string | null }>;
 };
 
 function brDate(s?: string | null) {
