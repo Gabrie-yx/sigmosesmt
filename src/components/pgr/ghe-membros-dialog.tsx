@@ -79,11 +79,13 @@ export function GheMembrosDialog({
     queryKey: ["roles_disponiveis_ghe", gheId],
     enabled: open && tab === "cargos",
     queryFn: async () => {
+      // `.neq` em coluna nullable exclui NULL no PostgREST.
+      // Usamos `or` para trazer cargos sem GHE OU em outro GHE.
       const { data } = await sb
         .from("roles")
         .select("id, name, ghe_id")
         .eq("ativo", true)
-        .neq("ghe_id", gheId)
+        .or(`ghe_id.is.null,ghe_id.neq.${gheId}`)
         .order("name");
       return data ?? [];
     },
