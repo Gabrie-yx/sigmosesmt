@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const tokenSchema = z.string().uuid();
@@ -8,6 +7,7 @@ const tokenSchema = z.string().uuid();
 export const getRcByToken = createServerFn({ method: "GET" })
   .inputValidator((input: { token: string }) => ({ token: tokenSchema.parse(input.token) }))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rc, error } = await supabaseAdmin
       .from("purchase_requisitions")
       .select(
@@ -44,6 +44,7 @@ export const marcarRcCotada = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rc, error: e1 } = await supabaseAdmin
       .from("purchase_requisitions")
       .select("id, status")
@@ -84,6 +85,7 @@ export const decidirRc = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { supabase, userId } = context;
 
     // Só admin ou moderador pode decidir
