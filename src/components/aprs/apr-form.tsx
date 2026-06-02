@@ -1313,9 +1313,22 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                       <div className="border-r border-black p-1.5 flex items-center justify-center">
                         <Checkbox checked={checked} disabled={!checked && !osOk} onCheckedChange={() => toggleExecutante(e.id)} />
                       </div>
-                      <div className="border-r border-black p-1.5">
-                        {e.nome}
-                        {!osOk && <span className="ml-2 text-[10px] font-bold uppercase">🚫 Sem OS Assinada</span>}
+                      <div className="border-r border-black p-1.5 flex items-center gap-2 flex-wrap">
+                        <span>{e.nome}</span>
+                        {!osOk && (
+                          <>
+                            <span className="text-[10px] font-bold uppercase">🚫 Sem OS Assinada</span>
+                            <button
+                              type="button"
+                              disabled={liberarOs.isPending}
+                              onClick={() => liberarOs.mutate({ empId: e.id, nome: e.nome })}
+                              className="ml-auto text-[9px] font-black uppercase tracking-wider bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded shadow-sm disabled:opacity-50"
+                              title="Cria uma liberação ITEM:OS por 30 dias com justificativa"
+                            >
+                              🔓 Liberar OS agora
+                            </button>
+                          </>
+                        )}
                       </div>
                       <div className="p-1.5">{role?.name ?? "—"}</div>
                     </div>
