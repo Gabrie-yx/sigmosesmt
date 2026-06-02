@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, UserPlus, UserMinus, Search, X, Briefcase } from "lucide-react";
+import { Users, UserPlus, UserMinus, Search, X, Briefcase, Link2, Unlink } from "lucide-react";
 import { toast } from "sonner";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,6 +27,7 @@ export function GheMembrosDialog({
   const [busca, setBusca] = useState("");
   const [novoEmp, setNovoEmp] = useState("");
   const [motivo, setMotivo] = useState("");
+  const [novoCargo, setNovoCargo] = useState("");
 
   // Membros efetivos deste GHE (via view)
   const { data: members = [], isLoading } = useQuery<Member[]>({
@@ -71,6 +72,47 @@ export function GheMembrosDialog({
       const { data } = await sb.from("roles").select("id, name").eq("ghe_id", gheId).eq("ativo", true).order("name");
       return data ?? [];
     },
+  });
+
+  // Cargos ativos disponíveis para vincular (sem GHE ou em outro GHE)
+  const { data: cargosDisponiveis = [] } = useQuery<{ id: string; name: string; ghe_id: string | null }[]>({
+    queryKey: ["roles_disponiveis_ghe", gheId],
+    enabled: open && tab === "cargos",
+    queryFn: async () => {
+      const { data } = await sb
+        .from("roles")
+        .select("id, name, ghe_id")
+        .eq("ativo", true)
+        .neq("ghe_id", gheId)
+        .order("name");
+      return data ?? [];
+    },
+  });
+
+  const invalidateCargos = () => {
+    qc.invalidateQueries({ queryKey: ["ghe_cargos", gheId] });
+    qc.invalidateQueries({ queryKey: ["roles_disponiveis_ghe", gheId] });
+    qc.invalidateQueries({ queryKey: ["ghe_membros", gheId] });
+    qc.invalidateQueries({ queryKey: ["pgr_ghe_membros_all"] });
+    qc.invalidateQueries({ queryKey: ["pgr_ghes"] });
+  };
+
+  const vincularCargo = useMutation({
+    mutationFn: async (roleId: string) => {
+      const { error } = await sb.from("roles").update({ ghe_id: gheId }).eq("id", roleId);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidateCargos(); setNovoCargo(""); toast.success("Cargo vinculado ao GHE"); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const desvincularCargo = useMutation({
+    mutationFn: async (roleId: string) => {
+      const { error } = await sb.from("roles").update({ ghe_id: null }).eq("id", roleId);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidateCargos(); toast.success("Cargo desvinculado"); },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   // Todos os funcionários ativos pra autocomplete de override
@@ -186,19 +228,58 @@ export function GheMembrosDialog({
             <p className="text-xs text-slate-500 mb-2">
               Estes cargos têm <strong>{gheLabel}</strong> como GHE padrão. Todo funcionário ativo nesses cargos entra automaticamente.
             </p>
+
+            <Card className="p-3 space-y-2 bg-emerald-50/40 border-emerald-200 mb-3">
+              <p className="text-xs font-semibold text-emerald-900 flex items-center gap-1">
+                <Link2 className="h-3.5 w-3.5" /> Vincular novo cargo
+              </p>
+              <div className="flex gap-2">
+                <Select value={novoCargo} onValueChange={setNovoCargo}>
+                  <SelectTrigger className="bg-white"><SelectValue placeholder="Selecione um cargo…" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {cargosDisponiveis.length === 0 ? (
+                      <div className="px-2 py-3 text-xs text-slate-400 text-center">Nenhum cargo disponível.</div>
+                    ) : cargosDisponiveis.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}{c.ghe_id ? " (já em outro GHE)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm" className="bg-emerald-600 hover:bg-emerald-700 gap-1 shrink-0"
+                  disabled={!novoCargo || vincularCargo.isPending}
+                  onClick={() => vincularCargo.mutate(novoCargo)}
+                >
+                  <Link2 className="h-3.5 w-3.5" /> Vincular
+                </Button>
+              </div>
+              <p className="text-[10px] text-emerald-800/70">
+                Vincular um cargo que já está em outro GHE vai movê-lo para cá.
+              </p>
+            </Card>
+
             {cargos.length === 0 ? (
               <Card className="p-6 text-center text-sm text-slate-500">
                 <Briefcase className="h-8 w-8 mx-auto mb-2 text-slate-300" />
-                Nenhum cargo vincula este GHE como padrão.
-                <br />
-                <span className="text-xs">Use a tela "Vincular cargos aos GHEs" no painel principal.</span>
+                Nenhum cargo vinculado ainda.
               </Card>
             ) : (
               <div className="space-y-1">
                 {cargos.map((c: { id: string; name: string }) => (
-                  <div key={c.id} className="flex items-center gap-2 p-2 border rounded text-sm">
+                  <div key={c.id} className="flex items-center gap-2 p-2 border rounded text-sm group">
                     <Briefcase className="h-4 w-4 text-slate-400" />
-                    {c.name}
+                    <span className="flex-1 truncate">{c.name}</span>
+                    <Button
+                      size="sm" variant="ghost"
+                      className="h-7 px-2 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                      disabled={desvincularCargo.isPending}
+                      onClick={() => {
+                        if (confirm(`Desvincular "${c.name}" deste GHE?`)) desvincularCargo.mutate(c.id);
+                      }}
+                    >
+                      <Unlink className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 ))}
               </div>
