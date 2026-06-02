@@ -187,7 +187,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
       const rawExt = nameParts.length > 1 ? nameParts.pop()!.toLowerCase() : "";
       const mimeExt = file.type?.split("/")?.[1]?.toLowerCase() || "";
       const ext = (rawExt && rawExt.length <= 5 ? rawExt : mimeExt) || "jpg";
-      const path = `${emp.id}/${Date.now()}.${ext}`;
+      const path = `employees/${emp.id}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("avatars")
         .upload(path, file, { upsert: true, contentType: file.type || undefined });
