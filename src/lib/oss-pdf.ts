@@ -41,6 +41,8 @@ export type OSSPdfData = {
       acidente?: string | null;
     } | null;
   };
+  /** Catálogo de EPIs do estoque (nome → CA) para enriquecer linhas que vierem sem CA. */
+  episCatalog?: Array<{ nome: string; ca: string | null }>;
 };
 
 function brDate(s?: string | null) {
@@ -93,19 +95,50 @@ const TXT_TERMO =
   'Declaro para os devidos fins que tomei conhecimento e irei cumprir o conteúdo destas ordens de serviço. Em conformidade com o Item 1.4.2 "a".';
 
 // Tenta separar "Nome do EPI - CA 12345" / "Nome do EPI (CA 12345)" / "Nome — CA: 12345"
-function parseEpis(raw: string): Array<{ desc: string; ca: string }> {
+function parseEpis(
+  raw: string,
+  catalog?: Array<{ nome: string; ca: string | null }>,
+): Array<{ desc: string; ca: string }> {
   if (!raw) return [];
+  const norm = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+  const lookupCa = (desc: string): string => {
+    if (!catalog?.length) return "";
+    const d = norm(desc);
+    if (!d) return "";
+    // 1) match exato
+    let hit = catalog.find((c) => norm(c.nome) === d);
+    // 2) catálogo contém descrição OU descrição contém catálogo (tokens >= 3 chars)
+    if (!hit) {
+      hit = catalog.find((c) => {
+        const n = norm(c.nome);
+        return n && (n.includes(d) || d.includes(n));
+      });
+    }
+    // 3) primeiro token relevante em comum
+    if (!hit) {
+      const tokens = d.split(" ").filter((t) => t.length >= 4);
+      hit = catalog.find((c) => {
+        const n = norm(c.nome);
+        return tokens.some((t) => n.includes(t));
+      });
+    }
+    return hit?.ca ?? "";
+  };
   return raw
     .split(/\r?\n|;/)
     .map((l) => l.trim())
     .filter(Boolean)
     .map((line) => {
+      // remove marcador de bullet inicial
+      line = line.replace(/^[•\-*·\u2022]\s*/, "");
       const m = line.match(/(.*?)\s*[-–—(:]\s*C\.?A\.?\s*[:nº#]?\s*(\d+)/i);
       if (m) return { desc: m[1].replace(/[\s\-–—(:]+$/, "").trim(), ca: m[2] };
       // tenta achar só número CA no fim
       const m2 = line.match(/(.*?)\s+(\d{3,6})\s*$/);
       if (m2) return { desc: m2[1].trim(), ca: m2[2] };
-      return { desc: line, ca: "" };
+      // sem CA inline — busca no catálogo de estoque
+      return { desc: line, ca: lookupCa(line) };
     });
 }
 
@@ -132,12 +165,19 @@ function parseRiscosTexto(raw: string) {
 export function buildOssPdf(data: OSSPdfData): jsPDF {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
   const margin = 8;
   const innerW = W - margin * 2;
+  let y = margin;
+  const ensureSpace = (needed: number) => {
+    if (y + needed > H - margin) {
+      doc.addPage();
+      y = margin;
+    }
+  };
 
   // ====================== CABEÇALHO (3 colunas) ======================
   // [Logo DMN] | [Título centralizado] | [Metadados FOR-SEG / Revisão / Data]
-  let y = margin;
   const hdrH = 22;
   const logoW = 38;
   const metaW = 42;
@@ -219,6 +259,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
 
   // Helper: barra de título de seção (fundo cinza)
   const sectionBar = (title: string) => {
+    ensureSpace(5 + 6);
     doc.setFillColor(225, 225, 225);
     doc.rect(margin, y, innerW, 5, "FD");
     doc.setFont("helvetica", "bold");
@@ -236,6 +277,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
     const lineH = size * 0.42;
     const lines = doc.splitTextToSize(text || "", innerW - 3);
     const h = Math.max(opts?.minH ?? 0, lines.length * lineH + 2);
+    ensureSpace(h);
     doc.rect(margin, y, innerW, h);
     doc.setTextColor(0);
     doc.text(lines, margin + 1.5, y + lineH + 0.5);
@@ -296,7 +338,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
 
   // ====================== 3. EPIs de Uso Obrigatório ======================
   sectionBar("3. EPI's de Uso Obrigatório");
-  const epis = parseEpis(data.conteudo.epis_obrigatorios);
+  const epis = parseEpis(data.conteudo.epis_obrigatorios, data.episCatalog);
   // pareia em 2 colunas
   const rows: Array<[string, string, string, string]> = [];
   const minRows = 5;
@@ -351,6 +393,8 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
   textBlock(obsTxt, { size: 7.5 });
 
   // ====================== TERMO DE RESPONSABILIDADE ======================
+  // Mantém o TERMO + assinaturas sempre na mesma página (não cortar no meio).
+  ensureSpace(5 + 14 + 22);
   // Barra de título centralizada
   doc.setFillColor(225, 225, 225);
   doc.rect(margin, y, innerW, 5, "FD");
@@ -363,6 +407,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
 
   // ====================== ASSINATURAS ======================
   const sigH = 22;
+  ensureSpace(sigH);
   doc.rect(margin, y, innerW, sigH);
   doc.line(margin + innerW / 2, y, margin + innerW / 2, y + sigH);
 

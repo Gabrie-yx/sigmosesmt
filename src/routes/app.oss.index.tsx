@@ -94,6 +94,13 @@ function OssIndexPage() {
   }, [emissoes, q, filterStatus]);
 
   const baixarPdf = async (em: Emissao) => {
+    // Busca catálogo de EPIs do estoque pra preencher os C.A. automaticamente
+    const { data: epiRows } = await supabase
+      .from("estoque_epi")
+      .select("nome_material, ca");
+    const episCatalog = (epiRows ?? [])
+      .filter((r: any) => r.nome_material && r.ca)
+      .map((r: any) => ({ nome: r.nome_material as string, ca: r.ca as string }));
     // Sempre regerar a partir do snapshot pra evitar dependência do storage
     const doc = buildOssPdf({
       revisao: em.template_revisao,
@@ -112,6 +119,7 @@ function OssIndexPage() {
       empresa: em.employees?.companies?.name ?? null,
       empresa_cnpj: em.employees?.companies?.cnpj ?? null,
       conteudo: em.conteudo_snapshot,
+      episCatalog,
     });
     setPreviewDoc({ doc, name: `OSS-${em.cargo_snapshot}-${em.employees?.nome ?? "func"}.pdf` });
   };
