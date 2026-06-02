@@ -24,10 +24,27 @@ export function SignaturePadDialog({
 
   const onUpload = (file: File | null) => {
     if (!file) return;
-    if (file.type !== "image/png") { toast.error("A assinatura deve estar no formato PNG"); return; }
-    if (file.size > 2 * 1024 * 1024) { toast.error("Arquivo muito grande (máx. 2MB)"); return; }
+    if (!file.type.startsWith("image/")) { toast.error("Envie uma imagem (PNG, JPG, WEBP...)"); return; }
+    if (file.size > 8 * 1024 * 1024) { toast.error("Arquivo muito grande (máx. 8MB)"); return; }
     const reader = new FileReader();
-    reader.onload = () => setSignature(reader.result as string);
+    reader.onload = () => {
+      const src = reader.result as string;
+      if (file.type === "image/png") { setSignature(src); return; }
+      // Converte pra PNG (mantém transparência só se já for PNG; senão fundo branco vira PNG igual)
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { setSignature(src); return; }
+        ctx.drawImage(img, 0, 0);
+        try { setSignature(canvas.toDataURL("image/png")); }
+        catch { setSignature(src); }
+      };
+      img.onerror = () => toast.error("Não consegui ler a imagem");
+      img.src = src;
+    };
     reader.readAsDataURL(file);
   };
 
@@ -60,8 +77,8 @@ export function SignaturePadDialog({
               </div>
             ) : (
               <label className="cursor-pointer text-[12px] text-red-700 hover:underline px-3 py-2 border border-dashed border-red-700/50 rounded">
-                Enviar assinatura (PNG)
-                <input type="file" accept="image/png" className="hidden" onChange={(e) => onUpload(e.target.files?.[0] ?? null)} />
+                Enviar assinatura (PNG, JPG ou WEBP)
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => onUpload(e.target.files?.[0] ?? null)} />
               </label>
             )}
           </div>
