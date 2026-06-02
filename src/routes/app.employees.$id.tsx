@@ -104,9 +104,22 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
       return (data ?? []) as SafetyOverride[];
     },
   });
+  const { data: ossValid = false } = useQuery({
+    queryKey: ["oss-valid", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("oss_emissoes")
+        .select("expira_em,status")
+        .eq("employee_id", id)
+        .eq("status", "ASSINADO");
+      if (error) throw error;
+      const now = Date.now();
+      return (data ?? []).some((r: any) => !r.expira_em || new Date(r.expira_em).getTime() > now);
+    },
+  });
 
   const role = (roles ?? []).find((r: any) => r.id === emp?.role_id) ?? null;
-  const status = emp ? calculateSafetyStatus(emp as any, role as any, (exams ?? []) as any, (vaccines ?? []) as any, overrides) : null;
+  const status = emp ? calculateSafetyStatus(emp as any, role as any, (exams ?? []) as any, (vaccines ?? []) as any, overrides, ossValid) : null;
 
   // Constrói lista de chaves disponíveis para liberação granular
   const availableItemKeys = useMemo(() => {
