@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { GheMembrosDialog } from "@/components/pgr/ghe-membros-dialog";
+import { GheFichaDialog } from "@/components/pgr/ghe-ficha-dialog";
 import {
   classifyAiha, AIHA_LABEL, AIHA_COLOR, AIHA_CELL, AIHA_PRIORIZACAO,
   PROB_LABELS, SEV_LABELS, CATEGORIA_LABEL, type AihaClass,
