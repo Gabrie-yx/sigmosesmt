@@ -129,6 +129,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
     (role?.req_nrs ?? []).forEach((nr: string) => keys.add(nr));
     (role?.req_exames ?? []).forEach((ex: string) => keys.add(`EXAME:${ex}`));
     (role?.req_vacinas ?? []).forEach((v: string) => keys.add(`VACINA:${v}`));
+    keys.add("OS");
     return Array.from(keys);
   }, [role]);
   const canEditHeader = isEditor || isAdmin;
