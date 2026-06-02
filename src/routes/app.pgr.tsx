@@ -14,7 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  ShieldAlert, Plus, Pencil, Trash2, Users, Layers, Grid3x3, ListChecks, AlertTriangle, Save,
+  ShieldAlert, Plus, Pencil, Trash2, Users, Layers, Grid3x3, ListChecks, AlertTriangle, Save, HardHat,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -337,6 +337,163 @@ function GheDialog({
 }
 
 /* ============================================================
+   DIALOG — Vincular EPIs a um Risco do Inventário
+   ============================================================ */
+function RiscoEpisDialog({ risco, onClose }: { risco: InvRow; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [epiSel, setEpiSel] = useState<string>("");
+  const [obrigatorio, setObrigatorio] = useState(true);
+  const [obs, setObs] = useState("");
+
+  const { data: vinc = [] } = useQuery<any[]>({
+    queryKey: ["pgr_risco_epi", risco.id],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("pgr_risco_epi")
+        .select("id, obrigatorio, observacao, epi_id, estoque_epi:epi_id(id, nome_material, codigo_material, ca)")
+        .eq("inventario_id", risco.id)
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: epis = [] } = useQuery<any[]>({
+    queryKey: ["estoque_epi_select"],
+    queryFn: async () => {
+      const { data, error } = await sb.from("estoque_epi").select("id, nome_material, codigo_material, ca").order("nome_material");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const epiIdsVinc = new Set(vinc.map((v) => v.epi_id));
+  const episDisponiveis = epis.filter((e) => !epiIdsVinc.has(e.id));
+
+  const add = useMutation({
+    mutationFn: async () => {
+      if (!epiSel) throw new Error("Selecione um EPI");
+      const { error } = await sb.from("pgr_risco_epi").insert({
+        inventario_id: risco.id,
+        epi_id: epiSel,
+        obrigatorio,
+        observacao: obs || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pgr_risco_epi", risco.id] });
+      setEpiSel(""); setObs(""); setObrigatorio(true);
+      toast.success("EPI vinculado");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await sb.from("pgr_risco_epi").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pgr_risco_epi", risco.id] });
+      toast.success("EPI desvinculado");
+    },
+  });
+
+  const toggle = useMutation({
+    mutationFn: async ({ id, obrigatorio }: { id: string; obrigatorio: boolean }) => {
+      const { error } = await sb.from("pgr_risco_epi").update({ obrigatorio }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["pgr_risco_epi", risco.id] }),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <HardHat className="h-5 w-5 text-amber-700" />
+            EPIs do risco
+          </DialogTitle>
+          <p className="text-xs text-slate-500">
+            <b>{risco.perigo}</b>
+            {risco.agravo && <> · agravo: {risco.agravo}</>}
+          </p>
+        </DialogHeader>
+
+        {/* Lista de EPIs já vinculados */}
+        <div className="space-y-2">
+          {vinc.length === 0 && (
+            <p className="text-sm text-slate-500 text-center py-4">Nenhum EPI vinculado ainda.</p>
+          )}
+          {vinc.map((v) => (
+            <div key={v.id} className="flex items-center gap-2 p-2 border rounded-lg bg-slate-50">
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold truncate">{v.estoque_epi?.nome_material}</div>
+                <div className="text-xs text-slate-500">
+                  Cód {v.estoque_epi?.codigo_material}
+                  {v.estoque_epi?.ca && <> · CA {v.estoque_epi.ca}</>}
+                </div>
+                {v.observacao && <div className="text-xs text-slate-600 italic mt-0.5">{v.observacao}</div>}
+              </div>
+              <Button
+                size="sm"
+                variant={v.obrigatorio ? "default" : "outline"}
+                className={v.obrigatorio ? "bg-rose-700 hover:bg-rose-800" : ""}
+                onClick={() => toggle.mutate({ id: v.id, obrigatorio: !v.obrigatorio })}
+              >
+                {v.obrigatorio ? "Obrigatório" : "Recomendado"}
+              </Button>
+              <Button size="sm" variant="ghost" className="text-rose-700" onClick={() => remove.mutate(v.id)}>
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        {/* Form de adicionar */}
+        <div className="border-t pt-3 space-y-2">
+          <Label className="text-xs font-semibold text-slate-600">Adicionar EPI</Label>
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2">
+            <Select value={epiSel} onValueChange={setEpiSel}>
+              <SelectTrigger><SelectValue placeholder="Selecione o EPI do estoque" /></SelectTrigger>
+              <SelectContent>
+                {episDisponiveis.length === 0 && <div className="px-2 py-1.5 text-xs text-slate-500">Todos os EPIs do estoque já estão vinculados.</div>}
+                {episDisponiveis.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.nome_material} {e.ca && `(CA ${e.ca})`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant={obrigatorio ? "default" : "outline"}
+              className={obrigatorio ? "bg-rose-700 hover:bg-rose-800" : ""}
+              onClick={() => setObrigatorio(!obrigatorio)}
+            >
+              {obrigatorio ? "Obrigatório" : "Recomendado"}
+            </Button>
+          </div>
+          <Input
+            placeholder="Observação (opcional)"
+            value={obs}
+            onChange={(e) => setObs(e.target.value)}
+          />
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
+          <Button onClick={() => add.mutate()} disabled={!epiSel || add.isPending} className="bg-rose-700 hover:bg-rose-800 gap-2">
+            <Plus className="h-4 w-4" />Vincular EPI
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ============================================================
    ABA 2 — Inventário de Riscos (AIHA 5×5)
    ============================================================ */
 function InventarioTab() {
@@ -344,6 +501,7 @@ function InventarioTab() {
   const [gheSel, setGheSel] = useState<string>("all");
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<InvRow | null>(null);
+  const [episFor, setEpisFor] = useState<InvRow | null>(null);
 
   const { data: ghes = [] } = useQuery<Ghe[]>({
     queryKey: ["pgr_ghe"],
@@ -469,6 +627,9 @@ function InventarioTab() {
                     <Button size="sm" variant="ghost" onClick={() => { setEdit(r); setOpen(true); }}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
+                    <Button size="sm" variant="ghost" className="text-amber-700" title="EPIs do risco" onClick={() => setEpisFor(r)}>
+                      <HardHat className="h-3.5 w-3.5" />
+                    </Button>
                     <Button size="sm" variant="ghost" className="text-rose-700" onClick={() => { if (confirm("Remover risco?")) remove.mutate(r.id); }}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -481,6 +642,7 @@ function InventarioTab() {
       )}
 
       <InvDialog open={open} onOpenChange={setOpen} edit={edit} ghes={ghes} gheDefault={gheSel !== "all" ? gheSel : undefined} />
+      {episFor && <RiscoEpisDialog risco={episFor} onClose={() => setEpisFor(null)} />}
     </div>
   );
 }
