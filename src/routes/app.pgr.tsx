@@ -1,0 +1,1017 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  ShieldAlert, Plus, Pencil, Trash2, Users, Layers, Grid3x3, ListChecks, AlertTriangle, Save,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  classifyAiha, AIHA_LABEL, AIHA_COLOR, AIHA_CELL, AIHA_PRIORIZACAO,
+  PROB_LABELS, SEV_LABELS, CATEGORIA_LABEL, type AihaClass,
+} from "@/lib/aiha";
+
+export const Route = createFileRoute("/app/pgr")({
+  component: PgrPage,
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb: any = supabase;
+
+type Ghe = {
+  id: string;
+  numero: number;
+  setor: string;
+  descricao_ambiente: string | null;
+  qtd_colaboradores: number | null;
+  jornada: string | null;
+  observacao: string | null;
+  ativo: boolean;
+};
+
+type InvRow = {
+  id: string;
+  ghe_id: string;
+  categoria: "FISICO" | "QUIMICO" | "BIOLOGICO" | "ERGONOMICO" | "ACIDENTE";
+  perigo: string;
+  agravo: string | null;
+  fonte_geradora: string | null;
+  controles_existentes: string | null;
+  exposicao: string | null;
+  intensidade: number | null;
+  unidade: string | null;
+  limite_tolerancia: number | null;
+  tipo_avaliacao: string | null;
+  probabilidade: number | null;
+  severidade: number | null;
+  risco: number | null;
+  classificacao: string | null;
+  monitoramento: string | null;
+  observacao: string | null;
+  ativo: boolean;
+};
+
+function PgrPage() {
+  const [tab, setTab] = useState("ghe");
+  return (
+    <div className="h-full flex flex-col bg-slate-50">
+      <header className="px-6 pt-5 pb-3 border-b border-rose-100 bg-gradient-to-r from-rose-50 via-white to-amber-50 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-rose-600 to-[#7f1212] text-white shadow">
+            <ShieldAlert className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight">PGR — Programa de Gerenciamento de Riscos</h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              NR-01 · GHE · Inventário de Riscos (AIHA 5×5) · Plano de Ação 5W2H
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <Tabs value={tab} onValueChange={setTab} className="p-6 space-y-4">
+          <TabsList className="bg-white border">
+            <TabsTrigger value="ghe" className="gap-2"><Layers className="h-4 w-4" />GHEs</TabsTrigger>
+            <TabsTrigger value="inv" className="gap-2"><Grid3x3 className="h-4 w-4" />Inventário de Riscos</TabsTrigger>
+            <TabsTrigger value="plano" className="gap-2"><ListChecks className="h-4 w-4" />Plano de Ação (5W2H)</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="ghe"><GheTab /></TabsContent>
+          <TabsContent value="inv"><InventarioTab /></TabsContent>
+          <TabsContent value="plano"><PlanoTab /></TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   ABA 1 — GHEs
+   ============================================================ */
+function GheTab() {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [edit, setEdit] = useState<Ghe | null>(null);
+
+  const { data: ghes = [], isLoading } = useQuery<Ghe[]>({
+    queryKey: ["pgr_ghe"],
+    queryFn: async () => {
+      const { data, error } = await sb.from("pgr_ghe").select("*").eq("ativo", true).order("numero");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ["roles-min-ghe"],
+    queryFn: async () => {
+      const { data, error } = await sb.from("roles").select("id, name, ghe_id").eq("ativo", true).order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const linkRole = useMutation({
+    mutationFn: async ({ role_id, ghe_id }: { role_id: string; ghe_id: string | null }) => {
+      const { error } = await sb.from("roles").update({ ghe_id }).eq("id", role_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["roles-min-ghe"] });
+      toast.success("Cargo vinculado ao GHE");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await sb.from("pgr_ghe").update({ ativo: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pgr_ghe"] });
+      toast.success("GHE arquivado");
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-slate-600">
+          {ghes.length} GHE{ghes.length === 1 ? "" : "s"} cadastrado{ghes.length === 1 ? "" : "s"}
+        </div>
+        <Button onClick={() => { setEdit(null); setOpen(true); }} className="bg-rose-700 hover:bg-rose-800 gap-2">
+          <Plus className="h-4 w-4" />Novo GHE
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-10 text-slate-500">Carregando GHEs…</div>
+      ) : ghes.length === 0 ? (
+        <Card className="p-10 text-center text-slate-500">
+          <Layers className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+          <p className="font-semibold">Nenhum GHE cadastrado</p>
+          <p className="text-sm mt-1">Comece criando os Grupos Homogêneos de Exposição (ex: GHE 1 — Supervisores).</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {ghes.map((g) => {
+            const cargosLigados = roles.filter((r: { ghe_id: string | null }) => r.ghe_id === g.id);
+            return (
+              <Card key={g.id} className="p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge className="bg-rose-700 text-white">GHE {g.numero}</Badge>
+                      <h4 className="font-bold text-slate-900 truncate">{g.setor}</h4>
+                    </div>
+                    {g.descricao_ambiente && (
+                      <p className="text-xs text-slate-600 mt-1">{g.descricao_ambiente}</p>
+                    )}
+                    <div className="flex gap-3 text-xs text-slate-500 mt-2">
+                      <span className="flex items-center gap-1"><Users className="h-3 w-3" />{g.qtd_colaboradores ?? 0} pessoas</span>
+                      {g.jornada && <span>· {g.jornada}</span>}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {cargosLigados.length === 0 ? (
+                        <span className="text-xs text-slate-400 italic">Nenhum cargo vinculado</span>
+                      ) : cargosLigados.map((c: { id: string; name: string }) => (
+                        <Badge key={c.id} variant="outline" className="text-xs">{c.name}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => { setEdit(g); setOpen(true); }}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="sm" variant="ghost" className="text-rose-700"
+                      onClick={() => {
+                        if (confirm(`Arquivar GHE ${g.numero}?`)) remove.mutate(g.id);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Vincular cargos ao GHE */}
+      {ghes.length > 0 && (
+        <Card className="p-4">
+          <h3 className="font-bold text-slate-900 mb-3 text-sm">Vincular cargos aos GHEs</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {roles.map((r: { id: string; name: string; ghe_id: string | null }) => (
+              <div key={r.id} className="flex items-center gap-2 text-sm">
+                <span className="flex-1 truncate">{r.name}</span>
+                <Select
+                  value={r.ghe_id ?? "none"}
+                  onValueChange={(v) => linkRole.mutate({ role_id: r.id, ghe_id: v === "none" ? null : v })}
+                >
+                  <SelectTrigger className="w-48 h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— sem GHE —</SelectItem>
+                    {ghes.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>GHE {g.numero} — {g.setor}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      <GheDialog open={open} onOpenChange={setOpen} edit={edit} />
+    </div>
+  );
+}
+
+function GheDialog({
+  open, onOpenChange, edit,
+}: { open: boolean; onOpenChange: (v: boolean) => void; edit: Ghe | null }) {
+  const qc = useQueryClient();
+  const [numero, setNumero] = useState<number | "">("");
+  const [setor, setSetor] = useState("");
+  const [amb, setAmb] = useState("");
+  const [qtd, setQtd] = useState<number | "">("");
+  const [jornada, setJornada] = useState("");
+  const [obs, setObs] = useState("");
+
+  // Reset on open
+  useMemo(() => {
+    if (open) {
+      setNumero(edit?.numero ?? "");
+      setSetor(edit?.setor ?? "");
+      setAmb(edit?.descricao_ambiente ?? "");
+      setQtd(edit?.qtd_colaboradores ?? "");
+      setJornada(edit?.jornada ?? "");
+      setObs(edit?.observacao ?? "");
+    }
+  }, [open, edit]);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      if (numero === "" || !setor.trim()) throw new Error("Número e setor são obrigatórios");
+      const payload = {
+        numero: Number(numero),
+        setor: setor.trim(),
+        descricao_ambiente: amb.trim() || null,
+        qtd_colaboradores: qtd === "" ? 0 : Number(qtd),
+        jornada: jornada.trim() || null,
+        observacao: obs.trim() || null,
+      };
+      if (edit) {
+        const { error } = await sb.from("pgr_ghe").update(payload).eq("id", edit.id);
+        if (error) throw error;
+      } else {
+        const { error } = await sb.from("pgr_ghe").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pgr_ghe"] });
+      toast.success(edit ? "GHE atualizado" : "GHE criado");
+      onOpenChange(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>{edit ? `Editar GHE ${edit.numero}` : "Novo GHE"}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Número *</Label>
+              <Input type="number" value={numero} onChange={(e) => setNumero(e.target.value === "" ? "" : Number(e.target.value))} />
+            </div>
+            <div>
+              <Label>Qtd. colaboradores</Label>
+              <Input type="number" value={qtd} onChange={(e) => setQtd(e.target.value === "" ? "" : Number(e.target.value))} />
+            </div>
+          </div>
+          <div>
+            <Label>Setor / Função *</Label>
+            <Input value={setor} onChange={(e) => setSetor(e.target.value)} placeholder="Ex: Supervisão / Caldeiraria / Solda" />
+          </div>
+          <div>
+            <Label>Descrição do ambiente</Label>
+            <Textarea rows={2} value={amb} onChange={(e) => setAmb(e.target.value)} placeholder="Ex: Galpão de produção, área aberta com cobertura..." />
+          </div>
+          <div>
+            <Label>Jornada</Label>
+            <Input value={jornada} onChange={(e) => setJornada(e.target.value)} placeholder="Ex: 44h/semana — 07h às 17h" />
+          </div>
+          <div>
+            <Label>Observação</Label>
+            <Textarea rows={2} value={obs} onChange={(e) => setObs(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-rose-700 hover:bg-rose-800 gap-2">
+            <Save className="h-4 w-4" />{save.isPending ? "Salvando…" : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ============================================================
+   ABA 2 — Inventário de Riscos (AIHA 5×5)
+   ============================================================ */
+function InventarioTab() {
+  const qc = useQueryClient();
+  const [gheSel, setGheSel] = useState<string>("all");
+  const [open, setOpen] = useState(false);
+  const [edit, setEdit] = useState<InvRow | null>(null);
+
+  const { data: ghes = [] } = useQuery<Ghe[]>({
+    queryKey: ["pgr_ghe"],
+    queryFn: async () => {
+      const { data, error } = await sb.from("pgr_ghe").select("*").eq("ativo", true).order("numero");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: inv = [], isLoading } = useQuery<InvRow[]>({
+    queryKey: ["pgr_inventario_riscos", gheSel],
+    queryFn: async () => {
+      let q = sb.from("pgr_inventario_riscos").select("*").eq("ativo", true);
+      if (gheSel !== "all") q = q.eq("ghe_id", gheSel);
+      const { data, error } = await q.order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await sb.from("pgr_inventario_riscos").update({ ativo: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pgr_inventario_riscos"] });
+      toast.success("Risco removido");
+    },
+  });
+
+  const counts = useMemo(() => {
+    const c: Record<AihaClass, number> = {
+      TRIVIAL: 0, BAIXO: 0, MODERADO: 0, ALTO: 0, MUITO_ALTO: 0, NAO_CLASSIFICADO: 0,
+    };
+    inv.forEach((r) => { c[classifyAiha(r.probabilidade, r.severidade)]++; });
+    return c;
+  }, [inv]);
+
+  return (
+    <div className="space-y-4">
+      {/* Topo: filtro + ação */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <Select value={gheSel} onValueChange={setGheSel}>
+          <SelectTrigger className="w-72 bg-white"><SelectValue placeholder="Todos os GHEs" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os GHEs</SelectItem>
+            {ghes.map((g) => (
+              <SelectItem key={g.id} value={g.id}>GHE {g.numero} — {g.setor}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex-1" />
+        <Button
+          onClick={() => { setEdit(null); setOpen(true); }}
+          className="bg-rose-700 hover:bg-rose-800 gap-2"
+          disabled={ghes.length === 0}
+        >
+          <Plus className="h-4 w-4" />Novo risco
+        </Button>
+      </div>
+
+      {/* KPIs por classe */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        {(["TRIVIAL","BAIXO","MODERADO","ALTO","MUITO_ALTO"] as AihaClass[]).map((c) => (
+          <Card key={c} className={`p-3 border ${AIHA_COLOR[c]}`}>
+            <div className="text-[10px] font-bold uppercase tracking-wide opacity-80">{AIHA_LABEL[c]}</div>
+            <div className="text-2xl font-black">{counts[c]}</div>
+            <div className="text-[10px] opacity-70">{AIHA_PRIORIZACAO[c]}</div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Matriz visual 5×5 */}
+      <MatrizVisual inv={inv} />
+
+      {/* Lista */}
+      {isLoading ? (
+        <div className="text-center py-10 text-slate-500">Carregando…</div>
+      ) : ghes.length === 0 ? (
+        <Card className="p-10 text-center text-slate-500">
+          <AlertTriangle className="h-10 w-10 mx-auto mb-3 text-amber-400" />
+          <p className="font-semibold">Crie GHEs primeiro</p>
+          <p className="text-sm">Cada risco precisa estar vinculado a um GHE.</p>
+        </Card>
+      ) : inv.length === 0 ? (
+        <Card className="p-10 text-center text-slate-500">
+          <Grid3x3 className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+          <p className="font-semibold">Nenhum risco no inventário</p>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {inv.map((r) => {
+            const cls = classifyAiha(r.probabilidade, r.severidade);
+            const ghe = ghes.find((g) => g.id === r.ghe_id);
+            return (
+              <Card key={r.id} className="p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start gap-3">
+                  <div className={`w-14 h-14 rounded-lg ${AIHA_CELL[cls]} flex flex-col items-center justify-center shrink-0`}>
+                    <div className="text-lg font-black">{r.risco ?? "—"}</div>
+                    <div className="text-[9px] uppercase opacity-90">{AIHA_LABEL[cls]}</div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h4 className="font-bold text-slate-900">{r.perigo}</h4>
+                      <Badge variant="outline" className="text-xs">{CATEGORIA_LABEL[r.categoria]}</Badge>
+                      {ghe && <Badge variant="outline" className="text-xs">GHE {ghe.numero} · {ghe.setor}</Badge>}
+                    </div>
+                    {r.agravo && <p className="text-xs text-slate-600"><b>Agravo:</b> {r.agravo}</p>}
+                    {r.fonte_geradora && <p className="text-xs text-slate-600"><b>Fonte:</b> {r.fonte_geradora}</p>}
+                    {r.controles_existentes && <p className="text-xs text-slate-600"><b>Controles:</b> {r.controles_existentes}</p>}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-0.5 text-xs text-slate-600 mt-1">
+                      {r.intensidade != null && <Field label="Intensidade" value={`${r.intensidade} ${r.unidade ?? ""}`} highlight={r.limite_tolerancia != null && r.intensidade > r.limite_tolerancia} />}
+                      {r.limite_tolerancia != null && <Field label="LT" value={`${r.limite_tolerancia} ${r.unidade ?? ""}`} />}
+                      {r.exposicao && <Field label="Exposição" value={r.exposicao} />}
+                      {r.tipo_avaliacao && <Field label="Tipo aval." value={r.tipo_avaliacao} />}
+                      <Field label="P × S" value={`${r.probabilidade ?? "?"} × ${r.severidade ?? "?"}`} />
+                      {r.monitoramento && <Field label="Monit." value={r.monitoramento} />}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => { setEdit(r); setOpen(true); }}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-rose-700" onClick={() => { if (confirm("Remover risco?")) remove.mutate(r.id); }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <InvDialog open={open} onOpenChange={setOpen} edit={edit} ghes={ghes} gheDefault={gheSel !== "all" ? gheSel : undefined} />
+    </div>
+  );
+}
+
+function MatrizVisual({ inv }: { inv: InvRow[] }) {
+  // bucket [sev][prob] => count
+  const grid: number[][] = Array.from({ length: 5 }, () => Array(5).fill(0));
+  inv.forEach((r) => {
+    if (r.severidade && r.probabilidade) {
+      grid[r.severidade - 1][r.probabilidade - 1]++;
+    }
+  });
+  return (
+    <Card className="p-4">
+      <h3 className="text-sm font-bold mb-3 text-slate-900">Matriz AIHA 5×5 — Severidade × Probabilidade</h3>
+      <div className="overflow-x-auto">
+        <table className="text-xs border-collapse">
+          <thead>
+            <tr>
+              <th className="p-1.5 text-right text-slate-500 font-normal">Sev ↓ / Prob →</th>
+              {PROB_LABELS.map((p) => (
+                <th key={p.v} className="p-1.5 text-center font-semibold text-slate-700 min-w-20">{p.v}<div className="text-[9px] font-normal text-slate-400">{p.label}</div></th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[5,4,3,2,1].map((sev) => (
+              <tr key={sev}>
+                <td className="p-1.5 text-right font-semibold text-slate-700">{sev}<div className="text-[9px] font-normal text-slate-400">{SEV_LABELS[sev-1].label}</div></td>
+                {[1,2,3,4,5].map((prob) => {
+                  const cls = classifyAiha(prob, sev);
+                  const n = grid[sev-1][prob-1];
+                  return (
+                    <td key={prob} className={`p-2 text-center border ${AIHA_CELL[cls]} font-bold w-16 h-12`}>
+                      <div className="text-lg leading-none">{prob * sev}</div>
+                      {n > 0 && <div className="text-[10px] mt-0.5 bg-black/30 rounded px-1 inline-block">{n}</div>}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
+function Field({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div>
+      <span className="text-slate-400">{label}: </span>
+      <span className={highlight ? "font-bold text-rose-700" : "font-semibold text-slate-700"}>{value}</span>
+    </div>
+  );
+}
+
+function InvDialog({
+  open, onOpenChange, edit, ghes, gheDefault,
+}: {
+  open: boolean; onOpenChange: (v: boolean) => void;
+  edit: InvRow | null; ghes: Ghe[]; gheDefault?: string;
+}) {
+  const qc = useQueryClient();
+  const [ghe, setGhe] = useState<string>("");
+  const [cat, setCat] = useState<InvRow["categoria"]>("FISICO");
+  const [perigo, setPerigo] = useState("");
+  const [agravo, setAgravo] = useState("");
+  const [fonte, setFonte] = useState("");
+  const [controles, setControles] = useState("");
+  const [exp, setExp] = useState("");
+  const [intens, setIntens] = useState<number | "">("");
+  const [unid, setUnid] = useState("");
+  const [lt, setLt] = useState<number | "">("");
+  const [tipoAv, setTipoAv] = useState("");
+  const [prob, setProb] = useState<number | "">("");
+  const [sev, setSev] = useState<number | "">("");
+  const [monit, setMonit] = useState("");
+
+  useMemo(() => {
+    if (open) {
+      setGhe(edit?.ghe_id ?? gheDefault ?? "");
+      setCat(edit?.categoria ?? "FISICO");
+      setPerigo(edit?.perigo ?? "");
+      setAgravo(edit?.agravo ?? "");
+      setFonte(edit?.fonte_geradora ?? "");
+      setControles(edit?.controles_existentes ?? "");
+      setExp(edit?.exposicao ?? "");
+      setIntens(edit?.intensidade ?? "");
+      setUnid(edit?.unidade ?? "");
+      setLt(edit?.limite_tolerancia ?? "");
+      setTipoAv(edit?.tipo_avaliacao ?? "");
+      setProb(edit?.probabilidade ?? "");
+      setSev(edit?.severidade ?? "");
+      setMonit(edit?.monitoramento ?? "");
+    }
+  }, [open, edit, gheDefault]);
+
+  const classif = classifyAiha(typeof prob === "number" ? prob : null, typeof sev === "number" ? sev : null);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      if (!ghe) throw new Error("Selecione um GHE");
+      if (!perigo.trim()) throw new Error("Perigo é obrigatório");
+      const payload = {
+        ghe_id: ghe,
+        categoria: cat,
+        perigo: perigo.trim(),
+        agravo: agravo.trim() || null,
+        fonte_geradora: fonte.trim() || null,
+        controles_existentes: controles.trim() || null,
+        exposicao: exp.trim() || null,
+        intensidade: intens === "" ? null : Number(intens),
+        unidade: unid.trim() || null,
+        limite_tolerancia: lt === "" ? null : Number(lt),
+        tipo_avaliacao: tipoAv.trim() || null,
+        probabilidade: prob === "" ? null : Number(prob),
+        severidade: sev === "" ? null : Number(sev),
+        classificacao: AIHA_LABEL[classif],
+        monitoramento: monit.trim() || null,
+      };
+      if (edit) {
+        const { error } = await sb.from("pgr_inventario_riscos").update(payload).eq("id", edit.id);
+        if (error) throw error;
+      } else {
+        const { error } = await sb.from("pgr_inventario_riscos").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pgr_inventario_riscos"] });
+      toast.success(edit ? "Risco atualizado" : "Risco adicionado ao inventário");
+      onOpenChange(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{edit ? "Editar risco" : "Novo risco no inventário"}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>GHE *</Label>
+              <Select value={ghe} onValueChange={setGhe}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {ghes.map((g) => (<SelectItem key={g.id} value={g.id}>GHE {g.numero} — {g.setor}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Categoria *</Label>
+              <Select value={cat} onValueChange={(v) => setCat(v as InvRow["categoria"])}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(CATEGORIA_LABEL).map(([k,v]) => (<SelectItem key={k} value={k}>{v}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label>Perigo *</Label>
+            <Input value={perigo} onChange={(e) => setPerigo(e.target.value)} placeholder="Ex: Ruído, Calor, Fumos metálicos, Postura inadequada..." />
+          </div>
+          <div>
+            <Label>Agravo à saúde</Label>
+            <Input value={agravo} onChange={(e) => setAgravo(e.target.value)} placeholder="Ex: PAIR, intermação, intoxicação por Mn..." />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Fonte geradora</Label>
+              <Input value={fonte} onChange={(e) => setFonte(e.target.value)} placeholder="Ex: Esmerilhadeira, máquina de solda..." />
+            </div>
+            <div>
+              <Label>Controles existentes</Label>
+              <Input value={controles} onChange={(e) => setControles(e.target.value)} placeholder="Ex: EPI, ventilação, treinamento..." />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Exposição</Label>
+              <Input value={exp} onChange={(e) => setExp(e.target.value)} placeholder="Habitual / Eventual / Intermitente" />
+            </div>
+            <div>
+              <Label>Tipo de avaliação</Label>
+              <Input value={tipoAv} onChange={(e) => setTipoAv(e.target.value)} placeholder="Qualitativa / Quantitativa" />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label>Intensidade</Label>
+              <Input type="number" step="any" value={intens} onChange={(e) => setIntens(e.target.value === "" ? "" : Number(e.target.value))} />
+            </div>
+            <div>
+              <Label>Unidade</Label>
+              <Input value={unid} onChange={(e) => setUnid(e.target.value)} placeholder="dB(A), °C IBUTG, ppm..." />
+            </div>
+            <div>
+              <Label>Limite de tolerância</Label>
+              <Input type="number" step="any" value={lt} onChange={(e) => setLt(e.target.value === "" ? "" : Number(e.target.value))} />
+            </div>
+          </div>
+
+          {/* Matriz P × S */}
+          <Card className="p-3 bg-slate-50">
+            <div className="text-xs font-bold text-slate-600 uppercase mb-2">Classificação AIHA 5×5</div>
+            <div className="grid grid-cols-3 gap-3 items-end">
+              <div>
+                <Label>Probabilidade (1-5)</Label>
+                <Select value={prob === "" ? "" : String(prob)} onValueChange={(v) => setProb(v ? Number(v) : "")}>
+                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectContent>
+                    {PROB_LABELS.map((p) => (<SelectItem key={p.v} value={String(p.v)}>{p.v} — {p.label}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Severidade (1-5)</Label>
+                <Select value={sev === "" ? "" : String(sev)} onValueChange={(v) => setSev(v ? Number(v) : "")}>
+                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectContent>
+                    {SEV_LABELS.map((s) => (<SelectItem key={s.v} value={String(s.v)}>{s.v} — {s.label}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className={`p-3 rounded-lg text-center ${AIHA_CELL[classif]}`}>
+                <div className="text-[10px] uppercase opacity-90 font-bold">Risco</div>
+                <div className="text-2xl font-black">{typeof prob === "number" && typeof sev === "number" ? prob*sev : "—"}</div>
+                <div className="text-[10px] font-semibold">{AIHA_LABEL[classif]}</div>
+              </div>
+            </div>
+          </Card>
+
+          <div>
+            <Label>Monitoramento</Label>
+            <Input value={monit} onChange={(e) => setMonit(e.target.value)} placeholder="Ex: Audiometria anual, monitoramento ambiental..." />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-rose-700 hover:bg-rose-800 gap-2">
+            <Save className="h-4 w-4" />{save.isPending ? "Salvando…" : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ============================================================
+   ABA 3 — Plano de Ação 5W2H
+   ============================================================ */
+type PlanoRow = {
+  id: string;
+  inventario_id: string;
+  o_que: string;
+  por_que: string | null;
+  onde: string | null;
+  quem: string | null;
+  quando: string | null;
+  como: string | null;
+  quanto: number | null;
+  status: "PENDENTE" | "EM_ANDAMENTO" | "CONCLUIDA" | "CANCELADA";
+  data_conclusao: string | null;
+  observacao: string | null;
+};
+
+function PlanoTab() {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [edit, setEdit] = useState<PlanoRow | null>(null);
+
+  const { data: inv = [] } = useQuery<InvRow[]>({
+    queryKey: ["pgr_inventario_riscos", "all-for-plano"],
+    queryFn: async () => {
+      const { data, error } = await sb.from("pgr_inventario_riscos").select("*").eq("ativo", true);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: planos = [], isLoading } = useQuery<PlanoRow[]>({
+    queryKey: ["pgr_plano_acao"],
+    queryFn: async () => {
+      const { data, error } = await sb.from("pgr_plano_acao").select("*").order("quando", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Sugere riscos sem plano (Alto / Muito Alto)
+  const sugeridos = useMemo(() => {
+    const comPlano = new Set(planos.map((p) => p.inventario_id));
+    return inv.filter((r) => {
+      const cls = classifyAiha(r.probabilidade, r.severidade);
+      return (cls === "ALTO" || cls === "MUITO_ALTO") && !comPlano.has(r.id);
+    });
+  }, [inv, planos]);
+
+  const updStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: PlanoRow["status"] }) => {
+      const patch: Partial<PlanoRow> = { status };
+      if (status === "CONCLUIDA") patch.data_conclusao = new Date().toISOString().slice(0,10);
+      const { error } = await sb.from("pgr_plano_acao").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pgr_plano_acao"] });
+      toast.success("Status atualizado");
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await sb.from("pgr_plano_acao").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pgr_plano_acao"] });
+      toast.success("Ação removida");
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-slate-600">{planos.length} ação{planos.length === 1 ? "" : "es"} cadastrada{planos.length === 1 ? "" : "s"}</div>
+        <Button onClick={() => { setEdit(null); setOpen(true); }} className="bg-rose-700 hover:bg-rose-800 gap-2" disabled={inv.length === 0}>
+          <Plus className="h-4 w-4" />Nova ação
+        </Button>
+      </div>
+
+      {sugeridos.length > 0 && (
+        <Card className="p-4 border-rose-200 bg-rose-50">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="h-4 w-4 text-rose-700" />
+            <h3 className="font-bold text-sm text-rose-900">
+              {sugeridos.length} risco{sugeridos.length === 1 ? "" : "s"} Alto/Muito Alto sem plano de ação
+            </h3>
+          </div>
+          <div className="text-xs text-rose-800 space-y-1">
+            {sugeridos.slice(0, 5).map((r) => (
+              <div key={r.id} className="flex items-center justify-between gap-2">
+                <span>• {r.perigo} <span className="opacity-60">({AIHA_LABEL[classifyAiha(r.probabilidade, r.severidade)]})</span></span>
+                <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => {
+                  setEdit({
+                    id: "", inventario_id: r.id, o_que: "", por_que: `Mitigar: ${r.perigo}`,
+                    onde: null, quem: null, quando: null, como: null, quanto: null,
+                    status: "PENDENTE", data_conclusao: null, observacao: null,
+                  });
+                  setOpen(true);
+                }}>
+                  Criar ação
+                </Button>
+              </div>
+            ))}
+            {sugeridos.length > 5 && <div className="text-rose-700 italic">... e mais {sugeridos.length - 5}</div>}
+          </div>
+        </Card>
+      )}
+
+      {isLoading ? (
+        <div className="text-center py-10 text-slate-500">Carregando…</div>
+      ) : planos.length === 0 ? (
+        <Card className="p-10 text-center text-slate-500">
+          <ListChecks className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+          <p className="font-semibold">Nenhuma ação no plano</p>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {planos.map((p) => {
+            const risco = inv.find((r) => r.id === p.inventario_id);
+            const cls = risco ? classifyAiha(risco.probabilidade, risco.severidade) : "NAO_CLASSIFICADO";
+            const statusColor = {
+              PENDENTE: "bg-slate-100 text-slate-700 border-slate-300",
+              EM_ANDAMENTO: "bg-amber-100 text-amber-800 border-amber-300",
+              CONCLUIDA: "bg-emerald-100 text-emerald-800 border-emerald-300",
+              CANCELADA: "bg-rose-100 text-rose-700 border-rose-300",
+            }[p.status];
+            return (
+              <Card key={p.id} className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h4 className="font-bold text-slate-900">{p.o_que}</h4>
+                      <Badge className={statusColor} variant="outline">{p.status}</Badge>
+                      {risco && <Badge className={AIHA_COLOR[cls]} variant="outline">{risco.perigo} · {AIHA_LABEL[cls]}</Badge>}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-0.5 text-xs text-slate-600">
+                      {p.por_que && <Field label="Por quê" value={p.por_que} />}
+                      {p.onde && <Field label="Onde" value={p.onde} />}
+                      {p.quem && <Field label="Quem" value={p.quem} />}
+                      {p.quando && <Field label="Quando" value={p.quando} />}
+                      {p.como && <Field label="Como" value={p.como} />}
+                      {p.quanto != null && <Field label="Quanto" value={`R$ ${p.quanto}`} />}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Select value={p.status} onValueChange={(v) => updStatus.mutate({ id: p.id, status: v as PlanoRow["status"] })}>
+                      <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PENDENTE">Pendente</SelectItem>
+                        <SelectItem value="EM_ANDAMENTO">Em andamento</SelectItem>
+                        <SelectItem value="CONCLUIDA">Concluída</SelectItem>
+                        <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => { setEdit(p); setOpen(true); }}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-rose-700" onClick={() => { if (confirm("Remover ação?")) remove.mutate(p.id); }}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <PlanoDialog open={open} onOpenChange={setOpen} edit={edit} inv={inv} />
+    </div>
+  );
+}
+
+function PlanoDialog({
+  open, onOpenChange, edit, inv,
+}: { open: boolean; onOpenChange: (v: boolean) => void; edit: PlanoRow | null; inv: InvRow[] }) {
+  const qc = useQueryClient();
+  const [invId, setInvId] = useState("");
+  const [oque, setOque] = useState("");
+  const [porque, setPorque] = useState("");
+  const [onde, setOnde] = useState("");
+  const [quem, setQuem] = useState("");
+  const [quando, setQuando] = useState("");
+  const [como, setComo] = useState("");
+  const [quanto, setQuanto] = useState<number | "">("");
+
+  useMemo(() => {
+    if (open) {
+      setInvId(edit?.inventario_id ?? "");
+      setOque(edit?.o_que ?? "");
+      setPorque(edit?.por_que ?? "");
+      setOnde(edit?.onde ?? "");
+      setQuem(edit?.quem ?? "");
+      setQuando(edit?.quando ?? "");
+      setComo(edit?.como ?? "");
+      setQuanto(edit?.quanto ?? "");
+    }
+  }, [open, edit]);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      if (!invId) throw new Error("Selecione o risco");
+      if (!oque.trim()) throw new Error("Campo 'O quê' é obrigatório");
+      const payload = {
+        inventario_id: invId,
+        o_que: oque.trim(),
+        por_que: porque.trim() || null,
+        onde: onde.trim() || null,
+        quem: quem.trim() || null,
+        quando: quando || null,
+        como: como.trim() || null,
+        quanto: quanto === "" ? null : Number(quanto),
+      };
+      if (edit && edit.id) {
+        const { error } = await sb.from("pgr_plano_acao").update(payload).eq("id", edit.id);
+        if (error) throw error;
+      } else {
+        const { error } = await sb.from("pgr_plano_acao").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pgr_plano_acao"] });
+      toast.success(edit && edit.id ? "Ação atualizada" : "Ação criada");
+      onOpenChange(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{edit && edit.id ? "Editar ação 5W2H" : "Nova ação 5W2H"}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Risco vinculado *</Label>
+            <Select value={invId} onValueChange={setInvId}>
+              <SelectTrigger><SelectValue placeholder="Selecione o risco do inventário" /></SelectTrigger>
+              <SelectContent>
+                {inv.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>{r.perigo} — {CATEGORIA_LABEL[r.categoria]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>O quê * (ação)</Label>
+            <Textarea rows={2} value={oque} onChange={(e) => setOque(e.target.value)} placeholder="O que será feito?" />
+          </div>
+          <div>
+            <Label>Por quê</Label>
+            <Textarea rows={2} value={porque} onChange={(e) => setPorque(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Onde</Label><Input value={onde} onChange={(e) => setOnde(e.target.value)} /></div>
+            <div><Label>Quem (responsável)</Label><Input value={quem} onChange={(e) => setQuem(e.target.value)} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Quando (prazo)</Label><Input type="date" value={quando} onChange={(e) => setQuando(e.target.value)} /></div>
+            <div><Label>Quanto (R$)</Label><Input type="number" step="any" value={quanto} onChange={(e) => setQuanto(e.target.value === "" ? "" : Number(e.target.value))} /></div>
+          </div>
+          <div>
+            <Label>Como</Label>
+            <Textarea rows={2} value={como} onChange={(e) => setComo(e.target.value)} placeholder="Como será executada?" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-rose-700 hover:bg-rose-800 gap-2">
+            <Save className="h-4 w-4" />{save.isPending ? "Salvando…" : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
