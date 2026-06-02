@@ -1246,3 +1246,295 @@ function HistoricoEpiDialog({ epi }: { epi: EpiRow }) {
     </Dialog>
   );
 }
+
+// ───────────────────────── Ficha de Entregas (NR-06) ─────────────────────────
+
+type EntregaJoined = {
+  id: string;
+  employee_id: string;
+  item: string | null;
+  ca: string | null;
+  tamanho: string | null;
+  qtd: number | null;
+  data_entrega: string | null;
+  motivo_entrega: string | null;
+  employees?: {
+    nome: string | null;
+    matricula: string | null;
+    cpf: string | null;
+    role_id: string | null;
+    company_id: string | null;
+  } | null;
+};
+
+const MOTIVO_LABEL_UI: Record<string, string> = {
+  PRIMEIRA_ENTREGA: "1ª Entrega",
+  TROCA_DESGASTE: "Troca",
+  EMPRESTIMO: "Empréstimo",
+  PERDA_EXTRAVIO: "Perda/Extravio",
+};
+
+const MOTIVO_BADGE: Record<string, string> = {
+  PRIMEIRA_ENTREGA: "border-emerald-500/40 text-emerald-700",
+  TROCA_DESGASTE: "border-sky-500/40 text-sky-700",
+  EMPRESTIMO: "border-amber-500/40 text-amber-700",
+  PERDA_EXTRAVIO: "border-destructive/40 text-destructive",
+};
+
+function fmtDateBR(d?: string | null) {
+  if (!d) return "—";
+  const s = d.split("T")[0];
+  const [y, m, day] = s.split("-");
+  return y && m && day ? `${day}/${m}/${y}` : d;
+}
+
+function EntregasFichaReport() {
+  const hoje = new Date();
+  const trintaDias = new Date(hoje); trintaDias.setDate(hoje.getDate() - 30);
+  const [from, setFrom] = useState(trintaDias.toISOString().slice(0, 10));
+  const [to, setTo] = useState(hoje.toISOString().slice(0, 10));
+  const [busca, setBusca] = useState("");
+  const [filtroMotivo, setFiltroMotivo] = useState<string>("todos");
+  const [filtroEpi, setFiltroEpi] = useState<string>("todos");
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
+
+  const { data: entregas = [], isLoading } = useQuery({
+    queryKey: ["epi_entregas_ficha", from, to],
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      let q = (supabase as any)
+        .from("epi_deliveries")
+        .select("id, employee_id, item, ca, tamanho, qtd, data_entrega, motivo_entrega, employees(nome, matricula, cpf, role_id, company_id)")
+        .order("data_entrega", { ascending: false })
+        .limit(2000);
+      if (from) q = q.gte("data_entrega", from);
+      if (to) q = q.lte("data_entrega", to);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as EntregaJoined[];
+    },
+  });
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ["roles_simple"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("roles").select("id, nome");
+      return (data ?? []) as { id: string; nome: string }[];
+    },
+  });
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies_simple"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("companies").select("id, nome");
+      return (data ?? []) as { id: string; nome: string }[];
+    },
+  });
+  const roleMap = useMemo(() => new Map(roles.map((r) => [r.id, r.nome])), [roles]);
+  const companyMap = useMemo(() => new Map(companies.map((c) => [c.id, c.nome])), [companies]);
+
+  const epiOptions = useMemo(() => {
+    const set = new Set<string>();
+    entregas.forEach((e) => e.item && set.add(e.item));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [entregas]);
+
+  const rows: EntregaRow[] = useMemo(() => {
+    const t = busca.trim().toLowerCase();
+    return entregas
+      .filter((e) => {
+        if (filtroMotivo !== "todos" && (e.motivo_entrega ?? "") !== filtroMotivo) return false;
+        if (filtroEpi !== "todos" && (e.item ?? "") !== filtroEpi) return false;
+        if (t) {
+          const hay = [
+            e.employees?.nome,
+            e.employees?.matricula,
+            e.employees?.cpf,
+            e.item,
+            e.ca,
+          ].filter(Boolean).join(" ").toLowerCase();
+          if (!hay.includes(t)) return false;
+        }
+        return true;
+      })
+      .map((e) => ({
+        data_entrega: e.data_entrega,
+        item: e.item,
+        ca: e.ca,
+        tamanho: e.tamanho,
+        qtd: e.qtd,
+        motivo_entrega: e.motivo_entrega,
+        colaborador: e.employees?.nome ?? "—",
+        matricula: e.employees?.matricula ?? null,
+        cpf: e.employees?.cpf ?? null,
+        cargo: e.employees?.role_id ? (roleMap.get(e.employees.role_id) ?? "—") : "—",
+        empresa: e.employees?.company_id ? (companyMap.get(e.employees.company_id) ?? "—") : "—",
+      }));
+  }, [entregas, busca, filtroMotivo, filtroEpi, roleMap, companyMap]);
+
+  const totalQtd = rows.reduce((s, r) => s + (r.qtd ?? 0), 0);
+
+  function gerarPdf() {
+    const filtros: string[] = [];
+    if (filtroEpi !== "todos") filtros.push(`EPI: ${filtroEpi}`);
+    if (filtroMotivo !== "todos") filtros.push(`Motivo: ${MOTIVO_LABEL_UI[filtroMotivo] ?? filtroMotivo}`);
+    if (busca.trim()) filtros.push(`Busca: "${busca.trim()}"`);
+    const doc = gerarPdfEntregasEpi(rows, {
+      periodoLabel: `Período: ${fmtDateBR(from)} a ${fmtDateBR(to)}`,
+      filtros: filtros.length ? `Filtros: ${filtros.join(" • ")}` : "Filtros: nenhum",
+    });
+    setPdfDoc(doc);
+    setPdfOpen(true);
+  }
+
+  function exportCsv() {
+    const head = ["Data", "Matrícula", "Colaborador", "CPF", "Cargo", "Empresa", "EPI", "CA", "Tamanho", "Qtd", "Motivo"];
+    const lines = [head.join(";")];
+    rows.forEach((r) => {
+      lines.push([
+        fmtDateBR(r.data_entrega),
+        r.matricula ?? "",
+        r.colaborador,
+        r.cpf ?? "",
+        r.cargo ?? "",
+        r.empresa ?? "",
+        r.item ?? "",
+        r.ca ?? "",
+        r.tamanho ?? "",
+        String(r.qtd ?? 0),
+        MOTIVO_LABEL_UI[r.motivo_entrega ?? ""] ?? (r.motivo_entrega ?? ""),
+      ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"));
+    });
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `entregas_epi_${from}_a_${to}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <Card className="p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-black tracking-tight flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            Ficha de Entregas de EPI — NR-06
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Listagem em tempo real • Atualiza automaticamente a cada 30s
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={exportCsv} disabled={rows.length === 0} className="gap-1.5">
+            <Download className="h-4 w-4" />CSV
+          </Button>
+          <Button onClick={gerarPdf} disabled={rows.length === 0} className="gap-1.5">
+            <Printer className="h-4 w-4" />Gerar PDF
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
+        <div>
+          <Label className="text-[10px] uppercase tracking-widest">De</Label>
+          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-[10px] uppercase tracking-widest">Até</Label>
+          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+        </div>
+        <div className="col-span-2 md:col-span-1">
+          <Label className="text-[10px] uppercase tracking-widest">Motivo</Label>
+          <Select value={filtroMotivo} onValueChange={setFiltroMotivo}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="PRIMEIRA_ENTREGA">1ª Entrega</SelectItem>
+              <SelectItem value="TROCA_DESGASTE">Troca</SelectItem>
+              <SelectItem value="EMPRESTIMO">Empréstimo</SelectItem>
+              <SelectItem value="PERDA_EXTRAVIO">Perda/Extravio</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-[10px] uppercase tracking-widest">EPI</Label>
+          <Select value={filtroEpi} onValueChange={setFiltroEpi}>
+            <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              {epiOptions.map((nome) => (
+                <SelectItem key={nome} value={nome}>{nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-[10px] uppercase tracking-widest">Buscar</Label>
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome, CPF, CA…" className="pl-8" />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground border-t pt-2">
+        <span><strong className="text-foreground">{rows.length}</strong> entrega(s)</span>
+        <span><strong className="text-foreground">{totalQtd}</strong> item(ns) entregue(s)</span>
+        <span><strong className="text-foreground">{new Set(rows.map((r) => r.colaborador)).size}</strong> colaborador(es)</span>
+      </div>
+
+      <div className="max-h-[60vh] overflow-auto border rounded-md">
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground py-10 text-center">Carregando…</div>
+        ) : rows.length === 0 ? (
+          <div className="text-sm text-muted-foreground py-10 text-center">
+            Nenhuma entrega encontrada com esses filtros.
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-background border-b">
+              <tr className="text-left text-[10px] uppercase tracking-widest text-muted-foreground">
+                <th className="py-2 px-2">Data</th>
+                <th className="py-2 px-2">Matrícula</th>
+                <th className="py-2 px-2">Colaborador</th>
+                <th className="py-2 px-2">Cargo</th>
+                <th className="py-2 px-2">EPI</th>
+                <th className="py-2 px-2">CA</th>
+                <th className="py-2 px-2">Tam.</th>
+                <th className="py-2 px-2 text-right">Qtd</th>
+                <th className="py-2 px-2">Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={i} className="border-b hover:bg-muted/30">
+                  <td className="py-2 px-2 whitespace-nowrap font-mono text-xs">{fmtDateBR(r.data_entrega)}</td>
+                  <td className="py-2 px-2 font-mono text-xs">{r.matricula ?? "—"}</td>
+                  <td className="py-2 px-2">{r.colaborador}</td>
+                  <td className="py-2 px-2 text-xs">{r.cargo ?? "—"}</td>
+                  <td className="py-2 px-2">{r.item ?? "—"}</td>
+                  <td className="py-2 px-2 font-mono text-xs">{r.ca ?? "—"}</td>
+                  <td className="py-2 px-2 text-xs text-center">{r.tamanho ?? "—"}</td>
+                  <td className="py-2 px-2 text-right font-bold">{r.qtd ?? 0}</td>
+                  <td className="py-2 px-2">
+                    <Badge variant="outline" className={MOTIVO_BADGE[r.motivo_entrega ?? ""] ?? ""}>
+                      {MOTIVO_LABEL_UI[r.motivo_entrega ?? ""] ?? (r.motivo_entrega ?? "—")}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <PDFPreviewDialog
+        open={pdfOpen}
+        onClose={() => setPdfOpen(false)}
+        doc={pdfDoc}
+        fileName={`ficha-entregas-epi-${from}_a_${to}.pdf`}
+        title="Ficha de Entregas de EPI — NR-06"
+      />
+    </Card>
+  );
+}
