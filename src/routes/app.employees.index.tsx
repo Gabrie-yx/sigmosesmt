@@ -302,10 +302,19 @@ function EmployeesPage() {
           </span>
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="md:col-span-3 h-12 rounded-2xl bg-white"><SelectValue placeholder="Cargo" /></SelectTrigger>
+          <SelectTrigger className="md:col-span-2 h-12 rounded-2xl bg-white"><SelectValue placeholder="Cargo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="TODOS">Todos os cargos</SelectItem>
             {(roles ?? []).map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={vinculoFilter} onValueChange={(v: any) => setVinculoFilter(v)}>
+          <SelectTrigger className="md:col-span-1 h-12 rounded-2xl bg-white"><SelectValue placeholder="Vínculo" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="TODOS">Todos os vínculos</SelectItem>
+            <SelectItem value="PROPRIO">Próprios (DMN)</SelectItem>
+            <SelectItem value="TERCEIRO">Terceiros</SelectItem>
+            <SelectItem value="MEI">Apenas MEI</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -331,6 +340,7 @@ function EmployeesPage() {
                 key={e.id}
                 emp={e}
                 company={cMap.get(e.company_id) ?? undefined}
+                companyType={cTypeMap.get(e.company_id) ?? undefined}
                 role={rMap.get(e.role_id) ?? undefined}
               />
             ))}
