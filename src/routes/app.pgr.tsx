@@ -22,9 +22,11 @@ import {
 import {
   ShieldAlert, Plus, Pencil, Trash2, Users, Layers, Grid3x3, ListChecks, AlertTriangle, Save, HardHat,
   Sparkles, Wand2, Loader2,
+  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
 import { GheMembrosDialog } from "@/components/pgr/ghe-membros-dialog";
+import { GheFichaDialog } from "@/components/pgr/ghe-ficha-dialog";
 import {
   classifyAiha, AIHA_LABEL, AIHA_COLOR, AIHA_CELL, AIHA_PRIORIZACAO,
   PROB_LABELS, SEV_LABELS, CATEGORIA_LABEL, type AihaClass,
@@ -113,6 +115,7 @@ function GheTab() {
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Ghe | null>(null);
   const [membrosFor, setMembrosFor] = useState<Ghe | null>(null);
+  const [fichaFor, setFichaFor] = useState<Ghe | null>(null);
 
   const { data: ghes = [], isLoading } = useQuery<Ghe[]>({
     queryKey: ["pgr_ghe"],
@@ -136,11 +139,19 @@ function GheTab() {
   const { data: allMembros = [] } = useQuery({
     queryKey: ["pgr_ghe_membros_all"],
     queryFn: async () => {
-      const { data, error } = await sb
+      const { data: rows, error } = await sb
         .from("pgr_ghe_membros_efetivos")
-        .select("ghe_id, employee_id, employees:employee_id(nome, foto_url)");
+        .select("ghe_id, employee_id");
       if (error) throw error;
-      return data ?? [];
+      const ids = Array.from(new Set((rows ?? []).map((r: any) => r.employee_id))).filter(Boolean);
+      if (ids.length === 0) return [];
+      const { data: emps } = await sb.from("employees").select("id, nome, foto_url").in("id", ids);
+      const m = new Map<string, { nome: string; foto_url: string | null }>((emps ?? []).map((e: any) => [e.id, e]));
+      return (rows ?? []).map((r: any) => ({
+        ghe_id: r.ghe_id,
+        employee_id: r.employee_id,
+        employees: m.get(r.employee_id) ?? null,
+      }));
     },
   });
 
@@ -260,6 +271,9 @@ function GheTab() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">
+                    <Button size="sm" variant="ghost" title="Ficha do GHE" onClick={() => setFichaFor(g)}>
+                      <ClipboardList className="h-3.5 w-3.5 text-rose-700" />
+                    </Button>
                     <Button size="sm" variant="ghost" title="Membros" onClick={() => setMembrosFor(g)}>
                       <Users className="h-3.5 w-3.5" />
                     </Button>
@@ -317,6 +331,11 @@ function GheTab() {
           gheLabel={`GHE ${membrosFor.numero} — ${membrosFor.setor}`}
         />
       )}
+      <GheFichaDialog
+        open={!!fichaFor}
+        onOpenChange={(v) => { if (!v) setFichaFor(null); }}
+        ghe={fichaFor}
+      />
     </div>
   );
 }

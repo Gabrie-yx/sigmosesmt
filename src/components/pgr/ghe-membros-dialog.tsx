@@ -33,18 +33,33 @@ export function GheMembrosDialog({
     queryKey: ["ghe_membros", gheId],
     enabled: open && !!gheId,
     queryFn: async () => {
-      const { data, error } = await sb
+      // 1) Buscar membros da view (sem embed — view não tem FK declarada).
+      const { data: rows, error } = await sb
         .from("pgr_ghe_membros_efetivos")
-        .select("employee_id, origem, employees:employee_id(nome, foto_url, role_id, roles:role_id(name))")
+        .select("employee_id, origem")
         .eq("ghe_id", gheId);
       if (error) throw error;
-      return (data ?? []).map((r: any) => ({
-        employee_id: r.employee_id,
-        origem: r.origem,
-        nome: r.employees?.nome ?? "—",
-        foto_url: r.employees?.foto_url ?? null,
-        role_name: r.employees?.roles?.name ?? null,
-      })).sort((a: Member, b: Member) => a.nome.localeCompare(b.nome));
+      const ids = Array.from(new Set((rows ?? []).map((r: any) => r.employee_id))).filter(Boolean);
+      if (ids.length === 0) return [];
+      // 2) Buscar funcionários + cargo em uma query separada.
+      const { data: emps, error: e2 } = await sb
+        .from("employees")
+        .select("id, nome, foto_url, role_id, roles:role_id(name)")
+        .in("id", ids);
+      if (e2) throw e2;
+      const empMap = new Map<string, any>((emps ?? []).map((e: any) => [e.id, e]));
+      return (rows ?? [])
+        .map((r: any) => {
+          const e = empMap.get(r.employee_id);
+          return {
+            employee_id: r.employee_id,
+            origem: r.origem,
+            nome: e?.nome ?? "—",
+            foto_url: e?.foto_url ?? null,
+            role_name: e?.roles?.name ?? null,
+          } as Member;
+        })
+        .sort((a: Member, b: Member) => a.nome.localeCompare(b.nome));
     },
   });
 
