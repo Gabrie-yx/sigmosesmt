@@ -259,6 +259,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
 
   // Helper: barra de título de seção (fundo cinza)
   const sectionBar = (title: string) => {
+    ensureSpace(5 + 6);
     doc.setFillColor(225, 225, 225);
     doc.rect(margin, y, innerW, 5, "FD");
     doc.setFont("helvetica", "bold");
@@ -276,6 +277,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
     const lineH = size * 0.42;
     const lines = doc.splitTextToSize(text || "", innerW - 3);
     const h = Math.max(opts?.minH ?? 0, lines.length * lineH + 2);
+    ensureSpace(h);
     doc.rect(margin, y, innerW, h);
     doc.setTextColor(0);
     doc.text(lines, margin + 1.5, y + lineH + 0.5);
@@ -336,7 +338,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
 
   // ====================== 3. EPIs de Uso Obrigatório ======================
   sectionBar("3. EPI's de Uso Obrigatório");
-  const epis = parseEpis(data.conteudo.epis_obrigatorios);
+  const epis = parseEpis(data.conteudo.epis_obrigatorios, data.episCatalog);
   // pareia em 2 colunas
   const rows: Array<[string, string, string, string]> = [];
   const minRows = 5;
@@ -391,6 +393,8 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
   textBlock(obsTxt, { size: 7.5 });
 
   // ====================== TERMO DE RESPONSABILIDADE ======================
+  // Mantém o TERMO + assinaturas sempre na mesma página (não cortar no meio).
+  ensureSpace(5 + 14 + 22);
   // Barra de título centralizada
   doc.setFillColor(225, 225, 225);
   doc.rect(margin, y, innerW, 5, "FD");
@@ -403,6 +407,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
 
   // ====================== ASSINATURAS ======================
   const sigH = 22;
+  ensureSpace(sigH);
   doc.rect(margin, y, innerW, sigH);
   doc.line(margin + innerW / 2, y, margin + innerW / 2, y + sigH);
 
