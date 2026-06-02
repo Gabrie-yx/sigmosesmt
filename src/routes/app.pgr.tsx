@@ -2,6 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { sugerirEpisIA } from "@/lib/pgr-epi-ai.functions";
+import {
+  suggestEpisHeuristic, epiKeywordsFaltantes,
+  type EstoqueEpiLite, type EpiSugestao,
+} from "@/lib/pgr-epi-suggest";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import {
   ShieldAlert, Plus, Pencil, Trash2, Users, Layers, Grid3x3, ListChecks, AlertTriangle, Save, HardHat,
+  Sparkles, Wand2, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
