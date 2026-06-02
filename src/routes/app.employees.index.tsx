@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText } from "lucide-react";
+import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
-import { maskCPF } from "@/lib/masks";
+import { maskCPF, maskCNPJ } from "@/lib/masks";
 import { Wizard, type WizardStep } from "@/components/wizard";
 import { EmployeeListagemDialog } from "@/components/employees/employee-listagem-dialog";
 
@@ -42,8 +42,9 @@ function EmployeesPage() {
   const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO">("TODOS");
   const [companyFilter, setCompanyFilter] = useState<string>("TODAS");
   const [roleFilter, setRoleFilter] = useState<string>("TODOS");
+  const [vinculoFilter, setVinculoFilter] = useState<"TODOS" | "PROPRIO" | "TERCEIRO" | "MEI">("TODOS");
   const [visibleCount, setVisibleCount] = useState(48);
-  const [form, setForm] = useState<any>({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "" });
+  const [form, setForm] = useState<any>({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "", tipo_cadastro: "NAO_MEI", cnpj: "" });
   const [listagemOpen, setListagemOpen] = useState(false);
 
   const { data: emps, isLoading } = useQuery({
@@ -55,8 +56,8 @@ function EmployeesPage() {
     },
   });
   const { data: companies } = useQuery({
-    queryKey: ["companies"],
-    queryFn: async () => (await supabase.from("companies").select("id,name").order("name")).data ?? [],
+    queryKey: ["companies-with-type"],
+    queryFn: async () => (await supabase.from("companies").select("id,name,type").order("name")).data ?? [],
   });
   const { data: roles } = useQuery({
     queryKey: ["roles"],
@@ -72,13 +73,15 @@ function EmployeesPage() {
         status: v.status,
         company_id: v.company_id || null,
         role_id: v.role_id || null,
+        tipo_cadastro: v.tipo_cadastro || "NAO_MEI",
+        cnpj: v.tipo_cadastro === "MEI" ? (v.cnpj || null) : null,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["employees"] });
       setOpen(false);
-      setForm({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "" });
+      setForm({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "", tipo_cadastro: "NAO_MEI", cnpj: "" });
       toast.success("Funcionário criado");
     },
     onError: (e: any) => toast.error(e.message),
@@ -90,6 +93,9 @@ function EmployeesPage() {
       if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
       if (companyFilter !== "TODAS" && e.company_id !== companyFilter) return false;
       if (roleFilter !== "TODOS" && e.role_id !== roleFilter) return false;
+      if (vinculoFilter === "PROPRIO" && e.tipo_vinculo !== "PROPRIO") return false;
+      if (vinculoFilter === "TERCEIRO" && e.tipo_vinculo !== "TERCEIRO") return false;
+      if (vinculoFilter === "MEI" && e.tipo_cadastro !== "MEI") return false;
       if (!s) return true;
       return (
         e.nome.toLowerCase().includes(s) ||
@@ -97,9 +103,10 @@ function EmployeesPage() {
         (e.matricula ?? "").toLowerCase().includes(s)
       );
     });
-  }, [emps, q, statusFilter, companyFilter, roleFilter]);
+  }, [emps, q, statusFilter, companyFilter, roleFilter, vinculoFilter]);
 
   const cMap = new Map((companies ?? []).map((c: any) => [c.id, c.name]));
+  const cTypeMap = new Map((companies ?? []).map((c: any) => [c.id, c.type]));
   const rMap = new Map((roles ?? []).map((r: any) => [r.id, r.name]));
 
   const stats = useMemo(() => {
@@ -140,7 +147,9 @@ function EmployeesPage() {
             <DialogContent>
               <DialogHeader><DialogTitle>Novo funcionário</DialogTitle></DialogHeader>
               {(() => {
-                const cName = (companies ?? []).find((c: any) => c.id === form.company_id)?.name ?? "—";
+                const selectedCompany = (companies ?? []).find((c: any) => c.id === form.company_id);
+                const cName = selectedCompany?.name ?? "—";
+                const isTerceiro = selectedCompany?.type === "TERCEIRIZADO";
                 const rName = (roles ?? []).find((r: any) => r.id === form.role_id)?.name ?? "—";
                 const steps: WizardStep[] = [
                   {
@@ -170,8 +179,9 @@ function EmployeesPage() {
                             <Label>Empresa</Label>
                             <Select value={form.company_id} onValueChange={(v) => setForm({ ...form, company_id: v })}>
                               <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                              <SelectContent>{(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                              <SelectContent>{(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}{c.type === "TERCEIRIZADO" ? " · TERCEIRO" : ""}</SelectItem>)}</SelectContent>
                             </Select>
+                            {isTerceiro && <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Vínculo: TERCEIRO</p>}
                           </div>
                           <div className="space-y-2">
                             <Label>Cargo</Label>
@@ -192,6 +202,24 @@ function EmployeesPage() {
                             </SelectContent>
                           </Select>
                         </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label>Tipo de cadastro</Label>
+                            <Select value={form.tipo_cadastro} onValueChange={(v) => setForm({ ...form, tipo_cadastro: v, cnpj: v === "MEI" ? form.cnpj : "" })}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="NAO_MEI">CLT</SelectItem>
+                                <SelectItem value="MEI">MEI</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {form.tipo_cadastro === "MEI" && (
+                            <div className="space-y-2">
+                              <Label>CNPJ (MEI)</Label>
+                              <Input inputMode="numeric" maxLength={18} placeholder="00.000.000/0000-00" value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: maskCNPJ(e.target.value) })} />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ),
                   },
@@ -208,6 +236,9 @@ function EmployeesPage() {
                           ["Empresa", cName],
                           ["Cargo", rName],
                           ["Status", form.status],
+                          ["Vínculo", isTerceiro ? "TERCEIRO" : "PRÓPRIO (DMN)"],
+                          ["Tipo", form.tipo_cadastro === "MEI" ? "MEI" : "CLT"],
+                          ...(form.tipo_cadastro === "MEI" ? [["CNPJ MEI", form.cnpj || "—"]] : []),
                         ].map(([k, v]) => (
                           <div key={k} className="flex items-center justify-between px-3 py-2">
                             <dt className="text-[10px] font-black uppercase tracking-widest text-slate-500">{k}</dt>
