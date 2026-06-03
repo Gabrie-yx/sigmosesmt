@@ -569,6 +569,32 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
     local_cep: "",
     local_municipio: "",
     local_uf: "",
+    // ===== Snapshot do acidentado (CAT oficial) =====
+    vitima_nome_mae: "",
+    vitima_data_nascimento: "",
+    vitima_sexo: "",
+    vitima_estado_civil: "",
+    vitima_grau_instrucao: "",
+    vitima_remuneracao: "",
+    vitima_ctps: "",
+    vitima_rg: "",
+    vitima_pis: "",
+    vitima_telefone: "",
+    vitima_cbo: "",
+    vitima_aposentado: false,
+    vitima_area: "URBANA",
+    vitima_filiacao: "EMPREGADO",
+    // ===== Acidente extra =====
+    horas_trabalhadas_antes: "",
+    cnpj_prestadora: "",
+    ultimo_dia_trabalhado: "",
+    // ===== Atestado extra =====
+    atestado_unidade: "",
+    atestado_hora: "",
+    atestado_observacoes: "",
+    sera_afastado: false,
+    // ===== Emitente =====
+    emitente_email: "",
   };
   const [form, setForm] = useState<any>(defaults);
   const [uploading, setUploading] = useState(false);
@@ -599,7 +625,7 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
       if (!form.company_id) return [];
       const { data } = await supabase
         .from("employees")
-        .select("id, nome, matricula, setor, role_id, roles(name)")
+        .select("id, nome, matricula, setor, rg, whatsapp, cep, endereco, bairro, cidade, uf, role_id, roles(name)")
         .eq("company_id", form.company_id)
         .eq("status", "ATIVO")
         .order("nome");
@@ -622,6 +648,8 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
       payload.dias_perdidos = Number(payload.dias_perdidos || 0);
       payload.dias_debitados = Number(payload.dias_debitados || 0);
       payload.duracao_tratamento_dias = Number(payload.duracao_tratamento_dias || 0) || null;
+      payload.horas_trabalhadas_antes = payload.horas_trabalhadas_antes ? Number(payload.horas_trabalhadas_antes) : null;
+      payload.vitima_remuneracao = payload.vitima_remuneracao ? Number(payload.vitima_remuneracao) : null;
       // Coerência mínima da CAT (S-2210):
       // - Tipo FATAL => obriga indicador de óbito e tipo de CAT "OBITO"
       // - Tipo COM_AFASTAMENTO => obriga indicador de afastamento
@@ -664,6 +692,8 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
       vitima_matricula: emp.matricula || "",
       vitima_cargo: emp.roles?.name || "",
       vitima_setor: emp.setor || "",
+      vitima_rg: emp.rg || f.vitima_rg,
+      vitima_telefone: emp.whatsapp || f.vitima_telefone,
     }));
   }
 
@@ -796,6 +826,82 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
             <Field label="Cargo"><Input value={form.vitima_cargo} onChange={e => set("vitima_cargo", e.target.value)} /></Field>
             <Field label="Setor"><Input value={form.vitima_setor} onChange={e => set("vitima_setor", e.target.value)} /></Field>
           </div>
+
+          <div className="mt-3 pt-3 border-t border-dashed">
+            <div className="text-[11px] font-semibold text-muted-foreground uppercase mb-2">Dados pessoais (CAT)</div>
+            <div className="grid md:grid-cols-3 gap-3">
+              <Field label="Nome da mãe"><Input value={form.vitima_nome_mae} onChange={e => set("vitima_nome_mae", e.target.value)} /></Field>
+              <Field label="Data de nascimento"><Input type="date" value={form.vitima_data_nascimento} onChange={e => set("vitima_data_nascimento", e.target.value)} /></Field>
+              <Field label="Sexo">
+                <Select value={form.vitima_sexo || undefined} onValueChange={v => set("vitima_sexo", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">Masculino</SelectItem>
+                    <SelectItem value="F">Feminino</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Estado civil">
+                <Select value={form.vitima_estado_civil || undefined} onValueChange={v => set("vitima_estado_civil", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SOLTEIRO">Solteiro(a)</SelectItem>
+                    <SelectItem value="CASADO">Casado(a)</SelectItem>
+                    <SelectItem value="DIVORCIADO">Divorciado(a)</SelectItem>
+                    <SelectItem value="VIUVO">Viúvo(a)</SelectItem>
+                    <SelectItem value="UNIAO_ESTAVEL">União estável</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Grau de instrução">
+                <Select value={form.vitima_grau_instrucao || undefined} onValueChange={v => set("vitima_grau_instrucao", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ANALFABETO">Analfabeto</SelectItem>
+                    <SelectItem value="FUND_INC">Fundamental incompleto</SelectItem>
+                    <SelectItem value="FUND_COMP">Fundamental completo</SelectItem>
+                    <SelectItem value="MEDIO_INC">Médio incompleto</SelectItem>
+                    <SelectItem value="MEDIO_COMP">Médio completo</SelectItem>
+                    <SelectItem value="SUPERIOR_INC">Superior incompleto</SelectItem>
+                    <SelectItem value="SUPERIOR_COMP">Superior completo</SelectItem>
+                    <SelectItem value="POS">Pós-graduação</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Remuneração mensal (R$)"><Input type="number" step="0.01" min={0} value={form.vitima_remuneracao} onChange={e => set("vitima_remuneracao", e.target.value)} /></Field>
+              <Field label="CTPS (nº/série/UF)"><Input value={form.vitima_ctps} onChange={e => set("vitima_ctps", e.target.value)} placeholder="123456 / 001 / AM" /></Field>
+              <Field label="RG"><Input value={form.vitima_rg} onChange={e => set("vitima_rg", e.target.value)} /></Field>
+              <Field label="PIS / PASEP / NIT"><Input value={form.vitima_pis} onChange={e => set("vitima_pis", e.target.value)} /></Field>
+              <Field label="Telefone"><Input value={form.vitima_telefone} onChange={e => set("vitima_telefone", e.target.value)} placeholder="(00) 00000-0000" /></Field>
+              <Field label="CBO"><Input value={form.vitima_cbo} onChange={e => set("vitima_cbo", e.target.value)} placeholder="Ex.: 7152-10" /></Field>
+              <Field label="Filiação previdenciária">
+                <Select value={form.vitima_filiacao || undefined} onValueChange={v => set("vitima_filiacao", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EMPREGADO">Empregado</SelectItem>
+                    <SelectItem value="TRAB_AVULSO">Trabalhador avulso</SelectItem>
+                    <SelectItem value="SEGURADO_ESPECIAL">Segurado especial</SelectItem>
+                    <SelectItem value="MEDICO_RESIDENTE">Médico residente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Área">
+                <Select value={form.vitima_area || undefined} onValueChange={v => set("vitima_area", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="URBANA">Urbana</SelectItem>
+                    <SelectItem value="RURAL">Rural</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Aposentado?">
+                <div className="flex items-center gap-2 h-9">
+                  <input id="apos-check" type="checkbox" checked={!!form.vitima_aposentado} onChange={e => set("vitima_aposentado", e.target.checked)} className="h-4 w-4" />
+                  <Label htmlFor="apos-check" className="text-sm font-normal cursor-pointer">Sim</Label>
+                </div>
+              </Field>
+            </div>
+          </div>
         </div>
 
         <div className="border-t pt-3 mt-1">
@@ -860,6 +966,17 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
               <Field label="Última refeição (hora)">
                 <Input type="time" value={form.ultima_refeicao_hora} onChange={e => set("ultima_refeicao_hora", e.target.value)} />
               </Field>
+              <Field label="Horas trabalhadas antes do acidente">
+                <Input type="number" step="0.5" min={0} max={24} value={form.horas_trabalhadas_antes} onChange={e => set("horas_trabalhadas_antes", e.target.value)} placeholder="Ex.: 4.5" />
+              </Field>
+              <Field label="Último dia trabalhado">
+                <Input type="date" value={form.ultimo_dia_trabalhado} onChange={e => set("ultimo_dia_trabalhado", e.target.value)} />
+              </Field>
+              {form.local_tipo === "ESTAB_TERCEIRO" && (
+                <Field label="CNPJ da prestadora (local de terceiros)">
+                  <Input value={form.cnpj_prestadora} onChange={e => set("cnpj_prestadora", e.target.value)} placeholder="00.000.000/0000-00" />
+                </Field>
+              )}
             </div>
             <Field label="Descrição do acidente *">
               <Textarea rows={3} value={form.descricao} onChange={e => set("descricao", e.target.value)} />
@@ -976,6 +1093,18 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
               <Field label="Data do atendimento">
                 <Input type="date" value={form.atestado_data} onChange={e => set("atestado_data", e.target.value)} />
               </Field>
+              <Field label="Hora do atendimento">
+                <Input type="time" value={form.atestado_hora} onChange={e => set("atestado_hora", e.target.value)} />
+              </Field>
+              <Field label="Unidade de atendimento">
+                <Input value={form.atestado_unidade} onChange={e => set("atestado_unidade", e.target.value)} placeholder="Hospital / pronto-socorro" />
+              </Field>
+              <Field label="Será afastado?">
+                <div className="flex items-center gap-2 h-9">
+                  <input id="afast2-check" type="checkbox" checked={!!form.sera_afastado} onChange={e => set("sera_afastado", e.target.checked)} className="h-4 w-4" />
+                  <Label htmlFor="afast2-check" className="text-sm font-normal cursor-pointer">Sim, há indicação</Label>
+                </div>
+              </Field>
               <Field label="Médico responsável">
                 <Input value={form.atestado_medico_nome} onChange={e => set("atestado_medico_nome", e.target.value)} placeholder="Dr(a). ..." />
               </Field>
@@ -984,6 +1113,14 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
               </Field>
               <Field label="UF do CRM">
                 <Input value={form.atestado_medico_uf} onChange={e => set("atestado_medico_uf", e.target.value)} maxLength={2} placeholder="AM" />
+              </Field>
+              <Field label="E-mail do emitente">
+                <Input type="email" value={form.emitente_email} onChange={e => set("emitente_email", e.target.value)} placeholder="sesmt@empresa.com" />
+              </Field>
+            </div>
+            <div className="mt-3">
+              <Field label="Observações médicas">
+                <Textarea rows={2} value={form.atestado_observacoes} onChange={e => set("atestado_observacoes", e.target.value)} placeholder="Diagnóstico, conduta, recomendações..." />
               </Field>
             </div>
           </div>
