@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus, AlertTriangle, Trophy, CalendarClock, Activity, ShieldAlert, Skull,
   TrendingDown, TrendingUp, Clock, Hash, Users, Calculator, FileDown,
-  Eye, Pencil, Trash2,
+  Eye, Pencil, Trash2, Upload, X, Image as ImageIcon, User as UserIcon,
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
