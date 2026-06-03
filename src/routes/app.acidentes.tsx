@@ -195,19 +195,6 @@ function AcidentesPage() {
     });
   }, [acidentes, hhtRows]);
 
-  const partesCorpoData = useMemo(() => {
-    const map = new Map<string, number>();
-    acidentes.forEach(a => {
-      if (a.parte_corpo_atingida) {
-        map.set(a.parte_corpo_atingida, (map.get(a.parte_corpo_atingida) || 0) + 1);
-      }
-    });
-    return Array.from(map.entries())
-      .map(([parte, qtd]) => ({ parte, qtd }))
-      .sort((a, b) => b.qtd - a.qtd)
-      .slice(0, 8);
-  }, [acidentes]);
-
   return (
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
