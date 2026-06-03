@@ -78,14 +78,16 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
       </CardHeader>
       <CardContent>
         {total === 0 ? (
-          <div className="h-[460px] flex items-center justify-center text-sm text-muted-foreground">
+          <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
             Nenhum acidente registrado com parte do corpo identificada
           </div>
         ) : (
-          <div
-            className="relative mx-auto"
-            style={{ width: "100%", maxWidth: 540, aspectRatio: "3 / 4" }}
-          >
+          <div className="grid md:grid-cols-[1fr_auto] gap-6 items-center">
+            {/* Bloco do corpo + bolhas/labels */}
+            <div
+              className="relative mx-auto"
+              style={{ width: "100%", maxWidth: 360, aspectRatio: "3 / 4" }}
+            >
             {/* Imagem do corpo */}
             <img
               src={corpoFrente}
@@ -100,7 +102,7 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
               if (!pos) return null;
               const intensity = qtd / max;
               const pct = Math.round((qtd / total) * 100);
-              const size = 38 + intensity * 56; // 38–94 px
+              const size = 28 + intensity * 42; // 28–70 px (mais compacto)
 
               return (
                 <div key={parte}>
@@ -123,43 +125,49 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                   <div
                     className="absolute pointer-events-none select-none"
                     style={{
-                      left: pos.side === "left" ? `${pos.x * 100 - 18}%` : `${pos.x * 100 + 18}%`,
+                      left: pos.side === "left" ? `${pos.x * 100 - 14}%` : `${pos.x * 100 + 14}%`,
                       top: `${pos.y * 100}%`,
                       transform: `translate(${pos.side === "left" ? "-100%" : "0"}, -50%)`,
                       textAlign: pos.side === "left" ? "right" : "left",
                     }}
                   >
-                    <div className="text-[11px] font-bold text-slate-800 leading-tight whitespace-nowrap">
+                    <div className="text-[10px] font-bold text-slate-800 leading-tight whitespace-nowrap">
                       {pos.short}
                     </div>
-                    <div className="text-[11px] font-semibold text-slate-500 leading-tight">
+                    <div className="text-[10px] font-semibold text-slate-500 leading-tight">
                       {pct}%
                     </div>
                   </div>
                 </div>
               );
             })}
-          </div>
-        )}
-
-        {/* Lista resumida abaixo */}
-        {partesComDados.length > 0 && (
-          <div className="mt-4 pt-4 border-t">
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              Ranking
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-              {partesComDados.slice(0, 8).map(([parte, qtd]) => {
-                const pct = Math.round((qtd / total) * 100);
-                return (
-                  <div key={parte} className="flex items-center justify-between text-sm">
-                    <span className="text-slate-700 truncate">{parte}</span>
-                    <span className="font-mono font-semibold text-slate-900 ml-2">
-                      {qtd} <span className="text-muted-foreground font-normal">({pct}%)</span>
-                    </span>
-                  </div>
-                );
-              })}
+
+            {/* Ranking lateral */}
+            <div className="w-full md:w-[220px] md:border-l md:pl-6 border-t md:border-t-0 pt-4 md:pt-0">
+              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Ranking
+              </div>
+              <div className="space-y-1.5">
+                {partesComDados.slice(0, 10).map(([parte, qtd]) => {
+                  const pct = Math.round((qtd / total) * 100);
+                  const intensity = qtd / max;
+                  return (
+                    <div key={parte} className="flex items-center justify-between text-sm gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="inline-block h-2.5 w-2.5 rounded-full flex-shrink-0"
+                          style={{ background: bubbleColor(intensity).replace(/[\d.]+\)$/, "0.85)") }}
+                        />
+                        <span className="text-slate-700 truncate text-xs">{parte}</span>
+                      </div>
+                      <span className="font-mono font-semibold text-slate-900 text-xs whitespace-nowrap">
+                        {qtd} <span className="text-muted-foreground font-normal">({pct}%)</span>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
