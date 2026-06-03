@@ -325,50 +325,33 @@ function AcidentesPage() {
             <KpiCard icon={<TrendingUp className="h-5 w-5" />} label="Taxa Gravidade" value={kpis.tg} color="purple" hint="× 10⁶ HHT" />
           </div>
 
-          {/* Gráficos */}
-          <div className="grid lg:grid-cols-3 gap-4">
-            <Card className="lg:col-span-2">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Evolução mensal — {new Date().getFullYear()}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={serieMensal}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="mes" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Legend />
-                    <Bar yAxisId="left" dataKey="Acidentes" fill="#f59e0b" radius={[4,4,0,0]} />
-                    <Bar yAxisId="left" dataKey="Com Afast." fill="#ef4444" radius={[4,4,0,0]} />
-                    <Line yAxisId="right" type="monotone" dataKey="TF" stroke="#6366f1" strokeWidth={2} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+          {/* Evolução mensal */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Evolução mensal — {new Date().getFullYear()}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={serieMensal}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="mes" />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="Acidentes" fill="#f59e0b" radius={[4,4,0,0]} />
+                  <Bar yAxisId="left" dataKey="Com Afast." fill="#ef4444" radius={[4,4,0,0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="TF" stroke="#6366f1" strokeWidth={2} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Distribuição por tipo</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={260}>
-                  <PieChart>
-                    <Pie data={tipoData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2}>
-                      {tipoData.map((d, i) => (
-                        <Cell key={i} fill={PIE_COLORS[d.key] || "#94a3b8"} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+          {/* Corpo humano (esq) + Total por tipo (dir) */}
+          <div className="grid lg:grid-cols-2 gap-4">
+            <CorpoHumanoAcidentes acidentes={acidentes} />
+            <TotalPorTipoCard acidentes={acidentes} />
           </div>
-
-          <CorpoHumanoAcidentes acidentes={acidentes} />
         </TabsContent>
 
         {/* ============ HISTÓRICO ============ */}
