@@ -198,5 +198,7 @@ export function ArquivosLegadosPanel({ equipamentoId }: { equipamentoId: string 
         </div>
       </CardContent>
     </Card>
+    <FileViewerHost />
+    </>
   );
 }
