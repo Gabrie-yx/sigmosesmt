@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Upload, Eye, RotateCw, Trash2, FileText, Check, FolderArchive } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 
 export const Route = createFileRoute("/app/sesmt/equipamentos-moveis_/arquivos-mensais")({
   component: ArquivosMensaisPage,
@@ -113,11 +114,8 @@ function ArquivosMensaisPage() {
   }
 
   async function handleVer(row: ArquivoRow) {
-    const { data, error } = await supabase.storage
-      .from("checklists-equipamentos")
-      .createSignedUrl(row.pdf_path, 300);
-    if (error || !data) { toast.error("Falha ao gerar link"); return; }
-    window.open(data.signedUrl, "_blank");
+    const fname = `${MESES[row.mes - 1]}-${row.ano}.pdf`;
+    await openStorageFile("checklists-equipamentos", row.pdf_path, fname);
   }
 
   async function handleDelete(row: ArquivoRow) {
@@ -256,6 +254,7 @@ function ArquivosMensaisPage() {
           })}
         </CardContent>
       </Card>
+      <FileViewerHost />
     </div>
   );
 }

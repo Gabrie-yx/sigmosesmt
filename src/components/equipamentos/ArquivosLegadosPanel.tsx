@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, Eye, RotateCw, Trash2, FileText, Check } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 
 const MESES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -96,14 +97,8 @@ export function ArquivosLegadosPanel({ equipamentoId }: { equipamentoId: string 
   }
 
   async function handleVer(row: ArquivoRow) {
-    const { data, error } = await supabase.storage
-      .from("checklists-equipamentos")
-      .createSignedUrl(row.pdf_path, 300);
-    if (error || !data) {
-      toast.error("Falha ao gerar link");
-      return;
-    }
-    window.open(data.signedUrl, "_blank");
+    const fname = `${MESES[row.mes - 1]}-${row.ano}.pdf`;
+    await openStorageFile("checklists-equipamentos", row.pdf_path, fname);
   }
 
   async function handleDelete(row: ArquivoRow) {
@@ -123,6 +118,7 @@ export function ArquivosLegadosPanel({ equipamentoId }: { equipamentoId: string 
   }
 
   return (
+    <>
     <Card>
       <CardContent className="p-4 space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -203,5 +199,7 @@ export function ArquivosLegadosPanel({ equipamentoId }: { equipamentoId: string 
         </div>
       </CardContent>
     </Card>
+    <FileViewerHost />
+    </>
   );
 }
