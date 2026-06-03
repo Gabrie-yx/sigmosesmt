@@ -305,28 +305,7 @@ function AcidentesPage() {
             </Card>
           </div>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Users className="h-4 w-4" /> Partes do corpo mais atingidas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {partesCorpoData.length === 0 ? (
-                <div className="text-sm text-muted-foreground text-center py-6">Sem dados ainda.</div>
-              ) : (
-                <ResponsiveContainer width="100%" height={Math.max(200, partesCorpoData.length * 32)}>
-                  <BarChart data={partesCorpoData} layout="vertical" margin={{ left: 80 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis type="number" />
-                    <YAxis type="category" dataKey="parte" width={120} />
-                    <Tooltip />
-                    <Bar dataKey="qtd" fill="#ef4444" radius={[0,4,4,0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
+          <CorpoHumanoAcidentes acidentes={acidentes} />
         </TabsContent>
 
         {/* ============ HISTÓRICO ============ */}
