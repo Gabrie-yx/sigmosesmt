@@ -1,9 +1,25 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const MODULES = ["sesmt", "estoque", "producao", "manutencao", "portaria", "usuarios"] as const;
 const ROLES = ["admin", "moderador", "editor", "viewer"] as const;
+const INVITE_REDIRECT_PATH = "/reset-password";
+
+function resolveInviteRedirect(redirectTo: string) {
+  const request = getRequest();
+  const appOrigin = new URL(request.url).origin;
+  const redirectUrl = new URL(redirectTo);
+
+  if (redirectUrl.origin !== appOrigin || redirectUrl.pathname !== INVITE_REDIRECT_PATH) {
+    throw new Error("Link de convite inválido para este ambiente");
+  }
+
+  redirectUrl.search = "";
+  redirectUrl.hash = "";
+  return redirectUrl.toString();
+}
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase
@@ -51,6 +67,7 @@ export const inviteUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
+    const redirectTo = resolveInviteRedirect(data.redirect_to);
 
     // Cria registro de convite (papel + módulos serão aplicados via trigger ao aceitar)
     const { error: invErr } = await supabaseAdmin.from("user_invites").insert({
@@ -65,7 +82,7 @@ export const inviteUser = createServerFn({ method: "POST" })
     // Envia o email padrão do Supabase com link para definir senha
     const { error: mailErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
       data: { full_name: data.full_name },
-      redirectTo: data.redirect_to,
+      redirectTo,
     });
     if (mailErr) {
       // se falhar o email, remove o convite para não ficar órfão
@@ -82,6 +99,7 @@ export const resendInvite = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
+    const redirectTo = resolveInviteRedirect(data.redirect_to);
     const { data: inv, error } = await supabaseAdmin
       .from("user_invites")
       .select("email, full_name")
@@ -90,7 +108,7 @@ export const resendInvite = createServerFn({ method: "POST" })
     if (error || !inv) throw new Error("Convite não encontrado");
     const { error: mailErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(inv.email, {
       data: { full_name: inv.full_name },
-      redirectTo: data.redirect_to,
+      redirectTo,
     });
     if (mailErr) throw new Error(mailErr.message);
     return { ok: true };
