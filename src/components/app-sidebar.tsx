@@ -52,6 +52,7 @@ import {
   Flame,
   BookOpenCheck,
   FileSignature,
+  ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
