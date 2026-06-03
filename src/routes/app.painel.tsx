@@ -1,23 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Search, AlertTriangle, Building2, Users, ShieldCheck, Package,
-  HardHat, FileWarning, Activity, TrendingUp, Boxes, ClipboardCheck,
-  ArrowUpRight, Stethoscope, GripVertical, RotateCcw, Lock, Unlock,
-  ShoppingBag, MessageSquare, FolderOpen,
-  Flame,
+  Search, AlertTriangle, ShieldCheck, Stethoscope,
+  ClipboardCheck, Flame, Calendar, ArrowRight, ChevronRight,
+  FolderOpen, Package, FileWarning, Boxes, TrendingUp,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  PieChart, Pie, Cell, Legend, ComposedChart, Line, Area, LabelList,
+  ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid,
+  ComposedChart, Line, Area, Bar,
 } from "recharts";
-import { focusScale } from "@/lib/chart-focus";
-// react-grid-layout touches `window` at import — load it client-only via lazy state
-type Layout = { i: string; x: number; y: number; w: number; h: number; minH?: number; minW?: number };
 
 export const Route = createFileRoute("/app/painel")({
   component: TstPanel,
@@ -27,42 +22,6 @@ const dayMs = 86400000;
 const today = new Date();
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
 const MONTHS_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-
-const LS_KEY = "sesmt-painel-layout-v4";
-// Layout compacto: até 3 widgets lado a lado em 12 colunas (w:4 cada)
-const DEFAULT_LAYOUT: Layout[] = [
-  { i: "kpis",        x: 0, y: 0,  w: 12, h: 4, minH: 3, minW: 6 },
-  { i: "health",      x: 0, y: 4,  w: 4,  h: 5, minH: 4, minW: 3 },
-  { i: "status-pie",  x: 4, y: 4,  w: 4,  h: 5, minH: 4, minW: 3 },
-  { i: "footer",      x: 8, y: 4,  w: 4,  h: 5, minH: 4, minW: 3 },
-  { i: "epi-mensal",  x: 0, y: 9,  w: 4,  h: 8, minH: 6, minW: 3 },
-  { i: "dds-trend",   x: 4, y: 9,  w: 4,  h: 8, minH: 6, minW: 3 },
-  { i: "conformidade",x: 8, y: 9,  w: 4,  h: 8, minH: 6, minW: 3 },
-  { i: "top-itens",   x: 0, y: 17, w: 4,  h: 8, minH: 6, minW: 3 },
-  { i: "top-recip",   x: 4, y: 17, w: 4,  h: 8, minH: 6, minW: 3 },
-  { i: "pendencias",  x: 8, y: 17, w: 4,  h: 8, minH: 6, minW: 3 },
-  { i: "epi-recentes",x: 0, y: 25, w: 4,  h: 8, minH: 5, minW: 3 },
-  { i: "dds-recentes",x: 4, y: 25, w: 4,  h: 8, minH: 5, minW: 3 },
-  { i: "doc-controle",x: 8, y: 25, w: 4,  h: 8, minH: 5, minW: 3 },
-  { i: "extintores",  x: 0, y: 33, w: 12, h: 5, minH: 4, minW: 6 },
-];
-
-function loadLayout(): Layout[] {
-  if (typeof window === "undefined") return DEFAULT_LAYOUT;
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return DEFAULT_LAYOUT;
-    const parsed = JSON.parse(raw) as Layout[];
-    // keep saved positions, but discard widgets removed from the dashboard
-    const defaultIds = new Set(DEFAULT_LAYOUT.map((d) => d.i));
-    const valid = parsed.filter((p) => defaultIds.has(p.i));
-    const ids = new Set(valid.map((p) => p.i));
-    const missing = DEFAULT_LAYOUT.filter((d) => !ids.has(d.i));
-    return [...valid, ...missing];
-  } catch {
-    return DEFAULT_LAYOUT;
-  }
-}
 
 function TstPanel() {
   const navigate = useNavigate();
