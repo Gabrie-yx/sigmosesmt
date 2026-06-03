@@ -58,6 +58,19 @@ const PARTES_CORPO = [
   "Perna direita","Perna esquerda","Pé direito","Pé esquerdo","Dedos do pé","Múltiplas",
 ];
 
+const TIPO_ICONS: Record<string, string> = {
+  SEM_AFASTAMENTO: "🩹",
+  COM_AFASTAMENTO: "🤕",
+  TRAJETO: "🚗",
+  FATAL: "💀",
+};
+const TIPO_COLOR: Record<string, string> = {
+  SEM_AFASTAMENTO: "#f59e0b",
+  COM_AFASTAMENTO: "#ef4444",
+  TRAJETO: "#3b82f6",
+  FATAL: "#0f172a",
+};
+
 function AcidentesPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
