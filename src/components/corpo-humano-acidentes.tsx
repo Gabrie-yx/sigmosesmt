@@ -77,18 +77,12 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {total === 0 ? (
-          <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
-            Nenhum acidente registrado com parte do corpo identificada
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-[1fr_auto] gap-6 items-center">
-            {/* Bloco do corpo + bolhas/labels */}
-            <div
-              className="relative mx-auto"
-              style={{ width: "100%", maxWidth: 360, aspectRatio: "3 / 4" }}
-            >
-            {/* Imagem do corpo */}
+        <div className="grid md:grid-cols-[1fr_auto] gap-6 items-center">
+          {/* Bloco do corpo + bolhas/labels */}
+          <div
+            className="relative mx-auto"
+            style={{ width: "100%", maxWidth: 320, aspectRatio: "3 / 4" }}
+          >
             <img
               src={corpoFrente}
               alt="Diagrama do corpo humano"
@@ -141,13 +135,25 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                 </div>
               );
             })}
-            </div>
+            {total === 0 && (
+              <div className="absolute inset-0 flex items-end justify-center pb-4 pointer-events-none">
+                <span className="text-xs text-muted-foreground bg-white/80 px-2 py-1 rounded">
+                  Sem ocorrências identificadas
+                </span>
+              </div>
+            )}
+          </div>
 
-            {/* Ranking lateral */}
-            <div className="w-full md:w-[220px] md:border-l md:pl-6 border-t md:border-t-0 pt-4 md:pt-0">
+          {/* Ranking lateral */}
+          <div className="w-full md:w-[220px] md:border-l md:pl-6 border-t md:border-t-0 pt-4 md:pt-0">
               <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Ranking
               </div>
+              {partesComDados.length === 0 ? (
+                <div className="text-xs text-muted-foreground italic">
+                  Nenhuma parte do corpo identificada ainda.
+                </div>
+              ) : (
               <div className="space-y-1.5">
                 {partesComDados.slice(0, 10).map(([parte, qtd]) => {
                   const pct = Math.round((qtd / total) * 100);
@@ -168,9 +174,9 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                   );
                 })}
               </div>
+              )}
             </div>
           </div>
-        )}
       </CardContent>
     </Card>
   );

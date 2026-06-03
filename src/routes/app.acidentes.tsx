@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus, AlertTriangle, Trophy, CalendarClock, Activity, ShieldAlert, Skull,
   TrendingDown, TrendingUp, Clock, Hash, Users, Calculator, FileDown,
-  Eye, Pencil, Trash2,
+  Eye, Pencil, Trash2, Upload, X, Image as ImageIcon, User as UserIcon,
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -28,7 +28,7 @@ import { CorpoHumanoAcidentes } from "@/components/corpo-humano-acidentes";
 import { gerarForSeg09, gerarForSeg10 } from "@/lib/pdf-acidentes";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  LineChart, Line, Legend, PieChart, Pie, Cell,
+  Line, Legend, PieChart, Pie, Cell,
 } from "recharts";
 
 export const Route = createFileRoute("/app/acidentes")({
@@ -57,6 +57,19 @@ const PARTES_CORPO = [
   "Dedos da mão","Quadril","Coxa direita","Coxa esquerda","Joelho direito","Joelho esquerdo",
   "Perna direita","Perna esquerda","Pé direito","Pé esquerdo","Dedos do pé","Múltiplas",
 ];
+
+const TIPO_ICONS: Record<string, string> = {
+  SEM_AFASTAMENTO: "🩹",
+  COM_AFASTAMENTO: "🤕",
+  TRAJETO: "🚗",
+  FATAL: "💀",
+};
+const TIPO_COLOR: Record<string, string> = {
+  SEM_AFASTAMENTO: "#f59e0b",
+  COM_AFASTAMENTO: "#ef4444",
+  TRAJETO: "#3b82f6",
+  FATAL: "#0f172a",
+};
 
 function AcidentesPage() {
   const { user } = useAuth();
@@ -182,32 +195,6 @@ function AcidentesPage() {
     });
   }, [acidentes, hhtRows]);
 
-  const partesCorpoData = useMemo(() => {
-    const map = new Map<string, number>();
-    acidentes.forEach(a => {
-      if (a.parte_corpo_atingida) {
-        map.set(a.parte_corpo_atingida, (map.get(a.parte_corpo_atingida) || 0) + 1);
-      }
-    });
-    return Array.from(map.entries())
-      .map(([parte, qtd]) => ({ parte, qtd }))
-      .sort((a, b) => b.qtd - a.qtd)
-      .slice(0, 8);
-  }, [acidentes]);
-
-  const tipoData = useMemo(() => {
-    const map: Record<string, number> = {};
-    acidentes.forEach(a => { map[a.tipo] = (map[a.tipo] || 0) + 1; });
-    return Object.entries(map).map(([k, v]) => ({ name: TIPO_LABEL[k] || k, value: v, key: k }));
-  }, [acidentes]);
-
-  const PIE_COLORS: Record<string, string> = {
-    COM_AFASTAMENTO: "#ef4444",
-    SEM_AFASTAMENTO: "#f59e0b",
-    TRAJETO: "#3b82f6",
-    FATAL: "#0f172a",
-  };
-
   return (
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -312,50 +299,33 @@ function AcidentesPage() {
             <KpiCard icon={<TrendingUp className="h-5 w-5" />} label="Taxa Gravidade" value={kpis.tg} color="purple" hint="× 10⁶ HHT" />
           </div>
 
-          {/* Gráficos */}
-          <div className="grid lg:grid-cols-3 gap-4">
-            <Card className="lg:col-span-2">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Evolução mensal — {new Date().getFullYear()}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={serieMensal}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="mes" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Legend />
-                    <Bar yAxisId="left" dataKey="Acidentes" fill="#f59e0b" radius={[4,4,0,0]} />
-                    <Bar yAxisId="left" dataKey="Com Afast." fill="#ef4444" radius={[4,4,0,0]} />
-                    <Line yAxisId="right" type="monotone" dataKey="TF" stroke="#6366f1" strokeWidth={2} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+          {/* Evolução mensal */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Evolução mensal — {new Date().getFullYear()}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={serieMensal}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="mes" />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="Acidentes" fill="#f59e0b" radius={[4,4,0,0]} />
+                  <Bar yAxisId="left" dataKey="Com Afast." fill="#ef4444" radius={[4,4,0,0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="TF" stroke="#6366f1" strokeWidth={2} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Distribuição por tipo</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={260}>
-                  <PieChart>
-                    <Pie data={tipoData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2}>
-                      {tipoData.map((d, i) => (
-                        <Cell key={i} fill={PIE_COLORS[d.key] || "#94a3b8"} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+          {/* Corpo humano (esq) + Total por tipo (dir) */}
+          <div className="grid lg:grid-cols-2 gap-4">
+            <CorpoHumanoAcidentes acidentes={acidentes} />
+            <TotalPorTipoCard acidentes={acidentes} />
           </div>
-
-          <CorpoHumanoAcidentes acidentes={acidentes} />
         </TabsContent>
 
         {/* ============ HISTÓRICO ============ */}
@@ -557,6 +527,7 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
     hora_acidente: "",
     turno: "",
     company_id: "",
+    employee_id: "",
     vitima_nome: "",
     vitima_matricula: "",
     vitima_cargo: "",
@@ -575,8 +546,10 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
     causa_basica: "",
     testemunhas: "",
     data_retorno: "",
+    evidencias_urls: [] as string[],
   };
   const [form, setForm] = useState<any>(defaults);
+  const [uploading, setUploading] = useState(false);
   const isEdit = !!initial?.id;
 
   useEffect(() => {
@@ -588,6 +561,7 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
         });
         if (cleaned.data_acidente) cleaned.data_acidente = String(cleaned.data_acidente).slice(0, 10);
         if (cleaned.data_retorno) cleaned.data_retorno = String(cleaned.data_retorno).slice(0, 10);
+        cleaned.evidencias_urls = Array.isArray(initial.evidencias_urls) ? initial.evidencias_urls : [];
         setForm(cleaned);
       } else {
         setForm(defaults);
@@ -596,12 +570,30 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial?.id]);
 
+  // Funcionários da empresa selecionada
+  const { data: employees = [] } = useQuery({
+    queryKey: ["employees-by-company", form.company_id],
+    queryFn: async () => {
+      if (!form.company_id) return [];
+      const { data } = await supabase
+        .from("employees")
+        .select("id, nome, matricula, setor, role_id, roles(name)")
+        .eq("company_id", form.company_id)
+        .eq("status", "ATIVO")
+        .order("nome");
+      return data ?? [];
+    },
+    enabled: !!form.company_id,
+  });
+
   const mut = useMutation({
     mutationFn: async () => {
       const payload: any = { ...form };
       if (!isEdit) payload.created_by = userId;
+      const evid = Array.isArray(payload.evidencias_urls) ? payload.evidencias_urls : [];
       // Limpa strings vazias para opcionais
       Object.keys(payload).forEach(k => { if (payload[k] === "") payload[k] = null; });
+      payload.evidencias_urls = evid;
       if (!payload.vitima_nome || !payload.descricao || !payload.data_acidente) {
         throw new Error("Preencha vítima, data e descrição.");
       }
@@ -620,13 +612,76 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
       onOpenChange(false);
       onSaved?.();
       if (!isEdit) {
-        setForm((f: any) => ({ ...f, vitima_nome: "", descricao: "", numero_cat: "", causa_imediata: "", causa_basica: "" }));
+        setForm((f: any) => ({ ...f, vitima_nome: "", descricao: "", numero_cat: "", causa_imediata: "", causa_basica: "", evidencias_urls: [] }));
       }
     },
     onError: (e: any) => toast.error(e.message || "Erro ao salvar."),
   });
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+
+  function pickEmployee(id: string) {
+    const emp: any = employees.find((e: any) => e.id === id);
+    if (!emp) return;
+    setForm((f: any) => ({
+      ...f,
+      employee_id: emp.id,
+      vitima_nome: emp.nome || "",
+      vitima_matricula: emp.matricula || "",
+      vitima_cargo: emp.roles?.name || "",
+      vitima_setor: emp.setor || "",
+    }));
+  }
+
+  function clearEmployee() {
+    setForm((f: any) => ({
+      ...f,
+      employee_id: "",
+      vitima_nome: "",
+      vitima_matricula: "",
+      vitima_cargo: "",
+      vitima_setor: "",
+    }));
+  }
+
+  async function handleUpload(files: FileList | null) {
+    if (!files || !files.length) return;
+    const atuais: string[] = Array.isArray(form.evidencias_urls) ? form.evidencias_urls : [];
+    const restante = 4 - atuais.length;
+    if (restante <= 0) {
+      toast.error("Máximo de 4 evidências.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const novas: string[] = [];
+      for (const file of Array.from(files).slice(0, restante)) {
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`${file.name}: máx. 10MB.`);
+          continue;
+        }
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `acidentes/${crypto.randomUUID()}-${safe}`;
+        const { error } = await supabase.storage.from("incident-photos").upload(path, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+        if (error) throw error;
+        novas.push(path);
+      }
+      set("evidencias_urls", [...atuais, ...novas]);
+      if (novas.length) toast.success(`${novas.length} evidência(s) enviada(s).`);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao enviar.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function removeEvidencia(path: string) {
+    await supabase.storage.from("incident-photos").remove([path]).catch(() => {});
+    set("evidencias_urls", (form.evidencias_urls || []).filter((p: string) => p !== path));
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -667,7 +722,40 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
         </div>
 
         <div className="border-t pt-3 mt-1">
-          <div className="text-xs font-semibold text-muted-foreground uppercase mb-2">Vítima</div>
+          <div className="text-xs font-semibold text-muted-foreground uppercase mb-2 flex items-center gap-2">
+            <UserIcon className="h-3.5 w-3.5" /> Vítima
+          </div>
+
+          {form.company_id && (
+            <div className="mb-3 p-3 rounded-md bg-slate-50 border border-slate-200">
+              <Label className="text-xs font-medium">Selecionar funcionário da empresa</Label>
+              <div className="flex gap-2 mt-1">
+                <Select value={form.employee_id || undefined} onValueChange={pickEmployee}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder={employees.length ? `Escolha entre ${employees.length} funcionário(s)…` : "Nenhum funcionário ativo nesta empresa"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees.map((e: any) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.nome}
+                        {e.matricula ? ` · ${e.matricula}` : ""}
+                        {e.roles?.name ? ` · ${e.roles.name}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.employee_id && (
+                  <Button type="button" variant="outline" size="sm" onClick={clearEmployee} className="gap-1">
+                    <X className="h-3.5 w-3.5" /> Trocar
+                  </Button>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1.5">
+                Ao selecionar, os campos abaixo são preenchidos. Use "Trocar" se errou a pessoa, ou edite manualmente.
+              </p>
+            </div>
+          )}
+
           <div className="grid md:grid-cols-2 gap-3">
             <Field label="Nome *"><Input value={form.vitima_nome} onChange={e => set("vitima_nome", e.target.value)} /></Field>
             <Field label="Matrícula"><Input value={form.vitima_matricula} onChange={e => set("vitima_matricula", e.target.value)} /></Field>
@@ -723,6 +811,36 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
               <Input type="date" value={form.data_retorno} onChange={e => set("data_retorno", e.target.value)} />
             </Field>
           </div>
+        </div>
+
+        <div className="border-t pt-3 mt-1">
+          <div className="text-xs font-semibold text-muted-foreground uppercase mb-2 flex items-center gap-2">
+            <ImageIcon className="h-3.5 w-3.5" /> Evidências fotográficas
+            <span className="font-normal normal-case text-[11px] text-muted-foreground">
+              ({(form.evidencias_urls || []).length}/4)
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {(form.evidencias_urls || []).map((p: string) => (
+              <EvidenciaThumb key={p} path={p} onRemove={() => removeEvidencia(p)} />
+            ))}
+            {(form.evidencias_urls || []).length < 4 && (
+              <label className={`w-24 h-24 border-2 border-dashed rounded flex flex-col items-center justify-center text-xs text-muted-foreground cursor-pointer hover:bg-slate-50 hover:border-slate-400 transition ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+                <Upload className="h-5 w-5 mb-1" />
+                {uploading ? "Enviando..." : "Adicionar"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => { handleUpload(e.target.files); e.target.value = ""; }}
+                />
+              </label>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Até 4 fotos (10MB cada). Clique em uma evidência para abrir em tamanho real.
+          </p>
         </div>
 
         <DialogFooter>
@@ -782,6 +900,19 @@ function VerAcidenteDialog({ acidente, companies, onOpenChange, onEdit }: any) {
           <Row label="Testemunhas" value={acidente.testemunhas} />
           <Row label="Data retorno" value={acidente.data_retorno ? formatDateBR(acidente.data_retorno) : null} />
         </div>
+        {Array.isArray(acidente.evidencias_urls) && acidente.evidencias_urls.length > 0 && (
+          <div className="border-t pt-3 mt-3">
+            <div className="text-xs font-semibold text-muted-foreground uppercase mb-2 flex items-center gap-2">
+              <ImageIcon className="h-3.5 w-3.5" />
+              Evidências ({acidente.evidencias_urls.length})
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {acidente.evidencias_urls.map((p: string) => (
+                <EvidenciaThumb key={p} path={p} />
+              ))}
+            </div>
+          </div>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
           <Button onClick={onEdit} className="gap-2"><Pencil className="h-4 w-4" /> Editar</Button>
@@ -891,5 +1022,125 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <Label className="text-xs font-medium">{label}</Label>
       {children}
     </div>
+  );
+}
+
+// ============================================================
+// Evidência (thumbnail com signed URL)
+// ============================================================
+function EvidenciaThumb({ path, onRemove }: { path: string; onRemove?: () => void }) {
+  const [url, setUrl] = useState<string>("");
+  useEffect(() => {
+    let cancelled = false;
+    supabase.storage
+      .from("incident-photos")
+      .createSignedUrl(path, 3600)
+      .then(({ data }) => {
+        if (!cancelled && data?.signedUrl) setUrl(data.signedUrl);
+      });
+    return () => { cancelled = true; };
+  }, [path]);
+
+  return (
+    <div className="relative group">
+      {url ? (
+        <a href={url} target="_blank" rel="noreferrer" title="Abrir em tamanho real">
+          <img
+            src={url}
+            alt="Evidência"
+            className="w-24 h-24 object-cover rounded border border-slate-200 hover:border-slate-400 transition"
+          />
+        </a>
+      ) : (
+        <div className="w-24 h-24 bg-muted animate-pulse rounded border" />
+      )}
+      {onRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md opacity-0 group-hover:opacity-100 transition"
+          title="Remover"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// Total por tipo — donuts estilo placar
+// ============================================================
+function TotalPorTipoCard({ acidentes }: { acidentes: any[] }) {
+  const total = acidentes.length;
+  const buckets = [
+    { key: "SEM_AFASTAMENTO", label: "Sem afast." },
+    { key: "COM_AFASTAMENTO", label: "Com afast." },
+    { key: "TRAJETO",         label: "Trajeto" },
+    { key: "FATAL",           label: "Fatal" },
+  ].map(b => {
+    const qtd = acidentes.filter(a => a.tipo === b.key).length;
+    const pct = total > 0 ? Math.round((qtd / total) * 100) : 0;
+    return { ...b, qtd, pct };
+  });
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Total de Acidentes por Tipo</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {total === 0 ? (
+          <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
+            Nenhum acidente registrado.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {buckets.map(b => {
+              const color = TIPO_COLOR[b.key];
+              const data = [
+                { name: "v", value: b.qtd },
+                { name: "r", value: Math.max(total - b.qtd, 0.0001) },
+              ];
+              return (
+                <div key={b.key} className="flex items-center gap-4 p-2 rounded-lg hover:bg-slate-50 transition">
+                  <div className="text-2xl w-8 text-center">{TIPO_ICONS[b.key]}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-slate-800">{b.label}</div>
+                    <div className="text-3xl font-black tabular-nums leading-none mt-0.5" style={{ color }}>
+                      {b.qtd}
+                    </div>
+                  </div>
+                  <div className="relative w-[78px] h-[78px] flex-shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={data}
+                          dataKey="value"
+                          innerRadius={26}
+                          outerRadius={36}
+                          startAngle={90}
+                          endAngle={-270}
+                          stroke="none"
+                        >
+                          <Cell fill={color} />
+                          <Cell fill="#e2e8f0" />
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div
+                      className="absolute inset-0 flex items-center justify-center text-xs font-bold"
+                      style={{ color }}
+                    >
+                      {b.pct}%
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

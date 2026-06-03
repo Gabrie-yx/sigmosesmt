@@ -29,6 +29,7 @@ export type Database = {
           dias_debitados: number
           dias_perdidos: number
           employee_id: string | null
+          evidencias_urls: string[]
           hora_acidente: string | null
           id: string
           investigado: boolean
@@ -60,6 +61,7 @@ export type Database = {
           dias_debitados?: number
           dias_perdidos?: number
           employee_id?: string | null
+          evidencias_urls?: string[]
           hora_acidente?: string | null
           id?: string
           investigado?: boolean
@@ -91,6 +93,7 @@ export type Database = {
           dias_debitados?: number
           dias_perdidos?: number
           employee_id?: string | null
+          evidencias_urls?: string[]
           hora_acidente?: string | null
           id?: string
           investigado?: boolean
