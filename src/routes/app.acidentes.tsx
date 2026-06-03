@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,7 +16,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus, AlertTriangle, Trophy, CalendarClock, Activity, ShieldAlert, Skull,
   TrendingDown, TrendingUp, Clock, Hash, Users, Calculator, FileDown,
+  Eye, Pencil, Trash2,
 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { CorpoHumanoAcidentes } from "@/components/corpo-humano-acidentes";
@@ -59,6 +64,23 @@ function AcidentesPage() {
   const [tab, setTab] = useState("painel");
   const [novoOpen, setNovoOpen] = useState(false);
   const [hhtOpen, setHhtOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [viewing, setViewing] = useState<any>(null);
+  const [deleting, setDeleting] = useState<any>(null);
+
+  const delMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("acidentes_trabalho").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Acidente excluído.");
+      setDeleting(null);
+      qc.invalidateQueries({ queryKey: ["acidentes"] });
+      qc.invalidateQueries({ queryKey: ["dias-sem-acidente"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Erro ao excluir."),
+  });
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-acidentes"],
@@ -350,11 +372,12 @@ function AcidentesPage() {
                     <TableHead className="text-right">Dias perd.</TableHead>
                     <TableHead>Parte atingida</TableHead>
                     <TableHead>CAT</TableHead>
+                    <TableHead className="w-[120px] text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {acidentes.length === 0 ? (
-                    <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum acidente registrado.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum acidente registrado.</TableCell></TableRow>
                   ) : acidentes.map(a => {
                     const emp = companies.find(c => c.id === a.company_id);
                     return (
@@ -371,6 +394,19 @@ function AcidentesPage() {
                         <TableCell className="text-right tabular-nums">{a.dias_perdidos || 0}</TableCell>
                         <TableCell className="text-sm">{a.parte_corpo_atingida || "—"}</TableCell>
                         <TableCell className="text-sm font-mono">{a.numero_cat || "—"}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setViewing(a)} title="Ver detalhes">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(a)} title="Editar">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setDeleting(a)} title="Excluir">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -426,6 +462,54 @@ function AcidentesPage() {
           qc.invalidateQueries({ queryKey: ["dias-sem-acidente"] });
         }}
       />
+      <NovoAcidenteDialog
+        open={!!editing}
+        onOpenChange={(o: boolean) => { if (!o) setEditing(null); }}
+        companies={companies}
+        userId={user?.id}
+        initial={editing}
+        onSaved={() => {
+          setEditing(null);
+          qc.invalidateQueries({ queryKey: ["acidentes"] });
+          qc.invalidateQueries({ queryKey: ["dias-sem-acidente"] });
+        }}
+      />
+      <VerAcidenteDialog
+        acidente={viewing}
+        companies={companies}
+        onOpenChange={(o: boolean) => { if (!o) setViewing(null); }}
+        onEdit={() => { setEditing(viewing); setViewing(null); }}
+      />
+      <AlertDialog open={!!deleting} onOpenChange={(o) => { if (!o) setDeleting(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir acidente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleting && (
+                <>
+                  Esta ação é permanente. O acidente de <strong>{deleting.vitima_nome}</strong> em{" "}
+                  <strong>{formatDateBR(deleting.data_acidente)}</strong> será removido.
+                  {(deleting.tipo === "COM_AFASTAMENTO" || deleting.tipo === "FATAL") && (
+                    <span className="block mt-2 text-amber-700">
+                      ⚠ A NC gerada automaticamente <em>não</em> será excluída — remova manualmente em Não Conformidades se necessário.
+                    </span>
+                  )}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={(e) => { e.preventDefault(); if (deleting) delMut.mutate(deleting.id); }}
+              disabled={delMut.isPending}
+            >
+              {delMut.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <HhtDialog
         open={hhtOpen}
         onOpenChange={setHhtOpen}
@@ -467,8 +551,8 @@ function KpiCard({ icon, label, value, color, hint }: {
 // ============================================================
 // Novo Acidente Dialog
 // ============================================================
-function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
-  const [form, setForm] = useState<any>({
+function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, initial }: any) {
+  const defaults = {
     data_acidente: new Date().toISOString().slice(0, 10),
     hora_acidente: "",
     turno: "",
@@ -491,11 +575,31 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved }: 
     causa_basica: "",
     testemunhas: "",
     data_retorno: "",
-  });
+  };
+  const [form, setForm] = useState<any>(defaults);
+  const isEdit = !!initial?.id;
+
+  useEffect(() => {
+    if (open) {
+      if (initial) {
+        const cleaned: any = { ...defaults };
+        Object.keys(defaults).forEach(k => {
+          cleaned[k] = initial[k] ?? (defaults as any)[k] ?? "";
+        });
+        if (cleaned.data_acidente) cleaned.data_acidente = String(cleaned.data_acidente).slice(0, 10);
+        if (cleaned.data_retorno) cleaned.data_retorno = String(cleaned.data_retorno).slice(0, 10);
+        setForm(cleaned);
+      } else {
+        setForm(defaults);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initial?.id]);
 
   const mut = useMutation({
     mutationFn: async () => {
-      const payload: any = { ...form, created_by: userId };
+      const payload: any = { ...form };
+      if (!isEdit) payload.created_by = userId;
       // Limpa strings vazias para opcionais
       Object.keys(payload).forEach(k => { if (payload[k] === "") payload[k] = null; });
       if (!payload.vitima_nome || !payload.descricao || !payload.data_acidente) {
@@ -503,14 +607,21 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved }: 
       }
       payload.dias_perdidos = Number(payload.dias_perdidos || 0);
       payload.dias_debitados = Number(payload.dias_debitados || 0);
-      const { error } = await supabase.from("acidentes_trabalho").insert(payload);
-      if (error) throw error;
+      if (isEdit) {
+        const { error } = await supabase.from("acidentes_trabalho").update(payload).eq("id", initial.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("acidentes_trabalho").insert(payload);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Acidente registrado.");
+      toast.success(isEdit ? "Acidente atualizado." : "Acidente registrado.");
       onOpenChange(false);
       onSaved?.();
-      setForm((f: any) => ({ ...f, vitima_nome: "", descricao: "", numero_cat: "", causa_imediata: "", causa_basica: "" }));
+      if (!isEdit) {
+        setForm((f: any) => ({ ...f, vitima_nome: "", descricao: "", numero_cat: "", causa_imediata: "", causa_basica: "" }));
+      }
     },
     onError: (e: any) => toast.error(e.message || "Erro ao salvar."),
   });
@@ -522,7 +633,8 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved }: 
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-600" /> Registrar acidente de trabalho
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+            {isEdit ? "Editar acidente de trabalho" : "Registrar acidente de trabalho"}
           </DialogTitle>
         </DialogHeader>
 
@@ -616,8 +728,63 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved }: 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button className="bg-red-600 hover:bg-red-700" onClick={() => mut.mutate()} disabled={mut.isPending}>
-            {mut.isPending ? "Salvando..." : "Registrar acidente"}
+            {mut.isPending ? "Salvando..." : (isEdit ? "Salvar alterações" : "Registrar acidente")}
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================================
+// Ver Acidente Dialog (read-only)
+// ============================================================
+function VerAcidenteDialog({ acidente, companies, onOpenChange, onEdit }: any) {
+  if (!acidente) return null;
+  const emp = companies.find((c: any) => c.id === acidente.company_id);
+  const Row = ({ label, value }: { label: string; value: any }) => (
+    <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-dashed last:border-0">
+      <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</div>
+      <div className="col-span-2 text-sm">{value ?? "—"}</div>
+    </div>
+  );
+  return (
+    <Dialog open={!!acidente} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldAlert className="h-5 w-5 text-red-600" />
+            Acidente — {acidente.vitima_nome}
+            <Badge className={TIPO_STYLE[acidente.tipo]} variant="outline">
+              {TIPO_LABEL[acidente.tipo]}
+            </Badge>
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-1">
+          <Row label="Data" value={formatDateBR(acidente.data_acidente)} />
+          <Row label="Hora" value={acidente.hora_acidente} />
+          <Row label="Turno" value={acidente.turno} />
+          <Row label="Empresa" value={emp?.name} />
+          <Row label="Matrícula" value={acidente.vitima_matricula} />
+          <Row label="Cargo" value={acidente.vitima_cargo} />
+          <Row label="Setor" value={acidente.vitima_setor} />
+          <Row label="Nº CAT" value={acidente.numero_cat} />
+          <Row label="Dias perdidos" value={acidente.dias_perdidos} />
+          <Row label="Dias debitados" value={acidente.dias_debitados} />
+          <Row label="Parte atingida" value={acidente.parte_corpo_atingida} />
+          <Row label="Natureza lesão" value={acidente.natureza_lesao} />
+          <Row label="Agente causador" value={acidente.agente_causador} />
+          <Row label="CID" value={acidente.cid} />
+          <Row label="Local" value={acidente.local_acidente} />
+          <Row label="Descrição" value={<span className="whitespace-pre-wrap">{acidente.descricao}</span>} />
+          <Row label="Causa imediata" value={<span className="whitespace-pre-wrap">{acidente.causa_imediata}</span>} />
+          <Row label="Causa básica" value={<span className="whitespace-pre-wrap">{acidente.causa_basica}</span>} />
+          <Row label="Testemunhas" value={acidente.testemunhas} />
+          <Row label="Data retorno" value={acidente.data_retorno ? formatDateBR(acidente.data_retorno) : null} />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+          <Button onClick={onEdit} className="gap-2"><Pencil className="h-4 w-4" /> Editar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
