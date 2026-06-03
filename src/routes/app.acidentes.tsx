@@ -569,6 +569,32 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
     local_cep: "",
     local_municipio: "",
     local_uf: "",
+    // ===== Snapshot do acidentado (CAT oficial) =====
+    vitima_nome_mae: "",
+    vitima_data_nascimento: "",
+    vitima_sexo: "",
+    vitima_estado_civil: "",
+    vitima_grau_instrucao: "",
+    vitima_remuneracao: "",
+    vitima_ctps: "",
+    vitima_rg: "",
+    vitima_pis: "",
+    vitima_telefone: "",
+    vitima_cbo: "",
+    vitima_aposentado: false,
+    vitima_area: "URBANA",
+    vitima_filiacao: "EMPREGADO",
+    // ===== Acidente extra =====
+    horas_trabalhadas_antes: "",
+    cnpj_prestadora: "",
+    ultimo_dia_trabalhado: "",
+    // ===== Atestado extra =====
+    atestado_unidade: "",
+    atestado_hora: "",
+    atestado_observacoes: "",
+    sera_afastado: false,
+    // ===== Emitente =====
+    emitente_email: "",
   };
   const [form, setForm] = useState<any>(defaults);
   const [uploading, setUploading] = useState(false);
@@ -599,7 +625,7 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
       if (!form.company_id) return [];
       const { data } = await supabase
         .from("employees")
-        .select("id, nome, matricula, setor, role_id, roles(name)")
+        .select("id, nome, matricula, setor, rg, whatsapp, cep, endereco, bairro, cidade, uf, role_id, roles(name)")
         .eq("company_id", form.company_id)
         .eq("status", "ATIVO")
         .order("nome");
@@ -622,6 +648,8 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
       payload.dias_perdidos = Number(payload.dias_perdidos || 0);
       payload.dias_debitados = Number(payload.dias_debitados || 0);
       payload.duracao_tratamento_dias = Number(payload.duracao_tratamento_dias || 0) || null;
+      payload.horas_trabalhadas_antes = payload.horas_trabalhadas_antes ? Number(payload.horas_trabalhadas_antes) : null;
+      payload.vitima_remuneracao = payload.vitima_remuneracao ? Number(payload.vitima_remuneracao) : null;
       // Coerência mínima da CAT (S-2210):
       // - Tipo FATAL => obriga indicador de óbito e tipo de CAT "OBITO"
       // - Tipo COM_AFASTAMENTO => obriga indicador de afastamento
@@ -664,6 +692,8 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
       vitima_matricula: emp.matricula || "",
       vitima_cargo: emp.roles?.name || "",
       vitima_setor: emp.setor || "",
+      vitima_rg: emp.rg || f.vitima_rg,
+      vitima_telefone: emp.whatsapp || f.vitima_telefone,
     }));
   }
 
