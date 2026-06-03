@@ -527,6 +527,7 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
     hora_acidente: "",
     turno: "",
     company_id: "",
+    employee_id: "",
     vitima_nome: "",
     vitima_matricula: "",
     vitima_cargo: "",
@@ -545,8 +546,10 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
     causa_basica: "",
     testemunhas: "",
     data_retorno: "",
+    evidencias_urls: [] as string[],
   };
   const [form, setForm] = useState<any>(defaults);
+  const [uploading, setUploading] = useState(false);
   const isEdit = !!initial?.id;
 
   useEffect(() => {
@@ -558,6 +561,7 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
         });
         if (cleaned.data_acidente) cleaned.data_acidente = String(cleaned.data_acidente).slice(0, 10);
         if (cleaned.data_retorno) cleaned.data_retorno = String(cleaned.data_retorno).slice(0, 10);
+        cleaned.evidencias_urls = Array.isArray(initial.evidencias_urls) ? initial.evidencias_urls : [];
         setForm(cleaned);
       } else {
         setForm(defaults);
@@ -566,12 +570,30 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial?.id]);
 
+  // Funcionários da empresa selecionada
+  const { data: employees = [] } = useQuery({
+    queryKey: ["employees-by-company", form.company_id],
+    queryFn: async () => {
+      if (!form.company_id) return [];
+      const { data } = await supabase
+        .from("employees")
+        .select("id, nome, matricula, setor, role_id, roles(name)")
+        .eq("company_id", form.company_id)
+        .eq("status", "ATIVO")
+        .order("nome");
+      return data ?? [];
+    },
+    enabled: !!form.company_id,
+  });
+
   const mut = useMutation({
     mutationFn: async () => {
       const payload: any = { ...form };
       if (!isEdit) payload.created_by = userId;
+      const evid = Array.isArray(payload.evidencias_urls) ? payload.evidencias_urls : [];
       // Limpa strings vazias para opcionais
       Object.keys(payload).forEach(k => { if (payload[k] === "") payload[k] = null; });
+      payload.evidencias_urls = evid;
       if (!payload.vitima_nome || !payload.descricao || !payload.data_acidente) {
         throw new Error("Preencha vítima, data e descrição.");
       }
@@ -590,13 +612,76 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
       onOpenChange(false);
       onSaved?.();
       if (!isEdit) {
-        setForm((f: any) => ({ ...f, vitima_nome: "", descricao: "", numero_cat: "", causa_imediata: "", causa_basica: "" }));
+        setForm((f: any) => ({ ...f, vitima_nome: "", descricao: "", numero_cat: "", causa_imediata: "", causa_basica: "", evidencias_urls: [] }));
       }
     },
     onError: (e: any) => toast.error(e.message || "Erro ao salvar."),
   });
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+
+  function pickEmployee(id: string) {
+    const emp: any = employees.find((e: any) => e.id === id);
+    if (!emp) return;
+    setForm((f: any) => ({
+      ...f,
+      employee_id: emp.id,
+      vitima_nome: emp.nome || "",
+      vitima_matricula: emp.matricula || "",
+      vitima_cargo: emp.roles?.name || "",
+      vitima_setor: emp.setor || "",
+    }));
+  }
+
+  function clearEmployee() {
+    setForm((f: any) => ({
+      ...f,
+      employee_id: "",
+      vitima_nome: "",
+      vitima_matricula: "",
+      vitima_cargo: "",
+      vitima_setor: "",
+    }));
+  }
+
+  async function handleUpload(files: FileList | null) {
+    if (!files || !files.length) return;
+    const atuais: string[] = Array.isArray(form.evidencias_urls) ? form.evidencias_urls : [];
+    const restante = 4 - atuais.length;
+    if (restante <= 0) {
+      toast.error("Máximo de 4 evidências.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const novas: string[] = [];
+      for (const file of Array.from(files).slice(0, restante)) {
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`${file.name}: máx. 10MB.`);
+          continue;
+        }
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `acidentes/${crypto.randomUUID()}-${safe}`;
+        const { error } = await supabase.storage.from("incident-photos").upload(path, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+        if (error) throw error;
+        novas.push(path);
+      }
+      set("evidencias_urls", [...atuais, ...novas]);
+      if (novas.length) toast.success(`${novas.length} evidência(s) enviada(s).`);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao enviar.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function removeEvidencia(path: string) {
+    await supabase.storage.from("incident-photos").remove([path]).catch(() => {});
+    set("evidencias_urls", (form.evidencias_urls || []).filter((p: string) => p !== path));
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -637,7 +722,40 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
         </div>
 
         <div className="border-t pt-3 mt-1">
-          <div className="text-xs font-semibold text-muted-foreground uppercase mb-2">Vítima</div>
+          <div className="text-xs font-semibold text-muted-foreground uppercase mb-2 flex items-center gap-2">
+            <UserIcon className="h-3.5 w-3.5" /> Vítima
+          </div>
+
+          {form.company_id && (
+            <div className="mb-3 p-3 rounded-md bg-slate-50 border border-slate-200">
+              <Label className="text-xs font-medium">Selecionar funcionário da empresa</Label>
+              <div className="flex gap-2 mt-1">
+                <Select value={form.employee_id || undefined} onValueChange={pickEmployee}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder={employees.length ? `Escolha entre ${employees.length} funcionário(s)…` : "Nenhum funcionário ativo nesta empresa"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees.map((e: any) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.nome}
+                        {e.matricula ? ` · ${e.matricula}` : ""}
+                        {e.roles?.name ? ` · ${e.roles.name}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.employee_id && (
+                  <Button type="button" variant="outline" size="sm" onClick={clearEmployee} className="gap-1">
+                    <X className="h-3.5 w-3.5" /> Trocar
+                  </Button>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1.5">
+                Ao selecionar, os campos abaixo são preenchidos. Use "Trocar" se errou a pessoa, ou edite manualmente.
+              </p>
+            </div>
+          )}
+
           <div className="grid md:grid-cols-2 gap-3">
             <Field label="Nome *"><Input value={form.vitima_nome} onChange={e => set("vitima_nome", e.target.value)} /></Field>
             <Field label="Matrícula"><Input value={form.vitima_matricula} onChange={e => set("vitima_matricula", e.target.value)} /></Field>
@@ -693,6 +811,36 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
               <Input type="date" value={form.data_retorno} onChange={e => set("data_retorno", e.target.value)} />
             </Field>
           </div>
+        </div>
+
+        <div className="border-t pt-3 mt-1">
+          <div className="text-xs font-semibold text-muted-foreground uppercase mb-2 flex items-center gap-2">
+            <ImageIcon className="h-3.5 w-3.5" /> Evidências fotográficas
+            <span className="font-normal normal-case text-[11px] text-muted-foreground">
+              ({(form.evidencias_urls || []).length}/4)
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {(form.evidencias_urls || []).map((p: string) => (
+              <EvidenciaThumb key={p} path={p} onRemove={() => removeEvidencia(p)} />
+            ))}
+            {(form.evidencias_urls || []).length < 4 && (
+              <label className={`w-24 h-24 border-2 border-dashed rounded flex flex-col items-center justify-center text-xs text-muted-foreground cursor-pointer hover:bg-slate-50 hover:border-slate-400 transition ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+                <Upload className="h-5 w-5 mb-1" />
+                {uploading ? "Enviando..." : "Adicionar"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => { handleUpload(e.target.files); e.target.value = ""; }}
+                />
+              </label>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Até 4 fotos (10MB cada). Clique em uma evidência para abrir em tamanho real.
+          </p>
         </div>
 
         <DialogFooter>
