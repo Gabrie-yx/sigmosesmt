@@ -900,6 +900,19 @@ function VerAcidenteDialog({ acidente, companies, onOpenChange, onEdit }: any) {
           <Row label="Testemunhas" value={acidente.testemunhas} />
           <Row label="Data retorno" value={acidente.data_retorno ? formatDateBR(acidente.data_retorno) : null} />
         </div>
+        {Array.isArray(acidente.evidencias_urls) && acidente.evidencias_urls.length > 0 && (
+          <div className="border-t pt-3 mt-3">
+            <div className="text-xs font-semibold text-muted-foreground uppercase mb-2 flex items-center gap-2">
+              <ImageIcon className="h-3.5 w-3.5" />
+              Evidências ({acidente.evidencias_urls.length})
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {acidente.evidencias_urls.map((p: string) => (
+                <EvidenciaThumb key={p} path={p} />
+              ))}
+            </div>
+          </div>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
           <Button onClick={onEdit} className="gap-2"><Pencil className="h-4 w-4" /> Editar</Button>
