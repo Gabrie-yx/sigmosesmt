@@ -4300,7 +4300,12 @@ export type Database = {
           classificacao: Database["public"]["Enums"]["purchase_req_class"]
           codigo_formulario: string | null
           cotacao_at: string | null
+          cotacao_attempt_count: number
           cotacao_fornecedor: string | null
+          cotacao_last_attempt_at: string | null
+          cotacao_submitted_at: string | null
+          cotacao_submitter_ip: string | null
+          cotacao_user_agent: string | null
           cotacao_valor: number | null
           cotador_nome: string | null
           created_at: string
@@ -4330,7 +4335,12 @@ export type Database = {
           classificacao?: Database["public"]["Enums"]["purchase_req_class"]
           codigo_formulario?: string | null
           cotacao_at?: string | null
+          cotacao_attempt_count?: number
           cotacao_fornecedor?: string | null
+          cotacao_last_attempt_at?: string | null
+          cotacao_submitted_at?: string | null
+          cotacao_submitter_ip?: string | null
+          cotacao_user_agent?: string | null
           cotacao_valor?: number | null
           cotador_nome?: string | null
           created_at?: string
@@ -4360,7 +4370,12 @@ export type Database = {
           classificacao?: Database["public"]["Enums"]["purchase_req_class"]
           codigo_formulario?: string | null
           cotacao_at?: string | null
+          cotacao_attempt_count?: number
           cotacao_fornecedor?: string | null
+          cotacao_last_attempt_at?: string | null
+          cotacao_submitted_at?: string | null
+          cotacao_submitter_ip?: string | null
+          cotacao_user_agent?: string | null
           cotacao_valor?: number | null
           cotador_nome?: string | null
           created_at?: string

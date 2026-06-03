@@ -1,8 +1,25 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const tokenSchema = z.string().uuid();
+
+const COTACAO_MAX_ATTEMPTS = 5;
+const COTACAO_WINDOW_MINUTES = 60;
+
+function extractClientInfo() {
+  const request = getRequest();
+  const headers = request.headers;
+  const fwd = headers.get("x-forwarded-for") ?? "";
+  const ip =
+    headers.get("cf-connecting-ip") ||
+    fwd.split(",")[0]?.trim() ||
+    headers.get("x-real-ip") ||
+    null;
+  const ua = headers.get("user-agent")?.slice(0, 300) ?? null;
+  return { ip, ua };
+}
 
 export const getRcByToken = createServerFn({ method: "GET" })
   .inputValidator((input: { token: string }) => ({ token: tokenSchema.parse(input.token) }))
@@ -45,13 +62,42 @@ export const marcarRcCotada = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { ip, ua } = extractClientInfo();
+
     const { data: rc, error: e1 } = await supabaseAdmin
       .from("purchase_requisitions")
-      .select("id, status")
+      .select(
+        "id, status, cotacao_attempt_count, cotacao_last_attempt_at, cotacao_submitted_at"
+      )
       .eq("status_token", data.token)
       .maybeSingle();
     if (e1) throw new Error(e1.message);
     if (!rc) throw new Error("Requisição não encontrada");
+
+    // Rate limit por token: máximo N tentativas dentro da janela
+    const lastAttempt = (rc as any).cotacao_last_attempt_at as string | null;
+    const attempts = (rc as any).cotacao_attempt_count as number | null;
+    const windowMs = COTACAO_WINDOW_MINUTES * 60 * 1000;
+    const withinWindow =
+      lastAttempt && Date.now() - new Date(lastAttempt).getTime() < windowMs;
+    if (withinWindow && (attempts ?? 0) >= COTACAO_MAX_ATTEMPTS) {
+      throw new Error(
+        `Limite de ${COTACAO_MAX_ATTEMPTS} tentativas atingido. Tente novamente em alguns minutos.`,
+      );
+    }
+    const newAttemptCount = withinWindow ? (attempts ?? 0) + 1 : 1;
+
+    // Registra a tentativa ANTES de validar status (audit trail mesmo em recusa)
+    await supabaseAdmin
+      .from("purchase_requisitions")
+      .update({
+        cotacao_attempt_count: newAttemptCount,
+        cotacao_last_attempt_at: new Date().toISOString(),
+        cotacao_submitter_ip: ip,
+        cotacao_user_agent: ua,
+      } as any)
+      .eq("id", rc.id);
+
     if (rc.status !== "PENDENTE") {
       throw new Error("Esta RC já saiu da etapa de cotação.");
     }
@@ -63,7 +109,8 @@ export const marcarRcCotada = createServerFn({ method: "POST" })
         cotacao_fornecedor: data.fornecedor,
         cotacao_valor: data.valor,
         cotacao_at: new Date().toISOString(),
-      })
+        cotacao_submitted_at: new Date().toISOString(),
+      } as any)
       .eq("id", rc.id);
     if (error) throw new Error(error.message);
     return { ok: true };
