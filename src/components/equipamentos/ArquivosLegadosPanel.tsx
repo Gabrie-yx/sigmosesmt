@@ -118,6 +118,7 @@ export function ArquivosLegadosPanel({ equipamentoId }: { equipamentoId: string 
   }
 
   return (
+    <>
     <Card>
       <CardContent className="p-4 space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
