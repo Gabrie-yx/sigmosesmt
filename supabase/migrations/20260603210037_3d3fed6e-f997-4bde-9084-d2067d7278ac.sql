@@ -1,0 +1,23 @@
+
+ALTER TABLE public.acidentes_trabalho
+  ADD COLUMN IF NOT EXISTS tipo_cat text CHECK (tipo_cat IN ('INICIAL','REABERTURA','OBITO')),
+  ADD COLUMN IF NOT EXISTS iniciativa_cat text CHECK (iniciativa_cat IN ('EMPREGADOR','SINDICATO','MEDICO','SEGURADO','AUTORIDADE_PUBLICA')),
+  ADD COLUMN IF NOT EXISTS houve_afastamento boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS houve_internacao boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS houve_obito boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS data_obito date,
+  ADD COLUMN IF NOT EXISTS ultima_refeicao_hora time,
+  ADD COLUMN IF NOT EXISTS registro_policial boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS numero_bo text,
+  ADD COLUMN IF NOT EXISTS lateralidade text CHECK (lateralidade IN ('ESQUERDA','DIREITA','AMBAS','NAO_APLICA')),
+  ADD COLUMN IF NOT EXISTS situacao_geradora text,
+  ADD COLUMN IF NOT EXISTS duracao_tratamento_dias integer,
+  ADD COLUMN IF NOT EXISTS atestado_data date,
+  ADD COLUMN IF NOT EXISTS atestado_medico_nome text,
+  ADD COLUMN IF NOT EXISTS atestado_medico_crm text,
+  ADD COLUMN IF NOT EXISTS atestado_medico_uf text,
+  ADD COLUMN IF NOT EXISTS local_tipo text CHECK (local_tipo IN ('ESTAB_EMPREGADOR','ESTAB_TERCEIRO','VIA_PUBLICA','AREA_RURAL','OUTROS')),
+  ADD COLUMN IF NOT EXISTS local_cep text,
+  ADD COLUMN IF NOT EXISTS local_municipio text,
+  ADD COLUMN IF NOT EXISTS local_uf text,
+  ADD COLUMN IF NOT EXISTS cat_data_emissao date;
