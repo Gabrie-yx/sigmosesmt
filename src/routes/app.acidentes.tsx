@@ -621,6 +621,18 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
       }
       payload.dias_perdidos = Number(payload.dias_perdidos || 0);
       payload.dias_debitados = Number(payload.dias_debitados || 0);
+      payload.duracao_tratamento_dias = Number(payload.duracao_tratamento_dias || 0) || null;
+      // Coerência mínima da CAT (S-2210):
+      // - Tipo FATAL => obriga indicador de óbito e tipo de CAT "OBITO"
+      // - Tipo COM_AFASTAMENTO => obriga indicador de afastamento
+      if (payload.tipo === "FATAL") {
+        payload.houve_obito = true;
+        payload.tipo_cat = payload.tipo_cat === "REABERTURA" ? "REABERTURA" : "OBITO";
+        if (!payload.data_obito) payload.data_obito = payload.data_acidente;
+      }
+      if (payload.tipo === "COM_AFASTAMENTO") {
+        payload.houve_afastamento = true;
+      }
       if (isEdit) {
         const { error } = await supabase.from("acidentes_trabalho").update(payload).eq("id", initial.id);
         if (error) throw error;
