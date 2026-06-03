@@ -37,6 +37,7 @@ import { Route as AppCascosRouteImport } from './routes/app.cascos'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppAprsRouteImport } from './routes/app.aprs'
 import { Route as AppAcoesRouteImport } from './routes/app.acoes'
+import { Route as AppAcidentesRouteImport } from './routes/app.acidentes'
 import { Route as AppOssIndexRouteImport } from './routes/app.oss.index'
 import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
@@ -208,6 +209,11 @@ const AppAprsRoute = AppAprsRouteImport.update({
 const AppAcoesRoute = AppAcoesRouteImport.update({
   id: '/acoes',
   path: '/acoes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAcidentesRoute = AppAcidentesRouteImport.update({
+  id: '/acidentes',
+  path: '/acidentes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOssIndexRoute = AppOssIndexRouteImport.update({
@@ -386,6 +392,7 @@ export interface FileRoutesByFullPath {
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
+  '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
@@ -447,6 +454,7 @@ export interface FileRoutesByTo {
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
+  '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
@@ -508,6 +516,7 @@ export interface FileRoutesById {
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
+  '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/audit': typeof AppAuditRoute
@@ -572,6 +581,7 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/reset-password'
     | '/termos'
+    | '/app/acidentes'
     | '/app/acoes'
     | '/app/aprs'
     | '/app/audit'
@@ -633,6 +643,7 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/reset-password'
     | '/termos'
+    | '/app/acidentes'
     | '/app/acoes'
     | '/app/aprs'
     | '/app/audit'
@@ -693,6 +704,7 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/reset-password'
     | '/termos'
+    | '/app/acidentes'
     | '/app/acoes'
     | '/app/aprs'
     | '/app/audit'
@@ -957,6 +969,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAcoesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/acidentes': {
+      id: '/app/acidentes'
+      path: '/acidentes'
+      fullPath: '/app/acidentes'
+      preLoaderRoute: typeof AppAcidentesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/oss/': {
       id: '/app/oss/'
       path: '/'
@@ -1216,6 +1235,7 @@ const AppOssRouteWithChildren =
   AppOssRoute._addFileChildren(AppOssRouteChildren)
 
 interface AppRouteChildren {
+  AppAcidentesRoute: typeof AppAcidentesRoute
   AppAcoesRoute: typeof AppAcoesRoute
   AppAprsRoute: typeof AppAprsRoute
   AppAuditRoute: typeof AppAuditRoute
@@ -1266,6 +1286,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAcidentesRoute: AppAcidentesRoute,
   AppAcoesRoute: AppAcoesRoute,
   AppAprsRoute: AppAprsRoute,
   AppAuditRoute: AppAuditRoute,

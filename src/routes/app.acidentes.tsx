@@ -132,7 +132,7 @@ function AcidentesPage() {
         recorde_com_afast: Math.max(acc.recorde_com_afast, d.recorde_com_afast ?? 0),
         ultimo_acidente_com_afast: d.ultimo_acidente_com_afast ?? acc.ultimo_acidente_com_afast,
       }),
-      { dias_sem_com_afast: null as number | null, recorde_com_afast: 0, ultimo_acidente_com_afast: null as string | null }
+      { dias_sem_com_afast: null as number | null, recorde_com_afast: 0, ultimo_acidente_com_afast: undefined as string | undefined }
     );
     return max;
   }, [dias]);
