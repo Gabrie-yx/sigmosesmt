@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { gerarPdfEntregasEpi, type EntregaRow } from "@/lib/epi-entregas-pdf";
+import { gerarPdfCatalogoEpi } from "@/lib/epi-catalogo-pdf";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/estoque/epi")({
