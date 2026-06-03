@@ -832,18 +832,160 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
         <div className="border-t pt-3 mt-1">
           <div className="text-xs font-semibold text-muted-foreground uppercase mb-2">Ocorrência e investigação</div>
           <div className="grid gap-3">
-            <Field label="Local do acidente"><Input value={form.local_acidente} onChange={e => set("local_acidente", e.target.value)} /></Field>
+            <div className="grid md:grid-cols-3 gap-3">
+              <Field label="Tipo do local (CAT)">
+                <Select value={form.local_tipo || undefined} onValueChange={v => set("local_tipo", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ESTAB_EMPREGADOR">Estabelecimento do empregador</SelectItem>
+                    <SelectItem value="ESTAB_TERCEIRO">Estabelecimento de terceiros</SelectItem>
+                    <SelectItem value="VIA_PUBLICA">Via pública</SelectItem>
+                    <SelectItem value="AREA_RURAL">Área rural</SelectItem>
+                    <SelectItem value="OUTROS">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Local do acidente (descrição)">
+                <Input value={form.local_acidente} onChange={e => set("local_acidente", e.target.value)} placeholder="Ex.: dique seco nº 2 — costado de bombordo" />
+              </Field>
+              <Field label="CEP do local">
+                <Input value={form.local_cep} onChange={e => set("local_cep", e.target.value)} placeholder="00000-000" />
+              </Field>
+              <Field label="Município">
+                <Input value={form.local_municipio} onChange={e => set("local_municipio", e.target.value)} placeholder="Ex.: Manaus" />
+              </Field>
+              <Field label="UF">
+                <Input value={form.local_uf} onChange={e => set("local_uf", e.target.value)} maxLength={2} placeholder="AM" />
+              </Field>
+              <Field label="Última refeição (hora)">
+                <Input type="time" value={form.ultima_refeicao_hora} onChange={e => set("ultima_refeicao_hora", e.target.value)} />
+              </Field>
+            </div>
             <Field label="Descrição do acidente *">
               <Textarea rows={3} value={form.descricao} onChange={e => set("descricao", e.target.value)} />
+            </Field>
+            <Field label="Situação geradora (relato técnico para a CAT)">
+              <Textarea rows={2} value={form.situacao_geradora} onChange={e => set("situacao_geradora", e.target.value)} placeholder="O que o trabalhador estava fazendo no momento e o que deu errado." />
             </Field>
             <div className="grid md:grid-cols-2 gap-3">
               <Field label="Causa imediata"><Textarea rows={2} value={form.causa_imediata} onChange={e => set("causa_imediata", e.target.value)} /></Field>
               <Field label="Causa básica"><Textarea rows={2} value={form.causa_basica} onChange={e => set("causa_basica", e.target.value)} /></Field>
             </div>
             <Field label="Testemunhas"><Input value={form.testemunhas} onChange={e => set("testemunhas", e.target.value)} /></Field>
-            <Field label="Data de retorno (se houver)">
-              <Input type="date" value={form.data_retorno} onChange={e => set("data_retorno", e.target.value)} />
+            <div className="grid md:grid-cols-3 gap-3">
+              <Field label="Data de retorno (se houver)">
+                <Input type="date" value={form.data_retorno} onChange={e => set("data_retorno", e.target.value)} />
+              </Field>
+              <Field label="Registro policial?">
+                <div className="flex items-center gap-2 h-9">
+                  <input id="bo-check" type="checkbox" checked={!!form.registro_policial} onChange={e => set("registro_policial", e.target.checked)} className="h-4 w-4" />
+                  <Label htmlFor="bo-check" className="text-sm font-normal cursor-pointer">Houve B.O.</Label>
+                </div>
+              </Field>
+              <Field label="Nº do Boletim de Ocorrência">
+                <Input value={form.numero_bo} onChange={e => set("numero_bo", e.target.value)} disabled={!form.registro_policial} placeholder="Ex.: 2026/123456" />
+              </Field>
+            </div>
+          </div>
+        </div>
+
+        {/* ============= CAT / eSocial S-2210 ============= */}
+        <div className="border-t pt-3 mt-1">
+          <div className="text-xs font-semibold text-red-700 uppercase mb-2 flex items-center gap-2">
+            <FileDown className="h-3.5 w-3.5" /> CAT — Comunicação de Acidente de Trabalho (eSocial S-2210)
+          </div>
+          <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 mb-3 text-[11px] text-amber-900">
+            A CAT deve ser emitida até o <strong>1º dia útil seguinte</strong> ao acidente (ou imediatamente em caso de óbito), mesmo sem afastamento — Lei 8.213/91 art. 22. Estes campos alimentam o evento <strong>S-2210</strong>.
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-3">
+            <Field label="Tipo de CAT *">
+              <Select value={form.tipo_cat} onValueChange={v => set("tipo_cat", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="INICIAL">Inicial (1ª comunicação)</SelectItem>
+                  <SelectItem value="REABERTURA">Reabertura (reinício do tratamento/afastamento)</SelectItem>
+                  <SelectItem value="OBITO">Comunicação de óbito</SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
+            <Field label="Iniciativa da CAT">
+              <Select value={form.iniciativa_cat} onValueChange={v => set("iniciativa_cat", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="EMPREGADOR">Empregador</SelectItem>
+                  <SelectItem value="SEGURADO">Próprio acidentado/dependente</SelectItem>
+                  <SelectItem value="SINDICATO">Sindicato</SelectItem>
+                  <SelectItem value="MEDICO">Médico assistente</SelectItem>
+                  <SelectItem value="AUTORIDADE_PUBLICA">Autoridade pública</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Data de emissão da CAT">
+              <Input type="date" value={form.cat_data_emissao} onChange={e => set("cat_data_emissao", e.target.value)} />
+            </Field>
+
+            <Field label="Nº da CAT (gerado pelo INSS)">
+              <Input value={form.numero_cat} onChange={e => set("numero_cat", e.target.value)} placeholder="Ex.: 2026.000123" />
+            </Field>
+            <Field label="Lateralidade da lesão">
+              <Select value={form.lateralidade} onValueChange={v => set("lateralidade", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NAO_APLICA">Não se aplica</SelectItem>
+                  <SelectItem value="ESQUERDA">Esquerda</SelectItem>
+                  <SelectItem value="DIREITA">Direita</SelectItem>
+                  <SelectItem value="AMBAS">Ambas</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Duração estimada do tratamento (dias)">
+              <Input type="number" min={0} value={form.duracao_tratamento_dias} onChange={e => set("duracao_tratamento_dias", e.target.value)} />
+            </Field>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-3 mt-3">
+            <Field label="Houve afastamento?">
+              <div className="flex items-center gap-2 h-9">
+                <input id="afast-check" type="checkbox" checked={!!form.houve_afastamento} onChange={e => set("houve_afastamento", e.target.checked)} className="h-4 w-4" />
+                <Label htmlFor="afast-check" className="text-sm font-normal cursor-pointer">Sim, gerou afastamento</Label>
+              </div>
+            </Field>
+            <Field label="Houve internação?">
+              <div className="flex items-center gap-2 h-9">
+                <input id="intern-check" type="checkbox" checked={!!form.houve_internacao} onChange={e => set("houve_internacao", e.target.checked)} className="h-4 w-4" />
+                <Label htmlFor="intern-check" className="text-sm font-normal cursor-pointer">Sim, ficou internado</Label>
+              </div>
+            </Field>
+            <Field label="Houve óbito?">
+              <div className="flex items-center gap-2 h-9">
+                <input id="obito-check" type="checkbox" checked={!!form.houve_obito} onChange={e => set("houve_obito", e.target.checked)} className="h-4 w-4" />
+                <Label htmlFor="obito-check" className="text-sm font-normal cursor-pointer">Sim, fatal</Label>
+              </div>
+            </Field>
+            {form.houve_obito && (
+              <Field label="Data do óbito">
+                <Input type="date" value={form.data_obito} onChange={e => set("data_obito", e.target.value)} />
+              </Field>
+            )}
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-dashed">
+            <div className="text-[11px] font-semibold text-muted-foreground uppercase mb-2">Atestado médico</div>
+            <div className="grid md:grid-cols-4 gap-3">
+              <Field label="Data do atendimento">
+                <Input type="date" value={form.atestado_data} onChange={e => set("atestado_data", e.target.value)} />
+              </Field>
+              <Field label="Médico responsável">
+                <Input value={form.atestado_medico_nome} onChange={e => set("atestado_medico_nome", e.target.value)} placeholder="Dr(a). ..." />
+              </Field>
+              <Field label="CRM">
+                <Input value={form.atestado_medico_crm} onChange={e => set("atestado_medico_crm", e.target.value)} placeholder="Ex.: 12345" />
+              </Field>
+              <Field label="UF do CRM">
+                <Input value={form.atestado_medico_uf} onChange={e => set("atestado_medico_uf", e.target.value)} maxLength={2} placeholder="AM" />
+              </Field>
+            </div>
           </div>
         </div>
 
