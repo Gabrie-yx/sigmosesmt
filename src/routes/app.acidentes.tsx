@@ -1093,6 +1093,18 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
               <Field label="Data do atendimento">
                 <Input type="date" value={form.atestado_data} onChange={e => set("atestado_data", e.target.value)} />
               </Field>
+              <Field label="Hora do atendimento">
+                <Input type="time" value={form.atestado_hora} onChange={e => set("atestado_hora", e.target.value)} />
+              </Field>
+              <Field label="Unidade de atendimento">
+                <Input value={form.atestado_unidade} onChange={e => set("atestado_unidade", e.target.value)} placeholder="Hospital / pronto-socorro" />
+              </Field>
+              <Field label="Será afastado?">
+                <div className="flex items-center gap-2 h-9">
+                  <input id="afast2-check" type="checkbox" checked={!!form.sera_afastado} onChange={e => set("sera_afastado", e.target.checked)} className="h-4 w-4" />
+                  <Label htmlFor="afast2-check" className="text-sm font-normal cursor-pointer">Sim, há indicação</Label>
+                </div>
+              </Field>
               <Field label="Médico responsável">
                 <Input value={form.atestado_medico_nome} onChange={e => set("atestado_medico_nome", e.target.value)} placeholder="Dr(a). ..." />
               </Field>
@@ -1101,6 +1113,14 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
               </Field>
               <Field label="UF do CRM">
                 <Input value={form.atestado_medico_uf} onChange={e => set("atestado_medico_uf", e.target.value)} maxLength={2} placeholder="AM" />
+              </Field>
+              <Field label="E-mail do emitente">
+                <Input type="email" value={form.emitente_email} onChange={e => set("emitente_email", e.target.value)} placeholder="sesmt@empresa.com" />
+              </Field>
+            </div>
+            <div className="mt-3">
+              <Field label="Observações médicas">
+                <Textarea rows={2} value={form.atestado_observacoes} onChange={e => set("atestado_observacoes", e.target.value)} placeholder="Diagnóstico, conduta, recomendações..." />
               </Field>
             </div>
           </div>
