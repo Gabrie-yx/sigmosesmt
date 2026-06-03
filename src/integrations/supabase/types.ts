@@ -14,6 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
+      acidentes_trabalho: {
+        Row: {
+          agente_causador: string | null
+          causa_basica: string | null
+          causa_imediata: string | null
+          cid: string | null
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          data_acidente: string
+          data_retorno: string | null
+          descricao: string
+          dias_debitados: number
+          dias_perdidos: number
+          employee_id: string | null
+          hora_acidente: string | null
+          id: string
+          investigado: boolean
+          local_acidente: string | null
+          natureza_lesao: string | null
+          numero_cat: string | null
+          observacoes: string | null
+          parte_corpo_atingida: string | null
+          testemunhas: string | null
+          tipo: Database["public"]["Enums"]["tipo_acidente"]
+          turno: Database["public"]["Enums"]["turno_acidente"] | null
+          updated_at: string
+          vitima_cargo: string | null
+          vitima_matricula: string | null
+          vitima_nome: string
+          vitima_setor: string | null
+        }
+        Insert: {
+          agente_causador?: string | null
+          causa_basica?: string | null
+          causa_imediata?: string | null
+          cid?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_acidente: string
+          data_retorno?: string | null
+          descricao: string
+          dias_debitados?: number
+          dias_perdidos?: number
+          employee_id?: string | null
+          hora_acidente?: string | null
+          id?: string
+          investigado?: boolean
+          local_acidente?: string | null
+          natureza_lesao?: string | null
+          numero_cat?: string | null
+          observacoes?: string | null
+          parte_corpo_atingida?: string | null
+          testemunhas?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_acidente"]
+          turno?: Database["public"]["Enums"]["turno_acidente"] | null
+          updated_at?: string
+          vitima_cargo?: string | null
+          vitima_matricula?: string | null
+          vitima_nome: string
+          vitima_setor?: string | null
+        }
+        Update: {
+          agente_causador?: string | null
+          causa_basica?: string | null
+          causa_imediata?: string | null
+          cid?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_acidente?: string
+          data_retorno?: string | null
+          descricao?: string
+          dias_debitados?: number
+          dias_perdidos?: number
+          employee_id?: string | null
+          hora_acidente?: string | null
+          id?: string
+          investigado?: boolean
+          local_acidente?: string | null
+          natureza_lesao?: string | null
+          numero_cat?: string | null
+          observacoes?: string | null
+          parte_corpo_atingida?: string | null
+          testemunhas?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_acidente"]
+          turno?: Database["public"]["Enums"]["turno_acidente"] | null
+          updated_at?: string
+          vitima_cargo?: string | null
+          vitima_matricula?: string | null
+          vitima_nome?: string
+          vitima_setor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acidentes_trabalho_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acidentes_trabalho_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acidentes_trabalho_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       apr_assinaturas: {
         Row: {
           apr_id: string
@@ -1601,6 +1719,50 @@ export type Database = {
         }
         Relationships: []
       }
+      dias_sem_acidente_recordes: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          data_inicio: string | null
+          data_recorde: string | null
+          escopo: string
+          id: string
+          observacoes: string | null
+          recorde_dias: number
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          data_inicio?: string | null
+          data_recorde?: string | null
+          escopo?: string
+          id?: string
+          observacoes?: string | null
+          recorde_dias?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          data_inicio?: string | null
+          data_recorde?: string | null
+          escopo?: string
+          id?: string
+          observacoes?: string | null
+          recorde_dias?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dias_sem_acidente_recordes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_docs: {
         Row: {
           employee_id: string
@@ -2294,6 +2456,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      hht_mensal: {
+        Row: {
+          ano: number
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          empregados_medio: number
+          hht: number
+          id: string
+          mes: number
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empregados_medio?: number
+          hht?: number
+          id?: string
+          mes: number
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empregados_medio?: number
+          hht?: number
+          id?: string
+          mes?: number
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hht_mensal_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       historico_entregas: {
         Row: {
@@ -5147,6 +5356,31 @@ export type Database = {
           },
         ]
       }
+      vw_quadro_estatistico: {
+        Row: {
+          acid_com_afast: number | null
+          acid_fatais: number | null
+          acid_sem_afast: number | null
+          ano: number | null
+          company_id: string | null
+          empregados_medio: number | null
+          hht: number | null
+          mes: number | null
+          taxa_frequencia: number | null
+          taxa_frequencia_sa: number | null
+          taxa_gravidade: number | null
+          total_dias: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hht_mensal_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       ajustar_saldo_epi: {
@@ -5154,6 +5388,18 @@ export type Database = {
         Returns: undefined
       }
       current_aal: { Args: never; Returns: string }
+      fn_dias_sem_acidente: {
+        Args: { _company_id?: string }
+        Returns: {
+          company_id: string
+          dias_sem_com_afast: number
+          dias_sem_registravel: number
+          recorde_com_afast: number
+          recorde_registravel: number
+          ultimo_acidente_com_afast: string
+          ultimo_acidente_registravel: string
+        }[]
+      }
       gerar_numero_apr: { Args: never; Returns: string }
       gerar_numero_controle_doc: { Args: never; Returns: string }
       gerar_numero_extintor: { Args: never; Returns: string }
@@ -5230,7 +5476,9 @@ export type Database = {
       oss_status: "PENDENTE_ASSINATURA" | "ASSINADO" | "VENCIDO" | "SUBSTITUIDO"
       purchase_req_class: "MATERIAL" | "SERVICO"
       purchase_req_status: "PENDENTE" | "COTADA" | "APROVADA" | "INDEFERIDA"
+      tipo_acidente: "COM_AFASTAMENTO" | "SEM_AFASTAMENTO" | "TRAJETO" | "FATAL"
       tipo_movimentacao_epi: "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO"
+      turno_acidente: "MANHA" | "TARDE" | "NOITE" | "MADRUGADA"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5388,11 +5636,13 @@ export const Constants = {
       oss_status: ["PENDENTE_ASSINATURA", "ASSINADO", "VENCIDO", "SUBSTITUIDO"],
       purchase_req_class: ["MATERIAL", "SERVICO"],
       purchase_req_status: ["PENDENTE", "COTADA", "APROVADA", "INDEFERIDA"],
+      tipo_acidente: ["COM_AFASTAMENTO", "SEM_AFASTAMENTO", "TRAJETO", "FATAL"],
       tipo_movimentacao_epi: [
         "SAIDA_ENTREGA",
         "ENTRADA_REPOSICAO",
         "DEVOLUCAO",
       ],
+      turno_acidente: ["MANHA", "TARDE", "NOITE", "MADRUGADA"],
     },
   },
 } as const
