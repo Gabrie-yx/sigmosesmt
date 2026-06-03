@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { gerarPdfEntregasEpi, type EntregaRow } from "@/lib/epi-entregas-pdf";
+import { gerarPdfCatalogoEpi } from "@/lib/epi-catalogo-pdf";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/estoque/epi")({
@@ -176,6 +177,20 @@ export function EstoqueEpiPage() {
               <Warehouse className="h-4 w-4" />
               Painel de Estoque SESMT
             </Link>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (!epis.length) {
+                toast.info("Nenhum EPI cadastrado para exportar");
+                return;
+              }
+              const doc = gerarPdfCatalogoEpi(epis as any);
+              doc.save(`catalogo-epis-${new Date().toISOString().slice(0, 10)}.pdf`);
+            }}
+          >
+            <FileText className="h-4 w-4" />
+            Exportar Catálogo (PDF)
           </Button>
           <NewEpiDialog onCreated={() => qc.invalidateQueries({ queryKey: ["estoque_epi"] })} />
         </div>
