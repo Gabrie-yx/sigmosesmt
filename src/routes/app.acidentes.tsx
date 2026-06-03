@@ -1026,6 +1026,49 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 // ============================================================
+// Evidência (thumbnail com signed URL)
+// ============================================================
+function EvidenciaThumb({ path, onRemove }: { path: string; onRemove?: () => void }) {
+  const [url, setUrl] = useState<string>("");
+  useEffect(() => {
+    let cancelled = false;
+    supabase.storage
+      .from("incident-photos")
+      .createSignedUrl(path, 3600)
+      .then(({ data }) => {
+        if (!cancelled && data?.signedUrl) setUrl(data.signedUrl);
+      });
+    return () => { cancelled = true; };
+  }, [path]);
+
+  return (
+    <div className="relative group">
+      {url ? (
+        <a href={url} target="_blank" rel="noreferrer" title="Abrir em tamanho real">
+          <img
+            src={url}
+            alt="Evidência"
+            className="w-24 h-24 object-cover rounded border border-slate-200 hover:border-slate-400 transition"
+          />
+        </a>
+      ) : (
+        <div className="w-24 h-24 bg-muted animate-pulse rounded border" />
+      )}
+      {onRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md opacity-0 group-hover:opacity-100 transition"
+          title="Remover"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // Total por tipo — donuts estilo placar
 // ============================================================
 function TotalPorTipoCard({ acidentes }: { acidentes: any[] }) {
