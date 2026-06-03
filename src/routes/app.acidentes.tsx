@@ -826,6 +826,82 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
             <Field label="Cargo"><Input value={form.vitima_cargo} onChange={e => set("vitima_cargo", e.target.value)} /></Field>
             <Field label="Setor"><Input value={form.vitima_setor} onChange={e => set("vitima_setor", e.target.value)} /></Field>
           </div>
+
+          <div className="mt-3 pt-3 border-t border-dashed">
+            <div className="text-[11px] font-semibold text-muted-foreground uppercase mb-2">Dados pessoais (CAT)</div>
+            <div className="grid md:grid-cols-3 gap-3">
+              <Field label="Nome da mãe"><Input value={form.vitima_nome_mae} onChange={e => set("vitima_nome_mae", e.target.value)} /></Field>
+              <Field label="Data de nascimento"><Input type="date" value={form.vitima_data_nascimento} onChange={e => set("vitima_data_nascimento", e.target.value)} /></Field>
+              <Field label="Sexo">
+                <Select value={form.vitima_sexo || undefined} onValueChange={v => set("vitima_sexo", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">Masculino</SelectItem>
+                    <SelectItem value="F">Feminino</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Estado civil">
+                <Select value={form.vitima_estado_civil || undefined} onValueChange={v => set("vitima_estado_civil", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SOLTEIRO">Solteiro(a)</SelectItem>
+                    <SelectItem value="CASADO">Casado(a)</SelectItem>
+                    <SelectItem value="DIVORCIADO">Divorciado(a)</SelectItem>
+                    <SelectItem value="VIUVO">Viúvo(a)</SelectItem>
+                    <SelectItem value="UNIAO_ESTAVEL">União estável</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Grau de instrução">
+                <Select value={form.vitima_grau_instrucao || undefined} onValueChange={v => set("vitima_grau_instrucao", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ANALFABETO">Analfabeto</SelectItem>
+                    <SelectItem value="FUND_INC">Fundamental incompleto</SelectItem>
+                    <SelectItem value="FUND_COMP">Fundamental completo</SelectItem>
+                    <SelectItem value="MEDIO_INC">Médio incompleto</SelectItem>
+                    <SelectItem value="MEDIO_COMP">Médio completo</SelectItem>
+                    <SelectItem value="SUPERIOR_INC">Superior incompleto</SelectItem>
+                    <SelectItem value="SUPERIOR_COMP">Superior completo</SelectItem>
+                    <SelectItem value="POS">Pós-graduação</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Remuneração mensal (R$)"><Input type="number" step="0.01" min={0} value={form.vitima_remuneracao} onChange={e => set("vitima_remuneracao", e.target.value)} /></Field>
+              <Field label="CTPS (nº/série/UF)"><Input value={form.vitima_ctps} onChange={e => set("vitima_ctps", e.target.value)} placeholder="123456 / 001 / AM" /></Field>
+              <Field label="RG"><Input value={form.vitima_rg} onChange={e => set("vitima_rg", e.target.value)} /></Field>
+              <Field label="PIS / PASEP / NIT"><Input value={form.vitima_pis} onChange={e => set("vitima_pis", e.target.value)} /></Field>
+              <Field label="Telefone"><Input value={form.vitima_telefone} onChange={e => set("vitima_telefone", e.target.value)} placeholder="(00) 00000-0000" /></Field>
+              <Field label="CBO"><Input value={form.vitima_cbo} onChange={e => set("vitima_cbo", e.target.value)} placeholder="Ex.: 7152-10" /></Field>
+              <Field label="Filiação previdenciária">
+                <Select value={form.vitima_filiacao || undefined} onValueChange={v => set("vitima_filiacao", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EMPREGADO">Empregado</SelectItem>
+                    <SelectItem value="TRAB_AVULSO">Trabalhador avulso</SelectItem>
+                    <SelectItem value="SEGURADO_ESPECIAL">Segurado especial</SelectItem>
+                    <SelectItem value="MEDICO_RESIDENTE">Médico residente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Área">
+                <Select value={form.vitima_area || undefined} onValueChange={v => set("vitima_area", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="URBANA">Urbana</SelectItem>
+                    <SelectItem value="RURAL">Rural</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Aposentado?">
+                <div className="flex items-center gap-2 h-9">
+                  <input id="apos-check" type="checkbox" checked={!!form.vitima_aposentado} onChange={e => set("vitima_aposentado", e.target.checked)} className="h-4 w-4" />
+                  <Label htmlFor="apos-check" className="text-sm font-normal cursor-pointer">Sim</Label>
+                </div>
+              </Field>
+            </div>
+          </div>
         </div>
 
         <div className="border-t pt-3 mt-1">
