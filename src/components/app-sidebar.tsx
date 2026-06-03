@@ -52,6 +52,7 @@ import {
   Flame,
   BookOpenCheck,
   FileSignature,
+  ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -102,6 +103,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
     items: [
       { to: "/app/ncs", label: "Não Conformidades", icon: AlertOctagon },
       { to: "/app/incidentes", label: "Incidentes / Investigação", icon: AlertTriangle },
+      { to: "/app/acidentes", label: "Acidentes de Trabalho", icon: ShieldAlert },
       { to: "/app/acoes", label: "Plano de Ações (5W2H)", icon: ListChecks },
     ],
   },
