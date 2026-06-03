@@ -22,7 +22,6 @@ import { Route as AppTrainingsRouteImport } from './routes/app.trainings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppPtesRouteImport } from './routes/app.ptes'
 import { Route as AppPgrRouteImport } from './routes/app.pgr'
-import { Route as AppPainelRouteImport } from './routes/app.painel'
 import { Route as AppOssRouteImport } from './routes/app.oss'
 import { Route as AppNcsRouteImport } from './routes/app.ncs'
 import { Route as AppMatrizTreinamentoRouteImport } from './routes/app.matriz-treinamento'
@@ -133,11 +132,6 @@ const AppPtesRoute = AppPtesRouteImport.update({
 const AppPgrRoute = AppPgrRouteImport.update({
   id: '/pgr',
   path: '/pgr',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPainelRoute = AppPainelRouteImport.update({
-  id: '/painel',
-  path: '/painel',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOssRoute = AppOssRouteImport.update({
@@ -400,7 +394,6 @@ export interface FileRoutesByFullPath {
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
   '/app/oss': typeof AppOssRouteWithChildren
-  '/app/painel': typeof AppPainelRoute
   '/app/pgr': typeof AppPgrRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -459,7 +452,6 @@ export interface FileRoutesByTo {
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
-  '/app/painel': typeof AppPainelRoute
   '/app/pgr': typeof AppPgrRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -522,7 +514,6 @@ export interface FileRoutesById {
   '/app/matriz-treinamento': typeof AppMatrizTreinamentoRoute
   '/app/ncs': typeof AppNcsRoute
   '/app/oss': typeof AppOssRouteWithChildren
-  '/app/painel': typeof AppPainelRoute
   '/app/pgr': typeof AppPgrRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
@@ -586,7 +577,6 @@ export interface FileRouteTypes {
     | '/app/matriz-treinamento'
     | '/app/ncs'
     | '/app/oss'
-    | '/app/painel'
     | '/app/pgr'
     | '/app/ptes'
     | '/app/roles'
@@ -645,7 +635,6 @@ export interface FileRouteTypes {
     | '/app/matriz-riscos'
     | '/app/matriz-treinamento'
     | '/app/ncs'
-    | '/app/painel'
     | '/app/pgr'
     | '/app/ptes'
     | '/app/roles'
@@ -707,7 +696,6 @@ export interface FileRouteTypes {
     | '/app/matriz-treinamento'
     | '/app/ncs'
     | '/app/oss'
-    | '/app/painel'
     | '/app/pgr'
     | '/app/ptes'
     | '/app/roles'
@@ -850,13 +838,6 @@ declare module '@tanstack/react-router' {
       path: '/pgr'
       fullPath: '/app/pgr'
       preLoaderRoute: typeof AppPgrRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/painel': {
-      id: '/app/painel'
-      path: '/painel'
-      fullPath: '/app/painel'
-      preLoaderRoute: typeof AppPainelRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/oss': {
@@ -1230,7 +1211,6 @@ interface AppRouteChildren {
   AppMatrizTreinamentoRoute: typeof AppMatrizTreinamentoRoute
   AppNcsRoute: typeof AppNcsRoute
   AppOssRoute: typeof AppOssRouteWithChildren
-  AppPainelRoute: typeof AppPainelRoute
   AppPgrRoute: typeof AppPgrRoute
   AppPtesRoute: typeof AppPtesRoute
   AppRolesRoute: typeof AppRolesRoute
@@ -1280,7 +1260,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppMatrizTreinamentoRoute: AppMatrizTreinamentoRoute,
   AppNcsRoute: AppNcsRoute,
   AppOssRoute: AppOssRouteWithChildren,
-  AppPainelRoute: AppPainelRoute,
   AppPgrRoute: AppPgrRoute,
   AppPtesRoute: AppPtesRoute,
   AppRolesRoute: AppRolesRoute,
@@ -1332,3 +1311,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
