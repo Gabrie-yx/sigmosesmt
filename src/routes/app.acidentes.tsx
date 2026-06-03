@@ -16,7 +16,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus, AlertTriangle, Trophy, CalendarClock, Activity, ShieldAlert, Skull,
   TrendingDown, TrendingUp, Clock, Hash, Users, Calculator, FileDown,
+  Eye, Pencil, Trash2,
 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { CorpoHumanoAcidentes } from "@/components/corpo-humano-acidentes";
@@ -59,6 +64,23 @@ function AcidentesPage() {
   const [tab, setTab] = useState("painel");
   const [novoOpen, setNovoOpen] = useState(false);
   const [hhtOpen, setHhtOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [viewing, setViewing] = useState<any>(null);
+  const [deleting, setDeleting] = useState<any>(null);
+
+  const delMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("acidentes_trabalho").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Acidente excluído.");
+      setDeleting(null);
+      qc.invalidateQueries({ queryKey: ["acidentes"] });
+      qc.invalidateQueries({ queryKey: ["dias-sem-acidente"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Erro ao excluir."),
+  });
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-acidentes"],
@@ -350,11 +372,12 @@ function AcidentesPage() {
                     <TableHead className="text-right">Dias perd.</TableHead>
                     <TableHead>Parte atingida</TableHead>
                     <TableHead>CAT</TableHead>
+                    <TableHead className="w-[120px] text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {acidentes.length === 0 ? (
-                    <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum acidente registrado.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum acidente registrado.</TableCell></TableRow>
                   ) : acidentes.map(a => {
                     const emp = companies.find(c => c.id === a.company_id);
                     return (
@@ -371,6 +394,19 @@ function AcidentesPage() {
                         <TableCell className="text-right tabular-nums">{a.dias_perdidos || 0}</TableCell>
                         <TableCell className="text-sm">{a.parte_corpo_atingida || "—"}</TableCell>
                         <TableCell className="text-sm font-mono">{a.numero_cat || "—"}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setViewing(a)} title="Ver detalhes">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(a)} title="Editar">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setDeleting(a)} title="Excluir">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -426,6 +462,54 @@ function AcidentesPage() {
           qc.invalidateQueries({ queryKey: ["dias-sem-acidente"] });
         }}
       />
+      <NovoAcidenteDialog
+        open={!!editing}
+        onOpenChange={(o: boolean) => { if (!o) setEditing(null); }}
+        companies={companies}
+        userId={user?.id}
+        initial={editing}
+        onSaved={() => {
+          setEditing(null);
+          qc.invalidateQueries({ queryKey: ["acidentes"] });
+          qc.invalidateQueries({ queryKey: ["dias-sem-acidente"] });
+        }}
+      />
+      <VerAcidenteDialog
+        acidente={viewing}
+        companies={companies}
+        onOpenChange={(o: boolean) => { if (!o) setViewing(null); }}
+        onEdit={() => { setEditing(viewing); setViewing(null); }}
+      />
+      <AlertDialog open={!!deleting} onOpenChange={(o) => { if (!o) setDeleting(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir acidente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleting && (
+                <>
+                  Esta ação é permanente. O acidente de <strong>{deleting.vitima_nome}</strong> em{" "}
+                  <strong>{formatDateBR(deleting.data_acidente)}</strong> será removido.
+                  {(deleting.tipo === "COM_AFASTAMENTO" || deleting.tipo === "FATAL") && (
+                    <span className="block mt-2 text-amber-700">
+                      ⚠ A NC gerada automaticamente <em>não</em> será excluída — remova manualmente em Não Conformidades se necessário.
+                    </span>
+                  )}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={(e) => { e.preventDefault(); if (deleting) delMut.mutate(deleting.id); }}
+              disabled={delMut.isPending}
+            >
+              {delMut.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <HhtDialog
         open={hhtOpen}
         onOpenChange={setHhtOpen}
