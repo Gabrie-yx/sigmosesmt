@@ -93,7 +93,7 @@ function AcidentesPage() {
   const { data: dias = [] } = useQuery({
     queryKey: ["dias-sem-acidente"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("fn_dias_sem_acidente", { _company_id: null });
+      const { data, error } = await supabase.rpc("fn_dias_sem_acidente", { _company_id: undefined as unknown as string });
       if (error) throw error;
       return data ?? [];
     },
