@@ -966,6 +966,17 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
               <Field label="Última refeição (hora)">
                 <Input type="time" value={form.ultima_refeicao_hora} onChange={e => set("ultima_refeicao_hora", e.target.value)} />
               </Field>
+              <Field label="Horas trabalhadas antes do acidente">
+                <Input type="number" step="0.5" min={0} max={24} value={form.horas_trabalhadas_antes} onChange={e => set("horas_trabalhadas_antes", e.target.value)} placeholder="Ex.: 4.5" />
+              </Field>
+              <Field label="Último dia trabalhado">
+                <Input type="date" value={form.ultimo_dia_trabalhado} onChange={e => set("ultimo_dia_trabalhado", e.target.value)} />
+              </Field>
+              {form.local_tipo === "ESTAB_TERCEIRO" && (
+                <Field label="CNPJ da prestadora (local de terceiros)">
+                  <Input value={form.cnpj_prestadora} onChange={e => set("cnpj_prestadora", e.target.value)} placeholder="00.000.000/0000-00" />
+                </Field>
+              )}
             </div>
             <Field label="Descrição do acidente *">
               <Textarea rows={3} value={form.descricao} onChange={e => set("descricao", e.target.value)} />
