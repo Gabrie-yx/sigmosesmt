@@ -208,19 +208,6 @@ function AcidentesPage() {
       .slice(0, 8);
   }, [acidentes]);
 
-  const tipoData = useMemo(() => {
-    const map: Record<string, number> = {};
-    acidentes.forEach(a => { map[a.tipo] = (map[a.tipo] || 0) + 1; });
-    return Object.entries(map).map(([k, v]) => ({ name: TIPO_LABEL[k] || k, value: v, key: k }));
-  }, [acidentes]);
-
-  const PIE_COLORS: Record<string, string> = {
-    COM_AFASTAMENTO: "#ef4444",
-    SEM_AFASTAMENTO: "#f59e0b",
-    TRAJETO: "#3b82f6",
-    FATAL: "#0f172a",
-  };
-
   return (
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
