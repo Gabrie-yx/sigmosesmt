@@ -18,13 +18,17 @@ export type Database = {
         Row: {
           agente_causador: string | null
           atestado_data: string | null
+          atestado_hora: string | null
           atestado_medico_crm: string | null
           atestado_medico_nome: string | null
           atestado_medico_uf: string | null
+          atestado_observacoes: string | null
+          atestado_unidade: string | null
           cat_data_emissao: string | null
           causa_basica: string | null
           causa_imediata: string | null
           cid: string | null
+          cnpj_prestadora: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
@@ -35,9 +39,11 @@ export type Database = {
           dias_debitados: number
           dias_perdidos: number
           duracao_tratamento_dias: number | null
+          emitente_email: string | null
           employee_id: string | null
           evidencias_urls: string[]
           hora_acidente: string | null
+          horas_trabalhadas_antes: number | null
           houve_afastamento: boolean | null
           houve_internacao: boolean | null
           houve_obito: boolean | null
@@ -56,28 +62,48 @@ export type Database = {
           observacoes: string | null
           parte_corpo_atingida: string | null
           registro_policial: boolean | null
+          sera_afastado: boolean | null
           situacao_geradora: string | null
           testemunhas: string | null
           tipo: Database["public"]["Enums"]["tipo_acidente"]
           tipo_cat: string | null
           turno: Database["public"]["Enums"]["turno_acidente"] | null
           ultima_refeicao_hora: string | null
+          ultimo_dia_trabalhado: string | null
           updated_at: string
+          vitima_aposentado: boolean | null
+          vitima_area: string | null
           vitima_cargo: string | null
+          vitima_cbo: string | null
+          vitima_ctps: string | null
+          vitima_data_nascimento: string | null
+          vitima_estado_civil: string | null
+          vitima_filiacao: string | null
+          vitima_grau_instrucao: string | null
           vitima_matricula: string | null
           vitima_nome: string
+          vitima_nome_mae: string | null
+          vitima_pis: string | null
+          vitima_remuneracao: number | null
+          vitima_rg: string | null
           vitima_setor: string | null
+          vitima_sexo: string | null
+          vitima_telefone: string | null
         }
         Insert: {
           agente_causador?: string | null
           atestado_data?: string | null
+          atestado_hora?: string | null
           atestado_medico_crm?: string | null
           atestado_medico_nome?: string | null
           atestado_medico_uf?: string | null
+          atestado_observacoes?: string | null
+          atestado_unidade?: string | null
           cat_data_emissao?: string | null
           causa_basica?: string | null
           causa_imediata?: string | null
           cid?: string | null
+          cnpj_prestadora?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -88,9 +114,11 @@ export type Database = {
           dias_debitados?: number
           dias_perdidos?: number
           duracao_tratamento_dias?: number | null
+          emitente_email?: string | null
           employee_id?: string | null
           evidencias_urls?: string[]
           hora_acidente?: string | null
+          horas_trabalhadas_antes?: number | null
           houve_afastamento?: boolean | null
           houve_internacao?: boolean | null
           houve_obito?: boolean | null
@@ -109,28 +137,48 @@ export type Database = {
           observacoes?: string | null
           parte_corpo_atingida?: string | null
           registro_policial?: boolean | null
+          sera_afastado?: boolean | null
           situacao_geradora?: string | null
           testemunhas?: string | null
           tipo?: Database["public"]["Enums"]["tipo_acidente"]
           tipo_cat?: string | null
           turno?: Database["public"]["Enums"]["turno_acidente"] | null
           ultima_refeicao_hora?: string | null
+          ultimo_dia_trabalhado?: string | null
           updated_at?: string
+          vitima_aposentado?: boolean | null
+          vitima_area?: string | null
           vitima_cargo?: string | null
+          vitima_cbo?: string | null
+          vitima_ctps?: string | null
+          vitima_data_nascimento?: string | null
+          vitima_estado_civil?: string | null
+          vitima_filiacao?: string | null
+          vitima_grau_instrucao?: string | null
           vitima_matricula?: string | null
           vitima_nome: string
+          vitima_nome_mae?: string | null
+          vitima_pis?: string | null
+          vitima_remuneracao?: number | null
+          vitima_rg?: string | null
           vitima_setor?: string | null
+          vitima_sexo?: string | null
+          vitima_telefone?: string | null
         }
         Update: {
           agente_causador?: string | null
           atestado_data?: string | null
+          atestado_hora?: string | null
           atestado_medico_crm?: string | null
           atestado_medico_nome?: string | null
           atestado_medico_uf?: string | null
+          atestado_observacoes?: string | null
+          atestado_unidade?: string | null
           cat_data_emissao?: string | null
           causa_basica?: string | null
           causa_imediata?: string | null
           cid?: string | null
+          cnpj_prestadora?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -141,9 +189,11 @@ export type Database = {
           dias_debitados?: number
           dias_perdidos?: number
           duracao_tratamento_dias?: number | null
+          emitente_email?: string | null
           employee_id?: string | null
           evidencias_urls?: string[]
           hora_acidente?: string | null
+          horas_trabalhadas_antes?: number | null
           houve_afastamento?: boolean | null
           houve_internacao?: boolean | null
           houve_obito?: boolean | null
@@ -162,17 +212,33 @@ export type Database = {
           observacoes?: string | null
           parte_corpo_atingida?: string | null
           registro_policial?: boolean | null
+          sera_afastado?: boolean | null
           situacao_geradora?: string | null
           testemunhas?: string | null
           tipo?: Database["public"]["Enums"]["tipo_acidente"]
           tipo_cat?: string | null
           turno?: Database["public"]["Enums"]["turno_acidente"] | null
           ultima_refeicao_hora?: string | null
+          ultimo_dia_trabalhado?: string | null
           updated_at?: string
+          vitima_aposentado?: boolean | null
+          vitima_area?: string | null
           vitima_cargo?: string | null
+          vitima_cbo?: string | null
+          vitima_ctps?: string | null
+          vitima_data_nascimento?: string | null
+          vitima_estado_civil?: string | null
+          vitima_filiacao?: string | null
+          vitima_grau_instrucao?: string | null
           vitima_matricula?: string | null
           vitima_nome?: string
+          vitima_nome_mae?: string | null
+          vitima_pis?: string | null
+          vitima_remuneracao?: number | null
+          vitima_rg?: string | null
           vitima_setor?: string | null
+          vitima_sexo?: string | null
+          vitima_telefone?: string | null
         }
         Relationships: [
           {
