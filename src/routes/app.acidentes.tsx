@@ -547,6 +547,28 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
     testemunhas: "",
     data_retorno: "",
     evidencias_urls: [] as string[],
+    // ===== Campos CAT / eSocial S-2210 =====
+    tipo_cat: "INICIAL",
+    iniciativa_cat: "EMPREGADOR",
+    cat_data_emissao: "",
+    houve_afastamento: false,
+    houve_internacao: false,
+    houve_obito: false,
+    data_obito: "",
+    ultima_refeicao_hora: "",
+    registro_policial: false,
+    numero_bo: "",
+    lateralidade: "NAO_APLICA",
+    situacao_geradora: "",
+    duracao_tratamento_dias: 0,
+    atestado_data: "",
+    atestado_medico_nome: "",
+    atestado_medico_crm: "",
+    atestado_medico_uf: "",
+    local_tipo: "ESTAB_EMPREGADOR",
+    local_cep: "",
+    local_municipio: "",
+    local_uf: "",
   };
   const [form, setForm] = useState<any>(defaults);
   const [uploading, setUploading] = useState(false);
