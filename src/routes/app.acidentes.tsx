@@ -28,7 +28,7 @@ import { CorpoHumanoAcidentes } from "@/components/corpo-humano-acidentes";
 import { gerarForSeg09, gerarForSeg10 } from "@/lib/pdf-acidentes";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  LineChart, Line, Legend, PieChart, Pie, Cell,
+  Line, Legend, PieChart, Pie, Cell,
 } from "recharts";
 
 export const Route = createFileRoute("/app/acidentes")({
@@ -887,5 +887,82 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <Label className="text-xs font-medium">{label}</Label>
       {children}
     </div>
+  );
+}
+
+// ============================================================
+// Total por tipo — donuts estilo placar
+// ============================================================
+function TotalPorTipoCard({ acidentes }: { acidentes: any[] }) {
+  const total = acidentes.length;
+  const buckets = [
+    { key: "SEM_AFASTAMENTO", label: "Sem afast." },
+    { key: "COM_AFASTAMENTO", label: "Com afast." },
+    { key: "TRAJETO",         label: "Trajeto" },
+    { key: "FATAL",           label: "Fatal" },
+  ].map(b => {
+    const qtd = acidentes.filter(a => a.tipo === b.key).length;
+    const pct = total > 0 ? Math.round((qtd / total) * 100) : 0;
+    return { ...b, qtd, pct };
+  });
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Total de Acidentes por Tipo</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {total === 0 ? (
+          <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
+            Nenhum acidente registrado.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {buckets.map(b => {
+              const color = TIPO_COLOR[b.key];
+              const data = [
+                { name: "v", value: b.qtd },
+                { name: "r", value: Math.max(total - b.qtd, 0.0001) },
+              ];
+              return (
+                <div key={b.key} className="flex items-center gap-4 p-2 rounded-lg hover:bg-slate-50 transition">
+                  <div className="text-2xl w-8 text-center">{TIPO_ICONS[b.key]}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-slate-800">{b.label}</div>
+                    <div className="text-3xl font-black tabular-nums leading-none mt-0.5" style={{ color }}>
+                      {b.qtd}
+                    </div>
+                  </div>
+                  <div className="relative w-[78px] h-[78px] flex-shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={data}
+                          dataKey="value"
+                          innerRadius={26}
+                          outerRadius={36}
+                          startAngle={90}
+                          endAngle={-270}
+                          stroke="none"
+                        >
+                          <Cell fill={color} />
+                          <Cell fill="#e2e8f0" />
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div
+                      className="absolute inset-0 flex items-center justify-center text-xs font-bold"
+                      style={{ color }}
+                    >
+                      {b.pct}%
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
