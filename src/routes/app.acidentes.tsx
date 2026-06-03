@@ -15,11 +15,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus, AlertTriangle, Trophy, CalendarClock, Activity, ShieldAlert, Skull,
-  TrendingDown, TrendingUp, Clock, Hash, Users, Calculator,
+  TrendingDown, TrendingUp, Clock, Hash, Users, Calculator, FileDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { CorpoHumanoAcidentes } from "@/components/corpo-humano-acidentes";
+import { gerarForSeg09, gerarForSeg10 } from "@/lib/pdf-acidentes";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LineChart, Line, Legend, PieChart, Pie, Cell,
@@ -200,6 +201,33 @@ function AcidentesPage() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setHhtOpen(true)} className="gap-2">
             <Calculator className="h-4 w-4" /> Lançar HHT
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => {
+              gerarForSeg09({
+                ano: new Date().getFullYear(),
+                acidentes: acidentes as any,
+                hht: hhtRows as any,
+              });
+              toast.success("FOR-SEG 09 gerado");
+            }}
+          >
+            <FileDown className="h-4 w-4" /> FOR-SEG 09
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => {
+              gerarForSeg10({
+                empresas: companies as any,
+                dias: dias as any,
+              });
+              toast.success("FOR-SEG 10 gerado");
+            }}
+          >
+            <FileDown className="h-4 w-4" /> FOR-SEG 10
           </Button>
           <Button onClick={() => setNovoOpen(true)} className="gap-2 bg-red-600 hover:bg-red-700">
             <Plus className="h-4 w-4" /> Registrar acidente
