@@ -383,10 +383,19 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         const fmt = (m?.[1] ?? "png").toUpperCase().replace("JPG", "JPEG");
         // Mantém proporção real da imagem
         const props = (doc as any).getImageProperties?.(p.assinaturaDataUrl);
-        const maxH = Math.min(p.assinaturaHeight ?? 14, 14);
-        const maxW = sigColW - 20;
+        // Converte altura do preview (px na tela) em mm proporcionalmente.
+        // Slider vai de 20 a 140 px → mapeia 6mm a 16mm.
+        const previewH = p.assinaturaHeight ?? 80;
+        const maxH = Math.max(6, Math.min(16, 4 + previewH * 0.09));
+        const maxW = sigColW - 16;
         let h = maxH;
         let w = h * 2.5;
+        if (props?.width && props?.height) {
+          const ratio = props.width / props.height;
+          h = maxH;
+          w = h * ratio;
+          if (w > maxW) { w = maxW; h = w / ratio; }
+        }
         if (props?.width && props?.height) {
           const ratio = props.width / props.height;
           h = maxH;
