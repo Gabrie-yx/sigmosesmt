@@ -378,10 +378,34 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     const sigCenterX = margin + sigColW / 2;
     if (p.assinaturaDataUrl) {
       try {
-        const h = Math.min(p.assinaturaHeight ?? 12, 13);
-        const w = h * 2.5;
-        doc.addImage(p.assinaturaDataUrl, "PNG", sigCenterX - w / 2, sigY + 3, w, h, undefined, "FAST");
-      } catch {}
+        // Detecta formato a partir do data URL (PNG / JPEG / WEBP)
+        const m = /^data:image\/(png|jpeg|jpg|webp);base64,/i.exec(p.assinaturaDataUrl);
+        const fmt = (m?.[1] ?? "png").toUpperCase().replace("JPG", "JPEG");
+        // Mantém proporção real da imagem
+        const props = (doc as any).getImageProperties?.(p.assinaturaDataUrl);
+        const maxH = Math.min(p.assinaturaHeight ?? 14, 14);
+        const maxW = sigColW - 20;
+        let h = maxH;
+        let w = h * 2.5;
+        if (props?.width && props?.height) {
+          const ratio = props.width / props.height;
+          h = maxH;
+          w = h * ratio;
+          if (w > maxW) { w = maxW; h = w / ratio; }
+        }
+        doc.addImage(
+          p.assinaturaDataUrl,
+          fmt === "WEBP" ? "PNG" : fmt,
+          sigCenterX - w / 2,
+          sigY + 15 - h,
+          w,
+          h,
+          undefined,
+          "FAST",
+        );
+      } catch (err) {
+        console.error("[hora-extra-pdf] falha ao inserir assinatura:", err);
+      }
     }
     doc.setDrawColor(...brand);
     doc.setLineWidth(0.4);
