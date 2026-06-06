@@ -336,21 +336,40 @@ function AcidentesPage() {
           {/* Evolução mensal */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Evolução mensal — {anoFiltro}</CardTitle>
+              <CardTitle className="text-base">Quantidade de Acidentes por Mês — {anoFiltro}</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={serieMensal}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis dataKey="mes" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar yAxisId="left" dataKey="Acidentes" fill="#f59e0b" radius={[4,4,0,0]} />
-                  <Bar yAxisId="left" dataKey="Com Afast." fill="#ef4444" radius={[4,4,0,0]} />
-                  <Line yAxisId="right" type="monotone" dataKey="TF" stroke="#6366f1" strokeWidth={2} />
-                </BarChart>
+              <ResponsiveContainer width="100%" height={240}>
+                <ComposedChart data={serieMensal} margin={{ top: 24, right: 20, left: 0, bottom: 4 }}>
+                  <defs>
+                    <linearGradient id="grad-acid" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0f766e" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#0f766e" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 12, fill: "#475569" }} axisLine={{ stroke: "#cbd5e1" }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
+                    formatter={(v: any) => [v, "Acidentes"]}
+                  />
+                  <Area type="monotone" dataKey="Acidentes" stroke="none" fill="url(#grad-acid)" />
+                  <Line
+                    type="monotone"
+                    dataKey="Acidentes"
+                    stroke="#0f766e"
+                    strokeWidth={2.5}
+                    dot={{ r: 5, fill: "#0f766e", strokeWidth: 2, stroke: "#fff" }}
+                    activeDot={{ r: 6 }}
+                  >
+                    <LabelList
+                      dataKey="Acidentes"
+                      position="top"
+                      style={{ fontSize: 12, fontWeight: 700, fill: "#0f172a" }}
+                    />
+                  </Line>
+                </ComposedChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
