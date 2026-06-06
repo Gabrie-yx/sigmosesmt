@@ -354,40 +354,43 @@ function AcidentesPage() {
             </CardContent>
           </Card>
 
-          {/* Corpo humano (esq) + Total por tipo (dir) */}
-          <div className="grid lg:grid-cols-2 gap-4">
+          {/* Corpo humano (mais largo) + Total por tipo (lateral compacto) */}
+          <div className="grid lg:grid-cols-[1.6fr_1fr] gap-4">
             <CorpoHumanoAcidentes acidentes={acidentesAno} />
             <TotalPorTipoCard acidentes={acidentesAno} />
           </div>
 
-          {/* Análises complementares */}
-          <div className="grid md:grid-cols-2 gap-4">
+          {/* 3 donuts compactos lado a lado */}
+          <div className="grid md:grid-cols-3 gap-4">
             <DistribuicaoCard
               title="Acidentes por Turno"
               acidentes={acidentesAno}
               accessor={(a) => a.turno || "Não informado"}
-              palette={["#6366f1", "#0ea5e9", "#f59e0b", "#94a3b8"]}
+              palette={["#0f766e", "#0ea5e9", "#f59e0b", "#94a3b8"]}
             />
             <DistribuicaoCard
               title="Acidentes por Horário"
               acidentes={acidentesAno}
               accessor={(a) => faixaHoraria(a.hora_acidente)}
-              palette={["#22c55e", "#eab308", "#f97316", "#ef4444", "#64748b"]}
+              palette={["#0d9488", "#0891b2", "#f59e0b", "#ef4444", "#64748b"]}
             />
+            <StatusInvestigacaoCard acidentes={acidentesAno} />
           </div>
+
+          {/* Top setores + Natureza da lesão (barras horizontais) */}
           <div className="grid md:grid-cols-2 gap-4">
             <TopBarCard
               title="Top Setores com Acidente"
               acidentes={acidentesAno}
               accessor={(a) => a.vitima_setor || "Não informado"}
-              color="#ef4444"
+              color="#0f766e"
               limit={8}
             />
             <TopBarCard
               title="Natureza da Lesão"
               acidentes={acidentesAno}
               accessor={(a) => a.natureza_lesao || "Não informado"}
-              color="#6366f1"
+              color="#0891b2"
               limit={8}
             />
           </div>
