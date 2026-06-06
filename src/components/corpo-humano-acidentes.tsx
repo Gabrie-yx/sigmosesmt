@@ -82,22 +82,21 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
       </CardHeader>
       <CardContent>
         <div className="grid md:grid-cols-[1fr_auto] gap-6 items-center">
-          {/* Bloco do corpo + bolhas/labels */}
-          <div
-            className="relative mx-auto px-20"
-            style={{ width: "100%", maxWidth: 460, aspectRatio: "3 / 4" }}
-          >
-            <div className="absolute inset-0 px-20">
+          {/* Wrapper externo dá espaço lateral pros labels não cortarem */}
+          <div className="mx-auto w-full" style={{ maxWidth: 460 }}>
+            <div
+              className="relative mx-auto"
+              style={{ width: "70%", aspectRatio: "3 / 4" }}
+            >
               <img
                 src={corpoFrente}
                 alt="Diagrama do corpo humano"
-                className="w-full h-full object-contain select-none pointer-events-none"
+                className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none"
                 draggable={false}
               />
-            </div>
 
-            {/* Bolhas + labels para cada parte com ocorrência */}
-            {partesComDados.map(([parte, qtd]) => {
+              {/* Bolhas + labels para cada parte com ocorrência */}
+              {partesComDados.map(([parte, qtd]) => {
               const pos = POSICOES[parte];
               if (!pos) return null;
               const intensity = qtd / max;
@@ -140,7 +139,7 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                   </div>
                 </div>
               );
-            })}
+              })}
             {total === 0 && (
               <div className="absolute inset-0 flex items-end justify-center pb-4 pointer-events-none">
                 <span className="text-xs text-muted-foreground bg-white/80 px-2 py-1 rounded">
@@ -148,6 +147,7 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                 </span>
               </div>
             )}
+            </div>
           </div>
 
           {/* Ranking lateral */}
