@@ -27,7 +27,9 @@ const POSICOES: Record<string, Pos> = {
   "Braço esquerdo":  { x: 0.70, y: 0.36,  side: "right", short: "BRAÇO E" },
   "Mão direita":     { x: 0.22, y: 0.54,  side: "left",  short: "MÃO D" },
   "Mão esquerda":    { x: 0.78, y: 0.54,  side: "right", short: "MÃO E" },
-  "Dedos da mão":    { x: 0.20, y: 0.585, side: "left",  short: "DEDOS MÃO" },
+  "Dedos da mão":          { x: 0.20, y: 0.585, side: "left",  short: "DEDOS MÃO" }, // legado
+  "Dedos da mão direita":  { x: 0.20, y: 0.585, side: "left",  short: "DEDOS MÃO D" },
+  "Dedos da mão esquerda": { x: 0.80, y: 0.585, side: "right", short: "DEDOS MÃO E" },
   "Coxa direita":    { x: 0.43, y: 0.60,  side: "left",  short: "COXA D" },
   "Coxa esquerda":   { x: 0.57, y: 0.60,  side: "right", short: "COXA E" },
   "Joelho direito":  { x: 0.43, y: 0.72,  side: "left",  short: "JOELHO D" },
@@ -36,7 +38,9 @@ const POSICOES: Record<string, Pos> = {
   "Perna esquerda":  { x: 0.57, y: 0.82,  side: "right", short: "PERNA E" },
   "Pé direito":      { x: 0.45, y: 0.955, side: "left",  short: "PÉ D" },
   "Pé esquerdo":     { x: 0.55, y: 0.955, side: "right", short: "PÉ E" },
-  "Dedos do pé":     { x: 0.50, y: 0.985, side: "right", short: "DEDOS PÉ" },
+  "Dedos do pé":          { x: 0.50, y: 0.985, side: "right", short: "DEDOS PÉ" }, // legado
+  "Dedos do pé direito":  { x: 0.42, y: 0.985, side: "left",  short: "DEDOS PÉ D" },
+  "Dedos do pé esquerdo": { x: 0.58, y: 0.985, side: "right", short: "DEDOS PÉ E" },
   "Múltiplas":       { x: 0.50, y: 0.50,  side: "right", short: "MÚLTIPLAS" },
 };
 
@@ -78,20 +82,21 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
       </CardHeader>
       <CardContent>
         <div className="grid md:grid-cols-[1fr_auto] gap-6 items-center">
-          {/* Bloco do corpo + bolhas/labels */}
-          <div
-            className="relative mx-auto"
-            style={{ width: "100%", maxWidth: 320, aspectRatio: "3 / 4" }}
-          >
-            <img
-              src={corpoFrente}
-              alt="Diagrama do corpo humano"
-              className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none"
-              draggable={false}
-            />
+          {/* Wrapper externo dá espaço lateral pros labels não cortarem */}
+          <div className="mx-auto w-full" style={{ maxWidth: 460 }}>
+            <div
+              className="relative mx-auto"
+              style={{ width: "70%", aspectRatio: "3 / 4" }}
+            >
+              <img
+                src={corpoFrente}
+                alt="Diagrama do corpo humano"
+                className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none"
+                draggable={false}
+              />
 
-            {/* Bolhas + labels para cada parte com ocorrência */}
-            {partesComDados.map(([parte, qtd]) => {
+              {/* Bolhas + labels para cada parte com ocorrência */}
+              {partesComDados.map(([parte, qtd]) => {
               const pos = POSICOES[parte];
               if (!pos) return null;
               const intensity = qtd / max;
@@ -134,7 +139,7 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                   </div>
                 </div>
               );
-            })}
+              })}
             {total === 0 && (
               <div className="absolute inset-0 flex items-end justify-center pb-4 pointer-events-none">
                 <span className="text-xs text-muted-foreground bg-white/80 px-2 py-1 rounded">
@@ -142,6 +147,7 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                 </span>
               </div>
             )}
+            </div>
           </div>
 
           {/* Ranking lateral */}

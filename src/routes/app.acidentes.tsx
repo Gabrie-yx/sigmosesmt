@@ -54,8 +54,10 @@ const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov"
 const PARTES_CORPO = [
   "Cabeça","Olho direito","Olho esquerdo","Face","Pescoço","Ombro direito","Ombro esquerdo",
   "Tórax","Abdômen","Coluna","Braço direito","Braço esquerdo","Mão direita","Mão esquerda",
-  "Dedos da mão","Quadril","Coxa direita","Coxa esquerda","Joelho direito","Joelho esquerdo",
-  "Perna direita","Perna esquerda","Pé direito","Pé esquerdo","Dedos do pé","Múltiplas",
+  "Dedos da mão direita","Dedos da mão esquerda",
+  "Quadril","Coxa direita","Coxa esquerda","Joelho direito","Joelho esquerdo",
+  "Perna direita","Perna esquerda","Pé direito","Pé esquerdo",
+  "Dedos do pé direito","Dedos do pé esquerdo","Múltiplas",
 ];
 
 const TIPO_ICONS: Record<string, string> = {
@@ -80,6 +82,7 @@ function AcidentesPage() {
   const [editing, setEditing] = useState<any>(null);
   const [viewing, setViewing] = useState<any>(null);
   const [deleting, setDeleting] = useState<any>(null);
+  const [anoFiltro, setAnoFiltro] = useState<number>(new Date().getFullYear());
 
   const delMut = useMutation({
     mutationFn: async (id: string) => {
@@ -139,7 +142,7 @@ function AcidentesPage() {
   // ===== KPIs =====
   const kpis = useMemo(() => {
     const now = new Date();
-    const anoAtual = now.getFullYear();
+    const anoAtual = anoFiltro;
     const mesAtual = now.getMonth() + 1;
     const noAno = acidentes.filter(a => new Date(a.data_acidente).getFullYear() === anoAtual);
     const noMes = noAno.filter(a => new Date(a.data_acidente).getMonth() + 1 === mesAtual);
@@ -158,7 +161,7 @@ function AcidentesPage() {
       tf: tf.toFixed(2),
       tg: tg.toFixed(2),
     };
-  }, [acidentes, hhtRows]);
+  }, [acidentes, hhtRows, anoFiltro]);
 
   const placarPrincipal = useMemo(() => {
     if (!dias.length) return { dias_sem_com_afast: null, recorde_com_afast: 0, ultimo_acidente_com_afast: null };
@@ -175,7 +178,7 @@ function AcidentesPage() {
   }, [dias]);
 
   const serieMensal = useMemo(() => {
-    const anoAtual = new Date().getFullYear();
+    const anoAtual = anoFiltro;
     return MESES.map((m, i) => {
       const acidsMes = acidentes.filter(a => {
         const d = new Date(a.data_acidente);
@@ -193,7 +196,20 @@ function AcidentesPage() {
         TF: tf,
       };
     });
-  }, [acidentes, hhtRows]);
+  }, [acidentes, hhtRows, anoFiltro]);
+
+  // Acidentes do ano selecionado — alimenta o corpo humano + total por tipo
+  const acidentesAno = useMemo(
+    () => acidentes.filter(a => new Date(a.data_acidente).getFullYear() === anoFiltro),
+    [acidentes, anoFiltro],
+  );
+
+  // Anos disponíveis (com base nos registros + ano atual)
+  const anosDisponiveis = useMemo(() => {
+    const set = new Set<number>([new Date().getFullYear()]);
+    acidentes.forEach(a => set.add(new Date(a.data_acidente).getFullYear()));
+    return Array.from(set).sort((a, b) => b - a);
+  }, [acidentes]);
 
   return (
     <div className="p-4 md:p-6 space-y-4">
@@ -253,6 +269,23 @@ function AcidentesPage() {
 
         {/* ============ PAINEL ============ */}
         <TabsContent value="painel" className="space-y-4 mt-4">
+          {/* Filtro de ano */}
+          <div className="flex items-center justify-end gap-2">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              Ano
+            </span>
+            <Select value={String(anoFiltro)} onValueChange={(v) => setAnoFiltro(Number(v))}>
+              <SelectTrigger className="w-[110px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {anosDisponiveis.map((y) => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Placar gigante - estilo Toyota */}
           <Card className="bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 text-white border-0 overflow-hidden relative">
             <div className="absolute inset-0 opacity-10" style={{
@@ -302,7 +335,7 @@ function AcidentesPage() {
           {/* Evolução mensal */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Evolução mensal — {new Date().getFullYear()}</CardTitle>
+              <CardTitle className="text-base">Evolução mensal — {anoFiltro}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={260}>
@@ -323,8 +356,8 @@ function AcidentesPage() {
 
           {/* Corpo humano (esq) + Total por tipo (dir) */}
           <div className="grid lg:grid-cols-2 gap-4">
-            <CorpoHumanoAcidentes acidentes={acidentes} />
-            <TotalPorTipoCard acidentes={acidentes} />
+            <CorpoHumanoAcidentes acidentes={acidentesAno} />
+            <TotalPorTipoCard acidentes={acidentesAno} />
           </div>
         </TabsContent>
 
