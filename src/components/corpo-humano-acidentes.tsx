@@ -1,55 +1,66 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import corpoFrente from "@/assets/corpo-humano-frente.png";
+import corpoCostas from "@/assets/corpo-humano-costas.png";
 
 type Acid = { parte_corpo_atingida?: string | null; tipo?: string };
 
 /**
  * Posições normalizadas (0–1) de cada parte do corpo sobre a imagem.
  * x = horizontal (0 esquerda, 1 direita)  /  y = vertical (0 topo, 1 base)
- * side = onde renderizar o label (left ou right)
+ * side  = onde renderizar o label (left ou right)
+ * view  = em qual figura (frente ou costas) o marcador aparece
  */
-type Pos = { x: number; y: number; side: "left" | "right"; short: string };
-
-const POSICOES: Record<string, Pos> = {
-  "Cabeça":          { x: 0.50, y: 0.085, side: "left",  short: "CRÂNIO" },
-  "Olho direito":    { x: 0.47, y: 0.105, side: "left",  short: "OLHO D" },
-  "Olho esquerdo":   { x: 0.53, y: 0.105, side: "right", short: "OLHO E" },
-  "Face":            { x: 0.50, y: 0.135, side: "right", short: "FACE" },
-  "Pescoço":         { x: 0.50, y: 0.18,  side: "left",  short: "PESCOÇO" },
-  "Ombro direito":   { x: 0.38, y: 0.23,  side: "left",  short: "OMBRO D" },
-  "Ombro esquerdo":  { x: 0.62, y: 0.23,  side: "right", short: "OMBRO E" },
-  "Tórax":           { x: 0.50, y: 0.30,  side: "right", short: "TÓRAX" },
-  "Abdômen":         { x: 0.50, y: 0.41,  side: "left",  short: "ABDÔMEN" },
-  "Coluna":          { x: 0.50, y: 0.36,  side: "right", short: "REG. LOMBAR" },
-  "Quadril":         { x: 0.50, y: 0.50,  side: "right", short: "QUADRIL" },
-  "Braço direito":   { x: 0.30, y: 0.36,  side: "left",  short: "BRAÇO D" },
-  "Braço esquerdo":  { x: 0.70, y: 0.36,  side: "right", short: "BRAÇO E" },
-  "Mão direita":     { x: 0.22, y: 0.54,  side: "left",  short: "MÃO D" },
-  "Mão esquerda":    { x: 0.78, y: 0.54,  side: "right", short: "MÃO E" },
-  "Dedos da mão":          { x: 0.20, y: 0.585, side: "left",  short: "DEDOS MÃO" }, // legado
-  "Dedos da mão direita":  { x: 0.20, y: 0.585, side: "left",  short: "DEDOS MÃO D" },
-  "Dedos da mão esquerda": { x: 0.80, y: 0.585, side: "right", short: "DEDOS MÃO E" },
-  "Coxa direita":    { x: 0.43, y: 0.60,  side: "left",  short: "COXA D" },
-  "Coxa esquerda":   { x: 0.57, y: 0.60,  side: "right", short: "COXA E" },
-  "Joelho direito":  { x: 0.43, y: 0.72,  side: "left",  short: "JOELHO D" },
-  "Joelho esquerdo": { x: 0.57, y: 0.72,  side: "right", short: "JOELHO E" },
-  "Perna direita":   { x: 0.43, y: 0.82,  side: "left",  short: "PERNA D" },
-  "Perna esquerda":  { x: 0.57, y: 0.82,  side: "right", short: "PERNA E" },
-  "Pé direito":      { x: 0.45, y: 0.955, side: "left",  short: "PÉ D" },
-  "Pé esquerdo":     { x: 0.55, y: 0.955, side: "right", short: "PÉ E" },
-  "Dedos do pé":          { x: 0.50, y: 0.985, side: "right", short: "DEDOS PÉ" }, // legado
-  "Dedos do pé direito":  { x: 0.42, y: 0.985, side: "left",  short: "DEDOS PÉ D" },
-  "Dedos do pé esquerdo": { x: 0.58, y: 0.985, side: "right", short: "DEDOS PÉ E" },
-  "Múltiplas":       { x: 0.50, y: 0.50,  side: "right", short: "MÚLTIPLAS" },
+type Pos = {
+  x: number;
+  y: number;
+  side: "left" | "right";
+  short: string;
+  view: "frente" | "costas";
 };
 
-/** Cor da bolha conforme intensidade (0–1): amarelo → laranja → vermelho */
-function bubbleColor(intensity: number) {
-  if (intensity < 0.25) return "rgba(250, 204, 21, 0.55)";   // amarelo
-  if (intensity < 0.5)  return "rgba(251, 146, 60, 0.6)";    // laranja claro
-  if (intensity < 0.75) return "rgba(249, 115, 22, 0.65)";   // laranja
-  return "rgba(239, 68, 68, 0.7)";                            // vermelho
+const POSICOES: Record<string, Pos> = {
+  // ====== FRENTE ======
+  "Cabeça":          { x: 0.50, y: 0.10, side: "right", short: "CRÂNIO",   view: "frente" },
+  "Olho direito":    { x: 0.46, y: 0.12, side: "left",  short: "OLHO D",   view: "frente" },
+  "Olho esquerdo":   { x: 0.54, y: 0.12, side: "right", short: "OLHO E",   view: "frente" },
+  "Face":            { x: 0.50, y: 0.15, side: "right", short: "FACE",     view: "frente" },
+  "Tórax":           { x: 0.50, y: 0.27, side: "right", short: "TÓRAX",    view: "frente" },
+  "Abdômen":         { x: 0.50, y: 0.38, side: "right", short: "ABDÔMEN",  view: "frente" },
+  "Quadril":         { x: 0.50, y: 0.48, side: "right", short: "QUADRIL",  view: "frente" },
+  "Mão direita":     { x: 0.30, y: 0.58, side: "left",  short: "MÃO D",    view: "frente" },
+  "Mão esquerda":    { x: 0.70, y: 0.58, side: "right", short: "MÃO E",    view: "frente" },
+  "Dedos da mão":          { x: 0.28, y: 0.62, side: "left",  short: "DEDOS MÃO",   view: "frente" },
+  "Dedos da mão direita":  { x: 0.28, y: 0.62, side: "left",  short: "DEDOS MÃO D", view: "frente" },
+  "Dedos da mão esquerda": { x: 0.72, y: 0.62, side: "right", short: "DEDOS MÃO E", view: "frente" },
+  "Joelho direito":  { x: 0.44, y: 0.74, side: "left",  short: "JOELHO D", view: "frente" },
+  "Joelho esquerdo": { x: 0.56, y: 0.74, side: "right", short: "JOELHO E", view: "frente" },
+  "Pé direito":      { x: 0.45, y: 0.96, side: "left",  short: "PÉ D",     view: "frente" },
+  "Pé esquerdo":     { x: 0.55, y: 0.96, side: "right", short: "PÉ E",     view: "frente" },
+  "Dedos do pé":          { x: 0.50, y: 0.99, side: "right", short: "DEDOS PÉ",   view: "frente" },
+  "Dedos do pé direito":  { x: 0.44, y: 0.99, side: "left",  short: "DEDOS PÉ D", view: "frente" },
+  "Dedos do pé esquerdo": { x: 0.56, y: 0.99, side: "right", short: "DEDOS PÉ E", view: "frente" },
+  "Múltiplas":       { x: 0.50, y: 0.40, side: "right", short: "MÚLTIPLAS", view: "frente" },
+
+  // ====== COSTAS ======
+  "Pescoço":         { x: 0.50, y: 0.13, side: "left",  short: "PESCOÇO",  view: "costas" },
+  "Ombro direito":   { x: 0.40, y: 0.21, side: "left",  short: "OMBRO D",  view: "costas" },
+  "Ombro esquerdo":  { x: 0.60, y: 0.21, side: "right", short: "OMBRO E",  view: "costas" },
+  "Braço direito":   { x: 0.32, y: 0.34, side: "left",  short: "BRAÇO D",  view: "costas" },
+  "Braço esquerdo":  { x: 0.68, y: 0.34, side: "right", short: "BRAÇO E",  view: "costas" },
+  "Coluna":          { x: 0.50, y: 0.32, side: "right", short: "COLUNA",   view: "costas" },
+  "Coxa direita":    { x: 0.44, y: 0.60, side: "left",  short: "COXA D",   view: "costas" },
+  "Coxa esquerda":   { x: 0.56, y: 0.60, side: "right", short: "COXA E",   view: "costas" },
+  "Perna direita":   { x: 0.44, y: 0.82, side: "left",  short: "PERNA D",  view: "costas" },
+  "Perna esquerda":  { x: 0.56, y: 0.82, side: "right", short: "PERNA E",  view: "costas" },
+};
+
+/** Cor sólida da bolha conforme intensidade (0–1): amarelo → laranja → vermelho */
+function bubbleSolid(intensity: number) {
+  if (intensity < 0.25) return "#facc15"; // amarelo
+  if (intensity < 0.5)  return "#fb923c"; // laranja claro
+  if (intensity < 0.75) return "#f97316"; // laranja
+  return "#ef4444";                        // vermelho
 }
 
 export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
@@ -70,6 +81,75 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
     .filter(([k]) => POSICOES[k])
     .sort((a, b) => b[1] - a[1]);
 
+  const partesFrente = partesComDados.filter(([k]) => POSICOES[k].view === "frente");
+  const partesCostas = partesComDados.filter(([k]) => POSICOES[k].view === "costas");
+
+  const renderFigure = (
+    label: string,
+    src: string,
+    parts: [string, number][],
+  ) => (
+    <div className="flex flex-col items-center">
+      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+        {label}
+      </div>
+      <div className="relative w-full px-8" style={{ maxWidth: 320 }}>
+        <div className="relative mx-auto w-full" style={{ aspectRatio: "3 / 4" }}>
+          <img
+            src={src}
+            alt={`Diagrama do corpo humano — ${label}`}
+            className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none"
+            draggable={false}
+          />
+          {parts.map(([parte, qtd]) => {
+            const pos = POSICOES[parte];
+            if (!pos) return null;
+            const intensity = qtd / max;
+            const pct = Math.round((qtd / total) * 100);
+            const size = 18 + intensity * 22; // 18–40 px (compacto e preciso)
+            const color = bubbleSolid(intensity);
+            return (
+              <div key={parte}>
+                <div
+                  className="absolute rounded-full pointer-events-none ring-2 ring-white shadow"
+                  style={{
+                    left: `${pos.x * 100}%`,
+                    top: `${pos.y * 100}%`,
+                    width: size,
+                    height: size,
+                    transform: "translate(-50%, -50%)",
+                    background: color,
+                    opacity: 0.92,
+                  }}
+                  title={`${parte}: ${qtd} (${pct}%)`}
+                />
+                <div
+                  className="absolute pointer-events-none select-none"
+                  style={{
+                    left:
+                      pos.side === "left"
+                        ? `${pos.x * 100 - 6}%`
+                        : `${pos.x * 100 + 6}%`,
+                    top: `${pos.y * 100}%`,
+                    transform: `translate(${pos.side === "left" ? "-100%" : "0"}, -50%)`,
+                    textAlign: pos.side === "left" ? "right" : "left",
+                  }}
+                >
+                  <div className="text-[9px] font-bold text-slate-800 leading-tight whitespace-nowrap">
+                    {pos.short}
+                  </div>
+                  <div className="text-[9px] font-semibold text-slate-500 leading-tight">
+                    {pct}%
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -81,65 +161,11 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid md:grid-cols-[1fr_190px] gap-4 items-center">
-          {/* Wrapper externo dá espaço lateral pros labels não cortarem */}
-          <div className="mx-auto w-full px-10" style={{ maxWidth: 560 }}>
-            <div
-              className="relative mx-auto w-full"
-              style={{ aspectRatio: "3 / 4" }}
-            >
-              <img
-                src={corpoFrente}
-                alt="Diagrama do corpo humano"
-                className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none"
-                draggable={false}
-              />
-
-              {/* Bolhas + labels para cada parte com ocorrência */}
-              {partesComDados.map(([parte, qtd]) => {
-              const pos = POSICOES[parte];
-              if (!pos) return null;
-              const intensity = qtd / max;
-              const pct = Math.round((qtd / total) * 100);
-              const size = 32 + intensity * 46; // 32–78 px
-
-              return (
-                <div key={parte}>
-                  {/* Bolha centralizada no ponto */}
-                  <div
-                    className="absolute rounded-full pointer-events-none transition-all"
-                    style={{
-                      left: `${pos.x * 100}%`,
-                      top: `${pos.y * 100}%`,
-                      width: size,
-                      height: size,
-                      transform: "translate(-50%, -50%)",
-                      background: `radial-gradient(circle, ${bubbleColor(intensity)} 0%, ${bubbleColor(intensity).replace(/[\d.]+\)$/, "0)")} 70%)`,
-                      filter: "blur(0.5px)",
-                    }}
-                    title={`${parte}: ${qtd} (${pct}%)`}
-                  />
-
-                  {/* Label com seta sutil */}
-                  <div
-                    className="absolute pointer-events-none select-none"
-                    style={{
-                      left: pos.side === "left" ? `${pos.x * 100 - 8}%` : `${pos.x * 100 + 8}%`,
-                      top: `${pos.y * 100}%`,
-                      transform: `translate(${pos.side === "left" ? "-100%" : "0"}, -50%)`,
-                      textAlign: pos.side === "left" ? "right" : "left",
-                    }}
-                  >
-                    <div className="text-[9px] font-bold text-slate-800 leading-tight whitespace-nowrap">
-                      {pos.short}
-                    </div>
-                    <div className="text-[9px] font-semibold text-slate-500 leading-tight">
-                      {pct}%
-                    </div>
-                  </div>
-                </div>
-              );
-              })}
+        <div className="space-y-4">
+          {/* Duas figuras lado a lado: frente + costas */}
+          <div className="grid grid-cols-2 gap-2 relative">
+            {renderFigure("Frente", corpoFrente, partesFrente)}
+            {renderFigure("Costas", corpoCostas, partesCostas)}
             {total === 0 && (
               <div className="absolute inset-0 flex items-end justify-center pb-4 pointer-events-none">
                 <span className="text-xs text-muted-foreground bg-white/80 px-2 py-1 rounded">
@@ -147,20 +173,19 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                 </span>
               </div>
             )}
-            </div>
           </div>
 
-          {/* Ranking lateral */}
-          <div className="w-full md:w-[220px] md:border-l md:pl-6 border-t md:border-t-0 pt-4 md:pt-0">
-              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Ranking
+          {/* Ranking compacto em 2 colunas (preenche o espaço inferior) */}
+          <div className="border-t pt-3">
+            <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Ranking das partes atingidas
+            </div>
+            {partesComDados.length === 0 ? (
+              <div className="text-xs text-muted-foreground italic">
+                Nenhuma parte do corpo identificada ainda.
               </div>
-              {partesComDados.length === 0 ? (
-                <div className="text-xs text-muted-foreground italic">
-                  Nenhuma parte do corpo identificada ainda.
-                </div>
-              ) : (
-              <div className="space-y-1.5">
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
                 {partesComDados.slice(0, 10).map(([parte, qtd]) => {
                   const pct = Math.round((qtd / total) * 100);
                   const intensity = qtd / max;
@@ -169,7 +194,7 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                       <div className="flex items-center gap-2 min-w-0">
                         <span
                           className="inline-block h-2.5 w-2.5 rounded-full flex-shrink-0"
-                          style={{ background: bubbleColor(intensity).replace(/[\d.]+\)$/, "0.85)") }}
+                          style={{ background: bubbleSolid(intensity) }}
                         />
                         <span className="text-slate-700 truncate text-xs">{parte}</span>
                       </div>
@@ -180,9 +205,9 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                   );
                 })}
               </div>
-              )}
-            </div>
+            )}
           </div>
+        </div>
       </CardContent>
     </Card>
   );
