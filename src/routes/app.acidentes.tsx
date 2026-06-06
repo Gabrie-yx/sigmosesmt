@@ -54,8 +54,10 @@ const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov"
 const PARTES_CORPO = [
   "Cabeça","Olho direito","Olho esquerdo","Face","Pescoço","Ombro direito","Ombro esquerdo",
   "Tórax","Abdômen","Coluna","Braço direito","Braço esquerdo","Mão direita","Mão esquerda",
-  "Dedos da mão","Quadril","Coxa direita","Coxa esquerda","Joelho direito","Joelho esquerdo",
-  "Perna direita","Perna esquerda","Pé direito","Pé esquerdo","Dedos do pé","Múltiplas",
+  "Dedos da mão direita","Dedos da mão esquerda",
+  "Quadril","Coxa direita","Coxa esquerda","Joelho direito","Joelho esquerdo",
+  "Perna direita","Perna esquerda","Pé direito","Pé esquerdo",
+  "Dedos do pé direito","Dedos do pé esquerdo","Múltiplas",
 ];
 
 const TIPO_ICONS: Record<string, string> = {
