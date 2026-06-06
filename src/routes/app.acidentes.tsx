@@ -1567,8 +1567,8 @@ function DistribuicaoCard({
             Sem registros no período.
           </div>
         ) : (
-          <div className="grid grid-cols-[auto_1fr] gap-4 items-center">
-            <div className="relative w-[140px] h-[140px]">
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative w-[130px] h-[130px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -1591,7 +1591,7 @@ function DistribuicaoCard({
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">acid.</div>
               </div>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1 w-full">
               {data.map((d, i) => (
                 <div key={d.name} className="flex items-center justify-between text-xs gap-2">
                   <div className="flex items-center gap-2 min-w-0">
