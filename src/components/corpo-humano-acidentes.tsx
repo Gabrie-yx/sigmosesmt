@@ -83,10 +83,10 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
       <CardContent>
         <div className="grid md:grid-cols-[1fr_auto] gap-6 items-center">
           {/* Wrapper externo dá espaço lateral pros labels não cortarem */}
-          <div className="mx-auto w-full" style={{ maxWidth: 460 }}>
+          <div className="mx-auto w-full px-14" style={{ maxWidth: 460 }}>
             <div
-              className="relative mx-auto"
-              style={{ width: "70%", aspectRatio: "3 / 4" }}
+              className="relative mx-auto w-full"
+              style={{ aspectRatio: "3 / 4" }}
             >
               <img
                 src={corpoFrente}
@@ -101,7 +101,7 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
               if (!pos) return null;
               const intensity = qtd / max;
               const pct = Math.round((qtd / total) * 100);
-              const size = 28 + intensity * 42; // 28–70 px (mais compacto)
+              const size = 32 + intensity * 46; // 32–78 px
 
               return (
                 <div key={parte}>
@@ -124,16 +124,16 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                   <div
                     className="absolute pointer-events-none select-none"
                     style={{
-                      left: pos.side === "left" ? `${pos.x * 100 - 14}%` : `${pos.x * 100 + 14}%`,
+                      left: pos.side === "left" ? `${pos.x * 100 - 8}%` : `${pos.x * 100 + 8}%`,
                       top: `${pos.y * 100}%`,
                       transform: `translate(${pos.side === "left" ? "-100%" : "0"}, -50%)`,
                       textAlign: pos.side === "left" ? "right" : "left",
                     }}
                   >
-                    <div className="text-[10px] font-bold text-slate-800 leading-tight whitespace-nowrap">
+                    <div className="text-[9px] font-bold text-slate-800 leading-tight whitespace-nowrap">
                       {pos.short}
                     </div>
-                    <div className="text-[10px] font-semibold text-slate-500 leading-tight">
+                    <div className="text-[9px] font-semibold text-slate-500 leading-tight">
                       {pct}%
                     </div>
                   </div>
