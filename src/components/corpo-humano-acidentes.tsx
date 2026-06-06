@@ -27,7 +27,9 @@ const POSICOES: Record<string, Pos> = {
   "Braço esquerdo":  { x: 0.70, y: 0.36,  side: "right", short: "BRAÇO E" },
   "Mão direita":     { x: 0.22, y: 0.54,  side: "left",  short: "MÃO D" },
   "Mão esquerda":    { x: 0.78, y: 0.54,  side: "right", short: "MÃO E" },
-  "Dedos da mão":    { x: 0.20, y: 0.585, side: "left",  short: "DEDOS MÃO" },
+  "Dedos da mão":          { x: 0.20, y: 0.585, side: "left",  short: "DEDOS MÃO" }, // legado
+  "Dedos da mão direita":  { x: 0.20, y: 0.585, side: "left",  short: "DEDOS MÃO D" },
+  "Dedos da mão esquerda": { x: 0.80, y: 0.585, side: "right", short: "DEDOS MÃO E" },
   "Coxa direita":    { x: 0.43, y: 0.60,  side: "left",  short: "COXA D" },
   "Coxa esquerda":   { x: 0.57, y: 0.60,  side: "right", short: "COXA E" },
   "Joelho direito":  { x: 0.43, y: 0.72,  side: "left",  short: "JOELHO D" },
@@ -36,7 +38,9 @@ const POSICOES: Record<string, Pos> = {
   "Perna esquerda":  { x: 0.57, y: 0.82,  side: "right", short: "PERNA E" },
   "Pé direito":      { x: 0.45, y: 0.955, side: "left",  short: "PÉ D" },
   "Pé esquerdo":     { x: 0.55, y: 0.955, side: "right", short: "PÉ E" },
-  "Dedos do pé":     { x: 0.50, y: 0.985, side: "right", short: "DEDOS PÉ" },
+  "Dedos do pé":          { x: 0.50, y: 0.985, side: "right", short: "DEDOS PÉ" }, // legado
+  "Dedos do pé direito":  { x: 0.42, y: 0.985, side: "left",  short: "DEDOS PÉ D" },
+  "Dedos do pé esquerdo": { x: 0.58, y: 0.985, side: "right", short: "DEDOS PÉ E" },
   "Múltiplas":       { x: 0.50, y: 0.50,  side: "right", short: "MÚLTIPLAS" },
 };
 
