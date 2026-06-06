@@ -354,40 +354,43 @@ function AcidentesPage() {
             </CardContent>
           </Card>
 
-          {/* Corpo humano (esq) + Total por tipo (dir) */}
-          <div className="grid lg:grid-cols-2 gap-4">
+          {/* Corpo humano (mais largo) + Total por tipo (lateral compacto) */}
+          <div className="grid lg:grid-cols-[1.6fr_1fr] gap-4">
             <CorpoHumanoAcidentes acidentes={acidentesAno} />
             <TotalPorTipoCard acidentes={acidentesAno} />
           </div>
 
-          {/* Análises complementares */}
-          <div className="grid md:grid-cols-2 gap-4">
+          {/* 3 donuts compactos lado a lado */}
+          <div className="grid md:grid-cols-3 gap-4">
             <DistribuicaoCard
               title="Acidentes por Turno"
               acidentes={acidentesAno}
               accessor={(a) => a.turno || "Não informado"}
-              palette={["#6366f1", "#0ea5e9", "#f59e0b", "#94a3b8"]}
+              palette={["#0f766e", "#0ea5e9", "#f59e0b", "#94a3b8"]}
             />
             <DistribuicaoCard
               title="Acidentes por Horário"
               acidentes={acidentesAno}
               accessor={(a) => faixaHoraria(a.hora_acidente)}
-              palette={["#22c55e", "#eab308", "#f97316", "#ef4444", "#64748b"]}
+              palette={["#0d9488", "#0891b2", "#f59e0b", "#ef4444", "#64748b"]}
             />
+            <StatusInvestigacaoCard acidentes={acidentesAno} />
           </div>
+
+          {/* Top setores + Natureza da lesão (barras horizontais) */}
           <div className="grid md:grid-cols-2 gap-4">
             <TopBarCard
               title="Top Setores com Acidente"
               acidentes={acidentesAno}
               accessor={(a) => a.vitima_setor || "Não informado"}
-              color="#ef4444"
+              color="#0f766e"
               limit={8}
             />
             <TopBarCard
               title="Natureza da Lesão"
               acidentes={acidentesAno}
               accessor={(a) => a.natureza_lesao || "Não informado"}
-              color="#6366f1"
+              color="#0891b2"
               limit={8}
             />
           </div>
@@ -1532,6 +1535,96 @@ function faixaHoraria(hora?: string | null): string {
   return "Madrugada (00–06h)";
 }
 
+function StatusInvestigacaoCard({ acidentes }: { acidentes: any[] }) {
+  const total = acidentes.length;
+  const hoje = Date.now();
+  const buckets = { Concluída: 0, "Em andamento": 0, "Não realizada": 0 };
+  acidentes.forEach((a: any) => {
+    if (a.data_investigacao) {
+      buckets["Concluída"]++;
+    } else {
+      const d = a.data_acidente ? new Date(a.data_acidente).getTime() : hoje;
+      const dias = (hoje - d) / 86400000;
+      if (dias <= 7) buckets["Em andamento"]++;
+      else buckets["Não realizada"]++;
+    }
+  });
+  const palette: Record<string, string> = {
+    "Concluída": "#0f766e",
+    "Em andamento": "#f59e0b",
+    "Não realizada": "#ef4444",
+  };
+  const data = Object.entries(buckets).map(([name, value]) => ({
+    name,
+    value,
+    pct: total > 0 ? Math.round((value / total) * 100) : 0,
+  }));
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center justify-between">
+          <span>Status Investigação</span>
+          <span className="text-xs font-normal text-muted-foreground">{total} total</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {total === 0 ? (
+          <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+            Sem registros no período.
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative w-[130px] h-[130px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data}
+                    dataKey="value"
+                    innerRadius={40}
+                    outerRadius={62}
+                    paddingAngle={2}
+                    stroke="none"
+                  >
+                    {data.map((d) => (
+                      <Cell key={d.name} fill={palette[d.name]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="text-2xl font-black tabular-nums">
+                  {buckets["Concluída"]}
+                </div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  concl.
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1 w-full">
+              {data.map((d) => (
+                <div key={d.name} className="flex items-center justify-between text-xs gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="inline-block h-2.5 w-2.5 rounded-sm flex-shrink-0"
+                      style={{ background: palette[d.name] }}
+                    />
+                    <span className="truncate text-slate-700">{d.name}</span>
+                  </div>
+                  <span className="font-mono font-semibold whitespace-nowrap">
+                    {d.value} <span className="text-muted-foreground font-normal">({d.pct}%)</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function DistribuicaoCard({
   title, acidentes, accessor, palette,
 }: {
@@ -1564,8 +1657,8 @@ function DistribuicaoCard({
             Sem registros no período.
           </div>
         ) : (
-          <div className="grid grid-cols-[auto_1fr] gap-4 items-center">
-            <div className="relative w-[140px] h-[140px]">
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative w-[130px] h-[130px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -1588,7 +1681,7 @@ function DistribuicaoCard({
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">acid.</div>
               </div>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1 w-full">
               {data.map((d, i) => (
                 <div key={d.name} className="flex items-center justify-between text-xs gap-2">
                   <div className="flex items-center gap-2 min-w-0">

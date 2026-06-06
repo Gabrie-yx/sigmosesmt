@@ -81,9 +81,9 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid md:grid-cols-[1fr_auto] gap-6 items-center">
+        <div className="grid md:grid-cols-[1fr_190px] gap-4 items-center">
           {/* Wrapper externo dá espaço lateral pros labels não cortarem */}
-          <div className="mx-auto w-full px-14" style={{ maxWidth: 460 }}>
+          <div className="mx-auto w-full px-10" style={{ maxWidth: 560 }}>
             <div
               className="relative mx-auto w-full"
               style={{ aspectRatio: "3 / 4" }}
