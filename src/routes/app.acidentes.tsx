@@ -1522,3 +1522,156 @@ function TotalPorTipoCard({ acidentes }: { acidentes: any[] }) {
     </Card>
   );
 }
+function faixaHoraria(hora?: string | null): string {
+  if (!hora) return "Não informado";
+  const h = Number(String(hora).split(":")[0]);
+  if (Number.isNaN(h)) return "Não informado";
+  if (h >= 6 && h < 12) return "Manhã (06–12h)";
+  if (h >= 12 && h < 18) return "Tarde (12–18h)";
+  if (h >= 18 && h < 24) return "Noite (18–24h)";
+  return "Madrugada (00–06h)";
+}
+
+function DistribuicaoCard({
+  title, acidentes, accessor, palette,
+}: {
+  title: string;
+  acidentes: any[];
+  accessor: (a: any) => string;
+  palette: string[];
+}) {
+  const total = acidentes.length;
+  const counts: Record<string, number> = {};
+  acidentes.forEach((a) => {
+    const k = accessor(a) || "Não informado";
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  const data = Object.entries(counts)
+    .map(([name, value]) => ({ name, value, pct: total > 0 ? Math.round((value / total) * 100) : 0 }))
+    .sort((a, b) => b.value - a.value);
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center justify-between">
+          <span>{title}</span>
+          <span className="text-xs font-normal text-muted-foreground">{total} total</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {total === 0 ? (
+          <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+            Sem registros no período.
+          </div>
+        ) : (
+          <div className="grid grid-cols-[auto_1fr] gap-4 items-center">
+            <div className="relative w-[140px] h-[140px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data}
+                    dataKey="value"
+                    innerRadius={42}
+                    outerRadius={66}
+                    paddingAngle={2}
+                    stroke="none"
+                  >
+                    {data.map((_, i) => (
+                      <Cell key={i} fill={palette[i % palette.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="text-2xl font-black tabular-nums">{total}</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">acid.</div>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              {data.map((d, i) => (
+                <div key={d.name} className="flex items-center justify-between text-xs gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="inline-block h-2.5 w-2.5 rounded-sm flex-shrink-0"
+                      style={{ background: palette[i % palette.length] }}
+                    />
+                    <span className="truncate text-slate-700">{d.name}</span>
+                  </div>
+                  <span className="font-mono font-semibold whitespace-nowrap">
+                    {d.value} <span className="text-muted-foreground font-normal">({d.pct}%)</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function TopBarCard({
+  title, acidentes, accessor, color, limit = 8,
+}: {
+  title: string;
+  acidentes: any[];
+  accessor: (a: any) => string;
+  color: string;
+  limit?: number;
+}) {
+  const total = acidentes.length;
+  const counts: Record<string, number> = {};
+  acidentes.forEach((a) => {
+    const k = accessor(a) || "Não informado";
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  const data = Object.entries(counts)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, limit);
+  const max = Math.max(1, ...data.map((d) => d.value));
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center justify-between">
+          <span>{title}</span>
+          <span className="text-xs font-normal text-muted-foreground">
+            {data.length} {data.length === 1 ? "item" : "itens"}
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {total === 0 ? (
+          <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+            Sem registros no período.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {data.map((d) => {
+              const pct = Math.round((d.value / total) * 100);
+              const widthPct = (d.value / max) * 100;
+              return (
+                <div key={d.name}>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="font-medium text-slate-700 truncate">{d.name}</span>
+                    <span className="font-mono font-semibold whitespace-nowrap ml-2">
+                      {d.value} <span className="text-muted-foreground font-normal">({pct}%)</span>
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${widthPct}%`, background: color }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
