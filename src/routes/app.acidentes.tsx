@@ -82,6 +82,7 @@ function AcidentesPage() {
   const [editing, setEditing] = useState<any>(null);
   const [viewing, setViewing] = useState<any>(null);
   const [deleting, setDeleting] = useState<any>(null);
+  const [anoFiltro, setAnoFiltro] = useState<number>(new Date().getFullYear());
 
   const delMut = useMutation({
     mutationFn: async (id: string) => {
@@ -141,7 +142,7 @@ function AcidentesPage() {
   // ===== KPIs =====
   const kpis = useMemo(() => {
     const now = new Date();
-    const anoAtual = now.getFullYear();
+    const anoAtual = anoFiltro;
     const mesAtual = now.getMonth() + 1;
     const noAno = acidentes.filter(a => new Date(a.data_acidente).getFullYear() === anoAtual);
     const noMes = noAno.filter(a => new Date(a.data_acidente).getMonth() + 1 === mesAtual);
@@ -160,7 +161,7 @@ function AcidentesPage() {
       tf: tf.toFixed(2),
       tg: tg.toFixed(2),
     };
-  }, [acidentes, hhtRows]);
+  }, [acidentes, hhtRows, anoFiltro]);
 
   const placarPrincipal = useMemo(() => {
     if (!dias.length) return { dias_sem_com_afast: null, recorde_com_afast: 0, ultimo_acidente_com_afast: null };
@@ -177,7 +178,7 @@ function AcidentesPage() {
   }, [dias]);
 
   const serieMensal = useMemo(() => {
-    const anoAtual = new Date().getFullYear();
+    const anoAtual = anoFiltro;
     return MESES.map((m, i) => {
       const acidsMes = acidentes.filter(a => {
         const d = new Date(a.data_acidente);
@@ -195,7 +196,20 @@ function AcidentesPage() {
         TF: tf,
       };
     });
-  }, [acidentes, hhtRows]);
+  }, [acidentes, hhtRows, anoFiltro]);
+
+  // Acidentes do ano selecionado — alimenta o corpo humano + total por tipo
+  const acidentesAno = useMemo(
+    () => acidentes.filter(a => new Date(a.data_acidente).getFullYear() === anoFiltro),
+    [acidentes, anoFiltro],
+  );
+
+  // Anos disponíveis (com base nos registros + ano atual)
+  const anosDisponiveis = useMemo(() => {
+    const set = new Set<number>([new Date().getFullYear()]);
+    acidentes.forEach(a => set.add(new Date(a.data_acidente).getFullYear()));
+    return Array.from(set).sort((a, b) => b - a);
+  }, [acidentes]);
 
   return (
     <div className="p-4 md:p-6 space-y-4">
