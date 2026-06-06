@@ -269,6 +269,23 @@ function AcidentesPage() {
 
         {/* ============ PAINEL ============ */}
         <TabsContent value="painel" className="space-y-4 mt-4">
+          {/* Filtro de ano */}
+          <div className="flex items-center justify-end gap-2">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              Ano
+            </span>
+            <Select value={String(anoFiltro)} onValueChange={(v) => setAnoFiltro(Number(v))}>
+              <SelectTrigger className="w-[110px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {anosDisponiveis.map((y) => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Placar gigante - estilo Toyota */}
           <Card className="bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 text-white border-0 overflow-hidden relative">
             <div className="absolute inset-0 opacity-10" style={{
@@ -318,7 +335,7 @@ function AcidentesPage() {
           {/* Evolução mensal */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Evolução mensal — {new Date().getFullYear()}</CardTitle>
+              <CardTitle className="text-base">Evolução mensal — {anoFiltro}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={260}>
@@ -339,8 +356,8 @@ function AcidentesPage() {
 
           {/* Corpo humano (esq) + Total por tipo (dir) */}
           <div className="grid lg:grid-cols-2 gap-4">
-            <CorpoHumanoAcidentes acidentes={acidentes} />
-            <TotalPorTipoCard acidentes={acidentes} />
+            <CorpoHumanoAcidentes acidentes={acidentesAno} />
+            <TotalPorTipoCard acidentes={acidentesAno} />
           </div>
         </TabsContent>
 
