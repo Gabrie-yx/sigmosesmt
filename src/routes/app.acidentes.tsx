@@ -29,6 +29,7 @@ import { gerarForSeg09, gerarForSeg10 } from "@/lib/pdf-acidentes";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   Line, Legend, PieChart, Pie, Cell,
+  ComposedChart, Area, LabelList,
 } from "recharts";
 
 export const Route = createFileRoute("/app/acidentes")({
@@ -335,21 +336,40 @@ function AcidentesPage() {
           {/* Evolução mensal */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Evolução mensal — {anoFiltro}</CardTitle>
+              <CardTitle className="text-base">Quantidade de Acidentes por Mês — {anoFiltro}</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={serieMensal}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis dataKey="mes" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar yAxisId="left" dataKey="Acidentes" fill="#f59e0b" radius={[4,4,0,0]} />
-                  <Bar yAxisId="left" dataKey="Com Afast." fill="#ef4444" radius={[4,4,0,0]} />
-                  <Line yAxisId="right" type="monotone" dataKey="TF" stroke="#6366f1" strokeWidth={2} />
-                </BarChart>
+              <ResponsiveContainer width="100%" height={240}>
+                <ComposedChart data={serieMensal} margin={{ top: 24, right: 20, left: 0, bottom: 4 }}>
+                  <defs>
+                    <linearGradient id="grad-acid" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0f766e" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#0f766e" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 12, fill: "#475569" }} axisLine={{ stroke: "#cbd5e1" }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
+                    formatter={(v: any) => [v, "Acidentes"]}
+                  />
+                  <Area type="monotone" dataKey="Acidentes" stroke="none" fill="url(#grad-acid)" />
+                  <Line
+                    type="monotone"
+                    dataKey="Acidentes"
+                    stroke="#0f766e"
+                    strokeWidth={2.5}
+                    dot={{ r: 5, fill: "#0f766e", strokeWidth: 2, stroke: "#fff" }}
+                    activeDot={{ r: 6 }}
+                  >
+                    <LabelList
+                      dataKey="Acidentes"
+                      position="top"
+                      style={{ fontSize: 12, fontWeight: 700, fill: "#0f172a" }}
+                    />
+                  </Line>
+                </ComposedChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -1472,11 +1492,11 @@ function TotalPorTipoCard({ acidentes }: { acidentes: any[] }) {
       </CardHeader>
       <CardContent>
         {total === 0 ? (
-          <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
+          <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">
             Nenhum acidente registrado.
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             {buckets.map(b => {
               const color = TIPO_COLOR[b.key];
               const data = [
@@ -1484,22 +1504,15 @@ function TotalPorTipoCard({ acidentes }: { acidentes: any[] }) {
                 { name: "r", value: Math.max(total - b.qtd, 0.0001) },
               ];
               return (
-                <div key={b.key} className="flex items-center gap-4 p-2 rounded-lg hover:bg-slate-50 transition">
-                  <div className="text-2xl w-8 text-center">{TIPO_ICONS[b.key]}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-slate-800">{b.label}</div>
-                    <div className="text-3xl font-black tabular-nums leading-none mt-0.5" style={{ color }}>
-                      {b.qtd}
-                    </div>
-                  </div>
-                  <div className="relative w-[78px] h-[78px] flex-shrink-0">
+                <div key={b.key} className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50/40 hover:bg-slate-50 transition">
+                  <div className="relative w-[62px] h-[62px] flex-shrink-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={data}
                           dataKey="value"
-                          innerRadius={26}
-                          outerRadius={36}
+                          innerRadius={21}
+                          outerRadius={29}
                           startAngle={90}
                           endAngle={-270}
                           stroke="none"
@@ -1510,10 +1523,19 @@ function TotalPorTipoCard({ acidentes }: { acidentes: any[] }) {
                       </PieChart>
                     </ResponsiveContainer>
                     <div
-                      className="absolute inset-0 flex items-center justify-center text-xs font-bold"
+                      className="absolute inset-0 flex items-center justify-center text-[10px] font-bold"
                       style={{ color }}
                     >
                       {b.pct}%
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-lg leading-none">{TIPO_ICONS[b.key]}</span>
+                      <span className="text-xs font-semibold text-slate-700 truncate">{b.label}</span>
+                    </div>
+                    <div className="text-2xl font-black tabular-nums leading-none mt-1" style={{ color }}>
+                      {b.qtd}
                     </div>
                   </div>
                 </div>
