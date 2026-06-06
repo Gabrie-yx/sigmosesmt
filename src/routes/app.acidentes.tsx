@@ -29,6 +29,7 @@ import { gerarForSeg09, gerarForSeg10 } from "@/lib/pdf-acidentes";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   Line, Legend, PieChart, Pie, Cell,
+  ComposedChart, Area, LabelList,
 } from "recharts";
 
 export const Route = createFileRoute("/app/acidentes")({
