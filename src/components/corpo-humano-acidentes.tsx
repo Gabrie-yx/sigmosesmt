@@ -84,15 +84,17 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
         <div className="grid md:grid-cols-[1fr_auto] gap-6 items-center">
           {/* Bloco do corpo + bolhas/labels */}
           <div
-            className="relative mx-auto"
-            style={{ width: "100%", maxWidth: 320, aspectRatio: "3 / 4" }}
+            className="relative mx-auto px-20"
+            style={{ width: "100%", maxWidth: 460, aspectRatio: "3 / 4" }}
           >
-            <img
-              src={corpoFrente}
-              alt="Diagrama do corpo humano"
-              className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none"
-              draggable={false}
-            />
+            <div className="absolute inset-0 px-20">
+              <img
+                src={corpoFrente}
+                alt="Diagrama do corpo humano"
+                className="w-full h-full object-contain select-none pointer-events-none"
+                draggable={false}
+              />
+            </div>
 
             {/* Bolhas + labels para cada parte com ocorrência */}
             {partesComDados.map(([parte, qtd]) => {
