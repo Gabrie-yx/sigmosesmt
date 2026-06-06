@@ -359,6 +359,38 @@ function AcidentesPage() {
             <CorpoHumanoAcidentes acidentes={acidentesAno} />
             <TotalPorTipoCard acidentes={acidentesAno} />
           </div>
+
+          {/* Análises complementares */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <DistribuicaoCard
+              title="Acidentes por Turno"
+              acidentes={acidentesAno}
+              accessor={(a) => a.turno || "Não informado"}
+              palette={["#6366f1", "#0ea5e9", "#f59e0b", "#94a3b8"]}
+            />
+            <DistribuicaoCard
+              title="Acidentes por Horário"
+              acidentes={acidentesAno}
+              accessor={(a) => faixaHoraria(a.hora_acidente)}
+              palette={["#22c55e", "#eab308", "#f97316", "#ef4444", "#64748b"]}
+            />
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <TopBarCard
+              title="Top Setores com Acidente"
+              acidentes={acidentesAno}
+              accessor={(a) => a.vitima_setor || "Não informado"}
+              color="#ef4444"
+              limit={8}
+            />
+            <TopBarCard
+              title="Natureza da Lesão"
+              acidentes={acidentesAno}
+              accessor={(a) => a.natureza_lesao || "Não informado"}
+              color="#6366f1"
+              limit={8}
+            />
+          </div>
         </TabsContent>
 
         {/* ============ HISTÓRICO ============ */}
