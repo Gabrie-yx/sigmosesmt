@@ -40,7 +40,10 @@ function genPassword(len = 14): string {
 }
 
 function genEmail(): string {
-  const suffix = Math.random().toString(36).slice(2, 8);
+  // CSPRNG — 12 hex chars (~48 bits) para evitar enumeração
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  const suffix = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
   return `investidor.${suffix}@sigmo.app`;
 }
 
