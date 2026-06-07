@@ -44,8 +44,8 @@ const POSICOES: Record<string, Pos> = {
 
   // ====== COSTAS ======
   "Pescoço":         { x: 0.50, y: 0.12, side: "left",  short: "PESCOÇO",  view: "costas" },
-  "Ombro direito":   { x: 0.36, y: 0.205, side: "left",  short: "OMBRO D",  view: "costas" },
-  "Ombro esquerdo":  { x: 0.64, y: 0.205, side: "right", short: "OMBRO E",  view: "costas" },
+  "Ombro direito":   { x: 0.30, y: 0.19, side: "left",  short: "OMBRO D",  view: "costas" },
+  "Ombro esquerdo":  { x: 0.70, y: 0.19, side: "right", short: "OMBRO E",  view: "costas" },
   "Braço direito":   { x: 0.30, y: 0.32, side: "left",  short: "BRAÇO D",  view: "costas" },
   "Braço esquerdo":  { x: 0.70, y: 0.32, side: "right", short: "BRAÇO E",  view: "costas" },
   "Coluna":          { x: 0.50, y: 0.30, side: "right", short: "COLUNA",   view: "costas" },
