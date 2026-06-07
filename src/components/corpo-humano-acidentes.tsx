@@ -30,9 +30,9 @@ const POSICOES: Record<string, Pos> = {
   "Quadril":         { x: 0.50, y: 0.44, side: "right", short: "QUADRIL",  view: "frente" },
   "Mão direita":     { x: 0.28, y: 0.56, side: "left",  short: "MÃO D",    view: "frente" },
   "Mão esquerda":    { x: 0.72, y: 0.56, side: "right", short: "MÃO E",    view: "frente" },
-  "Dedos da mão":          { x: 0.26, y: 0.60, side: "left",  short: "DEDOS MÃO",   view: "frente" },
-  "Dedos da mão direita":  { x: 0.26, y: 0.60, side: "left",  short: "DEDOS MÃO D", view: "frente" },
-  "Dedos da mão esquerda": { x: 0.74, y: 0.60, side: "right", short: "DEDOS MÃO E", view: "frente" },
+  "Dedos da mão":          { x: 0.21, y: 0.585, side: "left",  short: "DEDOS MÃO",   view: "frente" },
+  "Dedos da mão direita":  { x: 0.21, y: 0.585, side: "left",  short: "DEDOS MÃO D", view: "frente" },
+  "Dedos da mão esquerda": { x: 0.79, y: 0.585, side: "right", short: "DEDOS MÃO E", view: "frente" },
   "Joelho direito":  { x: 0.46, y: 0.72, side: "left",  short: "JOELHO D", view: "frente" },
   "Joelho esquerdo": { x: 0.54, y: 0.72, side: "right", short: "JOELHO E", view: "frente" },
   "Pé direito":      { x: 0.46, y: 0.95, side: "left",  short: "PÉ D",     view: "frente" },
@@ -44,8 +44,8 @@ const POSICOES: Record<string, Pos> = {
 
   // ====== COSTAS ======
   "Pescoço":         { x: 0.50, y: 0.12, side: "left",  short: "PESCOÇO",  view: "costas" },
-  "Ombro direito":   { x: 0.38, y: 0.18, side: "left",  short: "OMBRO D",  view: "costas" },
-  "Ombro esquerdo":  { x: 0.62, y: 0.18, side: "right", short: "OMBRO E",  view: "costas" },
+  "Ombro direito":   { x: 0.36, y: 0.205, side: "left",  short: "OMBRO D",  view: "costas" },
+  "Ombro esquerdo":  { x: 0.64, y: 0.205, side: "right", short: "OMBRO E",  view: "costas" },
   "Braço direito":   { x: 0.30, y: 0.32, side: "left",  short: "BRAÇO D",  view: "costas" },
   "Braço esquerdo":  { x: 0.70, y: 0.32, side: "right", short: "BRAÇO E",  view: "costas" },
   "Coluna":          { x: 0.50, y: 0.30, side: "right", short: "COLUNA",   view: "costas" },
