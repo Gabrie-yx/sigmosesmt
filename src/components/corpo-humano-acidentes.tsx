@@ -21,38 +21,38 @@ type Pos = {
 
 const POSICOES: Record<string, Pos> = {
   // ====== FRENTE ======
-  "Cabeça":          { x: 0.50, y: 0.10, side: "right", short: "CRÂNIO",   view: "frente" },
-  "Olho direito":    { x: 0.46, y: 0.12, side: "left",  short: "OLHO D",   view: "frente" },
-  "Olho esquerdo":   { x: 0.54, y: 0.12, side: "right", short: "OLHO E",   view: "frente" },
-  "Face":            { x: 0.50, y: 0.15, side: "right", short: "FACE",     view: "frente" },
-  "Tórax":           { x: 0.50, y: 0.27, side: "right", short: "TÓRAX",    view: "frente" },
-  "Abdômen":         { x: 0.50, y: 0.38, side: "right", short: "ABDÔMEN",  view: "frente" },
-  "Quadril":         { x: 0.50, y: 0.48, side: "right", short: "QUADRIL",  view: "frente" },
-  "Mão direita":     { x: 0.30, y: 0.58, side: "left",  short: "MÃO D",    view: "frente" },
-  "Mão esquerda":    { x: 0.70, y: 0.58, side: "right", short: "MÃO E",    view: "frente" },
-  "Dedos da mão":          { x: 0.28, y: 0.62, side: "left",  short: "DEDOS MÃO",   view: "frente" },
-  "Dedos da mão direita":  { x: 0.28, y: 0.62, side: "left",  short: "DEDOS MÃO D", view: "frente" },
-  "Dedos da mão esquerda": { x: 0.72, y: 0.62, side: "right", short: "DEDOS MÃO E", view: "frente" },
-  "Joelho direito":  { x: 0.44, y: 0.74, side: "left",  short: "JOELHO D", view: "frente" },
-  "Joelho esquerdo": { x: 0.56, y: 0.74, side: "right", short: "JOELHO E", view: "frente" },
-  "Pé direito":      { x: 0.45, y: 0.96, side: "left",  short: "PÉ D",     view: "frente" },
-  "Pé esquerdo":     { x: 0.55, y: 0.96, side: "right", short: "PÉ E",     view: "frente" },
-  "Dedos do pé":          { x: 0.50, y: 0.99, side: "right", short: "DEDOS PÉ",   view: "frente" },
-  "Dedos do pé direito":  { x: 0.44, y: 0.99, side: "left",  short: "DEDOS PÉ D", view: "frente" },
-  "Dedos do pé esquerdo": { x: 0.56, y: 0.99, side: "right", short: "DEDOS PÉ E", view: "frente" },
-  "Múltiplas":       { x: 0.50, y: 0.40, side: "right", short: "MÚLTIPLAS", view: "frente" },
+  "Cabeça":          { x: 0.50, y: 0.07, side: "right", short: "CRÂNIO",   view: "frente" },
+  "Olho direito":    { x: 0.47, y: 0.09, side: "left",  short: "OLHO D",   view: "frente" },
+  "Olho esquerdo":   { x: 0.53, y: 0.09, side: "right", short: "OLHO E",   view: "frente" },
+  "Face":            { x: 0.50, y: 0.11, side: "right", short: "FACE",     view: "frente" },
+  "Tórax":           { x: 0.50, y: 0.24, side: "right", short: "TÓRAX",    view: "frente" },
+  "Abdômen":         { x: 0.50, y: 0.34, side: "right", short: "ABDÔMEN",  view: "frente" },
+  "Quadril":         { x: 0.50, y: 0.44, side: "right", short: "QUADRIL",  view: "frente" },
+  "Mão direita":     { x: 0.28, y: 0.56, side: "left",  short: "MÃO D",    view: "frente" },
+  "Mão esquerda":    { x: 0.72, y: 0.56, side: "right", short: "MÃO E",    view: "frente" },
+  "Dedos da mão":          { x: 0.26, y: 0.60, side: "left",  short: "DEDOS MÃO",   view: "frente" },
+  "Dedos da mão direita":  { x: 0.26, y: 0.60, side: "left",  short: "DEDOS MÃO D", view: "frente" },
+  "Dedos da mão esquerda": { x: 0.74, y: 0.60, side: "right", short: "DEDOS MÃO E", view: "frente" },
+  "Joelho direito":  { x: 0.46, y: 0.72, side: "left",  short: "JOELHO D", view: "frente" },
+  "Joelho esquerdo": { x: 0.54, y: 0.72, side: "right", short: "JOELHO E", view: "frente" },
+  "Pé direito":      { x: 0.46, y: 0.95, side: "left",  short: "PÉ D",     view: "frente" },
+  "Pé esquerdo":     { x: 0.54, y: 0.95, side: "right", short: "PÉ E",     view: "frente" },
+  "Dedos do pé":          { x: 0.50, y: 0.98, side: "right", short: "DEDOS PÉ",   view: "frente" },
+  "Dedos do pé direito":  { x: 0.46, y: 0.98, side: "left",  short: "DEDOS PÉ D", view: "frente" },
+  "Dedos do pé esquerdo": { x: 0.54, y: 0.98, side: "right", short: "DEDOS PÉ E", view: "frente" },
+  "Múltiplas":       { x: 0.50, y: 0.36, side: "right", short: "MÚLTIPLAS", view: "frente" },
 
   // ====== COSTAS ======
-  "Pescoço":         { x: 0.50, y: 0.13, side: "left",  short: "PESCOÇO",  view: "costas" },
-  "Ombro direito":   { x: 0.40, y: 0.21, side: "left",  short: "OMBRO D",  view: "costas" },
-  "Ombro esquerdo":  { x: 0.60, y: 0.21, side: "right", short: "OMBRO E",  view: "costas" },
-  "Braço direito":   { x: 0.32, y: 0.34, side: "left",  short: "BRAÇO D",  view: "costas" },
-  "Braço esquerdo":  { x: 0.68, y: 0.34, side: "right", short: "BRAÇO E",  view: "costas" },
-  "Coluna":          { x: 0.50, y: 0.32, side: "right", short: "COLUNA",   view: "costas" },
-  "Coxa direita":    { x: 0.44, y: 0.60, side: "left",  short: "COXA D",   view: "costas" },
-  "Coxa esquerda":   { x: 0.56, y: 0.60, side: "right", short: "COXA E",   view: "costas" },
-  "Perna direita":   { x: 0.44, y: 0.82, side: "left",  short: "PERNA D",  view: "costas" },
-  "Perna esquerda":  { x: 0.56, y: 0.82, side: "right", short: "PERNA E",  view: "costas" },
+  "Pescoço":         { x: 0.50, y: 0.12, side: "left",  short: "PESCOÇO",  view: "costas" },
+  "Ombro direito":   { x: 0.38, y: 0.18, side: "left",  short: "OMBRO D",  view: "costas" },
+  "Ombro esquerdo":  { x: 0.62, y: 0.18, side: "right", short: "OMBRO E",  view: "costas" },
+  "Braço direito":   { x: 0.30, y: 0.32, side: "left",  short: "BRAÇO D",  view: "costas" },
+  "Braço esquerdo":  { x: 0.70, y: 0.32, side: "right", short: "BRAÇO E",  view: "costas" },
+  "Coluna":          { x: 0.50, y: 0.30, side: "right", short: "COLUNA",   view: "costas" },
+  "Coxa direita":    { x: 0.45, y: 0.58, side: "left",  short: "COXA D",   view: "costas" },
+  "Coxa esquerda":   { x: 0.55, y: 0.58, side: "right", short: "COXA E",   view: "costas" },
+  "Perna direita":   { x: 0.45, y: 0.80, side: "left",  short: "PERNA D",  view: "costas" },
+  "Perna esquerda":  { x: 0.55, y: 0.80, side: "right", short: "PERNA E",  view: "costas" },
 };
 
 /** Cor sólida da bolha conforme intensidade (0–1): amarelo → laranja → vermelho */
@@ -106,12 +106,12 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
             if (!pos) return null;
             const intensity = qtd / max;
             const pct = Math.round((qtd / total) * 100);
-            const size = 18 + intensity * 22; // 18–40 px (compacto e preciso)
+            const size = 8 + intensity * 8; // 8–16 px (marcador preciso)
             const color = bubbleSolid(intensity);
             return (
               <div key={parte}>
                 <div
-                  className="absolute rounded-full pointer-events-none ring-2 ring-white shadow"
+                  className="absolute rounded-full pointer-events-none ring-1 ring-white shadow-sm"
                   style={{
                     left: `${pos.x * 100}%`,
                     top: `${pos.y * 100}%`,
@@ -119,7 +119,7 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                     height: size,
                     transform: "translate(-50%, -50%)",
                     background: color,
-                    opacity: 0.92,
+                    opacity: 0.95,
                   }}
                   title={`${parte}: ${qtd} (${pct}%)`}
                 />
@@ -128,8 +128,8 @@ export function CorpoHumanoAcidentes({ acidentes }: { acidentes: Acid[] }) {
                   style={{
                     left:
                       pos.side === "left"
-                        ? `${pos.x * 100 - 6}%`
-                        : `${pos.x * 100 + 6}%`,
+                        ? `${pos.x * 100 - 3}%`
+                        : `${pos.x * 100 + 3}%`,
                     top: `${pos.y * 100}%`,
                     transform: `translate(${pos.side === "left" ? "-100%" : "0"}, -50%)`,
                     textAlign: pos.side === "left" ? "right" : "left",
