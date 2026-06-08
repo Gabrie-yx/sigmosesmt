@@ -16,6 +16,7 @@ export type SaidaExpedientePdfParams = {
   logoDataUrl?: string | null;
   assinaturaFuncionarioDataUrl?: string | null;
   assinaturaSesmtDataUrl?: string | null;
+  assinaturaSupervisorDataUrl?: string | null;
   sesmtNome?: string | null;
   sesmtCargo?: string | null;
 };
@@ -89,27 +90,29 @@ export function gerarSaidaExpedientePDF(p: SaidaExpedientePdfParams): jsPDF {
     y += ols.length * 5 + 4;
   }
 
-  y += 20;
+  y += 24;
 
-  // Assinaturas
-  const sigBlock = (label: string, sub: string, dataUrl?: string | null) => {
-    const sigW = 70, sigH = 22;
-    const x = pageW / 2 - sigW / 2;
+  // Assinaturas — TST à esquerda, Funcionário à direita; Supervisor abaixo
+  const sigW = 75, sigH = 22, gap = 14;
+  const drawSig = (cx: number, label: string, sub: string, dataUrl?: string | null) => {
+    const x = cx - sigW / 2;
     if (dataUrl) {
       try { doc.addImage(dataUrl, "PNG", x, y - sigH + 2, sigW, sigH, undefined, "FAST"); } catch {}
     }
-    y += 4;
     doc.setDrawColor(0); doc.setLineWidth(0.3);
-    doc.line(x, y, x + sigW, y);
-    y += 5;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-    doc.text(label, pageW / 2, y, { align: "center" });
-    if (sub) { y += 5; doc.setFontSize(9); doc.setTextColor(80,80,80); doc.text(sub, pageW / 2, y, { align: "center" }); doc.setTextColor(20,20,20); }
-    y += 18;
+    doc.line(x, y + 4, x + sigW, y + 4);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+    doc.text(label, cx, y + 9, { align: "center" });
+    if (sub) { doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(80,80,80); doc.text(sub, cx, y + 13.5, { align: "center" }); doc.setTextColor(20,20,20); }
   };
 
-  sigBlock(p.funcionarioNome, p.cargo ?? "", p.assinaturaFuncionarioDataUrl);
-  sigBlock(p.sesmtNome ?? "SESMT", p.sesmtCargo ?? "Técnico(a) de Segurança do Trabalho — SESMT", p.assinaturaSesmtDataUrl);
+  const leftCx = margin + sigW / 2;
+  const rightCx = pageW - margin - sigW / 2;
+  drawSig(leftCx, p.sesmtNome ?? "SESMT", p.sesmtCargo ?? "Técnico(a) de Segurança do Trabalho — TST", p.assinaturaSesmtDataUrl);
+  drawSig(rightCx, p.funcionarioNome, p.cargo ?? "Funcionário(a)", p.assinaturaFuncionarioDataUrl);
+
+  y += 22 + gap;
+  drawSig(pageW / 2, "Anderson de Oliveira Soares", "Supervisor Geral", p.assinaturaSupervisorDataUrl);
 
   return doc;
 }
