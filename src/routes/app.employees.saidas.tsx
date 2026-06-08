@@ -43,7 +43,7 @@ function SaidasPage() {
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [previewFileName, setPreviewFileName] = useState("autorizacao-saida.pdf");
   const [previewRowId, setPreviewRowId] = useState<string | null>(null);
-  const [sigOpen, setSigOpen] = useState<null | "FUNC" | "SESMT">(null);
+  const [sigOpen, setSigOpen] = useState<null | "FUNC" | "SESMT" | "SUPERVISOR">(null);
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["saidas-expediente"],
@@ -87,6 +87,7 @@ function SaidasPage() {
       logoDataUrl: logo,
       assinaturaFuncionarioDataUrl: row.assinatura_funcionario,
       assinaturaSesmtDataUrl: row.assinatura_sesmt,
+      assinaturaSupervisorDataUrl: (row as any).assinatura_supervisor ?? null,
       sesmtNome: (user as any)?.user_metadata?.full_name ?? null,
     });
     setPreviewFileName(`autorizacao-saida-${emp?.nome?.replace(/\s+/g,"-")}-${row.data}.pdf`);
@@ -94,11 +95,14 @@ function SaidasPage() {
     setPreviewRowId(id);
   }
 
-  async function salvarAssinatura(tipo: "FUNC" | "SESMT", dataUrl: string) {
+  async function salvarAssinatura(tipo: "FUNC" | "SESMT" | "SUPERVISOR", dataUrl: string) {
     if (!previewRowId) return;
-    const patch: any = tipo === "FUNC"
-      ? { assinatura_funcionario: dataUrl }
-      : { assinatura_sesmt: dataUrl, assinado_sesmt_por: user?.id ?? null, assinado_sesmt_em: new Date().toISOString() };
+    const patch: any =
+      tipo === "FUNC"
+        ? { assinatura_funcionario: dataUrl }
+        : tipo === "SESMT"
+        ? { assinatura_sesmt: dataUrl, assinado_sesmt_por: user?.id ?? null, assinado_sesmt_em: new Date().toISOString() }
+        : { assinatura_supervisor: dataUrl, assinado_supervisor_por: user?.id ?? null, assinado_supervisor_em: new Date().toISOString() };
     const { error } = await supabase.from("employee_saidas_expediente").update(patch).eq("id", previewRowId);
     if (error) return toast.error(error.message);
     toast.success("Assinatura salva");
@@ -181,15 +185,16 @@ function SaidasPage() {
       />
       {!!previewDoc && previewRowId && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex gap-2 bg-white border shadow-xl rounded-xl px-3 py-2">
+          <Button size="sm" variant="outline" onClick={() => setSigOpen("SESMT")}><PenLine className="h-3.5 w-3.5 mr-1" />Assinar TST</Button>
           <Button size="sm" variant="outline" onClick={() => setSigOpen("FUNC")}><PenLine className="h-3.5 w-3.5 mr-1" />Assinar funcionário</Button>
-          <Button size="sm" className="bg-rose-700 hover:bg-rose-800 text-white" onClick={() => setSigOpen("SESMT")}><PenLine className="h-3.5 w-3.5 mr-1" />Assinar SESMT</Button>
+          <Button size="sm" className="bg-rose-700 hover:bg-rose-800 text-white" onClick={() => setSigOpen("SUPERVISOR")}><PenLine className="h-3.5 w-3.5 mr-1" />Assinar Supervisor Geral</Button>
         </div>
       )}
       <SignaturePadDialog
         open={!!sigOpen}
         onClose={() => setSigOpen(null)}
         onConfirm={async (r) => { const t = sigOpen; setSigOpen(null); if (t) await salvarAssinatura(t, r.dataUrl); }}
-        title={sigOpen === "FUNC" ? "Assinatura do funcionário" : "Assinatura do SESMT"}
+        title={sigOpen === "FUNC" ? "Assinatura do funcionário" : sigOpen === "SESMT" ? "Assinatura do TST" : "Assinatura do Supervisor Geral"}
       />
     </div>
   );
