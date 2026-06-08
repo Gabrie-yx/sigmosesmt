@@ -2145,9 +2145,13 @@ export type Database = {
         Row: {
           assinado_sesmt_em: string | null
           assinado_sesmt_por: string | null
+          assinado_supervisor_em: string | null
+          assinado_supervisor_por: string | null
           assinatura_funcionario: string | null
           assinatura_sesmt: string | null
+          assinatura_supervisor: string | null
           com_retorno: boolean
+          company_id: string | null
           created_at: string
           created_by: string | null
           data: string
@@ -2163,9 +2167,13 @@ export type Database = {
         Insert: {
           assinado_sesmt_em?: string | null
           assinado_sesmt_por?: string | null
+          assinado_supervisor_em?: string | null
+          assinado_supervisor_por?: string | null
           assinatura_funcionario?: string | null
           assinatura_sesmt?: string | null
+          assinatura_supervisor?: string | null
           com_retorno?: boolean
+          company_id?: string | null
           created_at?: string
           created_by?: string | null
           data: string
@@ -2181,9 +2189,13 @@ export type Database = {
         Update: {
           assinado_sesmt_em?: string | null
           assinado_sesmt_por?: string | null
+          assinado_supervisor_em?: string | null
+          assinado_supervisor_por?: string | null
           assinatura_funcionario?: string | null
           assinatura_sesmt?: string | null
+          assinatura_supervisor?: string | null
           com_retorno?: boolean
+          company_id?: string | null
           created_at?: string
           created_by?: string | null
           data?: string
@@ -2197,6 +2209,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "employee_saidas_expediente_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "employee_saidas_expediente_employee_id_fkey"
             columns: ["employee_id"]

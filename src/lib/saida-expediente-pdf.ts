@@ -19,6 +19,9 @@ export type SaidaExpedientePdfParams = {
   assinaturaSupervisorDataUrl?: string | null;
   sesmtNome?: string | null;
   sesmtCargo?: string | null;
+  empresaNome?: string | null;
+  empresaTerceira?: boolean;
+  encarregadoNome?: string | null;
 };
 
 export function gerarSaidaExpedientePDF(p: SaidaExpedientePdfParams): jsPDF {
@@ -112,7 +115,16 @@ export function gerarSaidaExpedientePDF(p: SaidaExpedientePdfParams): jsPDF {
   drawSig(rightCx, p.funcionarioNome, p.cargo ?? "Funcionário(a)", p.assinaturaFuncionarioDataUrl);
 
   y += 22 + gap;
-  drawSig(pageW / 2, "Anderson de Oliveira Soares", "Supervisor Geral", p.assinaturaSupervisorDataUrl);
+  if (p.empresaTerceira) {
+    drawSig(
+      pageW / 2,
+      p.encarregadoNome ?? "Encarregado",
+      `Encarregado — ${p.empresaNome ?? "Terceirizada"}`,
+      p.assinaturaSupervisorDataUrl,
+    );
+  } else {
+    drawSig(pageW / 2, "Anderson de Oliveira Soares", "Supervisor Geral", p.assinaturaSupervisorDataUrl);
+  }
 
   return doc;
 }

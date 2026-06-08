@@ -16,14 +16,24 @@ export function SaidaExpedienteDialog({
   const qc = useQueryClient();
   const { user } = useAuth();
   const [form, setForm] = useState<any>({
-    employee_id: "", data: new Date().toISOString().slice(0, 10),
+    company_id: "", employee_id: "", data: new Date().toISOString().slice(0, 10),
     horario_saida: "", tipo: "PESSOAL", com_retorno: false,
     horario_retorno: "", motivo: "", observacao: "",
   });
 
+  const { data: companies } = useQuery({
+    queryKey: ["companies-min"],
+    queryFn: async () => (await supabase.from("companies").select("id,name,type,encarregado1").order("name")).data ?? [],
+  });
+
   const { data: employees } = useQuery({
-    queryKey: ["employees-min"],
-    queryFn: async () => (await supabase.from("employees").select("id,nome,cpf,rg,role_id,status").eq("status","ATIVO").order("nome")).data ?? [],
+    queryKey: ["employees-by-company", form.company_id],
+    enabled: !!form.company_id,
+    queryFn: async () => (await supabase.from("employees")
+      .select("id,nome,cpf,rg,role_id,status,company_id")
+      .eq("status","ATIVO")
+      .eq("company_id", form.company_id)
+      .order("nome")).data ?? [],
   });
 
   useEffect(() => {
@@ -34,7 +44,7 @@ export function SaidaExpedienteDialog({
       });
     } else {
       setForm({
-        employee_id: "", data: new Date().toISOString().slice(0,10),
+        company_id: "", employee_id: "", data: new Date().toISOString().slice(0,10),
         horario_saida: "", tipo: "PESSOAL", com_retorno: false,
         horario_retorno: "", motivo: "", observacao: "",
       });
@@ -43,11 +53,12 @@ export function SaidaExpedienteDialog({
 
   const save = useMutation({
     mutationFn: async () => {
+      if (!form.company_id) throw new Error("Selecione a empresa");
       if (!form.employee_id) throw new Error("Selecione o funcionário");
       if (!form.horario_saida) throw new Error("Informe o horário de saída");
       if (form.com_retorno && !form.horario_retorno) throw new Error("Informe o horário de retorno");
       const payload: any = {
-        employee_id: form.employee_id, data: form.data,
+        company_id: form.company_id, employee_id: form.employee_id, data: form.data,
         horario_saida: form.horario_saida, tipo: form.tipo,
         com_retorno: !!form.com_retorno,
         horario_retorno: form.com_retorno ? form.horario_retorno : null,
@@ -76,9 +87,22 @@ export function SaidaExpedienteDialog({
         <DialogHeader><DialogTitle>{editId ? "Editar autorização" : "Nova autorização de saída"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
+            <Label>Empresa que está liberando *</Label>
+            <Select value={form.company_id} onValueChange={(v) => setForm({ ...form, company_id: v, employee_id: "" })}>
+              <SelectTrigger><SelectValue placeholder="Selecione a empresa..." /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                {(companies ?? []).map((c: any) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name} {c.type === "TERCEIRIZADO" ? "· Terceirizada" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
             <Label>Funcionário *</Label>
-            <Select value={form.employee_id} onValueChange={(v) => setForm({ ...form, employee_id: v })}>
-              <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+            <Select value={form.employee_id} onValueChange={(v) => setForm({ ...form, employee_id: v })} disabled={!form.company_id}>
+              <SelectTrigger><SelectValue placeholder={form.company_id ? "Selecione..." : "Escolha a empresa primeiro"} /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {(employees ?? []).map((e: any) => (
                   <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
