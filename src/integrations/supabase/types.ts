@@ -1964,6 +1964,87 @@ export type Database = {
           },
         ]
       }
+      employee_atestados: {
+        Row: {
+          arquivo_path: string | null
+          cid: string | null
+          created_at: string
+          created_by: string | null
+          data_inicio: string
+          data_retorno: string | null
+          dias_afastamento: number
+          employee_id: string
+          homologado_em: string | null
+          homologado_por: string | null
+          id: string
+          medico_crm: string | null
+          medico_nome: string | null
+          motivo_recusa: string | null
+          observacao: string | null
+          override_id: string | null
+          status: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_path?: string | null
+          cid?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_inicio: string
+          data_retorno?: string | null
+          dias_afastamento?: number
+          employee_id: string
+          homologado_em?: string | null
+          homologado_por?: string | null
+          id?: string
+          medico_crm?: string | null
+          medico_nome?: string | null
+          motivo_recusa?: string | null
+          observacao?: string | null
+          override_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_path?: string | null
+          cid?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_inicio?: string
+          data_retorno?: string | null
+          dias_afastamento?: number
+          employee_id?: string
+          homologado_em?: string | null
+          homologado_por?: string | null
+          id?: string
+          medico_crm?: string | null
+          medico_nome?: string | null
+          motivo_recusa?: string | null
+          observacao?: string | null
+          override_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_atestados_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_atestados_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       employee_docs: {
         Row: {
           employee_id: string

@@ -33,6 +33,7 @@ import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban }
 import { GraduationCap } from "lucide-react";
 import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
 import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.functions";
+import { AtestadosTab } from "@/components/employees/atestados-tab";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -336,15 +337,19 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </TabsContent>
         <TabsContent value="health" className="mt-4">
           <Tabs value={healthSub} onValueChange={setHealthSub}>
-            <TabsList className="grid grid-cols-2 w-full max-w-md">
+            <TabsList className="grid grid-cols-3 w-full max-w-xl">
               <TabsTrigger value="exams">Exames / ASO</TabsTrigger>
               <TabsTrigger value="vaccines">Vacinas</TabsTrigger>
+              <TabsTrigger value="atestados">Atestados</TabsTrigger>
             </TabsList>
             <TabsContent value="exams" className="mt-4">
               <HealthTab empId={id} exams={exams ?? []} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
             </TabsContent>
             <TabsContent value="vaccines" className="mt-4">
               <VaccinesTab empId={id} vaccines={vaccines ?? []} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+            </TabsContent>
+            <TabsContent value="atestados" className="mt-4">
+              <AtestadosTab empId={id} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
             </TabsContent>
           </Tabs>
         </TabsContent>
