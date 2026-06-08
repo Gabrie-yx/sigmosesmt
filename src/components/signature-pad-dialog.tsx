@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Check, X, Pencil, Upload, Eraser } from "lucide-react";
+import { Check, X, Pencil, Upload, Eraser, BookmarkPlus, Trash2, Library } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export type AssinaturaResult = { dataUrl: string; height: number };
 
@@ -74,13 +77,59 @@ export function SignaturePadDialog({
 }) {
   const [signature, setSignature] = useState<string | null>(null);
   const [height, setHeight] = useState(80);
-  const [tab, setTab] = useState<"draw" | "upload">("draw");
+  const [tab, setTab] = useState<"draw" | "upload" | "saved">("saved");
+  const [saveNome, setSaveNome] = useState("");
+  const [saveCargo, setSaveCargo] = useState("");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawing = useRef(false);
   const lastPt = useRef<{ x: number; y: number } | null>(null);
   const hasStroke = useRef(false);
+  const qc = useQueryClient();
 
-  useEffect(() => { if (open) { setSignature(null); setHeight(80); setTab("draw"); hasStroke.current = false; } }, [open]);
+  const { data: salvas = [] } = useQuery({
+    queryKey: ["assinaturas-salvas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("assinaturas_salvas")
+        .select("id,nome,cargo,imagem_data_url,created_at")
+        .order("nome", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open,
+  });
+
+  const salvarMut = useMutation({
+    mutationFn: async (payload: { nome: string; cargo: string; imagem_data_url: string }) => {
+      const { error } = await supabase.from("assinaturas_salvas").insert(payload);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Assinatura salva na galeria");
+      qc.invalidateQueries({ queryKey: ["assinaturas-salvas"] });
+      setSaveNome(""); setSaveCargo("");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao salvar"),
+  });
+
+  const excluirMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("assinaturas_salvas").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Assinatura removida");
+      qc.invalidateQueries({ queryKey: ["assinaturas-salvas"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao remover"),
+  });
+
+  useEffect(() => {
+    if (open) {
+      setSignature(null); setHeight(80); setTab("saved"); hasStroke.current = false;
+      setSaveNome(""); setSaveCargo("");
+    }
+  }, [open]);
 
   // Setup canvas
   useEffect(() => {
@@ -209,13 +258,55 @@ export function SignaturePadDialog({
                 </button>
               </div>
             </div>
+            <div className="mt-3 border-t pt-3 space-y-2">
+              <p className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                <BookmarkPlus className="h-3.5 w-3.5" /> Salvar na galeria compartilhada (opcional)
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <Input placeholder="Nome (ex.: Anderson Soares)" value={saveNome} onChange={(e) => setSaveNome(e.target.value)} className="h-8 text-xs" />
+                <Input placeholder="Cargo (ex.: Supervisor Geral)" value={saveCargo} onChange={(e) => setSaveCargo(e.target.value)} className="h-8 text-xs" />
+              </div>
+              <Button type="button" size="sm" variant="outline" className="w-full"
+                disabled={!saveNome.trim() || !saveCargo.trim() || salvarMut.isPending}
+                onClick={() => salvarMut.mutate({ nome: saveNome.trim(), cargo: saveCargo.trim(), imagem_data_url: signature })}>
+                <BookmarkPlus className="h-3.5 w-3.5 mr-1" />
+                {salvarMut.isPending ? "Salvando..." : "Salvar para reutilizar depois"}
+              </Button>
+            </div>
           </div>
         ) : (
-          <Tabs value={tab} onValueChange={(v) => setTab(v as "draw" | "upload")}>
-            <TabsList className="grid grid-cols-2 w-full">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "draw" | "upload" | "saved")}>
+            <TabsList className="grid grid-cols-3 w-full">
+              <TabsTrigger value="saved"><Library className="h-3.5 w-3.5 mr-1.5" />Galeria</TabsTrigger>
               <TabsTrigger value="draw"><Pencil className="h-3.5 w-3.5 mr-1.5" />Desenhar</TabsTrigger>
-              <TabsTrigger value="upload"><Upload className="h-3.5 w-3.5 mr-1.5" />Importar PNG</TabsTrigger>
+              <TabsTrigger value="upload"><Upload className="h-3.5 w-3.5 mr-1.5" />Importar</TabsTrigger>
             </TabsList>
+            <TabsContent value="saved" className="mt-2">
+              {salvas.length === 0 ? (
+                <div className="text-[12px] text-muted-foreground border-2 border-dashed rounded p-6 text-center">
+                  Nenhuma assinatura salva ainda. Desenhe ou importe uma e salve na galeria pra reutilizar nos próximos PDFs.
+                </div>
+              ) : (
+                <div className="max-h-64 overflow-auto divide-y border rounded">
+                  {salvas.map((s: any) => (
+                    <div key={s.id} className="flex items-center gap-3 p-2 hover:bg-muted/50">
+                      <img src={s.imagem_data_url} alt={s.nome} className="h-10 w-24 object-contain bg-white border rounded" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-semibold truncate">{s.nome}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">{s.cargo}</div>
+                      </div>
+                      <Button type="button" size="sm" variant="default" onClick={() => { setSignature(s.imagem_data_url); setHeight(80); }}>
+                        Usar
+                      </Button>
+                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-red-700"
+                        onClick={() => { if (confirm(`Remover assinatura de ${s.nome}?`)) excluirMut.mutate(s.id); }}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
             <TabsContent value="draw" className="mt-2">
               <div className="border-2 border-black bg-white rounded">
                 <canvas

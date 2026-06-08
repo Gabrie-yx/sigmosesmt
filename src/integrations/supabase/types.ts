@@ -625,6 +625,36 @@ export type Database = {
           },
         ]
       }
+      assinaturas_salvas: {
+        Row: {
+          cargo: string
+          created_at: string
+          created_by: string | null
+          id: string
+          imagem_data_url: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          cargo: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          imagem_data_url: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          cargo?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          imagem_data_url?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
