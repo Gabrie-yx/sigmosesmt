@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, FileText, CheckCircle2, XCircle, Trash2, Download } from "lucide-react";
+import { Plus, FileText, CheckCircle2, XCircle, Trash2, Download, Eye } from "lucide-react";
 
 type Props = {
   empId: string;
@@ -61,6 +61,7 @@ function fmt(d: string | null | undefined) {
 
 export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
   const [openNew, setOpenNew] = useState(false);
+  const [viewing, setViewing] = useState<{ url: string; name: string; isPdf: boolean } | null>(null);
 
   const { data: atestados = [], isLoading } = useQuery({
     queryKey: ["employee-atestados", empId],
@@ -122,6 +123,13 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
     const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(path, 60);
     if (error || !data?.signedUrl) return toast.error("Falha ao gerar link");
     window.open(data.signedUrl, "_blank");
+  }
+
+  async function visualizar(path: string) {
+    const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(path, 300);
+    if (error || !data?.signedUrl) return toast.error("Falha ao gerar link");
+    const isPdf = path.toLowerCase().endsWith(".pdf");
+    setViewing({ url: data.signedUrl, name: path.split("/").pop() || "Arquivo", isPdf });
   }
 
   const ativo = atestados.find(
@@ -211,9 +219,14 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       {a.arquivo_path && (
-                        <Button size="icon" variant="ghost" onClick={() => baixar(a.arquivo_path)} title="Baixar arquivo">
-                          <Download className="h-4 w-4" />
-                        </Button>
+                        <>
+                          <Button size="icon" variant="ghost" onClick={() => visualizar(a.arquivo_path)} title="Visualizar">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => baixar(a.arquivo_path)} title="Baixar arquivo">
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </>
                       )}
                       {canEdit && a.status === "PENDENTE" && (
                         <>
@@ -238,6 +251,32 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-4 py-3 border-b">
+            <DialogTitle className="text-sm flex items-center justify-between gap-3">
+              <span className="truncate">{viewing?.name}</span>
+              {viewing && (
+                <a href={viewing.url} target="_blank" rel="noreferrer" className="text-xs text-primary underline shrink-0">
+                  Abrir em nova aba
+                </a>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto bg-muted/30">
+            {viewing && (
+              viewing.isPdf ? (
+                <iframe src={viewing.url} title={viewing.name} className="w-full h-full border-0" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center p-4">
+                  <img src={viewing.url} alt={viewing.name} className="max-w-full max-h-full object-contain" />
+                </div>
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
