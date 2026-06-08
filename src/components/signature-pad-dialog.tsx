@@ -118,18 +118,16 @@ export function SignaturePadDialog({
     const reader = new FileReader();
     reader.onload = () => {
       const src = reader.result as string;
-      if (file.type === "image/png") { setSignature(src); return; }
-      // Converte pra PNG (mantém transparência só se já for PNG; senão fundo branco vira PNG igual)
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) { setSignature(src); return; }
-        ctx.drawImage(img, 0, 0);
-        try { setSignature(canvas.toDataURL("image/png")); }
-        catch { setSignature(src); }
+        try {
+          const processed = processUploadedSignature(img, file.type === "image/png");
+          setSignature(processed);
+          // ajusta altura inicial proporcional pra preview ficar bonita
+          setHeight(80);
+        } catch {
+          setSignature(src);
+        }
       };
       img.onerror = () => toast.error("Não consegui ler a imagem");
       img.src = src;
@@ -146,7 +144,7 @@ export function SignaturePadDialog({
         {signature ? (
           <div className="border-2 border-black bg-white text-black p-3">
             <div className="flex flex-col items-center gap-1 w-full">
-              <img src={signature} alt="Assinatura" style={{ height: `${height}px` }} className="object-contain max-w-full" />
+              <img src={signature} alt="Assinatura" style={{ height: `${height}px`, width: "auto" }} className="object-contain max-w-full" />
               <div className="flex items-center gap-2 w-full px-2 pt-2">
                 <span className="text-[10px] text-muted-foreground">Tamanho</span>
                 <input type="range" min={20} max={140} step={2} value={height}
