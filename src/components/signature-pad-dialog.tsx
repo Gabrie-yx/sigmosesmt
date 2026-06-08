@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
+import { Check, X, Pencil, Upload, Eraser } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 export type AssinaturaResult = { dataUrl: string; height: number };
@@ -19,8 +20,96 @@ export function SignaturePadDialog({
 }) {
   const [signature, setSignature] = useState<string | null>(null);
   const [height, setHeight] = useState(80);
+  const [tab, setTab] = useState<"draw" | "upload">("draw");
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const drawing = useRef(false);
+  const lastPt = useRef<{ x: number; y: number } | null>(null);
+  const hasStroke = useRef(false);
 
-  useEffect(() => { if (open) { setSignature(null); setHeight(80); } }, [open]);
+  useEffect(() => { if (open) { setSignature(null); setHeight(80); setTab("draw"); hasStroke.current = false; } }, [open]);
+
+  // Setup canvas
+  useEffect(() => {
+    if (!open || tab !== "draw") return;
+    const c = canvasRef.current;
+    if (!c) return;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = c.getBoundingClientRect();
+    c.width = Math.round(rect.width * dpr);
+    c.height = Math.round(rect.height * dpr);
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    ctx.scale(dpr, dpr);
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#0a0a0a";
+    ctx.clearRect(0, 0, c.width, c.height);
+    hasStroke.current = false;
+  }, [open, tab]);
+
+  const getPt = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const c = canvasRef.current!;
+    const rect = c.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
+
+  const onDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    (e.target as HTMLCanvasElement).setPointerCapture(e.pointerId);
+    drawing.current = true;
+    lastPt.current = getPt(e);
+  };
+  const onMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawing.current) return;
+    const c = canvasRef.current; if (!c) return;
+    const ctx = c.getContext("2d"); if (!ctx) return;
+    const p = getPt(e);
+    if (lastPt.current) {
+      ctx.beginPath();
+      ctx.moveTo(lastPt.current.x, lastPt.current.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    }
+    lastPt.current = p;
+    hasStroke.current = true;
+  };
+  const onUp = () => { drawing.current = false; lastPt.current = null; };
+
+  const limparCanvas = () => {
+    const c = canvasRef.current; if (!c) return;
+    const ctx = c.getContext("2d"); if (!ctx) return;
+    ctx.clearRect(0, 0, c.width, c.height);
+    hasStroke.current = false;
+  };
+
+  // Crop transparente e exporta PNG
+  const exportDesenho = (): string | null => {
+    const c = canvasRef.current; if (!c) return null;
+    if (!hasStroke.current) return null;
+    const ctx = c.getContext("2d"); if (!ctx) return null;
+    const { width, height: h } = c;
+    const img = ctx.getImageData(0, 0, width, h).data;
+    let minX = width, minY = h, maxX = 0, maxY = 0, found = false;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < width; x++) {
+        if (img[(y * width + x) * 4 + 3] > 10) {
+          if (x < minX) minX = x; if (x > maxX) maxX = x;
+          if (y < minY) minY = y; if (y > maxY) maxY = y;
+          found = true;
+        }
+      }
+    }
+    if (!found) return null;
+    const pad = 8;
+    const sx = Math.max(0, minX - pad), sy = Math.max(0, minY - pad);
+    const sw = Math.min(width - sx, maxX - minX + pad * 2);
+    const sh = Math.min(h - sy, maxY - minY + pad * 2);
+    const out = document.createElement("canvas");
+    out.width = sw; out.height = sh;
+    out.getContext("2d")!.drawImage(c, sx, sy, sw, sh, 0, 0, sw, sh);
+    return out.toDataURL("image/png");
+  };
 
   const onUpload = (file: File | null) => {
     if (!file) return;
@@ -54,39 +143,67 @@ export function SignaturePadDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="border-2 border-black bg-white text-black">
-          <div className="font-bold text-center uppercase border-b border-black p-1.5 text-[12px]">
-            Assinatura do Técnico em Segurança do Trabalho
-          </div>
-          <div className="min-h-32 flex items-center justify-center p-3">
-            {signature ? (
-              <div className="flex flex-col items-center gap-1 w-full">
-                <img src={signature} alt="Assinatura" style={{ height: `${height}px` }} className="object-contain max-w-full" />
-                <div className="flex items-center gap-2 w-full px-2 pt-2">
-                  <span className="text-[10px] text-muted-foreground">Tamanho</span>
-                  <input
-                    type="range" min={20} max={140} step={2}
-                    value={height}
-                    onChange={(e) => setHeight(Number(e.target.value))}
-                    className="flex-1 accent-red-700"
-                  />
-                  <button type="button" onClick={() => setSignature(null)} className="text-[10px] text-red-700 hover:underline">
-                    Remover
-                  </button>
-                </div>
+        {signature ? (
+          <div className="border-2 border-black bg-white text-black p-3">
+            <div className="flex flex-col items-center gap-1 w-full">
+              <img src={signature} alt="Assinatura" style={{ height: `${height}px` }} className="object-contain max-w-full" />
+              <div className="flex items-center gap-2 w-full px-2 pt-2">
+                <span className="text-[10px] text-muted-foreground">Tamanho</span>
+                <input type="range" min={20} max={140} step={2} value={height}
+                  onChange={(e) => setHeight(Number(e.target.value))}
+                  className="flex-1 accent-red-700" />
+                <button type="button" onClick={() => setSignature(null)} className="text-[10px] text-red-700 hover:underline">
+                  Refazer
+                </button>
               </div>
-            ) : (
-              <label className="cursor-pointer text-[12px] text-red-700 hover:underline px-3 py-2 border border-dashed border-red-700/50 rounded">
-                Enviar assinatura (PNG, JPG ou WEBP)
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => onUpload(e.target.files?.[0] ?? null)} />
-              </label>
-            )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "draw" | "upload")}>
+            <TabsList className="grid grid-cols-2 w-full">
+              <TabsTrigger value="draw"><Pencil className="h-3.5 w-3.5 mr-1.5" />Desenhar</TabsTrigger>
+              <TabsTrigger value="upload"><Upload className="h-3.5 w-3.5 mr-1.5" />Importar PNG</TabsTrigger>
+            </TabsList>
+            <TabsContent value="draw" className="mt-2">
+              <div className="border-2 border-black bg-white rounded">
+                <canvas
+                  ref={canvasRef}
+                  onPointerDown={onDown}
+                  onPointerMove={onMove}
+                  onPointerUp={onUp}
+                  onPointerLeave={onUp}
+                  onPointerCancel={onUp}
+                  className="w-full h-48 touch-none cursor-crosshair block"
+                  style={{ touchAction: "none" }}
+                />
+              </div>
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-[11px] text-muted-foreground">Assine usando mouse, caneta ou dedo</p>
+                <Button type="button" size="sm" variant="ghost" onClick={limparCanvas}>
+                  <Eraser className="h-3.5 w-3.5 mr-1" />Limpar
+                </Button>
+              </div>
+              <div className="flex justify-end mt-2">
+                <Button type="button" size="sm" onClick={() => {
+                  const url = exportDesenho();
+                  if (!url) { toast.error("Desenhe sua assinatura primeiro"); return; }
+                  setSignature(url);
+                }}>Usar assinatura</Button>
+              </div>
+            </TabsContent>
+            <TabsContent value="upload" className="mt-2">
+              <label className="cursor-pointer flex flex-col items-center justify-center gap-2 text-[12px] text-red-700 hover:bg-red-50 px-3 py-8 border-2 border-dashed border-red-700/50 rounded">
+                <Upload className="h-5 w-5" />
+                <span>Clique para enviar PNG, JPG ou WEBP</span>
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/*" className="hidden"
+                  onChange={(e) => onUpload(e.target.files?.[0] ?? null)} />
+              </label>
+            </TabsContent>
+          </Tabs>
+        )}
         <div className="rounded-md bg-amber-50 border border-amber-200 p-2 text-[11px] text-amber-900 leading-snug">
-          <strong>Dica:</strong> envie um <strong>PNG com fundo transparente</strong> contendo
-          <strong> apenas o desenho da sua assinatura</strong> (sem moldura, sem prints da tela).
-          O sistema centraliza e posiciona logo acima da linha “Técnico em Segurança do Trabalho”.
+          <strong>Dica:</strong> você pode <strong>desenhar</strong> direto na tela ou
+          <strong> importar um PNG transparente</strong> com apenas o traçado da assinatura.
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}><X className="h-4 w-4 mr-1" />Cancelar</Button>
