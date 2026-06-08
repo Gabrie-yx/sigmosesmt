@@ -7,6 +7,60 @@ import { toast } from "sonner";
 
 export type AssinaturaResult = { dataUrl: string; height: number };
 
+// Recorta bordas vazias e (para JPG/WEBP) remove fundo branco -> transparente
+function processUploadedSignature(img: HTMLImageElement, isPng: boolean): string {
+  const MAX = 1200;
+  const scale = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.max(1, Math.round(img.naturalWidth * scale));
+  const h = Math.max(1, Math.round(img.naturalHeight * scale));
+  const src = document.createElement("canvas");
+  src.width = w; src.height = h;
+  const sctx = src.getContext("2d")!;
+  sctx.drawImage(img, 0, 0, w, h);
+  const imgData = sctx.getImageData(0, 0, w, h);
+  const d = imgData.data;
+
+  // Se não for PNG, remove fundo claro -> alpha 0
+  if (!isPng) {
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      // pixel claro -> transparente
+      if (r > 230 && g > 230 && b > 230) {
+        d[i + 3] = 0;
+      } else {
+        // escurece levemente para o traço ficar nítido
+        const k = 0.85;
+        d[i] = Math.round(r * k);
+        d[i + 1] = Math.round(g * k);
+        d[i + 2] = Math.round(b * k);
+      }
+    }
+    sctx.putImageData(imgData, 0, 0);
+  }
+
+  // Bounding box dos pixels visíveis (alpha > 10)
+  let minX = w, minY = h, maxX = 0, maxY = 0, found = false;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (d[(y * w + x) * 4 + 3] > 10) {
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+        found = true;
+      }
+    }
+  }
+  if (!found) return src.toDataURL("image/png");
+
+  const pad = 6;
+  const sx = Math.max(0, minX - pad), sy = Math.max(0, minY - pad);
+  const sw = Math.min(w - sx, maxX - minX + pad * 2);
+  const sh = Math.min(h - sy, maxY - minY + pad * 2);
+  const out = document.createElement("canvas");
+  out.width = sw; out.height = sh;
+  out.getContext("2d")!.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh);
+  return out.toDataURL("image/png");
+}
+
 export function SignaturePadDialog({
   open,
   onClose,
@@ -118,18 +172,16 @@ export function SignaturePadDialog({
     const reader = new FileReader();
     reader.onload = () => {
       const src = reader.result as string;
-      if (file.type === "image/png") { setSignature(src); return; }
-      // Converte pra PNG (mantém transparência só se já for PNG; senão fundo branco vira PNG igual)
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) { setSignature(src); return; }
-        ctx.drawImage(img, 0, 0);
-        try { setSignature(canvas.toDataURL("image/png")); }
-        catch { setSignature(src); }
+        try {
+          const processed = processUploadedSignature(img, file.type === "image/png");
+          setSignature(processed);
+          // ajusta altura inicial proporcional pra preview ficar bonita
+          setHeight(80);
+        } catch {
+          setSignature(src);
+        }
       };
       img.onerror = () => toast.error("Não consegui ler a imagem");
       img.src = src;
@@ -146,7 +198,7 @@ export function SignaturePadDialog({
         {signature ? (
           <div className="border-2 border-black bg-white text-black p-3">
             <div className="flex flex-col items-center gap-1 w-full">
-              <img src={signature} alt="Assinatura" style={{ height: `${height}px` }} className="object-contain max-w-full" />
+              <img src={signature} alt="Assinatura" style={{ height: `${height}px`, width: "auto" }} className="object-contain max-w-full" />
               <div className="flex items-center gap-2 w-full px-2 pt-2">
                 <span className="text-[10px] text-muted-foreground">Tamanho</span>
                 <input type="range" min={20} max={140} step={2} value={height}
