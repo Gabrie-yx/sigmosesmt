@@ -1309,6 +1309,75 @@ export type Database = {
         }
         Relationships: []
       }
+      company_frentes_servico: {
+        Row: {
+          cargos: string[] | null
+          casco_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          data_fim_prevista: string | null
+          data_inicio: string | null
+          escopo: string | null
+          ghe_ids: string[] | null
+          id: string
+          nome: string
+          observacoes: string | null
+          qtd_prevista: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cargos?: string[] | null
+          casco_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          data_fim_prevista?: string | null
+          data_inicio?: string | null
+          escopo?: string | null
+          ghe_ids?: string[] | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          qtd_prevista?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cargos?: string[] | null
+          casco_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_fim_prevista?: string | null
+          data_inicio?: string | null
+          escopo?: string | null
+          ghe_ids?: string[] | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          qtd_prevista?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_frentes_servico_casco_id_fkey"
+            columns: ["casco_id"]
+            isOneToOne: false
+            referencedRelation: "cascos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_frentes_servico_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_settings: {
         Row: {
           created_at: string
