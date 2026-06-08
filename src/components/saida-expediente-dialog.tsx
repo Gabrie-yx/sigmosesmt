@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { PenLine, Check } from "lucide-react";
 
 export function SaidaExpedienteDialog({
   open, onOpenChange, editId,
@@ -20,6 +22,7 @@ export function SaidaExpedienteDialog({
     horario_saida: "", tipo: "PESSOAL", com_retorno: false,
     horario_retorno: "", motivo: "", observacao: "",
   });
+  const [sigOpen, setSigOpen] = useState(false);
 
   const { data: companies } = useQuery({
     queryKey: ["companies-min"],
@@ -64,6 +67,11 @@ export function SaidaExpedienteDialog({
         horario_retorno: form.com_retorno ? form.horario_retorno : null,
         motivo: form.motivo || null, observacao: form.observacao || null,
       };
+      if (form.assinatura_sesmt) {
+        payload.assinatura_sesmt = form.assinatura_sesmt;
+        payload.assinado_sesmt_por = user?.id ?? null;
+        payload.assinado_sesmt_em = new Date().toISOString();
+      }
       if (editId) {
         const { error } = await supabase.from("employee_saidas_expediente").update(payload).eq("id", editId);
         if (error) throw error;
@@ -151,12 +159,34 @@ export function SaidaExpedienteDialog({
           <div className="space-y-1.5"><Label>Observação interna</Label>
             <Textarea rows={2} value={form.observacao ?? ""} onChange={(e) => setForm({ ...form, observacao: e.target.value })} />
           </div>
+          <div className="space-y-1.5 pt-2 border-t">
+            <Label>Minha assinatura (TST)</Label>
+            {form.assinatura_sesmt ? (
+              <div className="flex items-center gap-3">
+                <img src={form.assinatura_sesmt} alt="Assinatura TST" className="h-16 bg-white border rounded px-2" />
+                <span className="text-xs text-emerald-700 font-bold inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" /> Assinado</span>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setSigOpen(true)}>Refazer</Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setForm({ ...form, assinatura_sesmt: null })}>Remover</Button>
+              </div>
+            ) : (
+              <Button type="button" size="sm" variant="outline" onClick={() => setSigOpen(true)}>
+                <PenLine className="h-3.5 w-3.5 mr-1.5" />Assinar como TST
+              </Button>
+            )}
+            <p className="text-[11px] text-slate-500">Opcional — você também pode assinar depois na pré-visualização do PDF.</p>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? "Salvando..." : "Salvar"}</Button>
         </DialogFooter>
       </DialogContent>
+      <SignaturePadDialog
+        open={sigOpen}
+        onClose={() => setSigOpen(false)}
+        onConfirm={(r) => { setForm((f: any) => ({ ...f, assinatura_sesmt: r.dataUrl })); setSigOpen(false); }}
+        title="Assinatura do TST"
+      />
     </Dialog>
   );
 }
