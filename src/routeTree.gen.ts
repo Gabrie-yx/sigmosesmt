@@ -59,6 +59,7 @@ import { Route as AppProducaoBaseMateriaPrimaRouteImport } from './routes/app.pr
 import { Route as AppOssTemplatesRouteImport } from './routes/app.oss.templates'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
+import { Route as AppEmployeesSaidasRouteImport } from './routes/app.employees.saidas'
 import { Route as AppEmployeesListagemRouteImport } from './routes/app.employees.listagem'
 import { Route as AppEmployeesHoraExtraSabadoRouteImport } from './routes/app.employees.hora-extra-sabado'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
@@ -325,6 +326,11 @@ const AppEstoqueEpiRoute = AppEstoqueEpiRouteImport.update({
   path: '/estoque/epi',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEmployeesSaidasRoute = AppEmployeesSaidasRouteImport.update({
+  id: '/saidas',
+  path: '/saidas',
+  getParentRoute: () => AppEmployeesRoute,
+} as any)
 const AppEmployeesListagemRoute = AppEmployeesListagemRouteImport.update({
   id: '/listagem',
   path: '/listagem',
@@ -423,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
+  '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/oss/templates': typeof AppOssTemplatesRoute
@@ -483,6 +490,7 @@ export interface FileRoutesByTo {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
+  '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/oss/templates': typeof AppOssTemplatesRoute
@@ -547,6 +555,7 @@ export interface FileRoutesById {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
+  '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRoute
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/oss/templates': typeof AppOssTemplatesRoute
@@ -612,6 +621,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
+    | '/app/employees/saidas'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
     | '/app/oss/templates'
@@ -672,6 +682,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
+    | '/app/employees/saidas'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
     | '/app/oss/templates'
@@ -735,6 +746,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
+    | '/app/employees/saidas'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
     | '/app/oss/templates'
@@ -1123,6 +1135,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEstoqueEpiRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/employees/saidas': {
+      id: '/app/employees/saidas'
+      path: '/saidas'
+      fullPath: '/app/employees/saidas'
+      preLoaderRoute: typeof AppEmployeesSaidasRouteImport
+      parentRoute: typeof AppEmployeesRoute
+    }
     '/app/employees/listagem': {
       id: '/app/employees/listagem'
       path: '/listagem'
@@ -1207,6 +1226,7 @@ interface AppEmployeesRouteChildren {
   AppEmployeesIdRoute: typeof AppEmployeesIdRoute
   AppEmployeesHoraExtraSabadoRoute: typeof AppEmployeesHoraExtraSabadoRoute
   AppEmployeesListagemRoute: typeof AppEmployeesListagemRoute
+  AppEmployeesSaidasRoute: typeof AppEmployeesSaidasRoute
   AppEmployeesIndexRoute: typeof AppEmployeesIndexRoute
 }
 
@@ -1214,6 +1234,7 @@ const AppEmployeesRouteChildren: AppEmployeesRouteChildren = {
   AppEmployeesIdRoute: AppEmployeesIdRoute,
   AppEmployeesHoraExtraSabadoRoute: AppEmployeesHoraExtraSabadoRoute,
   AppEmployeesListagemRoute: AppEmployeesListagemRoute,
+  AppEmployeesSaidasRoute: AppEmployeesSaidasRoute,
   AppEmployeesIndexRoute: AppEmployeesIndexRoute,
 }
 
@@ -1353,13 +1374,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

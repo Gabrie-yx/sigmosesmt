@@ -142,6 +142,11 @@ function EmployeesPage() {
           <Button variant="outline" onClick={() => setListagemOpen(true)} className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-slate-300 text-slate-700 hover:bg-slate-100">
             <FileText className="h-4 w-4 mr-2" />Listagem (PDF)
           </Button>
+          <Link to="/app/employees/saidas">
+            <Button variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-slate-300 text-slate-700 hover:bg-slate-100">
+              <CalendarClock className="h-4 w-4 mr-2" />Saídas no expediente
+            </Button>
+          </Link>
           <Link to="/app/employees/hora-extra-sabado">
             <Button variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-[#7B1E2B]/30 text-[#7B1E2B] hover:bg-[#7B1E2B]/5">
               <CalendarClock className="h-4 w-4 mr-2" />Hora extra (sábado)
