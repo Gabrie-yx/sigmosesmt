@@ -551,7 +551,15 @@ export function EstoqueSesmtPage() {
                   )}
                   <TableCell>
                     {i.imagem_url ? (
-                      <img src={i.imagem_url} alt="" className="h-10 w-10 rounded object-cover border border-slate-200" />
+                      <img
+                        src={i.imagem_url}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        width={40}
+                        height={40}
+                        className="h-10 w-10 rounded object-cover border border-slate-200"
+                      />
                     ) : (
                       <div className="h-10 w-10 rounded border border-dashed border-slate-300 flex items-center justify-center text-slate-300">
                         <ImageIcon className="h-4 w-4" />
