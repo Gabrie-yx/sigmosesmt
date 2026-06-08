@@ -77,6 +77,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
       { to: "/app/controle-documentos", label: "Controle de Documentos", icon: FolderOpen },
       { to: "/app/extintores", label: "Controle de Extintores", icon: Flame },
       { to: "/app/sesmt/requisicoes", label: "Requisições de Compra", icon: ShoppingCart },
+      { to: "/app/assinador", label: "Assinador de PDFs", icon: FileSignature },
     ],
   },
   {
