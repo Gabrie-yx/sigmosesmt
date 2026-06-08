@@ -191,10 +191,17 @@ function SaidasPage() {
         signable={false}
       />
       {!!previewDoc && previewRowId && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex gap-2 bg-white border shadow-xl rounded-xl px-3 py-2">
-          <Button size="sm" variant="outline" onClick={() => setSigOpen("SESMT")}><PenLine className="h-3.5 w-3.5 mr-1" />Assinar TST</Button>
-          <Button size="sm" variant="outline" onClick={() => setSigOpen("FUNC")}><PenLine className="h-3.5 w-3.5 mr-1" />Assinar funcionário</Button>
-          <Button size="sm" className="bg-rose-700 hover:bg-rose-800 text-white" onClick={() => setSigOpen("SUPERVISOR")}><PenLine className="h-3.5 w-3.5 mr-1" />{previewTerceira ? "Assinar Encarregado" : "Assinar Supervisor Geral"}</Button>
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex flex-wrap items-center justify-center gap-2 bg-white/95 backdrop-blur border-2 border-rose-300 shadow-2xl rounded-xl px-3 py-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-rose-700 mr-1">Assinar:</span>
+          <Button size="sm" variant="outline" className="border-slate-300" onClick={() => setSigOpen("SESMT")}>
+            <PenLine className="h-3.5 w-3.5 mr-1" />TST (SESMT)
+          </Button>
+          <Button size="sm" variant="outline" className="border-slate-300" onClick={() => setSigOpen("FUNC")}>
+            <PenLine className="h-3.5 w-3.5 mr-1" />Funcionário
+          </Button>
+          <Button size="sm" variant="outline" className="border-slate-300" onClick={() => setSigOpen("SUPERVISOR")}>
+            <PenLine className="h-3.5 w-3.5 mr-1" />{previewTerceira ? "Encarregado" : "Supervisor Geral"}
+          </Button>
         </div>
       )}
       <SignaturePadDialog
