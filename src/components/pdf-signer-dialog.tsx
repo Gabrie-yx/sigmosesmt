@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library, Pencil, Upload as UploadIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library, Pencil } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from "pdf-lib";
@@ -221,7 +219,7 @@ export function PdfSignerDialog({
 
       // Audit row
       const userEmail = userData.user?.email ?? null;
-      const { error: insErr } = await supabase.from("documentos_assinados").insert({
+      const { error: insErr } = await (supabase as any).from("documentos_assinados").insert({
         nome_arquivo: nomeArquivo,
         modulo,
         referencia_id: referenciaId ?? null,
