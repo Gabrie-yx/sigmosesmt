@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, FileText, CheckCircle2, XCircle, Trash2, Download, Eye } from "lucide-react";
+import { Plus, FileText, CheckCircle2, XCircle, Trash2, Download, Eye, ShieldOff } from "lucide-react";
 
 type Props = {
   empId: string;
@@ -81,6 +81,14 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
   }
 
   async function homologar(at: any) {
+    const ok = window.confirm(
+      "Confirmar homologação?\n\n" +
+        "• O atestado foi assinado/validado pelo Supervisor Geral (Anderson)?\n" +
+        "• Os dados (CID, CRM, datas) foram conferidos?\n\n" +
+        "Ao homologar, será criado bloqueio na portaria APENAS durante o período do afastamento " +
+        "(do início até a data de retorno). Atestados retroativos não geram bloqueio.",
+    );
+    if (!ok) return;
     const { data: u } = await supabase.auth.getUser();
     const { error } = await (supabase as any)
       .from("employee_atestados")
@@ -92,7 +100,7 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
       })
       .eq("id", at.id);
     if (error) return toast.error(error.message);
-    toast.success("Atestado homologado" + (at.dias_afastamento > 0 ? " — bloqueio criado na portaria" : ""));
+    toast.success("Atestado homologado");
     refresh();
   }
 
@@ -105,6 +113,25 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
       .eq("id", at.id);
     if (error) return toast.error(error.message);
     toast.success("Atestado recusado");
+    refresh();
+  }
+
+  async function revogarBloqueio(at: any) {
+    if (!at.override_id) return toast.info("Este atestado não tem bloqueio ativo");
+    const motivo = window.prompt("Motivo da liberação manual na portaria:");
+    if (!motivo) return;
+    const { data: u } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from("safety_overrides")
+      .update({
+        ativo: false,
+        revogado_em: new Date().toISOString(),
+        revogado_por: u.user?.id,
+        motivo_revogacao: motivo,
+      })
+      .eq("id", at.override_id);
+    if (error) return toast.error(error.message);
+    toast.success("Bloqueio revogado — funcionário liberado na portaria");
     refresh();
   }
 
@@ -135,6 +162,7 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
   const ativo = atestados.find(
     (a: any) =>
       a.status === "HOMOLOGADO" &&
+      a.override_id &&
       a.data_retorno &&
       new Date(a.data_retorno) >= new Date(new Date().toDateString()),
   );
@@ -237,6 +265,11 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
                             <XCircle className="h-4 w-4 text-red-600" />
                           </Button>
                         </>
+                      )}
+                      {canEdit && a.status === "HOMOLOGADO" && a.override_id && (
+                        <Button size="icon" variant="ghost" onClick={() => revogarBloqueio(a)} title="Revogar bloqueio na portaria">
+                          <ShieldOff className="h-4 w-4 text-amber-600" />
+                        </Button>
                       )}
                       {canDelete && (
                         <Button size="icon" variant="ghost" onClick={() => excluir(a)} title="Excluir">
