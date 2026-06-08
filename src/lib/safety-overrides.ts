@@ -20,7 +20,12 @@ export interface SafetyOverride {
 export function filterActiveOverrides(list: SafetyOverride[] | null | undefined): SafetyOverride[] {
   if (!list) return [];
   const now = Date.now();
-  return list.filter((o) => o.ativo && (!o.expira_em || new Date(o.expira_em).getTime() > now));
+  return list.filter(
+    (o) =>
+      o.ativo &&
+      (!o.expira_em || new Date(o.expira_em).getTime() > now) &&
+      (!o.liberado_em || new Date(o.liberado_em).getTime() <= now),
+  );
 }
 
 /**
