@@ -35,6 +35,7 @@ import { Route as AppControleDocumentosRouteImport } from './routes/app.controle
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppCascosRouteImport } from './routes/app.cascos'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
+import { Route as AppAssinadorRouteImport } from './routes/app.assinador'
 import { Route as AppAprsRouteImport } from './routes/app.aprs'
 import { Route as AppAcoesRouteImport } from './routes/app.acoes'
 import { Route as AppAcidentesRouteImport } from './routes/app.acidentes'
@@ -200,6 +201,11 @@ const AppCascosRoute = AppCascosRouteImport.update({
 const AppAuditRoute = AppAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAssinadorRoute = AppAssinadorRouteImport.update({
+  id: '/assinador',
+  path: '/assinador',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAprsRoute = AppAprsRouteImport.update({
@@ -401,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
+  '/app/assinador': typeof AppAssinadorRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
@@ -464,6 +471,7 @@ export interface FileRoutesByTo {
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
+  '/app/assinador': typeof AppAssinadorRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
@@ -527,6 +535,7 @@ export interface FileRoutesById {
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
+  '/app/assinador': typeof AppAssinadorRoute
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
@@ -593,6 +602,7 @@ export interface FileRouteTypes {
     | '/app/acidentes'
     | '/app/acoes'
     | '/app/aprs'
+    | '/app/assinador'
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
@@ -656,6 +666,7 @@ export interface FileRouteTypes {
     | '/app/acidentes'
     | '/app/acoes'
     | '/app/aprs'
+    | '/app/assinador'
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
@@ -718,6 +729,7 @@ export interface FileRouteTypes {
     | '/app/acidentes'
     | '/app/acoes'
     | '/app/aprs'
+    | '/app/assinador'
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
@@ -965,6 +977,13 @@ declare module '@tanstack/react-router' {
       path: '/audit'
       fullPath: '/app/audit'
       preLoaderRoute: typeof AppAuditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/assinador': {
+      id: '/app/assinador'
+      path: '/assinador'
+      fullPath: '/app/assinador'
+      preLoaderRoute: typeof AppAssinadorRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/aprs': {
@@ -1259,6 +1278,7 @@ interface AppRouteChildren {
   AppAcidentesRoute: typeof AppAcidentesRoute
   AppAcoesRoute: typeof AppAcoesRoute
   AppAprsRoute: typeof AppAprsRoute
+  AppAssinadorRoute: typeof AppAssinadorRoute
   AppAuditRoute: typeof AppAuditRoute
   AppCascosRoute: typeof AppCascosRoute
   AppCompaniesRoute: typeof AppCompaniesRoute
@@ -1310,6 +1330,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAcidentesRoute: AppAcidentesRoute,
   AppAcoesRoute: AppAcoesRoute,
   AppAprsRoute: AppAprsRoute,
+  AppAssinadorRoute: AppAssinadorRoute,
   AppAuditRoute: AppAuditRoute,
   AppCascosRoute: AppCascosRoute,
   AppCompaniesRoute: AppCompaniesRoute,
