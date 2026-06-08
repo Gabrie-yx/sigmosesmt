@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, FileText, CheckCircle2, XCircle, Trash2, Download, Eye, ShieldOff } from "lucide-react";
+import { Plus, FileText, CheckCircle2, XCircle, Trash2, Download, Eye, ShieldOff, Pencil } from "lucide-react";
 
 type Props = {
   empId: string;
@@ -61,6 +61,7 @@ function fmt(d: string | null | undefined) {
 
 export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
   const [openNew, setOpenNew] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
   const [viewing, setViewing] = useState<{ url: string; name: string; isPdf: boolean } | null>(null);
 
   const { data: atestados = [], isLoading } = useQuery({
@@ -198,10 +199,20 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Novo atestado</Button>
             </DialogTrigger>
-            <NovoAtestadoDialog empId={empId} onSaved={() => { setOpenNew(false); refresh(); }} />
+            {openNew && <AtestadoFormDialog empId={empId} onSaved={() => { setOpenNew(false); refresh(); }} />}
           </Dialog>
         )}
       </div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        {editing && (
+          <AtestadoFormDialog
+            empId={empId}
+            atestado={editing}
+            onSaved={() => { setEditing(null); refresh(); }}
+          />
+        )}
+      </Dialog>
 
       <div className="border rounded-md">
         <Table>
@@ -255,6 +266,11 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
                             <Download className="h-4 w-4" />
                           </Button>
                         </>
+                      )}
+                      {canEdit && (
+                        <Button size="icon" variant="ghost" onClick={() => setEditing(a)} title="Editar">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                       )}
                       {canEdit && a.status === "PENDENTE" && (
                         <>
