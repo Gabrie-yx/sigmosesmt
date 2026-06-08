@@ -330,14 +330,25 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
   );
 }
 
-function NovoAtestadoDialog({ empId, onSaved }: { empId: string; onSaved: () => void }) {
-  const [tipo, setTipo] = useState("ATESTADO");
-  const [dataInicio, setDataInicio] = useState(new Date().toISOString().slice(0, 10));
-  const [dias, setDias] = useState<number>(1);
-  const [cid, setCid] = useState("");
-  const [medico, setMedico] = useState("");
-  const [crm, setCrm] = useState("");
-  const [obs, setObs] = useState("");
+function AtestadoFormDialog({
+  empId,
+  atestado,
+  onSaved,
+}: {
+  empId: string;
+  atestado?: any;
+  onSaved: () => void;
+}) {
+  const isEdit = !!atestado;
+  const [tipo, setTipo] = useState<string>(atestado?.tipo ?? "ATESTADO");
+  const [dataInicio, setDataInicio] = useState<string>(
+    atestado?.data_inicio ?? new Date().toISOString().slice(0, 10),
+  );
+  const [dias, setDias] = useState<number>(atestado?.dias_afastamento ?? 1);
+  const [cid, setCid] = useState<string>(atestado?.cid ?? "");
+  const [medico, setMedico] = useState<string>(atestado?.medico_nome ?? "");
+  const [crm, setCrm] = useState<string>(atestado?.medico_crm ?? "");
+  const [obs, setObs] = useState<string>(atestado?.observacao ?? "");
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -346,17 +357,20 @@ function NovoAtestadoDialog({ empId, onSaved }: { empId: string; onSaved: () => 
     setSaving(true);
     try {
       const { data: u } = await supabase.auth.getUser();
-      let arquivo_path: string | null = null;
+      let arquivo_path: string | null | undefined = isEdit ? atestado.arquivo_path : null;
       if (arquivo) {
         const ext = arquivo.name.split(".").pop();
-        arquivo_path = `atestados/${empId}/${crypto.randomUUID()}.${ext}`;
+        const newPath = `atestados/${empId}/${crypto.randomUUID()}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from("employee-docs")
-          .upload(arquivo_path, arquivo, { upsert: false });
+          .upload(newPath, arquivo, { upsert: false });
         if (upErr) throw upErr;
+        if (isEdit && atestado.arquivo_path) {
+          await supabase.storage.from("employee-docs").remove([atestado.arquivo_path]);
+        }
+        arquivo_path = newPath;
       }
-      const { error } = await (supabase as any).from("employee_atestados").insert({
-        employee_id: empId,
+      const payload: any = {
         tipo,
         data_inicio: dataInicio,
         dias_afastamento: dias,
@@ -365,10 +379,21 @@ function NovoAtestadoDialog({ empId, onSaved }: { empId: string; onSaved: () => 
         medico_crm: crm || null,
         observacao: obs || null,
         arquivo_path,
-        created_by: u.user?.id,
-      });
-      if (error) throw error;
-      toast.success("Atestado registrado");
+      };
+      if (isEdit) {
+        const { error } = await (supabase as any)
+          .from("employee_atestados")
+          .update(payload)
+          .eq("id", atestado.id);
+        if (error) throw error;
+        toast.success("Atestado atualizado");
+      } else {
+        const { error } = await (supabase as any)
+          .from("employee_atestados")
+          .insert({ ...payload, employee_id: empId, created_by: u.user?.id });
+        if (error) throw error;
+        toast.success("Atestado registrado");
+      }
       onSaved();
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao salvar");
@@ -380,7 +405,7 @@ function NovoAtestadoDialog({ empId, onSaved }: { empId: string; onSaved: () => 
   return (
     <DialogContent className="max-w-lg">
       <DialogHeader>
-        <DialogTitle>Novo Atestado</DialogTitle>
+        <DialogTitle>{isEdit ? "Editar Atestado" : "Novo Atestado"}</DialogTitle>
       </DialogHeader>
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
@@ -415,7 +440,14 @@ function NovoAtestadoDialog({ empId, onSaved }: { empId: string; onSaved: () => 
           <Input value={medico} onChange={(e) => setMedico(e.target.value)} />
         </div>
         <div className="col-span-2">
-          <Label>Arquivo digitalizado (PDF/imagem)</Label>
+          <Label>
+            Arquivo digitalizado (PDF/imagem)
+            {isEdit && atestado.arquivo_path && (
+              <span className="text-xs text-muted-foreground ml-2">
+                (deixe em branco para manter o atual)
+              </span>
+            )}
+          </Label>
           <Input type="file" accept="application/pdf,image/*" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)} />
         </div>
         <div className="col-span-2">
