@@ -43,6 +43,7 @@ function SaidasPage() {
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [previewFileName, setPreviewFileName] = useState("autorizacao-saida.pdf");
   const [previewRowId, setPreviewRowId] = useState<string | null>(null);
+  const [previewTerceira, setPreviewTerceira] = useState(false);
   const [sigOpen, setSigOpen] = useState<null | "FUNC" | "SESMT" | "SUPERVISOR">(null);
 
   const { data: rows, isLoading } = useQuery({
@@ -193,14 +194,14 @@ function SaidasPage() {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex gap-2 bg-white border shadow-xl rounded-xl px-3 py-2">
           <Button size="sm" variant="outline" onClick={() => setSigOpen("SESMT")}><PenLine className="h-3.5 w-3.5 mr-1" />Assinar TST</Button>
           <Button size="sm" variant="outline" onClick={() => setSigOpen("FUNC")}><PenLine className="h-3.5 w-3.5 mr-1" />Assinar funcionário</Button>
-          <Button size="sm" className="bg-rose-700 hover:bg-rose-800 text-white" onClick={() => setSigOpen("SUPERVISOR")}><PenLine className="h-3.5 w-3.5 mr-1" />Assinar Supervisor Geral</Button>
+          <Button size="sm" className="bg-rose-700 hover:bg-rose-800 text-white" onClick={() => setSigOpen("SUPERVISOR")}><PenLine className="h-3.5 w-3.5 mr-1" />{previewTerceira ? "Assinar Encarregado" : "Assinar Supervisor Geral"}</Button>
         </div>
       )}
       <SignaturePadDialog
         open={!!sigOpen}
         onClose={() => setSigOpen(null)}
         onConfirm={async (r) => { const t = sigOpen; setSigOpen(null); if (t) await salvarAssinatura(t, r.dataUrl); }}
-        title={sigOpen === "FUNC" ? "Assinatura do funcionário" : sigOpen === "SESMT" ? "Assinatura do TST" : "Assinatura do Supervisor Geral"}
+        title={sigOpen === "FUNC" ? "Assinatura do funcionário" : sigOpen === "SESMT" ? "Assinatura do TST" : (previewTerceira ? "Assinatura do Encarregado" : "Assinatura do Supervisor Geral")}
       />
     </div>
   );
