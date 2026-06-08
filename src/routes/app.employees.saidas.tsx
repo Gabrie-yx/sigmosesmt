@@ -5,10 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Plus, Eye, Pencil, Trash2, PenLine, LogOut } from "lucide-react";
+import { ArrowLeft, Plus, Eye, Pencil, Trash2, PenLine, LogOut, MousePointerClick } from "lucide-react";
 import { toast } from "sonner";
 import { SaidaExpedienteDialog } from "@/components/saida-expediente-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { PdfSignerDialog } from "@/components/pdf-signer-dialog";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { gerarSaidaExpedientePDF } from "@/lib/saida-expediente-pdf";
 import { formatDateBR } from "@/lib/utils-date";
@@ -45,6 +46,9 @@ function SaidasPage() {
   const [previewRowId, setPreviewRowId] = useState<string | null>(null);
   const [previewTerceira, setPreviewTerceira] = useState(false);
   const [sigOpen, setSigOpen] = useState<null | "FUNC" | "SESMT" | "SUPERVISOR">(null);
+  const [visualSignerBytes, setVisualSignerBytes] = useState<Uint8Array | null>(null);
+  const [visualSignerName, setVisualSignerName] = useState("");
+  const [visualSignerRef, setVisualSignerRef] = useState<string | undefined>(undefined);
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["saidas-expediente"],
@@ -202,6 +206,19 @@ function SaidasPage() {
           <Button size="sm" variant="outline" className="border-slate-300" onClick={() => setSigOpen("SUPERVISOR")}>
             <PenLine className="h-3.5 w-3.5 mr-1" />{previewTerceira ? "Encarregado" : "Supervisor Geral"}
           </Button>
+          <Button
+            size="sm"
+            className="bg-rose-600 hover:bg-rose-700 text-white"
+            onClick={() => {
+              if (!previewDoc) return;
+              const ab = previewDoc.output("arraybuffer") as ArrayBuffer;
+              setVisualSignerBytes(new Uint8Array(ab));
+              setVisualSignerName(previewFileName);
+              setVisualSignerRef(previewRowId ?? undefined);
+            }}
+          >
+            <MousePointerClick className="h-3.5 w-3.5 mr-1" />Assinador Visual
+          </Button>
         </div>
       )}
       <SignaturePadDialog
@@ -209,6 +226,14 @@ function SaidasPage() {
         onClose={() => setSigOpen(null)}
         onConfirm={async (r) => { const t = sigOpen; setSigOpen(null); if (t) await salvarAssinatura(t, r.dataUrl); }}
         title={sigOpen === "FUNC" ? "Assinatura do funcionário" : sigOpen === "SESMT" ? "Assinatura do TST" : (previewTerceira ? "Assinatura do Encarregado" : "Assinatura do Supervisor Geral")}
+      />
+      <PdfSignerDialog
+        open={!!visualSignerBytes}
+        onClose={() => setVisualSignerBytes(null)}
+        source={visualSignerBytes}
+        nomeArquivo={visualSignerName}
+        modulo="saida_expediente"
+        referenciaId={visualSignerRef}
       />
     </div>
   );
