@@ -69,10 +69,12 @@ function SaidasPage() {
   async function gerarPdf(id: string) {
     const { data: row, error } = await supabase
       .from("employee_saidas_expediente")
-      .select("*, employees(id,nome,cpf,rg,role_id,roles(name))")
+      .select("*, employees(id,nome,cpf,rg,role_id,roles(name)), companies(id,name,type,encarregado1)")
       .eq("id", id).maybeSingle();
     if (error || !row) return toast.error(error?.message ?? "Não encontrado");
     const emp: any = (row as any).employees;
+    const comp: any = (row as any).companies;
+    const terceira = comp?.type === "TERCEIRIZADO";
     const logo = await imageToDataUrl(dmnLogo);
     const doc = gerarSaidaExpedientePDF({
       funcionarioNome: emp?.nome ?? "—",
@@ -89,10 +91,14 @@ function SaidasPage() {
       assinaturaSesmtDataUrl: row.assinatura_sesmt,
       assinaturaSupervisorDataUrl: (row as any).assinatura_supervisor ?? null,
       sesmtNome: (user as any)?.user_metadata?.full_name ?? null,
+      empresaNome: comp?.name ?? null,
+      empresaTerceira: terceira,
+      encarregadoNome: comp?.encarregado1 ?? null,
     });
     setPreviewFileName(`autorizacao-saida-${emp?.nome?.replace(/\s+/g,"-")}-${row.data}.pdf`);
     setPreviewDoc(doc);
     setPreviewRowId(id);
+    setPreviewTerceira(terceira);
   }
 
   async function salvarAssinatura(tipo: "FUNC" | "SESMT" | "SUPERVISOR", dataUrl: string) {
