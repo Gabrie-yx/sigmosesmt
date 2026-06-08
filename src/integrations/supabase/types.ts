@@ -2141,6 +2141,78 @@ export type Database = {
           },
         ]
       }
+      employee_saidas_expediente: {
+        Row: {
+          assinado_sesmt_em: string | null
+          assinado_sesmt_por: string | null
+          assinatura_funcionario: string | null
+          assinatura_sesmt: string | null
+          com_retorno: boolean
+          created_at: string
+          created_by: string | null
+          data: string
+          employee_id: string
+          horario_retorno: string | null
+          horario_saida: string
+          id: string
+          motivo: string | null
+          observacao: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          assinado_sesmt_em?: string | null
+          assinado_sesmt_por?: string | null
+          assinatura_funcionario?: string | null
+          assinatura_sesmt?: string | null
+          com_retorno?: boolean
+          created_at?: string
+          created_by?: string | null
+          data: string
+          employee_id: string
+          horario_retorno?: string | null
+          horario_saida: string
+          id?: string
+          motivo?: string | null
+          observacao?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          assinado_sesmt_em?: string | null
+          assinado_sesmt_por?: string | null
+          assinatura_funcionario?: string | null
+          assinatura_sesmt?: string | null
+          com_retorno?: boolean
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          employee_id?: string
+          horario_retorno?: string | null
+          horario_saida?: string
+          id?: string
+          motivo?: string | null
+          observacao?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_saidas_expediente_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_saidas_expediente_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       employee_vaccinations: {
         Row: {
           anexo_path: string | null
