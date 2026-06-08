@@ -33,6 +33,7 @@ import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban }
 import { GraduationCap } from "lucide-react";
 import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
 import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.functions";
+import { AtestadosTab } from "@/components/employees/atestados-tab";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
