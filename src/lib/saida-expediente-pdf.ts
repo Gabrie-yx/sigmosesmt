@@ -96,14 +96,27 @@ export function gerarSaidaExpedientePDF(p: SaidaExpedientePdfParams): jsPDF {
   y += 24;
 
   // Assinaturas — TST à esquerda, Funcionário à direita; Supervisor abaixo
-  const sigW = 75, sigH = 22, gap = 14;
+  const sigW = 75, sigH = 22, gap = 18;
   const drawSig = (cx: number, label: string, sub: string, dataUrl?: string | null) => {
     const x = cx - sigW / 2;
+    const lineY = y + 4;
     if (dataUrl) {
-      try { doc.addImage(dataUrl, "PNG", x, y - sigH + 2, sigW, sigH, undefined, "FAST"); } catch {}
+      try {
+        // Preserva proporção da assinatura, centralizando acima da linha
+        const props = doc.getImageProperties(dataUrl);
+        const maxW = sigW;
+        const maxH = sigH;
+        const ratio = Math.min(maxW / props.width, maxH / props.height);
+        const imgW = Math.max(8, props.width * ratio);
+        const imgH = Math.max(4, props.height * ratio);
+        const imgX = cx - imgW / 2;
+        const imgY = lineY - imgH + 1; // base da imagem encosta na linha
+        const fmt = (props.fileType || "PNG").toString().toUpperCase().includes("JPEG") ? "JPEG" : "PNG";
+        doc.addImage(dataUrl, fmt as any, imgX, imgY, imgW, imgH, undefined, "FAST");
+      } catch {}
     }
     doc.setDrawColor(0); doc.setLineWidth(0.3);
-    doc.line(x, y + 4, x + sigW, y + 4);
+    doc.line(x, lineY, x + sigW, lineY);
     doc.setFont("helvetica", "bold"); doc.setFontSize(10);
     doc.text(label, cx, y + 9, { align: "center" });
     if (sub) { doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(80,80,80); doc.text(sub, cx, y + 13.5, { align: "center" }); doc.setTextColor(20,20,20); }
