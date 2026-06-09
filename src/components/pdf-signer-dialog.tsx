@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library, Pencil } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library, Pencil, Move } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from "pdf-lib";
@@ -183,6 +183,77 @@ export function PdfSignerDialog({
     img.src = pendingSig.dataUrl;
   }
 
+  // Drag-move / resize handlers
+  function startMove(e: React.PointerEvent, id: string) {
+    e.stopPropagation();
+    e.preventDefault();
+    const rect = overlayRef.current!.getBoundingClientRect();
+    const ptsPerCssX = pageSize.w / rect.width;
+    const ptsPerCssY = pageSize.h / rect.height;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const initial = placements.find((p) => p.id === id);
+    if (!initial) return;
+    const initX = initial.x;
+    const initY = initial.y;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    const onMove = (ev: PointerEvent) => {
+      const dxPt = (ev.clientX - startX) * ptsPerCssX;
+      const dyPt = (ev.clientY - startY) * ptsPerCssY;
+      setPlacements((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? {
+                ...p,
+                x: Math.max(0, Math.min(pageSize.w - p.width, initX + dxPt)),
+                y: Math.max(0, Math.min(pageSize.h - p.height, initY - dyPt)),
+              }
+            : p,
+        ),
+      );
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  function startResize(e: React.PointerEvent, id: string) {
+    e.stopPropagation();
+    e.preventDefault();
+    const rect = overlayRef.current!.getBoundingClientRect();
+    const ptsPerCssX = pageSize.w / rect.width;
+    const ptsPerCssY = pageSize.h / rect.height;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const initial = placements.find((p) => p.id === id);
+    if (!initial) return;
+    const initW = initial.width;
+    const initH = initial.height;
+    const initY = initial.y;
+    const aspect = initW / initH;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    const onMove = (ev: PointerEvent) => {
+      const dxPt = (ev.clientX - startX) * ptsPerCssX;
+      let newW = Math.max(20, initW + dxPt);
+      let newH = newW / aspect;
+      if (newH < 12) { newH = 12; newW = newH * aspect; }
+      // y is bottom-left; keep the top visually fixed → adjust y
+      const newY = initY + (initH - newH);
+      setPlacements((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, width: newW, height: newH, y: newY } : p)),
+      );
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
   const handleSave = async () => {
     if (!bytesRef.current) return;
     if (placements.length === 0) {
@@ -211,7 +282,8 @@ export function PdfSignerDialog({
       const safeName = nomeArquivo.replace(/[^\w.\-]+/g, "_");
       const path = `${uid}/${ts}_${safeName}`;
       const blob = new Blob([new Uint8Array(signedBytes)], { type: "application/pdf" });
-      const { error: upErr } = await supabase.storage.from("documentos-assinados").upload(path, blob, {
+      const fullPath = `assinados/${path}`;
+      const { error: upErr } = await supabase.storage.from("sesmt-docs").upload(fullPath, blob, {
         contentType: "application/pdf",
         upsert: false,
       });
@@ -223,7 +295,7 @@ export function PdfSignerDialog({
         nome_arquivo: nomeArquivo,
         modulo,
         referencia_id: referenciaId ?? null,
-        pdf_assinado_path: path,
+        pdf_assinado_path: fullPath,
         assinaturas: placements.map((p) => ({
           nome: p.nome,
           cargo: p.cargo,
@@ -242,7 +314,7 @@ export function PdfSignerDialog({
 
       qc.invalidateQueries({ queryKey: ["documentos-assinados"] });
       toast.success("Documento assinado e salvo com sucesso!");
-      onSigned?.({ path, signedBytes });
+      onSigned?.({ path: fullPath, signedBytes });
 
       // download
       const dlUrl = URL.createObjectURL(blob);
@@ -339,11 +411,12 @@ export function PdfSignerDialog({
                           return (
                             <div
                               key={p.id}
-                              className="absolute border-2 border-rose-500 bg-rose-500/10 group"
+                              className="absolute border-2 border-rose-500 bg-rose-500/10 group select-none"
                               style={{ left: leftCss, top: topCss, width: wCss, height: hCss }}
                               onClick={(ev) => ev.stopPropagation()}
+                              onPointerDown={(ev) => startMove(ev, p.id)}
                             >
-                              <img src={p.dataUrl} alt="" className="w-full h-full object-contain" />
+                              <img src={p.dataUrl} alt="" draggable={false} className="w-full h-full object-contain pointer-events-none" />
                               <button
                                 type="button"
                                 className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full h-5 w-5 flex items-center justify-center opacity-0 group-hover:opacity-100"
@@ -355,6 +428,11 @@ export function PdfSignerDialog({
                               >
                                 <X className="h-3 w-3" />
                               </button>
+                              <div
+                                onPointerDown={(ev) => startResize(ev, p.id)}
+                                className="absolute -bottom-1.5 -right-1.5 h-4 w-4 bg-rose-600 border-2 border-white rounded-sm cursor-nwse-resize opacity-0 group-hover:opacity-100"
+                                title="Redimensionar (arraste)"
+                              />
                             </div>
                           );
                         })}
