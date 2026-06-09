@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ShieldCheck, ShieldAlert, Trash2 } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Trash2, KeyRound, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/conta/seguranca")({
@@ -22,8 +22,41 @@ function SecurityPage() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [factors, setFactors] = useState<any[]>([]);
+  const [newPwd, setNewPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [pwdBusy, setPwdBusy] = useState(false);
+  const [signOutBusy, setSignOutBusy] = useState(false);
 
   useEffect(() => { refreshFactors(); }, []);
+
+  async function changePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPwd.length < 8) return toast.error("Senha deve ter ao menos 8 caracteres");
+    if (newPwd !== confirmPwd) return toast.error("As senhas não coincidem");
+    setPwdBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPwd });
+      if (error) throw error;
+      toast.success("Senha alterada com sucesso!");
+      setNewPwd(""); setConfirmPwd("");
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao alterar senha");
+    } finally { setPwdBusy(false); }
+  }
+
+  async function signOutAll() {
+    if (!confirm("Isso vai desconectar TODAS as sessões (inclusive esta). Continuar?")) return;
+    setSignOutBusy(true);
+    try {
+      const { error } = await supabase.auth.signOut({ scope: "global" });
+      if (error) throw error;
+      toast.success("Todas as sessões foram encerradas");
+      navigate({ to: "/login" });
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao encerrar sessões");
+      setSignOutBusy(false);
+    }
+  }
 
   async function refreshFactors() {
     const { data } = await supabase.auth.mfa.listFactors();
