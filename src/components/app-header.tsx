@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LogOut, Download, Upload } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
@@ -85,8 +86,12 @@ export function AppHeader() {
             />
           </div>
           <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-2">
-            <div className="text-right leading-tight">
-              <div className="text-[11px] font-bold text-header-foreground truncate max-w-[180px]">
+            <Link
+              to="/app/conta/seguranca"
+              title="Minha conta / Segurança (senha, MFA, sessões)"
+              className="text-right leading-tight hover:opacity-90"
+            >
+              <div className="text-[11px] font-bold text-header-foreground truncate max-w-[180px] underline-offset-2 hover:underline">
                 {user?.email}
               </div>
               <div className="flex gap-1 justify-end mt-0.5">
@@ -104,7 +109,14 @@ export function AppHeader() {
                   </Badge>
                 ))}
               </div>
-            </div>
+            </Link>
+            <Link
+              to="/app/conta/seguranca"
+              title="Segurança da conta"
+              className="h-8 w-8 rounded-md text-header-foreground hover:bg-white/10 flex items-center justify-center"
+            >
+              <ShieldCheck className="h-4 w-4" />
+            </Link>
             <Button
               size="icon"
               variant="ghost"
