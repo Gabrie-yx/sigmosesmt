@@ -445,6 +445,9 @@ function UsersPage() {
         <TabsContent value="history" className="mt-4">
           <HistoryView logs={logsData?.logs ?? []} loading={logsLoading} users={data?.users ?? []} />
         </TabsContent>
+        <TabsContent value="minha-conta" className="mt-4">
+          <MinhaContaPanel />
+        </TabsContent>
       </Tabs>
 
       {/* Modal Convidar */}
