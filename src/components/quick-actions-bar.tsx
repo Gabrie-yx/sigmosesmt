@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { DRAFTS_EVENT, deleteDraft, listDrafts, type DraftMeta } from "@/lib/draft-store";
-import { QuickEpiDrawer } from "@/components/quick-epi-drawer";
-import { HardHat, FileClock, X, Zap } from "lucide-react";
+import { FileClock, X, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 function timeAgo(ts: number): string {
@@ -18,7 +17,6 @@ function timeAgo(ts: number): string {
 
 export function QuickActionsBar() {
   const [drafts, setDrafts] = useState<DraftMeta[]>([]);
-  const [epiOpen, setEpiOpen] = useState(false);
 
   useEffect(() => {
     const refresh = () => setDrafts(listDrafts());
@@ -42,16 +40,6 @@ export function QuickActionsBar() {
   return (
     <>
       <div className="border-b bg-gradient-to-r from-slate-50 to-amber-50/40 px-3 md:px-4 py-1.5 flex items-center gap-2 text-[12px] overflow-x-auto">
-        <button
-          type="button"
-          onClick={() => setEpiOpen(true)}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-amber-300/70 bg-white px-2.5 py-1 font-semibold text-amber-800 hover:bg-amber-50 transition-colors shadow-sm"
-          title="Dar baixa rápida de EPI sem perder a tela atual"
-        >
-          <HardHat className="h-3.5 w-3.5" />
-          Baixa rápida de EPI
-        </button>
-
         <button
           type="button"
           onClick={() => {
@@ -107,8 +95,6 @@ export function QuickActionsBar() {
           </>
         )}
       </div>
-
-      <QuickEpiDrawer open={epiOpen} onOpenChange={setEpiOpen} />
     </>
   );
 }
