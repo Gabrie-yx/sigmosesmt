@@ -27,7 +27,6 @@ import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, NATUREZA_KEY_MAP, UFS, VACINAS_
 import { maskCPF, maskCNPJ, maskPhone, maskCEP, maskRG } from "@/lib/masks";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
-import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
 import { buildEpiFichaPdf } from "@/lib/epi-ficha-pdf";
 import { PdfSignerDialog } from "@/components/pdf-signer-dialog";
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
