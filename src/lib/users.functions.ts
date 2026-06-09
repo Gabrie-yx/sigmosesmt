@@ -106,6 +106,11 @@ export const resendInvite = createServerFn({ method: "POST" })
       .eq("id", data.invite_id)
       .maybeSingle();
     if (error || !inv) throw new Error("Convite não encontrado");
+    // Estende validade do convite para que a aceitação tardia ainda aplique role/módulos
+    await supabaseAdmin
+      .from("user_invites")
+      .update({ expires_at: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString() })
+      .eq("id", data.invite_id);
     const { error: mailErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(inv.email, {
       data: { full_name: inv.full_name },
       redirectTo,
@@ -390,4 +395,57 @@ export const listUserAuditLogs = createServerFn({ method: "POST" })
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     return { logs: rows ?? [] };
+  });
+
+// Aplica role + módulos do convite pendente para o usuário autenticado atual.
+// Idempotente. Usado pela tela /reset-password como rede de segurança caso a
+// trigger apply_pending_invite tenha falhado ou o convite tenha expirado.
+export const applyMyPendingInvite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const email = (context.claims as any)?.email as string | undefined;
+    if (!email) throw new Error("Sessão sem e-mail");
+
+    const { data: inv } = await supabaseAdmin
+      .from("user_invites")
+      .select("id, role, modules, accepted_at")
+      .ilike("email", email)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!inv) return { ok: true, applied: false, reason: "no_invite" as const };
+
+    // Aplica role (substitui qualquer role existente para garantir consistência)
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", context.userId);
+    const { error: rErr } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: context.userId, role: inv.role });
+    if (rErr) throw new Error(rErr.message);
+
+    // Aplica módulos
+    const modules = (inv.modules ?? []) as string[];
+    if (modules.length > 0) {
+      const rows = modules.map((m) => ({ user_id: context.userId, module: m as any, enabled: true }));
+      await supabaseAdmin
+        .from("user_module_access")
+        .upsert(rows, { onConflict: "user_id,module" });
+    }
+
+    if (!inv.accepted_at) {
+      await supabaseAdmin
+        .from("user_invites")
+        .update({ accepted_at: new Date().toISOString() })
+        .eq("id", inv.id);
+    }
+
+    await logAdminEvent(supabaseAdmin, {
+      action: "INVITE_ACCEPTED",
+      target_user_id: context.userId,
+      actor_user_id: context.userId,
+      payload: { email, role: inv.role, modules },
+    });
+
+    return { ok: true, applied: true, role: inv.role, modules };
   });
