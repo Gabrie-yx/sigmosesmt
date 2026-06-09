@@ -24,6 +24,14 @@ export type SaidaExpedientePdfParams = {
   encarregadoNome?: string | null;
 };
 
+type SignatureBox = {
+  cx: number;
+  y: number;
+  label: string;
+  sub: string;
+  dataUrl?: string | null;
+};
+
 export function gerarSaidaExpedientePDF(p: SaidaExpedientePdfParams): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -93,13 +101,13 @@ export function gerarSaidaExpedientePDF(p: SaidaExpedientePdfParams): jsPDF {
     y += ols.length * 5 + 4;
   }
 
-  y += 24;
+  const signatureStartY = Math.min(y + 24, 205);
 
-  // Assinaturas — TST à esquerda, Funcionário à direita; Supervisor abaixo
+  // Assinaturas — TST à esquerda, Funcionário à direita; Supervisor/Encarregado abaixo
   const sigW = 75, sigH = 22, gap = 18;
-  const drawSig = (cx: number, label: string, sub: string, dataUrl?: string | null) => {
+  const drawSig = ({ cx, y: sigY, label, sub, dataUrl }: SignatureBox) => {
     const x = cx - sigW / 2;
-    const lineY = y + 4;
+    const lineY = sigY + 4;
     if (dataUrl) {
       try {
         // Preserva proporção da assinatura, centralizando acima da linha
@@ -118,26 +126,21 @@ export function gerarSaidaExpedientePDF(p: SaidaExpedientePdfParams): jsPDF {
     doc.setDrawColor(0); doc.setLineWidth(0.3);
     doc.line(x, lineY, x + sigW, lineY);
     doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-    doc.text(label, cx, y + 9, { align: "center" });
-    if (sub) { doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(80,80,80); doc.text(sub, cx, y + 13.5, { align: "center" }); doc.setTextColor(20,20,20); }
+    doc.text(label, cx, sigY + 9, { align: "center" });
+    if (sub) { doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(80,80,80); doc.text(sub, cx, sigY + 13.5, { align: "center" }); doc.setTextColor(20,20,20); }
   };
 
   const leftCx = margin + sigW / 2;
   const rightCx = pageW - margin - sigW / 2;
-  drawSig(leftCx, p.sesmtNome ?? "SESMT", p.sesmtCargo ?? "Técnico(a) de Segurança do Trabalho — TST", p.assinaturaSesmtDataUrl);
-  drawSig(rightCx, p.funcionarioNome, p.cargo ?? "Funcionário(a)", p.assinaturaFuncionarioDataUrl);
+  const signatureBoxes: SignatureBox[] = [
+    { cx: leftCx, y: signatureStartY, label: p.sesmtNome ?? "SESMT", sub: p.sesmtCargo ?? "Técnico(a) de Segurança do Trabalho — TST", dataUrl: p.assinaturaSesmtDataUrl },
+    { cx: rightCx, y: signatureStartY, label: p.funcionarioNome, sub: p.cargo ?? "Funcionário(a)", dataUrl: p.assinaturaFuncionarioDataUrl },
+    p.empresaTerceira
+      ? { cx: pageW / 2, y: signatureStartY + sigH + gap, label: p.encarregadoNome ?? "Encarregado", sub: `Encarregado — ${p.empresaNome ?? "Terceirizada"}`, dataUrl: p.assinaturaSupervisorDataUrl }
+      : { cx: pageW / 2, y: signatureStartY + sigH + gap, label: "Anderson de Oliveira Soares", sub: "Supervisor Geral", dataUrl: p.assinaturaSupervisorDataUrl },
+  ];
 
-  y += 22 + gap;
-  if (p.empresaTerceira) {
-    drawSig(
-      pageW / 2,
-      p.encarregadoNome ?? "Encarregado",
-      `Encarregado — ${p.empresaNome ?? "Terceirizada"}`,
-      p.assinaturaSupervisorDataUrl,
-    );
-  } else {
-    drawSig(pageW / 2, "Anderson de Oliveira Soares", "Supervisor Geral", p.assinaturaSupervisorDataUrl);
-  }
+  signatureBoxes.forEach(drawSig);
 
   return doc;
 }

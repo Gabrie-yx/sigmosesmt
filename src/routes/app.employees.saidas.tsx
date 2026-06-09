@@ -74,7 +74,7 @@ function SaidasPage() {
   async function gerarPdf(id: string) {
     const { data: row, error } = await supabase
       .from("employee_saidas_expediente")
-      .select("*, employees(id,nome,cpf,rg,role_id,roles(name)), companies(id,name,type,encarregado1)")
+        .select("*, employees(id,nome,cpf,rg,role_id,roles(name)), companies(id,name,type,encarregado1,encarregado2)")
       .eq("id", id).maybeSingle();
     if (error || !row) return toast.error(error?.message ?? "Não encontrado");
     const emp: any = (row as any).employees;
@@ -98,7 +98,7 @@ function SaidasPage() {
       sesmtNome: (user as any)?.user_metadata?.full_name ?? null,
       empresaNome: comp?.name ?? null,
       empresaTerceira: terceira,
-      encarregadoNome: comp?.encarregado1 ?? null,
+      encarregadoNome: comp?.encarregado2 ?? comp?.encarregado1 ?? null,
     });
     setPreviewFileName(`autorizacao-saida-${emp?.nome?.replace(/\s+/g,"-")}-${row.data}.pdf`);
     setPreviewDoc(doc);
@@ -157,6 +157,7 @@ function SaidasPage() {
           {filtradas.map((r: any) => {
             const sigFunc = !!r.assinatura_funcionario;
             const sigSesmt = !!r.assinatura_sesmt;
+            const sigSupervisor = !!r.assinatura_supervisor;
             return (
               <div key={r.id} className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition-all">
                 <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -169,6 +170,7 @@ function SaidasPage() {
                       <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${r.com_retorno ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{r.com_retorno ? `retorno ${r.horario_retorno ?? ""}` : "sem retorno"}</span>
                       <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sigFunc ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>Func {sigFunc ? "✓" : "—"}</span>
                       <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sigSesmt ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>SESMT {sigSesmt ? "✓" : "—"}</span>
+                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sigSupervisor ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>Sup/Enc {sigSupervisor ? "✓" : "—"}</span>
                     </div>
                     {r.motivo && <p className="text-xs text-slate-600 mt-1.5 line-clamp-2"><b>Motivo:</b> {r.motivo}</p>}
                   </div>
