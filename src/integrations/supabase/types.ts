@@ -2565,6 +2565,66 @@ export type Database = {
           },
         ]
       }
+      epi_fichas_mensais: {
+        Row: {
+          ano: number
+          arquivo_assinado_path: string | null
+          created_at: string
+          employee_id: string
+          id: string
+          mes: number
+          observacoes: string | null
+          status: string
+          total_entregas: number
+          updated_at: string
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          ano: number
+          arquivo_assinado_path?: string | null
+          created_at?: string
+          employee_id: string
+          id?: string
+          mes: number
+          observacoes?: string | null
+          status?: string
+          total_entregas?: number
+          updated_at?: string
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          ano?: number
+          arquivo_assinado_path?: string | null
+          created_at?: string
+          employee_id?: string
+          id?: string
+          mes?: number
+          observacoes?: string | null
+          status?: string
+          total_entregas?: number
+          updated_at?: string
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_fichas_mensais_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_fichas_mensais_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       equipamentos_moveis: {
         Row: {
           ano: number | null
