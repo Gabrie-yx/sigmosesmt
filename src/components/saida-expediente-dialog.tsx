@@ -138,7 +138,7 @@ export function SaidaExpedienteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{editId ? "Editar autorização" : "Nova autorização de saída"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
