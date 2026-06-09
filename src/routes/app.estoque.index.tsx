@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { EstoqueEpiPage } from "./app.estoque.epi";
+import { EstoqueSesmtPage } from "./app.estoque.sesmt";
 
 export const Route = createFileRoute("/app/estoque/")({
-  component: EstoqueEpiPage,
+  component: EstoqueSesmtPage,
 });
