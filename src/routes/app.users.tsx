@@ -718,6 +718,64 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Trocar senha do usuário</DialogTitle>
+            <DialogDescription>
+              Você vai definir uma nova senha para <span className="font-semibold">{resetTarget?.email}</span>.
+              Recomende ao usuário trocá-la no próximo login. Mínimo 8 caracteres.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="reset-pwd" className="text-xs">Nova senha</Label>
+              <Input
+                id="reset-pwd"
+                type="text"
+                value={resetPwd}
+                onChange={(e) => setResetPwd(e.target.value)}
+                minLength={8}
+                autoFocus
+                placeholder="ex.: TrocarAgora@2026"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const rnd = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase() + "@" + Math.floor(Math.random() * 90 + 10);
+                setResetPwd(rnd);
+              }}
+            >
+              Gerar senha aleatória
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setResetOpen(false)}>Cancelar</Button>
+            <Button
+              disabled={resetBusy || resetPwd.length < 8 || !resetTarget}
+              onClick={async () => {
+                if (!resetTarget) return;
+                setResetBusy(true);
+                try {
+                  await resetPwdFn({ data: { user_id: resetTarget.id, new_password: resetPwd } });
+                  await navigator.clipboard.writeText(resetPwd).catch(() => {});
+                  toast.success("Senha trocada e copiada para a área de transferência");
+                  setResetOpen(false);
+                  setResetPwd("");
+                  qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+                } catch (e: any) {
+                  toast.error(e.message ?? "Falha ao trocar senha");
+                } finally { setResetBusy(false); }
+              }}
+            >
+              {resetBusy ? "Salvando..." : "Trocar senha"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
