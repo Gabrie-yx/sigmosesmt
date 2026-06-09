@@ -747,6 +747,45 @@ function ReqFormDialog({
   const [signature, setSignature] = useState<string | null>(existing?.signature_solicitante ?? null);
   const [signatureHeight, setSignatureHeight] = useState<number>(existing?.signature_solicitante_height ?? 80);
 
+  // === Autosave de rascunho (somente em modo de criação) ===
+  const DRAFT_KEY = "requisicao-nova";
+  const DRAFT_ROUTE = "/app/sesmt/requisicoes";
+
+  // Restaura rascunho ao abrir, se existir
+  useEffect(() => {
+    if (isEdit) return;
+    const rec = loadDraft<{
+      form: typeof form;
+      itens: Item[];
+      signature: string | null;
+      signatureHeight: number;
+    }>(DRAFT_KEY);
+    if (!rec) return;
+    setForm(rec.data.form);
+    setItens(rec.data.itens);
+    setSignature(rec.data.signature);
+    setSignatureHeight(rec.data.signatureHeight);
+    toast.info("Rascunho recuperado", {
+      description: "Continuamos de onde você parou.",
+      action: {
+        label: "Descartar",
+        onClick: () => {
+          deleteDraft(DRAFT_KEY);
+          onClose();
+        },
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useDraftAutosave(
+    DRAFT_KEY,
+    `Requisição ${form.numero || "nova"}${form.solicitante ? ` · ${form.solicitante}` : ""}`,
+    DRAFT_ROUTE,
+    { form, itens, signature, signatureHeight },
+    { enabled: !isEdit },
+  );
+
   // Carrega itens existentes em modo edição
   useEffect(() => {
     if (!existing) return;
@@ -895,6 +934,7 @@ function ReqFormDialog({
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
       toast.success(isEdit ? "Requisição atualizada" : "Requisição criada");
+      if (!isEdit) deleteDraft(DRAFT_KEY);
       onClose();
     },
     onError: (e: any) => toast.error(e.message),
