@@ -70,6 +70,7 @@ import { Route as AppDdsHistoricoRouteImport } from './routes/app.dds.historico'
 import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
 import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
+import { Route as AppEstoqueEpiFichasMensaisRouteImport } from './routes/app.estoque.epi.fichas-mensais'
 import { Route as AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.historico.$equipamentoId'
 import { Route as AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.checklist.$equipamentoId'
 
@@ -384,6 +385,12 @@ const AppSesmtEquipamentosMoveisArquivosMensaisRoute =
     path: '/sesmt/equipamentos-moveis/arquivos-mensais',
     getParentRoute: () => AppRoute,
   } as any)
+const AppEstoqueEpiFichasMensaisRoute =
+  AppEstoqueEpiFichasMensaisRouteImport.update({
+    id: '/fichas-mensais',
+    path: '/fichas-mensais',
+    getParentRoute: () => AppEstoqueEpiRoute,
+  } as any)
 const AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute =
   AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport.update({
     id: '/sesmt/equipamentos-moveis_/historico/$equipamentoId',
@@ -437,7 +444,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
-  '/app/estoque/epi': typeof AppEstoqueEpiRoute
+  '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
@@ -458,6 +465,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
+  '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -499,7 +507,7 @@ export interface FileRoutesByTo {
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
-  '/app/estoque/epi': typeof AppEstoqueEpiRoute
+  '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
@@ -520,6 +528,7 @@ export interface FileRoutesByTo {
   '/app/employees': typeof AppEmployeesIndexRoute
   '/app/estoque': typeof AppEstoqueIndexRoute
   '/app/oss': typeof AppOssIndexRoute
+  '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -565,7 +574,7 @@ export interface FileRoutesById {
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
-  '/app/estoque/epi': typeof AppEstoqueEpiRoute
+  '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
@@ -586,6 +595,7 @@ export interface FileRoutesById {
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
+  '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -653,6 +663,7 @@ export interface FileRouteTypes {
     | '/app/employees/'
     | '/app/estoque/'
     | '/app/oss/'
+    | '/app/estoque/epi/fichas-mensais'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -715,6 +726,7 @@ export interface FileRouteTypes {
     | '/app/employees'
     | '/app/estoque'
     | '/app/oss'
+    | '/app/estoque/epi/fichas-mensais'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -780,6 +792,7 @@ export interface FileRouteTypes {
     | '/app/employees/'
     | '/app/estoque/'
     | '/app/oss/'
+    | '/app/estoque/epi/fichas-mensais'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
@@ -1224,6 +1237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/estoque/epi/fichas-mensais': {
+      id: '/app/estoque/epi/fichas-mensais'
+      path: '/fichas-mensais'
+      fullPath: '/app/estoque/epi/fichas-mensais'
+      preLoaderRoute: typeof AppEstoqueEpiFichasMensaisRouteImport
+      parentRoute: typeof AppEstoqueEpiRoute
+    }
     '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': {
       id: '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
       path: '/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -1274,6 +1294,18 @@ const AppOssRouteChildren: AppOssRouteChildren = {
 const AppOssRouteWithChildren =
   AppOssRoute._addFileChildren(AppOssRouteChildren)
 
+interface AppEstoqueEpiRouteChildren {
+  AppEstoqueEpiFichasMensaisRoute: typeof AppEstoqueEpiFichasMensaisRoute
+}
+
+const AppEstoqueEpiRouteChildren: AppEstoqueEpiRouteChildren = {
+  AppEstoqueEpiFichasMensaisRoute: AppEstoqueEpiFichasMensaisRoute,
+}
+
+const AppEstoqueEpiRouteWithChildren = AppEstoqueEpiRoute._addFileChildren(
+  AppEstoqueEpiRouteChildren,
+)
+
 interface AppRouteChildren {
   AppAcidentesRoute: typeof AppAcidentesRoute
   AppAcoesRoute: typeof AppAcoesRoute
@@ -1303,7 +1335,7 @@ interface AppRouteChildren {
   AppDdsHistoricoRoute: typeof AppDdsHistoricoRoute
   AppDdsPainelRoute: typeof AppDdsPainelRoute
   AppDdsTemasRoute: typeof AppDdsTemasRoute
-  AppEstoqueEpiRoute: typeof AppEstoqueEpiRoute
+  AppEstoqueEpiRoute: typeof AppEstoqueEpiRouteWithChildren
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
   AppProducaoBaseMateriaPrimaRoute: typeof AppProducaoBaseMateriaPrimaRoute
   AppProducaoCriarOrdemRoute: typeof AppProducaoCriarOrdemRoute
@@ -1355,7 +1387,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDdsHistoricoRoute: AppDdsHistoricoRoute,
   AppDdsPainelRoute: AppDdsPainelRoute,
   AppDdsTemasRoute: AppDdsTemasRoute,
-  AppEstoqueEpiRoute: AppEstoqueEpiRoute,
+  AppEstoqueEpiRoute: AppEstoqueEpiRouteWithChildren,
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
   AppProducaoBaseMateriaPrimaRoute: AppProducaoBaseMateriaPrimaRoute,
   AppProducaoCriarOrdemRoute: AppProducaoCriarOrdemRoute,
