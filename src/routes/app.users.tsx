@@ -404,51 +404,87 @@ function UsersPage() {
                     </Select>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button size="icon" variant="ghost"
-                      onClick={() => {
-                        setEditing(u);
-                        setFRole(role);
-                        setFModules(u.modules);
-                        setFMenus(u.menus ?? []);
-                        setEditOpen(true);
-                      }}>
-                      <Settings2 className="h-3.5 w-3.5" />
-                    </Button>
-                    {u.suspended ? (
-                      <Button size="icon" variant="ghost" title="Reativar"
-                        onClick={async () => {
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" title="Ações">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-60">
+                        <DropdownMenuLabel className="truncate">{u.email}</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => {
+                          setEditing(u);
+                          setFRole(role);
+                          setFModules(u.modules);
+                          setFMenus(u.menus ?? []);
+                          setEditOpen(true);
+                        }}>
+                          <Settings2 className="h-4 w-4 mr-2" /> Editar permissões
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          setResetTarget(u);
+                          setResetPwd("");
+                          setResetOpen(true);
+                        }}>
+                          <KeyRound className="h-4 w-4 mr-2" /> Trocar senha
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={async () => {
                           try {
-                            await unsuspendFn({ data: { user_id: u.id } });
-                            toast.success("Usuário reativado");
-                            qc.invalidateQueries({ queryKey: ["users-admin"] });
+                            const { count } = await countSessionsFn({ data: { user_id: u.id } });
+                            toast.info(`${u.email}: ${count} sessão(ões) ativa(s)`);
+                          } catch (e: any) { toast.error(e.message); }
+                        }}>
+                          <MonitorSmartphone className="h-4 w-4 mr-2" /> Ver sessões ativas
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={async () => {
+                          if (!confirm(`Desconectar TODAS as sessões de ${u.email}?`)) return;
+                          try {
+                            const { count } = await signOutUserFn({ data: { user_id: u.id } });
+                            toast.success(`${count} sessão(ões) encerrada(s)`);
                             qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
                           } catch (e: any) { toast.error(e.message); }
                         }}>
-                        <Play className="h-3.5 w-3.5 text-green-600" />
-                      </Button>
-                    ) : (
-                      <Button size="icon" variant="ghost" title="Suspender"
-                        onClick={() => {
-                          setSuspendTarget(u);
-                          setSuspendMode("indef");
-                          setSuspendDays(30);
-                          setSuspendOpen(true);
-                        }}>
-                        <Ban className="h-3.5 w-3.5 text-amber-600" />
-                      </Button>
-                    )}
-                    <Button size="icon" variant="ghost"
-                      onClick={async () => {
-                        if (!confirm(`Remover ${u.email}?`)) return;
-                        try {
-                          await deleteUserFn({ data: { user_id: u.id } });
-                          toast.success("Usuário removido");
-                          qc.invalidateQueries({ queryKey: ["users-admin"] });
-                          qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
-                        } catch (e: any) { toast.error(e.message); }
-                      }}>
-                      <Trash2 className="h-3.5 w-3.5 text-red-600" />
-                    </Button>
+                          <LogOut className="h-4 w-4 mr-2" /> Desconectar todas as sessões
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {u.suspended ? (
+                          <DropdownMenuItem onClick={async () => {
+                            try {
+                              await unsuspendFn({ data: { user_id: u.id } });
+                              toast.success("Usuário reativado");
+                              qc.invalidateQueries({ queryKey: ["users-admin"] });
+                              qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+                            } catch (e: any) { toast.error(e.message); }
+                          }}>
+                            <Play className="h-4 w-4 mr-2 text-green-600" /> Reativar acesso
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => {
+                            setSuspendTarget(u);
+                            setSuspendMode("indef");
+                            setSuspendDays(30);
+                            setSuspendOpen(true);
+                          }}>
+                            <Ban className="h-4 w-4 mr-2 text-amber-600" /> Revogar / suspender acesso
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-700"
+                          onClick={async () => {
+                            if (!confirm(`Remover ${u.email}? Esta ação é irreversível.`)) return;
+                            try {
+                              await deleteUserFn({ data: { user_id: u.id } });
+                              toast.success("Usuário removido");
+                              qc.invalidateQueries({ queryKey: ["users-admin"] });
+                              qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+                            } catch (e: any) { toast.error(e.message); }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir usuário
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               );
