@@ -87,6 +87,9 @@ function UsersPage() {
   const deleteUserFn = useServerFn(deleteUser);
   const listFn = useServerFn(listUsersAdmin);
   const listLogsFn = useServerFn(listUserAuditLogs);
+  const resetPwdFn = useServerFn(adminResetUserPassword);
+  const countSessionsFn = useServerFn(adminCountUserSessions);
+  const signOutUserFn = useServerFn(adminForceSignOutUser);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -99,6 +102,12 @@ function UsersPage() {
   const [investorCreds, setInvestorCreds] = useState<{ email: string; password: string; expires_at: string; link: string } | null>(null);
   const [investorLoading, setInvestorLoading] = useState(false);
   const createInvestorFn = useServerFn(createInvestorAccess);
+
+  // Reset password dialog
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState<any>(null);
+  const [resetPwd, setResetPwd] = useState("");
+  const [resetBusy, setResetBusy] = useState(false);
 
   // form state
   const [fName, setFName] = useState("");
