@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ShieldCheck, ShieldAlert, Trash2 } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Trash2, KeyRound, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/conta/seguranca")({
@@ -22,8 +22,41 @@ function SecurityPage() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [factors, setFactors] = useState<any[]>([]);
+  const [newPwd, setNewPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [pwdBusy, setPwdBusy] = useState(false);
+  const [signOutBusy, setSignOutBusy] = useState(false);
 
   useEffect(() => { refreshFactors(); }, []);
+
+  async function changePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPwd.length < 8) return toast.error("Senha deve ter ao menos 8 caracteres");
+    if (newPwd !== confirmPwd) return toast.error("As senhas não coincidem");
+    setPwdBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPwd });
+      if (error) throw error;
+      toast.success("Senha alterada com sucesso!");
+      setNewPwd(""); setConfirmPwd("");
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao alterar senha");
+    } finally { setPwdBusy(false); }
+  }
+
+  async function signOutAll() {
+    if (!confirm("Isso vai desconectar TODAS as sessões (inclusive esta). Continuar?")) return;
+    setSignOutBusy(true);
+    try {
+      const { error } = await supabase.auth.signOut({ scope: "global" });
+      if (error) throw error;
+      toast.success("Todas as sessões foram encerradas");
+      navigate({ to: "/login" });
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao encerrar sessões");
+      setSignOutBusy(false);
+    }
+  }
 
   async function refreshFactors() {
     const { data } = await supabase.auth.mfa.listFactors();
@@ -162,6 +195,51 @@ function SecurityPage() {
           <div className="pt-4 border-t">
             <Button variant="outline" onClick={() => navigate({ to: "/app" })}>Voltar</Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-slate-700" />
+            <CardTitle>Alterar senha</CardTitle>
+          </div>
+          <CardDescription>
+            Defina uma nova senha (mínimo 8 caracteres). Você continuará logado nesta sessão.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={changePassword} className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="new-pwd">Nova senha</Label>
+              <Input id="new-pwd" type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} minLength={8} required />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="confirm-pwd">Confirme a nova senha</Label>
+              <Input id="confirm-pwd" type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} minLength={8} required />
+            </div>
+            <Button type="submit" disabled={pwdBusy}>
+              {pwdBusy ? "Salvando..." : "Alterar senha"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6 border-red-200">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <LogOut className="h-5 w-5 text-red-600" />
+            <CardTitle>Encerrar todas as sessões</CardTitle>
+          </div>
+          <CardDescription>
+            Desconecta sua conta de TODOS os dispositivos e navegadores (inclusive este). Útil se você suspeita de acesso indevido. Combine com a troca de senha acima para máxima segurança.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="destructive" onClick={signOutAll} disabled={signOutBusy}>
+            <LogOut className="h-4 w-4 mr-2" />
+            {signOutBusy ? "Encerrando..." : "Sair de todos os dispositivos"}
+          </Button>
         </CardContent>
       </Card>
     </div>
