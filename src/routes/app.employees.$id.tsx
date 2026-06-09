@@ -333,6 +333,14 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           <DocsTab empId={id} />
         </TabsContent>
         <TabsContent value="epi" className="mt-4">
+          <div className="mb-3 flex items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2">
+            <p className="text-xs text-amber-900">
+              <strong>Ficha mensal NR-06:</strong> em vez de assinar entrega por entrega, gere/colha a ficha mensal consolidada e anexe assinada.
+            </p>
+            <Button asChild size="sm" variant="outline" className="border-amber-400">
+              <Link to="/app/estoque/epi/fichas-mensais"><ClipboardCheck className="h-4 w-4 mr-1" /> Abrir Fichas Mensais</Link>
+            </Button>
+          </div>
           <EpiTab empId={id} epis={epis ?? []} emp={emp} company={(companies ?? []).find((c: any) => c.id === emp.company_id) ?? null} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} docsOk={docsOk} missingDocs={missingDocs} />
         </TabsContent>
         <TabsContent value="health" className="mt-4">
