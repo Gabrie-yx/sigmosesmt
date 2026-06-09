@@ -361,8 +361,8 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                       toast.info("Sem entregas de EPI registradas neste mês para este funcionário.");
                       return;
                     }
-                    const empresaNome = (companies ?? []).find((c: any) => c.id === emp.company_id)?.nome ?? null;
-                    const funcaoNome = (roles ?? []).find((r: any) => r.id === emp.role_id)?.nome ?? null;
+                    const empresaNome = (companies ?? []).find((c: any) => c.id === emp.company_id)?.name ?? null;
+                    const funcaoNome = (roles ?? []).find((r: any) => r.id === emp.role_id)?.name ?? null;
                     const { url } = openFichaMensalPdf([{
                       employee: {
                         id: emp.id,
