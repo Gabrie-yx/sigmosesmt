@@ -128,7 +128,6 @@ const DDS_SUBMENU: LeafItem[] = [
 
 const ESTOQUE_ITEMS: LeafItem[] = [
   { to: "/app/estoque", label: "Estoque de EPIs" },
-  { to: "/app/estoque/epi/fichas-mensais", label: "Fichas Mensais (EPI)" },
 ];
 const ESTOQUE_LOCKED: LockedItem[] = [
   { key: "estoque-eletrica", label: "Elétrica" },

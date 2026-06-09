@@ -28,6 +28,8 @@ import { maskCPF, maskCNPJ, maskPhone, maskCEP, maskRG } from "@/lib/masks";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
 import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
+import { buildEpiFichaPdf } from "@/lib/epi-ficha-pdf";
+import { PdfSignerDialog } from "@/components/pdf-signer-dialog";
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import { openFichaMensalPdf } from "@/lib/epi-ficha-mensal-pdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban } from "lucide-react";
@@ -1649,9 +1651,17 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     if (!docsOk) {
       toast.warning(`Atenção: documentação pendente (${(missingDocs ?? []).join(", ")}). Ficha emitida mesmo assim.`);
     }
-    const { url, fname } = openEpiFichaPdf({ emp, company, role, epis });
-    openFileViewer({ url, name: fname, mime: "application/pdf" });
+    if (!epis?.length) {
+      toast.error("Sem entregas registradas — nada a assinar.");
+      return;
+    }
+    const doc = buildEpiFichaPdf({ emp, company, role, epis });
+    const bytes = new Uint8Array(doc.output("arraybuffer"));
+    const fname = `Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}.pdf`;
+    setSignerSrc({ bytes, name: fname });
   }
+
+  const [signerSrc, setSignerSrc] = useState<{ bytes: Uint8Array; name: string } | null>(null);
 
   return (
     <div className="space-y-6">
