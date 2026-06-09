@@ -1994,6 +1994,51 @@ export type Database = {
           },
         ]
       }
+      documentos_assinados: {
+        Row: {
+          assinado_por: string | null
+          assinado_por_email: string | null
+          assinado_por_nome: string | null
+          assinaturas: Json
+          created_at: string
+          id: string
+          modulo: string
+          nome_arquivo: string
+          pdf_assinado_path: string
+          referencia_id: string | null
+          total_assinaturas: number
+          updated_at: string
+        }
+        Insert: {
+          assinado_por?: string | null
+          assinado_por_email?: string | null
+          assinado_por_nome?: string | null
+          assinaturas?: Json
+          created_at?: string
+          id?: string
+          modulo?: string
+          nome_arquivo: string
+          pdf_assinado_path: string
+          referencia_id?: string | null
+          total_assinaturas?: number
+          updated_at?: string
+        }
+        Update: {
+          assinado_por?: string | null
+          assinado_por_email?: string | null
+          assinado_por_nome?: string | null
+          assinaturas?: Json
+          created_at?: string
+          id?: string
+          modulo?: string
+          nome_arquivo?: string
+          pdf_assinado_path?: string
+          referencia_id?: string | null
+          total_assinaturas?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employee_atestados: {
         Row: {
           arquivo_path: string | null
