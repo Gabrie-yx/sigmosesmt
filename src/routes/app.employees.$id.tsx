@@ -29,6 +29,7 @@ import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
 import { openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
+import { openFichaMensalPdf } from "@/lib/epi-ficha-mensal-pdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban } from "lucide-react";
 import { GraduationCap } from "lucide-react";
 import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
