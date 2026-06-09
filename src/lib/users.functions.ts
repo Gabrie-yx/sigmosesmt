@@ -106,6 +106,11 @@ export const resendInvite = createServerFn({ method: "POST" })
       .eq("id", data.invite_id)
       .maybeSingle();
     if (error || !inv) throw new Error("Convite não encontrado");
+    // Estende validade do convite para que a aceitação tardia ainda aplique role/módulos
+    await supabaseAdmin
+      .from("user_invites")
+      .update({ expires_at: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString() })
+      .eq("id", data.invite_id);
     const { error: mailErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(inv.email, {
       data: { full_name: inv.full_name },
       redirectTo,
