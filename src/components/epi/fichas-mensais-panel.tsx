@@ -330,15 +330,19 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
         </Table>
       </Card>
 
-      <PdfSignerDialog
-        open={!!signer}
-        onClose={() => setSigner(null)}
-        source={signer?.bytes ?? null}
-        nomeArquivo={signer?.name ?? "ficha-epi.pdf"}
-        modulo="ficha-epi-mensal"
-        referenciaId={signer ? `${signer.row.employee_id}_${signer.row.ano}_${signer.row.mes}` : undefined}
-        onSigned={onSigned}
-      />
+      {signer && (
+        <Suspense fallback={null}>
+          <PdfSignerDialog
+            open={!!signer}
+            onClose={() => setSigner(null)}
+            source={signer?.bytes ?? null}
+            nomeArquivo={signer?.name ?? "ficha-epi.pdf"}
+            modulo="ficha-epi-mensal"
+            referenciaId={signer ? `${signer.row.employee_id}_${signer.row.ano}_${signer.row.mes}` : undefined}
+            onSigned={onSigned}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
