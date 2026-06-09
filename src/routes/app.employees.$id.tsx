@@ -28,7 +28,10 @@ import { maskCPF, maskCNPJ, maskPhone, maskCEP, maskRG } from "@/lib/masks";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
 import { buildEpiFichaPdf } from "@/lib/epi-ficha-pdf";
-import { PdfSignerDialog } from "@/components/pdf-signer-dialog";
+import { lazy, Suspense } from "react";
+const PdfSignerDialog = lazy(() =>
+  import("@/components/pdf-signer-dialog").then((m) => ({ default: m.PdfSignerDialog }))
+);
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import { openFichaMensalPdf } from "@/lib/epi-ficha-mensal-pdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban } from "lucide-react";
@@ -2067,14 +2070,18 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <PdfSignerDialog
-        open={!!signerSrc}
-        onClose={() => setSignerSrc(null)}
-        source={signerSrc?.bytes ?? null}
-        nomeArquivo={signerSrc?.name ?? "ficha-epi.pdf"}
-        modulo="ficha-epi"
-        referenciaId={empId}
-      />
+      {signerSrc && (
+        <Suspense fallback={null}>
+          <PdfSignerDialog
+            open={!!signerSrc}
+            onClose={() => setSignerSrc(null)}
+            source={signerSrc?.bytes ?? null}
+            nomeArquivo={signerSrc?.name ?? "ficha-epi.pdf"}
+            modulo="ficha-epi"
+            referenciaId={empId}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
