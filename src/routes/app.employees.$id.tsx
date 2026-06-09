@@ -2068,6 +2068,14 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <PdfSignerDialog
+        open={!!signerSrc}
+        onClose={() => setSignerSrc(null)}
+        source={signerSrc?.bytes ?? null}
+        nomeArquivo={signerSrc?.name ?? "ficha-epi.pdf"}
+        modulo="ficha-epi"
+        referenciaId={empId}
+      />
     </div>
   );
 }
