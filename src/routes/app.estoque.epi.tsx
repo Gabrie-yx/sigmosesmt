@@ -57,6 +57,7 @@ import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { gerarPdfEntregasEpi, type EntregaRow } from "@/lib/epi-entregas-pdf";
 import { gerarPdfCatalogoEpi } from "@/lib/epi-catalogo-pdf";
 import type jsPDF from "jspdf";
+import { FichasMensaisPanel } from "@/components/epi/fichas-mensais-panel";
 
 export const Route = createFileRoute("/app/estoque/epi")({
   component: EstoqueEpiPage,
@@ -232,6 +233,7 @@ export function EstoqueEpiPage() {
           <TabsTrigger value="colaborador">Consulta por Colaborador</TabsTrigger>
           <TabsTrigger value="historico">Histórico Geral</TabsTrigger>
           <TabsTrigger value="entregas">Ficha de Entregas (NR-06)</TabsTrigger>
+          <TabsTrigger value="fichas-mensais">Fichas Mensais</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inventario" className="mt-4">
@@ -260,6 +262,10 @@ export function EstoqueEpiPage() {
 
         <TabsContent value="entregas" className="mt-4">
           <EntregasFichaReport />
+        </TabsContent>
+
+        <TabsContent value="fichas-mensais" className="mt-4">
+          <FichasMensaisPanel embedded />
         </TabsContent>
       </Tabs>
     </div>
