@@ -1,1 +1,12 @@
 project_id = "mokuitocaihpgtlglrtg"
+
+[auth]
+site_url = "https://sigmosesmt.lovable.app"
+additional_redirect_urls = [
+  "https://sigmosesmt.lovable.app/reset-password",
+  "https://id-preview--4c16feea-38ca-4c93-8357-2c520346a279.lovable.app/reset-password",
+  "https://project--4c16feea-38ca-4c93-8357-2c520346a279.lovable.app/reset-password",
+  "https://project--4c16feea-38ca-4c93-8357-2c520346a279-dev.lovable.app/reset-password",
+  "http://localhost:5173/reset-password",
+  "http://localhost:8080/reset-password"
+]
