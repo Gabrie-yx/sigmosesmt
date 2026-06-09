@@ -676,6 +676,7 @@ function UsersPage() {
       </Dialog>
 
       <Dialog open={investorOpen} onOpenChange={setInvestorOpen}>
+        {/* anchor */}
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Acesso de investidor gerado</DialogTitle>
