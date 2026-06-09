@@ -12,7 +12,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, FileText, Upload, Printer, CheckCircle2, AlertTriangle, Download, FileSignature } from "lucide-react";
 import { buildEpiFichaPdf, openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
-import { PdfSignerDialog } from "@/components/pdf-signer-dialog";
+import { lazy, Suspense } from "react";
+const PdfSignerDialog = lazy(() =>
+  import("@/components/pdf-signer-dialog").then((m) => ({ default: m.PdfSignerDialog }))
+);
 
 const MESES = [
   "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
