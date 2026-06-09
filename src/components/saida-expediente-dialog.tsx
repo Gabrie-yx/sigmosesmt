@@ -12,21 +12,28 @@ import { useAuth } from "@/hooks/use-auth";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { PenLine, Check } from "lucide-react";
 
+type SignatureTarget = "FUNC" | "SESMT" | "SUPERVISOR";
+
+const emptyForm = () => ({
+  company_id: "", employee_id: "", data: new Date().toISOString().slice(0, 10),
+  horario_saida: "", tipo: "PESSOAL", com_retorno: false,
+  horario_retorno: "", motivo: "", observacao: "",
+  assinatura_funcionario: null,
+  assinatura_sesmt: null,
+  assinatura_supervisor: null,
+});
+
 export function SaidaExpedienteDialog({
   open, onOpenChange, editId,
 }: { open: boolean; onOpenChange: (b: boolean) => void; editId: string | null }) {
   const qc = useQueryClient();
   const { user } = useAuth();
-  const [form, setForm] = useState<any>({
-    company_id: "", employee_id: "", data: new Date().toISOString().slice(0, 10),
-    horario_saida: "", tipo: "PESSOAL", com_retorno: false,
-    horario_retorno: "", motivo: "", observacao: "",
-  });
-  const [sigOpen, setSigOpen] = useState(false);
+  const [form, setForm] = useState<any>(emptyForm);
+  const [sigOpen, setSigOpen] = useState<SignatureTarget | null>(null);
 
   const { data: companies } = useQuery({
     queryKey: ["companies-min"],
-    queryFn: async () => (await supabase.from("companies").select("id,name,type,encarregado1").order("name")).data ?? [],
+    queryFn: async () => (await supabase.from("companies").select("id,name,type,encarregado1,encarregado2").order("name")).data ?? [],
   });
 
   const { data: employees } = useQuery({
@@ -46,13 +53,12 @@ export function SaidaExpedienteDialog({
         if (data) setForm(data);
       });
     } else {
-      setForm({
-        company_id: "", employee_id: "", data: new Date().toISOString().slice(0,10),
-        horario_saida: "", tipo: "PESSOAL", com_retorno: false,
-        horario_retorno: "", motivo: "", observacao: "",
-      });
+      setForm(emptyForm());
     }
   }, [open, editId]);
+
+  const selectedCompany = (companies ?? []).find((c: any) => c.id === form.company_id);
+  const supervisorLabel = selectedCompany?.type === "TERCEIRIZADO" ? "Encarregado" : "Supervisor Geral";
 
   const save = useMutation({
     mutationFn: async () => {
@@ -66,11 +72,23 @@ export function SaidaExpedienteDialog({
         com_retorno: !!form.com_retorno,
         horario_retorno: form.com_retorno ? form.horario_retorno : null,
         motivo: form.motivo || null, observacao: form.observacao || null,
+        assinatura_funcionario: form.assinatura_funcionario || null,
+        assinatura_sesmt: form.assinatura_sesmt || null,
+        assinatura_supervisor: form.assinatura_supervisor || null,
       };
       if (form.assinatura_sesmt) {
-        payload.assinatura_sesmt = form.assinatura_sesmt;
         payload.assinado_sesmt_por = user?.id ?? null;
         payload.assinado_sesmt_em = new Date().toISOString();
+      } else {
+        payload.assinado_sesmt_por = null;
+        payload.assinado_sesmt_em = null;
+      }
+      if (form.assinatura_supervisor) {
+        payload.assinado_supervisor_por = user?.id ?? null;
+        payload.assinado_supervisor_em = new Date().toISOString();
+      } else {
+        payload.assinado_supervisor_por = null;
+        payload.assinado_supervisor_em = null;
       }
       if (editId) {
         const { error } = await supabase.from("employee_saidas_expediente").update(payload).eq("id", editId);
@@ -88,6 +106,35 @@ export function SaidaExpedienteDialog({
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const renderSignatureOption = (target: SignatureTarget, label: string, value: string | null | undefined) => (
+    <div className="rounded-lg border bg-slate-50 p-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-xs font-bold">{label}</Label>
+        {value && <span className="text-xs text-emerald-700 font-bold inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" /> Assinado</span>}
+      </div>
+      {value ? (
+        <div className="mt-2 flex items-center gap-3">
+          <img src={value} alt={`Assinatura ${label}`} className="h-14 max-w-40 bg-white border rounded px-2 object-contain" />
+          <div className="ml-auto flex gap-1">
+            <Button type="button" size="sm" variant="ghost" onClick={() => setSigOpen(target)}>Refazer</Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setForm((f: any) => ({ ...f, [target === "FUNC" ? "assinatura_funcionario" : target === "SESMT" ? "assinatura_sesmt" : "assinatura_supervisor"]: null }))}
+            >
+              Remover
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => setSigOpen(target)}>
+          <PenLine className="h-3.5 w-3.5 mr-1.5" />Inserir assinatura
+        </Button>
+      )}
+    </div>
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -159,21 +206,12 @@ export function SaidaExpedienteDialog({
           <div className="space-y-1.5"><Label>Observação interna</Label>
             <Textarea rows={2} value={form.observacao ?? ""} onChange={(e) => setForm({ ...form, observacao: e.target.value })} />
           </div>
-          <div className="space-y-1.5 pt-2 border-t">
-            <Label>Minha assinatura (TST)</Label>
-            {form.assinatura_sesmt ? (
-              <div className="flex items-center gap-3">
-                <img src={form.assinatura_sesmt} alt="Assinatura TST" className="h-16 bg-white border rounded px-2" />
-                <span className="text-xs text-emerald-700 font-bold inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" /> Assinado</span>
-                <Button type="button" size="sm" variant="ghost" onClick={() => setSigOpen(true)}>Refazer</Button>
-                <Button type="button" size="sm" variant="ghost" onClick={() => setForm({ ...form, assinatura_sesmt: null })}>Remover</Button>
-              </div>
-            ) : (
-              <Button type="button" size="sm" variant="outline" onClick={() => setSigOpen(true)}>
-                <PenLine className="h-3.5 w-3.5 mr-1.5" />Assinar como TST
-              </Button>
-            )}
-            <p className="text-[11px] text-slate-500">Opcional — você também pode assinar depois na pré-visualização do PDF.</p>
+          <div className="space-y-2 pt-2 border-t">
+            <Label>Assinaturas do documento</Label>
+            {renderSignatureOption("SESMT", "Minha assinatura — TST/SESMT", form.assinatura_sesmt)}
+            {renderSignatureOption("FUNC", "Assinatura do funcionário", form.assinatura_funcionario)}
+            {renderSignatureOption("SUPERVISOR", `Assinatura do ${supervisorLabel}`, form.assinatura_supervisor)}
+            <p className="text-[11px] text-slate-500">Opcional — cada assinatura é independente e pode ser removida/refeita antes de salvar.</p>
           </div>
         </div>
         <DialogFooter>
@@ -182,10 +220,16 @@ export function SaidaExpedienteDialog({
         </DialogFooter>
       </DialogContent>
       <SignaturePadDialog
-        open={sigOpen}
-        onClose={() => setSigOpen(false)}
-        onConfirm={(r) => { setForm((f: any) => ({ ...f, assinatura_sesmt: r.dataUrl })); setSigOpen(false); }}
-        title="Assinatura do TST"
+        open={!!sigOpen}
+        onClose={() => setSigOpen(null)}
+        onConfirm={(r) => {
+          const target = sigOpen;
+          setSigOpen(null);
+          if (!target) return;
+          const field = target === "FUNC" ? "assinatura_funcionario" : target === "SESMT" ? "assinatura_sesmt" : "assinatura_supervisor";
+          setForm((f: any) => ({ ...f, [field]: r.dataUrl }));
+        }}
+        title={sigOpen === "FUNC" ? "Assinatura do funcionário" : sigOpen === "SESMT" ? "Assinatura do TST/SESMT" : `Assinatura do ${supervisorLabel}`}
       />
     </Dialog>
   );
