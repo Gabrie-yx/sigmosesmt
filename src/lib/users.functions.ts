@@ -271,6 +271,60 @@ export const deleteUser = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminResetUserPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      user_id: z.string().uuid(),
+      new_password: z.string().min(8).max(72),
+    })
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertAdmin(context.supabase, context.userId);
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      password: data.new_password,
+    });
+    if (error) throw new Error(error.message);
+    await logAdminEvent(supabaseAdmin, {
+      action: "PASSWORD_RESET",
+      target_user_id: data.user_id,
+      actor_user_id: context.userId,
+    });
+    return { ok: true };
+  });
+
+export const adminCountUserSessions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ user_id: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data: n, error } = await context.supabase.rpc("admin_count_user_sessions", {
+      _user_id: data.user_id,
+    });
+    if (error) throw new Error(error.message);
+    return { count: (n as number) ?? 0 };
+  });
+
+export const adminForceSignOutUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ user_id: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertAdmin(context.supabase, context.userId);
+    const { data: n, error } = await context.supabase.rpc("admin_force_signout_user", {
+      _user_id: data.user_id,
+    });
+    if (error) throw new Error(error.message);
+    await logAdminEvent(supabaseAdmin, {
+      action: "FORCE_SIGNOUT",
+      target_user_id: data.user_id,
+      actor_user_id: context.userId,
+      payload: { sessions_killed: n ?? 0 },
+    });
+    return { count: (n as number) ?? 0 };
+  });
+
 export const listUsersAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

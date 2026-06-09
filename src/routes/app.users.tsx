@@ -11,8 +11,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { ShieldCheck, ShieldAlert, Trash2, Plus, Mail, RotateCcw, X, Settings2, Ban, Play, History as HistoryIcon, KeyRound, LogOut, UserCog } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { ShieldCheck, ShieldAlert, Trash2, Plus, Mail, RotateCcw, X, Settings2, Ban, Play, History as HistoryIcon, KeyRound, LogOut, MoreVertical, MonitorSmartphone } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
@@ -27,6 +34,9 @@ import {
   deleteUser,
   listUsersAdmin,
   listUserAuditLogs,
+  adminResetUserPassword,
+  adminCountUserSessions,
+  adminForceSignOutUser,
 } from "@/lib/users.functions";
 import { createInvestorAccess } from "@/lib/temp-investors.functions";
 import { MENU_CATALOG, MENU_BY_KEY, menusForModule } from "@/lib/menu-catalog";
@@ -77,6 +87,9 @@ function UsersPage() {
   const deleteUserFn = useServerFn(deleteUser);
   const listFn = useServerFn(listUsersAdmin);
   const listLogsFn = useServerFn(listUserAuditLogs);
+  const resetPwdFn = useServerFn(adminResetUserPassword);
+  const countSessionsFn = useServerFn(adminCountUserSessions);
+  const signOutUserFn = useServerFn(adminForceSignOutUser);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -89,6 +102,12 @@ function UsersPage() {
   const [investorCreds, setInvestorCreds] = useState<{ email: string; password: string; expires_at: string; link: string } | null>(null);
   const [investorLoading, setInvestorLoading] = useState(false);
   const createInvestorFn = useServerFn(createInvestorAccess);
+
+  // Reset password dialog
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState<any>(null);
+  const [resetPwd, setResetPwd] = useState("");
+  const [resetBusy, setResetBusy] = useState(false);
 
   // form state
   const [fName, setFName] = useState("");
@@ -261,9 +280,6 @@ function UsersPage() {
           <TabsTrigger value="history">
             <HistoryIcon className="h-3.5 w-3.5 mr-1" /> Histórico
           </TabsTrigger>
-          <TabsTrigger value="minha-conta">
-            <UserCog className="h-3.5 w-3.5 mr-1" /> Minha conta
-          </TabsTrigger>
         </TabsList>
         <TabsContent value="users" className="mt-4">
       {/* Convites pendentes */}
@@ -388,51 +404,87 @@ function UsersPage() {
                     </Select>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button size="icon" variant="ghost"
-                      onClick={() => {
-                        setEditing(u);
-                        setFRole(role);
-                        setFModules(u.modules);
-                        setFMenus(u.menus ?? []);
-                        setEditOpen(true);
-                      }}>
-                      <Settings2 className="h-3.5 w-3.5" />
-                    </Button>
-                    {u.suspended ? (
-                      <Button size="icon" variant="ghost" title="Reativar"
-                        onClick={async () => {
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" title="Ações">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-60">
+                        <DropdownMenuLabel className="truncate">{u.email}</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => {
+                          setEditing(u);
+                          setFRole(role);
+                          setFModules(u.modules);
+                          setFMenus(u.menus ?? []);
+                          setEditOpen(true);
+                        }}>
+                          <Settings2 className="h-4 w-4 mr-2" /> Editar permissões
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          setResetTarget(u);
+                          setResetPwd("");
+                          setResetOpen(true);
+                        }}>
+                          <KeyRound className="h-4 w-4 mr-2" /> Trocar senha
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={async () => {
                           try {
-                            await unsuspendFn({ data: { user_id: u.id } });
-                            toast.success("Usuário reativado");
-                            qc.invalidateQueries({ queryKey: ["users-admin"] });
+                            const { count } = await countSessionsFn({ data: { user_id: u.id } });
+                            toast.info(`${u.email}: ${count} sessão(ões) ativa(s)`);
+                          } catch (e: any) { toast.error(e.message); }
+                        }}>
+                          <MonitorSmartphone className="h-4 w-4 mr-2" /> Ver sessões ativas
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={async () => {
+                          if (!confirm(`Desconectar TODAS as sessões de ${u.email}?`)) return;
+                          try {
+                            const { count } = await signOutUserFn({ data: { user_id: u.id } });
+                            toast.success(`${count} sessão(ões) encerrada(s)`);
                             qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
                           } catch (e: any) { toast.error(e.message); }
                         }}>
-                        <Play className="h-3.5 w-3.5 text-green-600" />
-                      </Button>
-                    ) : (
-                      <Button size="icon" variant="ghost" title="Suspender"
-                        onClick={() => {
-                          setSuspendTarget(u);
-                          setSuspendMode("indef");
-                          setSuspendDays(30);
-                          setSuspendOpen(true);
-                        }}>
-                        <Ban className="h-3.5 w-3.5 text-amber-600" />
-                      </Button>
-                    )}
-                    <Button size="icon" variant="ghost"
-                      onClick={async () => {
-                        if (!confirm(`Remover ${u.email}?`)) return;
-                        try {
-                          await deleteUserFn({ data: { user_id: u.id } });
-                          toast.success("Usuário removido");
-                          qc.invalidateQueries({ queryKey: ["users-admin"] });
-                          qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
-                        } catch (e: any) { toast.error(e.message); }
-                      }}>
-                      <Trash2 className="h-3.5 w-3.5 text-red-600" />
-                    </Button>
+                          <LogOut className="h-4 w-4 mr-2" /> Desconectar todas as sessões
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {u.suspended ? (
+                          <DropdownMenuItem onClick={async () => {
+                            try {
+                              await unsuspendFn({ data: { user_id: u.id } });
+                              toast.success("Usuário reativado");
+                              qc.invalidateQueries({ queryKey: ["users-admin"] });
+                              qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+                            } catch (e: any) { toast.error(e.message); }
+                          }}>
+                            <Play className="h-4 w-4 mr-2 text-green-600" /> Reativar acesso
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => {
+                            setSuspendTarget(u);
+                            setSuspendMode("indef");
+                            setSuspendDays(30);
+                            setSuspendOpen(true);
+                          }}>
+                            <Ban className="h-4 w-4 mr-2 text-amber-600" /> Revogar / suspender acesso
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-700"
+                          onClick={async () => {
+                            if (!confirm(`Remover ${u.email}? Esta ação é irreversível.`)) return;
+                            try {
+                              await deleteUserFn({ data: { user_id: u.id } });
+                              toast.success("Usuário removido");
+                              qc.invalidateQueries({ queryKey: ["users-admin"] });
+                              qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+                            } catch (e: any) { toast.error(e.message); }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir usuário
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               );
@@ -444,9 +496,6 @@ function UsersPage() {
 
         <TabsContent value="history" className="mt-4">
           <HistoryView logs={logsData?.logs ?? []} loading={logsLoading} users={data?.users ?? []} />
-        </TabsContent>
-        <TabsContent value="minha-conta" className="mt-4">
-          <MinhaContaPanel />
         </TabsContent>
       </Tabs>
 
@@ -627,6 +676,7 @@ function UsersPage() {
       </Dialog>
 
       <Dialog open={investorOpen} onOpenChange={setInvestorOpen}>
+        {/* anchor */}
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Acesso de investidor gerado</DialogTitle>
@@ -665,6 +715,64 @@ function UsersPage() {
           )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setInvestorOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Trocar senha do usuário</DialogTitle>
+            <DialogDescription>
+              Você vai definir uma nova senha para <span className="font-semibold">{resetTarget?.email}</span>.
+              Recomende ao usuário trocá-la no próximo login. Mínimo 8 caracteres.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="reset-pwd" className="text-xs">Nova senha</Label>
+              <Input
+                id="reset-pwd"
+                type="text"
+                value={resetPwd}
+                onChange={(e) => setResetPwd(e.target.value)}
+                minLength={8}
+                autoFocus
+                placeholder="ex.: TrocarAgora@2026"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const rnd = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase() + "@" + Math.floor(Math.random() * 90 + 10);
+                setResetPwd(rnd);
+              }}
+            >
+              Gerar senha aleatória
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setResetOpen(false)}>Cancelar</Button>
+            <Button
+              disabled={resetBusy || resetPwd.length < 8 || !resetTarget}
+              onClick={async () => {
+                if (!resetTarget) return;
+                setResetBusy(true);
+                try {
+                  await resetPwdFn({ data: { user_id: resetTarget.id, new_password: resetPwd } });
+                  await navigator.clipboard.writeText(resetPwd).catch(() => {});
+                  toast.success("Senha trocada e copiada para a área de transferência");
+                  setResetOpen(false);
+                  setResetPwd("");
+                  qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+                } catch (e: any) {
+                  toast.error(e.message ?? "Falha ao trocar senha");
+                } finally { setResetBusy(false); }
+              }}
+            >
+              {resetBusy ? "Salvando..." : "Trocar senha"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -718,94 +826,6 @@ function HistoryView({ logs, loading, users }: { logs: any[]; loading: boolean; 
           </div>
         );
       })}
-    </div>
-  );
-}
-
-function MinhaContaPanel() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [newPwd, setNewPwd] = useState("");
-  const [confirmPwd, setConfirmPwd] = useState("");
-  const [pwdBusy, setPwdBusy] = useState(false);
-  const [signOutBusy, setSignOutBusy] = useState(false);
-
-  async function changePassword(e: React.FormEvent) {
-    e.preventDefault();
-    if (newPwd.length < 8) return toast.error("Senha deve ter ao menos 8 caracteres");
-    if (newPwd !== confirmPwd) return toast.error("As senhas não coincidem");
-    setPwdBusy(true);
-    try {
-      const { error } = await supabase.auth.updateUser({ password: newPwd });
-      if (error) throw error;
-      toast.success("Senha alterada com sucesso!");
-      setNewPwd(""); setConfirmPwd("");
-    } catch (e: any) {
-      toast.error(e.message ?? "Erro ao alterar senha");
-    } finally { setPwdBusy(false); }
-  }
-
-  async function signOutAll() {
-    if (!confirm("Isso vai desconectar TODAS as sessões (inclusive esta). Continuar?")) return;
-    setSignOutBusy(true);
-    try {
-      const { error } = await supabase.auth.signOut({ scope: "global" });
-      if (error) throw error;
-      toast.success("Todas as sessões foram encerradas");
-      navigate({ to: "/login" });
-    } catch (e: any) {
-      toast.error(e.message ?? "Erro ao encerrar sessões");
-      setSignOutBusy(false);
-    }
-  }
-
-  return (
-    <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
-      <div className="rounded-lg border bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-2 mb-1">
-          <KeyRound className="h-5 w-5 text-slate-700" />
-          <h3 className="font-bold">Alterar minha senha</h3>
-        </div>
-        <p className="text-xs text-muted-foreground mb-4">
-          Logado como <span className="font-semibold">{user?.email}</span>. Mínimo 8 caracteres.
-        </p>
-        <form onSubmit={changePassword} className="space-y-3">
-          <div className="space-y-1">
-            <Label htmlFor="new-pwd">Nova senha</Label>
-            <Input id="new-pwd" type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} minLength={8} required />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="confirm-pwd">Confirme a nova senha</Label>
-            <Input id="confirm-pwd" type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} minLength={8} required />
-          </div>
-          <Button type="submit" disabled={pwdBusy}>
-            {pwdBusy ? "Salvando..." : "Alterar senha"}
-          </Button>
-        </form>
-      </div>
-
-      <div className="rounded-lg border border-red-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-2 mb-1">
-          <LogOut className="h-5 w-5 text-red-600" />
-          <h3 className="font-bold">Encerrar todas as sessões</h3>
-        </div>
-        <p className="text-xs text-muted-foreground mb-4">
-          Desconecta sua conta de TODOS os dispositivos e navegadores (inclusive este). Use junto com a troca de senha pra cortar acesso de quem já estava logado.
-        </p>
-        <Button variant="destructive" onClick={signOutAll} disabled={signOutBusy}>
-          <LogOut className="h-4 w-4 mr-2" />
-          {signOutBusy ? "Encerrando..." : "Sair de todos os dispositivos"}
-        </Button>
-
-        <div className="mt-5 pt-4 border-t">
-          <p className="text-xs text-muted-foreground mb-2">
-            Quer configurar MFA (autenticação em 2 fatores)?
-          </p>
-          <Button variant="outline" size="sm" onClick={() => navigate({ to: "/app/conta/seguranca" })}>
-            <ShieldCheck className="h-4 w-4 mr-2" /> Abrir tela de segurança
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

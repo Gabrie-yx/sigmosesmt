@@ -5846,6 +5846,8 @@ export type Database = {
       }
     }
     Functions: {
+      admin_count_user_sessions: { Args: { _user_id: string }; Returns: number }
+      admin_force_signout_user: { Args: { _user_id: string }; Returns: number }
       ajustar_saldo_epi: {
         Args: { _epi_id: string; _novo_saldo: number }
         Returns: undefined
