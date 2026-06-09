@@ -197,6 +197,51 @@ function SecurityPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-slate-700" />
+            <CardTitle>Alterar senha</CardTitle>
+          </div>
+          <CardDescription>
+            Defina uma nova senha (mínimo 8 caracteres). Você continuará logado nesta sessão.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={changePassword} className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="new-pwd">Nova senha</Label>
+              <Input id="new-pwd" type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} minLength={8} required />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="confirm-pwd">Confirme a nova senha</Label>
+              <Input id="confirm-pwd" type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} minLength={8} required />
+            </div>
+            <Button type="submit" disabled={pwdBusy}>
+              {pwdBusy ? "Salvando..." : "Alterar senha"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6 border-red-200">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <LogOut className="h-5 w-5 text-red-600" />
+            <CardTitle>Encerrar todas as sessões</CardTitle>
+          </div>
+          <CardDescription>
+            Desconecta sua conta de TODOS os dispositivos e navegadores (inclusive este). Útil se você suspeita de acesso indevido. Combine com a troca de senha acima para máxima segurança.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="destructive" onClick={signOutAll} disabled={signOutBusy}>
+            <LogOut className="h-4 w-4 mr-2" />
+            {signOutBusy ? "Encerrando..." : "Sair de todos os dispositivos"}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
