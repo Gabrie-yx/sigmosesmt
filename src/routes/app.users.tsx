@@ -280,9 +280,6 @@ function UsersPage() {
           <TabsTrigger value="history">
             <HistoryIcon className="h-3.5 w-3.5 mr-1" /> Histórico
           </TabsTrigger>
-          <TabsTrigger value="minha-conta">
-            <UserCog className="h-3.5 w-3.5 mr-1" /> Minha conta
-          </TabsTrigger>
         </TabsList>
         <TabsContent value="users" className="mt-4">
       {/* Convites pendentes */}
