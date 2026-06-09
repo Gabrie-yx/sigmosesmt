@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LogOut, Download, Upload, Search } from "lucide-react";
+import { LogOut, Download, Upload } from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
@@ -60,21 +60,6 @@ export function AppHeader() {
 
         <div className="flex items-center gap-1.5 shrink-0 ml-auto">
           <PendenciasBadge />
-          <button
-            type="button"
-            title="Busca rápida (Ctrl+K)"
-            onClick={() => {
-              const isMac = typeof navigator !== "undefined" && /Mac/i.test(navigator.platform);
-              window.dispatchEvent(
-                new KeyboardEvent("keydown", { key: "k", ctrlKey: !isMac, metaKey: isMac, bubbles: true }),
-              );
-            }}
-            className="hidden md:inline-flex h-8 items-center gap-2 rounded-md border border-white/15 bg-white/5 px-2 text-[12px] text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground"
-          >
-            <Search className="h-3.5 w-3.5" />
-            <span>Buscar</span>
-            <kbd className="ml-1 rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-mono">Ctrl K</kbd>
-          </button>
           <div className="hidden md:flex items-center gap-0.5 border-l border-white/10 pl-2">
             <button
               title="Exportar backup"
