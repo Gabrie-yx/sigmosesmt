@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { applyMyPendingInvite } from "@/lib/users.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +19,7 @@ function ResetPasswordPage() {
   const [pwd2, setPwd2] = useState("");
   const [busy, setBusy] = useState(false);
   const [hasSession, setHasSession] = useState(false);
+  const applyInvite = useServerFn(applyMyPendingInvite);
 
   useEffect(() => {
     // Supabase processa o token do hash automaticamente e cria sessão
@@ -35,6 +38,9 @@ function ResetPasswordPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password: pwd });
       if (error) throw error;
+      // Rede de segurança: garante role + módulos do convite, mesmo se a
+      // trigger apply_pending_invite não tiver aplicado por timing/expiração.
+      try { await applyInvite({}); } catch (err) { console.warn("applyInvite", err); }
       toast.success("Senha definida! Bem-vindo.");
       nav({ to: "/app" });
     } catch (e: any) {
