@@ -228,40 +228,52 @@ function AcidentesPage() {
             Acidentes de Trabalho
           </h1>
           <p className="text-sm text-muted-foreground">
-            FOR-SEG 09 · Quadro Estatístico · FOR-SEG 10 · Dias sem Acidente — NBR 14280
+            Registre, investigue e acompanhe os indicadores de acidentes da equipe.
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setHhtOpen(true)} className="gap-2">
-            <Calculator className="h-4 w-4" /> Lançar HHT
-          </Button>
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => {
-              gerarForSeg09({
-                ano: new Date().getFullYear(),
-                acidentes: acidentes as any,
-                hht: hhtRows as any,
-              });
-              toast.success("FOR-SEG 09 gerado");
-            }}
-          >
-            <FileDown className="h-4 w-4" /> FOR-SEG 09
-          </Button>
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => {
-              gerarForSeg10({
-                empresas: companies as any,
-                dias: dias as any,
-              });
-              toast.success("FOR-SEG 10 gerado");
-            }}
-          >
-            <FileDown className="h-4 w-4" /> FOR-SEG 10
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <FileText className="h-4 w-4" /> Relatórios <ChevronDown className="h-3 w-3 opacity-70" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuLabel className="text-xs text-muted-foreground">Documentos NBR 14280</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => {
+                  gerarForSeg09({ ano: anoFiltro, acidentes: acidentes as any, hht: hhtRows as any });
+                  toast.success("Quadro Estatístico gerado");
+                }}
+              >
+                <FileDown className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span>Quadro Estatístico Anual</span>
+                  <span className="text-[10px] text-muted-foreground">FOR-SEG 09</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  gerarForSeg10({ empresas: companies as any, dias: dias as any });
+                  toast.success("Dias sem Acidente gerado");
+                }}
+              >
+                <FileDown className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span>Dias sem Acidente</span>
+                  <span className="text-[10px] text-muted-foreground">FOR-SEG 10</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setHhtOpen(true)}>
+                <Calculator className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span>Lançar HHT mensal</span>
+                  <span className="text-[10px] text-muted-foreground">Homem-Hora Trabalhada</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={() => setNovoOpen(true)} className="gap-2 bg-red-600 hover:bg-red-700">
             <Plus className="h-4 w-4" /> Registrar acidente
           </Button>
