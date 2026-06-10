@@ -3,9 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Search, AlertTriangle, ShieldCheck, Stethoscope, ClipboardCheck,
-  Flame, Calendar, ArrowRight, ChevronRight, FolderOpen, Package,
-  FileWarning, TrendingUp, Activity, MessageSquare,
+  Search, ShieldCheck, Flame, Calendar, ArrowRight, ChevronRight, FolderOpen, Package,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
