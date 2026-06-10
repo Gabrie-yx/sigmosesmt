@@ -17,7 +17,12 @@ import {
   Plus, AlertTriangle, Trophy, CalendarClock, Activity, ShieldAlert, Skull,
   TrendingDown, TrendingUp, Clock, Hash, Users, Calculator, FileDown,
   Eye, Pencil, Trash2, Upload, X, Image as ImageIcon, User as UserIcon,
+  FileText, ChevronDown,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -223,40 +228,52 @@ function AcidentesPage() {
             Acidentes de Trabalho
           </h1>
           <p className="text-sm text-muted-foreground">
-            FOR-SEG 09 · Quadro Estatístico · FOR-SEG 10 · Dias sem Acidente — NBR 14280
+            Registre, investigue e acompanhe os indicadores de acidentes da equipe.
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setHhtOpen(true)} className="gap-2">
-            <Calculator className="h-4 w-4" /> Lançar HHT
-          </Button>
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => {
-              gerarForSeg09({
-                ano: new Date().getFullYear(),
-                acidentes: acidentes as any,
-                hht: hhtRows as any,
-              });
-              toast.success("FOR-SEG 09 gerado");
-            }}
-          >
-            <FileDown className="h-4 w-4" /> FOR-SEG 09
-          </Button>
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => {
-              gerarForSeg10({
-                empresas: companies as any,
-                dias: dias as any,
-              });
-              toast.success("FOR-SEG 10 gerado");
-            }}
-          >
-            <FileDown className="h-4 w-4" /> FOR-SEG 10
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <FileText className="h-4 w-4" /> Relatórios <ChevronDown className="h-3 w-3 opacity-70" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuLabel className="text-xs text-muted-foreground">Documentos NBR 14280</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => {
+                  gerarForSeg09({ ano: anoFiltro, acidentes: acidentes as any, hht: hhtRows as any });
+                  toast.success("Quadro Estatístico gerado");
+                }}
+              >
+                <FileDown className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span>Quadro Estatístico Anual</span>
+                  <span className="text-[10px] text-muted-foreground">FOR-SEG 09</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  gerarForSeg10({ empresas: companies as any, dias: dias as any });
+                  toast.success("Dias sem Acidente gerado");
+                }}
+              >
+                <FileDown className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span>Dias sem Acidente</span>
+                  <span className="text-[10px] text-muted-foreground">FOR-SEG 10</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setHhtOpen(true)}>
+                <Calculator className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span>Lançar HHT mensal</span>
+                  <span className="text-[10px] text-muted-foreground">Homem-Hora Trabalhada</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={() => setNovoOpen(true)} className="gap-2 bg-red-600 hover:bg-red-700">
             <Plus className="h-4 w-4" /> Registrar acidente
           </Button>
@@ -296,6 +313,9 @@ function AcidentesPage() {
               backgroundSize: "30px 30px",
             }} />
             <CardContent className="p-8 relative">
+              <div className="absolute top-3 right-4 text-[10px] uppercase tracking-wider text-white/40 font-medium">
+                FOR-SEG 10 · NBR 14280
+              </div>
               <div className="grid md:grid-cols-3 gap-6 items-center">
                 <div className="md:col-span-2 text-center md:text-left">
                   <div className="text-sm uppercase tracking-widest text-red-200/80 font-semibold mb-2">
@@ -338,7 +358,12 @@ function AcidentesPage() {
           {/* Evolução mensal */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Quantidade de Acidentes por Mês — {anoFiltro}</CardTitle>
+              <div className="flex items-start justify-between gap-2">
+                <CardTitle className="text-base">Quadro Estatístico Mensal — {anoFiltro}</CardTitle>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                  FOR-SEG 09 · NBR 14280
+                </span>
+              </div>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={240}>
@@ -478,6 +503,25 @@ function AcidentesPage() {
 
         {/* ============ HHT ============ */}
         <TabsContent value="hht" className="mt-4">
+          <Card className="mb-3 bg-slate-50 border-slate-200">
+            <CardContent className="p-4 flex items-start justify-between gap-4">
+              <div className="text-sm text-slate-700">
+                <div className="font-semibold mb-1 flex items-center gap-2">
+                  <Calculator className="h-4 w-4 text-slate-500" />
+                  Homem-Hora Trabalhada (HHT)
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Soma de todas as horas efetivamente trabalhadas pela equipe no mês.
+                  É a <strong>base</strong> da Taxa de Frequência (TF) e Taxa de Gravidade (TG) da NBR 14280.
+                  Se o RH te passa o número pronto, lance direto. Se não, use o <strong>🧮 Calcular</strong> dentro do formulário
+                  (funcionários × jornada × dias úteis ± horas extras / faltas).
+                </p>
+              </div>
+              <Button onClick={() => setHhtOpen(true)} className="gap-2 shrink-0">
+                <Plus className="h-4 w-4" /> Lançar HHT
+              </Button>
+            </CardContent>
+          </Card>
           <Card>
             <CardContent className="p-0">
               <Table>
@@ -1331,7 +1375,8 @@ function VerAcidenteDialog({ acidente, companies, onOpenChange, onEdit }: any) {
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
           <Button variant="outline" onClick={() => setRiaOpen(true)} className="gap-2 border-red-300 text-red-700 hover:bg-red-50">
-            <FileDown className="h-4 w-4" /> Gerar FOR-SEG 14
+            <FileDown className="h-4 w-4" /> Investigar acidente
+            <span className="text-[9px] uppercase tracking-wider opacity-60 ml-1">FOR-SEG 14</span>
           </Button>
           <Button onClick={onEdit} className="gap-2"><Pencil className="h-4 w-4" /> Editar</Button>
         </DialogFooter>
@@ -1359,6 +1404,22 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
     empregados_medio: "",
     observacoes: "",
   });
+  const [modo, setModo] = useState<"manual" | "calc">("manual");
+  const [calc, setCalc] = useState({
+    funcionarios: "",
+    jornada: "8",
+    diasUteis: "22",
+    horasExtras: "0",
+    horasFaltas: "0",
+  });
+  const hhtCalculado = useMemo(() => {
+    const f = Number(calc.funcionarios) || 0;
+    const j = Number(calc.jornada) || 0;
+    const d = Number(calc.diasUteis) || 0;
+    const he = Number(calc.horasExtras) || 0;
+    const hf = Number(calc.horasFaltas) || 0;
+    return Math.max(0, f * j * d + he - hf);
+  }, [calc]);
 
   const mut = useMutation({
     mutationFn: async () => {
@@ -1387,6 +1448,13 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
   });
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+  const setC = (k: string, v: any) => setCalc((c) => ({ ...c, [k]: v }));
+  const aplicarCalculo = () => {
+    set("hht", String(hhtCalculado));
+    set("empregados_medio", calc.funcionarios);
+    setModo("manual");
+    toast.success(`HHT calculado: ${hhtCalculado.toLocaleString("pt-BR")} horas`);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1399,6 +1467,57 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
         <p className="text-xs text-muted-foreground -mt-2">
           Horas Homem Trabalhadas (HHT) — base da Taxa de Frequência (NBR 14280). Vem da folha do RH.
         </p>
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-md text-xs">
+          <button
+            type="button"
+            onClick={() => setModo("manual")}
+            className={`flex-1 py-1.5 rounded ${modo === "manual" ? "bg-white shadow-sm font-semibold" : "text-slate-600"}`}
+          >
+            Já tenho o número
+          </button>
+          <button
+            type="button"
+            onClick={() => setModo("calc")}
+            className={`flex-1 py-1.5 rounded ${modo === "calc" ? "bg-white shadow-sm font-semibold" : "text-slate-600"}`}
+          >
+            🧮 Calcular HHT
+          </button>
+        </div>
+        {modo === "calc" && (
+          <div className="space-y-3 p-3 rounded-md border bg-slate-50/60">
+            <div className="grid grid-cols-3 gap-2">
+              <Field label="Funcionários">
+                <Input type="number" value={calc.funcionarios} onChange={(e) => setC("funcionarios", e.target.value)} placeholder="50" />
+              </Field>
+              <Field label="Jornada (h/dia)">
+                <Input type="number" step="0.5" value={calc.jornada} onChange={(e) => setC("jornada", e.target.value)} />
+              </Field>
+              <Field label="Dias úteis">
+                <Input type="number" value={calc.diasUteis} onChange={(e) => setC("diasUteis", e.target.value)} />
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="+ Horas extras">
+                <Input type="number" value={calc.horasExtras} onChange={(e) => setC("horasExtras", e.target.value)} />
+              </Field>
+              <Field label="− Horas faltas/afast.">
+                <Input type="number" value={calc.horasFaltas} onChange={(e) => setC("horasFaltas", e.target.value)} />
+              </Field>
+            </div>
+            <div className="flex items-center justify-between bg-white border rounded-md p-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">HHT calculado</div>
+                <div className="text-2xl font-bold tabular-nums">{hhtCalculado.toLocaleString("pt-BR")} h</div>
+              </div>
+              <Button size="sm" onClick={aplicarCalculo} disabled={hhtCalculado <= 0}>
+                Usar este valor
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground leading-snug">
+              Fórmula: funcionários × jornada × dias úteis + horas extras − horas de faltas/afastamentos.
+            </p>
+          </div>
+        )}
         <div className="space-y-3">
           <Field label="Empresa *">
             <Select value={form.company_id || undefined} onValueChange={v => set("company_id", v)}>
