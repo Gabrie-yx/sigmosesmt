@@ -503,6 +503,25 @@ function AcidentesPage() {
 
         {/* ============ HHT ============ */}
         <TabsContent value="hht" className="mt-4">
+          <Card className="mb-3 bg-slate-50 border-slate-200">
+            <CardContent className="p-4 flex items-start justify-between gap-4">
+              <div className="text-sm text-slate-700">
+                <div className="font-semibold mb-1 flex items-center gap-2">
+                  <Calculator className="h-4 w-4 text-slate-500" />
+                  Homem-Hora Trabalhada (HHT)
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Soma de todas as horas efetivamente trabalhadas pela equipe no mês.
+                  É a <strong>base</strong> da Taxa de Frequência (TF) e Taxa de Gravidade (TG) da NBR 14280.
+                  Se o RH te passa o número pronto, lance direto. Se não, use o <strong>🧮 Calcular</strong> dentro do formulário
+                  (funcionários × jornada × dias úteis ± horas extras / faltas).
+                </p>
+              </div>
+              <Button onClick={() => setHhtOpen(true)} className="gap-2 shrink-0">
+                <Plus className="h-4 w-4" /> Lançar HHT
+              </Button>
+            </CardContent>
+          </Card>
           <Card>
             <CardContent className="p-0">
               <Table>
