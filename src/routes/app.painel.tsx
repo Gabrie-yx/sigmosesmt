@@ -977,22 +977,22 @@ function HBarList({
   }
   const max = Math.max(...items.map((i) => i.value), 1);
   return (
-    <div className="space-y-3 py-1">
+    <div className="space-y-3.5 py-2">
       {items.map((it) => {
         const c = perItemColor && it.color ? it.color : color ?? "#0c2340";
         const pct = Math.max(2, Math.round((it.value / max) * 100));
         return (
           <div key={it.name}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-bold text-slate-700 truncate pr-2">{it.name}</span>
-              <span className="text-[11px] font-black tabular-nums" style={{ color: c }}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[12px] font-bold text-slate-700 truncate pr-2">{it.name}</span>
+              <span className="text-[13px] font-black tabular-nums" style={{ color: c }}>
                 {it.value}{suffix ?? ""}
               </span>
             </div>
-            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner">
               <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${pct}%`, background: c }}
+                className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${c}cc, ${c})` }}
               />
             </div>
           </div>
