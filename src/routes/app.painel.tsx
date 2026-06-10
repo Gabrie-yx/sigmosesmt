@@ -401,22 +401,69 @@ function TstPanel() {
               {conformityView.length === 0 ? (
                 <EmptyBlock label="Sem empresas com colaboradores no período" />
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {conformityView.map((c: any) => (
                     <div key={c.id} className="group">
-                      <div className="flex justify-between text-xs mb-1.5 font-medium">
-                        <span className="text-slate-700 truncate pr-2">{c.name}</span>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-[10px] text-slate-400">{c.total} pessoas</span>
-                          <span className={`font-bold ${c.score >= 90 ? "text-emerald-600" : c.score >= 70 ? "text-amber-600" : "text-[#7f1212]"}`}>
+                      <div className="flex justify-between text-xs mb-2 font-medium items-end">
+                        <div className="min-w-0 pr-2">
+                          <div className="text-slate-800 font-bold truncate">{c.name}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">
+                            <span className="text-emerald-600 font-bold">{c.oks}</span> aptos ·{" "}
+                            <span className="text-amber-600 font-bold">{c.al}</span> alerta ·{" "}
+                            <span className="text-[#7f1212] font-bold">{c.bl}</span> crítico
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] text-slate-400">{c.total}</span>
+                          <span
+                            className={`text-base font-black tabular-nums tracking-tight ${
+                              c.score >= 90 ? "text-emerald-600" : c.score >= 70 ? "text-amber-600" : "text-[#7f1212]"
+                            }`}
+                            style={{
+                              textShadow:
+                                c.score >= 90
+                                  ? "0 0 12px rgba(16,185,129,0.35)"
+                                  : c.score >= 70
+                                    ? "0 0 12px rgba(245,158,11,0.35)"
+                                    : "0 0 12px rgba(127,18,18,0.4)",
+                            }}
+                          >
                             {c.score}%
                           </span>
                         </div>
                       </div>
-                      <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden flex">
-                        <div className="bg-emerald-500 h-full" style={{ width: `${c.okPct}%` }} title={`${c.oks} aptos`} />
-                        <div className="bg-amber-400 h-full" style={{ width: `${c.alPct}%` }} title={`${c.al} em alerta`} />
-                        <div className="bg-[#7f1212] h-full" style={{ width: `${c.blPct}%` }} title={`${c.bl} bloqueados`} />
+                      <div className="relative w-full h-3 rounded-full overflow-hidden bg-slate-100 shadow-inner">
+                        <div className="absolute inset-0 flex">
+                          <div
+                            className="h-full transition-all duration-700 ease-out"
+                            style={{
+                              width: `${c.okPct}%`,
+                              background: "linear-gradient(90deg,#34d399 0%,#10b981 100%)",
+                              boxShadow: c.okPct > 0 ? "0 0 8px rgba(16,185,129,0.55)" : undefined,
+                            }}
+                            title={`${c.oks} aptos`}
+                          />
+                          <div
+                            className="h-full transition-all duration-700 ease-out"
+                            style={{
+                              width: `${c.alPct}%`,
+                              background: "linear-gradient(90deg,#fbbf24 0%,#f59e0b 100%)",
+                              boxShadow: c.alPct > 0 ? "0 0 8px rgba(245,158,11,0.5)" : undefined,
+                            }}
+                            title={`${c.al} em alerta`}
+                          />
+                          <div
+                            className="h-full transition-all duration-700 ease-out"
+                            style={{
+                              width: `${c.blPct}%`,
+                              background: "linear-gradient(90deg,#b91c1c 0%,#7f1212 100%)",
+                              boxShadow: c.blPct > 0 ? "0 0 10px rgba(127,18,18,0.65)" : undefined,
+                            }}
+                            title={`${c.bl} bloqueados`}
+                          />
+                        </div>
+                        {/* shine overlay */}
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-black/10" />
                       </div>
                     </div>
                   ))}
