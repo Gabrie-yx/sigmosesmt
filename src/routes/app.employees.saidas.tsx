@@ -154,7 +154,7 @@ function SaidasPage() {
           <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Nenhuma autorização registrada</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtradas.map((r: any) => {
             const sigFunc = !!r.assinatura_funcionario;
             const sigSesmt = !!r.assinatura_sesmt;
