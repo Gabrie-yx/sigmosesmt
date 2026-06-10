@@ -154,32 +154,54 @@ function SaidasPage() {
           <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Nenhuma autorização registrada</p>
         </div>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtradas.map((r: any) => {
             const sigFunc = !!r.assinatura_funcionario;
             const sigSesmt = !!r.assinatura_sesmt;
             const sigSupervisor = !!r.assinatura_supervisor;
+            const emp = r.employees;
+            const iniciais = (emp?.nome ?? "—").split(" ").filter(Boolean).slice(0,2).map((s: string) => s[0]?.toUpperCase()).join("");
             return (
-              <div key={r.id} className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div key={r.id} className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition-all flex flex-col gap-3">
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-14 w-14 ring-2 ring-slate-100 shrink-0">
+                    {emp?.foto_url ? <AvatarImage src={emp.foto_url} alt={emp.nome} /> : null}
+                    <AvatarFallback className="text-sm font-black text-slate-700">{iniciais || "?"}</AvatarFallback>
+                  </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <p className="text-lg font-black text-slate-900">{r.employees?.nome ?? "—"}</p>
-                      <span className="text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-700 px-2 py-0.5 rounded">{formatDateBR(r.data)}</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest bg-rose-100 text-rose-700 px-2 py-0.5 rounded">{r.horario_saida}</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-700 px-2 py-0.5 rounded">{r.tipo === "PESSOAL" ? "Pessoal" : "A serviço"}</span>
-                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${r.com_retorno ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{r.com_retorno ? `retorno ${r.horario_retorno ?? ""}` : "sem retorno"}</span>
-                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sigFunc ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>Func {sigFunc ? "✓" : "—"}</span>
-                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sigSesmt ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>SESMT {sigSesmt ? "✓" : "—"}</span>
-                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sigSupervisor ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>Sup/Enc {sigSupervisor ? "✓" : "—"}</span>
-                    </div>
-                    {r.motivo && <p className="text-xs text-slate-600 mt-1.5 line-clamp-2"><b>Motivo:</b> {r.motivo}</p>}
+                    <p className="text-base font-black text-slate-900 leading-tight truncate">{emp?.nome ?? "—"}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 truncate">{emp?.roles?.name ?? "—"}</p>
+                    {emp?.id && (
+                      <Link
+                        to="/app/employees/$id"
+                        params={{ id: emp.id }}
+                        className="inline-flex items-center gap-1 mt-1 text-[10px] font-black uppercase tracking-widest text-brand hover:underline"
+                      >
+                        <UserCog className="h-3 w-3" /> Editar ficha
+                      </Link>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button size="sm" variant="outline" onClick={() => gerarPdf(r.id)}><Eye className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
-                    {isEditor && <Button size="icon" variant="ghost" onClick={() => { setEditId(r.id); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>}
-                    {isAdmin && <Button size="icon" variant="ghost" onClick={() => { if (confirm("Excluir esta autorização?")) del.mutate(r.id); }}><Trash2 className="h-4 w-4 text-rose-500" /></Button>}
-                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-700 px-2 py-0.5 rounded">{formatDateBR(r.data)}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest bg-rose-100 text-rose-700 px-2 py-0.5 rounded">{r.horario_saida}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-700 px-2 py-0.5 rounded">{r.tipo === "PESSOAL" ? "Pessoal" : "A serviço"}</span>
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${r.com_retorno ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{r.com_retorno ? `retorno ${r.horario_retorno ?? ""}` : "sem retorno"}</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sigFunc ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>Func {sigFunc ? "✓" : "—"}</span>
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sigSesmt ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>SESMT {sigSesmt ? "✓" : "—"}</span>
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sigSupervisor ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>Sup/Enc {sigSupervisor ? "✓" : "—"}</span>
+                </div>
+
+                {r.motivo && <p className="text-xs text-slate-600 line-clamp-2"><b>Motivo:</b> {r.motivo}</p>}
+
+                <div className="flex items-center justify-end gap-1 pt-2 border-t border-slate-100">
+                  <Button size="sm" variant="outline" onClick={() => gerarPdf(r.id)}><Eye className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
+                  {isEditor && <Button size="icon" variant="ghost" onClick={() => { setEditId(r.id); setOpen(true); }} title="Editar autorização"><Pencil className="h-4 w-4" /></Button>}
+                  {isAdmin && <Button size="icon" variant="ghost" onClick={() => { if (confirm("Excluir esta autorização?")) del.mutate(r.id); }} title="Excluir"><Trash2 className="h-4 w-4 text-rose-500" /></Button>}
                 </div>
               </div>
             );
