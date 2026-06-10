@@ -796,8 +796,9 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
     }));
   }
 
-  async function handleUpload(files: FileList | null) {
-    if (!files || !files.length) return;
+  async function handleUpload(filesInput: FileList | File[] | null) {
+    if (!filesInput || !filesInput.length) return;
+    const files = Array.from(filesInput);
     const atuais: string[] = Array.isArray(form.evidencias_urls) ? form.evidencias_urls : [];
     const restante = 4 - atuais.length;
     if (restante <= 0) {
@@ -807,7 +808,7 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
     setUploading(true);
     try {
       const novas: string[] = [];
-      for (const file of Array.from(files).slice(0, restante)) {
+      for (const file of files.slice(0, restante)) {
         if (file.size > 10 * 1024 * 1024) {
           toast.error(`${file.name}: máx. 10MB.`);
           continue;
@@ -818,12 +819,19 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
           contentType: file.type,
           upsert: false,
         });
-        if (error) throw error;
+        if (error) {
+          console.error("[evidencia upload]", error);
+          toast.error(`${file.name}: ${error.message}`);
+          continue;
+        }
         novas.push(path);
       }
-      set("evidencias_urls", [...atuais, ...novas]);
-      if (novas.length) toast.success(`${novas.length} evidência(s) enviada(s).`);
+      if (novas.length) {
+        set("evidencias_urls", [...atuais, ...novas]);
+        toast.success(`${novas.length} evidência(s) enviada(s).`);
+      }
     } catch (e: any) {
+      console.error("[evidencia upload]", e);
       toast.error(e.message || "Erro ao enviar.");
     } finally {
       setUploading(false);
@@ -1234,7 +1242,11 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
                   accept="image/*"
                   multiple
                   className="hidden"
-                  onChange={(e) => { handleUpload(e.target.files); e.target.value = ""; }}
+                  onChange={(e) => {
+                    const arr = e.target.files ? Array.from(e.target.files) : [];
+                    e.target.value = "";
+                    void handleUpload(arr);
+                  }}
                 />
               </label>
             )}
