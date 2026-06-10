@@ -338,63 +338,6 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           <DocsTab empId={id} />
         </TabsContent>
         <TabsContent value="epi" className="mt-4">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2">
-            <p className="text-xs text-amber-900 max-w-xl">
-              <strong>Ficha mensal NR-06:</strong> gere a ficha consolidada do mês deste funcionário, imprima, colha a assinatura e anexe em "Fichas Mensais".
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                className="bg-amber-600 hover:bg-amber-700 text-white"
-                onClick={async () => {
-                  try {
-                    const hoje = new Date();
-                    const ano = hoje.getFullYear();
-                    const mes = hoje.getMonth() + 1;
-                    const first = new Date(ano, mes - 1, 1).toISOString().slice(0, 10);
-                    const last = new Date(ano, mes, 0).toISOString().slice(0, 10);
-                    const { data: ents, error } = await supabase
-                      .from("epi_deliveries")
-                      .select("qtd, item, tamanho, ca, data_entrega, motivo_entrega")
-                      .eq("employee_id", emp.id)
-                      .gte("data_entrega", first)
-                      .lte("data_entrega", last)
-                      .order("data_entrega");
-                    if (error) throw error;
-                    if (!ents || ents.length === 0) {
-                      toast.info("Sem entregas de EPI registradas neste mês para este funcionário.");
-                      return;
-                    }
-                    const empresaNome = (companies ?? []).find((c: any) => c.id === emp.company_id)?.name ?? null;
-                    const funcaoNome = (roles ?? []).find((r: any) => r.id === emp.role_id)?.name ?? null;
-                    const { url } = openFichaMensalPdf([{
-                      employee: {
-                        id: emp.id,
-                        nome: emp.nome,
-                        matricula: emp.matricula,
-                        cpf: emp.cpf,
-                        funcao: funcaoNome,
-                        empresa: empresaNome,
-                      },
-                      ano, mes, entregas: ents,
-                    }], `Ficha_${emp.nome.replace(/\s+/g, "_")}_${ano}-${String(mes).padStart(2, "0")}.pdf`);
-                    window.open(url, "_blank");
-                    await supabase.from("epi_fichas_mensais").upsert({
-                      employee_id: emp.id, ano, mes, total_entregas: ents.length, status: "PENDENTE",
-                    }, { onConflict: "employee_id,ano,mes" });
-                    toast.success("Ficha do mês gerada — abra a janela do PDF para imprimir.");
-                  } catch (e: any) {
-                    toast.error(e.message ?? "Erro ao gerar ficha");
-                  }
-                }}
-              >
-                <Printer className="h-4 w-4 mr-1" /> Gerar ficha do mês
-              </Button>
-              <Button asChild size="sm" variant="outline" className="border-amber-400">
-                <Link to="/app/estoque/epi/fichas-mensais"><ClipboardCheck className="h-4 w-4 mr-1" /> Fichas Mensais</Link>
-              </Button>
-            </div>
-          </div>
           <EpiTab empId={id} epis={epis ?? []} emp={emp} company={(companies ?? []).find((c: any) => c.id === emp.company_id) ?? null} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} docsOk={docsOk} missingDocs={missingDocs} />
         </TabsContent>
         <TabsContent value="health" className="mt-4">
