@@ -1404,6 +1404,22 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
     empregados_medio: "",
     observacoes: "",
   });
+  const [modo, setModo] = useState<"manual" | "calc">("manual");
+  const [calc, setCalc] = useState({
+    funcionarios: "",
+    jornada: "8",
+    diasUteis: "22",
+    horasExtras: "0",
+    horasFaltas: "0",
+  });
+  const hhtCalculado = useMemo(() => {
+    const f = Number(calc.funcionarios) || 0;
+    const j = Number(calc.jornada) || 0;
+    const d = Number(calc.diasUteis) || 0;
+    const he = Number(calc.horasExtras) || 0;
+    const hf = Number(calc.horasFaltas) || 0;
+    return Math.max(0, f * j * d + he - hf);
+  }, [calc]);
 
   const mut = useMutation({
     mutationFn: async () => {
@@ -1432,6 +1448,13 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
   });
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+  const setC = (k: string, v: any) => setCalc((c) => ({ ...c, [k]: v }));
+  const aplicarCalculo = () => {
+    set("hht", String(hhtCalculado));
+    set("empregados_medio", calc.funcionarios);
+    setModo("manual");
+    toast.success(`HHT calculado: ${hhtCalculado.toLocaleString("pt-BR")} horas`);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1444,6 +1467,57 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
         <p className="text-xs text-muted-foreground -mt-2">
           Horas Homem Trabalhadas (HHT) — base da Taxa de Frequência (NBR 14280). Vem da folha do RH.
         </p>
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-md text-xs">
+          <button
+            type="button"
+            onClick={() => setModo("manual")}
+            className={`flex-1 py-1.5 rounded ${modo === "manual" ? "bg-white shadow-sm font-semibold" : "text-slate-600"}`}
+          >
+            Já tenho o número
+          </button>
+          <button
+            type="button"
+            onClick={() => setModo("calc")}
+            className={`flex-1 py-1.5 rounded ${modo === "calc" ? "bg-white shadow-sm font-semibold" : "text-slate-600"}`}
+          >
+            🧮 Calcular HHT
+          </button>
+        </div>
+        {modo === "calc" && (
+          <div className="space-y-3 p-3 rounded-md border bg-slate-50/60">
+            <div className="grid grid-cols-3 gap-2">
+              <Field label="Funcionários">
+                <Input type="number" value={calc.funcionarios} onChange={(e) => setC("funcionarios", e.target.value)} placeholder="50" />
+              </Field>
+              <Field label="Jornada (h/dia)">
+                <Input type="number" step="0.5" value={calc.jornada} onChange={(e) => setC("jornada", e.target.value)} />
+              </Field>
+              <Field label="Dias úteis">
+                <Input type="number" value={calc.diasUteis} onChange={(e) => setC("diasUteis", e.target.value)} />
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="+ Horas extras">
+                <Input type="number" value={calc.horasExtras} onChange={(e) => setC("horasExtras", e.target.value)} />
+              </Field>
+              <Field label="− Horas faltas/afast.">
+                <Input type="number" value={calc.horasFaltas} onChange={(e) => setC("horasFaltas", e.target.value)} />
+              </Field>
+            </div>
+            <div className="flex items-center justify-between bg-white border rounded-md p-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">HHT calculado</div>
+                <div className="text-2xl font-bold tabular-nums">{hhtCalculado.toLocaleString("pt-BR")} h</div>
+              </div>
+              <Button size="sm" onClick={aplicarCalculo} disabled={hhtCalculado <= 0}>
+                Usar este valor
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground leading-snug">
+              Fórmula: funcionários × jornada × dias úteis + horas extras − horas de faltas/afastamentos.
+            </p>
+          </div>
+        )}
         <div className="space-y-3">
           <Field label="Empresa *">
             <Select value={form.company_id || undefined} onValueChange={v => set("company_id", v)}>
