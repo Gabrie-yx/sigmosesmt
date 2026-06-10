@@ -313,6 +313,9 @@ function AcidentesPage() {
               backgroundSize: "30px 30px",
             }} />
             <CardContent className="p-8 relative">
+              <div className="absolute top-3 right-4 text-[10px] uppercase tracking-wider text-white/40 font-medium">
+                FOR-SEG 10 · NBR 14280
+              </div>
               <div className="grid md:grid-cols-3 gap-6 items-center">
                 <div className="md:col-span-2 text-center md:text-left">
                   <div className="text-sm uppercase tracking-widest text-red-200/80 font-semibold mb-2">
