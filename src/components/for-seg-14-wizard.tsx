@@ -111,15 +111,15 @@ export function ForSeg14Wizard({
     if (existente) {
       setData({
         numero: existente.numero,
-        ...(existente.dados_gerais ?? {}),
-        enquadramento: existente.enquadramento ?? {},
-        porques: existente.porques ?? [],
-        acoes_imediatas: existente.acoes_imediatas ?? [],
-        plano_acao: existente.plano_acao ?? [],
-        participantes: existente.participantes ?? [],
-        assinaturas: existente.assinaturas ?? {},
-        fotos_local: existente.fotos_local ?? [],
-        fotos_lesao: existente.fotos_lesao ?? [],
+        ...((existente.dados_gerais ?? {}) as Record<string, unknown>),
+        enquadramento: (existente.enquadramento ?? {}) as Record<string, string[]>,
+        porques: (existente.porques ?? []) as RIAData["porques"],
+        acoes_imediatas: (existente.acoes_imediatas ?? []) as RIAData["acoes_imediatas"],
+        plano_acao: (existente.plano_acao ?? []) as RIAData["plano_acao"],
+        participantes: (existente.participantes ?? []) as RIAData["participantes"],
+        assinaturas: (existente.assinaturas ?? {}) as RIAData["assinaturas"],
+        fotos_local: (existente.fotos_local ?? []) as string[],
+        fotos_lesao: (existente.fotos_lesao ?? []) as string[],
       });
       return;
     }
