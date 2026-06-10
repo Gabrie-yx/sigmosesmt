@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Plus, Eye, Pencil, Trash2, PenLine, LogOut, MousePointerClick } from "lucide-react";
+import { ArrowLeft, Plus, Eye, Pencil, Trash2, PenLine, LogOut, MousePointerClick, UserCog } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { SaidaExpedienteDialog } from "@/components/saida-expediente-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
@@ -55,7 +56,7 @@ function SaidasPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employee_saidas_expediente")
-        .select("*, employees(id,nome,cpf,rg,role_id,roles(name))")
+        .select("*, employees(id,nome,cpf,rg,role_id,foto_url,roles(name))")
         .order("data", { ascending: false }).order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
