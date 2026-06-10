@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { CorpoHumanoAcidentes } from "@/components/corpo-humano-acidentes";
 import { gerarForSeg09, gerarForSeg10 } from "@/lib/pdf-acidentes";
+import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   Line, Legend, PieChart, Pie, Cell,
@@ -1230,9 +1231,10 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
             </span>
           </div>
           <div className="flex flex-wrap gap-3">
-            {(form.evidencias_urls || []).map((p: string) => (
-              <EvidenciaThumb key={p} path={p} onRemove={() => removeEvidencia(p)} />
-            ))}
+            <EvidenciasGallery
+              paths={form.evidencias_urls || []}
+              onRemove={(p) => removeEvidencia(p)}
+            />
             {(form.evidencias_urls || []).length < 4 && (
               <label className={`w-24 h-24 border-2 border-dashed rounded flex flex-col items-center justify-center text-xs text-muted-foreground cursor-pointer hover:bg-slate-50 hover:border-slate-400 transition ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
                 <Upload className="h-5 w-5 mb-1" />
@@ -1252,7 +1254,7 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
             )}
           </div>
           <p className="text-[11px] text-muted-foreground mt-2">
-            Até 4 fotos (10MB cada). Clique em uma evidência para abrir em tamanho real.
+            Até 4 fotos (10MB cada). Clique em uma evidência para visualizar dentro do sistema (rotação, zoom, download e impressão).
           </p>
         </div>
 
@@ -1320,9 +1322,7 @@ function VerAcidenteDialog({ acidente, companies, onOpenChange, onEdit }: any) {
               Evidências ({acidente.evidencias_urls.length})
             </div>
             <div className="flex flex-wrap gap-3">
-              {acidente.evidencias_urls.map((p: string) => (
-                <EvidenciaThumb key={p} path={p} />
-              ))}
+              <EvidenciasGallery paths={acidente.evidencias_urls} />
             </div>
           </div>
         )}
@@ -1441,7 +1441,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 // ============================================================
 // Evidência (thumbnail com signed URL)
 // ============================================================
-function EvidenciaThumb({ path, onRemove }: { path: string; onRemove?: () => void }) {
+function EvidenciaThumb({ path, onRemove, onOpen, onUrl }: { path: string; onRemove?: () => void; onOpen?: () => void; onUrl?: (url: string) => void }) {
   const [url, setUrl] = useState<string>("");
   useEffect(() => {
     let cancelled = false;
@@ -1449,7 +1449,10 @@ function EvidenciaThumb({ path, onRemove }: { path: string; onRemove?: () => voi
       .from("incident-photos")
       .createSignedUrl(path, 3600)
       .then(({ data }) => {
-        if (!cancelled && data?.signedUrl) setUrl(data.signedUrl);
+        if (!cancelled && data?.signedUrl) {
+          setUrl(data.signedUrl);
+          onUrl?.(data.signedUrl);
+        }
       });
     return () => { cancelled = true; };
   }, [path]);
@@ -1457,13 +1460,13 @@ function EvidenciaThumb({ path, onRemove }: { path: string; onRemove?: () => voi
   return (
     <div className="relative group">
       {url ? (
-        <a href={url} target="_blank" rel="noreferrer" title="Abrir em tamanho real">
+        <button type="button" onClick={onOpen} title="Visualizar evidência" className="block">
           <img
             src={url}
             alt="Evidência"
             className="w-24 h-24 object-cover rounded border border-slate-200 hover:border-slate-400 transition"
           />
-        </a>
+        </button>
       ) : (
         <div className="w-24 h-24 bg-muted animate-pulse rounded border" />
       )}
@@ -1478,6 +1481,38 @@ function EvidenciaThumb({ path, onRemove }: { path: string; onRemove?: () => voi
         </button>
       )}
     </div>
+  );
+}
+
+function EvidenciasGallery({ paths, onRemove }: { paths: string[]; onRemove?: (path: string) => void }) {
+  const [urls, setUrls] = useState<Record<string, string>>({});
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+
+  const items: MediaItem[] = paths
+    .map((p, i) => ({ url: urls[p], name: `Evidência ${i + 1}`, kind: "image" as const }))
+    .filter((it) => !!it.url);
+
+  return (
+    <>
+      {paths.map((p) => (
+        <EvidenciaThumb
+          key={p}
+          path={p}
+          onRemove={onRemove ? () => onRemove(p) : undefined}
+          onUrl={(u) => setUrls((prev) => (prev[p] === u ? prev : { ...prev, [p]: u }))}
+          onOpen={() => {
+            const idx = paths.filter((x) => urls[x]).indexOf(p);
+            setViewerIndex(idx >= 0 ? idx : 0);
+          }}
+        />
+      ))}
+      <MediaViewerDialog
+        items={items}
+        index={viewerIndex}
+        onClose={() => setViewerIndex(null)}
+        onIndexChange={setViewerIndex}
+      />
+    </>
   );
 }
 

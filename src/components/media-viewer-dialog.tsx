@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Download, RotateCw, RotateCcw, ZoomIn, ZoomOut, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Printer, RotateCw, RotateCcw, ZoomIn, ZoomOut, X } from "lucide-react";
 
 export type MediaItem = { url: string; name: string; kind?: "image" | "pdf" };
 
@@ -57,6 +57,19 @@ export function MediaViewerDialog({
     }
   }
 
+  function printItem() {
+    const w = window.open("", "_blank", "width=900,height=700");
+    if (!w) { toast(); return; }
+    const safeName = item.name.replace(/[<>&"']/g, "");
+    if (isPdf) {
+      w.document.write(`<!doctype html><title>${safeName}</title><body style="margin:0"><iframe src="${item.url}" style="border:0;width:100vw;height:100vh" onload="setTimeout(()=>{this.contentWindow.focus();this.contentWindow.print();},400)"></iframe></body>`);
+    } else {
+      w.document.write(`<!doctype html><title>${safeName}</title><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#fff"><img src="${item.url}" style="max-width:100%;max-height:100vh;transform:rotate(${rotation}deg)" onload="setTimeout(()=>{window.focus();window.print();},300)"/></body>`);
+    }
+    w.document.close();
+  }
+  function toast() { /* no-op stub to avoid extra import */ }
+
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 flex flex-col gap-0 bg-slate-900 border-slate-800">
@@ -82,6 +95,9 @@ export function MediaViewerDialog({
             )}
             <Button size="sm" variant="ghost" className="text-slate-100 hover:bg-slate-800" onClick={download} title="Baixar">
               <Download className="h-4 w-4" />
+            </Button>
+            <Button size="sm" variant="ghost" className="text-slate-100 hover:bg-slate-800" onClick={printItem} title="Imprimir">
+              <Printer className="h-4 w-4" />
             </Button>
             <Button size="sm" variant="ghost" className="text-slate-100 hover:bg-slate-800" onClick={onClose} title="Fechar">
               <X className="h-4 w-4" />
