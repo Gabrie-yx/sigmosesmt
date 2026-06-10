@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Search, ShieldCheck, Flame, Calendar, ArrowRight, ChevronRight, FolderOpen, Package,
+  Users, AlertTriangle, ShieldAlert, TrendingUp,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
@@ -329,378 +330,339 @@ function TstPanel() {
 
   // === Distribuição global de status ===
   const statusBarsData = [
-    { name: "APTO", value: aptos, fill: "#10b981" },
-    { name: "ALERTA", value: alertas, fill: "#f59e0b" },
-    { name: "BLOQ.", value: bloqueados, fill: "#7f1212" },
+    { name: "APTO", value: aptos, fill: "#2d8a9e" },
+    { name: "ALERTA", value: alertas, fill: "#c8a23c" },
+    { name: "BLOQ.", value: bloqueados, fill: "#c8102e" },
   ];
 
+  // Top 5 empresas ordenadas por pendência (barras horizontais com %)
+  const top5Pend = useMemo(() => {
+    const items = conformityStacked.slice(0, 5).map((c: any) => {
+      const pendPct = Math.round(((c.al + c.bl) / Math.max(1, c.total)) * 100);
+      return { name: c.name, value: pendPct, total: c.total, score: c.score };
+    });
+    return items.sort((a, b) => b.value - a.value);
+  }, [conformityStacked]);
+
+  // Top 5 motivos de entrega EPI (barras horizontais com %)
+  const motivoEntrega = useMemo(() => {
+    const totals = { "1ª Entrega": 0, "Troca": 0, "Perda": 0, "Devolução": 0, "Outros": 0 };
+    entregaSerie.forEach((e: any) => {
+      totals["1ª Entrega"] += e.primeira;
+      totals["Troca"] += e.troca;
+      totals["Perda"] += e.perda;
+      totals["Devolução"] += e.devolucao;
+      totals["Outros"] += e.outros;
+    });
+    const sum = Object.values(totals).reduce((a, b) => a + b, 0) || 1;
+    return Object.entries(totals)
+      .map(([name, v]) => ({ name, value: Math.round((v / sum) * 100), abs: v }))
+      .filter((d) => d.abs > 0)
+      .sort((a, b) => b.value - a.value);
+  }, [entregaSerie]);
+
+  // Donut módulos (distribuição de atividades SESMT)
+  const modulosDonut = [
+    { name: "APRs", value: aprsAtivas, fill: "#0c2340" },
+    { name: "PTEs", value: ptesAtivas, fill: "#1a4a6e" },
+    { name: "DDS", value: ddsCount, fill: "#2d8a9e" },
+    { name: "Extint.", value: extMetrics.ativos, fill: "#c8102e" },
+  ].filter((d) => d.value > 0);
+  const modTotal = modulosDonut.reduce((s, d) => s + d.value, 0);
+
   return (
-    <div className="h-full overflow-y-auto bg-[#eef2f7] custom-scrollbar">
-      <div className="max-w-[1700px] mx-auto p-3 md:p-4 flex flex-col gap-3">
+    <div className="h-full overflow-y-auto bg-slate-50 custom-scrollbar">
+      <div className="max-w-[1700px] mx-auto p-4 md:p-5 flex flex-col gap-4">
 
-        {/* ===== HEADER BI ===== */}
-        <div className="rounded-md overflow-hidden shadow-md border border-slate-300">
-          <div
-            className="flex items-center justify-between gap-3 px-4 py-2.5"
-            style={{ background: "linear-gradient(90deg,#0c2340 0%,#1a4a6e 60%,#2d6a8e 100%)" }}
-          >
-            <h1 className="text-white text-lg md:text-xl font-black uppercase tracking-[0.18em] flex items-center gap-3">
-              <span className="bg-[#7f1212] text-white px-2 py-0.5 rounded text-xs font-black uppercase tracking-tighter">DMN</span>
-              Dashboard Painel Executivo · SESMT
-            </h1>
-            <div className="flex items-center gap-1 bg-white/95 px-1 py-0.5 rounded shadow-inner">
-              <select
-                value={filterCompany}
-                onChange={(e) => setFilterCompany(e.target.value)}
-                className="text-[11px] font-bold text-slate-700 px-2 py-1 bg-transparent border-none outline-none cursor-pointer uppercase tracking-wider"
-              >
-                <option value="ALL">Todas empresas</option>
-                {(data?.companies ?? []).map((c: any) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-              <div className="h-4 w-px bg-slate-300" />
-              {(["30", "60", "90", "180"] as const).map((p) => (
-                <button key={p} onClick={() => setPeriodo(p)}
-                  className={`px-2 py-1 text-[10px] font-black uppercase tracking-wider rounded transition-colors ${
-                    periodo === p ? "bg-[#0c2340] text-white" : "text-slate-500 hover:text-[#0c2340]"
-                  }`}>{p}d</button>
-              ))}
+        {/* ===== HEADER limpo ===== */}
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="bg-[#c8102e] text-white px-2 py-0.5 rounded-sm text-[10px] font-black uppercase tracking-tighter">DMN</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Painel Executivo · SESMT</span>
             </div>
+            <h1 className="text-xl md:text-2xl font-black text-[#0c2340] tracking-tight mt-1">Indicadores de Segurança do Trabalho</h1>
           </div>
-          {/* faixa fina informativa */}
-          <div className="bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 border-t border-slate-200 flex items-center justify-between">
-            <span>SGI · ISO 9001 · NR-1 · NR-6 · NR-7 · NR-9 · NR-23 — Gestão integrada de SST</span>
-            <span className="text-slate-700">{totalEmp} colaboradores · {(data?.companies ?? []).length} empresas</span>
-          </div>
-        </div>
-
-        {/* ===== GRID PRINCIPAL ===== */}
-        <div className="grid grid-cols-12 gap-3">
-
-          {/* ============ COLUNA FILTROS (esquerda) ============ */}
-          <aside className="col-span-12 lg:col-span-2 flex flex-col gap-3">
-            <BiCard title="Filtros" tight>
-              <div className="space-y-2">
-                <FilterChip label="Apto" value={aptos} active={false} color="#10b981" />
-                <FilterChip label="Alerta" value={alertas} active={false} color="#f59e0b" />
-                <FilterChip label="Bloqueado" value={bloqueados} active={false} color="#7f1212" />
-              </div>
-            </BiCard>
-
-            <BiCard title="Módulos" tight>
-              <div className="grid grid-cols-1 gap-1.5">
-                <FilterChip label="APRs" value={aprsAtivas} color="#0c2340" />
-                <FilterChip label="PTEs" value={ptesAtivas} color="#0c2340" />
-                <FilterChip label="DDS" value={ddsCount} color="#6d28d9" />
-                <FilterChip label="Extint." value={extMetrics.ativos} color="#7f1212" />
-              </div>
-            </BiCard>
-
-            {/* Busca compacta */}
-            <BiCard title="Buscar" tight>
-              <div className="relative">
-                <Search className="h-3.5 w-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Nome, CPF, função…"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded pl-7 pr-2 py-1.5 text-[11px] font-medium outline-none focus:ring-2 focus:ring-[#7f1212]/20 focus:border-[#7f1212] transition-all placeholder:text-slate-400"
-                />
-              </div>
-              {search && (
-                <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
-                  {searchResults.length === 0 ? (
-                    <div className="text-center text-slate-400 py-2 text-[9px] font-bold uppercase">Nenhum</div>
-                  ) : searchResults.map((r) => (
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative">
+              <Search className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input type="text" placeholder="Buscar colaborador, CPF, função…" value={q} onChange={(e) => setQ(e.target.value)}
+                className="w-64 bg-white border border-slate-200 rounded-md pl-8 pr-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-[#c8102e]/20 focus:border-[#c8102e] placeholder:text-slate-400" />
+              {search && searchResults.length > 0 && (
+                <div className="absolute z-30 mt-1 left-0 right-0 bg-white border border-slate-200 rounded-md shadow-lg max-h-56 overflow-y-auto">
+                  {searchResults.map((r) => (
                     <Link key={r.emp.id} to="/app/employees/$id" params={{ id: r.emp.id }}
-                      className="block p-1.5 border border-slate-100 rounded text-[10px] hover:border-[#7f1212] hover:bg-slate-50 transition-all">
+                      className="block px-3 py-2 text-xs hover:bg-slate-50 border-b border-slate-100 last:border-0">
                       <div className="font-bold text-slate-900 truncate">{r.emp.nome}</div>
-                      <div className="text-slate-500 truncate text-[9px]">{r.company}</div>
+                      <div className="text-slate-500 truncate text-[10px]">{r.company}</div>
                     </Link>
                   ))}
                 </div>
               )}
-            </BiCard>
-          </aside>
-
-          {/* ============ CENTRO (8 cols) ============ */}
-          <div className="col-span-12 lg:col-span-7 flex flex-col gap-3">
-
-            {/* Linha 1: KPI MEGA + STATUS BARS + AÇÕES/MÊS (área) */}
-            <div className="grid grid-cols-12 gap-3">
-              {/* KPI MEGA Bloqueados */}
-              <BiCard tight noTitle className="col-span-12 sm:col-span-3 !p-0 overflow-hidden">
-                <div
-                  className="h-full w-full flex flex-col items-center justify-center text-white py-4 px-2 relative"
-                  style={{
-                    background: "linear-gradient(160deg,#9b1c1c 0%,#7f1212 50%,#5a0c0c 100%)",
-                  }}
-                >
-                  {bloqueados > 0 && (
-                    <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-amber-300 animate-pulse" />
-                  )}
-                  <div className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-200">Quantidade</div>
-                  <div className="text-6xl font-black tabular-nums leading-none drop-shadow-md mt-1">
-                    {String(bloqueados).padStart(2, "0")}
-                  </div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-white/90 mt-2">Bloqueados</div>
-                  <div className="text-[9px] text-rose-100 mt-0.5">{alertas} em alerta</div>
-                </div>
-              </BiCard>
-
-              {/* TOP 5 EMPRESAS - barras verticais coloridas */}
-              <BiCard title="Top 5 · Score por Empresa" className="col-span-12 sm:col-span-5">
-                <div className="h-40">
-                  {top5Empresas.length === 0 ? <EmptyBlock label="Sem empresas" /> : (
-                    <ResponsiveContainer>
-                      <BarChart data={top5Empresas} margin={{ top: 16, right: 6, left: -22, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="2 3" stroke="#e2e8f0" vertical={false} />
-                        <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#475569", fontWeight: 700 }} axisLine={{ stroke: "#cbd5e1" }} tickLine={false} />
-                        <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                        <Tooltip cursor={{ fill: "rgba(12,35,64,0.06)" }} contentStyle={{ fontSize: 11, borderRadius: 6, border: "1px solid #cbd5e1" }} formatter={(v: any) => [`${v}%`, "Score"]} />
-                        <Bar dataKey="score" radius={[3, 3, 0, 0]}>
-                          {top5Empresas.map((e: any, i: number) => (
-                            <Cell key={i} fill={e.score >= 90 ? "#10b981" : e.score >= 70 ? "#f59e0b" : "#7f1212"} />
-                          ))}
-                          <LabelList dataKey="score" position="top" formatter={(v: any) => `${v}%`} style={{ fontSize: 10, fontWeight: 800, fill: "#0f172a" }} />
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </BiCard>
-
-              {/* ENTREGAS/MÊS (área) */}
-              <BiCard title="Fluxo de EPI · Mês" className="col-span-12 sm:col-span-4">
-                <div className="h-40">
-                  {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas" /> : (
-                    <ResponsiveContainer>
-                      <ComposedChart data={entregaSerie} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="gradFlow" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#1a4a6e" stopOpacity={0.9} />
-                            <stop offset="100%" stopColor="#1a4a6e" stopOpacity={0.05} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="2 3" stroke="#e2e8f0" vertical={false} />
-                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                        <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={{ fontSize: 11, borderRadius: 6, border: "1px solid #cbd5e1" }} />
-                        <Area type="monotone" dataKey="primeira" stackId="a" stroke="#1a4a6e" strokeWidth={2} fill="url(#gradFlow)" name="1ª entrega" />
-                        <Area type="monotone" dataKey="troca" stackId="a" stroke="#0c2340" strokeWidth={1.5} fill="#1a4a6e" fillOpacity={0.5} name="Troca" />
-                        <Area type="monotone" dataKey="perda" stackId="a" stroke="#7f1212" strokeWidth={1.5} fill="#7f1212" fillOpacity={0.6} name="Perda" />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </BiCard>
-            </div>
-
-            {/* Linha 2: DISTRIB. STATUS (barras) + DDS evolução (barras+linha) */}
-            <div className="grid grid-cols-12 gap-3">
-              <BiCard title="Distribuição de Status" className="col-span-12 sm:col-span-5">
-                <div className="h-36">
-                  <ResponsiveContainer>
-                    <BarChart data={statusBarsData} layout="vertical" margin={{ top: 4, right: 30, left: 6, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="2 3" stroke="#e2e8f0" horizontal={false} />
-                      <XAxis type="number" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                      <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#0f172a", fontWeight: 800 }} axisLine={false} tickLine={false} width={50} />
-                      <Tooltip cursor={{ fill: "rgba(12,35,64,0.06)" }} contentStyle={{ fontSize: 11, borderRadius: 6, border: "1px solid #cbd5e1" }} />
-                      <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                        {statusBarsData.map((e, i) => <Cell key={i} fill={e.fill} />)}
-                        <LabelList dataKey="value" position="right" style={{ fontSize: 10, fontWeight: 800, fill: "#0f172a" }} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </BiCard>
-
-              <BiCard title="DDS · Evolução" className="col-span-12 sm:col-span-7">
-                <div className="h-36">
-                  {ddsTrend.length === 0 ? <EmptyBlock label="Sem DDS" /> : (
-                    <ResponsiveContainer>
-                      <ComposedChart data={ddsTrend} margin={{ top: 6, right: 6, left: -22, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="2 3" stroke="#e2e8f0" vertical={false} />
-                        <XAxis dataKey="mes" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                        <YAxis yAxisId="l" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                        <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
-                        <Tooltip contentStyle={{ fontSize: 11, borderRadius: 6, border: "1px solid #cbd5e1" }} />
-                        <Bar yAxisId="l" dataKey="qtd" fill="#6d28d9" radius={[3, 3, 0, 0]} name="DDS" />
-                        <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3, fill: "#fff", stroke: "#10b981", strokeWidth: 2 }} name="% aderência" />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </BiCard>
-            </div>
-
-            {/* Linha 3: AÇÕES RECOMENDADAS + PRÓXIMOS 7 DIAS */}
-            <div className="grid grid-cols-12 gap-3">
-              <BiCard
-                title="Ações Recomendadas"
-                className="col-span-12 sm:col-span-7"
-                action={<Link to="/app/hoje" className="text-[9px] font-bold uppercase tracking-wider text-slate-500 hover:text-[#7f1212] flex items-center gap-1">Ver tudo <ArrowRight className="h-3 w-3" /></Link>}
-              >
-                {acoes.length === 0 ? (
-                  <div className="flex items-center justify-center py-6 text-emerald-600 text-[11px] font-black uppercase tracking-wider gap-2">
-                    <ShieldCheck className="h-4 w-4" /> Tudo em ordem
-                  </div>
-                ) : (
-                  <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
-                    {acoes.map((a) => (
-                      <Link key={a.id} to={a.link}
-                        className={`flex items-center gap-2 p-2 rounded border transition-colors ${
-                          a.severity === "crit"
-                            ? "border-rose-200 bg-rose-50/60 hover:bg-rose-50"
-                            : "border-slate-200 hover:bg-slate-50"
-                        }`}>
-                        <div className={`w-1.5 self-stretch rounded-full ${a.severity === "crit" ? "bg-[#7f1212]" : "bg-amber-500"} ${a.severity === "crit" ? "animate-pulse" : ""}`} />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[11px] font-bold text-slate-900 truncate">{a.titulo}</div>
-                          <div className="text-[9px] text-slate-500 truncate">{a.sub}</div>
-                        </div>
-                        <ChevronRight className="h-3 w-3 text-slate-400 shrink-0" />
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </BiCard>
-
-              <BiCard
-                title="Próximos 7 Dias"
-                className="col-span-12 sm:col-span-5"
-                action={<Calendar className="h-3 w-3 text-slate-400" />}
-              >
-                {proximos7.length === 0 ? (
-                  <div className="py-5 text-center text-emerald-600 text-[10px] font-bold uppercase tracking-wider">
-                    Sem vencimentos
-                  </div>
-                ) : (
-                  <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
-                    {proximos7.map((e, i) => {
-                      const d = new Date(e.date + "T00:00");
-                      return (
-                        <div key={i} className="flex gap-2 items-start p-1.5 rounded hover:bg-slate-50">
-                          <div className="text-center shrink-0 w-8 bg-slate-100 rounded py-0.5">
-                            <div className="text-[7px] font-black text-slate-400 uppercase leading-none">{MONTHS_PT[d.getMonth()]}</div>
-                            <div className={`text-sm font-black leading-tight ${e.severity === "crit" ? "text-[#7f1212]" : "text-slate-700"}`}>
-                              {String(d.getDate()).padStart(2, "0")}
-                            </div>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1">
-                              <span className={`text-[8px] font-black uppercase tracking-wider px-1 py-px rounded ${
-                                e.tipo === "ASO" ? "bg-amber-100 text-amber-700"
-                                  : e.tipo === "EXT" ? "bg-rose-100 text-[#7f1212]"
-                                  : "bg-slate-100 text-slate-600"
-                              }`}>{e.tipo}</span>
-                              <span className="text-[10px] font-bold text-slate-800 truncate">{e.titulo}</span>
-                            </div>
-                            <div className="text-[9px] text-slate-500 truncate">{e.sub}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </BiCard>
-            </div>
-
-            {/* Linha 4: Módulos (3 cards densos) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <ModuleStat to="/app/controle-documentos" icon={FolderOpen} title="Documentos" primary={docMetrics.abertos} primaryLabel="abertos"
-                stats={[
-                  { label: "Críticos", value: docMetrics.criticos, tone: docMetrics.criticos > 0 ? "crit" : "neutral" },
-                  { label: "Vencidos", value: docMetrics.vencidos, tone: docMetrics.vencidos > 0 ? "crit" : "neutral" },
-                  { label: "Resolvidos", value: docMetrics.resolvidos, tone: "ok" },
-                ]} />
-              <ModuleStat to="/app/extintores" icon={Flame} title="Extintores" primary={extMetrics.ativos} primaryLabel="ativos"
-                stats={[
-                  { label: "Vencidos", value: extMetrics.vencidos, tone: extMetrics.vencidos > 0 ? "crit" : "neutral" },
-                  { label: "Vence 30d", value: extMetrics.vencendo, tone: extMetrics.vencendo > 0 ? "warn" : "neutral" },
-                  { label: "S/ insp.", value: extMetrics.semInspecao, tone: extMetrics.semInspecao > 0 ? "warn" : "ok" },
-                ]} />
-              <ModuleStat to="/app/estoque/epi" icon={Package} title="Estoque EPI" primary={estoqueBaixo + caVencendo} primaryLabel="atenção"
-                stats={[
-                  { label: "Baixo", value: estoqueBaixo, tone: estoqueBaixo > 0 ? "crit" : "ok" },
-                  { label: "CAs venc.", value: caVencendo, tone: caVencendo > 0 ? "warn" : "ok" },
-                  { label: "Entreg.", value: totalEntregas, tone: "neutral" },
-                ]} />
             </div>
           </div>
+        </div>
 
-          {/* ============ COLUNA DIREITA (3 cols) ============ */}
-          <aside className="col-span-12 lg:col-span-3 flex flex-col gap-3">
+        {/* ===== Filtros em pílulas (estilo referência) ===== */}
+        <div className="bg-white border border-slate-200 rounded-lg p-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Período</span>
+            <div className="flex gap-1">
+              {(["30", "60", "90", "180"] as const).map((p) => (
+                <button key={p} onClick={() => setPeriodo(p)}
+                  className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-md transition-colors ${
+                    periodo === p ? "bg-[#c8102e] text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}>{p} dias</button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Empresa</span>
+            <button onClick={() => setFilterCompany("ALL")}
+              className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-md transition-colors ${
+                filterCompany === "ALL" ? "bg-[#0c2340] text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}>Todas</button>
+            {(data?.companies ?? []).slice(0, 6).map((c: any) => (
+              <button key={c.id} onClick={() => setFilterCompany(c.id)}
+                className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-md transition-colors ${
+                  filterCompany === c.id ? "bg-[#0c2340] text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}>{c.name.length > 14 ? c.name.slice(0, 14) + "…" : c.name}</button>
+            ))}
+          </div>
+        </div>
 
-            {/* DONUT Conformidade Geral */}
-            <BiCard title="Status Geral" tight>
-              <div className="relative h-40">
+        {/* ===== KPIs (4 cards limpos com ícone) ===== */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiBig icon={Users} label="Colaboradores" value={totalEmp} sub={`${(data?.companies ?? []).length} empresas`} accent="#0c2340" />
+          <KpiBig icon={ShieldCheck} label="Conformidade" value={`${conformidadeFiltro}%`} sub={`${aptos} aptos`} accent="#2d8a9e" />
+          <KpiBig icon={AlertTriangle} label="Em Alerta" value={alertas} sub="ASOs / docs próximos" accent="#c8a23c" />
+          <KpiBig icon={ShieldAlert} label="Bloqueados" value={bloqueados} sub="Ação imediata" accent="#c8102e" highlight={bloqueados > 0} />
+        </div>
+
+        {/* ===== Linha 1: Donut Status + Donut Módulos + Área Tendência ===== */}
+        <div className="grid grid-cols-12 gap-4">
+          {/* Donut Conformidade */}
+          <Card title="Status Geral" className="col-span-12 md:col-span-3">
+            <DonutCenter
+              data={donutData}
+              centerValue={`${conformidadeFiltro}%`}
+              centerLabel="Conformidade"
+              centerColor={conformidadeFiltro >= 90 ? "#2d8a9e" : conformidadeFiltro >= 70 ? "#c8a23c" : "#c8102e"}
+            />
+            <div className="flex justify-around pt-3 mt-2 border-t border-slate-100">
+              <LegendItem color="#2d8a9e" label="Aptos" value={aptos} />
+              <LegendItem color="#c8a23c" label="Alerta" value={alertas} />
+              <LegendItem color="#c8102e" label="Bloq." value={bloqueados} />
+            </div>
+          </Card>
+
+          {/* Donut Módulos */}
+          <Card title="Distribuição · Módulos" className="col-span-12 md:col-span-3">
+            <DonutCenter
+              data={modulosDonut.length > 0 ? modulosDonut : [{ name: "—", value: 1, fill: "#e2e8f0" }]}
+              centerValue={String(modTotal)}
+              centerLabel="Atividades"
+              centerColor="#0c2340"
+            />
+            <div className="grid grid-cols-2 gap-1.5 pt-3 mt-2 border-t border-slate-100">
+              {modulosDonut.map((m) => (
+                <LegendItem key={m.name} color={m.fill} label={m.name} value={m.value} />
+              ))}
+            </div>
+          </Card>
+
+          {/* Área grande de tendência (estilo Vendas por Período) */}
+          <Card title="Fluxo de Entregas EPI · Tendência" className="col-span-12 md:col-span-6"
+            action={<span className="text-[10px] font-bold text-slate-500 flex items-center gap-1"><TrendingUp className="h-3 w-3" />{totalEntregas} itens · R$ {valorEntregas.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}</span>}
+          >
+            <div className="h-48">
+              {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas no período" /> : (
                 <ResponsiveContainer>
-                  <PieChart>
-                    <Pie data={donutData.length > 0 ? donutData : [{ name: "—", value: 1, fill: "#e2e8f0" }]}
-                      dataKey="value" innerRadius={42} outerRadius={62} paddingAngle={2} stroke="#fff" strokeWidth={2}>
-                      {(donutData.length > 0 ? donutData : [{ fill: "#e2e8f0" }]).map((d: any, i: number) => (
-                        <Cell key={i} fill={d.fill} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 6, border: "1px solid #cbd5e1" }} />
-                  </PieChart>
+                  <ComposedChart data={entregaSerie} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradArea" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#2d8a9e" stopOpacity={0.55} />
+                        <stop offset="100%" stopColor="#2d8a9e" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
+                    <Area type="monotone" dataKey="primeira" stroke="#2d8a9e" strokeWidth={2.5} fill="url(#gradArea)" name="1ª Entrega" />
+                    <Line type="monotone" dataKey="troca" stroke="#0c2340" strokeWidth={2} dot={false} name="Troca" />
+                    <Line type="monotone" dataKey="perda" stroke="#c8102e" strokeWidth={2} dot={false} name="Perda" />
+                  </ComposedChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <div className={`text-2xl font-black tabular-nums leading-none ${
-                    conformidadeFiltro >= 90 ? "text-emerald-600" : conformidadeFiltro >= 70 ? "text-amber-600" : "text-[#7f1212]"
-                  }`}>{conformidadeFiltro}%</div>
-                  <div className="text-[8px] font-black uppercase tracking-widest text-slate-400 mt-0.5">Conformidade</div>
-                </div>
-              </div>
-              <div className="flex justify-around pt-2 mt-1 border-t border-slate-100 text-[9px]">
-                <Legenda cor="bg-emerald-500" label={`${aptos}`} />
-                <Legenda cor="bg-amber-500" label={`${alertas}`} />
-                <Legenda cor="bg-[#7f1212]" label={`${bloqueados}`} />
-              </div>
-            </BiCard>
+              )}
+            </div>
+          </Card>
+        </div>
 
-            {/* RANKING Empresas com mais pendências */}
-            <BiCard title="Ranking · Pendências">
-              {pendPorEmpresa.length === 0 ? (
-                <div className="py-4 text-center text-emerald-600 text-[10px] font-black uppercase tracking-wider">
-                  ✓ Sem pendências
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {pendPorEmpresa.map((p, i) => {
-                    const total = p.alerta + p.bloq;
-                    return (
-                      <div key={p.id} className="flex items-center gap-2 py-1 border-b border-slate-100 last:border-0">
-                        <span className="text-[9px] font-black text-slate-400 w-3 text-right">{i + 1}</span>
-                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#0c2340] to-[#1a4a6e] flex items-center justify-center text-[8px] font-black text-white shrink-0">
-                          {p.name.slice(0, 2).toUpperCase()}
-                        </div>
-                        <span className="text-[10px] text-slate-800 truncate font-bold flex-1">{p.name}</span>
-                        <div className="flex gap-1 shrink-0">
-                          {p.bloq > 0 && <span className="bg-[#7f1212] text-white text-[8px] font-black px-1 py-0.5 rounded leading-none">{p.bloq}</span>}
-                          {p.alerta > 0 && <span className="bg-amber-500 text-white text-[8px] font-black px-1 py-0.5 rounded leading-none">{p.alerta}</span>}
-                          <span className="text-[9px] font-black text-slate-700 tabular-nums w-4 text-right">{total}</span>
+        {/* ===== Linha 2: 3 barras horizontais com % (estilo Forma de Pagamento) ===== */}
+        <div className="grid grid-cols-12 gap-4">
+          <Card title="Pendência por Empresa" className="col-span-12 md:col-span-4">
+            <HBarList items={top5Pend} color="#c8102e" suffix="%" empty="Sem pendências" />
+          </Card>
+          <Card title="Distribuição · Status" className="col-span-12 md:col-span-4">
+            <HBarList
+              items={statusBarsData.map((s) => ({
+                name: s.name,
+                value: totalEmp > 0 ? Math.round((s.value / totalEmp) * 100) : 0,
+                color: s.fill,
+              }))}
+              suffix="%"
+              perItemColor
+            />
+          </Card>
+          <Card title="Motivo de Entrega · EPI" className="col-span-12 md:col-span-4">
+            <HBarList items={motivoEntrega} color="#0c2340" suffix="%" empty="Sem entregas" />
+          </Card>
+        </div>
+
+        {/* ===== Linha 3: Top 5 verticais + DDS evolução ===== */}
+        <div className="grid grid-cols-12 gap-4">
+          <Card title="Score por Empresa · TOP 5" className="col-span-12 md:col-span-5">
+            <div className="h-52">
+              {top5Empresas.length === 0 ? <EmptyBlock label="Sem empresas" /> : (
+                <ResponsiveContainer>
+                  <BarChart data={top5Empresas} margin={{ top: 20, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#475569", fontWeight: 600 }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} formatter={(v: any) => [`${v}%`, "Score"]} />
+                    <Bar dataKey="score" radius={[6, 6, 0, 0]} barSize={36}>
+                      {top5Empresas.map((e: any, i: number) => (
+                        <Cell key={i} fill={e.score >= 90 ? "#2d8a9e" : e.score >= 70 ? "#c8a23c" : "#c8102e"} />
+                      ))}
+                      <LabelList dataKey="score" position="top" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fontWeight: 800, fill: "#0c2340" }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </Card>
+
+          <Card title="DDS · Quantidade x Aderência" className="col-span-12 md:col-span-7"
+            action={<span className="text-[10px] font-black uppercase tracking-wider text-[#2d8a9e]">{ddsAderencia}% médio</span>}
+          >
+            <div className="h-52">
+              {ddsTrend.length === 0 ? <EmptyBlock label="Sem DDS registrados" /> : (
+                <ResponsiveContainer>
+                  <ComposedChart data={ddsTrend} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
+                    <Bar yAxisId="l" dataKey="qtd" fill="#0c2340" radius={[4, 4, 0, 0]} barSize={24} name="DDS" />
+                    <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#c8102e" strokeWidth={3} dot={{ r: 4, fill: "#fff", stroke: "#c8102e", strokeWidth: 2.5 }} name="% Aderência" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* ===== Linha 4: Ações + Próximos 7 dias + Ranking ===== */}
+        <div className="grid grid-cols-12 gap-4">
+          <Card title="Ações Recomendadas" className="col-span-12 md:col-span-5"
+            action={<Link to="/app/hoje" className="text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-[#c8102e] flex items-center gap-1">Ver tudo <ArrowRight className="h-3 w-3" /></Link>}
+          >
+            {acoes.length === 0 ? (
+              <div className="flex items-center justify-center py-8 text-[#2d8a9e] text-xs font-black uppercase tracking-wider gap-2">
+                <ShieldCheck className="h-4 w-4" /> Tudo em ordem
+              </div>
+            ) : (
+              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                {acoes.map((a) => (
+                  <Link key={a.id} to={a.link}
+                    className="flex items-center gap-2 p-2 rounded-md hover:bg-slate-50 transition-colors group">
+                    <div className={`w-1 self-stretch rounded-full ${a.severity === "crit" ? "bg-[#c8102e]" : "bg-[#c8a23c]"}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold text-slate-900 truncate">{a.titulo}</div>
+                      <div className="text-[10px] text-slate-500 truncate">{a.sub}</div>
+                    </div>
+                    <ChevronRight className="h-3 w-3 text-slate-300 group-hover:text-[#c8102e] shrink-0" />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card title="Próximos 7 Dias" className="col-span-12 md:col-span-4"
+            action={<Calendar className="h-3 w-3 text-slate-400" />}
+          >
+            {proximos7.length === 0 ? (
+              <div className="py-8 text-center text-[#2d8a9e] text-xs font-black uppercase tracking-wider">Sem vencimentos</div>
+            ) : (
+              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                {proximos7.map((e, i) => {
+                  const d = new Date(e.date + "T00:00");
+                  return (
+                    <div key={i} className="flex gap-2 items-center p-1.5 rounded hover:bg-slate-50">
+                      <div className="text-center shrink-0 w-10 bg-slate-100 rounded-md py-1">
+                        <div className="text-[8px] font-black text-slate-400 uppercase leading-none">{MONTHS_PT[d.getMonth()]}</div>
+                        <div className={`text-sm font-black leading-tight ${e.severity === "crit" ? "text-[#c8102e]" : "text-[#0c2340]"}`}>
+                          {String(d.getDate()).padStart(2, "0")}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </BiCard>
-
-            {/* MEDIDORES VERTICAIS estilo "Tempo na Função" */}
-            <BiCard title="Medidores · SST">
-              <div className="grid grid-cols-4 gap-2 pt-1">
-                <VerticalGauge label="ASOs OK" value={Math.max(0, totalEmp - asoVencidos - asoVencendo30)} max={Math.max(1, totalEmp)} color="#10b981" />
-                <VerticalGauge label="APRs" value={aprsAtivas} max={Math.max(1, aprsAtivas + 5)} color="#0c2340" />
-                <VerticalGauge label="Ext. OK" value={Math.max(0, extMetrics.ativos - extMetrics.vencidos)} max={Math.max(1, extMetrics.ativos)} color="#1a4a6e" />
-                <VerticalGauge label="DDS Ad." value={ddsAderencia} max={100} color="#6d28d9" suffix="%" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-bold text-slate-800 truncate">{e.titulo}</div>
+                        <div className="text-[10px] text-slate-500 truncate">{e.sub}</div>
+                      </div>
+                      <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 ${
+                        e.tipo === "ASO" ? "bg-amber-50 text-amber-700"
+                          : e.tipo === "EXT" ? "bg-rose-50 text-[#c8102e]"
+                          : "bg-slate-100 text-slate-600"
+                      }`}>{e.tipo}</span>
+                    </div>
+                  );
+                })}
               </div>
-            </BiCard>
-          </aside>
+            )}
+          </Card>
+
+          <Card title="Ranking · Empresas" className="col-span-12 md:col-span-3">
+            {pendPorEmpresa.length === 0 ? (
+              <div className="py-8 text-center text-[#2d8a9e] text-xs font-black uppercase tracking-wider">✓ Limpo</div>
+            ) : (
+              <div className="space-y-1.5">
+                {pendPorEmpresa.map((p, i) => {
+                  const total = p.alerta + p.bloq;
+                  return (
+                    <div key={p.id} className="flex items-center gap-2 py-1.5 border-b border-slate-100 last:border-0">
+                      <span className="text-xs font-black text-slate-300 w-4 text-center">{i + 1}</span>
+                      <span className="text-xs text-slate-800 truncate font-bold flex-1">{p.name}</span>
+                      <span className="text-xs font-black text-[#c8102e] tabular-nums">{total}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* ===== Linha 5: Módulos (3 cards) ===== */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <ModuleStat to="/app/controle-documentos" icon={FolderOpen} title="Documentos" primary={docMetrics.abertos} primaryLabel="abertos"
+            stats={[
+              { label: "Críticos", value: docMetrics.criticos, tone: docMetrics.criticos > 0 ? "crit" : "neutral" },
+              { label: "Vencidos", value: docMetrics.vencidos, tone: docMetrics.vencidos > 0 ? "crit" : "neutral" },
+              { label: "Resolvidos", value: docMetrics.resolvidos, tone: "ok" },
+            ]} />
+          <ModuleStat to="/app/extintores" icon={Flame} title="Extintores" primary={extMetrics.ativos} primaryLabel="ativos"
+            stats={[
+              { label: "Vencidos", value: extMetrics.vencidos, tone: extMetrics.vencidos > 0 ? "crit" : "neutral" },
+              { label: "Vence 30d", value: extMetrics.vencendo, tone: extMetrics.vencendo > 0 ? "warn" : "neutral" },
+              { label: "S/ insp.", value: extMetrics.semInspecao, tone: extMetrics.semInspecao > 0 ? "warn" : "ok" },
+            ]} />
+          <ModuleStat to="/app/estoque/epi" icon={Package} title="Estoque EPI" primary={estoqueBaixo + caVencendo} primaryLabel="atenção"
+            stats={[
+              { label: "Baixo", value: estoqueBaixo, tone: estoqueBaixo > 0 ? "crit" : "ok" },
+              { label: "CAs venc.", value: caVencendo, tone: caVencendo > 0 ? "warn" : "ok" },
+              { label: "Entreg.", value: totalEntregas, tone: "neutral" },
+            ]} />
         </div>
 
         {isLoading && (
@@ -709,25 +671,25 @@ function TstPanel() {
       </div>
     </div>
   );
+  // unused — silence linter for legacy refs (kept for compatibility)
+  void conformityView;
 }
 
 // === Subcomponentes ===
 
-function BiCard({
-  title, children, className, action, tight, noTitle,
+function Card({
+  title, children, className, action,
 }: {
   title?: string;
   children: React.ReactNode;
   className?: string;
   action?: React.ReactNode;
-  tight?: boolean;
-  noTitle?: boolean;
 }) {
   return (
-    <div className={`bg-white rounded-md border border-slate-300 shadow-sm ${tight ? "p-2" : "p-3"} ${className ?? ""}`}>
-      {!noTitle && title && (
-        <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-[#0c2340]">{title}</h3>
+    <div className={`bg-white rounded-lg border border-slate-200 shadow-sm p-4 ${className ?? ""}`}>
+      {title && (
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-[#0c2340]">{title}</h3>
           {action}
         </div>
       )}
@@ -736,44 +698,110 @@ function BiCard({
   );
 }
 
-function FilterChip({ label, value, color, active }: { label: string; value: number; color: string; active?: boolean }) {
+function KpiBig({
+  icon: Icon, label, value, sub, accent, highlight,
+}: {
+  icon: any;
+  label: string;
+  value: number | string;
+  sub?: string;
+  accent: string;
+  highlight?: boolean;
+}) {
   return (
     <div
-      className={`flex items-center justify-between px-2 py-1.5 rounded border text-[10px] font-bold transition-colors ${
-        active ? "bg-slate-900 text-white border-slate-900" : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+      className={`bg-white rounded-lg border shadow-sm p-4 flex items-center gap-3 transition-all ${
+        highlight ? "border-[#c8102e]/40 ring-1 ring-[#c8102e]/10" : "border-slate-200"
       }`}
     >
-      <div className="flex items-center gap-1.5 min-w-0">
-        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: color }} />
-        <span className="truncate uppercase tracking-wider">{label}</span>
+      <div
+        className="h-12 w-12 rounded-lg flex items-center justify-center shrink-0"
+        style={{ background: `${accent}15`, color: accent }}
+      >
+        <Icon className="h-6 w-6" />
       </div>
-      <span className="font-black tabular-nums">{value}</span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">{label}</div>
+        <div className="text-3xl font-black tabular-nums leading-tight" style={{ color: accent }}>{value}</div>
+        {sub && <div className="text-[10px] text-slate-500 truncate">{sub}</div>}
+      </div>
     </div>
   );
 }
 
-function VerticalGauge({ label, value, max, color, suffix }: { label: string; value: number; max: number; color: string; suffix?: string }) {
-  const pct = Math.max(2, Math.min(100, Math.round((value / max) * 100)));
+function DonutCenter({
+  data, centerValue, centerLabel, centerColor,
+}: {
+  data: { name: string; value: number; fill: string }[];
+  centerValue: string;
+  centerLabel: string;
+  centerColor: string;
+}) {
+  const hasData = data.length > 0 && data.some((d) => d.value > 0);
+  const chartData = hasData ? data : [{ name: "—", value: 1, fill: "#e2e8f0" }];
   return (
-    <div className="flex flex-col items-center">
-      <div className="text-[10px] font-black tabular-nums text-slate-900 leading-none mb-1">
-        {value}{suffix ?? ""}
+    <div className="relative h-44">
+      <ResponsiveContainer>
+        <PieChart>
+          <Pie data={chartData} dataKey="value" innerRadius={48} outerRadius={68} paddingAngle={2} stroke="#fff" strokeWidth={2}>
+            {chartData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+          </Pie>
+          <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <div className="text-2xl font-black tabular-nums leading-none" style={{ color: centerColor }}>{centerValue}</div>
+        <div className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mt-1">{centerLabel}</div>
       </div>
-      <div className="relative h-20 w-3.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-        <div
-          className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-700"
-          style={{ height: `${pct}%`, background: `linear-gradient(180deg,${color},${color}cc)`, boxShadow: `0 0 6px ${color}80` }}
-        />
-      </div>
-      <div className="text-[7px] font-black uppercase tracking-wider text-slate-500 mt-1 text-center leading-tight">{label}</div>
     </div>
   );
 }
 
-function Legenda({ cor, label }: { cor: string; label: string }) {
+function LegendItem({ color, label, value }: { color: string; label: string; value: number }) {
   return (
-    <div className="flex items-center gap-1 text-[10px] text-slate-600 font-black tabular-nums">
-      <div className={`h-2 w-2 rounded-full ${cor}`} /> {label}
+    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
+      <span className="h-2 w-2 rounded-full shrink-0" style={{ background: color }} />
+      <span className="truncate">{label}</span>
+      <span className="ml-auto tabular-nums text-slate-900 font-black">{value}</span>
+    </div>
+  );
+}
+
+function HBarList({
+  items, color, suffix, empty, perItemColor,
+}: {
+  items: { name: string; value: number; color?: string }[];
+  color?: string;
+  suffix?: string;
+  empty?: string;
+  perItemColor?: boolean;
+}) {
+  if (items.length === 0) {
+    return <div className="py-8 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">{empty ?? "Sem dados"}</div>;
+  }
+  const max = Math.max(...items.map((i) => i.value), 1);
+  return (
+    <div className="space-y-3 py-1">
+      {items.map((it) => {
+        const c = perItemColor && it.color ? it.color : color ?? "#0c2340";
+        const pct = Math.max(2, Math.round((it.value / max) * 100));
+        return (
+          <div key={it.name}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-bold text-slate-700 truncate pr-2">{it.name}</span>
+              <span className="text-[11px] font-black tabular-nums" style={{ color: c }}>
+                {it.value}{suffix ?? ""}
+              </span>
+            </div>
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${pct}%`, background: c }}
+              />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
