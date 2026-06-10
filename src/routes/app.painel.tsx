@@ -371,6 +371,58 @@ function TstPanel() {
   ].filter((d) => d.value > 0);
   const modTotal = modulosDonut.reduce((s, d) => s + d.value, 0);
 
+  // === ASO Donut (Em dia / Vence 30d / Vencidos) ===
+  const totalExames = (data?.exams ?? []).length;
+  const asoEmDia = Math.max(0, totalExames - asoVencendo30 - asoVencidos);
+  const asoDonut = [
+    { name: "Em dia", value: asoEmDia, fill: "#2d8a9e" },
+    { name: "Vence 30d", value: asoVencendo30, fill: "#c8a23c" },
+    { name: "Vencidos", value: asoVencidos, fill: "#c8102e" },
+  ].filter((d) => d.value > 0);
+  const asoConformPct = totalExames > 0 ? Math.round((asoEmDia / totalExames) * 100) : 0;
+
+  // === Pareto: Empresas por nº de colaboradores (barras + acumulado %) ===
+  const paretoEmpresas = useMemo(() => {
+    const arr = (data?.companies ?? []).map((c: any) => ({
+      name: c.name.length > 12 ? c.name.slice(0, 12) + "…" : c.name,
+      qtd: rows.filter((r) => r.emp.company_id === c.id).length,
+    })).filter((c) => c.qtd > 0).sort((a, b) => b.qtd - a.qtd).slice(0, 6);
+    const total = arr.reduce((s, a) => s + a.qtd, 0) || 1;
+    let acc = 0;
+    return arr.map((a) => {
+      acc += a.qtd;
+      return { ...a, acumulado: Math.round((acc / total) * 100) };
+    });
+  }, [data, rows]);
+
+  // === Extintores: barras por status ===
+  const extintoresBars = [
+    { name: "Ativos", value: extMetrics.ativos, fill: "#2d8a9e" },
+    { name: "Vence 30d", value: extMetrics.vencendo, fill: "#c8a23c" },
+    { name: "Vencidos", value: extMetrics.vencidos, fill: "#c8102e" },
+    { name: "S/ Insp.", value: extMetrics.semInspecao, fill: "#0c2340" },
+  ];
+
+  // === Documentos: Abertos x Resolvidos por mês (últimos 6 meses) ===
+  const docsMensal = useMemo(() => {
+    const out: { mes: string; abertos: number; resolvidos: number }[] = [];
+    const all = (data?.controleDocs ?? []) as any[];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const next = new Date(today.getFullYear(), today.getMonth() - i + 1, 1);
+      const sIso = fmt(d), eIso = fmt(next);
+      const abertos = all.filter((x) => x.created_at && x.created_at >= sIso && x.created_at < eIso).length;
+      const resolvidos = all.filter((x) => (x.status === "RESOLVIDO" || x.status === "FECHADO") && x.updated_at && x.updated_at >= sIso && x.updated_at < eIso).length;
+      out.push({ mes: `${MONTHS_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`, abertos, resolvidos });
+    }
+    return out;
+  }, [data]);
+
+  // === Radial: aderência DDS / cobertura ===
+  const radialDDS = [
+    { name: "Aderência", value: ddsAderencia, fill: ddsAderencia >= 90 ? "#2d8a9e" : ddsAderencia >= 70 ? "#c8a23c" : "#c8102e" },
+  ];
+
   return (
     <div className="h-full overflow-y-auto bg-slate-50 custom-scrollbar">
       <div className="max-w-[1700px] mx-auto p-4 md:p-5 flex flex-col gap-4">
