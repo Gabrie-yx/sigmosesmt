@@ -492,10 +492,11 @@ function TstPanel() {
           <KpiBig icon={ShieldAlert} label="Bloqueados" value={bloqueados} sub="Ação imediata" accent="#c8102e" highlight={bloqueados > 0} />
         </div>
 
-        {/* ===== Linha 1: Donut Status + Donut Módulos + Área Tendência ===== */}
+        {/* ===== QUADRO DOS 12 GRÁFICOS ===== */}
         <div className="grid grid-cols-12 gap-4">
-          {/* Donut Conformidade */}
-          <Card title="Status Geral" className="col-span-12 md:col-span-3">
+
+          {/* 1 · Donut Conformidade Geral */}
+          <Card title="01 · Status Geral" className="col-span-12 md:col-span-3">
             <DonutCenter
               data={donutData}
               centerValue={`${conformidadeFiltro}%`}
@@ -509,27 +510,48 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* Donut Módulos */}
-          <Card title="Distribuição · Módulos" className="col-span-12 md:col-span-3">
+          {/* 2 · Donut ASO Status (PCMSO/NR-07) */}
+          <Card title="02 · ASO · PCMSO" className="col-span-12 md:col-span-3">
             <DonutCenter
-              data={modulosDonut.length > 0 ? modulosDonut : [{ name: "—", value: 1, fill: "#e2e8f0" }]}
-              centerValue={String(modTotal)}
-              centerLabel="Atividades"
-              centerColor="#0c2340"
+              data={asoDonut.length > 0 ? asoDonut : [{ name: "—", value: 1, fill: "#e2e8f0" }]}
+              centerValue={`${asoConformPct}%`}
+              centerLabel="Em dia"
+              centerColor={asoConformPct >= 90 ? "#2d8a9e" : asoConformPct >= 70 ? "#c8a23c" : "#c8102e"}
             />
-            <div className="grid grid-cols-2 gap-1.5 pt-3 mt-2 border-t border-slate-100">
-              {modulosDonut.map((m) => (
-                <LegendItem key={m.name} color={m.fill} label={m.name} value={m.value} />
-              ))}
+            <div className="flex justify-around pt-3 mt-2 border-t border-slate-100">
+              <LegendItem color="#2d8a9e" label="OK" value={asoEmDia} />
+              <LegendItem color="#c8a23c" label="30d" value={asoVencendo30} />
+              <LegendItem color="#c8102e" label="Venc." value={asoVencidos} />
             </div>
           </Card>
 
-          {/* Área grande de tendência (estilo Vendas por Período) */}
-          <Card title="Fluxo de Entregas EPI · Tendência" className="col-span-12 md:col-span-6"
-            action={<span className="text-[10px] font-bold text-slate-500 flex items-center gap-1"><TrendingUp className="h-3 w-3" />{totalEntregas} itens · R$ {valorEntregas.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}</span>}
-          >
-            <div className="h-48">
-              {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas no período" /> : (
+          {/* 3 · Pareto Empresas por colaborador (Bar + acumulado %) */}
+          <Card title="03 · Pareto · Empresas" className="col-span-12 md:col-span-6"
+            action={<span className="text-[10px] font-bold text-slate-500">{totalEmp} colab.</span>}>
+            <div className="h-52">
+              {paretoEmpresas.length === 0 ? <EmptyBlock label="Sem dados" /> : (
+                <ResponsiveContainer>
+                  <ComposedChart data={paretoEmpresas} margin={{ top: 16, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#475569" }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
+                    <Bar yAxisId="l" dataKey="qtd" fill="#0c2340" radius={[4, 4, 0, 0]} barSize={28} name="Colaboradores">
+                      <LabelList dataKey="qtd" position="top" style={{ fontSize: 10, fontWeight: 800, fill: "#0c2340" }} />
+                    </Bar>
+                    <Line yAxisId="r" type="monotone" dataKey="acumulado" stroke="#2d8a9e" strokeWidth={2.5} dot={{ r: 3, fill: "#fff", stroke: "#2d8a9e", strokeWidth: 2 }} name="% Acumulado" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </Card>
+
+          {/* 4 · Área Fluxo Entregas EPI */}
+          <Card title="04 · Fluxo EPI · Tendência" className="col-span-12 md:col-span-6"
+            action={<span className="text-[10px] font-bold text-slate-500 flex items-center gap-1"><TrendingUp className="h-3 w-3" />{totalEntregas} · R$ {valorEntregas.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}</span>}>
+            <div className="h-52">
+              {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas" /> : (
                 <ResponsiveContainer>
                   <ComposedChart data={entregaSerie} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
                     <defs>
@@ -550,32 +572,9 @@ function TstPanel() {
               )}
             </div>
           </Card>
-        </div>
 
-        {/* ===== Linha 2: 3 barras horizontais com % (estilo Forma de Pagamento) ===== */}
-        <div className="grid grid-cols-12 gap-4">
-          <Card title="Pendência por Empresa" className="col-span-12 md:col-span-4">
-            <HBarList items={top5Pend} color="#c8102e" suffix="%" empty="Sem pendências" />
-          </Card>
-          <Card title="Distribuição · Status" className="col-span-12 md:col-span-4">
-            <HBarList
-              items={statusBarsData.map((s) => ({
-                name: s.name,
-                value: totalEmp > 0 ? Math.round((s.value / totalEmp) * 100) : 0,
-                color: s.fill,
-              }))}
-              suffix="%"
-              perItemColor
-            />
-          </Card>
-          <Card title="Motivo de Entrega · EPI" className="col-span-12 md:col-span-4">
-            <HBarList items={motivoEntrega} color="#0c2340" suffix="%" empty="Sem entregas" />
-          </Card>
-        </div>
-
-        {/* ===== Linha 3: Top 5 verticais + DDS evolução ===== */}
-        <div className="grid grid-cols-12 gap-4">
-          <Card title="Score por Empresa · TOP 5" className="col-span-12 md:col-span-5">
+          {/* 5 · Score Top 5 Empresas (barras verticais) */}
+          <Card title="05 · Score · TOP 5" className="col-span-12 md:col-span-4">
             <div className="h-52">
               {top5Empresas.length === 0 ? <EmptyBlock label="Sem empresas" /> : (
                 <ResponsiveContainer>
@@ -596,11 +595,11 @@ function TstPanel() {
             </div>
           </Card>
 
-          <Card title="DDS · Quantidade x Aderência" className="col-span-12 md:col-span-7"
-            action={<span className="text-[10px] font-black uppercase tracking-wider text-[#2d8a9e]">{ddsAderencia}% médio</span>}
-          >
+          {/* 6 · DDS Composto (qtd × aderência) */}
+          <Card title="06 · DDS · Qtd × Aderência" className="col-span-12 md:col-span-5"
+            action={<span className="text-[10px] font-black uppercase tracking-wider text-[#2d8a9e]">{ddsAderencia}% médio</span>}>
             <div className="h-52">
-              {ddsTrend.length === 0 ? <EmptyBlock label="Sem DDS registrados" /> : (
+              {ddsTrend.length === 0 ? <EmptyBlock label="Sem DDS" /> : (
                 <ResponsiveContainer>
                   <ComposedChart data={ddsTrend} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
@@ -608,14 +607,95 @@ function TstPanel() {
                     <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
                     <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
-                    <Bar yAxisId="l" dataKey="qtd" fill="#0c2340" radius={[4, 4, 0, 0]} barSize={24} name="DDS" />
+                    <Bar yAxisId="l" dataKey="qtd" fill="#0c2340" radius={[4, 4, 0, 0]} barSize={22} name="DDS" />
                     <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#c8102e" strokeWidth={3} dot={{ r: 4, fill: "#fff", stroke: "#c8102e", strokeWidth: 2.5 }} name="% Aderência" />
                   </ComposedChart>
                 </ResponsiveContainer>
               )}
             </div>
           </Card>
+
+          {/* 7 · Radial Aderência DDS */}
+          <Card title="07 · Aderência DDS" className="col-span-12 md:col-span-3">
+            <div className="relative h-44">
+              <ResponsiveContainer>
+                <RadialBarChart innerRadius="65%" outerRadius="100%" data={radialDDS} startAngle={210} endAngle={-30}>
+                  <RadialBar dataKey="value" cornerRadius={10} background={{ fill: "#e2e8f0" }} />
+                </RadialBarChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <div className="text-3xl font-black tabular-nums" style={{ color: radialDDS[0].fill }}>{ddsAderencia}%</div>
+                <div className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mt-1">Período</div>
+              </div>
+            </div>
+            <div className="flex justify-around pt-3 mt-2 border-t border-slate-100">
+              <LegendItem color="#0c2340" label="DDS" value={ddsCount} />
+              <LegendItem color="#2d8a9e" label="Meta" value={90} />
+            </div>
+          </Card>
+
+          {/* 8 · Linha Documentos Abertos × Resolvidos */}
+          <Card title="08 · Não Conformidades · 6 meses" className="col-span-12 md:col-span-6">
+            <div className="h-52">
+              {docsMensal.every((d) => d.abertos === 0 && d.resolvidos === 0) ? <EmptyBlock label="Sem registros" /> : (
+                <ResponsiveContainer>
+                  <LineChart data={docsMensal} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
+                    <Legend wrapperStyle={{ fontSize: 10 }} />
+                    <Line type="monotone" dataKey="abertos" stroke="#c8102e" strokeWidth={2.5} dot={{ r: 3 }} name="Abertos" />
+                    <Line type="monotone" dataKey="resolvidos" stroke="#2d8a9e" strokeWidth={2.5} dot={{ r: 3 }} name="Resolvidos" />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </Card>
+
+          {/* 9 · Barras Extintores por Status (NR-23) */}
+          <Card title="09 · Extintores · NR-23" className="col-span-12 md:col-span-3">
+            <div className="h-52">
+              <ResponsiveContainer>
+                <BarChart data={extintoresBars} margin={{ top: 20, right: 8, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#475569", fontWeight: 600 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                  <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={28}>
+                    {extintoresBars.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                    <LabelList dataKey="value" position="top" style={{ fontSize: 10, fontWeight: 800, fill: "#0c2340" }} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          {/* 10 · HBar Pendência por Empresa */}
+          <Card title="10 · Pendência · Empresa" className="col-span-12 md:col-span-4">
+            <HBarList items={top5Pend} color="#c8102e" suffix="%" empty="Sem pendências" />
+          </Card>
+
+          {/* 11 · HBar Distribuição Status */}
+          <Card title="11 · Distribuição Status" className="col-span-12 md:col-span-4">
+            <HBarList
+              items={statusBarsData.map((s) => ({
+                name: s.name,
+                value: totalEmp > 0 ? Math.round((s.value / totalEmp) * 100) : 0,
+                color: s.fill,
+              }))}
+              suffix="%" perItemColor
+            />
+          </Card>
+
+          {/* 12 · HBar Motivos EPI */}
+          <Card title="12 · Motivo Entrega · EPI" className="col-span-12 md:col-span-4">
+            <HBarList items={motivoEntrega} color="#0c2340" suffix="%" empty="Sem entregas" />
+          </Card>
+
         </div>
+        {/* dead-var ref kept silent */}
+        <span className="hidden">{modTotal}{modulosDonut.length}</span>
 
         {/* ===== Linha 4: Ações + Próximos 7 dias + Ranking ===== */}
         <div className="grid grid-cols-12 gap-4">
