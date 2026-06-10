@@ -313,463 +313,400 @@ function TstPanel() {
     ? conformityStacked
     : conformityStacked.filter((c: any) => c.id === filterCompany);
 
-  return (
-    <div className="h-full overflow-y-auto bg-slate-50 custom-scrollbar">
-      <div className="max-w-[1600px] mx-auto p-4 md:p-6 flex flex-col gap-5">
+  // === Donut Conformidade Geral ===
+  const donutData = [
+    { name: "Aptos", value: aptos, fill: "#10b981" },
+    { name: "Alerta", value: alertas, fill: "#f59e0b" },
+    { name: "Crítico", value: bloqueados, fill: "#7f1212" },
+  ].filter((d) => d.value > 0);
 
-        {/* === Header & Filters === */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3 tracking-tight">
-              <span className="bg-[#7f1212] text-white px-3 py-1 rounded text-sm font-black uppercase tracking-tighter">DMN</span>
-              Painel SESMT Executivo
+  // === Top 5 empresas (barras verticais) ===
+  const top5Empresas = conformityStacked.slice(0, 5).map((c: any) => ({
+    name: c.name.length > 10 ? c.name.slice(0, 10) + "…" : c.name,
+    score: c.score,
+    bl: c.bl,
+    al: c.al,
+    oks: c.oks,
+  }));
+
+  // === Distribuição global de status ===
+  const statusBarsData = [
+    { name: "APTO", value: aptos, fill: "#10b981" },
+    { name: "ALERTA", value: alertas, fill: "#f59e0b" },
+    { name: "BLOQ.", value: bloqueados, fill: "#7f1212" },
+  ];
+
+  return (
+    <div className="h-full overflow-y-auto bg-[#eef2f7] custom-scrollbar">
+      <div className="max-w-[1700px] mx-auto p-3 md:p-4 flex flex-col gap-3">
+
+        {/* ===== HEADER BI ===== */}
+        <div className="rounded-md overflow-hidden shadow-md border border-slate-300">
+          <div
+            className="flex items-center justify-between gap-3 px-4 py-2.5"
+            style={{ background: "linear-gradient(90deg,#0c2340 0%,#1a4a6e 60%,#2d6a8e 100%)" }}
+          >
+            <h1 className="text-white text-lg md:text-xl font-black uppercase tracking-[0.18em] flex items-center gap-3">
+              <span className="bg-[#7f1212] text-white px-2 py-0.5 rounded text-xs font-black uppercase tracking-tighter">DMN</span>
+              Dashboard Painel Executivo · SESMT
             </h1>
-            <p className="text-slate-500 text-xs mt-1">SGI · ISO 9001 · NRs — Gestão integrada de SST</p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-1 bg-white/95 px-1 py-0.5 rounded shadow-inner">
               <select
                 value={filterCompany}
                 onChange={(e) => setFilterCompany(e.target.value)}
-                className="text-xs font-medium text-slate-600 px-3 py-1.5 bg-transparent border-none outline-none focus:ring-0 cursor-pointer"
+                className="text-[11px] font-bold text-slate-700 px-2 py-1 bg-transparent border-none outline-none cursor-pointer uppercase tracking-wider"
               >
-                <option value="ALL">Todas as empresas</option>
+                <option value="ALL">Todas empresas</option>
                 {(data?.companies ?? []).map((c: any) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
-              <div className="h-4 w-px bg-slate-200" />
-              <div className="flex items-center">
-                {(["30", "60", "90", "180"] as const).map((p) => (
-                  <button key={p} onClick={() => setPeriodo(p)}
-                    className={`px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider rounded transition-colors ${
-                      periodo === p ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-900"
-                    }`}>{p}d</button>
-                ))}
-              </div>
+              <div className="h-4 w-px bg-slate-300" />
+              {(["30", "60", "90", "180"] as const).map((p) => (
+                <button key={p} onClick={() => setPeriodo(p)}
+                  className={`px-2 py-1 text-[10px] font-black uppercase tracking-wider rounded transition-colors ${
+                    periodo === p ? "bg-[#0c2340] text-white" : "text-slate-500 hover:text-[#0c2340]"
+                  }`}>{p}d</button>
+              ))}
             </div>
+          </div>
+          {/* faixa fina informativa */}
+          <div className="bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 border-t border-slate-200 flex items-center justify-between">
+            <span>SGI · ISO 9001 · NR-1 · NR-6 · NR-7 · NR-9 · NR-23 — Gestão integrada de SST</span>
+            <span className="text-slate-700">{totalEmp} colaboradores · {(data?.companies ?? []).length} empresas</span>
           </div>
         </div>
 
-        {/* === Top Executive KPIs === */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <KpiCard
-            label="Conformidade Geral"
-            value={`${conformidadeFiltro}%`}
-            barPct={conformidadeFiltro}
-            barTone={conformidadeFiltro >= 90 ? "ok" : conformidadeFiltro >= 70 ? "warn" : "crit"}
-            badge={conformidadeFiltro >= 90 ? { text: "OK", tone: "ok" } : conformidadeFiltro >= 70 ? { text: "Atenção", tone: "warn" } : { text: "Crítico", tone: "crit" }}
-          />
-          <KpiCard
-            label="Bloqueados"
-            value={String(bloqueados).padStart(2, "0")}
-            sub={`${alertas} em alerta · ${aptos} aptos`}
-            critical
-            pulse={bloqueados > 0}
-          />
-          <KpiCard
-            label="Exames Pendentes"
-            value={asoVencendo30 + asoVencidos}
-            sub={`${asoVencidos} vencido${asoVencidos !== 1 ? "s" : ""} · ${asoVencendo30} em 30 dias`}
-            badge={asoVencidos > 0 ? { text: "Crítico", tone: "crit" } : asoVencendo30 > 0 ? { text: "Atenção", tone: "warn" } : { text: "OK", tone: "ok" }}
-          />
-          <KpiCard
-            label="Pendências Ativas"
-            value={alertas + bloqueados}
-            sub={`${aprsAtivas} APRs · ${ptesAtivas} PTEs abertas`}
-          />
-        </div>
+        {/* ===== GRID PRINCIPAL ===== */}
+        <div className="grid grid-cols-12 gap-3">
 
-        {/* === Main Grid === */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-          {/* LEFT COL (2/3) */}
-          <div className="lg:col-span-2 space-y-5">
-
-            {/* Conformidade por Empresa */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-              <div className="flex justify-between items-center mb-5">
-                <div>
-                  <h3 className="font-bold text-slate-800 text-sm">Conformidade por Empresa</h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Distribuição de colaboradores por status</p>
-                </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  {totalEmp} colab.
-                </span>
+          {/* ============ COLUNA FILTROS (esquerda) ============ */}
+          <aside className="col-span-12 lg:col-span-2 flex flex-col gap-3">
+            <BiCard title="Filtros" tight>
+              <div className="space-y-2">
+                <FilterChip label="Apto" value={aptos} active={false} color="#10b981" />
+                <FilterChip label="Alerta" value={alertas} active={false} color="#f59e0b" />
+                <FilterChip label="Bloqueado" value={bloqueados} active={false} color="#7f1212" />
               </div>
+            </BiCard>
 
-              {conformityView.length === 0 ? (
-                <EmptyBlock label="Sem empresas com colaboradores no período" />
-              ) : (
-                <div className="space-y-5">
-                  {conformityView.map((c: any) => (
-                    <div key={c.id} className="group">
-                      <div className="flex justify-between text-xs mb-2 font-medium items-end">
-                        <div className="min-w-0 pr-2">
-                          <div className="text-slate-800 font-bold truncate">{c.name}</div>
-                          <div className="text-[10px] text-slate-400 mt-0.5">
-                            <span className="text-emerald-600 font-bold">{c.oks}</span> aptos ·{" "}
-                            <span className="text-amber-600 font-bold">{c.al}</span> alerta ·{" "}
-                            <span className="text-[#7f1212] font-bold">{c.bl}</span> crítico
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-[10px] text-slate-400">{c.total}</span>
-                          <span
-                            className={`text-base font-black tabular-nums tracking-tight ${
-                              c.score >= 90 ? "text-emerald-600" : c.score >= 70 ? "text-amber-600" : "text-[#7f1212]"
-                            }`}
-                            style={{
-                              textShadow:
-                                c.score >= 90
-                                  ? "0 0 12px rgba(16,185,129,0.35)"
-                                  : c.score >= 70
-                                    ? "0 0 12px rgba(245,158,11,0.35)"
-                                    : "0 0 12px rgba(127,18,18,0.4)",
-                            }}
-                          >
-                            {c.score}%
-                          </span>
-                        </div>
-                      </div>
-                      <div className="relative w-full h-3 rounded-full overflow-hidden bg-slate-100 shadow-inner">
-                        <div className="absolute inset-0 flex">
-                          <div
-                            className="h-full transition-all duration-700 ease-out"
-                            style={{
-                              width: `${c.okPct}%`,
-                              background: "linear-gradient(90deg,#34d399 0%,#10b981 100%)",
-                              boxShadow: c.okPct > 0 ? "0 0 8px rgba(16,185,129,0.55)" : undefined,
-                            }}
-                            title={`${c.oks} aptos`}
-                          />
-                          <div
-                            className="h-full transition-all duration-700 ease-out"
-                            style={{
-                              width: `${c.alPct}%`,
-                              background: "linear-gradient(90deg,#fbbf24 0%,#f59e0b 100%)",
-                              boxShadow: c.alPct > 0 ? "0 0 8px rgba(245,158,11,0.5)" : undefined,
-                            }}
-                            title={`${c.al} em alerta`}
-                          />
-                          <div
-                            className="h-full transition-all duration-700 ease-out"
-                            style={{
-                              width: `${c.blPct}%`,
-                              background: "linear-gradient(90deg,#b91c1c 0%,#7f1212 100%)",
-                              boxShadow: c.blPct > 0 ? "0 0 10px rgba(127,18,18,0.65)" : undefined,
-                            }}
-                            title={`${c.bl} bloqueados`}
-                          />
-                        </div>
-                        {/* shine overlay */}
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-black/10" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="mt-5 flex gap-4 border-t border-slate-100 pt-3">
-                <Legenda cor="bg-emerald-500" label="Aptos" />
-                <Legenda cor="bg-amber-400" label="Alerta" />
-                <Legenda cor="bg-[#7f1212]" label="Crítico" />
+            <BiCard title="Módulos" tight>
+              <div className="grid grid-cols-1 gap-1.5">
+                <FilterChip label="APRs" value={aprsAtivas} color="#0c2340" />
+                <FilterChip label="PTEs" value={ptesAtivas} color="#0c2340" />
+                <FilterChip label="DDS" value={ddsCount} color="#6d28d9" />
+                <FilterChip label="Extint." value={extMetrics.ativos} color="#7f1212" />
               </div>
-            </div>
+            </BiCard>
 
-            {/* Ações Recomendadas */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-slate-800 text-sm">Ações Recomendadas</h3>
-                <Link to="/app/hoje" className="text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-[#7f1212] flex items-center gap-1">
-                  Ver tudo <ArrowRight className="h-3 w-3" />
-                </Link>
+            {/* Busca compacta */}
+            <BiCard title="Buscar" tight>
+              <div className="relative">
+                <Search className="h-3.5 w-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Nome, CPF, função…"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded pl-7 pr-2 py-1.5 text-[11px] font-medium outline-none focus:ring-2 focus:ring-[#7f1212]/20 focus:border-[#7f1212] transition-all placeholder:text-slate-400"
+                />
               </div>
-
-              {acoes.length === 0 ? (
-                <div className="flex items-center justify-center py-8 text-emerald-600 text-xs font-black uppercase tracking-wider gap-2">
-                  <ShieldCheck className="h-4 w-4" /> Nenhuma ação prioritária no momento
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {acoes.map((a) => (
-                    <Link key={a.id} to={a.link}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                        a.severity === "crit"
-                          ? "border-rose-100 bg-rose-50/40 hover:bg-rose-50"
-                          : "border-slate-100 hover:bg-slate-50"
-                      }`}>
-                      <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
-                        a.severity === "crit" ? "bg-rose-100" : "bg-amber-100"
-                      }`}>
-                        <div className={`w-2 h-2 rounded-full ${a.severity === "crit" ? "bg-[#7f1212]" : "bg-amber-600"} ${a.severity === "crit" ? "animate-pulse" : ""}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold text-slate-900 truncate">{a.titulo}</div>
-                        <div className="text-[10px] text-slate-500 truncate">{a.sub}</div>
-                      </div>
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded shrink-0 ${
-                        a.severity === "crit" ? "text-[#7f1212] hover:bg-rose-100" : "text-slate-600 hover:bg-slate-100"
-                      }`}>
-                        Tratar
-                      </span>
+              {search && (
+                <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
+                  {searchResults.length === 0 ? (
+                    <div className="text-center text-slate-400 py-2 text-[9px] font-bold uppercase">Nenhum</div>
+                  ) : searchResults.map((r) => (
+                    <Link key={r.emp.id} to="/app/employees/$id" params={{ id: r.emp.id }}
+                      className="block p-1.5 border border-slate-100 rounded text-[10px] hover:border-[#7f1212] hover:bg-slate-50 transition-all">
+                      <div className="font-bold text-slate-900 truncate">{r.emp.nome}</div>
+                      <div className="text-slate-500 truncate text-[9px]">{r.company}</div>
                     </Link>
                   ))}
                 </div>
               )}
-            </div>
+            </BiCard>
+          </aside>
 
-            {/* Gráficos Operacionais (drill-down) */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-slate-400" /> Fluxo de EPI
-                    </h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Volume por motivo + valor R$</p>
+          {/* ============ CENTRO (8 cols) ============ */}
+          <div className="col-span-12 lg:col-span-7 flex flex-col gap-3">
+
+            {/* Linha 1: KPI MEGA + STATUS BARS + AÇÕES/MÊS (área) */}
+            <div className="grid grid-cols-12 gap-3">
+              {/* KPI MEGA Bloqueados */}
+              <BiCard tight noTitle className="col-span-12 sm:col-span-3 !p-0 overflow-hidden">
+                <div
+                  className="h-full w-full flex flex-col items-center justify-center text-white py-4 px-2 relative"
+                  style={{
+                    background: "linear-gradient(160deg,#9b1c1c 0%,#7f1212 50%,#5a0c0c 100%)",
+                  }}
+                >
+                  {bloqueados > 0 && (
+                    <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-amber-300 animate-pulse" />
+                  )}
+                  <div className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-200">Quantidade</div>
+                  <div className="text-6xl font-black tabular-nums leading-none drop-shadow-md mt-1">
+                    {String(bloqueados).padStart(2, "0")}
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400">{totalEntregas} itens · R$ {valorEntregas.toFixed(0)}</span>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-white/90 mt-2">Bloqueados</div>
+                  <div className="text-[9px] text-rose-100 mt-0.5">{alertas} em alerta</div>
                 </div>
-                <div className="h-52">
-                  {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas no período" /> : (
+              </BiCard>
+
+              {/* TOP 5 EMPRESAS - barras verticais coloridas */}
+              <BiCard title="Top 5 · Score por Empresa" className="col-span-12 sm:col-span-5">
+                <div className="h-40">
+                  {top5Empresas.length === 0 ? <EmptyBlock label="Sem empresas" /> : (
                     <ResponsiveContainer>
-                      <ComposedChart data={entregaSerie} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
+                      <BarChart data={top5Empresas} margin={{ top: 16, right: 6, left: -22, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="2 3" stroke="#e2e8f0" vertical={false} />
+                        <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#475569", fontWeight: 700 }} axisLine={{ stroke: "#cbd5e1" }} tickLine={false} />
+                        <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                        <Tooltip cursor={{ fill: "rgba(12,35,64,0.06)" }} contentStyle={{ fontSize: 11, borderRadius: 6, border: "1px solid #cbd5e1" }} formatter={(v: any) => [`${v}%`, "Score"]} />
+                        <Bar dataKey="score" radius={[3, 3, 0, 0]}>
+                          {top5Empresas.map((e: any, i: number) => (
+                            <Cell key={i} fill={e.score >= 90 ? "#10b981" : e.score >= 70 ? "#f59e0b" : "#7f1212"} />
+                          ))}
+                          <LabelList dataKey="score" position="top" formatter={(v: any) => `${v}%`} style={{ fontSize: 10, fontWeight: 800, fill: "#0f172a" }} />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </BiCard>
+
+              {/* ENTREGAS/MÊS (área) */}
+              <BiCard title="Fluxo de EPI · Mês" className="col-span-12 sm:col-span-4">
+                <div className="h-40">
+                  {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas" /> : (
+                    <ResponsiveContainer>
+                      <ComposedChart data={entregaSerie} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>
                         <defs>
-                          <linearGradient id="gradPrimeira" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.85} />
-                            <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0.05} />
+                          <linearGradient id="gradFlow" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#1a4a6e" stopOpacity={0.9} />
+                            <stop offset="100%" stopColor="#1a4a6e" stopOpacity={0.05} />
                           </linearGradient>
-                          <linearGradient id="gradTroca" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.85} />
-                            <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.05} />
-                          </linearGradient>
-                          <linearGradient id="gradPerda" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#ef4444" stopOpacity={0.85} />
-                            <stop offset="100%" stopColor="#7f1212" stopOpacity={0.05} />
-                          </linearGradient>
-                          <filter id="glowLine" x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur stdDeviation="3" result="blur" />
-                            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                          </filter>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                        <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                        <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={28} />
-                        <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={42} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : `${v}`} />
-                        <Tooltip
-                          cursor={{ stroke: "#7f1212", strokeWidth: 1, strokeDasharray: "4 4", opacity: 0.4 }}
-                          contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(127,18,18,0.5)", borderRadius: 10, color: "#fff", fontSize: 11, boxShadow: "0 10px 30px rgba(0,0,0,0.4)" }}
-                          labelStyle={{ color: "#fbbf24", fontWeight: 800, letterSpacing: 0.5 }}
-                          formatter={(v: any, n: any) => n === "Valor R$" ? [`R$ ${Number(v).toFixed(0)}`, n] : [v, n]}
-                        />
-                        <Area yAxisId="l" type="monotone" dataKey="primeira" stackId="a" stroke="#0ea5e9" strokeWidth={2} fill="url(#gradPrimeira)" name="1ª entrega" animationDuration={900} />
-                        <Area yAxisId="l" type="monotone" dataKey="troca" stackId="a" stroke="#8b5cf6" strokeWidth={2} fill="url(#gradTroca)" name="Troca" animationDuration={1100} />
-                        <Area yAxisId="l" type="monotone" dataKey="perda" stackId="a" stroke="#ef4444" strokeWidth={2} fill="url(#gradPerda)" name="Perda" animationDuration={1300} />
-                        <Line yAxisId="r" type="monotone" dataKey="valor" stroke="#7f1212" strokeWidth={2.5} dot={false} activeDot={{ r: 5, fill: "#fbbf24", stroke: "#7f1212", strokeWidth: 2 }} filter="url(#glowLine)" name="Valor R$" animationDuration={1400} />
+                        <CartesianGrid strokeDasharray="2 3" stroke="#e2e8f0" vertical={false} />
+                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                        <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={{ fontSize: 11, borderRadius: 6, border: "1px solid #cbd5e1" }} />
+                        <Area type="monotone" dataKey="primeira" stackId="a" stroke="#1a4a6e" strokeWidth={2} fill="url(#gradFlow)" name="1ª entrega" />
+                        <Area type="monotone" dataKey="troca" stackId="a" stroke="#0c2340" strokeWidth={1.5} fill="#1a4a6e" fillOpacity={0.5} name="Troca" />
+                        <Area type="monotone" dataKey="perda" stackId="a" stroke="#7f1212" strokeWidth={1.5} fill="#7f1212" fillOpacity={0.6} name="Perda" />
                       </ComposedChart>
                     </ResponsiveContainer>
                   )}
                 </div>
-              </div>
+              </BiCard>
+            </div>
 
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-slate-400" /> DDS · Evolução
-                    </h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Quantidade × aderência mensal</p>
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-400">{ddsCount} · {ddsAderencia}%</span>
+            {/* Linha 2: DISTRIB. STATUS (barras) + DDS evolução (barras+linha) */}
+            <div className="grid grid-cols-12 gap-3">
+              <BiCard title="Distribuição de Status" className="col-span-12 sm:col-span-5">
+                <div className="h-36">
+                  <ResponsiveContainer>
+                    <BarChart data={statusBarsData} layout="vertical" margin={{ top: 4, right: 30, left: 6, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="2 3" stroke="#e2e8f0" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#0f172a", fontWeight: 800 }} axisLine={false} tickLine={false} width={50} />
+                      <Tooltip cursor={{ fill: "rgba(12,35,64,0.06)" }} contentStyle={{ fontSize: 11, borderRadius: 6, border: "1px solid #cbd5e1" }} />
+                      <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                        {statusBarsData.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                        <LabelList dataKey="value" position="right" style={{ fontSize: 10, fontWeight: 800, fill: "#0f172a" }} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-                <div className="h-52">
-                  {ddsTrend.length === 0 ? <EmptyBlock label="Sem DDS no período" /> : (
+              </BiCard>
+
+              <BiCard title="DDS · Evolução" className="col-span-12 sm:col-span-7">
+                <div className="h-36">
+                  {ddsTrend.length === 0 ? <EmptyBlock label="Sem DDS" /> : (
                     <ResponsiveContainer>
-                      <ComposedChart data={ddsTrend} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="gradDdsBar" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#a78bfa" stopOpacity={1} />
-                            <stop offset="100%" stopColor="#6d28d9" stopOpacity={0.85} />
-                          </linearGradient>
-                          <filter id="glowDds" x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur stdDeviation="2.5" result="b" />
-                            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-                          </filter>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                        <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                        <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={26} />
-                        <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={32} tickFormatter={(v) => `${v}%`} />
-                        <Tooltip
-                          cursor={{ fill: "rgba(139,92,246,0.08)" }}
-                          contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(167,139,250,0.5)", borderRadius: 10, color: "#fff", fontSize: 11, boxShadow: "0 10px 30px rgba(0,0,0,0.4)" }}
-                          labelStyle={{ color: "#a78bfa", fontWeight: 800, letterSpacing: 0.5 }}
-                        />
-                        <Bar yAxisId="l" dataKey="qtd" fill="url(#gradDdsBar)" radius={[8, 8, 0, 0]} name="DDS realizados" animationDuration={1000} />
-                        <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: "#fff", stroke: "#10b981", strokeWidth: 2 }} activeDot={{ r: 6, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }} filter="url(#glowDds)" name="% aderência" animationDuration={1300} />
+                      <ComposedChart data={ddsTrend} margin={{ top: 6, right: 6, left: -22, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="2 3" stroke="#e2e8f0" vertical={false} />
+                        <XAxis dataKey="mes" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                        <YAxis yAxisId="l" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                        <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                        <Tooltip contentStyle={{ fontSize: 11, borderRadius: 6, border: "1px solid #cbd5e1" }} />
+                        <Bar yAxisId="l" dataKey="qtd" fill="#6d28d9" radius={[3, 3, 0, 0]} name="DDS" />
+                        <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3, fill: "#fff", stroke: "#10b981", strokeWidth: 2 }} name="% aderência" />
                       </ComposedChart>
                     </ResponsiveContainer>
                   )}
                 </div>
-              </div>
+              </BiCard>
             </div>
 
-            {/* Módulos Compactos */}
+            {/* Linha 3: AÇÕES RECOMENDADAS + PRÓXIMOS 7 DIAS */}
+            <div className="grid grid-cols-12 gap-3">
+              <BiCard
+                title="Ações Recomendadas"
+                className="col-span-12 sm:col-span-7"
+                action={<Link to="/app/hoje" className="text-[9px] font-bold uppercase tracking-wider text-slate-500 hover:text-[#7f1212] flex items-center gap-1">Ver tudo <ArrowRight className="h-3 w-3" /></Link>}
+              >
+                {acoes.length === 0 ? (
+                  <div className="flex items-center justify-center py-6 text-emerald-600 text-[11px] font-black uppercase tracking-wider gap-2">
+                    <ShieldCheck className="h-4 w-4" /> Tudo em ordem
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                    {acoes.map((a) => (
+                      <Link key={a.id} to={a.link}
+                        className={`flex items-center gap-2 p-2 rounded border transition-colors ${
+                          a.severity === "crit"
+                            ? "border-rose-200 bg-rose-50/60 hover:bg-rose-50"
+                            : "border-slate-200 hover:bg-slate-50"
+                        }`}>
+                        <div className={`w-1.5 self-stretch rounded-full ${a.severity === "crit" ? "bg-[#7f1212]" : "bg-amber-500"} ${a.severity === "crit" ? "animate-pulse" : ""}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11px] font-bold text-slate-900 truncate">{a.titulo}</div>
+                          <div className="text-[9px] text-slate-500 truncate">{a.sub}</div>
+                        </div>
+                        <ChevronRight className="h-3 w-3 text-slate-400 shrink-0" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </BiCard>
+
+              <BiCard
+                title="Próximos 7 Dias"
+                className="col-span-12 sm:col-span-5"
+                action={<Calendar className="h-3 w-3 text-slate-400" />}
+              >
+                {proximos7.length === 0 ? (
+                  <div className="py-5 text-center text-emerald-600 text-[10px] font-bold uppercase tracking-wider">
+                    Sem vencimentos
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                    {proximos7.map((e, i) => {
+                      const d = new Date(e.date + "T00:00");
+                      return (
+                        <div key={i} className="flex gap-2 items-start p-1.5 rounded hover:bg-slate-50">
+                          <div className="text-center shrink-0 w-8 bg-slate-100 rounded py-0.5">
+                            <div className="text-[7px] font-black text-slate-400 uppercase leading-none">{MONTHS_PT[d.getMonth()]}</div>
+                            <div className={`text-sm font-black leading-tight ${e.severity === "crit" ? "text-[#7f1212]" : "text-slate-700"}`}>
+                              {String(d.getDate()).padStart(2, "0")}
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1">
+                              <span className={`text-[8px] font-black uppercase tracking-wider px-1 py-px rounded ${
+                                e.tipo === "ASO" ? "bg-amber-100 text-amber-700"
+                                  : e.tipo === "EXT" ? "bg-rose-100 text-[#7f1212]"
+                                  : "bg-slate-100 text-slate-600"
+                              }`}>{e.tipo}</span>
+                              <span className="text-[10px] font-bold text-slate-800 truncate">{e.titulo}</span>
+                            </div>
+                            <div className="text-[9px] text-slate-500 truncate">{e.sub}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </BiCard>
+            </div>
+
+            {/* Linha 4: Módulos (3 cards densos) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <ModuleStat
-                to="/app/controle-documentos"
-                icon={FolderOpen}
-                title="Documentos"
-                primary={docMetrics.abertos}
-                primaryLabel="abertos"
+              <ModuleStat to="/app/controle-documentos" icon={FolderOpen} title="Documentos" primary={docMetrics.abertos} primaryLabel="abertos"
                 stats={[
                   { label: "Críticos", value: docMetrics.criticos, tone: docMetrics.criticos > 0 ? "crit" : "neutral" },
                   { label: "Vencidos", value: docMetrics.vencidos, tone: docMetrics.vencidos > 0 ? "crit" : "neutral" },
                   { label: "Resolvidos", value: docMetrics.resolvidos, tone: "ok" },
-                ]}
-              />
-              <ModuleStat
-                to="/app/extintores"
-                icon={Flame}
-                title="Extintores"
-                primary={extMetrics.ativos}
-                primaryLabel="ativos"
+                ]} />
+              <ModuleStat to="/app/extintores" icon={Flame} title="Extintores" primary={extMetrics.ativos} primaryLabel="ativos"
                 stats={[
                   { label: "Vencidos", value: extMetrics.vencidos, tone: extMetrics.vencidos > 0 ? "crit" : "neutral" },
-                  { label: "Vencendo 30d", value: extMetrics.vencendo, tone: extMetrics.vencendo > 0 ? "warn" : "neutral" },
-                  { label: "Sem inspeção", value: extMetrics.semInspecao, tone: extMetrics.semInspecao > 0 ? "warn" : "ok" },
-                ]}
-              />
-              <ModuleStat
-                to="/app/estoque/epi"
-                icon={Package}
-                title="Estoque EPI"
-                primary={estoqueBaixo + caVencendo}
-                primaryLabel="atenção"
+                  { label: "Vence 30d", value: extMetrics.vencendo, tone: extMetrics.vencendo > 0 ? "warn" : "neutral" },
+                  { label: "S/ insp.", value: extMetrics.semInspecao, tone: extMetrics.semInspecao > 0 ? "warn" : "ok" },
+                ]} />
+              <ModuleStat to="/app/estoque/epi" icon={Package} title="Estoque EPI" primary={estoqueBaixo + caVencendo} primaryLabel="atenção"
                 stats={[
-                  { label: "Estoque baixo", value: estoqueBaixo, tone: estoqueBaixo > 0 ? "crit" : "ok" },
-                  { label: "CAs vencendo", value: caVencendo, tone: caVencendo > 0 ? "warn" : "ok" },
-                  { label: "EPIs entregues", value: totalEntregas, tone: "neutral" },
-                ]}
-              />
+                  { label: "Baixo", value: estoqueBaixo, tone: estoqueBaixo > 0 ? "crit" : "ok" },
+                  { label: "CAs venc.", value: caVencendo, tone: caVencendo > 0 ? "warn" : "ok" },
+                  { label: "Entreg.", value: totalEntregas, tone: "neutral" },
+                ]} />
             </div>
           </div>
 
-          {/* RIGHT COL (1/3) */}
-          <div className="space-y-5">
+          {/* ============ COLUNA DIREITA (3 cols) ============ */}
+          <aside className="col-span-12 lg:col-span-3 flex flex-col gap-3">
 
-            {/* Busca universal */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-              <div className="relative">
-                <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Buscar colaborador, CPF, função..."
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-[#7f1212]/20 focus:border-[#7f1212] transition-all placeholder:text-slate-400 placeholder:font-normal"
-                />
-              </div>
-              {search && (
-                <div className="mt-3 space-y-1 max-h-56 overflow-y-auto">
-                  {searchResults.length === 0 ? (
-                    <div className="text-center text-slate-400 py-3 text-[10px] font-bold uppercase">Nenhum resultado</div>
-                  ) : searchResults.map((r) => (
-                    <Link key={r.emp.id} to="/app/employees/$id" params={{ id: r.emp.id }}
-                      className="flex items-center justify-between p-2 border border-slate-100 rounded-md hover:border-[#7f1212] hover:bg-slate-50 transition-all">
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-bold text-slate-900 truncate">{r.emp.nome}</div>
-                        <div className="text-[9px] text-slate-500 mt-0.5 truncate">{r.company} · {r.role?.name ?? "Sem cargo"}</div>
-                      </div>
-                      <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${r.status.colorClass} text-white shrink-0 ml-2`}>{r.status.label}</span>
-                    </Link>
-                  ))}
+            {/* DONUT Conformidade Geral */}
+            <BiCard title="Status Geral" tight>
+              <div className="relative h-40">
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie data={donutData.length > 0 ? donutData : [{ name: "—", value: 1, fill: "#e2e8f0" }]}
+                      dataKey="value" innerRadius={42} outerRadius={62} paddingAngle={2} stroke="#fff" strokeWidth={2}>
+                      {(donutData.length > 0 ? donutData : [{ fill: "#e2e8f0" }]).map((d: any, i: number) => (
+                        <Cell key={i} fill={d.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 6, border: "1px solid #cbd5e1" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <div className={`text-2xl font-black tabular-nums leading-none ${
+                    conformidadeFiltro >= 90 ? "text-emerald-600" : conformidadeFiltro >= 70 ? "text-amber-600" : "text-[#7f1212]"
+                  }`}>{conformidadeFiltro}%</div>
+                  <div className="text-[8px] font-black uppercase tracking-widest text-slate-400 mt-0.5">Conformidade</div>
                 </div>
-              )}
-            </div>
+              </div>
+              <div className="flex justify-around pt-2 mt-1 border-t border-slate-100 text-[9px]">
+                <Legenda cor="bg-emerald-500" label={`${aptos}`} />
+                <Legenda cor="bg-amber-500" label={`${alertas}`} />
+                <Legenda cor="bg-[#7f1212]" label={`${bloqueados}`} />
+              </div>
+            </BiCard>
 
-            {/* Próximos 7 dias */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-              <h3 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-slate-400" /> Próximos 7 dias
-              </h3>
-              {proximos7.length === 0 ? (
-                <div className="py-6 text-center text-emerald-600 text-xs font-bold uppercase tracking-wider">
-                  Sem vencimentos próximos
+            {/* RANKING Empresas com mais pendências */}
+            <BiCard title="Ranking · Pendências">
+              {pendPorEmpresa.length === 0 ? (
+                <div className="py-4 text-center text-emerald-600 text-[10px] font-black uppercase tracking-wider">
+                  ✓ Sem pendências
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {proximos7.map((e, i) => {
-                    const d = new Date(e.date + "T00:00");
+                <div className="space-y-1">
+                  {pendPorEmpresa.map((p, i) => {
+                    const total = p.alerta + p.bloq;
                     return (
-                      <div key={i} className="flex gap-3 items-start">
-                        <div className="text-center shrink-0 w-10">
-                          <div className="text-[9px] font-bold text-slate-400 uppercase">{MONTHS_PT[d.getMonth()]}</div>
-                          <div className={`text-lg font-black leading-none ${e.severity === "crit" ? "text-[#7f1212]" : "text-slate-700"}`}>
-                            {String(d.getDate()).padStart(2, "0")}
-                          </div>
+                      <div key={p.id} className="flex items-center gap-2 py-1 border-b border-slate-100 last:border-0">
+                        <span className="text-[9px] font-black text-slate-400 w-3 text-right">{i + 1}</span>
+                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#0c2340] to-[#1a4a6e] flex items-center justify-center text-[8px] font-black text-white shrink-0">
+                          {p.name.slice(0, 2).toUpperCase()}
                         </div>
-                        <div className="border-l border-slate-100 pl-3 py-0.5 min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                              e.tipo === "ASO" ? "bg-amber-100 text-amber-700"
-                                : e.tipo === "EXT" ? "bg-rose-100 text-[#7f1212]"
-                                : "bg-slate-100 text-slate-600"
-                            }`}>{e.tipo}</span>
-                            <span className="text-xs font-bold text-slate-800 truncate">{e.titulo}</span>
-                          </div>
-                          <div className="text-[10px] text-slate-500 truncate mt-0.5">{e.sub}</div>
+                        <span className="text-[10px] text-slate-800 truncate font-bold flex-1">{p.name}</span>
+                        <div className="flex gap-1 shrink-0">
+                          {p.bloq > 0 && <span className="bg-[#7f1212] text-white text-[8px] font-black px-1 py-0.5 rounded leading-none">{p.bloq}</span>}
+                          {p.alerta > 0 && <span className="bg-amber-500 text-white text-[8px] font-black px-1 py-0.5 rounded leading-none">{p.alerta}</span>}
+                          <span className="text-[9px] font-black text-slate-700 tabular-nums w-4 text-right">{total}</span>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               )}
-              <Link to="/app/hoje" className="w-full mt-5 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center justify-center gap-1.5">
-                Ver agenda completa <ChevronRight className="h-3 w-3" />
-              </Link>
-            </div>
+            </BiCard>
 
-            {/* Pendências por Empresa (card bordô assinatura) */}
-            <div className="bg-gradient-to-br from-[#7f1212] to-[#5a0c0c] p-5 rounded-xl border border-rose-950 shadow-lg text-white">
-              <h3 className="font-bold text-white text-sm mb-1 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" /> Pendências por Empresa
-              </h3>
-              <p className="text-[10px] text-rose-200 mb-4">Quem tem mais bloqueios e alertas</p>
-              {pendPorEmpresa.length === 0 ? (
-                <div className="py-6 text-center text-rose-100 text-xs font-bold uppercase">
-                  ✓ Sem pendências
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {pendPorEmpresa.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-7 h-7 rounded-full bg-rose-800/60 border border-rose-700/60 flex items-center justify-center text-[10px] font-black text-white shrink-0">
-                          {p.name.slice(0, 2).toUpperCase()}
-                        </div>
-                        <span className="text-xs text-rose-50 truncate font-medium">{p.name}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {p.alerta > 0 && (
-                          <span className="bg-amber-400/20 border border-amber-300/40 text-amber-100 text-[10px] font-black px-1.5 py-0.5 rounded">{p.alerta} ⚠</span>
-                        )}
-                        {p.bloq > 0 && (
-                          <span className="bg-white text-[#7f1212] text-[10px] font-black px-1.5 py-0.5 rounded">{p.bloq} ✕</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <p className="mt-4 text-[9px] text-rose-300 italic">Use o filtro de empresa acima para detalhar</p>
-            </div>
-          </div>
+            {/* MEDIDORES VERTICAIS estilo "Tempo na Função" */}
+            <BiCard title="Medidores · SST">
+              <div className="grid grid-cols-4 gap-2 pt-1">
+                <VerticalGauge label="ASOs OK" value={Math.max(0, totalEmp - asoVencidos - asoVencendo30)} max={Math.max(1, totalEmp)} color="#10b981" />
+                <VerticalGauge label="APRs" value={aprsAtivas} max={Math.max(1, aprsAtivas + 5)} color="#0c2340" />
+                <VerticalGauge label="Ext. OK" value={Math.max(0, extMetrics.ativos - extMetrics.vencidos)} max={Math.max(1, extMetrics.ativos)} color="#1a4a6e" />
+                <VerticalGauge label="DDS Ad." value={ddsAderencia} max={100} color="#6d28d9" suffix="%" />
+              </div>
+            </BiCard>
+          </aside>
         </div>
 
         {isLoading && (
-          <div className="text-center text-xs text-slate-400 py-4 animate-pulse">Carregando dados…</div>
+          <div className="text-center text-xs text-slate-400 py-2 animate-pulse">Carregando dados…</div>
         )}
       </div>
     </div>
@@ -778,45 +715,66 @@ function TstPanel() {
 
 // === Subcomponentes ===
 
-function KpiCard({
-  label, value, sub, badge, critical, pulse, barPct, barTone,
+function BiCard({
+  title, children, className, action, tight, noTitle,
 }: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  badge?: { text: string; tone: "ok" | "warn" | "crit" };
-  critical?: boolean;
-  pulse?: boolean;
-  barPct?: number;
-  barTone?: "ok" | "warn" | "crit";
+  title?: string;
+  children: React.ReactNode;
+  className?: string;
+  action?: React.ReactNode;
+  tight?: boolean;
+  noTitle?: boolean;
 }) {
-  const badgeCls = badge?.tone === "ok" ? "text-emerald-600 bg-emerald-50"
-    : badge?.tone === "warn" ? "text-amber-600 bg-amber-50"
-    : "text-[#7f1212] bg-rose-50";
-  const barCls = barTone === "ok" ? "bg-emerald-500"
-    : barTone === "warn" ? "bg-amber-500"
-    : "bg-[#7f1212]";
   return (
-    <div className={`bg-white p-4 rounded-xl border shadow-sm ${critical ? "border-l-4 border-l-[#7f1212] border-y-slate-200 border-r-slate-200" : "border-slate-200"}`}>
-      <div className="flex justify-between items-start mb-2 gap-2">
-        <span className={`text-[10px] font-bold uppercase tracking-wider ${critical ? "text-[#7f1212]" : "text-slate-500"}`}>{label}</span>
-        {badge && <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${badgeCls}`}>{badge.text}</span>}
-        {pulse && <div className="h-2 w-2 rounded-full bg-[#7f1212] animate-pulse mt-1" />}
-      </div>
-      <div className={`text-3xl font-bold ${critical ? "text-rose-950" : "text-slate-900"} tabular-nums`}>{value}</div>
-      {sub && <p className={`text-[10px] mt-2 font-medium ${critical ? "text-rose-700" : "text-slate-500"}`}>{sub}</p>}
-      {barPct !== undefined && (
-        <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
-          <div className={`${barCls} h-full transition-all`} style={{ width: `${Math.max(0, Math.min(100, barPct))}%` }} />
+    <div className={`bg-white rounded-md border border-slate-300 shadow-sm ${tight ? "p-2" : "p-3"} ${className ?? ""}`}>
+      {!noTitle && title && (
+        <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-[#0c2340]">{title}</h3>
+          {action}
         </div>
       )}
+      {children}
+    </div>
+  );
+}
+
+function FilterChip({ label, value, color, active }: { label: string; value: number; color: string; active?: boolean }) {
+  return (
+    <div
+      className={`flex items-center justify-between px-2 py-1.5 rounded border text-[10px] font-bold transition-colors ${
+        active ? "bg-slate-900 text-white border-slate-900" : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+      }`}
+    >
+      <div className="flex items-center gap-1.5 min-w-0">
+        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: color }} />
+        <span className="truncate uppercase tracking-wider">{label}</span>
+      </div>
+      <span className="font-black tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+function VerticalGauge({ label, value, max, color, suffix }: { label: string; value: number; max: number; color: string; suffix?: string }) {
+  const pct = Math.max(2, Math.min(100, Math.round((value / max) * 100)));
+  return (
+    <div className="flex flex-col items-center">
+      <div className="text-[10px] font-black tabular-nums text-slate-900 leading-none mb-1">
+        {value}{suffix ?? ""}
+      </div>
+      <div className="relative h-20 w-3.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+        <div
+          className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-700"
+          style={{ height: `${pct}%`, background: `linear-gradient(180deg,${color},${color}cc)`, boxShadow: `0 0 6px ${color}80` }}
+        />
+      </div>
+      <div className="text-[7px] font-black uppercase tracking-wider text-slate-500 mt-1 text-center leading-tight">{label}</div>
     </div>
   );
 }
 
 function Legenda({ cor, label }: { cor: string; label: string }) {
   return (
-    <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium">
+    <div className="flex items-center gap-1 text-[10px] text-slate-600 font-black tabular-nums">
       <div className={`h-2 w-2 rounded-full ${cor}`} /> {label}
     </div>
   );
@@ -824,7 +782,7 @@ function Legenda({ cor, label }: { cor: string; label: string }) {
 
 function EmptyBlock({ label }: { label: string }) {
   return (
-    <div className="h-full w-full flex items-center justify-center text-[11px] font-bold uppercase tracking-wider text-slate-400 py-8">
+    <div className="h-full w-full flex items-center justify-center text-[10px] font-bold uppercase tracking-wider text-slate-400 py-4">
       {label}
     </div>
   );
@@ -841,21 +799,19 @@ function ModuleStat({
   stats: { label: string; value: number; tone: "ok" | "warn" | "crit" | "neutral" }[];
 }) {
   return (
-    <Link to={to} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:border-[#7f1212] hover:shadow-md transition-all group">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-rose-50 flex items-center justify-center transition-colors">
-            <Icon className="h-3.5 w-3.5 text-slate-600 group-hover:text-[#7f1212]" />
-          </div>
-          <h4 className="text-xs font-bold text-slate-800">{title}</h4>
+    <Link to={to} className="bg-white rounded-md border border-slate-300 shadow-sm p-3 hover:border-[#7f1212] hover:shadow-md transition-all group">
+      <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
+        <div className="flex items-center gap-1.5">
+          <Icon className="h-3.5 w-3.5 text-[#0c2340]" />
+          <h4 className="text-[10px] font-black uppercase tracking-[0.15em] text-[#0c2340]">{title}</h4>
         </div>
-        <ChevronRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-[#7f1212] transition-colors" />
+        <ChevronRight className="h-3 w-3 text-slate-300 group-hover:text-[#7f1212] transition-colors" />
       </div>
-      <div className="flex items-baseline gap-1.5 mb-3">
-        <span className="text-2xl font-bold text-slate-900 tabular-nums">{primary}</span>
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{primaryLabel}</span>
+      <div className="flex items-baseline gap-1.5 mb-2">
+        <span className="text-xl font-black text-slate-900 tabular-nums">{primary}</span>
+        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{primaryLabel}</span>
       </div>
-      <div className="grid grid-cols-3 gap-1.5 pt-3 border-t border-slate-100">
+      <div className="grid grid-cols-3 gap-1 pt-2 border-t border-slate-100">
         {stats.map((s) => {
           const cls = s.tone === "crit" ? "text-[#7f1212]"
             : s.tone === "warn" ? "text-amber-600"
@@ -863,8 +819,8 @@ function ModuleStat({
             : "text-slate-700";
           return (
             <div key={s.label} className="text-center">
-              <div className={`text-sm font-bold tabular-nums ${cls}`}>{s.value}</div>
-              <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 mt-0.5 truncate">{s.label}</div>
+              <div className={`text-xs font-black tabular-nums ${cls}`}>{s.value}</div>
+              <div className="text-[7px] font-bold uppercase tracking-wider text-slate-400 mt-0.5 truncate">{s.label}</div>
             </div>
           );
         })}
