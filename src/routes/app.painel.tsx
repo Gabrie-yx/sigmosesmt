@@ -528,19 +528,25 @@ function TstPanel() {
           {/* 3 · Pareto Empresas por colaborador (Bar + acumulado %) */}
           <Card title="03 · Pareto · Empresas" className="col-span-12 md:col-span-6"
             action={<span className="text-[10px] font-bold text-slate-500">{totalEmp} colab.</span>}>
-            <div className="h-52">
+            <div className="h-64">
               {paretoEmpresas.length === 0 ? <EmptyBlock label="Sem dados" /> : (
                 <ResponsiveContainer>
                   <ComposedChart data={paretoEmpresas} margin={{ top: 16, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradPareto" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#1a4a6e" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#0c2340" stopOpacity={0.85} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#475569" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
                     <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
-                    <Bar yAxisId="l" dataKey="qtd" fill="#0c2340" radius={[4, 4, 0, 0]} barSize={28} name="Colaboradores">
-                      <LabelList dataKey="qtd" position="top" style={{ fontSize: 10, fontWeight: 800, fill: "#0c2340" }} />
+                    <Bar yAxisId="l" dataKey="qtd" fill="url(#gradPareto)" radius={[8, 8, 0, 0]} barSize={36} name="Colaboradores">
+                      <LabelList dataKey="qtd" position="top" style={{ fontSize: 11, fontWeight: 900, fill: "#0c2340" }} />
                     </Bar>
-                    <Line yAxisId="r" type="monotone" dataKey="acumulado" stroke="#2d8a9e" strokeWidth={2.5} dot={{ r: 3, fill: "#fff", stroke: "#2d8a9e", strokeWidth: 2 }} name="% Acumulado" />
+                    <Line yAxisId="r" type="monotone" dataKey="acumulado" stroke="#c8a23c" strokeWidth={3} dot={{ r: 4, fill: "#fff", stroke: "#c8a23c", strokeWidth: 2.5 }} name="% Acumulado" />
                   </ComposedChart>
                 </ResponsiveContainer>
               )}
@@ -550,23 +556,31 @@ function TstPanel() {
           {/* 4 · Área Fluxo Entregas EPI */}
           <Card title="04 · Fluxo EPI · Tendência" className="col-span-12 md:col-span-6"
             action={<span className="text-[10px] font-bold text-slate-500 flex items-center gap-1"><TrendingUp className="h-3 w-3" />{totalEntregas} · R$ {valorEntregas.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}</span>}>
-            <div className="h-52">
+            <div className="h-64">
               {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas" /> : (
                 <ResponsiveContainer>
                   <ComposedChart data={entregaSerie} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradArea" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2d8a9e" stopOpacity={0.55} />
+                        <stop offset="0%" stopColor="#2d8a9e" stopOpacity={0.7} />
                         <stop offset="100%" stopColor="#2d8a9e" stopOpacity={0.05} />
+                      </linearGradient>
+                      <linearGradient id="gradArea2" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#0c2340" stopOpacity={0.45} />
+                        <stop offset="100%" stopColor="#0c2340" stopOpacity={0.02} />
+                      </linearGradient>
+                      <linearGradient id="gradArea3" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#c8102e" stopOpacity={0.5} />
+                        <stop offset="100%" stopColor="#c8102e" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                     <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
-                    <Area type="monotone" dataKey="primeira" stroke="#2d8a9e" strokeWidth={2.5} fill="url(#gradArea)" name="1ª Entrega" />
-                    <Line type="monotone" dataKey="troca" stroke="#0c2340" strokeWidth={2} dot={false} name="Troca" />
-                    <Line type="monotone" dataKey="perda" stroke="#c8102e" strokeWidth={2} dot={false} name="Perda" />
+                    <Area type="monotone" dataKey="primeira" stroke="#2d8a9e" strokeWidth={3} fill="url(#gradArea)" name="1ª Entrega" />
+                    <Area type="monotone" dataKey="troca" stroke="#0c2340" strokeWidth={2.5} fill="url(#gradArea2)" name="Troca" />
+                    <Area type="monotone" dataKey="perda" stroke="#c8102e" strokeWidth={2.5} fill="url(#gradArea3)" name="Perda" />
                   </ComposedChart>
                 </ResponsiveContainer>
               )}
@@ -575,19 +589,30 @@ function TstPanel() {
 
           {/* 5 · Score Top 5 Empresas (barras verticais) */}
           <Card title="05 · Score · TOP 5" className="col-span-12 md:col-span-4">
-            <div className="h-52">
+            <div className="h-64">
               {top5Empresas.length === 0 ? <EmptyBlock label="Sem empresas" /> : (
                 <ResponsiveContainer>
                   <BarChart data={top5Empresas} margin={{ top: 20, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradScoreOk" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#5cbdb9" /><stop offset="100%" stopColor="#2d8a9e" />
+                      </linearGradient>
+                      <linearGradient id="gradScoreWarn" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#e8c069" /><stop offset="100%" stopColor="#c8a23c" />
+                      </linearGradient>
+                      <linearGradient id="gradScoreBad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#e85368" /><stop offset="100%" stopColor="#c8102e" />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#475569", fontWeight: 600 }} axisLine={false} tickLine={false} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                     <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} formatter={(v: any) => [`${v}%`, "Score"]} />
-                    <Bar dataKey="score" radius={[6, 6, 0, 0]} barSize={36}>
+                    <Bar dataKey="score" radius={[10, 10, 0, 0]} barSize={44}>
                       {top5Empresas.map((e: any, i: number) => (
-                        <Cell key={i} fill={e.score >= 90 ? "#2d8a9e" : e.score >= 70 ? "#c8a23c" : "#c8102e"} />
+                        <Cell key={i} fill={e.score >= 90 ? "url(#gradScoreOk)" : e.score >= 70 ? "url(#gradScoreWarn)" : "url(#gradScoreBad)"} />
                       ))}
-                      <LabelList dataKey="score" position="top" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fontWeight: 800, fill: "#0c2340" }} />
+                      <LabelList dataKey="score" position="top" formatter={(v: any) => `${v}%`} style={{ fontSize: 12, fontWeight: 900, fill: "#0c2340" }} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -598,17 +623,22 @@ function TstPanel() {
           {/* 6 · DDS Composto (qtd × aderência) */}
           <Card title="06 · DDS · Qtd × Aderência" className="col-span-12 md:col-span-5"
             action={<span className="text-[10px] font-black uppercase tracking-wider text-[#2d8a9e]">{ddsAderencia}% médio</span>}>
-            <div className="h-52">
+            <div className="h-64">
               {ddsTrend.length === 0 ? <EmptyBlock label="Sem DDS" /> : (
                 <ResponsiveContainer>
                   <ComposedChart data={ddsTrend} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradDDS" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#1a4a6e" /><stop offset="100%" stopColor="#0c2340" />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
                     <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
                     <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
-                    <Bar yAxisId="l" dataKey="qtd" fill="#0c2340" radius={[4, 4, 0, 0]} barSize={22} name="DDS" />
-                    <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#c8102e" strokeWidth={3} dot={{ r: 4, fill: "#fff", stroke: "#c8102e", strokeWidth: 2.5 }} name="% Aderência" />
+                    <Bar yAxisId="l" dataKey="qtd" fill="url(#gradDDS)" radius={[8, 8, 0, 0]} barSize={28} name="DDS" />
+                    <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#c8102e" strokeWidth={3.5} dot={{ r: 5, fill: "#fff", stroke: "#c8102e", strokeWidth: 2.5 }} name="% Aderência" />
                   </ComposedChart>
                 </ResponsiveContainer>
               )}
@@ -617,15 +647,21 @@ function TstPanel() {
 
           {/* 7 · Radial Aderência DDS */}
           <Card title="07 · Aderência DDS" className="col-span-12 md:col-span-3">
-            <div className="relative h-44">
+            <div className="relative h-56">
               <ResponsiveContainer>
-                <RadialBarChart innerRadius="65%" outerRadius="100%" data={radialDDS} startAngle={210} endAngle={-30}>
-                  <RadialBar dataKey="value" cornerRadius={10} background={{ fill: "#e2e8f0" }} />
+                <RadialBarChart innerRadius="70%" outerRadius="100%" data={radialDDS} startAngle={220} endAngle={-40}>
+                  <defs>
+                    <linearGradient id="gradRadial" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor={radialDDS[0].fill} stopOpacity={1} />
+                      <stop offset="100%" stopColor={radialDDS[0].fill} stopOpacity={0.6} />
+                    </linearGradient>
+                  </defs>
+                  <RadialBar dataKey="value" cornerRadius={14} background={{ fill: "#eef2f6" }} fill="url(#gradRadial)" />
                 </RadialBarChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <div className="text-3xl font-black tabular-nums" style={{ color: radialDDS[0].fill }}>{ddsAderencia}%</div>
-                <div className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mt-1">Período</div>
+                <div className="text-4xl font-black tabular-nums drop-shadow-sm" style={{ color: radialDDS[0].fill }}>{ddsAderencia}%</div>
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1.5">Período</div>
               </div>
             </div>
             <div className="flex justify-around pt-3 mt-2 border-t border-slate-100">
@@ -636,18 +672,28 @@ function TstPanel() {
 
           {/* 8 · Linha Documentos Abertos × Resolvidos */}
           <Card title="08 · Não Conformidades · 6 meses" className="col-span-12 md:col-span-6">
-            <div className="h-52">
+            <div className="h-64">
               {docsMensal.every((d) => d.abertos === 0 && d.resolvidos === 0) ? <EmptyBlock label="Sem registros" /> : (
                 <ResponsiveContainer>
-                  <LineChart data={docsMensal} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <ComposedChart data={docsMensal} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradAbertos" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#c8102e" stopOpacity={0.45} />
+                        <stop offset="100%" stopColor="#c8102e" stopOpacity={0.02} />
+                      </linearGradient>
+                      <linearGradient id="gradResolv" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#2d8a9e" stopOpacity={0.45} />
+                        <stop offset="100%" stopColor="#2d8a9e" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
                     <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
                     <Legend wrapperStyle={{ fontSize: 10 }} />
-                    <Line type="monotone" dataKey="abertos" stroke="#c8102e" strokeWidth={2.5} dot={{ r: 3 }} name="Abertos" />
-                    <Line type="monotone" dataKey="resolvidos" stroke="#2d8a9e" strokeWidth={2.5} dot={{ r: 3 }} name="Resolvidos" />
-                  </LineChart>
+                    <Area type="monotone" dataKey="abertos" stroke="#c8102e" strokeWidth={3} fill="url(#gradAbertos)" name="Abertos" dot={{ r: 4, fill: "#fff", stroke: "#c8102e", strokeWidth: 2 }} />
+                    <Area type="monotone" dataKey="resolvidos" stroke="#2d8a9e" strokeWidth={3} fill="url(#gradResolv)" name="Resolvidos" dot={{ r: 4, fill: "#fff", stroke: "#2d8a9e", strokeWidth: 2 }} />
+                  </ComposedChart>
                 </ResponsiveContainer>
               )}
             </div>
@@ -655,16 +701,24 @@ function TstPanel() {
 
           {/* 9 · Barras Extintores por Status (NR-23) */}
           <Card title="09 · Extintores · NR-23" className="col-span-12 md:col-span-3">
-            <div className="h-52">
+            <div className="h-64">
               <ResponsiveContainer>
                 <BarChart data={extintoresBars} margin={{ top: 20, right: 8, left: -25, bottom: 0 }}>
+                  <defs>
+                    {extintoresBars.map((e, i) => (
+                      <linearGradient id={`gradExt-${i}`} key={i} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={e.fill} stopOpacity={1} />
+                        <stop offset="100%" stopColor={e.fill} stopOpacity={0.6} />
+                      </linearGradient>
+                    ))}
+                  </defs>
                   <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#475569", fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={28}>
-                    {extintoresBars.map((e, i) => <Cell key={i} fill={e.fill} />)}
-                    <LabelList dataKey="value" position="top" style={{ fontSize: 10, fontWeight: 800, fill: "#0c2340" }} />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={36}>
+                    {extintoresBars.map((_e, i) => <Cell key={i} fill={`url(#gradExt-${i})`} />)}
+                    <LabelList dataKey="value" position="top" style={{ fontSize: 12, fontWeight: 900, fill: "#0c2340" }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
