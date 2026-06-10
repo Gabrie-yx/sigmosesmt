@@ -1,104 +1,68 @@
-# Módulo OSS (Ordem de Serviço de Segurança) — NR-01 item 1.4.1 "c"
+## Objetivo
 
-## Visão geral
-Cria o módulo de Ordens de Serviço de Segurança por **cargo**, gerada de forma **híbrida** (auto-monta a partir da Matriz de Riscos + EPIs + NRs, mas SESMT pode editar antes de emitir), com assinatura **física via upload de PDF assinado**, e reciclagem automática quando:
-- Funcionário muda de cargo
-- Risco/EPI do cargo é alterado
-- Vence o ciclo anual
+Reorganizar todo o `/app/painel` na pegada visual da imagem que você enviou (dashboard de controle de acidentes/incidentes, estilo BI corporativo). Toda a **lógica e dados existentes são preservados** — mudam só a estrutura visual, a grade e a estética dos gráficos.
 
-## 1. Banco de dados (migration única)
+## Linguagem visual nova (inspirada na imagem)
 
-### `oss_templates` — modelos editáveis por cargo
-- `cargo` (text, único) — chave do cargo (ex.: "SOLDADOR", "CALDEREIRO")
-- `titulo`, `setor`, `descricao_atividades` (text)
-- `riscos_texto`, `medidas_preventivas`, `epis_obrigatorios`, `proibicoes`, `penalidades`, `procedimentos_emergencia` (text) — todos pré-preenchidos a partir da Matriz de Riscos + ficha de EPI, mas editáveis
-- `validade_meses` (int, default 12)
-- `revisao` (int, default 1) — incrementa a cada alteração relevante
-- `hash_conteudo` (text) — SHA do conteúdo, usado pra detectar mudança de risco/EPI e disparar re-assinatura
-- `ativo` (bool)
+- **Header largo azul-marinho** com título em caixa alta branco, faixa fina abaixo, filtros à direita (empresa / período) em pílulas brancas.
+- **Coluna de filtros lateral** (esquerda, estreita) com blocos pequenos: Empresa, Período, Tipo (APTO/ALERTA/BLOQ), Modalidade, Setor — clicáveis pra cruzar dados.
+- **Grade central densa** (3–4 colunas), cada bloco com borda fina cinza, título compacto em maiúsculas e gráfico ocupando o card inteiro — sem espaço desperdiçado.
+- **KPI gigante vermelho** no topo-esquerda (estilo o "19" da imagem): número grande, label curto embaixo, fundo vermelho sangue (mantém o `#7f1212` da marca).
+- **Mini-charts coloridos**: barras verticais, donut, área pequena, ranking horizontal — todos com mesmas dimensões pra dar ritmo visual.
+- **Coluna direita** com ranking de pessoas/empresas (estilo o "GESTOR" da imagem) e medidores verticais (Tempo na Função / Tempo na Empresa → vira "Conformidade por Empresa" / "DDS por Setor").
 
-### `oss_emissoes` — OSS emitidas por funcionário
-- `employee_id` (uuid → employees)
-- `template_id` (uuid → oss_templates), `template_revisao` (int) — congela versão emitida
-- `cargo_snapshot` (text)
-- `pdf_gerado_path` (storage path, bucket `oss-pdfs`) — PDF "limpo" pra imprimir
-- `pdf_assinado_path` (storage path) — PDF escaneado de volta
-- `status` (enum: `PENDENTE_ASSINATURA`, `ASSINADO`, `VENCIDO`, `SUBSTITUIDO`)
-- `emitido_em`, `assinado_em`, `expira_em` (timestamptz)
-- `motivo_emissao` (enum: `ADMISSAO`, `MUDANCA_CARGO`, `REVISAO_RISCO`, `RECICLAGEM_ANUAL`)
-- `emitido_por`, `validado_por` (uuid → auth.users)
+## Mapeamento dos blocos (o que vai onde)
 
-### RLS
-- SELECT: usuários autenticados do mesmo workspace
-- INSERT/UPDATE: somente perfis SESMT/Admin (via `has_role`)
-
-### Triggers
-- Ao alterar `cargo` do funcionário → marca OSS ativa como `SUBSTITUIDO` e cria pendência
-- Ao alterar Matriz de Riscos de um cargo → recalcula `hash_conteudo` do template, marca OSS ativas como `SUBSTITUIDO`
-- Job diário (server fn agendada manualmente por enquanto) → marca `VENCIDO` quando `expira_em < now()`
-
-## 2. Storage
-Bucket privado `oss-pdfs` (RLS por user/role).
-
-## 3. Rotas e UI
-
-```
-src/routes/
-  app.oss.tsx                    # layout
-  app.oss.index.tsx              # lista de OSS emitidas (filtros: status, cargo, funcionário)
-  app.oss.templates.tsx          # gestão de modelos por cargo
-  app.oss.$id.tsx                # detalhe de uma OSS emitida
+```text
+┌──────────────────────────────────────────────────────────────┐
+│  HEADER AZUL · PAINEL EXECUTIVO SESMT · filtros à direita    │
+├────────┬─────────────────────────────────────────┬───────────┤
+│ FILTROS│ KPI 19  │ TOP 5 EMPRESAS │ ENTREGAS/MÊS │ CONFORM.  │
+│ Empresa│ (BLOQ)  │ (barras vert.) │ (área)       │ DONUT 87% │
+│ Período├─────────┴────────────────┴──────────────┤           │
+│ Status │ ENTREGAS POR MOTIVO (mini barras)       │ RANKING   │
+│ Setor  ├────────────────┬────────────────────────┤ EMPRESAS  │
+│ Modal. │ DDS POR TURNO  │ DDS EVOLUÇÃO (linha)   │ (lista)   │
+│        ├────────────────┴────────────────────────┤           │
+│        │ AÇÕES RECOMENDADAS · PRÓXIMOS 7 DIAS    │ MEDIDORES │
+│        │ (lista compacta com badges)             │ VERT.     │
+└────────┴─────────────────────────────────────────┴───────────┘
 ```
 
-### Página `app.oss.templates.tsx`
-- Lista todos os cargos com OSS configurada
-- Botão "Gerar a partir da Matriz" → puxa riscos do `cargo-riscos-panel` + EPIs da ficha + NRs aplicáveis e pré-popula os campos
-- Editor com todos os campos texto (Textarea grande), preview lateral
-- "Salvar revisão" incrementa `revisao` e recalcula `hash_conteudo`
+## Mudanças por seção
 
-### Página `app.oss.index.tsx`
-- Tabela: Funcionário | Cargo | Status (badge colorido) | Emitido em | Vence em | Ações
-- Filtros: status, cargo, busca por nome
-- Botão "Emitir OSS" → seleciona funcionário → escolhe template do cargo → gera PDF
-- Linha com status `PENDENTE_ASSINATURA`: botão **"Baixar PDF para assinar"** + **"Anexar PDF assinado"** (input file)
-- Linha `SUBSTITUIDO` ou `VENCIDO`: badge vermelho + botão "Reemitir"
+1. **Header** — vira faixa azul-marinho `#0c2340 → #1a4a6e`, título "DASHBOARD CONTROLE SESMT" em branco caixa-alta, badge DMN dentro, filtros movem pra direita.
+2. **Filtros** — coluna lateral estreita (~180px) com blocos clicáveis estilo "TIPO C…", "MODA…", "SETOR" da imagem (toggle de filtro por status / empresa).
+3. **KPI Bloqueados** — vira o "19": card vermelho-sangue grande, número em 64px branco, "BLOQUEADOS" embaixo.
+4. **Conformidade Geral** — vira um **donut grande** (igual o "Status Investigação" da imagem), com % no centro.
+5. **Conformidade por Empresa** — vira **barras verticais coloridas** (verde/amarelo/vermelho) tipo o "TOP 5" da imagem.
+6. **Fluxo de EPI** — mantém ComposedChart mas em card menor com fundo branco e bordas marcadas, estilo "Quantidade de Acidentes por Mês".
+7. **DDS · Evolução** — vira card lado-a-lado com "DDS por Setor" (barras horizontais).
+8. **Top pendências por empresa** — vira **ranking vertical estilo "GESTOR"** na coluna direita, com nomes em lista e número à direita.
+9. **Ações Recomendadas + Próximos 7 dias** — viram dois blocos densos lado-a-lado embaixo, estilo "Principais Setores com Acidente".
+10. **Medidores** (Documentos / Extintores / Estoque) — viram **barras verticais finas** estilo "Tempo na Função" / "Tempo na Empresa" na direita.
 
-### Detalhe `app.oss.$id.tsx`
-- Mostra conteúdo congelado da OSS
-- Download do PDF gerado e (se houver) do PDF assinado
-- Histórico de mudanças de status
+## Paleta
 
-## 4. Geração de PDF (`src/lib/oss-pdf.ts`)
-- Reaproveita o padrão de `epi-ficha-pdf.ts` (jsPDF + autoTable)
-- Cabeçalho com logo da empresa, número da OSS, revisão, validade
-- Seções: Atividades / Riscos / Medidas Preventivas / EPIs Obrigatórios / Proibições / Penalidades / Emergência
-- Rodapé com 2 campos de assinatura: **Trabalhador** + **SESMT/Encarregado**
-- Reusa `PDFPreviewDialog` (sem `signable`, pois assinatura é física)
+- Azul header: `#0c2340` → `#1a4a6e` (gradient)
+- Vermelho KPI crítico: `#7f1212` (já é o da marca, mantém)
+- Verde OK: `#10b981`
+- Amarelo alerta: `#f59e0b`
+- Cinza grade/bordas: `#cbd5e1` / `#e2e8f0`
+- Fundo página: `#f1f5f9` (mais frio que o atual)
 
-## 5. Integração com Pendências
-- Adicionar fonte `OSS_PENDENTE` no `use-pendencias` → aparece no `minhas-pendencias` do SESMT
-- Critério: existir `oss_emissoes` com status `PENDENTE_ASSINATURA`, `SUBSTITUIDO` ou `VENCIDO`
+## Detalhes técnicos
 
-## 6. Integração com APR/PT (Fase 2 — não incluído agora)
-Futuramente: ao criar APR/PT, validar que o funcionário tem OSS `ASSINADA` e dentro da validade pro cargo dele. Por ora, apenas registro independente — combinamos isso depois.
+- Arquivo único editado: `src/routes/app.painel.tsx` (873 linhas → reescreve o JSX a partir da linha ~316, mantendo todo o data fetching e os `useMemo` acima dela intactos).
+- `KpiCard` ganha variante `mega` (o card vermelho gigante) e `donut` (gauge circular).
+- Adiciono um `MiniBarsVertical` e um `RankingList` (componentes locais no mesmo arquivo, pra não inflar `/components`).
+- Recharts continua sendo a lib (já importada). Sem novas dependências.
+- Layout responsivo: a partir de `lg:` ativa a grade 3-colunas com filtros laterais; em mobile vira stack vertical normal.
 
-## 7. Menu e permissões
-- Adicionar item "Ordens de Serviço (OSS)" no `app-sidebar.tsx` na seção SESMT, com ícone `FileSignature`
-- Gate via `module-guard` exigindo módulo `seguranca` (ou criar `oss` específico se preferir)
+## Fora de escopo
 
-## 8. Cargos iniciais sugeridos (pré-popular templates)
-Soldador, Caldereiro, Pintor Naval, Eletricista Naval, Mecânico, Operador de Guindaste, Trabalhador em Espaço Confinado, Trabalhador em Altura, Mergulhador, Jateador, Encanador Naval, Ajudante de Estaleiro.
-(Cria os templates "em branco" — o usuário gera o conteúdo via botão "Gerar a partir da Matriz" quando quiser.)
+- Não mexo nas tabelas/listas de busca de colaboradores no rodapé (se houver).
+- Não mexo nos dados — toda métrica continua vindo do mesmo `useQuery`.
+- Não troco a paleta global do sistema, só a do painel.
 
----
-
-## Ordem de execução
-1. Migration (tabelas + RLS + triggers + bucket storage)
-2. `oss-pdf.ts` (gerador)
-3. Rotas e telas (templates → index → detalhe)
-4. Sidebar + Pendências
-5. Teste fim a fim (criar template → emitir → baixar → upload assinado → ver pendência sumir)
-
-## Pergunta final antes de começar
-- Confirma o bucket `oss-pdfs` privado, ok?
-- Os 12 cargos iniciais acima cobrem o estaleiro de vocês, ou quer ajustar a lista antes?
+Aprova que mando bala?
