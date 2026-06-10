@@ -11,7 +11,7 @@ import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
 import {
   ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid,
-  ComposedChart, Line, Area, Bar,
+  ComposedChart, Line, Area, Bar, BarChart, PieChart, Pie, Cell, LabelList,
 } from "recharts";
 
 export const Route = createFileRoute("/app/painel")({
