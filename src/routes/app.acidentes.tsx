@@ -27,6 +27,7 @@ import { formatDateBR } from "@/lib/utils-date";
 import { CorpoHumanoAcidentes } from "@/components/corpo-humano-acidentes";
 import { gerarForSeg09, gerarForSeg10 } from "@/lib/pdf-acidentes";
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
+import { ForSeg14Wizard } from "@/components/for-seg-14-wizard";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   Line, Legend, PieChart, Pie, Cell,
@@ -1275,6 +1276,7 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
 function VerAcidenteDialog({ acidente, companies, onOpenChange, onEdit }: any) {
   if (!acidente) return null;
   const emp = companies.find((c: any) => c.id === acidente.company_id);
+  const [riaOpen, setRiaOpen] = useState(false);
   const Row = ({ label, value }: { label: string; value: any }) => (
     <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-dashed last:border-0">
       <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</div>
@@ -1328,8 +1330,17 @@ function VerAcidenteDialog({ acidente, companies, onOpenChange, onEdit }: any) {
         )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+          <Button variant="outline" onClick={() => setRiaOpen(true)} className="gap-2 border-red-300 text-red-700 hover:bg-red-50">
+            <FileDown className="h-4 w-4" /> Gerar FOR-SEG 14
+          </Button>
           <Button onClick={onEdit} className="gap-2"><Pencil className="h-4 w-4" /> Editar</Button>
         </DialogFooter>
+        <ForSeg14Wizard
+          open={riaOpen}
+          onClose={() => setRiaOpen(false)}
+          acidente={acidente}
+          companies={companies}
+        />
       </DialogContent>
     </Dialog>
   );

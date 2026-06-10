@@ -5118,6 +5118,77 @@ export type Database = {
         }
         Relationships: []
       }
+      relatorios_investigacao_acidente: {
+        Row: {
+          acidente_id: string
+          acoes_imediatas: Json
+          ano: number
+          assinaturas: Json
+          created_at: string
+          created_by: string | null
+          dados_gerais: Json
+          enquadramento: Json
+          fotos_lesao: Json
+          fotos_local: Json
+          id: string
+          numero: string | null
+          participantes: Json
+          pdf_path: string | null
+          plano_acao: Json
+          porques: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          acidente_id: string
+          acoes_imediatas?: Json
+          ano?: number
+          assinaturas?: Json
+          created_at?: string
+          created_by?: string | null
+          dados_gerais?: Json
+          enquadramento?: Json
+          fotos_lesao?: Json
+          fotos_local?: Json
+          id?: string
+          numero?: string | null
+          participantes?: Json
+          pdf_path?: string | null
+          plano_acao?: Json
+          porques?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          acidente_id?: string
+          acoes_imediatas?: Json
+          ano?: number
+          assinaturas?: Json
+          created_at?: string
+          created_by?: string | null
+          dados_gerais?: Json
+          enquadramento?: Json
+          fotos_lesao?: Json
+          fotos_local?: Json
+          id?: string
+          numero?: string | null
+          participantes?: Json
+          pdf_path?: string | null
+          plano_acao?: Json
+          porques?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relatorios_investigacao_acidente_acidente_id_fkey"
+            columns: ["acidente_id"]
+            isOneToOne: false
+            referencedRelation: "acidentes_trabalho"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roles: {
         Row: {
           ativo: boolean
@@ -5914,6 +5985,7 @@ export type Database = {
       gerar_numero_controle_doc: { Args: never; Returns: string }
       gerar_numero_extintor: { Args: never; Returns: string }
       gerar_numero_ordem_producao: { Args: never; Returns: string }
+      gerar_numero_ria: { Args: never; Returns: string }
       gerar_numero_tnc: { Args: never; Returns: string }
       has_module_access: {
         Args: {
