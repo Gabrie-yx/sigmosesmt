@@ -1356,7 +1356,8 @@ function VerAcidenteDialog({ acidente, companies, onOpenChange, onEdit }: any) {
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
           <Button variant="outline" onClick={() => setRiaOpen(true)} className="gap-2 border-red-300 text-red-700 hover:bg-red-50">
-            <FileDown className="h-4 w-4" /> Gerar FOR-SEG 14
+            <FileDown className="h-4 w-4" /> Investigar acidente
+            <span className="text-[9px] uppercase tracking-wider opacity-60 ml-1">FOR-SEG 14</span>
           </Button>
           <Button onClick={onEdit} className="gap-2"><Pencil className="h-4 w-4" /> Editar</Button>
         </DialogFooter>
