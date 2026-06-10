@@ -401,22 +401,69 @@ function TstPanel() {
               {conformityView.length === 0 ? (
                 <EmptyBlock label="Sem empresas com colaboradores no período" />
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {conformityView.map((c: any) => (
                     <div key={c.id} className="group">
-                      <div className="flex justify-between text-xs mb-1.5 font-medium">
-                        <span className="text-slate-700 truncate pr-2">{c.name}</span>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-[10px] text-slate-400">{c.total} pessoas</span>
-                          <span className={`font-bold ${c.score >= 90 ? "text-emerald-600" : c.score >= 70 ? "text-amber-600" : "text-[#7f1212]"}`}>
+                      <div className="flex justify-between text-xs mb-2 font-medium items-end">
+                        <div className="min-w-0 pr-2">
+                          <div className="text-slate-800 font-bold truncate">{c.name}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">
+                            <span className="text-emerald-600 font-bold">{c.oks}</span> aptos ·{" "}
+                            <span className="text-amber-600 font-bold">{c.al}</span> alerta ·{" "}
+                            <span className="text-[#7f1212] font-bold">{c.bl}</span> crítico
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] text-slate-400">{c.total}</span>
+                          <span
+                            className={`text-base font-black tabular-nums tracking-tight ${
+                              c.score >= 90 ? "text-emerald-600" : c.score >= 70 ? "text-amber-600" : "text-[#7f1212]"
+                            }`}
+                            style={{
+                              textShadow:
+                                c.score >= 90
+                                  ? "0 0 12px rgba(16,185,129,0.35)"
+                                  : c.score >= 70
+                                    ? "0 0 12px rgba(245,158,11,0.35)"
+                                    : "0 0 12px rgba(127,18,18,0.4)",
+                            }}
+                          >
                             {c.score}%
                           </span>
                         </div>
                       </div>
-                      <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden flex">
-                        <div className="bg-emerald-500 h-full" style={{ width: `${c.okPct}%` }} title={`${c.oks} aptos`} />
-                        <div className="bg-amber-400 h-full" style={{ width: `${c.alPct}%` }} title={`${c.al} em alerta`} />
-                        <div className="bg-[#7f1212] h-full" style={{ width: `${c.blPct}%` }} title={`${c.bl} bloqueados`} />
+                      <div className="relative w-full h-3 rounded-full overflow-hidden bg-slate-100 shadow-inner">
+                        <div className="absolute inset-0 flex">
+                          <div
+                            className="h-full transition-all duration-700 ease-out"
+                            style={{
+                              width: `${c.okPct}%`,
+                              background: "linear-gradient(90deg,#34d399 0%,#10b981 100%)",
+                              boxShadow: c.okPct > 0 ? "0 0 8px rgba(16,185,129,0.55)" : undefined,
+                            }}
+                            title={`${c.oks} aptos`}
+                          />
+                          <div
+                            className="h-full transition-all duration-700 ease-out"
+                            style={{
+                              width: `${c.alPct}%`,
+                              background: "linear-gradient(90deg,#fbbf24 0%,#f59e0b 100%)",
+                              boxShadow: c.alPct > 0 ? "0 0 8px rgba(245,158,11,0.5)" : undefined,
+                            }}
+                            title={`${c.al} em alerta`}
+                          />
+                          <div
+                            className="h-full transition-all duration-700 ease-out"
+                            style={{
+                              width: `${c.blPct}%`,
+                              background: "linear-gradient(90deg,#b91c1c 0%,#7f1212 100%)",
+                              boxShadow: c.blPct > 0 ? "0 0 10px rgba(127,18,18,0.65)" : undefined,
+                            }}
+                            title={`${c.bl} bloqueados`}
+                          />
+                        </div>
+                        {/* shine overlay */}
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-black/10" />
                       </div>
                     </div>
                   ))}
@@ -488,15 +535,38 @@ function TstPanel() {
                   {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas no período" /> : (
                     <ResponsiveContainer>
                       <ComposedChart data={entregaSerie} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="gradPrimeira" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.85} />
+                            <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0.05} />
+                          </linearGradient>
+                          <linearGradient id="gradTroca" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.85} />
+                            <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.05} />
+                          </linearGradient>
+                          <linearGradient id="gradPerda" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#ef4444" stopOpacity={0.85} />
+                            <stop offset="100%" stopColor="#7f1212" stopOpacity={0.05} />
+                          </linearGradient>
+                          <filter id="glowLine" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                          </filter>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                         <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                         <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={28} />
                         <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={42} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : `${v}`} />
-                        <Tooltip contentStyle={{ background: "#0f172a", border: "none", borderRadius: 8, color: "#fff", fontSize: 11 }} labelStyle={{ color: "#cbd5e1", fontWeight: 700 }} formatter={(v: any, n: any) => n === "Valor R$" ? [`R$ ${Number(v).toFixed(0)}`, n] : [v, n]} />
-                        <Area yAxisId="l" type="monotone" dataKey="primeira" stackId="a" stroke="#0ea5e9" strokeWidth={1.5} fill="#0ea5e9" fillOpacity={0.15} name="1ª entrega" />
-                        <Area yAxisId="l" type="monotone" dataKey="troca" stackId="a" stroke="#8b5cf6" strokeWidth={1.5} fill="#8b5cf6" fillOpacity={0.15} name="Troca" />
-                        <Area yAxisId="l" type="monotone" dataKey="perda" stackId="a" stroke="#7f1212" strokeWidth={1.5} fill="#7f1212" fillOpacity={0.15} name="Perda" />
-                        <Line yAxisId="r" type="monotone" dataKey="valor" stroke="#7f1212" strokeWidth={2} dot={false} name="Valor R$" />
+                        <Tooltip
+                          cursor={{ stroke: "#7f1212", strokeWidth: 1, strokeDasharray: "4 4", opacity: 0.4 }}
+                          contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(127,18,18,0.5)", borderRadius: 10, color: "#fff", fontSize: 11, boxShadow: "0 10px 30px rgba(0,0,0,0.4)" }}
+                          labelStyle={{ color: "#fbbf24", fontWeight: 800, letterSpacing: 0.5 }}
+                          formatter={(v: any, n: any) => n === "Valor R$" ? [`R$ ${Number(v).toFixed(0)}`, n] : [v, n]}
+                        />
+                        <Area yAxisId="l" type="monotone" dataKey="primeira" stackId="a" stroke="#0ea5e9" strokeWidth={2} fill="url(#gradPrimeira)" name="1ª entrega" animationDuration={900} />
+                        <Area yAxisId="l" type="monotone" dataKey="troca" stackId="a" stroke="#8b5cf6" strokeWidth={2} fill="url(#gradTroca)" name="Troca" animationDuration={1100} />
+                        <Area yAxisId="l" type="monotone" dataKey="perda" stackId="a" stroke="#ef4444" strokeWidth={2} fill="url(#gradPerda)" name="Perda" animationDuration={1300} />
+                        <Line yAxisId="r" type="monotone" dataKey="valor" stroke="#7f1212" strokeWidth={2.5} dot={false} activeDot={{ r: 5, fill: "#fbbf24", stroke: "#7f1212", strokeWidth: 2 }} filter="url(#glowLine)" name="Valor R$" animationDuration={1400} />
                       </ComposedChart>
                     </ResponsiveContainer>
                   )}
@@ -517,13 +587,27 @@ function TstPanel() {
                   {ddsTrend.length === 0 ? <EmptyBlock label="Sem DDS no período" /> : (
                     <ResponsiveContainer>
                       <ComposedChart data={ddsTrend} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="gradDdsBar" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#a78bfa" stopOpacity={1} />
+                            <stop offset="100%" stopColor="#6d28d9" stopOpacity={0.85} />
+                          </linearGradient>
+                          <filter id="glowDds" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="2.5" result="b" />
+                            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                          </filter>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                         <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                         <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={26} />
                         <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={32} tickFormatter={(v) => `${v}%`} />
-                        <Tooltip contentStyle={{ background: "#0f172a", border: "none", borderRadius: 8, color: "#fff", fontSize: 11 }} labelStyle={{ color: "#cbd5e1", fontWeight: 700 }} />
-                        <Bar yAxisId="l" dataKey="qtd" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="DDS realizados" />
-                        <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: "#10b981", stroke: "#fff", strokeWidth: 1.5 }} name="% aderência" />
+                        <Tooltip
+                          cursor={{ fill: "rgba(139,92,246,0.08)" }}
+                          contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(167,139,250,0.5)", borderRadius: 10, color: "#fff", fontSize: 11, boxShadow: "0 10px 30px rgba(0,0,0,0.4)" }}
+                          labelStyle={{ color: "#a78bfa", fontWeight: 800, letterSpacing: 0.5 }}
+                        />
+                        <Bar yAxisId="l" dataKey="qtd" fill="url(#gradDdsBar)" radius={[8, 8, 0, 0]} name="DDS realizados" animationDuration={1000} />
+                        <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: "#fff", stroke: "#10b981", strokeWidth: 2 }} activeDot={{ r: 6, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }} filter="url(#glowDds)" name="% aderência" animationDuration={1300} />
                       </ComposedChart>
                     </ResponsiveContainer>
                   )}
