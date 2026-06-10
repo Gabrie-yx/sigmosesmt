@@ -872,19 +872,28 @@ function DonutCenter({
 }) {
   const hasData = data.length > 0 && data.some((d) => d.value > 0);
   const chartData = hasData ? data : [{ name: "—", value: 1, fill: "#e2e8f0" }];
+  const gradId = (i: number) => `donutGrad-${centerLabel.replace(/\s/g, "")}-${i}`;
   return (
-    <div className="relative h-44">
+    <div className="relative h-56">
       <ResponsiveContainer>
         <PieChart>
-          <Pie data={chartData} dataKey="value" innerRadius={48} outerRadius={68} paddingAngle={2} stroke="#fff" strokeWidth={2}>
-            {chartData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+          <defs>
+            {chartData.map((d, i) => (
+              <linearGradient id={gradId(i)} key={i} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor={d.fill} stopOpacity={1} />
+                <stop offset="100%" stopColor={d.fill} stopOpacity={0.55} />
+              </linearGradient>
+            ))}
+          </defs>
+          <Pie data={chartData} dataKey="value" innerRadius={62} outerRadius={92} paddingAngle={3} stroke="#fff" strokeWidth={3} startAngle={90} endAngle={-270}>
+            {chartData.map((_d, i) => <Cell key={i} fill={`url(#${gradId(i)})`} />)}
           </Pie>
           <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <div className="text-2xl font-black tabular-nums leading-none" style={{ color: centerColor }}>{centerValue}</div>
-        <div className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mt-1">{centerLabel}</div>
+        <div className="text-4xl font-black tabular-nums leading-none drop-shadow-sm" style={{ color: centerColor }}>{centerValue}</div>
+        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1.5">{centerLabel}</div>
       </div>
     </div>
   );
