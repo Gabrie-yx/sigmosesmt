@@ -677,21 +677,19 @@ function TstPanel() {
 
 // === Subcomponentes ===
 
-function BiCard({
-  title, children, className, action, tight, noTitle,
+function Card({
+  title, children, className, action,
 }: {
   title?: string;
   children: React.ReactNode;
   className?: string;
   action?: React.ReactNode;
-  tight?: boolean;
-  noTitle?: boolean;
 }) {
   return (
-    <div className={`bg-white rounded-md border border-slate-300 shadow-sm ${tight ? "p-2" : "p-3"} ${className ?? ""}`}>
-      {!noTitle && title && (
-        <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-[#0c2340]">{title}</h3>
+    <div className={`bg-white rounded-lg border border-slate-200 shadow-sm p-4 ${className ?? ""}`}>
+      {title && (
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-[#0c2340]">{title}</h3>
           {action}
         </div>
       )}
@@ -700,44 +698,110 @@ function BiCard({
   );
 }
 
-function FilterChip({ label, value, color, active }: { label: string; value: number; color: string; active?: boolean }) {
+function KpiBig({
+  icon: Icon, label, value, sub, accent, highlight,
+}: {
+  icon: any;
+  label: string;
+  value: number | string;
+  sub?: string;
+  accent: string;
+  highlight?: boolean;
+}) {
   return (
     <div
-      className={`flex items-center justify-between px-2 py-1.5 rounded border text-[10px] font-bold transition-colors ${
-        active ? "bg-slate-900 text-white border-slate-900" : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+      className={`bg-white rounded-lg border shadow-sm p-4 flex items-center gap-3 transition-all ${
+        highlight ? "border-[#c8102e]/40 ring-1 ring-[#c8102e]/10" : "border-slate-200"
       }`}
     >
-      <div className="flex items-center gap-1.5 min-w-0">
-        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: color }} />
-        <span className="truncate uppercase tracking-wider">{label}</span>
+      <div
+        className="h-12 w-12 rounded-lg flex items-center justify-center shrink-0"
+        style={{ background: `${accent}15`, color: accent }}
+      >
+        <Icon className="h-6 w-6" />
       </div>
-      <span className="font-black tabular-nums">{value}</span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">{label}</div>
+        <div className="text-3xl font-black tabular-nums leading-tight" style={{ color: accent }}>{value}</div>
+        {sub && <div className="text-[10px] text-slate-500 truncate">{sub}</div>}
+      </div>
     </div>
   );
 }
 
-function VerticalGauge({ label, value, max, color, suffix }: { label: string; value: number; max: number; color: string; suffix?: string }) {
-  const pct = Math.max(2, Math.min(100, Math.round((value / max) * 100)));
+function DonutCenter({
+  data, centerValue, centerLabel, centerColor,
+}: {
+  data: { name: string; value: number; fill: string }[];
+  centerValue: string;
+  centerLabel: string;
+  centerColor: string;
+}) {
+  const hasData = data.length > 0 && data.some((d) => d.value > 0);
+  const chartData = hasData ? data : [{ name: "—", value: 1, fill: "#e2e8f0" }];
   return (
-    <div className="flex flex-col items-center">
-      <div className="text-[10px] font-black tabular-nums text-slate-900 leading-none mb-1">
-        {value}{suffix ?? ""}
+    <div className="relative h-44">
+      <ResponsiveContainer>
+        <PieChart>
+          <Pie data={chartData} dataKey="value" innerRadius={48} outerRadius={68} paddingAngle={2} stroke="#fff" strokeWidth={2}>
+            {chartData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+          </Pie>
+          <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <div className="text-2xl font-black tabular-nums leading-none" style={{ color: centerColor }}>{centerValue}</div>
+        <div className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mt-1">{centerLabel}</div>
       </div>
-      <div className="relative h-20 w-3.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-        <div
-          className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-700"
-          style={{ height: `${pct}%`, background: `linear-gradient(180deg,${color},${color}cc)`, boxShadow: `0 0 6px ${color}80` }}
-        />
-      </div>
-      <div className="text-[7px] font-black uppercase tracking-wider text-slate-500 mt-1 text-center leading-tight">{label}</div>
     </div>
   );
 }
 
-function Legenda({ cor, label }: { cor: string; label: string }) {
+function LegendItem({ color, label, value }: { color: string; label: string; value: number }) {
   return (
-    <div className="flex items-center gap-1 text-[10px] text-slate-600 font-black tabular-nums">
-      <div className={`h-2 w-2 rounded-full ${cor}`} /> {label}
+    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
+      <span className="h-2 w-2 rounded-full shrink-0" style={{ background: color }} />
+      <span className="truncate">{label}</span>
+      <span className="ml-auto tabular-nums text-slate-900 font-black">{value}</span>
+    </div>
+  );
+}
+
+function HBarList({
+  items, color, suffix, empty, perItemColor,
+}: {
+  items: { name: string; value: number; color?: string }[];
+  color?: string;
+  suffix?: string;
+  empty?: string;
+  perItemColor?: boolean;
+}) {
+  if (items.length === 0) {
+    return <div className="py-8 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">{empty ?? "Sem dados"}</div>;
+  }
+  const max = Math.max(...items.map((i) => i.value), 1);
+  return (
+    <div className="space-y-3 py-1">
+      {items.map((it) => {
+        const c = perItemColor && it.color ? it.color : color ?? "#0c2340";
+        const pct = Math.max(2, Math.round((it.value / max) * 100));
+        return (
+          <div key={it.name}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-bold text-slate-700 truncate pr-2">{it.name}</span>
+              <span className="text-[11px] font-black tabular-nums" style={{ color: c }}>
+                {it.value}{suffix ?? ""}
+              </span>
+            </div>
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${pct}%`, background: c }}
+              />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
