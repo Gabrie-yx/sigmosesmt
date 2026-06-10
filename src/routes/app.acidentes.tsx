@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { CorpoHumanoAcidentes } from "@/components/corpo-humano-acidentes";
 import { gerarForSeg09, gerarForSeg10 } from "@/lib/pdf-acidentes";
+import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   Line, Legend, PieChart, Pie, Cell,
@@ -1230,9 +1231,10 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
             </span>
           </div>
           <div className="flex flex-wrap gap-3">
-            {(form.evidencias_urls || []).map((p: string) => (
-              <EvidenciaThumb key={p} path={p} onRemove={() => removeEvidencia(p)} />
-            ))}
+            <EvidenciasGallery
+              paths={form.evidencias_urls || []}
+              onRemove={(p) => removeEvidencia(p)}
+            />
             {(form.evidencias_urls || []).length < 4 && (
               <label className={`w-24 h-24 border-2 border-dashed rounded flex flex-col items-center justify-center text-xs text-muted-foreground cursor-pointer hover:bg-slate-50 hover:border-slate-400 transition ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
                 <Upload className="h-5 w-5 mb-1" />
@@ -1252,7 +1254,7 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
             )}
           </div>
           <p className="text-[11px] text-muted-foreground mt-2">
-            Até 4 fotos (10MB cada). Clique em uma evidência para abrir em tamanho real.
+            Até 4 fotos (10MB cada). Clique em uma evidência para visualizar dentro do sistema (rotação, zoom, download e impressão).
           </p>
         </div>
 
