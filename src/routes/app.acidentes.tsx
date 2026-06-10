@@ -358,7 +358,12 @@ function AcidentesPage() {
           {/* Evolução mensal */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Quantidade de Acidentes por Mês — {anoFiltro}</CardTitle>
+              <div className="flex items-start justify-between gap-2">
+                <CardTitle className="text-base">Quadro Estatístico Mensal — {anoFiltro}</CardTitle>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                  FOR-SEG 09 · NBR 14280
+                </span>
+              </div>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={240}>
