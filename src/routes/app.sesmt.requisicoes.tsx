@@ -124,28 +124,33 @@ async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "do
 
   // Cabeçalho
   doc.setLineWidth(0.4);
-  doc.rect(M, M, W - 2 * M, 22);
+  doc.rect(M, M, W - 2 * M, 24); // Aumentei a altura de 22 para 24
   if (logo) {
-    try { doc.addImage(logo, "PNG", M + 2, M + 2, 28, 18); } catch { /* noop */ }
+    try { doc.addImage(logo, "PNG", M + 2, M + 3, 28, 18); } catch { /* noop */ }
   }
-  doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-  doc.text("REQUISIÇÃO DE COMPRA DE MATERIAIS E SERVIÇOS", M + 35, M + 9, { maxWidth: W - 2 * M - 88 });
-  if (req.titulo) {
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    doc.text(req.titulo.toUpperCase(), M + 35, M + 18, { maxWidth: W - 2 * M - 88 });
-  }
-
+  
   // Bloco código
   const codX = W - M - 55;
-  doc.line(codX, M, codX, M + 22);
+  doc.line(codX, M, codX, M + 24);
   doc.setFont("helvetica", "normal"); doc.setFontSize(8);
   doc.text(`CÓD. FOR-COMP: ${req.codigo_formulario ?? "03"}`, codX + 2, M + 5);
   doc.text(`REVISÃO: ${req.revisao ?? "01"}`, codX + 2, M + 10);
   doc.text(`DATA: ${fmtBR(req.data_revisao) || fmtBR(req.data_requisicao)}`, codX + 2, M + 15);
   doc.text(`PAG.: ${req.pagina ?? "01/01"}`, codX + 2, M + 20);
 
+  // Títulos centrais
+  doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+  doc.text("REQUISIÇÃO DE COMPRA DE MATERIAIS E SERVIÇOS", M + 35, M + 8, { maxWidth: W - 2 * M - 95 });
+  
+  if (req.titulo) {
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+    doc.setTextColor(180, 0, 0); // Tom de vermelho para destacar o título da requisição
+    doc.text(req.titulo.toUpperCase(), M + 35, M + 19, { maxWidth: W - 2 * M - 95 });
+    doc.setTextColor(0, 0, 0); // Volta para preto
+  }
+
   // Linhas de cabeçalho do formulário
-  let y = M + 22;
+  let y = M + 24;
   const rowH = 7;
   const halfW = (W - 2 * M) / 2;
 
