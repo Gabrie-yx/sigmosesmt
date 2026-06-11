@@ -354,7 +354,7 @@ function SecurityPage() {
         </CardContent>
       </Card>
 
-      <Card className="mt-6">
+        <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <KeyRound className="h-5 w-5 text-slate-700" />
