@@ -1665,6 +1665,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
   }
 
   const [signerSrc, setSignerSrc] = useState<{ bytes: Uint8Array; name: string } | null>(null);
+  const [openFichaOptions, setOpenFichaOptions] = useState(false);
 
   return (
     <div className="space-y-6">
