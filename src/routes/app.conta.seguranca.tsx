@@ -303,7 +303,7 @@ function SecurityPage() {
                 <Label htmlFor="confirm-pwd">Confirme a nova senha</Label>
                 <Input id="confirm-pwd" type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} minLength={8} required />
               </div>
-              <Button type="submit" disabled={pwdBusy}>
+              <Button type="submit" disabled={pwdBusy} className="bg-red-700 hover:bg-red-800">
                 {pwdBusy ? "Salvando..." : "Alterar senha"}
               </Button>
             </form>
@@ -317,11 +317,11 @@ function SecurityPage() {
               <CardTitle>Encerrar todas as sessões</CardTitle>
             </div>
             <CardDescription>
-              Desconecta sua conta de TODOS os dispositivos e navegadores (inclusive este).
+              Desconecta sua conta de TODOS os dispositivos e navegadores (inclusive este). Combine com a troca de senha para máxima segurança.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="destructive" onClick={signOutAll} disabled={signOutBusy}>
+            <Button variant="destructive" onClick={signOutAll} disabled={signOutBusy} className="bg-red-700 hover:bg-red-800">
               <LogOut className="h-4 w-4 mr-2" />
               {signOutBusy ? "Encerrando..." : "Sair de todos os dispositivos"}
             </Button>
