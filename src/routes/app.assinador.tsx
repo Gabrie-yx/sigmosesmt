@@ -123,30 +123,45 @@ function AssinadorPage() {
               {docs.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-6">Nenhum documento assinado ainda.</p>
               ) : (
-                <div className="space-y-2">
-                  {docs.map((d) => (
-                    <div key={d.id} className="border rounded-md p-3 flex items-center gap-3 hover:bg-slate-50">
-                      <FileText className="h-8 w-8 text-rose-600 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold truncate">{d.nome_arquivo}</div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline">{d.modulo}</Badge>
-                          <span>{d.total_assinaturas} assinatura(s)</span>
-                          <span>•</span>
-                          <span>{d.assinado_por_email ?? "—"}</span>
-                          <span>•</span>
-                          <span>{new Date(d.created_at).toLocaleString("pt-BR")}</span>
-                        </div>
-                        {d.assinaturas?.length > 0 && (
-                          <div className="text-[11px] text-muted-foreground mt-1 truncate">
-                            {d.assinaturas.map((a) => `${a.nome}${a.cargo ? ` (${a.cargo})` : ""} — pág.${a.page}`).join(" · ")}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {docs
+                    .filter(d => d.modulo !== "ficha-epi")
+                    .map((d) => (
+                    <Card key={d.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="h-10 w-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 flex-shrink-0">
+                            <FileText className="h-6 w-6" />
                           </div>
-                        )}
-                      </div>
-                      <Button size="sm" variant="outline" onClick={() => baixar(d.pdf_assinado_path, d.nome_arquivo)}>
-                        <Download className="h-4 w-4 mr-1" /> Baixar
-                      </Button>
-                    </div>
+                          <Button size="icon" variant="ghost" onClick={() => baixar(d.pdf_assinado_path, d.nome_arquivo)} title="Baixar PDF">
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <div className="font-bold text-sm text-slate-800 line-clamp-2 min-h-[40px]" title={d.nome_arquivo}>
+                            {d.nome_arquivo}
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            <Badge variant="secondary" className="text-[10px] uppercase font-bold tracking-wider">
+                              {d.modulo}
+                            </Badge>
+                            <Badge variant="outline" className="text-[10px] font-bold">
+                              {d.total_assinaturas} assin.
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t space-y-1">
+                          <div className="text-[10px] text-slate-500 font-bold uppercase tracking-tight truncate">
+                            Por: {d.assinado_por_email?.split('@')[0] ?? "—"}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-medium">
+                            {new Date(d.created_at).toLocaleDateString("pt-BR")}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               )}
