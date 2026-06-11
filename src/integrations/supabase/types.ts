@@ -5044,6 +5044,7 @@ export type Database = {
           solicitante: string
           status: Database["public"]["Enums"]["purchase_req_status"]
           status_token: string
+          titulo: string | null
           updated_at: string
         }
         Insert: {
@@ -5079,6 +5080,7 @@ export type Database = {
           solicitante: string
           status?: Database["public"]["Enums"]["purchase_req_status"]
           status_token?: string
+          titulo?: string | null
           updated_at?: string
         }
         Update: {
@@ -5114,6 +5116,7 @@ export type Database = {
           solicitante?: string
           status?: Database["public"]["Enums"]["purchase_req_status"]
           status_token?: string
+          titulo?: string | null
           updated_at?: string
         }
         Relationships: []
