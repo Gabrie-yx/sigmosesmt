@@ -270,7 +270,7 @@ function SaidasPage() {
         </div>
       )}
 
-      <SaidaExpedienteDialog open={open} onOpenChange={setOpen} editId={editId} />
+      <SaidaExpedienteDialog open={open} onOpenChange={setOpen} editId={editId} duplicateData={duplicateData} />
 
       <PDFPreviewDialog
         open={!!previewDoc}
