@@ -1143,15 +1143,18 @@ function ReqFormDialog({
                   </div>
                 </div>
               ) : (
-                <label className="cursor-pointer text-[11px] text-red-700 hover:underline px-2 py-1 border border-dashed border-red-700/50 rounded">
-                  Enviar assinatura (PNG)
-                  <input
-                    type="file"
-                    accept="image/png"
-                    className="hidden"
-                    onChange={(e) => onSignatureUpload(e.target.files?.[0] ?? null)}
-                  />
-                </label>
+                <div className="flex flex-col gap-2 items-center p-2">
+                  <label className="cursor-pointer text-[11px] text-red-700 hover:underline px-2 py-1 border border-dashed border-red-700/50 rounded w-full text-center">
+                    Enviar assinatura (PNG)
+                    <input
+                      type="file"
+                      accept="image/png"
+                      className="hidden"
+                      onChange={(e) => onSignatureUpload(e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                  <SignatureGallery onSelect={(data) => setSignature(data)} />
+                </div>
               )}
             </div>
             <div className="border-r border-black" />
