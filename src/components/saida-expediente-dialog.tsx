@@ -10,12 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
-import { PenLine, Check } from "lucide-react";
+import { PenLine, Check, UserPlus, Pencil } from "lucide-react";
+import ReactSelect from "react-select";
 
 type SignatureTarget = "FUNC" | "SESMT" | "SUPERVISOR";
 
 const emptyForm = () => ({
-  company_id: "", employee_id: "", data: new Date().toISOString().slice(0, 10),
+  company_id: "", employee_ids: [] as string[], data: new Date().toISOString().slice(0, 10),
   horario_saida: "", tipo: "PESSOAL", com_retorno: false,
   horario_retorno: "", motivo: "", observacao: "",
   assinatura_funcionario: null,
@@ -50,7 +51,7 @@ export function SaidaExpedienteDialog({
     if (!open) return;
     if (editId) {
       supabase.from("employee_saidas_expediente").select("*").eq("id", editId).maybeSingle().then(({ data }) => {
-        if (data) setForm(data);
+        if (data) setForm({ ...data, employee_ids: [data.employee_id] });
       });
     } else {
       setForm(emptyForm());
@@ -63,44 +64,49 @@ export function SaidaExpedienteDialog({
   const save = useMutation({
     mutationFn: async () => {
       if (!form.company_id) throw new Error("Selecione a empresa");
-      if (!form.employee_id) throw new Error("Selecione o funcionário");
+      if (!form.employee_ids || form.employee_ids.length === 0) throw new Error("Selecione pelo menos um funcionário");
       if (!form.horario_saida) throw new Error("Informe o horário de saída");
       if (form.com_retorno && !form.horario_retorno) throw new Error("Informe o horário de retorno");
-      const payload: any = {
-        company_id: form.company_id, employee_id: form.employee_id, data: form.data,
+
+      const basePayload: any = {
+        company_id: form.company_id, data: form.data,
         horario_saida: form.horario_saida, tipo: form.tipo,
         com_retorno: !!form.com_retorno,
         horario_retorno: form.com_retorno ? form.horario_retorno : null,
         motivo: form.motivo || null, observacao: form.observacao || null,
-        assinatura_funcionario: form.assinatura_funcionario || null,
         assinatura_sesmt: form.assinatura_sesmt || null,
         assinatura_supervisor: form.assinatura_supervisor || null,
       };
+
       if (form.assinatura_sesmt) {
-        payload.assinado_sesmt_por = user?.id ?? null;
-        payload.assinado_sesmt_em = new Date().toISOString();
-      } else {
-        payload.assinado_sesmt_por = null;
-        payload.assinado_sesmt_em = null;
+        basePayload.assinado_sesmt_por = user?.id ?? null;
+        basePayload.assinado_sesmt_em = new Date().toISOString();
       }
       if (form.assinatura_supervisor) {
-        payload.assinado_supervisor_por = user?.id ?? null;
-        payload.assinado_supervisor_em = new Date().toISOString();
-      } else {
-        payload.assinado_supervisor_por = null;
-        payload.assinado_supervisor_em = null;
+        basePayload.assinado_supervisor_por = user?.id ?? null;
+        basePayload.assinado_supervisor_em = new Date().toISOString();
       }
+
       if (editId) {
-        const { error } = await supabase.from("employee_saidas_expediente").update(payload).eq("id", editId);
+        const { error } = await supabase.from("employee_saidas_expediente")
+          .update({ ...basePayload, employee_id: form.employee_ids[0], assinatura_funcionario: form.assinatura_funcionario })
+          .eq("id", editId);
         if (error) throw error;
       } else {
-        payload.created_by = user?.id ?? null;
-        const { error } = await supabase.from("employee_saidas_expediente").insert(payload);
+        const inserts = form.employee_ids.map((empId: string) => ({
+          ...basePayload,
+          employee_id: empId,
+          created_by: user?.id ?? null,
+          // Em saídas coletivas, a assinatura do funcionário geralmente é feita individualmente depois, 
+          // mas se houver uma no form (improvável em coletiva), aplicamos a todos.
+          assinatura_funcionario: form.assinatura_funcionario || null,
+        }));
+        const { error } = await supabase.from("employee_saidas_expediente").insert(inserts);
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      toast.success(editId ? "Autorização atualizada" : "Autorização registrada");
+      toast.success(editId ? "Autorização atualizada" : "Autorização(ões) registrada(s)");
       qc.invalidateQueries({ queryKey: ["saidas-expediente"] });
       onOpenChange(false);
     },
@@ -136,15 +142,23 @@ export function SaidaExpedienteDialog({
     </div>
   );
 
+  const employeeOptions = (employees ?? []).map((e: any) => ({ value: e.id, label: e.nome }));
+  const selectedValues = employeeOptions.filter(opt => form.employee_ids.includes(opt.value));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{editId ? "Editar autorização" : "Nova autorização de saída"}</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {editId ? <Pencil className="h-5 w-5 text-brand" /> : <UserPlus className="h-5 w-5 text-brand" />}
+            {editId ? "Editar autorização" : "Nova autorização (Individual ou Coletiva)"}
+          </DialogTitle>
+        </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label>Empresa que está liberando *</Label>
-            <Select value={form.company_id} onValueChange={(v) => setForm({ ...form, company_id: v, employee_id: "" })}>
-              <SelectTrigger><SelectValue placeholder="Selecione a empresa..." /></SelectTrigger>
+            <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Empresa que está liberando *</Label>
+            <Select value={form.company_id} onValueChange={(v) => setForm({ ...form, company_id: v, employee_ids: [] })}>
+              <SelectTrigger className="rounded-xl border-slate-200"><SelectValue placeholder="Selecione a empresa..." /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {(companies ?? []).map((c: any) => (
                   <SelectItem key={c.id} value={c.id}>
@@ -155,28 +169,57 @@ export function SaidaExpedienteDialog({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Funcionário *</Label>
-            <Select value={form.employee_id} onValueChange={(v) => setForm({ ...form, employee_id: v })} disabled={!form.company_id}>
-              <SelectTrigger><SelectValue placeholder={form.company_id ? "Selecione..." : "Escolha a empresa primeiro"} /></SelectTrigger>
-              <SelectContent className="max-h-72">
-                {(employees ?? []).map((e: any) => (
-                  <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Funcionário(s) *</Label>
+            <ReactSelect
+              isMulti
+              isDisabled={!form.company_id}
+              options={employeeOptions}
+              value={selectedValues}
+              onChange={(selected: any) => setForm({ ...form, employee_ids: selected ? selected.map((s: any) => s.value) : [] })}
+              placeholder={form.company_id ? "Busque e selecione um ou mais..." : "Escolha a empresa primeiro"}
+              noOptionsMessage={() => "Nenhum funcionário ativo encontrado"}
+              loadingMessage={() => "Carregando..."}
+              classNamePrefix="react-select"
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  borderRadius: '0.75rem',
+                  borderColor: '#e2e8f0',
+                  fontSize: '14px',
+                  minHeight: '42px',
+                }),
+                multiValue: (base) => ({
+                  ...base,
+                  backgroundColor: '#f1f5f9',
+                  borderRadius: '0.5rem',
+                }),
+                multiValueLabel: (base) => ({
+                  ...base,
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  textTransform: 'uppercase',
+                }),
+              }}
+            />
+            {!editId && form.employee_ids.length > 1 && (
+              <p className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                Atenção: Será gerada uma autorização individual para cada funcionário selecionado.
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>Data *</Label>
-              <Input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
+            <div className="space-y-1.5"><Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Data *</Label>
+              <Input type="date" className="rounded-xl" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
             </div>
-            <div className="space-y-1.5"><Label>Horário de saída *</Label>
-              <Input type="time" value={form.horario_saida} onChange={(e) => setForm({ ...form, horario_saida: e.target.value })} />
+            <div className="space-y-1.5"><Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Horário de saída *</Label>
+              <Input type="time" className="rounded-xl" value={form.horario_saida} onChange={(e) => setForm({ ...form, horario_saida: e.target.value })} />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Tipo *</Label>
+            <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Tipo *</Label>
             <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="PESSOAL">Assuntos pessoais</SelectItem>
                 <SelectItem value="SERVICO">A serviço da empresa</SelectItem>
@@ -185,9 +228,9 @@ export function SaidaExpedienteDialog({
           </div>
           <div className="grid grid-cols-2 gap-3 items-end">
             <div className="space-y-1.5">
-              <Label>Retorno</Label>
+              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Retorno</Label>
               <Select value={form.com_retorno ? "SIM" : "NAO"} onValueChange={(v) => setForm({ ...form, com_retorno: v === "SIM" })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="NAO">Sem retorno</SelectItem>
                   <SelectItem value="SIM">Com retorno</SelectItem>
@@ -195,28 +238,28 @@ export function SaidaExpedienteDialog({
               </Select>
             </div>
             {form.com_retorno && (
-              <div className="space-y-1.5"><Label>Horário de retorno *</Label>
-                <Input type="time" value={form.horario_retorno ?? ""} onChange={(e) => setForm({ ...form, horario_retorno: e.target.value })} />
+              <div className="space-y-1.5"><Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Horário de retorno *</Label>
+                <Input type="time" className="rounded-xl" value={form.horario_retorno ?? ""} onChange={(e) => setForm({ ...form, horario_retorno: e.target.value })} />
               </div>
             )}
           </div>
-          <div className="space-y-1.5"><Label>Motivo</Label>
-            <Textarea rows={3} value={form.motivo ?? ""} onChange={(e) => setForm({ ...form, motivo: e.target.value })} placeholder="Ex.: dor de cabeça forte, foi ao médico..." />
+          <div className="space-y-1.5"><Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Motivo</Label>
+            <Textarea rows={3} className="rounded-xl" value={form.motivo ?? ""} onChange={(e) => setForm({ ...form, motivo: e.target.value })} placeholder="Ex.: dor de cabeça forte, foi ao médico..." />
           </div>
-          <div className="space-y-1.5"><Label>Observação interna</Label>
-            <Textarea rows={2} value={form.observacao ?? ""} onChange={(e) => setForm({ ...form, observacao: e.target.value })} />
+          <div className="space-y-1.5"><Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Observação interna</Label>
+            <Textarea rows={2} className="rounded-xl" value={form.observacao ?? ""} onChange={(e) => setForm({ ...form, observacao: e.target.value })} />
           </div>
           <div className="space-y-2 pt-2 border-t">
-            <Label>Assinaturas do documento</Label>
+            <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Assinaturas do documento</Label>
             {renderSignatureOption("SESMT", "Minha assinatura — TST/SESMT", form.assinatura_sesmt)}
-            {renderSignatureOption("FUNC", "Assinatura do funcionário", form.assinatura_funcionario)}
+            {editId && renderSignatureOption("FUNC", "Assinatura do funcionário", form.assinatura_funcionario)}
             {renderSignatureOption("SUPERVISOR", `Assinatura do ${supervisorLabel}`, form.assinatura_supervisor)}
-            <p className="text-[11px] text-slate-500">Opcional — cada assinatura é independente e pode ser removida/refeita antes de salvar.</p>
+            <p className="text-[10px] text-slate-500 font-medium italic">Opcional — cada assinatura é independente e pode ser coletada individualmente no PDF depois.</p>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? "Salvando..." : "Salvar"}</Button>
+        <DialogFooter className="gap-2">
+          <Button variant="ghost" className="rounded-xl font-bold uppercase tracking-widest text-[10px]" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button className="rounded-xl font-bold uppercase tracking-widest text-[10px] bg-brand hover:bg-brand/90 text-white" onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? "Salvando..." : "Salvar autorização"}</Button>
         </DialogFooter>
       </DialogContent>
       <SignaturePadDialog
