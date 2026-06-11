@@ -53,6 +53,7 @@ export function PdfSignerDialog({
   modulo = "avulso",
   referenciaId,
   onSigned,
+  documentId,
 }: {
   open: boolean;
   onClose: () => void;
@@ -61,6 +62,7 @@ export function PdfSignerDialog({
   modulo?: string;
   referenciaId?: string;
   onSigned?: (info: { path: string; signedBytes: Uint8Array }) => void;
+  documentId?: string;
 }) {
   const qc = useQueryClient();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
