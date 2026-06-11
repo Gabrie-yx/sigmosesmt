@@ -127,6 +127,16 @@ function SaidasPage() {
     return (r.employees?.nome ?? "").toLowerCase().includes(s) || (r.data ?? "").includes(s) || (r.motivo ?? "").toLowerCase().includes(s);
   });
 
+  // Agrupar por data
+  const grupos = filtradas.reduce((acc: any, r: any) => {
+    const data = r.data;
+    if (!acc[data]) acc[data] = [];
+    acc[data].push(r);
+    return acc;
+  }, {});
+
+  const datasOrdenadas = Object.keys(grupos).sort((a, b) => b.localeCompare(a));
+
   return (
     <div className="p-6 md:p-8 animate-fadeIn">
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
@@ -144,7 +154,7 @@ function SaidasPage() {
         )}
       </div>
 
-      <Input className="mb-4 max-w-md" placeholder="Buscar por nome, data ou motivo…" value={busca} onChange={(e) => setBusca(e.target.value)} />
+      <Input className="mb-6 max-w-md bg-white border-slate-200 shadow-sm" placeholder="Buscar por nome, data ou motivo…" value={busca} onChange={(e) => setBusca(e.target.value)} />
 
       {isLoading ? (
         <div className="grid gap-3">{Array.from({length:3}).map((_,i)=><div key={i} className="h-20 rounded-xl bg-slate-100 animate-pulse"/>)}</div>
@@ -154,58 +164,65 @@ function SaidasPage() {
           <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Nenhuma autorização registrada</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtradas.map((r: any) => {
-            const sigFunc = !!r.assinatura_funcionario;
-            const sigSesmt = !!r.assinatura_sesmt;
-            const sigSupervisor = !!r.assinatura_supervisor;
-            const emp = r.employees;
-            const iniciais = (emp?.nome ?? "—").split(" ").filter(Boolean).slice(0,2).map((s: string) => s[0]?.toUpperCase()).join("");
-            return (
-              <div key={r.id} className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition-all flex flex-col gap-3">
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-14 w-14 ring-2 ring-slate-100 shrink-0">
-                    {emp?.foto_url ? <AvatarImage src={emp.foto_url} alt={emp.nome} /> : null}
-                    <AvatarFallback className="text-sm font-black text-slate-700">{iniciais || "?"}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-black text-slate-900 leading-tight truncate">{emp?.nome ?? "—"}</p>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 truncate">{emp?.roles?.name ?? "—"}</p>
-                    {emp?.id && (
-                      <Link
-                        to="/app/employees/$id"
-                        params={{ id: emp.id }}
-                        className="inline-flex items-center gap-1 mt-1 text-[10px] font-black uppercase tracking-widest text-brand hover:underline"
-                      >
-                        <UserCog className="h-3 w-3" /> Editar ficha
-                      </Link>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-700 px-2 py-0.5 rounded">{formatDateBR(r.data)}</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest bg-rose-100 text-rose-700 px-2 py-0.5 rounded">{r.horario_saida}</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-700 px-2 py-0.5 rounded">{r.tipo === "PESSOAL" ? "Pessoal" : "A serviço"}</span>
-                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${r.com_retorno ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{r.com_retorno ? `retorno ${r.horario_retorno ?? ""}` : "sem retorno"}</span>
-                </div>
-
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sigFunc ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>Func {sigFunc ? "✓" : "—"}</span>
-                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sigSesmt ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>SESMT {sigSesmt ? "✓" : "—"}</span>
-                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sigSupervisor ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>Sup/Enc {sigSupervisor ? "✓" : "—"}</span>
-                </div>
-
-                {r.motivo && <p className="text-xs text-slate-600 line-clamp-2"><b>Motivo:</b> {r.motivo}</p>}
-
-                <div className="flex items-center justify-end gap-1 pt-2 border-t border-slate-100">
-                  <Button size="sm" variant="outline" onClick={() => gerarPdf(r.id)}><Eye className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
-                  {isEditor && <Button size="icon" variant="ghost" onClick={() => { setEditId(r.id); setOpen(true); }} title="Editar autorização"><Pencil className="h-4 w-4" /></Button>}
-                  {isAdmin && <Button size="icon" variant="ghost" onClick={() => { if (confirm("Excluir esta autorização?")) del.mutate(r.id); }} title="Excluir"><Trash2 className="h-4 w-4 text-rose-500" /></Button>}
-                </div>
+        <div className="space-y-8">
+          {datasOrdenadas.map((data) => (
+            <div key={data} className="space-y-3">
+              <div className="flex items-center gap-4">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                  {formatDateBR(data)}
+                </h3>
+                <div className="h-px flex-1 bg-slate-100"></div>
               </div>
-            );
-          })}
+              
+              <div className="grid gap-3 sm:grid-cols-2">
+                {grupos[data].map((r: any) => {
+                  const sigFunc = !!r.assinatura_funcionario;
+                  const sigSesmt = !!r.assinatura_sesmt;
+                  const sigSupervisor = !!r.assinatura_supervisor;
+                  const emp = r.employees;
+                  const iniciais = (emp?.nome ?? "—").split(" ").filter(Boolean).slice(0,2).map((s: string) => s[0]?.toUpperCase()).join("");
+                  
+                  return (
+                    <div key={r.id} className="group relative rounded-xl border border-slate-100 bg-white p-3 shadow-sm hover:shadow-md hover:border-brand/20 transition-all flex items-center gap-4">
+                      <Avatar className="h-10 w-10 ring-2 ring-slate-50 shrink-0">
+                        {emp?.foto_url ? <AvatarImage src={emp.foto_url} alt={emp.nome} /> : null}
+                        <AvatarFallback className="text-xs font-black text-slate-700">{iniciais || "?"}</AvatarFallback>
+                      </Avatar>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[13px] font-black text-slate-900 leading-tight truncate uppercase tracking-tight">{emp?.nome ?? "—"}</p>
+                          <div className="flex gap-1 shrink-0">
+                            <span className={`w-2 h-2 rounded-full ${sigFunc ? "bg-emerald-500" : "bg-slate-200"}`} title="Assinatura Funcionário" />
+                            <span className={`w-2 h-2 rounded-full ${sigSesmt ? "bg-emerald-500" : "bg-slate-200"}`} title="Assinatura SESMT" />
+                            <span className={`w-2 h-2 rounded-full ${sigSupervisor ? "bg-emerald-500" : "bg-slate-200"}`} title="Assinatura Supervisor" />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded uppercase">{r.horario_saida}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">{emp?.roles?.name ?? "—"}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100" onClick={() => gerarPdf(r.id)} title="Visualizar PDF">
+                          <Eye className="h-4 w-4 text-slate-600" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100" onClick={() => { setEditId(r.id); setOpen(true); }} title="Editar">
+                          <Pencil className="h-3.5 w-3.5 text-slate-600" />
+                        </Button>
+                        {isAdmin && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:text-rose-600 hover:bg-rose-50" onClick={() => { if (confirm("Excluir esta autorização?")) del.mutate(r.id); }} title="Excluir">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
