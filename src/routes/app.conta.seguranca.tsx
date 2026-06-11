@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ShieldCheck, ShieldAlert, Trash2, KeyRound, LogOut } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Trash2, KeyRound, LogOut, PenTool, Image as ImageIcon, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/conta/seguranca")({
@@ -26,8 +26,24 @@ function SecurityPage() {
   const [confirmPwd, setConfirmPwd] = useState("");
   const [pwdBusy, setPwdBusy] = useState(false);
   const [signOutBusy, setSignOutBusy] = useState(false);
+  const [signature, setSignature] = useState<string | null>(() => localStorage.getItem("sigmo:last-user-signature"));
 
   useEffect(() => { refreshFactors(); }, []);
+
+  const onSignatureUpload = async (file: File | null) => {
+    if (!file) return;
+    if (file.type !== "image/png") return toast.error("A assinatura deve estar no formato PNG");
+    if (file.size > 2 * 1024 * 1024) return toast.error("Arquivo muito grande (máx. 2MB)");
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setSignature(base64);
+      localStorage.setItem("sigmo:last-user-signature", base64);
+      toast.success("Assinatura salva com sucesso!");
+    };
+    reader.readAsDataURL(file);
+  };
 
   async function changePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -124,6 +140,68 @@ function SecurityPage() {
     <div className="p-8 max-w-2xl">
       <h1 className="text-3xl font-bold tracking-tight mb-1">Segurança da conta</h1>
       <p className="text-muted-foreground text-sm mb-6">{user?.email}</p>
+
+      <Card className="mb-6 border-emerald-200">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <PenTool className="h-5 w-5 text-emerald-600" />
+            <CardTitle>Minha Assinatura</CardTitle>
+          </div>
+          <CardDescription>
+            Faça o upload da sua assinatura (PNG transparente) para que ela seja preenchida automaticamente em requisições e outros documentos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-6 items-center">
+            <div className="h-24 w-48 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center bg-slate-50 relative overflow-hidden group">
+              {signature ? (
+                <>
+                  <img src={signature} alt="Assinatura" className="h-full w-full object-contain p-2" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Check className="h-8 w-8 text-white" />
+                  </div>
+                </>
+              ) : (
+                <ImageIcon className="h-8 w-8 text-slate-300" />
+              )}
+            </div>
+            <div className="flex-1 space-y-3">
+              <div className="flex gap-2">
+                <label className="cursor-pointer">
+                  <Button variant="outline" className="pointer-events-none">
+                    <PenTool className="h-4 w-4 mr-2" />
+                    {signature ? "Trocar Assinatura" : "Enviar Assinatura"}
+                  </Button>
+                  <input
+                    type="file"
+                    accept="image/png"
+                    className="hidden"
+                    onChange={(e) => onSignatureUpload(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+                {signature && (
+                  <Button
+                    variant="ghost"
+                    className="text-red-600 hover:text-red-700"
+                    onClick={() => {
+                      if (confirm("Remover sua assinatura salva?")) {
+                        setSignature(null);
+                        localStorage.removeItem("sigmo:last-user-signature");
+                        toast.info("Assinatura removida");
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Recomendado: fundo transparente, formato PNG, máx 2MB.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
