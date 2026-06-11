@@ -234,7 +234,25 @@ function SaidasPage() {
                         <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100" onClick={() => gerarPdf(r.id)} title="Visualizar PDF">
                           <Eye className="h-4 w-4 text-slate-600" />
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100" onClick={() => { setEditId(r.id); setOpen(true); }} title="Editar">
+                        {isEditor && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-brand/5 hover:text-brand" onClick={() => {
+                            setEditId(null);
+                            setDuplicateData({
+                              company_id: r.company_id,
+                              employee_ids: [r.employee_id],
+                              horario_saida: r.horario_saida,
+                              tipo: r.tipo,
+                              com_retorno: r.com_retorno,
+                              horario_retorno: r.horario_retorno,
+                              motivo: r.motivo,
+                              observacao: r.observacao
+                            });
+                            setOpen(true);
+                          }} title="Repetir autorização hoje">
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100" onClick={() => { setEditId(r.id); setDuplicateData(null); setOpen(true); }} title="Editar">
                           <Pencil className="h-3.5 w-3.5 text-slate-600" />
                         </Button>
                         {isAdmin && (
