@@ -137,11 +137,13 @@ function SecurityPage() {
   if (loading) return <div className="p-8 text-sm text-muted-foreground">Carregando…</div>;
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-8 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold tracking-tight mb-1">Segurança da conta</h1>
       <p className="text-muted-foreground text-sm mb-6">{user?.email}</p>
 
-      <Card className="mb-6 border-emerald-200">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div className="space-y-6">
+          <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <PenTool className="h-5 w-5 text-emerald-600" />
@@ -182,7 +184,8 @@ function SecurityPage() {
                 {signature && (
                   <Button
                     variant="ghost"
-                    className="text-red-600 hover:text-red-700"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
                     onClick={() => {
                       if (confirm("Remover sua assinatura salva?")) {
                         setSignature(null);
@@ -202,8 +205,9 @@ function SecurityPage() {
           </div>
         </CardContent>
       </Card>
-
-      <Card>
+    </div>
+  );
+}
         <CardHeader>
           <div className="flex items-center gap-2">
             {mfaActive
