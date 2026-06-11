@@ -54,7 +54,7 @@ function AppLayout() {
             </ModuleRouteGuard>
           </main>
           <footer className="border-t bg-white/60 backdrop-blur py-3 px-4 text-center text-[11px] text-muted-foreground">
-            Copyright© 2026. Todos os Direitos Reservados. Desenvolvido por Francisco Bandeira e Anderson Soares — Sistema de Gerenciamento de SST.
+            Copyright© 2026. Todos os Direitos Reservados para Francisco Bandeira (fbandeira.br@gmail.com) — SIGMO - Sistema de Gerenciamento de SST.
           </footer>
           <CommandPalette />
         </div>
