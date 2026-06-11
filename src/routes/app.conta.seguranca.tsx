@@ -230,18 +230,6 @@ function SecurityPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-6 items-center text-center">
-                <div className="h-32 w-64 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center bg-slate-50 relative overflow-hidden group">
-                  {signature ? (
-                    <>
-                      <img src={signature} alt="Assinatura" className="h-full w-full object-contain p-2" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Check className="h-8 w-8 text-white" />
-                      </div>
-                    </>
-                  ) : (
-                    <ImageIcon className="h-10 w-10 text-slate-300" />
-                  )}
-                </div>
                 <div className="space-y-3 w-full">
                   <div className="flex flex-col gap-2">
                     <SignatureGallery 
@@ -252,30 +240,37 @@ function SecurityPage() {
                       }} 
                       trigger={
                         <Button className="w-full bg-red-700 hover:bg-red-800">
-                          <LayoutGrid className="h-4 w-4 mr-2" />
+                          <PenTool className="h-4 w-4 mr-2" />
                           Minhas Assinaturas (Galeria)
                         </Button>
                       }
                     />
                     {signature && (
-                      <Button
-                        variant="ghost"
-                        className="text-red-600 hover:text-red-700 w-full"
-                        onClick={() => {
-                          if (confirm("Remover assinatura da visualização padrão?")) {
-                            setSignature(null);
-                            localStorage.removeItem("sigmo:last-user-signature");
-                            toast.info("Removida da visualização");
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Remover da Visualização
-                      </Button>
+                      <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
+                        <p className="text-[10px] font-bold uppercase text-slate-500 mb-2">Assinatura Padrão Atual</p>
+                        <div className="h-24 w-full flex items-center justify-center bg-white rounded border border-dashed border-slate-200 overflow-hidden">
+                          <img src={signature} alt="Assinatura" className="h-full w-full object-contain p-2" />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 w-full mt-2 h-8"
+                          onClick={() => {
+                            if (confirm("Remover assinatura da visualização padrão?")) {
+                              setSignature(null);
+                              localStorage.removeItem("sigmo:last-user-signature");
+                              toast.info("Removida da visualização");
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-2" />
+                          Limpar Padrão
+                        </Button>
+                      </div>
                     )}
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    Recomendado: fundo transparente, formato PNG, máx 2MB.
+                    Armazene múltiplas assinaturas e escolha qual usar em seus documentos.
                   </p>
                 </div>
               </div>
