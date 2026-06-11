@@ -244,28 +244,16 @@ function SecurityPage() {
                 </div>
                 <div className="space-y-3 w-full">
                   <div className="flex flex-col gap-2">
-                    <label className="cursor-pointer">
-                      <div className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full">
-                        <PenTool className="h-4 w-4 mr-2" />
-                        {signature ? "Trocar Assinatura" : "Enviar Assinatura"}
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/png"
-                        className="hidden"
-                        onChange={(e) => onSignatureUpload(e.target.files?.[0] ?? null)}
-                      />
-                    </label>
                     <SignatureGallery 
                       onSelect={(data) => {
                         setSignature(data);
                         localStorage.setItem("sigmo:last-user-signature", data);
-                        toast.success("Assinatura padrão alterada pela galeria");
+                        toast.success("Assinatura alterada pela galeria");
                       }} 
                       trigger={
-                        <Button variant="outline" className="w-full">
+                        <Button className="w-full bg-red-700 hover:bg-red-800">
                           <LayoutGrid className="h-4 w-4 mr-2" />
-                          Abrir Galeria
+                          Minhas Assinaturas (Galeria)
                         </Button>
                       }
                     />
@@ -274,15 +262,15 @@ function SecurityPage() {
                         variant="ghost"
                         className="text-red-600 hover:text-red-700 w-full"
                         onClick={() => {
-                          if (confirm("Remover sua assinatura salva?")) {
+                          if (confirm("Remover assinatura da visualização padrão?")) {
                             setSignature(null);
                             localStorage.removeItem("sigmo:last-user-signature");
-                            toast.info("Assinatura removida");
+                            toast.info("Removida da visualização");
                           }
                         }}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
-                        Remover Assinatura
+                        Remover da Visualização
                       </Button>
                     )}
                   </div>
