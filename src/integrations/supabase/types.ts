@@ -2005,7 +2005,7 @@ export type Database = {
           modulo: string
           nome_arquivo: string
           original_pdf_path: string | null
-          pdf_assinado_path: string
+          pdf_assinado_path: string | null
           placements_draft: Json | null
           referencia_id: string | null
           status: string | null
@@ -2022,7 +2022,7 @@ export type Database = {
           modulo?: string
           nome_arquivo: string
           original_pdf_path?: string | null
-          pdf_assinado_path: string
+          pdf_assinado_path?: string | null
           placements_draft?: Json | null
           referencia_id?: string | null
           status?: string | null
@@ -2039,7 +2039,7 @@ export type Database = {
           modulo?: string
           nome_arquivo?: string
           original_pdf_path?: string | null
-          pdf_assinado_path?: string
+          pdf_assinado_path?: string | null
           placements_draft?: Json | null
           referencia_id?: string | null
           status?: string | null
