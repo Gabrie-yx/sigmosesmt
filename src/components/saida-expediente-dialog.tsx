@@ -25,8 +25,13 @@ const emptyForm = () => ({
 });
 
 export function SaidaExpedienteDialog({
-  open, onOpenChange, editId,
-}: { open: boolean; onOpenChange: (b: boolean) => void; editId: string | null }) {
+  open, onOpenChange, editId, duplicateData,
+}: { 
+  open: boolean; 
+  onOpenChange: (b: boolean) => void; 
+  editId: string | null;
+  duplicateData?: any;
+}) {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [form, setForm] = useState<any>(emptyForm);
@@ -53,10 +58,19 @@ export function SaidaExpedienteDialog({
       supabase.from("employee_saidas_expediente").select("*").eq("id", editId).maybeSingle().then(({ data }) => {
         if (data) setForm({ ...data, employee_ids: [data.employee_id] });
       });
+    } else if (duplicateData) {
+      setForm({
+        ...emptyForm(),
+        ...duplicateData,
+        data: new Date().toISOString().slice(0, 10),
+        assinatura_funcionario: null,
+        assinatura_sesmt: null,
+        assinatura_supervisor: null,
+      });
     } else {
       setForm(emptyForm());
     }
-  }, [open, editId]);
+  }, [open, editId, duplicateData]);
 
   const selectedCompany = (companies ?? []).find((c: any) => c.id === form.company_id);
   const supervisorLabel = selectedCompany?.type === "TERCEIRIZADO" ? "Encarregado" : "Supervisor Geral";

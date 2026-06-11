@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Plus, Eye, Pencil, Trash2, PenLine, LogOut, MousePointerClick, UserCog } from "lucide-react";
+import { ArrowLeft, Plus, Eye, Pencil, Trash2, PenLine, LogOut, MousePointerClick, UserCog, Copy } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { SaidaExpedienteDialog } from "@/components/saida-expediente-dialog";
@@ -41,6 +41,7 @@ function SaidasPage() {
   const { user, isEditor, isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [duplicateData, setDuplicateData] = useState<any>(null);
   const [busca, setBusca] = useState("");
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [previewFileName, setPreviewFileName] = useState("autorizacao-saida.pdf");
@@ -148,7 +149,7 @@ function SaidasPage() {
           </div>
         </div>
         {isEditor && (
-          <Button onClick={() => { setEditId(null); setOpen(true); }} className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
+          <Button onClick={() => { setEditId(null); setDuplicateData(null); setOpen(true); }} className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
             <Plus className="h-4 w-4 mr-2" />Nova autorização
           </Button>
         )}
@@ -171,6 +172,31 @@ function SaidasPage() {
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
                   {formatDateBR(data)}
                 </h3>
+                {isEditor && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 text-[10px] font-black uppercase tracking-widest text-brand hover:text-brand hover:bg-brand/5 rounded-lg border border-slate-100 hover:border-brand/20 bg-white shadow-sm"
+                    onClick={() => {
+                      const first = grupos[data][0];
+                      const empIds = grupos[data].map((r: any) => r.employee_id);
+                      setEditId(null);
+                      setDuplicateData({
+                        company_id: first.company_id,
+                        employee_ids: empIds,
+                        horario_saida: first.horario_saida,
+                        tipo: first.tipo,
+                        com_retorno: first.com_retorno,
+                        horario_retorno: first.horario_retorno,
+                        motivo: first.motivo,
+                        observacao: first.observacao
+                      });
+                      setOpen(true);
+                    }}
+                  >
+                    <Copy className="h-3 w-3 mr-1.5" /> Repetir Lote
+                  </Button>
+                )}
                 <div className="h-px flex-1 bg-slate-100"></div>
               </div>
               
@@ -208,7 +234,25 @@ function SaidasPage() {
                         <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100" onClick={() => gerarPdf(r.id)} title="Visualizar PDF">
                           <Eye className="h-4 w-4 text-slate-600" />
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100" onClick={() => { setEditId(r.id); setOpen(true); }} title="Editar">
+                        {isEditor && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-brand/5 hover:text-brand" onClick={() => {
+                            setEditId(null);
+                            setDuplicateData({
+                              company_id: r.company_id,
+                              employee_ids: [r.employee_id],
+                              horario_saida: r.horario_saida,
+                              tipo: r.tipo,
+                              com_retorno: r.com_retorno,
+                              horario_retorno: r.horario_retorno,
+                              motivo: r.motivo,
+                              observacao: r.observacao
+                            });
+                            setOpen(true);
+                          }} title="Repetir autorização hoje">
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100" onClick={() => { setEditId(r.id); setDuplicateData(null); setOpen(true); }} title="Editar">
                           <Pencil className="h-3.5 w-3.5 text-slate-600" />
                         </Button>
                         {isAdmin && (
@@ -226,7 +270,7 @@ function SaidasPage() {
         </div>
       )}
 
-      <SaidaExpedienteDialog open={open} onOpenChange={setOpen} editId={editId} />
+      <SaidaExpedienteDialog open={open} onOpenChange={setOpen} editId={editId} duplicateData={duplicateData} />
 
       <PDFPreviewDialog
         open={!!previewDoc}
