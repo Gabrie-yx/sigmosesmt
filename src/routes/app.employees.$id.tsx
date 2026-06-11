@@ -1681,8 +1681,8 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={() => setOpenFichaOptions(true)}
-            title="Opções da Ficha de EPI"
+            onClick={() => gerarFicha()}
+            title="Visualizar e Assinar Ficha de EPI"
             className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs"
             size="lg"
           >
