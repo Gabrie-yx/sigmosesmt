@@ -25,8 +25,13 @@ const emptyForm = () => ({
 });
 
 export function SaidaExpedienteDialog({
-  open, onOpenChange, editId,
-}: { open: boolean; onOpenChange: (b: boolean) => void; editId: string | null }) {
+  open, onOpenChange, editId, duplicateData,
+}: { 
+  open: boolean; 
+  onOpenChange: (b: boolean) => void; 
+  editId: string | null;
+  duplicateData?: any;
+}) {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [form, setForm] = useState<any>(emptyForm);
