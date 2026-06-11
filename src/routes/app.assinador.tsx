@@ -46,7 +46,7 @@ function AssinadorPage() {
   const [editingDoc, setEditingDoc] = useState<DocAssinado | null>(null);
   const [viewingDoc, setViewingDoc] = useState<DocAssinado | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("historico");
+  const [activeTab, setActiveTab] = useState("upload");
 
   const { data: docs = [], refetch } = useQuery({
     queryKey: ["documentos-assinados"],
@@ -134,8 +134,8 @@ function AssinadorPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="historico"><History className="h-4 w-4 mr-1" /> Meus Documentos ({docs.length})</TabsTrigger>
           <TabsTrigger value="upload"><Upload className="h-4 w-4 mr-1" /> Novo PDF</TabsTrigger>
+          <TabsTrigger value="historico"><History className="h-4 w-4 mr-1" /> Meus Documentos ({docs.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload">
