@@ -1704,6 +1704,38 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           >
             <Printer className="h-4 w-4 mr-2" /> Ficha em PDF
           </Button>
+          <Button
+            onClick={() => {
+              if (!epis?.length) {
+                toast.error("Nenhum EPI registrado para gerar termo.");
+                return;
+              }
+              // Abre com o primeiro item ou permite escolher? 
+              // Vou abrir um diálogo de seleção ou usar o último item de perda
+              const lastPerda = [...epis].find(e => e.motivo_entrega === "PERDA_EXTRAVIO");
+              if (lastPerda) {
+                const { url, fname } = openTermoPerdaPdf({
+                  emp, company, role,
+                  item: lastPerda.item,
+                  ca: lastPerda.ca,
+                  qtd: lastPerda.qtd,
+                  valor_unitario: lastPerda.valor_unitario,
+                  data_entrega: lastPerda.data_entrega,
+                  observacoes: lastPerda.observacoes
+                });
+                fetch(url).then(r => r.arrayBuffer()).then(buf => {
+                  setSignerSrc({ bytes: new Uint8Array(buf), name: fname });
+                });
+              } else {
+                toast.info("Não há registros de perda/extravio para este colaborador.");
+              }
+            }}
+            variant="outline"
+            className="border-rose-600 text-rose-600 hover:bg-rose-50 font-black uppercase tracking-widest text-xs"
+            size="lg"
+          >
+            <FileWarning className="h-4 w-4 mr-2" /> Termo de Perda
+          </Button>
         </div>
       </Card>
 
