@@ -326,31 +326,35 @@ export function PdfSignerDialog({
         if (!page) continue;
         const base64 = p.dataUrl.split(",")[1];
         const buf = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-        // assinaturas_salvas armazena PNG (com transparência)
         const png = await pdfDoc.embedPng(buf).catch(async () => await pdfDoc.embedJpg(buf));
         page.drawImage(png, { x: p.x, y: p.y, width: p.width, height: p.height });
       }
       const signedBytes = await pdfDoc.save();
 
-      // Upload
+      // Identificamos se é um Termo de Responsabilidade pelo nome do arquivo
+      const isTermoPerda = nomeArquivo.toLowerCase().includes("termo_perda");
+      
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id ?? "anon";
       const ts = new Date().toISOString().replace(/[:.]/g, "-");
       const safeName = nomeArquivo.replace(/[^\w.\-]+/g, "_");
+      
+      // Se for Termo de Perda, salvamos em uma pasta específica para facilitar a organização
+      const folder = isTermoPerda ? "termos_perda" : "assinados";
       const path = `${uid}/${ts}_${safeName}`;
+      const fullPath = `${folder}/${path}`;
+      
       const blob = new Blob([new Uint8Array(signedBytes)], { type: "application/pdf" });
-      const fullPath = `assinados/${path}`;
       const { error: upErr } = await supabase.storage.from("sesmt-docs").upload(fullPath, blob, {
         contentType: "application/pdf",
         upsert: false,
       });
       if (upErr) throw upErr;
 
-      // Audit row or update existing
       const userEmail = userData.user?.email ?? null;
       const docData = {
         nome_arquivo: nomeArquivo,
-        modulo,
+        modulo: isTermoPerda ? "termo_perda" : modulo,
         referencia_id: referenciaId ?? null,
         pdf_assinado_path: fullPath,
         assinaturas: placements.map((p) => ({
@@ -386,10 +390,16 @@ export function PdfSignerDialog({
       }
 
       qc.invalidateQueries({ queryKey: ["documentos-assinados"] });
-      toast.success("Documento assinado e salvo com sucesso!");
+      qc.invalidateQueries({ queryKey: ["signed-docs", referenciaId] });
+      
+      toast.success(isTermoPerda 
+        ? "Termo de Responsabilidade assinado e arquivado com sucesso!" 
+        : "Documento assinado e salvo com sucesso!"
+      );
+      
       onSigned?.({ path: fullPath, signedBytes });
 
-      // download
+      // download opcional (pode ser removido se o usuário preferir apenas arquivar)
       const dlUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = dlUrl;

@@ -1120,32 +1120,48 @@ function SignedDocsList({ employeeId }: { employeeId: string }) {
   if (!signedDocs?.length) return null;
 
   return (
-    <Card className="p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <FileSignature className="h-4 w-4 text-emerald-600" />
-        <div className="text-[11px] font-black uppercase tracking-widest text-slate-600">Documentos Assinados Digitalmente</div>
+    <Card className="p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FileSignature className="h-4 w-4 text-emerald-600" />
+          <div className="text-[11px] font-black uppercase tracking-widest text-slate-600">Documentos Assinados Digitalmente</div>
+        </div>
+        <Badge variant="outline" className="text-[9px] bg-emerald-50 text-emerald-700 border-emerald-200">
+          {signedDocs.length} DOCS
+        </Badge>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {signedDocs.map((d: any) => (
-          <div key={d.id} className="rounded-xl border border-emerald-100 bg-white p-3 flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <CheckCircle2 className="h-5 w-5" />
+        {signedDocs.map((d: any) => {
+          const isTermo = d.modulo === "termo_perda" || d.nome_arquivo.toLowerCase().includes("termo_perda");
+          return (
+            <div key={d.id} className={`rounded-xl border ${isTermo ? "border-rose-100 bg-rose-50/30" : "border-emerald-100 bg-white"} p-3 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow`}>
+              <div className="flex items-center gap-3">
+                <div className={`h-9 w-9 rounded-lg ${isTermo ? "bg-rose-100 text-rose-600" : "bg-emerald-50 text-emerald-600"} flex items-center justify-center`}>
+                  {isTermo ? <FileWarning className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-slate-800 truncate max-w-[140px]" title={d.nome_arquivo}>
+                    {d.nome_arquivo}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-medium">
+                    {formatDateBR(d.criado_at)} · {d.total_assinaturas} assinaturas
+                  </div>
+                </div>
               </div>
-              <div className="min-w-0">
-                <div className="text-sm font-bold text-slate-800 truncate" title={d.nome_arquivo}>
-                  {d.nome_arquivo}
-                </div>
-                <div className="text-[10px] text-slate-500 font-medium">
-                  Assinado em {formatDateBR(d.criado_at)} · {d.total_assinaturas} assinaturas
-                </div>
+              <div className="flex items-center gap-1">
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => openSigned(d.pdf_assinado_path)} 
+                  className={`${isTermo ? "text-rose-600 hover:text-rose-700 hover:bg-rose-100" : "text-brand hover:text-brand hover:bg-brand/5"}`}
+                >
+                  <FileText className="h-4 w-4 mr-1" /> Ver
+                </Button>
               </div>
             </div>
-            <Button size="sm" variant="ghost" onClick={() => openSigned(d.pdf_assinado_path)} className="text-brand hover:text-brand hover:bg-brand/5">
-              <FileText className="h-4 w-4 mr-1" /> Ver PDF
-            </Button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Card>
   );
@@ -1681,8 +1697,8 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={() => setOpenFichaOptions(true)}
-            title="Opções da Ficha de EPI"
+            onClick={() => gerarFicha()}
+            title="Visualizar e Assinar Ficha de EPI"
             className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs"
             size="lg"
           >
