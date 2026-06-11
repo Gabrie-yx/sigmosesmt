@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
-import { PenLine, Check, UserPlus, X } from "lucide-react";
+import { PenLine, Check, UserPlus, Pencil } from "lucide-react";
 import ReactSelect from "react-select";
 
 type SignatureTarget = "FUNC" | "SESMT" | "SUPERVISOR";
