@@ -38,8 +38,16 @@ async function fetchBytes(src: PdfSignerInput): Promise<Uint8Array> {
   if (src instanceof Uint8Array) return src;
   if (src instanceof Blob) return new Uint8Array(await src.arrayBuffer());
   if (src instanceof ArrayBuffer) return new Uint8Array(src);
-  // URL string
-  const res = await fetch(src);
+  
+  // If it's a string, check if it's a URL or a storage path
+  let url = src;
+  if (!src.startsWith("http") && !src.startsWith("data:")) {
+    const { data, error } = await supabase.storage.from("sesmt-docs").createSignedUrl(src, 3600);
+    if (error) throw error;
+    url = data.signedUrl;
+  }
+  
+  const res = await fetch(url);
   return new Uint8Array(await res.arrayBuffer());
 }
 
@@ -53,6 +61,7 @@ export function PdfSignerDialog({
   modulo = "avulso",
   referenciaId,
   onSigned,
+  documentId,
 }: {
   open: boolean;
   onClose: () => void;
@@ -61,6 +70,7 @@ export function PdfSignerDialog({
   modulo?: string;
   referenciaId?: string;
   onSigned?: (info: { path: string; signedBytes: Uint8Array }) => void;
+  documentId?: string;
 }) {
   const qc = useQueryClient();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -92,15 +102,45 @@ export function PdfSignerDialog({
     enabled: open,
   });
 
-  // Load PDF when source changes
+  // Load PDF and existing placements when source/documentId changes
   useEffect(() => {
     if (!open || !source) return;
     let cancelled = false;
     setLoadError(null);
     setPlacements([]);
     setPageNum(1);
-    (async () => {
+
+    const loadData = async () => {
       try {
+        // Load placements if editing
+        if (documentId) {
+          const { data: docRow, error: docErr } = await supabase
+            .from("documentos_assinados")
+            .select("assinaturas")
+            .eq("id", documentId)
+            .single();
+          
+          if (!docErr && docRow?.assinaturas && Array.isArray(docRow.assinaturas)) {
+            // Need to reconstruct placements (adding IDs if missing)
+            const loaded = (docRow.assinaturas as any[]).map(a => ({
+              id: a.id || crypto.randomUUID(),
+              page: a.page,
+              x: a.x,
+              y: a.y,
+              width: a.width,
+              height: a.height,
+              dataUrl: a.dataUrl || "", // We might need to store dataUrl or fetch it
+              nome: a.nome,
+              cargo: a.cargo,
+            }));
+            
+            // Note: If dataUrl is missing in the DB (current schema only stores some info),
+            // we might have a problem. But typically the signer expects the image data.
+            // Let's assume for now we'll update the storage logic to include it or handle it.
+            setPlacements(loaded);
+          }
+        }
+
         const bytes = await fetchBytes(source);
         if (cancelled) return;
         bytesRef.current = bytes;
@@ -113,11 +153,14 @@ export function PdfSignerDialog({
         console.error("[PdfSigner] load error", e);
         setLoadError(e?.message ?? "Falha ao carregar PDF");
       }
-    })();
+    };
+
+    loadData();
+
     return () => {
       cancelled = true;
     };
-  }, [open, source]);
+  }, [open, source, documentId]);
 
   // Render current page
   const renderPage = useCallback(async () => {
@@ -289,14 +332,15 @@ export function PdfSignerDialog({
       });
       if (upErr) throw upErr;
 
-      // Audit row
+      // Audit row or update existing
       const userEmail = userData.user?.email ?? null;
-      const { error: insErr } = await (supabase as any).from("documentos_assinados").insert({
+      const docData = {
         nome_arquivo: nomeArquivo,
         modulo,
         referencia_id: referenciaId ?? null,
         pdf_assinado_path: fullPath,
         assinaturas: placements.map((p) => ({
+          id: p.id,
           nome: p.nome,
           cargo: p.cargo,
           page: p.page,
@@ -304,13 +348,28 @@ export function PdfSignerDialog({
           y: p.y,
           width: p.width,
           height: p.height,
+          dataUrl: p.dataUrl,
         })),
         total_assinaturas: placements.length,
         assinado_por: userData.user?.id ?? null,
         assinado_por_email: userEmail,
         assinado_por_nome: userEmail,
-      });
-      if (insErr) throw insErr;
+        status: 'signed',
+        updated_at: new Date().toISOString(),
+      };
+
+      if (documentId) {
+        const { error: updErr } = await (supabase as any)
+          .from("documentos_assinados")
+          .update(docData)
+          .eq("id", documentId);
+        if (updErr) throw updErr;
+      } else {
+        const { error: insErr } = await (supabase as any)
+          .from("documentos_assinados")
+          .insert(docData);
+        if (insErr) throw insErr;
+      }
 
       qc.invalidateQueries({ queryKey: ["documentos-assinados"] });
       toast.success("Documento assinado e salvo com sucesso!");

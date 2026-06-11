@@ -2004,8 +2004,11 @@ export type Database = {
           id: string
           modulo: string
           nome_arquivo: string
+          original_pdf_path: string | null
           pdf_assinado_path: string
+          placements_draft: Json | null
           referencia_id: string | null
+          status: string | null
           total_assinaturas: number
           updated_at: string
         }
@@ -2018,8 +2021,11 @@ export type Database = {
           id?: string
           modulo?: string
           nome_arquivo: string
+          original_pdf_path?: string | null
           pdf_assinado_path: string
+          placements_draft?: Json | null
           referencia_id?: string | null
+          status?: string | null
           total_assinaturas?: number
           updated_at?: string
         }
@@ -2032,8 +2038,11 @@ export type Database = {
           id?: string
           modulo?: string
           nome_arquivo?: string
+          original_pdf_path?: string | null
           pdf_assinado_path?: string
+          placements_draft?: Json | null
           referencia_id?: string | null
+          status?: string | null
           total_assinaturas?: number
           updated_at?: string
         }
