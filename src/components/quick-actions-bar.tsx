@@ -71,6 +71,7 @@ export function QuickActionsBar() {
                 >
                   <Link
                     to={d.route as any}
+                    search={{ draft: "true" } as any}
                     className="font-semibold hover:underline max-w-[180px] truncate"
                   >
                     {d.label}

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLocation } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -321,6 +321,16 @@ function RequisicoesPage() {
   const { user, isEditor } = useAuth();
   const qc = useQueryClient();
   const [openNew, setOpenNew] = useState(false);
+  const location = useLocation();
+
+  // Se houver rascunho na URL (?draft=true), abre o modal automaticamente
+  useEffect(() => {
+    if ((location.search as any).draft === "true") {
+      setOpenNew(true);
+      // Limpa a URL para não reabrir ao navegar de volta
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [location.search.draft]);
   const [tab, setTab] = useState<"todas" | Status>("todas");
   const [filtroPeriodo, setFiltroPeriodo] = useState<"all" | "week" | "month" | "year">("all");
   const [filtroSolic, setFiltroSolic] = useState("");
