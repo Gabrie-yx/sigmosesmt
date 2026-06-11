@@ -38,8 +38,16 @@ async function fetchBytes(src: PdfSignerInput): Promise<Uint8Array> {
   if (src instanceof Uint8Array) return src;
   if (src instanceof Blob) return new Uint8Array(await src.arrayBuffer());
   if (src instanceof ArrayBuffer) return new Uint8Array(src);
-  // URL string
-  const res = await fetch(src);
+  
+  // If it's a string, check if it's a URL or a storage path
+  let url = src;
+  if (!src.startsWith("http") && !src.startsWith("data:")) {
+    const { data, error } = await supabase.storage.from("sesmt-docs").createSignedUrl(src, 3600);
+    if (error) throw error;
+    url = data.signedUrl;
+  }
+  
+  const res = await fetch(url);
   return new Uint8Array(await res.arrayBuffer());
 }
 
