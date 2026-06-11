@@ -148,9 +148,9 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
                     )}
                   </div>
                   <label className="cursor-pointer">
-                    <Button variant="outline" type="button" className="pointer-events-none">
+                    <div className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-10 px-4 py-2">
                       Selecionar Arquivo
-                    </Button>
+                    </div>
                     <input
                       type="file"
                       accept="image/png"
