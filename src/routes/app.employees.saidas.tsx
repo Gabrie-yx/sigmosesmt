@@ -172,6 +172,31 @@ function SaidasPage() {
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
                   {formatDateBR(data)}
                 </h3>
+                {isEditor && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 text-[10px] font-black uppercase tracking-widest text-brand hover:text-brand hover:bg-brand/5 rounded-lg border border-slate-100 hover:border-brand/20 bg-white shadow-sm"
+                    onClick={() => {
+                      const first = grupos[data][0];
+                      const empIds = grupos[data].map((r: any) => r.employee_id);
+                      setEditId(null);
+                      setDuplicateData({
+                        company_id: first.company_id,
+                        employee_ids: empIds,
+                        horario_saida: first.horario_saida,
+                        tipo: first.tipo,
+                        com_retorno: first.com_retorno,
+                        horario_retorno: first.horario_retorno,
+                        motivo: first.motivo,
+                        observacao: first.observacao
+                      });
+                      setOpen(true);
+                    }}
+                  >
+                    <Copy className="h-3 w-3 mr-1.5" /> Repetir Lote
+                  </Button>
+                )}
                 <div className="h-px flex-1 bg-slate-100"></div>
               </div>
               
