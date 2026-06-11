@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ShieldCheck, ShieldAlert, Trash2, KeyRound, LogOut, PenTool, Image as ImageIcon, Check } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Trash2, KeyRound, LogOut, PenTool, Image as ImageIcon, Check, LayoutGrid } from "lucide-react";
+import { SignatureGallery } from "@/components/signature-gallery";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/conta/seguranca")({
@@ -255,6 +256,19 @@ function SecurityPage() {
                         onChange={(e) => onSignatureUpload(e.target.files?.[0] ?? null)}
                       />
                     </label>
+                    <SignatureGallery 
+                      onSelect={(data) => {
+                        setSignature(data);
+                        localStorage.setItem("sigmo:last-user-signature", data);
+                        toast.success("Assinatura padrão alterada pela galeria");
+                      }} 
+                      trigger={
+                        <Button variant="outline" className="w-full">
+                          <LayoutGrid className="h-4 w-4 mr-2" />
+                          Abrir Galeria
+                        </Button>
+                      }
+                    />
                     {signature && (
                       <Button
                         variant="ghost"
