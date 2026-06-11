@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PenTool, Trash2, Plus, Check, ImageIcon } from "lucide-react";
+import { PenTool, Trash2, Plus, Check, ImageIcon, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserSignature {
@@ -33,6 +33,7 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [newLabel, setNewLabel] = useState("");
   const [newData, setNewData] = useState<string | null>(null);
 
@@ -70,6 +71,23 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const updateLabelMutation = useMutation({
+    mutationFn: async ({ id, label }: { id: string; label: string }) => {
+      const { error } = await supabase
+        .from("user_signatures")
+        .update({ label: label.trim() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["user-signatures"] });
+      toast.success("Nome atualizado");
+      setEditingId(null);
+      setNewLabel("");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("user_signatures").delete().eq("id", id);
@@ -85,9 +103,7 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
   const setDefaultMutation = useMutation({
     mutationFn: async (id: string) => {
       if (!user?.id) return;
-      // Primeiro remove default de todas do usuário
       await supabase.from("user_signatures").update({ is_default: false }).eq("user_id", user.id);
-      // Depois define a nova
       const { error } = await supabase.from("user_signatures").update({ is_default: true }).eq("id", id);
       if (error) throw error;
     },
@@ -105,6 +121,11 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
     const reader = new FileReader();
     reader.onload = () => setNewData(reader.result as string);
     reader.readAsDataURL(file);
+  };
+
+  const startEditing = (sig: UserSignature) => {
+    setEditingId(sig.id);
+    setNewLabel(sig.label);
   };
 
   return (
@@ -148,7 +169,7 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
                     )}
                   </div>
                   <label className="cursor-pointer">
-                    <div className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-10 px-4 py-2">
+                    <div className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-10 px-4 py-2 transition-colors">
                       Selecionar Arquivo
                     </div>
                     <input
@@ -188,10 +209,42 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
                     sig.is_default ? "border-red-200 bg-red-50/30" : "hover:border-slate-300 bg-white"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold uppercase truncate pr-8">{sig.label}</span>
-                    {sig.is_default && (
-                      <Check className="h-3.5 w-3.5 text-red-700" />
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    {editingId === sig.id ? (
+                      <div className="flex items-center gap-1 w-full">
+                        <Input
+                          size={1}
+                          className="h-6 text-[11px] py-0 px-2 flex-1"
+                          value={newLabel}
+                          onChange={(e) => setNewLabel(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") updateLabelMutation.mutate({ id: sig.id, label: newLabel });
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                          autoFocus
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0 text-emerald-600"
+                          onClick={() => updateLabelMutation.mutate({ id: sig.id, label: newLabel })}
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 flex-1 truncate">
+                        <span className="text-[11px] font-bold uppercase truncate">{sig.label}</span>
+                        <button
+                          onClick={() => startEditing(sig)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-slate-400 hover:text-red-700"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
+                    {sig.is_default && editingId !== sig.id && (
+                      <Check className="h-3.5 w-3.5 text-red-700 flex-shrink-0" />
                     )}
                   </div>
                   
