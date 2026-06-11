@@ -26,6 +26,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dmnLogo from "@/assets/dmn-logo.png";
 import { EstoqueLookupSheet, type PickedItem } from "@/components/estoque-lookup-sheet";
+import { SignatureGallery } from "@/components/signature-gallery";
 import { Wizard, type WizardStep } from "@/components/wizard";
 import { useDraftAutosave } from "@/hooks/use-draft-autosave";
 import { deleteDraft, loadDraft } from "@/lib/draft-store";
