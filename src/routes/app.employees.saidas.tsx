@@ -149,7 +149,7 @@ function SaidasPage() {
           </div>
         </div>
         {isEditor && (
-          <Button onClick={() => { setEditId(null); setOpen(true); }} className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
+          <Button onClick={() => { setEditId(null); setDuplicateData(null); setOpen(true); }} className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
             <Plus className="h-4 w-4 mr-2" />Nova autorização
           </Button>
         )}
