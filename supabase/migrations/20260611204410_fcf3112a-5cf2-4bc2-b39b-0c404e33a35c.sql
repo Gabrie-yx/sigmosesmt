@@ -1,0 +1,1 @@
+ALTER TABLE public.documentos_assinados ALTER COLUMN pdf_assinado_path DROP NOT NULL;

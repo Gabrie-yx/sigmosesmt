@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library, Pencil, Move } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library, Pencil, Move, PenTool } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from "pdf-lib";
@@ -10,6 +10,7 @@ import * as pdfjsLib from "pdfjs-dist";
 // @ts-ignore
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { SignaturePadDialog, type AssinaturaResult } from "@/components/signature-pad-dialog";
+import { SignatureGallery } from "@/components/signature-gallery";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -88,6 +89,19 @@ export function PdfSignerDialog({
   const [openPad, setOpenPad] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  const { data: userSigs = [] } = useQuery({
+    queryKey: ["user-signatures"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_signatures")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: open,
+  });
 
   const { data: savedSigs = [] } = useQuery({
     queryKey: ["assinaturas-salvas"],
@@ -504,39 +518,72 @@ export function PdfSignerDialog({
 
             {/* Right panel: signature picker */}
             <div className="border-l bg-white flex flex-col min-h-0">
-              <div className="px-3 py-2 border-b flex items-center gap-2">
-                <Library className="h-4 w-4 text-rose-600" />
-                <span className="font-bold text-sm">Galeria de Assinaturas</span>
+              <div className="px-3 py-2 border-b flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Library className="h-4 w-4 text-rose-600" />
+                  <span className="font-bold text-sm">Galeria</span>
+                </div>
+                <SignatureGallery 
+                  trigger={
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-600">
+                      <PenTool className="h-4 w-4" />
+                    </Button>
+                  }
+                />
               </div>
               <ScrollArea className="flex-1">
-                <div className="p-3 space-y-2">
-                  {savedSigs.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-4">
-                      Nenhuma assinatura salva. Use o botão abaixo para criar uma nova.
-                    </p>
+                <div className="p-3 space-y-4">
+                  {/* Minhas Assinaturas (user_signatures) */}
+                  {userSigs.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Minhas Assinaturas</div>
+                      {userSigs.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => setPendingSig({ dataUrl: s.signature_data, nome: s.label, cargo: "" })}
+                          className={`w-full border rounded-md p-2 hover:border-rose-400 hover:bg-rose-50 text-left transition ${
+                            pendingSig?.dataUrl === s.signature_data ? "border-rose-500 ring-2 ring-rose-200" : "border-slate-200"
+                          }`}
+                        >
+                          <img src={s.signature_data} alt={s.label} className="h-12 w-full object-contain bg-slate-50 rounded mb-1" />
+                          <div className="text-xs font-semibold truncate">{s.label}</div>
+                        </button>
+                      ))}
+                    </div>
                   )}
-                  {savedSigs.map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => pickSaved(s)}
-                      className={`w-full border rounded-md p-2 hover:border-rose-400 hover:bg-rose-50 text-left transition ${
-                        pendingSig?.dataUrl === s.imagem_data_url ? "border-rose-500 ring-2 ring-rose-200" : "border-slate-200"
-                      }`}
-                    >
-                      <img src={s.imagem_data_url} alt={s.nome} className="h-12 w-full object-contain bg-slate-50 rounded mb-1" />
-                      <div className="text-xs font-semibold truncate">{s.nome}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">{s.cargo || "—"}</div>
-                    </button>
-                  ))}
+
+                  {/* Assinaturas do Sistema (assinaturas_salvas) */}
+                  <div className="space-y-2">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assinaturas do Sistema</div>
+                    {savedSigs.length === 0 && userSigs.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-4">
+                        Nenhuma assinatura encontrada.
+                      </p>
+                    )}
+                    {savedSigs.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => pickSaved(s)}
+                        className={`w-full border rounded-md p-2 hover:border-rose-400 hover:bg-rose-50 text-left transition ${
+                          pendingSig?.dataUrl === s.imagem_data_url ? "border-rose-500 ring-2 ring-rose-200" : "border-slate-200"
+                        }`}
+                      >
+                        <img src={s.imagem_data_url} alt={s.nome} className="h-12 w-full object-contain bg-slate-50 rounded mb-1" />
+                        <div className="text-xs font-semibold truncate">{s.nome}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">{s.cargo || "—"}</div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </ScrollArea>
               <div className="border-t p-2 space-y-2">
                 <Button variant="outline" size="sm" className="w-full" onClick={() => setOpenPad(true)}>
-                  <Pencil className="h-4 w-4 mr-1" /> Desenhar / Importar nova
+                  <Pencil className="h-4 w-4 mr-1" /> Desenhar / Importar
                 </Button>
                 <div className="text-[11px] text-muted-foreground px-1">
-                  {placements.length} assinatura(s) posicionada(s) no documento
+                  {placements.length} assinatura(s) posicionada(s)
                 </div>
               </div>
             </div>
