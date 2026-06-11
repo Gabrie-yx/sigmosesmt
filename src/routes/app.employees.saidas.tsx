@@ -41,6 +41,7 @@ function SaidasPage() {
   const { user, isEditor, isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [duplicateData, setDuplicateData] = useState<any>(null);
   const [busca, setBusca] = useState("");
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [previewFileName, setPreviewFileName] = useState("autorizacao-saida.pdf");
