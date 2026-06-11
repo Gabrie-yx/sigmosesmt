@@ -128,11 +128,11 @@ async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "do
   if (logo) {
     try { doc.addImage(logo, "PNG", M + 2, M + 2, 28, 18); } catch { /* noop */ }
   }
-  doc.setFont("helvetica", "bold"); doc.setFontSize(13);
-  doc.text("REQUISIÇÃO DE COMPRA DE MATERIAIS E SERVIÇOS", M + 35, M + 10, { maxWidth: W - 2 * M - 80 });
+  doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+  doc.text("REQUISIÇÃO DE COMPRA DE MATERIAIS E SERVIÇOS", M + 35, M + 9, { maxWidth: W - 2 * M - 88 });
   if (req.titulo) {
-    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-    doc.text(req.titulo.toUpperCase(), M + 35, M + 17, { maxWidth: W - 2 * M - 80 });
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.text(req.titulo.toUpperCase(), M + 35, M + 18, { maxWidth: W - 2 * M - 88 });
   }
 
   // Bloco código
