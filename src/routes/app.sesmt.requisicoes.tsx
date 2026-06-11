@@ -771,7 +771,9 @@ function ReqFormDialog({
     observacoes: existing?.observacoes ?? "",
   });
   const [itens, setItens] = useState<Item[]>(emptyItems());
-  const [signature, setSignature] = useState<string | null>(existing?.signature_solicitante ?? null);
+  const [signature, setSignature] = useState<string | null>(() => {
+    return existing?.signature_solicitante || localStorage.getItem("sigmo:last-user-signature") || null;
+  });
   const [signatureHeight, setSignatureHeight] = useState<number>(existing?.signature_solicitante_height ?? 80);
 
   // === Autosave de rascunho (somente em modo de criação) ===
@@ -849,7 +851,12 @@ function ReqFormDialog({
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => setSignature(reader.result as string);
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setSignature(base64);
+      // Salva a assinatura globalmente para reaproveitamento em novas requisições
+      localStorage.setItem("sigmo:last-user-signature", base64);
+    };
     reader.readAsDataURL(file);
   };
 
