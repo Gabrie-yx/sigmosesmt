@@ -1385,7 +1385,9 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         data_entrega: f.data_entrega,
         observacoes: f.observacoes,
       });
-      openFileViewer({ url, name: fname, mime: "application/pdf" });
+      // Em vez de openFileViewer, usamos o PdfSignerDialog para ver e poder salvar
+      const doc = await fetch(url).then(r => r.arrayBuffer());
+      setSignerSrc({ bytes: new Uint8Array(doc), name: fname });
     }
   }
 
@@ -1581,7 +1583,8 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         data_entrega: notReturning.data_entrega,
         observacoes: nrForm.obs || "Item não devolvido pelo colaborador.",
       });
-      openFileViewer({ url, name: fname, mime: "application/pdf" });
+      const doc = await fetch(url).then(r => r.arrayBuffer());
+      setSignerSrc({ bytes: new Uint8Array(doc), name: fname });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["epis", empId] });
