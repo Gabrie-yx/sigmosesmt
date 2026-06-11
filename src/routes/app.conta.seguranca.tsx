@@ -115,7 +115,6 @@ function SecurityPage() {
       toast.success("MFA ativado com sucesso!");
       setFactorId(null); setQr(null); setSecret(null); setCode("");
       await refreshFactors();
-      // recarrega para atualizar aal
       window.location.reload();
     } catch (e: any) {
       toast.error(e.message);
@@ -225,7 +224,7 @@ function SecurityPage() {
                 <CardTitle>Minha Assinatura</CardTitle>
               </div>
               <CardDescription>
-                Faça o upload da sua assinatura (PNG transparente) para que ela seja preenchida automaticamente em requisições e outros documentos.
+                Faça o upload da sua assinatura (PNG transparente) para preenchimento automático.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -282,122 +281,53 @@ function SecurityPage() {
           </Card>
         </div>
       </div>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            {mfaActive
-              ? <ShieldCheck className="h-5 w-5 text-green-600" />
-              : <ShieldAlert className="h-5 w-5 text-amber-600" />}
-            <CardTitle>Autenticação em dois fatores (MFA)</CardTitle>
-          </div>
-          <CardDescription>
-            Use um app autenticador como Google Authenticator, Authy ou 1Password.
-            {requiresMfa && !mfaActive && (
-              <span className="block mt-2 text-amber-700 font-medium">
-                Seu papel exige MFA — ative para acessar áreas sensíveis.
-              </span>
-            )}
-            {mfaActive && aal !== "aal2" && (
-              <span className="block mt-2 text-amber-700 font-medium">
-                MFA ativo, mas a sessão atual não está verificada (aal1). Faça logout e entre novamente fornecendo o código.
-              </span>
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {factors.length > 0 && (
-            <div className="space-y-2">
-              {factors.map((f) => (
-                <div key={f.id} className="flex items-center justify-between p-3 rounded border bg-muted/30">
-                  <div>
-                    <div className="text-sm font-medium">{f.friendly_name ?? "TOTP"}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Status: <Badge status={f.status} />
-                    </div>
-                  </div>
-                  <Button size="sm" variant="ghost" onClick={() => unenrollFactor(f.id)}>
-                    <Trash2 className="h-4 w-4 text-red-600" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
 
-          {!qr && (
-            <Button onClick={startEnroll} disabled={busy}>
-              <ShieldCheck className="h-4 w-4 mr-2" />
-              {factors.some((f) => f.status === "verified") ? "Adicionar outro fator" : "Ativar MFA"}
-            </Button>
-          )}
-
-          {qr && (
-            <div className="space-y-3 p-4 border rounded-md bg-muted/20">
-              <p className="text-sm">1. Escaneie o QR code com seu app autenticador:</p>
-              <img src={qr} alt="QR Code MFA" className="bg-white p-2 rounded" />
-              <p className="text-xs text-muted-foreground">
-                Ou digite manualmente: <code className="font-mono bg-background px-1">{secret}</code>
-              </p>
-              <div>
-                <Label>2. Digite o código de 6 dígitos:</Label>
-                <Input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  className="font-mono text-lg tracking-widest" placeholder="000000" maxLength={6} />
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={verifyEnroll} disabled={busy || code.length !== 6}>Verificar e ativar</Button>
-                <Button variant="ghost" onClick={() => { setFactorId(null); setQr(null); setSecret(null); }}>Cancelar</Button>
-              </div>
-            </div>
-          )}
-
-          <div className="pt-4 border-t">
-            <Button variant="outline" onClick={() => navigate({ to: "/app" })}>Voltar</Button>
-          </div>
-        </CardContent>
-      </Card>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5 text-slate-700" />
-            <CardTitle>Alterar senha</CardTitle>
-          </div>
-          <CardDescription>
-            Defina uma nova senha (mínimo 8 caracteres). Você continuará logado nesta sessão.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={changePassword} className="space-y-3">
-            <div className="space-y-1">
-              <Label htmlFor="new-pwd">Nova senha</Label>
-              <Input id="new-pwd" type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} minLength={8} required />
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-slate-700" />
+              <CardTitle>Alterar senha</CardTitle>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="confirm-pwd">Confirme a nova senha</Label>
-              <Input id="confirm-pwd" type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} minLength={8} required />
-            </div>
-            <Button type="submit" disabled={pwdBusy}>
-              {pwdBusy ? "Salvando..." : "Alterar senha"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+            <CardDescription>
+              Defina uma nova senha (mínimo 8 caracteres). Você continuará logado nesta sessão.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={changePassword} className="space-y-3">
+              <div className="space-y-1">
+                <Label htmlFor="new-pwd">Nova senha</Label>
+                <Input id="new-pwd" type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} minLength={8} required />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="confirm-pwd">Confirme a nova senha</Label>
+                <Input id="confirm-pwd" type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} minLength={8} required />
+              </div>
+              <Button type="submit" disabled={pwdBusy}>
+                {pwdBusy ? "Salvando..." : "Alterar senha"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
-      <Card className="mt-6 border-red-200">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <LogOut className="h-5 w-5 text-red-600" />
-            <CardTitle>Encerrar todas as sessões</CardTitle>
-          </div>
-          <CardDescription>
-            Desconecta sua conta de TODOS os dispositivos e navegadores (inclusive este). Útil se você suspeita de acesso indevido. Combine com a troca de senha acima para máxima segurança.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="destructive" onClick={signOutAll} disabled={signOutBusy}>
-            <LogOut className="h-4 w-4 mr-2" />
-            {signOutBusy ? "Encerrando..." : "Sair de todos os dispositivos"}
-          </Button>
-        </CardContent>
-      </Card>
+        <Card className="border-red-200">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <LogOut className="h-5 w-5 text-red-600" />
+              <CardTitle>Encerrar todas as sessões</CardTitle>
+            </div>
+            <CardDescription>
+              Desconecta sua conta de TODOS os dispositivos e navegadores (inclusive este).
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="destructive" onClick={signOutAll} disabled={signOutBusy}>
+              <LogOut className="h-4 w-4 mr-2" />
+              {signOutBusy ? "Encerrando..." : "Sair de todos os dispositivos"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
