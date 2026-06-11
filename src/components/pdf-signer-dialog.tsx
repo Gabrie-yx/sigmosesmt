@@ -324,14 +324,15 @@ export function PdfSignerDialog({
       });
       if (upErr) throw upErr;
 
-      // Audit row
+      // Audit row or update existing
       const userEmail = userData.user?.email ?? null;
-      const { error: insErr } = await (supabase as any).from("documentos_assinados").insert({
+      const docData = {
         nome_arquivo: nomeArquivo,
         modulo,
         referencia_id: referenciaId ?? null,
         pdf_assinado_path: fullPath,
         assinaturas: placements.map((p) => ({
+          id: p.id,
           nome: p.nome,
           cargo: p.cargo,
           page: p.page,
@@ -339,13 +340,28 @@ export function PdfSignerDialog({
           y: p.y,
           width: p.width,
           height: p.height,
+          dataUrl: p.dataUrl,
         })),
         total_assinaturas: placements.length,
         assinado_por: userData.user?.id ?? null,
         assinado_por_email: userEmail,
         assinado_por_nome: userEmail,
-      });
-      if (insErr) throw insErr;
+        status: 'signed',
+        updated_at: new Date().toISOString(),
+      };
+
+      if (documentId) {
+        const { error: updErr } = await (supabase as any)
+          .from("documentos_assinados")
+          .update(docData)
+          .eq("id", documentId);
+        if (updErr) throw updErr;
+      } else {
+        const { error: insErr } = await (supabase as any)
+          .from("documentos_assinados")
+          .insert(docData);
+        if (insErr) throw insErr;
+      }
 
       qc.invalidateQueries({ queryKey: ["documentos-assinados"] });
       toast.success("Documento assinado e salvo com sucesso!");
