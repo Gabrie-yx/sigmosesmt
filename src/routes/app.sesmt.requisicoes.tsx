@@ -50,6 +50,7 @@ type PrintMode = "download" | "print" | "preview";
 type Req = {
   id: string;
   numero: string;
+  titulo: string | null;
   data_requisicao: string;
   classificacao: Classe;
   solicitante: string;
@@ -128,7 +129,11 @@ async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "do
     try { doc.addImage(logo, "PNG", M + 2, M + 2, 28, 18); } catch { /* noop */ }
   }
   doc.setFont("helvetica", "bold"); doc.setFontSize(13);
-  doc.text("REQUISIÇÃO DE COMPRA DE MATERIAIS E SERVIÇOS", M + 35, M + 13, { maxWidth: W - 2 * M - 80 });
+  doc.text("REQUISIÇÃO DE COMPRA DE MATERIAIS E SERVIÇOS", M + 35, M + 10, { maxWidth: W - 2 * M - 80 });
+  if (req.titulo) {
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    doc.text(req.titulo.toUpperCase(), M + 35, M + 17, { maxWidth: W - 2 * M - 80 });
+  }
 
   // Bloco código
   const codX = W - M - 55;
@@ -490,6 +495,7 @@ function RequisicoesPage() {
                       <div className="flex-1 min-w-[220px]">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-slate-900">Nº {r.numero}</span>
+                          {r.titulo && <span className="font-semibold text-red-800 ml-1">— {r.titulo}</span>}
                           <Badge variant="outline" className={STATUS_BADGE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
                           <Badge variant="outline" className="text-[10px]">{r.classificacao === "MATERIAL" ? "Material" : "Serviço"}</Badge>
                         </div>
@@ -608,6 +614,11 @@ function ViewBtn({ req }: { req: Req }) {
           <DialogTitle>Requisição Nº {req.numero}</DialogTitle>
         </DialogHeader>
         <div className="space-y-2 text-sm">
+          {req.titulo && (
+            <div className="bg-red-50 p-2 rounded border border-red-100 mb-2 font-bold text-red-900">
+              {req.titulo}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <div><strong>Data:</strong> {fmtBR(req.data_requisicao)}</div>
             <div><strong>Classificação:</strong> {req.classificacao === "MATERIAL" ? "Material" : "Serviço"}</div>
@@ -730,6 +741,7 @@ function ReqFormDialog({
 
   const [form, setForm] = useState({
     numero: existing?.numero ?? "Gerando...",
+    titulo: existing?.titulo ?? "",
     data_requisicao: existing?.data_requisicao ?? today,
     classificacao: (existing?.classificacao ?? "MATERIAL") as Classe,
     solicitante: existing?.solicitante ?? "",
@@ -876,6 +888,7 @@ function ReqFormDialog({
       }
       const payload = {
         numero: form.numero.trim(),
+        titulo: form.titulo.trim() || null,
         data_requisicao: form.data_requisicao,
         classificacao: form.classificacao,
         solicitante: form.solicitante.trim(),
