@@ -27,11 +27,18 @@ export function saveDraft<T>(key: string, label: string, route: string, data: T)
   const w = safeWindow();
   if (!w) return;
   try {
-    const payload: DraftRecord<T> = { label, route, data, updatedAt: Date.now() };
+    // Para economizar espaço no localStorage, removemos a assinatura (Base64 pesado) do rascunho
+    // se for o objeto de dados da requisição. Ela será recuperada do storage global ao reabrir.
+    const cleanData = JSON.parse(JSON.stringify(data));
+    if (cleanData && typeof cleanData === 'object' && 'signature' in cleanData) {
+      delete cleanData.signature;
+    }
+
+    const payload: DraftRecord<T> = { label, route, data: cleanData, updatedAt: Date.now() };
     w.localStorage.setItem(KEY_PREFIX + key, JSON.stringify(payload));
     w.dispatchEvent(new CustomEvent(EVT));
-  } catch {
-    // localStorage cheio / privado — ignora silenciosamente
+  } catch (e) {
+    console.warn("Falha ao salvar rascunho (provavelmente localStorage cheio):", e);
   }
 }
 
