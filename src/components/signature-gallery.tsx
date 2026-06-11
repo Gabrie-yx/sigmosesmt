@@ -51,9 +51,9 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      if (!newData || !newLabel.trim()) return;
+      if (!newData || !newLabel.trim() || !user?.id) return;
       const { error } = await supabase.from("user_signatures").insert({
-        user_id: user?.id,
+        user_id: user.id,
         label: newLabel.trim(),
         signature_data: newData,
         is_default: signatures.length === 0,
@@ -84,8 +84,9 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
 
   const setDefaultMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Primeiro remove default de todas
-      await supabase.from("user_signatures").update({ is_default: false }).eq("user_id", user?.id);
+      if (!user?.id) return;
+      // Primeiro remove default de todas do usuário
+      await supabase.from("user_signatures").update({ is_default: false }).eq("user_id", user.id);
       // Depois define a nova
       const { error } = await supabase.from("user_signatures").update({ is_default: true }).eq("id", id);
       if (error) throw error;
@@ -190,7 +191,7 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-bold uppercase truncate pr-8">{sig.label}</span>
                     {sig.is_default && (
-                      <Check className="h-3.5 w-3.5 text-red-700" title="Padrão" />
+                      <Check className="h-3.5 w-3.5 text-red-700" />
                     )}
                   </div>
                   
@@ -217,7 +218,7 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
                         className="h-8 text-[11px]"
                         onClick={() => setDefaultMutation.mutate(sig.id)}
                       >
-                        Tornar padrão
+                        Padrão
                       </Button>
                     )}
                     <Button
