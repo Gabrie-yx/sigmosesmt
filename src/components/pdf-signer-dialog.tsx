@@ -399,14 +399,6 @@ export function PdfSignerDialog({
       
       onSigned?.({ path: fullPath, signedBytes });
 
-      // download opcional (pode ser removido se o usuário preferir apenas arquivar)
-      const dlUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = dlUrl;
-      a.download = `assinado_${safeName}`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(dlUrl), 4000);
-
       onClose();
     } catch (e: any) {
       console.error(e);
