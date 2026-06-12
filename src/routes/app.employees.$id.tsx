@@ -188,6 +188,54 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const missingDocs = REQUIRED_DOCS.filter((t) => !docsTipos.has(t));
   const docsOk = missingDocs.length === 0;
 
+  // --- Estado das pills de atalho (verde = ok, âmbar = parcial, vermelho = pendente) ---
+  const asoTone: "ok" | "warn" | "rose" | "slate" = useMemo(() => {
+    if (!role?.req_aso) return "slate";
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const asos = (exams ?? []).filter((e: any) => /aso/i.test(String(e.tipo_exame ?? "")));
+    if (asos.length === 0) return "rose";
+    const vigente = asos.some((e: any) => {
+      if (!e.data_vencimento) return true;
+      const v = new Date(String(e.data_vencimento) + "T00:00:00");
+      return v.getTime() >= today.getTime();
+    });
+    if (!vigente) return "rose";
+    const proxVenc = asos.some((e: any) => {
+      if (!e.data_vencimento) return false;
+      const v = new Date(String(e.data_vencimento) + "T00:00:00");
+      const dias = Math.ceil((v.getTime() - today.getTime()) / 86400000);
+      return dias >= 0 && dias <= 30;
+    });
+    return proxVenc ? "warn" : "ok";
+  }, [role, exams]);
+
+  const nrTone: "ok" | "warn" | "rose" | "slate" = useMemo(() => {
+    const req: string[] = role?.req_nrs ?? [];
+    if (req.length === 0) return "slate";
+    const empNrs: Record<string, string> = (emp as any)?.nrs ?? {};
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let faltando = 0; let vencendo = 0;
+    req.forEach((nr) => {
+      const d = empNrs[nr];
+      if (!d) { faltando++; return; }
+      const dt = new Date(String(d) + "T00:00:00");
+      // NR vale 12 meses por padrão; alerta nos últimos 30 dias
+      const venc = new Date(dt); venc.setFullYear(venc.getFullYear() + 1);
+      const dias = Math.ceil((venc.getTime() - today.getTime()) / 86400000);
+      if (dias < 0) faltando++;
+      else if (dias <= 30) vencendo++;
+    });
+    if (faltando > 0) return "rose";
+    if (vencendo > 0) return "warn";
+    return "ok";
+  }, [role, emp]);
+
+  const docsTone: "ok" | "warn" | "rose" = docsOk
+    ? "ok"
+    : missingDocs.length === REQUIRED_DOCS.length
+    ? "rose"
+    : "warn";
+
   function initialsOf(name?: string | null) {
     if (!name) return "?";
     const parts = name.trim().split(/\s+/).filter(Boolean);
