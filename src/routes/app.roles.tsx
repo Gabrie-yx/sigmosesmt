@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CatalogoRiscosPanel } from "@/components/catalogo/catalogo-riscos-panel";
 import { CatalogoNrsPanel } from "@/components/catalogo/catalogo-nrs-panel";
 import { CargoRiscosPanel } from "@/components/cargo-riscos/cargo-riscos-panel";
+import { CboPicker } from "@/components/cbo-picker";
 
 
 export const Route = createFileRoute("/app/roles")({
@@ -73,7 +74,7 @@ type Natureza = "ADMISSIONAL" | "PERIODICO" | "RETORNO_TRABALHO" | "MUDANCA_RISC
 type ExamesPorNatureza = Record<Natureza, string[]>;
 type Role = {
   id: string; name: string; ativo: boolean;
-  ghe: string | null; setor: string | null; cbo: string | null;
+  ghe: string | null; setor: string | null; cbo: string | null; cbo_titulo: string | null;
   req_aso: boolean; req_integra: boolean;
   req_nrs: string[]; req_exames: string[]; req_vacinas: string[];
   risco_biologico: boolean; riscos: Riscos;
@@ -96,7 +97,7 @@ const emptyExames: ExamesPorNatureza = {
   MUDANCA_RISCO: [], DEMISSIONAL: [], SEMESTRAL: [],
 };
 const empty: Partial<Role> = {
-  name: "", ativo: true, ghe: "", setor: "", cbo: "",
+  name: "", ativo: true, ghe: "", setor: "", cbo: "", cbo_titulo: "",
   req_aso: true, req_integra: true,
   req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos,
   exames_por_natureza: emptyExames,
@@ -122,6 +123,7 @@ function RolesPage() {
         ghe: r.ghe ?? "",
         setor: r.setor ?? "",
         cbo: r.cbo ?? "",
+        cbo_titulo: r.cbo_titulo ?? "",
         req_vacinas: r.req_vacinas ?? [],
         risco_biologico: !!r.risco_biologico,
         riscos: r.riscos && typeof r.riscos === "object" ? { ...emptyRiscos, ...r.riscos } : emptyRiscos,
@@ -154,6 +156,7 @@ function RolesPage() {
         ghe: v.ghe || null,
         setor: v.setor || null,
         cbo: v.cbo || null,
+        cbo_titulo: v.cbo_titulo || null,
         req_aso: !!v.req_aso,
         req_integra: !!v.req_integra,
         req_nrs: v.req_nrs ?? [],
