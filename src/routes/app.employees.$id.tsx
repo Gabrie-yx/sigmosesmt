@@ -1200,6 +1200,15 @@ function SignedDocsList({ employeeId }: { employeeId: string }) {
                 >
                   <FileText className="h-4 w-4 mr-1" /> Ver
                 </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => excluir(d)}
+                  title="Excluir documento"
+                  className="text-slate-400 hover:text-rose-700 hover:bg-rose-100"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           );
