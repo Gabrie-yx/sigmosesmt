@@ -1101,21 +1101,62 @@ function DocsTab({ empId }: any) {
 }
 
 function SignedDocsList({ employeeId }: { employeeId: string }) {
+  const qc = useQueryClient();
   const { data: signedDocs } = useQuery({
     queryKey: ["signed-docs", employeeId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // 1) Docs ligados diretamente ao funcionário (fichas de EPI)
+      const { data: porFunc, error: e1 } = await supabase
         .from("documentos_assinados")
         .select("*")
-        .eq("referencia_id", employeeId)
-        .order("criado_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+        .eq("referencia_id", employeeId);
+      if (e1) throw e1;
+      // 2) Termos de perda — referencia_id aponta para epi_deliveries.id
+      const { data: perdas, error: e2 } = await supabase
+        .from("epi_deliveries")
+        .select("id")
+        .eq("employee_id", employeeId)
+        .eq("motivo_entrega", "PERDA_EXTRAVIO");
+      if (e2) throw e2;
+      const perdaIds = (perdas ?? []).map((p: any) => p.id);
+      let termos: any[] = [];
+      if (perdaIds.length) {
+        const { data: t, error: e3 } = await supabase
+          .from("documentos_assinados")
+          .select("*")
+          .eq("modulo", "termo_perda")
+          .in("referencia_id", perdaIds);
+        if (e3) throw e3;
+        termos = t ?? [];
+      }
+      const all = [...(porFunc ?? []), ...termos];
+      // dedup + ordena por data desc
+      const seen = new Set<string>();
+      return all
+        .filter((d) => (seen.has(d.id) ? false : (seen.add(d.id), true)))
+        .sort((a, b) => (b.criado_at ?? "").localeCompare(a.criado_at ?? ""));
     },
   });
 
   async function openSigned(path: string) {
     await openStorageFile("sesmt-docs", path);
+  }
+
+  async function excluir(d: any) {
+    if (!confirm(`Excluir definitivamente o documento "${d.nome_arquivo}"?\n\nEsta ação remove o PDF assinado e o registro do histórico. Não há como desfazer.`))
+      return;
+    try {
+      if (d.pdf_assinado_path) {
+        await supabase.storage.from("sesmt-docs").remove([d.pdf_assinado_path]);
+      }
+      const { error } = await supabase.from("documentos_assinados").delete().eq("id", d.id);
+      if (error) throw error;
+      toast.success("Documento excluído.");
+      qc.invalidateQueries({ queryKey: ["signed-docs", employeeId] });
+      qc.invalidateQueries({ queryKey: ["documentos-assinados"] });
+    } catch (e: any) {
+      toast.error("Falha ao excluir: " + (e?.message ?? "erro desconhecido"));
+    }
   }
 
   if (!signedDocs?.length) return null;
@@ -1158,6 +1199,15 @@ function SignedDocsList({ employeeId }: { employeeId: string }) {
                   className={`${isTermo ? "text-rose-600 hover:text-rose-700 hover:bg-rose-100" : "text-brand hover:text-brand hover:bg-brand/5"}`}
                 >
                   <FileText className="h-4 w-4 mr-1" /> Ver
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => excluir(d)}
+                  title="Excluir documento"
+                  className="text-slate-400 hover:text-rose-700 hover:bg-rose-100"
+                >
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
