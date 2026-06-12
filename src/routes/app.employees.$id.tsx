@@ -418,7 +418,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
 }
 
 /* ============ CONTEXT SIDEBAR (empresa + colegas) ============ */
-function QuickTabBtn({ icon: Icon, label, tone = "rose", active, onClick }: { icon: any; label: string; tone?: "rose" | "slate"; active?: boolean; onClick: () => void }) {
+function QuickTabBtn({ icon: Icon, label, tone = "rose", active, onClick }: { icon: any; label: string; tone?: "rose" | "slate" | "ok" | "warn"; active?: boolean; onClick: () => void }) {
   const palette = tone === "slate"
     ? "bg-slate-100 text-slate-600 hover:bg-slate-200 ring-slate-200"
     : tone === "ok"
