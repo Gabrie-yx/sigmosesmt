@@ -360,7 +360,7 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
         .select("id, cargo, titulo, setor, revisao, validade_meses, descricao_atividades, riscos_texto, medidas_preventivas, epis_obrigatorios, proibicoes, penalidades, procedimentos_emergencia, risco_fisico, risco_quimico, risco_biologico, risco_ergonomico, risco_acidente, risco_psicossocial")
         .eq("ativo", true)
         .order("cargo");
-      return data ?? [];
+      return (data ?? []) as any[];
     },
   });
 
