@@ -6,14 +6,26 @@ import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library,
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from "pdf-lib";
-import * as pdfjsLib from "pdfjs-dist";
-// @ts-ignore
-import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { SignaturePadDialog, type AssinaturaResult } from "@/components/signature-pad-dialog";
 import { SignatureGallery } from "@/components/signature-gallery";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+// pdfjs-dist usa DOMMatrix / Path2D — só pode carregar no browser.
+type PdfJsModule = typeof import("pdfjs-dist");
+let pdfjsPromise: Promise<PdfJsModule> | null = null;
+async function loadPdfJs(): Promise<PdfJsModule> {
+  if (typeof window === "undefined") throw new Error("pdfjs only available in browser");
+  if (!pdfjsPromise) {
+    pdfjsPromise = (async () => {
+      const lib = await import("pdfjs-dist");
+      // @ts-ignore
+      const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+      lib.GlobalWorkerOptions.workerSrc = workerUrl;
+      return lib;
+    })();
+  }
+  return pdfjsPromise;
+}
 
 type Placement = {
   id: string;
@@ -158,6 +170,7 @@ export function PdfSignerDialog({
         const bytes = await fetchBytes(source);
         if (cancelled) return;
         bytesRef.current = bytes;
+        const pdfjsLib = await loadPdfJs();
         const loadingTask = pdfjsLib.getDocument({ data: bytes.slice(0) });
         const pdf = await loadingTask.promise;
         if (cancelled) return;
