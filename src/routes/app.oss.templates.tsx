@@ -481,7 +481,27 @@ function TemplateEditorDialog({
         const itens = arr
           .map((v) => String(v).trim())
           .filter((v) => v && !/^nenhum/i.test(v) && !/^n\/?a$/i.test(v));
-        if (itens.length) buckets[cat] = itens;
+        if (itens.length) {
+          buckets[cat] = itens;
+          // Enriquecimento: tenta casar cada texto livre com um item do catálogo
+          // (mesma categoria) para puxar medidas_controle_padrao + epis_sugeridos.
+          const normTxt = (s: string) =>
+            s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+          const catalogoCat = (catalogo as any[]).filter(
+            (c) => (c.categoria ?? "").toUpperCase() === cat,
+          );
+          for (const item of itens) {
+            const it = normTxt(item);
+            const match = catalogoCat.find((c) => {
+              const cn = normTxt(c.nome ?? "");
+              if (!cn) return false;
+              return it.includes(cn) || cn.includes(it);
+            });
+            if (!match) continue;
+            for (const m of match.medidas_controle_padrao ?? []) medidasSet.add(String(m));
+            for (const e of match.epis_sugeridos ?? []) episSet.add(String(e));
+          }
+        }
       }
 
       // Descrição da função: prioriza coluna dedicada; fallback para o textão da ficha
