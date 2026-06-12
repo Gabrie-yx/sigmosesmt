@@ -188,6 +188,54 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const missingDocs = REQUIRED_DOCS.filter((t) => !docsTipos.has(t));
   const docsOk = missingDocs.length === 0;
 
+  // --- Estado das pills de atalho (verde = ok, âmbar = parcial, vermelho = pendente) ---
+  const asoTone: "ok" | "warn" | "rose" | "slate" = useMemo(() => {
+    if (!role?.req_aso) return "slate";
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const asos = (exams ?? []).filter((e: any) => /aso/i.test(String(e.tipo_exame ?? "")));
+    if (asos.length === 0) return "rose";
+    const vigente = asos.some((e: any) => {
+      if (!e.data_vencimento) return true;
+      const v = new Date(String(e.data_vencimento) + "T00:00:00");
+      return v.getTime() >= today.getTime();
+    });
+    if (!vigente) return "rose";
+    const proxVenc = asos.some((e: any) => {
+      if (!e.data_vencimento) return false;
+      const v = new Date(String(e.data_vencimento) + "T00:00:00");
+      const dias = Math.ceil((v.getTime() - today.getTime()) / 86400000);
+      return dias >= 0 && dias <= 30;
+    });
+    return proxVenc ? "warn" : "ok";
+  }, [role, exams]);
+
+  const nrTone: "ok" | "warn" | "rose" | "slate" = useMemo(() => {
+    const req: string[] = role?.req_nrs ?? [];
+    if (req.length === 0) return "slate";
+    const empNrs: Record<string, string> = (emp as any)?.nrs ?? {};
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let faltando = 0; let vencendo = 0;
+    req.forEach((nr) => {
+      const d = empNrs[nr];
+      if (!d) { faltando++; return; }
+      const dt = new Date(String(d) + "T00:00:00");
+      // NR vale 12 meses por padrão; alerta nos últimos 30 dias
+      const venc = new Date(dt); venc.setFullYear(venc.getFullYear() + 1);
+      const dias = Math.ceil((venc.getTime() - today.getTime()) / 86400000);
+      if (dias < 0) faltando++;
+      else if (dias <= 30) vencendo++;
+    });
+    if (faltando > 0) return "rose";
+    if (vencendo > 0) return "warn";
+    return "ok";
+  }, [role, emp]);
+
+  const docsTone: "ok" | "warn" | "rose" = docsOk
+    ? "ok"
+    : missingDocs.length === REQUIRED_DOCS.length
+    ? "rose"
+    : "warn";
+
   function initialsOf(name?: string | null) {
     if (!name) return "?";
     const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -300,9 +348,9 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
             </span>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <QuickTabBtn icon={HeartPulse} label="ASO" tone="rose" active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
-            <QuickTabBtn icon={Award} label="NR" tone="rose" active={tab === "nrs"} onClick={() => setTab("nrs")} />
-            <QuickTabBtn icon={FolderOpen} label="Docs" tone="rose" active={tab === "docs"} onClick={() => setTab("docs")} />
+            <QuickTabBtn icon={HeartPulse} label="ASO" tone={asoTone} active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
+            <QuickTabBtn icon={Award} label="NR" tone={nrTone} active={tab === "nrs"} onClick={() => setTab("nrs")} />
+            <QuickTabBtn icon={FolderOpen} label="Docs" tone={docsTone} active={tab === "docs"} onClick={() => setTab("docs")} />
             <QuickTabBtn icon={HardHat} label="EPI" tone="slate" active={tab === "epi"} onClick={() => setTab("epi")} />
             <Link
               to="/app/audit"
@@ -418,9 +466,13 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
 }
 
 /* ============ CONTEXT SIDEBAR (empresa + colegas) ============ */
-function QuickTabBtn({ icon: Icon, label, tone = "rose", active, onClick }: { icon: any; label: string; tone?: "rose" | "slate"; active?: boolean; onClick: () => void }) {
+function QuickTabBtn({ icon: Icon, label, tone = "rose", active, onClick }: { icon: any; label: string; tone?: "rose" | "slate" | "ok" | "warn"; active?: boolean; onClick: () => void }) {
   const palette = tone === "slate"
     ? "bg-slate-100 text-slate-600 hover:bg-slate-200 ring-slate-200"
+    : tone === "ok"
+    ? "bg-gradient-to-br from-emerald-500 to-emerald-700 text-white hover:from-emerald-600 hover:to-emerald-800 ring-emerald-300/40"
+    : tone === "warn"
+    ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white hover:from-amber-500 hover:to-amber-700 ring-amber-300/40"
     : "bg-gradient-to-br from-rose-500 to-[#991b1b] text-white hover:from-rose-600 hover:to-[#7B1E2B] ring-rose-300/40";
   return (
     <button
