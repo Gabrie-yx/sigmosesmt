@@ -526,13 +526,12 @@ function RolesPage() {
                   </div>
                   <div className="lg:col-span-3">
                     <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">CBO</label>
-                    <input
-                      type="text"
-                      value={editing.cbo ?? ""}
-                      onChange={(e) => setEditing({ ...editing, cbo: e.target.value })}
-                      placeholder="Ex: 7156-25"
+                    <CboPicker
+                      codigo={editing.cbo ?? null}
+                      titulo={editing.cbo_titulo ?? null}
+                      onChange={(cod, tit) => setEditing({ ...editing, cbo: cod ?? "", cbo_titulo: tit ?? "" })}
                       disabled={!isEditor}
-                      className="w-full bg-white border-2 border-rose-100 rounded-2xl px-4 py-3.5 text-sm font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60 shadow-sm"
+                      placeholder="Buscar CBO (código ou nome)…"
                     />
                   </div>
                   <div className="lg:col-span-12">
