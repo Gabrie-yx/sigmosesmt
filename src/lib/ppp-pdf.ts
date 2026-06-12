@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { LOGO_INSS_PNG_BASE64 } from "@/assets/logo-inss";
 
 /**
  * Gerador de PPP fiel ao leiaute oficial (Anexo XV — IN PRES/INSS 128/2022).
@@ -79,8 +80,8 @@ export type PPPDados = {
 };
 
 const BLACK: [number, number, number] = [0, 0, 0];
-const HEAD_BG: [number, number, number] = [225, 225, 225];
-const LABEL_BG: [number, number, number] = [240, 240, 240];
+const WHITE: [number, number, number] = [255, 255, 255];
+const TITLE_BLUE: [number, number, number] = [0, 92, 185];
 
 const baseStyle = {
   fontSize: 7.5,
@@ -88,9 +89,12 @@ const baseStyle = {
   lineColor: BLACK,
   lineWidth: 0.15,
   textColor: BLACK,
+  fillColor: WHITE,
   overflow: "linebreak" as const,
 };
-const headerCellStyle = { ...baseStyle, fillColor: HEAD_BG, fontStyle: "bold" as const };
+const headerCellStyle = { ...baseStyle, fillColor: WHITE, fontStyle: "bold" as const };
+const sectionTitleStyle = { ...baseStyle, fillColor: WHITE, fontStyle: "bold" as const, halign: "center" as const, fontSize: 8.5 };
+const blockTitleStyle = { ...baseStyle, fillColor: WHITE, fontStyle: "bold" as const, halign: "left" as const };
 
 function s(v: string | null | undefined): string {
   const t = (v ?? "").toString().trim();
@@ -104,23 +108,32 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
   const margin = 10;
   const contentW = pageW - margin * 2;
 
-  // ===== Cabeçalho oficial =====
+  // ===== Cabeçalho oficial (logo Previdência Social + título) =====
   let y = margin;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text("PERFIL PROFISSIOGRÁFICO PREVIDENCIÁRIO (PPP)", pageW / 2, y + 4, { align: "center" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.text("Previdência Social", pageW / 2, y + 8.5, { align: "center" });
-  if (opts?.numero) {
-    doc.setFontSize(7);
-    doc.text(`Nº ${opts.numero}`, pageW - margin, y + 4, { align: "right" });
+  // Caixa do cabeçalho com borda fina
+  const headerH = 18;
+  doc.setDrawColor(0);
+  doc.setLineWidth(0.2);
+  doc.rect(margin, y, contentW, headerH);
+  try {
+    doc.addImage(LOGO_INSS_PNG_BASE64, "PNG", margin + 2, y + 1, 32, 16);
+  } catch {
+    // se falhar embed da imagem, segue sem logo
   }
-  y += 12;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(TITLE_BLUE[0], TITLE_BLUE[1], TITLE_BLUE[2]);
+  doc.text("PERFIL PROFISSIOGRÁFICO PREVIDENCIÁRIO (PPP)", margin + 38, y + headerH / 2 + 1.5);
+  doc.setTextColor(0);
+  if (opts?.numero) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.text(`Nº ${opts.numero}`, pageW - margin - 2, y + 4, { align: "right" });
+  }
+  y += headerH + 1;
 
   // ===================== DADOS ADMINISTRATIVOS =====================
-  blockTitle(doc, "DADOS ADMINISTRATIVOS", margin, y, contentW);
-  y += 5;
+  y = sectionTitleRow(doc, "DADOS ADMINISTRATIVOS", margin, y, contentW);
 
   // Linha 1-3: CNPJ | Nome Empresarial | CNAE
   autoTable(doc, {
@@ -158,22 +171,13 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
     tableWidth: contentW,
     head: [["7 Data Nascimento", "8 Sexo (F/M)", "9 Matrícula eSocial", "10 Data Admissão", "11 Regime Revezamento"]],
     body: [[s(d.trab_nascimento), s(d.trab_sexo), s(d.trab_matricula_esocial), s(d.trab_admissao), s(d.regime_revezamento)]],
-    styles: { ...baseStyle, halign: "center" },
-    headStyles: { ...headerCellStyle, halign: "center" },
+    styles: { ...baseStyle },
+    headStyles: { ...headerCellStyle },
   });
   y = (doc as any).lastAutoTable.finalY;
 
   // 12 CAT
-  autoTable(doc, {
-    startY: y,
-    margin: { left: margin, right: margin },
-    theme: "grid",
-    tableWidth: contentW,
-    head: [[{ content: "12 - CAT REGISTRADA", colSpan: 2, styles: headerCellStyle }]],
-    body: [],
-    styles: baseStyle,
-  });
-  y = (doc as any).lastAutoTable.finalY;
+  y = blockTitleRow(doc, "12 - CAT REGISTRADA", margin, y, contentW);
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
@@ -181,22 +185,13 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
     tableWidth: contentW,
     head: [["12.1 Data do Registro", "12.2 Número da CAT"]],
     body: d.cats.length > 0 ? d.cats.map((c) => [s(c.data), s(c.numero)]) : [["", ""]],
-    styles: { ...baseStyle, halign: "center" },
-    headStyles: { ...headerCellStyle, halign: "center" },
+    styles: baseStyle,
+    headStyles: headerCellStyle,
   });
   y = (doc as any).lastAutoTable.finalY;
 
   // 13 Lotação e Atribuição
-  autoTable(doc, {
-    startY: y,
-    margin: { left: margin, right: margin },
-    theme: "grid",
-    tableWidth: contentW,
-    head: [[{ content: "13 - Lotação e Atribuição", colSpan: 7, styles: headerCellStyle }]],
-    body: [],
-    styles: baseStyle,
-  });
-  y = (doc as any).lastAutoTable.finalY;
+  y = blockTitleRow(doc, "13 - Lotação e Atribuição", margin, y, contentW);
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
@@ -207,27 +202,18 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
       ? d.lotacoes.map((l) => [s(l.periodo), s(l.cnpj), s(l.setor), s(l.cargo), s(l.funcao), s(l.cbo), s(l.gfip_esocial)])
       : [["", "", "", "", "", "", ""]],
     styles: { ...baseStyle, fontSize: 7 },
-    headStyles: { ...headerCellStyle, fontSize: 7, halign: "center" },
+    headStyles: { ...headerCellStyle, fontSize: 7 },
     columnStyles: {
       0: { cellWidth: 30 },
       1: { cellWidth: 30 },
-      5: { cellWidth: 16, halign: "center" },
-      6: { cellWidth: 22, halign: "center" },
+      5: { cellWidth: 16 },
+      6: { cellWidth: 22 },
     },
   });
   y = (doc as any).lastAutoTable.finalY;
 
   // 14 Profissiografia
-  autoTable(doc, {
-    startY: y,
-    margin: { left: margin, right: margin },
-    theme: "grid",
-    tableWidth: contentW,
-    head: [[{ content: "14 - Profissiografia", colSpan: 2, styles: headerCellStyle }]],
-    body: [],
-    styles: baseStyle,
-  });
-  y = (doc as any).lastAutoTable.finalY;
+  y = blockTitleRow(doc, "14 - Profissiografia", margin, y, contentW);
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
@@ -238,26 +224,15 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
       ? d.profissiografias.map((p) => [s(p.periodo), s(p.descricao)])
       : [["", ""]],
     styles: baseStyle,
-    headStyles: { ...headerCellStyle, halign: "center" },
-    columnStyles: { 0: { cellWidth: 30, halign: "center" } },
+    headStyles: headerCellStyle,
+    columnStyles: { 0: { cellWidth: 30 } },
   });
-  y = (doc as any).lastAutoTable.finalY + 2;
+  y = (doc as any).lastAutoTable.finalY;
 
   // ===================== REGISTROS AMBIENTAIS =====================
   if (y > pageH - 60) { doc.addPage(); y = margin; }
-  blockTitle(doc, "REGISTROS AMBIENTAIS", margin, y, contentW);
-  y += 5;
-
-  autoTable(doc, {
-    startY: y,
-    margin: { left: margin, right: margin },
-    theme: "grid",
-    tableWidth: contentW,
-    head: [[{ content: "15 - Exposição a Fatores de Riscos", colSpan: 8, styles: headerCellStyle }]],
-    body: [],
-    styles: baseStyle,
-  });
-  y = (doc as any).lastAutoTable.finalY;
+  y = sectionTitleRow(doc, "REGISTROS AMBIENTAIS", margin, y, contentW);
+  y = blockTitleRow(doc, "15 - Exposição a Fatores de Riscos", margin, y, contentW);
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
@@ -268,14 +243,14 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
       ? d.riscos.map((r) => [s(r.periodo), s(r.tipo), s(r.fator_risco), s(r.intensidade), s(r.tecnica), s(r.epc_eficaz), s(r.epi_eficaz), s(r.ca_epi)])
       : [["", "", "", "", "", "", "", ""]],
     styles: { ...baseStyle, fontSize: 6.8 },
-    headStyles: { ...headerCellStyle, fontSize: 6.8, halign: "center", valign: "middle" },
+    headStyles: { ...headerCellStyle, fontSize: 6.8, valign: "middle" },
     columnStyles: {
       0: { cellWidth: 22 },
-      1: { cellWidth: 16, halign: "center" },
-      3: { cellWidth: 22, halign: "center" },
-      5: { cellWidth: 14, halign: "center" },
-      6: { cellWidth: 14, halign: "center" },
-      7: { cellWidth: 16, halign: "center" },
+      1: { cellWidth: 16 },
+      3: { cellWidth: 22 },
+      5: { cellWidth: 14 },
+      6: { cellWidth: 14 },
+      7: { cellWidth: 16 },
     },
   });
   y = (doc as any).lastAutoTable.finalY;
@@ -286,7 +261,10 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
     margin: { left: margin, right: margin },
     theme: "grid",
     tableWidth: contentW,
-    head: [[{ content: "15.9 Atendimento aos requisitos das NR-06 e NR-01 do MTP pelos EPIs informados (*)", styles: headerCellStyle }, { content: "(S/N)", styles: { ...headerCellStyle, halign: "center" } }]],
+    head: [[
+      { content: "15.9 Atendimento aos requisitos das NR-06 e NR-01 do MTP pelos EPIs informados (*)", styles: { ...headerCellStyle } },
+      { content: "(S/N)", styles: { ...headerCellStyle, halign: "center" } },
+    ]],
     body: [
       ["Foi tentada a implementação de medidas de proteção coletiva, de caráter administrativo ou de organização do trabalho, optando-se pelo EPI por inviabilidade técnica, insuficiência ou interinidade, ou ainda em caráter complementar ou emergencial?", s(d.nr_medidas_protecao)],
       ["Foram observadas as condições de funcionamento e do uso ininterrupto do EPI ao longo do tempo, conforme especificação técnica do fabricante, ajustada às condições de campo?", s(d.nr_funcionamento_epi)],
@@ -295,21 +273,12 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
       ["Foi observada a higienização?", s(d.nr_higienizacao)],
     ],
     styles: { ...baseStyle, fontSize: 7 },
-    columnStyles: { 1: { cellWidth: 18, halign: "center", fontStyle: "bold" } },
+    columnStyles: { 1: { cellWidth: 18, halign: "center" } },
   });
   y = (doc as any).lastAutoTable.finalY;
 
   // 16 Responsável pelos Registros Ambientais
-  autoTable(doc, {
-    startY: y,
-    margin: { left: margin, right: margin },
-    theme: "grid",
-    tableWidth: contentW,
-    head: [[{ content: "16 - Responsável pelos Registros Ambientais", colSpan: 4, styles: headerCellStyle }]],
-    body: [],
-    styles: baseStyle,
-  });
-  y = (doc as any).lastAutoTable.finalY;
+  y = blockTitleRow(doc, "16 - Responsável pelos Registros Ambientais", margin, y, contentW);
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
@@ -320,26 +289,25 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
       ? d.responsaveis.map((r) => [s(r.periodo), s(r.cpf), s(r.registro), s(r.nome)])
       : [["", "", "", ""]],
     styles: baseStyle,
-    headStyles: { ...headerCellStyle, halign: "center" },
+    headStyles: headerCellStyle,
     columnStyles: {
-      0: { cellWidth: 30, halign: "center" },
-      1: { cellWidth: 30, halign: "center" },
-      2: { cellWidth: 40, halign: "center" },
+      0: { cellWidth: 30 },
+      1: { cellWidth: 30 },
+      2: { cellWidth: 40 },
     },
   });
-  y = (doc as any).lastAutoTable.finalY + 3;
+  y = (doc as any).lastAutoTable.finalY;
 
   // ===================== RESPONSÁVEIS PELAS INFORMAÇÕES =====================
   if (y > pageH - 80) { doc.addPage(); y = margin; }
-  blockTitle(doc, "RESPONSÁVEIS PELAS INFORMAÇÕES", margin, y, contentW);
-  y += 5;
+  y = sectionTitleRow(doc, "RESPONSÁVEIS PELAS INFORMAÇÕES", margin, y, contentW);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   const decl =
     "Declaramos, para todos fins de direito, que as informações prestadas neste documento são verídicas e foram transcritas fielmente dos registros administrativos, das demonstrações ambientais e dos programas médicos de responsabilidade da empresa. É de nosso conhecimento que a prestação de informações falsas neste documento constitui crime de falsificação de documento público, nos termos do art. 297 do Código Penal e, também, que tais informações são de caráter privativo do trabalhador, constituindo crime, nos termos da Lei nº 9.029, de 13 de abril de 1995, práticas discriminatórias decorrentes de sua exigibilidade por outrem, bem como de sua divulgação para terceiros, ressalvado quando exigida pelos órgãos públicos competentes.";
-  const lines = doc.splitTextToSize(decl, contentW);
-  doc.text(lines, margin, y);
+  const lines = doc.splitTextToSize(decl, contentW - 2);
+  doc.text(lines, margin + 1, y + 3);
   y += lines.length * 3.2 + 3;
 
   // 17 + 18
@@ -350,15 +318,15 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
     tableWidth: contentW,
     head: [[
       { content: "17 Data da Emissão do PPP", styles: headerCellStyle },
-      { content: "18 Representante Legal da Empresa", colSpan: 2, styles: { ...headerCellStyle, halign: "center" } },
+      { content: "18 Representante Legal da Empresa", colSpan: 2, styles: headerCellStyle },
     ]],
     body: [
-      [s(d.data_emissao), { content: "18.1 Nº CPF do Representante Legal", styles: { fillColor: LABEL_BG, fontStyle: "bold" } } as any, { content: "18.2 Nome do Representante Legal", styles: { fillColor: LABEL_BG, fontStyle: "bold" } } as any],
+      [s(d.data_emissao), { content: "18.1 Nº CPF do Representante Legal", styles: { fillColor: WHITE, fontStyle: "bold" } } as any, { content: "18.2 Nome do Representante Legal", styles: { fillColor: WHITE, fontStyle: "bold" } } as any],
       [{ content: "", rowSpan: 1 } as any, s(d.rep_legal_cpf), s(d.rep_legal_nome)],
       [{ content: "", rowSpan: 1 } as any, { content: "_____________________________________\n(Assinatura física ou eletrônica)", colSpan: 2, styles: { halign: "center", minCellHeight: 18 } } as any],
     ],
     styles: baseStyle,
-    columnStyles: { 0: { cellWidth: 35, halign: "center", valign: "middle" } },
+    columnStyles: { 0: { cellWidth: 35, valign: "middle" } },
   });
   y = (doc as any).lastAutoTable.finalY;
 
@@ -368,7 +336,7 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
     margin: { left: margin, right: margin },
     theme: "grid",
     tableWidth: contentW,
-    head: [[{ content: "Observações", styles: headerCellStyle }]],
+    head: [[{ content: "Observações", styles: { ...headerCellStyle, halign: "center" } }]],
     body: [[{ content: s(d.observacoes) || " ", styles: { minCellHeight: 14 } }]],
     styles: baseStyle,
   });
@@ -388,14 +356,30 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
   return doc;
 }
 
-function blockTitle(doc: jsPDF, title: string, x: number, y: number, w: number) {
-  doc.setFillColor(0, 0, 0);
-  doc.rect(x, y - 3, w, 5, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.5);
-  doc.setTextColor(255, 255, 255);
-  doc.text(title, x + w / 2, y + 0.5, { align: "center" });
-  doc.setTextColor(0);
+/** Linha-título de seção (texto centralizado em negrito, fundo branco, com borda). */
+function sectionTitleRow(doc: jsPDF, title: string, x: number, y: number, w: number): number {
+  autoTable(doc, {
+    startY: y,
+    margin: { left: x, right: x },
+    theme: "grid",
+    tableWidth: w,
+    body: [[{ content: title, styles: sectionTitleStyle }]],
+    styles: baseStyle,
+  });
+  return (doc as any).lastAutoTable.finalY;
+}
+
+/** Linha-título de bloco (esquerda, negrito, fundo branco). */
+function blockTitleRow(doc: jsPDF, title: string, x: number, y: number, w: number): number {
+  autoTable(doc, {
+    startY: y,
+    margin: { left: x, right: x },
+    theme: "grid",
+    tableWidth: w,
+    body: [[{ content: title, styles: blockTitleStyle }]],
+    styles: baseStyle,
+  });
+  return (doc as any).lastAutoTable.finalY;
 }
 
 /** Helpers pra construir o objeto PPPDados a partir dos dados do sistema. */
