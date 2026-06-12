@@ -847,13 +847,17 @@ function InventarioTab() {
     [inv, catTab],
   );
 
-  const CAT_STYLE: Record<InvRow["categoria"], { dot: string; active: string }> = {
-    FISICO:       { dot: "bg-orange-500",  active: "data-[state=active]:bg-orange-100 data-[state=active]:text-orange-900 data-[state=active]:border-orange-300" },
-    QUIMICO:      { dot: "bg-amber-500",   active: "data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900 data-[state=active]:border-amber-300" },
-    BIOLOGICO:    { dot: "bg-emerald-500", active: "data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-900 data-[state=active]:border-emerald-300" },
-    ERGONOMICO:   { dot: "bg-sky-500",     active: "data-[state=active]:bg-sky-100 data-[state=active]:text-sky-900 data-[state=active]:border-sky-300" },
-    ACIDENTE:     { dot: "bg-rose-500",    active: "data-[state=active]:bg-rose-100 data-[state=active]:text-rose-900 data-[state=active]:border-rose-300" },
-    PSICOSSOCIAL: { dot: "bg-fuchsia-500", active: "data-[state=active]:bg-fuchsia-100 data-[state=active]:text-fuchsia-900 data-[state=active]:border-fuchsia-300" },
+  const CAT_STYLE: Record<InvRow["categoria"], { active: string; badge: string }> = {
+    FISICO:       { active: "data-[state=active]:bg-orange-600  data-[state=active]:border-orange-700  data-[state=active]:shadow-orange-500/30",  badge: "data-[state=active]:bg-orange-800/40  data-[state=active]:text-white" },
+    QUIMICO:      { active: "data-[state=active]:bg-amber-500   data-[state=active]:border-amber-600   data-[state=active]:shadow-amber-500/30",   badge: "data-[state=active]:bg-amber-800/40   data-[state=active]:text-white" },
+    BIOLOGICO:    { active: "data-[state=active]:bg-emerald-600 data-[state=active]:border-emerald-700 data-[state=active]:shadow-emerald-500/30", badge: "data-[state=active]:bg-emerald-900/40 data-[state=active]:text-white" },
+    ERGONOMICO:   { active: "data-[state=active]:bg-sky-600     data-[state=active]:border-sky-700     data-[state=active]:shadow-sky-500/30",     badge: "data-[state=active]:bg-sky-900/40     data-[state=active]:text-white" },
+    ACIDENTE:     { active: "data-[state=active]:bg-rose-600    data-[state=active]:border-rose-700    data-[state=active]:shadow-rose-500/30",    badge: "data-[state=active]:bg-rose-900/40    data-[state=active]:text-white" },
+    PSICOSSOCIAL: { active: "data-[state=active]:bg-fuchsia-600 data-[state=active]:border-fuchsia-700 data-[state=active]:shadow-fuchsia-500/30", badge: "data-[state=active]:bg-fuchsia-900/40 data-[state=active]:text-white" },
+  };
+  const CAT_DOT: Record<InvRow["categoria"], string> = {
+    FISICO: "bg-orange-500", QUIMICO: "bg-amber-500", BIOLOGICO: "bg-emerald-500",
+    ERGONOMICO: "bg-sky-500", ACIDENTE: "bg-rose-500", PSICOSSOCIAL: "bg-fuchsia-500",
   };
   const CAT_ORDER: InvRow["categoria"][] = ["FISICO","QUIMICO","BIOLOGICO","ERGONOMICO","ACIDENTE","PSICOSSOCIAL"];
 
@@ -896,15 +900,32 @@ function InventarioTab() {
 
       {/* Abas por categoria */}
       <Tabs value={catTab} onValueChange={(v) => setCatTab(v as typeof catTab)}>
-        <TabsList className="bg-white border h-auto flex-wrap gap-1 p-1">
-          <TabsTrigger value="all" className="gap-2 border border-transparent data-[state=active]:bg-slate-900 data-[state=active]:text-white">
-            Todos <Badge variant="secondary" className="text-[10px]">{inv.length}</Badge>
+        <TabsList className="bg-slate-100/70 border border-slate-200 h-auto flex-wrap gap-1.5 p-1.5 rounded-xl w-full justify-start">
+          <TabsTrigger
+            value="all"
+            className="gap-2 h-9 px-3.5 rounded-lg border border-transparent text-slate-600 font-semibold transition-all
+              hover:bg-white hover:text-slate-900
+              data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:border-slate-900
+              data-[state=active]:shadow-md data-[state=active]:shadow-slate-900/20 data-[state=active]:scale-[1.02]"
+          >
+            Todos
+            <span className="ml-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-black bg-slate-200 text-slate-700
+              data-[state=active]:bg-white/20 data-[state=active]:text-white">{inv.length}</span>
           </TabsTrigger>
           {CAT_ORDER.map((c) => (
-            <TabsTrigger key={c} value={c} className={`gap-2 border border-transparent ${CAT_STYLE[c].active}`}>
-              <span className={`h-2 w-2 rounded-full ${CAT_STYLE[c].dot}`} />
+            <TabsTrigger
+              key={c}
+              value={c}
+              className={`gap-2 h-9 px-3.5 rounded-lg border border-transparent text-slate-600 font-semibold transition-all
+                hover:bg-white hover:text-slate-900
+                data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-[1.02]
+                ${CAT_STYLE[c].active}`}
+            >
+              <span className={`h-2 w-2 rounded-full ${CAT_DOT[c]} data-[state=active]:bg-white shadow-sm`} />
               {CATEGORIA_LABEL[c]}
-              <Badge variant="secondary" className="text-[10px]">{catCounts[c]}</Badge>
+              <span className={`ml-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-black bg-slate-200 text-slate-700 ${CAT_STYLE[c].badge}`}>
+                {catCounts[c]}
+              </span>
             </TabsTrigger>
           ))}
         </TabsList>
