@@ -224,7 +224,7 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
         [e.medico_nome, e.medico_crm].filter(Boolean).join(" • ") || "—",
       ]),
       styles: { fontSize: 7.5, cellPadding: 1.4, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
-      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: "bold", halign: "center", fontSize: 7.5 },
+      headStyles: { fillColor: WINE, textColor: [255, 255, 255], fontStyle: "bold", halign: "center", fontSize: 7.5 },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       columnStyles: {
         2: { halign: "center", cellWidth: 22 },
@@ -258,7 +258,7 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
         a.observacao ?? "—",
       ]),
       styles: { fontSize: 7.5, cellPadding: 1.4, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0], overflow: "linebreak" },
-      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: "bold", halign: "center", fontSize: 7.5 },
+      headStyles: { fillColor: WINE, textColor: [255, 255, 255], fontStyle: "bold", halign: "center", fontSize: 7.5 },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       columnStyles: {
         1: { halign: "center", cellWidth: 20 },
@@ -292,7 +292,7 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
         (a.descricao ?? "—").toString().slice(0, 220),
       ]),
       styles: { fontSize: 7.5, cellPadding: 1.4, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0], overflow: "linebreak" },
-      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: "bold", halign: "center", fontSize: 7.5 },
+      headStyles: { fillColor: WINE, textColor: [255, 255, 255], fontStyle: "bold", halign: "center", fontSize: 7.5 },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       columnStyles: {
         0: { halign: "center", cellWidth: 20 },
