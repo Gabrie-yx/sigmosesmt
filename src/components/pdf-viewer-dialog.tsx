@@ -28,22 +28,37 @@ export function PDFViewerDialog({
 
     const loadUrl = async () => {
       setLoading(true);
+      let createdBlobUrl: string | null = null;
       try {
         const { data, error } = await supabase.storage
           .from("sesmt-docs")
           .createSignedUrl(pdfPath, 3600);
         
         if (error) throw error;
-        setUrl(data.signedUrl);
+        // Chrome bloqueia PDFs cross-origin dentro de iframes aninhados
+        // (preview do Lovable, etc). Baixamos como blob e exibimos via blob: URL.
+        const resp = await fetch(data.signedUrl);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const blob = await resp.blob();
+        const pdfBlob = blob.type === "application/pdf"
+          ? blob
+          : new Blob([blob], { type: "application/pdf" });
+        createdBlobUrl = URL.createObjectURL(pdfBlob);
+        setUrl(createdBlobUrl);
       } catch (err: any) {
         console.error("Erro ao carregar PDF:", err);
         toast.error("Não foi possível carregar o documento.");
       } finally {
         setLoading(false);
       }
+      return () => {
+        if (createdBlobUrl) URL.revokeObjectURL(createdBlobUrl);
+      };
     };
 
-    loadUrl();
+    let cleanup: (() => void) | undefined;
+    loadUrl().then((c) => { cleanup = c; });
+    return () => { cleanup?.(); };
   }, [pdfPath, open]);
 
   function download() {
