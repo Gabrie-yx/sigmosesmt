@@ -554,7 +554,9 @@ function TemplateEditorDialog({
     mutationFn: async () => {
       if (!form.cargo.trim()) throw new Error("Cargo é obrigatório");
       if (!form.titulo.trim()) throw new Error("Título é obrigatório");
-      const payload = { ...form, cargo: form.cargo.trim().toUpperCase() };
+      // cbo_titulo é apenas display vindo do cargo — não persiste em oss_templates
+      const { cbo_titulo: _cboTit, ...rest } = form as any;
+      const payload = { ...rest, cargo: form.cargo.trim().toUpperCase() };
       if (template) {
         const { error } = await supabase.from("oss_templates").update(payload as any).eq("id", template.id);
         if (error) throw error;
@@ -599,7 +601,10 @@ function TemplateEditorDialog({
             psicossociais: merge(curRiscos.psicossociais, linhas(form.risco_psicossocial)),
           };
           const patch: any = { riscos: novosRiscos };
-          if (form.cbo && !(role as any).cbo) patch.cbo = form.cbo;
+          if (form.cbo && !(role as any).cbo) {
+            patch.cbo = form.cbo;
+            if (form.cbo_titulo) patch.cbo_titulo = form.cbo_titulo;
+          }
           await supabase.from("roles").update(patch).eq("id", (role as any).id);
         }
       } catch (e) {
