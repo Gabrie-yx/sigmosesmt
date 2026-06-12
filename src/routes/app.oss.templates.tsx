@@ -48,6 +48,7 @@ type Template = {
   risco_biologico: string | null;
   risco_ergonomico: string | null;
   risco_acidente: string | null;
+  risco_psicossocial: string | null;
 };
 
 function OssTemplatesPage() {
