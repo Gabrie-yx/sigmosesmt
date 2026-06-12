@@ -299,9 +299,10 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   return (
     <div className="space-y-6 animate-fadeIn">
       {showHeader && (
-      <Card className="p-6 flex flex-wrap items-center gap-6 rounded-2xl border-slate-200 shadow-sm">
-        <div className="relative h-20 w-20 shrink-0">
-          <label className={`relative h-20 w-20 rounded-full overflow-hidden border-2 border-slate-200 flex items-center justify-center bg-gradient-to-br from-brand/80 to-brand text-white ${canEditHeader ? "cursor-pointer hover:border-brand transition-colors" : ""}`}>
+      <Card className="p-5 sm:p-6 rounded-2xl border-slate-200 shadow-sm">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-4 sm:gap-5 items-start">
+        <div className="relative h-16 w-16 sm:h-20 sm:w-20 shrink-0">
+          <label className={`relative h-16 w-16 sm:h-20 sm:w-20 rounded-full overflow-hidden border-2 border-slate-200 flex items-center justify-center bg-gradient-to-br from-brand/80 to-brand text-white ${canEditHeader ? "cursor-pointer hover:border-brand transition-colors" : ""}`}>
             {emp.foto_url ? (
               <img src={emp.foto_url} alt={emp.nome} className="h-full w-full object-cover" />
             ) : (
@@ -333,26 +334,42 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
             </button>
           )}
         </div>
-        <div className="flex-1 min-w-[240px]">
-          <h1 className="heading-display text-3xl text-brand">{emp.nome}</h1>
-          <div className="mt-1 text-base font-bold tracking-wide text-slate-700">
-            CPF: <span className="font-mono">{emp.cpf ?? "—"}</span>
-            <span className="mx-2 text-slate-300">·</span>
-            <span className="text-[11px] uppercase tracking-widest text-slate-500">Matrícula {emp.matricula ?? "—"}</span>
+        <div className="min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="heading-display text-xl sm:text-2xl lg:text-[28px] leading-tight text-brand break-words min-w-0">{emp.nome}</h1>
+            {status && (
+              <div className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-slate-50 ring-1 ring-slate-200 pl-2 pr-2.5 py-1">
+                <span className={`h-2 w-2 rounded-full ${status.colorClass}`} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{status.label}</span>
+              </div>
+            )}
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-slate-600">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-600">
             <span className="inline-flex items-center gap-1">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Função:</span>
-              <span className="text-slate-800">{role?.name ?? "—"}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">CPF</span>
+              <span className="font-mono text-slate-800">{emp.cpf ?? "—"}</span>
             </span>
+            <span className="text-slate-300">·</span>
             <span className="inline-flex items-center gap-1">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Admissão:</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Matrícula</span>
+              <span className="text-slate-800">{emp.matricula ?? "—"}</span>
+            </span>
+            <span className="text-slate-300">·</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Função</span>
+              <span className="text-slate-800 truncate max-w-[220px]">{role?.name ?? "—"}</span>
+            </span>
+            <span className="text-slate-300">·</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Admissão</span>
               <span className="text-slate-800">
                 {emp.admissao ? new Date(emp.admissao + "T00:00:00").toLocaleDateString("pt-BR") : "—"}
               </span>
             </span>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+        </div>
+        </div>
+        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2">
             <QuickTabBtn icon={HeartPulse} label="ASO" tone={asoTone} active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
             <QuickTabBtn icon={Award} label="NR" tone={nrTone} active={tab === "nrs"} onClick={() => setTab("nrs")} />
             <QuickTabBtn icon={FolderOpen} label="Docs" tone={docsTone} active={tab === "docs"} onClick={() => setTab("docs")} />
@@ -380,14 +397,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
             >
               <FileSignature className="h-3.5 w-3.5" /> Emitir PPP
             </button>
-          </div>
         </div>
-        {status && (
-          <div className="flex items-center gap-2">
-            <span className={`h-3 w-3 rounded-full ${status.colorClass}`} />
-            <Badge className={`${status.colorClass} text-white border-0 text-[10px] font-black uppercase tracking-widest`}>{status.label}</Badge>
-          </div>
-        )}
       </Card>
       )}
 
