@@ -25,6 +25,8 @@ type Risco = {
   nrs_aplicaveis: string[];
   epis_sugeridos: string[];
   ativo: boolean;
+  codigo_esocial?: string | null;
+  aposentadoria_especial_anos?: number | null;
 };
 
 const CATEGORIAS = [
@@ -51,6 +53,8 @@ const empty: Partial<Risco> = {
   nrs_aplicaveis: [],
   epis_sugeridos: [],
   ativo: true,
+  codigo_esocial: "",
+  aposentadoria_especial_anos: null,
 };
 
 function csvToArr(s: string): string[] {
@@ -80,7 +84,13 @@ export function CatalogoRiscosPanel() {
   const filtered = useMemo(() => {
     return riscos.filter((r) => {
       if (filterCat !== "ALL" && r.categoria !== filterCat) return false;
-      if (search && !r.nome.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        const hit =
+          r.nome.toLowerCase().includes(q) ||
+          (r.codigo_esocial ?? "").toLowerCase().includes(q);
+        if (!hit) return false;
+      }
       return true;
     });
   }, [riscos, search, filterCat]);
@@ -95,6 +105,8 @@ export function CatalogoRiscosPanel() {
         nrs_aplicaveis: v.nrs_aplicaveis ?? [],
         epis_sugeridos: v.epis_sugeridos ?? [],
         ativo: v.ativo ?? true,
+        codigo_esocial: v.codigo_esocial?.toString().trim() || null,
+        aposentadoria_especial_anos: v.aposentadoria_especial_anos ?? null,
       };
       if (v.id) {
         const { error } = await supabase.from("catalogo_riscos").update(payload).eq("id", v.id);
@@ -143,7 +155,7 @@ export function CatalogoRiscosPanel() {
         <div className="relative flex-1 min-w-[240px]">
           <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
-            placeholder="Buscar risco..."
+            placeholder="Buscar por nome ou código eSocial..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -177,6 +189,18 @@ export function CatalogoRiscosPanel() {
                     {CATEGORIAS.find((c) => c.value === r.categoria)?.label ?? r.categoria}
                   </span>
                   <div className="font-bold text-slate-800 text-base mt-2 truncate">{r.nome}</div>
+                  {r.codigo_esocial && (
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        eSocial {r.codigo_esocial}
+                      </span>
+                      {r.aposentadoria_especial_anos && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                          Aposent. esp. {r.aposentadoria_especial_anos} anos
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {isEditor && (
                   <div className="flex gap-1 shrink-0">
@@ -229,6 +253,31 @@ export function CatalogoRiscosPanel() {
                 <div className="md:col-span-2">
                   <Label>Nome do risco *</Label>
                   <Input value={editing.nome ?? ""} onChange={(e) => setEditing({ ...editing, nome: e.target.value })} placeholder="Ex.: Ruído contínuo" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label>Código eSocial <span className="text-slate-400 text-xs">(Tabela 23, ex: 02.01.001)</span></Label>
+                  <Input
+                    value={editing.codigo_esocial ?? ""}
+                    onChange={(e) => setEditing({ ...editing, codigo_esocial: e.target.value })}
+                    placeholder="01.18.001"
+                  />
+                </div>
+                <div>
+                  <Label>Aposentadoria especial <span className="text-slate-400 text-xs">(anos)</span></Label>
+                  <Select
+                    value={editing.aposentadoria_especial_anos ? String(editing.aposentadoria_especial_anos) : "NONE"}
+                    onValueChange={(v) => setEditing({ ...editing, aposentadoria_especial_anos: v === "NONE" ? null : parseInt(v, 10) })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NONE">Não se aplica</SelectItem>
+                      <SelectItem value="15">15 anos</SelectItem>
+                      <SelectItem value="20">20 anos</SelectItem>
+                      <SelectItem value="25">25 anos</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div>

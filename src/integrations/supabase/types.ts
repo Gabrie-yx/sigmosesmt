@@ -963,8 +963,10 @@ export type Database = {
       }
       catalogo_riscos: {
         Row: {
+          aposentadoria_especial_anos: number | null
           ativo: boolean
           categoria: string
+          codigo_esocial: string | null
           created_at: string
           efeitos_tipicos: string[]
           epis_sugeridos: string[]
@@ -975,8 +977,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          aposentadoria_especial_anos?: number | null
           ativo?: boolean
           categoria: string
+          codigo_esocial?: string | null
           created_at?: string
           efeitos_tipicos?: string[]
           epis_sugeridos?: string[]
@@ -987,8 +991,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          aposentadoria_especial_anos?: number | null
           ativo?: boolean
           categoria?: string
+          codigo_esocial?: string | null
           created_at?: string
           efeitos_tipicos?: string[]
           epis_sugeridos?: string[]
