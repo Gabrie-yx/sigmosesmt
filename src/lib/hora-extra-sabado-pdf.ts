@@ -367,9 +367,13 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       y += obsH;
     }
 
-    // ===== RODAPÉ COM ASSINATURA =====
+    // ===== ASSINATURA — HÍBRIDO =====
+    // Páginas com ≥5 colaboradores: rodapé fixo (uniformidade).
+    // Páginas com <5: assinatura logo abaixo da tabela (elimina espaço em branco).
     const sigBlockH = 26;
-    const sigY = pageH - margin - sigBlockH;
+    const sigFooterY = pageH - margin - sigBlockH;
+    const compacto = pagina.funcionarios.length < 5;
+    const sigY = compacto ? Math.min(y + 4, sigFooterY) : sigFooterY;
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(margin, sigY, contentW, sigBlockH, 2, 2, "F");
     doc.setDrawColor(...line);
