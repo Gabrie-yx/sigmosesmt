@@ -125,11 +125,16 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     const cardH = 11;
     const cardGap = 2.5;
     const cardW = (contentW - cardGap * 3) / 4;
+    const totalColabsPagina = pagina.totalFuncionarios ?? pagina.funcionarios.length;
     const cards = [
       { label: "DATA", value: p.data, sub: p.diaSemana.toUpperCase() },
       { label: "TURNO", value: p.turno ?? "—", sub: p.horario ?? "" },
       { label: "SETOR", value: p.setor ?? "—", sub: p.centroCusto ? `C.C. ${p.centroCusto}` : "" },
-      { label: "REGIME", value: p.tipoEfetivo, sub: p.tipoEfetivo === "DMN" ? "EFETIVO" : p.tipoEfetivo === "MEI" ? "MEI" : "TERCEIRIZADO" },
+      {
+        label: "COLABORADORES",
+        value: String(totalColabsPagina).padStart(2, "0"),
+        sub: totalColabsPagina === 1 ? "PESSOA" : "PESSOAS",
+      },
     ];
     cards.forEach((c, i) => {
       const cx = margin + i * (cardW + cardGap);
@@ -362,9 +367,13 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       y += obsH;
     }
 
-    // ===== RODAPÉ COM ASSINATURA =====
+    // ===== ASSINATURA — HÍBRIDO =====
+    // Páginas com ≥5 colaboradores: rodapé fixo (uniformidade).
+    // Páginas com <5: assinatura logo abaixo da tabela (elimina espaço em branco).
     const sigBlockH = 26;
-    const sigY = pageH - margin - sigBlockH;
+    const sigFooterY = pageH - margin - sigBlockH;
+    const compacto = pagina.funcionarios.length < 5;
+    const sigY = compacto ? Math.min(y + 4, sigFooterY) : sigFooterY;
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(margin, sigY, contentW, sigBlockH, 2, 2, "F");
     doc.setDrawColor(...line);
