@@ -435,6 +435,15 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
             >
               <FileText className="h-3.5 w-3.5" /> {gerandoFicha ? "Gerando…" : "Ficha PDF"}
             </button>
+            <button
+              type="button"
+              onClick={gerarPPP}
+              disabled={gerandoPPP}
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-violet-700 to-violet-900 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-wait"
+              title="Emitir PPP (Perfil Profissiográfico Previdenciário)"
+            >
+              <FileSignature className="h-3.5 w-3.5" /> {gerandoPPP ? "Gerando…" : "Emitir PPP"}
+            </button>
           </div>
         </div>
         {status && (
