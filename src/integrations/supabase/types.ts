@@ -1000,6 +1000,30 @@ export type Database = {
         }
         Relationships: []
       }
+      cbo_catalogo: {
+        Row: {
+          codigo: string
+          codigo_familia: string | null
+          created_at: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          codigo: string
+          codigo_familia?: string | null
+          created_at?: string
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          codigo?: string
+          codigo_familia?: string | null
+          created_at?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       checklist_arquivos_legados: {
         Row: {
           ano: number
@@ -5211,6 +5235,7 @@ export type Database = {
         Row: {
           ativo: boolean
           cbo: string | null
+          cbo_titulo: string | null
           created_at: string
           descricao_atividades: string | null
           exames_por_natureza: Json
@@ -5231,6 +5256,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           cbo?: string | null
+          cbo_titulo?: string | null
           created_at?: string
           descricao_atividades?: string | null
           exames_por_natureza?: Json
@@ -5251,6 +5277,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           cbo?: string | null
+          cbo_titulo?: string | null
           created_at?: string
           descricao_atividades?: string | null
           exames_por_natureza?: Json
@@ -6072,7 +6099,10 @@ export type Database = {
         Returns: string
       }
       requires_mfa: { Args: { _user_id: string }; Returns: boolean }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       snapshot_estoque_epi_monthly: { Args: never; Returns: undefined }
+      unaccent: { Args: { "": string }; Returns: string }
       validar_eficacia_acao: {
         Args: { _eficaz: boolean; _id: string; _obs?: string }
         Returns: undefined

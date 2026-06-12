@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -30,6 +30,7 @@ type Template = {
   id: string;
   cargo: string;
   cbo: string | null;
+  cbo_titulo?: string | null;
   titulo: string;
   setor: string | null;
   descricao_atividades: string;
@@ -278,6 +279,7 @@ function DeleteTemplateDialog({
 const EMPTY: Omit<Template, "id" | "revisao" | "hash_conteudo" | "updated_at"> = {
   cargo: "",
   cbo: "",
+  cbo_titulo: "",
   titulo: "",
   setor: "",
   descricao_atividades: "",
@@ -316,19 +318,41 @@ function TemplateEditorDialog({
   const upd = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
+  // Auto-sincroniza CBO + título oficial do cargo selecionado.
+  // O CBO sai do modelo de OS: agora vem **sempre** da ficha do cargo (CARGOS/FUNÇÕES).
+  const cargoUpper = form.cargo.trim().toUpperCase();
+
   // Buscar cargos disponíveis (da matriz de riscos)
   const { data: roles = [] } = useQuery({
     queryKey: ["oss-roles-ativos-v2"],
     queryFn: async () => {
       const { data } = await supabase
         .from("roles")
-        .select("id, name, cbo, descricao_atividades, riscos")
+        .select("id, name, cbo, cbo_titulo, descricao_atividades, riscos")
         .eq("ativo", true)
         .order("name");
       return data ?? [];
     },
     staleTime: 0,
   });
+
+  const roleSel = useMemo(() => {
+    if (!cargoUpper) return null;
+    const norm = (s: string) =>
+      s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+    const alvo = norm(cargoUpper);
+    return (
+      (roles as any[]).find((r) => norm(r.name) === alvo) ??
+      (roles as any[]).find((r) => norm(r.name).includes(alvo) || alvo.includes(norm(r.name))) ??
+      null
+    );
+  }, [cargoUpper, roles]);
+
+  useEffect(() => {
+    const novoCbo = roleSel?.cbo ?? "";
+    const novoTit = roleSel?.cbo_titulo ?? "";
+    setForm((f) => (f.cbo === novoCbo && (f.cbo_titulo ?? "") === novoTit ? f : { ...f, cbo: novoCbo, cbo_titulo: novoTit }));
+  }, [roleSel]);
 
   // Catálogo de riscos (para picker por categoria)
   const { data: catalogo = [] } = useQuery({
@@ -530,7 +554,9 @@ function TemplateEditorDialog({
     mutationFn: async () => {
       if (!form.cargo.trim()) throw new Error("Cargo é obrigatório");
       if (!form.titulo.trim()) throw new Error("Título é obrigatório");
-      const payload = { ...form, cargo: form.cargo.trim().toUpperCase() };
+      // cbo_titulo é apenas display vindo do cargo — não persiste em oss_templates
+      const { cbo_titulo: _cboTit, ...rest } = form as any;
+      const payload = { ...rest, cargo: form.cargo.trim().toUpperCase() };
       if (template) {
         const { error } = await supabase.from("oss_templates").update(payload as any).eq("id", template.id);
         if (error) throw error;
@@ -575,7 +601,10 @@ function TemplateEditorDialog({
             psicossociais: merge(curRiscos.psicossociais, linhas(form.risco_psicossocial)),
           };
           const patch: any = { riscos: novosRiscos };
-          if (form.cbo && !(role as any).cbo) patch.cbo = form.cbo;
+          if (form.cbo && !(role as any).cbo) {
+            patch.cbo = form.cbo;
+            if (form.cbo_titulo) patch.cbo_titulo = form.cbo_titulo;
+          }
           await supabase.from("roles").update(patch).eq("id", (role as any).id);
         }
       } catch (e) {
@@ -663,13 +692,22 @@ function TemplateEditorDialog({
             </div>
 
             <div className="flex items-end gap-3 flex-wrap">
-              <div className="w-40">
-                <Label className="text-[10px] font-black uppercase">CBO</Label>
-                <Input
-                  value={form.cbo ?? ""}
-                  onChange={(e) => upd("cbo", e.target.value)}
-                  placeholder="Ex: 351505"
-                />
+              <div className="flex-1 min-w-[260px]">
+                <Label className="text-[10px] font-black uppercase">CBO (vem do cargo)</Label>
+                <div className="h-10 px-3 rounded-md border border-slate-200 bg-slate-50 flex items-center text-sm">
+                  {form.cbo ? (
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-rose-700">{form.cbo}</span>
+                      {form.cbo_titulo && <span className="text-slate-600 truncate">— {form.cbo_titulo}</span>}
+                    </span>
+                  ) : roleSel ? (
+                    <span className="text-amber-600 text-xs">
+                      Cargo "{roleSel.name}" sem CBO cadastrado — defina em CARGOS/FUNÇÕES.
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 text-xs">Selecione um cargo cadastrado para puxar o CBO oficial.</span>
+                  )}
+                </div>
               </div>
               <div className="w-32">
                 <Label className="text-[10px] font-black uppercase">Validade (meses)</Label>
