@@ -2,6 +2,10 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dmnLogo from "@/assets/dmn-logo.png";
 
+// Vinho DMN (mesma paleta usada na UI: #7B1E2B)
+const WINE: [number, number, number] = [123, 30, 43];
+const WINE_DARK: [number, number, number] = [90, 20, 32];
+
 type Emp = Record<string, any>;
 
 export type EmployeeFichaData = {
@@ -39,7 +43,43 @@ async function fetchAsDataUrl(url: string): Promise<string | null> {
 
 export async function loadEmployeePhotoDataUrl(url?: string | null): Promise<string | null> {
   if (!url) return null;
-  return fetchAsDataUrl(url);
+  const raw = await fetchAsDataUrl(url);
+  if (!raw) return null;
+  // Recorta em "cover" no aspecto 3x4 (foto tipo 3x4) pra não distorcer no PDF.
+  try {
+    return await cropCoverDataUrl(raw, 3, 4);
+  } catch {
+    return raw;
+  }
+}
+
+async function cropCoverDataUrl(dataUrl: string, arW: number, arH: number): Promise<string> {
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = dataUrl;
+  });
+  const targetAR = arW / arH;
+  const srcAR = img.width / img.height;
+  let sx = 0, sy = 0, sw = img.width, sh = img.height;
+  if (srcAR > targetAR) {
+    // imagem mais larga → corta laterais
+    sw = Math.round(img.height * targetAR);
+    sx = Math.round((img.width - sw) / 2);
+  } else {
+    // imagem mais alta → corta topo/baixo (puxando levemente pro topo, melhor pra rosto)
+    sh = Math.round(img.width / targetAR);
+    sy = Math.round((img.height - sh) * 0.25);
+  }
+  const outW = Math.min(600, sw);
+  const outH = Math.round(outW / targetAR);
+  const c = document.createElement("canvas");
+  c.width = outW; c.height = outH;
+  const ctx = c.getContext("2d");
+  if (!ctx) return dataUrl;
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+  return c.toDataURL("image/jpeg", 0.9);
 }
 
 export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
@@ -51,28 +91,38 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
   const hojeBR = new Date().toLocaleDateString("pt-BR");
   const emp = d.emp ?? {};
 
-  // ===== Header (apenas página 1) =====
-  const headerH = 22;
+  // ===== Header compacto (faixa vinho) =====
+  const headerH = 16;
   let y = margin;
-  doc.setDrawColor(0);
-  doc.setLineWidth(0.3);
-  doc.rect(margin, y, contentW, headerH);
-  try { doc.addImage(dmnLogo as any, "PNG", margin + 3, y + 4, 34, 14); } catch { /* noop */ }
+  // faixa vinho com filete escuro embaixo
+  doc.setFillColor(...WINE);
+  doc.rect(margin, y, contentW, headerH, "F");
+  doc.setFillColor(...WINE_DARK);
+  doc.rect(margin, y + headerH - 1, contentW, 1, "F");
+  // logo em área branca à esquerda (pra não sumir no fundo vinho)
+  const logoBoxW = 32;
+  doc.setFillColor(255, 255, 255);
+  doc.rect(margin, y, logoBoxW, headerH, "F");
+  try { doc.addImage(dmnLogo as any, "PNG", margin + 2, y + 2, logoBoxW - 4, headerH - 4); } catch { /* noop */ }
+  // título
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
-  doc.text("FICHA DO COLABORADOR", pageW / 2, y + 9, { align: "center" });
+  doc.setTextColor(255, 255, 255);
+  doc.text("FICHA DO COLABORADOR", margin + logoBoxW + (contentW - logoBoxW) / 2, y + 7, { align: "center" });
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.text("SESMT • DMN Estaleiro", pageW / 2, y + 14, { align: "center" });
   doc.setFontSize(7.5);
-  doc.text(`Emitido em ${hojeBR}`, pageW - margin - 3, y + 5.5, { align: "right" });
+  doc.text("SESMT • DMN Estaleiro", margin + logoBoxW + (contentW - logoBoxW) / 2, y + 12, { align: "center" });
+  doc.setFontSize(7);
+  doc.text(`Emitido em ${hojeBR}`, pageW - margin - 2, y + 5, { align: "right" });
+  doc.setTextColor(0);
 
-  y += headerH + 4;
+  y += headerH + 3;
 
   // ===== Identificação: foto + nome/cargo =====
-  const photoBoxW = 28;
-  const photoBoxH = 36;
-  doc.setDrawColor(180);
+  // foto 3x4 — proporção real, sem distorção
+  const photoBoxW = 27;
+  const photoBoxH = 36; // 27x36 ≈ 3:4
+  doc.setDrawColor(...WINE);
   doc.setLineWidth(0.2);
   doc.rect(margin, y, photoBoxW, photoBoxH);
   if (d.photoDataUrl) {
@@ -93,11 +143,13 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
   const infoW = contentW - photoBoxW - 5;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
-  doc.text(String(emp.nome ?? "—").toUpperCase(), infoX, y + 5, { maxWidth: infoW });
+  doc.setTextColor(...WINE_DARK);
+  doc.text(String(emp.nome ?? "—").toUpperCase(), infoX, y + 4.5, { maxWidth: infoW });
+  doc.setTextColor(0);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   const linhaCargo = `${d.roleName ?? "—"}   •   ${d.companyName ?? "—"}`;
-  doc.text(linhaCargo, infoX, y + 10, { maxWidth: infoW });
+  doc.text(linhaCargo, infoX, y + 9, { maxWidth: infoW });
 
   // bloco-resumo (chave: valor)
   const pairs: [string, string][] = [
@@ -114,7 +166,7 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
   doc.setFontSize(8);
   pairs.forEach((p, i) => {
     const cx = infoX + (i % 2) * colW;
-    const cy = y + 16 + Math.floor(i / 2) * 4.5;
+    const cy = y + 14 + Math.floor(i / 2) * 5.2;
     doc.setFont("helvetica", "bold");
     doc.setTextColor(90);
     doc.text(`${p[0]}:`, cx, cy);
@@ -123,7 +175,7 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
     doc.text(String(p[1] ?? "—"), cx + 22, cy, { maxWidth: colW - 23 });
   });
 
-  y += photoBoxH + 4;
+  y += photoBoxH + 3;
 
   // ===== Seção: Contato & Endereço =====
   drawSectionTitle(doc, "CONTATO & ENDEREÇO", margin, y, contentW);
