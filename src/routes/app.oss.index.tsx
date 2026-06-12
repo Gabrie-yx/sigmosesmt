@@ -358,7 +358,7 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
     queryFn: async () => {
       const { data } = await supabase
         .from("oss_templates")
-        .select("id, cargo, titulo, setor, revisao, validade_meses, descricao_atividades, riscos_texto, medidas_preventivas, epis_obrigatorios, proibicoes, penalidades, procedimentos_emergencia, risco_fisico, risco_quimico, risco_biologico, risco_ergonomico, risco_acidente, risco_psicossocial")
+        .select("id, cargo, cbo, titulo, setor, revisao, validade_meses, descricao_atividades, riscos_texto, medidas_preventivas, epis_obrigatorios, proibicoes, penalidades, procedimentos_emergencia, risco_fisico, risco_quimico, risco_biologico, risco_ergonomico, risco_acidente, risco_psicossocial")
         .eq("ativo", true)
         .order("cargo");
       return (data ?? []) as any[];
@@ -397,6 +397,7 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
         cargo_snapshot: emp.cargo ?? tpl.cargo,
         motivo_emissao: motivo as any,
         conteudo_snapshot: {
+          cbo: (tpl as any).cbo ?? null,
           descricao_atividades: tpl.descricao_atividades,
           riscos_texto: tpl.riscos_texto,
           medidas_preventivas: tpl.medidas_preventivas,
