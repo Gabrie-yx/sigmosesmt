@@ -662,7 +662,15 @@ function TemplateEditorDialog({
               </div>
             </div>
 
-            <div className="flex items-end gap-3">
+            <div className="flex items-end gap-3 flex-wrap">
+              <div className="w-40">
+                <Label className="text-[10px] font-black uppercase">CBO</Label>
+                <Input
+                  value={form.cbo ?? ""}
+                  onChange={(e) => upd("cbo", e.target.value)}
+                  placeholder="Ex: 351505"
+                />
+              </div>
               <div className="w-32">
                 <Label className="text-[10px] font-black uppercase">Validade (meses)</Label>
                 <Input
