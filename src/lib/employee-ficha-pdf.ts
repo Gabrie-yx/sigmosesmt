@@ -320,12 +320,14 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
 }
 
 function drawSectionTitle(doc: jsPDF, title: string, x: number, y: number, w: number) {
-  doc.setFillColor(15, 23, 42);
-  doc.rect(x, y - 3.5, w, 5, "F");
+  doc.setFillColor(...WINE);
+  doc.rect(x, y - 3.5, w, 5.5, "F");
+  doc.setFillColor(...WINE_DARK);
+  doc.rect(x, y + 1.5, w, 0.5, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(255, 255, 255);
-  doc.text(title, x + 2, y);
+  doc.text(title, x + 2.5, y);
   doc.setTextColor(0);
 }
 
