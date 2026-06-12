@@ -208,7 +208,11 @@ function TemplateEditorDialog({
   const { data: roles = [] } = useQuery({
     queryKey: ["oss-roles-ativos"],
     queryFn: async () => {
-      const { data } = await supabase.from("roles").select("id, name").eq("ativo", true).order("name");
+      const { data } = await supabase
+        .from("roles")
+        .select("id, name, descricao_atividades, riscos")
+        .eq("ativo", true)
+        .order("name");
       return data ?? [];
     },
   });
@@ -295,7 +299,44 @@ function TemplateEditorDialog({
         for (const m of r.catalogo_riscos?.medidas_controle_padrao ?? []) medidasSet.add(String(m));
         for (const e of r.catalogo_riscos?.epis_sugeridos ?? []) episSet.add(String(e));
       }
-      return { buckets, catMap, medidas: [...medidasSet], epis: [...episSet], total: lista.length };
+
+      // Fallback: ler riscos da ficha do cargo (roles.riscos JSONB, texto livre)
+      // Só preenche categorias que ficaram VAZIAS no passo anterior.
+      const riscosCargo = (role as any).riscos ?? {};
+      const fichaMap: Record<string, string> = {
+        FISICO: "fisicos",
+        QUIMICO: "quimicos",
+        BIOLOGICO: "biologicos",
+        ERGONOMICO: "ergonomicos",
+        ACIDENTE_MECANICO: "acidente_mecanico",
+      };
+      for (const [cat, key] of Object.entries(fichaMap)) {
+        if (buckets[cat]?.length) continue; // catálogo já preencheu
+        const raw = riscosCargo[key];
+        const arr = Array.isArray(raw) ? raw : raw ? [String(raw)] : [];
+        const itens = arr
+          .map((v) => String(v).trim())
+          .filter((v) => v && !/^nenhum/i.test(v) && !/^n\/?a$/i.test(v));
+        if (itens.length) buckets[cat] = itens;
+      }
+
+      // Descrição da função: prioriza coluna dedicada; fallback para o textão da ficha
+      const descricaoCargo: string | null =
+        (role as any).descricao_atividades?.trim() || riscosCargo.descricao?.trim() || null;
+
+      return {
+        buckets,
+        catMap,
+        medidas: [...medidasSet],
+        epis: [...episSet],
+        total: lista.length,
+        descricaoCargo,
+        fichaCount: Object.values(fichaMap).reduce((acc, k) => {
+          const raw = riscosCargo[k];
+          const arr = Array.isArray(raw) ? raw : raw ? [String(raw)] : [];
+          return acc + arr.filter((v) => String(v).trim() && !/^nenhum/i.test(String(v))).length;
+        }, 0),
+      };
     },
     onSuccess: (res) => {
       // Preenche cada campo categorizado
@@ -315,9 +356,22 @@ function TemplateEditorDialog({
           const block = res.epis.map((e) => `• ${e}`).join("\n");
           next.epis_obrigatorios = existing ? `${existing}\n${block}` : block;
         }
+        // Descrição da função (não sobrescreve o que já foi digitado)
+        if (res.descricaoCargo && !f.descricao_atividades.trim()) {
+          next.descricao_atividades = res.descricaoCargo;
+        }
         return next;
       });
-      toast.success(`${res.total} risco(s) importado(s) da Matriz — categorias, medidas e EPIs preenchidos`);
+      const totalLido = res.total + res.fichaCount;
+      const partes = [
+        res.total ? `${res.total} da Matriz (catálogo)` : null,
+        res.fichaCount ? `${res.fichaCount} da ficha do cargo` : null,
+      ].filter(Boolean);
+      toast.success(
+        totalLido === 0
+          ? "Nenhum risco encontrado para este cargo — cadastre em Matriz de Riscos ou na ficha do cargo"
+          : `Importados: ${partes.join(" + ")}. Descrição${res.descricaoCargo ? " e categorias" : ""} preenchidas.`,
+      );
     },
     onError: (e: any) => toast.error(e.message),
   });
