@@ -270,9 +270,34 @@ function TemplateEditorDialog({
   const gerarFromMatriz = useMutation({
     mutationFn: async () => {
       if (!form.cargo.trim()) throw new Error("Selecione/digite o cargo primeiro");
-      // Encontrar role correspondente
-      const role = roles.find((r) => r.name.toUpperCase() === form.cargo.toUpperCase());
-      if (!role) throw new Error("Cargo não encontrado em \"Cargos & Matriz de Riscos\". Cadastre-o lá primeiro.");
+      // Encontrar role — normaliza acentos, caixa e espaços
+      const norm = (s: string) =>
+        s
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toUpperCase()
+          .replace(/\s+/g, " ")
+          .trim();
+      const alvo = norm(form.cargo);
+      let role: any = roles.find((r) => norm(r.name) === alvo);
+      // Fallback 1: contém (caso usuário tenha digitado parcial)
+      if (!role) role = roles.find((r) => norm(r.name).includes(alvo) || alvo.includes(norm(r.name)));
+      // Fallback 2: busca direta no banco (caso a lista em cache esteja stale)
+      if (!role) {
+        const { data: fresh } = await supabase
+          .from("roles")
+          .select("id, name, descricao_atividades, riscos")
+          .eq("ativo", true);
+        role = (fresh ?? []).find((r) => norm(r.name) === alvo)
+            ?? (fresh ?? []).find((r) => norm(r.name).includes(alvo) || alvo.includes(norm(r.name)));
+      }
+      if (!role) {
+        throw new Error(
+          `Cargo "${form.cargo}" não bateu com nenhum cadastrado em ARGOS/Funções. Disponíveis: ${
+            roles.slice(0, 5).map((r) => r.name).join(", ")
+          }${roles.length > 5 ? "..." : ""}`,
+        );
+      }
       const { data: riscos } = await supabase
         .from("cargo_riscos")
         .select("*, catalogo_riscos(nome, categoria, medidas_controle_padrao, epis_sugeridos)")
