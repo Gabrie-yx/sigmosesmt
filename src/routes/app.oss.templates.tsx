@@ -545,7 +545,7 @@ function TemplateEditorDialog({
         const norm = (s: string) =>
           s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
         const alvo = norm(form.cargo);
-        let role = roles.find((r: any) => norm(r.name) === alvo)
+        let role: any = roles.find((r: any) => norm(r.name) === alvo)
                 ?? roles.find((r: any) => norm(r.name).includes(alvo) || alvo.includes(norm(r.name)));
         if (!role) {
           const { data: fresh } = await supabase
