@@ -471,6 +471,7 @@ function TemplateEditorDialog({
         epis: [...episSet],
         total: lista.length,
         descricaoCargo,
+        cboCargo: (role as any).cbo ?? null,
         fichaCount: Object.values(fichaMap).reduce((acc, k) => {
           const raw = riscosCargo[k];
           const arr = Array.isArray(raw) ? raw : raw ? [String(raw)] : [];
@@ -482,23 +483,32 @@ function TemplateEditorDialog({
       // Preenche cada campo categorizado
       setForm((f) => {
         const next = { ...f };
+        // MERGE (não sobrescreve) — mantém linhas que o usuário já digitou,
+        // adiciona apenas as que vieram novas da Matriz.
+        const mergeBullets = (existing: string, novos: string[]): string => {
+          const linhas = (existing || "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+          const setExist = new Set(linhas.map((l) => l.replace(/^[•\-*·]\s*/, "").toLowerCase()));
+          const add: string[] = [];
+          for (const n of novos) {
+            const key = n.toLowerCase();
+            if (!setExist.has(key)) { add.push(`• ${n}`); setExist.add(key); }
+          }
+          if (!add.length) return existing || "";
+          return (existing?.trim() ? existing.trim() + "\n" : "") + add.join("\n");
+        };
         for (const [cat, field] of Object.entries(res.catMap)) {
           const items = res.buckets[cat] ?? [];
-          if (items.length) (next as any)[field] = items.map((s) => `• ${s}`).join("\n");
+          if (items.length) (next as any)[field] = mergeBullets((f as any)[field] ?? "", items);
         }
-        if (res.medidas.length) {
-          const existing = f.medidas_preventivas.trim();
-          const block = res.medidas.map((m) => `• ${m}`).join("\n");
-          next.medidas_preventivas = existing ? `${existing}\n${block}` : block;
-        }
-        if (res.epis.length) {
-          const existing = f.epis_obrigatorios.trim();
-          const block = res.epis.map((e) => `• ${e}`).join("\n");
-          next.epis_obrigatorios = existing ? `${existing}\n${block}` : block;
-        }
+        if (res.medidas.length) next.medidas_preventivas = mergeBullets(f.medidas_preventivas, res.medidas);
+        if (res.epis.length) next.epis_obrigatorios = mergeBullets(f.epis_obrigatorios, res.epis);
         // Descrição da função (não sobrescreve o que já foi digitado)
         if (res.descricaoCargo && !f.descricao_atividades.trim()) {
           next.descricao_atividades = res.descricaoCargo;
+        }
+        // CBO (não sobrescreve se já tiver sido digitado)
+        if (res.cboCargo && !(f.cbo ?? "").trim()) {
+          next.cbo = res.cboCargo;
         }
         return next;
       });
