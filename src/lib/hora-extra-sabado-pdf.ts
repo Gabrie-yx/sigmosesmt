@@ -412,7 +412,9 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   });
 
   // Empacota em páginas
-  const pages = packBlocksIntoPages(blocks, PAGE_CAPACITY, BLOCK_GAP);
+  // lookahead=true: se o próximo bloco não couber, tenta encaixar os seguintes
+  // antes de virar a página (maximiza aproveitamento).
+  const pages = packBlocksIntoPages(blocks, PAGE_CAPACITY, BLOCK_GAP, { lookahead: true });
 
   // Desenha
   drawFlowPages({
