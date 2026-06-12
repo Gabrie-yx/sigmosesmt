@@ -310,6 +310,15 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
             >
               <ClipboardCheck className="h-3.5 w-3.5" /> Auditar
             </Link>
+            <button
+              type="button"
+              onClick={gerarFichaPdf}
+              disabled={gerandoFicha}
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-wait"
+              title="Gerar ficha em PDF"
+            >
+              <FileText className="h-3.5 w-3.5" /> {gerandoFicha ? "Gerando…" : "Ficha PDF"}
+            </button>
           </div>
         </div>
         {status && (
