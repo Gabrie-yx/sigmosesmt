@@ -279,6 +279,7 @@ function DeleteTemplateDialog({
 const EMPTY: Omit<Template, "id" | "revisao" | "hash_conteudo" | "updated_at"> = {
   cargo: "",
   cbo: "",
+  cbo_titulo: "",
   titulo: "",
   setor: "",
   descricao_atividades: "",
