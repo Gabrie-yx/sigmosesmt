@@ -322,7 +322,7 @@ function TemplateEditorDialog({
     queryFn: async () => {
       const { data } = await supabase
         .from("roles")
-        .select("id, name, cbo, descricao_atividades, riscos")
+        .select("id, name, cbo, cbo_titulo, descricao_atividades, riscos")
         .eq("ativo", true)
         .order("name");
       return data ?? [];
