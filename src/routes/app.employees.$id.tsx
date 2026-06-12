@@ -36,6 +36,7 @@ const PdfSignerDialog = lazy(() =>
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import { openFichaMensalPdf } from "@/lib/epi-ficha-mensal-pdf";
 import { gerarFichaFuncionarioPdf, loadEmployeePhotoDataUrl } from "@/lib/employee-ficha-pdf";
+import { gerarPPPPdf } from "@/lib/ppp-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban, ChevronDown } from "lucide-react";
