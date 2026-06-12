@@ -35,6 +35,9 @@ const PdfSignerDialog = lazy(() =>
 );
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import { openFichaMensalPdf } from "@/lib/epi-ficha-mensal-pdf";
+import { gerarFichaFuncionarioPdf, loadEmployeePhotoDataUrl } from "@/lib/employee-ficha-pdf";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import type jsPDF from "jspdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban, ChevronDown } from "lucide-react";
 import { GraduationCap } from "lucide-react";
 import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
@@ -145,6 +148,36 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [uploadingHeaderPhoto, setUploadingHeaderPhoto] = useState(false);
   const uploadEmployeePhotoFn = useServerFn(uploadEmployeePhoto);
   const removeEmployeePhotoFn = useServerFn(removeEmployeePhoto);
+  const [fichaDoc, setFichaDoc] = useState<jsPDF | null>(null);
+  const [gerandoFicha, setGerandoFicha] = useState(false);
+
+  async function gerarFichaPdf() {
+    if (!emp) return;
+    setGerandoFicha(true);
+    try {
+      const [atestadosRes, acidentesRes, photoDataUrl] = await Promise.all([
+        supabase.from("employee_atestados").select("*").eq("employee_id", id).order("data_inicio", { ascending: false }),
+        supabase.from("acidentes_trabalho").select("*").eq("employee_id", id).order("data_acidente", { ascending: false }),
+        loadEmployeePhotoDataUrl(emp.foto_url),
+      ]);
+      const company = (companies ?? []).find((c: any) => c.id === emp.company_id) ?? null;
+      const doc = gerarFichaFuncionarioPdf({
+        emp,
+        companyName: company?.name ?? null,
+        roleName: role?.name ?? null,
+        photoDataUrl,
+        atestados: (atestadosRes.data as any[]) ?? [],
+        exams: (exams as any[]) ?? [],
+        acidentes: (acidentesRes.data as any[]) ?? [],
+      });
+      setFichaDoc(doc);
+    } catch (e: any) {
+      console.error("[ficha-pdf] erro:", e);
+      toast.error("Erro ao gerar a ficha: " + (e?.message || "desconhecido"));
+    } finally {
+      setGerandoFicha(false);
+    }
+  }
 
   const { data: docsList } = useQuery({
     queryKey: ["docs-summary", id],
