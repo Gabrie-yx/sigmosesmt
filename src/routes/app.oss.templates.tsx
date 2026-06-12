@@ -687,13 +687,22 @@ function TemplateEditorDialog({
             </div>
 
             <div className="flex items-end gap-3 flex-wrap">
-              <div className="w-40">
-                <Label className="text-[10px] font-black uppercase">CBO</Label>
-                <Input
-                  value={form.cbo ?? ""}
-                  onChange={(e) => upd("cbo", e.target.value)}
-                  placeholder="Ex: 351505"
-                />
+              <div className="flex-1 min-w-[260px]">
+                <Label className="text-[10px] font-black uppercase">CBO (vem do cargo)</Label>
+                <div className="h-10 px-3 rounded-md border border-slate-200 bg-slate-50 flex items-center text-sm">
+                  {form.cbo ? (
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-rose-700">{form.cbo}</span>
+                      {form.cbo_titulo && <span className="text-slate-600 truncate">— {form.cbo_titulo}</span>}
+                    </span>
+                  ) : roleSel ? (
+                    <span className="text-amber-600 text-xs">
+                      Cargo "{roleSel.name}" sem CBO cadastrado — defina em CARGOS/FUNÇÕES.
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 text-xs">Selecione um cargo cadastrado para puxar o CBO oficial.</span>
+                  )}
+                </div>
               </div>
               <div className="w-32">
                 <Label className="text-[10px] font-black uppercase">Validade (meses)</Label>
