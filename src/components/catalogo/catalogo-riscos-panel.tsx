@@ -155,7 +155,7 @@ export function CatalogoRiscosPanel() {
         <div className="relative flex-1 min-w-[240px]">
           <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
-            placeholder="Buscar risco..."
+            placeholder="Buscar por nome ou código eSocial..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
