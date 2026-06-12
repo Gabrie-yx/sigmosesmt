@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Sparkles, FileSignature, Search, ArrowLeft, Save, Eye } from "lucide-react";
+import { Plus, Pencil, Sparkles, FileSignature, Search, ArrowLeft, Save, Eye, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { buildOssPdf } from "@/lib/oss-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
@@ -57,6 +57,7 @@ function OssTemplatesPage() {
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Template | null>(null);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<Template | null>(null);
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["oss-templates"],
@@ -64,6 +65,7 @@ function OssTemplatesPage() {
       const { data, error } = await supabase
         .from("oss_templates")
         .select("*")
+        .eq("ativo", true)
         .order("cargo");
       if (error) throw error;
       return (data ?? []) as unknown as Template[];
@@ -148,6 +150,17 @@ function OssTemplatesPage() {
                 >
                   <Pencil className="h-3.5 w-3.5 mr-1" />Editar
                 </Button>
+                {isEditor && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-rose-600 hover:bg-rose-50 hover:text-rose-700 border-rose-200"
+                    onClick={() => setDeleting(t)}
+                    title="Excluir modelo"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </div>
             </Card>
           ))}
@@ -162,7 +175,102 @@ function OssTemplatesPage() {
           onSaved={() => qc.invalidateQueries({ queryKey: ["oss-templates"] })}
         />
       )}
+      {deleting && (
+        <DeleteTemplateDialog
+          template={deleting}
+          onClose={() => setDeleting(null)}
+          onDone={() => {
+            setDeleting(null);
+            qc.invalidateQueries({ queryKey: ["oss-templates"] });
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function DeleteTemplateDialog({
+  template, onClose, onDone,
+}: { template: Template; onClose: () => void; onDone: () => void }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    setLoading(true);
+    // Tenta exclusão definitiva. Se houver OSS emitidas vinculadas, o FK
+    // (ON DELETE RESTRICT) impede — caímos para arquivamento (ativo=false)
+    // para preservar o histórico das emissões.
+    const { error: delErr } = await supabase
+      .from("oss_templates")
+      .delete()
+      .eq("id", template.id);
+
+    if (!delErr) {
+      toast.success(`Modelo de ${template.cargo} excluído.`);
+      setLoading(false);
+      onDone();
+      return;
+    }
+
+    const msg = String(delErr.message || "").toLowerCase();
+    const isFk =
+      msg.includes("foreign key") ||
+      msg.includes("violates") ||
+      msg.includes("23503");
+
+    if (isFk) {
+      const { error: updErr } = await supabase
+        .from("oss_templates")
+        .update({ ativo: false } as any)
+        .eq("id", template.id);
+      setLoading(false);
+      if (updErr) {
+        toast.error("Não foi possível arquivar: " + updErr.message);
+        return;
+      }
+      toast.success(
+        `Modelo de ${template.cargo} arquivado (existem OSS emitidas vinculadas, então o histórico foi preservado).`,
+      );
+      onDone();
+      return;
+    }
+
+    setLoading(false);
+    toast.error("Erro ao excluir: " + delErr.message);
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && !loading && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Excluir modelo de OSS?</DialogTitle>
+          <DialogDescription>
+            <span className="block mt-2 text-slate-700">
+              Cargo: <strong>{template.cargo}</strong>
+              {template.setor ? <> · Setor: <strong>{template.setor}</strong></> : null}
+            </span>
+            <span className="block mt-3 text-xs text-slate-500">
+              Se já existirem OSS emitidas a partir deste modelo, ele será
+              <strong> arquivado </strong>
+              (não aparecerá mais na lista) em vez de excluído, para preservar o
+              histórico das emissões antigas.
+            </span>
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button
+            className="bg-rose-600 hover:bg-rose-700"
+            onClick={handleDelete}
+            disabled={loading}
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            {loading ? "Excluindo..." : "Excluir"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
