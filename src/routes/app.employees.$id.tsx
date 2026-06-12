@@ -2280,8 +2280,9 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             onClose={() => setSignerSrc(null)}
             source={signerSrc?.bytes ?? null}
             nomeArquivo={signerSrc?.name ?? "ficha-epi.pdf"}
-            modulo="ficha-epi"
-            referenciaId={empId}
+            modulo={signerSrc?.modulo ?? "ficha-epi"}
+            referenciaId={signerSrc?.referenciaId ?? empId}
+            documentId={signerSrc?.documentId}
           />
         </Suspense>
       )}
