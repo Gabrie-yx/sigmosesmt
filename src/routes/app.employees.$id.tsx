@@ -348,9 +348,9 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
             </span>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <QuickTabBtn icon={HeartPulse} label="ASO" tone="rose" active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
-            <QuickTabBtn icon={Award} label="NR" tone="rose" active={tab === "nrs"} onClick={() => setTab("nrs")} />
-            <QuickTabBtn icon={FolderOpen} label="Docs" tone="rose" active={tab === "docs"} onClick={() => setTab("docs")} />
+            <QuickTabBtn icon={HeartPulse} label="ASO" tone={asoTone} active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
+            <QuickTabBtn icon={Award} label="NR" tone={nrTone} active={tab === "nrs"} onClick={() => setTab("nrs")} />
+            <QuickTabBtn icon={FolderOpen} label="Docs" tone={docsTone} active={tab === "docs"} onClick={() => setTab("docs")} />
             <QuickTabBtn icon={HardHat} label="EPI" tone="slate" active={tab === "epi"} onClick={() => setTab("epi")} />
             <Link
               to="/app/audit"
