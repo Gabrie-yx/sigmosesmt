@@ -23,11 +23,12 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
 
   useEffect(() => {
     if (!doc || !open) { setUrl(""); return; }
-    const blob = doc.output("blob");
-    const u = URL.createObjectURL(blob);
-    setUrl(u);
-    return () => URL.revokeObjectURL(u);
-  }, [doc, open]);
+    // Usa data URI em vez de blob: URL — o Chrome bloqueia blob: dentro do
+    // iframe da preview do Lovable ("Esta página foi bloqueada pelo Chrome").
+    const dataUri = doc.output("datauristring", { filename: fileName });
+    setUrl(dataUri);
+    return () => setUrl("");
+  }, [doc, open, fileName]);
 
   function download() {
     if (doc) doc.save(fileName);
