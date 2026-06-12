@@ -29,6 +29,7 @@ export const Route = createFileRoute("/app/oss/templates")({
 type Template = {
   id: string;
   cargo: string;
+  cbo: string | null;
   titulo: string;
   setor: string | null;
   descricao_atividades: string;
@@ -276,6 +277,7 @@ function DeleteTemplateDialog({
 
 const EMPTY: Omit<Template, "id" | "revisao" | "hash_conteudo" | "updated_at"> = {
   cargo: "",
+  cbo: "",
   titulo: "",
   setor: "",
   descricao_atividades: "",
@@ -320,7 +322,7 @@ function TemplateEditorDialog({
     queryFn: async () => {
       const { data } = await supabase
         .from("roles")
-        .select("id, name, descricao_atividades, riscos")
+        .select("id, name, cbo, descricao_atividades, riscos")
         .eq("ativo", true)
         .order("name");
       return data ?? [];
@@ -397,7 +399,7 @@ function TemplateEditorDialog({
       if (!role) {
         const { data: fresh } = await supabase
           .from("roles")
-          .select("id, name, descricao_atividades, riscos")
+          .select("id, name, cbo, descricao_atividades, riscos")
           .eq("ativo", true);
         role = (fresh ?? []).find((r) => norm(r.name) === alvo)
             ?? (fresh ?? []).find((r) => norm(r.name).includes(alvo) || alvo.includes(norm(r.name)));
@@ -469,6 +471,7 @@ function TemplateEditorDialog({
         epis: [...episSet],
         total: lista.length,
         descricaoCargo,
+        cboCargo: (role as any).cbo ?? null,
         fichaCount: Object.values(fichaMap).reduce((acc, k) => {
           const raw = riscosCargo[k];
           const arr = Array.isArray(raw) ? raw : raw ? [String(raw)] : [];
@@ -480,23 +483,32 @@ function TemplateEditorDialog({
       // Preenche cada campo categorizado
       setForm((f) => {
         const next = { ...f };
+        // MERGE (não sobrescreve) — mantém linhas que o usuário já digitou,
+        // adiciona apenas as que vieram novas da Matriz.
+        const mergeBullets = (existing: string, novos: string[]): string => {
+          const linhas = (existing || "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+          const setExist = new Set(linhas.map((l) => l.replace(/^[•\-*·]\s*/, "").toLowerCase()));
+          const add: string[] = [];
+          for (const n of novos) {
+            const key = n.toLowerCase();
+            if (!setExist.has(key)) { add.push(`• ${n}`); setExist.add(key); }
+          }
+          if (!add.length) return existing || "";
+          return (existing?.trim() ? existing.trim() + "\n" : "") + add.join("\n");
+        };
         for (const [cat, field] of Object.entries(res.catMap)) {
           const items = res.buckets[cat] ?? [];
-          if (items.length) (next as any)[field] = items.map((s) => `• ${s}`).join("\n");
+          if (items.length) (next as any)[field] = mergeBullets((f as any)[field] ?? "", items);
         }
-        if (res.medidas.length) {
-          const existing = f.medidas_preventivas.trim();
-          const block = res.medidas.map((m) => `• ${m}`).join("\n");
-          next.medidas_preventivas = existing ? `${existing}\n${block}` : block;
-        }
-        if (res.epis.length) {
-          const existing = f.epis_obrigatorios.trim();
-          const block = res.epis.map((e) => `• ${e}`).join("\n");
-          next.epis_obrigatorios = existing ? `${existing}\n${block}` : block;
-        }
+        if (res.medidas.length) next.medidas_preventivas = mergeBullets(f.medidas_preventivas, res.medidas);
+        if (res.epis.length) next.epis_obrigatorios = mergeBullets(f.epis_obrigatorios, res.epis);
         // Descrição da função (não sobrescreve o que já foi digitado)
         if (res.descricaoCargo && !f.descricao_atividades.trim()) {
           next.descricao_atividades = res.descricaoCargo;
+        }
+        // CBO (não sobrescreve se já tiver sido digitado)
+        if (res.cboCargo && !(f.cbo ?? "").trim()) {
+          next.cbo = res.cboCargo;
         }
         return next;
       });
@@ -525,6 +537,50 @@ function TemplateEditorDialog({
       } else {
         const { error } = await supabase.from("oss_templates").insert(payload as any);
         if (error) throw error;
+      }
+      // === Write-back para CARGOS/FUNÇÕES ===
+      // Mescla os riscos por categoria preenchidos no modelo de OSS dentro de
+      // roles.riscos (JSONB texto livre), preservando o que já estava lá.
+      try {
+        const norm = (s: string) =>
+          s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+        const alvo = norm(form.cargo);
+        let role: any = roles.find((r: any) => norm(r.name) === alvo)
+                ?? roles.find((r: any) => norm(r.name).includes(alvo) || alvo.includes(norm(r.name)));
+        if (!role) {
+          const { data: fresh } = await supabase
+            .from("roles").select("id, name, cbo, riscos").eq("ativo", true);
+          role = (fresh ?? []).find((r: any) => norm(r.name) === alvo)
+              ?? (fresh ?? []).find((r: any) => norm(r.name).includes(alvo) || alvo.includes(norm(r.name)));
+        }
+        if (role) {
+          const linhas = (s: string | null | undefined) =>
+            (s ?? "").split(/\r?\n/).map((l) => l.replace(/^[•\-*·]\s*/, "").trim()).filter(Boolean);
+          const merge = (existing: any, novos: string[]): string[] => {
+            const arr = Array.isArray(existing) ? existing.map((x: any) => String(x).trim()) : existing ? [String(existing).trim()] : [];
+            const set = new Set(arr.map((s) => s.toLowerCase()));
+            for (const n of novos) {
+              if (!set.has(n.toLowerCase())) { arr.push(n); set.add(n.toLowerCase()); }
+            }
+            return arr.filter(Boolean);
+          };
+          const curRiscos = (role as any).riscos ?? {};
+          const novosRiscos = {
+            ...curRiscos,
+            fisicos: merge(curRiscos.fisicos, linhas(form.risco_fisico)),
+            quimicos: merge(curRiscos.quimicos, linhas(form.risco_quimico)),
+            biologicos: merge(curRiscos.biologicos, linhas(form.risco_biologico)),
+            ergonomicos: merge(curRiscos.ergonomicos, linhas(form.risco_ergonomico)),
+            acidente_mecanico: merge(curRiscos.acidente_mecanico, linhas(form.risco_acidente)),
+            psicossociais: merge(curRiscos.psicossociais, linhas(form.risco_psicossocial)),
+          };
+          const patch: any = { riscos: novosRiscos };
+          if (form.cbo && !(role as any).cbo) patch.cbo = form.cbo;
+          await supabase.from("roles").update(patch).eq("id", (role as any).id);
+        }
+      } catch (e) {
+        // Não bloqueia o save da OSS se o write-back falhar — apenas avisa no console.
+        console.warn("[oss-templates] write-back para roles falhou:", e);
       }
     },
     onSuccess: () => {
@@ -606,7 +662,15 @@ function TemplateEditorDialog({
               </div>
             </div>
 
-            <div className="flex items-end gap-3">
+            <div className="flex items-end gap-3 flex-wrap">
+              <div className="w-40">
+                <Label className="text-[10px] font-black uppercase">CBO</Label>
+                <Input
+                  value={form.cbo ?? ""}
+                  onChange={(e) => upd("cbo", e.target.value)}
+                  placeholder="Ex: 351505"
+                />
+              </div>
               <div className="w-32">
                 <Label className="text-[10px] font-black uppercase">Validade (meses)</Label>
                 <Input
