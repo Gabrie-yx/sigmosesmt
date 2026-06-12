@@ -36,8 +36,8 @@ const PdfSignerDialog = lazy(() =>
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import { openFichaMensalPdf } from "@/lib/epi-ficha-mensal-pdf";
 import { gerarFichaFuncionarioPdf, loadEmployeePhotoDataUrl } from "@/lib/employee-ficha-pdf";
-import { gerarPPPPdf } from "@/lib/ppp-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { PPPEditorDialog } from "@/components/ppp/ppp-editor-dialog";
 import type jsPDF from "jspdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban, ChevronDown } from "lucide-react";
 import { GraduationCap } from "lucide-react";
@@ -151,8 +151,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const removeEmployeePhotoFn = useServerFn(removeEmployeePhoto);
   const [fichaDoc, setFichaDoc] = useState<jsPDF | null>(null);
   const [gerandoFicha, setGerandoFicha] = useState(false);
-  const [pppDoc, setPppDoc] = useState<jsPDF | null>(null);
-  const [gerandoPPP, setGerandoPPP] = useState(false);
+  const [pppOpen, setPppOpen] = useState(false);
 
   async function gerarFichaPdf() {
     if (!emp) return;
@@ -182,70 +181,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
     }
   }
 
-  async function gerarPPP() {
-    if (!emp) return;
-    setGerandoPPP(true);
-    try {
-      const company = (companies ?? []).find((c: any) => c.id === emp.company_id) ?? null;
-      const [riscosRes, epiRes] = await Promise.all([
-        emp.role_id
-          ? supabase
-              .from("cargo_riscos")
-              .select("*, catalogo_riscos(nome, categoria, codigo_esocial)")
-              .eq("role_id", emp.role_id)
-              .eq("ativo", true)
-          : Promise.resolve({ data: [] as any[] }),
-        supabase
-          .from("epi_deliveries")
-          .select("item, ca, data_entrega")
-          .eq("employee_id", id)
-          .order("data_entrega", { ascending: false })
-          .limit(20),
-      ]);
-      const riscos = ((riscosRes.data as any[]) ?? []).map((r) => ({
-        nome: r.catalogo_riscos?.nome ?? "—",
-        categoria: r.catalogo_riscos?.categoria ?? null,
-        codigo_esocial: r.catalogo_riscos?.codigo_esocial ?? null,
-        intensidade: r.intensidade,
-        unidade: r.unidade,
-        limite_tolerancia: r.limite_tolerancia,
-        tecnica_medicao: r.tecnica_medicao,
-        fonte_geradora: r.fonte_geradora,
-        epi_atenuacao_db: r.epi_atenuacao_db,
-        aposentadoria_especial_anos: r.aposentadoria_especial_anos,
-        periculosidade: !!r.periculosidade,
-        insalubridade_grau: r.insalubridade_grau,
-        data_avaliacao: r.data_avaliacao,
-        observacao: r.observacao,
-      }));
-      // deduplica EPI pelo nome (mantém a entrega mais recente)
-      const seen = new Set<string>();
-      const epis = ((epiRes.data as any[]) ?? []).filter((e) => {
-        const k = (e.item ?? "").toLowerCase();
-        if (seen.has(k)) return false;
-        seen.add(k); return true;
-      });
-      const doc = gerarPPPPdf({
-        emp,
-        company,
-        roleName: role?.name ?? null,
-        riscos,
-        exams: (exams as any[]) ?? [],
-        epis,
-        responsavelTecnico: {
-          nome: (company as any)?.responsavel_tecnico ?? null,
-          cargo: "Engenheiro de Segurança do Trabalho",
-          registro: null,
-        },
-      });
-      setPppDoc(doc);
-    } catch (e: any) {
-      console.error("[ppp-pdf] erro:", e);
-      toast.error("Erro ao gerar o PPP: " + (e?.message || "desconhecido"));
-    } finally {
-      setGerandoPPP(false);
-    }
-  }
+  // O PPP agora abre num editor (rascunho + emissão final). Veja PPPEditorDialog.
 
   const { data: docsList } = useQuery({
     queryKey: ["docs-summary", id],
@@ -437,12 +373,11 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
             </button>
             <button
               type="button"
-              onClick={gerarPPP}
-              disabled={gerandoPPP}
+              onClick={() => setPppOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-violet-700 to-violet-900 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-wait"
               title="Emitir PPP (Perfil Profissiográfico Previdenciário)"
             >
-              <FileSignature className="h-3.5 w-3.5" /> {gerandoPPP ? "Gerando…" : "Emitir PPP"}
+              <FileSignature className="h-3.5 w-3.5" /> Emitir PPP
             </button>
           </div>
         </div>

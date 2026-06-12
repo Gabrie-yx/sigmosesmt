@@ -4045,6 +4045,104 @@ export type Database = {
           },
         ]
       }
+      ppp_emissoes: {
+        Row: {
+          cancelado_em: string | null
+          cancelado_por: string | null
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          dados: Json
+          data_emissao: string | null
+          emitido_em: string | null
+          emitido_por: string | null
+          employee_id: string
+          id: string
+          motivo_cancelamento: string | null
+          numero: string | null
+          observacoes: string | null
+          pdf_hash: string | null
+          pdf_path: string | null
+          role_id: string | null
+          status: string
+          updated_at: string
+          versao: number
+        }
+        Insert: {
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dados?: Json
+          data_emissao?: string | null
+          emitido_em?: string | null
+          emitido_por?: string | null
+          employee_id: string
+          id?: string
+          motivo_cancelamento?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          pdf_hash?: string | null
+          pdf_path?: string | null
+          role_id?: string | null
+          status?: string
+          updated_at?: string
+          versao?: number
+        }
+        Update: {
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dados?: Json
+          data_emissao?: string | null
+          emitido_em?: string | null
+          emitido_por?: string | null
+          employee_id?: string
+          id?: string
+          motivo_cancelamento?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          pdf_hash?: string | null
+          pdf_path?: string | null
+          role_id?: string | null
+          status?: string
+          updated_at?: string
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ppp_emissoes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ppp_emissoes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ppp_emissoes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "ppp_emissoes_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       procedimento_cientes: {
         Row: {
           created_at: string
@@ -5239,6 +5337,7 @@ export type Database = {
       }
       roles: {
         Row: {
+          atividades: string | null
           ativo: boolean
           cbo: string | null
           cbo_titulo: string | null
@@ -5260,6 +5359,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          atividades?: string | null
           ativo?: boolean
           cbo?: string | null
           cbo_titulo?: string | null
@@ -5281,6 +5381,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          atividades?: string | null
           ativo?: boolean
           cbo?: string | null
           cbo_titulo?: string | null
@@ -6066,6 +6167,7 @@ export type Database = {
       gerar_numero_controle_doc: { Args: never; Returns: string }
       gerar_numero_extintor: { Args: never; Returns: string }
       gerar_numero_ordem_producao: { Args: never; Returns: string }
+      gerar_numero_ppp: { Args: never; Returns: string }
       gerar_numero_ria: { Args: never; Returns: string }
       gerar_numero_tnc: { Args: never; Returns: string }
       has_module_access: {

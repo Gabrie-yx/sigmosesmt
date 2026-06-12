@@ -1,328 +1,423 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import dmnLogo from "@/assets/dmn-logo.png";
 
-// Vinho DMN — coerente com a Ficha
-const WINE: [number, number, number] = [123, 30, 43];
-const WINE_DARK: [number, number, number] = [90, 20, 32];
+/**
+ * Gerador de PPP fiel ao leiaute oficial (Anexo XV — IN PRES/INSS 128/2022).
+ * Estrutura todos os campos numerados (1 a 18) e blocos "DADOS ADMINISTRATIVOS",
+ * "REGISTROS AMBIENTAIS" e "RESPONSÁVEIS PELAS INFORMAÇÕES".
+ */
 
-type Any = Record<string, any>;
-
-export type PPPData = {
-  emp: Any;
-  company: Any | null;
-  roleName?: string | null;
-  photoDataUrl?: string | null;
-  riscos: Array<{
-    nome: string;
-    categoria: string | null;
-    codigo_esocial: string | null;
-    intensidade: number | null;
-    unidade: string | null;
-    limite_tolerancia: number | null;
-    tecnica_medicao: string | null;
-    fonte_geradora: string | null;
-    epi_atenuacao_db: number | null;
-    aposentadoria_especial_anos: number | null;
-    periculosidade: boolean;
-    insalubridade_grau: string | null;
-    data_avaliacao: string | null;
-    observacao: string | null;
-  }>;
-  exams: Any[];
-  epis: Array<{ item: string; ca: string | null; data_entrega: string }>;
-  responsavelTecnico?: { nome?: string | null; cargo?: string | null; registro?: string | null } | null;
+export type PPPRisco = {
+  periodo: string;
+  tipo: string; // Físico / Químico / Biológico / Ergonômico / Acidente
+  fator_risco: string; // ex: "Calor (07/10/2022 a 17/05/2023)"
+  intensidade: string; // ex: "29,45 ºC" ou "NA"
+  tecnica: string; // ex: "NHO06 - ..."
+  epc_eficaz: string; // "Sim" | "Não" | "NA"
+  epi_eficaz: string; // idem
+  ca_epi: string;
 };
 
-function fmtBR(d?: string | null) {
-  if (!d) return "—";
-  const iso = String(d).split("T")[0];
-  const [y, m, day] = iso.split("-");
-  return y && m && day ? `${day}/${m}/${y}` : String(d);
+export type PPPResponsavel = {
+  periodo: string;
+  cpf: string;
+  registro: string; // Reg. Cons. de classe
+  nome: string;
+};
+
+export type PPPCAT = { data: string; numero: string };
+
+export type PPPLotacao = {
+  periodo: string;
+  cnpj: string;
+  setor: string;
+  cargo: string;
+  funcao: string;
+  cbo: string;
+  gfip_esocial: string;
+};
+
+export type PPPProfissiografia = { periodo: string; descricao: string };
+
+export type PPPDados = {
+  // 1-3 Empresa
+  empresa_cnpj: string;
+  empresa_nome: string;
+  empresa_cnae: string;
+  // 4-6 Trabalhador
+  trab_nome: string;
+  trab_br_pdh: string; // BR/PDH (geralmente "NA")
+  trab_cpf: string;
+  // 7-11
+  trab_nascimento: string; // DD/MM/AAAA
+  trab_sexo: string; // Masculino / Feminino
+  trab_matricula_esocial: string;
+  trab_admissao: string; // DD/MM/AAAA
+  regime_revezamento: string;
+  // 12 CATs
+  cats: PPPCAT[];
+  // 13 Lotação e Atribuição
+  lotacoes: PPPLotacao[];
+  // 14 Profissiografia
+  profissiografias: PPPProfissiografia[];
+  // 15 Riscos
+  riscos: PPPRisco[];
+  // 15.9 NR-06 / NR-01 — 5 respostas Sim/Não
+  nr_medidas_protecao: string;
+  nr_funcionamento_epi: string;
+  nr_prazo_validade: string;
+  nr_periodicidade_troca: string;
+  nr_higienizacao: string;
+  // 16 Responsáveis
+  responsaveis: PPPResponsavel[];
+  // 17 Data emissão | 18 Representante Legal
+  data_emissao: string; // DD/MM/AAAA
+  rep_legal_cpf: string;
+  rep_legal_nome: string;
+  // Observações
+  observacoes: string;
+};
+
+const BLACK: [number, number, number] = [0, 0, 0];
+const HEAD_BG: [number, number, number] = [225, 225, 225];
+const LABEL_BG: [number, number, number] = [240, 240, 240];
+
+const baseStyle = {
+  fontSize: 7.5,
+  cellPadding: 1.2,
+  lineColor: BLACK,
+  lineWidth: 0.15,
+  textColor: BLACK,
+  overflow: "linebreak" as const,
+};
+const headerCellStyle = { ...baseStyle, fillColor: HEAD_BG, fontStyle: "bold" as const };
+
+function s(v: string | null | undefined): string {
+  const t = (v ?? "").toString().trim();
+  return t.length ? t : "";
 }
 
-export function gerarPPPPdf(d: PPPData): jsPDF {
+export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = 210;
   const pageH = 297;
-  const margin = 12;
+  const margin = 10;
   const contentW = pageW - margin * 2;
-  const hoje = new Date().toLocaleDateString("pt-BR");
-  const emp = d.emp ?? {};
-  const co = d.company ?? {};
 
-  // ===== Header =====
+  // ===== Cabeçalho oficial =====
   let y = margin;
-  const headerH = 18;
-  doc.setFillColor(...WINE);
-  doc.rect(margin, y, contentW, headerH, "F");
-  doc.setFillColor(...WINE_DARK);
-  doc.rect(margin, y + headerH - 1, contentW, 1, "F");
-  const logoBoxW = 32;
-  doc.setFillColor(255, 255, 255);
-  doc.rect(margin, y, logoBoxW, headerH, "F");
-  try { doc.addImage(dmnLogo as any, "PNG", margin + 2, y + 2, logoBoxW - 4, headerH - 4); } catch { /* noop */ }
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(255, 255, 255);
-  doc.text("PERFIL PROFISSIOGRÁFICO PREVIDENCIÁRIO — PPP", margin + logoBoxW + (contentW - logoBoxW) / 2, y + 7, { align: "center" });
+  doc.setFontSize(11);
+  doc.text("PERFIL PROFISSIOGRÁFICO PREVIDENCIÁRIO (PPP)", pageW / 2, y + 4, { align: "center" });
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.text("Anexo XV — IN PRES/INSS nº 128/2022", margin + logoBoxW + (contentW - logoBoxW) / 2, y + 12, { align: "center" });
+  doc.setFontSize(8);
+  doc.text("Previdência Social", pageW / 2, y + 8.5, { align: "center" });
+  if (opts?.numero) {
+    doc.setFontSize(7);
+    doc.text(`Nº ${opts.numero}`, pageW - margin, y + 4, { align: "right" });
+  }
+  y += 12;
+
+  // ===================== DADOS ADMINISTRATIVOS =====================
+  blockTitle(doc, "DADOS ADMINISTRATIVOS", margin, y, contentW);
+  y += 5;
+
+  // Linha 1-3: CNPJ | Nome Empresarial | CNAE
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [["1 Nº CNPJ do Domicílio Tributário/CEI/CAEPF/CNO", "2 Nome Empresarial", "3 CNAE"]],
+    body: [[s(d.empresa_cnpj), s(d.empresa_nome), s(d.empresa_cnae)]],
+    styles: baseStyle,
+    headStyles: headerCellStyle,
+    columnStyles: { 0: { cellWidth: 70 }, 2: { cellWidth: 30 } },
+  });
+  y = (doc as any).lastAutoTable.finalY;
+
+  // Linha 4-6: Nome | BR/PDH | CPF
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [["4 Nome do Trabalhador", "5 BR/PDH", "6 CPF nº"]],
+    body: [[s(d.trab_nome), s(d.trab_br_pdh), s(d.trab_cpf)]],
+    styles: baseStyle,
+    headStyles: headerCellStyle,
+    columnStyles: { 1: { cellWidth: 25, halign: "center" }, 2: { cellWidth: 35, halign: "center" } },
+  });
+  y = (doc as any).lastAutoTable.finalY;
+
+  // Linha 7-11
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [["7 Data Nascimento", "8 Sexo (F/M)", "9 Matrícula eSocial", "10 Data Admissão", "11 Regime Revezamento"]],
+    body: [[s(d.trab_nascimento), s(d.trab_sexo), s(d.trab_matricula_esocial), s(d.trab_admissao), s(d.regime_revezamento)]],
+    styles: { ...baseStyle, halign: "center" },
+    headStyles: { ...headerCellStyle, halign: "center" },
+  });
+  y = (doc as any).lastAutoTable.finalY;
+
+  // 12 CAT
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [[{ content: "12 - CAT REGISTRADA", colSpan: 2, styles: headerCellStyle }]],
+    body: [],
+    styles: baseStyle,
+  });
+  y = (doc as any).lastAutoTable.finalY;
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [["12.1 Data do Registro", "12.2 Número da CAT"]],
+    body: d.cats.length > 0 ? d.cats.map((c) => [s(c.data), s(c.numero)]) : [["", ""]],
+    styles: { ...baseStyle, halign: "center" },
+    headStyles: { ...headerCellStyle, halign: "center" },
+  });
+  y = (doc as any).lastAutoTable.finalY;
+
+  // 13 Lotação e Atribuição
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [[{ content: "13 - Lotação e Atribuição", colSpan: 7, styles: headerCellStyle }]],
+    body: [],
+    styles: baseStyle,
+  });
+  y = (doc as any).lastAutoTable.finalY;
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [["13.1 Período", "13.2 CNPJ/CEI/CAEPF/CNO", "13.3 Setor", "13.4 Cargo", "13.5 Função", "13.6 CBO", "13.7 GFIP/eSocial"]],
+    body: d.lotacoes.length > 0
+      ? d.lotacoes.map((l) => [s(l.periodo), s(l.cnpj), s(l.setor), s(l.cargo), s(l.funcao), s(l.cbo), s(l.gfip_esocial)])
+      : [["", "", "", "", "", "", ""]],
+    styles: { ...baseStyle, fontSize: 7 },
+    headStyles: { ...headerCellStyle, fontSize: 7, halign: "center" },
+    columnStyles: {
+      0: { cellWidth: 30 },
+      1: { cellWidth: 30 },
+      5: { cellWidth: 16, halign: "center" },
+      6: { cellWidth: 22, halign: "center" },
+    },
+  });
+  y = (doc as any).lastAutoTable.finalY;
+
+  // 14 Profissiografia
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [[{ content: "14 - Profissiografia", colSpan: 2, styles: headerCellStyle }]],
+    body: [],
+    styles: baseStyle,
+  });
+  y = (doc as any).lastAutoTable.finalY;
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [["14.1 Período", "14.2 Descrição das Atividades"]],
+    body: d.profissiografias.length > 0
+      ? d.profissiografias.map((p) => [s(p.periodo), s(p.descricao)])
+      : [["", ""]],
+    styles: baseStyle,
+    headStyles: { ...headerCellStyle, halign: "center" },
+    columnStyles: { 0: { cellWidth: 30, halign: "center" } },
+  });
+  y = (doc as any).lastAutoTable.finalY + 2;
+
+  // ===================== REGISTROS AMBIENTAIS =====================
+  if (y > pageH - 60) { doc.addPage(); y = margin; }
+  blockTitle(doc, "REGISTROS AMBIENTAIS", margin, y, contentW);
+  y += 5;
+
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [[{ content: "15 - Exposição a Fatores de Riscos", colSpan: 8, styles: headerCellStyle }]],
+    body: [],
+    styles: baseStyle,
+  });
+  y = (doc as any).lastAutoTable.finalY;
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [["15.1 Período", "15.2 Tipo", "15.3 Fator de Risco", "15.4 Intensidade/Concentração", "15.5 Técnica Utilizada", "15.6 EPC Eficaz (S/N)", "15.7 EPI Eficaz (S/N)", "15.8 CA EPI"]],
+    body: d.riscos.length > 0
+      ? d.riscos.map((r) => [s(r.periodo), s(r.tipo), s(r.fator_risco), s(r.intensidade), s(r.tecnica), s(r.epc_eficaz), s(r.epi_eficaz), s(r.ca_epi)])
+      : [["", "", "", "", "", "", "", ""]],
+    styles: { ...baseStyle, fontSize: 6.8 },
+    headStyles: { ...headerCellStyle, fontSize: 6.8, halign: "center", valign: "middle" },
+    columnStyles: {
+      0: { cellWidth: 22 },
+      1: { cellWidth: 16, halign: "center" },
+      3: { cellWidth: 22, halign: "center" },
+      5: { cellWidth: 14, halign: "center" },
+      6: { cellWidth: 14, halign: "center" },
+      7: { cellWidth: 16, halign: "center" },
+    },
+  });
+  y = (doc as any).lastAutoTable.finalY;
+
+  // 15.9 NR-06 / NR-01
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [[{ content: "15.9 Atendimento aos requisitos das NR-06 e NR-01 do MTP pelos EPIs informados (*)", styles: headerCellStyle }, { content: "(S/N)", styles: { ...headerCellStyle, halign: "center" } }]],
+    body: [
+      ["Foi tentada a implementação de medidas de proteção coletiva, de caráter administrativo ou de organização do trabalho, optando-se pelo EPI por inviabilidade técnica, insuficiência ou interinidade, ou ainda em caráter complementar ou emergencial?", s(d.nr_medidas_protecao)],
+      ["Foram observadas as condições de funcionamento e do uso ininterrupto do EPI ao longo do tempo, conforme especificação técnica do fabricante, ajustada às condições de campo?", s(d.nr_funcionamento_epi)],
+      ["Foi observado o prazo de validade, conforme Certificado de Aprovação - CA do MTP?", s(d.nr_prazo_validade)],
+      ["Foi observada a periodicidade de troca definida pelos programas ambientais, comprovada mediante recibo assinado pelo usuário em época própria?", s(d.nr_periodicidade_troca)],
+      ["Foi observada a higienização?", s(d.nr_higienizacao)],
+    ],
+    styles: { ...baseStyle, fontSize: 7 },
+    columnStyles: { 1: { cellWidth: 18, halign: "center", fontStyle: "bold" } },
+  });
+  y = (doc as any).lastAutoTable.finalY;
+
+  // 16 Responsável pelos Registros Ambientais
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [[{ content: "16 - Responsável pelos Registros Ambientais", colSpan: 4, styles: headerCellStyle }]],
+    body: [],
+    styles: baseStyle,
+  });
+  y = (doc as any).lastAutoTable.finalY;
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    tableWidth: contentW,
+    head: [["16.1 Período", "16.2 CPF nº", "16.3 Reg. Cons. de classe", "16.4 Nome do profissional legalmente habilitado"]],
+    body: d.responsaveis.length > 0
+      ? d.responsaveis.map((r) => [s(r.periodo), s(r.cpf), s(r.registro), s(r.nome)])
+      : [["", "", "", ""]],
+    styles: baseStyle,
+    headStyles: { ...headerCellStyle, halign: "center" },
+    columnStyles: {
+      0: { cellWidth: 30, halign: "center" },
+      1: { cellWidth: 30, halign: "center" },
+      2: { cellWidth: 40, halign: "center" },
+    },
+  });
+  y = (doc as any).lastAutoTable.finalY + 3;
+
+  // ===================== RESPONSÁVEIS PELAS INFORMAÇÕES =====================
+  if (y > pageH - 80) { doc.addPage(); y = margin; }
+  blockTitle(doc, "RESPONSÁVEIS PELAS INFORMAÇÕES", margin, y, contentW);
+  y += 5;
+
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
-  doc.text(`Emitido em ${hoje}`, pageW - margin - 2, y + 5, { align: "right" });
-  doc.setTextColor(0);
-  y += headerH + 3;
+  const decl =
+    "Declaramos, para todos fins de direito, que as informações prestadas neste documento são verídicas e foram transcritas fielmente dos registros administrativos, das demonstrações ambientais e dos programas médicos de responsabilidade da empresa. É de nosso conhecimento que a prestação de informações falsas neste documento constitui crime de falsificação de documento público, nos termos do art. 297 do Código Penal e, também, que tais informações são de caráter privativo do trabalhador, constituindo crime, nos termos da Lei nº 9.029, de 13 de abril de 1995, práticas discriminatórias decorrentes de sua exigibilidade por outrem, bem como de sua divulgação para terceiros, ressalvado quando exigida pelos órgãos públicos competentes.";
+  const lines = doc.splitTextToSize(decl, contentW);
+  doc.text(lines, margin, y);
+  y += lines.length * 3.2 + 3;
 
-  // ===== 1. Dados da Empresa =====
-  sectionTitle(doc, "1. DADOS ADMINISTRATIVOS DA EMPRESA", margin, y, contentW);
-  y += 5;
+  // 17 + 18
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
     theme: "grid",
     tableWidth: contentW,
+    head: [[
+      { content: "17 Data da Emissão do PPP", styles: headerCellStyle },
+      { content: "18 Representante Legal da Empresa", colSpan: 2, styles: { ...headerCellStyle, halign: "center" } },
+    ]],
     body: [
-      ["CNPJ", co.cnpj ?? "—", "CNAE", co.cnae ?? "—"],
-      ["Razão Social", co.name ?? "—", "Grau de Risco", co.grau_risco ?? "—"],
-      ["Endereço", co.endereco ?? "—", "Município / UF", `${co.cidade ?? "—"} ${co.uf ? "/ " + co.uf : ""}`],
+      [s(d.data_emissao), { content: "18.1 Nº CPF do Representante Legal", styles: { fillColor: LABEL_BG, fontStyle: "bold" } } as any, { content: "18.2 Nome do Representante Legal", styles: { fillColor: LABEL_BG, fontStyle: "bold" } } as any],
+      [{ content: "", rowSpan: 1 } as any, s(d.rep_legal_cpf), s(d.rep_legal_nome)],
+      [{ content: "", rowSpan: 1 } as any, { content: "_____________________________________\n(Assinatura física ou eletrônica)", colSpan: 2, styles: { halign: "center", minCellHeight: 18 } } as any],
     ],
-    styles: stylesBase(),
-    columnStyles: pairCols(contentW),
+    styles: baseStyle,
+    columnStyles: { 0: { cellWidth: 35, halign: "center", valign: "middle" } },
   });
-  y = (doc as any).lastAutoTable.finalY + 3;
+  y = (doc as any).lastAutoTable.finalY;
 
-  // ===== 2. Dados do Trabalhador =====
-  sectionTitle(doc, "2. DADOS DO TRABALHADOR", margin, y, contentW);
-  y += 5;
+  // Observações
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
     theme: "grid",
     tableWidth: contentW,
-    body: [
-      ["Nome", emp.nome ?? "—", "CPF", emp.cpf ?? "—"],
-      ["Data Nascimento", fmtBR(emp.data_nascimento), "PIS/NIS", emp.pis ?? emp.nis ?? "—"],
-      ["Sexo", emp.sexo ?? "—", "Matrícula", emp.matricula ?? "—"],
-      ["Data Admissão", fmtBR(emp.admissao), "CTPS", [emp.ctps_numero, emp.ctps_serie].filter(Boolean).join(" / ") || "—"],
-      ["Cargo / Função", d.roleName ?? "—", "CBO", emp.cbo ?? "—"],
-      ["Setor", emp.setor ?? "—", "Lotação / Função", emp.setor ?? "—"],
-    ],
-    styles: stylesBase(),
-    columnStyles: pairCols(contentW),
+    head: [[{ content: "Observações", styles: headerCellStyle }]],
+    body: [[{ content: s(d.observacoes) || " ", styles: { minCellHeight: 14 } }]],
+    styles: baseStyle,
   });
-  y = (doc as any).lastAutoTable.finalY + 3;
-
-  // ===== 3. Registros Ambientais =====
-  sectionTitle(doc, "3. REGISTROS AMBIENTAIS — AGENTES NOCIVOS", margin, y, contentW);
-  y += 5;
-  if (d.riscos.length === 0) {
-    empty(doc, "Nenhum agente nocivo cadastrado para o cargo.", margin, y, contentW);
-    y += 7;
-  } else {
-    autoTable(doc, {
-      startY: y,
-      margin: { left: margin, right: margin },
-      theme: "grid",
-      tableWidth: contentW,
-      head: [["Cód. eSocial", "Agente Nocivo", "Tipo", "Intensidade", "L.T.", "Técnica", "Fonte", "EPI atenua"]],
-      body: d.riscos.map((r) => [
-        r.codigo_esocial ?? "—",
-        r.nome,
-        labelTipo(r),
-        r.intensidade != null ? `${r.intensidade} ${r.unidade ?? ""}` : "—",
-        r.limite_tolerancia != null ? `${r.limite_tolerancia} ${r.unidade ?? ""}` : "—",
-        r.tecnica_medicao ?? "—",
-        r.fonte_geradora ?? "—",
-        r.epi_atenuacao_db != null ? `${r.epi_atenuacao_db} dB` : "—",
-      ]),
-      styles: { ...stylesBase(), fontSize: 7 },
-      headStyles: headStyles(),
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      columnStyles: {
-        0: { cellWidth: 18, halign: "center" },
-        2: { cellWidth: 22, halign: "center" },
-        3: { cellWidth: 20, halign: "center" },
-        4: { cellWidth: 16, halign: "center" },
-        7: { cellWidth: 16, halign: "center" },
-      },
-    });
-    y = (doc as any).lastAutoTable.finalY + 2;
-
-    const apos = d.riscos.filter((r) => r.aposentadoria_especial_anos != null);
-    if (apos.length > 0) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.setTextColor(...WINE_DARK);
-      doc.text(
-        "Atividade enquadrada em APOSENTADORIA ESPECIAL: " +
-          apos.map((r) => `${r.nome} (${r.aposentadoria_especial_anos} anos)`).join(" • "),
-        margin,
-        y + 3,
-      );
-      doc.setTextColor(0);
-      y += 6;
-    }
-    y += 2;
-  }
-
-  // ===== 4. Exames Clínicos (ASO) =====
-  sectionTitle(doc, "4. EXAMES MÉDICOS CLÍNICOS / OCUPACIONAIS", margin, y, contentW);
-  y += 5;
-  const exams = (d.exams ?? []).slice(0, 8);
-  if (exams.length === 0) {
-    empty(doc, "Nenhum ASO registrado.", margin, y, contentW);
-    y += 7;
-  } else {
-    autoTable(doc, {
-      startY: y,
-      margin: { left: margin, right: margin },
-      theme: "grid",
-      tableWidth: contentW,
-      head: [["Tipo", "Natureza", "Realização", "Vencimento", "Aptidão", "Médico / CRM"]],
-      body: exams.map((e: Any) => [
-        e.tipo_exame ?? "—",
-        e.natureza ?? "—",
-        fmtBR(e.data_realizacao),
-        fmtBR(e.data_vencimento),
-        e.aptidao ?? "—",
-        [e.medico_nome, e.medico_crm].filter(Boolean).join(" • ") || "—",
-      ]),
-      styles: stylesBase(),
-      headStyles: headStyles(),
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      columnStyles: {
-        2: { halign: "center", cellWidth: 22 },
-        3: { halign: "center", cellWidth: 22 },
-        4: { halign: "center", cellWidth: 18 },
-      },
-    });
-    y = (doc as any).lastAutoTable.finalY + 3;
-  }
-
-  // ===== 5. EPIs entregues =====
-  sectionTitle(doc, "5. EPIs FORNECIDOS (EFICÁCIA)", margin, y, contentW);
-  y += 5;
-  const epis = d.epis.slice(0, 10);
-  if (epis.length === 0) {
-    empty(doc, "Nenhum EPI registrado.", margin, y, contentW);
-    y += 7;
-  } else {
-    autoTable(doc, {
-      startY: y,
-      margin: { left: margin, right: margin },
-      theme: "grid",
-      tableWidth: contentW,
-      head: [["EPI", "CA", "Última entrega", "Eficaz?"]],
-      body: epis.map((e) => [e.item, e.ca ?? "—", fmtBR(e.data_entrega), "Sim"]),
-      styles: stylesBase(),
-      headStyles: headStyles(),
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      columnStyles: {
-        1: { halign: "center", cellWidth: 24 },
-        2: { halign: "center", cellWidth: 26 },
-        3: { halign: "center", cellWidth: 18 },
-      },
-    });
-    y = (doc as any).lastAutoTable.finalY + 3;
-  }
-
-  // ===== 6. Responsáveis pelos Registros Ambientais / Biológicos =====
-  sectionTitle(doc, "6. RESPONSÁVEL TÉCNICO PELOS REGISTROS", margin, y, contentW);
-  y += 5;
-  const rt = d.responsavelTecnico ?? {};
-  autoTable(doc, {
-    startY: y,
-    margin: { left: margin, right: margin },
-    theme: "grid",
-    tableWidth: contentW,
-    body: [
-      ["Nome", rt.nome ?? "—", "Cargo", rt.cargo ?? "Engenheiro de Segurança do Trabalho"],
-      ["Registro Profissional", rt.registro ?? "—", "Data", hoje],
-    ],
-    styles: stylesBase(),
-    columnStyles: pairCols(contentW),
-  });
-  y = (doc as any).lastAutoTable.finalY + 8;
-
-  // ===== Assinaturas =====
-  if (y > pageH - 50) { doc.addPage(); y = margin; }
-  const sigW = (contentW - 10) / 2;
-  // Trabalhador
-  doc.setDrawColor(0);
-  doc.line(margin, y + 12, margin + sigW, y + 12);
-  doc.setFont("helvetica", "bold"); doc.setFontSize(8);
-  doc.text("Assinatura do Trabalhador", margin + sigW / 2, y + 17, { align: "center" });
-  doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
-  doc.text(emp.nome ?? "—", margin + sigW / 2, y + 21, { align: "center" });
-  doc.text(`CPF: ${emp.cpf ?? "—"}`, margin + sigW / 2, y + 25, { align: "center" });
-
-  // Representante legal
-  const sigX2 = margin + sigW + 10;
-  doc.line(sigX2, y + 12, sigX2 + sigW, y + 12);
-  doc.setFont("helvetica", "bold"); doc.setFontSize(8);
-  doc.text("Representante Legal da Empresa", sigX2 + sigW / 2, y + 17, { align: "center" });
-  doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
-  doc.text(co.name ?? "—", sigX2 + sigW / 2, y + 21, { align: "center" });
-  doc.text(`CNPJ: ${co.cnpj ?? "—"}`, sigX2 + sigW / 2, y + 25, { align: "center" });
+  y = (doc as any).lastAutoTable.finalY;
 
   // Rodapé
   const pageCount = (doc as any).internal.getNumberOfPages();
   for (let p = 1; p <= pageCount; p++) {
     doc.setPage(p);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
+    doc.setFontSize(6.5);
     doc.setTextColor(120);
-    doc.text("SESMT • DMN Estaleiro — Documento gerado eletronicamente", margin, pageH - 6);
-    doc.text(`Página ${p} de ${pageCount}`, pageW - margin, pageH - 6, { align: "right" });
+    doc.text(`Página ${p} de ${pageCount}`, pageW - margin, pageH - 5, { align: "right" });
     doc.setTextColor(0);
   }
 
   return doc;
 }
 
-function labelTipo(r: PPPData["riscos"][number]) {
-  const parts: string[] = [];
-  if (r.categoria) parts.push(r.categoria.toLowerCase());
-  if (r.periculosidade) parts.push("perig.");
-  if (r.insalubridade_grau && r.insalubridade_grau !== "NAO_INSALUBRE") parts.push("insal.");
-  return parts.join(" / ") || "—";
-}
-
-function sectionTitle(doc: jsPDF, title: string, x: number, y: number, w: number) {
-  doc.setFillColor(...WINE);
-  doc.rect(x, y - 3.5, w, 5.5, "F");
-  doc.setFillColor(...WINE_DARK);
-  doc.rect(x, y + 1.5, w, 0.5, "F");
+function blockTitle(doc: jsPDF, title: string, x: number, y: number, w: number) {
+  doc.setFillColor(0, 0, 0);
+  doc.rect(x, y - 3, w, 5, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(255, 255, 255);
-  doc.text(title, x + 2.5, y);
+  doc.text(title, x + w / 2, y + 0.5, { align: "center" });
   doc.setTextColor(0);
 }
 
-function empty(doc: jsPDF, text: string, x: number, y: number, w: number) {
-  doc.setDrawColor(220);
-  doc.setLineWidth(0.2);
-  doc.rect(x, y - 3, w, 6);
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(8);
-  doc.setTextColor(120);
-  doc.text(text, x + w / 2, y + 1, { align: "center" });
-  doc.setTextColor(0);
-}
-
-function stylesBase() {
-  return { fontSize: 7.5, cellPadding: 1.4, lineColor: [0, 0, 0] as [number, number, number], lineWidth: 0.1, textColor: [0, 0, 0] as [number, number, number], overflow: "linebreak" as const };
-}
-function headStyles() {
-  return { fillColor: WINE, textColor: [255, 255, 255] as [number, number, number], fontStyle: "bold" as const, halign: "center" as const, fontSize: 7.5 };
-}
-function pairCols(contentW: number) {
+/** Helpers pra construir o objeto PPPDados a partir dos dados do sistema. */
+export function emptyPPPDados(): PPPDados {
   return {
-    0: { cellWidth: 32, fontStyle: "bold" as const, fillColor: [248, 250, 252] as [number, number, number] },
-    1: { cellWidth: contentW / 2 - 32 },
-    2: { cellWidth: 32, fontStyle: "bold" as const, fillColor: [248, 250, 252] as [number, number, number] },
-    3: { cellWidth: contentW / 2 - 32 },
+    empresa_cnpj: "", empresa_nome: "", empresa_cnae: "",
+    trab_nome: "", trab_br_pdh: "NA", trab_cpf: "",
+    trab_nascimento: "", trab_sexo: "", trab_matricula_esocial: "",
+    trab_admissao: "", regime_revezamento: "NA",
+    cats: [],
+    lotacoes: [],
+    profissiografias: [],
+    riscos: [],
+    nr_medidas_protecao: "Não",
+    nr_funcionamento_epi: "Não",
+    nr_prazo_validade: "Não",
+    nr_periodicidade_troca: "Não",
+    nr_higienizacao: "Não",
+    responsaveis: [],
+    data_emissao: new Date().toLocaleDateString("pt-BR"),
+    rep_legal_cpf: "",
+    rep_legal_nome: "",
+    observacoes: "",
   };
 }
