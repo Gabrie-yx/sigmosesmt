@@ -105,25 +105,27 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = 210;
   const pageH = 297;
-  const margin = 10;
+  const margin = 10; // margens laterais
+  const marginY = 7; // margens superior/inferior (cabeçalho/rodapé)
   const contentW = pageW - margin * 2;
 
   // ===== Cabeçalho oficial (logo Previdência Social + título) =====
-  let y = margin;
+  let y = marginY;
   // Caixa do cabeçalho com borda fina
   const headerH = 14;
   doc.setDrawColor(0);
   doc.setLineWidth(0.2);
   doc.rect(margin, y, contentW, headerH);
   try {
-    doc.addImage(LOGO_INSS_PNG_BASE64, "PNG", margin + 2, y + 1, 26, 12);
+    // Logo Previdência Social — aspect ratio ~1.66:1
+    doc.addImage(LOGO_INSS_PNG_BASE64, "PNG", margin + 2, y + 1, 20, 12);
   } catch {
     // se falhar embed da imagem, segue sem logo
   }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(TITLE_BLUE[0], TITLE_BLUE[1], TITLE_BLUE[2]);
-  doc.text("PERFIL PROFISSIOGRÁFICO PREVIDENCIÁRIO (PPP)", margin + 32, y + headerH / 2 + 1.5);
+  doc.text("PERFIL PROFISSIOGRÁFICO PREVIDENCIÁRIO (PPP)", margin + 26, y + headerH / 2 + 1.5);
   doc.setTextColor(0);
   if (opts?.numero) {
     doc.setFont("helvetica", "normal");
@@ -230,7 +232,7 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
   y = (doc as any).lastAutoTable.finalY;
 
   // ===================== REGISTROS AMBIENTAIS =====================
-  if (y > pageH - 60) { doc.addPage(); y = margin; }
+  if (y > pageH - 60) { doc.addPage(); y = marginY; }
   y = sectionTitleRow(doc, "REGISTROS AMBIENTAIS", margin, y, contentW);
   y = blockTitleRow(doc, "15 - Exposição a Fatores de Riscos", margin, y, contentW);
   autoTable(doc, {
@@ -299,7 +301,7 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
   y = (doc as any).lastAutoTable.finalY;
 
   // ===================== RESPONSÁVEIS PELAS INFORMAÇÕES =====================
-  if (y > pageH - 80) { doc.addPage(); y = margin; }
+  if (y > pageH - 80) { doc.addPage(); y = marginY; }
   y = sectionTitleRow(doc, "RESPONSÁVEIS PELAS INFORMAÇÕES", margin, y, contentW);
 
   doc.setFont("helvetica", "normal");
@@ -349,7 +351,7 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
     doc.setFont("helvetica", "normal");
     doc.setFontSize(6.5);
     doc.setTextColor(120);
-    doc.text(`Página ${p} de ${pageCount}`, pageW - margin, pageH - 5, { align: "right" });
+    doc.text(`Página ${p} de ${pageCount}`, pageW - margin, pageH - marginY + 3, { align: "right" });
     doc.setTextColor(0);
   }
 
