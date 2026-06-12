@@ -138,7 +138,8 @@ export function openTermoPerdaPdf(a: Args) {
   doc.text("DMN Estaleiro • SESMT • Controle Interno de EPI", W / 2, H - 10, { align: "center" });
 
   const fname = `Termo_Perda_EPI_${(a.emp.nome ?? "colab").replace(/\s+/g, "_")}_${Date.now()}.pdf`;
-  const blob = doc.output("blob");
+  const bytes = new Uint8Array(doc.output("arraybuffer"));
+  const blob = new Blob([bytes], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
-  return { url, fname };
+  return { url, fname, bytes };
 }
