@@ -1712,16 +1712,44 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           </Button>
           {(() => {
             const perdas = (epis ?? []).filter((e: any) => e.motivo_entrega === "PERDA_EXTRAVIO");
-            const abrirTermo = (p: any) => {
-              const { url, fname } = openTermoPerdaPdf({
+            const abrirTermo = async (p: any) => {
+              // 1) Tenta reabrir um termo já assinado para esta perda
+              const { data: existing } = await supabase
+                .from("documentos_assinados")
+                .select("id, pdf_assinado_path, nome_arquivo")
+                .eq("modulo", "termo_perda")
+                .eq("referencia_id", p.id)
+                .order("updated_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              if (existing?.pdf_assinado_path) {
+                const { data: signed, error: sErr } = await supabase
+                  .storage.from("sesmt-docs")
+                  .createSignedUrl(existing.pdf_assinado_path, 3600);
+                if (!sErr && signed?.signedUrl) {
+                  const buf = await fetch(signed.signedUrl).then(r => r.arrayBuffer());
+                  setSignerSrc({
+                    bytes: new Uint8Array(buf),
+                    name: existing.nome_arquivo ?? "Termo_Perda.pdf",
+                    modulo: "termo_perda",
+                    referenciaId: p.id,
+                    documentId: existing.id,
+                  });
+                  return;
+                }
+              }
+              // 2) Caso contrário, gera um termo novo (em branco)
+              const { fname, bytes } = openTermoPerdaPdf({
                 emp, company, role,
                 item: p.item, ca: p.ca, qtd: p.qtd,
                 valor_unitario: p.valor_unitario,
                 data_entrega: p.data_entrega,
                 observacoes: p.observacoes,
               });
-              fetch(url).then(r => r.arrayBuffer()).then(buf => {
-                setSignerSrc({ bytes: new Uint8Array(buf), name: fname });
+              setSignerSrc({
+                bytes, name: fname,
+                modulo: "termo_perda",
+                referenciaId: p.id,
               });
             };
             if (perdas.length === 0) {
