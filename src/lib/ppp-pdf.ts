@@ -85,7 +85,7 @@ const TITLE_BLUE: [number, number, number] = [0, 92, 185];
 
 const baseStyle = {
   fontSize: 7.5,
-  cellPadding: 1.2,
+  cellPadding: 0.6,
   lineColor: BLACK,
   lineWidth: 0.15,
   textColor: BLACK,
@@ -93,8 +93,8 @@ const baseStyle = {
   overflow: "linebreak" as const,
 };
 const headerCellStyle = { ...baseStyle, fillColor: WHITE, fontStyle: "bold" as const };
-const sectionTitleStyle = { ...baseStyle, fillColor: WHITE, fontStyle: "bold" as const, halign: "center" as const, fontSize: 8.5 };
-const blockTitleStyle = { ...baseStyle, fillColor: WHITE, fontStyle: "bold" as const, halign: "left" as const };
+const sectionTitleStyle = { ...baseStyle, fillColor: WHITE, fontStyle: "bold" as const, halign: "center" as const, fontSize: 8, cellPadding: 0.8 };
+const blockTitleStyle = { ...baseStyle, fillColor: WHITE, fontStyle: "bold" as const, halign: "left" as const, cellPadding: 0.6 };
 
 function s(v: string | null | undefined): string {
   const t = (v ?? "").toString().trim();
@@ -111,26 +111,26 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
   // ===== Cabeçalho oficial (logo Previdência Social + título) =====
   let y = margin;
   // Caixa do cabeçalho com borda fina
-  const headerH = 18;
+  const headerH = 14;
   doc.setDrawColor(0);
   doc.setLineWidth(0.2);
   doc.rect(margin, y, contentW, headerH);
   try {
-    doc.addImage(LOGO_INSS_PNG_BASE64, "PNG", margin + 2, y + 1, 32, 16);
+    doc.addImage(LOGO_INSS_PNG_BASE64, "PNG", margin + 2, y + 1, 26, 12);
   } catch {
     // se falhar embed da imagem, segue sem logo
   }
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(12);
   doc.setTextColor(TITLE_BLUE[0], TITLE_BLUE[1], TITLE_BLUE[2]);
-  doc.text("PERFIL PROFISSIOGRÁFICO PREVIDENCIÁRIO (PPP)", margin + 38, y + headerH / 2 + 1.5);
+  doc.text("PERFIL PROFISSIOGRÁFICO PREVIDENCIÁRIO (PPP)", margin + 32, y + headerH / 2 + 1.5);
   doc.setTextColor(0);
   if (opts?.numero) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.text(`Nº ${opts.numero}`, pageW - margin - 2, y + 4, { align: "right" });
   }
-  y += headerH + 1;
+  y += headerH + 0.5;
 
   // ===================== DADOS ADMINISTRATIVOS =====================
   y = sectionTitleRow(doc, "DADOS ADMINISTRATIVOS", margin, y, contentW);
@@ -307,8 +307,8 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
   const decl =
     "Declaramos, para todos fins de direito, que as informações prestadas neste documento são verídicas e foram transcritas fielmente dos registros administrativos, das demonstrações ambientais e dos programas médicos de responsabilidade da empresa. É de nosso conhecimento que a prestação de informações falsas neste documento constitui crime de falsificação de documento público, nos termos do art. 297 do Código Penal e, também, que tais informações são de caráter privativo do trabalhador, constituindo crime, nos termos da Lei nº 9.029, de 13 de abril de 1995, práticas discriminatórias decorrentes de sua exigibilidade por outrem, bem como de sua divulgação para terceiros, ressalvado quando exigida pelos órgãos públicos competentes.";
   const lines = doc.splitTextToSize(decl, contentW - 2);
-  doc.text(lines, margin + 1, y + 3);
-  y += lines.length * 3.2 + 3;
+  doc.text(lines, margin + 1, y + 2.5);
+  y += lines.length * 2.8 + 1.5;
 
   // 17 + 18
   autoTable(doc, {
@@ -323,7 +323,7 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
     body: [
       [s(d.data_emissao), { content: "18.1 Nº CPF do Representante Legal", styles: { fillColor: WHITE, fontStyle: "bold" } } as any, { content: "18.2 Nome do Representante Legal", styles: { fillColor: WHITE, fontStyle: "bold" } } as any],
       [{ content: "", rowSpan: 1 } as any, s(d.rep_legal_cpf), s(d.rep_legal_nome)],
-      [{ content: "", rowSpan: 1 } as any, { content: "_____________________________________\n(Assinatura física ou eletrônica)", colSpan: 2, styles: { halign: "center", minCellHeight: 18 } } as any],
+      [{ content: "", rowSpan: 1 } as any, { content: "_____________________________________\n(Assinatura física ou eletrônica)", colSpan: 2, styles: { halign: "center", minCellHeight: 12 } } as any],
     ],
     styles: baseStyle,
     columnStyles: { 0: { cellWidth: 35, valign: "middle" } },
@@ -337,7 +337,7 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
     theme: "grid",
     tableWidth: contentW,
     head: [[{ content: "Observações", styles: { ...headerCellStyle, halign: "center" } }]],
-    body: [[{ content: s(d.observacoes) || " ", styles: { minCellHeight: 14 } }]],
+    body: [[{ content: s(d.observacoes) || " ", styles: { minCellHeight: 10 } }]],
     styles: baseStyle,
   });
   y = (doc as any).lastAutoTable.finalY;
