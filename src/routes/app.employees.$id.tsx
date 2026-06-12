@@ -44,6 +44,7 @@ import { GraduationCap } from "lucide-react";
 import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
 import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.functions";
 import { AtestadosTab } from "@/components/employees/atestados-tab";
+import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -773,6 +774,37 @@ function EmployeeContextSidebar({ id }: { id: string }) {
 }
 
 /* ============ PROFILE ============ */
+function AssinaturaField({ value, onChange, disabled }: { value: string | null; onChange: (v: string | null) => void; disabled?: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Field label="Assinatura digital">
+        <div className="flex items-center gap-2">
+          {value ? (
+            <img src={value} alt="Assinatura" className="h-10 w-32 object-contain border border-slate-200 rounded bg-white" />
+          ) : (
+            <div className="h-10 w-32 border border-dashed border-slate-300 rounded grid place-items-center text-[10px] text-slate-400 uppercase tracking-widest">Sem assinatura</div>
+          )}
+          <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)} disabled={disabled}>
+            {value ? "Substituir" : "Capturar"}
+          </Button>
+          {value && !disabled && (
+            <Button type="button" size="sm" variant="ghost" className="text-rose-600" onClick={() => onChange(null)}>
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+      </Field>
+      <SignaturePadDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        onConfirm={(r) => { onChange(r.dataUrl); setOpen(false); }}
+        title="Assinatura do funcionário"
+      />
+    </>
+  );
+}
+
 function GheField({ value, onChange, disabled }: { value: string | null; onChange: (v: string | null) => void; disabled?: boolean }) {
   const { data: ghes } = useQuery({
     queryKey: ["pgr_ghe_select"],
@@ -895,6 +927,18 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
         <Field label="RG"><Input placeholder="0000000" maxLength={12} value={maskRG(f.rg ?? "")} onChange={(e) => setF({ ...f, rg: maskRG(e.target.value) })} disabled={!canEdit} /></Field>
         <Field label="Órgão Emissor"><Input value={f.rg_orgao ?? ""} onChange={(e) => setF({ ...f, rg_orgao: e.target.value })} disabled={!canEdit} /></Field>
         <Field label="CNH"><Input inputMode="numeric" maxLength={11} placeholder="00000000000" value={(f.cnh ?? "").replace(/\D/g, "").slice(0, 11)} onChange={(e) => setF({ ...f, cnh: e.target.value.replace(/\D/g, "").slice(0, 11) })} disabled={!canEdit} /></Field>
+        <Field label="Data de Nascimento"><Input type="date" value={f.data_nascimento ?? ""} onChange={(e) => setF({ ...f, data_nascimento: e.target.value || null })} disabled={!canEdit} /></Field>
+        <Field label="Sexo">
+          <Select value={f.sexo ?? ""} onValueChange={(v) => setF({ ...f, sexo: v })} disabled={!canEdit}>
+            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Masculino">Masculino</SelectItem>
+              <SelectItem value="Feminino">Feminino</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="PIS / NIT (eSocial)"><Input inputMode="numeric" maxLength={14} placeholder="00000000000" value={f.pis ?? ""} onChange={(e) => setF({ ...f, pis: e.target.value.replace(/\D/g, "").slice(0, 14) })} disabled={!canEdit} /></Field>
+        <AssinaturaField value={f.assinatura_url ?? null} onChange={(v) => setF({ ...f, assinatura_url: v })} disabled={!canEdit} />
         <Field label="Tipo cadastro">
           <Select value={f.tipo_cadastro} onValueChange={(v) => setF({ ...f, tipo_cadastro: v })} disabled={!canEdit}>
             <SelectTrigger><SelectValue /></SelectTrigger>
