@@ -406,6 +406,13 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </TabsContent>
       </Tabs>
       <FileViewerHost />
+      <PDFPreviewDialog
+        open={!!fichaDoc}
+        onClose={() => setFichaDoc(null)}
+        doc={fichaDoc}
+        fileName={`ficha_${(emp?.nome ?? "funcionario").toLowerCase().replace(/\s+/g, "_")}.pdf`}
+        title="Ficha do Colaborador"
+      />
     </div>
   );
 }
