@@ -29,7 +29,14 @@ export type FlowPage<Ctx = unknown> = {
 };
 
 /**
- * Empacota blocos em páginas (greedy first-fit, mantendo ordem).
+ * Empacota blocos em páginas.
+ *
+ * Modo padrão: greedy first-fit preservando a ordem estrita.
+ * Com `lookahead: true`: quando o próximo bloco da fila não cabe na página
+ * atual, o motor procura entre os blocos seguintes algum que caiba antes de
+ * virar a página — maximizando o aproveitamento sem deixar nenhum bloco de
+ * fora. A ordem global é preservada o máximo possível (só "antecipa" um
+ * bloco menor quando o maior travaria a página).
  *
  * @param blocks lista ordenada de blocos
  * @param capacity altura útil em mm da página (sem cabeçalho/rodapé fixo)
@@ -39,22 +46,49 @@ export function packBlocksIntoPages<Ctx>(
   blocks: FlowBlock<Ctx>[],
   capacity: number,
   gap = 0,
+  options: { lookahead?: boolean } = {},
 ): FlowPage<Ctx>[] {
+  const { lookahead = false } = options;
   const pages: FlowPage<Ctx>[] = [];
   let current: FlowBlock<Ctx>[] = [];
   let used = 0;
 
-  for (const block of blocks) {
-    const needs = block.height + (current.length > 0 ? gap : 0);
-    if (used + needs > capacity && current.length > 0) {
-      pages.push({ blocks: current, contentHeight: used });
-      current = [];
-      used = 0;
+  if (!lookahead) {
+    for (const block of blocks) {
+      const needs = block.height + (current.length > 0 ? gap : 0);
+      if (used + needs > capacity && current.length > 0) {
+        pages.push({ blocks: current, contentHeight: used });
+        current = [];
+        used = 0;
+      }
+      current.push(block);
+      used += current.length === 1 ? block.height : needs;
     }
-    // Mesmo blocos maiores que a capacidade entram sozinhos numa página
-    // (o overflow visual fica a cargo do chamador resolver via pré-divisão).
-    current.push(block);
-    used += current.length === 1 ? block.height : needs;
+  } else {
+    const remaining = [...blocks];
+    while (remaining.length > 0) {
+      // Procura o PRIMEIRO bloco da fila que caiba no espaço restante.
+      const idx = remaining.findIndex((b) => {
+        const needs = b.height + (current.length > 0 ? gap : 0);
+        return used + needs <= capacity;
+      });
+      if (idx === -1) {
+        if (current.length === 0) {
+          // Bloco isolado maior que a página: força mesmo assim (caso degenerado).
+          const b = remaining.shift()!;
+          current.push(b);
+          used = b.height;
+        }
+        pages.push({ blocks: current, contentHeight: used });
+        current = [];
+        used = 0;
+        continue;
+      }
+      const [b] = remaining.splice(idx, 1);
+      const needs = b.height + (current.length > 0 ? gap : 0);
+      current.push(b);
+      used += current.length === 1 ? b.height : needs;
+    }
   }
   if (current.length > 0) {
     pages.push({ blocks: current, contentHeight: used });
