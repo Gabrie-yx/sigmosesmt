@@ -895,6 +895,18 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
         <Field label="RG"><Input placeholder="0000000" maxLength={12} value={maskRG(f.rg ?? "")} onChange={(e) => setF({ ...f, rg: maskRG(e.target.value) })} disabled={!canEdit} /></Field>
         <Field label="Órgão Emissor"><Input value={f.rg_orgao ?? ""} onChange={(e) => setF({ ...f, rg_orgao: e.target.value })} disabled={!canEdit} /></Field>
         <Field label="CNH"><Input inputMode="numeric" maxLength={11} placeholder="00000000000" value={(f.cnh ?? "").replace(/\D/g, "").slice(0, 11)} onChange={(e) => setF({ ...f, cnh: e.target.value.replace(/\D/g, "").slice(0, 11) })} disabled={!canEdit} /></Field>
+        <Field label="Data de Nascimento"><Input type="date" value={f.data_nascimento ?? ""} onChange={(e) => setF({ ...f, data_nascimento: e.target.value || null })} disabled={!canEdit} /></Field>
+        <Field label="Sexo">
+          <Select value={f.sexo ?? ""} onValueChange={(v) => setF({ ...f, sexo: v })} disabled={!canEdit}>
+            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Masculino">Masculino</SelectItem>
+              <SelectItem value="Feminino">Feminino</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="PIS / NIT (eSocial)"><Input inputMode="numeric" maxLength={14} placeholder="00000000000" value={f.pis ?? ""} onChange={(e) => setF({ ...f, pis: e.target.value.replace(/\D/g, "").slice(0, 14) })} disabled={!canEdit} /></Field>
+        <AssinaturaField value={f.assinatura_url ?? null} onChange={(v) => setF({ ...f, assinatura_url: v })} disabled={!canEdit} />
         <Field label="Tipo cadastro">
           <Select value={f.tipo_cadastro} onValueChange={(v) => setF({ ...f, tipo_cadastro: v })} disabled={!canEdit}>
             <SelectTrigger><SelectValue /></SelectTrigger>
