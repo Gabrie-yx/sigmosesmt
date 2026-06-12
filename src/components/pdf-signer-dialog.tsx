@@ -170,6 +170,7 @@ export function PdfSignerDialog({
         const bytes = await fetchBytes(source);
         if (cancelled) return;
         bytesRef.current = bytes;
+        const pdfjsLib = await loadPdfJs();
         const loadingTask = pdfjsLib.getDocument({ data: bytes.slice(0) });
         const pdf = await loadingTask.promise;
         if (cancelled) return;
