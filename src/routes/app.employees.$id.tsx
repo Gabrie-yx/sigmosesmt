@@ -35,6 +35,9 @@ const PdfSignerDialog = lazy(() =>
 );
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import { openFichaMensalPdf } from "@/lib/epi-ficha-mensal-pdf";
+import { gerarFichaFuncionarioPdf, loadEmployeePhotoDataUrl } from "@/lib/employee-ficha-pdf";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import type jsPDF from "jspdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban, ChevronDown } from "lucide-react";
 import { GraduationCap } from "lucide-react";
 import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
@@ -145,6 +148,36 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [uploadingHeaderPhoto, setUploadingHeaderPhoto] = useState(false);
   const uploadEmployeePhotoFn = useServerFn(uploadEmployeePhoto);
   const removeEmployeePhotoFn = useServerFn(removeEmployeePhoto);
+  const [fichaDoc, setFichaDoc] = useState<jsPDF | null>(null);
+  const [gerandoFicha, setGerandoFicha] = useState(false);
+
+  async function gerarFichaPdf() {
+    if (!emp) return;
+    setGerandoFicha(true);
+    try {
+      const [atestadosRes, acidentesRes, photoDataUrl] = await Promise.all([
+        supabase.from("employee_atestados").select("*").eq("employee_id", id).order("data_inicio", { ascending: false }),
+        supabase.from("acidentes_trabalho").select("*").eq("employee_id", id).order("data_acidente", { ascending: false }),
+        loadEmployeePhotoDataUrl(emp.foto_url),
+      ]);
+      const company = (companies ?? []).find((c: any) => c.id === emp.company_id) ?? null;
+      const doc = gerarFichaFuncionarioPdf({
+        emp,
+        companyName: company?.name ?? null,
+        roleName: role?.name ?? null,
+        photoDataUrl,
+        atestados: (atestadosRes.data as any[]) ?? [],
+        exams: (exams as any[]) ?? [],
+        acidentes: (acidentesRes.data as any[]) ?? [],
+      });
+      setFichaDoc(doc);
+    } catch (e: any) {
+      console.error("[ficha-pdf] erro:", e);
+      toast.error("Erro ao gerar a ficha: " + (e?.message || "desconhecido"));
+    } finally {
+      setGerandoFicha(false);
+    }
+  }
 
   const { data: docsList } = useQuery({
     queryKey: ["docs-summary", id],
@@ -277,6 +310,15 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
             >
               <ClipboardCheck className="h-3.5 w-3.5" /> Auditar
             </Link>
+            <button
+              type="button"
+              onClick={gerarFichaPdf}
+              disabled={gerandoFicha}
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-wait"
+              title="Gerar ficha em PDF"
+            >
+              <FileText className="h-3.5 w-3.5" /> {gerandoFicha ? "Gerando…" : "Ficha PDF"}
+            </button>
           </div>
         </div>
         {status && (
@@ -364,6 +406,13 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </TabsContent>
       </Tabs>
       <FileViewerHost />
+      <PDFPreviewDialog
+        open={!!fichaDoc}
+        onClose={() => setFichaDoc(null)}
+        doc={fichaDoc}
+        fileName={`ficha_${(emp?.nome ?? "funcionario").toLowerCase().replace(/\s+/g, "_")}.pdf`}
+        title="Ficha do Colaborador"
+      />
     </div>
   );
 }
