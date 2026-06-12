@@ -2391,6 +2391,7 @@ export type Database = {
       employees: {
         Row: {
           admissao: string | null
+          assinatura_url: string | null
           bairro: string | null
           cep: string | null
           cidade: string | null
@@ -2401,6 +2402,7 @@ export type Database = {
           created_at: string
           data_aso: string | null
           data_integracao: string | null
+          data_nascimento: string | null
           email: string | null
           empresa_terceira_id: string | null
           endereco: string | null
@@ -2411,10 +2413,12 @@ export type Database = {
           nome: string
           nome_contato: string | null
           nrs: Json
+          pis: string | null
           rg: string | null
           rg_orgao: string | null
           role_id: string | null
           setor: string | null
+          sexo: string | null
           status: string
           tipo_cadastro: string
           tipo_vinculo: string
@@ -2426,6 +2430,7 @@ export type Database = {
         }
         Insert: {
           admissao?: string | null
+          assinatura_url?: string | null
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
@@ -2436,6 +2441,7 @@ export type Database = {
           created_at?: string
           data_aso?: string | null
           data_integracao?: string | null
+          data_nascimento?: string | null
           email?: string | null
           empresa_terceira_id?: string | null
           endereco?: string | null
@@ -2446,10 +2452,12 @@ export type Database = {
           nome: string
           nome_contato?: string | null
           nrs?: Json
+          pis?: string | null
           rg?: string | null
           rg_orgao?: string | null
           role_id?: string | null
           setor?: string | null
+          sexo?: string | null
           status?: string
           tipo_cadastro?: string
           tipo_vinculo?: string
@@ -2461,6 +2469,7 @@ export type Database = {
         }
         Update: {
           admissao?: string | null
+          assinatura_url?: string | null
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
@@ -2471,6 +2480,7 @@ export type Database = {
           created_at?: string
           data_aso?: string | null
           data_integracao?: string | null
+          data_nascimento?: string | null
           email?: string | null
           empresa_terceira_id?: string | null
           endereco?: string | null
@@ -2481,10 +2491,12 @@ export type Database = {
           nome?: string
           nome_contato?: string | null
           nrs?: Json
+          pis?: string | null
           rg?: string | null
           rg_orgao?: string | null
           role_id?: string | null
           setor?: string | null
+          sexo?: string | null
           status?: string
           tipo_cadastro?: string
           tipo_vinculo?: string
