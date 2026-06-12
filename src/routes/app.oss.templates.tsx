@@ -318,6 +318,10 @@ function TemplateEditorDialog({
   const upd = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
+  // Auto-sincroniza CBO + título oficial do cargo selecionado.
+  // O CBO sai do modelo de OS: agora vem **sempre** da ficha do cargo (CARGOS/FUNÇÕES).
+  const cargoUpper = form.cargo.trim().toUpperCase();
+
   // Buscar cargos disponíveis (da matriz de riscos)
   const { data: roles = [] } = useQuery({
     queryKey: ["oss-roles-ativos-v2"],
@@ -331,6 +335,24 @@ function TemplateEditorDialog({
     },
     staleTime: 0,
   });
+
+  const roleSel = useMemo(() => {
+    if (!cargoUpper) return null;
+    const norm = (s: string) =>
+      s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+    const alvo = norm(cargoUpper);
+    return (
+      (roles as any[]).find((r) => norm(r.name) === alvo) ??
+      (roles as any[]).find((r) => norm(r.name).includes(alvo) || alvo.includes(norm(r.name))) ??
+      null
+    );
+  }, [cargoUpper, roles]);
+
+  useEffect(() => {
+    const novoCbo = roleSel?.cbo ?? "";
+    const novoTit = roleSel?.cbo_titulo ?? "";
+    setForm((f) => (f.cbo === novoCbo && (f.cbo_titulo ?? "") === novoTit ? f : { ...f, cbo: novoCbo, cbo_titulo: novoTit }));
+  }, [roleSel]);
 
   // Catálogo de riscos (para picker por categoria)
   const { data: catalogo = [] } = useQuery({
