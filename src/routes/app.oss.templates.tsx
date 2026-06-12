@@ -399,7 +399,7 @@ function TemplateEditorDialog({
       if (!role) {
         const { data: fresh } = await supabase
           .from("roles")
-          .select("id, name, descricao_atividades, riscos")
+          .select("id, name, cbo, descricao_atividades, riscos")
           .eq("ativo", true);
         role = (fresh ?? []).find((r) => norm(r.name) === alvo)
             ?? (fresh ?? []).find((r) => norm(r.name).includes(alvo) || alvo.includes(norm(r.name)));
