@@ -1448,7 +1448,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
 
     // 3) Se for perda/extravio, gera termo de responsabilidade automaticamente
     if (f.motivo_entrega === "PERDA_EXTRAVIO") {
-      const { url, fname } = openTermoPerdaPdf({
+      const { fname, bytes } = openTermoPerdaPdf({
         emp, company, role,
         item: selected.nome_material,
         ca: (f.ca || selected.ca) || null,
