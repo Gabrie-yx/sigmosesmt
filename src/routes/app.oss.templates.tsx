@@ -208,7 +208,7 @@ function TemplateEditorDialog({
 
   // Buscar cargos disponíveis (da matriz de riscos)
   const { data: roles = [] } = useQuery({
-    queryKey: ["oss-roles-ativos"],
+    queryKey: ["oss-roles-ativos-v2"],
     queryFn: async () => {
       const { data } = await supabase
         .from("roles")
@@ -217,6 +217,7 @@ function TemplateEditorDialog({
         .order("name");
       return data ?? [];
     },
+    staleTime: 0,
   });
 
   // Catálogo de riscos (para picker por categoria)
@@ -239,7 +240,7 @@ function TemplateEditorDialog({
   /** Adiciona um item do catálogo no campo de risco daquela categoria,
    *  e ainda enriquece medidas_preventivas + epis_obrigatorios. */
   function addFromCatalogo(
-    riscoField: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente",
+    riscoField: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente" | "risco_psicossocial",
     item: { nome: string; medidas_controle_padrao: string[] | null; epis_sugeridos: string[] | null },
   ) {
     setForm((f) => {
@@ -313,6 +314,7 @@ function TemplateEditorDialog({
         BIOLOGICO: "risco_biologico",
         ERGONOMICO: "risco_ergonomico",
         ACIDENTE_MECANICO: "risco_acidente",
+        PSICOSSOCIAL: "risco_psicossocial",
       };
       const buckets: Record<string, string[]> = {};
       const medidasSet = new Set<string>();
@@ -336,6 +338,7 @@ function TemplateEditorDialog({
         BIOLOGICO: "biologicos",
         ERGONOMICO: "ergonomicos",
         ACIDENTE_MECANICO: "acidente_mecanico",
+        PSICOSSOCIAL: "psicossociais",
       };
       for (const [cat, key] of Object.entries(fichaMap)) {
         if (buckets[cat]?.length) continue; // catálogo já preencheu
