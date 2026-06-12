@@ -473,12 +473,12 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         fileName={`ficha_${(emp?.nome ?? "funcionario").toLowerCase().replace(/\s+/g, "_")}.pdf`}
         title="Ficha do Colaborador"
       />
-      <PDFPreviewDialog
-        open={!!pppDoc}
-        onClose={() => setPppDoc(null)}
-        doc={pppDoc}
-        fileName={`PPP_${(emp?.nome ?? "funcionario").toLowerCase().replace(/\s+/g, "_")}.pdf`}
-        title="PPP — Perfil Profissiográfico Previdenciário"
+      <PPPEditorDialog
+        open={pppOpen}
+        onOpenChange={setPppOpen}
+        employee={emp}
+        company={(companies ?? []).find((c: any) => c.id === emp?.company_id) ?? null}
+        role={role}
       />
     </div>
   );
