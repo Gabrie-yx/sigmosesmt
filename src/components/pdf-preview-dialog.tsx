@@ -3,6 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Download, Printer, X, PenLine, ImagePlus } from "lucide-react";
 import type jsPDF from "jspdf";
+import * as pdfjsLib from "pdfjs-dist";
+// @ts-ignore
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, encSig, sesmtSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature }: {
   open: boolean;
@@ -18,29 +23,66 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
   onRequestSign?: () => void;
   hasSignature?: boolean;
 }) {
-  const [url, setUrl] = useState<string>("");
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  // Renderizamos as páginas com PDF.js em <canvas> — o visualizador nativo de
+  // PDF do Chrome é desativado dentro de iframes com sandbox (preview do
+  // Lovable), então tanto blob: quanto data: URIs aparecem quebrados.
+  const [pages, setPages] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const renderTokenRef = useRef(0);
 
   useEffect(() => {
-    if (!doc || !open) { setUrl(""); return; }
-    // Usa data URI em vez de blob: URL — o Chrome bloqueia blob: dentro do
-    // iframe da preview do Lovable ("Esta página foi bloqueada pelo Chrome").
-    const dataUri = doc.output("datauristring", { filename: fileName });
-    setUrl(dataUri);
-    return () => setUrl("");
-  }, [doc, open, fileName]);
+    if (!doc || !open) { setPages([]); setLoadError(null); return; }
+    const token = ++renderTokenRef.current;
+    setLoading(true);
+    setLoadError(null);
+    setPages([]);
+    (async () => {
+      try {
+        const buf = doc.output("arraybuffer") as ArrayBuffer;
+        const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+        if (renderTokenRef.current !== token) return;
+        const imgs: string[] = [];
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 2 });
+          const canvas = document.createElement("canvas");
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext("2d")!;
+          await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+          imgs.push(canvas.toDataURL("image/png"));
+          if (renderTokenRef.current !== token) return;
+        }
+        if (renderTokenRef.current !== token) return;
+        setPages(imgs);
+      } catch (e: any) {
+        console.error("[PDFPreview] render error", e);
+        if (renderTokenRef.current === token) setLoadError(e?.message ?? "Falha ao renderizar PDF");
+      } finally {
+        if (renderTokenRef.current === token) setLoading(false);
+      }
+    })();
+    return () => { renderTokenRef.current++; };
+  }, [doc, open]);
 
   function download() {
     if (doc) doc.save(fileName);
   }
   function print() {
-    if (!url) return;
-    try {
-      iframeRef.current?.contentWindow?.focus();
-      iframeRef.current?.contentWindow?.print();
-    } catch {
-      window.open(url, "_blank");
-    }
+    if (!pages.length) return;
+    const w = window.open("", "_blank");
+    if (!w) return;
+    const imgs = pages.map((p) => `<img src="${p}" />`).join("");
+    w.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title><style>
+      @page { size: A4; margin: 0; }
+      * { margin: 0; padding: 0; }
+      img { display: block; width: 100%; page-break-after: always; }
+      img:last-child { page-break-after: auto; }
+    </style></head><body>${imgs}</body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(() => { try { w.print(); } catch { /* noop */ } }, 400);
   }
 
   async function pickSignature(set: (v: string | null) => void) {
@@ -97,11 +139,26 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
             ))}
           </div>
         )}
-        <div className="flex-1 min-h-0 border rounded overflow-hidden bg-slate-100">
-          {url ? (
-            <iframe ref={iframeRef} src={url} title="Pré-visualização do PDF" className="w-full h-full" />
+        <div className="flex-1 min-h-0 border rounded overflow-y-auto bg-slate-200">
+          {loadError ? (
+            <div className="h-full flex items-center justify-center text-sm text-destructive px-6 text-center">
+              Não foi possível exibir a pré-visualização ({loadError}). Use "Baixar PDF" para abrir o arquivo.
+            </div>
+          ) : pages.length > 0 ? (
+            <div className="flex flex-col items-center gap-4 p-4">
+              {pages.map((p, i) => (
+                <img
+                  key={i}
+                  src={p}
+                  alt={`Página ${i + 1}`}
+                  className="w-full max-w-[860px] bg-white shadow-md border border-slate-300"
+                />
+              ))}
+            </div>
           ) : (
-            <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Carregando...</div>
+            <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+              {loading ? "Gerando pré-visualização..." : "Carregando..."}
+            </div>
           )}
         </div>
         <DialogFooter>
