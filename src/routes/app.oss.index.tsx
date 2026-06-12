@@ -357,10 +357,10 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
     queryFn: async () => {
       const { data } = await supabase
         .from("oss_templates")
-        .select("id, cargo, titulo, setor, revisao, validade_meses, descricao_atividades, riscos_texto, medidas_preventivas, epis_obrigatorios, proibicoes, penalidades, procedimentos_emergencia, risco_fisico, risco_quimico, risco_biologico, risco_ergonomico, risco_acidente")
+        .select("id, cargo, titulo, setor, revisao, validade_meses, descricao_atividades, riscos_texto, medidas_preventivas, epis_obrigatorios, proibicoes, penalidades, procedimentos_emergencia, risco_fisico, risco_quimico, risco_biologico, risco_ergonomico, risco_acidente, risco_psicossocial")
         .eq("ativo", true)
         .order("cargo");
-      return data ?? [];
+      return (data ?? []) as any[];
     },
   });
 
@@ -409,6 +409,7 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
             biologico: (tpl as any).risco_biologico ?? null,
             ergonomico: (tpl as any).risco_ergonomico ?? null,
             acidente: (tpl as any).risco_acidente ?? null,
+            psicossocial: (tpl as any).risco_psicossocial ?? null,
           },
         },
       });

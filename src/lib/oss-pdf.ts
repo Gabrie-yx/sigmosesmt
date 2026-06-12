@@ -39,6 +39,7 @@ export type OSSPdfData = {
       biologico?: string | null;
       ergonomico?: string | null;
       acidente?: string | null;
+      psicossocial?: string | null;
     } | null;
   };
   /** Catálogo de EPIs do estoque (nome → CA) para enriquecer linhas que vierem sem CA. */
@@ -304,6 +305,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
       ["Biológico:", cats.biologico || "—"],
       ["Ergonômico:", cats.ergonomico || "—"],
       ["Acidente/Mecânico:", cats.acidente || "—"],
+      ["Psicossocial:", cats.psicossocial || "—"],
     ];
     // bloco com labels em bold e valor à frente
     doc.setFontSize(8);

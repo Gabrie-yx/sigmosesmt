@@ -48,6 +48,7 @@ type Template = {
   risco_biologico: string | null;
   risco_ergonomico: string | null;
   risco_acidente: string | null;
+  risco_psicossocial: string | null;
 };
 
 function OssTemplatesPage() {
@@ -65,7 +66,7 @@ function OssTemplatesPage() {
         .select("*")
         .order("cargo");
       if (error) throw error;
-      return (data ?? []) as Template[];
+      return (data ?? []) as unknown as Template[];
     },
   });
 
@@ -186,6 +187,7 @@ const EMPTY: Omit<Template, "id" | "revisao" | "hash_conteudo" | "updated_at"> =
   risco_biologico: "",
   risco_ergonomico: "",
   risco_acidente: "",
+  risco_psicossocial: "",
 };
 
 function TemplateEditorDialog({
@@ -206,7 +208,7 @@ function TemplateEditorDialog({
 
   // Buscar cargos disponíveis (da matriz de riscos)
   const { data: roles = [] } = useQuery({
-    queryKey: ["oss-roles-ativos"],
+    queryKey: ["oss-roles-ativos-v2"],
     queryFn: async () => {
       const { data } = await supabase
         .from("roles")
@@ -215,6 +217,7 @@ function TemplateEditorDialog({
         .order("name");
       return data ?? [];
     },
+    staleTime: 0,
   });
 
   // Catálogo de riscos (para picker por categoria)
@@ -237,7 +240,7 @@ function TemplateEditorDialog({
   /** Adiciona um item do catálogo no campo de risco daquela categoria,
    *  e ainda enriquece medidas_preventivas + epis_obrigatorios. */
   function addFromCatalogo(
-    riscoField: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente",
+    riscoField: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente" | "risco_psicossocial",
     item: { nome: string; medidas_controle_padrao: string[] | null; epis_sugeridos: string[] | null },
   ) {
     setForm((f) => {
@@ -311,6 +314,7 @@ function TemplateEditorDialog({
         BIOLOGICO: "risco_biologico",
         ERGONOMICO: "risco_ergonomico",
         ACIDENTE_MECANICO: "risco_acidente",
+        PSICOSSOCIAL: "risco_psicossocial",
       };
       const buckets: Record<string, string[]> = {};
       const medidasSet = new Set<string>();
@@ -334,6 +338,7 @@ function TemplateEditorDialog({
         BIOLOGICO: "biologicos",
         ERGONOMICO: "ergonomicos",
         ACIDENTE_MECANICO: "acidente_mecanico",
+        PSICOSSOCIAL: "psicossociais",
       };
       for (const [cat, key] of Object.entries(fichaMap)) {
         if (buckets[cat]?.length) continue; // catálogo já preencheu
@@ -407,10 +412,10 @@ function TemplateEditorDialog({
       if (!form.titulo.trim()) throw new Error("Título é obrigatório");
       const payload = { ...form, cargo: form.cargo.trim().toUpperCase() };
       if (template) {
-        const { error } = await supabase.from("oss_templates").update(payload).eq("id", template.id);
+        const { error } = await supabase.from("oss_templates").update(payload as any).eq("id", template.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("oss_templates").insert(payload);
+        const { error } = await supabase.from("oss_templates").insert(payload as any);
         if (error) throw error;
       }
     },
@@ -446,6 +451,7 @@ function TemplateEditorDialog({
           biologico: form.risco_biologico,
           ergonomico: form.risco_ergonomico,
           acidente: form.risco_acidente,
+          psicossocial: form.risco_psicossocial,
         },
       },
     });
@@ -549,6 +555,12 @@ function TemplateEditorDialog({
                   placeholder="Ex: espaço confinado, altura, projeção..."
                   catalogo={catalogo} onAdd={addFromCatalogo}
                 />
+                <RiscoCategoria
+                  label="Psicossocial" catKey="PSICOSSOCIAL" field="risco_psicossocial"
+                  value={form.risco_psicossocial ?? ""} onChange={(v) => upd("risco_psicossocial", v)}
+                  placeholder="Ex: pressão por prazo, assédio, jornada exaustiva..."
+                  catalogo={catalogo} onAdd={addFromCatalogo}
+                />
               </div>
               <details className="text-[10px] text-slate-500">
                 <summary className="cursor-pointer">Texto livre (legado / fallback)</summary>
@@ -602,14 +614,14 @@ function RiscoCategoria({
   label, catKey, field, value, onChange, placeholder, catalogo, onAdd,
 }: {
   label: string;
-  catKey: "FISICO" | "QUIMICO" | "BIOLOGICO" | "ERGONOMICO" | "ACIDENTE_MECANICO";
-  field: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente";
+  catKey: "FISICO" | "QUIMICO" | "BIOLOGICO" | "ERGONOMICO" | "ACIDENTE_MECANICO" | "PSICOSSOCIAL";
+  field: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente" | "risco_psicossocial";
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   catalogo: CatalogoItem[];
   onAdd: (
-    field: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente",
+    field: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente" | "risco_psicossocial",
     item: CatalogoItem,
   ) => void;
 }) {
