@@ -770,6 +770,7 @@ function RiscoEpisDialog({ risco, onClose }: { risco: InvRow; onClose: () => voi
 function InventarioTab() {
   const qc = useQueryClient();
   const [gheSel, setGheSel] = useState<string>("all");
+  const [catTab, setCatTab] = useState<"all" | InvRow["categoria"]>("all");
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<InvRow | null>(null);
   const [episFor, setEpisFor] = useState<InvRow | null>(null);
@@ -833,6 +834,29 @@ function InventarioTab() {
     return c;
   }, [inv]);
 
+  const catCounts = useMemo(() => {
+    const c: Record<InvRow["categoria"], number> = {
+      FISICO: 0, QUIMICO: 0, BIOLOGICO: 0, ERGONOMICO: 0, ACIDENTE: 0, PSICOSSOCIAL: 0,
+    };
+    inv.forEach((r) => { c[r.categoria] = (c[r.categoria] ?? 0) + 1; });
+    return c;
+  }, [inv]);
+
+  const invFiltered = useMemo(
+    () => (catTab === "all" ? inv : inv.filter((r) => r.categoria === catTab)),
+    [inv, catTab],
+  );
+
+  const CAT_STYLE: Record<InvRow["categoria"], { dot: string; active: string }> = {
+    FISICO:       { dot: "bg-orange-500",  active: "data-[state=active]:bg-orange-100 data-[state=active]:text-orange-900 data-[state=active]:border-orange-300" },
+    QUIMICO:      { dot: "bg-amber-500",   active: "data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900 data-[state=active]:border-amber-300" },
+    BIOLOGICO:    { dot: "bg-emerald-500", active: "data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-900 data-[state=active]:border-emerald-300" },
+    ERGONOMICO:   { dot: "bg-sky-500",     active: "data-[state=active]:bg-sky-100 data-[state=active]:text-sky-900 data-[state=active]:border-sky-300" },
+    ACIDENTE:     { dot: "bg-rose-500",    active: "data-[state=active]:bg-rose-100 data-[state=active]:text-rose-900 data-[state=active]:border-rose-300" },
+    PSICOSSOCIAL: { dot: "bg-fuchsia-500", active: "data-[state=active]:bg-fuchsia-100 data-[state=active]:text-fuchsia-900 data-[state=active]:border-fuchsia-300" },
+  };
+  const CAT_ORDER: InvRow["categoria"][] = ["FISICO","QUIMICO","BIOLOGICO","ERGONOMICO","ACIDENTE","PSICOSSOCIAL"];
+
   return (
     <div className="space-y-4">
       {/* Topo: filtro + ação */}
@@ -870,6 +894,22 @@ function InventarioTab() {
       {/* Matriz visual 5×5 */}
       <MatrizVisual inv={inv} />
 
+      {/* Abas por categoria */}
+      <Tabs value={catTab} onValueChange={(v) => setCatTab(v as typeof catTab)}>
+        <TabsList className="bg-white border h-auto flex-wrap gap-1 p-1">
+          <TabsTrigger value="all" className="gap-2 border border-transparent data-[state=active]:bg-slate-900 data-[state=active]:text-white">
+            Todos <Badge variant="secondary" className="text-[10px]">{inv.length}</Badge>
+          </TabsTrigger>
+          {CAT_ORDER.map((c) => (
+            <TabsTrigger key={c} value={c} className={`gap-2 border border-transparent ${CAT_STYLE[c].active}`}>
+              <span className={`h-2 w-2 rounded-full ${CAT_STYLE[c].dot}`} />
+              {CATEGORIA_LABEL[c]}
+              <Badge variant="secondary" className="text-[10px]">{catCounts[c]}</Badge>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
       {/* Lista */}
       {isLoading ? (
         <div className="text-center py-10 text-slate-500">Carregando…</div>
@@ -879,14 +919,16 @@ function InventarioTab() {
           <p className="font-semibold">Crie GHEs primeiro</p>
           <p className="text-sm">Cada risco precisa estar vinculado a um GHE.</p>
         </Card>
-      ) : inv.length === 0 ? (
+      ) : invFiltered.length === 0 ? (
         <Card className="p-10 text-center text-slate-500">
           <Grid3x3 className="h-10 w-10 mx-auto mb-3 text-slate-300" />
-          <p className="font-semibold">Nenhum risco no inventário</p>
+          <p className="font-semibold">
+            {catTab === "all" ? "Nenhum risco no inventário" : `Nenhum risco da categoria ${CATEGORIA_LABEL[catTab]}`}
+          </p>
         </Card>
       ) : (
         <div className="space-y-2">
-          {inv.map((r) => {
+          {invFiltered.map((r) => {
             const cls = classifyAiha(r.probabilidade, r.severidade);
             const ghe = ghes.find((g) => g.id === r.ghe_id);
             return (
