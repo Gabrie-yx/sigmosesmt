@@ -1645,7 +1645,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         .eq("id", notReturning.id);
       if (error) throw error;
       // gera termo de perda
-      const { url, fname } = openTermoPerdaPdf({
+      const { fname, bytes } = openTermoPerdaPdf({
         emp, company, role,
         item: notReturning.item,
         ca: notReturning.ca ?? null,
@@ -1654,8 +1654,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         data_entrega: notReturning.data_entrega,
         observacoes: nrForm.obs || "Item não devolvido pelo colaborador.",
       });
-      const doc = await fetch(url).then(r => r.arrayBuffer());
-      setSignerSrc({ bytes: new Uint8Array(doc), name: fname });
+      setSignerSrc({ bytes, name: fname, modulo: "termo_perda", referenciaId: notReturning.id });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["epis", empId] });
