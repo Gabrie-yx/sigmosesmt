@@ -451,6 +451,7 @@ function TemplateEditorDialog({
           biologico: form.risco_biologico,
           ergonomico: form.risco_ergonomico,
           acidente: form.risco_acidente,
+          psicossocial: form.risco_psicossocial,
         },
       },
     });
