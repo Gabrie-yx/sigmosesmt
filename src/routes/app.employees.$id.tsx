@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText, Camera, X, AlertTriangle, Undo2, CheckCircle2, User, ShieldCheck, FileText as FileIcon, HeartPulse, Building2, IdCard, UserCog, Briefcase, Users, Award, FolderOpen, UserPlus, Download, Pencil, ClipboardCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
@@ -34,7 +35,7 @@ const PdfSignerDialog = lazy(() =>
 );
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import { openFichaMensalPdf } from "@/lib/epi-ficha-mensal-pdf";
-import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban } from "lucide-react";
+import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban, ChevronDown } from "lucide-react";
 import { GraduationCap } from "lucide-react";
 import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
 import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.functions";
@@ -1704,38 +1705,98 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           >
             <Printer className="h-4 w-4 mr-2" /> Ficha em PDF
           </Button>
-          <Button
-            onClick={() => {
-              if (!epis?.length) {
-                toast.error("Nenhum EPI registrado para gerar termo.");
-                return;
-              }
-              // Abre com o primeiro item ou permite escolher? 
-              // Vou abrir um diálogo de seleção ou usar o último item de perda
-              const lastPerda = [...epis].find(e => e.motivo_entrega === "PERDA_EXTRAVIO");
-              if (lastPerda) {
-                const { url, fname } = openTermoPerdaPdf({
-                  emp, company, role,
-                  item: lastPerda.item,
-                  ca: lastPerda.ca,
-                  qtd: lastPerda.qtd,
-                  valor_unitario: lastPerda.valor_unitario,
-                  data_entrega: lastPerda.data_entrega,
-                  observacoes: lastPerda.observacoes
-                });
-                fetch(url).then(r => r.arrayBuffer()).then(buf => {
-                  setSignerSrc({ bytes: new Uint8Array(buf), name: fname });
-                });
-              } else {
-                toast.info("Não há registros de perda/extravio para este colaborador.");
-              }
-            }}
-            variant="outline"
-            className="border-rose-600 text-rose-600 hover:bg-rose-50 font-black uppercase tracking-widest text-xs"
-            size="lg"
-          >
-            <FileWarning className="h-4 w-4 mr-2" /> Termo de Perda
-          </Button>
+          {(() => {
+            const perdas = (epis ?? []).filter((e: any) => e.motivo_entrega === "PERDA_EXTRAVIO");
+            const abrirTermo = (p: any) => {
+              const { url, fname } = openTermoPerdaPdf({
+                emp, company, role,
+                item: p.item, ca: p.ca, qtd: p.qtd,
+                valor_unitario: p.valor_unitario,
+                data_entrega: p.data_entrega,
+                observacoes: p.observacoes,
+              });
+              fetch(url).then(r => r.arrayBuffer()).then(buf => {
+                setSignerSrc({ bytes: new Uint8Array(buf), name: fname });
+              });
+            };
+            if (perdas.length === 0) {
+              return (
+                <Button
+                  onClick={() => toast.info("Não há registros de perda/extravio para este colaborador.")}
+                  variant="outline"
+                  className="border-rose-200 text-rose-400 hover:bg-rose-50 font-black uppercase tracking-widest text-xs"
+                  size="lg"
+                >
+                  <FileWarning className="h-4 w-4 mr-2" /> Termo de Perda
+                </Button>
+              );
+            }
+            if (perdas.length === 1) {
+              return (
+                <Button
+                  onClick={() => abrirTermo(perdas[0])}
+                  variant="outline"
+                  className="border-rose-600 text-rose-600 hover:bg-rose-50 font-black uppercase tracking-widest text-xs"
+                  size="lg"
+                >
+                  <FileWarning className="h-4 w-4 mr-2" /> Termo de Perda
+                </Button>
+              );
+            }
+            // 2+ perdas → dropdown com histórico
+            const ordenadas = [...perdas].sort((a, b) =>
+              (b.data_entrega ?? "").localeCompare(a.data_entrega ?? "")
+            );
+            return (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="border-rose-600 text-rose-600 hover:bg-rose-50 font-black uppercase tracking-widest text-xs"
+                    size="lg"
+                  >
+                    <FileWarning className="h-4 w-4 mr-2" />
+                    Termo de Perda
+                    <Badge className="ml-2 bg-rose-600 text-white text-[10px] px-1.5 py-0">{perdas.length}</Badge>
+                    <ChevronDown className="h-4 w-4 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    {perdas.length} extravios registrados
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {ordenadas.map((p: any) => {
+                    const valorTotal = (Number(p.valor_unitario) || 0) * (Number(p.qtd) || 1);
+                    return (
+                      <DropdownMenuItem
+                        key={p.id}
+                        onClick={() => abrirTermo(p)}
+                        className="flex flex-col items-start gap-0.5 py-2 cursor-pointer"
+                      >
+                        <div className="flex items-center justify-between w-full gap-2">
+                          <span className="font-bold text-xs text-slate-800 truncate">{p.item}</span>
+                          <span className="text-[10px] font-black text-rose-600 shrink-0">
+                            R$ {valorTotal.toFixed(2).replace(".", ",")}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                          <span>{formatDateBR(p.data_entrega)}</span>
+                          <span>•</span>
+                          <span>QTD {p.qtd}</span>
+                          {p.ca && <><span>•</span><span>CA {p.ca}</span></>}
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1.5 text-[9px] text-slate-400 italic">
+                    Termos assinados ficam arquivados na seção "Documentos Assinados" abaixo.
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          })()}
         </div>
       </Card>
 
