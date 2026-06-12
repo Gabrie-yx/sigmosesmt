@@ -53,7 +53,7 @@ type Ghe = {
 type InvRow = {
   id: string;
   ghe_id: string;
-  categoria: "FISICO" | "QUIMICO" | "BIOLOGICO" | "ERGONOMICO" | "ACIDENTE";
+  categoria: "FISICO" | "QUIMICO" | "BIOLOGICO" | "ERGONOMICO" | "ACIDENTE" | "PSICOSSOCIAL";
   perigo: string;
   agravo: string | null;
   fonte_geradora: string | null;

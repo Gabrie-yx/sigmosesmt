@@ -83,4 +83,5 @@ export const CATEGORIA_LABEL: Record<string, string> = {
   BIOLOGICO: "Biológico",
   ERGONOMICO: "Ergonômico",
   ACIDENTE: "Acidente",
+  PSICOSSOCIAL: "Psicossocial",
 };
