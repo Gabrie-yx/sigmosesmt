@@ -1458,8 +1458,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         observacoes: f.observacoes,
       });
       // Em vez de openFileViewer, usamos o PdfSignerDialog para ver e poder salvar
-      const doc = await fetch(url).then(r => r.arrayBuffer());
-      setSignerSrc({ bytes: new Uint8Array(doc), name: fname });
+      setSignerSrc({ bytes, name: fname, modulo: "termo_perda", referenciaId: undefined });
     }
   }
 
