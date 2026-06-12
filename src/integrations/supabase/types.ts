@@ -3497,6 +3497,7 @@ export type Database = {
           risco_biologico: string | null
           risco_ergonomico: string | null
           risco_fisico: string | null
+          risco_psicossocial: string | null
           risco_quimico: string | null
           riscos_texto: string
           setor: string | null
@@ -3523,6 +3524,7 @@ export type Database = {
           risco_biologico?: string | null
           risco_ergonomico?: string | null
           risco_fisico?: string | null
+          risco_psicossocial?: string | null
           risco_quimico?: string | null
           riscos_texto?: string
           setor?: string | null
@@ -3549,6 +3551,7 @@ export type Database = {
           risco_biologico?: string | null
           risco_ergonomico?: string | null
           risco_fisico?: string | null
+          risco_psicossocial?: string | null
           risco_quimico?: string | null
           riscos_texto?: string
           setor?: string | null
