@@ -421,6 +421,10 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
 function QuickTabBtn({ icon: Icon, label, tone = "rose", active, onClick }: { icon: any; label: string; tone?: "rose" | "slate"; active?: boolean; onClick: () => void }) {
   const palette = tone === "slate"
     ? "bg-slate-100 text-slate-600 hover:bg-slate-200 ring-slate-200"
+    : tone === "ok"
+    ? "bg-gradient-to-br from-emerald-500 to-emerald-700 text-white hover:from-emerald-600 hover:to-emerald-800 ring-emerald-300/40"
+    : tone === "warn"
+    ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white hover:from-amber-500 hover:to-amber-700 ring-amber-300/40"
     : "bg-gradient-to-br from-rose-500 to-[#991b1b] text-white hover:from-rose-600 hover:to-[#7B1E2B] ring-rose-300/40";
   return (
     <button
