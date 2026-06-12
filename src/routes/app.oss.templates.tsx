@@ -614,14 +614,14 @@ function RiscoCategoria({
   label, catKey, field, value, onChange, placeholder, catalogo, onAdd,
 }: {
   label: string;
-  catKey: "FISICO" | "QUIMICO" | "BIOLOGICO" | "ERGONOMICO" | "ACIDENTE_MECANICO";
-  field: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente";
+  catKey: "FISICO" | "QUIMICO" | "BIOLOGICO" | "ERGONOMICO" | "ACIDENTE_MECANICO" | "PSICOSSOCIAL";
+  field: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente" | "risco_psicossocial";
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   catalogo: CatalogoItem[];
   onAdd: (
-    field: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente",
+    field: "risco_fisico" | "risco_quimico" | "risco_biologico" | "risco_ergonomico" | "risco_acidente" | "risco_psicossocial",
     item: CatalogoItem,
   ) => void;
 }) {
