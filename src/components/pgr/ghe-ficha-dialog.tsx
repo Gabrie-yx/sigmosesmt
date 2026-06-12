@@ -24,6 +24,7 @@ const CAT_STYLE: Record<string, { label: string; bg: string; border: string; chi
   ERGONOMICO: { label: "Ergonômico", bg: "bg-sky-50",      border: "border-sky-300",     chip: "bg-sky-600 text-white" },
   ACIDENTE:   { label: "Acidente",   bg: "bg-violet-50",   border: "border-violet-300",  chip: "bg-violet-600 text-white" },
   MECANICO:   { label: "Mecânico",   bg: "bg-violet-50",   border: "border-violet-300",  chip: "bg-violet-600 text-white" },
+  PSICOSSOCIAL: { label: "Psicossocial", bg: "bg-fuchsia-50", border: "border-fuchsia-300", chip: "bg-fuchsia-600 text-white" },
 };
 
 export function GheFichaDialog({
