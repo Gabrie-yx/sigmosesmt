@@ -66,7 +66,7 @@ function OssTemplatesPage() {
         .select("*")
         .order("cargo");
       if (error) throw error;
-      return (data ?? []) as Template[];
+      return (data ?? []) as unknown as Template[];
     },
   });
 
@@ -187,6 +187,7 @@ const EMPTY: Omit<Template, "id" | "revisao" | "hash_conteudo" | "updated_at"> =
   risco_biologico: "",
   risco_ergonomico: "",
   risco_acidente: "",
+  risco_psicossocial: "",
 };
 
 function TemplateEditorDialog({
@@ -408,10 +409,10 @@ function TemplateEditorDialog({
       if (!form.titulo.trim()) throw new Error("Título é obrigatório");
       const payload = { ...form, cargo: form.cargo.trim().toUpperCase() };
       if (template) {
-        const { error } = await supabase.from("oss_templates").update(payload).eq("id", template.id);
+        const { error } = await supabase.from("oss_templates").update(payload as any).eq("id", template.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("oss_templates").insert(payload);
+        const { error } = await supabase.from("oss_templates").insert(payload as any);
         if (error) throw error;
       }
     },
