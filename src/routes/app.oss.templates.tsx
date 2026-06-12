@@ -555,6 +555,12 @@ function TemplateEditorDialog({
                   placeholder="Ex: espaço confinado, altura, projeção..."
                   catalogo={catalogo} onAdd={addFromCatalogo}
                 />
+                <RiscoCategoria
+                  label="Psicossocial" catKey="PSICOSSOCIAL" field="risco_psicossocial"
+                  value={form.risco_psicossocial ?? ""} onChange={(v) => upd("risco_psicossocial", v)}
+                  placeholder="Ex: pressão por prazo, assédio, jornada exaustiva..."
+                  catalogo={catalogo} onAdd={addFromCatalogo}
+                />
               </div>
               <details className="text-[10px] text-slate-500">
                 <summary className="cursor-pointer">Texto livre (legado / fallback)</summary>
