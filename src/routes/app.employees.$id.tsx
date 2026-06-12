@@ -151,6 +151,8 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const removeEmployeePhotoFn = useServerFn(removeEmployeePhoto);
   const [fichaDoc, setFichaDoc] = useState<jsPDF | null>(null);
   const [gerandoFicha, setGerandoFicha] = useState(false);
+  const [pppDoc, setPppDoc] = useState<jsPDF | null>(null);
+  const [gerandoPPP, setGerandoPPP] = useState(false);
 
   async function gerarFichaPdf() {
     if (!emp) return;
@@ -177,6 +179,71 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
       toast.error("Erro ao gerar a ficha: " + (e?.message || "desconhecido"));
     } finally {
       setGerandoFicha(false);
+    }
+  }
+
+  async function gerarPPP() {
+    if (!emp) return;
+    setGerandoPPP(true);
+    try {
+      const company = (companies ?? []).find((c: any) => c.id === emp.company_id) ?? null;
+      const [riscosRes, epiRes] = await Promise.all([
+        emp.role_id
+          ? supabase
+              .from("cargo_riscos")
+              .select("*, catalogo_riscos(nome, categoria, codigo_esocial)")
+              .eq("role_id", emp.role_id)
+              .eq("ativo", true)
+          : Promise.resolve({ data: [] as any[] }),
+        supabase
+          .from("epi_deliveries")
+          .select("item, ca, data_entrega")
+          .eq("employee_id", id)
+          .order("data_entrega", { ascending: false })
+          .limit(20),
+      ]);
+      const riscos = ((riscosRes.data as any[]) ?? []).map((r) => ({
+        nome: r.catalogo_riscos?.nome ?? "—",
+        categoria: r.catalogo_riscos?.categoria ?? null,
+        codigo_esocial: r.catalogo_riscos?.codigo_esocial ?? null,
+        intensidade: r.intensidade,
+        unidade: r.unidade,
+        limite_tolerancia: r.limite_tolerancia,
+        tecnica_medicao: r.tecnica_medicao,
+        fonte_geradora: r.fonte_geradora,
+        epi_atenuacao_db: r.epi_atenuacao_db,
+        aposentadoria_especial_anos: r.aposentadoria_especial_anos,
+        periculosidade: !!r.periculosidade,
+        insalubridade_grau: r.insalubridade_grau,
+        data_avaliacao: r.data_avaliacao,
+        observacao: r.observacao,
+      }));
+      // deduplica EPI pelo nome (mantém a entrega mais recente)
+      const seen = new Set<string>();
+      const epis = ((epiRes.data as any[]) ?? []).filter((e) => {
+        const k = (e.item ?? "").toLowerCase();
+        if (seen.has(k)) return false;
+        seen.add(k); return true;
+      });
+      const doc = gerarPPPPdf({
+        emp,
+        company,
+        roleName: role?.name ?? null,
+        riscos,
+        exams: (exams as any[]) ?? [],
+        epis,
+        responsavelTecnico: {
+          nome: (company as any)?.responsavel_tecnico ?? null,
+          cargo: "Engenheiro de Segurança do Trabalho",
+          registro: null,
+        },
+      });
+      setPppDoc(doc);
+    } catch (e: any) {
+      console.error("[ppp-pdf] erro:", e);
+      toast.error("Erro ao gerar o PPP: " + (e?.message || "desconhecido"));
+    } finally {
+      setGerandoPPP(false);
     }
   }
 
