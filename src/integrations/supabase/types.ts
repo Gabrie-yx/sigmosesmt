@@ -3482,6 +3482,7 @@ export type Database = {
         Row: {
           ativo: boolean
           cargo: string
+          cbo: string | null
           created_at: string
           created_by: string | null
           descricao_atividades: string
@@ -3509,6 +3510,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           cargo: string
+          cbo?: string | null
           created_at?: string
           created_by?: string | null
           descricao_atividades?: string
@@ -3536,6 +3538,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           cargo?: string
+          cbo?: string | null
           created_at?: string
           created_by?: string | null
           descricao_atividades?: string

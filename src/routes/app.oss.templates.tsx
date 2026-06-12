@@ -29,6 +29,7 @@ export const Route = createFileRoute("/app/oss/templates")({
 type Template = {
   id: string;
   cargo: string;
+  cbo: string | null;
   titulo: string;
   setor: string | null;
   descricao_atividades: string;
@@ -276,6 +277,7 @@ function DeleteTemplateDialog({
 
 const EMPTY: Omit<Template, "id" | "revisao" | "hash_conteudo" | "updated_at"> = {
   cargo: "",
+  cbo: "",
   titulo: "",
   setor: "",
   descricao_atividades: "",
