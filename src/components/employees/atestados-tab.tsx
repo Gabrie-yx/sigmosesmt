@@ -82,13 +82,37 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
   }
 
   async function homologar(at: any) {
-    const ok = window.confirm(
+    // Determina se o atestado é totalmente retroativo (período já encerrado)
+    const hojeISO = new Date().toISOString().slice(0, 10);
+    const retorno: string | null = at.data_retorno ?? null;
+    const inicio: string | null = at.data_inicio ?? null;
+    const isRetroativo = !!retorno && retorno < hojeISO;
+    const inicioFuturo = !!inicio && inicio > hojeISO;
+    const dias = at.dias_afastamento ?? 0;
+
+    let msg =
       "Confirmar homologação?\n\n" +
-        "• O atestado foi assinado/validado pelo Supervisor Geral (Anderson)?\n" +
-        "• Os dados (CID, CRM, datas) foram conferidos?\n\n" +
-        "Ao homologar, será criado bloqueio na portaria APENAS durante o período do afastamento " +
-        "(do início até a data de retorno). Atestados retroativos não geram bloqueio.",
-    );
+      "• O atestado foi assinado/validado pelo Supervisor Geral (Anderson)?\n" +
+      "• Os dados (CID, CRM, datas) foram conferidos?\n\n";
+
+    if (dias <= 0) {
+      msg +=
+        "Este registro não gera afastamento (0 dias). Apenas arquivamento no histórico — " +
+        "nenhum bloqueio na portaria será criado.";
+    } else if (isRetroativo) {
+      msg +=
+        `ATESTADO RETROATIVO: o período (${fmt(inicio)} → ${fmt(retorno)}) já se encerrou. ` +
+        "Apenas arquivamento no histórico — nenhum bloqueio na portaria será criado.";
+    } else if (inicioFuturo) {
+      msg +=
+        `Bloqueio programado: vigorará de ${fmt(inicio)} até ${fmt(retorno)} (${dias} dia(s)).`;
+    } else {
+      msg +=
+        `Bloqueio ativo de hoje até ${fmt(retorno)} (${dias} dia(s) de afastamento). ` +
+        "O período já iniciado anteriormente não retroage.";
+    }
+
+    const ok = window.confirm(msg);
     if (!ok) return;
     const { data: u } = await supabase.auth.getUser();
     const { error } = await (supabase as any)
