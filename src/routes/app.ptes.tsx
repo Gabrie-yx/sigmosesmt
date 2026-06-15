@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Files, Printer, Pencil, Trash2, X, HardHat, Clock, Link2, AlertTriangle, FileSearch } from "lucide-react";
+import { FileText, Files, Printer, Pencil, Trash2, X, HardHat, Clock, Link2, AlertTriangle, FileSearch, Users, Eye, ShieldCheck, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { PTE_RISCOS, PT_TIPOS } from "@/lib/constants";
 import { formatDateBR } from "@/lib/utils-date";
@@ -30,17 +30,22 @@ function PtesPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const search = useSearch({ from: "/app/ptes" });
-  const { isEditor, isAdmin } = useAuth();
+  const { isEditor, isAdmin, user } = useAuth();
   const today = new Date().toISOString().slice(0, 10);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkedAprId, setLinkedAprId] = useState<string | null>(null);
   const [previewPt, setPreviewPt] = useState<any | null>(null);
-  const [f, setF] = useState<any>({
-    data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
+  const emptyForm = {
+    data: today, risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
     tipo_pt: "PTE", hora_inicio: "07:00", hora_fim: "17:00",
     validade_tipo: "TURNO", validade_ate: "",
     emergencia_sem_apr: false, emergencia_justificativa: "",
-  });
+    requisitante_id: "" as string,
+    executantes_ids: [] as string[],
+    vigia_id: "" as string,
+    supervisor_entrada_id: "" as string,
+  };
+  const [f, setF] = useState<any>(emptyForm);
 
   const { data: ptes = [] } = useQuery({
     queryKey: ["ptes"],
@@ -151,7 +156,19 @@ function PtesPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const emp = emps.find((x: any) => x.id === f.employee_id);
+      // Validações de papéis
+      if (!f.requisitante_id) {
+        throw new Error("Requisitante (líder do serviço) é obrigatório.");
+      }
+      if (!f.executantes_ids || f.executantes_ids.length === 0) {
+        throw new Error("Adicione pelo menos 1 executante.");
+      }
+      if (f.tipo_pt === "PET") {
+        if (!f.vigia_id) throw new Error("Vigia é obrigatório em PET (Espaço Confinado — NR-33).");
+        if (!f.supervisor_entrada_id) throw new Error("Supervisor de Entrada é obrigatório em PET (NR-33).");
+      }
+
+      const requisitante = emps.find((x: any) => x.id === f.requisitante_id);
 
       // Regra de ouro: APR obrigatória (exceto emergência justificada)
       if (!linkedAprId && !f.emergencia_sem_apr) {
@@ -172,62 +189,59 @@ function PtesPage() {
         validadeAte = new Date(f.validade_ate).toISOString();
       }
 
-      // Bloqueio específico para Limpeza de Tanque (Risco Biológico)
+      // Bloqueio específico para Limpeza de Tanque (Risco Biológico) — checa TODOS os executantes
       if (f.risco?.toLowerCase().includes("tanque") || f.risco?.toLowerCase().includes("biológic")) {
-        const empOv = overridesAll.filter((o) => o.employee_id === emp?.id);
-        if (hasGlobalOverride(empOv) || empOv.some((o) => o.item_key === "PTE")) {
-          // Override ativo: pula bloqueio de vacinas
-        } else {
-        const role = roles.find((r: any) => r.id === emp?.role_id);
-        const reqVac: string[] = role?.req_vacinas ?? [];
-        const empVacs = vaccines.filter((v: any) => v.employee_id === emp?.id);
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const missing = reqVac.filter((vac) => {
-          const latest = empVacs
-            .filter((v: any) => v.tipo_vacina === vac)
-            .sort((a: any, b: any) => +new Date(b.data_aplicacao) - +new Date(a.data_aplicacao))[0];
-          if (!latest) return true;
-          if (!latest.anexo_path) return true;
-          if (latest.data_proxima_dose && new Date(latest.data_proxima_dose + "T00:00:00") < today) return true;
-          return false;
-        });
-        if (missing.length) {
-          throw new Error(`PTE bloqueada — vacinas obrigatórias pendentes: ${missing.join(", ")}. Admin pode liberar via Override no perfil do funcionário.`);
-        }
+        const todayD = new Date(); todayD.setHours(0, 0, 0, 0);
+        for (const exId of f.executantes_ids as string[]) {
+          const exEmp = emps.find((x: any) => x.id === exId);
+          if (!exEmp) continue;
+          const empOv = overridesAll.filter((o) => o.employee_id === exId);
+          if (hasGlobalOverride(empOv) || empOv.some((o) => o.item_key === "PTE")) continue;
+          const role = roles.find((r: any) => r.id === exEmp.role_id);
+          const reqVac: string[] = role?.req_vacinas ?? [];
+          const empVacs = vaccines.filter((v: any) => v.employee_id === exId);
+          const missing = reqVac.filter((vac) => {
+            const latest = empVacs
+              .filter((v: any) => v.tipo_vacina === vac)
+              .sort((a: any, b: any) => +new Date(b.data_aplicacao) - +new Date(a.data_aplicacao))[0];
+            if (!latest) return true;
+            if (!latest.anexo_path) return true;
+            if (latest.data_proxima_dose && new Date(latest.data_proxima_dose + "T00:00:00") < todayD) return true;
+            return false;
+          });
+          if (missing.length) {
+            throw new Error(`PT bloqueada — executante "${exEmp.nome}" com vacinas pendentes: ${missing.join(", ")}.`);
+          }
         }
       }
+      const commonPayload = {
+        data: f.data, local: f.local || null, risco: f.risco,
+        // Back-compat: employee_id/employee_name refletem o requisitante
+        employee_id: f.requisitante_id || null,
+        employee_name: requisitante?.nome ?? null,
+        company_id: requisitante?.company_id ?? f.company_id ?? null,
+        casco_id: f.casco_id || null,
+        tipo_pt: f.tipo_pt,
+        hora_inicio: f.hora_inicio || null,
+        hora_fim: f.hora_fim || null,
+        validade_tipo: f.validade_tipo,
+        validade_ate: validadeAte,
+        apr_id: linkedAprId,
+        emergencia_sem_apr: f.emergencia_sem_apr,
+        emergencia_justificativa: f.emergencia_sem_apr ? f.emergencia_justificativa : null,
+        requisitante_id: f.requisitante_id || null,
+        executantes_ids: f.executantes_ids,
+        vigia_id: f.vigia_id || null,
+        supervisor_entrada_id: f.supervisor_entrada_id || null,
+        emitente_user_id: user?.id ?? null,
+      };
+
       if (editingId) {
-        const { error } = await supabase.from("ptes").update({
-          data: f.data, local: f.local || null, risco: f.risco,
-          employee_id: f.employee_id || null, employee_name: emp?.nome ?? null,
-          company_id: emp?.company_id ?? null,
-          casco_id: f.casco_id || null,
-          tipo_pt: f.tipo_pt,
-          hora_inicio: f.hora_inicio || null,
-          hora_fim: f.hora_fim || null,
-          validade_tipo: f.validade_tipo,
-          validade_ate: validadeAte,
-          apr_id: linkedAprId,
-          emergencia_sem_apr: f.emergencia_sem_apr,
-          emergencia_justificativa: f.emergencia_sem_apr ? f.emergencia_justificativa : null,
-        }).eq("id", editingId);
+        const { error } = await supabase.from("ptes").update(commonPayload).eq("id", editingId);
         if (error) throw error;
       } else {
         const numero = `${f.tipo_pt}-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`;
-        const { error } = await supabase.from("ptes").insert({
-          numero, data: f.data, local: f.local || null, risco: f.risco, status: "ATIVA",
-          employee_id: f.employee_id || null, employee_name: emp?.nome ?? null,
-          company_id: emp?.company_id ?? null, dados: {},
-          apr_id: linkedAprId,
-          casco_id: f.casco_id || null,
-          tipo_pt: f.tipo_pt,
-          hora_inicio: f.hora_inicio || null,
-          hora_fim: f.hora_fim || null,
-          validade_tipo: f.validade_tipo,
-          validade_ate: validadeAte,
-          emergencia_sem_apr: f.emergencia_sem_apr,
-          emergencia_justificativa: f.emergencia_sem_apr ? f.emergencia_justificativa : null,
-        });
+        const { error } = await supabase.from("ptes").insert({ ...commonPayload, numero, status: "ATIVA", dados: {} });
         if (error) throw error;
       }
     },
@@ -240,12 +254,7 @@ function PtesPage() {
       } });
       setEditingId(null);
       setLinkedAprId(null);
-      setF({
-        data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
-        tipo_pt: "PTE", hora_inicio: "07:00", hora_fim: "17:00",
-        validade_tipo: "TURNO", validade_ate: "",
-        emergencia_sem_apr: false, emergencia_justificativa: "",
-      });
+      setF(emptyForm);
       toast.success(editingId ? "Permissão atualizada" : "Permissão emitida");
     },
     onError: (e: any) => toast.error(e.message),
@@ -280,7 +289,6 @@ function PtesPage() {
     setLinkedAprId(p.apr_id ?? null);
     setF({
       data: p.data,
-      employee_id: p.employee_id ?? "",
       risco: p.risco ?? PTE_RISCOS[0],
       local: p.local ?? "",
       company_id: p.company_id ?? "",
@@ -292,17 +300,16 @@ function PtesPage() {
       validade_ate: p.validade_ate ? new Date(p.validade_ate).toISOString().slice(0, 16) : "",
       emergencia_sem_apr: p.emergencia_sem_apr ?? false,
       emergencia_justificativa: p.emergencia_justificativa ?? "",
+      requisitante_id: p.requisitante_id ?? p.employee_id ?? "",
+      executantes_ids: (p.executantes_ids as string[] | null) ?? (p.employee_id ? [p.employee_id] : []),
+      vigia_id: p.vigia_id ?? "",
+      supervisor_entrada_id: p.supervisor_entrada_id ?? "",
     });
   }
   function cancelEdit() {
     setEditingId(null);
     setLinkedAprId(null);
-    setF({
-      data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
-      tipo_pt: "PTE", hora_inicio: "07:00", hora_fim: "17:00",
-      validade_tipo: "TURNO", validade_ate: "",
-      emergencia_sem_apr: false, emergencia_justificativa: "",
-    });
+    setF(emptyForm);
   }
 
   return (
