@@ -489,43 +489,133 @@ function PtesPage() {
               )}
             </div>
 
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
-              <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-3">
-                <HardHat className="h-4 w-4" /> Empresa
-              </Label>
-              <Select
-                value={f.company_id || "none"}
-                onValueChange={(v) => setF({ ...f, company_id: v === "none" ? "" : v, employee_id: "" })}
-              >
-                <SelectTrigger className="bg-white text-xs font-bold uppercase mb-4">
-                  <SelectValue placeholder="-- TODAS AS EMPRESAS --" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— TODAS AS EMPRESAS —</SelectItem>
-                  {companies.map((c: any) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-3">
-                <HardHat className="h-4 w-4" /> Selecionar Executante (Apenas Aptos)
-              </Label>
-              <select
-                required
-                value={f.employee_id}
-                onChange={(e) => setF({ ...f, employee_id: e.target.value })}
-                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b]"
-              >
-                <option value="">-- SELECIONE UM COLABORADOR NA BASE --</option>
-                {empOptions.map(({ e, st, compName }) => {
-                  const blocked = !st.acessoPermitido && (!editingId || f.employee_id !== e.id);
-                  return (
-                    <option key={e.id} value={e.id} disabled={blocked}>
-                      {blocked ? "🚫 BLOQUEADO" : "✅ APTO"}: {e.nome} - [{compName}] (MAT: {e.matricula || "N/A"})
-                    </option>
-                  );
-                })}
-              </select>
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-5">
+              <div>
+                <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-3">
+                  <HardHat className="h-4 w-4" /> Empresa (filtro)
+                </Label>
+                <Select
+                  value={f.company_id || "none"}
+                  onValueChange={(v) => setF({ ...f, company_id: v === "none" ? "" : v })}
+                >
+                  <SelectTrigger className="bg-white text-xs font-bold uppercase">
+                    <SelectValue placeholder="-- TODAS AS EMPRESAS --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— TODAS AS EMPRESAS —</SelectItem>
+                    {companies.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* REQUISITANTE */}
+              <div>
+                <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-2">
+                  <UserCheck className="h-4 w-4" /> Requisitante <span className="text-red-600">*</span>
+                  <span className="text-[9px] font-bold text-slate-500 normal-case">(líder/encarregado do serviço)</span>
+                </Label>
+                <select
+                  required
+                  value={f.requisitante_id}
+                  onChange={(e) => setF({ ...f, requisitante_id: e.target.value })}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b]"
+                >
+                  <option value="">-- SELECIONE O REQUISITANTE --</option>
+                  {empOptions.map(({ e, st, compName }) => {
+                    const blocked = !st.acessoPermitido;
+                    return (
+                      <option key={e.id} value={e.id} disabled={blocked && f.requisitante_id !== e.id}>
+                        {blocked ? "🚫" : "✅"} {e.nome} - [{compName}]
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* EXECUTANTES (multi) */}
+              <div>
+                <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4" /> Executantes <span className="text-red-600">*</span>
+                  <span className="text-[9px] font-bold text-slate-500 normal-case">(equipe que executa)</span>
+                </Label>
+                {f.executantes_ids.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {(f.executantes_ids as string[]).map((eid) => {
+                      const emp = emps.find((e: any) => e.id === eid);
+                      return (
+                        <span key={eid} className="inline-flex items-center gap-1 bg-orange-100 text-orange-800 text-[10px] font-black uppercase px-2 py-1 rounded">
+                          {emp?.nome ?? "?"}
+                          <button type="button" onClick={() => setF({ ...f, executantes_ids: f.executantes_ids.filter((x: string) => x !== eid) })} className="hover:text-red-600">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    if (f.executantes_ids.includes(e.target.value)) return;
+                    setF({ ...f, executantes_ids: [...f.executantes_ids, e.target.value] });
+                  }}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b]"
+                >
+                  <option value="">+ ADICIONAR EXECUTANTE</option>
+                  {empOptions
+                    .filter(({ e }) => !f.executantes_ids.includes(e.id))
+                    .map(({ e, st, compName }) => (
+                      <option key={e.id} value={e.id} disabled={!st.acessoPermitido}>
+                        {st.acessoPermitido ? "✅" : "🚫"} {e.nome} - [{compName}]
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {/* VIGIA + SUPERVISOR (apenas PET / NR-33) */}
+              {f.tipo_pt === "PET" && (
+                <>
+                  <div>
+                    <Label className="text-[10px] font-black text-amber-800 uppercase flex items-center gap-2 mb-2">
+                      <Eye className="h-4 w-4" /> Vigia (NR-33) <span className="text-red-600">*</span>
+                    </Label>
+                    <select
+                      required
+                      value={f.vigia_id}
+                      onChange={(e) => setF({ ...f, vigia_id: e.target.value })}
+                      className="w-full bg-white border border-amber-300 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-amber-600"
+                    >
+                      <option value="">-- SELECIONE O VIGIA --</option>
+                      {empOptions.map(({ e, compName }) => (
+                        <option key={e.id} value={e.id}>{e.nome} - [{compName}]</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-black text-amber-800 uppercase flex items-center gap-2 mb-2">
+                      <ShieldCheck className="h-4 w-4" /> Supervisor de Entrada (NR-33) <span className="text-red-600">*</span>
+                    </Label>
+                    <select
+                      required
+                      value={f.supervisor_entrada_id}
+                      onChange={(e) => setF({ ...f, supervisor_entrada_id: e.target.value })}
+                      className="w-full bg-white border border-amber-300 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-amber-600"
+                    >
+                      <option value="">-- SELECIONE O SUPERVISOR --</option>
+                      {empOptions.map(({ e, compName }) => (
+                        <option key={e.id} value={e.id}>{e.nome} - [{compName}]</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              <div className="text-[9px] font-bold uppercase text-slate-500 bg-white border border-dashed border-slate-200 rounded-lg px-3 py-2">
+                Emitente: <span className="text-slate-800 font-black">{user?.email ?? "—"}</span> (usuário logado)
+              </div>
             </div>
 
             <Button
