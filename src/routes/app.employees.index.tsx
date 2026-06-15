@@ -350,11 +350,65 @@ function EmployeesPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
-          <Users className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Nenhum funcionário encontrado</p>
-          <p className="text-xs text-slate-400 mt-1">Ajuste a busca ou os filtros.</p>
-        </div>
+        (() => {
+          // Quando a busca não retorna nada, conta quantos seriam encontrados
+          // se IGNORÁSSEMOS os filtros de empresa/cargo/vínculo/status.
+          // Evita o sintoma "o funcionário sumiu" — na verdade está só fora do filtro.
+          const norm = (v: string) =>
+            (v ?? "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+          const s = norm(q.trim());
+          const sDigits = q.replace(/\D/g, "");
+          const semFiltros = (emps ?? []).filter((e: any) => {
+            if (!s) return false;
+            const cpfDigits = (e.cpf ?? "").replace(/\D/g, "");
+            return (
+              norm(e.nome ?? "").includes(s) ||
+              norm(e.matricula ?? "").includes(s) ||
+              norm(e.cpf ?? "").includes(s) ||
+              (sDigits.length >= 3 && cpfDigits.includes(sDigits))
+            );
+          });
+          const filtrosAtivos =
+            statusFilter !== "TODOS" ||
+            companyFilter !== "TODAS" ||
+            roleFilter !== "TODOS" ||
+            vinculoFilter !== "TODOS";
+          return (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+              <Users className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Nenhum funcionário encontrado</p>
+              <p className="text-xs text-slate-400 mt-1">Ajuste a busca ou os filtros.</p>
+              {semFiltros.length > 0 && filtrosAtivos && (
+                <div className="mt-5 inline-flex flex-col items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 max-w-md">
+                  <p className="text-xs font-bold text-amber-800">
+                    Encontrei <span className="font-black">{semFiltros.length}</span> resultado(s) ignorando os filtros ativos.
+                  </p>
+                  <p className="text-[11px] text-amber-700">
+                    Filtros podem estar escondendo: {[
+                      statusFilter !== "TODOS" && `status=${statusFilter}`,
+                      companyFilter !== "TODAS" && `empresa selecionada`,
+                      roleFilter !== "TODOS" && `cargo selecionado`,
+                      vinculoFilter !== "TODOS" && `vínculo=${vinculoFilter}`,
+                    ].filter(Boolean).join(" · ")}
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-[11px] font-black uppercase tracking-widest"
+                    onClick={() => {
+                      setStatusFilter("TODOS");
+                      setCompanyFilter("TODAS");
+                      setRoleFilter("TODOS");
+                      setVinculoFilter("TODOS");
+                    }}
+                  >
+                    Limpar filtros e mostrar tudo
+                  </Button>
+                </div>
+              )}
+            </div>
+          );
+        })()
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
