@@ -31,11 +31,15 @@ async function loadPdfJs(): Promise<PdfJsModule> {
 type Placement = {
   id: string;
   page: number;
-  // PDF-points (origin bottom-left)
+  // Coordenadas em VIEWPORT do pdfjs (origem top-left, scale=1, em pontos PDF).
+  // Ou seja: como o pdfjs RENDERIZA a página (já considerando /Rotate).
+  // A transformação para o sistema da MediaBox (pdf-lib) é feita só na hora de salvar.
   x: number;
   y: number;
   width: number;
   height: number;
+  // Rotação (graus CW) da página no momento do posicionamento (0/90/180/270).
+  rotation: number;
   dataUrl: string;
   nome: string;
   cargo: string;
