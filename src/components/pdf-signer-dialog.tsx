@@ -344,7 +344,36 @@ export function PdfSignerDialog({
         const base64 = p.dataUrl.split(",")[1];
         const buf = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
         const png = await pdfDoc.embedPng(buf).catch(async () => await pdfDoc.embedJpg(buf));
-        page.drawImage(png, { x: p.x, y: p.y, width: p.width, height: p.height });
+        // Coordenadas armazenadas são em VIEWPORT do pdfjs (top-left, já considerando /Rotate).
+        // Converter para o sistema da MediaBox (pdf-lib, bottom-left) compensando a rotação.
+        const mw = page.getWidth();
+        const mh = page.getHeight();
+        const rot = (((p.rotation ?? page.getRotation().angle) % 360) + 360) % 360;
+        const sw = p.width;
+        const sh = p.height;
+        let drawX = p.x;
+        let drawY = mh - p.y - sh;
+        let drawRot = 0;
+        if (rot === 90) {
+          drawX = mw - p.y;
+          drawY = p.x;
+          drawRot = 90;
+        } else if (rot === 180) {
+          drawX = mw - p.x;
+          drawY = p.y + sh;
+          drawRot = 180;
+        } else if (rot === 270) {
+          drawX = mw - p.y - sh;
+          drawY = mh - p.x;
+          drawRot = 270;
+        }
+        page.drawImage(png, {
+          x: drawX,
+          y: drawY,
+          width: sw,
+          height: sh,
+          rotate: degrees(drawRot),
+        });
       }
       const signedBytes = await pdfDoc.save();
 
