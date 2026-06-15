@@ -667,8 +667,38 @@ function PtesPage() {
                     )}
                   </div>
                 </div>
-                <h4 className="text-xs font-black text-[#991b1b] uppercase mb-1">{p.employee_name ?? "—"}</h4>
-                <div className="text-[10px] font-bold text-slate-500 uppercase mt-1">Risco: <span className="font-black text-slate-700">{p.risco}</span></div>
+                {(() => {
+                  const reqName = emps.find((e: any) => e.id === (p.requisitante_id ?? p.employee_id))?.nome ?? p.employee_name;
+                  const execIds = (p.executantes_ids as string[] | null) ?? [];
+                  const execNames = execIds.map((id) => emps.find((e: any) => e.id === id)?.nome).filter(Boolean);
+                  const vigiaName = p.vigia_id ? emps.find((e: any) => e.id === p.vigia_id)?.nome : null;
+                  const supName = p.supervisor_entrada_id ? emps.find((e: any) => e.id === p.supervisor_entrada_id)?.nome : null;
+                  return (
+                    <>
+                      {reqName && (
+                        <div className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                          <UserCheck className="h-3 w-3" /> Requisitante: <span className="font-black text-[#991b1b]">{reqName}</span>
+                        </div>
+                      )}
+                      {execNames.length > 0 && (
+                        <div className="text-[10px] font-bold text-slate-500 uppercase flex items-start gap-1 mt-0.5">
+                          <Users className="h-3 w-3 mt-0.5 shrink-0" /> Executantes: <span className="font-black text-slate-700">{execNames.join(", ")}</span>
+                        </div>
+                      )}
+                      {vigiaName && (
+                        <div className="text-[10px] font-bold text-amber-700 uppercase flex items-center gap-1 mt-0.5">
+                          <Eye className="h-3 w-3" /> Vigia: <span className="font-black">{vigiaName}</span>
+                        </div>
+                      )}
+                      {supName && (
+                        <div className="text-[10px] font-bold text-amber-700 uppercase flex items-center gap-1 mt-0.5">
+                          <ShieldCheck className="h-3 w-3" /> Supervisor: <span className="font-black">{supName}</span>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+                <div className="text-[10px] font-bold text-slate-500 uppercase mt-2">Risco: <span className="font-black text-slate-700">{p.risco}</span></div>
                 <div className="text-[10px] font-bold text-slate-500 uppercase">Local: {p.local ?? "—"}</div>
                 {(p.hora_inicio || p.hora_fim) && (
                   <div className="text-[10px] font-bold text-slate-500 uppercase">
