@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library,
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from "pdf-lib";
+import { degrees } from "pdf-lib";
 import { SignaturePadDialog, type AssinaturaResult } from "@/components/signature-pad-dialog";
 import { SignatureGallery } from "@/components/signature-gallery";
 import { ScrollArea } from "@/components/ui/scroll-area";
