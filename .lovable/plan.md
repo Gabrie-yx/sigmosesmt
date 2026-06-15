@@ -1,68 +1,114 @@
-## Objetivo
+## Visão geral
 
-Reorganizar todo o `/app/painel` na pegada visual da imagem que você enviou (dashboard de controle de acidentes/incidentes, estilo BI corporativo). Toda a **lógica e dados existentes são preservados** — mudam só a estrutura visual, a grade e a estética dos gráficos.
+Hoje `/app/ptes` é uma "PTE genérica" solta — pouco campo, sem PDF, sem vínculo obrigatório com APR, sem subtipos. Vamos lapidar em **3 fases incrementais**, cada uma entregando valor sozinha. Esta proposta cobre a **Fase 1 (Fundação)**. Depois que rodar, encaixamos Fase 2 (PET NR-33) e Fase 3 (demais PTs + assinatura digital).
 
-## Linguagem visual nova (inspirada na imagem)
+---
 
-- **Header largo azul-marinho** com título em caixa alta branco, faixa fina abaixo, filtros à direita (empresa / período) em pílulas brancas.
-- **Coluna de filtros lateral** (esquerda, estreita) com blocos pequenos: Empresa, Período, Tipo (APTO/ALERTA/BLOQ), Modalidade, Setor — clicáveis pra cruzar dados.
-- **Grade central densa** (3–4 colunas), cada bloco com borda fina cinza, título compacto em maiúsculas e gráfico ocupando o card inteiro — sem espaço desperdiçado.
-- **KPI gigante vermelho** no topo-esquerda (estilo o "19" da imagem): número grande, label curto embaixo, fundo vermelho sangue (mantém o `#7f1212` da marca).
-- **Mini-charts coloridos**: barras verticais, donut, área pequena, ranking horizontal — todos com mesmas dimensões pra dar ritmo visual.
-- **Coluna direita** com ranking de pessoas/empresas (estilo o "GESTOR" da imagem) e medidores verticais (Tempo na Função / Tempo na Empresa → vira "Conformidade por Empresa" / "DDS por Setor").
+## Fase 1 — Fundação (esta entrega)
 
-## Mapeamento dos blocos (o que vai onde)
+Objetivo: deixar o módulo pronto para receber os subtipos, com APR amarrada, validade, horários, tipo da PT e PDF imprimível.
+
+### 1.1 Renomear módulo: "PTE" → "Permissões de Trabalho"
+
+- Rota `/app/ptes` continua (não quebra link), mas o título da página, breadcrumb e item de menu viram **"Permissões de Trabalho"**.
+- Subtítulo: "PT, PTE, PET e permissões especiais".
+
+### 1.2 Novo campo: **Tipo de Permissão**
+
+Select obrigatório com as categorias que conversamos na aula:
 
 ```text
-┌──────────────────────────────────────────────────────────────┐
-│  HEADER AZUL · PAINEL EXECUTIVO SESMT · filtros à direita    │
-├────────┬─────────────────────────────────────────┬───────────┤
-│ FILTROS│ KPI 19  │ TOP 5 EMPRESAS │ ENTREGAS/MÊS │ CONFORM.  │
-│ Empresa│ (BLOQ)  │ (barras vert.) │ (área)       │ DONUT 87% │
-│ Período├─────────┴────────────────┴──────────────┤           │
-│ Status │ ENTREGAS POR MOTIVO (mini barras)       │ RANKING   │
-│ Setor  ├────────────────┬────────────────────────┤ EMPRESAS  │
-│ Modal. │ DDS POR TURNO  │ DDS EVOLUÇÃO (linha)   │ (lista)   │
-│        ├────────────────┴────────────────────────┤           │
-│        │ AÇÕES RECOMENDADAS · PRÓXIMOS 7 DIAS    │ MEDIDORES │
-│        │ (lista compacta com badges)             │ VERT.     │
-└────────┴─────────────────────────────────────────┴───────────┘
+- PTE   — Permissão de Trabalho Especial (genérica, sem NR dedicada)
+- PET   — Espaço Confinado (NR-33)        [Fase 2: form completo]
+- PTQ   — Trabalho a Quente (NR-34)
+- PTA   — Trabalho em Altura (NR-35)
+- PTI   — Içamento de Carga (NR-11/34)
+- PTEL  — Elétrica / LOTO (NR-10)
+- PTP   — Pintura / Jateamento (NR-34+NR-15)
+- PTS   — Trabalho Simultâneo / SimOps
 ```
 
-## Mudanças por seção
+Na Fase 1 todos compartilham o **mesmo formulário base**. Na Fase 2/3 cada tipo ganha sua aba/checklist específica.
 
-1. **Header** — vira faixa azul-marinho `#0c2340 → #1a4a6e`, título "DASHBOARD CONTROLE SESMT" em branco caixa-alta, badge DMN dentro, filtros movem pra direita.
-2. **Filtros** — coluna lateral estreita (~180px) com blocos clicáveis estilo "TIPO C…", "MODA…", "SETOR" da imagem (toggle de filtro por status / empresa).
-3. **KPI Bloqueados** — vira o "19": card vermelho-sangue grande, número em 64px branco, "BLOQUEADOS" embaixo.
-4. **Conformidade Geral** — vira um **donut grande** (igual o "Status Investigação" da imagem), com % no centro.
-5. **Conformidade por Empresa** — vira **barras verticais coloridas** (verde/amarelo/vermelho) tipo o "TOP 5" da imagem.
-6. **Fluxo de EPI** — mantém ComposedChart mas em card menor com fundo branco e bordas marcadas, estilo "Quantidade de Acidentes por Mês".
-7. **DDS · Evolução** — vira card lado-a-lado com "DDS por Setor" (barras horizontais).
-8. **Top pendências por empresa** — vira **ranking vertical estilo "GESTOR"** na coluna direita, com nomes em lista e número à direita.
-9. **Ações Recomendadas + Próximos 7 dias** — viram dois blocos densos lado-a-lado embaixo, estilo "Principais Setores com Acidente".
-10. **Medidores** (Documentos / Extintores / Estoque) — viram **barras verticais finas** estilo "Tempo na Função" / "Tempo na Empresa" na direita.
+### 1.3 APR como pré-requisito (regra de ouro do auditor)
 
-## Paleta
+- Novo campo **"APR Vinculada"** no topo do formulário, **obrigatório** (não dá pra emitir sem).
+- Ao escolher a APR, sistema **puxa automaticamente**: local, casco, empresa e sugere o tipo de PT baseado nos riscos da APR (já existe `detectarExigenciaPTE`, vamos reaproveitar).
+- Botão "Gerar PT vinculada" continua funcionando vindo da tela da APR (já existe).
+- Exceção: admin pode marcar "Emergência — sem APR" com justificativa obrigatória (auditável).
 
-- Azul header: `#0c2340` → `#1a4a6e` (gradient)
-- Vermelho KPI crítico: `#7f1212` (já é o da marca, mantém)
-- Verde OK: `#10b981`
-- Amarelo alerta: `#f59e0b`
-- Cinza grade/bordas: `#cbd5e1` / `#e2e8f0`
-- Fundo página: `#f1f5f9` (mais frio que o atual)
+### 1.4 Validade e janela de execução
 
-## Detalhes técnicos
+Hoje só tem `data`. Adicionar:
 
-- Arquivo único editado: `src/routes/app.painel.tsx` (873 linhas → reescreve o JSX a partir da linha ~316, mantendo todo o data fetching e os `useMemo` acima dela intactos).
-- `KpiCard` ganha variante `mega` (o card vermelho gigante) e `donut` (gauge circular).
-- Adiciono um `MiniBarsVertical` e um `RankingList` (componentes locais no mesmo arquivo, pra não inflar `/components`).
-- Recharts continua sendo a lib (já importada). Sem novas dependências.
-- Layout responsivo: a partir de `lg:` ativa a grade 3-colunas com filtros laterais; em mobile vira stack vertical normal.
+- `hora_inicio` (time)
+- `hora_fim` (time)
+- `validade` (radio: Turno / 24h / Personalizada)
+- Status visual automático: **Válida / Expirada / Encerrada**
 
-## Fora de escopo
+### 1.5 PT irmãs (relacionar permissões)
 
-- Não mexo nas tabelas/listas de busca de colaboradores no rodapé (se houver).
-- Não mexo nos dados — toda métrica continua vindo do mesmo `useQuery`.
-- Não troco a paleta global do sistema, só a do painel.
+Campo opcional **"PTs relacionadas"** — multi-select de outras PTs ativas. Resolve o caso "soldar dentro de tanque" (PET + PTQ + Altura na mesma tarefa) que discutimos.
 
-Aprova que mando bala?
+### 1.6 PDF/Preview/Impressão
+
+Botão **"Visualizar PDF"** em cada PT do histórico:
+
+- Abre modal com layout A4 pronto para impressão (mesmo padrão do APR).
+- Campos: número, tipo, APR vinculada, local, casco, empresa, executante, validade, riscos, controles (puxados da APR), assinaturas (placeholder por enquanto).
+- Botões: **Imprimir** (window.print scoped) e **Download PDF** (jsPDF, já temos no projeto).
+- Assinatura digital fica para Fase 3.
+
+### 1.7 Banco — migration mínima
+
+Adicionar em `ptes`:
+- `tipo_pt` (text, default 'PTE')
+- `hora_inicio` (time)
+- `hora_fim` (time)
+- `validade_tipo` (text: 'TURNO' | '24H' | 'CUSTOM')
+- `validade_ate` (timestamptz, calculado)
+- `pts_relacionadas` (uuid[])
+- `emergencia_sem_apr` (boolean, default false)
+- `emergencia_justificativa` (text)
+
+APR já vinculada via `apr_id` existente. Sem novas tabelas nesta fase.
+
+---
+
+## Fase 2 — PET NR-33 completo (próxima rodada, não nesta)
+
+- Tabelas novas: `pet_trabalhadores_autorizados`, `pet_testes_atmosfera`, `pet_checklist_respostas` (35 itens do FOR-SEG 05), `pet_assinaturas`.
+- Validação automática de limites (O₂ 19.5–23%, LIE <10%, etc.) com bloqueio de liberação.
+- Vigia e Supervisor de Entrada obrigatórios.
+
+## Fase 3 — Demais PTs + assinatura digital
+
+- Forms específicos: PTQ (rescaldo 30min), PTA (ancoragem/cinto), PTEL (LOTO).
+- Assinatura digital (canvas, igual APR) para Emitente / Executante / Vigia / Supervisor.
+- Dashboard de PTs ativas por casco/frente.
+
+---
+
+## Detalhes técnicos (Fase 1)
+
+- **Arquivo principal:** `src/routes/app.ptes.tsx` — reescrever formulário, adicionar select de tipo + APR obrigatória + horários.
+- **Novo componente:** `src/components/pte/PtePdfPreview.tsx` — modal de preview/impressão.
+- **Migration:** colunas novas em `ptes`, todas opcionais para não quebrar registros existentes.
+- **Lib:** reaproveitar `apr-pte-rules.ts` para sugestão automática de tipo.
+- **Menu lateral:** label "PTE" → "Permissões".
+
+---
+
+## O que NÃO entra nesta fase
+
+- Checklist de 35 itens do PET (Fase 2).
+- Testes atmosféricos com validação numérica (Fase 2).
+- Assinatura digital com canvas (Fase 3).
+- Forms separados por tipo (Fase 3).
+- Continuous monitoring NR-33 (Fase 3).
+
+---
+
+## Pergunta antes de começar
+
+Topa essa Fase 1 do jeito que tá ou quer ajustar algo (ex: já incluir alguns campos do PET nesta rodada, ou começar pelo PDF e deixar tipo/APR pra depois)?
