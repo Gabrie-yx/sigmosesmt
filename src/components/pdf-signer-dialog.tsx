@@ -497,7 +497,7 @@ export function PdfSignerDialog({
                           const cssPerPtX = rect.width / pageSize.w;
                           const cssPerPtY = rect.height / pageSize.h;
                           const leftCss = p.x * cssPerPtX;
-                          const topCss = (pageSize.h - p.y - p.height) * cssPerPtY;
+                          const topCss = p.y * cssPerPtY;
                           const wCss = p.width * cssPerPtX;
                           const hCss = p.height * cssPerPtY;
                           return (
