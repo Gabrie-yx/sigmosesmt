@@ -53,6 +53,23 @@ export const PTE_RISCOS = [
   "Limpeza de Tanque (Risco Biológico)",
 ] as const;
 
+/**
+ * Tipos de Permissão de Trabalho (PT) — categorias canônicas no estaleiro.
+ * Cada tipo amarra a NR/normativa principal e define o escopo do form.
+ */
+export const PT_TIPOS = [
+  { value: "PTE",  label: "PTE — Permissão de Trabalho Especial",   nr: "Genérica" },
+  { value: "PET",  label: "PET — Espaço Confinado",                  nr: "NR-33" },
+  { value: "PTQ",  label: "PTQ — Trabalho a Quente",                 nr: "NR-34" },
+  { value: "PTA",  label: "PTA — Trabalho em Altura",                nr: "NR-35" },
+  { value: "PTI",  label: "PTI — Içamento de Carga",                 nr: "NR-11/34" },
+  { value: "PTEL", label: "PTEL — Elétrica / LOTO",                  nr: "NR-10" },
+  { value: "PTP",  label: "PTP — Pintura / Jateamento",              nr: "NR-34+NR-15" },
+  { value: "PTS",  label: "PTS — Trabalho Simultâneo (SimOps)",      nr: "Boas Práticas" },
+] as const;
+
+export type PtTipo = (typeof PT_TIPOS)[number]["value"];
+
 export const VACINAS_LIST = [
   "Tétano/Difteria (dT)",
   "Hepatite B",

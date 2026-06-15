@@ -5062,14 +5062,22 @@ export type Database = {
           dados: Json
           data: string
           data_emissao: string
+          emergencia_justificativa: string | null
+          emergencia_sem_apr: boolean
           employee_id: string | null
           employee_name: string | null
+          hora_fim: string | null
+          hora_inicio: string | null
           id: string
           local: string | null
           numero: string | null
           pdf_path: string | null
+          pts_relacionadas: string[] | null
           risco: string | null
           status: string
+          tipo_pt: string
+          validade_ate: string | null
+          validade_tipo: string
         }
         Insert: {
           apr_id?: string | null
@@ -5080,14 +5088,22 @@ export type Database = {
           dados?: Json
           data?: string
           data_emissao?: string
+          emergencia_justificativa?: string | null
+          emergencia_sem_apr?: boolean
           employee_id?: string | null
           employee_name?: string | null
+          hora_fim?: string | null
+          hora_inicio?: string | null
           id?: string
           local?: string | null
           numero?: string | null
           pdf_path?: string | null
+          pts_relacionadas?: string[] | null
           risco?: string | null
           status?: string
+          tipo_pt?: string
+          validade_ate?: string | null
+          validade_tipo?: string
         }
         Update: {
           apr_id?: string | null
@@ -5098,14 +5114,22 @@ export type Database = {
           dados?: Json
           data?: string
           data_emissao?: string
+          emergencia_justificativa?: string | null
+          emergencia_sem_apr?: boolean
           employee_id?: string | null
           employee_name?: string | null
+          hora_fim?: string | null
+          hora_inicio?: string | null
           id?: string
           local?: string | null
           numero?: string | null
           pdf_path?: string | null
+          pts_relacionadas?: string[] | null
           risco?: string | null
           status?: string
+          tipo_pt?: string
+          validade_ate?: string | null
+          validade_tipo?: string
         }
         Relationships: [
           {

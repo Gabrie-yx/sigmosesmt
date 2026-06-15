@@ -7,13 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Files, Printer, Pencil, Trash2, X, HardHat, Clock, Link2 } from "lucide-react";
+import { FileText, Files, Printer, Pencil, Trash2, X, HardHat, Clock, Link2, AlertTriangle, FileSearch } from "lucide-react";
 import { toast } from "sonner";
-import { PTE_RISCOS } from "@/lib/constants";
+import { PTE_RISCOS, PT_TIPOS } from "@/lib/constants";
 import { formatDateBR } from "@/lib/utils-date";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { hasGlobalOverride, type SafetyOverride } from "@/lib/safety-overrides";
 import { detectarExigenciaPTE } from "@/lib/apr-pte-rules";
+import { PtPdfPreview } from "@/components/ptes/PtPdfPreview";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/app/ptes")({
   component: PtesPage,
@@ -31,8 +34,12 @@ function PtesPage() {
   const today = new Date().toISOString().slice(0, 10);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkedAprId, setLinkedAprId] = useState<string | null>(null);
+  const [previewPt, setPreviewPt] = useState<any | null>(null);
   const [f, setF] = useState<any>({
     data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
+    tipo_pt: "PTE", hora_inicio: "07:00", hora_fim: "17:00",
+    validade_tipo: "TURNO", validade_ate: "",
+    emergencia_sem_apr: false, emergencia_justificativa: "",
   });
 
   const { data: ptes = [] } = useQuery({
@@ -63,6 +70,14 @@ function PtesPage() {
         risco: riscoSugerido,
         local: apr.local ?? cur.local,
         casco_id: apr.casco_id ?? cur.casco_id,
+        // Sugere tipo da PT pela categoria detectada
+        tipo_pt: det.categoriaPrincipal === "NR-33 Espaço Confinado" ? "PET"
+               : det.categoriaPrincipal === "NR-35 Altura" ? "PTA"
+               : det.categoriaPrincipal === "NR-34 Trabalho a Quente" ? "PTQ"
+               : det.categoriaPrincipal === "NR-10 Eletricidade" ? "PTEL"
+               : det.categoriaPrincipal === "Içamento de Carga" ? "PTI"
+               : det.categoriaPrincipal === "Pintura em Ambiente Fechado" ? "PTP"
+               : cur.tipo_pt,
       }));
       toast.info(`Vinculando nova PTE à APR ${apr.numero}`);
       // limpa o search para não repetir ao voltar
@@ -137,6 +152,26 @@ function PtesPage() {
   const save = useMutation({
     mutationFn: async () => {
       const emp = emps.find((x: any) => x.id === f.employee_id);
+
+      // Regra de ouro: APR obrigatória (exceto emergência justificada)
+      if (!linkedAprId && !f.emergencia_sem_apr) {
+        throw new Error("APR vinculada é obrigatória. Marque 'Emergência sem APR' apenas se autorizado.");
+      }
+      if (f.emergencia_sem_apr && (!f.emergencia_justificativa || f.emergencia_justificativa.trim().length < 10)) {
+        throw new Error("Justificativa de emergência é obrigatória (mínimo 10 caracteres).");
+      }
+
+      // Calcula validade_ate conforme tipo
+      let validadeAte: string | null = null;
+      const baseDate = new Date(f.data + "T" + (f.hora_fim || "23:59") + ":00");
+      if (f.validade_tipo === "TURNO") {
+        validadeAte = baseDate.toISOString();
+      } else if (f.validade_tipo === "24H") {
+        validadeAte = new Date(new Date(f.data + "T" + (f.hora_inicio || "00:00") + ":00").getTime() + 24 * 3600 * 1000).toISOString();
+      } else if (f.validade_tipo === "CUSTOM" && f.validade_ate) {
+        validadeAte = new Date(f.validade_ate).toISOString();
+      }
+
       // Bloqueio específico para Limpeza de Tanque (Risco Biológico)
       if (f.risco?.toLowerCase().includes("tanque") || f.risco?.toLowerCase().includes("biológic")) {
         const empOv = overridesAll.filter((o) => o.employee_id === emp?.id);
@@ -167,16 +202,31 @@ function PtesPage() {
           employee_id: f.employee_id || null, employee_name: emp?.nome ?? null,
           company_id: emp?.company_id ?? null,
           casco_id: f.casco_id || null,
+          tipo_pt: f.tipo_pt,
+          hora_inicio: f.hora_inicio || null,
+          hora_fim: f.hora_fim || null,
+          validade_tipo: f.validade_tipo,
+          validade_ate: validadeAte,
+          apr_id: linkedAprId,
+          emergencia_sem_apr: f.emergencia_sem_apr,
+          emergencia_justificativa: f.emergencia_sem_apr ? f.emergencia_justificativa : null,
         }).eq("id", editingId);
         if (error) throw error;
       } else {
-        const numero = `PTE-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`;
+        const numero = `${f.tipo_pt}-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`;
         const { error } = await supabase.from("ptes").insert({
           numero, data: f.data, local: f.local || null, risco: f.risco, status: "ATIVA",
           employee_id: f.employee_id || null, employee_name: emp?.nome ?? null,
           company_id: emp?.company_id ?? null, dados: {},
           apr_id: linkedAprId,
           casco_id: f.casco_id || null,
+          tipo_pt: f.tipo_pt,
+          hora_inicio: f.hora_inicio || null,
+          hora_fim: f.hora_fim || null,
+          validade_tipo: f.validade_tipo,
+          validade_ate: validadeAte,
+          emergencia_sem_apr: f.emergencia_sem_apr,
+          emergencia_justificativa: f.emergencia_sem_apr ? f.emergencia_justificativa : null,
         });
         if (error) throw error;
       }
@@ -190,8 +240,13 @@ function PtesPage() {
       } });
       setEditingId(null);
       setLinkedAprId(null);
-      setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "" });
-      toast.success(editingId ? "PTE atualizada" : "PTE emitida");
+      setF({
+        data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
+        tipo_pt: "PTE", hora_inicio: "07:00", hora_fim: "17:00",
+        validade_tipo: "TURNO", validade_ate: "",
+        emergencia_sem_apr: false, emergencia_justificativa: "",
+      });
+      toast.success(editingId ? "Permissão atualizada" : "Permissão emitida");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -222,25 +277,51 @@ function PtesPage() {
 
   function startEdit(p: any) {
     setEditingId(p.id);
-    setF({ data: p.data, employee_id: p.employee_id ?? "", risco: p.risco ?? PTE_RISCOS[0], local: p.local ?? "", company_id: p.company_id ?? "", casco_id: p.casco_id ?? "" });
+    setLinkedAprId(p.apr_id ?? null);
+    setF({
+      data: p.data,
+      employee_id: p.employee_id ?? "",
+      risco: p.risco ?? PTE_RISCOS[0],
+      local: p.local ?? "",
+      company_id: p.company_id ?? "",
+      casco_id: p.casco_id ?? "",
+      tipo_pt: p.tipo_pt ?? "PTE",
+      hora_inicio: p.hora_inicio ?? "07:00",
+      hora_fim: p.hora_fim ?? "17:00",
+      validade_tipo: p.validade_tipo ?? "TURNO",
+      validade_ate: p.validade_ate ? new Date(p.validade_ate).toISOString().slice(0, 16) : "",
+      emergencia_sem_apr: p.emergencia_sem_apr ?? false,
+      emergencia_justificativa: p.emergencia_justificativa ?? "",
+    });
   }
   function cancelEdit() {
     setEditingId(null);
-    setF({ data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "" });
+    setLinkedAprId(null);
+    setF({
+      data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
+      tipo_pt: "PTE", hora_inicio: "07:00", hora_fim: "17:00",
+      validade_tipo: "TURNO", validade_ate: "",
+      emergencia_sem_apr: false, emergencia_justificativa: "",
+    });
   }
 
   return (
     <div className="p-6 md:p-8 animate-fadeIn h-full overflow-y-auto custom-scrollbar bg-[#f1f5f9]">
-      <h2 className="heading-display text-3xl md:text-4xl text-[#991b1b] mb-8">
-        Emissão de PTE (Permissão de Trabalho)
-      </h2>
+      <div className="mb-8">
+        <h2 className="heading-display text-3xl md:text-4xl text-[#991b1b]">
+          Permissões de Trabalho
+        </h2>
+        <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mt-1">
+          PT • PTE • PET • emissão, validade e impressão
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* FORM */}
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
           <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-100 pb-4 flex items-center justify-between">
             <span className="flex items-center gap-2"><FileText className="h-5 w-5" />
-              {editingId ? "Editar Permissão Especial" : "Nova Permissão Especial"}
+              {editingId ? "Editar Permissão" : "Nova Permissão de Trabalho"}
             </span>
             {editingId && (
               <button type="button" onClick={cancelEdit} className="text-[10px] bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg hover:bg-slate-200 uppercase font-black">
@@ -249,7 +330,72 @@ function PtesPage() {
             )}
           </h3>
           <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="space-y-6">
-            {linkedAprId && (
+
+            {/* TIPO DA PT */}
+            <div>
+              <Label className="text-[10px] font-black text-slate-500 uppercase">Tipo de Permissão</Label>
+              <Select value={f.tipo_pt} onValueChange={(v) => setF({ ...f, tipo_pt: v })}>
+                <SelectTrigger className="bg-slate-50 mt-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PT_TIPOS.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>{t.label} <span className="text-[9px] text-slate-400 ml-1">({t.nr})</span></SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* APR VINCULADA — OBRIGATÓRIA */}
+            <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4">
+              <Label className="text-[10px] font-black text-emerald-800 uppercase flex items-center gap-2 mb-2">
+                <Link2 className="h-4 w-4" /> APR Vinculada {!f.emergencia_sem_apr && <span className="text-red-600">*</span>}
+              </Label>
+              <Select
+                value={linkedAprId ?? "none"}
+                disabled={f.emergencia_sem_apr}
+                onValueChange={(v) => {
+                  if (v === "none") { setLinkedAprId(null); return; }
+                  setLinkedAprId(v);
+                  const apr = aprsMap.get(v) as any;
+                  if (apr) setF((cur: any) => ({ ...cur, local: apr.local ?? cur.local, casco_id: apr.casco_id ?? cur.casco_id }));
+                }}
+              >
+                <SelectTrigger className="bg-white text-xs font-bold uppercase">
+                  <SelectValue placeholder="-- SELECIONE A APR --" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— SEM APR —</SelectItem>
+                  {(aprsAll as any[]).slice(0, 200).map((a: any) => (
+                    <SelectItem key={a.id} value={a.id}>APR {a.numero} — {a.atividade_descricao?.slice(0, 50) ?? ""}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {isAdmin && (
+                <div className="mt-3 flex items-start gap-2">
+                  <Checkbox
+                    id="emerg"
+                    checked={f.emergencia_sem_apr}
+                    onCheckedChange={(v) => setF({ ...f, emergencia_sem_apr: !!v })}
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="emerg" className="text-[10px] font-black text-amber-800 uppercase cursor-pointer flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" /> Emergência — emitir sem APR (apenas Admin)
+                    </label>
+                    {f.emergencia_sem_apr && (
+                      <Textarea
+                        required
+                        value={f.emergencia_justificativa}
+                        onChange={(e) => setF({ ...f, emergencia_justificativa: e.target.value })}
+                        placeholder="Justificativa obrigatória (mínimo 10 caracteres) — será registrada em auditoria"
+                        className="mt-2 bg-white text-xs"
+                        rows={2}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {linkedAprId && !f.emergencia_sem_apr && (
               <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 flex items-start gap-2">
                 <Link2 className="h-4 w-4 text-amber-700 mt-0.5 shrink-0" />
                 <div className="flex-1 text-[10px] font-bold uppercase text-amber-900">
@@ -258,6 +404,7 @@ function PtesPage() {
                 </div>
               </div>
             )}
+
             <div>
               <Label className="text-[10px] font-black text-slate-500 uppercase">Local do Trabalho / Instalação</Label>
               <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-slate-50 mt-2 text-xs font-bold uppercase" />
@@ -285,9 +432,54 @@ function PtesPage() {
                 <SelectContent>{PTE_RISCOS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+
+            {/* DATA + HORÁRIOS */}
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-[10px] font-black text-slate-500 uppercase">Data</Label>
+                <Input type="date" required value={f.data} onChange={(e) => setF({ ...f, data: e.target.value })} className="bg-slate-50 mt-2" />
+              </div>
+              <div>
+                <Label className="text-[10px] font-black text-slate-500 uppercase">Início</Label>
+                <Input type="time" value={f.hora_inicio} onChange={(e) => setF({ ...f, hora_inicio: e.target.value })} className="bg-slate-50 mt-2" />
+              </div>
+              <div>
+                <Label className="text-[10px] font-black text-slate-500 uppercase">Fim</Label>
+                <Input type="time" value={f.hora_fim} onChange={(e) => setF({ ...f, hora_fim: e.target.value })} className="bg-slate-50 mt-2" />
+              </div>
+            </div>
+
+            {/* VALIDADE */}
             <div>
-              <Label className="text-[10px] font-black text-slate-500 uppercase">Data</Label>
-              <Input type="date" required value={f.data} onChange={(e) => setF({ ...f, data: e.target.value })} className="bg-slate-50 mt-2" />
+              <Label className="text-[10px] font-black text-slate-500 uppercase mb-2 block">Validade</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { v: "TURNO", l: "Turno" },
+                  { v: "24H", l: "24h" },
+                  { v: "CUSTOM", l: "Personalizada" },
+                ].map((opt) => (
+                  <button
+                    key={opt.v}
+                    type="button"
+                    onClick={() => setF({ ...f, validade_tipo: opt.v })}
+                    className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-colors ${
+                      f.validade_tipo === opt.v
+                        ? "bg-[#991b1b] text-white border-[#991b1b]"
+                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    {opt.l}
+                  </button>
+                ))}
+              </div>
+              {f.validade_tipo === "CUSTOM" && (
+                <Input
+                  type="datetime-local"
+                  value={f.validade_ate}
+                  onChange={(e) => setF({ ...f, validade_ate: e.target.value })}
+                  className="bg-slate-50 mt-2"
+                />
+              )}
             </div>
 
             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
@@ -336,7 +528,7 @@ function PtesPage() {
                 editingId ? "bg-blue-600 hover:bg-blue-700" : "bg-orange-600 hover:bg-orange-700"
               } text-white`}
             >
-              <Printer className="h-4 w-4" /> {editingId ? "Salvar Alterações" : "Emitir PTE"}
+              <Printer className="h-4 w-4" /> {editingId ? "Salvar Alterações" : "Emitir Permissão"}
             </Button>
           </form>
         </div>
@@ -344,7 +536,7 @@ function PtesPage() {
         {/* HISTORY */}
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
           <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-100 pb-4 flex items-center gap-2">
-            <Files className="h-5 w-5" /> Histórico de PTEs Emitidas
+            <Files className="h-5 w-5" /> Histórico de Permissões
           </h3>
           <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
             {ptes.length === 0 && (
@@ -355,9 +547,17 @@ function PtesPage() {
             {ptes.map((p: any) => (
               <div key={p.id} className={`p-5 border rounded-2xl ${p.status === "ATIVA" ? "bg-orange-50 border-orange-200 shadow-sm" : "bg-slate-50 border-slate-200 opacity-70"}`}>
                 <div className="flex justify-between items-start mb-3">
-                  <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Nº {p.numero}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Nº {p.numero}</div>
+                    {p.tipo_pt && p.tipo_pt !== "PTE" && (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">{p.tipo_pt}</span>
+                    )}
+                  </div>
                   <div className="flex gap-2 items-center">
                     <div className={`text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-widest ${p.status === "ATIVA" ? "bg-orange-500 text-white" : "bg-slate-300 text-slate-600"}`}>{p.status}</div>
+                    <button onClick={() => setPreviewPt(p)} className="w-6 h-6 rounded bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-colors" title="Visualizar / Imprimir PDF">
+                      <FileSearch className="h-3 w-3" />
+                    </button>
                     {isEditor && (
                       <button onClick={() => startEdit(p)} className="w-6 h-6 rounded bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors" title="Editar">
                         <Pencil className="h-3 w-3" />
@@ -373,6 +573,11 @@ function PtesPage() {
                 <h4 className="text-xs font-black text-[#991b1b] uppercase mb-1">{p.employee_name ?? "—"}</h4>
                 <div className="text-[10px] font-bold text-slate-500 uppercase mt-1">Risco: <span className="font-black text-slate-700">{p.risco}</span></div>
                 <div className="text-[10px] font-bold text-slate-500 uppercase">Local: {p.local ?? "—"}</div>
+                {(p.hora_inicio || p.hora_fim) && (
+                  <div className="text-[10px] font-bold text-slate-500 uppercase">
+                    Horário: <span className="font-black text-slate-700">{p.hora_inicio ?? "—"} → {p.hora_fim ?? "—"}</span>
+                  </div>
+                )}
                 {p.casco_id && (
                   <div className="text-[10px] font-bold text-indigo-700 uppercase">
                     Casco: <span className="font-black">{(cascosMap.get(p.casco_id) as any)?.numero ?? "—"}</span>
@@ -382,6 +587,11 @@ function PtesPage() {
                 {p.apr_id && (
                   <div className="text-[10px] font-bold text-emerald-700 uppercase mt-1 flex items-center gap-1">
                     <Link2 className="h-3 w-3" /> APR {(aprsMap.get(p.apr_id) as any)?.numero ?? p.apr_id.slice(0, 8)}
+                  </div>
+                )}
+                {p.emergencia_sem_apr && (
+                  <div className="text-[10px] font-black text-amber-700 uppercase mt-1 flex items-center gap-1 bg-amber-50 px-2 py-1 rounded">
+                    <AlertTriangle className="h-3 w-3" /> Emergência — sem APR
                   </div>
                 )}
                 <div className="text-[9px] font-black text-slate-400 uppercase mt-3 tracking-widest flex items-center gap-1">
@@ -397,6 +607,15 @@ function PtesPage() {
           </div>
         </div>
       </div>
+
+      <PtPdfPreview
+        open={!!previewPt}
+        onClose={() => setPreviewPt(null)}
+        pt={previewPt}
+        apr={previewPt?.apr_id ? aprsMap.get(previewPt.apr_id) : undefined}
+        casco={previewPt?.casco_id ? cascosMap.get(previewPt.casco_id) : undefined}
+        company={previewPt?.company_id ? (companies as any[]).find((c: any) => c.id === previewPt.company_id) : undefined}
+      />
     </div>
   );
 }
