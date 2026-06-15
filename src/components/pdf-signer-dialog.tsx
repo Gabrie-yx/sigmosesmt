@@ -412,6 +412,7 @@ export function PdfSignerDialog({
           y: p.y,
           width: p.width,
           height: p.height,
+          rotation: p.rotation,
           dataUrl: p.dataUrl,
         })),
         total_assinaturas: placements.length,
