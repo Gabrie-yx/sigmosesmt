@@ -71,10 +71,12 @@ function PtesPage() {
         local: apr.local ?? cur.local,
         casco_id: apr.casco_id ?? cur.casco_id,
         // Sugere tipo da PT pela categoria detectada
-        tipo_pt: det.categoriaPrincipal === "Espaço Confinado" ? "PET"
-               : det.categoriaPrincipal === "Trabalho em Altura" ? "PTA"
-               : det.categoriaPrincipal === "Trabalho a Quente" ? "PTQ"
-               : det.categoriaPrincipal === "Eletricidade Alta Tensão" ? "PTEL"
+        tipo_pt: det.categoriaPrincipal === "NR-33 Espaço Confinado" ? "PET"
+               : det.categoriaPrincipal === "NR-35 Altura" ? "PTA"
+               : det.categoriaPrincipal === "NR-34 Trabalho a Quente" ? "PTQ"
+               : det.categoriaPrincipal === "NR-10 Eletricidade" ? "PTEL"
+               : det.categoriaPrincipal === "Içamento de Carga" ? "PTI"
+               : det.categoriaPrincipal === "Pintura em Ambiente Fechado" ? "PTP"
                : cur.tipo_pt,
       }));
       toast.info(`Vinculando nova PTE à APR ${apr.numero}`);
