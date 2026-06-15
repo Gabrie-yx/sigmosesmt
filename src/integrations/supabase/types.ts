@@ -5064,8 +5064,10 @@ export type Database = {
           data_emissao: string
           emergencia_justificativa: string | null
           emergencia_sem_apr: boolean
+          emitente_user_id: string | null
           employee_id: string | null
           employee_name: string | null
+          executantes_ids: string[] | null
           hora_fim: string | null
           hora_inicio: string | null
           id: string
@@ -5073,11 +5075,14 @@ export type Database = {
           numero: string | null
           pdf_path: string | null
           pts_relacionadas: string[] | null
+          requisitante_id: string | null
           risco: string | null
           status: string
+          supervisor_entrada_id: string | null
           tipo_pt: string
           validade_ate: string | null
           validade_tipo: string
+          vigia_id: string | null
         }
         Insert: {
           apr_id?: string | null
@@ -5090,8 +5095,10 @@ export type Database = {
           data_emissao?: string
           emergencia_justificativa?: string | null
           emergencia_sem_apr?: boolean
+          emitente_user_id?: string | null
           employee_id?: string | null
           employee_name?: string | null
+          executantes_ids?: string[] | null
           hora_fim?: string | null
           hora_inicio?: string | null
           id?: string
@@ -5099,11 +5106,14 @@ export type Database = {
           numero?: string | null
           pdf_path?: string | null
           pts_relacionadas?: string[] | null
+          requisitante_id?: string | null
           risco?: string | null
           status?: string
+          supervisor_entrada_id?: string | null
           tipo_pt?: string
           validade_ate?: string | null
           validade_tipo?: string
+          vigia_id?: string | null
         }
         Update: {
           apr_id?: string | null
@@ -5116,8 +5126,10 @@ export type Database = {
           data_emissao?: string
           emergencia_justificativa?: string | null
           emergencia_sem_apr?: boolean
+          emitente_user_id?: string | null
           employee_id?: string | null
           employee_name?: string | null
+          executantes_ids?: string[] | null
           hora_fim?: string | null
           hora_inicio?: string | null
           id?: string
@@ -5125,11 +5137,14 @@ export type Database = {
           numero?: string | null
           pdf_path?: string | null
           pts_relacionadas?: string[] | null
+          requisitante_id?: string | null
           risco?: string | null
           status?: string
+          supervisor_entrada_id?: string | null
           tipo_pt?: string
           validade_ate?: string | null
           validade_tipo?: string
+          vigia_id?: string | null
         }
         Relationships: [
           {
