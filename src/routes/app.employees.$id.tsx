@@ -1067,6 +1067,15 @@ function NrsTab({ emp, role, canEdit, qc }: any) {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["employee", emp.id] }); toast.success("Salvo"); },
     onError: (e: any) => toast.error(e.message),
   });
+  // Listener do botão Salvar do cabeçalho
+  useEffect(() => {
+    if (!canEdit) return;
+    const handler = (e: any) => {
+      if (e?.detail?.tab === "nrs" && !save.isPending) save.mutate();
+    };
+    window.addEventListener("employee:save-tab", handler as EventListener);
+    return () => window.removeEventListener("employee:save-tab", handler as EventListener);
+  }, [canEdit, save]);
 
   const reqNrs: string[] = role?.req_nrs ?? [];
   const allNrs = Array.from(new Set([...reqNrs, ...NRS_LIST])).sort();
