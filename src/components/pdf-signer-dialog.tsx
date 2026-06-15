@@ -99,6 +99,7 @@ export function PdfSignerDialog({
   const [pageNum, setPageNum] = useState(1);
   const [numPages, setNumPages] = useState(0);
   const [pageSize, setPageSize] = useState({ w: 0, h: 0 }); // PDF points
+  const [pageRotation, setPageRotation] = useState(0); // graus CW (0/90/180/270)
   const [renderScale, setRenderScale] = useState(1.5); // canvas px / pt
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [picking, setPicking] = useState(false);
@@ -160,6 +161,7 @@ export function PdfSignerDialog({
               y: a.y,
               width: a.width,
               height: a.height,
+              rotation: a.rotation ?? 0,
               dataUrl: a.dataUrl || "", // We might need to store dataUrl or fetch it
               nome: a.nome,
               cargo: a.cargo,
