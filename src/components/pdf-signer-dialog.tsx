@@ -210,6 +210,7 @@ export function PdfSignerDialog({
     await page.render({ canvasContext: ctx, viewport, canvas }).promise;
     const ptVp = page.getViewport({ scale: 1 });
     setPageSize({ w: ptVp.width, h: ptVp.height });
+    setPageRotation(((page.rotate ?? 0) % 360 + 360) % 360);
   }, [pageNum, renderScale]);
 
   useEffect(() => {
@@ -234,11 +235,9 @@ export function PdfSignerDialog({
     img.onload = () => {
       const aspect = img.naturalWidth / img.naturalHeight;
       const widthPt = sigHeightPt * aspect;
-      // center placement at click point, sit on the line (y is the bottom)
+      // Centro da assinatura no ponto do clique — em coords do VIEWPORT (top-left).
       const xPt = xCssPx * ptsPerCssX - widthPt / 2;
-      const yPtTop = yCssPx * ptsPerCssY; // from top
-      // pdf-lib y is from bottom of page
-      const yPt = pageSize.h - yPtTop - sigHeightPt / 2;
+      const yPt = yCssPx * ptsPerCssY - sigHeightPt / 2;
       const xClamped = Math.max(0, Math.min(pageSize.w - widthPt, xPt));
       const yClamped = Math.max(0, Math.min(pageSize.h - sigHeightPt, yPt));
       setPlacements((prev) => [
@@ -250,6 +249,7 @@ export function PdfSignerDialog({
           y: yClamped,
           width: widthPt,
           height: sigHeightPt,
+          rotation: pageRotation,
           dataUrl: pendingSig.dataUrl,
           nome: pendingSig.nome,
           cargo: pendingSig.cargo,
@@ -283,7 +283,7 @@ export function PdfSignerDialog({
             ? {
                 ...p,
                 x: Math.max(0, Math.min(pageSize.w - p.width, initX + dxPt)),
-                y: Math.max(0, Math.min(pageSize.h - p.height, initY - dyPt)),
+                y: Math.max(0, Math.min(pageSize.h - p.height, initY + dyPt)),
               }
             : p,
         ),
@@ -309,7 +309,6 @@ export function PdfSignerDialog({
     if (!initial) return;
     const initW = initial.width;
     const initH = initial.height;
-    const initY = initial.y;
     const aspect = initW / initH;
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     const onMove = (ev: PointerEvent) => {
@@ -317,10 +316,8 @@ export function PdfSignerDialog({
       let newW = Math.max(20, initW + dxPt);
       let newH = newW / aspect;
       if (newH < 12) { newH = 12; newW = newH * aspect; }
-      // y is bottom-left; keep the top visually fixed → adjust y
-      const newY = initY + (initH - newH);
       setPlacements((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, width: newW, height: newH, y: newY } : p)),
+        prev.map((p) => (p.id === id ? { ...p, width: newW, height: newH } : p)),
       );
     };
     const onUp = () => {
