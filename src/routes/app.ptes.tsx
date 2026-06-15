@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Files, Printer, Pencil, Trash2, X, HardHat, Clock, Link2, AlertTriangle, FileSearch } from "lucide-react";
+import { FileText, Files, Printer, Pencil, Trash2, X, HardHat, Clock, Link2, AlertTriangle, FileSearch, Users, Eye, ShieldCheck, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { PTE_RISCOS, PT_TIPOS } from "@/lib/constants";
 import { formatDateBR } from "@/lib/utils-date";
@@ -30,17 +30,22 @@ function PtesPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const search = useSearch({ from: "/app/ptes" });
-  const { isEditor, isAdmin } = useAuth();
+  const { isEditor, isAdmin, user } = useAuth();
   const today = new Date().toISOString().slice(0, 10);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkedAprId, setLinkedAprId] = useState<string | null>(null);
   const [previewPt, setPreviewPt] = useState<any | null>(null);
-  const [f, setF] = useState<any>({
-    data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
+  const emptyForm = {
+    data: today, risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
     tipo_pt: "PTE", hora_inicio: "07:00", hora_fim: "17:00",
     validade_tipo: "TURNO", validade_ate: "",
     emergencia_sem_apr: false, emergencia_justificativa: "",
-  });
+    requisitante_id: "" as string,
+    executantes_ids: [] as string[],
+    vigia_id: "" as string,
+    supervisor_entrada_id: "" as string,
+  };
+  const [f, setF] = useState<any>(emptyForm);
 
   const { data: ptes = [] } = useQuery({
     queryKey: ["ptes"],
@@ -151,7 +156,19 @@ function PtesPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const emp = emps.find((x: any) => x.id === f.employee_id);
+      // Validações de papéis
+      if (!f.requisitante_id) {
+        throw new Error("Requisitante (líder do serviço) é obrigatório.");
+      }
+      if (!f.executantes_ids || f.executantes_ids.length === 0) {
+        throw new Error("Adicione pelo menos 1 executante.");
+      }
+      if (f.tipo_pt === "PET") {
+        if (!f.vigia_id) throw new Error("Vigia é obrigatório em PET (Espaço Confinado — NR-33).");
+        if (!f.supervisor_entrada_id) throw new Error("Supervisor de Entrada é obrigatório em PET (NR-33).");
+      }
+
+      const requisitante = emps.find((x: any) => x.id === f.requisitante_id);
 
       // Regra de ouro: APR obrigatória (exceto emergência justificada)
       if (!linkedAprId && !f.emergencia_sem_apr) {
@@ -172,62 +189,59 @@ function PtesPage() {
         validadeAte = new Date(f.validade_ate).toISOString();
       }
 
-      // Bloqueio específico para Limpeza de Tanque (Risco Biológico)
+      // Bloqueio específico para Limpeza de Tanque (Risco Biológico) — checa TODOS os executantes
       if (f.risco?.toLowerCase().includes("tanque") || f.risco?.toLowerCase().includes("biológic")) {
-        const empOv = overridesAll.filter((o) => o.employee_id === emp?.id);
-        if (hasGlobalOverride(empOv) || empOv.some((o) => o.item_key === "PTE")) {
-          // Override ativo: pula bloqueio de vacinas
-        } else {
-        const role = roles.find((r: any) => r.id === emp?.role_id);
-        const reqVac: string[] = role?.req_vacinas ?? [];
-        const empVacs = vaccines.filter((v: any) => v.employee_id === emp?.id);
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const missing = reqVac.filter((vac) => {
-          const latest = empVacs
-            .filter((v: any) => v.tipo_vacina === vac)
-            .sort((a: any, b: any) => +new Date(b.data_aplicacao) - +new Date(a.data_aplicacao))[0];
-          if (!latest) return true;
-          if (!latest.anexo_path) return true;
-          if (latest.data_proxima_dose && new Date(latest.data_proxima_dose + "T00:00:00") < today) return true;
-          return false;
-        });
-        if (missing.length) {
-          throw new Error(`PTE bloqueada — vacinas obrigatórias pendentes: ${missing.join(", ")}. Admin pode liberar via Override no perfil do funcionário.`);
-        }
+        const todayD = new Date(); todayD.setHours(0, 0, 0, 0);
+        for (const exId of f.executantes_ids as string[]) {
+          const exEmp = emps.find((x: any) => x.id === exId);
+          if (!exEmp) continue;
+          const empOv = overridesAll.filter((o) => o.employee_id === exId);
+          if (hasGlobalOverride(empOv) || empOv.some((o) => o.item_key === "PTE")) continue;
+          const role = roles.find((r: any) => r.id === exEmp.role_id);
+          const reqVac: string[] = role?.req_vacinas ?? [];
+          const empVacs = vaccines.filter((v: any) => v.employee_id === exId);
+          const missing = reqVac.filter((vac) => {
+            const latest = empVacs
+              .filter((v: any) => v.tipo_vacina === vac)
+              .sort((a: any, b: any) => +new Date(b.data_aplicacao) - +new Date(a.data_aplicacao))[0];
+            if (!latest) return true;
+            if (!latest.anexo_path) return true;
+            if (latest.data_proxima_dose && new Date(latest.data_proxima_dose + "T00:00:00") < todayD) return true;
+            return false;
+          });
+          if (missing.length) {
+            throw new Error(`PT bloqueada — executante "${exEmp.nome}" com vacinas pendentes: ${missing.join(", ")}.`);
+          }
         }
       }
+      const commonPayload = {
+        data: f.data, local: f.local || null, risco: f.risco,
+        // Back-compat: employee_id/employee_name refletem o requisitante
+        employee_id: f.requisitante_id || null,
+        employee_name: requisitante?.nome ?? null,
+        company_id: requisitante?.company_id ?? f.company_id ?? null,
+        casco_id: f.casco_id || null,
+        tipo_pt: f.tipo_pt,
+        hora_inicio: f.hora_inicio || null,
+        hora_fim: f.hora_fim || null,
+        validade_tipo: f.validade_tipo,
+        validade_ate: validadeAte,
+        apr_id: linkedAprId,
+        emergencia_sem_apr: f.emergencia_sem_apr,
+        emergencia_justificativa: f.emergencia_sem_apr ? f.emergencia_justificativa : null,
+        requisitante_id: f.requisitante_id || null,
+        executantes_ids: f.executantes_ids,
+        vigia_id: f.vigia_id || null,
+        supervisor_entrada_id: f.supervisor_entrada_id || null,
+        emitente_user_id: user?.id ?? null,
+      };
+
       if (editingId) {
-        const { error } = await supabase.from("ptes").update({
-          data: f.data, local: f.local || null, risco: f.risco,
-          employee_id: f.employee_id || null, employee_name: emp?.nome ?? null,
-          company_id: emp?.company_id ?? null,
-          casco_id: f.casco_id || null,
-          tipo_pt: f.tipo_pt,
-          hora_inicio: f.hora_inicio || null,
-          hora_fim: f.hora_fim || null,
-          validade_tipo: f.validade_tipo,
-          validade_ate: validadeAte,
-          apr_id: linkedAprId,
-          emergencia_sem_apr: f.emergencia_sem_apr,
-          emergencia_justificativa: f.emergencia_sem_apr ? f.emergencia_justificativa : null,
-        }).eq("id", editingId);
+        const { error } = await supabase.from("ptes").update(commonPayload).eq("id", editingId);
         if (error) throw error;
       } else {
         const numero = `${f.tipo_pt}-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`;
-        const { error } = await supabase.from("ptes").insert({
-          numero, data: f.data, local: f.local || null, risco: f.risco, status: "ATIVA",
-          employee_id: f.employee_id || null, employee_name: emp?.nome ?? null,
-          company_id: emp?.company_id ?? null, dados: {},
-          apr_id: linkedAprId,
-          casco_id: f.casco_id || null,
-          tipo_pt: f.tipo_pt,
-          hora_inicio: f.hora_inicio || null,
-          hora_fim: f.hora_fim || null,
-          validade_tipo: f.validade_tipo,
-          validade_ate: validadeAte,
-          emergencia_sem_apr: f.emergencia_sem_apr,
-          emergencia_justificativa: f.emergencia_sem_apr ? f.emergencia_justificativa : null,
-        });
+        const { error } = await supabase.from("ptes").insert({ ...commonPayload, numero, status: "ATIVA", dados: {} });
         if (error) throw error;
       }
     },
@@ -240,12 +254,7 @@ function PtesPage() {
       } });
       setEditingId(null);
       setLinkedAprId(null);
-      setF({
-        data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
-        tipo_pt: "PTE", hora_inicio: "07:00", hora_fim: "17:00",
-        validade_tipo: "TURNO", validade_ate: "",
-        emergencia_sem_apr: false, emergencia_justificativa: "",
-      });
+      setF(emptyForm);
       toast.success(editingId ? "Permissão atualizada" : "Permissão emitida");
     },
     onError: (e: any) => toast.error(e.message),
@@ -280,7 +289,6 @@ function PtesPage() {
     setLinkedAprId(p.apr_id ?? null);
     setF({
       data: p.data,
-      employee_id: p.employee_id ?? "",
       risco: p.risco ?? PTE_RISCOS[0],
       local: p.local ?? "",
       company_id: p.company_id ?? "",
@@ -292,17 +300,16 @@ function PtesPage() {
       validade_ate: p.validade_ate ? new Date(p.validade_ate).toISOString().slice(0, 16) : "",
       emergencia_sem_apr: p.emergencia_sem_apr ?? false,
       emergencia_justificativa: p.emergencia_justificativa ?? "",
+      requisitante_id: p.requisitante_id ?? p.employee_id ?? "",
+      executantes_ids: (p.executantes_ids as string[] | null) ?? (p.employee_id ? [p.employee_id] : []),
+      vigia_id: p.vigia_id ?? "",
+      supervisor_entrada_id: p.supervisor_entrada_id ?? "",
     });
   }
   function cancelEdit() {
     setEditingId(null);
     setLinkedAprId(null);
-    setF({
-      data: today, employee_id: "", risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
-      tipo_pt: "PTE", hora_inicio: "07:00", hora_fim: "17:00",
-      validade_tipo: "TURNO", validade_ate: "",
-      emergencia_sem_apr: false, emergencia_justificativa: "",
-    });
+    setF(emptyForm);
   }
 
   return (
@@ -482,43 +489,133 @@ function PtesPage() {
               )}
             </div>
 
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
-              <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-3">
-                <HardHat className="h-4 w-4" /> Empresa
-              </Label>
-              <Select
-                value={f.company_id || "none"}
-                onValueChange={(v) => setF({ ...f, company_id: v === "none" ? "" : v, employee_id: "" })}
-              >
-                <SelectTrigger className="bg-white text-xs font-bold uppercase mb-4">
-                  <SelectValue placeholder="-- TODAS AS EMPRESAS --" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— TODAS AS EMPRESAS —</SelectItem>
-                  {companies.map((c: any) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-3">
-                <HardHat className="h-4 w-4" /> Selecionar Executante (Apenas Aptos)
-              </Label>
-              <select
-                required
-                value={f.employee_id}
-                onChange={(e) => setF({ ...f, employee_id: e.target.value })}
-                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b]"
-              >
-                <option value="">-- SELECIONE UM COLABORADOR NA BASE --</option>
-                {empOptions.map(({ e, st, compName }) => {
-                  const blocked = !st.acessoPermitido && (!editingId || f.employee_id !== e.id);
-                  return (
-                    <option key={e.id} value={e.id} disabled={blocked}>
-                      {blocked ? "🚫 BLOQUEADO" : "✅ APTO"}: {e.nome} - [{compName}] (MAT: {e.matricula || "N/A"})
-                    </option>
-                  );
-                })}
-              </select>
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-5">
+              <div>
+                <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-3">
+                  <HardHat className="h-4 w-4" /> Empresa (filtro)
+                </Label>
+                <Select
+                  value={f.company_id || "none"}
+                  onValueChange={(v) => setF({ ...f, company_id: v === "none" ? "" : v })}
+                >
+                  <SelectTrigger className="bg-white text-xs font-bold uppercase">
+                    <SelectValue placeholder="-- TODAS AS EMPRESAS --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— TODAS AS EMPRESAS —</SelectItem>
+                    {companies.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* REQUISITANTE */}
+              <div>
+                <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-2">
+                  <UserCheck className="h-4 w-4" /> Requisitante <span className="text-red-600">*</span>
+                  <span className="text-[9px] font-bold text-slate-500 normal-case">(líder/encarregado do serviço)</span>
+                </Label>
+                <select
+                  required
+                  value={f.requisitante_id}
+                  onChange={(e) => setF({ ...f, requisitante_id: e.target.value })}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b]"
+                >
+                  <option value="">-- SELECIONE O REQUISITANTE --</option>
+                  {empOptions.map(({ e, st, compName }) => {
+                    const blocked = !st.acessoPermitido;
+                    return (
+                      <option key={e.id} value={e.id} disabled={blocked && f.requisitante_id !== e.id}>
+                        {blocked ? "🚫" : "✅"} {e.nome} - [{compName}]
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* EXECUTANTES (multi) */}
+              <div>
+                <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4" /> Executantes <span className="text-red-600">*</span>
+                  <span className="text-[9px] font-bold text-slate-500 normal-case">(equipe que executa)</span>
+                </Label>
+                {f.executantes_ids.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {(f.executantes_ids as string[]).map((eid) => {
+                      const emp = emps.find((e: any) => e.id === eid);
+                      return (
+                        <span key={eid} className="inline-flex items-center gap-1 bg-orange-100 text-orange-800 text-[10px] font-black uppercase px-2 py-1 rounded">
+                          {emp?.nome ?? "?"}
+                          <button type="button" onClick={() => setF({ ...f, executantes_ids: f.executantes_ids.filter((x: string) => x !== eid) })} className="hover:text-red-600">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    if (f.executantes_ids.includes(e.target.value)) return;
+                    setF({ ...f, executantes_ids: [...f.executantes_ids, e.target.value] });
+                  }}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b]"
+                >
+                  <option value="">+ ADICIONAR EXECUTANTE</option>
+                  {empOptions
+                    .filter(({ e }) => !f.executantes_ids.includes(e.id))
+                    .map(({ e, st, compName }) => (
+                      <option key={e.id} value={e.id} disabled={!st.acessoPermitido}>
+                        {st.acessoPermitido ? "✅" : "🚫"} {e.nome} - [{compName}]
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {/* VIGIA + SUPERVISOR (apenas PET / NR-33) */}
+              {f.tipo_pt === "PET" && (
+                <>
+                  <div>
+                    <Label className="text-[10px] font-black text-amber-800 uppercase flex items-center gap-2 mb-2">
+                      <Eye className="h-4 w-4" /> Vigia (NR-33) <span className="text-red-600">*</span>
+                    </Label>
+                    <select
+                      required
+                      value={f.vigia_id}
+                      onChange={(e) => setF({ ...f, vigia_id: e.target.value })}
+                      className="w-full bg-white border border-amber-300 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-amber-600"
+                    >
+                      <option value="">-- SELECIONE O VIGIA --</option>
+                      {empOptions.map(({ e, compName }) => (
+                        <option key={e.id} value={e.id}>{e.nome} - [{compName}]</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-black text-amber-800 uppercase flex items-center gap-2 mb-2">
+                      <ShieldCheck className="h-4 w-4" /> Supervisor de Entrada (NR-33) <span className="text-red-600">*</span>
+                    </Label>
+                    <select
+                      required
+                      value={f.supervisor_entrada_id}
+                      onChange={(e) => setF({ ...f, supervisor_entrada_id: e.target.value })}
+                      className="w-full bg-white border border-amber-300 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-amber-600"
+                    >
+                      <option value="">-- SELECIONE O SUPERVISOR --</option>
+                      {empOptions.map(({ e, compName }) => (
+                        <option key={e.id} value={e.id}>{e.nome} - [{compName}]</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              <div className="text-[9px] font-bold uppercase text-slate-500 bg-white border border-dashed border-slate-200 rounded-lg px-3 py-2">
+                Emitente: <span className="text-slate-800 font-black">{user?.email ?? "—"}</span> (usuário logado)
+              </div>
             </div>
 
             <Button
@@ -570,8 +667,38 @@ function PtesPage() {
                     )}
                   </div>
                 </div>
-                <h4 className="text-xs font-black text-[#991b1b] uppercase mb-1">{p.employee_name ?? "—"}</h4>
-                <div className="text-[10px] font-bold text-slate-500 uppercase mt-1">Risco: <span className="font-black text-slate-700">{p.risco}</span></div>
+                {(() => {
+                  const reqName = emps.find((e: any) => e.id === (p.requisitante_id ?? p.employee_id))?.nome ?? p.employee_name;
+                  const execIds = (p.executantes_ids as string[] | null) ?? [];
+                  const execNames = execIds.map((id) => emps.find((e: any) => e.id === id)?.nome).filter(Boolean);
+                  const vigiaName = p.vigia_id ? emps.find((e: any) => e.id === p.vigia_id)?.nome : null;
+                  const supName = p.supervisor_entrada_id ? emps.find((e: any) => e.id === p.supervisor_entrada_id)?.nome : null;
+                  return (
+                    <>
+                      {reqName && (
+                        <div className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                          <UserCheck className="h-3 w-3" /> Requisitante: <span className="font-black text-[#991b1b]">{reqName}</span>
+                        </div>
+                      )}
+                      {execNames.length > 0 && (
+                        <div className="text-[10px] font-bold text-slate-500 uppercase flex items-start gap-1 mt-0.5">
+                          <Users className="h-3 w-3 mt-0.5 shrink-0" /> Executantes: <span className="font-black text-slate-700">{execNames.join(", ")}</span>
+                        </div>
+                      )}
+                      {vigiaName && (
+                        <div className="text-[10px] font-bold text-amber-700 uppercase flex items-center gap-1 mt-0.5">
+                          <Eye className="h-3 w-3" /> Vigia: <span className="font-black">{vigiaName}</span>
+                        </div>
+                      )}
+                      {supName && (
+                        <div className="text-[10px] font-bold text-amber-700 uppercase flex items-center gap-1 mt-0.5">
+                          <ShieldCheck className="h-3 w-3" /> Supervisor: <span className="font-black">{supName}</span>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+                <div className="text-[10px] font-bold text-slate-500 uppercase mt-2">Risco: <span className="font-black text-slate-700">{p.risco}</span></div>
                 <div className="text-[10px] font-bold text-slate-500 uppercase">Local: {p.local ?? "—"}</div>
                 {(p.hora_inicio || p.hora_fim) && (
                   <div className="text-[10px] font-bold text-slate-500 uppercase">
