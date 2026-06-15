@@ -41,6 +41,7 @@ import { PPPEditorDialog } from "@/components/ppp/ppp-editor-dialog";
 import type jsPDF from "jspdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban, ChevronDown } from "lucide-react";
 import { GraduationCap } from "lucide-react";
+import { Save } from "lucide-react";
 import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
 import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.functions";
 import { AtestadosTab } from "@/components/employees/atestados-tab";
@@ -337,12 +338,24 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         <div className="min-w-0">
           <div className="flex items-start justify-between gap-3">
             <h1 className="heading-display text-xl sm:text-2xl lg:text-[28px] leading-tight text-brand break-words min-w-0">{emp.nome}</h1>
-            {status && (
-              <div className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-slate-50 ring-1 ring-slate-200 pl-2 pr-2.5 py-1">
-                <span className={`h-2 w-2 rounded-full ${status.colorClass}`} />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{status.label}</span>
-              </div>
-            )}
+            <div className="shrink-0 flex items-center gap-2">
+              {isEditor && (tab === "profile" || tab === "nrs") && (
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("employee:save-tab", { detail: { tab } }))}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-700 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                  title="Salvar alterações desta aba"
+                >
+                  <Save className="h-3.5 w-3.5" /> Salvar
+                </button>
+              )}
+              {status && (
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 ring-1 ring-slate-200 pl-2 pr-2.5 py-1">
+                  <span className={`h-2 w-2 rounded-full ${status.colorClass}`} />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{status.label}</span>
+                </div>
+              )}
+            </div>
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-600">
             <span className="inline-flex items-center gap-1">
