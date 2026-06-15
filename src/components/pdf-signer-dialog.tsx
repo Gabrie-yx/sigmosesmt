@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library,
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from "pdf-lib";
+import { degrees } from "pdf-lib";
 import { SignaturePadDialog, type AssinaturaResult } from "@/components/signature-pad-dialog";
 import { SignatureGallery } from "@/components/signature-gallery";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,11 +31,15 @@ async function loadPdfJs(): Promise<PdfJsModule> {
 type Placement = {
   id: string;
   page: number;
-  // PDF-points (origin bottom-left)
+  // Coordenadas em VIEWPORT do pdfjs (origem top-left, scale=1, em pontos PDF).
+  // Ou seja: como o pdfjs RENDERIZA a página (já considerando /Rotate).
+  // A transformação para o sistema da MediaBox (pdf-lib) é feita só na hora de salvar.
   x: number;
   y: number;
   width: number;
   height: number;
+  // Rotação (graus CW) da página no momento do posicionamento (0/90/180/270).
+  rotation: number;
   dataUrl: string;
   nome: string;
   cargo: string;
@@ -94,6 +99,7 @@ export function PdfSignerDialog({
   const [pageNum, setPageNum] = useState(1);
   const [numPages, setNumPages] = useState(0);
   const [pageSize, setPageSize] = useState({ w: 0, h: 0 }); // PDF points
+  const [pageRotation, setPageRotation] = useState(0); // graus CW (0/90/180/270)
   const [renderScale, setRenderScale] = useState(1.5); // canvas px / pt
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [picking, setPicking] = useState(false);
@@ -155,6 +161,7 @@ export function PdfSignerDialog({
               y: a.y,
               width: a.width,
               height: a.height,
+              rotation: a.rotation ?? 0,
               dataUrl: a.dataUrl || "", // We might need to store dataUrl or fetch it
               nome: a.nome,
               cargo: a.cargo,
@@ -203,6 +210,7 @@ export function PdfSignerDialog({
     await page.render({ canvasContext: ctx, viewport, canvas }).promise;
     const ptVp = page.getViewport({ scale: 1 });
     setPageSize({ w: ptVp.width, h: ptVp.height });
+    setPageRotation(((page.rotate ?? 0) % 360 + 360) % 360);
   }, [pageNum, renderScale]);
 
   useEffect(() => {
@@ -227,11 +235,9 @@ export function PdfSignerDialog({
     img.onload = () => {
       const aspect = img.naturalWidth / img.naturalHeight;
       const widthPt = sigHeightPt * aspect;
-      // center placement at click point, sit on the line (y is the bottom)
+      // Centro da assinatura no ponto do clique — em coords do VIEWPORT (top-left).
       const xPt = xCssPx * ptsPerCssX - widthPt / 2;
-      const yPtTop = yCssPx * ptsPerCssY; // from top
-      // pdf-lib y is from bottom of page
-      const yPt = pageSize.h - yPtTop - sigHeightPt / 2;
+      const yPt = yCssPx * ptsPerCssY - sigHeightPt / 2;
       const xClamped = Math.max(0, Math.min(pageSize.w - widthPt, xPt));
       const yClamped = Math.max(0, Math.min(pageSize.h - sigHeightPt, yPt));
       setPlacements((prev) => [
@@ -243,6 +249,7 @@ export function PdfSignerDialog({
           y: yClamped,
           width: widthPt,
           height: sigHeightPt,
+          rotation: pageRotation,
           dataUrl: pendingSig.dataUrl,
           nome: pendingSig.nome,
           cargo: pendingSig.cargo,
@@ -276,7 +283,7 @@ export function PdfSignerDialog({
             ? {
                 ...p,
                 x: Math.max(0, Math.min(pageSize.w - p.width, initX + dxPt)),
-                y: Math.max(0, Math.min(pageSize.h - p.height, initY - dyPt)),
+                y: Math.max(0, Math.min(pageSize.h - p.height, initY + dyPt)),
               }
             : p,
         ),
@@ -302,7 +309,6 @@ export function PdfSignerDialog({
     if (!initial) return;
     const initW = initial.width;
     const initH = initial.height;
-    const initY = initial.y;
     const aspect = initW / initH;
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     const onMove = (ev: PointerEvent) => {
@@ -310,10 +316,8 @@ export function PdfSignerDialog({
       let newW = Math.max(20, initW + dxPt);
       let newH = newW / aspect;
       if (newH < 12) { newH = 12; newW = newH * aspect; }
-      // y is bottom-left; keep the top visually fixed → adjust y
-      const newY = initY + (initH - newH);
       setPlacements((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, width: newW, height: newH, y: newY } : p)),
+        prev.map((p) => (p.id === id ? { ...p, width: newW, height: newH } : p)),
       );
     };
     const onUp = () => {
@@ -340,7 +344,36 @@ export function PdfSignerDialog({
         const base64 = p.dataUrl.split(",")[1];
         const buf = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
         const png = await pdfDoc.embedPng(buf).catch(async () => await pdfDoc.embedJpg(buf));
-        page.drawImage(png, { x: p.x, y: p.y, width: p.width, height: p.height });
+        // Coordenadas armazenadas são em VIEWPORT do pdfjs (top-left, já considerando /Rotate).
+        // Converter para o sistema da MediaBox (pdf-lib, bottom-left) compensando a rotação.
+        const mw = page.getWidth();
+        const mh = page.getHeight();
+        const rot = (((p.rotation ?? page.getRotation().angle) % 360) + 360) % 360;
+        const sw = p.width;
+        const sh = p.height;
+        let drawX = p.x;
+        let drawY = mh - p.y - sh;
+        let drawRot = 0;
+        if (rot === 90) {
+          drawX = mw - p.y;
+          drawY = p.x;
+          drawRot = 90;
+        } else if (rot === 180) {
+          drawX = mw - p.x;
+          drawY = p.y + sh;
+          drawRot = 180;
+        } else if (rot === 270) {
+          drawX = mw - p.y - sh;
+          drawY = mh - p.x;
+          drawRot = 270;
+        }
+        page.drawImage(png, {
+          x: drawX,
+          y: drawY,
+          width: sw,
+          height: sh,
+          rotate: degrees(drawRot),
+        });
       }
       const signedBytes = await pdfDoc.save();
 
@@ -379,6 +412,7 @@ export function PdfSignerDialog({
           y: p.y,
           width: p.width,
           height: p.height,
+          rotation: p.rotation,
           dataUrl: p.dataUrl,
         })),
         total_assinaturas: placements.length,
@@ -493,7 +527,7 @@ export function PdfSignerDialog({
                           const cssPerPtX = rect.width / pageSize.w;
                           const cssPerPtY = rect.height / pageSize.h;
                           const leftCss = p.x * cssPerPtX;
-                          const topCss = (pageSize.h - p.y - p.height) * cssPerPtY;
+                          const topCss = p.y * cssPerPtY;
                           const wCss = p.width * cssPerPtX;
                           const hCss = p.height * cssPerPtY;
                           return (
