@@ -891,6 +891,15 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["employee", emp.id] }); qc.invalidateQueries({ queryKey: ["employees"] }); toast.success("Salvo"); },
     onError: (e: any) => toast.error(e.message),
   });
+  // Listener do botão Salvar do cabeçalho (mesma mutation do botão do rodapé)
+  useEffect(() => {
+    if (!canEdit) return;
+    const handler = (e: any) => {
+      if (e?.detail?.tab === "profile" && !save.isPending) save.mutate();
+    };
+    window.addEventListener("employee:save-tab", handler as EventListener);
+    return () => window.removeEventListener("employee:save-tab", handler as EventListener);
+  }, [canEdit, save]);
   const del = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("employees").delete().eq("id", emp.id);
