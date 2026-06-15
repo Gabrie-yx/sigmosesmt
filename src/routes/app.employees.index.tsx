@@ -97,7 +97,14 @@ function EmployeesPage() {
   });
 
   const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
+    const norm = (v: string) =>
+      (v ?? "")
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+    const s = norm(q.trim());
+    const sDigits = q.replace(/\D/g, "");
     return (emps ?? []).filter((e: any) => {
       if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
       if (companyFilter !== "TODAS" && e.company_id !== companyFilter) return false;
@@ -106,10 +113,12 @@ function EmployeesPage() {
       if (vinculoFilter === "TERCEIRO" && e.tipo_vinculo !== "TERCEIRO") return false;
       if (vinculoFilter === "MEI" && e.tipo_cadastro !== "MEI") return false;
       if (!s) return true;
+      const cpfDigits = (e.cpf ?? "").replace(/\D/g, "");
       return (
-        e.nome.toLowerCase().includes(s) ||
-        (e.cpf ?? "").toLowerCase().includes(s) ||
-        (e.matricula ?? "").toLowerCase().includes(s)
+        norm(e.nome ?? "").includes(s) ||
+        norm(e.matricula ?? "").includes(s) ||
+        norm(e.cpf ?? "").includes(s) ||
+        (sDigits.length >= 3 && cpfDigits.includes(sDigits))
       );
     });
   }, [emps, q, statusFilter, companyFilter, roleFilter, vinculoFilter]);
