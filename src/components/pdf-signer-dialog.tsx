@@ -668,13 +668,29 @@ export function PdfSignerDialog({
                 if (!bytes) { toast.error("PDF ainda não carregado"); return; }
                 const blob = new Blob([bytes.slice().buffer], { type: "application/pdf" });
                 const url = URL.createObjectURL(blob);
-                const w = window.open(url, "_blank");
-                if (w) {
-                  w.addEventListener("load", () => { try { w.focus(); w.print(); } catch {} });
-                } else {
-                  toast.error("Permita pop-ups para imprimir");
-                }
-                setTimeout(() => URL.revokeObjectURL(url), 60000);
+                const iframe = document.createElement("iframe");
+                iframe.style.position = "fixed";
+                iframe.style.right = "0";
+                iframe.style.bottom = "0";
+                iframe.style.width = "0";
+                iframe.style.height = "0";
+                iframe.style.border = "0";
+                iframe.src = url;
+                iframe.onload = () => {
+                  setTimeout(() => {
+                    try {
+                      iframe.contentWindow?.focus();
+                      iframe.contentWindow?.print();
+                    } catch (e) {
+                      toast.error("Não foi possível abrir a impressão");
+                    }
+                  }, 300);
+                };
+                document.body.appendChild(iframe);
+                setTimeout(() => {
+                  URL.revokeObjectURL(url);
+                  iframe.remove();
+                }, 60000);
               }}
             >
               <Printer className="h-4 w-4 mr-1" /> Imprimir
