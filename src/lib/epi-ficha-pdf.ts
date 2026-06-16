@@ -216,142 +216,17 @@ export function buildEpiFichaPdf(opts: {
     },
   });
 
-  // Pg2: rodapé limpo (sem assinaturas decorativas).
-  // A quitação fica no Termo de Encerramento (pg 3), quando aplicável.
-  doc.setFont("helvetica", "italic"); doc.setFontSize(7); doc.setTextColor(100);
-  doc.text(
-    "Registro de entregas e devoluções. A quitação consta no Termo de Encerramento (pág. 03), quando aplicável.",
-    W / 2, H - 6, { align: "center" }
-  );
-  doc.setTextColor(0);
-
-  /* ============ PAGE 3 — Termo de Encerramento e Quitação (opcional) ============ */
-  if (incluirEncerramento) {
-    doc.addPage();
-    // Header igual
-    doc.setDrawColor(0); doc.setLineWidth(0.3);
-    doc.rect(M, M, W - 2 * M, 14);
-    doc.rect(M, M, 32, 14);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-    doc.text("DMN", M + 16, M + 6, { align: "center" });
-    doc.setFontSize(7); doc.setFont("helvetica", "normal");
-    doc.text("ESTALEIRO", M + 16, M + 11, { align: "center" });
-    doc.setFont("helvetica", "bold"); doc.setFontSize(13);
-    doc.text("TERMO DE ENCERRAMENTO E QUITAÇÃO DE EPI's", W / 2, M + 9, { align: "center" });
-    const codeX3 = W - M - 50;
-    doc.rect(codeX3, M, 50, 14);
-    doc.setFontSize(7); doc.setFont("helvetica", "normal");
-    doc.text("CÓD: FOR-SEG 02", codeX3 + 2, M + 3.5);
-    doc.text("REVISÃO: 30/08/2025", codeX3 + 2, M + 7);
-    doc.text(`DATA: ${hoje}`, codeX3 + 2, M + 10.5);
-    doc.text("PÁG.: 03/03", codeX3 + 2, M + 13.5);
-
-    let y3 = M + 18;
-
-    // Motivo do encerramento
-    doc.setFillColor(220, 220, 220);
-    doc.rect(M, y3, W - 2 * M, 6, "FD");
-    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-    doc.text("MOTIVO DO ENCERRAMENTO", W / 2, y3 + 4.2, { align: "center" });
-    y3 += 6;
-
-    const mark = (k: string) => (encerramento?.motivo === k ? "X" : " ");
-    const motivosEnc: [string, string][] = [
-      [mark("DESLIGAMENTO"), "Desligamento / Rescisão"],
-      [mark("TRANSFERENCIA"), "Transferência de setor/função"],
-      [mark("FIM_CONTRATO"), "Fim de contrato (avulso/temporário)"],
-      [mark("AFASTAMENTO"), "Afastamento prolongado"],
-      [mark("OUTRO"), `Outro: ${encerramento?.motivo_outro ?? "___________________________"}`],
-    ];
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    const mw = (W - 2 * M) / 5;
-    motivosEnc.forEach(([mk, label], i) => {
-      const x = M + i * mw;
-      doc.rect(x + 2, y3 + 1, 5, 5);
-      doc.setFont("helvetica", "bold");
-      doc.text(mk, x + 4.5, y3 + 4.7, { align: "center" });
-      doc.setFont("helvetica", "normal"); doc.setFontSize(8);
-      doc.text(label, x + 8, y3 + 4.5);
-      doc.setFontSize(9);
-    });
-    y3 += 8;
-
-    // Vínculo
-    const isTerceiro = encerramento?.vinculo === "TERCEIRO";
-    doc.setFillColor(220, 230, 241);
-    doc.rect(M, y3, 30, 7, "FD");
-    doc.setFont("helvetica", "bold"); doc.setFontSize(9);
-    doc.text("Vínculo:", M + 2, y3 + 4.7);
-    doc.rect(M + 30, y3, 60, 7);
-    doc.setFont("helvetica", "normal");
-    doc.text(isTerceiro ? "Avulso terceirizado" : "Próprio (CLT direto)", M + 32, y3 + 4.7);
-    doc.setFillColor(220, 230, 241);
-    doc.rect(M + 90, y3, 40, 7, "FD");
-    doc.setFont("helvetica", "bold");
-    doc.text("Empresa Terceira:", M + 92, y3 + 4.7);
-    doc.rect(M + 130, y3, W - M - 130 - M, 7);
-    doc.setFont("helvetica", "normal");
-    doc.text(isTerceiro ? (encerramento?.empresa_terceira ?? "") : "—", M + 132, y3 + 4.7);
-    y3 += 9;
-
-    // Termo
-    doc.setFillColor(220, 220, 220);
-    doc.rect(M, y3, W - 2 * M, 6, "FD");
-    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-    doc.text("TERMO DE QUITAÇÃO", W / 2, y3 + 4.2, { align: "center" });
-    y3 += 6;
-
-    const empresaNome = company?.name ?? "_______________________";
-    const termo = `Eu, ${emp.nome ?? "________________________"}, portador(a) do CPF ${emp.cpf ?? "_______________"}, matrícula ${emp.matricula ?? "_____"}, função ${role?.name ?? "________________"}, declaro para os devidos fins legais que, na presente data, DEVOLVI à empresa ${empresaNome} todos os Equipamentos de Proteção Individual (EPIs) e uniformes que estavam sob minha guarda e responsabilidade, conforme histórico de entregas e devoluções registrado nas páginas 01 e 02 desta ficha (FOR-SEG 02).
-
-Declaro ainda que:
-
-1 - Os itens devolvidos foram conferidos pelo responsável SST da empresa, ficando esta ISENTA de qualquer cobrança futura referente aos EPIs e uniformes devolvidos e quitados neste ato;
-
-2 - Eventuais itens não devolvidos, danificados por dolo, mau uso ou negligência, ou extraviados, foram-me apresentados e estou ciente de que os valores correspondentes poderão ser descontados em rescisão, nos termos do art. 462 e §1º da CLT e da autorização firmada no Termo de Responsabilidade (página 01);
-
-3 - Recebi orientação sobre a devolução obrigatória de todos os EPIs sob minha guarda como condição para o encerramento do vínculo / transferência, conforme NR-06, item 6.7.1, alínea "h";
-
-4 - Não tenho mais nenhuma pendência relativa a EPIs ou uniformes junto à empresa ${empresaNome} a partir desta data, dando plena e geral QUITAÇÃO no que se refere a este tema.
-
-E, por estar de acordo com tudo o que foi exposto, firmo o presente termo.`;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    const linesT = doc.splitTextToSize(termo, W - 2 * M - 4);
-    doc.text(linesT, M + 2, y3 + 4);
-    y3 += linesT.length * 3.8 + 4;
-
-    // Local (digitado pelo usuário) e Data (do sistema)
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    const localTxt = encerramento?.local && encerramento.local.trim().length > 0 ? encerramento.local : "____________________";
-    doc.text(`Local: ${localTxt}    Data: ${hoje}`, M + 2, y3 + 4);
-    y3 += 10;
-
-    // 4 assinaturas — Funcionário / Téc. Segurança / Encarregado / Supervisor Geral
-    const sigY3 = Math.min(y3 + 14, H - 18);
-    const sigCount = 4;
-    const sigW3 = (W - 2 * M) / sigCount;
-    const titles = [
-      "ASSINATURA DO FUNCIONÁRIO",
-      "ASSINATURA DO TÉCNICO EM SEGURANÇA",
-      "ASSINATURA DO ENCARREGADO",
-      "ASSINATURA DO SUPERVISOR GERAL",
-    ];
-    const names = [
-      emp.nome ?? "",
-      responsaveis?.tecnico_nome ?? "",
-      responsaveis?.encarregado_nome ?? "",
-      responsaveis?.supervisor_nome ?? "",
-    ];
-    doc.setDrawColor(0); doc.setLineWidth(0.3);
-    for (let i = 0; i < sigCount; i++) {
-      const x = M + i * sigW3;
-      doc.line(x + 6, sigY3, x + sigW3 - 6, sigY3);
-      doc.setFont("helvetica", "bold"); doc.setFontSize(8);
-      doc.text(titles[i], x + sigW3 / 2, sigY3 + 4, { align: "center" });
-      doc.setFont("helvetica", "normal"); doc.setFontSize(7);
-      if (names[i]) doc.text(names[i], x + sigW3 / 2, sigY3 + 8, { align: "center" });
-    }
+  // Signatures footer — modelo original homologado.
+  const sigY = H - 18;
+  const sigW = (W - 2 * M) / 3;
+  for (let i = 0; i < 3; i++) {
+    const x = M + i * sigW;
+    doc.setDrawColor(0); doc.line(x + 6, sigY, x + sigW - 6, sigY);
   }
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+  doc.text("TÉCNICO EM SEGURANÇA DO TRABALHO", M + sigW / 2, sigY + 4, { align: "center" });
+  doc.text("GERENTE DE OPERAÇÕES", M + sigW + sigW / 2, sigY + 4, { align: "center" });
+  doc.text("ENCARREGADO DA EQUIPE", M + 2 * sigW + sigW / 2, sigY + 4, { align: "center" });
 
   return doc;
 }
