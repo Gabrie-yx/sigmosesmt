@@ -155,21 +155,6 @@ export function buildEpiFichaPdf(opts: {
   writeText("Declaro ainda, ter plena ciência:");
   TERMO_CIENCIA.forEach((t) => writeText(t, 3.6, [220, 230, 241]));
 
-  // Slot da assinatura digitalizada do trabalhador (logo após o bloco de ciência).
-  // O sistema (PdfSignerDialog) sobrepõe a imagem da galeria exatamente sobre esta linha.
-  {
-    const slotY = Math.min(y + 8, H - 18);
-    const lineW = 80;
-    const lineX = (W - lineW) / 2;
-    doc.setDrawColor(0); doc.setLineWidth(0.3);
-    doc.line(lineX, slotY, lineX + lineW, slotY);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(8);
-    doc.text("ASSINATURA DO TRABALHADOR", W / 2, slotY + 3.5, { align: "center" });
-    doc.setFont("helvetica", "normal"); doc.setFontSize(7);
-    const linhaIdent = [emp.nome ?? "", emp.cpf ? `— CPF ${emp.cpf}` : ""].filter(Boolean).join(" ");
-    if (linhaIdent) doc.text(linhaIdent, W / 2, slotY + 6.8, { align: "center" });
-  }
-
   /* ============ PAGE 2 — Back ============ */
   doc.addPage();
   let y2 = M;
