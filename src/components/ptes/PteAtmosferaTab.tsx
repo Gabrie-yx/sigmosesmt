@@ -6,7 +6,9 @@
  import { Input } from "@/components/ui/input";
  import { Label } from "@/components/ui/label";
  import { Textarea } from "@/components/ui/textarea";
- import { Wind, Plus, Trash2, AlertTriangle, CheckCircle2, Gauge, Clock, Wrench } from "lucide-react";
+import { Wind, Plus, Trash2, AlertTriangle, CheckCircle2, Gauge, Clock, Wrench, Settings2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { CatalogoGasesManager } from "@/components/sesmt/CatalogoGasesManager";
  import { toast } from "sonner";
  
  type Gas = {
@@ -64,8 +66,9 @@
  
  export function PteAtmosferaTab({ petId, employees }: { petId: string | null; employees: any[] }) {
    const qc = useQueryClient();
-   const { user, isEditor } = useAuth();
+  const { user, isEditor, isModerator } = useAuth();
    const [showForm, setShowForm] = useState(false);
+  const [showCatalogo, setShowCatalogo] = useState(false);
  
    const { data: gases = [] } = useQuery({
      queryKey: ["catalogo-gases-ativos"],
@@ -212,9 +215,22 @@
            )}
          </div>
          {isEditor && !showForm && (
-           <Button type="button" size="sm" onClick={abrirForm} className="bg-cyan-700 hover:bg-cyan-800 text-white text-[10px] font-black uppercase tracking-wider">
-             <Plus className="h-3 w-3 mr-1" /> Nova Medição
-           </Button>
+            <div className="flex items-center gap-2">
+              {isModerator && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowCatalogo(true)}
+                  className="text-[10px] font-black uppercase tracking-wider border-cyan-300 text-cyan-800 hover:bg-cyan-50"
+                >
+                  <Settings2 className="h-3 w-3 mr-1" /> Gerenciar gases
+                </Button>
+              )}
+              <Button type="button" size="sm" onClick={abrirForm} className="bg-cyan-700 hover:bg-cyan-800 text-white text-[10px] font-black uppercase tracking-wider">
+                <Plus className="h-3 w-3 mr-1" /> Nova Medição
+              </Button>
+            </div>
          )}
        </div>
  
