@@ -1924,13 +1924,30 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     onError: (e: any) => toast.error(e.message),
   });
 
-  function gerarFicha() {
-    if (!docsOk) {
-      toast.warning(`Atenção: documentação pendente (${(missingDocs ?? []).join(", ")}). Ficha emitida mesmo assim.`);
-    }
+  async function gerarFicha() {
     if (!epis?.length) {
       toast.error("Sem entregas registradas — nada a assinar.");
       return;
+    }
+    const { data: existing, error: existingErr } = await supabase
+      .from("documentos_assinados")
+      .select("pdf_assinado_path, nome_arquivo")
+      .eq("modulo", "ficha-epi")
+      .eq("referencia_id", empId)
+      .not("pdf_assinado_path", "is", null)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (existingErr) {
+      toast.error("Falha ao consultar ficha assinada: " + existingErr.message);
+      return;
+    }
+    if (existing?.pdf_assinado_path) {
+      await openStorageFile("sesmt-docs", existing.pdf_assinado_path, existing.nome_arquivo ?? `Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}.pdf`);
+      return;
+    }
+    if (!docsOk) {
+      toast.warning(`Atenção: documentação pendente (${(missingDocs ?? []).join(", ")}). Ficha emitida mesmo assim.`);
     }
     const doc = buildEpiFichaPdf({ emp, company, role, epis });
     const bytes = new Uint8Array(doc.output("arraybuffer"));
