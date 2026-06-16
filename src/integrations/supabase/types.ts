@@ -931,6 +931,54 @@ export type Database = {
           },
         ]
       }
+      catalogo_gases_atmosfericos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          descricao_limite: string | null
+          id: string
+          is_padrao_nr33: boolean
+          limite_max: number | null
+          limite_min: number | null
+          nome: string
+          ordem: number
+          simbolo: string
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao_limite?: string | null
+          id?: string
+          is_padrao_nr33?: boolean
+          limite_max?: number | null
+          limite_min?: number | null
+          nome: string
+          ordem?: number
+          simbolo: string
+          unidade: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao_limite?: string | null
+          id?: string
+          is_padrao_nr33?: boolean
+          limite_max?: number | null
+          limite_min?: number | null
+          nome?: string
+          ordem?: number
+          simbolo?: string
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       catalogo_nrs: {
         Row: {
           ativo: boolean
@@ -5051,6 +5099,88 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      pte_medicoes_atmosfericas: {
+        Row: {
+          calibracao_data: string | null
+          calibracao_validade: string | null
+          created_at: string
+          created_by: string | null
+          equipamento_marca: string | null
+          equipamento_modelo: string | null
+          equipamento_serie: string | null
+          executor_id: string | null
+          executor_nome: string | null
+          id: string
+          leituras: Json
+          medido_em: string
+          momento: string
+          observacao: string | null
+          pte_id: string
+          tem_fora_limite: boolean
+          updated_at: string
+        }
+        Insert: {
+          calibracao_data?: string | null
+          calibracao_validade?: string | null
+          created_at?: string
+          created_by?: string | null
+          equipamento_marca?: string | null
+          equipamento_modelo?: string | null
+          equipamento_serie?: string | null
+          executor_id?: string | null
+          executor_nome?: string | null
+          id?: string
+          leituras?: Json
+          medido_em?: string
+          momento?: string
+          observacao?: string | null
+          pte_id: string
+          tem_fora_limite?: boolean
+          updated_at?: string
+        }
+        Update: {
+          calibracao_data?: string | null
+          calibracao_validade?: string | null
+          created_at?: string
+          created_by?: string | null
+          equipamento_marca?: string | null
+          equipamento_modelo?: string | null
+          equipamento_serie?: string | null
+          executor_id?: string | null
+          executor_nome?: string | null
+          id?: string
+          leituras?: Json
+          medido_em?: string
+          momento?: string
+          observacao?: string | null
+          pte_id?: string
+          tem_fora_limite?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pte_medicoes_atmosfericas_executor_id_fkey"
+            columns: ["executor_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pte_medicoes_atmosfericas_executor_id_fkey"
+            columns: ["executor_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "pte_medicoes_atmosfericas_pte_id_fkey"
+            columns: ["pte_id"]
+            isOneToOne: false
+            referencedRelation: "ptes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ptes: {
         Row: {
