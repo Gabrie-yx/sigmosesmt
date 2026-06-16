@@ -1,0 +1,6 @@
+---
+name: FM-SGI-02 APR - estrutura final
+description: FM-SGI-02 (APR) emitido v1 com 11 seções, matriz 5x5, mesma identidade visual do FM-SGI-01 (faixa vermelha, header SIGMO, footer FM/Página). Vínculo: APR aprovada é pré-requisito p/ emissão da PT (FM-SGI-01).
+type: feature
+---
+FM-SGI-02 (APR — Análise Preliminar de Risco) gera a PT do FM-SGI-01. Sem APR aprovada, PT não pode ser emitida. Seções: 1 Identificação · 2 Equipe elaboradora · 3 Decomposição em etapas · 4 Matriz Perigos×Riscos×Controles (com risco bruto e residual) · 5 Matriz 5×5 (Sev×Prob) com critério de aceitação · 6 Recursos (EPI/EPC/Ferramentas/LOTO) · 7 Requisitos legais (NR-01/33/34/35 + ISO 45001 + PROCO-SGI-SST-01) · 8 Plano de emergência/resgate · 9 Validação/assinaturas (Elaborador, SESMT c/ ART, Supervisor NR-35 c/ ART, Fiscal, Cliente) · 10 Gatilhos de revalidação (escopo, equipe, ambiente, quase-acidente, novo turno, novo perigo) · 11 NC durante APR (abre FM-SGI-NC). Design idêntico ao FM-SGI-01: header com faixa vermelha + título SIGMO; numeração de seção em quadradinho preto + faixa vermelha; tabelas com header preto + zebra cinza; callout vermelho de regra de ouro; rodapé "FM-SGI-02 · Página X de Y · SGI-SST DMN". Arquivo: /mnt/documents/FM-SGI-02_APR.docx.
