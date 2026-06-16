@@ -1990,32 +1990,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           >
             <Printer className="h-4 w-4 mr-2" /> Ficha em PDF
           </Button>
-          <Button
-            onClick={() => {
-              const local = window.prompt("Local (cidade/UF) para o Termo de Encerramento:", "Manaus/AM") ?? "";
-              if (local === null) return;
-              const isTerc = (company as any)?.type === "TERCEIRIZADO";
-              const doc = buildEpiFichaPdf({
-                emp, company, role, epis,
-                encerramento: {
-                  incluir: true,
-                  local,
-                  motivo: "DESLIGAMENTO",
-                  vinculo: isTerc ? "TERCEIRO" : "PROPRIO",
-                  empresa_terceira: isTerc ? (company?.name ?? "") : undefined,
-                },
-              });
-              const bytes = new Uint8Array(doc.output("arraybuffer"));
-              const fname = `Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}_com_encerramento.pdf`;
-              setSignerSrc({ bytes, name: fname });
-            }}
-            title="Gerar ficha completa com Termo de Encerramento e Quitação (pág. 03)"
-            variant="outline"
-            className="border-orange-500 text-orange-700 hover:bg-orange-50 font-black uppercase tracking-widest text-xs"
-            size="lg"
-          >
-            <Printer className="h-4 w-4 mr-2" /> Com Encerramento
-          </Button>
           {(() => {
             const perdas = (epis ?? []).filter((e: any) => e.motivo_entrega === "PERDA_EXTRAVIO");
             const abrirTermo = async (p: any) => {
@@ -2138,72 +2112,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           })()}
         </div>
       </Card>
-
-      <Dialog open={openFichaOptions} onOpenChange={setOpenFichaOptions}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Printer className="h-5 w-5 text-orange-500" />
-              Ficha de Controle de EPI
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="rounded-lg bg-slate-50 p-4 border border-slate-200">
-              <div className="text-sm font-bold text-slate-800 truncate mb-1">{emp?.nome}</div>
-              <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest">
-                CPF: {emp?.cpf} · {epis?.length || 0} entregas registradas
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-3">
-              <Button 
-                onClick={() => {
-                  setOpenFichaOptions(false);
-                  gerarFicha();
-                }}
-                className="w-full bg-brand text-white font-bold h-12"
-              >
-                <FileSignature className="h-4 w-4 mr-2" /> Visualizar e Assinar Digitalmente
-              </Button>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={async () => {
-                    const r = await obterPdfFichaParaSaida();
-                    if (!r) return;
-                    const blob = new Blob([r.bytes as BlobPart], { type: "application/pdf" });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url; a.download = r.fname; a.click();
-                    setTimeout(() => URL.revokeObjectURL(url), 1000);
-                    if (r.assinado) toast.success("Ficha assinada baixada.");
-                  }}
-                  className="font-bold border-slate-200"
-                >
-                  <Download className="h-4 w-4 mr-2" /> Download
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={async () => {
-                    const r = await obterPdfFichaParaSaida();
-                    if (!r) return;
-                    const blob = new Blob([r.bytes as BlobPart], { type: "application/pdf" });
-                    window.open(URL.createObjectURL(blob), "_blank");
-                    if (r.assinado) toast.success("Ficha assinada aberta para impressão.");
-                  }}
-                  className="font-bold border-slate-200"
-                >
-                  <Printer className="h-4 w-4 mr-2" /> Imprimir
-                </Button>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpenFichaOptions(false)}>Fechar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {canEdit && (
         <Card className="p-5 rounded-2xl">
