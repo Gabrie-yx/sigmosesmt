@@ -214,6 +214,26 @@ import { CatalogoGasesManager } from "@/components/sesmt/CatalogoGasesManager";
              </span>
            )}
          </div>
+
+      <Dialog open={showCatalogo} onOpenChange={setShowCatalogo}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings2 className="h-5 w-5 text-cyan-700" />
+              Gerenciar Catálogo de Gases (NR-33)
+            </DialogTitle>
+            <DialogDescription>
+              Cadastre gases extras (NH₃, CO₂, SO₂…) ou ajuste limites. As alterações refletem nas próximas medições.
+            </DialogDescription>
+          </DialogHeader>
+          <CatalogoGasesManager compact />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// retorno antigo trocado para Fragment — wrapper ajustado abaixo
          {isEditor && !showForm && (
             <div className="flex items-center gap-2">
               {isModerator && (
