@@ -648,7 +648,7 @@ export function PdfSignerDialog({
               onClick={() => {
                 const bytes = bytesRef.current;
                 if (!bytes) { toast.error("PDF ainda não carregado"); return; }
-                const blob = new Blob([bytes], { type: "application/pdf" });
+                const blob = new Blob([bytes.slice().buffer], { type: "application/pdf" });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
@@ -666,7 +666,7 @@ export function PdfSignerDialog({
               onClick={() => {
                 const bytes = bytesRef.current;
                 if (!bytes) { toast.error("PDF ainda não carregado"); return; }
-                const blob = new Blob([bytes], { type: "application/pdf" });
+                const blob = new Blob([bytes.slice().buffer], { type: "application/pdf" });
                 const url = URL.createObjectURL(blob);
                 const w = window.open(url, "_blank");
                 if (w) {
