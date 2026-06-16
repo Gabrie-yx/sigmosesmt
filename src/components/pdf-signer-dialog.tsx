@@ -107,6 +107,7 @@ export function PdfSignerDialog({
   const [openPad, setOpenPad] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [activeDocumentId, setActiveDocumentId] = useState<string | undefined>(documentId);
 
   const { data: userSigs = [] } = useQuery({
     queryKey: ["user-signatures"],
@@ -144,36 +145,7 @@ export function PdfSignerDialog({
 
     const loadData = async () => {
       try {
-        // Load placements if editing
-        if (documentId) {
-          const { data: docRow, error: docErr } = await supabase
-            .from("documentos_assinados")
-            .select("assinaturas")
-            .eq("id", documentId)
-            .single();
-          
-          if (!docErr && docRow?.assinaturas && Array.isArray(docRow.assinaturas)) {
-            // Need to reconstruct placements (adding IDs if missing)
-            const loaded = (docRow.assinaturas as any[]).map(a => ({
-              id: a.id || crypto.randomUUID(),
-              page: a.page,
-              x: a.x,
-              y: a.y,
-              width: a.width,
-              height: a.height,
-              rotation: a.rotation ?? 0,
-              dataUrl: a.dataUrl || "", // We might need to store dataUrl or fetch it
-              nome: a.nome,
-              cargo: a.cargo,
-            }));
-            
-            // Note: If dataUrl is missing in the DB (current schema only stores some info),
-            // we might have a problem. But typically the signer expects the image data.
-            // Let's assume for now we'll update the storage logic to include it or handle it.
-            setPlacements(loaded);
-          }
-        }
-
+        setActiveDocumentId(documentId);
         const bytes = await fetchBytes(source);
         if (cancelled) return;
         bytesRef.current = bytes;
