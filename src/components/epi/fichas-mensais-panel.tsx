@@ -39,6 +39,7 @@ type Row = {
   ficha_id: string | null;
   status: "PENDENTE" | "ASSINADA";
   arquivo_path: string | null;
+  arquivo_bucket?: "epi-fichas-mensais" | "sesmt-docs" | null;
 };
 
 function periodoKey(ano: number, mes: number) {
@@ -183,8 +184,9 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
     mutationFn: async (r: Row) => {
       // Se já tem ficha assinada, baixa do storage
       if (r.arquivo_path) {
+        const bucket = r.arquivo_bucket ?? "epi-fichas-mensais";
         const { data, error } = await supabase.storage
-          .from("epi-fichas-mensais")
+          .from(bucket)
           .createSignedUrl(r.arquivo_path, 300);
         if (error) throw error;
         window.open(data.signedUrl, "_blank");
