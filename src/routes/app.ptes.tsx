@@ -15,6 +15,7 @@ import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { hasGlobalOverride, type SafetyOverride } from "@/lib/safety-overrides";
 import { detectarExigenciaPTE } from "@/lib/apr-pte-rules";
 import { PtPdfPreview } from "@/components/ptes/PtPdfPreview";
+import { PteAtmosferaTab } from "@/components/ptes/PteAtmosferaTab";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
