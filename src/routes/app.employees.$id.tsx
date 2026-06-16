@@ -1339,12 +1339,16 @@ function SignedDocsList({ employeeId }: { employeeId: string }) {
       const seen = new Set<string>();
       return all
         .filter((d) => (seen.has(d.id) ? false : (seen.add(d.id), true)))
-        .sort((a, b) => (b.criado_at ?? "").localeCompare(a.criado_at ?? ""));
+        .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
     },
   });
 
-  async function openSigned(path: string) {
-    await openStorageFile("sesmt-docs", path);
+  async function openSigned(path: string | null, name?: string) {
+    if (!path) {
+      toast.error("Documento assinado sem arquivo vinculado.");
+      return;
+    }
+    await openStorageFile("sesmt-docs", path, name);
   }
 
   async function excluir(d: any) {
@@ -1392,7 +1396,7 @@ function SignedDocsList({ employeeId }: { employeeId: string }) {
                     {d.nome_arquivo}
                   </div>
                   <div className="text-[10px] text-slate-500 font-medium">
-                    {formatDateBR(d.criado_at)} · {d.total_assinaturas} assinaturas
+                    {formatDateBR(d.created_at)} · {d.total_assinaturas} assinaturas
                   </div>
                 </div>
               </div>
@@ -1400,7 +1404,7 @@ function SignedDocsList({ employeeId }: { employeeId: string }) {
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  onClick={() => openSigned(d.pdf_assinado_path)} 
+                  onClick={() => openSigned(d.pdf_assinado_path, d.nome_arquivo)} 
                   className={`${isTermo ? "text-rose-600 hover:text-rose-700 hover:bg-rose-100" : "text-brand hover:text-brand hover:bg-brand/5"}`}
                 >
                   <FileText className="h-4 w-4 mr-1" /> Ver
