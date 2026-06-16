@@ -59,12 +59,17 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
   const { data, isLoading } = useQuery({
     queryKey: ["fichas-mensais-base"],
     queryFn: async () => {
-      const [entregasRes, empsRes, fichasRes, compsRes, rolesRes] = await Promise.all([
+      const [entregasRes, empsRes, fichasRes, compsRes, rolesRes, docsRes] = await Promise.all([
         supabase.from("epi_deliveries").select("employee_id, data_entrega").limit(20000),
         supabase.from("employees").select("id, nome, matricula, cpf, funcao, role_id, company_id, admissao"),
         supabase.from("epi_fichas_mensais").select("*"),
         supabase.from("companies").select("id, name"),
         supabase.from("roles").select("id, name"),
+        supabase
+          .from("documentos_assinados")
+          .select("referencia_id, pdf_assinado_path, updated_at")
+          .eq("modulo", "ficha-epi-mensal")
+          .order("updated_at", { ascending: false }),
       ]);
       if (entregasRes.error) throw entregasRes.error;
       if (empsRes.error) throw empsRes.error;
@@ -75,6 +80,7 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
         fichas: fichasRes.data ?? [],
         comps: compsRes.data ?? [],
         roles: rolesRes.data ?? [],
+        docs: docsRes.data ?? [],
       };
     },
   });
@@ -87,6 +93,12 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
     const fichasMap = new Map(
       data.fichas.map((f: any) => [`${f.employee_id}_${f.ano}_${f.mes}`, f]),
     );
+    // Documentos assinados (fonte de verdade: PdfSignerDialog grava aqui)
+    const docsMap = new Map<string, any>();
+    for (const d of data.docs as any[]) {
+      if (!d.referencia_id) continue;
+      if (!docsMap.has(d.referencia_id)) docsMap.set(d.referencia_id, d);
+    }
 
     const buckets = new Map<string, { emp_id: string; ano: number; mes: number; total: number }>();
     for (const e of data.entregas as any[]) {
@@ -106,6 +118,10 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
       const company: any = compMap.get(emp.company_id) ?? null;
       const role: any = roleMap.get(emp.role_id) ?? null;
       const ficha = fichasMap.get(`${b.emp_id}_${b.ano}_${b.mes}`);
+      const refKey = `${b.emp_id}_${b.ano}_${b.mes}`;
+      const doc = docsMap.get(refKey);
+      const assinadoPath = ficha?.arquivo_assinado_path ?? doc?.pdf_assinado_path ?? null;
+      const assinadoBucket = ficha?.arquivo_assinado_path ? "epi-fichas-mensais" : (doc ? "sesmt-docs" : null);
       result.push({
         employee_id: b.emp_id,
         nome: emp.nome,
@@ -117,8 +133,9 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
         role, company, emp,
         ano: b.ano, mes: b.mes, total: b.total,
         ficha_id: ficha?.id ?? null,
-        status: ficha?.arquivo_assinado_path ? "ASSINADA" : "PENDENTE",
-        arquivo_path: ficha?.arquivo_assinado_path ?? null,
+        status: assinadoPath ? "ASSINADA" : "PENDENTE",
+        arquivo_path: assinadoPath,
+        arquivo_bucket: assinadoBucket,
       });
     });
 
