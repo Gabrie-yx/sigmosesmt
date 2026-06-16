@@ -1943,7 +1943,12 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       return;
     }
     if (existing?.pdf_assinado_path) {
-      await openStorageFile("sesmt-docs", existing.pdf_assinado_path, existing.nome_arquivo ?? `Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}.pdf`);
+      setSignerSrc({
+        bytes: existing.pdf_assinado_path,
+        name: existing.nome_arquivo ?? `Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}.pdf`,
+        modulo: "ficha-epi",
+        referenciaId: empId,
+      });
       return;
     }
     if (!docsOk) {
@@ -1956,7 +1961,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
   }
 
   const [signerSrc, setSignerSrc] = useState<{
-    bytes: Uint8Array;
+    bytes: Uint8Array | string;
     name: string;
     modulo?: string;
     referenciaId?: string;

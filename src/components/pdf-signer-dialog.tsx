@@ -590,7 +590,10 @@ export function PdfSignerDialog({
                         <button
                           key={s.id}
                           type="button"
-                          onClick={() => setPendingSig({ dataUrl: s.signature_data, nome: s.label, cargo: "" })}
+                          onClick={() => {
+                            setPendingSig({ dataUrl: s.signature_data, nome: s.label, cargo: "" });
+                            setPicking(true);
+                          }}
                           className={`w-full border rounded-md p-2 hover:border-rose-400 hover:bg-rose-50 text-left transition ${
                             pendingSig?.dataUrl === s.signature_data ? "border-rose-500 ring-2 ring-rose-200" : "border-slate-200"
                           }`}
