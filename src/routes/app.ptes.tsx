@@ -619,6 +619,11 @@ function PtesPage() {
               </div>
             </div>
 
+            {/* FM-SGI-05 — Medição Atmosférica (apenas PET / NR-33) */}
+            {f.tipo_pt === "PET" && (
+              <PteAtmosferaTab petId={editingId} employees={emps as any[]} />
+            )}
+
             <Button
               type="submit"
               disabled={save.isPending}
