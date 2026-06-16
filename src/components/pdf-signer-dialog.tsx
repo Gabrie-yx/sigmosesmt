@@ -631,10 +631,10 @@ export function PdfSignerDialog({
             <Button variant="outline" onClick={onClose} disabled={saving}>Cancelar</Button>
             <Button
               variant="outline"
-              onClick={() => {
-                const bytes = bytesRef.current;
+              onClick={async () => {
+                const bytes = placements.length > 0 ? await saveSignedPdf() : bytesRef.current;
                 if (!bytes) { toast.error("PDF ainda não carregado"); return; }
-                const blob = new Blob([bytes.slice().buffer], { type: "application/pdf" });
+                const blob = new Blob([bytes.slice()], { type: "application/pdf" });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
@@ -649,10 +649,10 @@ export function PdfSignerDialog({
             </Button>
             <Button
               variant="outline"
-              onClick={() => {
-                const bytes = bytesRef.current;
+              onClick={async () => {
+                const bytes = placements.length > 0 ? await saveSignedPdf() : bytesRef.current;
                 if (!bytes) { toast.error("PDF ainda não carregado"); return; }
-                const blob = new Blob([bytes.slice().buffer], { type: "application/pdf" });
+                const blob = new Blob([bytes.slice()], { type: "application/pdf" });
                 const url = URL.createObjectURL(blob);
                 const iframe = document.createElement("iframe");
                 iframe.style.position = "fixed";
@@ -690,7 +690,7 @@ export function PdfSignerDialog({
             </Button>
             <Button onClick={handleSave} disabled={saving || placements.length === 0} className="bg-rose-600 hover:bg-rose-700">
               <Save className="h-4 w-4 mr-1" />
-              {saving ? "Salvando…" : "Salvar PDF Assinado"}
+              {saving ? "Salvando…" : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>
