@@ -70,6 +70,7 @@ import { Route as AppDdsHistoricoRouteImport } from './routes/app.dds.historico'
 import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
 import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
+import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
 import { Route as AppEstoqueEpiFichasMensaisRouteImport } from './routes/app.estoque.epi.fichas-mensais'
 import { Route as AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.historico.$equipamentoId'
 import { Route as AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.checklist.$equipamentoId'
@@ -385,6 +386,11 @@ const AppSesmtEquipamentosMoveisArquivosMensaisRoute =
     path: '/sesmt/equipamentos-moveis/arquivos-mensais',
     getParentRoute: () => AppRoute,
   } as any)
+const AppSesmtCatalogosGasesRoute = AppSesmtCatalogosGasesRouteImport.update({
+  id: '/sesmt/catalogos/gases',
+  path: '/sesmt/catalogos/gases',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEstoqueEpiFichasMensaisRoute =
   AppEstoqueEpiFichasMensaisRouteImport.update({
     id: '/fichas-mensais',
@@ -466,6 +472,7 @@ export interface FileRoutesByFullPath {
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
+  '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -529,6 +536,7 @@ export interface FileRoutesByTo {
   '/app/estoque': typeof AppEstoqueIndexRoute
   '/app/oss': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
+  '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -596,6 +604,7 @@ export interface FileRoutesById {
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
+  '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -664,6 +673,7 @@ export interface FileRouteTypes {
     | '/app/estoque/'
     | '/app/oss/'
     | '/app/estoque/epi/fichas-mensais'
+    | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -727,6 +737,7 @@ export interface FileRouteTypes {
     | '/app/estoque'
     | '/app/oss'
     | '/app/estoque/epi/fichas-mensais'
+    | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -793,6 +804,7 @@ export interface FileRouteTypes {
     | '/app/estoque/'
     | '/app/oss/'
     | '/app/estoque/epi/fichas-mensais'
+    | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
@@ -1237,6 +1249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/sesmt/catalogos/gases': {
+      id: '/app/sesmt/catalogos/gases'
+      path: '/sesmt/catalogos/gases'
+      fullPath: '/app/sesmt/catalogos/gases'
+      preLoaderRoute: typeof AppSesmtCatalogosGasesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/estoque/epi/fichas-mensais': {
       id: '/app/estoque/epi/fichas-mensais'
       path: '/fichas-mensais'
@@ -1353,6 +1372,7 @@ interface AppRouteChildren {
   AppSesmtTerceirosRoute: typeof AppSesmtTerceirosRoute
   AppDdsIndexRoute: typeof AppDdsIndexRoute
   AppEstoqueIndexRoute: typeof AppEstoqueIndexRoute
+  AppSesmtCatalogosGasesRoute: typeof AppSesmtCatalogosGasesRoute
   AppSesmtEquipamentosMoveisArquivosMensaisRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
@@ -1405,6 +1425,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtTerceirosRoute: AppSesmtTerceirosRoute,
   AppDdsIndexRoute: AppDdsIndexRoute,
   AppEstoqueIndexRoute: AppEstoqueIndexRoute,
+  AppSesmtCatalogosGasesRoute: AppSesmtCatalogosGasesRoute,
   AppSesmtEquipamentosMoveisArquivosMensaisRoute:
     AppSesmtEquipamentosMoveisArquivosMensaisRoute,
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute:

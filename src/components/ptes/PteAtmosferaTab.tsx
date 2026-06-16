@@ -6,7 +6,9 @@
  import { Input } from "@/components/ui/input";
  import { Label } from "@/components/ui/label";
  import { Textarea } from "@/components/ui/textarea";
- import { Wind, Plus, Trash2, AlertTriangle, CheckCircle2, Gauge, Clock, Wrench } from "lucide-react";
+import { Wind, Plus, Trash2, AlertTriangle, CheckCircle2, Gauge, Clock, Wrench, Settings2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { CatalogoGasesManager } from "@/components/sesmt/CatalogoGasesManager";
  import { toast } from "sonner";
  
  type Gas = {
@@ -64,8 +66,9 @@
  
  export function PteAtmosferaTab({ petId, employees }: { petId: string | null; employees: any[] }) {
    const qc = useQueryClient();
-   const { user, isEditor } = useAuth();
+  const { user, isEditor, isModerator } = useAuth();
    const [showForm, setShowForm] = useState(false);
+  const [showCatalogo, setShowCatalogo] = useState(false);
  
    const { data: gases = [] } = useQuery({
      queryKey: ["catalogo-gases-ativos"],
@@ -198,7 +201,8 @@
    }
  
    return (
-     <div className="mt-6 rounded-2xl border-2 border-cyan-300 bg-gradient-to-br from-cyan-50 to-white p-5 space-y-4">
+    <>
+    <div className="mt-6 rounded-2xl border-2 border-cyan-300 bg-gradient-to-br from-cyan-50 to-white p-5 space-y-4">
        <div className="flex items-center justify-between flex-wrap gap-2">
          <div className="flex items-center gap-2">
            <Wind className="h-5 w-5 text-cyan-700" />
@@ -212,9 +216,22 @@
            )}
          </div>
          {isEditor && !showForm && (
-           <Button type="button" size="sm" onClick={abrirForm} className="bg-cyan-700 hover:bg-cyan-800 text-white text-[10px] font-black uppercase tracking-wider">
-             <Plus className="h-3 w-3 mr-1" /> Nova Medição
-           </Button>
+            <div className="flex items-center gap-2">
+              {isModerator && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowCatalogo(true)}
+                  className="text-[10px] font-black uppercase tracking-wider border-cyan-300 text-cyan-800 hover:bg-cyan-50"
+                >
+                  <Settings2 className="h-3 w-3 mr-1" /> Gerenciar gases
+                </Button>
+              )}
+              <Button type="button" size="sm" onClick={abrirForm} className="bg-cyan-700 hover:bg-cyan-800 text-white text-[10px] font-black uppercase tracking-wider">
+                <Plus className="h-3 w-3 mr-1" /> Nova Medição
+              </Button>
+            </div>
          )}
        </div>
  
@@ -430,5 +447,20 @@
          </div>
        )}
      </div>
-   );
- }
+      <Dialog open={showCatalogo} onOpenChange={setShowCatalogo}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings2 className="h-5 w-5 text-cyan-700" />
+              Gerenciar Catálogo de Gases (NR-33)
+            </DialogTitle>
+            <DialogDescription>
+              Cadastre gases extras (NH₃, CO₂, SO₂…) ou ajuste limites. As alterações refletem nas próximas medições.
+            </DialogDescription>
+          </DialogHeader>
+          <CatalogoGasesManager compact />
+        </DialogContent>
+      </Dialog>
+    </>
+    );
+  }

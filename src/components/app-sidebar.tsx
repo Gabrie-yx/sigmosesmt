@@ -53,6 +53,7 @@ import {
   BookOpenCheck,
   FileSignature,
   ShieldAlert,
+  Wind,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -78,6 +79,12 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
       { to: "/app/extintores", label: "Controle de Extintores", icon: Flame },
       { to: "/app/sesmt/requisicoes", label: "Requisições de Compra", icon: ShoppingCart },
       { to: "/app/assinador", label: "Assinador de PDFs", icon: FileSignature },
+    ],
+  },
+  {
+    title: "Catálogos",
+    items: [
+      { to: "/app/sesmt/catalogos/gases", label: "Gases Atmosféricos (NR-33)", icon: Wind },
     ],
   },
   {
