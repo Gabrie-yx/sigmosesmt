@@ -1990,6 +1990,32 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           >
             <Printer className="h-4 w-4 mr-2" /> Ficha em PDF
           </Button>
+          <Button
+            onClick={() => {
+              const local = window.prompt("Local (cidade/UF) para o Termo de Encerramento:", "Manaus/AM") ?? "";
+              if (local === null) return;
+              const isTerc = (company as any)?.type === "TERCEIRIZADO";
+              const doc = buildEpiFichaPdf({
+                emp, company, role, epis,
+                encerramento: {
+                  incluir: true,
+                  local,
+                  motivo: "DESLIGAMENTO",
+                  vinculo: isTerc ? "TERCEIRO" : "PROPRIO",
+                  empresa_terceira: isTerc ? (company?.name ?? "") : undefined,
+                },
+              });
+              const bytes = new Uint8Array(doc.output("arraybuffer"));
+              const fname = `Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}_com_encerramento.pdf`;
+              setSignerSrc({ bytes, name: fname });
+            }}
+            title="Gerar ficha completa com Termo de Encerramento e Quitação (pág. 03)"
+            variant="outline"
+            className="border-orange-500 text-orange-700 hover:bg-orange-50 font-black uppercase tracking-widest text-xs"
+            size="lg"
+          >
+            <Printer className="h-4 w-4 mr-2" /> Com Encerramento
+          </Button>
           {(() => {
             const perdas = (epis ?? []).filter((e: any) => e.motivo_entrega === "PERDA_EXTRAVIO");
             const abrirTermo = async (p: any) => {
