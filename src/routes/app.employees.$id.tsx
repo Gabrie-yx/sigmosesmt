@@ -2208,7 +2208,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                   onClick={async () => {
                     const r = await obterPdfFichaParaSaida();
                     if (!r) return;
-                    const blob = new Blob([r.bytes], { type: "application/pdf" });
+                    const blob = new Blob([r.bytes as BlobPart], { type: "application/pdf" });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
                     a.href = url; a.download = r.fname; a.click();
@@ -2224,7 +2224,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                   onClick={async () => {
                     const r = await obterPdfFichaParaSaida();
                     if (!r) return;
-                    const blob = new Blob([r.bytes], { type: "application/pdf" });
+                    const blob = new Blob([r.bytes as BlobPart], { type: "application/pdf" });
                     window.open(URL.createObjectURL(blob), "_blank");
                     if (r.assinado) toast.success("Ficha assinada aberta para impressão.");
                   }}
