@@ -427,6 +427,7 @@ export function PdfSignerDialog({
       pdfDocRef.current = pdf;
       setNumPages(pdf.numPages);
       setPageNum((p) => Math.min(p, pdf.numPages));
+      await renderPage();
       onSigned?.({ path: fullPath, signedBytes });
       return signedBytes;
     } catch (e: any) {
