@@ -15,6 +15,7 @@ import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { hasGlobalOverride, type SafetyOverride } from "@/lib/safety-overrides";
 import { detectarExigenciaPTE } from "@/lib/apr-pte-rules";
 import { PtPdfPreview } from "@/components/ptes/PtPdfPreview";
+import { PteAtmosferaTab } from "@/components/ptes/PteAtmosferaTab";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -617,6 +618,11 @@ function PtesPage() {
                 Emitente: <span className="text-slate-800 font-black">{user?.email ?? "—"}</span> (usuário logado)
               </div>
             </div>
+
+            {/* FM-SGI-05 — Medição Atmosférica (apenas PET / NR-33) */}
+            {f.tipo_pt === "PET" && (
+              <PteAtmosferaTab petId={editingId} employees={emps as any[]} />
+            )}
 
             <Button
               type="submit"
