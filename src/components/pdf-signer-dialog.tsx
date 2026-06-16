@@ -89,6 +89,25 @@ async function fetchImageBytes(src: string): Promise<Uint8Array> {
   }
 }
 
+async function rasterizeImageToPngBytes(src: string): Promise<Uint8Array> {
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Não foi possível converter a assinatura para PNG."));
+    image.src = src;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, img.naturalWidth || img.width);
+  canvas.height = Math.max(1, img.naturalHeight || img.height);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Não foi possível preparar a assinatura para o PDF.");
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Não foi possível gerar PNG da assinatura."))), "image/png"),
+  );
+  return new Uint8Array(await blob.arrayBuffer());
+}
+
 export type PdfSignerInput = Uint8Array | Blob | ArrayBuffer | string;
 
 export function PdfSignerDialog({
@@ -334,7 +353,13 @@ export function PdfSignerDialog({
         const page = pages[p.page - 1];
         if (!page) continue;
         const buf = await fetchImageBytes(p.dataUrl);
-        const png = await pdfDoc.embedPng(buf).catch(async () => await pdfDoc.embedJpg(buf));
+        const png = await pdfDoc.embedPng(buf).catch(async () => {
+          try {
+            return await pdfDoc.embedJpg(buf);
+          } catch {
+            return await pdfDoc.embedPng(await rasterizeImageToPngBytes(p.dataUrl));
+          }
+        });
         // Coordenadas armazenadas são em VIEWPORT do pdfjs (top-left, já considerando /Rotate).
         // Converter para o sistema da MediaBox (pdf-lib, bottom-left) compensando a rotação.
         const mw = page.getWidth();
