@@ -422,6 +422,11 @@ export function PdfSignerDialog({
       
       bytesRef.current = signedBytes;
       setPlacements([]);
+      const pdfjsLib = await loadPdfJs();
+      const pdf = await pdfjsLib.getDocument({ data: signedBytes.slice(0) }).promise;
+      pdfDocRef.current = pdf;
+      setNumPages(pdf.numPages);
+      setPageNum((p) => Math.min(p, pdf.numPages));
       onSigned?.({ path: fullPath, signedBytes });
       return signedBytes;
     } catch (e: any) {
