@@ -300,7 +300,7 @@ export function PdfSignerDialog({
     window.addEventListener("pointerup", onUp);
   }
 
-  const handleSave = async () => {
+  const saveSignedPdf = async () => {
     if (!bytesRef.current) return;
     if (placements.length === 0) {
       toast.error("Adicione ao menos uma assinatura.");
@@ -347,7 +347,7 @@ export function PdfSignerDialog({
           rotate: degrees(drawRot),
         });
       }
-      const signedBytes = await pdfDoc.save();
+      const signedBytes = new Uint8Array(await pdfDoc.save());
 
       // Identificamos se é um Termo de Responsabilidade pelo nome do arquivo
       const isTermoPerda = nomeArquivo.toLowerCase().includes("termo_perda");
@@ -362,7 +362,7 @@ export function PdfSignerDialog({
       const path = `${uid}/${ts}_${safeName}`;
       const fullPath = `${folder}/${path}`;
       
-      const blob = new Blob([new Uint8Array(signedBytes)], { type: "application/pdf" });
+      const blob = new Blob([signedBytes], { type: "application/pdf" });
       const { error: upErr } = await supabase.storage.from("sesmt-docs").upload(fullPath, blob, {
         contentType: "application/pdf",
         upsert: false,
@@ -395,17 +395,21 @@ export function PdfSignerDialog({
         updated_at: new Date().toISOString(),
       };
 
-      if (documentId) {
+      const targetDocumentId = activeDocumentId ?? documentId;
+      if (targetDocumentId) {
         const { error: updErr } = await (supabase as any)
           .from("documentos_assinados")
           .update(docData)
-          .eq("id", documentId);
+          .eq("id", targetDocumentId);
         if (updErr) throw updErr;
       } else {
-        const { error: insErr } = await (supabase as any)
+        const { data: inserted, error: insErr } = await (supabase as any)
           .from("documentos_assinados")
-          .insert(docData);
+          .insert(docData)
+          .select("id")
+          .single();
         if (insErr) throw insErr;
+        if (inserted?.id) setActiveDocumentId(inserted.id);
       }
 
       qc.invalidateQueries({ queryKey: ["documentos-assinados"] });
@@ -416,15 +420,20 @@ export function PdfSignerDialog({
         : "Documento assinado e salvo com sucesso!"
       );
       
+      bytesRef.current = signedBytes;
+      setPlacements([]);
       onSigned?.({ path: fullPath, signedBytes });
-
-      onClose();
+      return signedBytes;
     } catch (e: any) {
       console.error(e);
       toast.error("Falha ao salvar: " + (e?.message ?? "erro desconhecido"));
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSave = async () => {
+    await saveSignedPdf();
   };
 
   const pickSaved = (s: SavedSig) => {
