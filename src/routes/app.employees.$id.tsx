@@ -1961,41 +1961,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     setSignerSrc({ bytes, name: fname, modulo: "ficha-epi", referenciaId: empId });
   }
 
-  // Busca o PDF assinado mais recente (com assinaturas embedded) ou gera do zero.
-  // Usado pelos botões Download/Imprimir para garantir que SEMPRE saia o documento
-  // com as assinaturas que já foram salvas digitalmente.
-  async function obterPdfFichaParaSaida(): Promise<{ bytes: Uint8Array; fname: string; assinado: boolean } | null> {
-    if (!epis?.length) {
-      toast.error("Sem entregas registradas.");
-      return null;
-    }
-    const fname = `Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}.pdf`;
-    const { data: existing } = await supabase
-      .from("documentos_assinados")
-      .select("pdf_assinado_path, nome_arquivo")
-      .eq("modulo", "ficha-epi")
-      .eq("referencia_id", empId)
-      .not("pdf_assinado_path", "is", null)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (existing?.pdf_assinado_path) {
-      const { data: signed, error: urlErr } = await supabase.storage
-        .from("sesmt-docs")
-        .createSignedUrl(existing.pdf_assinado_path, 300);
-      if (!urlErr && signed?.signedUrl) {
-        const res = await fetch(signed.signedUrl);
-        if (res.ok) {
-          const buf = new Uint8Array(await res.arrayBuffer());
-          return { bytes: buf, fname: existing.nome_arquivo ?? fname, assinado: true };
-        }
-      }
-      toast.warning("Não foi possível baixar a ficha assinada — gerando ficha em branco.");
-    }
-    const doc = buildEpiFichaPdf({ emp, company, role, epis });
-    return { bytes: new Uint8Array(doc.output("arraybuffer")), fname, assinado: false };
-  }
-
   const [signerSrc, setSignerSrc] = useState<{
     bytes: Uint8Array | string;
     name: string;
@@ -2003,7 +1968,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     referenciaId?: string;
     documentId?: string;
   } | null>(null);
-  const [openFichaOptions, setOpenFichaOptions] = useState(false);
 
   return (
     <div className="space-y-6">
