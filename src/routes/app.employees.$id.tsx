@@ -1961,41 +1961,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     setSignerSrc({ bytes, name: fname, modulo: "ficha-epi", referenciaId: empId });
   }
 
-  // Busca o PDF assinado mais recente (com assinaturas embedded) ou gera do zero.
-  // Usado pelos botões Download/Imprimir para garantir que SEMPRE saia o documento
-  // com as assinaturas que já foram salvas digitalmente.
-  async function obterPdfFichaParaSaida(): Promise<{ bytes: Uint8Array; fname: string; assinado: boolean } | null> {
-    if (!epis?.length) {
-      toast.error("Sem entregas registradas.");
-      return null;
-    }
-    const fname = `Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}.pdf`;
-    const { data: existing } = await supabase
-      .from("documentos_assinados")
-      .select("pdf_assinado_path, nome_arquivo")
-      .eq("modulo", "ficha-epi")
-      .eq("referencia_id", empId)
-      .not("pdf_assinado_path", "is", null)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (existing?.pdf_assinado_path) {
-      const { data: signed, error: urlErr } = await supabase.storage
-        .from("sesmt-docs")
-        .createSignedUrl(existing.pdf_assinado_path, 300);
-      if (!urlErr && signed?.signedUrl) {
-        const res = await fetch(signed.signedUrl);
-        if (res.ok) {
-          const buf = new Uint8Array(await res.arrayBuffer());
-          return { bytes: buf, fname: existing.nome_arquivo ?? fname, assinado: true };
-        }
-      }
-      toast.warning("Não foi possível baixar a ficha assinada — gerando ficha em branco.");
-    }
-    const doc = buildEpiFichaPdf({ emp, company, role, epis });
-    return { bytes: new Uint8Array(doc.output("arraybuffer")), fname, assinado: false };
-  }
-
   const [signerSrc, setSignerSrc] = useState<{
     bytes: Uint8Array | string;
     name: string;
@@ -2003,7 +1968,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     referenciaId?: string;
     documentId?: string;
   } | null>(null);
-  const [openFichaOptions, setOpenFichaOptions] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -2025,32 +1989,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             size="lg"
           >
             <Printer className="h-4 w-4 mr-2" /> Ficha em PDF
-          </Button>
-          <Button
-            onClick={() => {
-              const local = window.prompt("Local (cidade/UF) para o Termo de Encerramento:", "Manaus/AM") ?? "";
-              if (local === null) return;
-              const isTerc = (company as any)?.type === "TERCEIRIZADO";
-              const doc = buildEpiFichaPdf({
-                emp, company, role, epis,
-                encerramento: {
-                  incluir: true,
-                  local,
-                  motivo: "DESLIGAMENTO",
-                  vinculo: isTerc ? "TERCEIRO" : "PROPRIO",
-                  empresa_terceira: isTerc ? (company?.name ?? "") : undefined,
-                },
-              });
-              const bytes = new Uint8Array(doc.output("arraybuffer"));
-              const fname = `Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}_com_encerramento.pdf`;
-              setSignerSrc({ bytes, name: fname });
-            }}
-            title="Gerar ficha completa com Termo de Encerramento e Quitação (pág. 03)"
-            variant="outline"
-            className="border-orange-500 text-orange-700 hover:bg-orange-50 font-black uppercase tracking-widest text-xs"
-            size="lg"
-          >
-            <Printer className="h-4 w-4 mr-2" /> Com Encerramento
           </Button>
           {(() => {
             const perdas = (epis ?? []).filter((e: any) => e.motivo_entrega === "PERDA_EXTRAVIO");
@@ -2174,72 +2112,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           })()}
         </div>
       </Card>
-
-      <Dialog open={openFichaOptions} onOpenChange={setOpenFichaOptions}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Printer className="h-5 w-5 text-orange-500" />
-              Ficha de Controle de EPI
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="rounded-lg bg-slate-50 p-4 border border-slate-200">
-              <div className="text-sm font-bold text-slate-800 truncate mb-1">{emp?.nome}</div>
-              <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest">
-                CPF: {emp?.cpf} · {epis?.length || 0} entregas registradas
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-3">
-              <Button 
-                onClick={() => {
-                  setOpenFichaOptions(false);
-                  gerarFicha();
-                }}
-                className="w-full bg-brand text-white font-bold h-12"
-              >
-                <FileSignature className="h-4 w-4 mr-2" /> Visualizar e Assinar Digitalmente
-              </Button>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={async () => {
-                    const r = await obterPdfFichaParaSaida();
-                    if (!r) return;
-                    const blob = new Blob([r.bytes as BlobPart], { type: "application/pdf" });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url; a.download = r.fname; a.click();
-                    setTimeout(() => URL.revokeObjectURL(url), 1000);
-                    if (r.assinado) toast.success("Ficha assinada baixada.");
-                  }}
-                  className="font-bold border-slate-200"
-                >
-                  <Download className="h-4 w-4 mr-2" /> Download
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={async () => {
-                    const r = await obterPdfFichaParaSaida();
-                    if (!r) return;
-                    const blob = new Blob([r.bytes as BlobPart], { type: "application/pdf" });
-                    window.open(URL.createObjectURL(blob), "_blank");
-                    if (r.assinado) toast.success("Ficha assinada aberta para impressão.");
-                  }}
-                  className="font-bold border-slate-200"
-                >
-                  <Printer className="h-4 w-4 mr-2" /> Imprimir
-                </Button>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpenFichaOptions(false)}>Fechar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {canEdit && (
         <Card className="p-5 rounded-2xl">
