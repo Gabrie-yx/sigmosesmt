@@ -220,30 +220,10 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
 
   async function onSigned(info: { path: string; signedBytes: Uint8Array }) {
     if (!signer) return;
-    const r = signer.row;
-    try {
-      const path = `${r.employee_id}/${r.ano}-${String(r.mes).padStart(2, "0")}.pdf`;
-      const blob = new Blob([new Uint8Array(info.signedBytes)], { type: "application/pdf" });
-      const { error: upErr } = await supabase.storage
-        .from("epi-fichas-mensais")
-        .upload(path, blob, { upsert: true, contentType: "application/pdf" });
-      if (upErr) throw upErr;
-      const { error: dbErr } = await supabase.from("epi_fichas_mensais").upsert(
-        {
-          employee_id: r.employee_id, ano: r.ano, mes: r.mes,
-          total_entregas: r.total, status: "ASSINADA",
-          arquivo_assinado_path: path, uploaded_at: new Date().toISOString(),
-        },
-        { onConflict: "employee_id,ano,mes" },
-      );
-      if (dbErr) throw dbErr;
-      toast.success("Ficha assinada e arquivada");
-      qc.invalidateQueries({ queryKey: ["fichas-mensais-base"] });
-    } catch (e: any) {
-      toast.error(e.message ?? "Falha ao arquivar");
-    } finally {
-      setSigner(null);
-    }
+    // O PdfSignerDialog já fez o upload em sesmt-docs e gravou em documentos_assinados.
+    // Só precisamos atualizar a UI.
+    qc.invalidateQueries({ queryKey: ["fichas-mensais-base"] });
+    setSigner(null);
   }
 
   return (
