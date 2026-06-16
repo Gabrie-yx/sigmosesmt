@@ -2205,9 +2205,15 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
               <div className="grid grid-cols-2 gap-3">
                 <Button 
                   variant="outline" 
-                  onClick={() => {
-                    const doc = buildEpiFichaPdf({ emp, company, role, epis });
-                    doc.save(`Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}.pdf`);
+                  onClick={async () => {
+                    const r = await obterPdfFichaParaSaida();
+                    if (!r) return;
+                    const blob = new Blob([r.bytes], { type: "application/pdf" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url; a.download = r.fname; a.click();
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    if (r.assinado) toast.success("Ficha assinada baixada.");
                   }}
                   className="font-bold border-slate-200"
                 >
@@ -2215,9 +2221,12 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={() => {
-                    const doc = buildEpiFichaPdf({ emp, company, role, epis });
-                    window.open(doc.output('bloburl'), '_blank');
+                  onClick={async () => {
+                    const r = await obterPdfFichaParaSaida();
+                    if (!r) return;
+                    const blob = new Blob([r.bytes], { type: "application/pdf" });
+                    window.open(URL.createObjectURL(blob), "_blank");
+                    if (r.assinado) toast.success("Ficha assinada aberta para impressão.");
                   }}
                   className="font-bold border-slate-200"
                 >
