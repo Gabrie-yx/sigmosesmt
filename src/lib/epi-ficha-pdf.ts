@@ -73,33 +73,12 @@ export function buildEpiFichaPdf(opts: {
   company: CompanyInfo | null;
   role: RoleInfo | null;
   epis: EpiRow[];
-  encerramento?: {
-    incluir?: boolean; // se true, adiciona página 3 (Termo de Encerramento e Quitação)
-    local?: string;
-    motivo?:
-      | "DESLIGAMENTO"
-      | "TRANSFERENCIA"
-      | "FIM_CONTRATO"
-      | "AFASTAMENTO"
-      | "OUTRO";
-    motivo_outro?: string;
-    vinculo?: "PROPRIO" | "TERCEIRO";
-    empresa_terceira?: string;
-  };
-  responsaveis?: {
-    tecnico_nome?: string;
-    encarregado_nome?: string;
-    supervisor_nome?: string;
-  };
 }) {
-  const { emp, company, role, epis, encerramento, responsaveis } = opts;
+  const { emp, company, role, epis } = opts;
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   const M = 8;
-  const incluirEncerramento = encerramento?.incluir === true;
-  const totalPags = incluirEncerramento ? 3 : 2;
-  const hoje = new Date().toLocaleDateString("pt-BR");
 
   /* ============ PAGE 1 — Front ============ */
   // Header bar
@@ -120,8 +99,8 @@ export function buildEpiFichaPdf(opts: {
   doc.setFontSize(7); doc.setFont("helvetica", "normal");
   doc.text("CÓD: FOR-SEG 02", codeX + 2, M + 3.5);
   doc.text("REVISÃO: 30/08/2025", codeX + 2, M + 7);
-  doc.text(`DATA: ${hoje}`, codeX + 2, M + 10.5);
-  doc.text(`PÁG.: 01/${String(totalPags).padStart(2, "0")}`, codeX + 2, M + 13.5);
+  doc.text(`DATA: ${new Date().toLocaleDateString("pt-BR")}`, codeX + 2, M + 10.5);
+  doc.text("PÁG.: 01/02", codeX + 2, M + 13.5);
 
   let y = M + 14;
 
