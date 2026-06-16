@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library, Pencil, Move, PenTool } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library, Pencil, Move, PenTool, Download, Printer } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from "pdf-lib";
@@ -643,6 +643,42 @@ export function PdfSignerDialog({
 
           <DialogFooter className="border-t px-4 py-3 flex-shrink-0">
             <Button variant="outline" onClick={onClose} disabled={saving}>Cancelar</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const bytes = bytesRef.current;
+                if (!bytes) { toast.error("PDF ainda não carregado"); return; }
+                const blob = new Blob([bytes], { type: "application/pdf" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = nomeArquivo || "documento.pdf";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+              }}
+            >
+              <Download className="h-4 w-4 mr-1" /> Baixar
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const bytes = bytesRef.current;
+                if (!bytes) { toast.error("PDF ainda não carregado"); return; }
+                const blob = new Blob([bytes], { type: "application/pdf" });
+                const url = URL.createObjectURL(blob);
+                const w = window.open(url, "_blank");
+                if (w) {
+                  w.addEventListener("load", () => { try { w.focus(); w.print(); } catch {} });
+                } else {
+                  toast.error("Permita pop-ups para imprimir");
+                }
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
+              }}
+            >
+              <Printer className="h-4 w-4 mr-1" /> Imprimir
+            </Button>
             <Button
               variant="outline"
               onClick={() => setPlacements([])}
