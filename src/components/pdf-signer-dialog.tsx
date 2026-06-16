@@ -139,7 +139,7 @@ export function PdfSignerDialog({
   const [numPages, setNumPages] = useState(0);
   const [pageSize, setPageSize] = useState({ w: 0, h: 0 }); // PDF points
   const [pageRotation, setPageRotation] = useState(0); // graus CW (0/90/180/270)
-  const [renderScale, setRenderScale] = useState(1.5); // canvas px / pt
+  const [renderScale, setRenderScale] = useState(1.0); // canvas px / pt
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [picking, setPicking] = useState(false);
   const [pendingSig, setPendingSig] = useState<{ dataUrl: string; nome: string; cargo: string } | null>(null);
