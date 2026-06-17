@@ -123,7 +123,7 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col">
+      <DialogContent className="pdf-dialog max-w-6xl w-[95vw] h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{title ?? "Visualizar PDF"} — {fileName}</DialogTitle>
         </DialogHeader>

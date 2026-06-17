@@ -27,25 +27,25 @@ export const Route = createFileRoute("/app/roles")({
 
 function RolesPageWithTabs() {
   return (
-    <div className="h-full flex flex-col bg-slate-50">
+    <div className="h-full flex flex-col bg-transparent">
       <Tabs defaultValue="cargos" className="flex-1 flex flex-col min-h-0">
-        <div className="px-6 pt-5 pb-3 border-b border-rose-100 bg-gradient-to-r from-rose-50 via-white to-amber-50 shadow-sm">
-          <TabsList className="h-14 bg-white/80 backdrop-blur p-1.5 rounded-xl shadow-md border border-rose-100 gap-1">
+        <div className="px-6 pt-5 pb-3 border-b border-border bg-card/60 backdrop-blur-xl shadow-sm">
+          <TabsList className="h-14 glass-card p-1.5 rounded-xl gap-1">
             <TabsTrigger
               value="cargos"
-              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-rose-600 data-[state=active]:to-[#991b1b] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-accent/70 data-[state=active]:text-accent-foreground data-[state=active]:shadow-lg transition-all"
             >
               Cargos
             </TabsTrigger>
             <TabsTrigger
               value="riscos"
-              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-rose-600 data-[state=active]:to-[#991b1b] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-accent/70 data-[state=active]:text-accent-foreground data-[state=active]:shadow-lg transition-all"
             >
               Catálogo de Riscos
             </TabsTrigger>
             <TabsTrigger
               value="nrs"
-              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-rose-600 data-[state=active]:to-[#991b1b] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-accent/70 data-[state=active]:text-accent-foreground data-[state=active]:shadow-lg transition-all"
             >
               Catálogo de NRs
             </TabsTrigger>
@@ -268,17 +268,11 @@ function RolesPage() {
     editing && setEditing({ ...editing, riscos: { ...riscos, ...patch } });
 
   return (
-    <div className="p-4 md:p-6 flex gap-4 md:gap-6 h-full bg-gradient-to-br from-fuchsia-100 via-rose-100 to-amber-100 animate-fadeIn relative overflow-hidden">
-      {/* floating decorative blobs */}
-      <div className="absolute top-0 left-1/3 w-96 h-96 bg-rose-300/40 rounded-full blur-3xl pointer-events-none animate-pulse" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-300/40 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 right-0 w-72 h-72 bg-fuchsia-300/30 rounded-full blur-3xl pointer-events-none" />
+    <div className="p-4 md:p-6 flex gap-4 md:gap-6 h-full bg-transparent animate-fadeIn relative overflow-hidden">
       {/* LEFT: Cargos Catalogados */}
-      <aside className="w-[360px] flex flex-col bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_25px_70px_-15px_rgba(153,27,27,0.45)] border border-white/60 overflow-hidden shrink-0 ring-1 ring-rose-200 relative z-10">
+      <aside className="glass-card glass-shine w-[360px] flex flex-col overflow-hidden shrink-0 relative z-10">
         {/* Header */}
-        <div className="p-5 bg-gradient-to-br from-rose-600 via-[#991b1b] to-[#7f1d1d] text-white relative overflow-hidden">
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-12 -left-8 w-32 h-32 bg-rose-300/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="p-5 bg-accent/55 text-card-foreground relative overflow-hidden border-b border-border">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-black uppercase tracking-wider flex items-center gap-2 relative">
               <Briefcase className="h-5 w-5" /> Cargos / Funções
@@ -290,7 +284,7 @@ function RolesPage() {
           {isEditor && (
             <button
               onClick={startNew}
-              className="relative w-full py-3 bg-gradient-to-r from-amber-400 to-amber-300 text-[#7f1d1d] hover:from-amber-300 hover:to-amber-200 text-sm font-black rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-amber-400/50 hover:-translate-y-0.5"
+                className="prism-pill accent-amber relative w-full py-3 text-[rgba(255,225,190,0.95)] text-sm font-black rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5"
             >
               <FilePlus2 className="h-5 w-5" /> Novo Cargo
             </button>
@@ -298,7 +292,7 @@ function RolesPage() {
         </div>
 
         {/* Search & filter */}
-        <div className="p-4 border-b border-rose-100/60 space-y-2.5 bg-white/70">
+        <div className="p-4 border-b border-border space-y-2.5 bg-card/25">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-rose-400" />
             <input
@@ -349,7 +343,7 @@ function RolesPage() {
               >
                 <div className="flex items-start gap-3">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
-                    isSel ? "bg-gradient-to-br from-rose-600 to-[#7f1d1d] text-white shadow-lg shadow-rose-500/40" : "bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500 group-hover:from-rose-500 group-hover:to-[#991b1b] group-hover:text-white group-hover:shadow-md"
+                    isSel ? "bg-accent text-accent-foreground shadow-lg" : "bg-secondary text-muted-foreground group-hover:bg-accent group-hover:text-accent-foreground group-hover:shadow-md"
                   }`}>
                     <UserCog className="h-5 w-5" />
                   </div>
@@ -413,14 +407,14 @@ function RolesPage() {
       </aside>
 
       {/* RIGHT: Matriz de Requisitos */}
-      <main className="flex-1 bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_25px_70px_-15px_rgba(15,23,42,0.3)] border border-white/60 overflow-hidden flex flex-col ring-1 ring-rose-100 relative z-10">
+      <main className="glass-card glass-shine flex-1 overflow-hidden flex flex-col relative z-10">
         {!editing ? (
           <EmptyState canEdit={isEditor} onNew={startNew} />
         ) : (
           <>
             {/* Sticky Top Action Bar — SALVAR em destaque máximo */}
             {isEditor && (
-              <div className="px-6 py-3 border-b border-rose-100 bg-gradient-to-r from-emerald-50 via-white to-rose-50 flex items-center justify-between gap-3 shrink-0">
+              <div className="px-6 py-3 border-b border-border bg-card/25 flex items-center justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-600">
                   <Sparkles className="h-4 w-4 text-amber-500" />
                   {editing.id ? "Editando cargo" : "Novo cargo"}
@@ -436,7 +430,7 @@ function RolesPage() {
                   type="button"
                   onClick={() => save.mutate(editing)}
                   disabled={save.isPending}
-                  className="bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-sm font-black rounded-xl uppercase tracking-wider shadow-lg shadow-emerald-500/50 hover:shadow-emerald-500/70 hover:-translate-y-0.5 px-6 py-2.5 h-auto flex items-center gap-2 transition-all ring-2 ring-white animate-pulse-slow"
+                  className="prism-pill accent-emerald text-emerald-200 text-sm font-black rounded-xl uppercase tracking-wider hover:-translate-y-0.5 px-6 py-2.5 h-auto flex items-center gap-2 transition-all"
                 >
                   <Save className="h-5 w-5" /> {save.isPending ? "Salvando..." : "Salvar Diretrizes"}
                 </Button>
@@ -444,9 +438,7 @@ function RolesPage() {
             )}
 
             {/* Header (banner colorido) */}
-            <div className="px-8 py-5 border-b border-rose-100/60 bg-gradient-to-r from-rose-500 via-[#991b1b] to-fuchsia-700 text-white flex items-center gap-4 shrink-0 relative overflow-hidden">
-              <div className="absolute -top-12 right-1/3 w-56 h-56 bg-amber-300/30 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-12 -right-8 w-56 h-56 bg-fuchsia-400/30 rounded-full blur-3xl pointer-events-none" />
+            <div className="px-8 py-5 border-b border-border bg-accent/45 text-card-foreground flex items-center gap-4 shrink-0 relative overflow-hidden">
               <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-xl text-white flex items-center justify-center shadow-xl ring-2 ring-white/30 relative shrink-0">
                 <ShieldCheck className="h-7 w-7" />
               </div>
@@ -464,7 +456,7 @@ function RolesPage() {
 
             {/* Sub-tabs internas */}
             {editing.id && (
-              <div className="shrink-0 flex border-b border-rose-100 bg-white/70">
+              <div className="shrink-0 flex border-b border-border bg-card/20">
                 <button
                   type="button"
                   onClick={() => setInnerTab("diretrizes")}
@@ -688,7 +680,7 @@ function EmptyState({ canEdit, onNew }: { canEdit: boolean; onNew: () => void })
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="text-center max-w-md">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-6">
           <Briefcase className="h-10 w-10 text-slate-400" />
         </div>
         <h3 className="text-xl font-black uppercase text-slate-800 tracking-tight mb-2">
@@ -700,7 +692,7 @@ function EmptyState({ canEdit, onNew }: { canEdit: boolean; onNew: () => void })
         {canEdit && (
           <Button
             onClick={onNew}
-            className="bg-gradient-to-r from-[#991b1b] to-[#7f1d1d] hover:from-[#7f1d1d] hover:to-[#991b1b] text-white text-[11px] font-black uppercase tracking-wider px-6 py-3 h-auto shadow-lg"
+            className="prism-pill accent-wine text-[11px] font-black uppercase tracking-wider px-6 py-3 h-auto"
           >
             <Plus className="h-4 w-4 mr-2" /> Cadastrar Novo Cargo
           </Button>
@@ -714,15 +706,15 @@ function Section({
   icon, title, hint, full, children,
 }: { icon: React.ReactNode; title: string; hint?: string; full?: boolean; children: React.ReactNode }) {
   return (
-    <div className={`p-5 border border-white/80 rounded-3xl bg-gradient-to-br from-white via-rose-50/30 to-amber-50/30 shadow-[0_10px_30px_-12px_rgba(15,23,42,0.18)] hover:shadow-[0_15px_40px_-12px_rgba(153,27,27,0.25)] transition-all ${full ? "lg:col-span-2" : ""}`}>
+    <div className={`p-5 border border-border rounded-3xl bg-card/25 backdrop-blur-xl shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)] hover:shadow-[0_15px_40px_-12px_rgba(120,18,32,0.35)] transition-all ${full ? "lg:col-span-2" : ""}`}>
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-100 to-amber-100 text-[#991b1b] flex items-center justify-center shadow-sm">{icon}</div>
+        <div className="w-9 h-9 rounded-xl bg-secondary text-accent-foreground flex items-center justify-center shadow-sm">{icon}</div>
         <div className="text-sm font-black uppercase text-slate-800 tracking-wider">{title}</div>
         {hint && (
           <span className="ml-auto text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-full uppercase tracking-wider">{hint}</span>
         )}
       </div>
-      <div className="bg-white/80 backdrop-blur p-4 rounded-2xl border border-white shadow-inner space-y-4">
+      <div className="bg-card/20 backdrop-blur p-4 rounded-2xl border border-border shadow-inner space-y-4">
         {children}
       </div>
     </div>

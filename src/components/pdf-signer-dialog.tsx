@@ -502,7 +502,7 @@ export function PdfSignerDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-        <DialogContent className="max-w-[95vw] w-[1400px] h-[90vh] flex flex-col p-0 overflow-hidden">
+        <DialogContent className="pdf-dialog max-w-[95vw] w-[1400px] h-[90vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="px-4 py-3 border-b">
             <DialogTitle className="flex items-center gap-2">
               <MousePointerClick className="h-5 w-5 text-rose-600" />
