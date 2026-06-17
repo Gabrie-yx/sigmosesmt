@@ -1,0 +1,1 @@
+ALTER TYPE public.oss_status ADD VALUE IF NOT EXISTS 'CANCELADO';

@@ -6422,7 +6422,12 @@ export type Database = {
         | "REVISAO_RISCO"
         | "RECICLAGEM_ANUAL"
         | "EMISSAO_MANUAL"
-      oss_status: "PENDENTE_ASSINATURA" | "ASSINADO" | "VENCIDO" | "SUBSTITUIDO"
+      oss_status:
+        | "PENDENTE_ASSINATURA"
+        | "ASSINADO"
+        | "VENCIDO"
+        | "SUBSTITUIDO"
+        | "CANCELADO"
       purchase_req_class: "MATERIAL" | "SERVICO"
       purchase_req_status: "PENDENTE" | "COTADA" | "APROVADA" | "INDEFERIDA"
       tipo_acidente: "COM_AFASTAMENTO" | "SEM_AFASTAMENTO" | "TRAJETO" | "FATAL"
@@ -6582,7 +6587,13 @@ export const Constants = {
         "RECICLAGEM_ANUAL",
         "EMISSAO_MANUAL",
       ],
-      oss_status: ["PENDENTE_ASSINATURA", "ASSINADO", "VENCIDO", "SUBSTITUIDO"],
+      oss_status: [
+        "PENDENTE_ASSINATURA",
+        "ASSINADO",
+        "VENCIDO",
+        "SUBSTITUIDO",
+        "CANCELADO",
+      ],
       purchase_req_class: ["MATERIAL", "SERVICO"],
       purchase_req_status: ["PENDENTE", "COTADA", "APROVADA", "INDEFERIDA"],
       tipo_acidente: ["COM_AFASTAMENTO", "SEM_AFASTAMENTO", "TRAJETO", "FATAL"],
