@@ -813,3 +813,50 @@
     color: rgba(235, 210, 215, 0.58) !important;
   }
 }
+
+/* ============================================================
+   Labels brand red hardcoded (#991b1b, #7f1d1d) ficam invisíveis
+   sobre vidro escuro. Eleva para tom rosado mais claro e legível
+   sem perder a identidade da marca.
+   ============================================================ */
+@layer base {
+  .app-glass-scope .text-\[\#991b1b\],
+  .app-glass-scope .text-\[\#7f1d1d\],
+  .modal-glass-scope:not(.pdf-dialog) .text-\[\#991b1b\],
+  .modal-glass-scope:not(.pdf-dialog) .text-\[\#7f1d1d\] {
+    color: #ffb4be !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+  .app-glass-scope .border-\[\#991b1b\],
+  .modal-glass-scope:not(.pdf-dialog) .border-\[\#991b1b\] {
+    border-color: rgba(255, 130, 150, 0.55) !important;
+  }
+
+  /* Volume nos inputs: highlight no topo + sombra externa + leve inset */
+  .app-glass-scope input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  .app-glass-scope textarea,
+  .app-glass-scope select,
+  .modal-glass-scope input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  .modal-glass-scope textarea,
+  .modal-glass-scope select {
+    box-shadow:
+      0 1px 0 0 rgba(255, 240, 244, 0.10) inset,
+      0 -1px 0 0 rgba(0, 0, 0, 0.35) inset,
+      0 6px 16px -8px rgba(0, 0, 0, 0.55),
+      0 1px 2px rgba(0, 0, 0, 0.35);
+    transition: box-shadow .2s ease, border-color .2s ease, background-color .2s ease;
+  }
+  .app-glass-scope input:focus:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  .app-glass-scope textarea:focus,
+  .app-glass-scope select:focus,
+  .modal-glass-scope input:focus:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  .modal-glass-scope textarea:focus,
+  .modal-glass-scope select:focus {
+    border-color: rgba(255, 160, 180, 0.55) !important;
+    box-shadow:
+      0 1px 0 0 rgba(255, 240, 244, 0.18) inset,
+      0 -1px 0 0 rgba(0, 0, 0, 0.35) inset,
+      0 0 0 3px rgba(220, 60, 90, 0.18),
+      0 10px 24px -10px rgba(220, 60, 90, 0.35);
+  }
+}
