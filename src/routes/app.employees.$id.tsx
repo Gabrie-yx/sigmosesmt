@@ -1219,13 +1219,26 @@ function DocsTab({ empId }: any) {
             const items = docsByTipo[tipo] ?? [];
             const has = items.length > 0;
             return (
-              <div key={tipo} className={`rounded-xl border p-3 flex items-center gap-3 ${has ? "border-emerald-200 bg-emerald-50/40" : "border-slate-200 bg-slate-50/40"}`}>
-                <div className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center ${has ? "bg-emerald-500" : "bg-slate-300"} text-white`}>
-                  <FileText className="h-4 w-4" />
+              <div
+                key={tipo}
+                className={`rounded-xl border p-3 flex items-center gap-3 transition-colors ${
+                  has
+                    ? "border-emerald-400/30 bg-gradient-to-br from-emerald-900/30 to-emerald-950/20"
+                    : "border-rose-300/15 bg-gradient-to-br from-rose-950/40 to-[#1a0408]/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                }`}
+              >
+                <div
+                  className={`h-10 w-10 shrink-0 rounded-2xl flex items-center justify-center text-white border ${
+                    has
+                      ? "bg-gradient-to-br from-emerald-500/80 to-emerald-700/80 border-emerald-200/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_12px_-2px_rgba(0,0,0,0.5)]"
+                      : "bg-gradient-to-br from-rose-100/15 to-rose-100/5 border-rose-100/25 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-1px_0_rgba(0,0,0,0.25),0_6px_16px_-4px_rgba(0,0,0,0.5)]"
+                  }`}
+                >
+                  <FileText className="h-4 w-4 drop-shadow" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-slate-800 truncate">{tipo}</div>
-                  <div className="text-[10px] text-slate-500">
+                  <div className="text-sm font-bold text-rose-50 truncate">{tipo}</div>
+                  <div className="text-[10px] text-rose-200/60">
                     {has ? `Enviado em ${formatDateBR(items[0].uploaded_at)}` : "Não enviado"}
                   </div>
                 </div>
