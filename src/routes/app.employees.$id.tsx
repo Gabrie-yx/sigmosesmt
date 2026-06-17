@@ -387,9 +387,9 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
         </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-nowrap items-center justify-between gap-3 overflow-x-auto">
+        <div className="mt-4 pt-4 border-t border-rose-100/10 flex flex-wrap items-center justify-between gap-3">
           {/* Navegação de seções */}
-          <div className="inline-flex shrink-0 items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
+          <div className="inline-flex shrink-0 items-center rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
             <QuickTabBtn icon={HeartPulse} label="ASO" tone={asoTone} active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
             <QuickTabBtn icon={Award} label="NR" tone={nrTone} active={tab === "nrs"} onClick={() => setTab("nrs")} />
             <QuickTabBtn icon={FolderOpen} label="Docs" tone={docsTone} active={tab === "docs"} onClick={() => setTab("docs")} />
@@ -397,30 +397,30 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
 
           {/* Ações documentais */}
-          <div className="flex flex-nowrap items-center gap-1.5 ml-auto shrink-0">
-            <div className="inline-flex shrink-0 items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2 ml-auto shrink-0">
+            <div className="inline-flex shrink-0 items-center rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
               <Link
                 to="/app/audit"
-                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-100/85 hover:bg-rose-100/10 hover:text-white transition-colors"
                 title="Auditar"
               >
                 <ClipboardCheck className="h-3.5 w-3.5" /> Auditar
               </Link>
-              <span className="h-4 w-px bg-slate-200" />
+              <span className="h-4 w-px bg-rose-200/20" />
               <button
                 type="button"
                 onClick={gerarFichaPdf}
                 disabled={gerandoFicha}
-                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-60 disabled:cursor-wait"
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-100/85 hover:bg-rose-100/10 hover:text-white transition-colors disabled:opacity-60 disabled:cursor-wait"
                 title="Gerar ficha em PDF"
               >
                 <FileText className="h-3.5 w-3.5" /> {gerandoFicha ? "Gerando…" : "Ficha"}
               </button>
-              <span className="h-4 w-px bg-slate-200" />
+              <span className="h-4 w-px bg-rose-200/20" />
               <button
                 type="button"
                 onClick={() => setPppOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-100/85 hover:bg-rose-100/10 hover:text-white transition-colors"
                 title="Emitir PPP (Perfil Profissiográfico Previdenciário)"
               >
                 <FileSignature className="h-3.5 w-3.5" /> PPP
@@ -576,7 +576,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
 /* ============ CONTEXT SIDEBAR (empresa + colegas) ============ */
 function QuickTabBtn({ icon: Icon, label, tone = "rose", active, onClick }: { icon: any; label: string; tone?: "rose" | "slate" | "ok" | "warn"; active?: boolean; onClick: () => void }) {
   const palette = tone === "slate"
-    ? "bg-slate-100 text-slate-600 hover:bg-slate-200 ring-slate-200"
+    ? "bg-gradient-to-b from-rose-100/15 to-rose-100/5 text-rose-50 hover:from-rose-100/25 hover:to-rose-100/10 ring-rose-200/20"
     : tone === "ok"
     ? "bg-gradient-to-br from-emerald-500 to-emerald-700 text-white hover:from-emerald-600 hover:to-emerald-800 ring-emerald-300/40"
     : tone === "warn"
@@ -586,7 +586,7 @@ function QuickTabBtn({ icon: Icon, label, tone = "rose", active, onClick }: { ic
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-widest shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all ring-1 ${palette} ${active ? "ring-2 ring-offset-1 ring-[#7B1E2B]" : ""}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[10px] font-black uppercase tracking-widest shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_4px_12px_-2px_rgba(0,0,0,0.45)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_8px_20px_-4px_rgba(0,0,0,0.55)] hover:-translate-y-0.5 transition-all ring-1 ${palette} ${active ? "ring-2 ring-offset-2 ring-offset-rose-950 ring-rose-300/70" : ""}`}
     >
       <Icon className="h-3.5 w-3.5" /> {label}
     </button>
