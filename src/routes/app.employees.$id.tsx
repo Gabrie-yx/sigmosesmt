@@ -47,6 +47,8 @@ import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CAT
 import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.functions";
 import { AtestadosTab } from "@/components/employees/atestados-tab";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
+import { UserMinus, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
