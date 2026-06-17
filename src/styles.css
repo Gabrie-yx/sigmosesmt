@@ -673,35 +673,35 @@
   }
 
   /* Anéis pastel viram traço translúcido suave */
-  .ring-emerald-200, .ring-green-200, .ring-teal-200,
-  .ring-amber-200, .ring-yellow-200, .ring-orange-200,
-  .ring-rose-200, .ring-red-200, .ring-pink-200,
-  .ring-purple-200, .ring-violet-200, .ring-indigo-200,
-  .ring-fuchsia-200, .ring-sky-200, .ring-blue-200 {
+  .app-glass-scope .ring-emerald-200, .app-glass-scope .ring-green-200, .app-glass-scope .ring-teal-200,
+  .app-glass-scope .ring-amber-200, .app-glass-scope .ring-yellow-200, .app-glass-scope .ring-orange-200,
+  .app-glass-scope .ring-rose-200, .app-glass-scope .ring-red-200, .app-glass-scope .ring-pink-200,
+  .app-glass-scope .ring-purple-200, .app-glass-scope .ring-violet-200, .app-glass-scope .ring-indigo-200,
+  .app-glass-scope .ring-fuchsia-200, .app-glass-scope .ring-sky-200, .app-glass-scope .ring-blue-200 {
     --tw-ring-color: rgba(255, 220, 225, 0.10) !important;
   }
 
   /* Cores de texto saturadas dentro das pílulas: suavizar p/ tons pastéis */
-  .text-emerald-700, .text-emerald-600, .text-green-700, .text-green-600,
-  .text-teal-700 { color: #7be0b8 !important; }
-  .text-amber-700, .text-amber-800, .text-amber-600,
-  .text-yellow-700, .text-yellow-800, .text-orange-700 { color: #f0c280 !important; }
-  .text-rose-700, .text-rose-600, .text-red-700, .text-red-600,
-  .text-pink-700 { color: #ff9aae !important; }
-  .text-purple-700, .text-violet-700, .text-indigo-700,
-  .text-fuchsia-700 { color: #c9a8ff !important; }
-  .text-sky-700, .text-blue-700, .text-blue-600 { color: #8fc8ff !important; }
+  .app-glass-scope .text-emerald-700, .app-glass-scope .text-emerald-600, .app-glass-scope .text-green-700, .app-glass-scope .text-green-600,
+  .app-glass-scope .text-teal-700 { color: #7be0b8 !important; }
+  .app-glass-scope .text-amber-700, .app-glass-scope .text-amber-800, .app-glass-scope .text-amber-600,
+  .app-glass-scope .text-yellow-700, .app-glass-scope .text-yellow-800, .app-glass-scope .text-orange-700 { color: #f0c280 !important; }
+  .app-glass-scope .text-rose-700, .app-glass-scope .text-rose-600, .app-glass-scope .text-red-700, .app-glass-scope .text-red-600,
+  .app-glass-scope .text-pink-700 { color: #ff9aae !important; }
+  .app-glass-scope .text-purple-700, .app-glass-scope .text-violet-700, .app-glass-scope .text-indigo-700,
+  .app-glass-scope .text-fuchsia-700 { color: #c9a8ff !important; }
+  .app-glass-scope .text-sky-700, .app-glass-scope .text-blue-700, .app-glass-scope .text-blue-600 { color: #8fc8ff !important; }
 
   /* Ícones com fundos saturados nos KPIs → toque dessaturado e elegante */
-  .bg-emerald-600, .bg-emerald-500, .bg-green-600, .bg-green-500 {
+  .app-glass-scope .bg-emerald-600, .app-glass-scope .bg-emerald-500, .app-glass-scope .bg-green-600, .app-glass-scope .bg-green-500 {
     background-color: rgba(40, 110, 80, 0.55) !important;
     box-shadow: 0 0 0 1px rgba(255,220,225,0.08) inset;
   }
-  .bg-amber-600, .bg-amber-500, .bg-yellow-600, .bg-orange-500 {
+  .app-glass-scope .bg-amber-600, .app-glass-scope .bg-amber-500, .app-glass-scope .bg-yellow-600, .app-glass-scope .bg-orange-500 {
     background-color: rgba(140, 90, 30, 0.55) !important;
     box-shadow: 0 0 0 1px rgba(255,220,225,0.08) inset;
   }
-  .bg-rose-600, .bg-rose-500, .bg-red-600, .bg-red-500, .bg-pink-600 {
+  .app-glass-scope .bg-rose-600, .app-glass-scope .bg-rose-500, .app-glass-scope .bg-red-600, .app-glass-scope .bg-red-500, .app-glass-scope .bg-pink-600 {
     background-color: rgba(150, 30, 55, 0.6) !important;
     box-shadow: 0 0 0 1px rgba(255,220,225,0.08) inset;
   }
