@@ -112,8 +112,8 @@ function RolesPage() {
   const [showInactive, setShowInactive] = useState(false);
 
 
-  const { data: roles = [] } = useQuery({
-    queryKey: ["roles"],
+  const rolesQuery = useQuery({
+    queryKey: ["roles", "full"],
     queryFn: async () => {
       const { data, error } = await supabase.from("roles").select("*").order("name");
       if (error) throw error;
@@ -124,7 +124,11 @@ function RolesPage() {
         setor: r.setor ?? "",
         cbo: r.cbo ?? "",
         cbo_titulo: r.cbo_titulo ?? "",
-        req_vacinas: r.req_vacinas ?? [],
+        req_aso: r.req_aso ?? true,
+        req_integra: r.req_integra ?? true,
+        req_nrs: Array.isArray(r.req_nrs) ? r.req_nrs : [],
+        req_exames: Array.isArray(r.req_exames) ? r.req_exames : [],
+        req_vacinas: Array.isArray(r.req_vacinas) ? r.req_vacinas : [],
         risco_biologico: !!r.risco_biologico,
         riscos: r.riscos && typeof r.riscos === "object" ? { ...emptyRiscos, ...r.riscos } : emptyRiscos,
         exames_por_natureza: r.exames_por_natureza && typeof r.exames_por_natureza === "object"
@@ -133,6 +137,9 @@ function RolesPage() {
       })) as Role[];
     },
   });
+  const roles = rolesQuery.data ?? [];
+  const rolesLoading = rolesQuery.isLoading || (rolesQuery.isFetching && roles.length === 0);
+  const rolesError = rolesQuery.error instanceof Error ? rolesQuery.error.message : null;
 
   const filtered = useMemo(() => {
     return roles.filter((r) => {
