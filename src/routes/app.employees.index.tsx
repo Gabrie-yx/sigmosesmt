@@ -162,6 +162,11 @@ function EmployeesPage() {
               <CalendarClock className="h-4 w-4 mr-2" />Hora extra (sábado)
             </Button>
           </Link>
+          <Link to="/app/employees/desligados">
+            <Button variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-slate-400 text-slate-700 hover:bg-slate-100">
+              <UserRoundX className="h-4 w-4 mr-2" />Desligados
+            </Button>
+          </Link>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">

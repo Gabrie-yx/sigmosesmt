@@ -63,6 +63,7 @@ import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesSaidasRouteImport } from './routes/app.employees.saidas'
 import { Route as AppEmployeesListagemRouteImport } from './routes/app.employees.listagem'
 import { Route as AppEmployeesHoraExtraSabadoRouteImport } from './routes/app.employees.hora-extra-sabado'
+import { Route as AppEmployeesDesligadosRouteImport } from './routes/app.employees.desligados'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 import { Route as AppDdsTemasRouteImport } from './routes/app.dds.temas'
 import { Route as AppDdsPainelRouteImport } from './routes/app.dds.painel'
@@ -350,6 +351,11 @@ const AppEmployeesHoraExtraSabadoRoute =
     path: '/hora-extra-sabado',
     getParentRoute: () => AppEmployeesRoute,
   } as any)
+const AppEmployeesDesligadosRoute = AppEmployeesDesligadosRouteImport.update({
+  id: '/desligados',
+  path: '/desligados',
+  getParentRoute: () => AppEmployeesRoute,
+} as any)
 const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -447,6 +453,7 @@ export interface FileRoutesByFullPath {
   '/app/dds/painel': typeof AppDdsPainelRoute
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
+  '/app/employees/desligados': typeof AppEmployeesDesligadosRoute
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
@@ -511,6 +518,7 @@ export interface FileRoutesByTo {
   '/app/dds/painel': typeof AppDdsPainelRoute
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
+  '/app/employees/desligados': typeof AppEmployeesDesligadosRoute
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
@@ -579,6 +587,7 @@ export interface FileRoutesById {
   '/app/dds/painel': typeof AppDdsPainelRoute
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
+  '/app/employees/desligados': typeof AppEmployeesDesligadosRoute
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
@@ -648,6 +657,7 @@ export interface FileRouteTypes {
     | '/app/dds/painel'
     | '/app/dds/temas'
     | '/app/employees/$id'
+    | '/app/employees/desligados'
     | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
     | '/app/employees/saidas'
@@ -712,6 +722,7 @@ export interface FileRouteTypes {
     | '/app/dds/painel'
     | '/app/dds/temas'
     | '/app/employees/$id'
+    | '/app/employees/desligados'
     | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
     | '/app/employees/saidas'
@@ -779,6 +790,7 @@ export interface FileRouteTypes {
     | '/app/dds/painel'
     | '/app/dds/temas'
     | '/app/employees/$id'
+    | '/app/employees/desligados'
     | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
     | '/app/employees/saidas'
@@ -1200,6 +1212,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmployeesHoraExtraSabadoRouteImport
       parentRoute: typeof AppEmployeesRoute
     }
+    '/app/employees/desligados': {
+      id: '/app/employees/desligados'
+      path: '/desligados'
+      fullPath: '/app/employees/desligados'
+      preLoaderRoute: typeof AppEmployeesDesligadosRouteImport
+      parentRoute: typeof AppEmployeesRoute
+    }
     '/app/employees/$id': {
       id: '/app/employees/$id'
       path: '/$id'
@@ -1282,6 +1301,7 @@ declare module '@tanstack/react-router' {
 
 interface AppEmployeesRouteChildren {
   AppEmployeesIdRoute: typeof AppEmployeesIdRoute
+  AppEmployeesDesligadosRoute: typeof AppEmployeesDesligadosRoute
   AppEmployeesHoraExtraSabadoRoute: typeof AppEmployeesHoraExtraSabadoRoute
   AppEmployeesListagemRoute: typeof AppEmployeesListagemRoute
   AppEmployeesSaidasRoute: typeof AppEmployeesSaidasRoute
@@ -1290,6 +1310,7 @@ interface AppEmployeesRouteChildren {
 
 const AppEmployeesRouteChildren: AppEmployeesRouteChildren = {
   AppEmployeesIdRoute: AppEmployeesIdRoute,
+  AppEmployeesDesligadosRoute: AppEmployeesDesligadosRoute,
   AppEmployeesHoraExtraSabadoRoute: AppEmployeesHoraExtraSabadoRoute,
   AppEmployeesListagemRoute: AppEmployeesListagemRoute,
   AppEmployeesSaidasRoute: AppEmployeesSaidasRoute,
