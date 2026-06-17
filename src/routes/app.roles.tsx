@@ -711,7 +711,7 @@ function Section({
         <div className="w-9 h-9 rounded-xl bg-secondary text-accent-foreground flex items-center justify-center shadow-sm">{icon}</div>
         <div className="text-sm font-black uppercase text-slate-800 tracking-wider">{title}</div>
         {hint && (
-          <span className="ml-auto text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-full uppercase tracking-wider">{hint}</span>
+          <span className="ml-auto text-[10px] font-bold text-amber-200 bg-amber-400/12 ring-1 ring-amber-300/25 px-2 py-1 rounded-full uppercase tracking-wider">{hint}</span>
         )}
       </div>
       <div className="bg-card/20 backdrop-blur p-4 rounded-2xl border border-border shadow-inner space-y-4">
