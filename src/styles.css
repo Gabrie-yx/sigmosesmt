@@ -707,32 +707,32 @@
   }
 
   /* Hovers brancos agressivos viram tom vinho translúcido */
-  .hover\:bg-white:hover,
-  .hover\:bg-slate-50:hover, .hover\:bg-slate-100:hover,
-  .hover\:bg-gray-50:hover, .hover\:bg-gray-100:hover,
-  .hover\:bg-zinc-50:hover, .hover\:bg-zinc-100:hover,
-  .hover\:bg-neutral-50:hover, .hover\:bg-neutral-100:hover {
+  .app-glass-scope .hover\:bg-white:hover,
+  .app-glass-scope .hover\:bg-slate-50:hover, .app-glass-scope .hover\:bg-slate-100:hover,
+  .app-glass-scope .hover\:bg-gray-50:hover, .app-glass-scope .hover\:bg-gray-100:hover,
+  .app-glass-scope .hover\:bg-zinc-50:hover, .app-glass-scope .hover\:bg-zinc-100:hover,
+  .app-glass-scope .hover\:bg-neutral-50:hover, .app-glass-scope .hover\:bg-neutral-100:hover {
     background-color: rgba(90, 20, 35, 0.45) !important;
     color: #fff5f6 !important;
     backdrop-filter: blur(14px) saturate(150%);
   }
-  .data-\[state\=active\]\:bg-white[data-state="active"],
-  [data-state="active"].bg-white {
+  .app-glass-scope .data-\[state\=active\]\:bg-white[data-state="active"],
+  .app-glass-scope [data-state="active"].bg-white {
     background-color: rgba(90, 20, 35, 0.55) !important;
     color: #fff5f6 !important;
     box-shadow: 0 0 0 1px rgba(255, 220, 225, 0.12) inset;
   }
 
   /* Texto escuro hardcoded vira tom marfim suave (não branco puro) */
-  .text-slate-900, .text-slate-800, .text-zinc-900, .text-zinc-800,
-  .text-gray-900, .text-gray-800, .text-neutral-900, .text-neutral-800,
-  .text-black { color: rgba(245, 225, 225, 0.92) !important; }
-  .text-slate-700, .text-slate-600, .text-zinc-700, .text-zinc-600,
-  .text-gray-700, .text-gray-600, .text-neutral-700, .text-neutral-600 {
+  .app-glass-scope .text-slate-900, .app-glass-scope .text-slate-800, .app-glass-scope .text-zinc-900, .app-glass-scope .text-zinc-800,
+  .app-glass-scope .text-gray-900, .app-glass-scope .text-gray-800, .app-glass-scope .text-neutral-900, .app-glass-scope .text-neutral-800,
+  .app-glass-scope .text-black { color: rgba(245, 225, 225, 0.92) !important; }
+  .app-glass-scope .text-slate-700, .app-glass-scope .text-slate-600, .app-glass-scope .text-zinc-700, .app-glass-scope .text-zinc-600,
+  .app-glass-scope .text-gray-700, .app-glass-scope .text-gray-600, .app-glass-scope .text-neutral-700, .app-glass-scope .text-neutral-600 {
     color: rgba(240, 220, 222, 0.78) !important;
   }
-  .text-slate-500, .text-slate-400, .text-zinc-500, .text-zinc-400,
-  .text-gray-500, .text-gray-400, .text-neutral-500, .text-neutral-400 {
+  .app-glass-scope .text-slate-500, .app-glass-scope .text-slate-400, .app-glass-scope .text-zinc-500, .app-glass-scope .text-zinc-400,
+  .app-glass-scope .text-gray-500, .app-glass-scope .text-gray-400, .app-glass-scope .text-neutral-500, .app-glass-scope .text-neutral-400 {
     color: rgba(235, 210, 215, 0.58) !important;
   }
 }
