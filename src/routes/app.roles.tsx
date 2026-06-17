@@ -333,12 +333,12 @@ function RolesPage() {
               <div
                 key={r.id}
                 onClick={() => { setEditing(r); setInnerTab("diretrizes"); }}
-                className={`group relative p-3.5 rounded-2xl border-2 cursor-pointer transition-all hover:-translate-y-0.5 ${
+                className={`group relative p-3.5 rounded-2xl border cursor-pointer transition-all hover:-translate-y-0.5 backdrop-blur-xl ${
                   isSel
-                    ? "border-[#991b1b] bg-gradient-to-r from-rose-100 via-rose-50 to-white shadow-[0_10px_25px_-10px_rgba(153,27,27,0.5)]"
+                    ? "border-red-400/40 bg-gradient-to-br from-red-500/15 via-white/[0.04] to-white/[0.02] shadow-[0_0_40px_-12px_rgba(220,38,38,0.45)]"
                     : !r.ativo
-                    ? "border-slate-100 bg-slate-50/50 opacity-70 hover:opacity-100 hover:border-slate-300"
-                    : "border-white bg-white hover:border-rose-300 hover:shadow-lg shadow-sm"
+                    ? "border-white/[0.06] bg-white/[0.02] opacity-60 hover:opacity-90 hover:border-white/15"
+                    : "border-white/10 bg-white/[0.03] hover:border-red-400/30 hover:bg-white/[0.05] hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)]"
                 }`}
               >
                 <div className="flex items-start gap-3">
