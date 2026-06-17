@@ -243,12 +243,12 @@ export function HoraExtraSabadoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl max-h-[calc(100dvh-2rem)] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto !p-5 !gap-3">
         <DialogHeader>
-          <DialogTitle>{editId ? "Editar" : "Nova"} ficha de hora extra (sábado)</DialogTitle>
+          <DialogTitle className="text-base">{editId ? "Editar" : "Nova"} ficha de hora extra (sábado)</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
           <div className="space-y-1"><Label>Data</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
           <div className="space-y-1"><Label>Turno</Label><Input value={turno} onChange={(e) => setTurno(e.target.value)} placeholder="1º" /></div>
           <div className="space-y-1"><Label>Horário início</Label><Input value={horaIni} onChange={(e) => setHoraIni(e.target.value)} placeholder="07:30" /></div>
@@ -308,7 +308,7 @@ export function HoraExtraSabadoDialog({
             {setoresSel.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {setoresSel.map((s) => (
-                  <span key={s} className="text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200 px-1.5 py-0.5 rounded inline-flex items-center gap-1">
+                  <span key={s} className="text-[10px] font-medium bg-white/[0.06] text-current/80 ring-1 ring-white/10 px-1.5 py-0.5 rounded inline-flex items-center gap-1">
                     {s}
                     <button type="button" onClick={() => setSetoresSel((p) => p.filter((x) => x !== s))}>
                       <X className="h-2.5 w-2.5" />
@@ -343,55 +343,55 @@ export function HoraExtraSabadoDialog({
         </div>
 
         {/* Seletor de funcionários */}
-        <div className="mt-4 rounded-xl border border-slate-200 p-3 bg-slate-50/80">
+        <div className="mt-3 rounded-xl border border-white/10 p-2.5 bg-white/[0.03]">
           <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-            <p className="text-xs font-black uppercase tracking-widest text-slate-600">Adicionar funcionários</p>
-            <Button size="sm" variant="outline" onClick={addTodos} disabled={empsDisponiveis.length === 0}>
+            <p className="text-[10px] font-black uppercase tracking-widest">Adicionar funcionários</p>
+            <Button size="sm" variant="outline" onClick={addTodos} disabled={empsDisponiveis.length === 0} className="h-7 text-xs">
               <Users className="h-3.5 w-3.5 mr-1.5" />Adicionar todos ({empsDisponiveis.length})
             </Button>
           </div>
           <div className="relative mb-2">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input className="pl-9" placeholder="Buscar funcionário…" value={busca} onChange={(e) => setBusca(e.target.value)} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-60" />
+            <Input className="pl-9 h-8" placeholder="Buscar funcionário…" value={busca} onChange={(e) => setBusca(e.target.value)} />
           </div>
-          <div className="max-h-44 overflow-y-auto rounded-md border bg-white divide-y">
+          <div className="max-h-40 overflow-y-auto rounded-md border border-white/10 bg-white/[0.03] divide-y divide-white/10">
             {empsDisponiveis.slice(0, 50).map((e: any) => (
-              <button key={e.id} type="button" onClick={() => addEmp(e)} className="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-100 flex items-center justify-between">
+              <button key={e.id} type="button" onClick={() => addEmp(e)} className="w-full text-left px-3 py-1.5 text-sm hover:bg-white/[0.06] flex items-center justify-between">
                 <span>{e.nome}</span>
-                <Plus className="h-3.5 w-3.5 text-slate-400" />
+                <Plus className="h-3.5 w-3.5 opacity-60" />
               </button>
             ))}
-            {empsDisponiveis.length === 0 && <p className="px-3 py-3 text-xs text-slate-400 italic">Nenhum funcionário disponível.</p>}
+            {empsDisponiveis.length === 0 && <p className="px-3 py-3 text-xs opacity-60 italic">Nenhum funcionário disponível.</p>}
           </div>
           {/* Externo */}
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-12 gap-2">
-            <Input className="md:col-span-5" placeholder="Nome de pessoa externa" value={novoExternoNome} onChange={(e) => setNovoExternoNome(e.target.value)} />
-            <Input className="md:col-span-4" placeholder="Função (opcional)" value={novoExternoFuncao} onChange={(e) => setNovoExternoFuncao(e.target.value)} />
-            <Button className="md:col-span-3" variant="secondary" onClick={addExterno} disabled={!novoExternoNome.trim()}>
+          <div className="mt-2 grid grid-cols-1 md:grid-cols-12 gap-2">
+            <Input className="md:col-span-5 h-8" placeholder="Nome de pessoa externa" value={novoExternoNome} onChange={(e) => setNovoExternoNome(e.target.value)} />
+            <Input className="md:col-span-4 h-8" placeholder="Função (opcional)" value={novoExternoFuncao} onChange={(e) => setNovoExternoFuncao(e.target.value)} />
+            <Button className="md:col-span-3 h-8 text-xs" variant="secondary" onClick={addExterno} disabled={!novoExternoNome.trim()}>
               <Plus className="h-3.5 w-3.5 mr-1.5" />Adicionar externo
             </Button>
           </div>
         </div>
 
         {/* Lista selecionada */}
-        <div className="mt-4">
+        <div className="mt-3">
           <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-            <p className="text-xs font-black uppercase tracking-widest text-slate-600">Selecionados ({funcs.length})</p>
+            <p className="text-[10px] font-black uppercase tracking-widest">Selecionados ({funcs.length})</p>
             {funcs.length > 0 && (
-              <div className="flex gap-2 flex-wrap">
-                <Button size="sm" variant="ghost" onClick={() => marcarTodos("transporte", true)}><CheckSquare className="h-3.5 w-3.5 mr-1" />Todos transporte</Button>
-                <Button size="sm" variant="ghost" onClick={() => marcarTodos("transporte", false)}><Square className="h-3.5 w-3.5 mr-1" />Nenhum transp.</Button>
-                <Button size="sm" variant="ghost" onClick={() => marcarTodos("alimentacao", true)}><CheckSquare className="h-3.5 w-3.5 mr-1" />Todos alim.</Button>
-                <Button size="sm" variant="ghost" className="text-rose-600 hover:text-rose-700 hover:bg-rose-50" onClick={removerTodos}><Trash2 className="h-3.5 w-3.5 mr-1" />Remover todos</Button>
+              <div className="flex gap-1 flex-wrap">
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => marcarTodos("transporte", true)}><CheckSquare className="h-3.5 w-3.5 mr-1" />Todos transp.</Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => marcarTodos("transporte", false)}><Square className="h-3.5 w-3.5 mr-1" />Nenhum transp.</Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => marcarTodos("alimentacao", true)}><CheckSquare className="h-3.5 w-3.5 mr-1" />Todos alim.</Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs text-rose-300 hover:text-rose-200 hover:bg-rose-500/10" onClick={removerTodos}><Trash2 className="h-3.5 w-3.5 mr-1" />Remover todos</Button>
               </div>
             )}
           </div>
           {funcs.length === 0 ? (
-            <p className="rounded-md border border-dashed p-4 text-center text-xs text-slate-400">Nenhum funcionário adicionado ainda.</p>
+            <p className="rounded-md border border-dashed border-white/15 p-3 text-center text-xs opacity-60">Nenhum funcionário adicionado ainda.</p>
           ) : (
-            <div className="overflow-x-auto rounded-xl border">
+            <div className="overflow-x-auto rounded-xl border border-white/10">
               <table className="w-full text-sm">
-                <thead className="bg-slate-100 text-[10px] uppercase tracking-widest text-slate-600">
+                <thead className="bg-white/[0.05] text-[10px] uppercase tracking-widest">
                   <tr>
                     <th className="px-2 py-2 text-left w-10">#</th>
                     <th className="px-2 py-2 text-left">Nome</th>
@@ -403,12 +403,12 @@ export function HoraExtraSabadoDialog({
                 </thead>
                 <tbody>
                   {funcs.map((f, i) => (
-                    <tr key={f.key} className="border-t">
-                      <td className="px-2 py-1.5 text-slate-500">{i + 1}</td>
+                    <tr key={f.key} className="border-t border-white/10">
+                      <td className="px-2 py-1.5 opacity-60">{i + 1}</td>
                       <td className="px-2 py-1.5">
                         <span className="font-medium">{f.nome}</span>
-                        {f.externo && <span className="ml-2 text-[10px] uppercase font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">Externo</span>}
-                        {f.funcao && <span className="ml-2 text-xs text-slate-500">— {f.funcao}</span>}
+                        {f.externo && <span className="ml-2 text-[10px] uppercase font-bold text-amber-200 bg-amber-400/12 ring-1 ring-amber-300/25 px-1.5 py-0.5 rounded">Externo</span>}
+                        {f.funcao && <span className="ml-2 text-xs opacity-70">— {f.funcao}</span>}
                       </td>
                       <td className="px-2 py-1.5 text-center"><Checkbox checked={f.transporte} onCheckedChange={() => toggle(f.key, "transporte")} /></td>
                       <td className="px-2 py-1.5 text-center"><Checkbox checked={f.alimentacao} onCheckedChange={() => toggle(f.key, "alimentacao")} /></td>
@@ -423,7 +423,7 @@ export function HoraExtraSabadoDialog({
                         </Select>
                       </td>
                       <td className="px-2 py-1.5 text-center">
-                        <Button size="icon" variant="ghost" onClick={() => remove(f.key)}><X className="h-4 w-4 text-rose-500" /></Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(f.key)}><X className="h-4 w-4 text-rose-300" /></Button>
                       </td>
                     </tr>
                   ))}
@@ -433,12 +433,12 @@ export function HoraExtraSabadoDialog({
           )}
         </div>
 
-        <div className="mt-4 space-y-1">
+        <div className="mt-3 space-y-1">
           <Label>Observação</Label>
           <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={2} />
         </div>
 
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-4 flex justify-end gap-2">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button onClick={() => save.mutate()} disabled={save.isPending || funcs.length === 0}>
             {save.isPending ? "Salvando…" : editId ? "Salvar alterações" : "Criar ficha"}
