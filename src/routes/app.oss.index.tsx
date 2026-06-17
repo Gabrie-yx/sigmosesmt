@@ -23,6 +23,7 @@ import { formatDateBR } from "@/lib/utils-date";
 import { buildOssPdf } from "@/lib/oss-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { OssRowActions } from "@/components/oss/oss-row-actions";
+import { EmployeeQuickView } from "@/components/employees/employee-quick-view";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/oss/")({
