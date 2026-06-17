@@ -155,10 +155,10 @@
 
   body {
     background:
-      radial-gradient(1200px 700px at 8% -10%, rgba(155, 28, 28, 0.42), transparent 60%),
-      radial-gradient(900px 600px at 110% 15%, rgba(88, 12, 24, 0.35), transparent 65%),
-      radial-gradient(800px 600px at 50% 110%, rgba(40, 8, 14, 0.55), transparent 70%),
-      linear-gradient(135deg, #1a0509 0%, #0a0608 55%, #050304 100%);
+      radial-gradient(1600px 900px at 15% 0%, rgba(120, 22, 38, 0.55), transparent 55%),
+      radial-gradient(1400px 900px at 95% 10%, rgba(60, 10, 20, 0.50), transparent 60%),
+      radial-gradient(1200px 800px at 50% 110%, rgba(20, 4, 8, 0.85), transparent 70%),
+      linear-gradient(160deg, #2a070f 0%, #14040a 40%, #08030500 70%, #050305 100%);
     background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-sans);
@@ -297,29 +297,30 @@
 
 @utility glass-card {
   background: linear-gradient(
-    140deg,
-    rgba(48, 14, 22, 0.38) 0%,
-    rgba(22, 6, 10, 0.48) 100%
+    180deg,
+    rgba(48, 14, 22, 0.55) 0%,
+    rgba(20, 6, 10, 0.72) 100%
   );
-  backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid rgba(255, 220, 225, 0.10);
+  backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(255, 220, 225, 0.06);
   box-shadow:
-    0 1px 0 0 rgba(255, 230, 235, 0.10) inset,
-    0 0 0 1px rgba(255, 230, 235, 0.025) inset,
-    0 0 14px -4px rgba(180, 30, 50, 0.14),
-    0 18px 50px -18px rgba(0, 0, 0, 0.55);
+    0 1px 0 0 rgba(255, 230, 235, 0.08) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.45) inset,
+    0 0 0 1px rgba(255, 230, 235, 0.02) inset,
+    0 20px 50px -20px rgba(0, 0, 0, 0.7),
+    0 2px 6px rgba(0, 0, 0, 0.35);
   color: rgba(245, 225, 225, 0.92);
-  border-radius: 1rem;
+  border-radius: 1.25rem;
   transition: box-shadow .3s ease, border-color .3s ease, transform .3s ease;
 }
 .glass-card:hover {
-  border-color: rgba(255, 220, 225, 0.18);
+  border-color: rgba(255, 220, 225, 0.12);
   box-shadow:
-    0 1px 0 0 rgba(255, 230, 235, 0.14) inset,
-    0 0 0 1px rgba(255, 230, 235, 0.04) inset,
-    0 0 22px -4px rgba(200, 30, 55, 0.28),
-    0 0 48px -14px rgba(160, 16, 40, 0.22),
-    0 22px 60px -18px rgba(0, 0, 0, 0.65);
+    0 1px 0 0 rgba(255, 230, 235, 0.12) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.5) inset,
+    0 0 0 1px rgba(255, 230, 235, 0.03) inset,
+    0 0 30px -8px rgba(200, 30, 55, 0.22),
+    0 24px 60px -20px rgba(0, 0, 0, 0.75);
 }
 
 @utility glass-vinho {
