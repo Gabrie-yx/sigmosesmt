@@ -466,10 +466,10 @@ function EmployeesPage() {
 // ============ Sub-componentes ============
 
 const TONES = {
-  slate: { bg: "bg-slate-50", text: "text-slate-700", ring: "ring-slate-200", icon: "bg-slate-900 text-white" },
-  emerald: { bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-200", icon: "bg-emerald-600 text-white" },
-  amber: { bg: "bg-amber-50", text: "text-amber-700", ring: "ring-amber-200", icon: "bg-amber-500 text-white" },
-  rose: { bg: "bg-rose-50", text: "text-rose-700", ring: "ring-rose-200", icon: "bg-rose-600 text-white" },
+  slate:   { accent: "accent-wine",    text: "text-[rgba(245,225,225,0.78)]", icon: "bg-[rgba(60,18,28,0.85)] text-[#fff5f6] ring-1 ring-white/10" },
+  emerald: { accent: "accent-emerald", text: "text-emerald-300",              icon: "bg-[rgba(20,60,40,0.7)] text-emerald-300 ring-1 ring-emerald-400/20" },
+  amber:   { accent: "accent-amber",   text: "text-amber-300",                icon: "bg-[rgba(70,40,12,0.7)] text-amber-300 ring-1 ring-amber-400/20" },
+  rose:    { accent: "accent-rose",    text: "text-rose-300",                 icon: "bg-[rgba(80,18,32,0.75)] text-rose-300 ring-1 ring-rose-400/25" },
 } as const;
 
 function KpiCard({ icon: Icon, label, value, tone, active, onClick }: { icon: any; label: string; value: number; tone: keyof typeof TONES; active?: boolean; onClick?: () => void }) {
@@ -478,14 +478,14 @@ function KpiCard({ icon: Icon, label, value, tone, active, onClick }: { icon: an
     <button
       type="button"
       onClick={onClick}
-      className={`text-left rounded-2xl ${t.bg} ring-1 ${active ? "ring-2 ring-[#7B1E2B] shadow-md -translate-y-0.5" : t.ring} p-4 flex items-center gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all`}
+      className={`prism-kpi ${t.accent} text-left p-4 flex items-center gap-3 hover:-translate-y-0.5 transition-all ${active ? "ring-1 ring-rose-400/40" : ""}`}
     >
-      <div className={`h-11 w-11 rounded-xl ${t.icon} flex items-center justify-center shadow`}>
+      <div className={`relative z-10 h-11 w-11 rounded-xl ${t.icon} flex items-center justify-center`}>
         <Icon className="h-5 w-5" />
       </div>
-      <div>
+      <div className="relative z-10">
         <p className={`text-[10px] font-black uppercase tracking-widest ${t.text}`}>{label}</p>
-        <p className="text-2xl font-black text-slate-900 leading-none mt-1">{value}</p>
+        <p className="text-2xl font-black text-[#fff5f6] leading-none mt-1">{value}</p>
       </div>
     </button>
   );
