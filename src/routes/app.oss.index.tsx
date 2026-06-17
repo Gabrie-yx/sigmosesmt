@@ -16,12 +16,13 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  Plus, FileSignature, Download, Upload, Search, Settings2, AlertCircle, CheckCircle2, Clock, FileWarning, Eye,
+  Plus, FileSignature, Download, Upload, Search, Settings2, AlertCircle, CheckCircle2, Clock, FileWarning, Eye, Ban,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { buildOssPdf } from "@/lib/oss-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { OssRowActions } from "@/components/oss/oss-row-actions";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/oss/")({
@@ -58,6 +59,10 @@ const STATUS_META: Record<Emissao["status"], { label: string; cls: string; icon:
   VENCIDO: { label: "Vencido", cls: "bg-red-100 text-red-800 border-red-300", icon: AlertCircle },
   SUBSTITUIDO: { label: "Substituído", cls: "bg-slate-100 text-slate-600 border-slate-300", icon: FileWarning },
 };
+const STATUS_META_EXTRA: Record<string, { label: string; cls: string; icon: any }> = {
+  ...STATUS_META,
+  CANCELADO: { label: "Cancelado", cls: "bg-red-50 text-red-700 border-red-200 line-through", icon: Ban },
+};
 
 function OssIndexPage() {
   const qc = useQueryClient();
@@ -82,7 +87,7 @@ function OssIndexPage() {
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     return emissoes.filter((e) => {
-      if (filterStatus === "ATIVAS" && (e.status === "SUBSTITUIDO" || e.status === "VENCIDO")) return false;
+      if (filterStatus === "ATIVAS" && (e.status === "SUBSTITUIDO" || e.status === "VENCIDO" || (e.status as string) === "CANCELADO")) return false;
       if (filterStatus !== "ATIVAS" && filterStatus !== "TODAS" && e.status !== filterStatus) return false;
       if (!s) return true;
       return (
@@ -197,6 +202,7 @@ function OssIndexPage() {
               <SelectItem value="ASSINADO">Apenas assinadas</SelectItem>
               <SelectItem value="VENCIDO">Apenas vencidas</SelectItem>
               <SelectItem value="SUBSTITUIDO">Apenas substituídas</SelectItem>
+              <SelectItem value="CANCELADO">Apenas canceladas</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -231,7 +237,7 @@ function OssIndexPage() {
               </TableHeader>
               <TableBody>
                 {filtered.map((em) => {
-                  const meta = STATUS_META[em.status];
+                  const meta = STATUS_META_EXTRA[em.status] ?? STATUS_META.PENDENTE_ASSINATURA;
                   const Icon = meta.icon;
                   return (
                     <TableRow key={em.id}>
@@ -261,6 +267,7 @@ function OssIndexPage() {
                           {isEditor && em.status === "PENDENTE_ASSINATURA" && (
                             <UploadAssinadoButton onPick={(f) => uploadAssinado.mutate({ em, file: f })} disabled={uploadAssinado.isPending} />
                           )}
+                          <OssRowActions em={em} invalidateKeys={[["oss-emissoes"], ["employee-oss", em.employee_id]]} />
                         </div>
                       </TableCell>
                     </TableRow>
