@@ -640,7 +640,14 @@ function TemplateEditorDialog({
     onError: (e: any) => toast.error(e.message),
   });
 
-  const visualizar = () => {
+  const visualizar = async () => {
+    // Busca catálogo de EPIs do estoque pra preencher os C.A. automaticamente
+    const { data: epiRows } = await supabase
+      .from("estoque_epi")
+      .select("nome_material, ca");
+    const episCatalog = (epiRows ?? [])
+      .filter((r: any) => r.nome_material && r.ca)
+      .map((r: any) => ({ nome: r.nome_material as string, ca: r.ca as string }));
     const doc = buildOssPdf({
       numero: "PREVIEW",
       revisao: template?.revisao ?? 1,
@@ -667,6 +674,7 @@ function TemplateEditorDialog({
           psicossocial: form.risco_psicossocial,
         },
       },
+      episCatalog,
     });
     setPreviewDoc(doc);
   };
