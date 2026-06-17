@@ -333,12 +333,12 @@ function RolesPage() {
               <div
                 key={r.id}
                 onClick={() => { setEditing(r); setInnerTab("diretrizes"); }}
-                className={`group relative p-3.5 rounded-2xl border-2 cursor-pointer transition-all hover:-translate-y-0.5 ${
+                className={`group relative p-3.5 rounded-2xl border cursor-pointer transition-all hover:-translate-y-0.5 backdrop-blur-xl ${
                   isSel
-                    ? "border-[#991b1b] bg-gradient-to-r from-rose-100 via-rose-50 to-white shadow-[0_10px_25px_-10px_rgba(153,27,27,0.5)]"
+                    ? "border-red-400/40 bg-gradient-to-br from-red-500/15 via-white/[0.04] to-white/[0.02] shadow-[0_0_40px_-12px_rgba(220,38,38,0.45)]"
                     : !r.ativo
-                    ? "border-slate-100 bg-slate-50/50 opacity-70 hover:opacity-100 hover:border-slate-300"
-                    : "border-white bg-white hover:border-rose-300 hover:shadow-lg shadow-sm"
+                    ? "border-white/[0.06] bg-white/[0.02] opacity-60 hover:opacity-90 hover:border-white/15"
+                    : "border-white/10 bg-white/[0.03] hover:border-red-400/30 hover:bg-white/[0.05] hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)]"
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -711,7 +711,7 @@ function Section({
         <div className="w-9 h-9 rounded-xl bg-secondary text-accent-foreground flex items-center justify-center shadow-sm">{icon}</div>
         <div className="text-sm font-black uppercase text-slate-800 tracking-wider">{title}</div>
         {hint && (
-          <span className="ml-auto text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-full uppercase tracking-wider">{hint}</span>
+          <span className="ml-auto text-[10px] font-bold text-amber-200 bg-amber-400/12 ring-1 ring-amber-300/25 px-2 py-1 rounded-full uppercase tracking-wider">{hint}</span>
         )}
       </div>
       <div className="bg-card/20 backdrop-blur p-4 rounded-2xl border border-border shadow-inner space-y-4">
@@ -723,13 +723,13 @@ function Section({
 
 function Pill({ icon, label, tone }: { icon: React.ReactNode; label: string; tone: "emerald" | "sky" | "red" | "rose" }) {
   const map = {
-    emerald: "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white border-emerald-300 shadow-emerald-400/40",
-    sky: "bg-gradient-to-br from-sky-400 to-sky-600 text-white border-sky-300 shadow-sky-400/40",
-    red: "bg-gradient-to-br from-rose-500 to-red-600 text-white border-red-300 shadow-rose-500/40",
-    rose: "bg-gradient-to-br from-pink-400 to-rose-600 text-white border-rose-300 shadow-rose-400/40",
+    emerald: "bg-emerald-400/12 text-emerald-200 ring-emerald-300/25",
+    sky:     "bg-sky-400/12 text-sky-200 ring-sky-300/25",
+    red:     "bg-red-500/15 text-red-200 ring-red-400/30",
+    rose:    "bg-pink-400/12 text-pink-200 ring-pink-300/25",
   } as const;
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border shadow-md ${map[tone]}`}>
+    <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ring-1 backdrop-blur-sm ${map[tone]}`}>
       {icon}{label}
     </span>
   );
