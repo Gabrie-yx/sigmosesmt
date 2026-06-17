@@ -723,13 +723,13 @@ function Section({
 
 function Pill({ icon, label, tone }: { icon: React.ReactNode; label: string; tone: "emerald" | "sky" | "red" | "rose" }) {
   const map = {
-    emerald: "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white border-emerald-300 shadow-emerald-400/40",
-    sky: "bg-gradient-to-br from-sky-400 to-sky-600 text-white border-sky-300 shadow-sky-400/40",
-    red: "bg-gradient-to-br from-rose-500 to-red-600 text-white border-red-300 shadow-rose-500/40",
-    rose: "bg-gradient-to-br from-pink-400 to-rose-600 text-white border-rose-300 shadow-rose-400/40",
+    emerald: "bg-emerald-400/12 text-emerald-200 ring-emerald-300/25",
+    sky:     "bg-sky-400/12 text-sky-200 ring-sky-300/25",
+    red:     "bg-red-500/15 text-red-200 ring-red-400/30",
+    rose:    "bg-pink-400/12 text-pink-200 ring-pink-300/25",
   } as const;
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border shadow-md ${map[tone]}`}>
+    <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ring-1 backdrop-blur-sm ${map[tone]}`}>
       {icon}{label}
     </span>
   );
