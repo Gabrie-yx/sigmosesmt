@@ -142,8 +142,8 @@ function EmployeesPage() {
     <div className="p-6 md:p-8 animate-fadeIn">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="heading-display text-3xl md:text-4xl text-brand leading-none">Funcionários</h2>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-2">
+          <h2 className="heading-display text-3xl md:text-4xl leading-none text-white drop-shadow-[0_2px_12px_rgba(200,16,46,0.45)]">Funcionários</h2>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-200/80 mt-2">
             Cadastro de funcionários
           </p>
         </div>
@@ -530,7 +530,7 @@ function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?:
     <Link
       to="/app/employees/$id"
       params={{ id: emp.id }}
-      className="group relative block rounded-2xl bg-white border border-slate-200 p-4 shadow-sm hover:shadow-xl hover:-translate-y-0.5 hover:border-[#7B1E2B]/40 transition-all duration-200 overflow-hidden"
+      className="glass-card glass-shine group relative block rounded-2xl p-4 hover:-translate-y-0.5 hover:shadow-2xl transition-all duration-200 overflow-hidden"
     >
       <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${avatarGradient(emp.nome)}`} />
       <div className="flex items-start gap-3">
