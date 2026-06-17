@@ -326,7 +326,23 @@ function RolesPage() {
 
         {/* List */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
-          {filtered.length === 0 && (
+          {rolesLoading && (
+            <div className="text-center py-12 px-4">
+              <Briefcase className="h-10 w-10 text-slate-200 mx-auto mb-3 animate-pulse" />
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Carregando cargos…</p>
+            </div>
+          )}
+          {rolesError && !rolesLoading && (
+            <div className="text-center py-12 px-4">
+              <AlertTriangle className="h-10 w-10 text-red-300 mx-auto mb-3" />
+              <p className="text-xs font-bold text-red-500 uppercase tracking-wider">Erro ao carregar cargos</p>
+              <p className="text-[10px] text-slate-400 mt-2 break-words">{rolesError}</p>
+              <Button type="button" size="sm" variant="outline" className="mt-4" onClick={() => rolesQuery.refetch()}>
+                Tentar novamente
+              </Button>
+            </div>
+          )}
+          {!rolesLoading && !rolesError && filtered.length === 0 && (
             <div className="text-center py-12 px-4">
               <Briefcase className="h-10 w-10 text-slate-200 mx-auto mb-3" />
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
