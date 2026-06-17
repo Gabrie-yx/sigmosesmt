@@ -206,7 +206,7 @@ export function AppSidebar() {
     <Sidebar
       collapsible="icon"
       overlay
-      className="border-r border-white/10"
+      className="border-0"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
