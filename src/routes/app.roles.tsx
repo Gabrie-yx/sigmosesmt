@@ -29,23 +29,23 @@ function RolesPageWithTabs() {
   return (
     <div className="h-full flex flex-col bg-transparent">
       <Tabs defaultValue="cargos" className="flex-1 flex flex-col min-h-0">
-        <div className="px-6 pt-5 pb-3 border-b border-white/10 bg-[rgba(20,6,10,0.45)] backdrop-blur-xl shadow-sm">
+        <div className="px-6 pt-5 pb-3 border-b border-border bg-card/60 backdrop-blur-xl shadow-sm">
           <TabsList className="h-14 glass-card p-1.5 rounded-xl gap-1">
             <TabsTrigger
               value="cargos"
-              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-[rgba(140,20,38,0.55)] data-[state=active]:text-[rgba(255,238,240,0.95)] data-[state=active]:shadow-lg transition-all"
+              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-accent/70 data-[state=active]:text-accent-foreground data-[state=active]:shadow-lg transition-all"
             >
               Cargos
             </TabsTrigger>
             <TabsTrigger
               value="riscos"
-              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-[rgba(140,20,38,0.55)] data-[state=active]:text-[rgba(255,238,240,0.95)] data-[state=active]:shadow-lg transition-all"
+              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-accent/70 data-[state=active]:text-accent-foreground data-[state=active]:shadow-lg transition-all"
             >
               Catálogo de Riscos
             </TabsTrigger>
             <TabsTrigger
               value="nrs"
-              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-[rgba(140,20,38,0.55)] data-[state=active]:text-[rgba(255,238,240,0.95)] data-[state=active]:shadow-lg transition-all"
+              className="px-6 py-2.5 text-sm font-black uppercase tracking-wide rounded-lg data-[state=active]:bg-accent/70 data-[state=active]:text-accent-foreground data-[state=active]:shadow-lg transition-all"
             >
               Catálogo de NRs
             </TabsTrigger>
