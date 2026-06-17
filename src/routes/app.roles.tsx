@@ -706,15 +706,15 @@ function Section({
   icon, title, hint, full, children,
 }: { icon: React.ReactNode; title: string; hint?: string; full?: boolean; children: React.ReactNode }) {
   return (
-    <div className={`p-5 border border-white/80 rounded-3xl bg-gradient-to-br from-white via-rose-50/30 to-amber-50/30 shadow-[0_10px_30px_-12px_rgba(15,23,42,0.18)] hover:shadow-[0_15px_40px_-12px_rgba(153,27,27,0.25)] transition-all ${full ? "lg:col-span-2" : ""}`}>
+    <div className={`p-5 border border-border rounded-3xl bg-card/25 backdrop-blur-xl shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)] hover:shadow-[0_15px_40px_-12px_rgba(120,18,32,0.35)] transition-all ${full ? "lg:col-span-2" : ""}`}>
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-100 to-amber-100 text-[#991b1b] flex items-center justify-center shadow-sm">{icon}</div>
+        <div className="w-9 h-9 rounded-xl bg-secondary text-accent-foreground flex items-center justify-center shadow-sm">{icon}</div>
         <div className="text-sm font-black uppercase text-slate-800 tracking-wider">{title}</div>
         {hint && (
           <span className="ml-auto text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-full uppercase tracking-wider">{hint}</span>
         )}
       </div>
-      <div className="bg-white/80 backdrop-blur p-4 rounded-2xl border border-white shadow-inner space-y-4">
+      <div className="bg-card/20 backdrop-blur p-4 rounded-2xl border border-border shadow-inner space-y-4">
         {children}
       </div>
     </div>
