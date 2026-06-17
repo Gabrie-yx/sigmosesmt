@@ -244,7 +244,7 @@ export function EmployeeListagemDialog({
                       </tr>
                     ) : (
                       filtered.map((e: any, i: number) => (
-                        <tr key={e.id} className="hover:bg-slate-50">
+                        <tr key={e.id} className="transition-colors hover:bg-white/[0.06] hover:backdrop-blur-md">
                           <td className="px-3 py-2 text-slate-500 tabular-nums">
                             {String(i + 1).padStart(3, "0")}
                           </td>
