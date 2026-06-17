@@ -87,7 +87,7 @@ function OssIndexPage() {
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     return emissoes.filter((e) => {
-      if (filterStatus === "ATIVAS" && (e.status === "SUBSTITUIDO" || e.status === "VENCIDO")) return false;
+      if (filterStatus === "ATIVAS" && (e.status === "SUBSTITUIDO" || e.status === "VENCIDO" || (e.status as string) === "CANCELADO")) return false;
       if (filterStatus !== "ATIVAS" && filterStatus !== "TODAS" && e.status !== filterStatus) return false;
       if (!s) return true;
       return (
@@ -202,6 +202,7 @@ function OssIndexPage() {
               <SelectItem value="ASSINADO">Apenas assinadas</SelectItem>
               <SelectItem value="VENCIDO">Apenas vencidas</SelectItem>
               <SelectItem value="SUBSTITUIDO">Apenas substituídas</SelectItem>
+              <SelectItem value="CANCELADO">Apenas canceladas</SelectItem>
             </SelectContent>
           </Select>
         </div>
