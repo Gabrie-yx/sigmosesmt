@@ -47,6 +47,8 @@ import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CAT
 import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.functions";
 import { AtestadosTab } from "@/components/employees/atestados-tab";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
+import { UserMinus, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -155,6 +157,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [fichaDoc, setFichaDoc] = useState<jsPDF | null>(null);
   const [gerandoFicha, setGerandoFicha] = useState(false);
   const [pppOpen, setPppOpen] = useState(false);
+  const [desligamentoOpen, setDesligamentoOpen] = useState(false);
 
   async function gerarFichaPdf() {
     if (!emp) return;
@@ -411,8 +414,47 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
             >
               <FileSignature className="h-3.5 w-3.5" /> Emitir PPP
             </button>
+            {isEditor && (
+              emp.status === "DESLIGADO" ? (
+                <button
+                  type="button"
+                  onClick={() => setDesligamentoOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-700 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                  title="Reativar funcionário"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Reativar
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setDesligamentoOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-rose-700 to-rose-900 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                  title="Registrar desligamento do funcionário"
+                >
+                  <UserMinus className="h-3.5 w-3.5" /> Desligamento
+                </button>
+              )
+            )}
         </div>
       </Card>
+      )}
+
+      {emp.status === "DESLIGADO" && (
+        <Card className="p-4 rounded-2xl border-2 border-rose-300 bg-rose-50 flex items-start gap-3">
+          <div className="h-9 w-9 shrink-0 rounded-full bg-rose-600 text-white flex items-center justify-center">
+            <UserMinus className="h-5 w-5" />
+          </div>
+          <div className="flex-1 text-sm">
+            <div className="text-sm font-black uppercase tracking-widest text-rose-700">Funcionário DESLIGADO</div>
+            <div className="text-xs text-rose-900 mt-0.5">
+              {(emp as any).data_desligamento && (
+                <>Desligado em <strong>{new Date((emp as any).data_desligamento + "T00:00:00").toLocaleDateString("pt-BR")}</strong>. </>
+              )}
+              {(emp as any).motivo_desligamento && <>Motivo: <strong>{(emp as any).motivo_desligamento}</strong>. </>}
+              Histórico mantido por exigência legal (até 20 anos). Novas emissões bloqueadas.
+            </div>
+          </div>
+        </Card>
       )}
 
       {!docsOk && (
@@ -508,6 +550,11 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         employee={emp}
         company={(companies ?? []).find((c: any) => c.id === emp?.company_id) ?? null}
         role={role}
+      />
+      <DesligamentoDialog
+        emp={emp as any}
+        open={desligamentoOpen}
+        onClose={() => setDesligamentoOpen(false)}
       />
     </div>
   );

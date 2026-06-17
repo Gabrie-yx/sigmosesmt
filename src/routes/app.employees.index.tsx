@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText } from "lucide-react";
+import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText, UserRoundX } from "lucide-react";
 import { toast } from "sonner";
 import { maskCPF, maskCNPJ } from "@/lib/masks";
 import { Wizard, type WizardStep } from "@/components/wizard";
@@ -44,7 +44,7 @@ function EmployeesPage() {
     try { return JSON.parse(sessionStorage.getItem(FILTERS_KEY) || "null"); } catch { return null; }
   })();
   const [q, setQ] = useState<string>(initialFilters?.q ?? "");
-  const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO">(initialFilters?.statusFilter ?? "TODOS");
+  const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO" | "DESLIGADO">(initialFilters?.statusFilter ?? "ATIVO");
   const [companyFilter, setCompanyFilter] = useState<string>(initialFilters?.companyFilter ?? "TODAS");
   const [roleFilter, setRoleFilter] = useState<string>(initialFilters?.roleFilter ?? "TODOS");
   const [vinculoFilter, setVinculoFilter] = useState<"TODOS" | "PROPRIO" | "TERCEIRO" | "MEI">(initialFilters?.vinculoFilter ?? "TODOS");
@@ -134,6 +134,7 @@ function EmployeesPage() {
       ativos: list.filter((e: any) => e.status === "ATIVO").length,
       inativos: list.filter((e: any) => e.status === "INATIVO").length,
       afastados: list.filter((e: any) => e.status === "AFASTADO").length,
+      desligados: list.filter((e: any) => e.status === "DESLIGADO").length,
     };
   }, [emps]);
 
@@ -290,14 +291,14 @@ function EmployeesPage() {
 
       {/* KPIs (clicáveis = filtro de status) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        <KpiCard icon={Users} label="Total" value={stats.total} tone="slate"
-          active={statusFilter === "TODOS"} onClick={() => setStatusFilter("TODOS")} />
         <KpiCard icon={UserCheck} label="Ativos" value={stats.ativos} tone="emerald"
           active={statusFilter === "ATIVO"} onClick={() => setStatusFilter("ATIVO")} />
         <KpiCard icon={UserMinus} label="Afastados" value={stats.afastados} tone="amber"
           active={statusFilter === "AFASTADO"} onClick={() => setStatusFilter("AFASTADO")} />
         <KpiCard icon={UserX} label="Inativos" value={stats.inativos} tone="rose"
           active={statusFilter === "INATIVO"} onClick={() => setStatusFilter("INATIVO")} />
+        <KpiCard icon={UserRoundX} label="Desligados" value={stats.desligados} tone="rose"
+          active={statusFilter === "DESLIGADO"} onClick={() => setStatusFilter("DESLIGADO")} />
       </div>
 
       {/* Busca + filtros */}
@@ -502,6 +503,8 @@ function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?:
       ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
       : emp.status === "AFASTADO"
       ? "bg-amber-100 text-amber-700 ring-amber-200"
+      : emp.status === "DESLIGADO"
+      ? "bg-slate-200 text-slate-700 ring-slate-300"
       : "bg-rose-100 text-rose-700 ring-rose-200";
   const isTerceiro = companyType === "TERCEIRIZADO" || emp.tipo_vinculo === "TERCEIRO";
   const isMei = emp.tipo_cadastro === "MEI";
