@@ -169,14 +169,14 @@ function SaidasPage() {
           {datasOrdenadas.map((data) => (
             <div key={data} className="space-y-3">
               <div className="flex items-center gap-4">
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-rose-100/70 bg-white/[0.04] px-3 py-1 rounded-full border border-white/10 backdrop-blur-md">
                   {formatDateBR(data)}
                 </h3>
                 {isEditor && (
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-7 text-[10px] font-black uppercase tracking-widest text-brand hover:text-brand hover:bg-brand/5 rounded-lg border border-slate-100 hover:border-brand/20 bg-white shadow-sm"
+                    className="h-7 text-[10px] font-black uppercase tracking-widest text-rose-100/80 hover:text-white hover:bg-rose-500/15 rounded-lg border border-white/10 hover:border-rose-400/30 bg-white/[0.03] backdrop-blur-md shadow-sm"
                     onClick={() => {
                       const first = grupos[data][0];
                       const empIds = grupos[data].map((r: any) => r.employee_id);
@@ -197,7 +197,7 @@ function SaidasPage() {
                     <Copy className="h-3 w-3 mr-1.5" /> Repetir Lote
                   </Button>
                 )}
-                <div className="h-px flex-1 bg-slate-100"></div>
+                <div className="h-px flex-1 bg-gradient-to-r from-white/10 via-rose-500/10 to-transparent"></div>
               </div>
               
               <div className="grid gap-3 sm:grid-cols-2">
@@ -209,33 +209,33 @@ function SaidasPage() {
                   const iniciais = (emp?.nome ?? "—").split(" ").filter(Boolean).slice(0,2).map((s: string) => s[0]?.toUpperCase()).join("");
                   
                   return (
-                    <div key={r.id} className="group relative rounded-xl border border-slate-100 bg-white p-3 shadow-sm hover:shadow-md hover:border-brand/20 transition-all flex items-center gap-4">
-                      <Avatar className="h-10 w-10 ring-2 ring-slate-50 shrink-0">
+                    <div key={r.id} className="group relative rounded-xl border border-white/10 bg-gradient-to-br from-black/70 via-[#1a0408]/80 to-[#3a0a14]/70 p-3 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.7)] hover:shadow-[0_12px_32px_-12px_rgba(200,30,60,0.35)] hover:border-rose-400/25 transition-all flex items-center gap-4 backdrop-blur-md">
+                      <Avatar className="h-10 w-10 ring-2 ring-white/10 shrink-0">
                         {emp?.foto_url ? <AvatarImage src={emp.foto_url} alt={emp.nome} /> : null}
-                        <AvatarFallback className="text-xs font-black text-slate-700">{iniciais || "?"}</AvatarFallback>
+                        <AvatarFallback className="text-xs font-black text-rose-50 bg-rose-950/60">{iniciais || "?"}</AvatarFallback>
                       </Avatar>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-[13px] font-black text-slate-900 leading-tight truncate uppercase tracking-tight">{emp?.nome ?? "—"}</p>
+                          <p className="text-[13px] font-black text-rose-50 leading-tight truncate uppercase tracking-tight">{emp?.nome ?? "—"}</p>
                           <div className="flex gap-1 shrink-0">
-                            <span className={`w-2 h-2 rounded-full ${sigFunc ? "bg-emerald-500" : "bg-slate-200"}`} title="Assinatura Funcionário" />
-                            <span className={`w-2 h-2 rounded-full ${sigSesmt ? "bg-emerald-500" : "bg-slate-200"}`} title="Assinatura SESMT" />
-                            <span className={`w-2 h-2 rounded-full ${sigSupervisor ? "bg-emerald-500" : "bg-slate-200"}`} title="Assinatura Supervisor" />
+                            <span className={`w-2 h-2 rounded-full ${sigFunc ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" : "bg-white/15"}`} title="Assinatura Funcionário" />
+                            <span className={`w-2 h-2 rounded-full ${sigSesmt ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" : "bg-white/15"}`} title="Assinatura SESMT" />
+                            <span className={`w-2 h-2 rounded-full ${sigSupervisor ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" : "bg-white/15"}`} title="Assinatura Supervisor" />
                           </div>
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded uppercase">{r.horario_saida}</span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">{emp?.roles?.name ?? "—"}</span>
+                          <span className="text-[10px] font-black text-rose-100 bg-rose-500/20 ring-1 ring-rose-400/30 px-1.5 py-0.5 rounded uppercase">{r.horario_saida}</span>
+                          <span className="text-[10px] font-bold text-rose-100/55 uppercase tracking-wider truncate">{emp?.roles?.name ?? "—"}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1">
-                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100" onClick={() => gerarPdf(r.id)} title="Visualizar PDF">
-                          <Eye className="h-4 w-4 text-slate-600" />
+                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-white/10 text-rose-100/70 hover:text-rose-50" onClick={() => gerarPdf(r.id)} title="Visualizar PDF">
+                          <Eye className="h-4 w-4" />
                         </Button>
                         {isEditor && (
-                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-brand/5 hover:text-brand" onClick={() => {
+                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-rose-500/15 text-rose-100/70 hover:text-rose-50" onClick={() => {
                             setEditId(null);
                             setDuplicateData({
                               company_id: r.company_id,
@@ -252,11 +252,11 @@ function SaidasPage() {
                             <Copy className="h-3.5 w-3.5" />
                           </Button>
                         )}
-                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100" onClick={() => { setEditId(r.id); setDuplicateData(null); setOpen(true); }} title="Editar">
-                          <Pencil className="h-3.5 w-3.5 text-slate-600" />
+                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-white/10 text-rose-100/70 hover:text-rose-50" onClick={() => { setEditId(r.id); setDuplicateData(null); setOpen(true); }} title="Editar">
+                          <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         {isAdmin && (
-                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:text-rose-600 hover:bg-rose-50" onClick={() => { if (confirm("Excluir esta autorização?")) del.mutate(r.id); }} title="Excluir">
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-rose-200/70 hover:text-rose-300 hover:bg-rose-500/15" onClick={() => { if (confirm("Excluir esta autorização?")) del.mutate(r.id); }} title="Excluir">
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         )}
