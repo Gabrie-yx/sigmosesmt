@@ -159,8 +159,21 @@ const MANUTENCAO_LOCKED: LockedItem[] = [
 export function AppSidebar() {
   const location = useLocation();
   const { roles, hasModule, hasMenu } = useAuth();
-  const { state } = useSidebar();
+  const { state, setOpen, isMobile } = useSidebar();
   const collapsed = state === "collapsed";
+  const hoverTimer = (typeof window !== "undefined") ? (window as any) : null;
+  const handleMouseEnter = () => {
+    if (isMobile) return;
+    if ((globalThis as any).__sbLeaveTimer) {
+      clearTimeout((globalThis as any).__sbLeaveTimer);
+      (globalThis as any).__sbLeaveTimer = null;
+    }
+    setOpen(true);
+  };
+  const handleMouseLeave = () => {
+    if (isMobile) return;
+    (globalThis as any).__sbLeaveTimer = setTimeout(() => setOpen(false), 200);
+  };
 
   const isActive = (to: string) => location.pathname === to || location.pathname.startsWith(to + "/");
   const anyActive = (items: LeafItem[]) => items.some((i) => isActive(i.to));
@@ -191,7 +204,12 @@ export function AppSidebar() {
     collapsed ? <>{children}</> : <CollapsibleContent>{children}</CollapsibleContent>;
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-white/10">
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-white/10"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <SidebarHeader className="bg-gradient-to-b from-[#a01818] to-[#7f1212] text-white">
         <Link to="/app" className="flex items-center gap-2 px-1 py-1 hover:opacity-90 transition-opacity">
           <div className="flex h-8 w-8 items-center justify-center rounded bg-white/95 shrink-0">
