@@ -140,39 +140,51 @@ function EmployeesPage() {
 
   return (
     <div className="p-6 md:p-8 animate-fadeIn">
-      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="heading-display text-3xl md:text-4xl text-brand">Funcionários</h2>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">
+          <h2 className="heading-display text-3xl md:text-4xl text-brand leading-none">Funcionários</h2>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-2">
             Cadastro de funcionários
           </p>
         </div>
         {isEditor && (
-          <>
-          <Button variant="outline" onClick={() => setListagemOpen(true)} className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-slate-300 text-slate-700 hover:bg-slate-100">
-            <FileText className="h-4 w-4 mr-2" />Listagem (PDF)
-          </Button>
-          <Link to="/app/employees/saidas">
-            <Button variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-slate-300 text-slate-700 hover:bg-slate-100">
-              <CalendarClock className="h-4 w-4 mr-2" />Saídas no expediente
-            </Button>
-          </Link>
-          <Link to="/app/employees/hora-extra-sabado">
-            <Button variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-[#7B1E2B]/30 text-[#7B1E2B] hover:bg-[#7B1E2B]/5">
-              <CalendarClock className="h-4 w-4 mr-2" />Hora extra (sábado)
-            </Button>
-          </Link>
-          <Link to="/app/employees/desligados">
-            <Button variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto border-slate-400 text-slate-700 hover:bg-slate-100">
-              <UserRoundX className="h-4 w-4 mr-2" />Desligados
-            </Button>
-          </Link>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
-                <Plus className="h-4 w-4 mr-2" />Novo funcionário
-              </Button>
-            </DialogTrigger>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setListagemOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <FileText className="h-3.5 w-3.5" /> Listagem
+              </button>
+              <span className="h-5 w-px bg-slate-200" />
+              <Link
+                to="/app/employees/saidas"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <CalendarClock className="h-3.5 w-3.5" /> Saídas
+              </Link>
+              <span className="h-5 w-px bg-slate-200" />
+              <Link
+                to="/app/employees/hora-extra-sabado"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <CalendarClock className="h-3.5 w-3.5" /> Hora extra
+              </Link>
+              <span className="h-5 w-px bg-slate-200" />
+              <Link
+                to="/app/employees/desligados"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <UserRoundX className="h-3.5 w-3.5" /> Desligados
+              </Link>
+            </div>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#0f172a] hover:bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-xl px-4 py-2.5 h-auto shadow-md">
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />Novo funcionário
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Novo funcionário</DialogTitle></DialogHeader>
               {(() => {
