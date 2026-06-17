@@ -407,14 +407,14 @@ function RolesPage() {
       </aside>
 
       {/* RIGHT: Matriz de Requisitos */}
-      <main className="flex-1 bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_25px_70px_-15px_rgba(15,23,42,0.3)] border border-white/60 overflow-hidden flex flex-col ring-1 ring-rose-100 relative z-10">
+      <main className="glass-card glass-shine flex-1 overflow-hidden flex flex-col relative z-10">
         {!editing ? (
           <EmptyState canEdit={isEditor} onNew={startNew} />
         ) : (
           <>
             {/* Sticky Top Action Bar — SALVAR em destaque máximo */}
             {isEditor && (
-              <div className="px-6 py-3 border-b border-rose-100 bg-gradient-to-r from-emerald-50 via-white to-rose-50 flex items-center justify-between gap-3 shrink-0">
+              <div className="px-6 py-3 border-b border-border bg-card/25 flex items-center justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-600">
                   <Sparkles className="h-4 w-4 text-amber-500" />
                   {editing.id ? "Editando cargo" : "Novo cargo"}
@@ -430,7 +430,7 @@ function RolesPage() {
                   type="button"
                   onClick={() => save.mutate(editing)}
                   disabled={save.isPending}
-                  className="bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-sm font-black rounded-xl uppercase tracking-wider shadow-lg shadow-emerald-500/50 hover:shadow-emerald-500/70 hover:-translate-y-0.5 px-6 py-2.5 h-auto flex items-center gap-2 transition-all ring-2 ring-white animate-pulse-slow"
+                  className="prism-pill accent-emerald text-emerald-200 text-sm font-black rounded-xl uppercase tracking-wider hover:-translate-y-0.5 px-6 py-2.5 h-auto flex items-center gap-2 transition-all"
                 >
                   <Save className="h-5 w-5" /> {save.isPending ? "Salvando..." : "Salvar Diretrizes"}
                 </Button>
@@ -438,9 +438,7 @@ function RolesPage() {
             )}
 
             {/* Header (banner colorido) */}
-            <div className="px-8 py-5 border-b border-rose-100/60 bg-gradient-to-r from-rose-500 via-[#991b1b] to-fuchsia-700 text-white flex items-center gap-4 shrink-0 relative overflow-hidden">
-              <div className="absolute -top-12 right-1/3 w-56 h-56 bg-amber-300/30 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-12 -right-8 w-56 h-56 bg-fuchsia-400/30 rounded-full blur-3xl pointer-events-none" />
+            <div className="px-8 py-5 border-b border-border bg-accent/45 text-card-foreground flex items-center gap-4 shrink-0 relative overflow-hidden">
               <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-xl text-white flex items-center justify-center shadow-xl ring-2 ring-white/30 relative shrink-0">
                 <ShieldCheck className="h-7 w-7" />
               </div>
@@ -458,7 +456,7 @@ function RolesPage() {
 
             {/* Sub-tabs internas */}
             {editing.id && (
-              <div className="shrink-0 flex border-b border-rose-100 bg-white/70">
+              <div className="shrink-0 flex border-b border-border bg-card/20">
                 <button
                   type="button"
                   onClick={() => setInnerTab("diretrizes")}
