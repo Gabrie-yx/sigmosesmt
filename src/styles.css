@@ -580,16 +580,92 @@
     color: #f5e6ea;
   }
 
-  /* Texto escuro hardcoded vira claro pra continuar legível no vidro */
+  /* Pastel KPIs / pílulas saturadas → vidro tintado discreto que harmoniza
+     com o painel. Mantemos um leve matiz da cor original via texto/ícone. */
+  .bg-emerald-50, .bg-emerald-100,
+  .bg-green-50, .bg-green-100,
+  .bg-teal-50, .bg-teal-100,
+  .bg-amber-50, .bg-amber-100,
+  .bg-yellow-50, .bg-yellow-100,
+  .bg-orange-50, .bg-orange-100,
+  .bg-rose-50, .bg-rose-100,
+  .bg-red-50, .bg-red-100,
+  .bg-pink-50, .bg-pink-100,
+  .bg-purple-50, .bg-purple-100,
+  .bg-violet-50, .bg-violet-100,
+  .bg-indigo-50, .bg-indigo-100,
+  .bg-fuchsia-50, .bg-fuchsia-100,
+  .bg-sky-50, .bg-sky-100,
+  .bg-blue-50, .bg-blue-100 {
+    background-color: rgba(35, 12, 18, 0.42) !important;
+    backdrop-filter: blur(14px) saturate(140%);
+    border-color: rgba(255, 220, 225, 0.08) !important;
+    box-shadow:
+      0 0 0 1px rgba(255, 220, 225, 0.04) inset,
+      0 0 14px -4px rgba(160, 28, 50, 0.18);
+  }
+
+  /* Anéis pastel viram traço translúcido suave */
+  .ring-emerald-200, .ring-green-200, .ring-teal-200,
+  .ring-amber-200, .ring-yellow-200, .ring-orange-200,
+  .ring-rose-200, .ring-red-200, .ring-pink-200,
+  .ring-purple-200, .ring-violet-200, .ring-indigo-200,
+  .ring-fuchsia-200, .ring-sky-200, .ring-blue-200 {
+    --tw-ring-color: rgba(255, 220, 225, 0.10) !important;
+  }
+
+  /* Cores de texto saturadas dentro das pílulas: suavizar p/ tons pastéis */
+  .text-emerald-700, .text-emerald-600, .text-green-700, .text-green-600,
+  .text-teal-700 { color: #7be0b8 !important; }
+  .text-amber-700, .text-amber-800, .text-amber-600,
+  .text-yellow-700, .text-yellow-800, .text-orange-700 { color: #f0c280 !important; }
+  .text-rose-700, .text-rose-600, .text-red-700, .text-red-600,
+  .text-pink-700 { color: #ff9aae !important; }
+  .text-purple-700, .text-violet-700, .text-indigo-700,
+  .text-fuchsia-700 { color: #c9a8ff !important; }
+  .text-sky-700, .text-blue-700, .text-blue-600 { color: #8fc8ff !important; }
+
+  /* Ícones com fundos saturados nos KPIs → toque dessaturado e elegante */
+  .bg-emerald-600, .bg-emerald-500, .bg-green-600, .bg-green-500 {
+    background-color: rgba(40, 110, 80, 0.55) !important;
+    box-shadow: 0 0 0 1px rgba(255,220,225,0.08) inset;
+  }
+  .bg-amber-600, .bg-amber-500, .bg-yellow-600, .bg-orange-500 {
+    background-color: rgba(140, 90, 30, 0.55) !important;
+    box-shadow: 0 0 0 1px rgba(255,220,225,0.08) inset;
+  }
+  .bg-rose-600, .bg-rose-500, .bg-red-600, .bg-red-500, .bg-pink-600 {
+    background-color: rgba(150, 30, 55, 0.6) !important;
+    box-shadow: 0 0 0 1px rgba(255,220,225,0.08) inset;
+  }
+
+  /* Hovers brancos agressivos viram tom vinho translúcido */
+  .hover\:bg-white:hover,
+  .hover\:bg-slate-50:hover, .hover\:bg-slate-100:hover,
+  .hover\:bg-gray-50:hover, .hover\:bg-gray-100:hover,
+  .hover\:bg-zinc-50:hover, .hover\:bg-zinc-100:hover,
+  .hover\:bg-neutral-50:hover, .hover\:bg-neutral-100:hover {
+    background-color: rgba(90, 20, 35, 0.45) !important;
+    color: #fff5f6 !important;
+    backdrop-filter: blur(14px) saturate(150%);
+  }
+  .data-\[state\=active\]\:bg-white[data-state="active"],
+  [data-state="active"].bg-white {
+    background-color: rgba(90, 20, 35, 0.55) !important;
+    color: #fff5f6 !important;
+    box-shadow: 0 0 0 1px rgba(255, 220, 225, 0.12) inset;
+  }
+
+  /* Texto escuro hardcoded vira tom marfim suave (não branco puro) */
   .text-slate-900, .text-slate-800, .text-zinc-900, .text-zinc-800,
   .text-gray-900, .text-gray-800, .text-neutral-900, .text-neutral-800,
-  .text-black { color: #fff5f6 !important; }
+  .text-black { color: rgba(245, 225, 225, 0.92) !important; }
   .text-slate-700, .text-slate-600, .text-zinc-700, .text-zinc-600,
   .text-gray-700, .text-gray-600, .text-neutral-700, .text-neutral-600 {
-    color: rgba(245, 230, 234, 0.82) !important;
+    color: rgba(240, 220, 222, 0.78) !important;
   }
   .text-slate-500, .text-slate-400, .text-zinc-500, .text-zinc-400,
   .text-gray-500, .text-gray-400, .text-neutral-500, .text-neutral-400 {
-    color: rgba(245, 230, 234, 0.62) !important;
+    color: rgba(235, 210, 215, 0.58) !important;
   }
 }
