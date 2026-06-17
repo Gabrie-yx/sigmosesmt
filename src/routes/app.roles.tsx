@@ -185,6 +185,7 @@ function RolesPage() {
     },
     onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["roles"] });
+      qc.invalidateQueries({ queryKey: ["roles", "full"] });
       toast.success("Diretrizes salvas com sucesso");
       // mantém o cargo selecionado
       setEditing((cur) => cur ? { ...cur, id } : cur);
@@ -199,6 +200,7 @@ function RolesPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["roles"] });
+      qc.invalidateQueries({ queryKey: ["roles", "full"] });
       toast.success("Cargo excluído");
       setEditing(null);
     },
@@ -212,6 +214,7 @@ function RolesPage() {
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["roles"] });
+      qc.invalidateQueries({ queryKey: ["roles", "full"] });
       toast.success(vars.ativo ? "Cargo reativado" : "Cargo desativado");
       setEditing((cur) => cur && cur.id === vars.id ? { ...cur, ativo: vars.ativo } : cur);
     },
