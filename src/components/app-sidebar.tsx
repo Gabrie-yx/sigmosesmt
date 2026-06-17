@@ -211,22 +211,6 @@ export function AppSidebar() {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <SidebarHeader className="bg-gradient-to-b from-[#a01818] to-[#7f1212] text-white">
-        <Link to="/app" className="flex items-center gap-2 px-1 py-1 hover:opacity-90 transition-opacity">
-          <div className="flex h-8 w-8 items-center justify-center rounded bg-white/95 shrink-0">
-            <img src={dmnLogo} alt="DMN" className="h-6 w-auto object-contain" />
-          </div>
-          {!collapsed && (
-            <div className="leading-tight overflow-hidden">
-              <div className="text-[12px] font-black uppercase tracking-tight truncate">SIGMO</div>
-              <div className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/70 truncate">
-                Estaleiro DMN
-              </div>
-            </div>
-          )}
-        </Link>
-      </SidebarHeader>
-
       <SidebarContent>
         {/* HOJE */}
         <SidebarGroup>
