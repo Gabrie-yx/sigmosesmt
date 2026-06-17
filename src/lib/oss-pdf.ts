@@ -126,21 +126,43 @@ function parseEpis(
     }
     return hit?.ca ?? "";
   };
-  return raw
-    .split(/\r?\n|;/)
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((line) => {
-      // remove marcador de bullet inicial
-      line = line.replace(/^[•\-*·\u2022]\s*/, "");
-      const m = line.match(/(.*?)\s*[-–—(:]\s*C\.?A\.?\s*[:nº#]?\s*(\d+)/i);
-      if (m) return { desc: m[1].replace(/[\s\-–—(:]+$/, "").trim(), ca: m[2] };
-      // tenta achar só número CA no fim
-      const m2 = line.match(/(.*?)\s+(\d{3,6})\s*$/);
-      if (m2) return { desc: m2[1].trim(), ca: m2[2] };
-      // sem CA inline — busca no catálogo de estoque
-      return { desc: line, ca: lookupCa(line) };
-    });
+  const out: Array<{ desc: string; ca: string }> = [];
+  const pushItem = (rawItem: string) => {
+    let line = rawItem.trim().replace(/^[•\-*·\u2022]\s*/, "").replace(/\.$/, "").trim();
+    if (!line) return;
+    // CA inline: "Nome - CA 12345" / "Nome (CA: 12345)"
+    const m = line.match(/(.*?)\s*[-–—(:]\s*C\.?A\.?\s*[:nº#]?\s*(\d+)/i);
+    if (m) { out.push({ desc: m[1].replace(/[\s\-–—(:]+$/, "").trim(), ca: m[2] }); return; }
+    // Número CA solto no fim
+    const m2 = line.match(/(.*?)\s+(\d{3,6})\s*$/);
+    if (m2) { out.push({ desc: m2[1].trim(), ca: m2[2] }); return; }
+    out.push({ desc: line, ca: lookupCa(line) });
+  };
+  // 1) quebra por linhas / ;
+  const lines = raw.split(/\r?\n|;/).map((l) => l.trim()).filter(Boolean);
+  for (let line of lines) {
+    line = line.replace(/^[•\-*·\u2022]\s*/, "");
+    // se tem prefixo descritivo tipo "Ao circular em área operacional:" remove
+    const colonIdx = line.indexOf(":");
+    let body = line;
+    if (colonIdx > 0 && colonIdx < 80) {
+      const head = line.slice(0, colonIdx);
+      // só remove se o prefixo não parece ser nome de EPI (não tem dígitos / "CA")
+      if (!/\bC\.?A\.?\b|\d/.test(head)) body = line.slice(colonIdx + 1).trim();
+    }
+    // 2) quebra por vírgula / " e " — mas preserva quando a linha inteira casa exato no catálogo
+    const matchesExact = catalog?.some((c) => norm(c.nome) === norm(body));
+    if (!matchesExact && /[,]| e /i.test(body)) {
+      const parts = body
+        .split(/,| e (?=[a-zA-ZÀ-ÿ])/i)
+        .map((p) => p.trim())
+        .filter(Boolean);
+      parts.forEach(pushItem);
+    } else {
+      pushItem(body);
+    }
+  }
+  return out;
 }
 
 /** Tenta extrair categorias de risco a partir de um bloco de texto livre. */
