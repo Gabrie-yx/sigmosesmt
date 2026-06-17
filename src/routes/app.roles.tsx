@@ -268,17 +268,11 @@ function RolesPage() {
     editing && setEditing({ ...editing, riscos: { ...riscos, ...patch } });
 
   return (
-    <div className="p-4 md:p-6 flex gap-4 md:gap-6 h-full bg-gradient-to-br from-fuchsia-100 via-rose-100 to-amber-100 animate-fadeIn relative overflow-hidden">
-      {/* floating decorative blobs */}
-      <div className="absolute top-0 left-1/3 w-96 h-96 bg-rose-300/40 rounded-full blur-3xl pointer-events-none animate-pulse" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-300/40 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 right-0 w-72 h-72 bg-fuchsia-300/30 rounded-full blur-3xl pointer-events-none" />
+    <div className="p-4 md:p-6 flex gap-4 md:gap-6 h-full bg-transparent animate-fadeIn relative overflow-hidden">
       {/* LEFT: Cargos Catalogados */}
-      <aside className="w-[360px] flex flex-col bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_25px_70px_-15px_rgba(153,27,27,0.45)] border border-white/60 overflow-hidden shrink-0 ring-1 ring-rose-200 relative z-10">
+      <aside className="glass-card glass-shine w-[360px] flex flex-col overflow-hidden shrink-0 relative z-10">
         {/* Header */}
-        <div className="p-5 bg-gradient-to-br from-rose-600 via-[#991b1b] to-[#7f1d1d] text-white relative overflow-hidden">
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-12 -left-8 w-32 h-32 bg-rose-300/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="p-5 bg-accent/55 text-card-foreground relative overflow-hidden border-b border-border">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-black uppercase tracking-wider flex items-center gap-2 relative">
               <Briefcase className="h-5 w-5" /> Cargos / Funções
@@ -290,7 +284,7 @@ function RolesPage() {
           {isEditor && (
             <button
               onClick={startNew}
-              className="relative w-full py-3 bg-gradient-to-r from-amber-400 to-amber-300 text-[#7f1d1d] hover:from-amber-300 hover:to-amber-200 text-sm font-black rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-amber-400/50 hover:-translate-y-0.5"
+                className="prism-pill accent-amber relative w-full py-3 text-[rgba(255,225,190,0.95)] text-sm font-black rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5"
             >
               <FilePlus2 className="h-5 w-5" /> Novo Cargo
             </button>
@@ -298,7 +292,7 @@ function RolesPage() {
         </div>
 
         {/* Search & filter */}
-        <div className="p-4 border-b border-rose-100/60 space-y-2.5 bg-white/70">
+        <div className="p-4 border-b border-border space-y-2.5 bg-card/25">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-rose-400" />
             <input
