@@ -156,6 +156,7 @@ const Sidebar = React.forwardRef<
     side?: "left" | "right";
     variant?: "sidebar" | "floating" | "inset";
     collapsible?: "offcanvas" | "icon" | "none";
+    overlay?: boolean;
   }
 >(
   (
@@ -163,6 +164,7 @@ const Sidebar = React.forwardRef<
       side = "left",
       variant = "sidebar",
       collapsible = "offcanvas",
+      overlay = false,
       className,
       children,
       ...props
@@ -228,6 +230,7 @@ const Sidebar = React.forwardRef<
             variant === "floating" || variant === "inset"
               ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
               : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
+            overlay && "!w-(--sidebar-width-icon)",
           )}
         />
         <div
@@ -240,6 +243,7 @@ const Sidebar = React.forwardRef<
             variant === "floating" || variant === "inset"
               ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
               : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
+            overlay && "z-40 shadow-xl",
             className,
           )}
           {...props}
