@@ -831,6 +831,28 @@
     border-color: rgba(255, 130, 150, 0.55) !important;
   }
 
+  /* Tons institucionais hardcoded usados no Painel SESMT
+     (#0c2340 navy, #7f1212 sangria escura, #2d8a9e teal) ficam
+     invisíveis no fundo vinho — eleva pra tons legíveis. */
+  .app-glass-scope .text-\[\#0c2340\],
+  .modal-glass-scope:not(.pdf-dialog) .text-\[\#0c2340\] {
+    color: #ffd9df !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+  .app-glass-scope .text-\[\#7f1212\],
+  .modal-glass-scope:not(.pdf-dialog) .text-\[\#7f1212\] {
+    color: #ff9aae !important;
+  }
+  .app-glass-scope .text-\[\#2d8a9e\],
+  .modal-glass-scope:not(.pdf-dialog) .text-\[\#2d8a9e\] {
+    color: #7ed4e0 !important;
+  }
+  .app-glass-scope .text-\[\#c8102e\],
+  .modal-glass-scope:not(.pdf-dialog) .text-\[\#c8102e\] {
+    color: #ff8095 !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+
   /* Volume nos inputs: highlight no topo + sombra externa + leve inset */
   .app-glass-scope input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
   .app-glass-scope textarea,
