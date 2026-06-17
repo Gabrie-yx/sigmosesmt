@@ -48,6 +48,7 @@ import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.f
 import { AtestadosTab } from "@/components/employees/atestados-tab";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
+import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { UserMinus, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/app/employees/$id")({
