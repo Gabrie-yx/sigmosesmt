@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  Plus, FileSignature, Download, Upload, Search, Settings2, AlertCircle, CheckCircle2, Clock, FileWarning, Eye,
+  Plus, FileSignature, Download, Upload, Search, Settings2, AlertCircle, CheckCircle2, Clock, FileWarning, Eye, Ban,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
