@@ -15,6 +15,38 @@ import ReactSelect from "react-select";
 
 type SignatureTarget = "FUNC" | "SESMT" | "SUPERVISOR";
 
+const selectGlassStyles = {
+  control: (base: any) => ({
+    ...base,
+    minHeight: "42px",
+    borderRadius: "0.75rem",
+    borderColor: "rgba(255, 220, 225, 0.14)",
+    background: "rgba(20, 6, 10, 0.45)",
+    boxShadow: "none",
+    fontSize: "14px",
+  }),
+  menu: (base: any) => ({
+    ...base,
+    zIndex: 70,
+    borderRadius: "0.75rem",
+    overflow: "hidden",
+    background: "rgba(34, 10, 16, 0.98)",
+    border: "1px solid rgba(255, 220, 225, 0.12)",
+  }),
+  menuPortal: (base: any) => ({ ...base, zIndex: 70 }),
+  option: (base: any, state: any) => ({
+    ...base,
+    background: state.isFocused || state.isSelected ? "rgba(90, 20, 35, 0.82)" : "transparent",
+    color: "rgba(255, 245, 246, 0.92)",
+  }),
+  input: (base: any) => ({ ...base, color: "rgba(255, 245, 246, 0.92)" }),
+  placeholder: (base: any) => ({ ...base, color: "rgba(245, 230, 234, 0.50)" }),
+  singleValue: (base: any) => ({ ...base, color: "rgba(255, 245, 246, 0.92)" }),
+  multiValue: (base: any) => ({ ...base, backgroundColor: "rgba(58, 22, 30, 0.92)", borderRadius: "0.5rem" }),
+  multiValueLabel: (base: any) => ({ ...base, color: "rgba(255, 245, 246, 0.88)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase" }),
+  multiValueRemove: (base: any) => ({ ...base, color: "rgba(255, 210, 218, 0.72)", ":hover": { backgroundColor: "rgba(200, 16, 46, 0.35)", color: "#fff5f6" } }),
+};
+
 const emptyForm = () => ({
   company_id: "", employee_ids: [] as string[], data: new Date().toISOString().slice(0, 10),
   horario_saida: "", tipo: "PESSOAL", com_retorno: false,
@@ -161,7 +193,7 @@ export function SaidaExpedienteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {editId ? <Pencil className="h-5 w-5 text-brand" /> : <UserPlus className="h-5 w-5 text-brand" />}
@@ -194,27 +226,9 @@ export function SaidaExpedienteDialog({
               noOptionsMessage={() => "Nenhum funcionário ativo encontrado"}
               loadingMessage={() => "Carregando..."}
               classNamePrefix="react-select"
-              styles={{
-                control: (base) => ({
-                  ...base,
-                  borderRadius: '0.75rem',
-                  borderColor: '#e2e8f0',
-                  fontSize: '14px',
-                  minHeight: '42px',
-                }),
-                multiValue: (base) => ({
-                  ...base,
-                  backgroundColor: '#f1f5f9',
-                  borderRadius: '0.5rem',
-                }),
-                multiValueLabel: (base) => ({
-                  ...base,
-                  fontSize: '12px',
-                  fontWeight: '700',
-                  color: '#0f172a',
-                  textTransform: 'uppercase',
-                }),
-              }}
+              menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
+              menuPosition="fixed"
+              styles={selectGlassStyles}
             />
             {!editId && form.employee_ids.length > 1 && (
               <p className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">
