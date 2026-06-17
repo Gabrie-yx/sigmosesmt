@@ -243,12 +243,12 @@ export function HoraExtraSabadoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editId ? "Editar" : "Nova"} ficha de hora extra (sábado)</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="space-y-1"><Label>Data</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
           <div className="space-y-1"><Label>Turno</Label><Input value={turno} onChange={(e) => setTurno(e.target.value)} placeholder="1º" /></div>
           <div className="space-y-1"><Label>Horário início</Label><Input value={horaIni} onChange={(e) => setHoraIni(e.target.value)} placeholder="07:30" /></div>
@@ -343,7 +343,7 @@ export function HoraExtraSabadoDialog({
         </div>
 
         {/* Seletor de funcionários */}
-        <div className="mt-4 rounded-xl border border-slate-200 p-3 bg-slate-50">
+        <div className="mt-4 rounded-xl border border-slate-200 p-3 bg-slate-50/80">
           <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
             <p className="text-xs font-black uppercase tracking-widest text-slate-600">Adicionar funcionários</p>
             <Button size="sm" variant="outline" onClick={addTodos} disabled={empsDisponiveis.length === 0}>
@@ -354,7 +354,7 @@ export function HoraExtraSabadoDialog({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input className="pl-9" placeholder="Buscar funcionário…" value={busca} onChange={(e) => setBusca(e.target.value)} />
           </div>
-          <div className="max-h-40 overflow-y-auto rounded-md border bg-white divide-y">
+          <div className="max-h-44 overflow-y-auto rounded-md border bg-white divide-y">
             {empsDisponiveis.slice(0, 50).map((e: any) => (
               <button key={e.id} type="button" onClick={() => addEmp(e)} className="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-100 flex items-center justify-between">
                 <span>{e.nome}</span>
