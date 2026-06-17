@@ -34,7 +34,7 @@ function AppLayout() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="app-glass-scope min-h-screen flex w-full bg-muted/30">
+      <div className="app-glass-scope min-h-screen flex w-full bg-[radial-gradient(ellipse_at_top,_#2a0610_0%,_#12030a_45%,_#070205_100%)]">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <AppHeader />
