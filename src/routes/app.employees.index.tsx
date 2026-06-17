@@ -302,7 +302,7 @@ function EmployeesPage() {
               })()}
             </DialogContent>
           </Dialog>
-          </>
+          </div>
         )}
       </div>
 
