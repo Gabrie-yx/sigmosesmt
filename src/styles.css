@@ -494,15 +494,15 @@
   [data-sidebar="sidebar"] {
     background: linear-gradient(
       180deg,
-      rgba(85, 18, 30, 0.55) 0%,
-      rgba(45, 10, 18, 0.62) 100%
+      rgba(85, 18, 30, 0.08) 0%,
+      rgba(45, 10, 18, 0.11) 100%
     ) !important;
-    backdrop-filter: blur(28px) saturate(170%);
-    border-right: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(9px) saturate(190%);
+    border-right: 1px solid rgba(200, 16, 46, 0.72);
     color: #f5e6ea;
     box-shadow:
-      1px 0 0 0 rgba(255,255,255,0.08) inset,
-      8px 0 30px -10px rgba(0, 0, 0, 0.4);
+      1px 0 0 0 rgba(255, 210, 220, 0.08) inset,
+      8px 0 30px -14px rgba(0, 0, 0, 0.28);
   }
   [data-sidebar="sidebar"] [data-sidebar="menu-button"][data-active="true"] {
     background: linear-gradient(
