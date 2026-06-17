@@ -179,9 +179,12 @@ function EmployeesPage() {
                 <UserRoundX className="h-3.5 w-3.5" /> Desligados
               </Link>
             </div>
-            <Dialog open={open} onOpenChange={setOpen}>
+            <Dialog open={open} onOpenChange={(v) => { console.log("[NovoFunc] onOpenChange", v); setOpen(v); }}>
               <DialogTrigger asChild>
-                <Button className="bg-[#0f172a] hover:bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-xl px-4 py-2.5 h-auto shadow-md">
+                <Button
+                  onClick={() => console.log("[NovoFunc] click", { open })}
+                  className="bg-[#0f172a] hover:bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-xl px-4 py-2.5 h-auto shadow-md"
+                >
                   <Plus className="h-3.5 w-3.5 mr-1.5" />Novo funcionário
                 </Button>
               </DialogTrigger>
