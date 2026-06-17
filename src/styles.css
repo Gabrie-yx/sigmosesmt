@@ -258,9 +258,8 @@
   }
   .page-canvas {
     background:
-      radial-gradient(1200px 600px at -10% -20%, rgba(220,38,38,0.08), transparent 60%),
-      radial-gradient(900px 500px at 110% 10%, rgba(63,63,63,0.06), transparent 60%),
-      linear-gradient(180deg, #f4f4f5 0%, #ececef 100%);
+      radial-gradient(1200px 600px at -10% -20%, rgba(220,38,38,0.10), transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, rgba(120,18,40,0.10), transparent 60%);
   }
   @keyframes floaty {
     0%,100% { transform: translateY(0); }
