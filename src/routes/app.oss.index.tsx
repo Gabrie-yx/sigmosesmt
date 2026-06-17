@@ -305,6 +305,11 @@ function OssIndexPage() {
         fileName={previewDoc?.name ?? "OSS.pdf"}
         title="Ordem de Serviço de Segurança"
       />
+      <EmployeeQuickView
+        employeeId={quickViewEmpId}
+        open={!!quickViewEmpId}
+        onClose={() => setQuickViewEmpId(null)}
+      />
     </div>
   );
 }
