@@ -551,6 +551,11 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         company={(companies ?? []).find((c: any) => c.id === emp?.company_id) ?? null}
         role={role}
       />
+      <DesligamentoDialog
+        emp={emp as any}
+        open={desligamentoOpen}
+        onClose={() => setDesligamentoOpen(false)}
+      />
     </div>
   );
 }
