@@ -774,9 +774,18 @@
   /* Texto escuro hardcoded vira tom marfim suave (não branco puro) */
   .app-glass-scope .text-slate-900, .app-glass-scope .text-slate-800, .app-glass-scope .text-zinc-900, .app-glass-scope .text-zinc-800,
   .app-glass-scope .text-gray-900, .app-glass-scope .text-gray-800, .app-glass-scope .text-neutral-900, .app-glass-scope .text-neutral-800,
-  .app-glass-scope .text-black { color: rgba(245, 225, 225, 0.92) !important; }
+  .app-glass-scope .text-black,
+  .modal-glass-scope:not(.pdf-dialog) .text-slate-900, .modal-glass-scope:not(.pdf-dialog) .text-slate-800,
+  .modal-glass-scope:not(.pdf-dialog) .text-zinc-900, .modal-glass-scope:not(.pdf-dialog) .text-zinc-800,
+  .modal-glass-scope:not(.pdf-dialog) .text-gray-900, .modal-glass-scope:not(.pdf-dialog) .text-gray-800,
+  .modal-glass-scope:not(.pdf-dialog) .text-neutral-900, .modal-glass-scope:not(.pdf-dialog) .text-neutral-800,
+  .modal-glass-scope:not(.pdf-dialog) .text-black { color: rgba(245, 225, 225, 0.92) !important; }
   .app-glass-scope .text-slate-700, .app-glass-scope .text-slate-600, .app-glass-scope .text-zinc-700, .app-glass-scope .text-zinc-600,
-  .app-glass-scope .text-gray-700, .app-glass-scope .text-gray-600, .app-glass-scope .text-neutral-700, .app-glass-scope .text-neutral-600 {
+  .app-glass-scope .text-gray-700, .app-glass-scope .text-gray-600, .app-glass-scope .text-neutral-700, .app-glass-scope .text-neutral-600,
+  .modal-glass-scope:not(.pdf-dialog) .text-slate-700, .modal-glass-scope:not(.pdf-dialog) .text-slate-600,
+  .modal-glass-scope:not(.pdf-dialog) .text-zinc-700, .modal-glass-scope:not(.pdf-dialog) .text-zinc-600,
+  .modal-glass-scope:not(.pdf-dialog) .text-gray-700, .modal-glass-scope:not(.pdf-dialog) .text-gray-600,
+  .modal-glass-scope:not(.pdf-dialog) .text-neutral-700, .modal-glass-scope:not(.pdf-dialog) .text-neutral-600 {
     color: rgba(240, 220, 222, 0.78) !important;
   }
   .app-glass-scope .text-slate-500, .app-glass-scope .text-slate-400, .app-glass-scope .text-zinc-500, .app-glass-scope .text-zinc-400,
