@@ -236,7 +236,7 @@ function OssIndexPage() {
               </TableHeader>
               <TableBody>
                 {filtered.map((em) => {
-                  const meta = STATUS_META[em.status];
+                  const meta = STATUS_META_EXTRA[em.status] ?? STATUS_META.PENDENTE_ASSINATURA;
                   const Icon = meta.icon;
                   return (
                     <TableRow key={em.id}>
@@ -266,6 +266,7 @@ function OssIndexPage() {
                           {isEditor && em.status === "PENDENTE_ASSINATURA" && (
                             <UploadAssinadoButton onPick={(f) => uploadAssinado.mutate({ em, file: f })} disabled={uploadAssinado.isPending} />
                           )}
+                          <OssRowActions em={em} invalidateKeys={[["oss-emissoes"], ["employee-oss", em.employee_id]]} />
                         </div>
                       </TableCell>
                     </TableRow>
