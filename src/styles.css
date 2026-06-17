@@ -729,9 +729,13 @@
   .modal-glass-scope:not(.pdf-dialog) .text-emerald-700, .modal-glass-scope:not(.pdf-dialog) .text-emerald-600, .modal-glass-scope:not(.pdf-dialog) .text-green-700, .modal-glass-scope:not(.pdf-dialog) .text-green-600,
   .modal-glass-scope:not(.pdf-dialog) .text-teal-700 { color: #7be0b8 !important; }
   .app-glass-scope .text-amber-700, .app-glass-scope .text-amber-800, .app-glass-scope .text-amber-600,
-  .app-glass-scope .text-yellow-700, .app-glass-scope .text-yellow-800, .app-glass-scope .text-orange-700 { color: #f0c280 !important; }
+  .app-glass-scope .text-yellow-700, .app-glass-scope .text-yellow-800, .app-glass-scope .text-orange-700,
+  .modal-glass-scope:not(.pdf-dialog) .text-amber-700, .modal-glass-scope:not(.pdf-dialog) .text-amber-800, .modal-glass-scope:not(.pdf-dialog) .text-amber-600,
+  .modal-glass-scope:not(.pdf-dialog) .text-yellow-700, .modal-glass-scope:not(.pdf-dialog) .text-yellow-800, .modal-glass-scope:not(.pdf-dialog) .text-orange-700 { color: #f0c280 !important; }
   .app-glass-scope .text-rose-700, .app-glass-scope .text-rose-600, .app-glass-scope .text-red-700, .app-glass-scope .text-red-600,
-  .app-glass-scope .text-pink-700 { color: #ff9aae !important; }
+  .app-glass-scope .text-pink-700,
+  .modal-glass-scope:not(.pdf-dialog) .text-rose-700, .modal-glass-scope:not(.pdf-dialog) .text-rose-600, .modal-glass-scope:not(.pdf-dialog) .text-red-700, .modal-glass-scope:not(.pdf-dialog) .text-red-600,
+  .modal-glass-scope:not(.pdf-dialog) .text-pink-700 { color: #ff9aae !important; }
   .app-glass-scope .text-purple-700, .app-glass-scope .text-violet-700, .app-glass-scope .text-indigo-700,
   .app-glass-scope .text-fuchsia-700 { color: #c9a8ff !important; }
   .app-glass-scope .text-sky-700, .app-glass-scope .text-blue-700, .app-glass-scope .text-blue-600 { color: #8fc8ff !important; }
