@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect, useMemo } from "react";
 import { z } from "zod";
@@ -60,12 +60,25 @@ export const Route = createFileRoute("/app/employees/$id")({
 function EmployeeDetail() {
   const { id } = Route.useParams();
   const { tab } = Route.useSearch();
+  const router = useRouter();
+  const canGoBack = typeof window !== "undefined" && window.history.length > 1;
   return (
     <div className="p-6 md:p-8 space-y-6 animate-fadeIn">
       <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="sm" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-brand">
-          <Link to="/app/employees"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
-        </Button>
+        {canGoBack ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-brand"
+            onClick={() => router.history.back()}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />Voltar
+          </Button>
+        ) : (
+          <Button asChild variant="ghost" size="sm" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-brand">
+            <Link to="/app/employees"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
+          </Button>
+        )}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
         <div className="min-w-0">
