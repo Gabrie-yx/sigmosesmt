@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { buildOssPdf } from "@/lib/oss-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { OssRowActions } from "@/components/oss/oss-row-actions";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/oss/")({
@@ -57,6 +58,10 @@ const STATUS_META: Record<Emissao["status"], { label: string; cls: string; icon:
   ASSINADO: { label: "Assinado", cls: "bg-emerald-100 text-emerald-800 border-emerald-300", icon: CheckCircle2 },
   VENCIDO: { label: "Vencido", cls: "bg-red-100 text-red-800 border-red-300", icon: AlertCircle },
   SUBSTITUIDO: { label: "Substituído", cls: "bg-slate-100 text-slate-600 border-slate-300", icon: FileWarning },
+};
+const STATUS_META_EXTRA: Record<string, { label: string; cls: string; icon: any }> = {
+  ...STATUS_META,
+  CANCELADO: { label: "Cancelado", cls: "bg-red-50 text-red-700 border-red-200 line-through", icon: Ban },
 };
 
 function OssIndexPage() {
