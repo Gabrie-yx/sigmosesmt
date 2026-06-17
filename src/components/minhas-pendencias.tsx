@@ -134,11 +134,63 @@ const META: Record<string, CardMeta> = {
 };
 
 const SEV_PALETTE = {
-  critico: { ring: "ring-red-300", bg: "from-red-50 to-white", icon: "bg-red-600 text-white", chip: "bg-red-100 text-red-800", cta: "text-red-700 hover:text-red-900", label: "Crítico" },
-  alto:    { ring: "ring-amber-200", bg: "from-amber-50 to-white", icon: "bg-amber-500 text-white", chip: "bg-amber-100 text-amber-800", cta: "text-amber-700 hover:text-amber-900", label: "Alto" },
-  medio:   { ring: "ring-blue-200", bg: "from-blue-50 to-white", icon: "bg-blue-600 text-white", chip: "bg-blue-100 text-blue-800", cta: "text-blue-700 hover:text-blue-900", label: "Médio" },
-  ok:      { ring: "ring-emerald-200", bg: "from-emerald-50 to-white", icon: "bg-emerald-600 text-white", chip: "bg-emerald-100 text-emerald-800", cta: "text-emerald-700 hover:text-emerald-900", label: "OK" },
-  neutro:  { ring: "ring-slate-200", bg: "from-slate-50 to-white", icon: "bg-slate-400 text-white", chip: "bg-slate-100 text-slate-700", cta: "text-slate-600 hover:text-slate-900", label: "Sem dados" },
+  // Accent overlays para o tema dark glass. Cada severidade tem:
+  //  edge   → gradient sutil no topo do card (faixa de acento)
+  //  glow   → box-shadow ambiente
+  //  border → cor da borda sutil
+  //  icon   → badge translúcido do ícone
+  //  chip   → pill da severidade (canto direito)
+  //  cta    → cor do link "Renovar agora →"
+  critico: {
+    edge: "from-red-500/40 via-red-500/10",
+    glow: "shadow-[0_0_40px_-12px_rgba(239,68,68,0.55)]",
+    border: "border-red-400/25 hover:border-red-400/45",
+    icon: "bg-red-500/15 text-red-300 ring-1 ring-red-400/30",
+    chip: "bg-red-500/15 text-red-200 ring-1 ring-red-400/30",
+    cta: "text-red-300 hover:text-red-200",
+    number: "text-red-100",
+    label: "Crítico",
+  },
+  alto: {
+    edge: "from-amber-400/35 via-amber-400/10",
+    glow: "shadow-[0_0_36px_-14px_rgba(251,191,36,0.45)]",
+    border: "border-amber-300/20 hover:border-amber-300/40",
+    icon: "bg-amber-400/15 text-amber-200 ring-1 ring-amber-300/30",
+    chip: "bg-amber-400/15 text-amber-100 ring-1 ring-amber-300/30",
+    cta: "text-amber-200 hover:text-amber-100",
+    number: "text-amber-50",
+    label: "Alto",
+  },
+  medio: {
+    edge: "from-sky-400/30 via-sky-400/10",
+    glow: "shadow-[0_0_32px_-14px_rgba(56,189,248,0.4)]",
+    border: "border-sky-300/20 hover:border-sky-300/40",
+    icon: "bg-sky-400/15 text-sky-200 ring-1 ring-sky-300/30",
+    chip: "bg-sky-400/15 text-sky-100 ring-1 ring-sky-300/30",
+    cta: "text-sky-200 hover:text-sky-100",
+    number: "text-sky-50",
+    label: "Médio",
+  },
+  ok: {
+    edge: "from-emerald-400/30 via-emerald-400/10",
+    glow: "shadow-[0_0_30px_-14px_rgba(52,211,153,0.4)]",
+    border: "border-emerald-300/20 hover:border-emerald-300/40",
+    icon: "bg-emerald-400/15 text-emerald-200 ring-1 ring-emerald-300/30",
+    chip: "bg-emerald-400/15 text-emerald-100 ring-1 ring-emerald-300/30",
+    cta: "text-emerald-200 hover:text-emerald-100",
+    number: "text-emerald-50",
+    label: "OK",
+  },
+  neutro: {
+    edge: "from-white/15 via-white/5",
+    glow: "",
+    border: "border-white/10 hover:border-white/20",
+    icon: "bg-white/5 text-[rgba(245,225,225,0.6)] ring-1 ring-white/10",
+    chip: "bg-white/5 text-[rgba(245,225,225,0.55)] ring-1 ring-white/10",
+    cta: "text-[rgba(245,225,225,0.6)] hover:text-[rgba(245,225,225,0.85)]",
+    number: "text-[rgba(245,225,225,0.55)]",
+    label: "Sem dados",
+  },
 } as const;
 
 function PendenciaCard({ item }: { item: PendenciaItem }) {
@@ -166,45 +218,64 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
 
   return (
     <div className={cn(
-      "group relative flex flex-col gap-3 rounded-2xl border bg-gradient-to-br p-5 shadow-sm hover:shadow-lg transition-all ring-1",
-      c.bg, c.ring, snoozed && "opacity-60",
+      "group relative flex flex-col gap-3 rounded-2xl border p-5 transition-all overflow-hidden",
+      "bg-gradient-to-b from-white/[0.04] to-white/[0.015] backdrop-blur-xl",
+      "hover:-translate-y-0.5",
+      c.border, c.glow,
+      snoozed && "opacity-50",
     )}>
-      <div className="flex items-start justify-between gap-3">
-        <div className={cn("p-2.5 rounded-xl shadow-sm", c.icon)}>
+      {/* faixa de acento no topo */}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r to-transparent",
+          c.edge,
+        )}
+      />
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute -top-24 -right-16 h-48 w-48 rounded-full blur-3xl opacity-40 bg-gradient-radial",
+          c.edge,
+        )}
+      />
+
+      <div className="relative flex items-start justify-between gap-3">
+        <div className={cn("p-2.5 rounded-xl", c.icon)}>
           <Icon className="h-5 w-5" />
         </div>
-        <div className={cn("text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full", c.chip)}>
+        <div className={cn("text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full", c.chip)}>
           {item.loading ? "Verificando…" : isNeutral ? "Sem dados" : item.ok ? "Tudo certo" : c.label}
         </div>
       </div>
-      <div>
+      <div className="relative">
         <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-black text-slate-900 leading-none tabular-nums">
+          <span className={cn("text-4xl font-black leading-none tabular-nums", c.number)}>
             {item.loading
               ? "—"
               : isNeutral
-                ? <HelpCircle className="h-9 w-9 text-slate-400 inline" />
+                ? <HelpCircle className="h-9 w-9 text-[rgba(245,225,225,0.35)] inline" />
                 : item.ok
-                  ? <CheckCircle2 className="h-9 w-9 text-emerald-600 inline" />
+                  ? <CheckCircle2 className="h-9 w-9 text-emerald-300 inline" />
                   : item.count}
           </span>
         </div>
-        <div className="mt-1 text-sm font-bold text-slate-900">{meta.titulo}</div>
-        <div className="mt-1 text-xs text-slate-600 leading-relaxed">
+        <div className="mt-1.5 text-sm font-bold text-[rgba(255,240,242,0.96)]">{meta.titulo}</div>
+        <div className="mt-1 text-xs leading-relaxed text-[rgba(245,225,225,0.7)]">
           {isNeutral
             ? "Ainda não há dados cadastrados para avaliar este item."
             : item.ok ? meta.descricaoOk : meta.descricaoPend(item.count)}
         </div>
         {snoozed && (
-          <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[rgba(245,225,225,0.55)]">
             <BellOff className="h-3 w-3" /> Adiado até amanhã
           </div>
         )}
       </div>
-      <div className="mt-auto pt-2 flex items-center justify-between gap-2">
+      <div className="relative mt-auto pt-3 flex items-center justify-between gap-2 border-t border-white/[0.06]">
         <Link
           to={meta.to}
-          className={cn("inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider", c.cta)}
+          className={cn("inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider transition-colors", c.cta)}
         >
           {item.ok ? (meta.ctaOk ?? "Ver detalhes") : meta.ctaPend}
           <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
@@ -214,7 +285,7 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
             <button
               type="button"
               onClick={(e) => { e.preventDefault(); clearSnooze(item.key); }}
-              className="text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+              className="text-[10px] font-bold uppercase tracking-wider text-[rgba(245,225,225,0.5)] hover:text-[rgba(245,225,225,0.9)] transition-colors"
             >
               Reativar
             </button>
@@ -222,7 +293,7 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
             <button
               type="button"
               onClick={(e) => { e.preventDefault(); snoozeUntilTomorrow(item.key); }}
-              className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+              className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[rgba(245,225,225,0.45)] hover:text-[rgba(245,225,225,0.85)] transition-colors"
               title="Lembrar amanhã"
             >
               <BellOff className="h-3 w-3" /> Adiar
@@ -234,7 +305,7 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
         <Link
           to="/app/ncs"
           search={tncSearch as any}
-          className="inline-flex items-center justify-center gap-1.5 mt-1 px-2 py-1.5 rounded-md bg-red-700 hover:bg-red-800 text-white text-[10px] font-bold uppercase tracking-wider transition"
+          className="relative inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-b from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-[10px] font-black uppercase tracking-wider transition shadow-[0_8px_24px_-8px_rgba(220,38,38,0.6)] ring-1 ring-red-400/30"
           title="Abrir Tratativa de Não Conformidade pré-preenchida"
         >
           <TncIcon className="h-3 w-3" /> Abrir TNC
@@ -271,16 +342,16 @@ export function MinhasPendencias() {
     <section className="px-6 md:px-14 pt-10 pb-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#7f1d1d]/10 border border-[#7f1d1d]/20 mb-3">
-            <CalendarClock className="h-3.5 w-3.5 text-[#7f1d1d]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#7f1d1d]">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-400/25 mb-3">
+            <CalendarClock className="h-3.5 w-3.5 text-red-300" />
+            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-red-200">
               Hoje · {diaSemanaPt()}
             </span>
           </div>
-          <h2 className="heading-display text-2xl md:text-4xl text-slate-900 tracking-tight">
+          <h2 className="heading-display text-2xl md:text-4xl text-brand tracking-tight">
             O que precisa ser feito agora
           </h2>
-          <p className="text-sm text-slate-600 mt-1">
+          <p className="text-sm text-[rgba(245,225,225,0.7)] mt-2">
             {totalPendencias === 0
               ? semDadosCount > 0
                 ? `Sistema em configuração — ${semDadosCount} indicador(es) ainda sem dados para avaliar.`
@@ -291,12 +362,12 @@ export function MinhasPendencias() {
       </div>
 
       {sorted.length === 0 ? (
-        <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-8 text-center shadow-sm">
-          <div className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-emerald-600 text-white mb-3">
+        <div className="rounded-2xl border border-emerald-300/25 bg-gradient-to-b from-emerald-500/10 to-emerald-500/[0.03] backdrop-blur-xl p-8 text-center shadow-[0_0_40px_-12px_rgba(52,211,153,0.35)]">
+          <div className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-emerald-400/15 ring-1 ring-emerald-300/40 text-emerald-200 mb-3">
             <CheckCircle2 className="h-7 w-7" />
           </div>
-          <div className="text-lg font-black text-emerald-900">Tudo em dia</div>
-          <div className="text-sm text-emerald-700 mt-1">
+          <div className="text-lg font-black text-emerald-100">Tudo em dia</div>
+          <div className="text-sm text-emerald-200/80 mt-1">
             Nenhuma pendência detectada. Bom trabalho!
           </div>
         </div>
