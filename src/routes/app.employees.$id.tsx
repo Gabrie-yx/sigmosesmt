@@ -451,6 +451,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
             { value: "docs", label: "Docs", icon: FileIcon },
             { value: "epi", label: "EPI", icon: HardHat },
             { value: "health", label: "Saúde", icon: HeartPulse },
+            { value: "oss", label: "OS", icon: FileSignature },
             { value: "matriz", label: "Matriz", icon: GraduationCap },
           ]}
         />
@@ -487,6 +488,9 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </TabsContent>
         <TabsContent value="matriz" className="mt-4">
           <MatrizTab emp={emp} canEdit={isEditor} />
+        </TabsContent>
+        <TabsContent value="oss" className="mt-4">
+          <OssTab empId={id} empNome={emp.nome} />
         </TabsContent>
       </Tabs>
       <FileViewerHost />
