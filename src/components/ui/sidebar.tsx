@@ -230,7 +230,7 @@ const Sidebar = React.forwardRef<
             variant === "floating" || variant === "inset"
               ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
               : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
-            overlay && "!w-(--sidebar-width-icon)",
+            overlay && "!w-0",
           )}
         />
         <div
@@ -252,7 +252,7 @@ const Sidebar = React.forwardRef<
             data-sidebar="sidebar"
             className={cn(
               "flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow",
-              overlay && "bg-sidebar/20 backdrop-blur-3xl backdrop-saturate-150",
+              overlay && "bg-sidebar/40 backdrop-blur-3xl backdrop-saturate-150",
             )}
           >
             {children}
