@@ -576,7 +576,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
 /* ============ CONTEXT SIDEBAR (empresa + colegas) ============ */
 function QuickTabBtn({ icon: Icon, label, tone = "rose", active, onClick }: { icon: any; label: string; tone?: "rose" | "slate" | "ok" | "warn"; active?: boolean; onClick: () => void }) {
   const palette = tone === "slate"
-    ? "bg-slate-100 text-slate-600 hover:bg-slate-200 ring-slate-200"
+    ? "bg-gradient-to-b from-rose-100/15 to-rose-100/5 text-rose-50 hover:from-rose-100/25 hover:to-rose-100/10 ring-rose-200/20"
     : tone === "ok"
     ? "bg-gradient-to-br from-emerald-500 to-emerald-700 text-white hover:from-emerald-600 hover:to-emerald-800 ring-emerald-300/40"
     : tone === "warn"
@@ -586,7 +586,7 @@ function QuickTabBtn({ icon: Icon, label, tone = "rose", active, onClick }: { ic
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-widest shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all ring-1 ${palette} ${active ? "ring-2 ring-offset-1 ring-[#7B1E2B]" : ""}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[10px] font-black uppercase tracking-widest shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_4px_12px_-2px_rgba(0,0,0,0.45)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_8px_20px_-4px_rgba(0,0,0,0.55)] hover:-translate-y-0.5 transition-all ring-1 ${palette} ${active ? "ring-2 ring-offset-2 ring-offset-rose-950 ring-rose-300/70" : ""}`}
     >
       <Icon className="h-3.5 w-3.5" /> {label}
     </button>
