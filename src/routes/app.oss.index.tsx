@@ -163,6 +163,8 @@ function OssIndexPage() {
     window.open(data.signedUrl, "_blank");
   };
 
+  const [quickViewEmpId, setQuickViewEmpId] = useState<string | null>(null);
+
   return (
     <div className="h-full flex flex-col bg-slate-50">
       <div className="px-6 pt-5 pb-3 border-b border-rose-100 bg-gradient-to-r from-rose-50 via-white to-amber-50 shadow-sm">
