@@ -343,7 +343,7 @@ function RolesPage() {
               >
                 <div className="flex items-start gap-3">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
-                    isSel ? "bg-gradient-to-br from-rose-600 to-[#7f1d1d] text-white shadow-lg shadow-rose-500/40" : "bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500 group-hover:from-rose-500 group-hover:to-[#991b1b] group-hover:text-white group-hover:shadow-md"
+                    isSel ? "bg-accent text-accent-foreground shadow-lg" : "bg-secondary text-muted-foreground group-hover:bg-accent group-hover:text-accent-foreground group-hover:shadow-md"
                   }`}>
                     <UserCog className="h-5 w-5" />
                   </div>
@@ -680,7 +680,7 @@ function EmptyState({ canEdit, onNew }: { canEdit: boolean; onNew: () => void })
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="text-center max-w-md">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-6">
           <Briefcase className="h-10 w-10 text-slate-400" />
         </div>
         <h3 className="text-xl font-black uppercase text-slate-800 tracking-tight mb-2">
@@ -692,7 +692,7 @@ function EmptyState({ canEdit, onNew }: { canEdit: boolean; onNew: () => void })
         {canEdit && (
           <Button
             onClick={onNew}
-            className="bg-gradient-to-r from-[#991b1b] to-[#7f1d1d] hover:from-[#7f1d1d] hover:to-[#991b1b] text-white text-[11px] font-black uppercase tracking-wider px-6 py-3 h-auto shadow-lg"
+            className="prism-pill accent-wine text-[11px] font-black uppercase tracking-wider px-6 py-3 h-auto"
           >
             <Plus className="h-4 w-4 mr-2" /> Cadastrar Novo Cargo
           </Button>
