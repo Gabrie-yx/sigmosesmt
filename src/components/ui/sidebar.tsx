@@ -230,7 +230,7 @@ const Sidebar = React.forwardRef<
             variant === "floating" || variant === "inset"
               ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
               : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
-            overlay && "!w-0",
+            overlay && "!w-[var(--sidebar-width-icon)]",
           )}
         />
         <div
