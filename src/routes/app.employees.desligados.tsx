@@ -77,7 +77,7 @@ function DesligadosPage() {
         </div>
       </div>
 
-      <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 mb-5">
+      <div className="rounded-xl bg-white/5 border border-white/10 p-3 text-xs text-slate-400 mb-5">
         Funcionários desligados são preservados por exigência legal (NR-07 ASOs 20 anos · PPP permanente · NR-06 EPIs 5 anos · NR-33/34/35 treinamentos 5 anos · OSs até 5 anos pós-contrato).
         Eles ficam ocultos de listagens, seleções e geração de OS/EPI/PTE. Reativar restaura tudo.
       </div>
