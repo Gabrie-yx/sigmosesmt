@@ -15,7 +15,7 @@ export const Route = createFileRoute("/app/employees/listagem")({
 
 function ListagemFuncionariosPage() {
   const [companyFilter, setCompanyFilter] = useState<string>("TODAS");
-  const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO">("ATIVO");
+  const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO" | "DESLIGADO">("ATIVO");
   const [preview, setPreview] = useState<{ doc: jsPDF; fileName: string } | null>(null);
 
   const { data: emps, isLoading } = useQuery({
@@ -130,6 +130,7 @@ function ListagemFuncionariosPage() {
               <SelectItem value="ATIVO">Ativos</SelectItem>
               <SelectItem value="AFASTADO">Afastados</SelectItem>
               <SelectItem value="INATIVO">Inativos</SelectItem>
+              <SelectItem value="DESLIGADO">Desligados</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -174,6 +175,7 @@ function ListagemFuncionariosPage() {
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ring-1 ${
                         e.status === "ATIVO" ? "bg-emerald-100 text-emerald-700 ring-emerald-200" :
                         e.status === "AFASTADO" ? "bg-amber-100 text-amber-700 ring-amber-200" :
+                        e.status === "DESLIGADO" ? "bg-slate-200 text-slate-700 ring-slate-300" :
                         "bg-rose-100 text-rose-700 ring-rose-200"
                       }`}>{e.status}</span>
                     </td>
