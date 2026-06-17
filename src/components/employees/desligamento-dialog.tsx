@@ -52,12 +52,12 @@ export function DesligamentoDialog({ emp, open, onClose }: Props) {
   const desligar = useMutation({
     mutationFn: async () => {
       const motivoFinal = motivo === "Outro" ? (motivoOutro.trim() || "Outro") : motivo;
-      const { error } = await supabase.rpc("registrar_desligamento_funcionario", {
+      const { error } = await (supabase as any).rpc("registrar_desligamento_funcionario", {
         _employee_id: emp.id,
         _data_desligamento: data,
         _motivo: motivoFinal,
         _observacoes: obs || null,
-        _checklist: checklist as any,
+        _checklist: checklist,
       });
       if (error) throw error;
     },
@@ -74,7 +74,7 @@ export function DesligamentoDialog({ emp, open, onClose }: Props) {
 
   const reativar = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc("reativar_funcionario", { _employee_id: emp.id });
+      const { error } = await (supabase as any).rpc("reativar_funcionario", { _employee_id: emp.id });
       if (error) throw error;
     },
     onSuccess: () => {
