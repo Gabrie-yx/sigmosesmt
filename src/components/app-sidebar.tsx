@@ -206,11 +206,11 @@ export function AppSidebar() {
     <Sidebar
       collapsible="icon"
       overlay
-      className="border-r border-white/10"
+      className="border-0"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <SidebarContent>
+      <SidebarContent className="scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* HOJE */}
         <SidebarGroup>
           <SidebarGroupContent>
