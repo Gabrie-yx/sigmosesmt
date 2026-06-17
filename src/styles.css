@@ -625,9 +625,23 @@
   table tbody tr { border-color: rgba(255, 255, 255, 0.08); }
   table tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
 
-  /* Mata superfícies brancas hardcoded em telas legadas */
-  .bg-white { background-color: rgba(30, 8, 14, 0.42) !important; backdrop-filter: blur(20px) saturate(160%); color: #f5e6ea; }
-  .bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-gray-100, .bg-zinc-50, .bg-zinc-100, .bg-neutral-50, .bg-neutral-100 {
+  /* Superfícies legadas: escurece somente o app principal, preservando canvas/iframe de PDFs. */
+  .app-glass-scope .bg-white,
+  .app-glass-scope .bg-white\/60,
+  .app-glass-scope .bg-white\/70,
+  .app-glass-scope .bg-white\/80 {
+    background-color: rgba(30, 8, 14, 0.42) !important;
+    backdrop-filter: blur(20px) saturate(160%);
+    color: #f5e6ea;
+  }
+  .app-glass-scope .bg-slate-50,
+  .app-glass-scope .bg-slate-100,
+  .app-glass-scope .bg-gray-50,
+  .app-glass-scope .bg-gray-100,
+  .app-glass-scope .bg-zinc-50,
+  .app-glass-scope .bg-zinc-100,
+  .app-glass-scope .bg-neutral-50,
+  .app-glass-scope .bg-neutral-100 {
     background-color: rgba(40, 12, 20, 0.35) !important;
     backdrop-filter: blur(16px) saturate(150%);
     color: #f5e6ea;
@@ -635,21 +649,21 @@
 
   /* Pastel KPIs / pílulas saturadas → vidro tintado discreto que harmoniza
      com o painel. Mantemos um leve matiz da cor original via texto/ícone. */
-  .bg-emerald-50, .bg-emerald-100,
-  .bg-green-50, .bg-green-100,
-  .bg-teal-50, .bg-teal-100,
-  .bg-amber-50, .bg-amber-100,
-  .bg-yellow-50, .bg-yellow-100,
-  .bg-orange-50, .bg-orange-100,
-  .bg-rose-50, .bg-rose-100,
-  .bg-red-50, .bg-red-100,
-  .bg-pink-50, .bg-pink-100,
-  .bg-purple-50, .bg-purple-100,
-  .bg-violet-50, .bg-violet-100,
-  .bg-indigo-50, .bg-indigo-100,
-  .bg-fuchsia-50, .bg-fuchsia-100,
-  .bg-sky-50, .bg-sky-100,
-  .bg-blue-50, .bg-blue-100 {
+  .app-glass-scope .bg-emerald-50, .app-glass-scope .bg-emerald-100,
+  .app-glass-scope .bg-green-50, .app-glass-scope .bg-green-100,
+  .app-glass-scope .bg-teal-50, .app-glass-scope .bg-teal-100,
+  .app-glass-scope .bg-amber-50, .app-glass-scope .bg-amber-100,
+  .app-glass-scope .bg-yellow-50, .app-glass-scope .bg-yellow-100,
+  .app-glass-scope .bg-orange-50, .app-glass-scope .bg-orange-100,
+  .app-glass-scope .bg-rose-50, .app-glass-scope .bg-rose-100,
+  .app-glass-scope .bg-red-50, .app-glass-scope .bg-red-100,
+  .app-glass-scope .bg-pink-50, .app-glass-scope .bg-pink-100,
+  .app-glass-scope .bg-purple-50, .app-glass-scope .bg-purple-100,
+  .app-glass-scope .bg-violet-50, .app-glass-scope .bg-violet-100,
+  .app-glass-scope .bg-indigo-50, .app-glass-scope .bg-indigo-100,
+  .app-glass-scope .bg-fuchsia-50, .app-glass-scope .bg-fuchsia-100,
+  .app-glass-scope .bg-sky-50, .app-glass-scope .bg-sky-100,
+  .app-glass-scope .bg-blue-50, .app-glass-scope .bg-blue-100 {
     background: linear-gradient(145deg, rgba(58,22,30,0.92), rgba(34,14,20,0.92)) !important;
     border-color: rgba(255, 220, 225, 0.06) !important;
     box-shadow:
