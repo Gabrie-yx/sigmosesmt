@@ -5,14 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText, UserRoundX } from "lucide-react";
-import { toast } from "sonner";
-import { maskCPF, maskCNPJ } from "@/lib/masks";
-import { Wizard, type WizardStep } from "@/components/wizard";
 import { EmployeeListagemDialog } from "@/components/employees/employee-listagem-dialog";
+import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 
 export const Route = createFileRoute("/app/employees/")({
   component: EmployeesPage,
@@ -28,11 +24,12 @@ function EmployeesPage() {
   const navigate = useNavigate();
   const { new: openNew, company: openCompany } = Route.useSearch();
   const [open, setOpen] = useState(false);
+  const [newEmployeeCompanyId, setNewEmployeeCompanyId] = useState<string | undefined>();
   useEffect(() => {
     if (openNew && isEditor) {
+      setNewEmployeeCompanyId(openCompany);
       setOpen(true);
       if (openCompany) {
-        setForm((f: any) => ({ ...f, company_id: openCompany }));
         setCompanyFilter(openCompany);
       }
       navigate({ to: "/app/employees", search: {}, replace: true });
@@ -53,7 +50,6 @@ function EmployeesPage() {
     if (typeof window === "undefined") return;
     sessionStorage.setItem(FILTERS_KEY, JSON.stringify({ q, statusFilter, companyFilter, roleFilter, vinculoFilter, visibleCount }));
   }, [q, statusFilter, companyFilter, roleFilter, vinculoFilter, visibleCount]);
-  const [form, setForm] = useState<any>({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "", tipo_cadastro: "NAO_MEI", cnpj: "" });
   const [listagemOpen, setListagemOpen] = useState(false);
 
   const { data: emps, isLoading } = useQuery({
@@ -71,29 +67,6 @@ function EmployeesPage() {
   const { data: roles } = useQuery({
     queryKey: ["roles"],
     queryFn: async () => (await supabase.from("roles").select("id,name").order("name")).data ?? [],
-  });
-
-  const create = useMutation({
-    mutationFn: async (v: any) => {
-      const { error } = await supabase.from("employees").insert({
-        nome: v.nome,
-        cpf: v.cpf || null,
-        matricula: v.matricula || null,
-        status: v.status,
-        company_id: v.company_id || null,
-        role_id: v.role_id || null,
-        tipo_cadastro: v.tipo_cadastro || "NAO_MEI",
-        cnpj: v.tipo_cadastro === "MEI" ? (v.cnpj || null) : null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["employees"] });
-      setOpen(false);
-      setForm({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: "", role_id: "", tipo_cadastro: "NAO_MEI", cnpj: "" });
-      toast.success("Funcionário criado");
-    },
-    onError: (e: any) => toast.error(e.message),
   });
 
   const filtered = useMemo(() => {
