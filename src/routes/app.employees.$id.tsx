@@ -2973,3 +2973,190 @@ function MatrizEntryDialog({ empId, course, entry, onClose, onSaved }:
     </Dialog>
   );
 }
+
+// =====================================================
+// OssTab — Ordens de Serviço de Segurança do funcionário
+// =====================================================
+function OssTab({ empId, empNome }: { empId: string; empNome: string }) {
+  const qc = useQueryClient();
+  const { isEditor } = useAuth();
+
+  const { data: emissoes = [], isLoading } = useQuery({
+    queryKey: ["employee-oss", empId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("oss_emissoes")
+        .select("id, template_id, template_revisao, cargo_snapshot, status, motivo_emissao, emitido_em, assinado_em, expira_em, pdf_gerado_path, pdf_assinado_path, oss_templates(titulo, setor)")
+        .eq("employee_id", empId)
+        .order("emitido_em", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const now = Date.now();
+  const hasValidSigned = emissoes.some(
+    (e: any) => e.status === "ASSINADO" && (!e.expira_em || new Date(e.expira_em).getTime() > now),
+  );
+
+  const STATUS_META: Record<string, { label: string; cls: string }> = {
+    PENDENTE_ASSINATURA: { label: "Pendente assinatura", cls: "bg-amber-100 text-amber-800 border-amber-300" },
+    ASSINADO: { label: "Assinado", cls: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+    VENCIDO: { label: "Vencido", cls: "bg-red-100 text-red-800 border-red-300" },
+    SUBSTITUIDO: { label: "Substituído", cls: "bg-slate-100 text-slate-600 border-slate-300" },
+  };
+
+  function abrirPdf(em: any) {
+    const path = em.pdf_assinado_path ?? em.pdf_gerado_path;
+    if (!path) {
+      toast.error("Esta OS ainda não tem PDF salvo no Storage. Use o módulo SESMT → OSS para emitir/anexar.");
+      return;
+    }
+    const fname = `OS-${em.cargo_snapshot}-${empNome}.pdf`;
+    openStorageFile("oss-pdfs", path, fname);
+  }
+
+  const uploadAssinado = useMutation({
+    mutationFn: async ({ em, file }: { em: any; file: File }) => {
+      const path = `${em.id}/${Date.now()}-assinado.pdf`;
+      const { error: upErr } = await supabase.storage.from("oss-pdfs").upload(path, file, {
+        contentType: "application/pdf",
+        upsert: false,
+      });
+      if (upErr) throw upErr;
+      const { error } = await supabase
+        .from("oss_emissoes")
+        .update({
+          pdf_assinado_path: path,
+          status: "ASSINADO",
+          assinado_em: new Date().toISOString(),
+        })
+        .eq("id", em.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("PDF assinado anexado");
+      qc.invalidateQueries({ queryKey: ["employee-oss", empId] });
+      qc.invalidateQueries({ queryKey: ["oss-valid", empId] });
+      qc.invalidateQueries({ queryKey: ["oss-emissoes"] });
+    },
+    onError: (e: any) => toast.error("Erro no upload: " + e.message),
+  });
+
+  return (
+    <div className="space-y-4">
+      {!isLoading && !hasValidSigned && (
+        <Card className="p-3 border-red-300 bg-red-50 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+          <div className="text-sm">
+            <div className="font-bold text-red-800">Funcionário sem Ordem de Serviço assinada</div>
+            <div className="text-xs text-red-700 mt-0.5">
+              Risco trabalhista — NR-01 item 1.4.1 alínea "c". A OS é o documento formal de ciência dos riscos da função.
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <Card>
+        <div className="p-3 flex items-center justify-between border-b">
+          <div className="flex items-center gap-2">
+            <FileSignature className="h-4 w-4 text-rose-600" />
+            <span className="text-sm font-bold">Histórico de OS</span>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/app/oss">Ir para módulo OSS</Link>
+          </Button>
+        </div>
+        {isLoading && <div className="p-6 text-sm text-slate-500">Carregando...</div>}
+        {!isLoading && emissoes.length === 0 && (
+          <div className="p-8 text-center text-sm text-slate-500">
+            Nenhuma OS emitida para este funcionário ainda.
+            <div className="text-xs mt-2">
+              Acesse <Link to="/app/oss" className="text-rose-600 underline">SESMT → OSS</Link> para emitir.
+            </div>
+          </div>
+        )}
+        {!isLoading && emissoes.length > 0 && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Modelo / Cargo</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Emitido</TableHead>
+                <TableHead>Assinado</TableHead>
+                <TableHead>Vence</TableHead>
+                <TableHead>Motivo</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {emissoes.map((em: any) => {
+                const meta = STATUS_META[em.status] ?? { label: em.status, cls: "" };
+                return (
+                  <TableRow key={em.id}>
+                    <TableCell className="text-sm">
+                      <div className="font-medium">{em.oss_templates?.titulo ?? em.cargo_snapshot}</div>
+                      <div className="text-[10px] text-slate-500">{em.cargo_snapshot} · Rev.{em.template_revisao}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={`${meta.cls} text-[10px]`}>{meta.label}</Badge>
+                    </TableCell>
+                    <TableCell className="text-xs">{formatDateBR(em.emitido_em.slice(0, 10))}</TableCell>
+                    <TableCell className="text-xs">{em.assinado_em ? formatDateBR(em.assinado_em.slice(0, 10)) : "—"}</TableCell>
+                    <TableCell className="text-xs">{em.expira_em ? formatDateBR(em.expira_em.slice(0, 10)) : "—"}</TableCell>
+                    <TableCell className="text-[10px] text-slate-600">{String(em.motivo_emissao).replace(/_/g, " ")}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => abrirPdf(em)}
+                          title={em.pdf_assinado_path ? "Visualizar / Imprimir / Baixar PDF assinado" : (em.pdf_gerado_path ? "Visualizar PDF (não assinado)" : "Sem PDF no Storage")}
+                          disabled={!em.pdf_assinado_path && !em.pdf_gerado_path}
+                        >
+                          <FileIcon className="h-3.5 w-3.5 mr-1" />
+                          {em.pdf_assinado_path ? "Ver assinada" : "Ver"}
+                        </Button>
+                        {isEditor && em.status === "PENDENTE_ASSINATURA" && (
+                          <OssUploadAssinadoButton onPick={(f) => uploadAssinado.mutate({ em, file: f })} disabled={uploadAssinado.isPending} />
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+
+      <Card className="p-3 text-[11px] text-slate-600 bg-slate-50">
+        <strong>Onde fica o PDF assinado?</strong> No bucket <code>oss-pdfs</code> do Storage.
+        Quando você clica em <em>Ver assinada</em>, o sistema abre o PDF dentro do próprio SIGMO
+        com botões de impressão e download — sem precisar sair da ficha do funcionário.
+      </Card>
+    </div>
+  );
+}
+
+function OssUploadAssinadoButton({ onPick, disabled }: { onPick: (f: File) => void; disabled?: boolean }) {
+  const [key, setKey] = useState(0);
+  return (
+    <label className="inline-flex">
+      <input
+        key={key}
+        type="file"
+        accept="application/pdf"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onPick(f);
+          setKey((k) => k + 1);
+        }}
+      />
+      <Button asChild variant="outline" size="sm" disabled={disabled} className="border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+        <span><Upload className="h-3.5 w-3.5 mr-1" />Anexar assinada</span>
+      </Button>
+    </label>
+  );
+}
