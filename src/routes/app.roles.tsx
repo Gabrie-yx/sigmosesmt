@@ -112,8 +112,8 @@ function RolesPage() {
   const [showInactive, setShowInactive] = useState(false);
 
 
-  const { data: roles = [] } = useQuery({
-    queryKey: ["roles"],
+  const rolesQuery = useQuery({
+    queryKey: ["roles", "full"],
     queryFn: async () => {
       const { data, error } = await supabase.from("roles").select("*").order("name");
       if (error) throw error;
@@ -124,7 +124,11 @@ function RolesPage() {
         setor: r.setor ?? "",
         cbo: r.cbo ?? "",
         cbo_titulo: r.cbo_titulo ?? "",
-        req_vacinas: r.req_vacinas ?? [],
+        req_aso: r.req_aso ?? true,
+        req_integra: r.req_integra ?? true,
+        req_nrs: Array.isArray(r.req_nrs) ? r.req_nrs : [],
+        req_exames: Array.isArray(r.req_exames) ? r.req_exames : [],
+        req_vacinas: Array.isArray(r.req_vacinas) ? r.req_vacinas : [],
         risco_biologico: !!r.risco_biologico,
         riscos: r.riscos && typeof r.riscos === "object" ? { ...emptyRiscos, ...r.riscos } : emptyRiscos,
         exames_por_natureza: r.exames_por_natureza && typeof r.exames_por_natureza === "object"
@@ -133,6 +137,9 @@ function RolesPage() {
       })) as Role[];
     },
   });
+  const roles = rolesQuery.data ?? [];
+  const rolesLoading = rolesQuery.isLoading || (rolesQuery.isFetching && roles.length === 0);
+  const rolesError = rolesQuery.error instanceof Error ? rolesQuery.error.message : null;
 
   const filtered = useMemo(() => {
     return roles.filter((r) => {
@@ -178,6 +185,7 @@ function RolesPage() {
     },
     onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["roles"] });
+      qc.invalidateQueries({ queryKey: ["roles", "full"] });
       toast.success("Diretrizes salvas com sucesso");
       // mantém o cargo selecionado
       setEditing((cur) => cur ? { ...cur, id } : cur);
@@ -192,6 +200,7 @@ function RolesPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["roles"] });
+      qc.invalidateQueries({ queryKey: ["roles", "full"] });
       toast.success("Cargo excluído");
       setEditing(null);
     },
@@ -205,6 +214,7 @@ function RolesPage() {
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["roles"] });
+      qc.invalidateQueries({ queryKey: ["roles", "full"] });
       toast.success(vars.ativo ? "Cargo reativado" : "Cargo desativado");
       setEditing((cur) => cur && cur.id === vars.id ? { ...cur, ativo: vars.ativo } : cur);
     },
@@ -316,7 +326,23 @@ function RolesPage() {
 
         {/* List */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
-          {filtered.length === 0 && (
+          {rolesLoading && (
+            <div className="text-center py-12 px-4">
+              <Briefcase className="h-10 w-10 text-slate-200 mx-auto mb-3 animate-pulse" />
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Carregando cargos…</p>
+            </div>
+          )}
+          {rolesError && !rolesLoading && (
+            <div className="text-center py-12 px-4">
+              <AlertTriangle className="h-10 w-10 text-red-300 mx-auto mb-3" />
+              <p className="text-xs font-bold text-red-500 uppercase tracking-wider">Erro ao carregar cargos</p>
+              <p className="text-[10px] text-slate-400 mt-2 break-words">{rolesError}</p>
+              <Button type="button" size="sm" variant="outline" className="mt-4" onClick={() => rolesQuery.refetch()}>
+                Tentar novamente
+              </Button>
+            </div>
+          )}
+          {!rolesLoading && !rolesError && filtered.length === 0 && (
             <div className="text-center py-12 px-4">
               <Briefcase className="h-10 w-10 text-slate-200 mx-auto mb-3" />
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
