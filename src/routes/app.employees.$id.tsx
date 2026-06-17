@@ -343,22 +343,45 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         <div className="min-w-0">
           <div className="flex items-start justify-between gap-3">
             <h1 className="heading-display text-xl sm:text-2xl lg:text-[28px] leading-tight text-brand break-words min-w-0">{emp.nome}</h1>
-            <div className="shrink-0 flex items-center gap-2">
-              {isEditor && (tab === "profile" || tab === "nrs") && (
-                <button
-                  type="button"
-                  onClick={() => window.dispatchEvent(new CustomEvent("employee:save-tab", { detail: { tab } }))}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-700 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
-                  title="Salvar alterações desta aba"
-                >
-                  <Save className="h-3.5 w-3.5" /> Salvar
-                </button>
-              )}
-              {status && (
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 ring-1 ring-slate-200 pl-2 pr-2.5 py-1">
-                  <span className={`h-2 w-2 rounded-full ${status.colorClass}`} />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{status.label}</span>
-                </div>
+            <div className="shrink-0 flex flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
+                {isEditor && (tab === "profile" || tab === "nrs") && (
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new CustomEvent("employee:save-tab", { detail: { tab } }))}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-700 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                    title="Salvar alterações desta aba"
+                  >
+                    <Save className="h-3.5 w-3.5" /> Salvar
+                  </button>
+                )}
+                {status && (
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 ring-1 ring-slate-200 pl-2 pr-2.5 py-1">
+                    <span className={`h-2 w-2 rounded-full ${status.colorClass}`} />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{status.label}</span>
+                  </div>
+                )}
+              </div>
+              {isEditor && (
+                emp.status === "DESLIGADO" ? (
+                  <button
+                    type="button"
+                    onClick={() => setDesligamentoOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
+                    title="Reativar funcionário"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" /> Reativar
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setDesligamentoOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-rose-800 hover:bg-rose-900 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
+                    title="Registrar desligamento do funcionário"
+                  >
+                    <UserMinus className="h-3.5 w-3.5" /> Desligamento
+                  </button>
+                )
               )}
             </div>
           </div>
@@ -387,7 +410,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
         </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-rose-100/10 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-4 pt-4 border-t border-rose-100/10 flex flex-nowrap items-center justify-between gap-3">
           {/* Navegação de seções */}
           <div className="inline-flex shrink-0 items-center rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
             <QuickTabBtn icon={HeartPulse} label="ASO" tone={asoTone} active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
@@ -397,7 +420,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
 
           {/* Ações documentais */}
-          <div className="flex flex-wrap items-center gap-2 ml-auto shrink-0">
+          <div className="flex flex-nowrap items-center gap-2 ml-auto shrink-0">
             <div className="inline-flex shrink-0 items-center rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
               <Link
                 to="/app/audit"
@@ -426,27 +449,6 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                 <FileSignature className="h-3.5 w-3.5" /> PPP
               </button>
             </div>
-            {isEditor && (
-              emp.status === "DESLIGADO" ? (
-                <button
-                  type="button"
-                  onClick={() => setDesligamentoOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
-                  title="Reativar funcionário"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" /> Reativar
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setDesligamentoOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-rose-800 hover:bg-rose-900 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
-                  title="Registrar desligamento do funcionário"
-                >
-                  <UserMinus className="h-3.5 w-3.5" /> Desligamento
-                </button>
-              )
-            )}
           </div>
         </div>
       </Card>
