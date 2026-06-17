@@ -25,11 +25,11 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
-        .select("id, nome, cpf, rg, matricula, admissao, status, foto_url, sexo, data_nascimento, telefone, email, companies(name, cnpj), roles(name, cbo, setor)")
+        .select("id, nome, cpf, rg, matricula, admissao, status, foto_url, companies(name, cnpj), roles(name, cbo, setor)")
         .eq("id", employeeId!)
         .single();
       if (error) throw error;
-      return data;
+      return data as any;
     },
   });
 
@@ -39,7 +39,7 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
     queryFn: async () => {
       const { data } = await supabase
         .from("employee_exams")
-        .select("tipo, data_realizacao, data_vencimento, apto")
+        .select("tipo_exame, data_realizacao, data_vencimento, aptidao")
         .eq("employee_id", employeeId!)
         .order("data_realizacao", { ascending: false })
         .limit(1)
@@ -141,7 +141,7 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
                 icon={Stethoscope}
                 label="Último ASO"
                 value={lastAso?.data_realizacao ? formatDateBR(lastAso.data_realizacao) : "—"}
-                hint={lastAso?.apto === false ? "Inapto" : lastAso?.data_vencimento ? `vence ${formatDateBR(lastAso.data_vencimento)}` : undefined}
+                hint={lastAso?.aptidao && lastAso.aptidao !== "APTO" ? lastAso.aptidao : lastAso?.data_vencimento ? `vence ${formatDateBR(lastAso.data_vencimento)}` : undefined}
               />
               <Stat
                 icon={HardHat}
