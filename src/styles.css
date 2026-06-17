@@ -399,6 +399,46 @@
   }
 }
 
+/* Aplica glass na Sidebar shadcn sem reescrever o componente */
+@layer base {
+  [data-sidebar="sidebar"] {
+    background: linear-gradient(
+      180deg,
+      rgba(40, 6, 12, 0.78) 0%,
+      rgba(15, 4, 6, 0.85) 100%
+    ) !important;
+    backdrop-filter: blur(24px) saturate(160%);
+    border-right: 1px solid rgba(255, 255, 255, 0.10);
+    color: #f5e6ea;
+    box-shadow: 8px 0 30px -10px rgba(0, 0, 0, 0.5);
+  }
+  [data-sidebar="sidebar"] [data-sidebar="menu-button"][data-active="true"] {
+    background: linear-gradient(
+      135deg,
+      rgba(200, 16, 46, 0.35) 0%,
+      rgba(155, 28, 28, 0.22) 100%
+    );
+    color: #fff5f6;
+    box-shadow: 0 1px 0 0 rgba(255,255,255,0.18) inset;
+  }
+  [data-sidebar="sidebar"] [data-sidebar="menu-button"]:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+  }
+
+  /* Headers de página com glass vinho */
+  .app-header, header[data-app-header] {
+    background: linear-gradient(
+      180deg,
+      rgba(30, 6, 10, 0.78) 0%,
+      rgba(15, 4, 6, 0.62) 100%
+    ) !important;
+    backdrop-filter: blur(20px) saturate(160%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+    color: #fff5f6;
+  }
+}
+
 /* ============================================================
    Dashboard Dinâmico — efeito 3D nos gráficos (CSS-only)
    Aplica profundidade, sombras e brilho às formas SVG do Recharts
