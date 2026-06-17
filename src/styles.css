@@ -860,3 +860,73 @@
       0 10px 24px -10px rgba(220, 60, 90, 0.35);
   }
 }
+
+/* ============================================================
+   Padronização global de paineis/sub-paineis sob o app:
+   sobrescreve utilitárias legadas (.surface-elevated, gradients
+   claros e bordas slate-claras) para o vidro vinho escuro.
+   ============================================================ */
+@layer base {
+  .app-glass-scope .surface-elevated,
+  .modal-glass-scope:not(.pdf-dialog) .surface-elevated {
+    background: linear-gradient(160deg, rgba(58, 14, 24, 0.55) 0%, rgba(30, 8, 14, 0.55) 100%) !important;
+    backdrop-filter: blur(22px) saturate(160%);
+    color: #f5e6ea;
+    box-shadow:
+      0 1px 0 0 rgba(255, 240, 244, 0.06) inset,
+      0 1px 2px rgba(0, 0, 0, 0.35),
+      0 12px 32px -16px rgba(0, 0, 0, 0.7) !important;
+  }
+
+  /* Bordas slate claras → traço translúcido coerente */
+  .app-glass-scope [class*="border-slate-100"],
+  .app-glass-scope [class*="border-slate-200"],
+  .app-glass-scope [class*="border-slate-300"],
+  .app-glass-scope [class*="border-gray-100"],
+  .app-glass-scope [class*="border-gray-200"],
+  .app-glass-scope [class*="border-gray-300"],
+  .app-glass-scope [class*="border-zinc-100"],
+  .app-glass-scope [class*="border-zinc-200"],
+  .app-glass-scope [class*="border-neutral-100"],
+  .app-glass-scope [class*="border-neutral-200"],
+  .modal-glass-scope:not(.pdf-dialog) [class*="border-slate-100"],
+  .modal-glass-scope:not(.pdf-dialog) [class*="border-slate-200"],
+  .modal-glass-scope:not(.pdf-dialog) [class*="border-slate-300"],
+  .modal-glass-scope:not(.pdf-dialog) [class*="border-gray-100"],
+  .modal-glass-scope:not(.pdf-dialog) [class*="border-gray-200"],
+  .modal-glass-scope:not(.pdf-dialog) [class*="border-gray-300"] {
+    border-color: rgba(255, 220, 225, 0.10) !important;
+  }
+
+  /* Gradients claros bg-gradient from-*-50 / to-white viram vinho discreto */
+  .app-glass-scope [class*="from-red-50"],
+  .app-glass-scope [class*="from-rose-50"],
+  .app-glass-scope [class*="from-slate-50"],
+  .app-glass-scope [class*="from-gray-50"],
+  .app-glass-scope [class*="to-white"],
+  .modal-glass-scope:not(.pdf-dialog) [class*="from-red-50"],
+  .modal-glass-scope:not(.pdf-dialog) [class*="from-rose-50"],
+  .modal-glass-scope:not(.pdf-dialog) [class*="from-slate-50"],
+  .modal-glass-scope:not(.pdf-dialog) [class*="from-gray-50"],
+  .modal-glass-scope:not(.pdf-dialog) [class*="to-white"] {
+    background-image: linear-gradient(160deg, rgba(70, 18, 32, 0.45), rgba(30, 8, 14, 0.55)) !important;
+  }
+
+  /* Tabs/abas: estado inativo claro vira vidro escuro; ativo vira vinho saturado */
+  .app-glass-scope [role="tablist"],
+  .modal-glass-scope:not(.pdf-dialog) [role="tablist"] {
+    background-color: rgba(20, 6, 10, 0.45) !important;
+    border-color: rgba(255, 220, 225, 0.08) !important;
+    backdrop-filter: blur(14px) saturate(150%);
+  }
+  .app-glass-scope [role="tab"][data-state="active"],
+  .modal-glass-scope:not(.pdf-dialog) [role="tab"][data-state="active"] {
+    background-color: rgba(120, 24, 48, 0.55) !important;
+    color: #fff5f6 !important;
+    box-shadow: 0 0 0 1px rgba(255, 220, 225, 0.14) inset, 0 4px 12px -4px rgba(200, 30, 60, 0.45);
+  }
+
+  /* Scrollbar combina com o tema */
+  .app-glass-scope .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 220, 225, 0.18); }
+  .app-glass-scope .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 220, 225, 0.32); }
+}
