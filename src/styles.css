@@ -154,10 +154,32 @@
   }
 
   body {
-    background-color: var(--color-background);
+    background:
+      radial-gradient(1200px 700px at 8% -10%, rgba(155, 28, 28, 0.42), transparent 60%),
+      radial-gradient(900px 600px at 110% 15%, rgba(88, 12, 24, 0.35), transparent 65%),
+      radial-gradient(800px 600px at 50% 110%, rgba(40, 8, 14, 0.55), transparent 70%),
+      linear-gradient(135deg, #1a0509 0%, #0a0608 55%, #050304 100%);
+    background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    min-height: 100vh;
   }
+  /* sutil noise / texture overlay para profundidade */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 3px 3px, 7px 7px;
+    background-position: 0 0, 1px 1px;
+    mix-blend-mode: overlay;
+    opacity: 0.6;
+  }
+  #root, main, [data-app-shell] { position: relative; z-index: 1; }
   .bg-brand { background-color: var(--brand); color: var(--brand-foreground); }
   .text-brand { color: var(--brand); }
   .border-brand { border-color: var(--brand); }
