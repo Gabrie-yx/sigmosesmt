@@ -13,9 +13,10 @@ type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   defaultCompanyId?: string;
+  onCreated?: () => void;
 };
 
-export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId }: Props) {
+export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCreated }: Props) {
   const qc = useQueryClient();
   const [form, setForm] = useState<any>({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: defaultCompanyId ?? "", role_id: "", tipo_cadastro: "NAO_MEI", cnpj: "" });
 
@@ -51,6 +52,7 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId }: Prop
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["employees"] });
       qc.invalidateQueries({ queryKey: ["employees-light"] });
+      onCreated?.();
       onOpenChange(false);
       toast.success("Funcionário criado");
     },

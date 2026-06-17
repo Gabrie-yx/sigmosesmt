@@ -48,6 +48,7 @@ import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.f
 import { AtestadosTab } from "@/components/employees/atestados-tab";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
+import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { UserMinus, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/app/employees/$id")({
@@ -596,14 +597,6 @@ function EmployeeContextSidebar({ id }: { id: string }) {
   const qc = useQueryClient();
   const { isEditor } = useAuth();
   const [openNewEmployee, setOpenNewEmployee] = useState(false);
-  const [newEmployeeForm, setNewEmployeeForm] = useState<any>({
-    nome: "",
-    cpf: "",
-    matricula: "",
-    status: "ATIVO",
-    company_id: "",
-    role_id: "",
-  });
   const { data: emp } = useQuery({
     queryKey: ["employee-sidebar", id],
     queryFn: async () => {
@@ -657,33 +650,6 @@ function EmployeeContextSidebar({ id }: { id: string }) {
       return m;
     },
   });
-
-  const createEmployee = useMutation({
-    mutationFn: async (v: any) => {
-      const { error } = await supabase.from("employees").insert({
-        nome: toTitleCasePT(v.nome),
-        cpf: v.cpf || null,
-        matricula: v.matricula || null,
-        status: v.status,
-        company_id: v.company_id || companyId,
-        role_id: v.role_id || null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["employees"] });
-      qc.invalidateQueries({ queryKey: ["coworkers-sidebar", companyId, id] });
-      setOpenNewEmployee(false);
-      setNewEmployeeForm({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: companyId ?? "", role_id: "" });
-      toast.success("Funcionário criado");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  function openNewEmployeeDialog() {
-    setNewEmployeeForm({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: companyId ?? "", role_id: "" });
-    setOpenNewEmployee(true);
-  }
 
   if (!companyId) {
     return (
@@ -746,7 +712,7 @@ function EmployeeContextSidebar({ id }: { id: string }) {
 
       {/* AÇÕES — paleta coesa (brand + navy + outlines) */}
       <div className="grid grid-cols-2 gap-2">
-        <button type="button" onClick={openNewEmployeeDialog} disabled={!isEditor} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-[#991b1b] to-[#7B1E2B] hover:from-[#7B1E2B] hover:to-[#4a0e15] text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all disabled:pointer-events-none disabled:opacity-50">
+        <button type="button" onClick={() => setOpenNewEmployee(true)} disabled={!isEditor} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-[#991b1b] to-[#7B1E2B] hover:from-[#7B1E2B] hover:to-[#4a0e15] text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all disabled:pointer-events-none disabled:opacity-50">
           <UserPlus className="h-3.5 w-3.5" /> Novo Func.
         </button>
         <Link to="/app/companies" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0f172a] hover:bg-[#1e293b] text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 shadow-sm hover:shadow-md transition-all">
@@ -763,37 +729,12 @@ function EmployeeContextSidebar({ id }: { id: string }) {
         </Link>
       </div>
 
-      <Dialog open={openNewEmployee} onOpenChange={setOpenNewEmployee}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Novo funcionário</DialogTitle></DialogHeader>
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!newEmployeeForm.nome.trim()) {
-                toast.error("Informe o nome.");
-                return;
-              }
-              createEmployee.mutate({ ...newEmployeeForm, nome: newEmployeeForm.nome.trim() });
-            }}
-          >
-            <Field label="Nome *"><Input required value={newEmployeeForm.nome} onChange={(e) => setNewEmployeeForm({ ...newEmployeeForm, nome: e.target.value })} /></Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="CPF"><Input inputMode="numeric" placeholder="000.000.000-00" value={newEmployeeForm.cpf} onChange={(e) => setNewEmployeeForm({ ...newEmployeeForm, cpf: maskCPF(e.target.value) })} /></Field>
-              <Field label="Matrícula"><Input value={newEmployeeForm.matricula} onChange={(e) => setNewEmployeeForm({ ...newEmployeeForm, matricula: e.target.value })} /></Field>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Empresa"><Select value={newEmployeeForm.company_id} disabled><SelectTrigger><SelectValue placeholder={company?.name ?? "Empresa atual"} /></SelectTrigger><SelectContent>{company && <SelectItem value={company.id}>{company.name}</SelectItem>}</SelectContent></Select></Field>
-              <Field label="Cargo"><Select value={newEmployeeForm.role_id} onValueChange={(v) => setNewEmployeeForm({ ...newEmployeeForm, role_id: v })}><SelectTrigger><SelectValue placeholder="—" /></SelectTrigger><SelectContent>{Array.from(rolesMap?.entries() ?? []).map(([roleId, roleName]) => <SelectItem key={roleId} value={roleId}>{roleName}</SelectItem>)}</SelectContent></Select></Field>
-            </div>
-            <Field label="Status"><Select value={newEmployeeForm.status} onValueChange={(v) => setNewEmployeeForm({ ...newEmployeeForm, status: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ATIVO">ATIVO</SelectItem><SelectItem value="INATIVO">INATIVO</SelectItem><SelectItem value="AFASTADO">AFASTADO</SelectItem></SelectContent></Select></Field>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpenNewEmployee(false)}>Cancelar</Button>
-              <Button type="submit" disabled={createEmployee.isPending}>{createEmployee.isPending ? "Salvando…" : "Criar funcionário"}</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <NewEmployeeDialog
+        open={openNewEmployee}
+        onOpenChange={setOpenNewEmployee}
+        defaultCompanyId={companyId ?? undefined}
+        onCreated={() => qc.invalidateQueries({ queryKey: ["coworkers-sidebar", companyId, id] })}
+      />
 
       <Card className="p-4 rounded-2xl border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-3">
