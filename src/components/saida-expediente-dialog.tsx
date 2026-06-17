@@ -160,20 +160,21 @@ export function SaidaExpedienteDialog({
   });
 
   const renderSignatureOption = (target: SignatureTarget, label: string, value: string | null | undefined) => (
-    <div className="rounded-lg border bg-slate-50 p-2.5">
-      <div className="flex items-center justify-between gap-2">
-        <Label className="text-xs font-bold">{label}</Label>
-        {value && <span className="text-xs text-emerald-700 font-bold inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" /> Assinado</span>}
+    <div className="flex flex-col rounded-lg border border-white/10 bg-white/[0.03] p-2 min-w-0">
+      <div className="flex items-center justify-between gap-1.5">
+        <Label className="text-[10px] font-bold uppercase tracking-wide truncate">{label}</Label>
+        {value && <span className="text-[10px] text-emerald-300 font-bold inline-flex items-center gap-0.5 shrink-0"><Check className="h-3 w-3" /> OK</span>}
       </div>
       {value ? (
-        <div className="mt-2 flex items-center gap-3">
-          <img src={value} alt={`Assinatura ${label}`} className="h-14 max-w-40 bg-white border rounded px-2 object-contain" />
-          <div className="ml-auto flex gap-1">
-            <Button type="button" size="sm" variant="ghost" onClick={() => setSigOpen(target)}>Refazer</Button>
+        <div className="mt-1.5 flex items-center gap-1.5">
+          <img src={value} alt={`Assinatura ${label}`} className="h-10 flex-1 min-w-0 bg-white/90 border border-white/10 rounded px-1 object-contain" />
+          <div className="flex flex-col gap-0.5 shrink-0">
+            <Button type="button" size="sm" variant="ghost" className="h-6 px-1.5 text-[10px]" onClick={() => setSigOpen(target)}>Refazer</Button>
             <Button
               type="button"
               size="sm"
               variant="ghost"
+              className="h-6 px-1.5 text-[10px] text-rose-300 hover:text-rose-200"
               onClick={() => setForm((f: any) => ({ ...f, [target === "FUNC" ? "assinatura_funcionario" : target === "SESMT" ? "assinatura_sesmt" : "assinatura_supervisor"]: null }))}
             >
               Remover
@@ -181,8 +182,8 @@ export function SaidaExpedienteDialog({
           </div>
         </div>
       ) : (
-        <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => setSigOpen(target)}>
-          <PenLine className="h-3.5 w-3.5 mr-1.5" />Inserir assinatura
+        <Button type="button" size="sm" variant="outline" className="mt-1.5 h-8 text-[11px] w-full" onClick={() => setSigOpen(target)}>
+          <PenLine className="h-3 w-3 mr-1" />Inserir
         </Button>
       )}
     </div>
@@ -277,11 +278,13 @@ export function SaidaExpedienteDialog({
           <div className="space-y-1.5"><Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Observação interna</Label>
             <Textarea rows={2} className="rounded-xl" value={form.observacao ?? ""} onChange={(e) => setForm({ ...form, observacao: e.target.value })} />
           </div>
-          <div className="space-y-2 pt-2 border-t">
+          <div className="space-y-2 pt-2 border-t border-white/10">
             <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Assinaturas do documento</Label>
-            {renderSignatureOption("SESMT", "Minha assinatura — TST/SESMT", form.assinatura_sesmt)}
-            {editId && renderSignatureOption("FUNC", "Assinatura do funcionário", form.assinatura_funcionario)}
-            {renderSignatureOption("SUPERVISOR", `Assinatura do ${supervisorLabel}`, form.assinatura_supervisor)}
+            <div className={`grid gap-2 ${editId ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
+              {renderSignatureOption("SESMT", "TST/SESMT", form.assinatura_sesmt)}
+              {editId && renderSignatureOption("FUNC", "Funcionário", form.assinatura_funcionario)}
+              {renderSignatureOption("SUPERVISOR", supervisorLabel, form.assinatura_supervisor)}
+            </div>
             <p className="text-[10px] text-slate-500 font-medium italic">Opcional — cada assinatura é independente e pode ser coletada individualmente no PDF depois.</p>
           </div>
         </div>
