@@ -57,7 +57,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import dmnLogo from "@/assets/dmn-logo.png";
 
 type LeafItem = { to: string; label: string; icon?: typeof CalendarCheck2 };
 type LockedItem = { key: string; label: string; icon?: typeof CalendarCheck2 };
