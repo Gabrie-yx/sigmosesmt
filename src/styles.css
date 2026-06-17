@@ -597,12 +597,12 @@
   .bg-fuchsia-50, .bg-fuchsia-100,
   .bg-sky-50, .bg-sky-100,
   .bg-blue-50, .bg-blue-100 {
-    background-color: rgba(35, 12, 18, 0.42) !important;
-    backdrop-filter: blur(14px) saturate(140%);
-    border-color: rgba(255, 220, 225, 0.08) !important;
+    background: linear-gradient(145deg, rgba(58,22,30,0.92), rgba(34,14,20,0.92)) !important;
+    border-color: rgba(255, 220, 225, 0.06) !important;
     box-shadow:
-      0 0 0 1px rgba(255, 220, 225, 0.04) inset,
-      0 0 14px -4px rgba(160, 28, 50, 0.18);
+      2px 2px 6px rgba(0, 0, 0, 0.45),
+      -1px -1px 3px rgba(255, 230, 235, 0.035),
+      0 0 0 1px rgba(255, 230, 235, 0.04) inset !important;
   }
 
   /* Anéis pastel viram traço translúcido suave */
