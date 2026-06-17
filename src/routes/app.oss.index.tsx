@@ -245,8 +245,17 @@ function OssIndexPage() {
                   return (
                     <TableRow key={em.id}>
                       <TableCell>
-                        <div className="font-medium text-sm">{em.employees?.nome ?? "—"}</div>
-                        <div className="text-[10px] text-slate-500">{em.employees?.cpf ?? ""}</div>
+                        <button
+                          type="button"
+                          onClick={() => setQuickViewEmpId(em.employee_id)}
+                          className="text-left group"
+                          title="Ver resumo do funcionário"
+                        >
+                          <div className="font-medium text-sm text-slate-900 group-hover:text-rose-600 group-hover:underline underline-offset-2 transition-colors">
+                            {em.employees?.nome ?? "—"}
+                          </div>
+                          <div className="text-[10px] text-slate-500">{em.employees?.cpf ?? ""}</div>
+                        </button>
                       </TableCell>
                       <TableCell className="text-sm">{em.cargo_snapshot} <span className="text-[10px] text-slate-400">Rev.{em.template_revisao}</span></TableCell>
                       <TableCell>
