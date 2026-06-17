@@ -597,33 +597,48 @@
    sem precisar editar cada componente shadcn.
    ============================================================ */
 @layer base {
-  .bg-popover,
-  .bg-card,
-  .bg-background,
-  .bg-muted,
-  .bg-secondary,
-  .bg-accent,
+  .app-glass-scope .bg-popover,
+  .app-glass-scope .bg-card,
+  .app-glass-scope .bg-background,
+  .app-glass-scope .bg-muted,
+  .app-glass-scope .bg-secondary,
+  .app-glass-scope .bg-accent,
+  .modal-glass-scope .bg-popover,
+  .modal-glass-scope .bg-card,
+  .modal-glass-scope .bg-background,
+  .modal-glass-scope .bg-muted,
+  .modal-glass-scope .bg-secondary,
+  .modal-glass-scope .bg-accent,
   [data-radix-popper-content-wrapper] > * {
     backdrop-filter: blur(22px) saturate(170%);
   }
 
   /* Inputs/selects/textareas: vidro escuro com borda branca translúcida */
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
-  textarea,
-  select {
+  .app-glass-scope input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  .app-glass-scope textarea,
+  .app-glass-scope select,
+  .modal-glass-scope input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  .modal-glass-scope textarea,
+  .modal-glass-scope select {
     background-color: rgba(20, 6, 10, 0.45) !important;
     border-color: rgba(255, 255, 255, 0.14) !important;
     color: #fff5f6 !important;
     backdrop-filter: blur(10px) saturate(150%);
   }
-  input::placeholder,
-  textarea::placeholder { color: rgba(245, 230, 234, 0.50) !important; }
+  .app-glass-scope input::placeholder,
+  .app-glass-scope textarea::placeholder,
+  .modal-glass-scope input::placeholder,
+  .modal-glass-scope textarea::placeholder { color: rgba(245, 230, 234, 0.50) !important; }
 
   /* Linhas de tabela mais legíveis sobre vidro escuro */
-  table { color: #f5e6ea; }
-  table thead { color: rgba(245, 230, 234, 0.78); }
-  table tbody tr { border-color: rgba(255, 255, 255, 0.08); }
-  table tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
+  .app-glass-scope table,
+  .modal-glass-scope table { color: #f5e6ea; }
+  .app-glass-scope table thead,
+  .modal-glass-scope table thead { color: rgba(245, 230, 234, 0.78); }
+  .app-glass-scope table tbody tr,
+  .modal-glass-scope table tbody tr { border-color: rgba(255, 255, 255, 0.08); }
+  .app-glass-scope table tbody tr:hover,
+  .modal-glass-scope table tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
 
   /* Superfícies legadas: escurece somente o app principal, preservando canvas/iframe de PDFs. */
   .app-glass-scope .bg-white,
