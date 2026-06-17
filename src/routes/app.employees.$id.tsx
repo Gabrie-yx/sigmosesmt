@@ -3122,6 +3122,10 @@ function OssTab({ empId, empNome }: { empId: string; empNome: string }) {
                         {isEditor && em.status === "PENDENTE_ASSINATURA" && (
                           <OssUploadAssinadoButton onPick={(f) => uploadAssinado.mutate({ em, file: f })} disabled={uploadAssinado.isPending} />
                         )}
+                        <OssRowActions
+                          em={em}
+                          invalidateKeys={[["employee-oss", empId], ["oss-valid", empId], ["oss-emissoes"]]}
+                        />
                       </div>
                     </TableCell>
                   </TableRow>
