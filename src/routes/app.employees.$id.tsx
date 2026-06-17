@@ -157,6 +157,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [fichaDoc, setFichaDoc] = useState<jsPDF | null>(null);
   const [gerandoFicha, setGerandoFicha] = useState(false);
   const [pppOpen, setPppOpen] = useState(false);
+  const [desligamentoOpen, setDesligamentoOpen] = useState(false);
 
   async function gerarFichaPdf() {
     if (!emp) return;
