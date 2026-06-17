@@ -164,7 +164,7 @@ function ListagemFuncionariosPage() {
                 <tr><td colSpan={7} className="px-3 py-8 text-center text-slate-400">Nenhum funcionário encontrado.</td></tr>
               ) : (
                 filtered.map((e: any, i: number) => (
-                  <tr key={e.id} className="hover:bg-slate-50">
+                  <tr key={e.id} className="transition-colors hover:bg-white/[0.06] hover:backdrop-blur-md">
                     <td className="px-3 py-2 text-slate-500 tabular-nums">{String(i + 1).padStart(3, "0")}</td>
                     <td className="px-3 py-2 tabular-nums">{e.matricula ?? "—"}</td>
                     <td className="px-3 py-2 font-semibold text-slate-900">{e.nome}</td>
