@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { useRef, useState } from "react";
 import dmnLogo from "@/assets/dmn-logo.png";
 import { PendenciasBadge } from "@/components/pendencias-badge";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function AppHeader() {
   const { user, roles } = useAuth();
@@ -43,8 +42,6 @@ export function AppHeader() {
   return (
     <header className="bg-header sticky top-0 z-30 shadow-md bg-gradient-to-b from-[#a01818] to-[#7f1212]">
       <div className="flex h-14 items-center gap-3 px-3 md:px-4">
-        <SidebarTrigger className="text-white hover:bg-white/10 hover:text-white shrink-0" />
-
         <Link to="/app" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity shrink-0 min-w-0">
           <div className="flex h-9 items-center justify-center rounded bg-white/95 px-1.5 py-1 shadow-sm shrink-0">
             <img src={dmnLogo} alt="DMN Estaleiro" className="h-7 w-auto object-contain" />
