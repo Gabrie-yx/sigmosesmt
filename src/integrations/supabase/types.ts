@@ -2449,8 +2449,12 @@ export type Database = {
           cpf: string | null
           created_at: string
           data_aso: string | null
+          data_desligamento: string | null
           data_integracao: string | null
           data_nascimento: string | null
+          desligado_por: string | null
+          desligamento_checklist: Json
+          desligamento_observacoes: string | null
           email: string | null
           empresa_terceira_id: string | null
           endereco: string | null
@@ -2458,6 +2462,7 @@ export type Database = {
           ghe_id: string | null
           id: string
           matricula: string | null
+          motivo_desligamento: string | null
           nome: string
           nome_contato: string | null
           nrs: Json
@@ -2488,8 +2493,12 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           data_aso?: string | null
+          data_desligamento?: string | null
           data_integracao?: string | null
           data_nascimento?: string | null
+          desligado_por?: string | null
+          desligamento_checklist?: Json
+          desligamento_observacoes?: string | null
           email?: string | null
           empresa_terceira_id?: string | null
           endereco?: string | null
@@ -2497,6 +2506,7 @@ export type Database = {
           ghe_id?: string | null
           id?: string
           matricula?: string | null
+          motivo_desligamento?: string | null
           nome: string
           nome_contato?: string | null
           nrs?: Json
@@ -2527,8 +2537,12 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           data_aso?: string | null
+          data_desligamento?: string | null
           data_integracao?: string | null
           data_nascimento?: string | null
+          desligado_por?: string | null
+          desligamento_checklist?: Json
+          desligamento_observacoes?: string | null
           email?: string | null
           empresa_terceira_id?: string | null
           endereco?: string | null
@@ -2536,6 +2550,7 @@ export type Database = {
           ghe_id?: string | null
           id?: string
           matricula?: string | null
+          motivo_desligamento?: string | null
           nome?: string
           nome_contato?: string | null
           nrs?: Json
@@ -6372,6 +6387,20 @@ export type Database = {
       oss_marcar_vencidas: { Args: never; Returns: number }
       peek_proximo_numero_apr: { Args: never; Returns: string }
       pt_title_case: { Args: { s: string }; Returns: string }
+      reativar_funcionario: {
+        Args: { _employee_id: string }
+        Returns: undefined
+      }
+      registrar_desligamento_funcionario: {
+        Args: {
+          _checklist?: Json
+          _data_desligamento: string
+          _employee_id: string
+          _motivo: string
+          _observacoes?: string
+        }
+        Returns: undefined
+      }
       registrar_entrega_epi: {
         Args: { _cpf: string; _epi_id: string; _nome: string; _qtd: number }
         Returns: string
