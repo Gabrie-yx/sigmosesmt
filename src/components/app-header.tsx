@@ -40,7 +40,7 @@ export function AppHeader() {
   }
 
   return (
-    <header className="bg-header sticky top-0 z-30 shadow-md bg-gradient-to-b from-[#a01818] to-[#7f1212]">
+    <header className="bg-header sticky top-0 z-30 shadow-md bg-gradient-to-b from-[#a01818] to-[#7f1212] relative overflow-visible before:absolute before:inset-y-0 before:right-full before:w-[var(--sidebar-width-icon,3rem)] before:bg-gradient-to-b before:from-[#a01818] before:to-[#7f1212] before:content-['']">
       <div className="flex h-14 items-center gap-3 px-3 md:px-4">
         <Link to="/app" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity shrink-0 min-w-0">
           <div className="flex h-9 items-center justify-center rounded bg-white/95 px-1.5 py-1 shadow-sm shrink-0">
