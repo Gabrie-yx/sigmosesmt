@@ -386,40 +386,51 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
         </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2">
+        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          {/* Navegação de seções */}
+          <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
             <QuickTabBtn icon={HeartPulse} label="ASO" tone={asoTone} active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
             <QuickTabBtn icon={Award} label="NR" tone={nrTone} active={tab === "nrs"} onClick={() => setTab("nrs")} />
             <QuickTabBtn icon={FolderOpen} label="Docs" tone={docsTone} active={tab === "docs"} onClick={() => setTab("docs")} />
             <QuickTabBtn icon={HardHat} label="EPI" tone="slate" active={tab === "epi"} onClick={() => setTab("epi")} />
-            <Link
-              to="/app/audit"
-              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-[#991b1b] to-[#7B1E2B] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
-            >
-              <ClipboardCheck className="h-3.5 w-3.5" /> Auditar
-            </Link>
-            <button
-              type="button"
-              onClick={gerarFichaPdf}
-              disabled={gerandoFicha}
-              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-wait"
-              title="Gerar ficha em PDF"
-            >
-              <FileText className="h-3.5 w-3.5" /> {gerandoFicha ? "Gerando…" : "Ficha PDF"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPppOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-violet-700 to-violet-900 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-wait"
-              title="Emitir PPP (Perfil Profissiográfico Previdenciário)"
-            >
-              <FileSignature className="h-3.5 w-3.5" /> Emitir PPP
-            </button>
+          </div>
+
+          {/* Ações documentais */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <div className="inline-flex items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+              <Link
+                to="/app/audit"
+                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
+                title="Auditar"
+              >
+                <ClipboardCheck className="h-3.5 w-3.5" /> Auditar
+              </Link>
+              <span className="h-4 w-px bg-slate-200" />
+              <button
+                type="button"
+                onClick={gerarFichaPdf}
+                disabled={gerandoFicha}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-60 disabled:cursor-wait"
+                title="Gerar ficha em PDF"
+              >
+                <FileText className="h-3.5 w-3.5" /> {gerandoFicha ? "Gerando…" : "Ficha"}
+              </button>
+              <span className="h-4 w-px bg-slate-200" />
+              <button
+                type="button"
+                onClick={() => setPppOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
+                title="Emitir PPP (Perfil Profissiográfico Previdenciário)"
+              >
+                <FileSignature className="h-3.5 w-3.5" /> PPP
+              </button>
+            </div>
             {isEditor && (
               emp.status === "DESLIGADO" ? (
                 <button
                   type="button"
                   onClick={() => setDesligamentoOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-700 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
                   title="Reativar funcionário"
                 >
                   <RotateCcw className="h-3.5 w-3.5" /> Reativar
@@ -428,13 +439,14 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                 <button
                   type="button"
                   onClick={() => setDesligamentoOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-rose-700 to-rose-900 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-rose-800 hover:bg-rose-900 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
                   title="Registrar desligamento do funcionário"
                 >
                   <UserMinus className="h-3.5 w-3.5" /> Desligamento
                 </button>
               )
             )}
+          </div>
         </div>
       </Card>
       )}
