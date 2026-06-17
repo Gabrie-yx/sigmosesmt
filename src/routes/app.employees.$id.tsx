@@ -387,9 +387,9 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
         </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-nowrap items-center justify-between gap-3 overflow-x-auto">
           {/* Navegação de seções */}
-          <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
+          <div className="inline-flex shrink-0 items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
             <QuickTabBtn icon={HeartPulse} label="ASO" tone={asoTone} active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
             <QuickTabBtn icon={Award} label="NR" tone={nrTone} active={tab === "nrs"} onClick={() => setTab("nrs")} />
             <QuickTabBtn icon={FolderOpen} label="Docs" tone={docsTone} active={tab === "docs"} onClick={() => setTab("docs")} />
@@ -397,8 +397,8 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
 
           {/* Ações documentais */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <div className="inline-flex items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+          <div className="flex flex-nowrap items-center gap-1.5 ml-auto shrink-0">
+            <div className="inline-flex shrink-0 items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
               <Link
                 to="/app/audit"
                 className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
