@@ -503,6 +503,8 @@ function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?:
       ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
       : emp.status === "AFASTADO"
       ? "bg-amber-100 text-amber-700 ring-amber-200"
+      : emp.status === "DESLIGADO"
+      ? "bg-slate-200 text-slate-700 ring-slate-300"
       : "bg-rose-100 text-rose-700 ring-rose-200";
   const isTerceiro = companyType === "TERCEIRIZADO" || emp.tipo_vinculo === "TERCEIRO";
   const isMei = emp.tipo_cadastro === "MEI";
