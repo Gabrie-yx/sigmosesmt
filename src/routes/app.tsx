@@ -34,7 +34,7 @@ function AppLayout() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full bg-muted/30">
+      <div className="app-glass-scope min-h-screen flex w-full bg-muted/30">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <AppHeader />
