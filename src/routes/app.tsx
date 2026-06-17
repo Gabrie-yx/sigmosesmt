@@ -26,7 +26,13 @@ function AppLayout() {
 
   if (loading || !session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 text-sm text-muted-foreground">
+      <div
+        className="flex min-h-screen items-center justify-center text-sm text-rose-100/80"
+        style={{
+          background:
+            "linear-gradient(180deg, #5a0f22 0%, #3a0a18 45%, #1f0610 100%)",
+        }}
+      >
         Carregando…
       </div>
     );
