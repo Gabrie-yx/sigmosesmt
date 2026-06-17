@@ -40,6 +40,7 @@ import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { PPPEditorDialog } from "@/components/ppp/ppp-editor-dialog";
 import type jsPDF from "jspdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban, ChevronDown } from "lucide-react";
+import { OssRowActions } from "@/components/oss/oss-row-actions";
 import { GraduationCap } from "lucide-react";
 import { Save } from "lucide-react";
 import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
