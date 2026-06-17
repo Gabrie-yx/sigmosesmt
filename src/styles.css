@@ -420,7 +420,8 @@
   position: relative;
 }
 @layer base {
-  .glass-shine::after {
+  .glass-shine::after,
+  .dialog-glass-shine::after {
     content: "";
     position: absolute;
     inset: 0;
