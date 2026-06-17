@@ -690,7 +690,22 @@
   .app-glass-scope .bg-indigo-50, .app-glass-scope .bg-indigo-100,
   .app-glass-scope .bg-fuchsia-50, .app-glass-scope .bg-fuchsia-100,
   .app-glass-scope .bg-sky-50, .app-glass-scope .bg-sky-100,
-  .app-glass-scope .bg-blue-50, .app-glass-scope .bg-blue-100 {
+  .app-glass-scope .bg-blue-50, .app-glass-scope .bg-blue-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-emerald-50, .modal-glass-scope:not(.pdf-dialog) .bg-emerald-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-green-50, .modal-glass-scope:not(.pdf-dialog) .bg-green-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-teal-50, .modal-glass-scope:not(.pdf-dialog) .bg-teal-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-amber-50, .modal-glass-scope:not(.pdf-dialog) .bg-amber-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-yellow-50, .modal-glass-scope:not(.pdf-dialog) .bg-yellow-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-orange-50, .modal-glass-scope:not(.pdf-dialog) .bg-orange-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-rose-50, .modal-glass-scope:not(.pdf-dialog) .bg-rose-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-red-50, .modal-glass-scope:not(.pdf-dialog) .bg-red-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-pink-50, .modal-glass-scope:not(.pdf-dialog) .bg-pink-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-purple-50, .modal-glass-scope:not(.pdf-dialog) .bg-purple-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-violet-50, .modal-glass-scope:not(.pdf-dialog) .bg-violet-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-indigo-50, .modal-glass-scope:not(.pdf-dialog) .bg-indigo-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-fuchsia-50, .modal-glass-scope:not(.pdf-dialog) .bg-fuchsia-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-sky-50, .modal-glass-scope:not(.pdf-dialog) .bg-sky-100,
+  .modal-glass-scope:not(.pdf-dialog) .bg-blue-50, .modal-glass-scope:not(.pdf-dialog) .bg-blue-100 {
     background: linear-gradient(145deg, rgba(58,22,30,0.92), rgba(34,14,20,0.92)) !important;
     border-color: rgba(255, 220, 225, 0.06) !important;
     box-shadow:
@@ -710,7 +725,9 @@
 
   /* Cores de texto saturadas dentro das pílulas: suavizar p/ tons pastéis */
   .app-glass-scope .text-emerald-700, .app-glass-scope .text-emerald-600, .app-glass-scope .text-green-700, .app-glass-scope .text-green-600,
-  .app-glass-scope .text-teal-700 { color: #7be0b8 !important; }
+  .app-glass-scope .text-teal-700,
+  .modal-glass-scope:not(.pdf-dialog) .text-emerald-700, .modal-glass-scope:not(.pdf-dialog) .text-emerald-600, .modal-glass-scope:not(.pdf-dialog) .text-green-700, .modal-glass-scope:not(.pdf-dialog) .text-green-600,
+  .modal-glass-scope:not(.pdf-dialog) .text-teal-700 { color: #7be0b8 !important; }
   .app-glass-scope .text-amber-700, .app-glass-scope .text-amber-800, .app-glass-scope .text-amber-600,
   .app-glass-scope .text-yellow-700, .app-glass-scope .text-yellow-800, .app-glass-scope .text-orange-700 { color: #f0c280 !important; }
   .app-glass-scope .text-rose-700, .app-glass-scope .text-rose-600, .app-glass-scope .text-red-700, .app-glass-scope .text-red-600,
@@ -759,7 +776,9 @@
     color: rgba(240, 220, 222, 0.78) !important;
   }
   .app-glass-scope .text-slate-500, .app-glass-scope .text-slate-400, .app-glass-scope .text-zinc-500, .app-glass-scope .text-zinc-400,
-  .app-glass-scope .text-gray-500, .app-glass-scope .text-gray-400, .app-glass-scope .text-neutral-500, .app-glass-scope .text-neutral-400 {
+  .app-glass-scope .text-gray-500, .app-glass-scope .text-gray-400, .app-glass-scope .text-neutral-500, .app-glass-scope .text-neutral-400,
+  .modal-glass-scope:not(.pdf-dialog) .text-slate-500, .modal-glass-scope:not(.pdf-dialog) .text-slate-400, .modal-glass-scope:not(.pdf-dialog) .text-zinc-500, .modal-glass-scope:not(.pdf-dialog) .text-zinc-400,
+  .modal-glass-scope:not(.pdf-dialog) .text-gray-500, .modal-glass-scope:not(.pdf-dialog) .text-gray-400, .modal-glass-scope:not(.pdf-dialog) .text-neutral-500, .modal-glass-scope:not(.pdf-dialog) .text-neutral-400 {
     color: rgba(235, 210, 215, 0.58) !important;
   }
 }
