@@ -23,6 +23,7 @@ import { formatDateBR } from "@/lib/utils-date";
 import { buildOssPdf } from "@/lib/oss-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { OssRowActions } from "@/components/oss/oss-row-actions";
+import { EmployeeQuickView } from "@/components/employees/employee-quick-view";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/oss/")({
@@ -162,6 +163,8 @@ function OssIndexPage() {
     window.open(data.signedUrl, "_blank");
   };
 
+  const [quickViewEmpId, setQuickViewEmpId] = useState<string | null>(null);
+
   return (
     <div className="h-full flex flex-col bg-slate-50">
       <div className="px-6 pt-5 pb-3 border-b border-rose-100 bg-gradient-to-r from-rose-50 via-white to-amber-50 shadow-sm">
@@ -242,8 +245,17 @@ function OssIndexPage() {
                   return (
                     <TableRow key={em.id}>
                       <TableCell>
-                        <div className="font-medium text-sm">{em.employees?.nome ?? "—"}</div>
-                        <div className="text-[10px] text-slate-500">{em.employees?.cpf ?? ""}</div>
+                        <button
+                          type="button"
+                          onClick={() => setQuickViewEmpId(em.employee_id)}
+                          className="text-left group"
+                          title="Ver resumo do funcionário"
+                        >
+                          <div className="font-medium text-sm text-slate-900 group-hover:text-rose-600 group-hover:underline underline-offset-2 transition-colors">
+                            {em.employees?.nome ?? "—"}
+                          </div>
+                          <div className="text-[10px] text-slate-500">{em.employees?.cpf ?? ""}</div>
+                        </button>
                       </TableCell>
                       <TableCell className="text-sm">{em.cargo_snapshot} <span className="text-[10px] text-slate-400">Rev.{em.template_revisao}</span></TableCell>
                       <TableCell>
@@ -292,6 +304,11 @@ function OssIndexPage() {
         doc={previewDoc?.doc ?? null}
         fileName={previewDoc?.name ?? "OSS.pdf"}
         title="Ordem de Serviço de Segurança"
+      />
+      <EmployeeQuickView
+        employeeId={quickViewEmpId}
+        open={!!quickViewEmpId}
+        onClose={() => setQuickViewEmpId(null)}
       />
     </div>
   );
