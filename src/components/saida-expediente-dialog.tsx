@@ -245,17 +245,17 @@ export function SaidaExpedienteDialog({
               <Input type="time" className="rounded-xl" value={form.horario_saida} onChange={(e) => setForm({ ...form, horario_saida: e.target.value })} />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Tipo *</Label>
-            <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
-              <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PESSOAL">Assuntos pessoais</SelectItem>
-                <SelectItem value="SERVICO">A serviço da empresa</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-3 items-end">
+          <div className={`grid gap-3 items-end ${form.com_retorno ? "grid-cols-3" : "grid-cols-2"}`}>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Tipo *</Label>
+              <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
+                <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PESSOAL">Assuntos pessoais</SelectItem>
+                  <SelectItem value="SERVICO">A serviço da empresa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-1.5">
               <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Retorno</Label>
               <Select value={form.com_retorno ? "SIM" : "NAO"} onValueChange={(v) => setForm({ ...form, com_retorno: v === "SIM" })}>
