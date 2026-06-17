@@ -67,38 +67,38 @@
 
 :root {
   --radius: 0.625rem;
-  /* DMN: fundo cinza-neutro, primário vermelho do logo */
-  --background: oklch(0.97 0.003 25);
-  --foreground: oklch(0.20 0.02 25);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.20 0.02 25);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.20 0.02 25);
+  /* DMN Aero-Glass: superfícies escuras translúcidas (vinho/preto) */
+  --background: oklch(0.12 0.04 18 / 0.0);
+  --foreground: oklch(0.97 0.01 20);
+  --card: oklch(0.18 0.06 20 / 0.45);
+  --card-foreground: oklch(0.97 0.01 20);
+  --popover: oklch(0.16 0.06 20 / 0.72);
+  --popover-foreground: oklch(0.97 0.01 20);
   --primary: oklch(0.55 0.21 25);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.95 0.005 25);
-  --secondary-foreground: oklch(0.30 0.02 25);
-  --muted: oklch(0.95 0.005 25);
-  --muted-foreground: oklch(0.50 0.02 25);
-  --accent: oklch(0.96 0.03 25);
-  --accent-foreground: oklch(0.46 0.20 25);
+  --secondary: oklch(0.22 0.05 18 / 0.55);
+  --secondary-foreground: oklch(0.95 0.01 20);
+  --muted: oklch(0.22 0.04 18 / 0.45);
+  --muted-foreground: oklch(0.80 0.02 20 / 0.78);
+  --accent: oklch(0.30 0.10 22 / 0.55);
+  --accent-foreground: oklch(0.97 0.01 20);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.92 0.005 25);
-  --input: oklch(0.92 0.005 25);
+  --border: oklch(1 0 0 / 0.14);
+  --input: oklch(1 0 0 / 0.12);
   --ring: oklch(0.55 0.21 25);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.99 0 0);
-  --sidebar-foreground: oklch(0.20 0.02 25);
+  --sidebar: oklch(0.16 0.06 20 / 0.65);
+  --sidebar-foreground: oklch(0.97 0.01 20);
   --sidebar-primary: oklch(0.55 0.21 25);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.96 0.03 25);
-  --sidebar-accent-foreground: oklch(0.46 0.20 25);
-  --sidebar-border: oklch(0.92 0.005 25);
+  --sidebar-accent: oklch(0.30 0.10 22 / 0.45);
+  --sidebar-accent-foreground: oklch(0.97 0.01 20);
+  --sidebar-border: oklch(1 0 0 / 0.12);
   --sidebar-ring: oklch(0.55 0.21 25);
   /* DMN brand — vermelho #C8102E inspirado no logotipo */
   --brand: oklch(0.55 0.21 25);
@@ -535,4 +535,61 @@
 /* Cards do dashboard recebem leve elevação 3D */
 .dashboard-3d [class*="rounded"][class*="border"]:not(.recharts-wrapper *) {
   transition: transform 300ms ease, box-shadow 300ms ease;
+}
+
+/* ============================================================
+   Aero Glass global — aplica blur em qualquer superfície que
+   use os tokens semânticos. Assim dropdowns, selects, dialogs,
+   tooltips, command, calendars etc. ficam todos de vidro escuro
+   sem precisar editar cada componente shadcn.
+   ============================================================ */
+@layer base {
+  .bg-popover,
+  .bg-card,
+  .bg-background,
+  .bg-muted,
+  .bg-secondary,
+  .bg-accent,
+  [data-radix-popper-content-wrapper] > * {
+    backdrop-filter: blur(22px) saturate(170%);
+  }
+
+  /* Inputs/selects/textareas: vidro escuro com borda branca translúcida */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  textarea,
+  select {
+    background-color: rgba(20, 6, 10, 0.45) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #fff5f6 !important;
+    backdrop-filter: blur(10px) saturate(150%);
+  }
+  input::placeholder,
+  textarea::placeholder { color: rgba(245, 230, 234, 0.50) !important; }
+
+  /* Linhas de tabela mais legíveis sobre vidro escuro */
+  table { color: #f5e6ea; }
+  table thead { color: rgba(245, 230, 234, 0.78); }
+  table tbody tr { border-color: rgba(255, 255, 255, 0.08); }
+  table tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
+
+  /* Mata superfícies brancas hardcoded em telas legadas */
+  .bg-white { background-color: rgba(30, 8, 14, 0.42) !important; backdrop-filter: blur(20px) saturate(160%); color: #f5e6ea; }
+  .bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-gray-100, .bg-zinc-50, .bg-zinc-100, .bg-neutral-50, .bg-neutral-100 {
+    background-color: rgba(40, 12, 20, 0.35) !important;
+    backdrop-filter: blur(16px) saturate(150%);
+    color: #f5e6ea;
+  }
+
+  /* Texto escuro hardcoded vira claro pra continuar legível no vidro */
+  .text-slate-900, .text-slate-800, .text-zinc-900, .text-zinc-800,
+  .text-gray-900, .text-gray-800, .text-neutral-900, .text-neutral-800,
+  .text-black { color: #fff5f6 !important; }
+  .text-slate-700, .text-slate-600, .text-zinc-700, .text-zinc-600,
+  .text-gray-700, .text-gray-600, .text-neutral-700, .text-neutral-600 {
+    color: rgba(245, 230, 234, 0.82) !important;
+  }
+  .text-slate-500, .text-slate-400, .text-zinc-500, .text-zinc-400,
+  .text-gray-500, .text-gray-400, .text-neutral-500, .text-neutral-400 {
+    color: rgba(245, 230, 234, 0.62) !important;
+  }
 }
