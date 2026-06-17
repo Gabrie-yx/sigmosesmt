@@ -3005,6 +3005,7 @@ function OssTab({ empId, empNome }: { empId: string; empNome: string }) {
     ASSINADO: { label: "Assinado", cls: "bg-emerald-100 text-emerald-800 border-emerald-300" },
     VENCIDO: { label: "Vencido", cls: "bg-red-100 text-red-800 border-red-300" },
     SUBSTITUIDO: { label: "Substituído", cls: "bg-slate-100 text-slate-600 border-slate-300" },
+    CANCELADO: { label: "Cancelado", cls: "bg-red-50 text-red-700 border-red-200 line-through" },
   };
 
   function abrirPdf(em: any) {
