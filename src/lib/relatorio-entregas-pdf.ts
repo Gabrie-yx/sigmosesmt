@@ -81,7 +81,11 @@ export function buildRelatorioEntregasPdf(opts: RelatorioEntregasOpts): jsPDF {
     subtitulo: "Movimentações de saída — SESMT",
     responsavel: opts.responsavel ?? null,
     filtros,
-    destaque: `Total no período: ${opts.rows.length} registro(s)   ·   ${totalGeral} unidade(s)`,
+    kpis: [
+      { label: "Registros", value: opts.rows.length, tone: "neutral" },
+      { label: "Unidades entregues", value: totalGeral, tone: "success" },
+      { label: sortedKeys.length === 1 ? "Período" : "Grupos", value: sortedKeys.length, tone: "warning" },
+    ],
   });
 
   // Tabela resumo por grupo
