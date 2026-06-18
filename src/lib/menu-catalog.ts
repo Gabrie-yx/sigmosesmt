@@ -10,7 +10,7 @@ export type MenuEntry = {
 // Chave = rota base. Tem que bater com o que aparece na sidebar e no guard.
 export const MENU_CATALOG: MenuEntry[] = [
   // ----- SESMT -----
-  { key: "/app/painel", label: "Painel de Indicadores", module: "sesmt" },
+  { key: "/app/painel", label: "Dashboard SESMT", module: "sesmt" },
   { key: "/app/sesmt/procedimentos", label: "Procedimentos / POPs", module: "sesmt" },
   { key: "/app/matriz-treinamento", label: "Matriz de Treinamento", module: "sesmt" },
   { key: "/app/sesmt/docs", label: "Documentos SESMT", module: "sesmt" },
