@@ -314,25 +314,25 @@ function PtesPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 animate-fadeIn h-full overflow-y-auto custom-scrollbar bg-[#f1f5f9]">
+    <div className="p-6 md:p-8 animate-fadeIn h-full overflow-y-auto custom-scrollbar">
       <div className="mb-8">
-        <h2 className="heading-display text-3xl md:text-4xl text-[#991b1b]">
+        <h2 className="heading-display text-3xl md:text-4xl text-rose-100 drop-shadow-[0_2px_12px_rgba(220,38,70,0.45)]">
           Permissões de Trabalho
         </h2>
-        <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mt-1">
+        <p className="text-xs font-bold uppercase tracking-widest text-rose-200/60 mt-1">
           PT • PTE • PET • emissão, validade e impressão
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* FORM */}
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
-          <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-100 pb-4 flex items-center justify-between">
+        <div className="glass-card glass-shine rounded-2xl p-8">
+          <h3 className="text-sm font-black text-rose-100 uppercase tracking-widest mb-6 border-b border-white/10 pb-4 flex items-center justify-between">
             <span className="flex items-center gap-2"><FileText className="h-5 w-5" />
               {editingId ? "Editar Permissão" : "Nova Permissão de Trabalho"}
             </span>
             {editingId && (
-              <button type="button" onClick={cancelEdit} className="text-[10px] bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg hover:bg-slate-200 uppercase font-black">
+              <button type="button" onClick={cancelEdit} className="text-[10px] bg-black/40 text-rose-200 border border-white/10 px-3 py-1.5 rounded-lg hover:bg-black/60 uppercase font-black">
                 Cancelar Edição
               </button>
             )}
@@ -341,9 +341,9 @@ function PtesPage() {
 
             {/* TIPO DA PT */}
             <div>
-              <Label className="text-[10px] font-black text-slate-500 uppercase">Tipo de Permissão</Label>
+              <Label className="text-[10px] font-black text-rose-200/70 uppercase">Tipo de Permissão</Label>
               <Select value={f.tipo_pt} onValueChange={(v) => setF({ ...f, tipo_pt: v })}>
-                <SelectTrigger className="bg-slate-50 mt-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {PT_TIPOS.map((t) => (
                     <SelectItem key={t.value} value={t.value}>{t.label} <span className="text-[9px] text-slate-400 ml-1">({t.nr})</span></SelectItem>
@@ -353,8 +353,8 @@ function PtesPage() {
             </div>
 
             {/* APR VINCULADA — OBRIGATÓRIA */}
-            <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4">
-              <Label className="text-[10px] font-black text-emerald-800 uppercase flex items-center gap-2 mb-2">
+            <div className="rounded-xl p-4 bg-gradient-to-br from-rose-950/60 to-black/40 border border-rose-500/20 shadow-[inset_0_1px_0_rgba(255,230,235,0.05)]">
+              <Label className="text-[10px] font-black text-rose-200 uppercase flex items-center gap-2 mb-2">
                 <Link2 className="h-4 w-4" /> APR Vinculada {!f.emergencia_sem_apr && <span className="text-red-600">*</span>}
               </Label>
               <Select
@@ -367,7 +367,7 @@ function PtesPage() {
                   if (apr) setF((cur: any) => ({ ...cur, local: apr.local ?? cur.local, casco_id: apr.casco_id ?? cur.casco_id }));
                 }}
               >
-                <SelectTrigger className="bg-white text-xs font-bold uppercase">
+                <SelectTrigger className="bg-black/40 border-white/10 text-rose-50 text-xs font-bold uppercase">
                   <SelectValue placeholder="-- SELECIONE A APR --" />
                 </SelectTrigger>
                 <SelectContent>
@@ -385,7 +385,7 @@ function PtesPage() {
                     onCheckedChange={(v) => setF({ ...f, emergencia_sem_apr: !!v })}
                   />
                   <div className="flex-1">
-                    <label htmlFor="emerg" className="text-[10px] font-black text-amber-800 uppercase cursor-pointer flex items-center gap-1">
+                    <label htmlFor="emerg" className="text-[10px] font-black text-amber-300 uppercase cursor-pointer flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" /> Emergência — emitir sem APR (apenas Admin)
                     </label>
                     {f.emergencia_sem_apr && (
@@ -394,7 +394,7 @@ function PtesPage() {
                         value={f.emergencia_justificativa}
                         onChange={(e) => setF({ ...f, emergencia_justificativa: e.target.value })}
                         placeholder="Justificativa obrigatória (mínimo 10 caracteres) — será registrada em auditoria"
-                        className="mt-2 bg-white text-xs"
+                        className="mt-2 bg-black/40 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs"
                         rows={2}
                       />
                     )}
@@ -404,23 +404,23 @@ function PtesPage() {
             </div>
 
             {linkedAprId && !f.emergencia_sem_apr && (
-              <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 flex items-start gap-2">
-                <Link2 className="h-4 w-4 text-amber-700 mt-0.5 shrink-0" />
-                <div className="flex-1 text-[10px] font-bold uppercase text-amber-900">
+              <div className="bg-amber-950/40 border border-amber-500/30 rounded-xl p-3 flex items-start gap-2">
+                <Link2 className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
+                <div className="flex-1 text-[10px] font-bold uppercase text-amber-100">
                   Vinculando à APR {(aprsMap.get(linkedAprId) as any)?.numero ?? linkedAprId.slice(0, 8)}
-                  <button type="button" onClick={() => setLinkedAprId(null)} className="ml-2 text-amber-700 underline">remover vínculo</button>
+                  <button type="button" onClick={() => setLinkedAprId(null)} className="ml-2 text-amber-300 underline">remover vínculo</button>
                 </div>
               </div>
             )}
 
             <div>
-              <Label className="text-[10px] font-black text-slate-500 uppercase">Local do Trabalho / Instalação</Label>
-              <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-slate-50 mt-2 text-xs font-bold uppercase" />
+              <Label className="text-[10px] font-black text-rose-200/70 uppercase">Local do Trabalho / Instalação</Label>
+              <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 mt-2 text-xs font-bold uppercase" />
             </div>
             <div>
-              <Label className="text-[10px] font-black text-slate-500 uppercase">Frente de Trabalho (Casco)</Label>
+              <Label className="text-[10px] font-black text-rose-200/70 uppercase">Frente de Trabalho (Casco)</Label>
               <Select value={f.casco_id || "none"} onValueChange={(v) => setF({ ...f, casco_id: v === "none" ? "" : v })}>
-                <SelectTrigger className="bg-slate-50 mt-2 text-xs font-bold uppercase">
+                <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase">
                   <SelectValue placeholder="-- SELECIONE O CASCO --" />
                 </SelectTrigger>
                 <SelectContent>
@@ -434,9 +434,9 @@ function PtesPage() {
               </Select>
             </div>
             <div>
-              <Label className="text-[10px] font-black text-slate-500 uppercase">Classificação de Risco (GSI)</Label>
+              <Label className="text-[10px] font-black text-rose-200/70 uppercase">Classificação de Risco (GSI)</Label>
               <Select value={f.risco} onValueChange={(v) => setF({ ...f, risco: v })}>
-                <SelectTrigger className="bg-slate-50 mt-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
                 <SelectContent>{PTE_RISCOS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -444,22 +444,22 @@ function PtesPage() {
             {/* DATA + HORÁRIOS */}
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <Label className="text-[10px] font-black text-slate-500 uppercase">Data</Label>
-                <Input type="date" required value={f.data} onChange={(e) => setF({ ...f, data: e.target.value })} className="bg-slate-50 mt-2" />
+                <Label className="text-[10px] font-black text-rose-200/70 uppercase">Data</Label>
+                <Input type="date" required value={f.data} onChange={(e) => setF({ ...f, data: e.target.value })} className="bg-black/30 border-white/10 text-rose-50 mt-2" />
               </div>
               <div>
-                <Label className="text-[10px] font-black text-slate-500 uppercase">Início</Label>
-                <Input type="time" value={f.hora_inicio} onChange={(e) => setF({ ...f, hora_inicio: e.target.value })} className="bg-slate-50 mt-2" />
+                <Label className="text-[10px] font-black text-rose-200/70 uppercase">Início</Label>
+                <Input type="time" value={f.hora_inicio} onChange={(e) => setF({ ...f, hora_inicio: e.target.value })} className="bg-black/30 border-white/10 text-rose-50 mt-2" />
               </div>
               <div>
-                <Label className="text-[10px] font-black text-slate-500 uppercase">Fim</Label>
-                <Input type="time" value={f.hora_fim} onChange={(e) => setF({ ...f, hora_fim: e.target.value })} className="bg-slate-50 mt-2" />
+                <Label className="text-[10px] font-black text-rose-200/70 uppercase">Fim</Label>
+                <Input type="time" value={f.hora_fim} onChange={(e) => setF({ ...f, hora_fim: e.target.value })} className="bg-black/30 border-white/10 text-rose-50 mt-2" />
               </div>
             </div>
 
             {/* VALIDADE */}
             <div>
-              <Label className="text-[10px] font-black text-slate-500 uppercase mb-2 block">Validade</Label>
+              <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">Validade</Label>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { v: "TURNO", l: "Turno" },
@@ -470,10 +470,10 @@ function PtesPage() {
                     key={opt.v}
                     type="button"
                     onClick={() => setF({ ...f, validade_tipo: opt.v })}
-                    className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-colors ${
+                    className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
                       f.validade_tipo === opt.v
-                        ? "bg-[#991b1b] text-white border-[#991b1b]"
-                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                        ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40 shadow-[0_0_20px_-4px_rgba(220,38,70,0.7)]"
+                        : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50 hover:text-rose-100"
                     }`}
                   >
                     {opt.l}
@@ -485,21 +485,21 @@ function PtesPage() {
                   type="datetime-local"
                   value={f.validade_ate}
                   onChange={(e) => setF({ ...f, validade_ate: e.target.value })}
-                  className="bg-slate-50 mt-2"
+                  className="bg-black/30 border-white/10 text-rose-50 mt-2"
                 />
               )}
             </div>
 
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-5">
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-black/40 to-rose-950/30 border border-white/10 shadow-[inset_0_1px_0_rgba(255,230,235,0.05)] space-y-5">
               <div>
-                <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-3">
+                <Label className="text-[10px] font-black text-rose-100 uppercase flex items-center gap-2 mb-3">
                   <HardHat className="h-4 w-4" /> Empresa (filtro)
                 </Label>
                 <Select
                   value={f.company_id || "none"}
                   onValueChange={(v) => setF({ ...f, company_id: v === "none" ? "" : v })}
                 >
-                  <SelectTrigger className="bg-white text-xs font-bold uppercase">
+                  <SelectTrigger className="bg-black/40 border-white/10 text-rose-50 text-xs font-bold uppercase">
                     <SelectValue placeholder="-- TODAS AS EMPRESAS --" />
                   </SelectTrigger>
                   <SelectContent>
@@ -513,15 +513,15 @@ function PtesPage() {
 
               {/* REQUISITANTE */}
               <div>
-                <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-2">
+                <Label className="text-[10px] font-black text-rose-100 uppercase flex items-center gap-2 mb-2">
                   <UserCheck className="h-4 w-4" /> Requisitante <span className="text-red-600">*</span>
-                  <span className="text-[9px] font-bold text-slate-500 normal-case">(líder/encarregado do serviço)</span>
+                  <span className="text-[9px] font-bold text-rose-200/50 normal-case">(líder/encarregado do serviço)</span>
                 </Label>
                 <select
                   required
                   value={f.requisitante_id}
                   onChange={(e) => setF({ ...f, requisitante_id: e.target.value })}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b]"
+                  className="w-full bg-black/40 border border-white/10 text-rose-50 rounded-xl px-4 py-3 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-400/40"
                 >
                   <option value="">-- SELECIONE O REQUISITANTE --</option>
                   {empOptions.map(({ e, st, compName }) => {
@@ -537,18 +537,18 @@ function PtesPage() {
 
               {/* EXECUTANTES (multi) */}
               <div>
-                <Label className="text-[10px] font-black text-slate-800 uppercase flex items-center gap-2 mb-2">
+                <Label className="text-[10px] font-black text-rose-100 uppercase flex items-center gap-2 mb-2">
                   <Users className="h-4 w-4" /> Executantes <span className="text-red-600">*</span>
-                  <span className="text-[9px] font-bold text-slate-500 normal-case">(equipe que executa)</span>
+                  <span className="text-[9px] font-bold text-rose-200/50 normal-case">(equipe que executa)</span>
                 </Label>
                 {f.executantes_ids.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
                     {(f.executantes_ids as string[]).map((eid) => {
                       const emp = emps.find((e: any) => e.id === eid);
                       return (
-                        <span key={eid} className="inline-flex items-center gap-1 bg-orange-100 text-orange-800 text-[10px] font-black uppercase px-2 py-1 rounded">
+                        <span key={eid} className="inline-flex items-center gap-1 bg-rose-950/70 text-rose-100 border border-rose-500/30 text-[10px] font-black uppercase px-2 py-1 rounded">
                           {emp?.nome ?? "?"}
-                          <button type="button" onClick={() => setF({ ...f, executantes_ids: f.executantes_ids.filter((x: string) => x !== eid) })} className="hover:text-red-600">
+                          <button type="button" onClick={() => setF({ ...f, executantes_ids: f.executantes_ids.filter((x: string) => x !== eid) })} className="hover:text-red-400">
                             <X className="h-3 w-3" />
                           </button>
                         </span>
@@ -563,7 +563,7 @@ function PtesPage() {
                     if (f.executantes_ids.includes(e.target.value)) return;
                     setF({ ...f, executantes_ids: [...f.executantes_ids, e.target.value] });
                   }}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-[#991b1b]"
+                  className="w-full bg-black/40 border border-white/10 text-rose-50 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-400/40"
                 >
                   <option value="">+ ADICIONAR EXECUTANTE</option>
                   {empOptions
@@ -580,14 +580,14 @@ function PtesPage() {
               {f.tipo_pt === "PET" && (
                 <>
                   <div>
-                    <Label className="text-[10px] font-black text-amber-800 uppercase flex items-center gap-2 mb-2">
+                    <Label className="text-[10px] font-black text-amber-300 uppercase flex items-center gap-2 mb-2">
                       <Eye className="h-4 w-4" /> Vigia (NR-33) <span className="text-red-600">*</span>
                     </Label>
                     <select
                       required
                       value={f.vigia_id}
                       onChange={(e) => setF({ ...f, vigia_id: e.target.value })}
-                      className="w-full bg-white border border-amber-300 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-amber-600"
+                      className="w-full bg-black/40 border border-amber-500/30 text-rose-50 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400/50"
                     >
                       <option value="">-- SELECIONE O VIGIA --</option>
                       {empOptions.map(({ e, compName }) => (
@@ -596,14 +596,14 @@ function PtesPage() {
                     </select>
                   </div>
                   <div>
-                    <Label className="text-[10px] font-black text-amber-800 uppercase flex items-center gap-2 mb-2">
+                    <Label className="text-[10px] font-black text-amber-300 uppercase flex items-center gap-2 mb-2">
                       <ShieldCheck className="h-4 w-4" /> Supervisor de Entrada (NR-33) <span className="text-red-600">*</span>
                     </Label>
                     <select
                       required
                       value={f.supervisor_entrada_id}
                       onChange={(e) => setF({ ...f, supervisor_entrada_id: e.target.value })}
-                      className="w-full bg-white border border-amber-300 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:border-amber-600"
+                      className="w-full bg-black/40 border border-amber-500/30 text-rose-50 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400/50"
                     >
                       <option value="">-- SELECIONE O SUPERVISOR --</option>
                       {empOptions.map(({ e, compName }) => (
@@ -614,8 +614,8 @@ function PtesPage() {
                 </>
               )}
 
-              <div className="text-[9px] font-bold uppercase text-slate-500 bg-white border border-dashed border-slate-200 rounded-lg px-3 py-2">
-                Emitente: <span className="text-slate-800 font-black">{user?.email ?? "—"}</span> (usuário logado)
+              <div className="text-[9px] font-bold uppercase text-rose-200/60 bg-black/30 border border-dashed border-white/10 rounded-lg px-3 py-2">
+                Emitente: <span className="text-rose-100 font-black">{user?.email ?? "—"}</span> (usuário logado)
               </div>
             </div>
 
@@ -627,9 +627,11 @@ function PtesPage() {
             <Button
               type="submit"
               disabled={save.isPending}
-              className={`w-full text-xs font-black uppercase tracking-widest h-auto px-8 py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 ${
-                editingId ? "bg-blue-600 hover:bg-blue-700" : "bg-orange-600 hover:bg-orange-700"
-              } text-white`}
+              className={`w-full text-xs font-black uppercase tracking-widest h-auto px-8 py-4 rounded-xl flex items-center justify-center gap-2 text-rose-50 border transition-all ${
+                editingId
+                  ? "bg-gradient-to-br from-blue-600/80 to-blue-900/80 border-blue-400/30 shadow-[0_0_24px_-4px_rgba(59,130,246,0.6)] hover:shadow-[0_0_32px_-2px_rgba(59,130,246,0.8)]"
+                  : "bg-gradient-to-br from-rose-600/90 to-rose-900/90 border-rose-400/40 shadow-[0_0_24px_-4px_rgba(220,38,70,0.7)] hover:shadow-[0_0_36px_-2px_rgba(220,38,70,0.9)]"
+              }`}
             >
               <Printer className="h-4 w-4" /> {editingId ? "Salvar Alterações" : "Emitir Permissão"}
             </Button>
@@ -637,37 +639,37 @@ function PtesPage() {
         </div>
 
         {/* HISTORY */}
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
-          <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-100 pb-4 flex items-center gap-2">
+        <div className="glass-card glass-shine rounded-2xl p-8">
+          <h3 className="text-sm font-black text-rose-100 uppercase tracking-widest mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
             <Files className="h-5 w-5" /> Histórico de Permissões
           </h3>
           <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
             {ptes.length === 0 && (
-              <div className="text-center text-slate-400 py-10 font-bold uppercase text-xs border border-dashed border-slate-200 rounded-2xl">
+              <div className="text-center text-rose-200/40 py-10 font-bold uppercase text-xs border border-dashed border-white/10 rounded-2xl bg-black/20">
                 Nenhuma permissão foi emitida até o momento.
               </div>
             )}
             {ptes.map((p: any) => (
-              <div key={p.id} className={`p-5 border rounded-2xl ${p.status === "ATIVA" ? "bg-orange-50 border-orange-200 shadow-sm" : "bg-slate-50 border-slate-200 opacity-70"}`}>
+              <div key={p.id} className={`glass-card p-5 rounded-2xl transition-all hover:-translate-y-0.5 ${p.status !== "ATIVA" ? "opacity-60" : ""}`}>
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Nº {p.numero}</div>
+                    <div className="text-[10px] font-black uppercase text-rose-200/70 tracking-widest">Nº <span className="text-rose-100">{p.numero}</span></div>
                     {p.tipo_pt && p.tipo_pt !== "PTE" && (
-                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">{p.tipo_pt}</span>
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-indigo-950/70 text-indigo-200 border border-indigo-500/30">{p.tipo_pt}</span>
                     )}
                   </div>
                   <div className="flex gap-2 items-center">
-                    <div className={`text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-widest ${p.status === "ATIVA" ? "bg-orange-500 text-white" : "bg-slate-300 text-slate-600"}`}>{p.status}</div>
-                    <button onClick={() => setPreviewPt(p)} className="w-6 h-6 rounded bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-colors" title="Visualizar / Imprimir PDF">
+                    <div className={`text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-widest border ${p.status === "ATIVA" ? "bg-gradient-to-br from-amber-600/80 to-amber-900/80 text-amber-50 border-amber-400/40 shadow-[0_0_12px_-2px_rgba(245,158,11,0.5)]" : "bg-black/40 text-rose-200/50 border-white/10"}`}>{p.status}</div>
+                    <button onClick={() => setPreviewPt(p)} className="w-6 h-6 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-colors" title="Visualizar / Imprimir PDF">
                       <FileSearch className="h-3 w-3" />
                     </button>
                     {isEditor && (
-                      <button onClick={() => startEdit(p)} className="w-6 h-6 rounded bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors" title="Editar">
+                      <button onClick={() => startEdit(p)} className="w-6 h-6 rounded bg-blue-950/60 text-blue-300 border border-blue-500/30 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors" title="Editar">
                         <Pencil className="h-3 w-3" />
                       </button>
                     )}
                     {isAdmin && (
-                      <button onClick={() => { if (confirm("Excluir PTE?")) del.mutate(p.id); }} className="w-6 h-6 rounded bg-red-100 text-red-600 hover:bg-red-600 hover:text-white flex items-center justify-center transition-colors" title="Excluir">
+                      <button onClick={() => { if (confirm("Excluir PTE?")) del.mutate(p.id); }} className="w-6 h-6 rounded bg-rose-950/60 text-rose-300 border border-rose-500/30 hover:bg-rose-600 hover:text-white flex items-center justify-center transition-colors" title="Excluir">
                         <Trash2 className="h-3 w-3" />
                       </button>
                     )}
@@ -682,56 +684,56 @@ function PtesPage() {
                   return (
                     <>
                       {reqName && (
-                        <div className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
-                          <UserCheck className="h-3 w-3" /> Requisitante: <span className="font-black text-[#991b1b]">{reqName}</span>
+                        <div className="text-[10px] font-bold text-rose-200/60 uppercase flex items-center gap-1">
+                          <UserCheck className="h-3 w-3" /> Requisitante: <span className="font-black text-rose-100">{reqName}</span>
                         </div>
                       )}
                       {execNames.length > 0 && (
-                        <div className="text-[10px] font-bold text-slate-500 uppercase flex items-start gap-1 mt-0.5">
-                          <Users className="h-3 w-3 mt-0.5 shrink-0" /> Executantes: <span className="font-black text-slate-700">{execNames.join(", ")}</span>
+                        <div className="text-[10px] font-bold text-rose-200/60 uppercase flex items-start gap-1 mt-0.5">
+                          <Users className="h-3 w-3 mt-0.5 shrink-0" /> Executantes: <span className="font-black text-rose-50">{execNames.join(", ")}</span>
                         </div>
                       )}
                       {vigiaName && (
-                        <div className="text-[10px] font-bold text-amber-700 uppercase flex items-center gap-1 mt-0.5">
+                        <div className="text-[10px] font-bold text-amber-300 uppercase flex items-center gap-1 mt-0.5">
                           <Eye className="h-3 w-3" /> Vigia: <span className="font-black">{vigiaName}</span>
                         </div>
                       )}
                       {supName && (
-                        <div className="text-[10px] font-bold text-amber-700 uppercase flex items-center gap-1 mt-0.5">
+                        <div className="text-[10px] font-bold text-amber-300 uppercase flex items-center gap-1 mt-0.5">
                           <ShieldCheck className="h-3 w-3" /> Supervisor: <span className="font-black">{supName}</span>
                         </div>
                       )}
                     </>
                   );
                 })()}
-                <div className="text-[10px] font-bold text-slate-500 uppercase mt-2">Risco: <span className="font-black text-slate-700">{p.risco}</span></div>
-                <div className="text-[10px] font-bold text-slate-500 uppercase">Local: {p.local ?? "—"}</div>
+                <div className="text-[10px] font-bold text-rose-200/60 uppercase mt-2">Risco: <span className="font-black text-rose-50">{p.risco}</span></div>
+                <div className="text-[10px] font-bold text-rose-200/60 uppercase">Local: <span className="text-rose-100">{p.local ?? "—"}</span></div>
                 {(p.hora_inicio || p.hora_fim) && (
-                  <div className="text-[10px] font-bold text-slate-500 uppercase">
-                    Horário: <span className="font-black text-slate-700">{p.hora_inicio ?? "—"} → {p.hora_fim ?? "—"}</span>
+                  <div className="text-[10px] font-bold text-rose-200/60 uppercase">
+                    Horário: <span className="font-black text-rose-50">{p.hora_inicio ?? "—"} → {p.hora_fim ?? "—"}</span>
                   </div>
                 )}
                 {p.casco_id && (
-                  <div className="text-[10px] font-bold text-indigo-700 uppercase">
+                  <div className="text-[10px] font-bold text-indigo-300 uppercase">
                     Casco: <span className="font-black">{(cascosMap.get(p.casco_id) as any)?.numero ?? "—"}</span>
                     {(cascosMap.get(p.casco_id) as any)?.nome ? ` — ${(cascosMap.get(p.casco_id) as any).nome}` : ""}
                   </div>
                 )}
                 {p.apr_id && (
-                  <div className="text-[10px] font-bold text-emerald-700 uppercase mt-1 flex items-center gap-1">
+                  <div className="text-[10px] font-bold text-emerald-300 uppercase mt-1 flex items-center gap-1">
                     <Link2 className="h-3 w-3" /> APR {(aprsMap.get(p.apr_id) as any)?.numero ?? p.apr_id.slice(0, 8)}
                   </div>
                 )}
                 {p.emergencia_sem_apr && (
-                  <div className="text-[10px] font-black text-amber-700 uppercase mt-1 flex items-center gap-1 bg-amber-50 px-2 py-1 rounded">
+                  <div className="text-[10px] font-black text-amber-200 uppercase mt-1 flex items-center gap-1 bg-amber-950/40 border border-amber-500/30 px-2 py-1 rounded">
                     <AlertTriangle className="h-3 w-3" /> Emergência — sem APR
                   </div>
                 )}
-                <div className="text-[9px] font-black text-slate-400 uppercase mt-3 tracking-widest flex items-center gap-1">
+                <div className="text-[9px] font-black text-rose-200/40 uppercase mt-3 tracking-widest flex items-center gap-1">
                   <Clock className="h-3 w-3" /> Emitida em: {formatDateBR(p.data_emissao || p.data)}
                 </div>
                 {p.status === "ATIVA" && isEditor && (
-                  <button onClick={() => revoke.mutate(p.id)} className="mt-4 w-full py-2 bg-white border border-red-200 text-red-500 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center gap-1">
+                  <button onClick={() => revoke.mutate(p.id)} className="mt-4 w-full py-2 bg-black/40 border border-rose-500/30 text-rose-300 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-600 hover:text-white hover:border-rose-400 transition-colors flex items-center justify-center gap-1">
                     <X className="h-3 w-3" /> Encerrar / Revogar
                   </button>
                 )}
