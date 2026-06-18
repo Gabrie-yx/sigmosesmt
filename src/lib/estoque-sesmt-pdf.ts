@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { drawPdfHeader } from "./pdf-header";
 
 export type EstoqueItemPdf = {
   codigo_material: string;
@@ -37,49 +38,24 @@ export function buildEstoqueSesmtPdf(opts: EstoqueSesmtPdfOpts): jsPDF {
   const H = doc.internal.pageSize.getHeight();
   const M = 12;
 
-  // Header
-  doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, W, 18, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text("INVENTÁRIO DE ESTOQUE — SESMT", M, 11);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.text(
-    `Emitido em ${new Date().toLocaleString("pt-BR")}`,
-    W - M,
-    11,
-    { align: "right" },
-  );
-
-  doc.setTextColor(0, 0, 0);
-  let y = 23;
-
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  const meta: string[] = [];
-  if (opts.empresa) meta.push(`Empresa: ${opts.empresa}`);
-  if (opts.responsavel) meta.push(`Responsável: ${opts.responsavel}`);
-  if (opts.filtroAtivo) meta.push(`Filtro: "${opts.filtroAtivo}"`);
-  meta.push(`Total de itens listados: ${opts.items.length}`);
-  doc.text(meta.join("   ·   "), M, y);
-  y += 5;
-
-  // Totais
+  // Totais (calculados antes para entrar no cabeçalho)
   const totalUnid = opts.items.reduce((a, i) => a + (i.quantidade_atual ?? 0), 0);
   const zerados = opts.items.filter((i) => (i.quantidade_atual ?? 0) === 0).length;
   const baixos = opts.items.filter(
     (i) => (i.quantidade_atual ?? 0) > 0 && (i.estoque_minimo ?? 0) > 0 && (i.quantidade_atual ?? 0) <= (i.estoque_minimo ?? 0),
   ).length;
 
-  doc.setFont("helvetica", "bold");
-  doc.text(
-    `Total em mãos: ${totalUnid} un.   ·   Zerados: ${zerados}   ·   Abaixo do mínimo: ${baixos}`,
-    M,
-    y,
-  );
-  y += 3;
+  const filtros: string[] = [];
+  if (opts.filtroAtivo) filtros.push(`Filtro: "${opts.filtroAtivo}"`);
+  filtros.push(`Itens listados: ${opts.items.length}`);
+
+  const y = drawPdfHeader(doc, {
+    titulo: "Inventário de Estoque — SESMT",
+    subtitulo: "Levantamento de EPIs e materiais de segurança",
+    responsavel: opts.responsavel ?? null,
+    filtros,
+    destaque: `Total em mãos: ${totalUnid} un.   ·   Zerados: ${zerados}   ·   Abaixo do mínimo: ${baixos}`,
+  });
 
   const rows = opts.items.map((i, idx) => {
     const s = statusOf(i.quantidade_atual ?? 0, i.estoque_minimo ?? 0);
@@ -98,7 +74,7 @@ export function buildEstoqueSesmtPdf(opts: EstoqueSesmtPdfOpts): jsPDF {
   });
 
   autoTable(doc, {
-    startY: y + 2,
+    startY: y + 1,
     margin: { left: M, right: M, bottom: 16 },
     head: [[
       "#",
