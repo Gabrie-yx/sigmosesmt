@@ -438,6 +438,13 @@ export function EstoqueSesmtPage() {
           >
             <Printer className="h-4 w-4 mr-2" /> Imprimir PDF
           </Button>
+          <Button
+            variant="outline"
+            className="border-indigo-600 text-indigo-700 hover:bg-indigo-50"
+            onClick={() => setShowRelatorioEntregas(true)}
+          >
+            <History className="h-4 w-4 mr-2" /> Relatório de entregas
+          </Button>
         </div>
       </div>
 
