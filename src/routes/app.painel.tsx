@@ -475,14 +475,14 @@ function TstPanel() {
         </div>
 
         {/* ===== Filtros em pílulas (estilo referência) ===== */}
-        <div className="bg-white border border-slate-700/60 rounded-lg p-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-xl p-3 flex flex-wrap items-center gap-x-6 gap-y-2">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Período</span>
             <div className="flex gap-1">
               {(["30", "60", "90", "180"] as const).map((p) => (
                 <button key={p} onClick={() => setPeriodo(p)}
                   className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-md transition-colors ${
-                    periodo === p ? "bg-[#f43f5e] text-white shadow-sm" : "bg-slate-800/60 text-slate-600 hover:bg-slate-700"
+                    periodo === p ? "bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.5)]" : "bg-slate-800/60 text-slate-300 hover:bg-slate-700/80 hover:text-slate-100"
                   }`}>{p} dias</button>
               ))}
             </div>
@@ -491,12 +491,12 @@ function TstPanel() {
             <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Empresa</span>
             <button onClick={() => setFilterCompany("ALL")}
               className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-md transition-colors ${
-                filterCompany === "ALL" ? "bg-[#22d3ee] text-white shadow-sm" : "bg-slate-800/60 text-slate-600 hover:bg-slate-700"
+                filterCompany === "ALL" ? "bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-[0_0_15px_rgba(34,211,238,0.5)]" : "bg-slate-800/60 text-slate-300 hover:bg-slate-700/80 hover:text-slate-100"
               }`}>Todas</button>
             {(data?.companies ?? []).slice(0, 6).map((c: any) => (
               <button key={c.id} onClick={() => setFilterCompany(c.id)}
                 className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-md transition-colors ${
-                  filterCompany === c.id ? "bg-[#22d3ee] text-white shadow-sm" : "bg-slate-800/60 text-slate-600 hover:bg-slate-700"
+                  filterCompany === c.id ? "bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-[0_0_15px_rgba(34,211,238,0.5)]" : "bg-slate-800/60 text-slate-300 hover:bg-slate-700/80 hover:text-slate-100"
                 }`}>{c.name.length > 14 ? c.name.slice(0, 14) + "…" : c.name}</button>
             ))}
           </div>
@@ -1064,7 +1064,7 @@ function ModuleStat({
   stats: { label: string; value: number; tone: "ok" | "warn" | "crit" | "neutral" }[];
 }) {
   return (
-    <Link to={to} className="bg-white rounded-md border border-slate-700 shadow-sm p-3 hover:border-[#be123c] hover:shadow-md transition-all group">
+    <Link to={to} className="relative rounded-xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-md shadow-[0_8px_30px_-12px_rgba(0,0,0,0.5)] p-3 hover:border-cyan-500/50 hover:shadow-[0_0_25px_-5px_rgba(34,211,238,0.4)] transition-all group">
       <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800/80">
         <div className="flex items-center gap-1.5">
           <Icon className="h-3.5 w-3.5 text-[#22d3ee]" />
