@@ -827,7 +827,8 @@ function TstPanel() {
           {/* 1 · Donut Conformidade Geral */}
           <Card title="01 · Status Geral" className="col-span-12 md:col-span-3"
             period={`${periodo}d`} meta="≥ 90%"
-            metaTone={conformidadeFiltro >= 90 ? "ok" : conformidadeFiltro >= 70 ? "warn" : "crit"}>
+            metaTone={conformidadeFiltro >= 90 ? "ok" : conformidadeFiltro >= 70 ? "warn" : "crit"}
+            ncPrefill={{ codigo: "IND-00", indicador: "Status Geral de Conformidade", mesRef: mesRefAtual }}>
             <DonutCenter
               data={donutData}
               centerValue={`${conformidadeFiltro}%`}
@@ -844,7 +845,8 @@ function TstPanel() {
           {/* 2 · Donut ASO Status (PCMSO/NR-07) */}
           <Card title="02 · ASO · PCMSO" className="col-span-12 md:col-span-3"
             period="MENSAL" meta="100%"
-            metaTone={asoConformPct >= 95 ? "ok" : asoConformPct >= 80 ? "warn" : "crit"}>
+            metaTone={asoConformPct >= 95 ? "ok" : asoConformPct >= 80 ? "warn" : "crit"}
+            ncPrefill={{ codigo: "IND-05", indicador: "ASOs em dia", mesRef: mesRefAtual }}>
             <DonutCenter
               data={asoDonut.length > 0 ? asoDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
               centerValue={`${asoConformPct}%`}
@@ -960,6 +962,7 @@ function TstPanel() {
             meta={`≥ 90% · ${ddsPlanRealizado.realizados}/${ddsPlanRealizado.planejados}`}
             metaTone={ddsPlanRealizado.pct >= 90 ? "ok" : ddsPlanRealizado.pct >= 70 ? "warn" : "crit"}
             action={<MessageSquare className="h-3 w-3 text-cyan-300" />}
+            ncPrefill={{ codigo: "IND-04", indicador: "DDS Planejado vs Realizado", mesRef: mesRefAtual }}
           >
             <div className="h-60">
               {ddsPlanRealizado.series.length === 0 ? <EmptyBlock label="Sem DDS no período" /> : (
@@ -993,12 +996,20 @@ function TstPanel() {
           </Card>
 
           {/* 7 · Reincidência EPI por colaborador */}
-          <Card title="07 · Reincidência EPI · TOP" className="col-span-12 md:col-span-3"
-            action={<Repeat className="h-3 w-3 text-rose-400" />}>
+          <Card title="07 · Reincidência EPI" className="col-span-12 md:col-span-3"
+            period="MENSAL"
+            meta={`≤ 5% · ${reincidenciaEPIPct.pct}%`}
+            metaTone={reincidenciaEPIPct.pct <= 5 ? "ok" : reincidenciaEPIPct.pct <= 15 ? "warn" : "crit"}
+            action={<Repeat className="h-3 w-3 text-rose-400" />}
+            ncPrefill={{ codigo: "IND-06", indicador: "Reincidência EPI", mesRef: mesRefAtual }}>
+            <div className="text-[10px] text-slate-500 mb-2">
+              <span className="text-rose-300 font-black tabular-nums">{reincidenciaEPIPct.reincidentes}</span> de{" "}
+              <span className="text-slate-300 font-black tabular-nums">{reincidenciaEPIPct.base}</span> colab. com perda/troca no mês
+            </div>
             {reincidenciaEPI.length === 0 ? (
               <div className="py-10 text-center text-[#10b981] text-xs font-black uppercase tracking-wider">Sem reincidências</div>
             ) : (
-              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+              <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
                 {reincidenciaEPI.map((r, i) => {
                   const max = reincidenciaEPI[0].total || 1;
                   const pct = Math.round((r.total / max) * 100);
@@ -1060,7 +1071,8 @@ function TstPanel() {
           {/* 9 · Barras Extintores por Status (NR-23) */}
           <Card title="09 · Extintores · NR-23" className="col-span-12 md:col-span-3"
             period="MENSAL" meta="100% em dia"
-            metaTone={extMetrics.vencidos > 0 ? "crit" : extMetrics.vencendo > 0 ? "warn" : "ok"}>
+            metaTone={extMetrics.vencidos > 0 ? "crit" : extMetrics.vencendo > 0 ? "warn" : "ok"}
+            ncPrefill={{ codigo: "IND-07", indicador: "Inspeção/Recarga de Extintores", mesRef: mesRefAtual }}>
             <div className="h-64">
               <ResponsiveContainer>
                 <BarChart data={extintoresBars} margin={{ top: 20, right: 8, left: -25, bottom: 0 }}>
@@ -1088,7 +1100,8 @@ function TstPanel() {
           {/* 10 · % Ações Plano no prazo */}
           <Card title="10 · Plano de Ação · Prazo" className="col-span-12 md:col-span-4"
             period="MENSAL" meta="≥ 90%"
-            metaTone={planoAcoesMetric.pct >= 90 ? "ok" : planoAcoesMetric.pct >= 70 ? "warn" : "crit"}>
+            metaTone={planoAcoesMetric.pct >= 90 ? "ok" : planoAcoesMetric.pct >= 70 ? "warn" : "crit"}
+            ncPrefill={{ codigo: "IND-08", indicador: "Plano de Ação no prazo", mesRef: mesRefAtual }}>
             <DonutCenter
               data={planoAcoesDonut.length > 0 ? planoAcoesDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
               centerValue={`${planoAcoesMetric.pct}%`}
@@ -1104,8 +1117,13 @@ function TstPanel() {
 
           {/* 11 · % Treinamentos NR em dia */}
           <Card title="11 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4"
-            period="MENSAL" meta="100%" metaTone="ok"
-            action={<GraduationCap className="h-3 w-3 text-cyan-400" />}>
+            period="MENSAL" meta="≥ 95%"
+            metaTone={(() => {
+              const avg = treinamentosNR.length > 0 ? Math.round(treinamentosNR.reduce((s, t) => s + t.value, 0) / treinamentosNR.length) : 100;
+              return avg >= 95 ? "ok" : avg >= 80 ? "warn" : "crit";
+            })()}
+            action={<GraduationCap className="h-3 w-3 text-cyan-400" />}
+            ncPrefill={{ codigo: "IND-03", indicador: "Treinamentos NR em dia", mesRef: mesRefAtual }}>
             {treinamentosNR.length === 0 ? (
               <EmptyBlock label="Sem matriz NR" />
             ) : (
@@ -1126,7 +1144,8 @@ function TstPanel() {
             metaTone={nearMissMesAtual >= 5 ? "ok" : nearMissMesAtual >= 2 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
               <Eye className="h-3 w-3" /> {nearMissTotal} total
-            </span>}>
+            </span>}
+            ncPrefill={{ codigo: "IND-09", indicador: "Quase-Acidentes (proativo)", mesRef: mesRefAtual }}>
             <div className="h-52">
               {nearMissTotal === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center gap-1">
@@ -1158,6 +1177,90 @@ function TstPanel() {
             <div className="flex justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
               <span className="text-slate-500">Mês atual: <span className="text-amber-300 font-black">{nearMissMesAtual}</span></span>
               <span className="text-slate-500">Meta: <span className="text-emerald-400 font-black">≥ 5</span></span>
+            </div>
+          </Card>
+
+          {/* 13 · TF — Taxa de Frequência (NBR 14280) */}
+          <Card title="13 · TF · Taxa de Frequência" className="col-span-12 md:col-span-6"
+            period="12 MESES" meta="= 0"
+            metaTone={tf === 0 ? "ok" : tf <= 5 ? "warn" : "crit"}
+            action={<span className="text-[10px] font-black uppercase tracking-wider text-rose-300 flex items-center gap-1">
+              <Activity className="h-3 w-3" /> {tf.toFixed(2)}
+            </span>}
+            ncPrefill={{ codigo: "IND-01", indicador: "Taxa de Frequência (TF)", mesRef: mesRefAtual }}>
+            <div className="h-56">
+              {totalHHT12m === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center gap-1">
+                  <AlertOctagon className="h-6 w-6 text-amber-400" />
+                  <div className="text-[10px] font-black uppercase tracking-wider text-amber-300">Lançar HHT mensal</div>
+                  <div className="text-[9px] text-slate-500">Sem HHT cadastrado · cálculo indisponível</div>
+                </div>
+              ) : (
+                <ResponsiveContainer>
+                  <ComposedChart data={tfSerie} margin={{ top: 14, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradTF" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.55} />
+                        <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={tooltipDark} formatter={(v: any) => [Number(v).toFixed(2), "TF"]} />
+                    <Area type="monotone" dataKey="tf" stroke="#f43f5e" strokeWidth={3} fill="url(#gradTF)"
+                      dot={{ r: 3, fill: "#0a0f1f", stroke: "#f43f5e", strokeWidth: 2 }}>
+                      <LabelList dataKey="tf" position="top" style={{ fontSize: 9, fontWeight: 900, fill: "#fda4af" }} />
+                    </Area>
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+            <div className="flex justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
+              <span className="text-slate-500">Acidentes c/ afast. 12m: <span className="text-rose-300 font-black">{totalAcid12m}</span></span>
+              <span className="text-slate-500">HHT 12m: <span className="text-slate-300 font-black tabular-nums">{totalHHT12m.toLocaleString("pt-BR")}</span></span>
+            </div>
+          </Card>
+
+          {/* 14 · TG — Taxa de Gravidade (NBR 14280) */}
+          <Card title="14 · TG · Taxa de Gravidade" className="col-span-12 md:col-span-6"
+            period="12 MESES" meta="≤ 100"
+            metaTone={tg <= 100 ? "ok" : tg <= 500 ? "warn" : "crit"}
+            action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
+              <Activity className="h-3 w-3" /> {tg.toFixed(2)}
+            </span>}
+            ncPrefill={{ codigo: "IND-02", indicador: "Taxa de Gravidade (TG)", mesRef: mesRefAtual }}>
+            <div className="h-56">
+              {totalHHT12m === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center gap-1">
+                  <AlertOctagon className="h-6 w-6 text-amber-400" />
+                  <div className="text-[10px] font-black uppercase tracking-wider text-amber-300">Lançar HHT mensal</div>
+                  <div className="text-[9px] text-slate-500">Sem HHT cadastrado · cálculo indisponível</div>
+                </div>
+              ) : (
+                <ResponsiveContainer>
+                  <ComposedChart data={tfSerie} margin={{ top: 14, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradTG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#fbbf24" stopOpacity={0.55} />
+                        <stop offset="100%" stopColor="#fbbf24" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={tooltipDark} formatter={(v: any) => [Number(v).toFixed(2), "TG"]} />
+                    <Area type="monotone" dataKey="tg" stroke="#fbbf24" strokeWidth={3} fill="url(#gradTG)"
+                      dot={{ r: 3, fill: "#0a0f1f", stroke: "#fbbf24", strokeWidth: 2 }}>
+                      <LabelList dataKey="tg" position="top" style={{ fontSize: 9, fontWeight: 900, fill: "#fde68a" }} />
+                    </Area>
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+            <div className="flex justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
+              <span className="text-slate-500">Dias perdidos 12m: <span className="text-amber-300 font-black">{totalDias12m}</span></span>
+              <span className="text-slate-500">Meta NBR: <span className="text-emerald-400 font-black">≤ 100</span></span>
             </div>
           </Card>
 
