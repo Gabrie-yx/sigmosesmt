@@ -552,7 +552,7 @@ function TstPanel() {
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#475569" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
-                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} />
+                    <Tooltip contentStyle={tooltipDark} />
                     <Bar yAxisId="l" dataKey="qtd" fill="url(#gradPareto)" radius={[8, 8, 0, 0]} barSize={36} name="Colaboradores">
                       <LabelList dataKey="qtd" position="top" style={{ fontSize: 11, fontWeight: 900, fill: "#22d3ee" }} />
                     </Bar>
@@ -587,7 +587,7 @@ function TstPanel() {
                     <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                     <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} />
+                    <Tooltip contentStyle={tooltipDark} />
                     <Area type="monotone" dataKey="primeira" stroke="#10b981" strokeWidth={3} fill="url(#gradArea)" name="1ª Entrega" />
                     <Area type="monotone" dataKey="troca" stroke="#22d3ee" strokeWidth={2.5} fill="url(#gradArea2)" name="Troca" />
                     <Area type="monotone" dataKey="perda" stroke="#f43f5e" strokeWidth={2.5} fill="url(#gradArea3)" name="Perda" />
@@ -617,7 +617,7 @@ function TstPanel() {
                     <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#475569", fontWeight: 600 }} axisLine={false} tickLine={false} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} formatter={(v: any) => [`${v}%`, "Score"]} />
+                    <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={tooltipDark} formatter={(v: any) => [`${v}%`, "Score"]} />
                     <Bar dataKey="score" radius={[10, 10, 0, 0]} barSize={44}>
                       {top5Empresas.map((e: any, i: number) => (
                         <Cell key={i} fill={e.score >= 90 ? "url(#gradScoreOk)" : e.score >= 70 ? "url(#gradScoreWarn)" : "url(#gradScoreBad)"} />
@@ -646,7 +646,7 @@ function TstPanel() {
                     <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
-                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} />
+                    <Tooltip contentStyle={tooltipDark} />
                     <Bar yAxisId="l" dataKey="qtd" fill="url(#gradDDS)" radius={[8, 8, 0, 0]} barSize={28} name="DDS" />
                     <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#f43f5e" strokeWidth={3.5} dot={{ r: 5, fill: "#fff", stroke: "#f43f5e", strokeWidth: 2.5 }} name="% Aderência" />
                   </ComposedChart>
@@ -699,7 +699,7 @@ function TstPanel() {
                     <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} />
+                    <Tooltip contentStyle={tooltipDark} />
                     <Legend wrapperStyle={{ fontSize: 10 }} />
                     <Area type="monotone" dataKey="abertos" stroke="#f43f5e" strokeWidth={3} fill="url(#gradAbertos)" name="Abertos" dot={{ r: 4, fill: "#fff", stroke: "#f43f5e", strokeWidth: 2 }} />
                     <Area type="monotone" dataKey="resolvidos" stroke="#10b981" strokeWidth={3} fill="url(#gradResolv)" name="Resolvidos" dot={{ r: 4, fill: "#fff", stroke: "#10b981", strokeWidth: 2 }} />
@@ -725,7 +725,7 @@ function TstPanel() {
                   <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#475569", fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} />
+                  <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={tooltipDark} />
                   <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={36}>
                     {extintoresBars.map((_e, i) => <Cell key={i} fill={`url(#gradExt-${i})`} />)}
                     <LabelList dataKey="value" position="top" style={{ fontSize: 12, fontWeight: 900, fill: "#22d3ee" }} />
@@ -952,7 +952,7 @@ function DonutCenter({
           <Pie data={chartData} dataKey="value" innerRadius={62} outerRadius={92} paddingAngle={3} stroke="#fff" strokeWidth={3} startAngle={90} endAngle={-270}>
             {chartData.map((_d, i) => <Cell key={i} fill={`url(#${gradId(i)})`} />)}
           </Pie>
-          <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} />
+          <Tooltip contentStyle={tooltipDark} />
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
