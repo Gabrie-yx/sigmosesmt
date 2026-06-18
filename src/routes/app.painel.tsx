@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Search, ShieldCheck, Flame, Calendar, ArrowRight, ChevronRight, FolderOpen, Package,
   Users, AlertTriangle, ShieldAlert, TrendingUp, Repeat, GraduationCap, ClipboardCheck, Eye,
-  Trophy, Target, MessageSquare,
+  Trophy, Target, MessageSquare, Activity, AlertOctagon, FilePlus2,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
@@ -46,7 +46,8 @@ function TstPanel() {
     queryKey: ["sesmt-painel", since],
     queryFn: async () => {
       const since6m = fmt(new Date(today.getTime() - 180 * dayMs));
-      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, aprs, ptes, controleDocs, extintores, extInspecoes, planoAcoes, trainCourses, trainEntries, incidentes] = await Promise.all([
+      const since12m = fmt(new Date(today.getTime() - 365 * dayMs));
+      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, aprs, ptes, controleDocs, extintores, extInspecoes, planoAcoes, trainCourses, trainEntries, incidentes, acidentes, hht] = await Promise.all([
         supabase.from("employees").select("*").order("nome"),
         supabase.from("companies").select("id,name").order("name"),
         supabase.from("roles").select("*"),
@@ -64,6 +65,8 @@ function TstPanel() {
         supabase.from("training_matrix_courses").select("id,codigo,nome,categoria,periodicidade,ativo").eq("ativo", true),
         supabase.from("training_matrix_entries").select("id,course_id,employee_id,data_realizacao,status_override"),
         supabase.from("incidentes").select("id,tipo,gravidade,data_ocorrencia,status").gte("data_ocorrencia", since6m),
+        supabase.from("acidentes_trabalho").select("id,company_id,tipo,data_acidente,dias_perdidos").gte("data_acidente", since12m),
+        supabase.from("hht_mensal").select("ano,mes,company_id,hht"),
       ]);
       const recordesRes = await supabase
         .from("dias_sem_acidente_recordes")
@@ -92,6 +95,8 @@ function TstPanel() {
         trainEntries: trainEntries.data ?? [],
         incidentes: incidentes.data ?? [],
         recordes: recordesRes.data ?? [],
+        acidentes: acidentes.data ?? [],
+        hht: hht.data ?? [],
       };
     },
   });
