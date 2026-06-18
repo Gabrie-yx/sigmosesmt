@@ -872,28 +872,42 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 6 · DDS Composto (qtd × aderência) */}
-          <Card title="06 · DDS · Qtd × Aderência" className="col-span-12 md:col-span-5"
-            action={<span className="text-[10px] font-black uppercase tracking-wider text-[#10b981]">{ddsAderencia}% médio</span>}>
-            <div className="h-64">
-              {ddsTrend.length === 0 ? <EmptyBlock label="Sem DDS" /> : (
+          {/* 6 · DDS Planejado vs Realizado (semanal) */}
+          <Card title="06 · DDS · Planejado vs Realizado"
+            className="col-span-12 md:col-span-5"
+            period="SEMANAL"
+            meta={`≥ 90% · ${ddsPlanRealizado.realizados}/${ddsPlanRealizado.planejados}`}
+            metaTone={ddsPlanRealizado.pct >= 90 ? "ok" : ddsPlanRealizado.pct >= 70 ? "warn" : "crit"}
+            action={<MessageSquare className="h-3 w-3 text-cyan-300" />}
+          >
+            <div className="h-60">
+              {ddsPlanRealizado.series.length === 0 ? <EmptyBlock label="Sem DDS no período" /> : (
                 <ResponsiveContainer>
-                  <ComposedChart data={ddsTrend} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <ComposedChart data={ddsPlanRealizado.series} margin={{ top: 14, right: 12, left: -20, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="gradDDS" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#0891b2" /><stop offset="100%" stopColor="#22d3ee" />
+                      <linearGradient id="gradPlanReal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#22d3ee" /><stop offset="100%" stopColor="#0891b2" />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
-                    <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                    <XAxis dataKey="sem" tick={{ fontSize: 10, fill: "#cbd5e1" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
                     <Tooltip contentStyle={tooltipDark} />
-                    <Bar yAxisId="l" dataKey="qtd" fill="url(#gradDDS)" radius={[8, 8, 0, 0]} barSize={28} name="DDS" />
-                    <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#f43f5e" strokeWidth={3.5} dot={{ r: 5, fill: "#0a0f1f", stroke: "#f43f5e", strokeWidth: 2.5 }} name="% Aderência" />
+                    <Bar dataKey="plan" fill="rgba(148,163,184,0.18)" radius={[6, 6, 0, 0]} barSize={26} name="Planejado">
+                      <LabelList dataKey="plan" position="top" style={{ fontSize: 9, fontWeight: 700, fill: "#94a3b8" }} />
+                    </Bar>
+                    <Bar dataKey="real" fill="url(#gradPlanReal)" radius={[6, 6, 0, 0]} barSize={26} name="Realizado">
+                      <LabelList dataKey="real" position="top" style={{ fontSize: 11, fontWeight: 900, fill: "#22d3ee" }} />
+                    </Bar>
                   </ComposedChart>
                 </ResponsiveContainer>
               )}
+            </div>
+            <div className="flex items-center justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
+              <span className="text-slate-500">Aderência: <span className="font-black tabular-nums"
+                style={{ color: ddsPlanRealizado.pct >= 90 ? "#10b981" : ddsPlanRealizado.pct >= 70 ? "#fbbf24" : "#f43f5e" }}>
+                {ddsPlanRealizado.pct}%</span></span>
+              <span className="text-slate-500">Aderência média (sessões): <span className="font-black text-cyan-300">{ddsAderencia}%</span></span>
             </div>
           </Card>
 
