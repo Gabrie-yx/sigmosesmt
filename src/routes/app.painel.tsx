@@ -778,29 +778,39 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 7 · Radial Aderência DDS */}
-          <Card title="07 · Aderência DDS" className="col-span-12 md:col-span-3">
-            <div className="relative h-56">
-              <ResponsiveContainer>
-                <RadialBarChart innerRadius="70%" outerRadius="100%" data={radialDDS} startAngle={220} endAngle={-40}>
-                  <defs>
-                    <linearGradient id="gradRadial" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor={radialDDS[0].fill} stopOpacity={1} />
-                      <stop offset="100%" stopColor={radialDDS[0].fill} stopOpacity={0.6} />
-                    </linearGradient>
-                  </defs>
-                  <RadialBar dataKey="value" cornerRadius={14} background={{ fill: "#1e293b" }} fill="url(#gradRadial)" />
-                </RadialBarChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <div className="text-4xl font-black tabular-nums drop-shadow-sm" style={{ color: radialDDS[0].fill }}>{ddsAderencia}%</div>
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mt-1.5">Período</div>
+          {/* 7 · Reincidência EPI por colaborador */}
+          <Card title="07 · Reincidência EPI · TOP" className="col-span-12 md:col-span-3"
+            action={<Repeat className="h-3 w-3 text-rose-400" />}>
+            {reincidenciaEPI.length === 0 ? (
+              <div className="py-10 text-center text-[#10b981] text-xs font-black uppercase tracking-wider">Sem reincidências</div>
+            ) : (
+              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                {reincidenciaEPI.map((r, i) => {
+                  const max = reincidenciaEPI[0].total || 1;
+                  const pct = Math.round((r.total / max) * 100);
+                  return (
+                    <Link key={r.id} to="/app/employees/$id" params={{ id: r.id }}
+                      className="block p-1.5 rounded hover:bg-slate-800/40 group">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold text-slate-200 truncate flex items-center gap-1.5">
+                          <span className="text-slate-600 tabular-nums">{i + 1}.</span>
+                          {r.nome}
+                        </span>
+                        <span className="text-[10px] font-black text-rose-400 tabular-nums shrink-0 ml-1">{r.total}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-slate-800/80 overflow-hidden">
+                        <div className="h-full rounded-full"
+                          style={{ width: `${pct}%`, background: `linear-gradient(90deg, #f43f5e, #fb7185)`, boxShadow: "0 0 8px rgba(244,63,94,0.5)" }} />
+                      </div>
+                      <div className="flex gap-2 mt-0.5 text-[9px] text-slate-500">
+                        <span>Perda: <span className="text-rose-300 font-bold">{r.perda}</span></span>
+                        <span>Troca: <span className="text-amber-300 font-bold">{r.troca}</span></span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
-            </div>
-            <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80">
-              <LegendItem color="#22d3ee" label="DDS" value={ddsCount} />
-              <LegendItem color="#10b981" label="Meta" value={90} />
-            </div>
+            )}
           </Card>
 
           {/* 8 · Linha Documentos Abertos × Resolvidos */}
@@ -858,26 +868,79 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 10 · HBar Pendência por Empresa */}
-          <Card title="10 · Pendência · Empresa" className="col-span-12 md:col-span-4">
-            <HBarList items={top5Pend} color="#f43f5e" suffix="%" empty="Sem pendências" />
-          </Card>
-
-          {/* 11 · HBar Distribuição Status */}
-          <Card title="11 · Distribuição Status" className="col-span-12 md:col-span-4">
-            <HBarList
-              items={statusBarsData.map((s) => ({
-                name: s.name,
-                value: totalEmp > 0 ? Math.round((s.value / totalEmp) * 100) : 0,
-                color: s.fill,
-              }))}
-              suffix="%" perItemColor
+          {/* 10 · % Ações Plano no prazo */}
+          <Card title="10 · Plano de Ação · Prazo" className="col-span-12 md:col-span-4"
+            action={<span className="text-[10px] font-black uppercase tracking-wider"
+              style={{ color: planoAcoesMetric.pct >= 90 ? "#10b981" : planoAcoesMetric.pct >= 70 ? "#fbbf24" : "#f43f5e" }}>
+              Meta ≥ 90%
+            </span>}>
+            <DonutCenter
+              data={planoAcoesDonut.length > 0 ? planoAcoesDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
+              centerValue={`${planoAcoesMetric.pct}%`}
+              centerLabel="No prazo"
+              centerColor={planoAcoesMetric.pct >= 90 ? "#10b981" : planoAcoesMetric.pct >= 70 ? "#fbbf24" : "#f43f5e"}
             />
+            <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80">
+              <LegendItem color="#10b981" label="No prazo" value={planoAcoesMetric.noPrazo} />
+              <LegendItem color="#22d3ee" label="Abertas" value={planoAcoesMetric.abertasOk} />
+              <LegendItem color="#f43f5e" label="Atrasadas" value={planoAcoesMetric.atrasadas} />
+            </div>
           </Card>
 
-          {/* 12 · HBar Motivos EPI */}
-          <Card title="12 · Motivo Entrega · EPI" className="col-span-12 md:col-span-4">
-            <HBarList items={motivoEntrega} color="#22d3ee" suffix="%" empty="Sem entregas" />
+          {/* 11 · % Treinamentos NR em dia */}
+          <Card title="11 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4"
+            action={<GraduationCap className="h-3 w-3 text-cyan-400" />}>
+            {treinamentosNR.length === 0 ? (
+              <EmptyBlock label="Sem matriz NR" />
+            ) : (
+              <HBarList
+                items={treinamentosNR.map((t) => ({
+                  name: t.name,
+                  value: t.value,
+                  color: t.value >= 90 ? "#10b981" : t.value >= 70 ? "#fbbf24" : "#f43f5e",
+                }))}
+                suffix="%" perItemColor
+              />
+            )}
+          </Card>
+
+          {/* 12 · Near-miss / Quase-acidentes */}
+          <Card title="12 · Quase-Acidentes · 6m" className="col-span-12 md:col-span-4"
+            action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
+              <Eye className="h-3 w-3" /> {nearMissTotal} total
+            </span>}>
+            <div className="h-52">
+              {nearMissTotal === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center gap-1">
+                  <ClipboardCheck className="h-6 w-6 text-slate-600" />
+                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">Nenhum reporte</div>
+                  <div className="text-[9px] text-slate-600">Meta: ≥ 5/mês (proativo)</div>
+                </div>
+              ) : (
+                <ResponsiveContainer>
+                  <ComposedChart data={nearMissTrend} margin={{ top: 14, right: 8, left: -25, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradNM" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#fbbf24" stopOpacity={0.6} />
+                        <stop offset="100%" stopColor="#fbbf24" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip contentStyle={tooltipDark} />
+                    <Area type="monotone" dataKey="qtd" stroke="#fbbf24" strokeWidth={3} fill="url(#gradNM)"
+                      dot={{ r: 4, fill: "#0a0f1f", stroke: "#fbbf24", strokeWidth: 2 }}>
+                      <LabelList dataKey="qtd" position="top" style={{ fontSize: 10, fontWeight: 900, fill: "#fde68a" }} />
+                    </Area>
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+            <div className="flex justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
+              <span className="text-slate-500">Mês atual: <span className="text-amber-300 font-black">{nearMissMesAtual}</span></span>
+              <span className="text-slate-500">Meta: <span className="text-emerald-400 font-black">≥ 5</span></span>
+            </div>
           </Card>
 
         </div>
