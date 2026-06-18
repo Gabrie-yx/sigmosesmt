@@ -44,7 +44,8 @@ function TstPanel() {
   const { data, isLoading } = useQuery({
     queryKey: ["sesmt-painel", since],
     queryFn: async () => {
-      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, aprs, ptes, controleDocs, extintores, extInspecoes] = await Promise.all([
+      const since6m = fmt(new Date(today.getTime() - 180 * dayMs));
+      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, aprs, ptes, controleDocs, extintores, extInspecoes, planoAcoes, trainCourses, trainEntries, incidentes] = await Promise.all([
         supabase.from("employees").select("*").order("nome"),
         supabase.from("companies").select("id,name").order("name"),
         supabase.from("roles").select("*"),
@@ -58,6 +59,10 @@ function TstPanel() {
         supabase.from("controle_documentos").select("*"),
         supabase.from("extintores").select("id,status,proxima_recarga,proximo_teste_hidrostatico,numero_identificacao"),
         supabase.from("extintor_inspecoes").select("extintor_id,data_inspecao,conforme"),
+        supabase.from("plano_acoes").select("id,status,quando,data_conclusao,created_at"),
+        supabase.from("training_matrix_courses").select("id,codigo,nome,categoria,periodicidade,ativo").eq("ativo", true),
+        supabase.from("training_matrix_entries").select("id,course_id,employee_id,data_realizacao,status_override"),
+        supabase.from("incidentes").select("id,tipo,gravidade,data_ocorrencia,status").gte("data_ocorrencia", since6m),
       ]);
       const ossRes = await supabase
         .from("oss_emissoes")
@@ -78,6 +83,10 @@ function TstPanel() {
         extintores: extintores.data ?? [],
         extInspecoes: extInspecoes.data ?? [],
         oss: ossRes.data ?? [],
+        planoAcoes: planoAcoes.data ?? [],
+        trainCourses: trainCourses.data ?? [],
+        trainEntries: trainEntries.data ?? [],
+        incidentes: incidentes.data ?? [],
       };
     },
   });
