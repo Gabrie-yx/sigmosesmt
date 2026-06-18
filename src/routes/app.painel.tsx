@@ -458,9 +458,9 @@ function TstPanel() {
             <div className="relative">
               <Search className="h-3.5 w-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
               <input type="text" placeholder="Buscar colaborador, CPF, função…" value={q} onChange={(e) => setQ(e.target.value)}
-                className="w-64 bg-white border border-slate-700/60 rounded-md pl-8 pr-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-[#f43f5e]/20 focus:border-[#f43f5e] placeholder:text-slate-500" />
+                className="w-64 bg-slate-900/60 backdrop-blur-md border border-slate-700/60 rounded-md pl-8 pr-3 py-1.5 text-xs font-medium text-slate-100 outline-none focus:ring-2 focus:ring-cyan-400/30 focus:border-cyan-400/60 placeholder:text-slate-500" />
               {search && searchResults.length > 0 && (
-                <div className="absolute z-30 mt-1 left-0 right-0 bg-white border border-slate-700/60 rounded-md shadow-lg max-h-56 overflow-y-auto">
+                <div className="absolute z-30 mt-1 left-0 right-0 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-md shadow-xl max-h-56 overflow-y-auto">
                   {searchResults.map((r) => (
                     <Link key={r.emp.id} to="/app/employees/$id" params={{ id: r.emp.id }}
                       className="block px-3 py-2 text-xs hover:bg-slate-800/40 border-b border-slate-800/80 last:border-0">
