@@ -317,7 +317,7 @@ function TstPanel() {
   const donutData = [
     { name: "Aptos", value: aptos, fill: "#10b981" },
     { name: "Alerta", value: alertas, fill: "#f59e0b" },
-    { name: "Crítico", value: bloqueados, fill: "#7f1212" },
+    { name: "Crítico", value: bloqueados, fill: "#be123c" },
   ].filter((d) => d.value > 0);
 
   // === Top 5 empresas (barras verticais) ===
@@ -331,9 +331,9 @@ function TstPanel() {
 
   // === Distribuição global de status ===
   const statusBarsData = [
-    { name: "APTO", value: aptos, fill: "#2d8a9e" },
-    { name: "ALERTA", value: alertas, fill: "#c8a23c" },
-    { name: "BLOQ.", value: bloqueados, fill: "#c8102e" },
+    { name: "APTO", value: aptos, fill: "#10b981" },
+    { name: "ALERTA", value: alertas, fill: "#fbbf24" },
+    { name: "BLOQ.", value: bloqueados, fill: "#f43f5e" },
   ];
 
   // Top 5 empresas ordenadas por pendência (barras horizontais com %)
@@ -364,10 +364,10 @@ function TstPanel() {
 
   // Donut módulos (distribuição de atividades SESMT)
   const modulosDonut = [
-    { name: "APRs", value: aprsAtivas, fill: "#0c2340" },
-    { name: "PTEs", value: ptesAtivas, fill: "#1a4a6e" },
-    { name: "DDS", value: ddsCount, fill: "#2d8a9e" },
-    { name: "Extint.", value: extMetrics.ativos, fill: "#c8102e" },
+    { name: "APRs", value: aprsAtivas, fill: "#22d3ee" },
+    { name: "PTEs", value: ptesAtivas, fill: "#0891b2" },
+    { name: "DDS", value: ddsCount, fill: "#10b981" },
+    { name: "Extint.", value: extMetrics.ativos, fill: "#f43f5e" },
   ].filter((d) => d.value > 0);
   const modTotal = modulosDonut.reduce((s, d) => s + d.value, 0);
 
@@ -375,9 +375,9 @@ function TstPanel() {
   const totalExames = (data?.exams ?? []).length;
   const asoEmDia = Math.max(0, totalExames - asoVencendo30 - asoVencidos);
   const asoDonut = [
-    { name: "Em dia", value: asoEmDia, fill: "#2d8a9e" },
-    { name: "Vence 30d", value: asoVencendo30, fill: "#c8a23c" },
-    { name: "Vencidos", value: asoVencidos, fill: "#c8102e" },
+    { name: "Em dia", value: asoEmDia, fill: "#10b981" },
+    { name: "Vence 30d", value: asoVencendo30, fill: "#fbbf24" },
+    { name: "Vencidos", value: asoVencidos, fill: "#f43f5e" },
   ].filter((d) => d.value > 0);
   const asoConformPct = totalExames > 0 ? Math.round((asoEmDia / totalExames) * 100) : 0;
 
@@ -397,10 +397,10 @@ function TstPanel() {
 
   // === Extintores: barras por status ===
   const extintoresBars = [
-    { name: "Ativos", value: extMetrics.ativos, fill: "#2d8a9e" },
-    { name: "Vence 30d", value: extMetrics.vencendo, fill: "#c8a23c" },
-    { name: "Vencidos", value: extMetrics.vencidos, fill: "#c8102e" },
-    { name: "S/ Insp.", value: extMetrics.semInspecao, fill: "#0c2340" },
+    { name: "Ativos", value: extMetrics.ativos, fill: "#10b981" },
+    { name: "Vence 30d", value: extMetrics.vencendo, fill: "#fbbf24" },
+    { name: "Vencidos", value: extMetrics.vencidos, fill: "#f43f5e" },
+    { name: "S/ Insp.", value: extMetrics.semInspecao, fill: "#22d3ee" },
   ];
 
   // === Documentos: Abertos x Resolvidos por mês (últimos 6 meses) ===
@@ -420,7 +420,7 @@ function TstPanel() {
 
   // === Radial: aderência DDS / cobertura ===
   const radialDDS = [
-    { name: "Aderência", value: ddsAderencia, fill: ddsAderencia >= 90 ? "#2d8a9e" : ddsAderencia >= 70 ? "#c8a23c" : "#c8102e" },
+    { name: "Aderência", value: ddsAderencia, fill: ddsAderencia >= 90 ? "#10b981" : ddsAderencia >= 70 ? "#fbbf24" : "#f43f5e" },
   ];
 
   return (
@@ -431,22 +431,22 @@ function TstPanel() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="bg-[#c8102e] text-white px-2 py-0.5 rounded-sm text-[10px] font-black uppercase tracking-tighter">DMN</span>
+              <span className="bg-[#f43f5e] text-white px-2 py-0.5 rounded-sm text-[10px] font-black uppercase tracking-tighter">DMN</span>
               <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Painel Executivo · SESMT</span>
             </div>
-            <h1 className="text-xl md:text-2xl font-black text-[#0c2340] tracking-tight mt-1">Indicadores de Segurança do Trabalho</h1>
+            <h1 className="text-xl md:text-2xl font-black text-[#22d3ee] tracking-tight mt-1">Indicadores de Segurança do Trabalho</h1>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative">
-              <Search className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <Search className="h-3.5 w-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
               <input type="text" placeholder="Buscar colaborador, CPF, função…" value={q} onChange={(e) => setQ(e.target.value)}
-                className="w-64 bg-white border border-slate-200 rounded-md pl-8 pr-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-[#c8102e]/20 focus:border-[#c8102e] placeholder:text-slate-400" />
+                className="w-64 bg-white border border-slate-700/60 rounded-md pl-8 pr-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-[#f43f5e]/20 focus:border-[#f43f5e] placeholder:text-slate-500" />
               {search && searchResults.length > 0 && (
-                <div className="absolute z-30 mt-1 left-0 right-0 bg-white border border-slate-200 rounded-md shadow-lg max-h-56 overflow-y-auto">
+                <div className="absolute z-30 mt-1 left-0 right-0 bg-white border border-slate-700/60 rounded-md shadow-lg max-h-56 overflow-y-auto">
                   {searchResults.map((r) => (
                     <Link key={r.emp.id} to="/app/employees/$id" params={{ id: r.emp.id }}
-                      className="block px-3 py-2 text-xs hover:bg-slate-50 border-b border-slate-100 last:border-0">
-                      <div className="font-bold text-slate-900 truncate">{r.emp.nome}</div>
+                      className="block px-3 py-2 text-xs hover:bg-slate-800/40 border-b border-slate-800/80 last:border-0">
+                      <div className="font-bold text-slate-50 truncate">{r.emp.nome}</div>
                       <div className="text-slate-500 truncate text-[10px]">{r.company}</div>
                     </Link>
                   ))}
@@ -457,28 +457,28 @@ function TstPanel() {
         </div>
 
         {/* ===== Filtros em pílulas (estilo referência) ===== */}
-        <div className="bg-white border border-slate-200 rounded-lg p-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div className="bg-white border border-slate-700/60 rounded-lg p-3 flex flex-wrap items-center gap-x-6 gap-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Período</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Período</span>
             <div className="flex gap-1">
               {(["30", "60", "90", "180"] as const).map((p) => (
                 <button key={p} onClick={() => setPeriodo(p)}
                   className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-md transition-colors ${
-                    periodo === p ? "bg-[#c8102e] text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    periodo === p ? "bg-[#f43f5e] text-white shadow-sm" : "bg-slate-800/60 text-slate-600 hover:bg-slate-700"
                   }`}>{p} dias</button>
               ))}
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Empresa</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Empresa</span>
             <button onClick={() => setFilterCompany("ALL")}
               className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-md transition-colors ${
-                filterCompany === "ALL" ? "bg-[#0c2340] text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                filterCompany === "ALL" ? "bg-[#22d3ee] text-white shadow-sm" : "bg-slate-800/60 text-slate-600 hover:bg-slate-700"
               }`}>Todas</button>
             {(data?.companies ?? []).slice(0, 6).map((c: any) => (
               <button key={c.id} onClick={() => setFilterCompany(c.id)}
                 className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-md transition-colors ${
-                  filterCompany === c.id ? "bg-[#0c2340] text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  filterCompany === c.id ? "bg-[#22d3ee] text-white shadow-sm" : "bg-slate-800/60 text-slate-600 hover:bg-slate-700"
                 }`}>{c.name.length > 14 ? c.name.slice(0, 14) + "…" : c.name}</button>
             ))}
           </div>
@@ -486,10 +486,10 @@ function TstPanel() {
 
         {/* ===== KPIs (4 cards limpos com ícone) ===== */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiBig icon={Users} label="Colaboradores" value={totalEmp} sub={`${(data?.companies ?? []).length} empresas`} accent="#0c2340" />
-          <KpiBig icon={ShieldCheck} label="Conformidade" value={`${conformidadeFiltro}%`} sub={`${aptos} aptos`} accent="#2d8a9e" />
-          <KpiBig icon={AlertTriangle} label="Em Alerta" value={alertas} sub="ASOs / docs próximos" accent="#c8a23c" />
-          <KpiBig icon={ShieldAlert} label="Bloqueados" value={bloqueados} sub="Ação imediata" accent="#c8102e" highlight={bloqueados > 0} />
+          <KpiBig icon={Users} label="Colaboradores" value={totalEmp} sub={`${(data?.companies ?? []).length} empresas`} accent="#22d3ee" />
+          <KpiBig icon={ShieldCheck} label="Conformidade" value={`${conformidadeFiltro}%`} sub={`${aptos} aptos`} accent="#10b981" />
+          <KpiBig icon={AlertTriangle} label="Em Alerta" value={alertas} sub="ASOs / docs próximos" accent="#fbbf24" />
+          <KpiBig icon={ShieldAlert} label="Bloqueados" value={bloqueados} sub="Ação imediata" accent="#f43f5e" highlight={bloqueados > 0} />
         </div>
 
         {/* ===== QUADRO DOS 12 GRÁFICOS ===== */}
@@ -501,27 +501,27 @@ function TstPanel() {
               data={donutData}
               centerValue={`${conformidadeFiltro}%`}
               centerLabel="Conformidade"
-              centerColor={conformidadeFiltro >= 90 ? "#2d8a9e" : conformidadeFiltro >= 70 ? "#c8a23c" : "#c8102e"}
+              centerColor={conformidadeFiltro >= 90 ? "#10b981" : conformidadeFiltro >= 70 ? "#fbbf24" : "#f43f5e"}
             />
-            <div className="flex justify-around pt-3 mt-2 border-t border-slate-100">
-              <LegendItem color="#2d8a9e" label="Aptos" value={aptos} />
-              <LegendItem color="#c8a23c" label="Alerta" value={alertas} />
-              <LegendItem color="#c8102e" label="Bloq." value={bloqueados} />
+            <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80">
+              <LegendItem color="#10b981" label="Aptos" value={aptos} />
+              <LegendItem color="#fbbf24" label="Alerta" value={alertas} />
+              <LegendItem color="#f43f5e" label="Bloq." value={bloqueados} />
             </div>
           </Card>
 
           {/* 2 · Donut ASO Status (PCMSO/NR-07) */}
           <Card title="02 · ASO · PCMSO" className="col-span-12 md:col-span-3">
             <DonutCenter
-              data={asoDonut.length > 0 ? asoDonut : [{ name: "—", value: 1, fill: "#e2e8f0" }]}
+              data={asoDonut.length > 0 ? asoDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
               centerValue={`${asoConformPct}%`}
               centerLabel="Em dia"
-              centerColor={asoConformPct >= 90 ? "#2d8a9e" : asoConformPct >= 70 ? "#c8a23c" : "#c8102e"}
+              centerColor={asoConformPct >= 90 ? "#10b981" : asoConformPct >= 70 ? "#fbbf24" : "#f43f5e"}
             />
-            <div className="flex justify-around pt-3 mt-2 border-t border-slate-100">
-              <LegendItem color="#2d8a9e" label="OK" value={asoEmDia} />
-              <LegendItem color="#c8a23c" label="30d" value={asoVencendo30} />
-              <LegendItem color="#c8102e" label="Venc." value={asoVencidos} />
+            <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80">
+              <LegendItem color="#10b981" label="OK" value={asoEmDia} />
+              <LegendItem color="#fbbf24" label="30d" value={asoVencendo30} />
+              <LegendItem color="#f43f5e" label="Venc." value={asoVencidos} />
             </div>
           </Card>
 
@@ -534,19 +534,19 @@ function TstPanel() {
                   <ComposedChart data={paretoEmpresas} margin={{ top: 16, right: 8, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradPareto" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#1a4a6e" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#0c2340" stopOpacity={0.85} />
+                        <stop offset="0%" stopColor="#0891b2" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.85} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#475569" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
-                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
+                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} />
                     <Bar yAxisId="l" dataKey="qtd" fill="url(#gradPareto)" radius={[8, 8, 0, 0]} barSize={36} name="Colaboradores">
-                      <LabelList dataKey="qtd" position="top" style={{ fontSize: 11, fontWeight: 900, fill: "#0c2340" }} />
+                      <LabelList dataKey="qtd" position="top" style={{ fontSize: 11, fontWeight: 900, fill: "#22d3ee" }} />
                     </Bar>
-                    <Line yAxisId="r" type="monotone" dataKey="acumulado" stroke="#c8a23c" strokeWidth={3} dot={{ r: 4, fill: "#fff", stroke: "#c8a23c", strokeWidth: 2.5 }} name="% Acumulado" />
+                    <Line yAxisId="r" type="monotone" dataKey="acumulado" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: "#fff", stroke: "#fbbf24", strokeWidth: 2.5 }} name="% Acumulado" />
                   </ComposedChart>
                 </ResponsiveContainer>
               )}
@@ -562,25 +562,25 @@ function TstPanel() {
                   <ComposedChart data={entregaSerie} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradArea" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2d8a9e" stopOpacity={0.7} />
-                        <stop offset="100%" stopColor="#2d8a9e" stopOpacity={0.05} />
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.7} />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.05} />
                       </linearGradient>
                       <linearGradient id="gradArea2" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#0c2340" stopOpacity={0.45} />
-                        <stop offset="100%" stopColor="#0c2340" stopOpacity={0.02} />
+                        <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.45} />
+                        <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.02} />
                       </linearGradient>
                       <linearGradient id="gradArea3" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#c8102e" stopOpacity={0.5} />
-                        <stop offset="100%" stopColor="#c8102e" stopOpacity={0.02} />
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.5} />
+                        <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                     <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
-                    <Area type="monotone" dataKey="primeira" stroke="#2d8a9e" strokeWidth={3} fill="url(#gradArea)" name="1ª Entrega" />
-                    <Area type="monotone" dataKey="troca" stroke="#0c2340" strokeWidth={2.5} fill="url(#gradArea2)" name="Troca" />
-                    <Area type="monotone" dataKey="perda" stroke="#c8102e" strokeWidth={2.5} fill="url(#gradArea3)" name="Perda" />
+                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} />
+                    <Area type="monotone" dataKey="primeira" stroke="#10b981" strokeWidth={3} fill="url(#gradArea)" name="1ª Entrega" />
+                    <Area type="monotone" dataKey="troca" stroke="#22d3ee" strokeWidth={2.5} fill="url(#gradArea2)" name="Troca" />
+                    <Area type="monotone" dataKey="perda" stroke="#f43f5e" strokeWidth={2.5} fill="url(#gradArea3)" name="Perda" />
                   </ComposedChart>
                 </ResponsiveContainer>
               )}
@@ -595,24 +595,24 @@ function TstPanel() {
                   <BarChart data={top5Empresas} margin={{ top: 20, right: 8, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradScoreOk" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#5cbdb9" /><stop offset="100%" stopColor="#2d8a9e" />
+                        <stop offset="0%" stopColor="#34d399" /><stop offset="100%" stopColor="#10b981" />
                       </linearGradient>
                       <linearGradient id="gradScoreWarn" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#e8c069" /><stop offset="100%" stopColor="#c8a23c" />
+                        <stop offset="0%" stopColor="#fde68a" /><stop offset="100%" stopColor="#fbbf24" />
                       </linearGradient>
                       <linearGradient id="gradScoreBad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#e85368" /><stop offset="100%" stopColor="#c8102e" />
+                        <stop offset="0%" stopColor="#fb7185" /><stop offset="100%" stopColor="#f43f5e" />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#475569", fontWeight: 600 }} axisLine={false} tickLine={false} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} formatter={(v: any) => [`${v}%`, "Score"]} />
+                    <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} formatter={(v: any) => [`${v}%`, "Score"]} />
                     <Bar dataKey="score" radius={[10, 10, 0, 0]} barSize={44}>
                       {top5Empresas.map((e: any, i: number) => (
                         <Cell key={i} fill={e.score >= 90 ? "url(#gradScoreOk)" : e.score >= 70 ? "url(#gradScoreWarn)" : "url(#gradScoreBad)"} />
                       ))}
-                      <LabelList dataKey="score" position="top" formatter={(v: any) => `${v}%`} style={{ fontSize: 12, fontWeight: 900, fill: "#0c2340" }} />
+                      <LabelList dataKey="score" position="top" formatter={(v: any) => `${v}%`} style={{ fontSize: 12, fontWeight: 900, fill: "#22d3ee" }} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -622,23 +622,23 @@ function TstPanel() {
 
           {/* 6 · DDS Composto (qtd × aderência) */}
           <Card title="06 · DDS · Qtd × Aderência" className="col-span-12 md:col-span-5"
-            action={<span className="text-[10px] font-black uppercase tracking-wider text-[#2d8a9e]">{ddsAderencia}% médio</span>}>
+            action={<span className="text-[10px] font-black uppercase tracking-wider text-[#10b981]">{ddsAderencia}% médio</span>}>
             <div className="h-64">
               {ddsTrend.length === 0 ? <EmptyBlock label="Sem DDS" /> : (
                 <ResponsiveContainer>
                   <ComposedChart data={ddsTrend} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradDDS" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#1a4a6e" /><stop offset="100%" stopColor="#0c2340" />
+                        <stop offset="0%" stopColor="#0891b2" /><stop offset="100%" stopColor="#22d3ee" />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
-                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
+                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} />
                     <Bar yAxisId="l" dataKey="qtd" fill="url(#gradDDS)" radius={[8, 8, 0, 0]} barSize={28} name="DDS" />
-                    <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#c8102e" strokeWidth={3.5} dot={{ r: 5, fill: "#fff", stroke: "#c8102e", strokeWidth: 2.5 }} name="% Aderência" />
+                    <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#f43f5e" strokeWidth={3.5} dot={{ r: 5, fill: "#fff", stroke: "#f43f5e", strokeWidth: 2.5 }} name="% Aderência" />
                   </ComposedChart>
                 </ResponsiveContainer>
               )}
@@ -656,17 +656,17 @@ function TstPanel() {
                       <stop offset="100%" stopColor={radialDDS[0].fill} stopOpacity={0.6} />
                     </linearGradient>
                   </defs>
-                  <RadialBar dataKey="value" cornerRadius={14} background={{ fill: "#eef2f6" }} fill="url(#gradRadial)" />
+                  <RadialBar dataKey="value" cornerRadius={14} background={{ fill: "#1e293b" }} fill="url(#gradRadial)" />
                 </RadialBarChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <div className="text-4xl font-black tabular-nums drop-shadow-sm" style={{ color: radialDDS[0].fill }}>{ddsAderencia}%</div>
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1.5">Período</div>
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mt-1.5">Período</div>
               </div>
             </div>
-            <div className="flex justify-around pt-3 mt-2 border-t border-slate-100">
-              <LegendItem color="#0c2340" label="DDS" value={ddsCount} />
-              <LegendItem color="#2d8a9e" label="Meta" value={90} />
+            <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80">
+              <LegendItem color="#22d3ee" label="DDS" value={ddsCount} />
+              <LegendItem color="#10b981" label="Meta" value={90} />
             </div>
           </Card>
 
@@ -678,21 +678,21 @@ function TstPanel() {
                   <ComposedChart data={docsMensal} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradAbertos" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#c8102e" stopOpacity={0.45} />
-                        <stop offset="100%" stopColor="#c8102e" stopOpacity={0.02} />
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.45} />
+                        <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.02} />
                       </linearGradient>
                       <linearGradient id="gradResolv" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2d8a9e" stopOpacity={0.45} />
-                        <stop offset="100%" stopColor="#2d8a9e" stopOpacity={0.02} />
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.45} />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
+                    <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} />
                     <Legend wrapperStyle={{ fontSize: 10 }} />
-                    <Area type="monotone" dataKey="abertos" stroke="#c8102e" strokeWidth={3} fill="url(#gradAbertos)" name="Abertos" dot={{ r: 4, fill: "#fff", stroke: "#c8102e", strokeWidth: 2 }} />
-                    <Area type="monotone" dataKey="resolvidos" stroke="#2d8a9e" strokeWidth={3} fill="url(#gradResolv)" name="Resolvidos" dot={{ r: 4, fill: "#fff", stroke: "#2d8a9e", strokeWidth: 2 }} />
+                    <Area type="monotone" dataKey="abertos" stroke="#f43f5e" strokeWidth={3} fill="url(#gradAbertos)" name="Abertos" dot={{ r: 4, fill: "#fff", stroke: "#f43f5e", strokeWidth: 2 }} />
+                    <Area type="monotone" dataKey="resolvidos" stroke="#10b981" strokeWidth={3} fill="url(#gradResolv)" name="Resolvidos" dot={{ r: 4, fill: "#fff", stroke: "#10b981", strokeWidth: 2 }} />
                   </ComposedChart>
                 </ResponsiveContainer>
               )}
@@ -712,13 +712,13 @@ function TstPanel() {
                       </linearGradient>
                     ))}
                   </defs>
-                  <CartesianGrid strokeDasharray="2 4" stroke="#e2e8f0" vertical={false} />
+                  <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#475569", fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
+                  <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} />
                   <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={36}>
                     {extintoresBars.map((_e, i) => <Cell key={i} fill={`url(#gradExt-${i})`} />)}
-                    <LabelList dataKey="value" position="top" style={{ fontSize: 12, fontWeight: 900, fill: "#0c2340" }} />
+                    <LabelList dataKey="value" position="top" style={{ fontSize: 12, fontWeight: 900, fill: "#22d3ee" }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -727,7 +727,7 @@ function TstPanel() {
 
           {/* 10 · HBar Pendência por Empresa */}
           <Card title="10 · Pendência · Empresa" className="col-span-12 md:col-span-4">
-            <HBarList items={top5Pend} color="#c8102e" suffix="%" empty="Sem pendências" />
+            <HBarList items={top5Pend} color="#f43f5e" suffix="%" empty="Sem pendências" />
           </Card>
 
           {/* 11 · HBar Distribuição Status */}
@@ -744,7 +744,7 @@ function TstPanel() {
 
           {/* 12 · HBar Motivos EPI */}
           <Card title="12 · Motivo Entrega · EPI" className="col-span-12 md:col-span-4">
-            <HBarList items={motivoEntrega} color="#0c2340" suffix="%" empty="Sem entregas" />
+            <HBarList items={motivoEntrega} color="#22d3ee" suffix="%" empty="Sem entregas" />
           </Card>
 
         </div>
@@ -754,23 +754,23 @@ function TstPanel() {
         {/* ===== Linha 4: Ações + Próximos 7 dias + Ranking ===== */}
         <div className="grid grid-cols-12 gap-4">
           <Card title="Ações Recomendadas" className="col-span-12 md:col-span-5"
-            action={<Link to="/app/hoje" className="text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-[#c8102e] flex items-center gap-1">Ver tudo <ArrowRight className="h-3 w-3" /></Link>}
+            action={<Link to="/app/hoje" className="text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-[#f43f5e] flex items-center gap-1">Ver tudo <ArrowRight className="h-3 w-3" /></Link>}
           >
             {acoes.length === 0 ? (
-              <div className="flex items-center justify-center py-8 text-[#2d8a9e] text-xs font-black uppercase tracking-wider gap-2">
+              <div className="flex items-center justify-center py-8 text-[#10b981] text-xs font-black uppercase tracking-wider gap-2">
                 <ShieldCheck className="h-4 w-4" /> Tudo em ordem
               </div>
             ) : (
               <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                 {acoes.map((a) => (
                   <Link key={a.id} to={a.link}
-                    className="flex items-center gap-2 p-2 rounded-md hover:bg-slate-50 transition-colors group">
-                    <div className={`w-1 self-stretch rounded-full ${a.severity === "crit" ? "bg-[#c8102e]" : "bg-[#c8a23c]"}`} />
+                    className="flex items-center gap-2 p-2 rounded-md hover:bg-slate-800/40 transition-colors group">
+                    <div className={`w-1 self-stretch rounded-full ${a.severity === "crit" ? "bg-[#f43f5e]" : "bg-[#fbbf24]"}`} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold text-slate-900 truncate">{a.titulo}</div>
+                      <div className="text-xs font-bold text-slate-50 truncate">{a.titulo}</div>
                       <div className="text-[10px] text-slate-500 truncate">{a.sub}</div>
                     </div>
-                    <ChevronRight className="h-3 w-3 text-slate-300 group-hover:text-[#c8102e] shrink-0" />
+                    <ChevronRight className="h-3 w-3 text-slate-600 group-hover:text-[#f43f5e] shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -778,30 +778,30 @@ function TstPanel() {
           </Card>
 
           <Card title="Próximos 7 Dias" className="col-span-12 md:col-span-4"
-            action={<Calendar className="h-3 w-3 text-slate-400" />}
+            action={<Calendar className="h-3 w-3 text-slate-500" />}
           >
             {proximos7.length === 0 ? (
-              <div className="py-8 text-center text-[#2d8a9e] text-xs font-black uppercase tracking-wider">Sem vencimentos</div>
+              <div className="py-8 text-center text-[#10b981] text-xs font-black uppercase tracking-wider">Sem vencimentos</div>
             ) : (
               <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                 {proximos7.map((e, i) => {
                   const d = new Date(e.date + "T00:00");
                   return (
-                    <div key={i} className="flex gap-2 items-center p-1.5 rounded hover:bg-slate-50">
-                      <div className="text-center shrink-0 w-10 bg-slate-100 rounded-md py-1">
-                        <div className="text-[8px] font-black text-slate-400 uppercase leading-none">{MONTHS_PT[d.getMonth()]}</div>
-                        <div className={`text-sm font-black leading-tight ${e.severity === "crit" ? "text-[#c8102e]" : "text-[#0c2340]"}`}>
+                    <div key={i} className="flex gap-2 items-center p-1.5 rounded hover:bg-slate-800/40">
+                      <div className="text-center shrink-0 w-10 bg-slate-800/60 rounded-md py-1">
+                        <div className="text-[8px] font-black text-slate-500 uppercase leading-none">{MONTHS_PT[d.getMonth()]}</div>
+                        <div className={`text-sm font-black leading-tight ${e.severity === "crit" ? "text-[#f43f5e]" : "text-[#22d3ee]"}`}>
                           {String(d.getDate()).padStart(2, "0")}
                         </div>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="text-[11px] font-bold text-slate-800 truncate">{e.titulo}</div>
+                        <div className="text-[11px] font-bold text-slate-100 truncate">{e.titulo}</div>
                         <div className="text-[10px] text-slate-500 truncate">{e.sub}</div>
                       </div>
                       <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 ${
-                        e.tipo === "ASO" ? "bg-amber-50 text-amber-700"
-                          : e.tipo === "EXT" ? "bg-rose-50 text-[#c8102e]"
-                          : "bg-slate-100 text-slate-600"
+                        e.tipo === "ASO" ? "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30"
+                          : e.tipo === "EXT" ? "bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/30"
+                          : "bg-slate-800/60 text-slate-600"
                       }`}>{e.tipo}</span>
                     </div>
                   );
@@ -812,16 +812,16 @@ function TstPanel() {
 
           <Card title="Ranking · Empresas" className="col-span-12 md:col-span-3">
             {pendPorEmpresa.length === 0 ? (
-              <div className="py-8 text-center text-[#2d8a9e] text-xs font-black uppercase tracking-wider">✓ Limpo</div>
+              <div className="py-8 text-center text-[#10b981] text-xs font-black uppercase tracking-wider">✓ Limpo</div>
             ) : (
               <div className="space-y-1.5">
                 {pendPorEmpresa.map((p, i) => {
                   const total = p.alerta + p.bloq;
                   return (
-                    <div key={p.id} className="flex items-center gap-2 py-1.5 border-b border-slate-100 last:border-0">
-                      <span className="text-xs font-black text-slate-300 w-4 text-center">{i + 1}</span>
-                      <span className="text-xs text-slate-800 truncate font-bold flex-1">{p.name}</span>
-                      <span className="text-xs font-black text-[#c8102e] tabular-nums">{total}</span>
+                    <div key={p.id} className="flex items-center gap-2 py-1.5 border-b border-slate-800/80 last:border-0">
+                      <span className="text-xs font-black text-slate-600 w-4 text-center">{i + 1}</span>
+                      <span className="text-xs text-slate-100 truncate font-bold flex-1">{p.name}</span>
+                      <span className="text-xs font-black text-[#f43f5e] tabular-nums">{total}</span>
                     </div>
                   );
                 })}
@@ -853,7 +853,7 @@ function TstPanel() {
         </div>
 
         {isLoading && (
-          <div className="text-center text-xs text-slate-400 py-2 animate-pulse">Carregando dados…</div>
+          <div className="text-center text-xs text-slate-500 py-2 animate-pulse">Carregando dados…</div>
         )}
       </div>
     </div>
@@ -873,10 +873,10 @@ function Card({
   action?: React.ReactNode;
 }) {
   return (
-    <div className={`bg-white rounded-lg border border-slate-200 shadow-sm p-4 ${className ?? ""}`}>
+    <div className={`bg-white rounded-lg border border-slate-700/60 shadow-sm p-4 ${className ?? ""}`}>
       {title && (
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-[#0c2340]">{title}</h3>
+          <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-[#22d3ee]">{title}</h3>
           {action}
         </div>
       )}
@@ -898,7 +898,7 @@ function KpiBig({
   return (
     <div
       className={`bg-white rounded-lg border shadow-sm p-4 flex items-center gap-3 transition-all ${
-        highlight ? "border-[#c8102e]/40 ring-1 ring-[#c8102e]/10" : "border-slate-200"
+        highlight ? "border-[#f43f5e]/40 ring-1 ring-[#f43f5e]/10" : "border-slate-700/60"
       }`}
     >
       <div
@@ -925,7 +925,7 @@ function DonutCenter({
   centerColor: string;
 }) {
   const hasData = data.length > 0 && data.some((d) => d.value > 0);
-  const chartData = hasData ? data : [{ name: "—", value: 1, fill: "#e2e8f0" }];
+  const chartData = hasData ? data : [{ name: "—", value: 1, fill: "#1e293b" }];
   const gradId = (i: number) => `donutGrad-${centerLabel.replace(/\s/g, "")}-${i}`;
   return (
     <div className="relative h-56">
@@ -942,12 +942,12 @@ function DonutCenter({
           <Pie data={chartData} dataKey="value" innerRadius={62} outerRadius={92} paddingAngle={3} stroke="#fff" strokeWidth={3} startAngle={90} endAngle={-270}>
             {chartData.map((_d, i) => <Cell key={i} fill={`url(#${gradId(i)})`} />)}
           </Pie>
-          <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #cbd5e1" }} />
+          <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #334155" }} />
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
         <div className="text-4xl font-black tabular-nums leading-none drop-shadow-sm" style={{ color: centerColor }}>{centerValue}</div>
-        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1.5">{centerLabel}</div>
+        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mt-1.5">{centerLabel}</div>
       </div>
     </div>
   );
@@ -958,7 +958,7 @@ function LegendItem({ color, label, value }: { color: string; label: string; val
     <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
       <span className="h-2 w-2 rounded-full shrink-0" style={{ background: color }} />
       <span className="truncate">{label}</span>
-      <span className="ml-auto tabular-nums text-slate-900 font-black">{value}</span>
+      <span className="ml-auto tabular-nums text-slate-50 font-black">{value}</span>
     </div>
   );
 }
@@ -973,23 +973,23 @@ function HBarList({
   perItemColor?: boolean;
 }) {
   if (items.length === 0) {
-    return <div className="py-8 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">{empty ?? "Sem dados"}</div>;
+    return <div className="py-8 text-center text-[10px] font-black uppercase tracking-wider text-slate-500">{empty ?? "Sem dados"}</div>;
   }
   const max = Math.max(...items.map((i) => i.value), 1);
   return (
     <div className="space-y-3.5 py-2">
       {items.map((it) => {
-        const c = perItemColor && it.color ? it.color : color ?? "#0c2340";
+        const c = perItemColor && it.color ? it.color : color ?? "#22d3ee";
         const pct = Math.max(2, Math.round((it.value / max) * 100));
         return (
           <div key={it.name}>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[12px] font-bold text-slate-700 truncate pr-2">{it.name}</span>
+              <span className="text-[12px] font-bold text-slate-200 truncate pr-2">{it.name}</span>
               <span className="text-[13px] font-black tabular-nums" style={{ color: c }}>
                 {it.value}{suffix ?? ""}
               </span>
             </div>
-            <div className="h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+            <div className="h-3 bg-slate-800/60 rounded-full overflow-hidden shadow-inner">
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${c}cc, ${c})` }}
@@ -1004,7 +1004,7 @@ function HBarList({
 
 function EmptyBlock({ label }: { label: string }) {
   return (
-    <div className="h-full w-full flex items-center justify-center text-[10px] font-bold uppercase tracking-wider text-slate-400 py-4">
+    <div className="h-full w-full flex items-center justify-center text-[10px] font-bold uppercase tracking-wider text-slate-500 py-4">
       {label}
     </div>
   );
@@ -1021,28 +1021,28 @@ function ModuleStat({
   stats: { label: string; value: number; tone: "ok" | "warn" | "crit" | "neutral" }[];
 }) {
   return (
-    <Link to={to} className="bg-white rounded-md border border-slate-300 shadow-sm p-3 hover:border-[#7f1212] hover:shadow-md transition-all group">
-      <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
+    <Link to={to} className="bg-white rounded-md border border-slate-700 shadow-sm p-3 hover:border-[#be123c] hover:shadow-md transition-all group">
+      <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800/80">
         <div className="flex items-center gap-1.5">
-          <Icon className="h-3.5 w-3.5 text-[#0c2340]" />
-          <h4 className="text-[10px] font-black uppercase tracking-[0.15em] text-[#0c2340]">{title}</h4>
+          <Icon className="h-3.5 w-3.5 text-[#22d3ee]" />
+          <h4 className="text-[10px] font-black uppercase tracking-[0.15em] text-[#22d3ee]">{title}</h4>
         </div>
-        <ChevronRight className="h-3 w-3 text-slate-300 group-hover:text-[#7f1212] transition-colors" />
+        <ChevronRight className="h-3 w-3 text-slate-600 group-hover:text-[#be123c] transition-colors" />
       </div>
       <div className="flex items-baseline gap-1.5 mb-2">
-        <span className="text-xl font-black text-slate-900 tabular-nums">{primary}</span>
-        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{primaryLabel}</span>
+        <span className="text-xl font-black text-slate-50 tabular-nums">{primary}</span>
+        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{primaryLabel}</span>
       </div>
-      <div className="grid grid-cols-3 gap-1 pt-2 border-t border-slate-100">
+      <div className="grid grid-cols-3 gap-1 pt-2 border-t border-slate-800/80">
         {stats.map((s) => {
-          const cls = s.tone === "crit" ? "text-[#7f1212]"
-            : s.tone === "warn" ? "text-amber-600"
-            : s.tone === "ok" ? "text-emerald-600"
-            : "text-slate-700";
+          const cls = s.tone === "crit" ? "text-[#be123c]"
+            : s.tone === "warn" ? "text-amber-300"
+            : s.tone === "ok" ? "text-emerald-300"
+            : "text-slate-200";
           return (
             <div key={s.label} className="text-center">
               <div className={`text-xs font-black tabular-nums ${cls}`}>{s.value}</div>
-              <div className="text-[7px] font-bold uppercase tracking-wider text-slate-400 mt-0.5 truncate">{s.label}</div>
+              <div className="text-[7px] font-bold uppercase tracking-wider text-slate-500 mt-0.5 truncate">{s.label}</div>
             </div>
           );
         })}
