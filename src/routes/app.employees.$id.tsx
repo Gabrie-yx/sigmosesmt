@@ -1668,10 +1668,10 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     PERDA_EXTRAVIO: "Reposição por perda/extravio",
   };
   const MOTIVO_COLOR: Record<MotivoEntrega, string> = {
-    PRIMEIRA_ENTREGA: "bg-emerald-500",
-    TROCA_DESGASTE: "bg-blue-500",
-    EMPRESTIMO: "bg-amber-500",
-    PERDA_EXTRAVIO: "bg-rose-600",
+    PRIMEIRA_ENTREGA: "bg-gradient-to-br from-rose-700/80 to-rose-950/80 ring-1 ring-rose-400/40",
+    TROCA_DESGASTE: "bg-gradient-to-br from-rose-600/70 to-rose-900/70 ring-1 ring-rose-300/30",
+    EMPRESTIMO: "bg-gradient-to-br from-amber-700/80 to-rose-950/80 ring-1 ring-amber-400/40",
+    PERDA_EXTRAVIO: "bg-gradient-to-br from-rose-500 to-rose-800 ring-1 ring-rose-300/50",
   };
 
   const [f, setF] = useState<{
