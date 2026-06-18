@@ -653,7 +653,7 @@ function VinculosDialog({ onClose, courses, roleMapping, roles }:
   const TopBar = (
     <div className="flex items-center gap-2 flex-wrap">
       <div className="relative flex-1 min-w-[180px]">
-        <Search className="h-3.5 w-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search className="h-3.5 w-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-rose-200/45" />
         <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar curso..." className="h-8 text-xs pl-7" />
       </div>
       <Button size="sm" onClick={onClose} className="h-8"><Save className="h-3.5 w-3.5 mr-1" /> Salvar e fechar</Button>
@@ -665,26 +665,26 @@ function VinculosDialog({ onClose, courses, roleMapping, roles }:
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0">
         <DialogHeader className="p-4 pb-2 border-b">
           <DialogTitle className="text-base">Vincular Cursos por Função</DialogTitle>
-          <p className="text-[11px] text-slate-500 mt-1">Conforme NR-01, os treinamentos são definidos por função. As alterações são salvas automaticamente.</p>
+          <p className="text-[11px] text-rose-200/60 mt-1">Conforme NR-01, os treinamentos são definidos por função. As alterações são salvas automaticamente.</p>
         </DialogHeader>
 
-        <div className="px-4 py-2 border-b bg-slate-50/50 sticky top-0 z-10">{TopBar}</div>
+        <div className="px-4 py-2 border-b border-rose-200/10 bg-rose-950/50 sticky top-0 z-10">{TopBar}</div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {cursosFiltrados.length === 0 && (
-            <div className="text-center text-slate-400 text-xs py-8 uppercase font-bold">Nenhum curso encontrado</div>
+            <div className="text-center text-rose-200/45 text-xs py-8 uppercase font-bold">Nenhum curso encontrado</div>
           )}
           {cursosFiltrados.map((c) => {
             const open = openId === c.id;
             const nRoles = roles.filter((r) => hasRole(r.id, c.id)).length;
             return (
-              <div key={c.id} className="border rounded-md bg-white">
+              <div key={c.id} className="border border-rose-200/10 rounded-md bg-rose-950/45">
                 <button
                   type="button"
                   onClick={() => setOpenId(open ? null : c.id)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-slate-50"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-rose-900/35"
                 >
-                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${open ? "" : "-rotate-90"}`} />
+                  <ChevronDown className={`h-4 w-4 text-rose-200/45 transition-transform ${open ? "" : "-rotate-90"}`} />
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-bold truncate">{c.codigo} — <span className="font-normal text-slate-700">{c.nome}</span></div>
                   </div>
