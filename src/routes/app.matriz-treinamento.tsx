@@ -268,7 +268,7 @@ function MatrizPage() {
         )}
       </div>
 
-      <div className="glass-card glass-shine rounded-xl p-3 mb-3 flex flex-wrap items-end gap-3">
+      <div className="glass-card glass-shine rounded-xl p-3 mb-3 flex flex-wrap items-end gap-3 border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]">
         <div className="flex items-center gap-2 text-xs font-bold text-rose-200/70 uppercase">
           <Filter className="h-4 w-4" /> Filtros
         </div>
@@ -309,7 +309,7 @@ function MatrizPage() {
         <div className="text-[11px] text-rose-200/70 font-bold">{empsFiltrados.length} funcionário(s) · {cursosVisiveis.length} curso(s)</div>
       </div>
 
-      <div className="mb-3 glass-card glass-shine rounded-xl px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div className="mb-3 glass-card glass-shine rounded-xl px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2 border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]">
         <div className="text-[10px] font-black uppercase text-rose-200/70">Legenda</div>
         {STATUS_LEGENDA.map((item) => (
           <div key={item.label} className="flex items-center gap-1.5 text-[10px] font-bold text-rose-100/90">
@@ -320,7 +320,7 @@ function MatrizPage() {
         ))}
       </div>
 
-      <div className="glass-card glass-shine rounded-xl overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 340px)" }}>
+      <div className="glass-card glass-shine rounded-xl overflow-auto custom-scrollbar border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]" style={{ maxHeight: "calc(100vh - 340px)" }}>
         <table className="text-[11px] border-collapse w-full table-fixed">
           <thead className="sticky top-0 bg-black/60 backdrop-blur-md z-10 text-rose-100">
             <tr>
