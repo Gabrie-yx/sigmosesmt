@@ -65,6 +65,9 @@ function TstPanel() {
         supabase.from("training_matrix_entries").select("id,course_id,employee_id,data_realizacao,status_override"),
         supabase.from("incidentes").select("id,tipo,gravidade,data_ocorrencia,status").gte("data_ocorrencia", since6m),
       ]);
+      const recordesRes = await supabase
+        .from("dias_sem_acidente_recordes")
+        .select("id,company_id,escopo,recorde_dias,data_inicio,data_recorde");
       const ossRes = await supabase
         .from("oss_emissoes")
         .select("employee_id,status,expira_em")
@@ -88,6 +91,7 @@ function TstPanel() {
         trainCourses: trainCourses.data ?? [],
         trainEntries: trainEntries.data ?? [],
         incidentes: incidentes.data ?? [],
+        recordes: recordesRes.data ?? [],
       };
     },
   });
