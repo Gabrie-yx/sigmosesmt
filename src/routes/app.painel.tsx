@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Search, ShieldCheck, Flame, Calendar, ArrowRight, ChevronRight, FolderOpen, Package,
   Users, AlertTriangle, ShieldAlert, TrendingUp, Repeat, GraduationCap, ClipboardCheck, Eye,
+  Trophy, Target, MessageSquare,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
@@ -64,6 +65,9 @@ function TstPanel() {
         supabase.from("training_matrix_entries").select("id,course_id,employee_id,data_realizacao,status_override"),
         supabase.from("incidentes").select("id,tipo,gravidade,data_ocorrencia,status").gte("data_ocorrencia", since6m),
       ]);
+      const recordesRes = await supabase
+        .from("dias_sem_acidente_recordes")
+        .select("id,company_id,escopo,recorde_dias,data_inicio,data_recorde");
       const ossRes = await supabase
         .from("oss_emissoes")
         .select("employee_id,status,expira_em")
@@ -87,6 +91,7 @@ function TstPanel() {
         trainCourses: trainCourses.data ?? [],
         trainEntries: trainEntries.data ?? [],
         incidentes: incidentes.data ?? [],
+        recordes: recordesRes.data ?? [],
       };
     },
   });
@@ -548,13 +553,59 @@ function TstPanel() {
   const nearMissTotal = nearMissTrend.reduce((s, m) => s + m.qtd, 0);
   const nearMissMesAtual = nearMissTrend[nearMissTrend.length - 1]?.qtd ?? 0;
 
+  // === Dias sem acidente — atual + recorde (filtra empresa quando selecionada) ===
+  const recordeAcidente = useMemo(() => {
+    const all = ((data as any)?.recordes ?? []) as any[];
+    const filtered = filterCompany === "ALL"
+      ? all
+      : all.filter((r) => r.company_id === filterCompany);
+    if (filtered.length === 0) return { atual: 0, recorde: 0, dataInicio: null as string | null };
+    // Pega o mais recente data_inicio (contagem atual)
+    const atualRec = filtered
+      .filter((r) => r.data_inicio)
+      .sort((a, b) => (b.data_inicio || "").localeCompare(a.data_inicio || ""))[0];
+    const recorde = Math.max(...filtered.map((r) => Number(r.recorde_dias || 0)), 0);
+    const atual = atualRec?.data_inicio
+      ? Math.max(0, Math.floor((today.getTime() - new Date(atualRec.data_inicio + "T00:00").getTime()) / dayMs))
+      : 0;
+    return { atual, recorde, dataInicio: atualRec?.data_inicio ?? null };
+  }, [data, filterCompany]);
+
+  // === DDS Planejado vs Realizado (meta: 1 DDS / semana / empresa ativa) ===
+  const ddsPlanRealizado = useMemo(() => {
+    const semanas = Math.max(1, Math.ceil(dias / 7));
+    const empresasAtivas = (data?.companies ?? []).length || 1;
+    const planejados = semanas * empresasAtivas;
+    const realizados = ddsCount;
+    const pct = planejados > 0 ? Math.round((realizados / planejados) * 100) : 0;
+    // Serie por semana (últimas N semanas)
+    const map = new Map<string, { sem: string; real: number }>();
+    (data?.dds ?? []).forEach((d: any) => {
+      const dt = new Date(d.data + "T00:00");
+      const day = (dt.getDay() + 6) % 7;
+      const wk = new Date(dt.getTime() - day * dayMs);
+      const key = fmt(wk);
+      const label = `${String(wk.getDate()).padStart(2, "0")}/${MONTHS_PT[wk.getMonth()]}`;
+      const cur = map.get(key) ?? { sem: label, real: 0 };
+      cur.real += 1;
+      map.set(key, cur);
+    });
+    const series = Array.from(map.values()).slice(-semanas).map((s) => ({
+      ...s, plan: empresasAtivas,
+    }));
+    return { planejados, realizados, pct, series };
+  }, [data, dias, ddsCount]);
+
   return (
     <div className="h-full overflow-y-auto custom-scrollbar relative"
       style={{
         background:
-          "radial-gradient(1200px 600px at 10% -10%, rgba(34,211,238,0.10), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(244,63,94,0.08), transparent 60%), linear-gradient(180deg, #060913 0%, #0a0f1f 50%, #060913 100%)",
+          "radial-gradient(1400px 700px at 8% -10%, rgba(34,211,238,0.14), transparent 55%), radial-gradient(1100px 600px at 100% 5%, rgba(244,63,94,0.10), transparent 55%), radial-gradient(900px 500px at 50% 110%, rgba(16,185,129,0.08), transparent 60%), linear-gradient(180deg, #0b1322 0%, #0f1a2e 35%, #0a1226 70%, #0b1322 100%)",
       }}
     >
+      {/* grain sutil pra remover o "chapado" */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 opacity-[0.035] mix-blend-overlay"
+        style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
       <div className="max-w-[1700px] mx-auto p-4 md:p-5 flex flex-col gap-4 relative">
 
         {/* ===== HEADER limpo ===== */}
@@ -625,11 +676,81 @@ function TstPanel() {
           <KpiBig icon={ShieldAlert} label="Bloqueados" value={bloqueados} sub="Ação imediata" accent="#f43f5e" highlight={bloqueados > 0} />
         </div>
 
+        {/* ===== Faixa Recorde · Dias sem acidente ===== */}
+        <div className="relative rounded-xl overflow-hidden border border-emerald-500/30"
+          style={{
+            background:
+              "radial-gradient(600px 200px at 15% 50%, rgba(16,185,129,0.18), transparent 60%), radial-gradient(500px 200px at 85% 50%, rgba(34,211,238,0.12), transparent 60%), linear-gradient(135deg, rgba(15,23,42,0.85), rgba(8,15,30,0.75))",
+            boxShadow: "0 10px 40px -15px rgba(16,185,129,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
+          }}>
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" />
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 md:p-5">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 relative"
+                style={{ background: "linear-gradient(135deg, #10b98140, #10b98110)", boxShadow: "0 0 30px #10b98180, inset 0 1px 0 #10b98180" }}>
+                <Trophy className="h-7 w-7 text-emerald-300" />
+              </div>
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300/80">Dias sem Acidente · Registrável</div>
+                <div className="text-4xl md:text-5xl font-black tabular-nums leading-none mt-1 text-emerald-300"
+                  style={{ textShadow: "0 0 25px rgba(16,185,129,0.6), 0 0 50px rgba(16,185,129,0.25)" }}>
+                  {recordeAcidente.atual}
+                  <span className="text-base text-emerald-400/70 ml-2 font-bold tracking-wide">dias</span>
+                </div>
+                {recordeAcidente.dataInicio && (
+                  <div className="text-[10px] text-slate-400 mt-1">Contagem iniciada em {new Date(recordeAcidente.dataInicio + "T00:00").toLocaleDateString("pt-BR")}</div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-6 pr-2">
+              <div className="text-right">
+                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 flex items-center gap-1 justify-end">
+                  <Trophy className="h-3 w-3 text-amber-400" /> Recorde Histórico
+                </div>
+                <div className="text-3xl font-black tabular-nums text-amber-300 tracking-tight"
+                  style={{ textShadow: "0 0 18px rgba(251,191,36,0.5)" }}>
+                  {recordeAcidente.recorde}
+                  <span className="text-xs text-amber-400/70 ml-1.5 font-bold">dias</span>
+                </div>
+              </div>
+              <div className="hidden md:block h-12 w-px bg-slate-700/60" />
+              <div className="text-right">
+                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Diferença</div>
+                <div className={`text-2xl font-black tabular-nums tracking-tight ${
+                  recordeAcidente.atual >= recordeAcidente.recorde ? "text-emerald-300" : "text-slate-300"
+                }`}>
+                  {recordeAcidente.atual >= recordeAcidente.recorde ? "+" : "−"}
+                  {Math.abs(recordeAcidente.recorde - recordeAcidente.atual)}
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* barra de progresso até o recorde */}
+          {recordeAcidente.recorde > 0 && (
+            <div className="px-4 md:px-5 pb-4">
+              <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                <span>Progresso até o recorde</span>
+                <span className="text-emerald-300/80">{Math.min(100, Math.round((recordeAcidente.atual / recordeAcidente.recorde) * 100))}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-slate-800/80 overflow-hidden">
+                <div className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${Math.min(100, (recordeAcidente.atual / recordeAcidente.recorde) * 100)}%`,
+                    background: "linear-gradient(90deg, #10b981, #34d399, #fbbf24)",
+                    boxShadow: "0 0 12px rgba(16,185,129,0.7)",
+                  }} />
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* ===== QUADRO DOS 12 GRÁFICOS ===== */}
         <div className="grid grid-cols-12 gap-4">
 
           {/* 1 · Donut Conformidade Geral */}
-          <Card title="01 · Status Geral" className="col-span-12 md:col-span-3">
+          <Card title="01 · Status Geral" className="col-span-12 md:col-span-3"
+            period={`${periodo}d`} meta="≥ 90%"
+            metaTone={conformidadeFiltro >= 90 ? "ok" : conformidadeFiltro >= 70 ? "warn" : "crit"}>
             <DonutCenter
               data={donutData}
               centerValue={`${conformidadeFiltro}%`}
@@ -644,7 +765,9 @@ function TstPanel() {
           </Card>
 
           {/* 2 · Donut ASO Status (PCMSO/NR-07) */}
-          <Card title="02 · ASO · PCMSO" className="col-span-12 md:col-span-3">
+          <Card title="02 · ASO · PCMSO" className="col-span-12 md:col-span-3"
+            period="MENSAL" meta="100%"
+            metaTone={asoConformPct >= 95 ? "ok" : asoConformPct >= 80 ? "warn" : "crit"}>
             <DonutCenter
               data={asoDonut.length > 0 ? asoDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
               centerValue={`${asoConformPct}%`}
@@ -753,28 +876,42 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 6 · DDS Composto (qtd × aderência) */}
-          <Card title="06 · DDS · Qtd × Aderência" className="col-span-12 md:col-span-5"
-            action={<span className="text-[10px] font-black uppercase tracking-wider text-[#10b981]">{ddsAderencia}% médio</span>}>
-            <div className="h-64">
-              {ddsTrend.length === 0 ? <EmptyBlock label="Sem DDS" /> : (
+          {/* 6 · DDS Planejado vs Realizado (semanal) */}
+          <Card title="06 · DDS · Planejado vs Realizado"
+            className="col-span-12 md:col-span-5"
+            period="SEMANAL"
+            meta={`≥ 90% · ${ddsPlanRealizado.realizados}/${ddsPlanRealizado.planejados}`}
+            metaTone={ddsPlanRealizado.pct >= 90 ? "ok" : ddsPlanRealizado.pct >= 70 ? "warn" : "crit"}
+            action={<MessageSquare className="h-3 w-3 text-cyan-300" />}
+          >
+            <div className="h-60">
+              {ddsPlanRealizado.series.length === 0 ? <EmptyBlock label="Sem DDS no período" /> : (
                 <ResponsiveContainer>
-                  <ComposedChart data={ddsTrend} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <ComposedChart data={ddsPlanRealizado.series} margin={{ top: 14, right: 12, left: -20, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="gradDDS" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#0891b2" /><stop offset="100%" stopColor="#22d3ee" />
+                      <linearGradient id="gradPlanReal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#22d3ee" /><stop offset="100%" stopColor="#0891b2" />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
-                    <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                    <XAxis dataKey="sem" tick={{ fontSize: 10, fill: "#cbd5e1" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
                     <Tooltip contentStyle={tooltipDark} />
-                    <Bar yAxisId="l" dataKey="qtd" fill="url(#gradDDS)" radius={[8, 8, 0, 0]} barSize={28} name="DDS" />
-                    <Line yAxisId="r" type="monotone" dataKey="aderencia" stroke="#f43f5e" strokeWidth={3.5} dot={{ r: 5, fill: "#0a0f1f", stroke: "#f43f5e", strokeWidth: 2.5 }} name="% Aderência" />
+                    <Bar dataKey="plan" fill="rgba(148,163,184,0.18)" radius={[6, 6, 0, 0]} barSize={26} name="Planejado">
+                      <LabelList dataKey="plan" position="top" style={{ fontSize: 9, fontWeight: 700, fill: "#94a3b8" }} />
+                    </Bar>
+                    <Bar dataKey="real" fill="url(#gradPlanReal)" radius={[6, 6, 0, 0]} barSize={26} name="Realizado">
+                      <LabelList dataKey="real" position="top" style={{ fontSize: 11, fontWeight: 900, fill: "#22d3ee" }} />
+                    </Bar>
                   </ComposedChart>
                 </ResponsiveContainer>
               )}
+            </div>
+            <div className="flex items-center justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
+              <span className="text-slate-500">Aderência: <span className="font-black tabular-nums"
+                style={{ color: ddsPlanRealizado.pct >= 90 ? "#10b981" : ddsPlanRealizado.pct >= 70 ? "#fbbf24" : "#f43f5e" }}>
+                {ddsPlanRealizado.pct}%</span></span>
+              <span className="text-slate-500">Aderência média (sessões): <span className="font-black text-cyan-300">{ddsAderencia}%</span></span>
             </div>
           </Card>
 
@@ -814,7 +951,8 @@ function TstPanel() {
           </Card>
 
           {/* 8 · Linha Documentos Abertos × Resolvidos */}
-          <Card title="08 · Não Conformidades · 6 meses" className="col-span-12 md:col-span-6">
+          <Card title="08 · Não Conformidades" className="col-span-12 md:col-span-6"
+            period="6 MESES" meta="Resolv. ≥ Abertos" metaTone="neutral">
             <div className="h-64">
               {docsMensal.every((d) => d.abertos === 0 && d.resolvidos === 0) ? <EmptyBlock label="Sem registros" /> : (
                 <ResponsiveContainer>
@@ -843,7 +981,9 @@ function TstPanel() {
           </Card>
 
           {/* 9 · Barras Extintores por Status (NR-23) */}
-          <Card title="09 · Extintores · NR-23" className="col-span-12 md:col-span-3">
+          <Card title="09 · Extintores · NR-23" className="col-span-12 md:col-span-3"
+            period="MENSAL" meta="100% em dia"
+            metaTone={extMetrics.vencidos > 0 ? "crit" : extMetrics.vencendo > 0 ? "warn" : "ok"}>
             <div className="h-64">
               <ResponsiveContainer>
                 <BarChart data={extintoresBars} margin={{ top: 20, right: 8, left: -25, bottom: 0 }}>
@@ -870,10 +1010,8 @@ function TstPanel() {
 
           {/* 10 · % Ações Plano no prazo */}
           <Card title="10 · Plano de Ação · Prazo" className="col-span-12 md:col-span-4"
-            action={<span className="text-[10px] font-black uppercase tracking-wider"
-              style={{ color: planoAcoesMetric.pct >= 90 ? "#10b981" : planoAcoesMetric.pct >= 70 ? "#fbbf24" : "#f43f5e" }}>
-              Meta ≥ 90%
-            </span>}>
+            period="MENSAL" meta="≥ 90%"
+            metaTone={planoAcoesMetric.pct >= 90 ? "ok" : planoAcoesMetric.pct >= 70 ? "warn" : "crit"}>
             <DonutCenter
               data={planoAcoesDonut.length > 0 ? planoAcoesDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
               centerValue={`${planoAcoesMetric.pct}%`}
@@ -889,6 +1027,7 @@ function TstPanel() {
 
           {/* 11 · % Treinamentos NR em dia */}
           <Card title="11 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4"
+            period="MENSAL" meta="100%" metaTone="ok"
             action={<GraduationCap className="h-3 w-3 text-cyan-400" />}>
             {treinamentosNR.length === 0 ? (
               <EmptyBlock label="Sem matriz NR" />
@@ -905,7 +1044,9 @@ function TstPanel() {
           </Card>
 
           {/* 12 · Near-miss / Quase-acidentes */}
-          <Card title="12 · Quase-Acidentes · 6m" className="col-span-12 md:col-span-4"
+          <Card title="12 · Quase-Acidentes" className="col-span-12 md:col-span-4"
+            period="MENSAL" meta="≥ 5/mês"
+            metaTone={nearMissMesAtual >= 5 ? "ok" : nearMissMesAtual >= 2 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
               <Eye className="h-3 w-3" /> {nearMissTotal} total
             </span>}>
@@ -1061,20 +1202,42 @@ function TstPanel() {
 // === Subcomponentes ===
 
 function Card({
-  title, children, className, action,
+  title, children, className, action, period, meta, metaTone,
 }: {
   title?: string;
   children: React.ReactNode;
   className?: string;
   action?: React.ReactNode;
+  period?: string;
+  meta?: string;
+  metaTone?: "ok" | "warn" | "crit" | "neutral";
 }) {
+  const toneColor = metaTone === "ok" ? "#10b981"
+    : metaTone === "warn" ? "#fbbf24"
+    : metaTone === "crit" ? "#f43f5e"
+    : "#94a3b8";
   return (
     <div className={`relative rounded-xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-md shadow-[0_8px_30px_-12px_rgba(0,0,0,0.5)] p-4 overflow-hidden ${className ?? ""}`}>
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
       {title && (
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-cyan-300/90">{title}</h3>
-          {action}
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-cyan-300/90 truncate">{title}</h3>
+            {period && (
+              <span className="text-[8.5px] font-black uppercase tracking-[0.15em] px-1.5 py-0.5 rounded bg-slate-800/70 text-slate-400 ring-1 ring-slate-700/60 shrink-0">
+                {period}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {meta && (
+              <span className="text-[9px] font-black uppercase tracking-wider flex items-center gap-1 px-1.5 py-0.5 rounded ring-1 shrink-0"
+                style={{ color: toneColor, background: `${toneColor}12`, borderColor: `${toneColor}40`, boxShadow: `0 0 8px ${toneColor}30` }}>
+                <Target className="h-2.5 w-2.5" /> {meta}
+              </span>
+            )}
+            {action}
+          </div>
         </div>
       )}
       {children}
