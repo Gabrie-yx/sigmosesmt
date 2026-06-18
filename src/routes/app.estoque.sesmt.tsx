@@ -717,6 +717,13 @@ export function EstoqueSesmtPage() {
         onSubmit={(v) => entradaMut.mutate(v)}
         pending={entradaMut.isPending}
       />
+
+      {/* Relatório de Entregas */}
+      <RelatorioEntregasDialog
+        open={showRelatorioEntregas}
+        onOpenChange={setShowRelatorioEntregas}
+        responsavel={user?.email ?? null}
+      />
     </div>
   );
 }
