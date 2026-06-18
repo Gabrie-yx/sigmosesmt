@@ -600,9 +600,12 @@ function TstPanel() {
     <div className="h-full overflow-y-auto custom-scrollbar relative"
       style={{
         background:
-          "radial-gradient(1200px 600px at 10% -10%, rgba(34,211,238,0.10), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(244,63,94,0.08), transparent 60%), linear-gradient(180deg, #060913 0%, #0a0f1f 50%, #060913 100%)",
+          "radial-gradient(1400px 700px at 8% -10%, rgba(34,211,238,0.14), transparent 55%), radial-gradient(1100px 600px at 100% 5%, rgba(244,63,94,0.10), transparent 55%), radial-gradient(900px 500px at 50% 110%, rgba(16,185,129,0.08), transparent 60%), linear-gradient(180deg, #0b1322 0%, #0f1a2e 35%, #0a1226 70%, #0b1322 100%)",
       }}
     >
+      {/* grain sutil pra remover o "chapado" */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 opacity-[0.035] mix-blend-overlay"
+        style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
       <div className="max-w-[1700px] mx-auto p-4 md:p-5 flex flex-col gap-4 relative">
 
         {/* ===== HEADER limpo ===== */}
