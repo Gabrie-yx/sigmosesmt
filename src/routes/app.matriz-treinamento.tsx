@@ -892,17 +892,17 @@ function BulkEmpDialog({ companies, employees, onClose }:
             <Label className="text-[10px] uppercase font-black">
               Já cadastrados nesta empresa ({existentes.length})
             </Label>
-            <div className="mt-1 border border-slate-200 rounded p-2 max-h-40 overflow-y-auto bg-slate-50 text-[11px]">
-              {existentes.length === 0 && <div className="text-slate-400 italic">Nenhum cadastro nesta empresa ainda.</div>}
+            <div className="mt-1 border border-rose-200/10 rounded p-2 max-h-40 overflow-y-auto bg-rose-950/45 text-[11px]">
+              {existentes.length === 0 && <div className="text-rose-200/45 italic">Nenhum cadastro nesta empresa ainda.</div>}
               {existentes.map((e) => (
-                <div key={e.id} className="flex justify-between border-b border-slate-100 py-0.5">
+                <div key={e.id} className="flex justify-between border-b border-rose-200/10 py-0.5">
                   <span className="font-bold">{e.matricula ?? "—"}</span>
                   <span className="flex-1 px-2">{e.nome}</span>
-                  <span className="text-slate-500 uppercase">{e.setor ?? "—"}</span>
+                  <span className="text-rose-200/60 uppercase">{e.setor ?? "—"}</span>
                 </div>
               ))}
             </div>
-            <div className="text-[10px] text-slate-500 mt-1">Use a lista acima para evitar duplicar matrículas/nomes — eles serão ignorados automaticamente.</div>
+            <div className="text-[10px] text-rose-200/60 mt-1">Use a lista acima para evitar duplicar matrículas/nomes — eles serão ignorados automaticamente.</div>
           </div>
 
           <div>
@@ -914,7 +914,7 @@ function BulkEmpDialog({ companies, employees, onClose }:
               placeholder={"matricula;NOME COMPLETO\n000999;FULANO DE TAL\n000998;CICLANO\n— ou só o nome:\nBELTRANO DA SILVA"}
               className="mt-1 font-mono text-xs"
             />
-            <div className="text-[10px] text-slate-500 mt-1">Separadores aceitos: <code>;</code> <code>|</code> <code>,</code> ou tabulação. Matrícula é opcional.</div>
+            <div className="text-[10px] text-rose-200/60 mt-1">Separadores aceitos: <code>;</code> <code>|</code> <code>,</code> ou tabulação. Matrícula é opcional.</div>
           </div>
         </div>
         <DialogFooter className="gap-2">
