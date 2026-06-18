@@ -2018,7 +2018,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           <Button
             onClick={() => gerarFicha()}
             title="Visualizar e Assinar Ficha de EPI"
-            className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs"
+            className="bg-gradient-to-br from-rose-600/90 via-rose-800/90 to-rose-950/90 hover:from-rose-500 hover:to-rose-900 text-rose-50 font-black uppercase tracking-widest text-xs ring-1 ring-rose-400/40 shadow-[0_0_24px_rgba(244,80,110,0.35)]"
             size="lg"
           >
             <Printer className="h-4 w-4 mr-2" /> Ficha em PDF
