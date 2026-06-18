@@ -60,7 +60,7 @@ const CELL_BG: Record<string, string> = {
   "PENDENTE": "bg-rose-300 hover:bg-rose-400",
   "EM ANDAMENTO": "bg-cyan-500 hover:bg-cyan-600",
   "A INICIAR": "bg-violet-500 hover:bg-violet-600",
-  "N/A": "bg-white/10 hover:bg-white/20",
+  "N/A": "bg-rose-950/70 hover:bg-rose-900/80",
 };
 
 const STATUS_LEGENDA = [
@@ -341,7 +341,7 @@ function MatrizPage() {
             {empsFiltrados.map((emp, i) => {
               const comp = emp.company_id ? compMap[emp.company_id] : null;
               return (
-                <tr key={emp.id} className={i % 2 ? "bg-white/[0.03]" : "bg-transparent"}>
+                <tr key={emp.id} className={i % 2 ? "bg-rose-950/20" : "bg-transparent"}>
                   <td className="sticky left-0 z-10 bg-[#1a0810]/90 backdrop-blur-sm px-2 py-1.5 border-b border-r border-white/10 font-bold text-[11px] text-rose-100">{emp.matricula ?? "—"}</td>
                   <td className="sticky left-[60px] z-10 bg-[#1a0810]/90 backdrop-blur-sm px-2 py-1.5 border-b border-r border-white/10">
                     <div className="font-bold text-rose-50 text-[12px] leading-tight truncate max-w-[200px]">{emp.nome}</div>
@@ -391,7 +391,7 @@ function MatrizPage() {
                         <button
                           disabled={!isEditor}
                           onClick={() => setEditing({ emp, course: c, entry })}
-                          className={`w-full h-8 ${CELL_BG[st.label] ?? "bg-white/10"} text-white text-[9px] font-black leading-none`}
+                          className={`w-full h-8 ${CELL_BG[st.label] ?? "bg-rose-950/70"} text-rose-50 text-[9px] font-black leading-none`}
                           title={`${c.nome} — ${st.label}${dataLabel ? ` (${dataLabel})` : ""}${sched ? ` — Turma: ${sched.titulo}` : ""}${entry?.observacao ? ` — ${entry.observacao}` : ""}`}
                         />
                       </td>
@@ -463,7 +463,7 @@ function EntryDialog({ emp, course, entry, onClose, onSaved, isAdmin }:
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>{course.nome}</DialogTitle></DialogHeader>
-        <div className="text-xs text-slate-500 -mt-2 mb-2">{emp.nome} · {emp.matricula ?? "—"} · {course.periodicidade}</div>
+        <div className="text-xs text-rose-200/60 -mt-2 mb-2">{emp.nome} · {emp.matricula ?? "—"} · {course.periodicidade}</div>
         <div className="space-y-3">
           <div>
             <Label className="text-[10px] font-black uppercase">Data de realização</Label>
