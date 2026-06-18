@@ -458,21 +458,21 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Emitir nova OSS</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-lg sm:max-w-lg overflow-hidden">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-base">Emitir nova OSS</DialogTitle>
+          <DialogDescription className="text-xs">
             Após emitir, baixe o PDF, imprima, colete as assinaturas físicas e anexe o PDF escaneado na lista.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-3 min-w-0">
           <div>
             <Label className="text-[10px] font-black uppercase">Empresa *</Label>
             <Select
               value={companyId}
               onValueChange={(v) => { setCompanyId(v); setEmployeeId(""); setTemplateId(""); }}
             >
-              <SelectTrigger><SelectValue placeholder="Selecione a empresa..." /></SelectTrigger>
+              <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Selecione a empresa..." className="truncate" /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {companies.map((c) => (
                   <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -483,8 +483,8 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
           <div>
             <Label className="text-[10px] font-black uppercase">Funcionário *</Label>
             <Select value={employeeId} onValueChange={(v) => { setEmployeeId(v); setTemplateId(""); }} disabled={!companyId}>
-              <SelectTrigger>
-                <SelectValue placeholder={companyId ? "Selecione..." : "Escolha a empresa primeiro"} />
+              <SelectTrigger className="w-full min-w-0">
+                <SelectValue placeholder={companyId ? "Selecione..." : "Escolha a empresa primeiro"} className="truncate" />
               </SelectTrigger>
               <SelectContent className="max-h-72">
                 {employees.length === 0 && companyId && (
@@ -499,7 +499,7 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
           <div>
             <Label className="text-[10px] font-black uppercase">Modelo de OSS *</Label>
             <Select value={effectiveTemplateId} onValueChange={setTemplateId}>
-              <SelectTrigger><SelectValue placeholder="Selecione o modelo..." /></SelectTrigger>
+              <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Selecione o modelo..." className="truncate" /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {templates.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
@@ -520,7 +520,7 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
           <div>
             <Label className="text-[10px] font-black uppercase">Motivo da emissão</Label>
             <Select value={motivo} onValueChange={setMotivo}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full min-w-0"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="ADMISSAO">Admissão</SelectItem>
                 <SelectItem value="MUDANCA_CARGO">Mudança de cargo</SelectItem>
@@ -531,10 +531,10 @@ function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: 
             </Select>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => emit.mutate()} disabled={emit.isPending || !employeeId || !effectiveTemplateId} className="bg-rose-600 hover:bg-rose-700">
-            <FileSignature className="h-4 w-4 mr-1" />Emitir OSS
+        <DialogFooter className="flex-row justify-end gap-2 sm:gap-2">
+          <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
+          <Button size="sm" onClick={() => emit.mutate()} disabled={emit.isPending || !employeeId || !effectiveTemplateId} className="bg-rose-600 hover:bg-rose-700">
+            <FileSignature className="h-4 w-4 mr-1" />Emitir
           </Button>
         </DialogFooter>
       </DialogContent>
