@@ -170,8 +170,7 @@ export function buildEstoqueSesmtPdf(opts: EstoqueSesmtPdfOpts): jsPDF {
 
 export function openEstoqueSesmtPdf(opts: EstoqueSesmtPdfOpts) {
   const doc = buildEstoqueSesmtPdf(opts);
-  const blobUrl = doc.output("bloburl");
-  window.open(blobUrl, "_blank");
+  doc.save(`inventario-estoque-sesmt-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
 export function downloadEstoqueSesmtPdf(opts: EstoqueSesmtPdfOpts) {

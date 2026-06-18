@@ -28,6 +28,7 @@ import protectiveClothingIcon from "@/assets/protective-clothing.png";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { openEstoqueSesmtPdf } from "@/lib/estoque-sesmt-pdf";
+import { RelatorioEntregasDialog } from "@/components/estoque/relatorio-entregas-dialog";
 
 type Item = {
   id: string;
@@ -62,6 +63,7 @@ export function EstoqueSesmtPage() {
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<Set<string>>(new Set());
   const [gerandoReq, setGerandoReq] = useState(false);
+  const [showRelatorioEntregas, setShowRelatorioEntregas] = useState(false);
   const CART_MAX = 15;
 
   const { data: items = [] } = useQuery({
@@ -436,6 +438,13 @@ export function EstoqueSesmtPage() {
           >
             <Printer className="h-4 w-4 mr-2" /> Imprimir PDF
           </Button>
+          <Button
+            variant="outline"
+            className="border-indigo-600 text-indigo-700 hover:bg-indigo-50"
+            onClick={() => setShowRelatorioEntregas(true)}
+          >
+            <History className="h-4 w-4 mr-2" /> Relatório de entregas
+          </Button>
         </div>
       </div>
 
@@ -707,6 +716,13 @@ export function EstoqueSesmtPage() {
         items={items}
         onSubmit={(v) => entradaMut.mutate(v)}
         pending={entradaMut.isPending}
+      />
+
+      {/* Relatório de Entregas */}
+      <RelatorioEntregasDialog
+        open={showRelatorioEntregas}
+        onOpenChange={setShowRelatorioEntregas}
+        responsavel={user?.email ?? null}
       />
     </div>
   );
