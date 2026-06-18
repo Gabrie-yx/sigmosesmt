@@ -25,14 +25,14 @@ type Doc = {
 };
 
 const CORES = {
-  rose: "bg-rose-100 text-rose-700",
-  amber: "bg-amber-100 text-amber-700",
-  emerald: "bg-emerald-100 text-emerald-700",
-  orange: "bg-orange-100 text-orange-700",
-  red: "bg-red-100 text-red-700",
-  violet: "bg-violet-100 text-violet-700",
-  blue: "bg-blue-100 text-blue-700",
-  slate: "bg-slate-100 text-slate-700",
+  rose: "bg-rose-950/60 text-rose-200 border border-rose-400/30",
+  amber: "bg-amber-950/50 text-amber-200 border border-amber-400/30",
+  emerald: "bg-emerald-950/50 text-emerald-200 border border-emerald-400/30",
+  orange: "bg-orange-950/50 text-orange-200 border border-orange-400/30",
+  red: "bg-red-950/60 text-red-200 border border-red-400/30",
+  violet: "bg-violet-950/50 text-violet-200 border border-violet-400/30",
+  blue: "bg-rose-950/60 text-rose-200 border border-rose-400/30",
+  slate: "bg-rose-950/60 text-rose-200 border border-rose-400/30",
 } as const;
 
 const DOCS: Doc[] = [
@@ -157,17 +157,17 @@ const DOCS: Doc[] = [
 
 function GuiaDocumentosPage() {
   return (
-    <div className="h-full overflow-y-auto bg-slate-50">
-      <div className="px-6 pt-5 pb-3 border-b border-blue-100 bg-gradient-to-r from-blue-50 via-white to-emerald-50 shadow-sm">
+    <div className="h-full overflow-y-auto">
+      <div className="px-6 pt-5 pb-3 border-b border-rose-400/20 bg-gradient-to-r from-rose-950/70 via-[#1a0810]/80 to-black/70 shadow-[0_0_24px_-12px_rgba(220,38,70,0.6)]">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-blue-600 to-emerald-600 text-white shadow">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-rose-600 to-rose-900 text-rose-50 shadow-[0_0_18px_-4px_rgba(220,38,70,0.7)] border border-rose-400/40">
             <BookOpenCheck className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-xl font-black text-rose-50 tracking-tight">
               Guia: Onde encontrar meus documentos de SST?
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-rose-200/70 mt-0.5">
               Quem emite, onde fica arquivado, qual a validade e para que serve cada laudo obrigatório.
             </p>
           </div>
@@ -175,11 +175,11 @@ function GuiaDocumentosPage() {
       </div>
 
       <div className="p-6 max-w-6xl mx-auto space-y-4">
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 flex gap-3">
-          <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5 text-amber-600" />
+        <div className="rounded-lg border border-amber-400/30 bg-amber-950/30 p-4 text-sm text-amber-100 flex gap-3 backdrop-blur-sm">
+          <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5 text-amber-300" />
           <div>
-            <p className="font-semibold mb-1">Antes de marcar um risco como "Avaliado":</p>
-            <p className="text-amber-800">
+            <p className="font-semibold mb-1 text-amber-200">Antes de marcar um risco como "Avaliado":</p>
+            <p className="text-amber-100/90">
               Sempre confira os valores reais (intensidade, limite de tolerância, grau de insalubridade) no
               <b> laudo oficial assinado por profissional habilitado</b>. Não use estimativas de IA ou da literatura
               para decisões legais — elas servem só de ponto de partida.
@@ -191,27 +191,27 @@ function GuiaDocumentosPage() {
           {DOCS.map((d) => {
             const Icon = d.icon;
             return (
-              <Card key={d.sigla} className="border-slate-200 hover:shadow-md transition-shadow">
+              <Card key={d.sigla} className="glass-card border-rose-400/20 hover:shadow-[0_0_28px_-10px_rgba(220,38,70,0.7)] transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <div className={`p-1.5 rounded-md ${CORES[d.cor]}`}>
                         <Icon className="h-4 w-4" />
                       </div>
-                      <CardTitle className="text-base font-bold text-slate-900">{d.sigla}</CardTitle>
+                      <CardTitle className="text-base font-bold text-rose-50">{d.sigla}</CardTitle>
                     </div>
                     <Badge
                       variant="outline"
                       className={
                         d.obrigatorio === "SIM"
-                          ? "border-rose-300 bg-rose-50 text-rose-700 text-[10px]"
-                          : "border-amber-300 bg-amber-50 text-amber-700 text-[10px]"
+                          ? "border-rose-400/40 bg-rose-950/60 text-rose-200 text-[10px]"
+                          : "border-amber-400/40 bg-amber-950/50 text-amber-200 text-[10px]"
                       }
                     >
                       {d.obrigatorio === "SIM" ? "Obrigatório" : "Quando aplicável"}
                     </Badge>
                   </div>
-                  <p className="text-xs text-slate-600 mt-1 leading-snug">{d.nome}</p>
+                  <p className="text-xs text-rose-200/70 mt-1 leading-snug">{d.nome}</p>
                 </CardHeader>
                 <CardContent className="space-y-2 text-xs">
                   <Linha label="Base legal" value={d.base} />
@@ -226,14 +226,14 @@ function GuiaDocumentosPage() {
           })}
         </div>
 
-        <Card className="border-emerald-200 bg-emerald-50/40">
+        <Card className="glass-card border-emerald-400/25 bg-emerald-950/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-emerald-900 flex items-center gap-2">
+            <CardTitle className="text-sm font-bold text-emerald-200 flex items-center gap-2">
               <ExternalLink className="h-4 w-4" />
               Não tenho nenhum desses documentos. E agora?
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-emerald-900 space-y-2">
+          <CardContent className="text-xs text-emerald-100/90 space-y-2">
             <p>
               <b>1.</b> Procure uma <b>consultoria de SST</b> registrada (Engenheiro de Seg. do Trabalho com CREA ativo).
               Peça orçamento de pacote: <b>PGR + LTCAT + PCMSO</b> juntos saem mais barato.
@@ -255,9 +255,9 @@ function GuiaDocumentosPage() {
 
 function Linha({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className={`flex gap-2 ${highlight ? "bg-blue-50 -mx-2 px-2 py-1 rounded" : ""}`}>
-      <span className="font-semibold text-slate-500 shrink-0 w-24">{label}:</span>
-      <span className={highlight ? "text-blue-900 font-medium" : "text-slate-700"}>{value}</span>
+    <div className={`flex gap-2 ${highlight ? "bg-rose-950/50 border border-rose-400/20 -mx-2 px-2 py-1 rounded" : ""}`}>
+      <span className="font-semibold text-rose-200/60 shrink-0 w-24">{label}:</span>
+      <span className={highlight ? "text-rose-100 font-medium" : "text-rose-100/85"}>{value}</span>
     </div>
   );
 }
