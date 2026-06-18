@@ -824,26 +824,114 @@ function TstPanel() {
         {/* ===== QUADRO DOS 12 GRÁFICOS ===== */}
         <div className="grid grid-cols-12 gap-4">
 
-          {/* 1 · Donut Conformidade Geral */}
-          <Card title="01 · Status Geral" className="col-span-12 md:col-span-3"
-            period={`${periodo}d`} meta="≥ 90%"
-            metaTone={conformidadeFiltro >= 90 ? "ok" : conformidadeFiltro >= 70 ? "warn" : "crit"}
-            ncPrefill={{ codigo: "IND-00", indicador: "Status Geral de Conformidade", mesRef: mesRefAtual }}>
-            <DonutCenter
-              data={donutData}
-              centerValue={`${conformidadeFiltro}%`}
-              centerLabel="Conformidade"
-              centerColor={conformidadeFiltro >= 90 ? "#10b981" : conformidadeFiltro >= 70 ? "#fbbf24" : "#f43f5e"}
-            />
-            <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80">
-              <LegendItem color="#10b981" label="Aptos" value={aptos} />
-              <LegendItem color="#fbbf24" label="Alerta" value={alertas} />
-              <LegendItem color="#f43f5e" label="Bloq." value={bloqueados} />
+          {/* 1 · TF — Taxa de Frequência (NBR 14280) */}
+          <Card title="01 · TF · Taxa de Frequência" className="col-span-12 md:col-span-4"
+            period="12 MESES" meta="= 0"
+            metaTone={tf === 0 ? "ok" : tf <= 5 ? "warn" : "crit"}
+            action={<span className="text-[10px] font-black uppercase tracking-wider text-rose-300 flex items-center gap-1">
+              <Activity className="h-3 w-3" /> {tf.toFixed(2)}
+            </span>}
+            ncPrefill={{ codigo: "IND-01", indicador: "Taxa de Frequência (TF)", mesRef: mesRefAtual }}>
+            <div className="h-56">
+              {totalHHT12m === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center gap-1">
+                  <AlertOctagon className="h-6 w-6 text-amber-400" />
+                  <div className="text-[10px] font-black uppercase tracking-wider text-amber-300">Lançar HHT mensal</div>
+                  <div className="text-[9px] text-slate-500">Sem HHT cadastrado · cálculo indisponível</div>
+                </div>
+              ) : (
+                <ResponsiveContainer>
+                  <ComposedChart data={tfSerie} margin={{ top: 14, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradTF" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.55} />
+                        <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={tooltipDark} formatter={(v: any) => [Number(v).toFixed(2), "TF"]} />
+                    <Area type="monotone" dataKey="tf" stroke="#f43f5e" strokeWidth={3} fill="url(#gradTF)"
+                      dot={{ r: 3, fill: "#0a0f1f", stroke: "#f43f5e", strokeWidth: 2 }}>
+                      <LabelList dataKey="tf" position="top" style={{ fontSize: 9, fontWeight: 900, fill: "#fda4af" }} />
+                    </Area>
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+            <div className="flex justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
+              <span className="text-slate-500">Acidentes c/ afast. 12m: <span className="text-rose-300 font-black">{totalAcid12m}</span></span>
+              <span className="text-slate-500">HHT 12m: <span className="text-slate-300 font-black tabular-nums">{totalHHT12m.toLocaleString("pt-BR")}</span></span>
             </div>
           </Card>
 
-          {/* 2 · Donut ASO Status (PCMSO/NR-07) */}
-          <Card title="02 · ASO · PCMSO" className="col-span-12 md:col-span-3"
+          {/* 2 · TG — Taxa de Gravidade (NBR 14280) */}
+          <Card title="02 · TG · Taxa de Gravidade" className="col-span-12 md:col-span-4"
+            period="12 MESES" meta="≤ 100"
+            metaTone={tg <= 100 ? "ok" : tg <= 500 ? "warn" : "crit"}
+            action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
+              <Activity className="h-3 w-3" /> {tg.toFixed(2)}
+            </span>}
+            ncPrefill={{ codigo: "IND-02", indicador: "Taxa de Gravidade (TG)", mesRef: mesRefAtual }}>
+            <div className="h-56">
+              {totalHHT12m === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center gap-1">
+                  <AlertOctagon className="h-6 w-6 text-amber-400" />
+                  <div className="text-[10px] font-black uppercase tracking-wider text-amber-300">Lançar HHT mensal</div>
+                  <div className="text-[9px] text-slate-500">Sem HHT cadastrado · cálculo indisponível</div>
+                </div>
+              ) : (
+                <ResponsiveContainer>
+                  <ComposedChart data={tfSerie} margin={{ top: 14, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradTG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#fbbf24" stopOpacity={0.55} />
+                        <stop offset="100%" stopColor="#fbbf24" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={tooltipDark} formatter={(v: any) => [Number(v).toFixed(2), "TG"]} />
+                    <Area type="monotone" dataKey="tg" stroke="#fbbf24" strokeWidth={3} fill="url(#gradTG)"
+                      dot={{ r: 3, fill: "#0a0f1f", stroke: "#fbbf24", strokeWidth: 2 }}>
+                      <LabelList dataKey="tg" position="top" style={{ fontSize: 9, fontWeight: 900, fill: "#fde68a" }} />
+                    </Area>
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+            <div className="flex justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
+              <span className="text-slate-500">Dias perdidos 12m: <span className="text-amber-300 font-black">{totalDias12m}</span></span>
+              <span className="text-slate-500">Meta NBR: <span className="text-emerald-400 font-black">≤ 100</span></span>
+            </div>
+          </Card>
+          {/* 3 · % Treinamentos NR em dia */}
+          <Card title="03 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4"
+            period="MENSAL" meta="≥ 95%"
+            metaTone={(() => {
+              const avg = treinamentosNR.length > 0 ? Math.round(treinamentosNR.reduce((s, t) => s + t.value, 0) / treinamentosNR.length) : 100;
+              return avg >= 95 ? "ok" : avg >= 80 ? "warn" : "crit";
+            })()}
+            action={<GraduationCap className="h-3 w-3 text-cyan-400" />}
+            ncPrefill={{ codigo: "IND-03", indicador: "Treinamentos NR em dia", mesRef: mesRefAtual }}>
+            {treinamentosNR.length === 0 ? (
+              <EmptyBlock label="Sem matriz NR" />
+            ) : (
+              <HBarList
+                items={treinamentosNR.map((t) => ({
+                  name: t.name,
+                  value: t.value,
+                  color: t.value >= 90 ? "#10b981" : t.value >= 70 ? "#fbbf24" : "#f43f5e",
+                }))}
+                suffix="%" perItemColor
+              />
+            )}
+          </Card>
+
+          {/* 4 · Donut ASO Status (PCMSO/NR-07) */}
+          <Card title="04 · ASO · PCMSO" className="col-span-12 md:col-span-4"
             period="MENSAL" meta="100%"
             metaTone={asoConformPct >= 95 ? "ok" : asoConformPct >= 80 ? "warn" : "crit"}
             ncPrefill={{ codigo: "IND-05", indicador: "ASOs em dia", mesRef: mesRefAtual }}>
@@ -860,103 +948,8 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 3 · Pareto Empresas por colaborador (Bar + acumulado %) */}
-          <Card title="03 · Pareto · Empresas" className="col-span-12 md:col-span-6"
-            action={<span className="text-[10px] font-bold text-slate-500">{totalEmp} colab.</span>}>
-            <div className="h-64">
-              {paretoEmpresas.length === 0 ? <EmptyBlock label="Sem dados" /> : (
-                <ResponsiveContainer>
-                  <ComposedChart data={paretoEmpresas} margin={{ top: 16, right: 8, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="gradPareto" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#0891b2" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.85} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#cbd5e1" }} axisLine={false} tickLine={false} />
-                    <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
-                    <Tooltip contentStyle={tooltipDark} />
-                    <Bar yAxisId="l" dataKey="qtd" fill="url(#gradPareto)" radius={[8, 8, 0, 0]} barSize={36} name="Colaboradores">
-                      <LabelList dataKey="qtd" position="top" style={{ fontSize: 11, fontWeight: 900, fill: "#e2e8f0" }} />
-                    </Bar>
-                    <Line yAxisId="r" type="monotone" dataKey="acumulado" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: "#0a0f1f", stroke: "#fbbf24", strokeWidth: 2.5 }} name="% Acumulado" />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </Card>
-
-          {/* 4 · Área Fluxo Entregas EPI */}
-          <Card title="04 · Fluxo EPI · Tendência" className="col-span-12 md:col-span-6"
-            action={<span className="text-[10px] font-bold text-slate-500 flex items-center gap-1"><TrendingUp className="h-3 w-3" />{totalEntregas} · R$ {valorEntregas.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}</span>}>
-            <div className="h-64">
-              {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas" /> : (
-                <ResponsiveContainer>
-                  <ComposedChart data={entregaSerie} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="gradArea" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.7} />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.05} />
-                      </linearGradient>
-                      <linearGradient id="gradArea2" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.45} />
-                        <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.02} />
-                      </linearGradient>
-                      <linearGradient id="gradArea3" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.5} />
-                        <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.02} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={tooltipDark} />
-                    <Area type="monotone" dataKey="primeira" stroke="#10b981" strokeWidth={3} fill="url(#gradArea)" name="1ª Entrega" />
-                    <Area type="monotone" dataKey="troca" stroke="#22d3ee" strokeWidth={2.5} fill="url(#gradArea2)" name="Troca" />
-                    <Area type="monotone" dataKey="perda" stroke="#f43f5e" strokeWidth={2.5} fill="url(#gradArea3)" name="Perda" />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </Card>
-
-          {/* 5 · Score Top 5 Empresas (barras verticais) */}
-          <Card title="05 · Score · TOP 5" className="col-span-12 md:col-span-4">
-            <div className="h-64">
-              {top5Empresas.length === 0 ? <EmptyBlock label="Sem empresas" /> : (
-                <ResponsiveContainer>
-                  <BarChart data={top5Empresas} margin={{ top: 20, right: 8, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="gradScoreOk" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#34d399" /><stop offset="100%" stopColor="#10b981" />
-                      </linearGradient>
-                      <linearGradient id="gradScoreWarn" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#fde68a" /><stop offset="100%" stopColor="#fbbf24" />
-                      </linearGradient>
-                      <linearGradient id="gradScoreBad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#fb7185" /><stop offset="100%" stopColor="#f43f5e" />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#cbd5e1", fontWeight: 600 }} axisLine={false} tickLine={false} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={tooltipDark} formatter={(v: any) => [`${v}%`, "Score"]} />
-                    <Bar dataKey="score" radius={[10, 10, 0, 0]} barSize={44}>
-                      {top5Empresas.map((e: any, i: number) => (
-                        <Cell key={i} fill={e.score >= 90 ? "url(#gradScoreOk)" : e.score >= 70 ? "url(#gradScoreWarn)" : "url(#gradScoreBad)"} />
-                      ))}
-                      <LabelList dataKey="score" position="top" formatter={(v: any) => `${v}%`} style={{ fontSize: 12, fontWeight: 900, fill: "#f1f5f9" }} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </Card>
-
-          {/* 6 · DDS Planejado vs Realizado (semanal) */}
-          <Card title="06 · DDS · Planejado vs Realizado"
+          {/* 5 · DDS Planejado vs Realizado (semanal) */}
+          <Card title="05 · DDS · Planejado vs Realizado"
             className="col-span-12 md:col-span-5"
             period="SEMANAL"
             meta={`≥ 90% · ${ddsPlanRealizado.realizados}/${ddsPlanRealizado.planejados}`}
@@ -995,8 +988,8 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 7 · Reincidência EPI por colaborador */}
-          <Card title="07 · Reincidência EPI" className="col-span-12 md:col-span-3"
+          {/* 6 · Reincidência EPI por colaborador */}
+          <Card title="06 · Reincidência EPI" className="col-span-12 md:col-span-3"
             period="MENSAL"
             meta={`≤ 5% · ${reincidenciaEPIPct.pct}%`}
             metaTone={reincidenciaEPIPct.pct <= 5 ? "ok" : reincidenciaEPIPct.pct <= 15 ? "warn" : "crit"}
@@ -1038,8 +1031,55 @@ function TstPanel() {
             )}
           </Card>
 
-          {/* 8 · Linha Documentos Abertos × Resolvidos */}
-          <Card title="08 · Não Conformidades" className="col-span-12 md:col-span-6"
+          {/* 7 · Barras Extintores por Status (NR-23) */}
+          <Card title="07 · Extintores · NR-23" className="col-span-12 md:col-span-3"
+            period="MENSAL" meta="100% em dia"
+            metaTone={extMetrics.vencidos > 0 ? "crit" : extMetrics.vencendo > 0 ? "warn" : "ok"}
+            ncPrefill={{ codigo: "IND-07", indicador: "Inspeção/Recarga de Extintores", mesRef: mesRefAtual }}>
+            <div className="h-64">
+              <ResponsiveContainer>
+                <BarChart data={extintoresBars} margin={{ top: 20, right: 8, left: -25, bottom: 0 }}>
+                  <defs>
+                    {extintoresBars.map((e, i) => (
+                      <linearGradient id={`gradExt-${i}`} key={i} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={e.fill} stopOpacity={1} />
+                        <stop offset="100%" stopColor={e.fill} stopOpacity={0.6} />
+                      </linearGradient>
+                    ))}
+                  </defs>
+                  <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#cbd5e1", fontWeight: 600 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                  <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={tooltipDark} />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={36}>
+                    {extintoresBars.map((_e, i) => <Cell key={i} fill={`url(#gradExt-${i})`} />)}
+                    <LabelList dataKey="value" position="top" style={{ fontSize: 12, fontWeight: 900, fill: "#f1f5f9" }} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          {/* 8 · Donut Conformidade Geral */}
+          <Card title="08 · Status Geral" className="col-span-12 md:col-span-3"
+            period={`${periodo}d`} meta="≥ 90%"
+            metaTone={conformidadeFiltro >= 90 ? "ok" : conformidadeFiltro >= 70 ? "warn" : "crit"}
+            ncPrefill={{ codigo: "IND-00", indicador: "Status Geral de Conformidade", mesRef: mesRefAtual }}>
+            <DonutCenter
+              data={donutData}
+              centerValue={`${conformidadeFiltro}%`}
+              centerLabel="Conformidade"
+              centerColor={conformidadeFiltro >= 90 ? "#10b981" : conformidadeFiltro >= 70 ? "#fbbf24" : "#f43f5e"}
+            />
+            <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80">
+              <LegendItem color="#10b981" label="Aptos" value={aptos} />
+              <LegendItem color="#fbbf24" label="Alerta" value={alertas} />
+              <LegendItem color="#f43f5e" label="Bloq." value={bloqueados} />
+            </div>
+          </Card>
+
+          {/* 9 · Linha Documentos Abertos × Resolvidos */}
+          <Card title="09 · Não Conformidades" className="col-span-12 md:col-span-6"
             period="6 MESES" meta="Resolv. ≥ Abertos" metaTone="neutral">
             <div className="h-64">
               {docsMensal.every((d) => d.abertos === 0 && d.resolvidos === 0) ? <EmptyBlock label="Sem registros" /> : (
@@ -1068,37 +1108,103 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 9 · Barras Extintores por Status (NR-23) */}
-          <Card title="09 · Extintores · NR-23" className="col-span-12 md:col-span-3"
-            period="MENSAL" meta="100% em dia"
-            metaTone={extMetrics.vencidos > 0 ? "crit" : extMetrics.vencendo > 0 ? "warn" : "ok"}
-            ncPrefill={{ codigo: "IND-07", indicador: "Inspeção/Recarga de Extintores", mesRef: mesRefAtual }}>
+          {/* 10 · Pareto Empresas por colaborador (Bar + acumulado %) */}
+          <Card title="10 · Pareto · Empresas" className="col-span-12 md:col-span-6"
+            action={<span className="text-[10px] font-bold text-slate-500">{totalEmp} colab.</span>}>
             <div className="h-64">
-              <ResponsiveContainer>
-                <BarChart data={extintoresBars} margin={{ top: 20, right: 8, left: -25, bottom: 0 }}>
-                  <defs>
-                    {extintoresBars.map((e, i) => (
-                      <linearGradient id={`gradExt-${i}`} key={i} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={e.fill} stopOpacity={1} />
-                        <stop offset="100%" stopColor={e.fill} stopOpacity={0.6} />
+              {paretoEmpresas.length === 0 ? <EmptyBlock label="Sem dados" /> : (
+                <ResponsiveContainer>
+                  <ComposedChart data={paretoEmpresas} margin={{ top: 16, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradPareto" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#0891b2" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.85} />
                       </linearGradient>
-                    ))}
-                  </defs>
-                  <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#cbd5e1", fontWeight: 600 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={tooltipDark} />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={36}>
-                    {extintoresBars.map((_e, i) => <Cell key={i} fill={`url(#gradExt-${i})`} />)}
-                    <LabelList dataKey="value" position="top" style={{ fontSize: 12, fontWeight: 900, fill: "#f1f5f9" }} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#cbd5e1" }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                    <Tooltip contentStyle={tooltipDark} />
+                    <Bar yAxisId="l" dataKey="qtd" fill="url(#gradPareto)" radius={[8, 8, 0, 0]} barSize={36} name="Colaboradores">
+                      <LabelList dataKey="qtd" position="top" style={{ fontSize: 11, fontWeight: 900, fill: "#e2e8f0" }} />
+                    </Bar>
+                    <Line yAxisId="r" type="monotone" dataKey="acumulado" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: "#0a0f1f", stroke: "#fbbf24", strokeWidth: 2.5 }} name="% Acumulado" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </Card>
 
-          {/* 10 · % Ações Plano no prazo */}
-          <Card title="10 · Plano de Ação · Prazo" className="col-span-12 md:col-span-4"
+          {/* 11 · Área Fluxo Entregas EPI */}
+          <Card title="11 · Fluxo EPI · Tendência" className="col-span-12 md:col-span-6"
+            action={<span className="text-[10px] font-bold text-slate-500 flex items-center gap-1"><TrendingUp className="h-3 w-3" />{totalEntregas} · R$ {valorEntregas.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}</span>}>
+            <div className="h-64">
+              {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas" /> : (
+                <ResponsiveContainer>
+                  <ComposedChart data={entregaSerie} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradArea" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.7} />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.05} />
+                      </linearGradient>
+                      <linearGradient id="gradArea2" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.45} />
+                        <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.02} />
+                      </linearGradient>
+                      <linearGradient id="gradArea3" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.5} />
+                        <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={tooltipDark} />
+                    <Area type="monotone" dataKey="primeira" stroke="#10b981" strokeWidth={3} fill="url(#gradArea)" name="1ª Entrega" />
+                    <Area type="monotone" dataKey="troca" stroke="#22d3ee" strokeWidth={2.5} fill="url(#gradArea2)" name="Troca" />
+                    <Area type="monotone" dataKey="perda" stroke="#f43f5e" strokeWidth={2.5} fill="url(#gradArea3)" name="Perda" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </Card>
+
+          {/* 12 · Score Top 5 Empresas (barras verticais) */}
+          <Card title="12 · Score · TOP 5" className="col-span-12 md:col-span-4">
+            <div className="h-64">
+              {top5Empresas.length === 0 ? <EmptyBlock label="Sem empresas" /> : (
+                <ResponsiveContainer>
+                  <BarChart data={top5Empresas} margin={{ top: 20, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradScoreOk" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#34d399" /><stop offset="100%" stopColor="#10b981" />
+                      </linearGradient>
+                      <linearGradient id="gradScoreWarn" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#fde68a" /><stop offset="100%" stopColor="#fbbf24" />
+                      </linearGradient>
+                      <linearGradient id="gradScoreBad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#fb7185" /><stop offset="100%" stopColor="#f43f5e" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#cbd5e1", fontWeight: 600 }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={tooltipDark} formatter={(v: any) => [`${v}%`, "Score"]} />
+                    <Bar dataKey="score" radius={[10, 10, 0, 0]} barSize={44}>
+                      {top5Empresas.map((e: any, i: number) => (
+                        <Cell key={i} fill={e.score >= 90 ? "url(#gradScoreOk)" : e.score >= 70 ? "url(#gradScoreWarn)" : "url(#gradScoreBad)"} />
+                      ))}
+                      <LabelList dataKey="score" position="top" formatter={(v: any) => `${v}%`} style={{ fontSize: 12, fontWeight: 900, fill: "#f1f5f9" }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </Card>
+
+          {/* 13 · % Ações Plano no prazo */}
+          <Card title="13 · Plano de Ação · Prazo" className="col-span-12 md:col-span-4"
             period="MENSAL" meta="≥ 90%"
             metaTone={planoAcoesMetric.pct >= 90 ? "ok" : planoAcoesMetric.pct >= 70 ? "warn" : "crit"}
             ncPrefill={{ codigo: "IND-08", indicador: "Plano de Ação no prazo", mesRef: mesRefAtual }}>
@@ -1115,31 +1221,8 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 11 · % Treinamentos NR em dia */}
-          <Card title="11 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4"
-            period="MENSAL" meta="≥ 95%"
-            metaTone={(() => {
-              const avg = treinamentosNR.length > 0 ? Math.round(treinamentosNR.reduce((s, t) => s + t.value, 0) / treinamentosNR.length) : 100;
-              return avg >= 95 ? "ok" : avg >= 80 ? "warn" : "crit";
-            })()}
-            action={<GraduationCap className="h-3 w-3 text-cyan-400" />}
-            ncPrefill={{ codigo: "IND-03", indicador: "Treinamentos NR em dia", mesRef: mesRefAtual }}>
-            {treinamentosNR.length === 0 ? (
-              <EmptyBlock label="Sem matriz NR" />
-            ) : (
-              <HBarList
-                items={treinamentosNR.map((t) => ({
-                  name: t.name,
-                  value: t.value,
-                  color: t.value >= 90 ? "#10b981" : t.value >= 70 ? "#fbbf24" : "#f43f5e",
-                }))}
-                suffix="%" perItemColor
-              />
-            )}
-          </Card>
-
-          {/* 12 · Near-miss / Quase-acidentes */}
-          <Card title="12 · Quase-Acidentes" className="col-span-12 md:col-span-4"
+          {/* 14 · Near-miss / Quase-acidentes */}
+          <Card title="14 · Quase-Acidentes" className="col-span-12 md:col-span-4"
             period="MENSAL" meta="≥ 5/mês"
             metaTone={nearMissMesAtual >= 5 ? "ok" : nearMissMesAtual >= 2 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
@@ -1180,89 +1263,6 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 13 · TF — Taxa de Frequência (NBR 14280) */}
-          <Card title="13 · TF · Taxa de Frequência" className="col-span-12 md:col-span-6"
-            period="12 MESES" meta="= 0"
-            metaTone={tf === 0 ? "ok" : tf <= 5 ? "warn" : "crit"}
-            action={<span className="text-[10px] font-black uppercase tracking-wider text-rose-300 flex items-center gap-1">
-              <Activity className="h-3 w-3" /> {tf.toFixed(2)}
-            </span>}
-            ncPrefill={{ codigo: "IND-01", indicador: "Taxa de Frequência (TF)", mesRef: mesRefAtual }}>
-            <div className="h-56">
-              {totalHHT12m === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center gap-1">
-                  <AlertOctagon className="h-6 w-6 text-amber-400" />
-                  <div className="text-[10px] font-black uppercase tracking-wider text-amber-300">Lançar HHT mensal</div>
-                  <div className="text-[9px] text-slate-500">Sem HHT cadastrado · cálculo indisponível</div>
-                </div>
-              ) : (
-                <ResponsiveContainer>
-                  <ComposedChart data={tfSerie} margin={{ top: 14, right: 8, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="gradTF" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.55} />
-                        <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.05} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
-                    <XAxis dataKey="mes" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={tooltipDark} formatter={(v: any) => [Number(v).toFixed(2), "TF"]} />
-                    <Area type="monotone" dataKey="tf" stroke="#f43f5e" strokeWidth={3} fill="url(#gradTF)"
-                      dot={{ r: 3, fill: "#0a0f1f", stroke: "#f43f5e", strokeWidth: 2 }}>
-                      <LabelList dataKey="tf" position="top" style={{ fontSize: 9, fontWeight: 900, fill: "#fda4af" }} />
-                    </Area>
-                  </ComposedChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            <div className="flex justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
-              <span className="text-slate-500">Acidentes c/ afast. 12m: <span className="text-rose-300 font-black">{totalAcid12m}</span></span>
-              <span className="text-slate-500">HHT 12m: <span className="text-slate-300 font-black tabular-nums">{totalHHT12m.toLocaleString("pt-BR")}</span></span>
-            </div>
-          </Card>
-
-          {/* 14 · TG — Taxa de Gravidade (NBR 14280) */}
-          <Card title="14 · TG · Taxa de Gravidade" className="col-span-12 md:col-span-6"
-            period="12 MESES" meta="≤ 100"
-            metaTone={tg <= 100 ? "ok" : tg <= 500 ? "warn" : "crit"}
-            action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
-              <Activity className="h-3 w-3" /> {tg.toFixed(2)}
-            </span>}
-            ncPrefill={{ codigo: "IND-02", indicador: "Taxa de Gravidade (TG)", mesRef: mesRefAtual }}>
-            <div className="h-56">
-              {totalHHT12m === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center gap-1">
-                  <AlertOctagon className="h-6 w-6 text-amber-400" />
-                  <div className="text-[10px] font-black uppercase tracking-wider text-amber-300">Lançar HHT mensal</div>
-                  <div className="text-[9px] text-slate-500">Sem HHT cadastrado · cálculo indisponível</div>
-                </div>
-              ) : (
-                <ResponsiveContainer>
-                  <ComposedChart data={tfSerie} margin={{ top: 14, right: 8, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="gradTG" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#fbbf24" stopOpacity={0.55} />
-                        <stop offset="100%" stopColor="#fbbf24" stopOpacity={0.05} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
-                    <XAxis dataKey="mes" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={tooltipDark} formatter={(v: any) => [Number(v).toFixed(2), "TG"]} />
-                    <Area type="monotone" dataKey="tg" stroke="#fbbf24" strokeWidth={3} fill="url(#gradTG)"
-                      dot={{ r: 3, fill: "#0a0f1f", stroke: "#fbbf24", strokeWidth: 2 }}>
-                      <LabelList dataKey="tg" position="top" style={{ fontSize: 9, fontWeight: 900, fill: "#fde68a" }} />
-                    </Area>
-                  </ComposedChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            <div className="flex justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
-              <span className="text-slate-500">Dias perdidos 12m: <span className="text-amber-300 font-black">{totalDias12m}</span></span>
-              <span className="text-slate-500">Meta NBR: <span className="text-emerald-400 font-black">≤ 100</span></span>
-            </div>
-          </Card>
 
         </div>
         {/* dead-var ref kept silent */}
