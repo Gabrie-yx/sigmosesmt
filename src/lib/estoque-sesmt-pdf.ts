@@ -47,14 +47,18 @@ export function buildEstoqueSesmtPdf(opts: EstoqueSesmtPdfOpts): jsPDF {
 
   const filtros: string[] = [];
   if (opts.filtroAtivo) filtros.push(`Filtro: "${opts.filtroAtivo}"`);
-  filtros.push(`Itens listados: ${opts.items.length}`);
 
   const y = drawPdfHeader(doc, {
     titulo: "Inventário de Estoque — SESMT",
     subtitulo: "Levantamento de EPIs e materiais de segurança",
     responsavel: opts.responsavel ?? null,
     filtros,
-    destaque: `Total em mãos: ${totalUnid} un.   ·   Zerados: ${zerados}   ·   Abaixo do mínimo: ${baixos}`,
+    kpis: [
+      { label: "Itens listados", value: opts.items.length, tone: "neutral" },
+      { label: "Total em mãos", value: `${totalUnid}`, tone: "success" },
+      { label: "Abaixo do mínimo", value: baixos, tone: "warning" },
+      { label: "Zerados", value: zerados, tone: "danger" },
+    ],
   });
 
   const rows = opts.items.map((i, idx) => {
