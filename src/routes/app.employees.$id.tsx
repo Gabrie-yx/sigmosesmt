@@ -2349,7 +2349,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           {epis.map((e: any) => (
             <div
               key={e.id}
-              className={`flex items-center gap-3 p-3 rounded-xl border transition backdrop-blur-md ${e.data_devolucao ? "border-amber-400/20 bg-gradient-to-br from-amber-950/30 via-black/40 to-rose-950/30" : "border-white/10 bg-gradient-to-br from-white/5 via-black/30 to-rose-950/20 hover:from-white/10 hover:to-rose-900/30"}`}
+              className={`flex items-center gap-3 p-3 rounded-xl border transition backdrop-blur-md ${e.data_devolucao ? "border-amber-400/25 bg-gradient-to-br from-amber-950/40 via-rose-950/40 to-black/60" : "border-rose-400/20 bg-gradient-to-br from-rose-950/50 via-[#1a0810]/70 to-black/70 hover:from-rose-900/60 hover:to-rose-950/70 hover:border-rose-400/40 hover:shadow-[0_0_20px_rgba(244,80,110,0.25)]"}`}
             >
               <div className="h-10 w-10 rounded-lg bg-black/40 border border-rose-400/20 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(244,80,110,0.25)_inset]">
                 <HardHat className="h-5 w-5 text-rose-300 drop-shadow-[0_0_6px_rgba(244,80,110,0.7)]" />
@@ -2358,7 +2358,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-black text-sm text-rose-50 uppercase">{e.item}</span>
                   {e.tamanho && <span className="text-xs text-rose-200/70">({e.tamanho})</span>}
-                  <Badge className="text-[10px] bg-black/40 text-rose-100 ring-1 ring-white/10">QTD: {e.qtd}</Badge>
+                  <Badge className="text-[10px] bg-gradient-to-br from-rose-900/70 to-black/70 text-rose-100 ring-1 ring-rose-400/30">QTD: {e.qtd}</Badge>
                   {e.motivo_entrega && (
                     <Badge className={`${MOTIVO_COLOR[e.motivo_entrega as MotivoEntrega] ?? "bg-slate-500"} text-white text-[10px]`}>
                       {MOTIVO_LABEL[e.motivo_entrega as MotivoEntrega] ?? e.motivo_entrega}
