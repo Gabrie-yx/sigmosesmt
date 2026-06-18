@@ -129,6 +129,9 @@ export function OssRowActions({ em, invalidateKeys }: { em: Em; invalidateKeys: 
               placeholder="Ex.: emissão duplicada, template incorreto, funcionário desligado..."
               rows={3}
             />
+            <p className="text-[10px] text-slate-500">
+              Mínimo 20 caracteres. A OS NÃO é apagada (documento legal NR-1) — fica registrada como CANCELADA no histórico, e uma pendência de nova emissão é aberta automaticamente.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setCancelOpen(false)}>Voltar</Button>
