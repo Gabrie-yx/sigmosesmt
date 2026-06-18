@@ -9,6 +9,21 @@ export type PdfHeaderOpts = {
   filtros?: string[];
   /** texto extra a aparecer abaixo (ex.: totais). Renderizado em negrito. */
   destaque?: string;
+  /** KPIs renderizados como cartões na faixa institucional (lado direito). */
+  kpis?: PdfHeaderKpi[];
+};
+
+export type PdfHeaderKpi = {
+  label: string;
+  value: string | number;
+  tone?: "danger" | "warning" | "success" | "neutral";
+};
+
+const TONE_COLORS: Record<NonNullable<PdfHeaderKpi["tone"]>, [number, number, number]> = {
+  danger: [220, 38, 38],
+  warning: [202, 138, 4],
+  success: [22, 163, 74],
+  neutral: [15, 23, 42],
 };
 
 /**
@@ -23,7 +38,7 @@ export function drawPdfHeader(doc: jsPDF, opts: PdfHeaderOpts): number {
   const M = 12;
 
   // ============== Faixa institucional ==============
-  const instH = 22;
+  const instH = 24;
   doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, W, instH, "F");
 
@@ -53,6 +68,39 @@ export function drawPdfHeader(doc: jsPDF, opts: PdfHeaderOpts): number {
   doc.text(EMPRESA_INFO.endereco, infoX, 15);
   doc.text(`${EMPRESA_INFO.cidade_uf_cep}   ·   ${EMPRESA_INFO.contato}`, infoX, 18.5);
 
+  // ============== KPI cards (lado direito da faixa institucional) ==============
+  if (opts.kpis && opts.kpis.length) {
+    const kpis = opts.kpis.slice(0, 4);
+    const cardH = 16;
+    const gap = 3;
+    const cardW = 34;
+    const totalW = kpis.length * cardW + (kpis.length - 1) * gap;
+    let cx = W - M - totalW;
+    const cy = (instH - cardH) / 2;
+    for (const k of kpis) {
+      const tone = TONE_COLORS[k.tone ?? "neutral"];
+      // fundo claro
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(cx, cy, cardW, cardH, 1.5, 1.5, "FD");
+      // barra lateral colorida
+      doc.setFillColor(tone[0], tone[1], tone[2]);
+      doc.rect(cx, cy, 1.6, cardH, "F");
+      // valor
+      doc.setTextColor(tone[0], tone[1], tone[2]);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(String(k.value), cx + 4, cy + 8);
+      // label
+      doc.setTextColor(71, 85, 105);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.text(k.label.toUpperCase(), cx + 4, cy + 13);
+      cx += cardW + gap;
+    }
+  }
+
   // Linha divisória fina
   doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(0.2);
@@ -81,22 +129,24 @@ export function drawPdfHeader(doc: jsPDF, opts: PdfHeaderOpts): number {
     { align: "right" },
   );
 
-  // ============== Metadados ==============
-  let y = titleY + titleH + 5;
+  // ============== Metadados (linha única, fonte maior) ==============
+  let y = titleY + titleH + 6;
   doc.setTextColor(30, 41, 59);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(9.5);
   const meta: string[] = [];
   if (opts.responsavel) meta.push(`Responsável: ${opts.responsavel}`);
   if (opts.filtros && opts.filtros.length) meta.push(...opts.filtros);
   if (meta.length) {
     doc.text(meta.join("   ·   "), M, y);
-    y += 4.5;
+    y += 5;
   }
-  if (opts.destaque) {
+  // destaque só renderiza quando não há KPIs (compat)
+  if (opts.destaque && (!opts.kpis || !opts.kpis.length)) {
     doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
     doc.text(opts.destaque, M, y);
-    y += 4;
+    y += 4.5;
   }
 
   doc.setTextColor(0, 0, 0);
