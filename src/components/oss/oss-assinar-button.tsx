@@ -87,7 +87,7 @@ export function OssAssinarButton({ em }: { em: EmInput }) {
   const handleSigned = async (info: { path: string; signedBytes: Uint8Array }) => {
     try {
       // Faz upload também no bucket oss-pdfs (linha mestre da OS)
-      const blob = new Blob([info.signedBytes], { type: "application/pdf" });
+      const blob = new Blob([info.signedBytes as BlobPart], { type: "application/pdf" });
       const path = `${em.id}/${Date.now()}-assinado.pdf`;
       const { error: upErr } = await supabase.storage
         .from("oss-pdfs")
