@@ -21,12 +21,13 @@ import {
 import {
   Search, Download, Plus, History,
   Trash2, ExternalLink, AlertTriangle, Pencil, X, Upload, ImageIcon, Copy,
-  ArrowDownToLine, ShoppingCart, CheckSquare,
+  ArrowDownToLine, ShoppingCart, CheckSquare, Printer,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import protectiveClothingIcon from "@/assets/protective-clothing.png";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
+import { openEstoqueSesmtPdf } from "@/lib/estoque-sesmt-pdf";
 
 type Item = {
   id: string;
@@ -56,7 +57,7 @@ export const Route = createFileRoute("/app/estoque/sesmt")({
 
 export function EstoqueSesmtPage() {
   const qc = useQueryClient();
-  const { isAdmin, isEditor } = useAuth();
+  const { isAdmin, isEditor, user } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<Set<string>>(new Set());
@@ -421,6 +422,19 @@ export function EstoqueSesmtPage() {
           )}
           <Button variant="outline" onClick={exportXlsx}>
             <Download className="h-4 w-4 mr-2" /> Exportar XLSX
+          </Button>
+          <Button
+            variant="outline"
+            className="border-slate-700 text-slate-800 hover:bg-slate-100"
+            onClick={() =>
+              openEstoqueSesmtPdf({
+                items: filtered,
+                responsavel: user?.email ?? undefined,
+                filtroAtivo: search.trim() || null,
+              })
+            }
+          >
+            <Printer className="h-4 w-4 mr-2" /> Imprimir PDF
           </Button>
         </div>
       </div>
