@@ -1279,7 +1279,7 @@ function TstPanel() {
 // === Subcomponentes ===
 
 function Card({
-  title, children, className, action, period, meta, metaTone,
+  title, children, className, action, period, meta, metaTone, ncPrefill,
 }: {
   title?: string;
   children: React.ReactNode;
@@ -1288,11 +1288,14 @@ function Card({
   period?: string;
   meta?: string;
   metaTone?: "ok" | "warn" | "crit" | "neutral";
+  ncPrefill?: { codigo: string; indicador: string; mesRef: string };
 }) {
   const toneColor = metaTone === "ok" ? "#10b981"
     : metaTone === "warn" ? "#fbbf24"
     : metaTone === "crit" ? "#f43f5e"
     : "#94a3b8";
+  const showNC = ncPrefill && (metaTone === "crit" || metaTone === "warn");
+  const sev = metaTone === "crit" ? "ALTA" : "MEDIA";
   return (
     <div className={`relative rounded-xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-md shadow-[0_8px_30px_-12px_rgba(0,0,0,0.5)] p-4 overflow-hidden ${className ?? ""}`}>
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
@@ -1318,6 +1321,26 @@ function Card({
         </div>
       )}
       {children}
+      {showNC && (
+        <Link
+          to="/app/ncs"
+          search={{
+            titulo: `Meta ${ncPrefill!.codigo} não atingida — ${ncPrefill!.mesRef}`,
+            descricao: `Indicador ${ncPrefill!.codigo} (${ncPrefill!.indicador}) abaixo da meta no período ${ncPrefill!.mesRef}. Abrir tratativa: análise de causa, plano de ação e verificação de eficácia.`,
+            origem: "INDICADOR",
+            severidade: sev,
+            pendencia: `indicador:${ncPrefill!.codigo}:${ncPrefill!.mesRef}`,
+          }}
+          className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-md ring-1 transition-colors"
+          style={{
+            color: toneColor,
+            background: `${toneColor}15`,
+            borderColor: `${toneColor}50`,
+          }}
+        >
+          <FilePlus2 className="h-3 w-3" /> Abrir NC
+        </Link>
+      )}
     </div>
   );
 }
