@@ -295,10 +295,10 @@
 
 @utility glass-card {
   background:
-    radial-gradient(135% 100% at 0% 0%, rgba(230, 60, 95, 0.34) 0%, rgba(150, 30, 55, 0.14) 32%, transparent 60%),
-    radial-gradient(125% 90% at 100% 100%, rgba(190, 45, 80, 0.40) 0%, rgba(110, 22, 42, 0.16) 36%, transparent 64%),
-    radial-gradient(80% 60% at 50% 0%, rgba(255, 200, 215, 0.06) 0%, transparent 70%),
-    linear-gradient(165deg, rgba(58, 16, 28, 0.88) 0%, rgba(28, 8, 14, 0.92) 55%, rgba(14, 4, 8, 0.95) 100%);
+    radial-gradient(135% 100% at 0% 0%, rgba(230, 60, 95, 0.42) 0%, rgba(150, 30, 55, 0.22) 32%, transparent 60%),
+    radial-gradient(125% 90% at 100% 100%, rgba(190, 45, 80, 0.44) 0%, rgba(110, 22, 42, 0.24) 36%, transparent 64%),
+    radial-gradient(80% 60% at 50% 0%, rgba(255, 165, 185, 0.08) 0%, transparent 70%),
+    linear-gradient(165deg, rgba(62, 10, 22, 0.98) 0%, rgba(34, 6, 13, 0.99) 55%, rgba(12, 2, 6, 1) 100%);
   backdrop-filter: blur(24px) saturate(150%);
   border: 1px solid rgba(255, 220, 225, 0.10);
   box-shadow:
@@ -665,7 +665,7 @@
   .modal-glass-scope:not(.pdf-dialog) .bg-white\/60,
   .modal-glass-scope:not(.pdf-dialog) .bg-white\/70,
   .modal-glass-scope:not(.pdf-dialog) .bg-white\/80 {
-    background-color: rgba(30, 8, 14, 0.42) !important;
+    background-color: rgba(42, 8, 17, 0.92) !important;
     backdrop-filter: blur(20px) saturate(160%);
     color: #f5e6ea;
   }
@@ -685,7 +685,7 @@
   .modal-glass-scope:not(.pdf-dialog) .bg-zinc-100,
   .modal-glass-scope:not(.pdf-dialog) .bg-neutral-50,
   .modal-glass-scope:not(.pdf-dialog) .bg-neutral-100 {
-    background-color: rgba(40, 12, 20, 0.35) !important;
+    background-color: rgba(50, 10, 20, 0.90) !important;
     backdrop-filter: blur(16px) saturate(150%);
     color: #f5e6ea;
   }
