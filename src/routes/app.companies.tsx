@@ -276,42 +276,44 @@ function CompaniesPage() {
             <div
               key={c.id}
               onClick={() => { setSelectedId(c.id); setShowForm(false); setEditing(null); setSelectedEmpId(null); }}
-              className={`relative p-5 rounded-2xl border cursor-pointer hover-lift overflow-hidden ${
-                isSel ? "surface-elevated-dark border-transparent text-white" : "surface-elevated border-slate-200/70 hover:border-[#991b1b]/40"
+              className={`glass-card glass-shine relative p-5 rounded-2xl cursor-pointer overflow-hidden transition-all hover:-translate-y-0.5 ${
+                isSel
+                  ? "text-white shadow-[0_0_40px_-6px_rgba(220,38,70,0.85),inset_0_1px_0_rgba(255,230,235,0.12)] ring-1 ring-rose-400/40"
+                  : "text-rose-50"
               }`}
             >
               {isSel && (
                 <>
-                  <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-                  <div className="absolute -bottom-12 -left-8 w-32 h-32 rounded-full bg-red-300/20 blur-2xl pointer-events-none" />
+                  <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-rose-500/30 blur-3xl pointer-events-none" />
+                  <div className="absolute -bottom-14 -left-10 w-44 h-44 rounded-full bg-rose-600/25 blur-3xl pointer-events-none" />
                 </>
               )}
               <div className="relative flex justify-between items-start mb-2">
-                <div className={`text-[9px] font-black px-2 py-1 rounded inline-flex items-center gap-1 ${isSel ? "text-white bg-white/15 ring-1 ring-white/20 backdrop-blur" : ts}`}>
+                <div className={`text-[9px] font-black px-2 py-1 rounded inline-flex items-center gap-1 ${isSel ? "text-white bg-white/15 ring-1 ring-white/20 backdrop-blur" : "bg-black/40 text-rose-100 ring-1 ring-rose-500/30 backdrop-blur"}`}>
                   <Briefcase className="h-3 w-3" /> {c.type}
                 </div>
-                <div className={`flex items-center gap-2 rounded-full pl-1 pr-3 py-1 shadow-md ${isSel ? "bg-white/15 ring-1 ring-white/30 backdrop-blur shadow-black/20" : "bg-gradient-to-br from-red-50 to-red-100 ring-1 ring-red-200 shadow-red-200/40"}`}>
-                  <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-1 ${isSel ? "bg-white/25 ring-white/40" : "bg-gradient-to-br from-red-500 to-red-700 ring-red-300"}`}>
-                    <Users className={`h-4 w-4 ${isSel ? "text-white" : "text-white"}`} />
+                <div className="group/pill flex items-center gap-2 rounded-full pl-1 pr-3 py-1 backdrop-blur-xl bg-gradient-to-br from-rose-600/40 via-rose-700/30 to-rose-950/40 ring-1 ring-rose-400/40 shadow-[0_0_24px_-4px_rgba(244,80,110,0.75),inset_0_1px_0_rgba(255,230,235,0.15)] transition-all hover:shadow-[0_0_36px_-2px_rgba(244,80,110,1),inset_0_1px_0_rgba(255,230,235,0.25)]">
+                  <span className="h-8 w-8 rounded-full flex items-center justify-center ring-1 ring-rose-300/60 bg-gradient-to-br from-rose-500 to-rose-800 shadow-[0_0_16px_-2px_rgba(244,80,110,0.9)]">
+                    <Users className="h-4 w-4 text-white drop-shadow-[0_0_6px_rgba(255,200,210,0.9)]" />
                   </span>
                   <div className="leading-none">
-                    <div className={`text-base font-black tabular-nums ${isSel ? "text-white" : "text-[#991b1b]"}`}>{empCount}</div>
-                    <div className={`text-[8px] font-black uppercase tracking-widest ${isSel ? "text-white/80" : "text-slate-500"}`}>Vínculos</div>
+                    <div className="text-base font-black tabular-nums text-rose-50 drop-shadow-[0_0_10px_rgba(244,80,110,0.9)]">{empCount}</div>
+                    <div className="text-[8px] font-black uppercase tracking-widest text-rose-100/80">Vínculos</div>
                   </div>
                 </div>
               </div>
               <div className="relative flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isSel ? "bg-white/15 ring-1 ring-white/25 backdrop-blur" : "bg-gradient-to-br from-red-50 to-red-100 ring-1 ring-red-200/60"}`}>
-                  <Building2 className={`h-5 w-5 ${isSel ? "text-white" : "text-[#991b1b]"}`} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br from-rose-600/40 to-rose-950/40 ring-1 ring-rose-400/30 backdrop-blur shadow-[0_0_18px_-4px_rgba(244,80,110,0.6),inset_0_1px_0_rgba(255,230,235,0.1)]">
+                  <Building2 className="h-5 w-5 text-rose-100 drop-shadow-[0_0_8px_rgba(244,80,110,0.7)]" />
                 </div>
-                <h3 className={`text-lg font-black uppercase leading-tight ${isSel ? "text-white" : "text-slate-800"}`}>{c.name}</h3>
+                <h3 className={`text-lg font-black uppercase leading-tight ${isSel ? "text-white drop-shadow-[0_0_10px_rgba(244,80,110,0.7)]" : "text-rose-50"}`}>{c.name}</h3>
               </div>
-              <p className={`relative text-[10px] font-bold uppercase mt-2 flex items-center gap-1 ${isSel ? "text-white/70" : "text-slate-500"}`}>
+              <p className={`relative text-[10px] font-bold uppercase mt-2 flex items-center gap-1 ${isSel ? "text-white/80" : "text-rose-200/70"}`}>
                 <IdCard className="h-3 w-3" /> CNPJ: {c.cnpj || "Não informado"} <span className="mx-1">|</span> ENTRADA: {entrada}
               </p>
-              <div className={`relative mt-4 pt-4 border-t text-xs font-bold ${isSel ? "border-white/20 text-white/90" : "border-slate-100 text-slate-600"}`}>
-                <div className="flex items-center gap-2"><User className={`h-3.5 w-3.5 ${isSel ? "text-white" : "text-[#991b1b]"}`} /> {c.encarregado1 ? `Empreiteiro: ${c.encarregado1}` : "S/ Empreiteiro"}</div>
-                <div className="flex items-center gap-2 mt-1"><UserCog className={`h-3.5 w-3.5 ${isSel ? "text-white" : "text-[#991b1b]"}`} /> {c.encarregado2 ? `Encarregado: ${c.encarregado2}` : "S/ Encarregado"}</div>
+              <div className={`relative mt-4 pt-4 border-t text-xs font-bold ${isSel ? "border-white/20 text-white/90" : "border-white/10 text-rose-100/85"}`}>
+                <div className="flex items-center gap-2"><User className="h-3.5 w-3.5 text-rose-300" /> {c.encarregado1 ? `Empreiteiro: ${c.encarregado1}` : "S/ Empreiteiro"}</div>
+                <div className="flex items-center gap-2 mt-1"><UserCog className="h-3.5 w-3.5 text-rose-300" /> {c.encarregado2 ? `Encarregado: ${c.encarregado2}` : "S/ Encarregado"}</div>
               </div>
             </div>
           );
