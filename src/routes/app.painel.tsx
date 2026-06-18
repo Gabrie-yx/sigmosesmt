@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Search, ShieldCheck, Flame, Calendar, ArrowRight, ChevronRight, FolderOpen, Package,
   Users, AlertTriangle, ShieldAlert, TrendingUp, Repeat, GraduationCap, ClipboardCheck, Eye,
+  Trophy, Target, MessageSquare,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
