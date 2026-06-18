@@ -553,6 +553,49 @@ function TstPanel() {
   const nearMissTotal = nearMissTrend.reduce((s, m) => s + m.qtd, 0);
   const nearMissMesAtual = nearMissTrend[nearMissTrend.length - 1]?.qtd ?? 0;
 
+  // === Dias sem acidente — atual + recorde (filtra empresa quando selecionada) ===
+  const recordeAcidente = useMemo(() => {
+    const all = ((data as any)?.recordes ?? []) as any[];
+    const filtered = filterCompany === "ALL"
+      ? all
+      : all.filter((r) => r.company_id === filterCompany);
+    if (filtered.length === 0) return { atual: 0, recorde: 0, dataInicio: null as string | null };
+    // Pega o mais recente data_inicio (contagem atual)
+    const atualRec = filtered
+      .filter((r) => r.data_inicio)
+      .sort((a, b) => (b.data_inicio || "").localeCompare(a.data_inicio || ""))[0];
+    const recorde = Math.max(...filtered.map((r) => Number(r.recorde_dias || 0)), 0);
+    const atual = atualRec?.data_inicio
+      ? Math.max(0, Math.floor((today.getTime() - new Date(atualRec.data_inicio + "T00:00").getTime()) / dayMs))
+      : 0;
+    return { atual, recorde, dataInicio: atualRec?.data_inicio ?? null };
+  }, [data, filterCompany]);
+
+  // === DDS Planejado vs Realizado (meta: 1 DDS / semana / empresa ativa) ===
+  const ddsPlanRealizado = useMemo(() => {
+    const semanas = Math.max(1, Math.ceil(dias / 7));
+    const empresasAtivas = (data?.companies ?? []).length || 1;
+    const planejados = semanas * empresasAtivas;
+    const realizados = ddsCount;
+    const pct = planejados > 0 ? Math.round((realizados / planejados) * 100) : 0;
+    // Serie por semana (últimas N semanas)
+    const map = new Map<string, { sem: string; real: number }>();
+    (data?.dds ?? []).forEach((d: any) => {
+      const dt = new Date(d.data + "T00:00");
+      const day = (dt.getDay() + 6) % 7;
+      const wk = new Date(dt.getTime() - day * dayMs);
+      const key = fmt(wk);
+      const label = `${String(wk.getDate()).padStart(2, "0")}/${MONTHS_PT[wk.getMonth()]}`;
+      const cur = map.get(key) ?? { sem: label, real: 0 };
+      cur.real += 1;
+      map.set(key, cur);
+    });
+    const series = Array.from(map.values()).slice(-semanas).map((s) => ({
+      ...s, plan: empresasAtivas,
+    }));
+    return { planejados, realizados, pct, series };
+  }, [data, dias, ddsCount]);
+
   return (
     <div className="h-full overflow-y-auto custom-scrollbar relative"
       style={{
