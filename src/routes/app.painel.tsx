@@ -891,10 +891,11 @@ function Card({
   action?: React.ReactNode;
 }) {
   return (
-    <div className={`bg-white rounded-lg border border-slate-700/60 shadow-sm p-4 ${className ?? ""}`}>
+    <div className={`relative rounded-xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-md shadow-[0_8px_30px_-12px_rgba(0,0,0,0.5)] p-4 overflow-hidden ${className ?? ""}`}>
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
       {title && (
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-[#22d3ee]">{title}</h3>
+          <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-cyan-300/90">{title}</h3>
           {action}
         </div>
       )}
@@ -915,19 +916,43 @@ function KpiBig({
 }) {
   return (
     <div
-      className={`bg-white rounded-lg border shadow-sm p-4 flex items-center gap-3 transition-all ${
-        highlight ? "border-[#f43f5e]/40 ring-1 ring-[#f43f5e]/10" : "border-slate-700/60"
+      className={`relative rounded-xl border bg-slate-900/50 backdrop-blur-md p-4 flex items-center gap-3 transition-all overflow-hidden group ${
+        highlight
+          ? "border-rose-500/50 ring-1 ring-rose-500/20"
+          : "border-slate-800/80 hover:border-slate-700"
       }`}
+      style={{
+        boxShadow: highlight
+          ? `0 0 40px -10px ${accent}66, inset 0 1px 0 rgba(255,255,255,0.04)`
+          : `0 8px 30px -15px ${accent}40, inset 0 1px 0 rgba(255,255,255,0.04)`,
+      }}
     >
       <div
-        className="h-12 w-12 rounded-lg flex items-center justify-center shrink-0"
-        style={{ background: `${accent}15`, color: accent }}
+        aria-hidden
+        className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity"
+        style={{ background: accent }}
+      />
+      <div
+        className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 relative z-10"
+        style={{
+          background: `linear-gradient(135deg, ${accent}30, ${accent}08)`,
+          color: accent,
+          boxShadow: `0 0 20px ${accent}50, inset 0 1px 0 ${accent}40`,
+        }}
       >
         <Icon className="h-6 w-6" />
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 relative z-10">
         <div className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">{label}</div>
-        <div className="text-3xl font-black tabular-nums leading-tight" style={{ color: accent }}>{value}</div>
+        <div
+          className="text-3xl font-black tabular-nums leading-tight"
+          style={{
+            color: accent,
+            textShadow: `0 0 18px ${accent}99, 0 0 36px ${accent}33`,
+          }}
+        >
+          {value}
+        </div>
         {sub && <div className="text-[10px] text-slate-500 truncate">{sub}</div>}
       </div>
     </div>
