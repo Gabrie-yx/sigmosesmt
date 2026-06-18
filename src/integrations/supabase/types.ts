@@ -3501,6 +3501,8 @@ export type Database = {
       oss_emissoes: {
         Row: {
           assinado_em: string | null
+          cancelado_em: string | null
+          cancelado_por: string | null
           cargo_snapshot: string
           conteudo_snapshot: Json
           created_at: string
@@ -3509,6 +3511,7 @@ export type Database = {
           employee_id: string
           expira_em: string | null
           id: string
+          motivo_cancelamento: string | null
           motivo_emissao: Database["public"]["Enums"]["oss_motivo"]
           observacoes: string | null
           pdf_assinado_path: string | null
@@ -3521,6 +3524,8 @@ export type Database = {
         }
         Insert: {
           assinado_em?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
           cargo_snapshot: string
           conteudo_snapshot?: Json
           created_at?: string
@@ -3529,6 +3534,7 @@ export type Database = {
           employee_id: string
           expira_em?: string | null
           id?: string
+          motivo_cancelamento?: string | null
           motivo_emissao?: Database["public"]["Enums"]["oss_motivo"]
           observacoes?: string | null
           pdf_assinado_path?: string | null
@@ -3541,6 +3547,8 @@ export type Database = {
         }
         Update: {
           assinado_em?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
           cargo_snapshot?: string
           conteudo_snapshot?: Json
           created_at?: string
@@ -3549,6 +3557,7 @@ export type Database = {
           employee_id?: string
           expira_em?: string | null
           id?: string
+          motivo_cancelamento?: string | null
           motivo_emissao?: Database["public"]["Enums"]["oss_motivo"]
           observacoes?: string | null
           pdf_assinado_path?: string | null
@@ -6344,6 +6353,10 @@ export type Database = {
       admin_force_signout_user: { Args: { _user_id: string }; Returns: number }
       ajustar_saldo_epi: {
         Args: { _epi_id: string; _novo_saldo: number }
+        Returns: undefined
+      }
+      cancelar_os: {
+        Args: { _motivo: string; _os_id: string }
         Returns: undefined
       }
       current_aal: { Args: never; Returns: string }

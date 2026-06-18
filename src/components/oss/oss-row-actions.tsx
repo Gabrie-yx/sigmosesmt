@@ -46,6 +46,22 @@ export function OssRowActions({ em, invalidateKeys }: { em: Em; invalidateKeys: 
     onError: (e: any) => toast.error(e.message),
   });
 
+  const cancelarOs = useMutation({
+    mutationFn: async (motivo: string) => {
+      const { error } = await (supabase as any).rpc("cancelar_os", {
+        _os_id: em.id,
+        _motivo: motivo,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("OS cancelada. Pendência aberta para nova emissão.");
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["pend-oss"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const removeRow = useMutation({
     mutationFn: async () => {
       // Tenta apagar PDFs do storage (não falha se não existir)
@@ -113,20 +129,21 @@ export function OssRowActions({ em, invalidateKeys }: { em: Em; invalidateKeys: 
               placeholder="Ex.: emissão duplicada, template incorreto, funcionário desligado..."
               rows={3}
             />
+            <p className="text-[10px] text-slate-500">
+              Mínimo 20 caracteres. A OS NÃO é apagada (documento legal NR-1) — fica registrada como CANCELADA no histórico, e uma pendência de nova emissão é aberta automaticamente.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setCancelOpen(false)}>Voltar</Button>
             <Button
               variant="destructive"
-              disabled={!cancelReason.trim() || setStatus.isPending}
+              disabled={cancelReason.trim().length < 20 || cancelarOs.isPending}
               onClick={async () => {
-                await setStatus.mutateAsync({
-                  status: "CANCELADO",
-                  observacoes: `[CANCELADA em ${new Date().toLocaleString("pt-BR")}] ${cancelReason.trim()}`,
-                });
-                toast.success("OS cancelada");
-                setCancelOpen(false);
-                setCancelReason("");
+                try {
+                  await cancelarOs.mutateAsync(cancelReason.trim());
+                  setCancelOpen(false);
+                  setCancelReason("");
+                } catch {}
               }}
             >
               Confirmar cancelamento

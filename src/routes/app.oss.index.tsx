@@ -23,6 +23,7 @@ import { formatDateBR } from "@/lib/utils-date";
 import { buildOssPdf } from "@/lib/oss-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { OssRowActions } from "@/components/oss/oss-row-actions";
+import { OssAssinarButton } from "@/components/oss/oss-assinar-button";
 import { EmployeeQuickView } from "@/components/employees/employee-quick-view";
 import type jsPDF from "jspdf";
 
@@ -277,7 +278,13 @@ function OssIndexPage() {
                             </Button>
                           )}
                           {isEditor && em.status === "PENDENTE_ASSINATURA" && (
-                            <UploadAssinadoButton onPick={(f) => uploadAssinado.mutate({ em, file: f })} disabled={uploadAssinado.isPending} />
+                            <>
+                              <OssAssinarButton em={em} />
+                              <UploadAssinadoButton
+                                onPick={(f) => uploadAssinado.mutate({ em, file: f })}
+                                disabled={uploadAssinado.isPending}
+                              />
+                            </>
                           )}
                           <OssRowActions em={em} invalidateKeys={[["oss-emissoes"], ["employee-oss", em.employee_id]]} />
                         </div>

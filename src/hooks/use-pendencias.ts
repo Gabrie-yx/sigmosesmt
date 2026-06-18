@@ -252,7 +252,7 @@ export function usePendencias() {
     queryFn: async () => {
       const { count } = await supabase
         .from("oss_emissoes").select("id", { count: "exact", head: true })
-        .in("status", ["PENDENTE_ASSINATURA", "SUBSTITUIDO", "VENCIDO"]);
+        .in("status", ["PENDENTE_ASSINATURA", "SUBSTITUIDO", "VENCIDO", "CANCELADO"]);
       return count ?? 0;
     },
   });
