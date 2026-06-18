@@ -686,22 +686,22 @@ function VinculosDialog({ onClose, courses, roleMapping, roles }:
                 >
                   <ChevronDown className={`h-4 w-4 text-rose-200/45 transition-transform ${open ? "" : "-rotate-90"}`} />
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold truncate">{c.codigo} — <span className="font-normal text-slate-700">{c.nome}</span></div>
+                    <div className="text-xs font-bold truncate text-rose-100">{c.codigo} — <span className="font-normal text-rose-200/75">{c.nome}</span></div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-violet-50 text-violet-700">{nRoles} função{nRoles === 1 ? "" : "ões"}</span>
+                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-100 border border-violet-300/25">{nRoles} função{nRoles === 1 ? "" : "ões"}</span>
                   </div>
                 </button>
                 {open && (
-                  <div className="border-t p-3 bg-slate-50/40">
+                  <div className="border-t border-rose-200/10 p-3 bg-rose-950/35">
                     {roles.length === 0 ? (
-                          <div className="text-center text-slate-400 text-xs py-6 uppercase font-bold">Cadastre funções em Cargos / Funções primeiro.</div>
+                          <div className="text-center text-rose-200/45 text-xs py-6 uppercase font-bold">Cadastre funções em Cargos / Funções primeiro.</div>
                         ) : (
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-64 overflow-y-auto pr-1">
                             {roles.map((r) => {
                               const checked = hasRole(r.id, c.id);
                               return (
-                                <label key={r.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded border cursor-pointer transition ${checked ? "bg-violet-50 border-violet-300" : "bg-white border-slate-200 hover:bg-slate-50"}`}>
+                                <label key={r.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded border cursor-pointer transition ${checked ? "bg-violet-500/20 border-violet-300/35 text-violet-50" : "bg-rose-950/45 border-rose-200/10 hover:bg-rose-900/35 text-rose-100/85"}`}>
                                   <input type="checkbox" checked={checked} onChange={(e) => toggleRole.mutate({ roleId: r.id, courseId: c.id, on: e.target.checked })} />
                                   <span className="truncate" title={r.name}>{r.name}</span>
                                 </label>
@@ -716,7 +716,7 @@ function VinculosDialog({ onClose, courses, roleMapping, roles }:
           })}
         </div>
 
-        <DialogFooter className="p-3 border-t bg-slate-50/50 gap-2">
+        <DialogFooter className="p-3 border-t border-rose-200/10 bg-rose-950/50 gap-2">
           <Button variant="outline" size="sm" onClick={onClose}><X className="h-3.5 w-3.5 mr-1" /> Fechar</Button>
           <Button size="sm" onClick={onClose}><Save className="h-3.5 w-3.5 mr-1" /> Salvar e fechar</Button>
         </DialogFooter>
