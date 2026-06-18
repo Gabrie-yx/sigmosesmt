@@ -748,7 +748,9 @@ function TstPanel() {
         <div className="grid grid-cols-12 gap-4">
 
           {/* 1 · Donut Conformidade Geral */}
-          <Card title="01 · Status Geral" className="col-span-12 md:col-span-3">
+          <Card title="01 · Status Geral" className="col-span-12 md:col-span-3"
+            period={`${periodo}d`} meta="≥ 90%"
+            metaTone={conformidadeFiltro >= 90 ? "ok" : conformidadeFiltro >= 70 ? "warn" : "crit"}>
             <DonutCenter
               data={donutData}
               centerValue={`${conformidadeFiltro}%`}
@@ -763,7 +765,9 @@ function TstPanel() {
           </Card>
 
           {/* 2 · Donut ASO Status (PCMSO/NR-07) */}
-          <Card title="02 · ASO · PCMSO" className="col-span-12 md:col-span-3">
+          <Card title="02 · ASO · PCMSO" className="col-span-12 md:col-span-3"
+            period="MENSAL" meta="100%"
+            metaTone={asoConformPct >= 95 ? "ok" : asoConformPct >= 80 ? "warn" : "crit"}>
             <DonutCenter
               data={asoDonut.length > 0 ? asoDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
               centerValue={`${asoConformPct}%`}
@@ -947,7 +951,8 @@ function TstPanel() {
           </Card>
 
           {/* 8 · Linha Documentos Abertos × Resolvidos */}
-          <Card title="08 · Não Conformidades · 6 meses" className="col-span-12 md:col-span-6">
+          <Card title="08 · Não Conformidades" className="col-span-12 md:col-span-6"
+            period="6 MESES" meta="Resolv. ≥ Abertos" metaTone="neutral">
             <div className="h-64">
               {docsMensal.every((d) => d.abertos === 0 && d.resolvidos === 0) ? <EmptyBlock label="Sem registros" /> : (
                 <ResponsiveContainer>
@@ -976,7 +981,9 @@ function TstPanel() {
           </Card>
 
           {/* 9 · Barras Extintores por Status (NR-23) */}
-          <Card title="09 · Extintores · NR-23" className="col-span-12 md:col-span-3">
+          <Card title="09 · Extintores · NR-23" className="col-span-12 md:col-span-3"
+            period="MENSAL" meta="100% em dia"
+            metaTone={extMetrics.vencidos > 0 ? "crit" : extMetrics.vencendo > 0 ? "warn" : "ok"}>
             <div className="h-64">
               <ResponsiveContainer>
                 <BarChart data={extintoresBars} margin={{ top: 20, right: 8, left: -25, bottom: 0 }}>
@@ -1003,10 +1010,8 @@ function TstPanel() {
 
           {/* 10 · % Ações Plano no prazo */}
           <Card title="10 · Plano de Ação · Prazo" className="col-span-12 md:col-span-4"
-            action={<span className="text-[10px] font-black uppercase tracking-wider"
-              style={{ color: planoAcoesMetric.pct >= 90 ? "#10b981" : planoAcoesMetric.pct >= 70 ? "#fbbf24" : "#f43f5e" }}>
-              Meta ≥ 90%
-            </span>}>
+            period="MENSAL" meta="≥ 90%"
+            metaTone={planoAcoesMetric.pct >= 90 ? "ok" : planoAcoesMetric.pct >= 70 ? "warn" : "crit"}>
             <DonutCenter
               data={planoAcoesDonut.length > 0 ? planoAcoesDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
               centerValue={`${planoAcoesMetric.pct}%`}
@@ -1022,6 +1027,7 @@ function TstPanel() {
 
           {/* 11 · % Treinamentos NR em dia */}
           <Card title="11 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4"
+            period="MENSAL" meta="100%" metaTone="ok"
             action={<GraduationCap className="h-3 w-3 text-cyan-400" />}>
             {treinamentosNR.length === 0 ? (
               <EmptyBlock label="Sem matriz NR" />
@@ -1038,7 +1044,9 @@ function TstPanel() {
           </Card>
 
           {/* 12 · Near-miss / Quase-acidentes */}
-          <Card title="12 · Quase-Acidentes · 6m" className="col-span-12 md:col-span-4"
+          <Card title="12 · Quase-Acidentes" className="col-span-12 md:col-span-4"
+            period="MENSAL" meta="≥ 5/mês"
+            metaTone={nearMissMesAtual >= 5 ? "ok" : nearMissMesAtual >= 2 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
               <Eye className="h-3 w-3" /> {nearMissTotal} total
             </span>}>
