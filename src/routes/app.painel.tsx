@@ -945,7 +945,7 @@ function TstPanel() {
 
         </div>
         {/* dead-var ref kept silent */}
-        <span className="hidden">{modTotal}{modulosDonut.length}</span>
+        <span className="hidden">{modTotal}{modulosDonut.length}{top5Pend.length}{statusBarsData.length}{motivoEntrega.length}{radialDDS[0]?.value}</span>
 
         {/* ===== Linha 4: Ações + Próximos 7 dias + Ranking ===== */}
         <div className="grid grid-cols-12 gap-4">
