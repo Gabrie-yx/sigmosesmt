@@ -1668,10 +1668,10 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     PERDA_EXTRAVIO: "Reposição por perda/extravio",
   };
   const MOTIVO_COLOR: Record<MotivoEntrega, string> = {
-    PRIMEIRA_ENTREGA: "bg-emerald-500",
-    TROCA_DESGASTE: "bg-blue-500",
-    EMPRESTIMO: "bg-amber-500",
-    PERDA_EXTRAVIO: "bg-rose-600",
+    PRIMEIRA_ENTREGA: "bg-gradient-to-br from-rose-700/80 to-rose-950/80 ring-1 ring-rose-400/40",
+    TROCA_DESGASTE: "bg-gradient-to-br from-rose-600/70 to-rose-900/70 ring-1 ring-rose-300/30",
+    EMPRESTIMO: "bg-gradient-to-br from-amber-700/80 to-rose-950/80 ring-1 ring-amber-400/40",
+    PERDA_EXTRAVIO: "bg-gradient-to-br from-rose-500 to-rose-800 ring-1 ring-rose-300/50",
   };
 
   const [f, setF] = useState<{
@@ -2018,7 +2018,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           <Button
             onClick={() => gerarFicha()}
             title="Visualizar e Assinar Ficha de EPI"
-            className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs"
+            className="bg-gradient-to-br from-rose-600/90 via-rose-800/90 to-rose-950/90 hover:from-rose-500 hover:to-rose-900 text-rose-50 font-black uppercase tracking-widest text-xs ring-1 ring-rose-400/40 shadow-[0_0_24px_rgba(244,80,110,0.35)]"
             size="lg"
           >
             <Printer className="h-4 w-4 mr-2" /> Ficha em PDF
@@ -2349,50 +2349,50 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           {epis.map((e: any) => (
             <div
               key={e.id}
-              className={`flex items-center gap-3 p-3 rounded-xl border transition ${e.data_devolucao ? "border-amber-200 bg-amber-50/40" : "border-slate-200 bg-slate-50/50 hover:bg-slate-50"}`}
+              className={`flex items-center gap-3 p-3 rounded-xl border transition backdrop-blur-md ${e.data_devolucao ? "border-amber-400/20 bg-gradient-to-br from-amber-950/30 via-black/40 to-rose-950/30" : "border-white/10 bg-gradient-to-br from-white/5 via-black/30 to-rose-950/20 hover:from-white/10 hover:to-rose-900/30"}`}
             >
-              <div className="h-10 w-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0">
-                <HardHat className="h-5 w-5 text-brand" />
+              <div className="h-10 w-10 rounded-lg bg-black/40 border border-rose-400/20 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(244,80,110,0.25)_inset]">
+                <HardHat className="h-5 w-5 text-rose-300 drop-shadow-[0_0_6px_rgba(244,80,110,0.7)]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-black text-sm text-slate-800 uppercase">{e.item}</span>
-                  {e.tamanho && <span className="text-xs text-slate-500">({e.tamanho})</span>}
-                  <Badge variant="secondary" className="text-[10px]">QTD: {e.qtd}</Badge>
+                  <span className="font-black text-sm text-rose-50 uppercase">{e.item}</span>
+                  {e.tamanho && <span className="text-xs text-rose-200/70">({e.tamanho})</span>}
+                  <Badge className="text-[10px] bg-black/40 text-rose-100 ring-1 ring-white/10">QTD: {e.qtd}</Badge>
                   {e.motivo_entrega && (
                     <Badge className={`${MOTIVO_COLOR[e.motivo_entrega as MotivoEntrega] ?? "bg-slate-500"} text-white text-[10px]`}>
                       {MOTIVO_LABEL[e.motivo_entrega as MotivoEntrega] ?? e.motivo_entrega}
                     </Badge>
                   )}
                   {e.data_devolucao ? (
-                    <Badge className="bg-amber-500 text-white text-[10px]">DEVOLVIDO</Badge>
+                    <Badge className="bg-gradient-to-br from-amber-600/80 to-rose-900/80 text-amber-50 text-[10px] ring-1 ring-amber-300/40">DEVOLVIDO</Badge>
                   ) : (
-                    <Badge className="bg-emerald-500 text-white text-[10px]">EM USO</Badge>
+                    <Badge className="bg-gradient-to-br from-rose-600/80 to-rose-950/80 text-rose-50 text-[10px] ring-1 ring-rose-300/40 shadow-[0_0_10px_rgba(244,80,110,0.45)]">EM USO</Badge>
                   )}
                 </div>
-                <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-0.5">
-                  C.A.: {e.ca ?? "N/A"} • Entregue em: <span className="text-slate-700">{formatDateBR(e.data_entrega)}</span>
+                <div className="text-[11px] font-bold uppercase tracking-widest text-rose-200/60 mt-0.5">
+                  C.A.: {e.ca ?? "N/A"} • Entregue em: <span className="text-rose-100">{formatDateBR(e.data_entrega)}</span>
                   {e.data_devolucao && (
-                    <> • Devolvido em: <span className="text-amber-700">{formatDateBR(e.data_devolucao)}</span></>
+                    <> • Devolvido em: <span className="text-amber-300">{formatDateBR(e.data_devolucao)}</span></>
                   )}
                 </div>
                 {e.data_devolucao && e.observacoes && (
-                  <div className="text-[11px] text-amber-800 mt-0.5 normal-case">{e.observacoes}</div>
+                  <div className="text-[11px] text-amber-200/80 mt-0.5 normal-case">{e.observacoes}</div>
                 )}
               </div>
               {canEdit && !e.data_devolucao && (
                 <>
-                  <Button size="sm" variant="outline" onClick={() => openReturn(e)} className="border-amber-300 text-amber-700 hover:bg-amber-50">
+                  <Button size="sm" variant="outline" onClick={() => openReturn(e)} className="border-amber-400/40 bg-black/30 text-amber-200 hover:bg-amber-900/30 hover:text-amber-100">
                     <Undo2 className="h-4 w-4 mr-1" /> Devolver
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => openNotReturned(e)} className="border-rose-300 text-rose-700 hover:bg-rose-50" title="Marcar como não devolvido (perda/extravio)">
+                  <Button size="sm" variant="outline" onClick={() => openNotReturned(e)} className="border-rose-400/40 bg-black/30 text-rose-200 hover:bg-rose-900/30 hover:text-rose-100" title="Marcar como não devolvido (perda/extravio)">
                     <Ban className="h-4 w-4 mr-1" /> Não devolvido
                   </Button>
                 </>
               )}
               {canEdit && e.data_devolucao && (
                 <Button size="sm" variant="ghost" onClick={() => undoReturn.mutate(e.id)} title="Desfazer devolução">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  <CheckCircle2 className="h-4 w-4 text-rose-300" />
                 </Button>
               )}
               {canDelete && (
