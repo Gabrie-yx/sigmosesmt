@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Search, ShieldCheck, Flame, Calendar, ArrowRight, ChevronRight, FolderOpen, Package,
-  Users, AlertTriangle, ShieldAlert, TrendingUp,
+  Users, AlertTriangle, ShieldAlert, TrendingUp, Repeat, GraduationCap, ClipboardCheck, Eye,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
@@ -44,7 +44,8 @@ function TstPanel() {
   const { data, isLoading } = useQuery({
     queryKey: ["sesmt-painel", since],
     queryFn: async () => {
-      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, aprs, ptes, controleDocs, extintores, extInspecoes] = await Promise.all([
+      const since6m = fmt(new Date(today.getTime() - 180 * dayMs));
+      const [emps, comps, roles, exams, overrides, deliveries, estoque, dds, aprs, ptes, controleDocs, extintores, extInspecoes, planoAcoes, trainCourses, trainEntries, incidentes] = await Promise.all([
         supabase.from("employees").select("*").order("nome"),
         supabase.from("companies").select("id,name").order("name"),
         supabase.from("roles").select("*"),
@@ -58,6 +59,10 @@ function TstPanel() {
         supabase.from("controle_documentos").select("*"),
         supabase.from("extintores").select("id,status,proxima_recarga,proximo_teste_hidrostatico,numero_identificacao"),
         supabase.from("extintor_inspecoes").select("extintor_id,data_inspecao,conforme"),
+        supabase.from("plano_acoes").select("id,status,quando,data_conclusao,created_at"),
+        supabase.from("training_matrix_courses").select("id,codigo,nome,categoria,periodicidade,ativo").eq("ativo", true),
+        supabase.from("training_matrix_entries").select("id,course_id,employee_id,data_realizacao,status_override"),
+        supabase.from("incidentes").select("id,tipo,gravidade,data_ocorrencia,status").gte("data_ocorrencia", since6m),
       ]);
       const ossRes = await supabase
         .from("oss_emissoes")
@@ -78,6 +83,10 @@ function TstPanel() {
         extintores: extintores.data ?? [],
         extInspecoes: extInspecoes.data ?? [],
         oss: ossRes.data ?? [],
+        planoAcoes: planoAcoes.data ?? [],
+        trainCourses: trainCourses.data ?? [],
+        trainEntries: trainEntries.data ?? [],
+        incidentes: incidentes.data ?? [],
       };
     },
   });
@@ -433,6 +442,112 @@ function TstPanel() {
     { name: "Aderência", value: ddsAderencia, fill: ddsAderencia >= 90 ? "#10b981" : ddsAderencia >= 70 ? "#fbbf24" : "#f43f5e" },
   ];
 
+  // === NOVO 07 · Reincidência EPI por colaborador ===
+  // Conta entregas com motivo PERDA/EXTRAVIO/TROCA por colaborador
+  const reincidenciaEPI = useMemo(() => {
+    const map = new Map<string, { id: string; nome: string; perda: number; troca: number; total: number }>();
+    const empNome = new Map((data?.employees ?? []).map((e: any) => [e.id, e.nome]));
+    (data?.deliveries ?? []).forEach((d: any) => {
+      const motivo = String(d.motivo_entrega || "");
+      if (motivo !== "PERDA_EXTRAVIO" && motivo !== "TROCA" && motivo !== "TROCA_DESGASTE") return;
+      const id = d.employee_id;
+      if (!id) return;
+      const cur = map.get(id) ?? { id, nome: (empNome.get(id) as string) ?? "—", perda: 0, troca: 0, total: 0 };
+      const q = Number(d.qtd || 0);
+      if (motivo === "PERDA_EXTRAVIO") cur.perda += q;
+      else cur.troca += q;
+      cur.total += q;
+      map.set(id, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => b.total - a.total).slice(0, 6);
+  }, [data]);
+
+  // === NOVO 10 · % Ações Plano no prazo ===
+  const planoAcoesMetric = useMemo(() => {
+    const all = (data as any)?.planoAcoes ?? [];
+    const hoje = today.getTime();
+    let noPrazo = 0, atrasadas = 0, abertasOk = 0;
+    all.forEach((a: any) => {
+      const concluido = a.status === "CONCLUIDA" || a.status === "CONCLUIDO" || !!a.data_conclusao;
+      const prevista = a.quando ? new Date(a.quando + "T00:00").getTime() : null;
+      if (concluido) {
+        const dc = a.data_conclusao ? new Date(a.data_conclusao + "T00:00").getTime() : hoje;
+        if (!prevista || dc <= prevista) noPrazo += 1;
+        else atrasadas += 1;
+      } else {
+        if (prevista && prevista < hoje) atrasadas += 1;
+        else abertasOk += 1;
+      }
+    });
+    const total = noPrazo + atrasadas + abertasOk;
+    const pct = total > 0 ? Math.round((noPrazo / total) * 100) : 0;
+    return { noPrazo, atrasadas, abertasOk, total, pct };
+  }, [data]);
+
+  const planoAcoesDonut = [
+    { name: "No prazo", value: planoAcoesMetric.noPrazo, fill: "#10b981" },
+    { name: "Em aberto", value: planoAcoesMetric.abertasOk, fill: "#22d3ee" },
+    { name: "Atrasadas", value: planoAcoesMetric.atrasadas, fill: "#f43f5e" },
+  ].filter((d) => d.value > 0);
+
+  // === NOVO 11 · % Treinamentos NR em dia (por curso) ===
+  const periodicidadeMeses = (p: string): number => {
+    const v = String(p || "").toUpperCase();
+    if (v.includes("ANUAL")) return 12;
+    if (v.includes("BIENAL") || v.includes("2 ANOS")) return 24;
+    if (v.includes("TRIENAL") || v.includes("3 ANOS")) return 36;
+    if (v.includes("SEMESTRAL") || v.includes("6 MESES")) return 6;
+    if (v.includes("INICIAL") || v.includes("UNICA") || v.includes("ÚNICA")) return 9999;
+    const n = parseInt(v, 10);
+    return isNaN(n) ? 12 : n;
+  };
+  const treinamentosNR = useMemo(() => {
+    const courses = ((data as any)?.trainCourses ?? []) as any[];
+    const entries = ((data as any)?.trainEntries ?? []) as any[];
+    const totalEmps = (data?.employees ?? []).filter((e: any) => e.ativo !== false).length || 1;
+    // foca em NRs (categoria começando com "NR" ou código tipo NR-XX)
+    const nrCourses = courses.filter((c) => {
+      const tag = `${c.categoria ?? ""} ${c.codigo ?? ""}`.toUpperCase();
+      return tag.includes("NR");
+    });
+    const out = nrCourses.map((c) => {
+      const meses = periodicidadeMeses(c.periodicidade);
+      const limiteVal = today.getTime();
+      const validEmps = new Set<string>();
+      entries.filter((en) => en.course_id === c.id).forEach((en) => {
+        if (!en.data_realizacao) return;
+        const dr = new Date(en.data_realizacao + "T00:00").getTime();
+        const validade = meses >= 9999 ? Infinity : dr + meses * 30 * dayMs;
+        if (validade >= limiteVal) validEmps.add(en.employee_id);
+      });
+      const pct = Math.round((validEmps.size / totalEmps) * 100);
+      const code = c.codigo || c.nome;
+      const name = code.length > 12 ? code.slice(0, 12) + "…" : code;
+      return { name, value: Math.min(100, pct), abs: validEmps.size };
+    }).filter((c) => c.abs > 0 || c.value > 0).sort((a, b) => b.value - a.value).slice(0, 6);
+    return out;
+  }, [data]);
+
+  // === NOVO 12 · Near-miss / Quase-acidentes por mês (6 meses) ===
+  const nearMissTrend = useMemo(() => {
+    const out: { mes: string; qtd: number }[] = [];
+    const all = ((data as any)?.incidentes ?? []) as any[];
+    const nm = all.filter((i) => {
+      const t = String(i.tipo || "").toUpperCase();
+      return t.includes("QUASE") || t.includes("NEAR") || t.includes("NEAR_MISS");
+    });
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const next = new Date(today.getFullYear(), today.getMonth() - i + 1, 1);
+      const sIso = fmt(d), eIso = fmt(next);
+      const qtd = nm.filter((x) => x.data_ocorrencia >= sIso && x.data_ocorrencia < eIso).length;
+      out.push({ mes: `${MONTHS_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`, qtd });
+    }
+    return out;
+  }, [data]);
+  const nearMissTotal = nearMissTrend.reduce((s, m) => s + m.qtd, 0);
+  const nearMissMesAtual = nearMissTrend[nearMissTrend.length - 1]?.qtd ?? 0;
+
   return (
     <div className="h-full overflow-y-auto custom-scrollbar relative"
       style={{
@@ -663,29 +778,39 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 7 · Radial Aderência DDS */}
-          <Card title="07 · Aderência DDS" className="col-span-12 md:col-span-3">
-            <div className="relative h-56">
-              <ResponsiveContainer>
-                <RadialBarChart innerRadius="70%" outerRadius="100%" data={radialDDS} startAngle={220} endAngle={-40}>
-                  <defs>
-                    <linearGradient id="gradRadial" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor={radialDDS[0].fill} stopOpacity={1} />
-                      <stop offset="100%" stopColor={radialDDS[0].fill} stopOpacity={0.6} />
-                    </linearGradient>
-                  </defs>
-                  <RadialBar dataKey="value" cornerRadius={14} background={{ fill: "#1e293b" }} fill="url(#gradRadial)" />
-                </RadialBarChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <div className="text-4xl font-black tabular-nums drop-shadow-sm" style={{ color: radialDDS[0].fill }}>{ddsAderencia}%</div>
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mt-1.5">Período</div>
+          {/* 7 · Reincidência EPI por colaborador */}
+          <Card title="07 · Reincidência EPI · TOP" className="col-span-12 md:col-span-3"
+            action={<Repeat className="h-3 w-3 text-rose-400" />}>
+            {reincidenciaEPI.length === 0 ? (
+              <div className="py-10 text-center text-[#10b981] text-xs font-black uppercase tracking-wider">Sem reincidências</div>
+            ) : (
+              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                {reincidenciaEPI.map((r, i) => {
+                  const max = reincidenciaEPI[0].total || 1;
+                  const pct = Math.round((r.total / max) * 100);
+                  return (
+                    <Link key={r.id} to="/app/employees/$id" params={{ id: r.id }}
+                      className="block p-1.5 rounded hover:bg-slate-800/40 group">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold text-slate-200 truncate flex items-center gap-1.5">
+                          <span className="text-slate-600 tabular-nums">{i + 1}.</span>
+                          {r.nome}
+                        </span>
+                        <span className="text-[10px] font-black text-rose-400 tabular-nums shrink-0 ml-1">{r.total}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-slate-800/80 overflow-hidden">
+                        <div className="h-full rounded-full"
+                          style={{ width: `${pct}%`, background: `linear-gradient(90deg, #f43f5e, #fb7185)`, boxShadow: "0 0 8px rgba(244,63,94,0.5)" }} />
+                      </div>
+                      <div className="flex gap-2 mt-0.5 text-[9px] text-slate-500">
+                        <span>Perda: <span className="text-rose-300 font-bold">{r.perda}</span></span>
+                        <span>Troca: <span className="text-amber-300 font-bold">{r.troca}</span></span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
-            </div>
-            <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80">
-              <LegendItem color="#22d3ee" label="DDS" value={ddsCount} />
-              <LegendItem color="#10b981" label="Meta" value={90} />
-            </div>
+            )}
           </Card>
 
           {/* 8 · Linha Documentos Abertos × Resolvidos */}
@@ -743,31 +868,84 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 10 · HBar Pendência por Empresa */}
-          <Card title="10 · Pendência · Empresa" className="col-span-12 md:col-span-4">
-            <HBarList items={top5Pend} color="#f43f5e" suffix="%" empty="Sem pendências" />
-          </Card>
-
-          {/* 11 · HBar Distribuição Status */}
-          <Card title="11 · Distribuição Status" className="col-span-12 md:col-span-4">
-            <HBarList
-              items={statusBarsData.map((s) => ({
-                name: s.name,
-                value: totalEmp > 0 ? Math.round((s.value / totalEmp) * 100) : 0,
-                color: s.fill,
-              }))}
-              suffix="%" perItemColor
+          {/* 10 · % Ações Plano no prazo */}
+          <Card title="10 · Plano de Ação · Prazo" className="col-span-12 md:col-span-4"
+            action={<span className="text-[10px] font-black uppercase tracking-wider"
+              style={{ color: planoAcoesMetric.pct >= 90 ? "#10b981" : planoAcoesMetric.pct >= 70 ? "#fbbf24" : "#f43f5e" }}>
+              Meta ≥ 90%
+            </span>}>
+            <DonutCenter
+              data={planoAcoesDonut.length > 0 ? planoAcoesDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
+              centerValue={`${planoAcoesMetric.pct}%`}
+              centerLabel="No prazo"
+              centerColor={planoAcoesMetric.pct >= 90 ? "#10b981" : planoAcoesMetric.pct >= 70 ? "#fbbf24" : "#f43f5e"}
             />
+            <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80">
+              <LegendItem color="#10b981" label="No prazo" value={planoAcoesMetric.noPrazo} />
+              <LegendItem color="#22d3ee" label="Abertas" value={planoAcoesMetric.abertasOk} />
+              <LegendItem color="#f43f5e" label="Atrasadas" value={planoAcoesMetric.atrasadas} />
+            </div>
           </Card>
 
-          {/* 12 · HBar Motivos EPI */}
-          <Card title="12 · Motivo Entrega · EPI" className="col-span-12 md:col-span-4">
-            <HBarList items={motivoEntrega} color="#22d3ee" suffix="%" empty="Sem entregas" />
+          {/* 11 · % Treinamentos NR em dia */}
+          <Card title="11 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4"
+            action={<GraduationCap className="h-3 w-3 text-cyan-400" />}>
+            {treinamentosNR.length === 0 ? (
+              <EmptyBlock label="Sem matriz NR" />
+            ) : (
+              <HBarList
+                items={treinamentosNR.map((t) => ({
+                  name: t.name,
+                  value: t.value,
+                  color: t.value >= 90 ? "#10b981" : t.value >= 70 ? "#fbbf24" : "#f43f5e",
+                }))}
+                suffix="%" perItemColor
+              />
+            )}
+          </Card>
+
+          {/* 12 · Near-miss / Quase-acidentes */}
+          <Card title="12 · Quase-Acidentes · 6m" className="col-span-12 md:col-span-4"
+            action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
+              <Eye className="h-3 w-3" /> {nearMissTotal} total
+            </span>}>
+            <div className="h-52">
+              {nearMissTotal === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center gap-1">
+                  <ClipboardCheck className="h-6 w-6 text-slate-600" />
+                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">Nenhum reporte</div>
+                  <div className="text-[9px] text-slate-600">Meta: ≥ 5/mês (proativo)</div>
+                </div>
+              ) : (
+                <ResponsiveContainer>
+                  <ComposedChart data={nearMissTrend} margin={{ top: 14, right: 8, left: -25, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradNM" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#fbbf24" stopOpacity={0.6} />
+                        <stop offset="100%" stopColor="#fbbf24" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip contentStyle={tooltipDark} />
+                    <Area type="monotone" dataKey="qtd" stroke="#fbbf24" strokeWidth={3} fill="url(#gradNM)"
+                      dot={{ r: 4, fill: "#0a0f1f", stroke: "#fbbf24", strokeWidth: 2 }}>
+                      <LabelList dataKey="qtd" position="top" style={{ fontSize: 10, fontWeight: 900, fill: "#fde68a" }} />
+                    </Area>
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+            <div className="flex justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
+              <span className="text-slate-500">Mês atual: <span className="text-amber-300 font-black">{nearMissMesAtual}</span></span>
+              <span className="text-slate-500">Meta: <span className="text-emerald-400 font-black">≥ 5</span></span>
+            </div>
           </Card>
 
         </div>
         {/* dead-var ref kept silent */}
-        <span className="hidden">{modTotal}{modulosDonut.length}</span>
+        <span className="hidden">{modTotal}{modulosDonut.length}{top5Pend.length}{statusBarsData.length}{motivoEntrega.length}{radialDDS[0]?.value}</span>
 
         {/* ===== Linha 4: Ações + Próximos 7 dias + Ranking ===== */}
         <div className="grid grid-cols-12 gap-4">
