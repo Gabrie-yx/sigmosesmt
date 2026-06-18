@@ -137,18 +137,18 @@ export function CursosMinistradosPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3 bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+      <div className="glass-card glass-shine flex flex-wrap items-center gap-3 p-4">
         <div className="relative flex-1 min-w-[240px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-rose-200/60 z-10" />
           <Input
             placeholder="Buscar por código ou nome (NR-06, NR-17, ...)"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="pl-9"
+            className="pl-9 bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/40 focus-visible:ring-rose-500/40 focus-visible:border-rose-500/40"
           />
         </div>
         <Select value={filtroCat} onValueChange={setFiltroCat}>
-          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[200px] bg-black/30 border-white/10 text-rose-50"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="__all__">Todas as categorias</SelectItem>
             {Object.entries(CATEGORIA_LABEL).map(([k, v]) => (
@@ -156,16 +156,16 @@ export function CursosMinistradosPanel() {
             ))}
           </SelectContent>
         </Select>
-        <Badge variant="secondary" className="text-xs font-bold">
+        <Badge className="text-xs font-bold bg-rose-950/60 text-rose-100 border border-rose-500/30 shadow-[0_0_14px_-4px_rgba(220,38,70,0.6)] hover:bg-rose-900/70">
           {filtered.length} cursos
         </Badge>
       </div>
 
       {filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 text-center text-slate-400 border border-dashed border-slate-200">
-          <Layers className="h-10 w-10 mx-auto mb-3 opacity-30" />
-          <p className="text-xs uppercase font-bold">Nenhum curso encontrado</p>
-          <p className="text-[11px] mt-1 text-slate-400">
+        <div className="glass-card p-12 text-center text-rose-200/70">
+          <Layers className="h-10 w-10 mx-auto mb-3 opacity-40 text-rose-300" />
+          <p className="text-xs uppercase font-bold text-rose-100">Nenhum curso encontrado</p>
+          <p className="text-[11px] mt-1 text-rose-200/50">
             Cadastre cursos em <b>Matriz de Treinamento</b> para que apareçam aqui.
           </p>
         </div>
@@ -181,17 +181,17 @@ export function CursosMinistradosPanel() {
               <button
                 key={c.id}
                 onClick={() => setOpenCourseId(c.id)}
-                className="text-left bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:shadow-md hover:border-[#991b1b]/40 transition-all group"
+                className="glass-card text-left p-5 hover:-translate-y-0.5 transition-all group"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded border ${catColor}`}>
+                  <div className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md bg-rose-950/70 text-rose-100 border border-rose-500/30 shadow-[0_0_12px_-4px_rgba(220,38,70,0.5)]">
                     {CATEGORIA_LABEL[c.categoria] ?? c.categoria ?? "—"}
                   </div>
-                  <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-[#991b1b] group-hover:translate-x-0.5 transition" />
+                  <ChevronRight className="h-4 w-4 text-rose-300/60 group-hover:text-rose-200 group-hover:translate-x-0.5 transition" />
                 </div>
-                <div className="text-xs font-black text-[#991b1b] uppercase tracking-widest mb-1">{c.codigo}</div>
-                <h4 className="text-sm font-bold text-slate-800 line-clamp-2 min-h-[2.5rem]">{c.nome}</h4>
-                <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-[10px] font-bold uppercase text-slate-500">
+                <div className="text-xs font-black text-rose-300 uppercase tracking-widest mb-1">{c.codigo}</div>
+                <h4 className="text-sm font-bold text-rose-50 line-clamp-2 min-h-[2.5rem]">{c.nome}</h4>
+                <div className="mt-4 pt-3 border-t border-white/10 grid grid-cols-2 gap-2 text-[10px] font-bold uppercase text-rose-200/60">
                   <div className="flex items-center gap-1">
                     <Layers className="h-3 w-3" /> {turmas.length} turma{turmas.length !== 1 ? "s" : ""}
                   </div>
@@ -201,22 +201,22 @@ export function CursosMinistradosPanel() {
                   </div>
                 </div>
                 {ad && ad.precisam > 0 && pct !== null && (
-                  <div className="mt-3 pt-3 border-t border-slate-100">
+                  <div className="mt-3 pt-3 border-t border-white/10">
                     <div className="flex items-center justify-between text-[10px] font-black uppercase mb-1">
-                      <span className="text-slate-500">Aderência</span>
-                      <span className={pct === 100 ? "text-emerald-600" : pct >= 70 ? "text-amber-600" : "text-red-600"}>
+                      <span className="text-rose-200/60">Aderência</span>
+                      <span className={pct === 100 ? "text-emerald-300" : pct >= 70 ? "text-amber-300" : "text-rose-300"}>
                         {pct}%
                       </span>
                     </div>
-                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-black/40 rounded-full overflow-hidden ring-1 ring-white/5">
                       <div
-                        className={`h-full ${pct === 100 ? "bg-emerald-500" : pct >= 70 ? "bg-amber-500" : "bg-red-500"}`}
+                        className={`h-full ${pct === 100 ? "bg-gradient-to-r from-emerald-400 to-emerald-500 shadow-[0_0_10px_rgba(52,211,153,0.6)]" : pct >= 70 ? "bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(251,191,36,0.6)]" : "bg-gradient-to-r from-rose-400 to-rose-600 shadow-[0_0_10px_rgba(244,63,94,0.6)]"}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <div className="flex items-center justify-between text-[10px] mt-1.5 font-bold text-slate-500">
+                    <div className="flex items-center justify-between text-[10px] mt-1.5 font-bold text-rose-200/60">
                       <span>{ad.treinados}/{ad.precisam} treinados</span>
-                      {ad.faltam > 0 && <span className="text-red-600">{ad.faltam} faltam</span>}
+                      {ad.faltam > 0 && <span className="text-rose-300">{ad.faltam} faltam</span>}
                     </div>
                   </div>
                 )}
