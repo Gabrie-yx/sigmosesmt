@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Search, ShieldCheck, Flame, Calendar, ArrowRight, ChevronRight, FolderOpen, Package,
-  Users, AlertTriangle, ShieldAlert, TrendingUp,
+  Users, AlertTriangle, ShieldAlert, TrendingUp, Repeat, GraduationCap, ClipboardCheck, Eye,
 } from "lucide-react";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { type SafetyOverride } from "@/lib/safety-overrides";
