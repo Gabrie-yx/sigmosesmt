@@ -51,12 +51,15 @@ const STATUS_CELL_MAP: Record<string, string[]> = {
 };
 
 const CELL_BG: Record<string, string> = {
+  // Paleta segura p/ daltônicos (Okabe-Ito adaptado):
+  // verde = ok | amarelo = atenção | bordô = vencido | salmão = pendente
+  // ciano = em andamento (azul distintivo) | roxo = a iniciar (violeta distintivo)
   "REALIZADO": "bg-emerald-400 hover:bg-emerald-500",
   "A VENCER": "bg-amber-400 hover:bg-amber-500",
-  "VENCIDO": "bg-red-500 hover:bg-red-600",
-  "PENDENTE": "bg-red-300 hover:bg-red-400",
-  "EM ANDAMENTO": "bg-rose-400 hover:bg-rose-500",
-  "A INICIAR": "bg-rose-300 hover:bg-rose-400",
+  "VENCIDO": "bg-red-600 hover:bg-red-700",
+  "PENDENTE": "bg-rose-300 hover:bg-rose-400",
+  "EM ANDAMENTO": "bg-cyan-500 hover:bg-cyan-600",
+  "A INICIAR": "bg-violet-500 hover:bg-violet-600",
   "N/A": "bg-white/10 hover:bg-white/20",
 };
 
@@ -366,7 +369,7 @@ function MatrizPage() {
                     // Sobrescreve com "A INICIAR" quando há turma agendada ou data futura na matriz
                     const showAIniciar = Boolean(sched) || Boolean(entry?.data_realizacao && entry.data_realizacao >= hoje);
                     const st = showAIniciar
-                      ? { label: "A INICIAR", color: "bg-rose-500/30 text-rose-100 border-rose-400/40" }
+                      ? { label: "A INICIAR", color: "bg-violet-500/30 text-violet-100 border-violet-400/40" }
                       : baseSt;
                     // Aplica filtro de status à célula: se um filtro está ativo e esta célula não corresponde, oculta
                     if (filtroStatus !== "ALL") {
