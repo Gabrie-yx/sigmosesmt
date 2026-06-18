@@ -442,6 +442,112 @@ function TstPanel() {
     { name: "Aderência", value: ddsAderencia, fill: ddsAderencia >= 90 ? "#10b981" : ddsAderencia >= 70 ? "#fbbf24" : "#f43f5e" },
   ];
 
+  // === NOVO 07 · Reincidência EPI por colaborador ===
+  // Conta entregas com motivo PERDA/EXTRAVIO/TROCA por colaborador
+  const reincidenciaEPI = useMemo(() => {
+    const map = new Map<string, { id: string; nome: string; perda: number; troca: number; total: number }>();
+    const empNome = new Map((data?.employees ?? []).map((e: any) => [e.id, e.nome]));
+    (data?.deliveries ?? []).forEach((d: any) => {
+      const motivo = String(d.motivo_entrega || "");
+      if (motivo !== "PERDA_EXTRAVIO" && motivo !== "TROCA" && motivo !== "TROCA_DESGASTE") return;
+      const id = d.employee_id;
+      if (!id) return;
+      const cur = map.get(id) ?? { id, nome: (empNome.get(id) as string) ?? "—", perda: 0, troca: 0, total: 0 };
+      const q = Number(d.qtd || 0);
+      if (motivo === "PERDA_EXTRAVIO") cur.perda += q;
+      else cur.troca += q;
+      cur.total += q;
+      map.set(id, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => b.total - a.total).slice(0, 6);
+  }, [data]);
+
+  // === NOVO 10 · % Ações Plano no prazo ===
+  const planoAcoesMetric = useMemo(() => {
+    const all = (data as any)?.planoAcoes ?? [];
+    const hoje = today.getTime();
+    let noPrazo = 0, atrasadas = 0, abertasOk = 0;
+    all.forEach((a: any) => {
+      const concluido = a.status === "CONCLUIDA" || a.status === "CONCLUIDO" || !!a.data_conclusao;
+      const prevista = a.quando ? new Date(a.quando + "T00:00").getTime() : null;
+      if (concluido) {
+        const dc = a.data_conclusao ? new Date(a.data_conclusao + "T00:00").getTime() : hoje;
+        if (!prevista || dc <= prevista) noPrazo += 1;
+        else atrasadas += 1;
+      } else {
+        if (prevista && prevista < hoje) atrasadas += 1;
+        else abertasOk += 1;
+      }
+    });
+    const total = noPrazo + atrasadas + abertasOk;
+    const pct = total > 0 ? Math.round((noPrazo / total) * 100) : 0;
+    return { noPrazo, atrasadas, abertasOk, total, pct };
+  }, [data]);
+
+  const planoAcoesDonut = [
+    { name: "No prazo", value: planoAcoesMetric.noPrazo, fill: "#10b981" },
+    { name: "Em aberto", value: planoAcoesMetric.abertasOk, fill: "#22d3ee" },
+    { name: "Atrasadas", value: planoAcoesMetric.atrasadas, fill: "#f43f5e" },
+  ].filter((d) => d.value > 0);
+
+  // === NOVO 11 · % Treinamentos NR em dia (por curso) ===
+  const periodicidadeMeses = (p: string): number => {
+    const v = String(p || "").toUpperCase();
+    if (v.includes("ANUAL")) return 12;
+    if (v.includes("BIENAL") || v.includes("2 ANOS")) return 24;
+    if (v.includes("TRIENAL") || v.includes("3 ANOS")) return 36;
+    if (v.includes("SEMESTRAL") || v.includes("6 MESES")) return 6;
+    if (v.includes("INICIAL") || v.includes("UNICA") || v.includes("ÚNICA")) return 9999;
+    const n = parseInt(v, 10);
+    return isNaN(n) ? 12 : n;
+  };
+  const treinamentosNR = useMemo(() => {
+    const courses = ((data as any)?.trainCourses ?? []) as any[];
+    const entries = ((data as any)?.trainEntries ?? []) as any[];
+    const totalEmps = (data?.employees ?? []).filter((e: any) => e.ativo !== false).length || 1;
+    // foca em NRs (categoria começando com "NR" ou código tipo NR-XX)
+    const nrCourses = courses.filter((c) => {
+      const tag = `${c.categoria ?? ""} ${c.codigo ?? ""}`.toUpperCase();
+      return tag.includes("NR");
+    });
+    const out = nrCourses.map((c) => {
+      const meses = periodicidadeMeses(c.periodicidade);
+      const limiteVal = today.getTime();
+      const validEmps = new Set<string>();
+      entries.filter((en) => en.course_id === c.id).forEach((en) => {
+        if (!en.data_realizacao) return;
+        const dr = new Date(en.data_realizacao + "T00:00").getTime();
+        const validade = meses >= 9999 ? Infinity : dr + meses * 30 * dayMs;
+        if (validade >= limiteVal) validEmps.add(en.employee_id);
+      });
+      const pct = Math.round((validEmps.size / totalEmps) * 100);
+      const code = c.codigo || c.nome;
+      const name = code.length > 12 ? code.slice(0, 12) + "…" : code;
+      return { name, value: Math.min(100, pct), abs: validEmps.size };
+    }).filter((c) => c.abs > 0 || c.value > 0).sort((a, b) => b.value - a.value).slice(0, 6);
+    return out;
+  }, [data]);
+
+  // === NOVO 12 · Near-miss / Quase-acidentes por mês (6 meses) ===
+  const nearMissTrend = useMemo(() => {
+    const out: { mes: string; qtd: number }[] = [];
+    const all = ((data as any)?.incidentes ?? []) as any[];
+    const nm = all.filter((i) => {
+      const t = String(i.tipo || "").toUpperCase();
+      return t.includes("QUASE") || t.includes("NEAR") || t.includes("NEAR_MISS");
+    });
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const next = new Date(today.getFullYear(), today.getMonth() - i + 1, 1);
+      const sIso = fmt(d), eIso = fmt(next);
+      const qtd = nm.filter((x) => x.data_ocorrencia >= sIso && x.data_ocorrencia < eIso).length;
+      out.push({ mes: `${MONTHS_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`, qtd });
+    }
+    return out;
+  }, [data]);
+  const nearMissTotal = nearMissTrend.reduce((s, m) => s + m.qtd, 0);
+  const nearMissMesAtual = nearMissTrend[nearMissTrend.length - 1]?.qtd ?? 0;
+
   return (
     <div className="h-full overflow-y-auto custom-scrollbar relative"
       style={{
