@@ -63,6 +63,7 @@ export function EstoqueSesmtPage() {
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<Set<string>>(new Set());
   const [gerandoReq, setGerandoReq] = useState(false);
+  const [showRelatorioEntregas, setShowRelatorioEntregas] = useState(false);
   const CART_MAX = 15;
 
   const { data: items = [] } = useQuery({
