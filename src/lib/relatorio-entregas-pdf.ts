@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { drawPdfHeader } from "./pdf-header";
 
 export type EntregaRow = {
   data_entrega: string; // ISO
@@ -55,28 +56,6 @@ export function buildRelatorioEntregasPdf(opts: RelatorioEntregasOpts): jsPDF {
   const H = doc.internal.pageSize.getHeight();
   const M = 12;
 
-  // Header
-  doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, W, 18, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text("RELATÓRIO DE ENTREGAS DE EPI", M, 11);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.text(`Emitido em ${new Date().toLocaleString("pt-BR")}`, W - M, 11, { align: "right" });
-
-  doc.setTextColor(0, 0, 0);
-  let y = 23;
-  doc.setFontSize(8);
-  const meta: string[] = [];
-  meta.push(`Período: ${brDateOnly(opts.inicio)} a ${brDateOnly(opts.fim)}`);
-  meta.push(`Agrupamento: ${opts.agrupamento === "semanal" ? "Semanal" : "Mensal"}`);
-  if (opts.filtroEpi) meta.push(`EPI: ${opts.filtroEpi}`);
-  if (opts.responsavel) meta.push(`Responsável: ${opts.responsavel}`);
-  doc.text(meta.join("   ·   "), M, y);
-  y += 4;
-
   // Agrupar
   const groupOf = opts.agrupamento === "semanal" ? weekKey : monthKey;
   const buckets = new Map<string, { label: string; rows: EntregaRow[]; total: number }>();
@@ -90,16 +69,24 @@ export function buildRelatorioEntregasPdf(opts: RelatorioEntregasOpts): jsPDF {
   const sortedKeys = Array.from(buckets.keys()).sort();
 
   const totalGeral = opts.rows.reduce((a, r) => a + (r.quantidade ?? 0), 0);
-  doc.setFont("helvetica", "bold");
-  doc.text(
-    `Total de entregas no período: ${opts.rows.length} registros · ${totalGeral} unidade(s)`,
-    M, y,
-  );
-  y += 2;
+
+  const filtros: string[] = [
+    `Período: ${brDateOnly(opts.inicio)} a ${brDateOnly(opts.fim)}`,
+    `Agrupamento: ${opts.agrupamento === "semanal" ? "Semanal" : "Mensal"}`,
+  ];
+  if (opts.filtroEpi) filtros.push(`EPI: ${opts.filtroEpi}`);
+
+  const y = drawPdfHeader(doc, {
+    titulo: "Relatório de Entregas de EPI",
+    subtitulo: "Movimentações de saída — SESMT",
+    responsavel: opts.responsavel ?? null,
+    filtros,
+    destaque: `Total no período: ${opts.rows.length} registro(s)   ·   ${totalGeral} unidade(s)`,
+  });
 
   // Tabela resumo por grupo
   autoTable(doc, {
-    startY: y + 2,
+    startY: y + 1,
     margin: { left: M, right: M, bottom: 14 },
     head: [["Período", "Registros", "Unidades entregues"]],
     body: sortedKeys.map((k) => {
