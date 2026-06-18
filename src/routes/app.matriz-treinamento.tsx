@@ -369,7 +369,7 @@ function MatrizPage() {
                     // Sobrescreve com "A INICIAR" quando há turma agendada ou data futura na matriz
                     const showAIniciar = Boolean(sched) || Boolean(entry?.data_realizacao && entry.data_realizacao >= hoje);
                     const st = showAIniciar
-                      ? { label: "A INICIAR", color: "bg-rose-500/30 text-rose-100 border-rose-400/40" }
+                      ? { label: "A INICIAR", color: "bg-violet-500/30 text-violet-100 border-violet-400/40" }
                       : baseSt;
                     // Aplica filtro de status à célula: se um filtro está ativo e esta célula não corresponde, oculta
                     if (filtroStatus !== "ALL") {
