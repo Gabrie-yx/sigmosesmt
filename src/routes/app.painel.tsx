@@ -434,17 +434,25 @@ function TstPanel() {
   ];
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 custom-scrollbar">
-      <div className="max-w-[1700px] mx-auto p-4 md:p-5 flex flex-col gap-4">
+    <div className="h-full overflow-y-auto custom-scrollbar relative"
+      style={{
+        background:
+          "radial-gradient(1200px 600px at 10% -10%, rgba(34,211,238,0.10), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(244,63,94,0.08), transparent 60%), linear-gradient(180deg, #060913 0%, #0a0f1f 50%, #060913 100%)",
+      }}
+    >
+      <div className="max-w-[1700px] mx-auto p-4 md:p-5 flex flex-col gap-4 relative">
 
         {/* ===== HEADER limpo ===== */}
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="bg-[#f43f5e] text-white px-2 py-0.5 rounded-sm text-[10px] font-black uppercase tracking-tighter">DMN</span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Painel Executivo · SESMT</span>
+              <span className="bg-gradient-to-r from-rose-500 to-rose-600 text-white px-2 py-0.5 rounded-sm text-[10px] font-black uppercase tracking-tighter shadow-[0_0_20px_rgba(244,63,94,0.5)]">DMN</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">SGI-SST · Auditoria ISO 9001 / 45001</span>
             </div>
-            <h1 className="text-xl md:text-2xl font-black text-[#22d3ee] tracking-tight mt-1">Indicadores de Segurança do Trabalho</h1>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight mt-1 bg-gradient-to-r from-cyan-300 via-cyan-200 to-emerald-300 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(34,211,238,0.35)]">
+              Dashboard SESMT
+            </h1>
+            <div className="text-[11px] text-slate-400 mt-0.5">Indicadores de Segurança · Medição &amp; Avaliação (FORCP-SGI-20)</div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative">
