@@ -28,6 +28,7 @@ import protectiveClothingIcon from "@/assets/protective-clothing.png";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { openEstoqueSesmtPdf } from "@/lib/estoque-sesmt-pdf";
+import { RelatorioEntregasDialog } from "@/components/estoque/relatorio-entregas-dialog";
 
 type Item = {
   id: string;
