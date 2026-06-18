@@ -242,10 +242,10 @@ function MatrizPage() {
   }, [courses, roleCourses, empsFiltrados]);
 
   return (
-    <div className="p-4 md:p-6 animate-fadeIn h-full bg-[#f1f5f9]">
+    <div className="p-4 md:p-6 animate-fadeIn h-full">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h2 className="heading-display text-2xl md:text-3xl text-[#991b1b] flex items-center gap-3">
-          <GraduationCap className="h-7 w-7" /> Matriz de Treinamento — 2026
+        <h2 className="heading-display text-2xl md:text-3xl text-rose-100 drop-shadow-[0_2px_12px_rgba(220,38,70,0.45)] flex items-center gap-3">
+          <GraduationCap className="h-7 w-7 text-rose-300 drop-shadow-[0_0_8px_rgba(244,80,110,0.7)]" /> Matriz de Treinamento — 2026
         </h2>
         {isEditor && (
           <div className="flex gap-2 flex-wrap">
@@ -265,12 +265,12 @@ function MatrizPage() {
         )}
       </div>
 
-      <div className="bg-white rounded-xl p-3 mb-3 shadow-sm border border-slate-200 flex flex-wrap items-end gap-3">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
+      <div className="glass-card glass-shine rounded-xl p-3 mb-3 flex flex-wrap items-end gap-3">
+        <div className="flex items-center gap-2 text-xs font-bold text-rose-200/70 uppercase">
           <Filter className="h-4 w-4" /> Filtros
         </div>
         <div>
-          <Label className="text-[10px] font-black text-slate-500 uppercase">Setor</Label>
+          <Label className="text-[10px] font-black text-rose-200/70 uppercase">Setor</Label>
           <Select value={filtroSetor} onValueChange={setFiltroSetor}>
             <SelectTrigger className="mt-1 h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -280,7 +280,7 @@ function MatrizPage() {
           </Select>
         </div>
         <div>
-          <Label className="text-[10px] font-black text-slate-500 uppercase">Vínculo</Label>
+          <Label className="text-[10px] font-black text-rose-200/70 uppercase">Vínculo</Label>
           <Select value={filtroVinculo} onValueChange={setFiltroVinculo}>
             <SelectTrigger className="mt-1 h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -291,7 +291,7 @@ function MatrizPage() {
           </Select>
         </div>
         <div>
-          <Label className="text-[10px] font-black text-slate-500 uppercase">Status</Label>
+          <Label className="text-[10px] font-black text-rose-200/70 uppercase">Status</Label>
           <Select value={filtroStatus} onValueChange={setFiltroStatus}>
             <SelectTrigger className="mt-1 h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -300,35 +300,35 @@ function MatrizPage() {
           </Select>
         </div>
         <div className="flex-1 min-w-[200px]">
-          <Label className="text-[10px] font-black text-slate-500 uppercase">Buscar</Label>
+          <Label className="text-[10px] font-black text-rose-200/70 uppercase">Buscar</Label>
           <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="nome ou matrícula" className="mt-1 h-8 text-xs" />
         </div>
-        <div className="text-[11px] text-slate-500 font-bold">{empsFiltrados.length} funcionário(s) · {cursosVisiveis.length} curso(s)</div>
+        <div className="text-[11px] text-rose-200/70 font-bold">{empsFiltrados.length} funcionário(s) · {cursosVisiveis.length} curso(s)</div>
       </div>
 
-      <div className="mb-3 bg-white rounded-xl shadow-sm border border-slate-200 px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="text-[10px] font-black uppercase text-slate-500">Legenda</div>
+      <div className="mb-3 glass-card glass-shine rounded-xl px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="text-[10px] font-black uppercase text-rose-200/70">Legenda</div>
         {STATUS_LEGENDA.map((item) => (
-          <div key={item.label} className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
-            <span className={`h-3.5 w-3.5 rounded-sm border border-slate-300 ${item.className}`} />
+          <div key={item.label} className="flex items-center gap-1.5 text-[10px] font-bold text-rose-100/90">
+            <span className={`h-3.5 w-3.5 rounded-sm border border-white/20 ${item.className}`} />
             <span className="uppercase">{item.label}</span>
-            <span className="hidden md:inline text-slate-400 normal-case">({item.detalhe})</span>
+            <span className="hidden md:inline text-rose-200/50 normal-case">({item.detalhe})</span>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 340px)" }}>
+      <div className="glass-card glass-shine rounded-xl overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 340px)" }}>
         <table className="text-[10px] border-collapse">
-          <thead className="sticky top-0 bg-slate-100 z-10">
+          <thead className="sticky top-0 bg-black/60 backdrop-blur-md z-10 text-rose-100">
             <tr>
-              <th className="sticky left-0 bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 w-[55px] text-[10px]">Mat.</th>
-              <th className="sticky left-[55px] bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 w-[180px] text-[10px]">Funcionário</th>
-              <th className="sticky left-[235px] bg-slate-100 z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-slate-200 w-[100px] text-[10px]">Setor</th>
+              <th className="sticky left-0 bg-black/70 backdrop-blur-md z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 w-[55px] text-[10px]">Mat.</th>
+              <th className="sticky left-[55px] bg-black/70 backdrop-blur-md z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 w-[180px] text-[10px]">Funcionário</th>
+              <th className="sticky left-[235px] bg-black/70 backdrop-blur-md z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 w-[100px] text-[10px]">Setor</th>
               {cursosVisiveis.map((c) => (
-                <th key={c.id} className="text-center px-0.5 py-2 font-black uppercase border-b border-r border-slate-200 align-bottom" style={{ width: 38, minWidth: 38, maxWidth: 38, height: 130 }} title={`${c.nome} (${c.periodicidade})`}>
+                <th key={c.id} className="text-center px-0.5 py-2 font-black uppercase border-b border-r border-white/10 align-bottom" style={{ width: 38, minWidth: 38, maxWidth: 38, height: 130 }} title={`${c.nome} (${c.periodicidade})`}>
                   <div className="flex flex-col items-center justify-end h-full">
                     <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }} className="text-[10px] whitespace-nowrap leading-tight">{c.codigo}</span>
-                    <span className="text-[8px] text-slate-400 font-bold normal-case mt-1">{c.periodicidade.slice(0,3)}</span>
+                    <span className="text-[8px] text-rose-200/60 font-bold normal-case mt-1">{c.periodicidade.slice(0,3)}</span>
                   </div>
                 </th>
               ))}
@@ -338,16 +338,16 @@ function MatrizPage() {
             {empsFiltrados.map((emp, i) => {
               const comp = emp.company_id ? compMap[emp.company_id] : null;
               return (
-                <tr key={emp.id} className={i % 2 ? "bg-slate-50/50" : "bg-white"}>
-                  <td className="sticky left-0 z-10 bg-inherit px-2 py-1 border-b border-r border-slate-200 font-bold text-[10px]">{emp.matricula ?? "—"}</td>
-                  <td className="sticky left-[55px] z-10 bg-inherit px-2 py-1 border-b border-r border-slate-200">
-                    <div className="font-bold text-slate-800 text-[10px] leading-tight truncate max-w-[170px]">{emp.nome}</div>
-                    <div className="text-[8px] text-slate-500 uppercase truncate max-w-[170px]">{comp?.name ?? "—"} · {comp?.type ?? "—"}</div>
+                <tr key={emp.id} className={i % 2 ? "bg-white/[0.03]" : "bg-transparent"}>
+                  <td className="sticky left-0 z-10 bg-[#1a0810]/90 backdrop-blur-sm px-2 py-1 border-b border-r border-white/10 font-bold text-[10px] text-rose-100">{emp.matricula ?? "—"}</td>
+                  <td className="sticky left-[55px] z-10 bg-[#1a0810]/90 backdrop-blur-sm px-2 py-1 border-b border-r border-white/10">
+                    <div className="font-bold text-rose-50 text-[10px] leading-tight truncate max-w-[170px]">{emp.nome}</div>
+                    <div className="text-[8px] text-rose-200/60 uppercase truncate max-w-[170px]">{comp?.name ?? "—"} · {comp?.type ?? "—"}</div>
                   </td>
-                  <td className="sticky left-[235px] z-10 bg-inherit px-2 py-1 border-b border-r border-slate-200 text-[9px] uppercase font-bold text-slate-600">
-                    {emp.setor ?? <span className="text-red-500">—</span>}
+                  <td className="sticky left-[235px] z-10 bg-[#1a0810]/90 backdrop-blur-sm px-2 py-1 border-b border-r border-white/10 text-[9px] uppercase font-bold text-rose-100/90">
+                    {emp.setor ?? <span className="text-rose-400">—</span>}
                     {isEditor && (
-                      <button onClick={() => setOpenEmp(emp)} className="ml-1 text-slate-400 hover:text-slate-700"><Pencil className="h-3 w-3 inline" /></button>
+                      <button onClick={() => setOpenEmp(emp)} className="ml-1 text-rose-300/60 hover:text-rose-200"><Pencil className="h-3 w-3 inline" /></button>
                     )}
                   </td>
                   {cursosVisiveis.map((c) => {
@@ -356,9 +356,9 @@ function MatrizPage() {
                     const sched = scheduledMap.get(`${emp.id}|${c.id}`);
                     if (!required) {
                       return (
-                        <td key={c.id} className="p-0 border-b border-r border-slate-200 text-center bg-slate-50/40" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
+                        <td key={c.id} className="p-0 border-b border-r border-white/10 text-center bg-black/20" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
                           <button disabled={!isEditor} onClick={() => setEditing({ emp, course: c })}
-                            className="w-full h-7 text-[9px] text-slate-300 hover:text-slate-600">—</button>
+                            className="w-full h-7 text-[9px] text-rose-200/30 hover:text-rose-200/70">—</button>
                         </td>
                       );
                     }
@@ -366,16 +366,16 @@ function MatrizPage() {
                     // Sobrescreve com "A INICIAR" quando há turma agendada ou data futura na matriz
                     const showAIniciar = Boolean(sched) || Boolean(entry?.data_realizacao && entry.data_realizacao >= hoje);
                     const st = showAIniciar
-                      ? { label: "A INICIAR", color: "bg-indigo-100 text-indigo-700 border-indigo-300" }
+                      ? { label: "A INICIAR", color: "bg-rose-500/30 text-rose-100 border-rose-400/40" }
                       : baseSt;
                     // Aplica filtro de status à célula: se um filtro está ativo e esta célula não corresponde, oculta
                     if (filtroStatus !== "ALL") {
                       const wantedCell = STATUS_CELL_MAP[filtroStatus] ?? [];
                       if (!wantedCell.includes(st.label)) {
                         return (
-                          <td key={c.id} className="p-0 border-b border-r border-slate-200 text-center bg-slate-50/40" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
+                          <td key={c.id} className="p-0 border-b border-r border-white/10 text-center bg-black/20" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
                             <button disabled={!isEditor} onClick={() => setEditing({ emp, course: c, entry })}
-                              className="w-full h-7 text-[9px] text-slate-300 hover:text-slate-600">—</button>
+                              className="w-full h-7 text-[9px] text-rose-200/30 hover:text-rose-200/70">—</button>
                           </td>
                         );
                       }
@@ -384,11 +384,11 @@ function MatrizPage() {
                       ? formatDateBR(entry.data_realizacao)
                       : (showAIniciar && sched ? formatDateBR(sched.data) : "");
                     return (
-                      <td key={c.id} className="p-0 border-b border-r border-slate-200 text-center align-middle" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
+                      <td key={c.id} className="p-0 border-b border-r border-white/10 text-center align-middle" style={{ width: 38, minWidth: 38, maxWidth: 38 }}>
                         <button
                           disabled={!isEditor}
                           onClick={() => setEditing({ emp, course: c, entry })}
-                          className={`w-full h-7 ${CELL_BG[st.label] ?? "bg-slate-200"} text-white text-[8px] font-black leading-none`}
+                          className={`w-full h-7 ${CELL_BG[st.label] ?? "bg-white/10"} text-white text-[8px] font-black leading-none`}
                           title={`${c.nome} — ${st.label}${dataLabel ? ` (${dataLabel})` : ""}${sched ? ` — Turma: ${sched.titulo}` : ""}${entry?.observacao ? ` — ${entry.observacao}` : ""}`}
                         />
                       </td>
@@ -398,7 +398,7 @@ function MatrizPage() {
               );
             })}
             {empsFiltrados.length === 0 && (
-              <tr><td colSpan={cursosVisiveis.length + 3} className="text-center py-8 text-slate-400 text-xs uppercase font-bold">Nenhum funcionário.</td></tr>
+              <tr><td colSpan={cursosVisiveis.length + 3} className="text-center py-8 text-rose-200/50 text-xs uppercase font-bold">Nenhum funcionário.</td></tr>
             )}
           </tbody>
         </table>
