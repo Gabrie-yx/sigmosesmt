@@ -1194,20 +1194,42 @@ function TstPanel() {
 // === Subcomponentes ===
 
 function Card({
-  title, children, className, action,
+  title, children, className, action, period, meta, metaTone,
 }: {
   title?: string;
   children: React.ReactNode;
   className?: string;
   action?: React.ReactNode;
+  period?: string;
+  meta?: string;
+  metaTone?: "ok" | "warn" | "crit" | "neutral";
 }) {
+  const toneColor = metaTone === "ok" ? "#10b981"
+    : metaTone === "warn" ? "#fbbf24"
+    : metaTone === "crit" ? "#f43f5e"
+    : "#94a3b8";
   return (
     <div className={`relative rounded-xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-md shadow-[0_8px_30px_-12px_rgba(0,0,0,0.5)] p-4 overflow-hidden ${className ?? ""}`}>
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
       {title && (
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-cyan-300/90">{title}</h3>
-          {action}
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-cyan-300/90 truncate">{title}</h3>
+            {period && (
+              <span className="text-[8.5px] font-black uppercase tracking-[0.15em] px-1.5 py-0.5 rounded bg-slate-800/70 text-slate-400 ring-1 ring-slate-700/60 shrink-0">
+                {period}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {meta && (
+              <span className="text-[9px] font-black uppercase tracking-wider flex items-center gap-1 px-1.5 py-0.5 rounded ring-1 shrink-0"
+                style={{ color: toneColor, background: `${toneColor}12`, borderColor: `${toneColor}40`, boxShadow: `0 0 8px ${toneColor}30` }}>
+                <Target className="h-2.5 w-2.5" /> {meta}
+              </span>
+            )}
+            {action}
+          </div>
         </div>
       )}
       {children}
