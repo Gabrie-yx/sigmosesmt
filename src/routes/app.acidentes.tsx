@@ -306,13 +306,20 @@ function AcidentesPage() {
             </Select>
           </div>
 
-          {/* Placar gigante - estilo Toyota */}
-          <Card className="bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 text-white border-0 overflow-hidden relative">
-            <div className="absolute inset-0 opacity-10" style={{
+          {/* Placar gigante - estilo Toyota (glass + glow vinho) */}
+          <div className="glass-card glass-shine relative overflow-hidden rounded-2xl">
+            {/* Halo radial vinho no canto */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -top-32 -left-20 h-[420px] w-[420px] rounded-full opacity-60 blur-3xl"
+              style={{ background: "radial-gradient(circle, rgba(220,38,70,0.45) 0%, transparent 65%)" }}
+            />
+            {/* Dot grid sutil */}
+            <div className="absolute inset-0 opacity-[0.07] pointer-events-none" style={{
               backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px)",
               backgroundSize: "30px 30px",
             }} />
-            <CardContent className="p-8 relative">
+            <div className="p-8 relative">
               <div className="absolute top-3 right-4 text-[10px] uppercase tracking-wider text-white/40 font-medium">
                 FOR-SEG 10 · NBR 14280
               </div>
@@ -342,8 +349,8 @@ function AcidentesPage() {
                   <div className="text-xs text-slate-400 mt-1">dias</div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -631,24 +638,24 @@ function AcidentesPage() {
 function KpiCard({ icon, label, value, color, hint }: {
   icon: React.ReactNode; label: string; value: number | string; color: string; hint?: string;
 }) {
-  const colorMap: Record<string, string> = {
-    red: "from-red-500/10 to-red-500/5 text-red-700 border-red-200",
-    amber: "from-amber-500/10 to-amber-500/5 text-amber-700 border-amber-200",
-    slate: "from-slate-500/10 to-slate-500/5 text-slate-700 border-slate-200",
-    indigo: "from-indigo-500/10 to-indigo-500/5 text-indigo-700 border-indigo-200",
-    purple: "from-purple-500/10 to-purple-500/5 text-purple-700 border-purple-200",
+  // Mapeia "color" legado → accent do prism-kpi (glow por cor) + tonalidade do ícone
+  const accentMap: Record<string, { accent: string; icon: string; value: string }> = {
+    red:    { accent: "accent-wine",    icon: "text-rose-300",    value: "text-rose-100" },
+    amber:  { accent: "accent-amber",   icon: "text-amber-300",   value: "text-amber-100" },
+    slate:  { accent: "accent-violet",  icon: "text-slate-300",   value: "text-slate-100" },
+    indigo: { accent: "accent-sky",     icon: "text-sky-300",     value: "text-sky-100" },
+    purple: { accent: "accent-violet",  icon: "text-violet-300",  value: "text-violet-100" },
   };
+  const a = accentMap[color] ?? accentMap.slate;
   return (
-    <Card className={`bg-gradient-to-br ${colorMap[color]} border`}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="text-xs font-semibold uppercase tracking-wider opacity-80">{label}</div>
-          {icon}
-        </div>
-        <div className="text-3xl font-bold mt-2 tabular-nums">{value}</div>
-        {hint && <div className="text-[10px] opacity-60 mt-1">{hint}</div>}
-      </CardContent>
-    </Card>
+    <div className={`prism-kpi ${a.accent} p-4 transition-transform duration-200 hover:-translate-y-0.5`}>
+      <div className="flex items-center justify-between relative">
+        <div className="text-[10px] font-black uppercase tracking-widest text-rose-100/70">{label}</div>
+        <span className={a.icon}>{icon}</span>
+      </div>
+      <div className={`text-3xl font-black mt-2 tabular-nums tracking-tight relative ${a.value}`}>{value}</div>
+      {hint && <div className="text-[10px] text-rose-100/50 mt-1 relative">{hint}</div>}
+    </div>
   );
 }
 
