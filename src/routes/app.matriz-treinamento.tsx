@@ -548,7 +548,7 @@ function CatalogDialog({ onClose, courses, isAdmin }:
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Cursos / NRs do catálogo</DialogTitle></DialogHeader>
-        <div className="border border-slate-200 rounded p-3 bg-slate-50 space-y-2">
+        <div className="border border-rose-300/15 rounded p-3 bg-rose-950/40 space-y-2 shadow-[0_0_24px_-14px_rgba(220,38,70,0.65)]">
           <div className="grid grid-cols-12 gap-2">
             <Input placeholder="Código" value={novo.codigo} onChange={(e) => setNovo({ ...novo, codigo: e.target.value })} className="col-span-3 h-8 text-xs" />
             <Input placeholder="Nome" value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} className="col-span-9 h-8 text-xs" />
@@ -568,7 +568,7 @@ function CatalogDialog({ onClose, courses, isAdmin }:
           </div>
         </div>
         <table className="text-xs w-full mt-3">
-          <thead className="bg-slate-100">
+          <thead className="bg-rose-950/70 text-rose-100">
             <tr>
               <th className="text-left p-2">Código</th>
               <th className="text-left p-2">Nome</th>
@@ -596,7 +596,7 @@ function CourseRow({ c, onSave, onDel, canDelete }: { c: Course; onSave: (c: Cou
   const [v, setV] = useState(c);
   const dirty = JSON.stringify(v) !== JSON.stringify(c);
   return (
-    <tr className="border-b">
+    <tr className="border-b border-rose-200/10">
       <td className="p-1"><Input value={v.codigo} onChange={(e) => setV({ ...v, codigo: e.target.value })} className="h-7 text-xs" /></td>
       <td className="p-1"><Input value={v.nome} onChange={(e) => setV({ ...v, nome: e.target.value })} className="h-7 text-xs" /></td>
       <td className="p-1">
@@ -615,8 +615,8 @@ function CourseRow({ c, onSave, onDel, canDelete }: { c: Course; onSave: (c: Cou
       <td className="p-1 w-20"><Input type="number" value={v.ordem} onChange={(e) => setV({ ...v, ordem: Number(e.target.value) })} className="h-7 text-xs" /></td>
       <td className="p-1 text-center"><input type="checkbox" checked={v.ativo} onChange={(e) => setV({ ...v, ativo: e.target.checked })} /></td>
       <td className="p-1 flex gap-1">
-        {dirty && <button onClick={() => onSave(v)} className="text-emerald-600 hover:text-emerald-800"><Save className="h-3.5 w-3.5" /></button>}
-        {canDelete && <button onClick={() => onDel(c.id)} className="text-red-600 hover:text-red-800"><Trash2 className="h-3.5 w-3.5" /></button>}
+        {dirty && <button onClick={() => onSave(v)} className="text-emerald-300 hover:text-emerald-200"><Save className="h-3.5 w-3.5" /></button>}
+        {canDelete && <button onClick={() => onDel(c.id)} className="text-rose-300 hover:text-rose-200"><Trash2 className="h-3.5 w-3.5" /></button>}
       </td>
     </tr>
   );
