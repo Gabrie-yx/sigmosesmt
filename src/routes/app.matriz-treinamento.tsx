@@ -55,9 +55,9 @@ const CELL_BG: Record<string, string> = {
   "A VENCER": "bg-amber-400 hover:bg-amber-500",
   "VENCIDO": "bg-red-500 hover:bg-red-600",
   "PENDENTE": "bg-red-300 hover:bg-red-400",
-  "EM ANDAMENTO": "bg-blue-400 hover:bg-blue-500",
-  "A INICIAR": "bg-indigo-400 hover:bg-indigo-500",
-  "N/A": "bg-slate-200 hover:bg-slate-300",
+  "EM ANDAMENTO": "bg-rose-400 hover:bg-rose-500",
+  "A INICIAR": "bg-rose-300 hover:bg-rose-400",
+  "N/A": "bg-white/10 hover:bg-white/20",
 };
 
 const STATUS_LEGENDA = [
