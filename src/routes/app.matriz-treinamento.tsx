@@ -60,7 +60,7 @@ const CELL_BG: Record<string, string> = {
   "PENDENTE": "bg-rose-300 hover:bg-rose-400",
   "EM ANDAMENTO": "bg-cyan-500 hover:bg-cyan-600",
   "A INICIAR": "bg-violet-500 hover:bg-violet-600",
-  "N/A": "bg-white/10 hover:bg-white/20",
+  "N/A": "bg-rose-950/70 hover:bg-rose-900/80",
 };
 
 const STATUS_LEGENDA = [
@@ -268,7 +268,7 @@ function MatrizPage() {
         )}
       </div>
 
-      <div className="glass-card glass-shine rounded-xl p-3 mb-3 flex flex-wrap items-end gap-3">
+      <div className="glass-card glass-shine rounded-xl p-3 mb-3 flex flex-wrap items-end gap-3 border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]">
         <div className="flex items-center gap-2 text-xs font-bold text-rose-200/70 uppercase">
           <Filter className="h-4 w-4" /> Filtros
         </div>
@@ -309,7 +309,7 @@ function MatrizPage() {
         <div className="text-[11px] text-rose-200/70 font-bold">{empsFiltrados.length} funcionário(s) · {cursosVisiveis.length} curso(s)</div>
       </div>
 
-      <div className="mb-3 glass-card glass-shine rounded-xl px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div className="mb-3 glass-card glass-shine rounded-xl px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2 border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]">
         <div className="text-[10px] font-black uppercase text-rose-200/70">Legenda</div>
         {STATUS_LEGENDA.map((item) => (
           <div key={item.label} className="flex items-center gap-1.5 text-[10px] font-bold text-rose-100/90">
@@ -320,7 +320,7 @@ function MatrizPage() {
         ))}
       </div>
 
-      <div className="glass-card glass-shine rounded-xl overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 340px)" }}>
+      <div className="glass-card glass-shine rounded-xl overflow-auto custom-scrollbar border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]" style={{ maxHeight: "calc(100vh - 340px)" }}>
         <table className="text-[11px] border-collapse w-full table-fixed">
           <thead className="sticky top-0 bg-black/60 backdrop-blur-md z-10 text-rose-100">
             <tr>
@@ -341,7 +341,7 @@ function MatrizPage() {
             {empsFiltrados.map((emp, i) => {
               const comp = emp.company_id ? compMap[emp.company_id] : null;
               return (
-                <tr key={emp.id} className={i % 2 ? "bg-white/[0.03]" : "bg-transparent"}>
+                <tr key={emp.id} className={i % 2 ? "bg-rose-950/20" : "bg-transparent"}>
                   <td className="sticky left-0 z-10 bg-[#1a0810]/90 backdrop-blur-sm px-2 py-1.5 border-b border-r border-white/10 font-bold text-[11px] text-rose-100">{emp.matricula ?? "—"}</td>
                   <td className="sticky left-[60px] z-10 bg-[#1a0810]/90 backdrop-blur-sm px-2 py-1.5 border-b border-r border-white/10">
                     <div className="font-bold text-rose-50 text-[12px] leading-tight truncate max-w-[200px]">{emp.nome}</div>
@@ -391,7 +391,7 @@ function MatrizPage() {
                         <button
                           disabled={!isEditor}
                           onClick={() => setEditing({ emp, course: c, entry })}
-                          className={`w-full h-8 ${CELL_BG[st.label] ?? "bg-white/10"} text-white text-[9px] font-black leading-none`}
+                          className={`w-full h-8 ${CELL_BG[st.label] ?? "bg-rose-950/70"} text-rose-50 text-[9px] font-black leading-none`}
                           title={`${c.nome} — ${st.label}${dataLabel ? ` (${dataLabel})` : ""}${sched ? ` — Turma: ${sched.titulo}` : ""}${entry?.observacao ? ` — ${entry.observacao}` : ""}`}
                         />
                       </td>
@@ -463,7 +463,7 @@ function EntryDialog({ emp, course, entry, onClose, onSaved, isAdmin }:
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>{course.nome}</DialogTitle></DialogHeader>
-        <div className="text-xs text-slate-500 -mt-2 mb-2">{emp.nome} · {emp.matricula ?? "—"} · {course.periodicidade}</div>
+        <div className="text-xs text-rose-200/60 -mt-2 mb-2">{emp.nome} · {emp.matricula ?? "—"} · {course.periodicidade}</div>
         <div className="space-y-3">
           <div>
             <Label className="text-[10px] font-black uppercase">Data de realização</Label>
@@ -548,7 +548,7 @@ function CatalogDialog({ onClose, courses, isAdmin }:
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Cursos / NRs do catálogo</DialogTitle></DialogHeader>
-        <div className="border border-slate-200 rounded p-3 bg-slate-50 space-y-2">
+        <div className="border border-rose-300/15 rounded p-3 bg-rose-950/40 space-y-2 shadow-[0_0_24px_-14px_rgba(220,38,70,0.65)]">
           <div className="grid grid-cols-12 gap-2">
             <Input placeholder="Código" value={novo.codigo} onChange={(e) => setNovo({ ...novo, codigo: e.target.value })} className="col-span-3 h-8 text-xs" />
             <Input placeholder="Nome" value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} className="col-span-9 h-8 text-xs" />
@@ -568,7 +568,7 @@ function CatalogDialog({ onClose, courses, isAdmin }:
           </div>
         </div>
         <table className="text-xs w-full mt-3">
-          <thead className="bg-slate-100">
+          <thead className="bg-rose-950/70 text-rose-100">
             <tr>
               <th className="text-left p-2">Código</th>
               <th className="text-left p-2">Nome</th>
@@ -596,7 +596,7 @@ function CourseRow({ c, onSave, onDel, canDelete }: { c: Course; onSave: (c: Cou
   const [v, setV] = useState(c);
   const dirty = JSON.stringify(v) !== JSON.stringify(c);
   return (
-    <tr className="border-b">
+    <tr className="border-b border-rose-200/10">
       <td className="p-1"><Input value={v.codigo} onChange={(e) => setV({ ...v, codigo: e.target.value })} className="h-7 text-xs" /></td>
       <td className="p-1"><Input value={v.nome} onChange={(e) => setV({ ...v, nome: e.target.value })} className="h-7 text-xs" /></td>
       <td className="p-1">
@@ -615,8 +615,8 @@ function CourseRow({ c, onSave, onDel, canDelete }: { c: Course; onSave: (c: Cou
       <td className="p-1 w-20"><Input type="number" value={v.ordem} onChange={(e) => setV({ ...v, ordem: Number(e.target.value) })} className="h-7 text-xs" /></td>
       <td className="p-1 text-center"><input type="checkbox" checked={v.ativo} onChange={(e) => setV({ ...v, ativo: e.target.checked })} /></td>
       <td className="p-1 flex gap-1">
-        {dirty && <button onClick={() => onSave(v)} className="text-emerald-600 hover:text-emerald-800"><Save className="h-3.5 w-3.5" /></button>}
-        {canDelete && <button onClick={() => onDel(c.id)} className="text-red-600 hover:text-red-800"><Trash2 className="h-3.5 w-3.5" /></button>}
+        {dirty && <button onClick={() => onSave(v)} className="text-emerald-300 hover:text-emerald-200"><Save className="h-3.5 w-3.5" /></button>}
+        {canDelete && <button onClick={() => onDel(c.id)} className="text-rose-300 hover:text-rose-200"><Trash2 className="h-3.5 w-3.5" /></button>}
       </td>
     </tr>
   );
@@ -653,7 +653,7 @@ function VinculosDialog({ onClose, courses, roleMapping, roles }:
   const TopBar = (
     <div className="flex items-center gap-2 flex-wrap">
       <div className="relative flex-1 min-w-[180px]">
-        <Search className="h-3.5 w-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search className="h-3.5 w-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-rose-200/45" />
         <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar curso..." className="h-8 text-xs pl-7" />
       </div>
       <Button size="sm" onClick={onClose} className="h-8"><Save className="h-3.5 w-3.5 mr-1" /> Salvar e fechar</Button>
@@ -665,43 +665,43 @@ function VinculosDialog({ onClose, courses, roleMapping, roles }:
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0">
         <DialogHeader className="p-4 pb-2 border-b">
           <DialogTitle className="text-base">Vincular Cursos por Função</DialogTitle>
-          <p className="text-[11px] text-slate-500 mt-1">Conforme NR-01, os treinamentos são definidos por função. As alterações são salvas automaticamente.</p>
+          <p className="text-[11px] text-rose-200/60 mt-1">Conforme NR-01, os treinamentos são definidos por função. As alterações são salvas automaticamente.</p>
         </DialogHeader>
 
-        <div className="px-4 py-2 border-b bg-slate-50/50 sticky top-0 z-10">{TopBar}</div>
+        <div className="px-4 py-2 border-b border-rose-200/10 bg-rose-950/50 sticky top-0 z-10">{TopBar}</div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {cursosFiltrados.length === 0 && (
-            <div className="text-center text-slate-400 text-xs py-8 uppercase font-bold">Nenhum curso encontrado</div>
+            <div className="text-center text-rose-200/45 text-xs py-8 uppercase font-bold">Nenhum curso encontrado</div>
           )}
           {cursosFiltrados.map((c) => {
             const open = openId === c.id;
             const nRoles = roles.filter((r) => hasRole(r.id, c.id)).length;
             return (
-              <div key={c.id} className="border rounded-md bg-white">
+              <div key={c.id} className="border border-rose-200/10 rounded-md bg-rose-950/45">
                 <button
                   type="button"
                   onClick={() => setOpenId(open ? null : c.id)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-slate-50"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-rose-900/35"
                 >
-                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${open ? "" : "-rotate-90"}`} />
+                  <ChevronDown className={`h-4 w-4 text-rose-200/45 transition-transform ${open ? "" : "-rotate-90"}`} />
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold truncate">{c.codigo} — <span className="font-normal text-slate-700">{c.nome}</span></div>
+                    <div className="text-xs font-bold truncate text-rose-100">{c.codigo} — <span className="font-normal text-rose-200/75">{c.nome}</span></div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-violet-50 text-violet-700">{nRoles} função{nRoles === 1 ? "" : "ões"}</span>
+                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-100 border border-violet-300/25">{nRoles} função{nRoles === 1 ? "" : "ões"}</span>
                   </div>
                 </button>
                 {open && (
-                  <div className="border-t p-3 bg-slate-50/40">
+                  <div className="border-t border-rose-200/10 p-3 bg-rose-950/35">
                     {roles.length === 0 ? (
-                          <div className="text-center text-slate-400 text-xs py-6 uppercase font-bold">Cadastre funções em Cargos / Funções primeiro.</div>
+                          <div className="text-center text-rose-200/45 text-xs py-6 uppercase font-bold">Cadastre funções em Cargos / Funções primeiro.</div>
                         ) : (
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-64 overflow-y-auto pr-1">
                             {roles.map((r) => {
                               const checked = hasRole(r.id, c.id);
                               return (
-                                <label key={r.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded border cursor-pointer transition ${checked ? "bg-violet-50 border-violet-300" : "bg-white border-slate-200 hover:bg-slate-50"}`}>
+                                <label key={r.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded border cursor-pointer transition ${checked ? "bg-violet-500/20 border-violet-300/35 text-violet-50" : "bg-rose-950/45 border-rose-200/10 hover:bg-rose-900/35 text-rose-100/85"}`}>
                                   <input type="checkbox" checked={checked} onChange={(e) => toggleRole.mutate({ roleId: r.id, courseId: c.id, on: e.target.checked })} />
                                   <span className="truncate" title={r.name}>{r.name}</span>
                                 </label>
@@ -716,7 +716,7 @@ function VinculosDialog({ onClose, courses, roleMapping, roles }:
           })}
         </div>
 
-        <DialogFooter className="p-3 border-t bg-slate-50/50 gap-2">
+        <DialogFooter className="p-3 border-t border-rose-200/10 bg-rose-950/50 gap-2">
           <Button variant="outline" size="sm" onClick={onClose}><X className="h-3.5 w-3.5 mr-1" /> Fechar</Button>
           <Button size="sm" onClick={onClose}><Save className="h-3.5 w-3.5 mr-1" /> Salvar e fechar</Button>
         </DialogFooter>
@@ -892,17 +892,17 @@ function BulkEmpDialog({ companies, employees, onClose }:
             <Label className="text-[10px] uppercase font-black">
               Já cadastrados nesta empresa ({existentes.length})
             </Label>
-            <div className="mt-1 border border-slate-200 rounded p-2 max-h-40 overflow-y-auto bg-slate-50 text-[11px]">
-              {existentes.length === 0 && <div className="text-slate-400 italic">Nenhum cadastro nesta empresa ainda.</div>}
+            <div className="mt-1 border border-rose-200/10 rounded p-2 max-h-40 overflow-y-auto bg-rose-950/45 text-[11px]">
+              {existentes.length === 0 && <div className="text-rose-200/45 italic">Nenhum cadastro nesta empresa ainda.</div>}
               {existentes.map((e) => (
-                <div key={e.id} className="flex justify-between border-b border-slate-100 py-0.5">
+                <div key={e.id} className="flex justify-between border-b border-rose-200/10 py-0.5">
                   <span className="font-bold">{e.matricula ?? "—"}</span>
                   <span className="flex-1 px-2">{e.nome}</span>
-                  <span className="text-slate-500 uppercase">{e.setor ?? "—"}</span>
+                  <span className="text-rose-200/60 uppercase">{e.setor ?? "—"}</span>
                 </div>
               ))}
             </div>
-            <div className="text-[10px] text-slate-500 mt-1">Use a lista acima para evitar duplicar matrículas/nomes — eles serão ignorados automaticamente.</div>
+            <div className="text-[10px] text-rose-200/60 mt-1">Use a lista acima para evitar duplicar matrículas/nomes — eles serão ignorados automaticamente.</div>
           </div>
 
           <div>
@@ -914,7 +914,7 @@ function BulkEmpDialog({ companies, employees, onClose }:
               placeholder={"matricula;NOME COMPLETO\n000999;FULANO DE TAL\n000998;CICLANO\n— ou só o nome:\nBELTRANO DA SILVA"}
               className="mt-1 font-mono text-xs"
             />
-            <div className="text-[10px] text-slate-500 mt-1">Separadores aceitos: <code>;</code> <code>|</code> <code>,</code> ou tabulação. Matrícula é opcional.</div>
+            <div className="text-[10px] text-rose-200/60 mt-1">Separadores aceitos: <code>;</code> <code>|</code> <code>,</code> ou tabulação. Matrícula é opcional.</div>
           </div>
         </div>
         <DialogFooter className="gap-2">
