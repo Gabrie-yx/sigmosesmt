@@ -23,6 +23,16 @@ const today = new Date();
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
 const MONTHS_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
+// Tooltip dark theme padrão (usado em todos os charts)
+const tooltipDark = {
+  fontSize: 11,
+  borderRadius: 10,
+  border: "1px solid #334155",
+  background: "rgba(2, 6, 23, 0.92)",
+  color: "#f1f5f9",
+  boxShadow: "0 10px 30px -10px rgba(0,0,0,0.6)",
+} as const;
+
 function TstPanel() {
   const [q, setQ] = useState("");
   const [filterCompany, setFilterCompany] = useState("ALL");
