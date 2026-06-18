@@ -676,6 +676,74 @@ function TstPanel() {
           <KpiBig icon={ShieldAlert} label="Bloqueados" value={bloqueados} sub="Ação imediata" accent="#f43f5e" highlight={bloqueados > 0} />
         </div>
 
+        {/* ===== Faixa Recorde · Dias sem acidente ===== */}
+        <div className="relative rounded-xl overflow-hidden border border-emerald-500/30"
+          style={{
+            background:
+              "radial-gradient(600px 200px at 15% 50%, rgba(16,185,129,0.18), transparent 60%), radial-gradient(500px 200px at 85% 50%, rgba(34,211,238,0.12), transparent 60%), linear-gradient(135deg, rgba(15,23,42,0.85), rgba(8,15,30,0.75))",
+            boxShadow: "0 10px 40px -15px rgba(16,185,129,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
+          }}>
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" />
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 md:p-5">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 relative"
+                style={{ background: "linear-gradient(135deg, #10b98140, #10b98110)", boxShadow: "0 0 30px #10b98180, inset 0 1px 0 #10b98180" }}>
+                <Trophy className="h-7 w-7 text-emerald-300" />
+              </div>
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300/80">Dias sem Acidente · Registrável</div>
+                <div className="text-4xl md:text-5xl font-black tabular-nums leading-none mt-1 text-emerald-300"
+                  style={{ textShadow: "0 0 25px rgba(16,185,129,0.6), 0 0 50px rgba(16,185,129,0.25)" }}>
+                  {recordeAcidente.atual}
+                  <span className="text-base text-emerald-400/70 ml-2 font-bold tracking-wide">dias</span>
+                </div>
+                {recordeAcidente.dataInicio && (
+                  <div className="text-[10px] text-slate-400 mt-1">Contagem iniciada em {new Date(recordeAcidente.dataInicio + "T00:00").toLocaleDateString("pt-BR")}</div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-6 pr-2">
+              <div className="text-right">
+                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 flex items-center gap-1 justify-end">
+                  <Trophy className="h-3 w-3 text-amber-400" /> Recorde Histórico
+                </div>
+                <div className="text-3xl font-black tabular-nums text-amber-300 tracking-tight"
+                  style={{ textShadow: "0 0 18px rgba(251,191,36,0.5)" }}>
+                  {recordeAcidente.recorde}
+                  <span className="text-xs text-amber-400/70 ml-1.5 font-bold">dias</span>
+                </div>
+              </div>
+              <div className="hidden md:block h-12 w-px bg-slate-700/60" />
+              <div className="text-right">
+                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Diferença</div>
+                <div className={`text-2xl font-black tabular-nums tracking-tight ${
+                  recordeAcidente.atual >= recordeAcidente.recorde ? "text-emerald-300" : "text-slate-300"
+                }`}>
+                  {recordeAcidente.atual >= recordeAcidente.recorde ? "+" : "−"}
+                  {Math.abs(recordeAcidente.recorde - recordeAcidente.atual)}
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* barra de progresso até o recorde */}
+          {recordeAcidente.recorde > 0 && (
+            <div className="px-4 md:px-5 pb-4">
+              <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                <span>Progresso até o recorde</span>
+                <span className="text-emerald-300/80">{Math.min(100, Math.round((recordeAcidente.atual / recordeAcidente.recorde) * 100))}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-slate-800/80 overflow-hidden">
+                <div className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${Math.min(100, (recordeAcidente.atual / recordeAcidente.recorde) * 100)}%`,
+                    background: "linear-gradient(90deg, #10b981, #34d399, #fbbf24)",
+                    boxShadow: "0 0 12px rgba(16,185,129,0.7)",
+                  }} />
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* ===== QUADRO DOS 12 GRÁFICOS ===== */}
         <div className="grid grid-cols-12 gap-4">
 
