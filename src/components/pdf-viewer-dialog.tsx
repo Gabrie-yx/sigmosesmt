@@ -17,66 +17,79 @@ export function PDFViewerDialog({
   fileName: string;
 }) {
   const [url, setUrl] = useState<string>("");
+  const [blobUrl, setBlobUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string>("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (!pdfPath || !open) { 
       setUrl(""); 
+      setBlobUrl("");
+      setErrorMsg("");
       return; 
     }
 
+    let createdBlobUrl: string | null = null;
+    let cancelled = false;
     const loadUrl = async () => {
       setLoading(true);
-      let createdBlobUrl: string | null = null;
+      setErrorMsg("");
       try {
         const { data, error } = await supabase.storage
           .from("sesmt-docs")
           .createSignedUrl(pdfPath, 3600);
-        
         if (error) throw error;
-        // Chrome bloqueia PDFs cross-origin dentro de iframes aninhados
-        // (preview do Lovable, etc). Baixamos como blob e exibimos via blob: URL.
-        const resp = await fetch(data.signedUrl);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const blob = await resp.blob();
-        const pdfBlob = blob.type === "application/pdf"
-          ? blob
-          : new Blob([blob], { type: "application/pdf" });
-        createdBlobUrl = URL.createObjectURL(pdfBlob);
-        setUrl(createdBlobUrl);
+        if (cancelled) return;
+        // Tentamos primeiro a URL assinada direta (mais confiável p/ render
+        // nativo do PDF). Em paralelo, baixamos como blob para fallback de
+        // download/impressão quando a sandbox bloqueia o iframe.
+        setUrl(`${data.signedUrl}#toolbar=1&view=FitH`);
+        try {
+          const resp = await fetch(data.signedUrl);
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const pdfBlob = blob.type === "application/pdf"
+              ? blob
+              : new Blob([blob], { type: "application/pdf" });
+            createdBlobUrl = URL.createObjectURL(pdfBlob);
+            if (!cancelled) setBlobUrl(createdBlobUrl);
+          }
+        } catch {/* fallback opcional */}
       } catch (err: any) {
         console.error("Erro ao carregar PDF:", err);
+        setErrorMsg("Não foi possível carregar o documento.");
         toast.error("Não foi possível carregar o documento.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-      return () => {
-        if (createdBlobUrl) URL.revokeObjectURL(createdBlobUrl);
-      };
     };
 
-    let cleanup: (() => void) | undefined;
-    loadUrl().then((c) => { cleanup = c; });
-    return () => { cleanup?.(); };
+    loadUrl();
+    return () => {
+      cancelled = true;
+      if (createdBlobUrl) URL.revokeObjectURL(createdBlobUrl);
+    };
   }, [pdfPath, open]);
 
   function download() {
-    if (!url) return;
+    const href = blobUrl || url;
+    if (!href) return;
     const a = document.createElement("a");
-    a.href = url;
+    a.href = href;
     a.download = fileName;
     a.target = "_blank";
     a.click();
   }
 
   function print() {
-    if (!url) return;
+    const href = blobUrl || url;
+    if (!href) return;
     try {
       iframeRef.current?.contentWindow?.focus();
       iframeRef.current?.contentWindow?.print();
     } catch {
-      window.open(url, "_blank");
+      window.open(href, "_blank");
     }
   }
 
@@ -94,14 +107,27 @@ export function PDFViewerDialog({
           {loading ? (
             <div className="text-sm text-muted-foreground animate-pulse">Carregando documento...</div>
           ) : url ? (
-            <iframe 
-              ref={iframeRef} 
-              src={url} 
-              title="Pré-visualização do PDF" 
-              className="w-full h-full border-0" 
-            />
+            <object data={url} type="application/pdf" className="w-full h-full">
+              <iframe
+                ref={iframeRef}
+                src={blobUrl || url}
+                title="Pré-visualização do PDF"
+                className="w-full h-full border-0"
+              />
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
+                <FileText className="h-10 w-10 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Seu navegador não conseguiu exibir o PDF embutido.
+                </p>
+                <Button onClick={() => window.open(blobUrl || url, "_blank")}>
+                  Abrir em nova aba
+                </Button>
+              </div>
+            </object>
           ) : (
-            <div className="text-sm text-muted-foreground">Documento não disponível.</div>
+            <div className="text-sm text-muted-foreground">
+              {errorMsg || "Documento não disponível."}
+            </div>
           )}
         </div>
 
