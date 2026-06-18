@@ -242,17 +242,23 @@ function TrainingsPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 animate-fadeIn h-full overflow-y-auto custom-scrollbar bg-[#f1f5f9]">
-      <h2 className="heading-display text-3xl md:text-4xl text-[#991b1b] mb-8 flex items-center gap-3">
-        <GraduationCap className="h-8 w-8" /> Treinamentos &amp; Integrações
+    <div className="p-6 md:p-8 animate-fadeIn h-full overflow-y-auto custom-scrollbar">
+      <h2 className="heading-display text-3xl md:text-4xl text-rose-100 mb-8 flex items-center gap-3 drop-shadow-[0_2px_12px_rgba(220,38,70,0.45)]">
+        <GraduationCap className="h-8 w-8 text-rose-300" /> Treinamentos &amp; Integrações
       </h2>
 
       <Tabs defaultValue="cursos" className="w-full">
-        <TabsList className="bg-white border border-slate-200 mb-6">
-          <TabsTrigger value="cursos" className="text-xs font-black uppercase tracking-wider">
+        <TabsList className="glass-card mb-6 p-1.5 gap-1 bg-transparent border-0">
+          <TabsTrigger
+            value="cursos"
+            className="text-xs font-black uppercase tracking-wider text-rose-100/70 data-[state=active]:text-white data-[state=active]:bg-gradient-to-br data-[state=active]:from-rose-600/80 data-[state=active]:to-rose-900/80 data-[state=active]:shadow-[0_0_20px_-4px_rgba(220,38,70,0.6)] rounded-lg transition-all"
+          >
             Cursos Ministrados
           </TabsTrigger>
-          <TabsTrigger value="grade" className="text-xs font-black uppercase tracking-wider">
+          <TabsTrigger
+            value="grade"
+            className="text-xs font-black uppercase tracking-wider text-rose-100/70 data-[state=active]:text-white data-[state=active]:bg-gradient-to-br data-[state=active]:from-rose-600/80 data-[state=active]:to-rose-900/80 data-[state=active]:shadow-[0_0_20px_-4px_rgba(220,38,70,0.6)] rounded-lg transition-all"
+          >
             Grade Atual
           </TabsTrigger>
         </TabsList>
