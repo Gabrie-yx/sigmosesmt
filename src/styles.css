@@ -1097,3 +1097,127 @@
       inset 0 0 0 1px rgba(255, 240, 245, 0.25);
   }
 }
+
+/* ============================================================
+   GLASS GLOSS · reflexo curvo de vidro (vermelho/vinho)
+   Inspirado na imagem de referência — arco luminoso diagonal
+   sobre todos os cards e KPIs.
+   ============================================================ */
+@layer base {
+  .glass-card,
+  .glass-panel,
+  .glass-vinho,
+  .prism-kpi {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* Reflexo principal: arco curvo de luz no canto superior esquerdo */
+  .glass-card::before,
+  .glass-panel::before,
+  .glass-vinho::before,
+  .prism-kpi::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 1;
+    background:
+      radial-gradient(
+        140% 90% at -10% -30%,
+        rgba(255, 200, 215, 0.42) 0%,
+        rgba(255, 160, 180, 0.22) 18%,
+        rgba(255, 120, 150, 0.10) 32%,
+        transparent 48%
+      ),
+      radial-gradient(
+        90% 70% at 100% 120%,
+        rgba(255, 80, 110, 0.18) 0%,
+        transparent 55%
+      );
+    mix-blend-mode: screen;
+    opacity: 0.95;
+  }
+
+  /* Segundo reflexo: faixa diagonal curva (gloss) atravessando o card */
+  .glass-card::after,
+  .glass-panel::after,
+  .glass-vinho::after,
+  .prism-kpi::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 1;
+    background:
+      linear-gradient(
+        125deg,
+        transparent 0%,
+        transparent 28%,
+        rgba(255, 230, 235, 0.10) 38%,
+        rgba(255, 230, 235, 0.22) 44%,
+        rgba(255, 230, 235, 0.06) 52%,
+        transparent 62%,
+        transparent 100%
+      );
+    mix-blend-mode: screen;
+    opacity: 0.7;
+  }
+
+  /* Garante que o conteúdo do card fique acima dos reflexos */
+  .glass-card > *,
+  .glass-panel > *,
+  .glass-vinho > *,
+  .prism-kpi > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Mantém a borda reluzente (glass-shine ::after) por cima dos reflexos */
+  .glass-shine::after,
+  .dialog-glass-shine::after {
+    z-index: 3;
+  }
+
+  /* No tema Liquid Glass, intensifica o gloss */
+  html.theme-liquid .glass-card::before,
+  html.theme-liquid .glass-panel::before,
+  html.theme-liquid .glass-vinho::before,
+  html.theme-liquid .prism-kpi::before {
+    background:
+      radial-gradient(
+        150% 100% at -15% -35%,
+        rgba(255, 215, 225, 0.55) 0%,
+        rgba(255, 170, 190, 0.30) 18%,
+        rgba(255, 120, 150, 0.14) 35%,
+        transparent 52%
+      ),
+      radial-gradient(
+        100% 80% at 110% 130%,
+        rgba(255, 70, 105, 0.28) 0%,
+        transparent 60%
+      );
+    opacity: 1;
+  }
+
+  html.theme-liquid .glass-card::after,
+  html.theme-liquid .glass-panel::after,
+  html.theme-liquid .glass-vinho::after,
+  html.theme-liquid .prism-kpi::after {
+    background:
+      linear-gradient(
+        125deg,
+        transparent 0%,
+        transparent 26%,
+        rgba(255, 240, 245, 0.14) 36%,
+        rgba(255, 240, 245, 0.32) 44%,
+        rgba(255, 240, 245, 0.10) 54%,
+        transparent 66%,
+        transparent 100%
+      );
+    opacity: 0.9;
+  }
+}
