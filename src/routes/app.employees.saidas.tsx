@@ -220,7 +220,55 @@ function SaidasPage() {
 
       <SaidaExpedienteDialog open={open} onOpenChange={setOpen} editId={editId} duplicateData={duplicateData} />
 
-      <RelatorioSaidasDialog open={relOpen} onClose={() => setRelOpen(false)} rows={rows ?? []} />
+      <RelatorioSaidasDialog
+        open={relOpen}
+        onClose={() => setRelOpen(false)}
+        rows={rows ?? []}
+        onPreview={(doc, name) => { setPreviewDoc(doc); setPreviewFileName(name); setPreviewRowId(null); setPreviewTerceira(false); }}
+      />
+
+      <MesDetalheDialog
+        ym={mesAberto}
+        onClose={() => setMesAberto(null)}
+        meses={meses}
+        isEditor={isEditor}
+        isAdmin={isAdmin}
+        onView={(id) => gerarPdf(id)}
+        onEdit={(id) => { setEditId(id); setDuplicateData(null); setOpen(true); setMesAberto(null); }}
+        onDelete={(id) => { if (confirm("Excluir esta autorização?")) del.mutate(id); }}
+        onRepeat={(r) => {
+          setEditId(null);
+          setDuplicateData({
+            company_id: r.company_id,
+            employee_ids: [r.employee_id],
+            horario_saida: r.horario_saida,
+            tipo: r.tipo,
+            com_retorno: r.com_retorno,
+            horario_retorno: r.horario_retorno,
+            motivo: r.motivo,
+            observacao: r.observacao,
+          });
+          setOpen(true);
+          setMesAberto(null);
+        }}
+        onRepeatLote={(rowsDia) => {
+          const first = rowsDia[0];
+          const empIds = rowsDia.map((r: any) => r.employee_id);
+          setEditId(null);
+          setDuplicateData({
+            company_id: first.company_id,
+            employee_ids: empIds,
+            horario_saida: first.horario_saida,
+            tipo: first.tipo,
+            com_retorno: first.com_retorno,
+            horario_retorno: first.horario_retorno,
+            motivo: first.motivo,
+            observacao: first.observacao,
+          });
+          setOpen(true);
+          setMesAberto(null);
+        }}
+      />
 
       <PDFPreviewDialog
         open={!!previewDoc}
