@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { PenLine, Check, UserPlus, Pencil } from "lucide-react";
-import ReactSelect from "react-select";
 
 type SignatureTarget = "FUNC" | "SESMT" | "SUPERVISOR";
 
@@ -68,6 +67,7 @@ export function SaidaExpedienteDialog({
   const { user } = useAuth();
   const [form, setForm] = useState<any>(emptyForm);
   const [sigOpen, setSigOpen] = useState<SignatureTarget | null>(null);
+  const [employeeSearch, setEmployeeSearch] = useState("");
 
   const { data: companies } = useQuery({
     queryKey: ["companies-min"],
