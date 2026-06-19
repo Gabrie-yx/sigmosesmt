@@ -187,18 +187,6 @@ export function SaidaExpedienteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="w-[calc(100vw-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto"
-        onPointerDownOutside={(e) => {
-          const target = e.target as Element | null;
-          if (target?.closest?.('.react-select__menu, [class*="-menu"], .react-select__menu-portal')) {
-            e.preventDefault();
-          }
-        }}
-        onInteractOutside={(e) => {
-          const target = e.target as Element | null;
-          if (target?.closest?.('.react-select__menu, [class*="-menu"], .react-select__menu-portal')) {
-            e.preventDefault();
-          }
-        }}
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
