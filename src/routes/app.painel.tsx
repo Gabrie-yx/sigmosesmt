@@ -855,13 +855,13 @@ function TstPanel() {
             <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 ring-1 ring-cyan-400/40">
               <ShieldCheck className="h-3.5 w-3.5 text-cyan-300" />
               <span className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">Indicadores Oficiais · Auditoria SGI-SST</span>
-              <span className="text-[9px] font-bold text-cyan-400/70">(6 indicadores · NBR 14280 · ISO 45001)</span>
+              <span className="text-[9px] font-bold text-cyan-400/70">(4 ativos · 2 substitutos de TF/TG pendentes · ISO 45001)</span>
             </div>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-cyan-500/60 to-cyan-500/30" />
           </div>
 
-          {/* 1 · TF — Taxa de Frequência (NBR 14280) */}
-          <Card title="01 · TF · Taxa de Frequência" className="col-span-12 md:col-span-4 order-2"
+          {/* TF — movido para APOIO (pendente substituto Acidentes/Efetivo) */}
+          <Card title="TF · Taxa de Frequência (legado · pend. HHT)" className="col-span-12 md:col-span-4 order-[20]"
             period="12 MESES" meta="= 0"
             metaTone={tf === 0 ? "ok" : tf <= 5 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-rose-300 flex items-center gap-1">
@@ -902,8 +902,8 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 2 · TG — Taxa de Gravidade (NBR 14280) */}
-          <Card title="02 · TG · Taxa de Gravidade" className="col-span-12 md:col-span-4 order-3"
+          {/* TG — movido para APOIO (pendente substituto Dias Perdidos) */}
+          <Card title="TG · Taxa de Gravidade (legado · pend. HHT)" className="col-span-12 md:col-span-4 order-[21]"
             period="12 MESES" meta="≤ 100"
             metaTone={tg <= 100 ? "ok" : tg <= 500 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
@@ -943,8 +943,8 @@ function TstPanel() {
               <span className="text-slate-500">Meta NBR: <span className="text-emerald-400 font-black">≤ 100</span></span>
             </div>
           </Card>
-          {/* 3 · % Treinamentos NR em dia */}
-          <Card title="03 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4 order-4"
+          {/* OFICIAL 3 · % Treinamentos NR em dia */}
+          <Card title="03 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4 order-2"
             period="MENSAL" meta="≥ 95%"
             metaTone={(() => {
               const avg = treinamentosNR.length > 0 ? Math.round(treinamentosNR.reduce((s, t) => s + t.value, 0) / treinamentosNR.length) : 100;
@@ -966,8 +966,8 @@ function TstPanel() {
             )}
           </Card>
 
-          {/* 4 · Donut ASO Status (PCMSO/NR-07) */}
-          <Card title="04 · ASO · PCMSO" className="col-span-12 md:col-span-4 order-5"
+          {/* OFICIAL 4 · Donut ASO Status (PCMSO/NR-07) */}
+          <Card title="04 · ASO · PCMSO" className="col-span-12 md:col-span-4 order-3"
             period="MENSAL" meta="100%"
             metaTone={asoConformPct >= 95 ? "ok" : asoConformPct >= 80 ? "warn" : "crit"}
             ncPrefill={{ codigo: "IND-05", indicador: "ASOs em dia", mesRef: mesRefAtual }}>
@@ -984,9 +984,9 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 5 · DDS Planejado vs Realizado (semanal) */}
+          {/* OFICIAL 5 · DDS Planejado vs Realizado (semanal) */}
           <Card title="05 · DDS · Planejado vs Realizado"
-            className="col-span-12 md:col-span-4 order-6"
+            className="col-span-12 md:col-span-4 order-4"
             period="SEMANAL"
             meta={`≥ 90% · ${ddsPlanRealizado.realizados}/${ddsPlanRealizado.planejados}`}
             metaTone={ddsPlanRealizado.pct >= 90 ? "ok" : ddsPlanRealizado.pct >= 70 ? "warn" : "crit"}
@@ -1078,8 +1078,8 @@ function TstPanel() {
             )}
           </Card>
 
-          {/* 7 · Barras Extintores por Status (NR-23) */}
-          <Card title="06 · Inspeções · Extintores NR-23" className="col-span-12 md:col-span-4 order-7"
+          {/* OFICIAL 6 · Inspeções (Extintores NR-23) */}
+          <Card title="06 · Inspeções · Extintores NR-23" className="col-span-12 md:col-span-4 order-5"
             period="MENSAL" meta="100% em dia"
             metaTone={extMetrics.vencidos > 0 ? "crit" : extMetrics.vencendo > 0 ? "warn" : "ok"}
             ncPrefill={{ codigo: "IND-07", indicador: "Inspeção/Recarga de Extintores", mesRef: mesRefAtual }}>
