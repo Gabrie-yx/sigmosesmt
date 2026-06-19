@@ -198,7 +198,7 @@ export function SaidaExpedienteDialog({
   );
 
   const employeeOptions = (employees ?? []).map((e: any) => ({ value: e.id, label: e.nome }));
-  const selectedValues = employeeOptions.filter(opt => form.employee_ids.includes(opt.value));
+  const selectedValues = employeeOptions.filter(opt => (form.employee_ids ?? []).includes(opt.value));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -249,8 +249,9 @@ export function SaidaExpedienteDialog({
               noOptionsMessage={() => "Nenhum funcionário ativo encontrado"}
               loadingMessage={() => "Carregando..."}
               classNamePrefix="react-select"
-              menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
-              menuPosition="fixed"
+              closeMenuOnSelect={false}
+              blurInputOnSelect={false}
+              menuPlacement="auto"
               styles={selectGlassStyles}
             />
             {!editId && form.employee_ids.length > 1 && (
