@@ -323,7 +323,7 @@ function SaidasPage() {
   );
 }
 
-function RelatorioSaidasDialog({ open, onClose, rows }: { open: boolean; onClose: () => void; rows: any[] }) {
+function RelatorioSaidasDialog({ open, onClose, rows, onPreview }: { open: boolean; onClose: () => void; rows: any[]; onPreview: (doc: jsPDF, fileName: string) => void }) {
   const hoje = new Date();
   const isoHoje = hoje.toISOString().slice(0, 10);
   // segunda da semana atual
@@ -365,22 +365,52 @@ function RelatorioSaidasDialog({ open, onClose, rows }: { open: boolean; onClose
       toast.error("Nenhuma saída no período selecionado");
       return;
     }
-    const header = ["Data", "Funcionário", "Cargo", "Empresa", "Horário Saída", "Com Retorno", "Horário Retorno", "Motivo"];
-    const linhas = filtradas
-      .sort((a: any, b: any) => (a.data + a.horario_saida).localeCompare(b.data + b.horario_saida))
-      .map((r: any) => [
+    const ordenadas = [...filtradas].sort((a: any, b: any) => (a.data + a.horario_saida).localeCompare(b.data + b.horario_saida));
+    const empresaSel = empresaId !== "__all__" ? (empresas.find((e: any) => e.id === empresaId) as any)?.name : null;
+    const periodoLbl = periodo === "semana" ? "Semana atual" : periodo === "mes" ? "Mês atual" : "Período personalizado";
+    const totalRet = ordenadas.filter((r: any) => r.com_retorno).length;
+
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const yStart = drawPdfHeader(doc, {
+      titulo: "Relatório de Saídas durante o Expediente",
+      subtitulo: `${periodoLbl} · ${formatDateBR(from)} → ${formatDateBR(to)}`,
+      filtros: [
+        `Empresa: ${empresaSel ?? "Todas"}`,
+        `Total: ${ordenadas.length}`,
+        `Com retorno: ${totalRet}`,
+        `Sem retorno: ${ordenadas.length - totalRet}`,
+      ],
+    });
+    autoTable(doc, {
+      startY: yStart + 2,
+      head: [["Data", "Funcionário", "Cargo", "Empresa", "Saída", "Retorno", "Horário Ret.", "Motivo"]],
+      body: ordenadas.map((r: any) => [
         formatDateBR(r.data),
         r.employees?.nome ?? "",
         r.employees?.roles?.name ?? "",
         r.companies?.name ?? "",
         r.horario_saida ?? "",
         r.com_retorno ? "Sim" : "Não",
-        r.horario_retorno ?? "",
+        r.horario_retorno ?? "—",
         r.motivo ?? "",
-      ]);
+      ]),
+      styles: { fontSize: 8.5, cellPadding: 2 },
+      headStyles: { fillColor: [11, 18, 40], textColor: 255, fontStyle: "bold", fontSize: 8.5 },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      columnStyles: {
+        0: { cellWidth: 22 },
+        1: { cellWidth: 55 },
+        2: { cellWidth: 38 },
+        3: { cellWidth: 45 },
+        4: { cellWidth: 16, halign: "center" },
+        5: { cellWidth: 18, halign: "center" },
+        6: { cellWidth: 22, halign: "center" },
+      },
+      margin: { left: 10, right: 10 },
+    });
     const sufixo = periodo === "semana" ? "semana" : periodo === "mes" ? "mes" : `${from}_a_${to}`;
-    downloadCSV(`saidas-expediente-${sufixo}.csv`, [header, ...linhas]);
-    toast.success(`${linhas.length} registro(s) exportado(s)`);
+    onPreview(doc, `relatorio-saidas-${sufixo}.pdf`);
+    toast.success(`${ordenadas.length} registro(s) no relatório`);
     onClose();
   }
 
@@ -432,7 +462,7 @@ function RelatorioSaidasDialog({ open, onClose, rows }: { open: boolean; onClose
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={gerar} className="bg-rose-600 hover:bg-rose-700 text-white">
-            <FileSpreadsheet className="h-4 w-4 mr-2" />Baixar CSV
+            <FileText className="h-4 w-4 mr-2" />Gerar PDF
           </Button>
         </DialogFooter>
       </DialogContent>
