@@ -197,8 +197,23 @@ export function SaidaExpedienteDialog({
     </div>
   );
 
-  const employeeOptions = (employees ?? []).map((e: any) => ({ value: e.id, label: e.nome }));
-  const selectedValues = employeeOptions.filter(opt => (form.employee_ids ?? []).includes(opt.value));
+  const normalizedEmployeeSearch = employeeSearch.trim().toLowerCase();
+  const filteredEmployees = (employees ?? []).filter((employee: any) => {
+    if (!normalizedEmployeeSearch) return true;
+    return [employee.nome, employee.cpf, employee.rg]
+      .filter(Boolean)
+      .some((value: string) => value.toLowerCase().includes(normalizedEmployeeSearch));
+  });
+  const selectedEmployeeIds = form.employee_ids ?? [];
+  const toggleEmployee = (employeeId: string) => {
+    setForm((current: any) => {
+      const currentIds = current.employee_ids ?? [];
+      const nextIds = currentIds.includes(employeeId)
+        ? currentIds.filter((id: string) => id !== employeeId)
+        : [...currentIds, employeeId];
+      return { ...current, employee_ids: nextIds };
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
