@@ -876,7 +876,7 @@ function TstPanel() {
           </div>
 
           {/* TF — movido para APOIO (pendente substituto Acidentes/Efetivo) */}
-          <Card title="TF · Taxa de Frequência (legado · pend. HHT)" className="col-span-12 md:col-span-4 order-[20]"
+          <Card title="TF · Taxa de Frequência (legado · pend. HHT)" className="col-span-12 md:col-span-6 order-[20]"
             period="12 MESES" meta="= 0"
             metaTone={tf === 0 ? "ok" : tf <= 5 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-rose-300 flex items-center gap-1">
@@ -918,7 +918,7 @@ function TstPanel() {
           </Card>
 
           {/* TG — movido para APOIO (pendente substituto Dias Perdidos) */}
-          <Card title="TG · Taxa de Gravidade (legado · pend. HHT)" className="col-span-12 md:col-span-4 order-[21]"
+          <Card title="TG · Taxa de Gravidade (legado · pend. HHT)" className="col-span-12 md:col-span-6 order-[21]"
             period="12 MESES" meta="≤ 100"
             metaTone={tg <= 100 ? "ok" : tg <= 500 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
@@ -1277,7 +1277,7 @@ function TstPanel() {
           </Card>
 
           {/* 11 · Área Fluxo Entregas EPI */}
-          <Card title="15 · Fluxo EPI · Tendência" className="col-span-12 md:col-span-6 order-[13]"
+          <Card title="15 · Fluxo EPI · Tendência" className="col-span-12 order-[13]"
             action={<span className="text-[10px] font-bold text-slate-500 flex items-center gap-1"><TrendingUp className="h-3 w-3" />{totalEntregas} · R$ {valorEntregas.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}</span>}>
             <div className="h-64">
               {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas" /> : (
