@@ -354,10 +354,10 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           )}
         </div>
         <div className="min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <h1 className="heading-display text-xl sm:text-2xl lg:text-[28px] leading-tight text-slate-100/95 break-words min-w-0 tracking-tight drop-shadow-[0_1px_0_rgba(0,0,0,0.45)]">{emp.nome}</h1>
-            <div className="shrink-0 flex flex-col items-end gap-2">
-              <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
+            <h1 className="heading-display text-lg sm:text-2xl lg:text-[28px] leading-tight text-slate-100/95 break-words min-w-0 tracking-tight drop-shadow-[0_1px_0_rgba(0,0,0,0.45)]">{emp.nome}</h1>
+            <div className="shrink-0 flex flex-row flex-wrap sm:flex-col items-start sm:items-end gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {isEditor && (tab === "profile" || tab === "nrs") && (
                   <button
                     type="button"
