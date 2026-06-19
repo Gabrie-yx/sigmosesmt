@@ -77,11 +77,19 @@ export function SaidaExpedienteDialog({
   const { data: employees } = useQuery({
     queryKey: ["employees-by-company", form.company_id],
     enabled: !!form.company_id,
-    queryFn: async () => (await supabase.from("employees")
-      .select("id,nome,cpf,rg,role_id,status,company_id")
-      .eq("status","ATIVO")
-      .eq("company_id", form.company_id)
-      .order("nome")).data ?? [],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("employees")
+        .select("id,nome,cpf,rg,role_id,status,company_id")
+        .eq("status","ATIVO")
+        .eq("company_id", form.company_id)
+        .order("nome");
+      if (error) {
+        console.error("[SaidaExpediente] erro ao carregar funcionários:", error);
+        toast.error("Erro ao carregar funcionários: " + error.message);
+        return [];
+      }
+      return data ?? [];
+    },
   });
 
   useEffect(() => {
@@ -194,7 +202,21 @@ export function SaidaExpedienteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto">
+      <DialogContent
+        className="w-[calc(100vw-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto"
+        onPointerDownOutside={(e) => {
+          const target = e.target as Element | null;
+          if (target?.closest?.('.react-select__menu, [class*="-menu"], .react-select__menu-portal')) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          const target = e.target as Element | null;
+          if (target?.closest?.('.react-select__menu, [class*="-menu"], .react-select__menu-portal')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {editId ? <Pencil className="h-5 w-5 text-brand" /> : <UserPlus className="h-5 w-5 text-brand" />}
