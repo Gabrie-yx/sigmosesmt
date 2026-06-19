@@ -987,12 +987,19 @@ function TstPanel() {
               background: "linear-gradient(135deg, rgba(167,139,250,0.95) 0%, rgba(34,211,238,0.55) 35%, rgba(16,185,129,0.90) 100%)",
               boxShadow:
                 "0 0 0 1px rgba(167,139,250,0.35), " +
-                "0 0 24px rgba(167,139,250,0.55), " +
-                "0 0 48px rgba(16,185,129,0.45), " +
-                "0 30px 70px -20px rgba(124,58,237,0.75), " +
-                "0 20px 60px -20px rgba(16,185,129,0.60)",
+                "0 0 18px rgba(167,139,250,0.22), " +
+                "0 0 36px rgba(16,185,129,0.18), " +
+                "0 24px 56px -22px rgba(124,58,237,0.30), " +
+                "0 18px 48px -22px rgba(16,185,129,0.24)",
             }}
           >
+            {/* hotspot brilhante na borda (canto superior direito) */}
+            <div aria-hidden className="pointer-events-none absolute -top-10 -right-8 h-40 w-56 rounded-full z-10"
+              style={{
+                background: "radial-gradient(closest-side, rgba(125,252,255,0.95) 0%, rgba(94,234,212,0.55) 35%, rgba(94,234,212,0) 75%)",
+                filter: "blur(6px)",
+                mixBlendMode: "screen",
+              }} />
             <div className="relative rounded-2xl overflow-hidden"
               style={{
                 background:
