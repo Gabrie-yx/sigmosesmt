@@ -1590,24 +1590,56 @@ function DonutCenter({
   const gradId = (i: number) => `donutGrad-${centerLabel.replace(/\s/g, "")}-${i}`;
   return (
     <div className="relative h-56">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `radial-gradient(closest-side, ${centerColor}33 0%, ${centerColor}11 45%, transparent 70%)`,
+          filter: "blur(6px)",
+        }}
+      />
       <ResponsiveContainer>
         <PieChart>
           <defs>
             {chartData.map((d, i) => (
-              <linearGradient id={gradId(i)} key={i} x1="0" y1="0" x2="1" y2="1">
+              <linearGradient id={gradId(i)} key={i} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={d.fill} stopOpacity={1} />
+                <stop offset="55%" stopColor={d.fill} stopOpacity={0.92} />
                 <stop offset="100%" stopColor={d.fill} stopOpacity={0.55} />
               </linearGradient>
             ))}
+            <filter id={`donutGlow-${centerLabel.replace(/\s/g, "")}`} x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="3.5" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
-          <Pie data={chartData} dataKey="value" innerRadius={62} outerRadius={92} paddingAngle={3} stroke="#0a0f1f" strokeWidth={3} startAngle={90} endAngle={-270}>
+          <Pie
+            data={chartData}
+            dataKey="value"
+            innerRadius={62}
+            outerRadius={94}
+            paddingAngle={3}
+            stroke="#0a0f1f"
+            strokeWidth={2}
+            startAngle={90}
+            endAngle={-270}
+            filter={`url(#donutGlow-${centerLabel.replace(/\s/g, "")})`}
+          >
             {chartData.map((_d, i) => <Cell key={i} fill={`url(#${gradId(i)})`} />)}
           </Pie>
           <Tooltip contentStyle={tooltipDark} />
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <div className="text-4xl font-black tabular-nums leading-none drop-shadow-sm" style={{ color: centerColor }}>{centerValue}</div>
+        <div
+          className="text-4xl font-black tabular-nums leading-none"
+          style={{ color: centerColor, textShadow: `0 0 18px ${centerColor}aa, 0 0 36px ${centerColor}55` }}
+        >
+          {centerValue}
+        </div>
         <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mt-1.5">{centerLabel}</div>
       </div>
     </div>
