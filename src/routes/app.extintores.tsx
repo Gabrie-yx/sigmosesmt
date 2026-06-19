@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -153,6 +153,9 @@ function ExtintoresPage() {
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90" onClick={abrirPdfPlanilha}>
               <Printer className="h-4 w-4" /> Visualizar PDF
+            </Button>
+            <Button asChild variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90">
+              <Link to="/app/extintores/inspecao-foto"><Sparkles className="h-4 w-4" /> Inspeção por foto (IA)</Link>
             </Button>
             <Button onClick={() => setNovoOpen(true)} className="gap-2 bg-slate-900 hover:bg-slate-800 text-white">
               <Plus className="h-4 w-4" /> Novo extintor
