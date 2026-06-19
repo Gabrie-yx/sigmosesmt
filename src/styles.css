@@ -1062,3 +1062,38 @@
     transition: background-color .35s ease, border-color .35s ease, box-shadow .35s ease;
   }
 }
+
+/* ============================================================
+   SCROLLBAR · vidro fino com glow vinho (global)
+   ============================================================ */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(232, 60, 90, 0.45) transparent;
+  }
+  *::-webkit-scrollbar { width: 6px; height: 6px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(244, 90, 120, 0.55), rgba(180, 30, 60, 0.55));
+    border-radius: 999px;
+    box-shadow:
+      0 0 6px rgba(232, 60, 90, 0.55),
+      0 0 14px rgba(232, 60, 90, 0.35),
+      inset 0 0 0 1px rgba(255, 240, 245, 0.18);
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(255, 120, 150, 0.75), rgba(210, 40, 75, 0.75));
+    box-shadow:
+      0 0 10px rgba(244, 90, 120, 0.85),
+      0 0 22px rgba(244, 90, 120, 0.55),
+      inset 0 0 0 1px rgba(255, 240, 245, 0.28);
+  }
+  *::-webkit-scrollbar-corner { background: transparent; }
+
+  html.theme-liquid *::-webkit-scrollbar-thumb {
+    box-shadow:
+      0 0 8px rgba(244, 90, 120, 0.75),
+      0 0 20px rgba(244, 90, 120, 0.45),
+      inset 0 0 0 1px rgba(255, 240, 245, 0.25);
+  }
+}
