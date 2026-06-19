@@ -502,12 +502,29 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
         {status && status.msgs.length > 0 ? (
-          <Card className="p-4 flex flex-wrap gap-2 self-start">
-            {status.msgs.map((m, i) => (
-              <Badge key={i} variant="outline">{m}</Badge>
-            ))}
+          <Card className="glass-vinho p-4 rounded-2xl h-full flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-rose-300" />
+              <span className="text-xs font-black uppercase tracking-widest text-rose-100/90">
+                Pendências detectadas
+              </span>
+              <Badge className="bg-rose-500/20 text-rose-100 border border-rose-300/30 text-[10px]">
+                {status.msgs.length}
+              </Badge>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {status.msgs.map((m, i) => (
+                <Badge
+                  key={i}
+                  variant="outline"
+                  className="border-rose-300/30 bg-white/5 text-rose-50 text-[11px]"
+                >
+                  {m}
+                </Badge>
+              ))}
+            </div>
           </Card>
         ) : (
           <div className="hidden lg:block" />

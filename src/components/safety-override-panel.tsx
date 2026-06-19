@@ -120,42 +120,53 @@ export function SafetyOverridePanel({ employeeId, employeeName, availableItemKey
   }
 
   return (
-    <Card className="p-4 rounded-2xl border-2 border-amber-200 bg-amber-50/50">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <ShieldAlert className="h-5 w-5 text-amber-600" />
-          <span className="text-xs font-black uppercase tracking-widest text-amber-800">
+    <Card className="glass-vinho p-4 rounded-2xl h-full flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <ShieldAlert className="h-4 w-4 text-amber-300 shrink-0" />
+          <span className="text-xs font-black uppercase tracking-widest text-amber-100/90 truncate">
             Liberações Manuais (Override SST)
           </span>
           {active.length > 0 && (
-            <Badge className="bg-amber-500 text-white border-0 text-[10px]">{active.length} ativa(s)</Badge>
+            <Badge className="bg-amber-500/20 text-amber-100 border border-amber-300/30 text-[10px]">
+              {active.length} ativa(s)
+            </Badge>
           )}
         </div>
         {isAdmin && (
-          <Button size="sm" onClick={() => setOpenDialog(true)} className="bg-amber-600 hover:bg-amber-700 text-white text-xs">
+          <Button
+            size="sm"
+            onClick={() => setOpenDialog(true)}
+            className="bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs h-8"
+          >
             <Plus className="h-3 w-3 mr-1" /> Liberar
           </Button>
         )}
       </div>
 
       {active.length === 0 && (
-        <div className="text-[11px] text-slate-500 italic">Nenhuma liberação ativa. Bloqueios padrão aplicados.</div>
+        <div className="text-[11px] text-white/55 italic">
+          Nenhuma liberação ativa. Bloqueios padrão aplicados.
+        </div>
       )}
 
       {active.map((o) => (
-        <div key={o.id} className="bg-white rounded-lg p-3 mb-2 border border-amber-200 flex items-start gap-3">
-          <Unlock className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+        <div
+          key={o.id}
+          className="bg-white/5 rounded-lg p-3 border border-white/10 flex items-start gap-3"
+        >
+          <Unlock className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-[10px] font-black">
+              <Badge className="bg-amber-500/15 text-amber-100 border border-amber-300/30 text-[10px] font-black">
                 {o.scope === "GLOBAL" ? "TODOS OS BLOQUEIOS" : o.item_key}
               </Badge>
-              <span className="text-[10px] text-slate-500">
+              <span className="text-[10px] text-white/55">
                 até {o.expira_em ? formatDateBR(o.expira_em.slice(0, 10)) : "indefinido"}
               </span>
             </div>
-            <div className="text-xs text-slate-700 mt-1">{o.justificativa}</div>
-            <div className="text-[10px] text-slate-400 mt-1">
+            <div className="text-xs text-white/85 mt-1">{o.justificativa}</div>
+            <div className="text-[10px] text-white/50 mt-1">
               Por {o.liberado_por_email ?? "—"} em {formatDateBR(o.liberado_em.slice(0, 10))}
             </div>
           </div>
@@ -164,7 +175,7 @@ export function SafetyOverridePanel({ employeeId, employeeName, availableItemKey
               size="sm"
               variant="outline"
               onClick={() => handleRevoke(o.id)}
-              className="text-[10px] h-7 border-red-300 text-red-600 hover:bg-red-50"
+              className="text-[10px] h-7 border-rose-300/40 text-rose-200 hover:bg-rose-500/10 bg-transparent"
             >
               <Lock className="h-3 w-3 mr-1" /> Revogar
             </Button>
@@ -173,17 +184,22 @@ export function SafetyOverridePanel({ employeeId, employeeName, availableItemKey
       ))}
 
       {historico.length > 0 && (
-        <details className="mt-3">
-          <summary className="text-[10px] font-bold uppercase tracking-widest text-slate-500 cursor-pointer">
+        <details className="mt-1">
+          <summary className="text-[10px] font-bold uppercase tracking-widest text-white/55 cursor-pointer">
             Histórico ({historico.length})
           </summary>
           <div className="mt-2 space-y-1">
             {historico.slice(0, 10).map((o) => (
-              <div key={o.id} className="text-[10px] text-slate-500 bg-white/50 p-2 rounded border border-slate-200">
-                <span className="font-bold">{o.scope === "GLOBAL" ? "GLOBAL" : o.item_key}</span> —{" "}
-                {o.justificativa.slice(0, 80)}
+              <div
+                key={o.id}
+                className="text-[10px] text-white/60 bg-white/5 p-2 rounded border border-white/10"
+              >
+                <span className="font-bold text-white/80">
+                  {o.scope === "GLOBAL" ? "GLOBAL" : o.item_key}
+                </span>{" "}
+                — {o.justificativa.slice(0, 80)}
                 {o.justificativa.length > 80 ? "…" : ""}
-                <div className="text-slate-400">
+                <div className="text-white/45">
                   Revogado{o.revogado_em ? ` em ${formatDateBR(o.revogado_em.slice(0, 10))}` : ""}
                   {o.motivo_revogacao ? ` — ${o.motivo_revogacao}` : ""}
                 </div>
