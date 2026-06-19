@@ -469,3 +469,187 @@ function RelatorioSaidasDialog({ open, onClose, rows, onPreview }: { open: boole
     </Dialog>
   );
 }
+
+function MesCard({ ym, total, empresasCount, onClick }: { ym: string; total: number; empresasCount: number; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative rounded-2xl p-[1.5px] overflow-hidden text-left transition-transform hover:scale-[1.015] focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+      style={{
+        background: "linear-gradient(135deg, rgba(244,63,94,0.85) 0%, rgba(167,139,250,0.55) 45%, rgba(34,211,238,0.65) 100%)",
+        boxShadow:
+          "0 0 0 1px rgba(244,63,94,0.30), " +
+          "0 0 18px rgba(167,139,250,0.22), " +
+          "0 0 36px rgba(16,185,129,0.18), " +
+          "0 24px 56px -22px rgba(124,58,237,0.30), " +
+          "0 18px 48px -22px rgba(16,185,129,0.24)",
+      }}
+    >
+      <div
+        className="relative rounded-2xl overflow-hidden flex flex-col w-full p-5 min-h-[180px]"
+        style={{
+          background:
+            "radial-gradient(120% 80% at 0% 0%, rgba(136,8,8,0.45) 0%, rgba(15,23,42,0) 55%), " +
+            "radial-gradient(120% 80% at 100% 100%, rgba(16,185,129,0.25) 0%, rgba(15,23,42,0) 55%), " +
+            "linear-gradient(160deg, #0b1228 0%, #0a0f22 45%, #070b1a 100%)",
+        }}
+      >
+        {/* top highlight */}
+        <div aria-hidden className="pointer-events-none absolute -top-3 left-[30%] h-6 w-40 rounded-full"
+          style={{
+            background: "radial-gradient(ellipse at center, rgba(196,181,253,0.95) 0%, rgba(167,139,250,0.65) 30%, rgba(139,92,246,0.25) 60%, rgba(139,92,246,0) 80%)",
+            filter: "blur(6px)", mixBlendMode: "screen",
+          }} />
+        <div aria-hidden className="pointer-events-none absolute -top-1 left-[34%] h-1 w-28 rounded-full"
+          style={{ background: "linear-gradient(90deg, rgba(167,139,250,0) 0%, rgba(221,214,254,1) 50%, rgba(167,139,250,0) 100%)", filter: "blur(1.5px)" }} />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
+          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 40%, transparent 100%)" }} />
+        <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl"
+          style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), inset 0 0 0 1px rgba(148,163,184,0.08), inset 0 -40px 80px -40px rgba(16,185,129,0.20)" }} />
+        <div aria-hidden className="pointer-events-none absolute -top-20 -left-16 h-56 w-56 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(153,27,27,0.55) 0%, rgba(136,8,8,0) 70%)", filter: "blur(10px)" }} />
+        <div aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 h-56 w-56 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(52,211,153,0.40) 0%, rgba(52,211,153,0) 70%)", filter: "blur(10px)" }} />
+
+        <div className="relative flex items-center justify-between mb-3">
+          <span className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300/90 flex items-center gap-1.5">
+            <CalIcon className="h-3 w-3" /> Mensal
+          </span>
+          <ChevronRight className="h-4 w-4 text-cyan-300/60 group-hover:text-cyan-200 group-hover:translate-x-0.5 transition-all" />
+        </div>
+
+        <div className="relative flex-1 flex flex-col justify-center">
+          <h3 className="text-2xl font-black uppercase tracking-tight text-white leading-tight">{mesLabel(ym)}</h3>
+          <div className="mt-4 flex items-baseline gap-2">
+            <span className="text-5xl font-black text-rose-300" style={{ textShadow: "0 0 20px rgba(244,63,94,0.55)" }}>
+              {total}
+            </span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+              autorização{total === 1 ? "" : "ões"}
+            </span>
+          </div>
+        </div>
+
+        <div className="relative flex items-center justify-between pt-3 mt-3 border-t border-slate-700/60">
+          <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400">
+            {empresasCount} empresa{empresasCount === 1 ? "" : "s"}
+          </span>
+          <span className="text-[9.5px] font-black uppercase tracking-wider text-cyan-300/80">
+            Ver detalhes
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function MesDetalheDialog({
+  ym, onClose, meses, isEditor, isAdmin, onView, onEdit, onDelete, onRepeat, onRepeatLote,
+}: {
+  ym: string | null;
+  onClose: () => void;
+  meses: Record<string, Record<string, any[]>>;
+  isEditor: boolean;
+  isAdmin: boolean;
+  onView: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onRepeat: (row: any) => void;
+  onRepeatLote: (rowsDia: any[]) => void;
+}) {
+  if (!ym) return null;
+  const datas = Object.keys(meses[ym] ?? {}).sort((a, b) => b.localeCompare(a));
+  const total = datas.reduce((s, d) => s + meses[ym][d].length, 0);
+
+  return (
+    <Dialog open={!!ym} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-5xl max-h-[88vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-black uppercase tracking-tight text-slate-900 flex items-center gap-3">
+            <CalIcon className="h-5 w-5 text-rose-600" />
+            {mesLabel(ym)}
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+              {total} autorização{total === 1 ? "" : "ões"}
+            </span>
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-auto pr-1 space-y-5 py-2">
+          {datas.map((data) => (
+            <div key={data} className="space-y-2">
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md">
+                  {formatDateBR(data)}
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                  {meses[ym][data].length} saída{meses[ym][data].length === 1 ? "" : "s"}
+                </span>
+                {isEditor && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-[10px] font-black uppercase tracking-widest text-rose-700 hover:text-rose-800 hover:bg-rose-50 rounded-lg border border-rose-200"
+                    onClick={() => onRepeatLote(meses[ym][data])}
+                  >
+                    <Copy className="h-3 w-3 mr-1.5" /> Repetir Lote
+                  </Button>
+                )}
+                <div className="h-px flex-1 bg-slate-200"></div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {meses[ym][data].map((r: any) => {
+                  const sigFunc = !!r.assinatura_funcionario;
+                  const sigSesmt = !!r.assinatura_sesmt;
+                  const sigSupervisor = !!r.assinatura_supervisor;
+                  const emp = r.employees;
+                  const iniciais = (emp?.nome ?? "—").split(" ").filter(Boolean).slice(0, 2).map((s: string) => s[0]?.toUpperCase()).join("");
+                  return (
+                    <div key={r.id} className="group relative rounded-xl border border-slate-200 bg-white p-3 shadow-sm hover:shadow-md hover:border-rose-300 transition-all flex items-center gap-3">
+                      <Avatar className="h-10 w-10 ring-2 ring-slate-100 shrink-0">
+                        {emp?.foto_url ? <AvatarImage src={emp.foto_url} alt={emp.nome} /> : null}
+                        <AvatarFallback className="text-xs font-black text-rose-700 bg-rose-100">{iniciais || "?"}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[12px] font-black text-slate-900 leading-tight truncate uppercase tracking-tight">{emp?.nome ?? "—"}</p>
+                          <div className="flex gap-1 shrink-0">
+                            <span className={`w-2 h-2 rounded-full ${sigFunc ? "bg-emerald-500" : "bg-slate-200"}`} title="Assinatura Funcionário" />
+                            <span className={`w-2 h-2 rounded-full ${sigSesmt ? "bg-emerald-500" : "bg-slate-200"}`} title="Assinatura SESMT" />
+                            <span className={`w-2 h-2 rounded-full ${sigSupervisor ? "bg-emerald-500" : "bg-slate-200"}`} title="Assinatura Supervisor" />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span className="text-[10px] font-black text-rose-700 bg-rose-50 ring-1 ring-rose-200 px-1.5 py-0.5 rounded uppercase">{r.horario_saida}</span>
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">{emp?.roles?.name ?? "—"}</span>
+                          {r.companies?.name && <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">{r.companies.name}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100 text-slate-500 hover:text-slate-900" onClick={() => onView(r.id)} title="Visualizar PDF">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {isEditor && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-rose-50 text-slate-500 hover:text-rose-700" onClick={() => onRepeat(r)} title="Repetir autorização hoje">
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100 text-slate-500 hover:text-slate-900" onClick={() => onEdit(r.id)} title="Editar">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        {isAdmin && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-rose-700 hover:bg-rose-50" onClick={() => onDelete(r.id)} title="Excluir">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
