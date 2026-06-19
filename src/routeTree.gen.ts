@@ -32,6 +32,7 @@ import { Route as AppHojeRouteImport } from './routes/app.hoje'
 import { Route as AppExtintoresRouteImport } from './routes/app.extintores'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppControleDocumentosRouteImport } from './routes/app.controle-documentos'
+import { Route as AppConfiguracoesIndicadoresRouteImport } from './routes/app.configuracoes-indicadores'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppCascosRouteImport } from './routes/app.cascos'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
@@ -191,6 +192,12 @@ const AppControleDocumentosRoute = AppControleDocumentosRouteImport.update({
   path: '/controle-documentos',
   getParentRoute: () => AppRoute,
 } as any)
+const AppConfiguracoesIndicadoresRoute =
+  AppConfiguracoesIndicadoresRouteImport.update({
+    id: '/configuracoes-indicadores',
+    path: '/configuracoes-indicadores',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppCompaniesRoute = AppCompaniesRouteImport.update({
   id: '/companies',
   path: '/companies',
@@ -430,6 +437,7 @@ export interface FileRoutesByFullPath {
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
+  '/app/configuracoes-indicadores': typeof AppConfiguracoesIndicadoresRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/extintores': typeof AppExtintoresRoute
@@ -497,6 +505,7 @@ export interface FileRoutesByTo {
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
+  '/app/configuracoes-indicadores': typeof AppConfiguracoesIndicadoresRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/extintores': typeof AppExtintoresRoute
   '/app/hoje': typeof AppHojeRoute
@@ -564,6 +573,7 @@ export interface FileRoutesById {
   '/app/audit': typeof AppAuditRoute
   '/app/cascos': typeof AppCascosRoute
   '/app/companies': typeof AppCompaniesRoute
+  '/app/configuracoes-indicadores': typeof AppConfiguracoesIndicadoresRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/extintores': typeof AppExtintoresRoute
@@ -634,6 +644,7 @@ export interface FileRouteTypes {
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
+    | '/app/configuracoes-indicadores'
     | '/app/controle-documentos'
     | '/app/employees'
     | '/app/extintores'
@@ -701,6 +712,7 @@ export interface FileRouteTypes {
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
+    | '/app/configuracoes-indicadores'
     | '/app/controle-documentos'
     | '/app/extintores'
     | '/app/hoje'
@@ -767,6 +779,7 @@ export interface FileRouteTypes {
     | '/app/audit'
     | '/app/cascos'
     | '/app/companies'
+    | '/app/configuracoes-indicadores'
     | '/app/controle-documentos'
     | '/app/employees'
     | '/app/extintores'
@@ -993,6 +1006,13 @@ declare module '@tanstack/react-router' {
       path: '/controle-documentos'
       fullPath: '/app/controle-documentos'
       preLoaderRoute: typeof AppControleDocumentosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/configuracoes-indicadores': {
+      id: '/app/configuracoes-indicadores'
+      path: '/configuracoes-indicadores'
+      fullPath: '/app/configuracoes-indicadores'
+      preLoaderRoute: typeof AppConfiguracoesIndicadoresRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/companies': {
@@ -1354,6 +1374,7 @@ interface AppRouteChildren {
   AppAuditRoute: typeof AppAuditRoute
   AppCascosRoute: typeof AppCascosRoute
   AppCompaniesRoute: typeof AppCompaniesRoute
+  AppConfiguracoesIndicadoresRoute: typeof AppConfiguracoesIndicadoresRoute
   AppControleDocumentosRoute: typeof AppControleDocumentosRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppExtintoresRoute: typeof AppExtintoresRoute
@@ -1407,6 +1428,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAuditRoute: AppAuditRoute,
   AppCascosRoute: AppCascosRoute,
   AppCompaniesRoute: AppCompaniesRoute,
+  AppConfiguracoesIndicadoresRoute: AppConfiguracoesIndicadoresRoute,
   AppControleDocumentosRoute: AppControleDocumentosRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppExtintoresRoute: AppExtintoresRoute,
