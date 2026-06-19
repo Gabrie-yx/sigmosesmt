@@ -179,7 +179,7 @@ function SaidasPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={() => setRelOpen(true)} variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-4 py-3 h-auto border-rose-200 text-rose-700 hover:bg-rose-50">
-            <FileSpreadsheet className="h-4 w-4 mr-2" />Relatório
+            <FileText className="h-4 w-4 mr-2" />Relatório PDF
           </Button>
           {isEditor && (
             <Button onClick={() => { setEditId(null); setDuplicateData(null); setOpen(true); }} className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
