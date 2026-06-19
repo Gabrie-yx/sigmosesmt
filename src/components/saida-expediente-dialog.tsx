@@ -14,38 +14,6 @@ import { PenLine, Check, UserPlus, Pencil } from "lucide-react";
 
 type SignatureTarget = "FUNC" | "SESMT" | "SUPERVISOR";
 
-const selectGlassStyles = {
-  control: (base: any) => ({
-    ...base,
-    minHeight: "42px",
-    borderRadius: "0.75rem",
-    borderColor: "rgba(255, 220, 225, 0.14)",
-    background: "rgba(20, 6, 10, 0.45)",
-    boxShadow: "none",
-    fontSize: "14px",
-  }),
-  menu: (base: any) => ({
-    ...base,
-    zIndex: 9999,
-    borderRadius: "0.75rem",
-    overflow: "hidden",
-    background: "rgba(34, 10, 16, 0.98)",
-    border: "1px solid rgba(255, 220, 225, 0.12)",
-  }),
-  menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
-  option: (base: any, state: any) => ({
-    ...base,
-    background: state.isFocused || state.isSelected ? "rgba(90, 20, 35, 0.82)" : "transparent",
-    color: "rgba(255, 245, 246, 0.92)",
-  }),
-  input: (base: any) => ({ ...base, color: "rgba(255, 245, 246, 0.92)" }),
-  placeholder: (base: any) => ({ ...base, color: "rgba(245, 230, 234, 0.50)" }),
-  singleValue: (base: any) => ({ ...base, color: "rgba(255, 245, 246, 0.92)" }),
-  multiValue: (base: any) => ({ ...base, backgroundColor: "rgba(58, 22, 30, 0.92)", borderRadius: "0.5rem" }),
-  multiValueLabel: (base: any) => ({ ...base, color: "rgba(255, 245, 246, 0.88)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase" }),
-  multiValueRemove: (base: any) => ({ ...base, color: "rgba(255, 210, 218, 0.72)", ":hover": { backgroundColor: "rgba(200, 16, 46, 0.35)", color: "#fff5f6" } }),
-};
-
 const emptyForm = () => ({
   company_id: "", employee_ids: [] as string[], data: new Date().toISOString().slice(0, 10),
   horario_saida: "", tipo: "PESSOAL", com_retorno: false,
@@ -241,7 +209,7 @@ export function SaidaExpedienteDialog({
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Empresa que está liberando *</Label>
-            <Select value={form.company_id} onValueChange={(v) => setForm({ ...form, company_id: v, employee_ids: [] })}>
+            <Select value={form.company_id} onValueChange={(v) => { setEmployeeSearch(""); setForm({ ...form, company_id: v, employee_ids: [] }); }}>
               <SelectTrigger className="rounded-xl border-slate-200"><SelectValue placeholder="Selecione a empresa..." /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {(companies ?? []).map((c: any) => (
