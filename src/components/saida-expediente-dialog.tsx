@@ -254,21 +254,44 @@ export function SaidaExpedienteDialog({
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Funcionário(s) *</Label>
-            <ReactSelect
-              isMulti
-              isDisabled={!form.company_id}
-              options={employeeOptions}
-              value={selectedValues}
-              onChange={(selected: any) => setForm({ ...form, employee_ids: selected ? selected.map((s: any) => s.value) : [] })}
-              placeholder={form.company_id ? "Busque e selecione um ou mais..." : "Escolha a empresa primeiro"}
-              noOptionsMessage={() => "Nenhum funcionário ativo encontrado"}
-              loadingMessage={() => "Carregando..."}
-              classNamePrefix="react-select"
-              closeMenuOnSelect={false}
-              blurInputOnSelect={false}
-              menuPlacement="auto"
-              styles={selectGlassStyles}
-            />
+            <div className="rounded-xl border border-slate-200 bg-background/60 p-2 shadow-sm">
+              <Input
+                disabled={!form.company_id}
+                value={employeeSearch}
+                onChange={(event) => setEmployeeSearch(event.target.value)}
+                placeholder={form.company_id ? "Buscar por nome, CPF ou RG..." : "Escolha a empresa primeiro"}
+                className="h-9 rounded-lg text-sm"
+              />
+              <div className="mt-2 max-h-44 overflow-y-auto rounded-lg border border-slate-200/70 bg-background">
+                {!form.company_id ? (
+                  <div className="px-3 py-3 text-xs font-semibold text-slate-500">Selecione uma empresa para listar os funcionários.</div>
+                ) : filteredEmployees.length === 0 ? (
+                  <div className="px-3 py-3 text-xs font-semibold text-slate-500">Nenhum funcionário ativo encontrado.</div>
+                ) : (
+                  filteredEmployees.map((employee: any) => {
+                    const checked = selectedEmployeeIds.includes(employee.id);
+                    return (
+                      <button
+                        key={employee.id}
+                        type="button"
+                        onClick={() => toggleEmployee(employee.id)}
+                        className={`flex w-full items-center gap-2 border-b border-slate-100 px-3 py-2 text-left text-sm transition last:border-b-0 ${checked ? "bg-rose-50 text-rose-950" : "hover:bg-slate-50"}`}
+                      >
+                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${checked ? "border-brand bg-brand text-white" : "border-slate-300"}`}>
+                          {checked && <Check className="h-3 w-3" />}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate font-semibold">{employee.nome}</span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+              {selectedEmployeeIds.length > 0 && (
+                <div className="mt-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  {selectedEmployeeIds.length} funcionário(s) selecionado(s)
+                </div>
+              )}
+            </div>
             {!editId && form.employee_ids.length > 1 && (
               <p className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">
                 Atenção: Será gerada uma autorização individual para cada funcionário selecionado.
