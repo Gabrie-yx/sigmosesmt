@@ -19,6 +19,10 @@ function ResetPasswordPage() {
   const [pwd2, setPwd2] = useState("");
   const [busy, setBusy] = useState(false);
   const [hasSession, setHasSession] = useState(false);
+  const [mfaNeeded, setMfaNeeded] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaChallengeId, setMfaChallengeId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
   const applyInvite = useServerFn(applyMyPendingInvite);
 
   useEffect(() => {
@@ -30,21 +34,68 @@ function ResetPasswordPage() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  async function finishPasswordUpdate() {
+    const { error } = await supabase.auth.updateUser({ password: pwd });
+    if (error) throw error;
+    try { await applyInvite({}); } catch (err) { console.warn("applyInvite", err); }
+    toast.success("Senha definida! Bem-vindo.");
+    nav({ to: "/app" });
+  }
+
+  async function startMfaChallenge(): Promise<boolean> {
+    const { data: factors, error: fErr } = await supabase.auth.mfa.listFactors();
+    if (fErr) throw fErr;
+    const totp = factors?.totp?.find((f) => f.status === "verified");
+    if (!totp) {
+      toast.error("Sua conta tem MFA ativo mas nenhum autenticador verificado foi encontrado. Contate o administrador.");
+      return false;
+    }
+    const { data: ch, error: cErr } = await supabase.auth.mfa.challenge({ factorId: totp.id });
+    if (cErr) throw cErr;
+    setMfaFactorId(totp.id);
+    setMfaChallengeId(ch.id);
+    setMfaNeeded(true);
+    toast.info("Digite o código de 6 dígitos do seu app autenticador.");
+    return true;
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (pwd.length < 8) return toast.error("A senha precisa ter pelo menos 8 caracteres");
     if (pwd !== pwd2) return toast.error("As senhas não coincidem");
     setBusy(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: pwd });
-      if (error) throw error;
-      // Rede de segurança: garante role + módulos do convite, mesmo se a
-      // trigger apply_pending_invite não tiver aplicado por timing/expiração.
-      try { await applyInvite({}); } catch (err) { console.warn("applyInvite", err); }
-      toast.success("Senha definida! Bem-vindo.");
-      nav({ to: "/app" });
+      await finishPasswordUpdate();
     } catch (e: any) {
-      toast.error(e.message);
+      const code = e?.code || "";
+      const msg = (e?.message || "").toLowerCase();
+      if (code === "insufficient_aal" || msg.includes("aal2")) {
+        try {
+          await startMfaChallenge();
+        } catch (err: any) {
+          toast.error(err.message || "Falha ao iniciar verificação MFA");
+        }
+      } else {
+        toast.error(e.message);
+      }
+    } finally { setBusy(false); }
+  }
+
+  async function submitMfa(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaFactorId || !mfaChallengeId) return;
+    if (!/^\d{6}$/.test(mfaCode)) return toast.error("Digite os 6 dígitos do código");
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: mfaFactorId,
+        challengeId: mfaChallengeId,
+        code: mfaCode,
+      });
+      if (error) throw error;
+      await finishPasswordUpdate();
+    } catch (e: any) {
+      toast.error(e.message || "Código inválido");
     } finally { setBusy(false); }
   }
 
@@ -60,7 +111,7 @@ function ResetPasswordPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {hasSession ? (
+          {hasSession && !mfaNeeded ? (
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-2">
                 <Label>Nova senha</Label>
@@ -72,6 +123,27 @@ function ResetPasswordPage() {
               </div>
               <Button type="submit" className="w-full" disabled={busy}>
                 {busy ? "Salvando..." : "Definir senha e entrar"}
+              </Button>
+            </form>
+          ) : hasSession && mfaNeeded ? (
+            <form onSubmit={submitMfa} className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Sua conta tem verificação em duas etapas (MFA). Digite o código de 6 dígitos do seu app autenticador para concluir a troca de senha.
+              </p>
+              <div className="space-y-2">
+                <Label>Código do autenticador</Label>
+                <Input
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder="000000"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={busy}>
+                {busy ? "Verificando..." : "Verificar e salvar senha"}
               </Button>
             </form>
           ) : (
