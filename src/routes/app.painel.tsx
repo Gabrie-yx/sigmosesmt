@@ -1014,17 +1014,30 @@ function TstPanel() {
                   <ComposedChart data={ddsPlanRealizado.series} margin={{ top: 14, right: 12, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradPlanReal" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#22d3ee" /><stop offset="100%" stopColor="#0891b2" />
+                        <stop offset="0%" stopColor="#67e8f9" stopOpacity={1} />
+                        <stop offset="55%" stopColor="#22d3ee" stopOpacity={0.95} />
+                        <stop offset="100%" stopColor="#0e7490" stopOpacity={0.85} />
                       </linearGradient>
+                      <linearGradient id="gradPlanBg" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#475569" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#1e293b" stopOpacity={0.15} />
+                      </linearGradient>
+                      <filter id="ddsGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="2.5" result="b" />
+                        <feMerge>
+                          <feMergeNode in="b" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
                     </defs>
                     <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="sem" tick={{ fontSize: 10, fill: "#cbd5e1" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
                     <Tooltip contentStyle={tooltipDark} />
-                    <Bar dataKey="plan" fill="rgba(148,163,184,0.18)" radius={[6, 6, 0, 0]} barSize={26} name="Planejado">
+                    <Bar dataKey="plan" fill="url(#gradPlanBg)" radius={[6, 6, 0, 0]} barSize={26} name="Planejado">
                       <LabelList dataKey="plan" position="top" style={{ fontSize: 9, fontWeight: 700, fill: "#94a3b8" }} />
                     </Bar>
-                    <Bar dataKey="real" fill="url(#gradPlanReal)" radius={[6, 6, 0, 0]} barSize={26} name="Realizado">
+                    <Bar dataKey="real" fill="url(#gradPlanReal)" radius={[6, 6, 0, 0]} barSize={26} name="Realizado" filter="url(#ddsGlow)">
                       <LabelList dataKey="real" position="top" style={{ fontSize: 11, fontWeight: 900, fill: "#22d3ee" }} />
                     </Bar>
                   </ComposedChart>
@@ -1117,15 +1130,23 @@ function TstPanel() {
                     {extintoresBars.map((e, i) => (
                       <linearGradient id={`gradExt-${i}`} key={i} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={e.fill} stopOpacity={1} />
-                        <stop offset="100%" stopColor={e.fill} stopOpacity={0.6} />
+                        <stop offset="55%" stopColor={e.fill} stopOpacity={0.92} />
+                        <stop offset="100%" stopColor={e.fill} stopOpacity={0.55} />
                       </linearGradient>
                     ))}
+                    <filter id="extGlow" x="-30%" y="-30%" width="160%" height="160%">
+                      <feGaussianBlur stdDeviation="3" result="b" />
+                      <feMerge>
+                        <feMergeNode in="b" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
                   </defs>
                   <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#cbd5e1", fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={tooltipDark} />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={36}>
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={36} filter="url(#extGlow)">
                     {extintoresBars.map((_e, i) => <Cell key={i} fill={`url(#gradExt-${i})`} />)}
                     <LabelList dataKey="value" position="top" style={{ fontSize: 12, fontWeight: 900, fill: "#f1f5f9" }} />
                   </Bar>
@@ -1590,24 +1611,56 @@ function DonutCenter({
   const gradId = (i: number) => `donutGrad-${centerLabel.replace(/\s/g, "")}-${i}`;
   return (
     <div className="relative h-56">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `radial-gradient(closest-side, ${centerColor}33 0%, ${centerColor}11 45%, transparent 70%)`,
+          filter: "blur(6px)",
+        }}
+      />
       <ResponsiveContainer>
         <PieChart>
           <defs>
             {chartData.map((d, i) => (
-              <linearGradient id={gradId(i)} key={i} x1="0" y1="0" x2="1" y2="1">
+              <linearGradient id={gradId(i)} key={i} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={d.fill} stopOpacity={1} />
+                <stop offset="55%" stopColor={d.fill} stopOpacity={0.92} />
                 <stop offset="100%" stopColor={d.fill} stopOpacity={0.55} />
               </linearGradient>
             ))}
+            <filter id={`donutGlow-${centerLabel.replace(/\s/g, "")}`} x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="3.5" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
-          <Pie data={chartData} dataKey="value" innerRadius={62} outerRadius={92} paddingAngle={3} stroke="#0a0f1f" strokeWidth={3} startAngle={90} endAngle={-270}>
+          <Pie
+            data={chartData}
+            dataKey="value"
+            innerRadius={62}
+            outerRadius={94}
+            paddingAngle={3}
+            stroke="#0a0f1f"
+            strokeWidth={2}
+            startAngle={90}
+            endAngle={-270}
+            filter={`url(#donutGlow-${centerLabel.replace(/\s/g, "")})`}
+          >
             {chartData.map((_d, i) => <Cell key={i} fill={`url(#${gradId(i)})`} />)}
           </Pie>
           <Tooltip contentStyle={tooltipDark} />
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <div className="text-4xl font-black tabular-nums leading-none drop-shadow-sm" style={{ color: centerColor }}>{centerValue}</div>
+        <div
+          className="text-4xl font-black tabular-nums leading-none"
+          style={{ color: centerColor, textShadow: `0 0 18px ${centerColor}aa, 0 0 36px ${centerColor}55` }}
+        >
+          {centerValue}
+        </div>
         <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mt-1.5">{centerLabel}</div>
       </div>
     </div>
@@ -1650,11 +1703,27 @@ function HBarList({
                 {it.value}{suffix ?? ""}
               </span>
             </div>
-            <div className="h-3 bg-slate-800/60 rounded-full overflow-hidden shadow-inner">
+            <div
+              className="relative h-3 rounded-full overflow-hidden"
+              style={{
+                background: "linear-gradient(180deg, rgba(2,6,23,0.85), rgba(15,23,42,0.55))",
+                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.6), inset 0 -1px 0 rgba(255,255,255,0.04)",
+              }}
+            >
               <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${c}cc, ${c})` }}
-              />
+                className="relative h-full rounded-full transition-all duration-700"
+                style={{
+                  width: `${pct}%`,
+                  background: `linear-gradient(180deg, ${c}ff 0%, ${c}d9 45%, ${c}99 100%)`,
+                  boxShadow: `0 0 12px ${c}aa, 0 0 22px ${c}55, inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -1px 0 rgba(0,0,0,0.25)`,
+                }}
+              >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full"
+                  style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35), transparent)" }}
+                />
+              </div>
             </div>
           </div>
         );
