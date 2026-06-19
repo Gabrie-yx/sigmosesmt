@@ -54,6 +54,7 @@ import {
   FileSignature,
   ShieldAlert,
   Wind,
+  Target,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
