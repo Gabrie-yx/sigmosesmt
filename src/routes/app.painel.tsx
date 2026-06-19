@@ -1130,15 +1130,23 @@ function TstPanel() {
                     {extintoresBars.map((e, i) => (
                       <linearGradient id={`gradExt-${i}`} key={i} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={e.fill} stopOpacity={1} />
-                        <stop offset="100%" stopColor={e.fill} stopOpacity={0.6} />
+                        <stop offset="55%" stopColor={e.fill} stopOpacity={0.92} />
+                        <stop offset="100%" stopColor={e.fill} stopOpacity={0.55} />
                       </linearGradient>
                     ))}
+                    <filter id="extGlow" x="-30%" y="-30%" width="160%" height="160%">
+                      <feGaussianBlur stdDeviation="3" result="b" />
+                      <feMerge>
+                        <feMergeNode in="b" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
                   </defs>
                   <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#cbd5e1", fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <Tooltip cursor={{ fill: "rgba(12,35,64,0.05)" }} contentStyle={tooltipDark} />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={36}>
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={36} filter="url(#extGlow)">
                     {extintoresBars.map((_e, i) => <Cell key={i} fill={`url(#gradExt-${i})`} />)}
                     <LabelList dataKey="value" position="top" style={{ fontSize: 12, fontWeight: 900, fill: "#f1f5f9" }} />
                   </Bar>
