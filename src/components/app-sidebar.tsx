@@ -421,21 +421,72 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* USUÁRIOS no rodapé */}
-      {(isAdmin || canUsuarios) && (
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={isActive("/app/users")} tooltip="Usuários">
-                <Link to="/app/users">
-                  <UsersIcon />
-                  <span>Usuários</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      )}
+      {/* CONFIGURAÇÕES (hover no rodapé) */}
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <HoverCard openDelay={80} closeDelay={150}>
+              <HoverCardTrigger asChild>
+                <SidebarMenuButton
+                  tooltip="Configurações"
+                  isActive={
+                    isActive("/app/users") ||
+                    isActive("/app/audit") ||
+                    isActive("/app/configuracoes-indicadores")
+                  }
+                  className="font-bold"
+                >
+                  <Settings className="text-red-700" />
+                  <span>Configurações</span>
+                  <ChevronRight className="ml-auto h-4 w-4" />
+                </SidebarMenuButton>
+              </HoverCardTrigger>
+              <HoverCardContent
+                side="right"
+                align="end"
+                sideOffset={8}
+                className="w-60 p-2"
+              >
+                <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                  Configurações
+                </div>
+                <nav className="flex flex-col gap-0.5">
+                  {(isAdmin || canUsuarios) && (
+                    <Link
+                      to="/app/users"
+                      className="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted data-[active=true]:bg-amber-100 data-[active=true]:text-red-900"
+                      data-active={isActive("/app/users") || undefined}
+                    >
+                      <UsersIcon className="h-4 w-4 text-red-700" />
+                      <span>Usuários</span>
+                    </Link>
+                  )}
+                  {hasMenu("/app/audit") && (
+                    <Link
+                      to="/app/audit"
+                      className="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted data-[active=true]:bg-amber-100 data-[active=true]:text-red-900"
+                      data-active={isActive("/app/audit") || undefined}
+                    >
+                      <History className="h-4 w-4 text-red-700" />
+                      <span>Log de Auditoria</span>
+                    </Link>
+                  )}
+                  {hasMenu("/app/configuracoes-indicadores") && (
+                    <Link
+                      to="/app/configuracoes-indicadores"
+                      className="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted data-[active=true]:bg-amber-100 data-[active=true]:text-red-900"
+                      data-active={isActive("/app/configuracoes-indicadores") || undefined}
+                    >
+                      <Target className="h-4 w-4 text-red-700" />
+                      <span>Metas dos Indicadores</span>
+                    </Link>
+                  )}
+                </nav>
+              </HoverCardContent>
+            </HoverCard>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
