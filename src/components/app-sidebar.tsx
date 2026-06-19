@@ -54,6 +54,7 @@ import {
   FileSignature,
   ShieldAlert,
   Wind,
+  Target,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -64,7 +65,10 @@ type LockedItem = { key: string; label: string; icon?: typeof CalendarCheck2 };
 const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
   {
     title: "Visão Geral",
-    items: [{ to: "/app/painel", label: "Dashboard SESMT", icon: BarChart3 }],
+    items: [
+      { to: "/app/painel", label: "Dashboard SESMT", icon: BarChart3 },
+      { to: "/app/configuracoes-indicadores", label: "Metas dos Indicadores", icon: Target },
+    ],
   },
   {
     title: "Planejar",
