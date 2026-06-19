@@ -27,13 +27,13 @@ const selectGlassStyles = {
   }),
   menu: (base: any) => ({
     ...base,
-    zIndex: 70,
+    zIndex: 9999,
     borderRadius: "0.75rem",
     overflow: "hidden",
     background: "rgba(34, 10, 16, 0.98)",
     border: "1px solid rgba(255, 220, 225, 0.12)",
   }),
-  menuPortal: (base: any) => ({ ...base, zIndex: 70 }),
+  menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
   option: (base: any, state: any) => ({
     ...base,
     background: state.isFocused || state.isSelected ? "rgba(90, 20, 35, 0.82)" : "transparent",
