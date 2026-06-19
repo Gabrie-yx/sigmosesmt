@@ -29,6 +29,7 @@ import { Route as AppMatrizTreinamentoRouteImport } from './routes/app.matriz-tr
 import { Route as AppMatrizRiscosRouteImport } from './routes/app.matriz-riscos'
 import { Route as AppIncidentesRouteImport } from './routes/app.incidentes'
 import { Route as AppHojeRouteImport } from './routes/app.hoje'
+import { Route as AppExtintoresInspecaoFotoRouteImport } from './routes/app.extintores-inspecao-foto'
 import { Route as AppExtintoresRouteImport } from './routes/app.extintores'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppControleDocumentosRouteImport } from './routes/app.controle-documentos'
@@ -59,7 +60,6 @@ import { Route as AppProducaoExpedicaoRouteImport } from './routes/app.producao.
 import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
 import { Route as AppProducaoBaseMateriaPrimaRouteImport } from './routes/app.producao.base-materia-prima'
 import { Route as AppOssTemplatesRouteImport } from './routes/app.oss.templates'
-import { Route as AppExtintoresInspecaoFotoRouteImport } from './routes/app.extintores.inspecao-foto'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesSaidasRouteImport } from './routes/app.employees.saidas'
@@ -178,6 +178,12 @@ const AppHojeRoute = AppHojeRouteImport.update({
   path: '/hoje',
   getParentRoute: () => AppRoute,
 } as any)
+const AppExtintoresInspecaoFotoRoute =
+  AppExtintoresInspecaoFotoRouteImport.update({
+    id: '/extintores-inspecao-foto',
+    path: '/extintores-inspecao-foto',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppExtintoresRoute = AppExtintoresRouteImport.update({
   id: '/extintores',
   path: '/extintores',
@@ -333,12 +339,6 @@ const AppOssTemplatesRoute = AppOssTemplatesRouteImport.update({
   path: '/templates',
   getParentRoute: () => AppOssRoute,
 } as any)
-const AppExtintoresInspecaoFotoRoute =
-  AppExtintoresInspecaoFotoRouteImport.update({
-    id: '/inspecao-foto',
-    path: '/inspecao-foto',
-    getParentRoute: () => AppExtintoresRoute,
-  } as any)
 const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
   id: '/estoque/sesmt',
   path: '/estoque/sesmt',
@@ -447,7 +447,8 @@ export interface FileRoutesByFullPath {
   '/app/configuracoes-indicadores': typeof AppConfiguracoesIndicadoresRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
-  '/app/extintores': typeof AppExtintoresRouteWithChildren
+  '/app/extintores': typeof AppExtintoresRoute
+  '/app/extintores-inspecao-foto': typeof AppExtintoresInspecaoFotoRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
@@ -474,7 +475,6 @@ export interface FileRoutesByFullPath {
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
-  '/app/extintores/inspecao-foto': typeof AppExtintoresInspecaoFotoRoute
   '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
@@ -515,7 +515,8 @@ export interface FileRoutesByTo {
   '/app/companies': typeof AppCompaniesRoute
   '/app/configuracoes-indicadores': typeof AppConfiguracoesIndicadoresRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
-  '/app/extintores': typeof AppExtintoresRouteWithChildren
+  '/app/extintores': typeof AppExtintoresRoute
+  '/app/extintores-inspecao-foto': typeof AppExtintoresInspecaoFotoRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
@@ -541,7 +542,6 @@ export interface FileRoutesByTo {
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
-  '/app/extintores/inspecao-foto': typeof AppExtintoresInspecaoFotoRoute
   '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
@@ -585,7 +585,8 @@ export interface FileRoutesById {
   '/app/configuracoes-indicadores': typeof AppConfiguracoesIndicadoresRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
-  '/app/extintores': typeof AppExtintoresRouteWithChildren
+  '/app/extintores': typeof AppExtintoresRoute
+  '/app/extintores-inspecao-foto': typeof AppExtintoresInspecaoFotoRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
@@ -612,7 +613,6 @@ export interface FileRoutesById {
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
-  '/app/extintores/inspecao-foto': typeof AppExtintoresInspecaoFotoRoute
   '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
@@ -658,6 +658,7 @@ export interface FileRouteTypes {
     | '/app/controle-documentos'
     | '/app/employees'
     | '/app/extintores'
+    | '/app/extintores-inspecao-foto'
     | '/app/hoje'
     | '/app/incidentes'
     | '/app/matriz-riscos'
@@ -684,7 +685,6 @@ export interface FileRouteTypes {
     | '/app/employees/saidas'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
-    | '/app/extintores/inspecao-foto'
     | '/app/oss/templates'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
@@ -726,6 +726,7 @@ export interface FileRouteTypes {
     | '/app/configuracoes-indicadores'
     | '/app/controle-documentos'
     | '/app/extintores'
+    | '/app/extintores-inspecao-foto'
     | '/app/hoje'
     | '/app/incidentes'
     | '/app/matriz-riscos'
@@ -751,7 +752,6 @@ export interface FileRouteTypes {
     | '/app/employees/saidas'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
-    | '/app/extintores/inspecao-foto'
     | '/app/oss/templates'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
@@ -795,6 +795,7 @@ export interface FileRouteTypes {
     | '/app/controle-documentos'
     | '/app/employees'
     | '/app/extintores'
+    | '/app/extintores-inspecao-foto'
     | '/app/hoje'
     | '/app/incidentes'
     | '/app/matriz-riscos'
@@ -821,7 +822,6 @@ export interface FileRouteTypes {
     | '/app/employees/saidas'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
-    | '/app/extintores/inspecao-foto'
     | '/app/oss/templates'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
@@ -998,6 +998,13 @@ declare module '@tanstack/react-router' {
       path: '/hoje'
       fullPath: '/app/hoje'
       preLoaderRoute: typeof AppHojeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/extintores-inspecao-foto': {
+      id: '/app/extintores-inspecao-foto'
+      path: '/extintores-inspecao-foto'
+      fullPath: '/app/extintores-inspecao-foto'
+      preLoaderRoute: typeof AppExtintoresInspecaoFotoRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/extintores': {
@@ -1210,13 +1217,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOssTemplatesRouteImport
       parentRoute: typeof AppOssRoute
     }
-    '/app/extintores/inspecao-foto': {
-      id: '/app/extintores/inspecao-foto'
-      path: '/inspecao-foto'
-      fullPath: '/app/extintores/inspecao-foto'
-      preLoaderRoute: typeof AppExtintoresInspecaoFotoRouteImport
-      parentRoute: typeof AppExtintoresRoute
-    }
     '/app/estoque/sesmt': {
       id: '/app/estoque/sesmt'
       path: '/estoque/sesmt'
@@ -1361,18 +1361,6 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
   AppEmployeesRouteChildren,
 )
 
-interface AppExtintoresRouteChildren {
-  AppExtintoresInspecaoFotoRoute: typeof AppExtintoresInspecaoFotoRoute
-}
-
-const AppExtintoresRouteChildren: AppExtintoresRouteChildren = {
-  AppExtintoresInspecaoFotoRoute: AppExtintoresInspecaoFotoRoute,
-}
-
-const AppExtintoresRouteWithChildren = AppExtintoresRoute._addFileChildren(
-  AppExtintoresRouteChildren,
-)
-
 interface AppOssRouteChildren {
   AppOssTemplatesRoute: typeof AppOssTemplatesRoute
   AppOssIndexRoute: typeof AppOssIndexRoute
@@ -1409,7 +1397,8 @@ interface AppRouteChildren {
   AppConfiguracoesIndicadoresRoute: typeof AppConfiguracoesIndicadoresRoute
   AppControleDocumentosRoute: typeof AppControleDocumentosRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
-  AppExtintoresRoute: typeof AppExtintoresRouteWithChildren
+  AppExtintoresRoute: typeof AppExtintoresRoute
+  AppExtintoresInspecaoFotoRoute: typeof AppExtintoresInspecaoFotoRoute
   AppHojeRoute: typeof AppHojeRoute
   AppIncidentesRoute: typeof AppIncidentesRoute
   AppMatrizRiscosRoute: typeof AppMatrizRiscosRoute
@@ -1463,7 +1452,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppConfiguracoesIndicadoresRoute: AppConfiguracoesIndicadoresRoute,
   AppControleDocumentosRoute: AppControleDocumentosRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
-  AppExtintoresRoute: AppExtintoresRouteWithChildren,
+  AppExtintoresRoute: AppExtintoresRoute,
+  AppExtintoresInspecaoFotoRoute: AppExtintoresInspecaoFotoRoute,
   AppHojeRoute: AppHojeRoute,
   AppIncidentesRoute: AppIncidentesRoute,
   AppMatrizRiscosRoute: AppMatrizRiscosRoute,
