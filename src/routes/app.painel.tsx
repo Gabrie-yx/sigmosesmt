@@ -582,28 +582,47 @@ function TstPanel() {
     return { atual, recorde, dataInicio: atualRec?.data_inicio ?? null };
   }, [data, filterCompany]);
 
-  // === DDS Planejado vs Realizado (meta: 1 DDS / semana / empresa ativa) ===
+  // === DDS Planejado vs Realizado (config: meta por dia da semana em company_settings) ===
   const ddsPlanRealizado = useMemo(() => {
-    const semanas = Math.max(1, Math.ceil(dias / 7));
-    const empresasAtivas = (data?.companies ?? []).length || 1;
-    const planejados = semanas * empresasAtivas;
+    const settings: any = (data as any)?.settings;
+    const diasSemanaCfg: number[] = settings?.meta_dds_dias_semana ?? [1, 3, 5]; // seg/qua/sex
+    const inicio = new Date(today.getTime() - dias * dayMs);
+    // conta dias do período que caem nos dias-da-semana configurados
+    let planejados = 0;
+    for (let d = new Date(inicio); d <= today; d.setDate(d.getDate() + 1)) {
+      if (diasSemanaCfg.includes(d.getDay())) planejados++;
+    }
+    planejados = Math.max(1, planejados);
     const realizados = ddsCount;
-    const pct = planejados > 0 ? Math.round((realizados / planejados) * 100) : 0;
-    // Serie por semana (últimas N semanas)
-    const map = new Map<string, { sem: string; real: number }>();
+    const pct = Math.min(100, Math.round((realizados / planejados) * 100));
+    // Serie por semana
+    const map = new Map<string, { sem: string; real: number; plan: number }>();
+    const semanas = Math.max(1, Math.ceil(dias / 7));
+    // popula buckets de semana com plan = nº de dias config naquela semana
+    for (let i = 0; i < semanas; i++) {
+      const ref = new Date(today.getTime() - i * 7 * dayMs);
+      const day = (ref.getDay() + 6) % 7;
+      const wk = new Date(ref.getTime() - day * dayMs);
+      const key = fmt(wk);
+      const label = `${String(wk.getDate()).padStart(2, "0")}/${MONTHS_PT[wk.getMonth()]}`;
+      let planSem = 0;
+      for (let k = 0; k < 7; k++) {
+        const d2 = new Date(wk.getTime() + k * dayMs);
+        if (d2 <= today && d2 >= inicio && diasSemanaCfg.includes(d2.getDay())) planSem++;
+      }
+      map.set(key, { sem: label, real: 0, plan: planSem });
+    }
     (data?.dds ?? []).forEach((d: any) => {
       const dt = new Date(d.data + "T00:00");
       const day = (dt.getDay() + 6) % 7;
       const wk = new Date(dt.getTime() - day * dayMs);
       const key = fmt(wk);
-      const label = `${String(wk.getDate()).padStart(2, "0")}/${MONTHS_PT[wk.getMonth()]}`;
-      const cur = map.get(key) ?? { sem: label, real: 0 };
-      cur.real += 1;
-      map.set(key, cur);
+      const cur = map.get(key);
+      if (cur) cur.real += 1;
     });
-    const series = Array.from(map.values()).slice(-semanas).map((s) => ({
-      ...s, plan: empresasAtivas,
-    }));
+    const series = Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([, v]) => v);
     return { planejados, realizados, pct, series };
   }, [data, dias, ddsCount]);
 
