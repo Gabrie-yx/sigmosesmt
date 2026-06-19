@@ -42,7 +42,7 @@ export function SaidaExpedienteDialog({
     queryFn: async () => (await supabase.from("companies").select("id,name,type,encarregado1,encarregado2").order("name")).data ?? [],
   });
 
-  const { data: employees } = useQuery({
+  const { data: employees, isFetching: loadingEmployees } = useQuery({
     queryKey: ["employees-by-company", form.company_id],
     enabled: !!form.company_id,
     queryFn: async () => {
@@ -62,6 +62,7 @@ export function SaidaExpedienteDialog({
 
   useEffect(() => {
     if (!open) return;
+    setEmployeeSearch("");
     if (editId) {
       supabase.from("employee_saidas_expediente").select("*").eq("id", editId).maybeSingle().then(({ data }) => {
         if (data) setForm({ ...data, employee_ids: [data.employee_id] });
@@ -221,6 +222,8 @@ export function SaidaExpedienteDialog({
               <div className="mt-2 max-h-44 overflow-y-auto rounded-lg border border-slate-200/70 bg-background">
                 {!form.company_id ? (
                   <div className="px-3 py-3 text-xs font-semibold text-slate-500">Selecione uma empresa para listar os funcionários.</div>
+                ) : loadingEmployees ? (
+                  <div className="px-3 py-3 text-xs font-semibold text-slate-500">Carregando funcionários...</div>
                 ) : filteredEmployees.length === 0 ? (
                   <div className="px-3 py-3 text-xs font-semibold text-slate-500">Nenhum funcionário ativo encontrado.</div>
                 ) : (
