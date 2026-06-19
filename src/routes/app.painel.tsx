@@ -1095,8 +1095,20 @@ function TstPanel() {
 
           {/* OFICIAL 6 · Inspeções (Extintores NR-23) */}
           <Card title="06 · Inspeções · Extintores NR-23" className="col-span-12 md:col-span-4 order-5"
-            period="MENSAL" meta="100% em dia"
-            metaTone={extMetrics.vencidos > 0 ? "crit" : extMetrics.vencendo > 0 ? "warn" : "ok"}
+            period="MENSAL"
+            meta={(() => {
+              const pct = extMetrics.ativos > 0
+                ? Math.round(((extMetrics.ativos - extMetrics.semInspecao) / extMetrics.ativos) * 100)
+                : 100;
+              return `≥ ${metas.inspPct}% · ${pct}%`;
+            })()}
+            metaTone={(() => {
+              if (extMetrics.vencidos > 0) return "crit";
+              const pct = extMetrics.ativos > 0
+                ? Math.round(((extMetrics.ativos - extMetrics.semInspecao) / extMetrics.ativos) * 100)
+                : 100;
+              return tone(pct, metas.inspPct);
+            })()}
             ncPrefill={{ codigo: "IND-07", indicador: "Inspeção/Recarga de Extintores", mesRef: mesRefAtual }}>
             <div className="h-64">
               <ResponsiveContainer>
