@@ -355,7 +355,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </div>
         <div className="min-w-0">
           <div className="flex items-start justify-between gap-3">
-            <h1 className="heading-display text-xl sm:text-2xl lg:text-[28px] leading-tight text-brand break-words min-w-0">{emp.nome}</h1>
+            <h1 className="heading-display text-xl sm:text-2xl lg:text-[28px] leading-tight text-slate-100/95 break-words min-w-0 tracking-tight drop-shadow-[0_1px_0_rgba(0,0,0,0.45)]">{emp.nome}</h1>
             <div className="shrink-0 flex flex-col items-end gap-2">
               <div className="flex items-center gap-2">
                 {isEditor && (tab === "profile" || tab === "nrs") && (
@@ -423,9 +423,9 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
         </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-rose-100/10 flex flex-nowrap items-center justify-between gap-3">
+        <div className="mt-6 pt-5 border-t border-rose-100/10 flex flex-nowrap items-center justify-between gap-3">
           {/* Navegação de seções */}
-          <div className="inline-flex shrink-0 items-center rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
+          <div className="inline-flex shrink-0 items-center gap-1 rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
             <QuickTabBtn icon={HeartPulse} label="ASO" tone={asoTone} active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
             <QuickTabBtn icon={Award} label="NR" tone={nrTone} active={tab === "nrs"} onClick={() => setTab("nrs")} />
             <QuickTabBtn icon={FolderOpen} label="Docs" tone={docsTone} active={tab === "docs"} onClick={() => setTab("docs")} />
@@ -434,32 +434,32 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
 
           {/* Ações documentais */}
           <div className="flex flex-nowrap items-center gap-2 ml-auto shrink-0">
-            <div className="inline-flex shrink-0 items-center rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
+            <div className="inline-flex shrink-0 items-center rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
               <Link
                 to="/app/audit"
-                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-100/85 hover:bg-rose-100/10 hover:text-white transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-black uppercase tracking-widest text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors"
                 title="Auditar"
               >
-                <ClipboardCheck className="h-3.5 w-3.5" /> Auditar
+                <ClipboardCheck className="h-4 w-4" /> Auditar
               </Link>
               <span className="h-4 w-px bg-rose-200/20" />
               <button
                 type="button"
                 onClick={gerarFichaPdf}
                 disabled={gerandoFicha}
-                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-100/85 hover:bg-rose-100/10 hover:text-white transition-colors disabled:opacity-60 disabled:cursor-wait"
+                className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-black uppercase tracking-widest text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors disabled:opacity-60 disabled:cursor-wait"
                 title="Gerar ficha em PDF"
               >
-                <FileText className="h-3.5 w-3.5" /> {gerandoFicha ? "Gerando…" : "Ficha"}
+                <FileText className="h-4 w-4" /> {gerandoFicha ? "Gerando…" : "Ficha"}
               </button>
               <span className="h-4 w-px bg-rose-200/20" />
               <button
                 type="button"
                 onClick={() => setPppOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-100/85 hover:bg-rose-100/10 hover:text-white transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-black uppercase tracking-widest text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors"
                 title="Emitir PPP (Perfil Profissiográfico Previdenciário)"
               >
-                <FileSignature className="h-3.5 w-3.5" /> PPP
+                <FileSignature className="h-4 w-4" /> PPP
               </button>
             </div>
           </div>
@@ -502,15 +502,18 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </Card>
       )}
 
-      {status && status.msgs.length > 0 && (
-        <Card className="p-4 flex flex-wrap gap-2">
-          {status.msgs.map((m, i) => (
-            <Badge key={i} variant="outline">{m}</Badge>
-          ))}
-        </Card>
-      )}
-
-      <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        {status && status.msgs.length > 0 ? (
+          <Card className="p-4 flex flex-wrap gap-2 self-start">
+            {status.msgs.map((m, i) => (
+              <Badge key={i} variant="outline">{m}</Badge>
+            ))}
+          </Card>
+        ) : (
+          <div className="hidden lg:block" />
+        )}
+        <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
+      </div>
 
       <Tabs value={tab} onValueChange={setTab}>
         <AnimatedTabsBar
