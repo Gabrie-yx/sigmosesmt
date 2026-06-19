@@ -960,10 +960,10 @@ function TstPanel() {
           </Card>
           {/* OFICIAL 3 · % Treinamentos NR em dia */}
           <Card title="03 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4 order-2"
-            period="MENSAL" meta="≥ 95%"
+            period="MENSAL" meta={`≥ ${metas.treinPct}%`}
             metaTone={(() => {
               const avg = treinamentosNR.length > 0 ? Math.round(treinamentosNR.reduce((s, t) => s + t.value, 0) / treinamentosNR.length) : 100;
-              return avg >= 95 ? "ok" : avg >= 80 ? "warn" : "crit";
+              return tone(avg, metas.treinPct);
             })()}
             action={<GraduationCap className="h-3 w-3 text-cyan-400" />}
             ncPrefill={{ codigo: "IND-03", indicador: "Treinamentos NR em dia", mesRef: mesRefAtual }}>
@@ -974,7 +974,7 @@ function TstPanel() {
                 items={treinamentosNR.map((t) => ({
                   name: t.name,
                   value: t.value,
-                  color: t.value >= 90 ? "#10b981" : t.value >= 70 ? "#fbbf24" : "#f43f5e",
+                  color: t.value >= metas.treinPct ? "#10b981" : t.value >= metas.treinPct * 0.8 ? "#fbbf24" : "#f43f5e",
                 }))}
                 suffix="%" perItemColor
               />
@@ -983,14 +983,14 @@ function TstPanel() {
 
           {/* OFICIAL 4 · Donut ASO Status (PCMSO/NR-07) */}
           <Card title="04 · ASO · PCMSO" className="col-span-12 md:col-span-4 order-3"
-            period="MENSAL" meta="100%"
-            metaTone={asoConformPct >= 95 ? "ok" : asoConformPct >= 80 ? "warn" : "crit"}
+            period="MENSAL" meta={`≥ ${metas.asoPct}%`}
+            metaTone={tone(asoConformPct, metas.asoPct)}
             ncPrefill={{ codigo: "IND-05", indicador: "ASOs em dia", mesRef: mesRefAtual }}>
             <DonutCenter
               data={asoDonut.length > 0 ? asoDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
               centerValue={`${asoConformPct}%`}
               centerLabel="Em dia"
-              centerColor={asoConformPct >= 90 ? "#10b981" : asoConformPct >= 70 ? "#fbbf24" : "#f43f5e"}
+              centerColor={asoConformPct >= metas.asoPct ? "#10b981" : asoConformPct >= metas.asoPct * 0.8 ? "#fbbf24" : "#f43f5e"}
             />
             <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80">
               <LegendItem color="#10b981" label="OK" value={asoEmDia} />
