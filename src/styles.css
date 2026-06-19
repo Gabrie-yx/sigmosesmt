@@ -1135,6 +1135,265 @@
 }
 
 /* ============================================================
+   THEME · CRYSTAL GLASS (light)
+   Ativado via <html class="theme-crystal">.
+   Vidro fosco claro com fundo perolado azul-céu, bordas
+   cristalinas, botões em gradiente azul→ciano e tipografia
+   cinza-chumbo. Inspirado no mockup "Glassmorphism Light".
+   ============================================================ */
+@layer base {
+  /* Fundo claro perolado com bokeh azul/ciano sutil */
+  html.theme-crystal body {
+    background:
+      radial-gradient(900px 600px at 12% 8%,  rgba(120, 180, 255, 0.55), transparent 60%),
+      radial-gradient(800px 550px at 88% 18%, rgba(180, 220, 255, 0.55), transparent 65%),
+      radial-gradient(700px 500px at 50% 95%, rgba(190, 220, 245, 0.50), transparent 70%),
+      radial-gradient(600px 420px at 25% 70%, rgba(220, 235, 255, 0.45), transparent 70%),
+      linear-gradient(165deg, #eaf2fb 0%, #f3f7fc 50%, #ffffff 100%);
+    background-attachment: fixed;
+    color: #2a2f36;
+  }
+  html.theme-crystal body::before { opacity: 0.25; mix-blend-mode: multiply; }
+  html.theme-crystal body::after {
+    content: "";
+    position: fixed;
+    inset: -10%;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(420px 320px at 20% 30%, rgba(255,255,255,0.55), transparent 65%),
+      radial-gradient(520px 380px at 80% 60%, rgba(180, 220, 255, 0.45), transparent 65%),
+      radial-gradient(380px 280px at 60% 15%, rgba(255, 255, 255, 0.4), transparent 70%);
+    mix-blend-mode: screen;
+  }
+
+  /* Texto base cinza-chumbo */
+  html.theme-crystal,
+  html.theme-crystal body,
+  html.theme-crystal .text-foreground { color: #2a2f36; }
+
+  /* Sobrescreve tokens claros pro shadcn */
+  html.theme-crystal {
+    --background: oklch(0.99 0.005 240 / 0);
+    --foreground: oklch(0.22 0.02 260);
+    --card: oklch(1 0 0 / 0.6);
+    --card-foreground: oklch(0.22 0.02 260);
+    --popover: oklch(1 0 0 / 0.8);
+    --popover-foreground: oklch(0.22 0.02 260);
+    --primary: oklch(0.62 0.18 240);
+    --primary-foreground: oklch(0.99 0 0);
+    --secondary: oklch(0.96 0.01 240 / 0.6);
+    --secondary-foreground: oklch(0.25 0.02 260);
+    --muted: oklch(0.94 0.01 240 / 0.6);
+    --muted-foreground: oklch(0.45 0.02 260);
+    --accent: oklch(0.92 0.04 230 / 0.6);
+    --accent-foreground: oklch(0.25 0.02 260);
+    --border: oklch(0.55 0.02 240 / 0.15);
+    --input: oklch(1 0 0 / 0.5);
+    --ring: oklch(0.62 0.18 240);
+    --sidebar: oklch(1 0 0 / 0.55);
+    --sidebar-foreground: oklch(0.25 0.02 260);
+    --sidebar-border: oklch(0.5 0.02 240 / 0.18);
+    --header: oklch(1 0 0 / 0.55);
+    --header-foreground: oklch(0.22 0.02 260);
+    --brand: oklch(0.62 0.18 240);
+    --brand-foreground: oklch(0.99 0 0);
+  }
+
+  /* ----- Containers de vidro (cards, panels, drawers, sidebars) ----- */
+  html.theme-crystal .glass-card,
+  html.theme-crystal .glass-panel,
+  html.theme-crystal .glass-vinho,
+  html.theme-crystal .glass-sidebar {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.58) 100%);
+    backdrop-filter: blur(30px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.95) inset,           /* highline superior */
+      0 -1px 0 0 rgba(255, 255, 255, 0.45) inset,
+      0 10px 30px rgba(20, 40, 80, 0.10),
+      0 24px 60px -20px rgba(20, 40, 80, 0.18);
+    color: #2a2f36;
+    border-radius: 20px;
+  }
+  html.theme-crystal .glass-card:hover {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.68) 100%);
+    border-color: rgba(180, 215, 255, 0.95);
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.95) inset,
+      0 0 0 1px rgba(120, 180, 255, 0.35),
+      0 14px 40px rgba(40, 80, 150, 0.14),
+      0 30px 70px -22px rgba(40, 80, 150, 0.22);
+  }
+
+  /* Reflexo de luz no topo (gloss sutil) */
+  html.theme-crystal .glass-card::before,
+  html.theme-crystal .glass-panel::before,
+  html.theme-crystal .glass-vinho::before,
+  html.theme-crystal .prism-kpi::before {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.85) 0%,
+        rgba(255, 255, 255, 0.20) 18%,
+        transparent 45%
+      );
+    mix-blend-mode: screen;
+    opacity: 0.9;
+  }
+
+  /* "Estalinhos" de luz nos cantos (pontos especulares) */
+  html.theme-crystal .glass-shine::after,
+  html.theme-crystal .dialog-glass-shine::after {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.20) 30%,
+      rgba(255, 255, 255, 0.10) 70%,
+      rgba(255, 255, 255, 0.85) 100%
+    );
+  }
+
+  /* Texto dentro dos vidros vira escuro */
+  html.theme-crystal .glass-card,
+  html.theme-crystal .glass-panel,
+  html.theme-crystal .glass-vinho,
+  html.theme-crystal .glass-sidebar { color: #2a2f36; }
+  html.theme-crystal .glass-card .text-white,
+  html.theme-crystal .glass-panel .text-white,
+  html.theme-crystal .glass-vinho .text-white,
+  html.theme-crystal .glass-card [class*="text-slate-1"],
+  html.theme-crystal .glass-card [class*="text-slate-2"],
+  html.theme-crystal .glass-card [class*="text-slate-3"],
+  html.theme-crystal .glass-card .text-muted-foreground { color: #4b5563 !important; }
+
+  /* Header também vira vidro claro */
+  html.theme-crystal header.bg-header {
+    background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(245,250,255,0.55)) !important;
+    backdrop-filter: blur(28px) saturate(160%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.95) inset,
+      0 10px 24px -14px rgba(20, 40, 80, 0.18);
+    color: #2a2f36;
+  }
+  html.theme-crystal header.bg-header .text-header-foreground,
+  html.theme-crystal header.bg-header [class*="text-white"] { color: #1f2937 !important; }
+  html.theme-crystal header.bg-header .text-white\/70,
+  html.theme-crystal header.bg-header .text-white\/80 { color: #4b5563 !important; }
+  html.theme-crystal header.bg-header button:hover { background-color: rgba(40, 80, 150, 0.08) !important; }
+
+  /* Sidebar */
+  html.theme-crystal aside,
+  html.theme-crystal nav[data-sidebar] {
+    background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(245,250,255,0.55));
+    backdrop-filter: blur(28px) saturate(160%);
+    border-right: 1px solid rgba(255,255,255,0.85);
+    color: #2a2f36;
+  }
+
+  /* Inputs / textareas / selects translúcidos */
+  html.theme-crystal input,
+  html.theme-crystal textarea,
+  html.theme-crystal select {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.85) !important;
+    color: #2a2f36 !important;
+    backdrop-filter: blur(14px) saturate(140%);
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.9) inset,
+      0 2px 6px rgba(20, 40, 80, 0.06);
+    border-radius: 14px;
+  }
+  html.theme-crystal input::placeholder,
+  html.theme-crystal textarea::placeholder { color: #777 !important; font-weight: 400; }
+  html.theme-crystal input:focus,
+  html.theme-crystal textarea:focus,
+  html.theme-crystal select:focus {
+    outline: none;
+    border-color: rgba(80, 150, 255, 0.7) !important;
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.95) inset,
+      0 0 0 3px rgba(80, 150, 255, 0.22);
+  }
+
+  /* Botões primários — gradiente azul → ciano com glow interno */
+  html.theme-crystal .bg-primary,
+  html.theme-crystal [data-slot="button"].bg-primary,
+  html.theme-crystal button.bg-primary,
+  html.theme-crystal .bg-brand,
+  html.theme-crystal button.bg-brand {
+    background: linear-gradient(180deg, #3b82f6 0%, #22d3ee 100%) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.7) !important;
+    border-radius: 16px;
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.6) inset,
+      0 -1px 0 0 rgba(0, 60, 140, 0.25) inset,
+      0 8px 22px -6px rgba(59, 130, 246, 0.55),
+      0 0 0 1px rgba(120, 180, 255, 0.35);
+    text-shadow: 0 1px 0 rgba(0, 40, 100, 0.25);
+  }
+  html.theme-crystal .bg-primary:hover,
+  html.theme-crystal button.bg-primary:hover,
+  html.theme-crystal button.bg-brand:hover {
+    filter: brightness(1.06);
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.7) inset,
+      0 -1px 0 0 rgba(0, 60, 140, 0.3) inset,
+      0 10px 28px -6px rgba(59, 130, 246, 0.7),
+      0 0 0 1px rgba(150, 200, 255, 0.55);
+  }
+
+  /* Pills / chips de vidro */
+  html.theme-crystal .prism-pill {
+    background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.55));
+    border: 1px solid rgba(255,255,255,0.9);
+    color: #2a2f36;
+    border-radius: 999px;
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.95) inset,
+      0 4px 14px -4px rgba(20, 40, 80, 0.12);
+  }
+
+  /* KPIs — número grande em cor sólida vibrante */
+  html.theme-crystal .prism-kpi {
+    background: linear-gradient(180deg, rgba(255,255,255,0.80), rgba(255,255,255,0.55));
+    border: 1px solid rgba(255,255,255,0.9);
+    color: #2a2f36;
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.95) inset,
+      0 10px 30px rgba(20, 40, 80, 0.10);
+    border-radius: 18px;
+  }
+  html.theme-crystal .prism-kpi [class*="text-3xl"],
+  html.theme-crystal .prism-kpi [class*="text-4xl"],
+  html.theme-crystal .prism-kpi [class*="text-5xl"] {
+    color: #1d4ed8;
+    font-weight: 600;
+  }
+
+  /* Scrollbar clara cristalina */
+  html.theme-crystal *::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(120, 180, 255, 0.55), rgba(80, 140, 220, 0.55));
+    box-shadow:
+      0 0 6px rgba(80, 140, 220, 0.35),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+  }
+  html.theme-crystal {
+    scrollbar-color: rgba(80, 140, 220, 0.5) transparent;
+  }
+
+  /* Transição suave entre temas */
+  html.theme-crystal,
+  html.theme-crystal * {
+    transition: background-color .35s ease, border-color .35s ease, box-shadow .35s ease, color .35s ease;
+  }
+}
+
+/* ============================================================
    GLASS GLOSS · reflexo curvo de vidro (vermelho/vinho)
    Inspirado em reflexo de vidro real — arco luminoso no canto
    superior esquerdo + gloss diagonal. Aplicado em cards e KPIs.
