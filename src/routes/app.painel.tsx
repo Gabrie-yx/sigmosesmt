@@ -1001,6 +1001,18 @@ function TstPanel() {
                   "linear-gradient(160deg, #0b1228 0%, #0a0f22 45%, #070b1a 100%)",
               }}
             >
+              {/* focused edge glow — hotspot na borda superior */}
+              <div aria-hidden className="pointer-events-none absolute -top-3 left-[30%] h-6 w-40 rounded-full"
+                style={{
+                  background: "radial-gradient(ellipse at center, rgba(196,181,253,0.95) 0%, rgba(167,139,250,0.65) 30%, rgba(139,92,246,0.25) 60%, rgba(139,92,246,0) 80%)",
+                  filter: "blur(6px)",
+                  mixBlendMode: "screen",
+                }} />
+              <div aria-hidden className="pointer-events-none absolute -top-1 left-[34%] h-1 w-28 rounded-full"
+                style={{
+                  background: "linear-gradient(90deg, rgba(167,139,250,0) 0%, rgba(221,214,254,1) 50%, rgba(167,139,250,0) 100%)",
+                  filter: "blur(1.5px)",
+                }} />
               {/* glossy top highlight */}
               <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
                 style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 40%, transparent 100%)" }} />
