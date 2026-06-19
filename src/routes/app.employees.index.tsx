@@ -121,34 +121,38 @@ function EmployeesPage() {
         </div>
         {isEditor && (
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+            <div className="inline-flex items-center rounded-2xl border border-white/15 bg-gradient-to-r from-[#3a0712]/80 via-[#5c0a1c]/70 to-[#3a0712]/80 p-1.5 shadow-[0_10px_30px_-10px_rgba(200,16,46,0.55)] backdrop-blur-md">
               <button
                 type="button"
                 onClick={() => setListagemOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
+                className="nav-pill group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-white/95 hover:text-white"
               >
-                <FileText className="h-3.5 w-3.5" /> Listagem
+                <FileText className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3" />
+                <span>Listagem</span>
               </button>
-              <span className="h-5 w-px bg-slate-200" />
+              <span className="h-6 w-px bg-white/15" />
               <Link
                 to="/app/employees/saidas"
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
+                className="nav-pill group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-white/95 hover:text-white"
               >
-                <CalendarClock className="h-3.5 w-3.5" /> Saídas
+                <CalendarClock className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3" />
+                <span>Saídas</span>
               </Link>
-              <span className="h-5 w-px bg-slate-200" />
+              <span className="h-6 w-px bg-white/15" />
               <Link
                 to="/app/employees/hora-extra-sabado"
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
+                className="nav-pill group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-white/95 hover:text-white"
               >
-                <CalendarClock className="h-3.5 w-3.5" /> Hora extra
+                <CalendarClock className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3" />
+                <span>Hora extra</span>
               </Link>
-              <span className="h-5 w-px bg-slate-200" />
+              <span className="h-6 w-px bg-white/15" />
               <Link
                 to="/app/employees/desligados"
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-colors"
+                className="nav-pill group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-white/95 hover:text-white"
               >
-                <UserRoundX className="h-3.5 w-3.5" /> Desligados
+                <UserRoundX className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3" />
+                <span>Desligados</span>
               </Link>
             </div>
             <Button
@@ -157,9 +161,9 @@ function EmployeesPage() {
                 setNewEmployeeCompanyId(undefined);
                 setOpen(true);
               }}
-              className="bg-[#0f172a] hover:bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-xl px-4 py-2.5 h-auto shadow-md"
+              className="nav-pill bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-2xl px-5 py-3 h-auto shadow-lg border border-white/10"
             >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />Novo funcionário
+              <Plus className="h-4 w-4 mr-1.5" />Novo funcionário
             </Button>
             <NewEmployeeDialog
               open={open}
