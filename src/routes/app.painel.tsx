@@ -982,22 +982,50 @@ function TstPanel() {
           </Card>
 
           {/* OFICIAL 4 · Donut ASO Status (PCMSO/NR-07) */}
-          <Card title="04 · ASO · PCMSO" className="col-span-12 md:col-span-4 order-3"
-            period="MENSAL" meta={`≥ ${metas.asoPct}%`}
-            metaTone={tone(asoConformPct, metas.asoPct)}
-            ncPrefill={{ codigo: "IND-05", indicador: "ASOs em dia", mesRef: mesRefAtual }}>
-            <DonutCenter
-              data={asoDonut.length > 0 ? asoDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
-              centerValue={`${asoConformPct}%`}
-              centerLabel="Em dia"
-              centerColor={asoConformPct >= metas.asoPct ? "#10b981" : asoConformPct >= metas.asoPct * 0.8 ? "#fbbf24" : "#f43f5e"}
-            />
-            <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80">
-              <LegendItem color="#10b981" label="OK" value={asoEmDia} />
-              <LegendItem color="#fbbf24" label="30d" value={asoVencendo30} />
-              <LegendItem color="#f43f5e" label="Venc." value={asoVencidos} />
+          <div className="col-span-12 md:col-span-4 order-3 relative rounded-2xl p-[1px] overflow-hidden"
+            style={{
+              background: "linear-gradient(135deg, rgba(167,139,250,0.55) 0%, rgba(34,211,238,0.15) 35%, rgba(16,185,129,0.45) 100%)",
+              boxShadow: "0 30px 60px -25px rgba(124,58,237,0.55), 0 20px 50px -20px rgba(16,185,129,0.35)",
+            }}
+          >
+            <div className="relative rounded-2xl overflow-hidden"
+              style={{
+                background:
+                  "radial-gradient(120% 80% at 0% 0%, rgba(139,92,246,0.28) 0%, rgba(15,23,42,0) 55%), " +
+                  "radial-gradient(120% 80% at 100% 100%, rgba(16,185,129,0.25) 0%, rgba(15,23,42,0) 55%), " +
+                  "linear-gradient(160deg, #0b1228 0%, #0a0f22 45%, #070b1a 100%)",
+              }}
+            >
+              {/* glossy top highlight */}
+              <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
+                style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 40%, transparent 100%)" }} />
+              {/* inner ring */}
+              <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl"
+                style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), inset 0 0 0 1px rgba(148,163,184,0.08), inset 0 -40px 80px -40px rgba(16,185,129,0.20)" }} />
+              {/* corner glows */}
+              <div aria-hidden className="pointer-events-none absolute -top-20 -left-16 h-56 w-56 rounded-full"
+                style={{ background: "radial-gradient(circle, rgba(167,139,250,0.45) 0%, rgba(167,139,250,0) 70%)", filter: "blur(10px)" }} />
+              <div aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 h-56 w-56 rounded-full"
+                style={{ background: "radial-gradient(circle, rgba(52,211,153,0.40) 0%, rgba(52,211,153,0) 70%)", filter: "blur(10px)" }} />
+
+              <Card title="04 · ASO · PCMSO" className="!bg-transparent !border-0 !shadow-none !backdrop-blur-0"
+                period="MENSAL" meta={`≥ ${metas.asoPct}%`}
+                metaTone={tone(asoConformPct, metas.asoPct)}
+                ncPrefill={{ codigo: "IND-05", indicador: "ASOs em dia", mesRef: mesRefAtual }}>
+                <DonutCenter
+                  data={asoDonut.length > 0 ? asoDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
+                  centerValue={`${asoConformPct}%`}
+                  centerLabel="Em dia"
+                  centerColor={asoConformPct >= metas.asoPct ? "#10b981" : asoConformPct >= metas.asoPct * 0.8 ? "#fbbf24" : "#f43f5e"}
+                />
+                <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/60">
+                  <LegendItem color="#10b981" label="OK" value={asoEmDia} />
+                  <LegendItem color="#fbbf24" label="30d" value={asoVencendo30} />
+                  <LegendItem color="#f43f5e" label="Venc." value={asoVencidos} />
+                </div>
+              </Card>
             </div>
-          </Card>
+          </div>
 
           {/* OFICIAL 5 · DDS Planejado vs Realizado (semanal) */}
           <Card title="05 · DDS · Planejado vs Realizado"
