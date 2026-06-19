@@ -423,7 +423,6 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
         </div>
         </div>
-        </div>
         <div className="mt-6 pt-5 border-t border-rose-100/10 flex flex-nowrap items-center justify-between gap-3">
           {/* Navegação de seções */}
           <div className="inline-flex shrink-0 items-center gap-1 rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
