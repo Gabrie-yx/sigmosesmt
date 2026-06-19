@@ -19,7 +19,7 @@ import {
   salvarInspecaoFoto,
 } from "@/lib/extintor-inspecao-foto.functions";
 
-export const Route = createFileRoute("/app/extintores/inspecao-foto")({
+export const Route = createFileRoute("/app/extintores-inspecao-foto")({
   component: InspecaoFotoPage,
   head: () => ({ meta: [{ title: "Inspeção de Extintor por Foto · SIGMO" }] }),
 });
