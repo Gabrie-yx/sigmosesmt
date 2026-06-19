@@ -1,33 +1,22 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 
-export type ThemeMode = "dmn" | "liquid" | "crystal";
+export type ThemeMode = "dmn";
 const STORAGE_KEY = "sigmo:theme";
 
-function apply(mode: ThemeMode) {
+function apply() {
   const root = document.documentElement;
-  root.classList.remove("theme-dmn", "theme-liquid", "theme-crystal");
-  root.classList.add(`theme-${mode}`);
+  root.classList.remove("theme-liquid", "theme-crystal");
+  root.classList.add("theme-dmn");
 }
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<ThemeMode>(() => {
-    if (typeof window === "undefined") return "crystal";
-    return (localStorage.getItem(STORAGE_KEY) as ThemeMode) || "crystal";
-  });
-
   useEffect(() => {
-    apply(theme);
-    try { localStorage.setItem(STORAGE_KEY, theme); } catch {}
-  }, [theme]);
+    apply();
+    try { localStorage.setItem(STORAGE_KEY, "dmn"); } catch {}
+  }, []);
 
-  const setTheme = useCallback((t: ThemeMode) => setThemeState(t), []);
-  const toggle = useCallback(
-    () =>
-      setThemeState((t) =>
-        t === "crystal" ? "dmn" : t === "dmn" ? "liquid" : "crystal",
-      ),
-    [],
-  );
+  const setTheme = useCallback((_t: ThemeMode) => {}, []);
+  const toggle = useCallback(() => {}, []);
 
-  return { theme, setTheme, toggle };
+  return { theme: "dmn" as ThemeMode, setTheme, toggle };
 }
