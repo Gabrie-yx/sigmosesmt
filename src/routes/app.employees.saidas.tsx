@@ -477,21 +477,21 @@ function MesCard({ ym, total, empresasCount, onClick }: { ym: string; total: num
       onClick={onClick}
       className="group relative rounded-2xl p-[1.5px] overflow-hidden text-left transition-transform hover:scale-[1.015] focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
       style={{
-        background: "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(15,118,110,0.55) 45%, rgba(34,211,238,0.65) 100%)",
+        background: "linear-gradient(135deg, rgba(69,10,10,0.92) 0%, rgba(15,118,110,0.62) 48%, rgba(251,191,36,0.72) 100%)",
         boxShadow:
-          "0 0 0 1px rgba(127,29,29,0.45), " +
+          "0 0 0 1px rgba(120,53,15,0.42), " +
           "0 0 18px rgba(45,212,191,0.22), " +
-          "0 0 36px rgba(16,185,129,0.18), " +
+          "0 0 36px rgba(245,158,11,0.15), " +
           "0 24px 56px -22px rgba(13,148,136,0.35), " +
-          "0 18px 48px -22px rgba(16,185,129,0.24)",
+          "0 18px 48px -22px rgba(120,53,15,0.24)",
       }}
     >
       <div
         className="relative rounded-2xl overflow-hidden flex flex-col w-full p-5 min-h-[180px]"
         style={{
           background:
-            "radial-gradient(120% 80% at 0% 0%, rgba(136,8,8,0.45) 0%, rgba(15,23,42,0) 55%), " +
-            "radial-gradient(120% 80% at 100% 100%, rgba(16,185,129,0.25) 0%, rgba(15,23,42,0) 55%), " +
+            "radial-gradient(120% 80% at 0% 0%, rgba(120,53,15,0.38) 0%, rgba(15,23,42,0) 55%), " +
+            "radial-gradient(120% 80% at 100% 100%, rgba(20,184,166,0.27) 0%, rgba(15,23,42,0) 55%), " +
             "linear-gradient(160deg, #0b1228 0%, #0a0f22 45%, #070b1a 100%)",
         }}
       >
@@ -506,11 +506,11 @@ function MesCard({ ym, total, empresasCount, onClick }: { ym: string; total: num
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
           style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 40%, transparent 100%)" }} />
         <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl"
-          style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), inset 0 0 0 1px rgba(148,163,184,0.08), inset 0 -40px 80px -40px rgba(16,185,129,0.20)" }} />
+          style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12), inset 0 0 0 1px rgba(148,163,184,0.08), inset 0 -40px 80px -40px rgba(20,184,166,0.22)" }} />
         <div aria-hidden className="pointer-events-none absolute -top-20 -left-16 h-56 w-56 rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(153,27,27,0.55) 0%, rgba(136,8,8,0) 70%)", filter: "blur(10px)" }} />
+          style={{ background: "radial-gradient(circle, rgba(120,53,15,0.48) 0%, rgba(120,53,15,0) 70%)", filter: "blur(10px)" }} />
         <div aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 h-56 w-56 rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(52,211,153,0.40) 0%, rgba(52,211,153,0) 70%)", filter: "blur(10px)" }} />
+          style={{ background: "radial-gradient(circle, rgba(20,184,166,0.42) 0%, rgba(20,184,166,0) 70%)", filter: "blur(10px)" }} />
 
         <div className="relative flex items-center justify-between mb-3">
           <span className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300/90 flex items-center gap-1.5">
@@ -522,7 +522,7 @@ function MesCard({ ym, total, empresasCount, onClick }: { ym: string; total: num
         <div className="relative flex-1 flex flex-col justify-center">
           <h3 className="text-2xl font-black uppercase tracking-tight text-white leading-tight">{mesLabel(ym)}</h3>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-5xl font-black text-red-400" style={{ textShadow: "0 0 20px rgba(127,29,29,0.65)" }}>
+            <span className="text-5xl font-black text-amber-300" style={{ textShadow: "0 0 20px rgba(245,158,11,0.42)" }}>
               {total}
             </span>
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
