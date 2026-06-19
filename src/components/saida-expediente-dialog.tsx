@@ -11,41 +11,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { PenLine, Check, UserPlus, Pencil } from "lucide-react";
-import ReactSelect from "react-select";
 
 type SignatureTarget = "FUNC" | "SESMT" | "SUPERVISOR";
-
-const selectGlassStyles = {
-  control: (base: any) => ({
-    ...base,
-    minHeight: "42px",
-    borderRadius: "0.75rem",
-    borderColor: "rgba(255, 220, 225, 0.14)",
-    background: "rgba(20, 6, 10, 0.45)",
-    boxShadow: "none",
-    fontSize: "14px",
-  }),
-  menu: (base: any) => ({
-    ...base,
-    zIndex: 9999,
-    borderRadius: "0.75rem",
-    overflow: "hidden",
-    background: "rgba(34, 10, 16, 0.98)",
-    border: "1px solid rgba(255, 220, 225, 0.12)",
-  }),
-  menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
-  option: (base: any, state: any) => ({
-    ...base,
-    background: state.isFocused || state.isSelected ? "rgba(90, 20, 35, 0.82)" : "transparent",
-    color: "rgba(255, 245, 246, 0.92)",
-  }),
-  input: (base: any) => ({ ...base, color: "rgba(255, 245, 246, 0.92)" }),
-  placeholder: (base: any) => ({ ...base, color: "rgba(245, 230, 234, 0.50)" }),
-  singleValue: (base: any) => ({ ...base, color: "rgba(255, 245, 246, 0.92)" }),
-  multiValue: (base: any) => ({ ...base, backgroundColor: "rgba(58, 22, 30, 0.92)", borderRadius: "0.5rem" }),
-  multiValueLabel: (base: any) => ({ ...base, color: "rgba(255, 245, 246, 0.88)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase" }),
-  multiValueRemove: (base: any) => ({ ...base, color: "rgba(255, 210, 218, 0.72)", ":hover": { backgroundColor: "rgba(200, 16, 46, 0.35)", color: "#fff5f6" } }),
-};
 
 const emptyForm = () => ({
   company_id: "", employee_ids: [] as string[], data: new Date().toISOString().slice(0, 10),
@@ -68,13 +35,14 @@ export function SaidaExpedienteDialog({
   const { user } = useAuth();
   const [form, setForm] = useState<any>(emptyForm);
   const [sigOpen, setSigOpen] = useState<SignatureTarget | null>(null);
+  const [employeeSearch, setEmployeeSearch] = useState("");
 
   const { data: companies } = useQuery({
     queryKey: ["companies-min"],
     queryFn: async () => (await supabase.from("companies").select("id,name,type,encarregado1,encarregado2").order("name")).data ?? [],
   });
 
-  const { data: employees } = useQuery({
+  const { data: employees, isFetching: loadingEmployees } = useQuery({
     queryKey: ["employees-by-company", form.company_id],
     enabled: !!form.company_id,
     queryFn: async () => {
@@ -94,6 +62,7 @@ export function SaidaExpedienteDialog({
 
   useEffect(() => {
     if (!open) return;
+    setEmployeeSearch("");
     if (editId) {
       supabase.from("employee_saidas_expediente").select("*").eq("id", editId).maybeSingle().then(({ data }) => {
         if (data) setForm({ ...data, employee_ids: [data.employee_id] });
@@ -197,25 +166,28 @@ export function SaidaExpedienteDialog({
     </div>
   );
 
-  const employeeOptions = (employees ?? []).map((e: any) => ({ value: e.id, label: e.nome }));
-  const selectedValues = employeeOptions.filter(opt => form.employee_ids.includes(opt.value));
+  const normalizedEmployeeSearch = employeeSearch.trim().toLowerCase();
+  const filteredEmployees = (employees ?? []).filter((employee: any) => {
+    if (!normalizedEmployeeSearch) return true;
+    return [employee.nome, employee.cpf, employee.rg]
+      .filter(Boolean)
+      .some((value: string) => value.toLowerCase().includes(normalizedEmployeeSearch));
+  });
+  const selectedEmployeeIds = form.employee_ids ?? [];
+  const toggleEmployee = (employeeId: string) => {
+    setForm((current: any) => {
+      const currentIds = current.employee_ids ?? [];
+      const nextIds = currentIds.includes(employeeId)
+        ? currentIds.filter((id: string) => id !== employeeId)
+        : [...currentIds, employeeId];
+      return { ...current, employee_ids: nextIds };
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="w-[calc(100vw-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto"
-        onPointerDownOutside={(e) => {
-          const target = e.target as Element | null;
-          if (target?.closest?.('.react-select__menu, [class*="-menu"], .react-select__menu-portal')) {
-            e.preventDefault();
-          }
-        }}
-        onInteractOutside={(e) => {
-          const target = e.target as Element | null;
-          if (target?.closest?.('.react-select__menu, [class*="-menu"], .react-select__menu-portal')) {
-            e.preventDefault();
-          }
-        }}
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -226,7 +198,7 @@ export function SaidaExpedienteDialog({
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Empresa que está liberando *</Label>
-            <Select value={form.company_id} onValueChange={(v) => setForm({ ...form, company_id: v, employee_ids: [] })}>
+            <Select value={form.company_id} onValueChange={(v) => { setEmployeeSearch(""); setForm({ ...form, company_id: v, employee_ids: [] }); }}>
               <SelectTrigger className="rounded-xl border-slate-200"><SelectValue placeholder="Selecione a empresa..." /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {(companies ?? []).map((c: any) => (
@@ -239,20 +211,46 @@ export function SaidaExpedienteDialog({
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Funcionário(s) *</Label>
-            <ReactSelect
-              isMulti
-              isDisabled={!form.company_id}
-              options={employeeOptions}
-              value={selectedValues}
-              onChange={(selected: any) => setForm({ ...form, employee_ids: selected ? selected.map((s: any) => s.value) : [] })}
-              placeholder={form.company_id ? "Busque e selecione um ou mais..." : "Escolha a empresa primeiro"}
-              noOptionsMessage={() => "Nenhum funcionário ativo encontrado"}
-              loadingMessage={() => "Carregando..."}
-              classNamePrefix="react-select"
-              menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
-              menuPosition="fixed"
-              styles={selectGlassStyles}
-            />
+            <div className="rounded-xl border border-slate-200 bg-background/60 p-2 shadow-sm">
+              <Input
+                disabled={!form.company_id}
+                value={employeeSearch}
+                onChange={(event) => setEmployeeSearch(event.target.value)}
+                placeholder={form.company_id ? "Buscar por nome, CPF ou RG..." : "Escolha a empresa primeiro"}
+                className="h-9 rounded-lg text-sm"
+              />
+              <div className="mt-2 max-h-44 overflow-y-auto rounded-lg border border-slate-200/70 bg-background">
+                {!form.company_id ? (
+                  <div className="px-3 py-3 text-xs font-semibold text-slate-500">Selecione uma empresa para listar os funcionários.</div>
+                ) : loadingEmployees ? (
+                  <div className="px-3 py-3 text-xs font-semibold text-slate-500">Carregando funcionários...</div>
+                ) : filteredEmployees.length === 0 ? (
+                  <div className="px-3 py-3 text-xs font-semibold text-slate-500">Nenhum funcionário ativo encontrado.</div>
+                ) : (
+                  filteredEmployees.map((employee: any) => {
+                    const checked = selectedEmployeeIds.includes(employee.id);
+                    return (
+                      <button
+                        key={employee.id}
+                        type="button"
+                        onClick={() => toggleEmployee(employee.id)}
+                        className={`flex w-full items-center gap-2 border-b border-slate-100 px-3 py-2 text-left text-sm transition last:border-b-0 ${checked ? "bg-rose-50 text-rose-950" : "hover:bg-slate-50"}`}
+                      >
+                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${checked ? "border-brand bg-brand text-white" : "border-slate-300"}`}>
+                          {checked && <Check className="h-3 w-3" />}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate font-semibold">{employee.nome}</span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+              {selectedEmployeeIds.length > 0 && (
+                <div className="mt-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  {selectedEmployeeIds.length} funcionário(s) selecionado(s)
+                </div>
+              )}
+            </div>
             {!editId && form.employee_ids.length > 1 && (
               <p className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">
                 Atenção: Será gerada uma autorização individual para cada funcionário selecionado.
