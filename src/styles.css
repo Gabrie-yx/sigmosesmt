@@ -155,10 +155,10 @@
 
   body {
     background:
-      radial-gradient(1600px 900px at 15% 0%, rgba(120, 22, 38, 0.55), transparent 55%),
-      radial-gradient(1400px 900px at 95% 10%, rgba(60, 10, 20, 0.50), transparent 60%),
-      radial-gradient(1200px 800px at 50% 110%, rgba(20, 4, 8, 0.85), transparent 70%),
-      linear-gradient(160deg, #2a070f 0%, #14040a 40%, #08030500 70%, #050305 100%);
+      radial-gradient(1600px 900px at 15% 0%, rgba(40, 70, 140, 0.45), transparent 55%),
+      radial-gradient(1400px 900px at 95% 10%, rgba(20, 35, 90, 0.55), transparent 60%),
+      radial-gradient(1200px 800px at 50% 110%, rgba(6, 10, 30, 0.85), transparent 70%),
+      linear-gradient(160deg, #0a1230 0%, #060a20 40%, #04061500 70%, #02030a 100%);
     background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-sans);
