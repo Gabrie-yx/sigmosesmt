@@ -5,8 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Plus, Eye, Pencil, Trash2, PenLine, LogOut, MousePointerClick, UserCog, Copy } from "lucide-react";
+import { ArrowLeft, Plus, Eye, Pencil, Trash2, PenLine, LogOut, MousePointerClick, UserCog, Copy, FileSpreadsheet, Calendar as CalIcon } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { toast } from "sonner";
 import { SaidaExpedienteDialog } from "@/components/saida-expediente-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
@@ -36,6 +39,38 @@ function dataExtenso(iso: string) {
   return `${String(d).padStart(2,"0")} de ${MESES[m-1]} de ${y}`;
 }
 
+function mesLabel(ym: string) {
+  const [y, m] = ym.split("-").map(Number);
+  return `${MESES[m - 1].charAt(0).toUpperCase()}${MESES[m - 1].slice(1)} de ${y}`;
+}
+
+// ISO week (segunda como início)
+function isoWeek(iso: string) {
+  const d = new Date(iso + "T00:00:00");
+  const target = new Date(d.valueOf());
+  const dayNr = (d.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+  const week = 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+  return { year: d.getFullYear(), week };
+}
+
+function csvEscape(v: any) {
+  const s = v == null ? "" : String(v);
+  if (/[",;\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+function downloadCSV(filename: string, rows: string[][]) {
+  const csv = "\ufeff" + rows.map((r) => r.map(csvEscape).join(";")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
 function SaidasPage() {
   const qc = useQueryClient();
   const { user, isEditor, isAdmin } = useAuth();
@@ -43,6 +78,7 @@ function SaidasPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [duplicateData, setDuplicateData] = useState<any>(null);
   const [busca, setBusca] = useState("");
+  const [relOpen, setRelOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [previewFileName, setPreviewFileName] = useState("autorizacao-saida.pdf");
   const [previewRowId, setPreviewRowId] = useState<string | null>(null);
@@ -57,7 +93,7 @@ function SaidasPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employee_saidas_expediente")
-        .select("*, employees(id,nome,cpf,rg,role_id,foto_url,roles(name))")
+        .select("*, employees(id,nome,cpf,rg,role_id,foto_url,roles(name)), companies(id,name)")
         .order("data", { ascending: false }).order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -128,15 +164,17 @@ function SaidasPage() {
     return (r.employees?.nome ?? "").toLowerCase().includes(s) || (r.data ?? "").includes(s) || (r.motivo ?? "").toLowerCase().includes(s);
   });
 
-  // Agrupar por data
-  const grupos = filtradas.reduce((acc: any, r: any) => {
-    const data = r.data;
-    if (!acc[data]) acc[data] = [];
-    acc[data].push(r);
-    return acc;
-  }, {});
-
-  const datasOrdenadas = Object.keys(grupos).sort((a, b) => b.localeCompare(a));
+  // Agrupar por MÊS → DATA
+  const meses: Record<string, Record<string, any[]>> = {};
+  for (const r of filtradas) {
+    const ym = (r.data ?? "").slice(0, 7); // YYYY-MM
+    const d = r.data;
+    if (!ym) continue;
+    if (!meses[ym]) meses[ym] = {};
+    if (!meses[ym][d]) meses[ym][d] = [];
+    meses[ym][d].push(r);
+  }
+  const mesesOrdenados = Object.keys(meses).sort((a, b) => b.localeCompare(a));
 
   return (
     <div className="p-6 md:p-8 animate-fadeIn">
@@ -148,11 +186,16 @@ function SaidasPage() {
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">Autorizações com assinatura do funcionário e SESMT</p>
           </div>
         </div>
-        {isEditor && (
-          <Button onClick={() => { setEditId(null); setDuplicateData(null); setOpen(true); }} className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
-            <Plus className="h-4 w-4 mr-2" />Nova autorização
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setRelOpen(true)} variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-4 py-3 h-auto border-rose-200 text-rose-700 hover:bg-rose-50">
+            <FileSpreadsheet className="h-4 w-4 mr-2" />Relatório
           </Button>
-        )}
+          {isEditor && (
+            <Button onClick={() => { setEditId(null); setDuplicateData(null); setOpen(true); }} className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
+              <Plus className="h-4 w-4 mr-2" />Nova autorização
+            </Button>
+          )}
+        </div>
       </div>
 
       <Input className="mb-6 max-w-md bg-white border-slate-200 shadow-sm" placeholder="Buscar por nome, data ou motivo…" value={busca} onChange={(e) => setBusca(e.target.value)} />
@@ -165,21 +208,38 @@ function SaidasPage() {
           <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Nenhuma autorização registrada</p>
         </div>
       ) : (
-        <div className="space-y-8">
-          {datasOrdenadas.map((data) => (
-            <div key={data} className="space-y-3">
-              <div className="flex items-center gap-4">
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-rose-100/70 bg-white/[0.04] px-3 py-1 rounded-full border border-white/10 backdrop-blur-md">
-                  {formatDateBR(data)}
-                </h3>
-                {isEditor && (
+        <div className="space-y-6">
+          {mesesOrdenados.map((ym) => {
+            const datas = Object.keys(meses[ym]).sort((a, b) => b.localeCompare(a));
+            const totalMes = datas.reduce((s, d) => s + meses[ym][d].length, 0);
+            return (
+              <section key={ym} className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <header className="flex items-center justify-between gap-3 px-5 py-3 bg-gradient-to-r from-rose-50 via-white to-white border-b border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">
+                      <CalIcon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black uppercase tracking-tight text-slate-900">{mesLabel(ym)}</h3>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{totalMes} autorização{totalMes === 1 ? "" : "ões"}</p>
+                    </div>
+                  </div>
+                </header>
+                <div className="p-4 md:p-5 space-y-5">
+                  {datas.map((data) => (
+                    <div key={data} className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[11px] font-black uppercase tracking-widest text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md">
+                          {formatDateBR(data)}
+                        </span>
+                        {isEditor && (
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-7 text-[10px] font-black uppercase tracking-widest text-rose-100/80 hover:text-white hover:bg-rose-500/15 rounded-lg border border-white/10 hover:border-rose-400/30 bg-white/[0.03] backdrop-blur-md shadow-sm"
+                    className="h-7 text-[10px] font-black uppercase tracking-widest text-rose-700 hover:text-rose-800 hover:bg-rose-50 rounded-lg border border-rose-200"
                     onClick={() => {
-                      const first = grupos[data][0];
-                      const empIds = grupos[data].map((r: any) => r.employee_id);
+                      const first = meses[ym][data][0];
+                      const empIds = meses[ym][data].map((r: any) => r.employee_id);
                       setEditId(null);
                       setDuplicateData({
                         company_id: first.company_id,
@@ -197,11 +257,11 @@ function SaidasPage() {
                     <Copy className="h-3 w-3 mr-1.5" /> Repetir Lote
                   </Button>
                 )}
-                <div className="h-px flex-1 bg-gradient-to-r from-white/10 via-rose-500/10 to-transparent"></div>
+                <div className="h-px flex-1 bg-slate-200"></div>
               </div>
               
-              <div className="grid gap-3 sm:grid-cols-2">
-                {grupos[data].map((r: any) => {
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {meses[ym][data].map((r: any) => {
                   const sigFunc = !!r.assinatura_funcionario;
                   const sigSesmt = !!r.assinatura_sesmt;
                   const sigSupervisor = !!r.assinatura_supervisor;
@@ -209,33 +269,33 @@ function SaidasPage() {
                   const iniciais = (emp?.nome ?? "—").split(" ").filter(Boolean).slice(0,2).map((s: string) => s[0]?.toUpperCase()).join("");
                   
                   return (
-                    <div key={r.id} className="group relative rounded-xl border border-white/10 bg-gradient-to-br from-black/70 via-[#1a0408]/80 to-[#3a0a14]/70 p-3 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.7)] hover:shadow-[0_12px_32px_-12px_rgba(200,30,60,0.35)] hover:border-rose-400/25 transition-all flex items-center gap-4 backdrop-blur-md">
-                      <Avatar className="h-10 w-10 ring-2 ring-white/10 shrink-0">
+                    <div key={r.id} className="group relative rounded-xl border border-slate-200 bg-white p-3 shadow-sm hover:shadow-md hover:border-rose-300 transition-all flex items-center gap-3">
+                      <Avatar className="h-10 w-10 ring-2 ring-slate-100 shrink-0">
                         {emp?.foto_url ? <AvatarImage src={emp.foto_url} alt={emp.nome} /> : null}
-                        <AvatarFallback className="text-xs font-black text-rose-50 bg-rose-950/60">{iniciais || "?"}</AvatarFallback>
+                        <AvatarFallback className="text-xs font-black text-rose-700 bg-rose-100">{iniciais || "?"}</AvatarFallback>
                       </Avatar>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-[13px] font-black text-rose-50 leading-tight truncate uppercase tracking-tight">{emp?.nome ?? "—"}</p>
+                          <p className="text-[12px] font-black text-slate-900 leading-tight truncate uppercase tracking-tight">{emp?.nome ?? "—"}</p>
                           <div className="flex gap-1 shrink-0">
-                            <span className={`w-2 h-2 rounded-full ${sigFunc ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" : "bg-white/15"}`} title="Assinatura Funcionário" />
-                            <span className={`w-2 h-2 rounded-full ${sigSesmt ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" : "bg-white/15"}`} title="Assinatura SESMT" />
-                            <span className={`w-2 h-2 rounded-full ${sigSupervisor ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" : "bg-white/15"}`} title="Assinatura Supervisor" />
+                            <span className={`w-2 h-2 rounded-full ${sigFunc ? "bg-emerald-500" : "bg-slate-200"}`} title="Assinatura Funcionário" />
+                            <span className={`w-2 h-2 rounded-full ${sigSesmt ? "bg-emerald-500" : "bg-slate-200"}`} title="Assinatura SESMT" />
+                            <span className={`w-2 h-2 rounded-full ${sigSupervisor ? "bg-emerald-500" : "bg-slate-200"}`} title="Assinatura Supervisor" />
                           </div>
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-black text-rose-100 bg-rose-500/20 ring-1 ring-rose-400/30 px-1.5 py-0.5 rounded uppercase">{r.horario_saida}</span>
-                          <span className="text-[10px] font-bold text-rose-100/55 uppercase tracking-wider truncate">{emp?.roles?.name ?? "—"}</span>
+                          <span className="text-[10px] font-black text-rose-700 bg-rose-50 ring-1 ring-rose-200 px-1.5 py-0.5 rounded uppercase">{r.horario_saida}</span>
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">{emp?.roles?.name ?? "—"}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1">
-                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-white/10 text-rose-100/70 hover:text-rose-50" onClick={() => gerarPdf(r.id)} title="Visualizar PDF">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100 text-slate-500 hover:text-slate-900" onClick={() => gerarPdf(r.id)} title="Visualizar PDF">
                           <Eye className="h-4 w-4" />
                         </Button>
                         {isEditor && (
-                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-rose-500/15 text-rose-100/70 hover:text-rose-50" onClick={() => {
+                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-rose-50 text-slate-500 hover:text-rose-700" onClick={() => {
                             setEditId(null);
                             setDuplicateData({
                               company_id: r.company_id,
@@ -252,11 +312,11 @@ function SaidasPage() {
                             <Copy className="h-3.5 w-3.5" />
                           </Button>
                         )}
-                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-white/10 text-rose-100/70 hover:text-rose-50" onClick={() => { setEditId(r.id); setDuplicateData(null); setOpen(true); }} title="Editar">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-100 text-slate-500 hover:text-slate-900" onClick={() => { setEditId(r.id); setDuplicateData(null); setOpen(true); }} title="Editar">
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         {isAdmin && (
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-rose-200/70 hover:text-rose-300 hover:bg-rose-500/15" onClick={() => { if (confirm("Excluir esta autorização?")) del.mutate(r.id); }} title="Excluir">
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-rose-700 hover:bg-rose-50" onClick={() => { if (confirm("Excluir esta autorização?")) del.mutate(r.id); }} title="Excluir">
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         )}
@@ -265,12 +325,18 @@ function SaidasPage() {
                   );
                 })}
               </div>
-            </div>
-          ))}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
       )}
 
       <SaidaExpedienteDialog open={open} onOpenChange={setOpen} editId={editId} duplicateData={duplicateData} />
+
+      <RelatorioSaidasDialog open={relOpen} onClose={() => setRelOpen(false)} rows={rows ?? []} />
 
       <PDFPreviewDialog
         open={!!previewDoc}
