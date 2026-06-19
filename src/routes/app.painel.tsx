@@ -996,7 +996,7 @@ function TstPanel() {
             <div className="relative rounded-2xl overflow-hidden"
               style={{
                 background:
-                  "radial-gradient(120% 80% at 0% 0%, rgba(139,92,246,0.28) 0%, rgba(15,23,42,0) 55%), " +
+                  "radial-gradient(120% 80% at 0% 0%, rgba(136,8,8,0.45) 0%, rgba(15,23,42,0) 55%), " +
                   "radial-gradient(120% 80% at 100% 100%, rgba(16,185,129,0.25) 0%, rgba(15,23,42,0) 55%), " +
                   "linear-gradient(160deg, #0b1228 0%, #0a0f22 45%, #070b1a 100%)",
               }}
@@ -1009,7 +1009,7 @@ function TstPanel() {
                 style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), inset 0 0 0 1px rgba(148,163,184,0.08), inset 0 -40px 80px -40px rgba(16,185,129,0.20)" }} />
               {/* corner glows */}
               <div aria-hidden className="pointer-events-none absolute -top-20 -left-16 h-56 w-56 rounded-full"
-                style={{ background: "radial-gradient(circle, rgba(167,139,250,0.45) 0%, rgba(167,139,250,0) 70%)", filter: "blur(10px)" }} />
+                style={{ background: "radial-gradient(circle, rgba(153,27,27,0.55) 0%, rgba(136,8,8,0) 70%)", filter: "blur(10px)" }} />
               <div aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 h-56 w-56 rounded-full"
                 style={{ background: "radial-gradient(circle, rgba(52,211,153,0.40) 0%, rgba(52,211,153,0) 70%)", filter: "blur(10px)" }} />
 
