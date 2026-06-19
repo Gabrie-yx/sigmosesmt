@@ -1490,18 +1490,39 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          meta_acidentes_taxa_max_pct: number
+          meta_aso_pct: number
+          meta_dds_dias_semana: number[]
+          meta_dds_semana: number
+          meta_dias_perdidos_max_mes: number
+          meta_inspecoes_pct: number
+          meta_treinamentos_pct: number
           pt_exige_apr_valida: boolean
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
+          meta_acidentes_taxa_max_pct?: number
+          meta_aso_pct?: number
+          meta_dds_dias_semana?: number[]
+          meta_dds_semana?: number
+          meta_dias_perdidos_max_mes?: number
+          meta_inspecoes_pct?: number
+          meta_treinamentos_pct?: number
           pt_exige_apr_valida?: boolean
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          meta_acidentes_taxa_max_pct?: number
+          meta_aso_pct?: number
+          meta_dds_dias_semana?: number[]
+          meta_dds_semana?: number
+          meta_dias_perdidos_max_mes?: number
+          meta_inspecoes_pct?: number
+          meta_treinamentos_pct?: number
           pt_exige_apr_valida?: boolean
           updated_at?: string
         }
