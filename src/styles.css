@@ -1097,3 +1097,108 @@
       inset 0 0 0 1px rgba(255, 240, 245, 0.25);
   }
 }
+
+/* ============================================================
+   GLASS GLOSS · reflexo curvo de vidro (vermelho/vinho)
+   Inspirado em reflexo de vidro real — arco luminoso no canto
+   superior esquerdo + gloss diagonal. Aplicado em cards e KPIs.
+   Usa ::before só (o ::after já é a borda reluzente glass-shine).
+   ============================================================ */
+@layer base {
+  .glass-card,
+  .glass-panel,
+  .glass-vinho,
+  .prism-kpi {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .glass-card > *,
+  .glass-panel > *,
+  .glass-vinho > *,
+  .prism-kpi > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Camada de gloss: arco + faixa diagonal num único ::before */
+  .glass-card::before,
+  .glass-panel::before,
+  .glass-vinho::before,
+  .prism-kpi::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 1;
+    background:
+      /* Arco principal — canto superior esquerdo, simula reflexo de luz */
+      radial-gradient(
+        140% 90% at -10% -30%,
+        rgba(255, 210, 220, 0.42) 0%,
+        rgba(255, 160, 180, 0.22) 18%,
+        rgba(255, 110, 140, 0.10) 32%,
+        transparent 50%
+      ),
+      /* Gloss diagonal atravessando o card */
+      linear-gradient(
+        125deg,
+        transparent 0%,
+        transparent 30%,
+        rgba(255, 230, 235, 0.12) 40%,
+        rgba(255, 230, 235, 0.22) 46%,
+        rgba(255, 230, 235, 0.06) 54%,
+        transparent 64%,
+        transparent 100%
+      ),
+      /* Reverberação inferior-direita em vinho */
+      radial-gradient(
+        90% 70% at 110% 120%,
+        rgba(255, 70, 105, 0.16) 0%,
+        transparent 58%
+      );
+    mix-blend-mode: screen;
+    opacity: 0.95;
+    transition: opacity .35s ease;
+  }
+
+  .glass-card:hover::before,
+  .prism-kpi:hover::before { opacity: 1; }
+
+  /* Mantém a borda reluzente acima dos reflexos */
+  .glass-shine::after,
+  .dialog-glass-shine::after { z-index: 3; }
+
+  /* Liquid Glass intensifica o gloss */
+  html.theme-liquid .glass-card::before,
+  html.theme-liquid .glass-panel::before,
+  html.theme-liquid .glass-vinho::before,
+  html.theme-liquid .prism-kpi::before {
+    background:
+      radial-gradient(
+        150% 100% at -15% -35%,
+        rgba(255, 220, 230, 0.58) 0%,
+        rgba(255, 170, 190, 0.32) 18%,
+        rgba(255, 110, 140, 0.14) 36%,
+        transparent 54%
+      ),
+      linear-gradient(
+        125deg,
+        transparent 0%,
+        transparent 28%,
+        rgba(255, 240, 245, 0.16) 38%,
+        rgba(255, 240, 245, 0.34) 45%,
+        rgba(255, 240, 245, 0.10) 55%,
+        transparent 68%,
+        transparent 100%
+      ),
+      radial-gradient(
+        100% 80% at 115% 130%,
+        rgba(255, 60, 100, 0.26) 0%,
+        transparent 62%
+      );
+    opacity: 1;
+  }
+}
