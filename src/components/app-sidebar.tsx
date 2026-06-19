@@ -21,6 +21,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
   CalendarCheck2,
   ShieldCheck,
   Boxes,
@@ -55,6 +60,7 @@ import {
   ShieldAlert,
   Wind,
   Target,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -67,7 +73,6 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
     title: "Visão Geral",
     items: [
       { to: "/app/painel", label: "Dashboard SESMT", icon: BarChart3 },
-      { to: "/app/configuracoes-indicadores", label: "Metas dos Indicadores", icon: Target },
     ],
   },
   {
@@ -106,7 +111,6 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
     items: [
       { to: "/app/sesmt/terceiros", label: "Painel de Terceiros", icon: Briefcase },
       { to: "/app/relatorios/reincidencia-epi", label: "Reincidência de EPI", icon: Recycle },
-      { to: "/app/audit", label: "Auditoria do Sistema", icon: History },
     ],
   },
   {
