@@ -24,7 +24,7 @@ import dmnLogo from "@/assets/dmn-logo.png";
 
 export const Route = createFileRoute("/app/employees/saidas")({
   component: SaidasPage,
-  errorComponent: ({ error }) => <div className="p-6 text-rose-600">Erro: {String(error?.message ?? error)}</div>,
+  errorComponent: ({ error }) => <div className="p-6 text-red-700">Erro: {String(error?.message ?? error)}</div>,
   notFoundComponent: () => <div className="p-6">Não encontrado</div>,
 });
 
@@ -178,7 +178,7 @@ function SaidasPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setRelOpen(true)} variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-4 py-3 h-auto border-rose-200 text-rose-700 hover:bg-rose-50">
+          <Button onClick={() => setRelOpen(true)} variant="outline" className="text-[11px] font-black uppercase tracking-widest rounded-xl px-4 py-3 h-auto border-red-300 text-red-800 hover:bg-red-50">
             <FileText className="h-4 w-4 mr-2" />Relatório PDF
           </Button>
           {isEditor && (
@@ -279,8 +279,8 @@ function SaidasPage() {
         signable={false}
       />
       {!!previewDoc && previewRowId && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex flex-wrap items-center justify-center gap-2 bg-white/95 backdrop-blur border-2 border-rose-300 shadow-2xl rounded-xl px-3 py-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-rose-700 mr-1">Assinar:</span>
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex flex-wrap items-center justify-center gap-2 bg-white/95 backdrop-blur border-2 border-red-500 shadow-2xl rounded-xl px-3 py-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-red-800 mr-1">Assinar:</span>
           <Button size="sm" variant="outline" className="border-slate-300" onClick={() => setSigOpen("SESMT")}>
             <PenLine className="h-3.5 w-3.5 mr-1" />TST (SESMT)
           </Button>
@@ -292,7 +292,7 @@ function SaidasPage() {
           </Button>
           <Button
             size="sm"
-            className="bg-rose-600 hover:bg-rose-700 text-white"
+            className="bg-red-800 hover:bg-red-900 text-white"
             onClick={() => {
               if (!previewDoc) return;
               const ab = previewDoc.output("arraybuffer") as ArrayBuffer;
@@ -461,7 +461,7 @@ function RelatorioSaidasDialog({ open, onClose, rows, onPreview }: { open: boole
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={gerar} className="bg-rose-600 hover:bg-rose-700 text-white">
+          <Button onClick={gerar} className="bg-red-800 hover:bg-red-900 text-white">
             <FileText className="h-4 w-4 mr-2" />Gerar PDF
           </Button>
         </DialogFooter>
@@ -477,9 +477,9 @@ function MesCard({ ym, total, empresasCount, onClick }: { ym: string; total: num
       onClick={onClick}
       className="group relative rounded-2xl p-[1.5px] overflow-hidden text-left transition-transform hover:scale-[1.015] focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
       style={{
-        background: "linear-gradient(135deg, rgba(244,63,94,0.85) 0%, rgba(167,139,250,0.55) 45%, rgba(34,211,238,0.65) 100%)",
+        background: "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(167,139,250,0.55) 45%, rgba(34,211,238,0.65) 100%)",
         boxShadow:
-          "0 0 0 1px rgba(244,63,94,0.30), " +
+          "0 0 0 1px rgba(127,29,29,0.45), " +
           "0 0 18px rgba(167,139,250,0.22), " +
           "0 0 36px rgba(16,185,129,0.18), " +
           "0 24px 56px -22px rgba(124,58,237,0.30), " +
@@ -522,7 +522,7 @@ function MesCard({ ym, total, empresasCount, onClick }: { ym: string; total: num
         <div className="relative flex-1 flex flex-col justify-center">
           <h3 className="text-2xl font-black uppercase tracking-tight text-white leading-tight">{mesLabel(ym)}</h3>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-5xl font-black text-rose-300" style={{ textShadow: "0 0 20px rgba(244,63,94,0.55)" }}>
+            <span className="text-5xl font-black text-red-400" style={{ textShadow: "0 0 20px rgba(127,29,29,0.65)" }}>
               {total}
             </span>
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
@@ -567,7 +567,7 @@ function MesDetalheDialog({
       <DialogContent className="max-w-5xl max-h-[88vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-xl font-black uppercase tracking-tight text-slate-900 flex items-center gap-3">
-            <CalIcon className="h-5 w-5 text-rose-600" />
+            <CalIcon className="h-5 w-5 text-red-700" />
             {mesLabel(ym)}
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
               {total} autorização{total === 1 ? "" : "ões"}
@@ -588,7 +588,7 @@ function MesDetalheDialog({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 text-[10px] font-black uppercase tracking-widest text-rose-700 hover:text-rose-800 hover:bg-rose-50 rounded-lg border border-rose-200"
+                    className="h-7 text-[10px] font-black uppercase tracking-widest text-red-800 hover:text-red-900 hover:bg-red-50 rounded-lg border border-red-300"
                     onClick={() => onRepeatLote(meses[ym][data])}
                   >
                     <Copy className="h-3 w-3 mr-1.5" /> Repetir Lote
@@ -604,10 +604,10 @@ function MesDetalheDialog({
                   const emp = r.employees;
                   const iniciais = (emp?.nome ?? "—").split(" ").filter(Boolean).slice(0, 2).map((s: string) => s[0]?.toUpperCase()).join("");
                   return (
-                    <div key={r.id} className="group relative rounded-xl border border-slate-200 bg-white p-3 shadow-sm hover:shadow-md hover:border-rose-300 transition-all flex items-center gap-3">
+                    <div key={r.id} className="group relative rounded-xl border border-slate-200 bg-white p-3 shadow-sm hover:shadow-md hover:border-red-500 transition-all flex items-center gap-3">
                       <Avatar className="h-10 w-10 ring-2 ring-slate-100 shrink-0">
                         {emp?.foto_url ? <AvatarImage src={emp.foto_url} alt={emp.nome} /> : null}
-                        <AvatarFallback className="text-xs font-black text-rose-700 bg-rose-100">{iniciais || "?"}</AvatarFallback>
+                        <AvatarFallback className="text-xs font-black text-red-800 bg-red-100">{iniciais || "?"}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
@@ -619,7 +619,7 @@ function MesDetalheDialog({
                           </div>
                         </div>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          <span className="text-[10px] font-black text-rose-700 bg-rose-50 ring-1 ring-rose-200 px-1.5 py-0.5 rounded uppercase">{r.horario_saida}</span>
+                          <span className="text-[10px] font-black text-red-800 bg-red-50 ring-1 ring-red-300 px-1.5 py-0.5 rounded uppercase">{r.horario_saida}</span>
                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">{emp?.roles?.name ?? "—"}</span>
                           {r.companies?.name && <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">{r.companies.name}</span>}
                         </div>
@@ -629,7 +629,7 @@ function MesDetalheDialog({
                           <Eye className="h-4 w-4" />
                         </Button>
                         {isEditor && (
-                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-rose-50 text-slate-500 hover:text-rose-700" onClick={() => onRepeat(r)} title="Repetir autorização hoje">
+                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-red-50 text-slate-500 hover:text-red-800" onClick={() => onRepeat(r)} title="Repetir autorização hoje">
                             <Copy className="h-3.5 w-3.5" />
                           </Button>
                         )}
@@ -637,7 +637,7 @@ function MesDetalheDialog({
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         {isAdmin && (
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-rose-700 hover:bg-rose-50" onClick={() => onDelete(r.id)} title="Excluir">
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-red-800 hover:bg-red-50" onClick={() => onDelete(r.id)} title="Excluir">
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         )}
