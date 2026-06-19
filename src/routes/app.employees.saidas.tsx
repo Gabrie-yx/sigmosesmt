@@ -390,3 +390,120 @@ function SaidasPage() {
     </div>
   );
 }
+
+function RelatorioSaidasDialog({ open, onClose, rows }: { open: boolean; onClose: () => void; rows: any[] }) {
+  const hoje = new Date();
+  const isoHoje = hoje.toISOString().slice(0, 10);
+  // segunda da semana atual
+  const seg = new Date(hoje);
+  seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
+  const isoSeg = seg.toISOString().slice(0, 10);
+  const dom = new Date(seg); dom.setDate(dom.getDate() + 6);
+  const isoDom = dom.toISOString().slice(0, 10);
+  const isoMesInicio = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-01`;
+
+  const [periodo, setPeriodo] = useState<"semana" | "mes" | "custom">("mes");
+  const [empresaId, setEmpresaId] = useState<string>("__all__");
+  const [de, setDe] = useState(isoMesInicio);
+  const [ate, setAte] = useState(isoHoje);
+
+  const empresas = Array.from(
+    new Map(
+      (rows ?? [])
+        .filter((r) => r.companies?.id)
+        .map((r) => [r.companies.id, { id: r.companies.id, name: r.companies.name }])
+    ).values()
+  ).sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+  function resolverIntervalo() {
+    if (periodo === "semana") return { from: isoSeg, to: isoDom };
+    if (periodo === "mes") return { from: isoMesInicio, to: isoHoje };
+    return { from: de, to: ate };
+  }
+
+  function gerar() {
+    const { from, to } = resolverIntervalo();
+    const filtradas = (rows ?? []).filter((r: any) => {
+      if (!r.data) return false;
+      if (r.data < from || r.data > to) return false;
+      if (empresaId !== "__all__" && r.company_id !== empresaId) return false;
+      return true;
+    });
+    if (!filtradas.length) {
+      toast.error("Nenhuma saída no período selecionado");
+      return;
+    }
+    const header = ["Data", "Funcionário", "Cargo", "Empresa", "Horário Saída", "Com Retorno", "Horário Retorno", "Motivo"];
+    const linhas = filtradas
+      .sort((a: any, b: any) => (a.data + a.horario_saida).localeCompare(b.data + b.horario_saida))
+      .map((r: any) => [
+        formatDateBR(r.data),
+        r.employees?.nome ?? "",
+        r.employees?.roles?.name ?? "",
+        r.companies?.name ?? "",
+        r.horario_saida ?? "",
+        r.com_retorno ? "Sim" : "Não",
+        r.horario_retorno ?? "",
+        r.motivo ?? "",
+      ]);
+    const sufixo = periodo === "semana" ? "semana" : periodo === "mes" ? "mes" : `${from}_a_${to}`;
+    downloadCSV(`saidas-expediente-${sufixo}.csv`, [header, ...linhas]);
+    toast.success(`${linhas.length} registro(s) exportado(s)`);
+    onClose();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-base font-black uppercase tracking-tight">Relatório de saídas</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-600">Período</Label>
+            <Select value={periodo} onValueChange={(v) => setPeriodo(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="semana">Semana atual ({formatDateBR(isoSeg)} → {formatDateBR(isoDom)})</SelectItem>
+                <SelectItem value="mes">Mês atual ({formatDateBR(isoMesInicio)} → {formatDateBR(isoHoje)})</SelectItem>
+                <SelectItem value="custom">Período personalizado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {periodo === "custom" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-600">De</Label>
+                <Input type="date" value={de} onChange={(e) => setDe(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-600">Até</Label>
+                <Input type="date" value={ate} onChange={(e) => setAte(e.target.value)} />
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-600">Empresa</Label>
+            <Select value={empresaId} onValueChange={setEmpresaId}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas as empresas</SelectItem>
+                {empresas.map((c: any) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={gerar} className="bg-rose-600 hover:bg-rose-700 text-white">
+            <FileSpreadsheet className="h-4 w-4 mr-2" />Baixar CSV
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
