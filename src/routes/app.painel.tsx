@@ -993,13 +993,6 @@ function TstPanel() {
                 "0 18px 48px -22px rgba(16,185,129,0.24)",
             }}
           >
-            {/* hotspot brilhante na borda (canto superior direito) */}
-            <div aria-hidden className="pointer-events-none absolute -top-10 -right-8 h-40 w-56 rounded-full z-10"
-              style={{
-                background: "radial-gradient(closest-side, rgba(125,252,255,0.95) 0%, rgba(94,234,212,0.55) 35%, rgba(94,234,212,0) 75%)",
-                filter: "blur(6px)",
-                mixBlendMode: "screen",
-              }} />
             <div className="relative rounded-2xl overflow-hidden"
               style={{
                 background:
