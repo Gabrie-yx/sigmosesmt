@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LogOut, Download, Upload, Sparkles, Droplet } from "lucide-react";
+import { LogOut, Download, Upload, Sparkles, Droplet, Gem } from "lucide-react";
 import { ShieldCheck } from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
@@ -63,13 +63,17 @@ export function AppHeader() {
           <button
             title={
               theme === "liquid"
-                ? "Tema: Liquid Glass DMN (clique para voltar ao Vinho)"
+                ? "Tema: Liquid Glass DMN (clique para Crystal)"
+                : theme === "crystal"
+                ? "Tema: Crystal Glass claro (clique para Vinho)"
                 : "Tema: Vinho DMN (clique para Liquid Glass)"
             }
             onClick={toggle}
             className="h-8 w-8 rounded-md text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground flex items-center justify-center"
           >
-            {theme === "liquid" ? (
+            {theme === "crystal" ? (
+              <Gem className="h-4 w-4" />
+            ) : theme === "liquid" ? (
               <Droplet className="h-4 w-4" />
             ) : (
               <Sparkles className="h-4 w-4" />

@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 
-export type ThemeMode = "dmn" | "liquid";
+export type ThemeMode = "dmn" | "liquid" | "crystal";
 const STORAGE_KEY = "sigmo:theme";
 
 function apply(mode: ThemeMode) {
   const root = document.documentElement;
-  root.classList.remove("theme-dmn", "theme-liquid");
+  root.classList.remove("theme-dmn", "theme-liquid", "theme-crystal");
   root.classList.add(`theme-${mode}`);
 }
 
@@ -22,7 +22,10 @@ export function useTheme() {
 
   const setTheme = useCallback((t: ThemeMode) => setThemeState(t), []);
   const toggle = useCallback(
-    () => setThemeState((t) => (t === "dmn" ? "liquid" : "dmn")),
+    () =>
+      setThemeState((t) =>
+        t === "dmn" ? "liquid" : t === "liquid" ? "crystal" : "dmn",
+      ),
     [],
   );
 
