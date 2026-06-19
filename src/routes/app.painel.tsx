@@ -982,10 +982,15 @@ function TstPanel() {
           </Card>
 
           {/* OFICIAL 4 · Donut ASO Status (PCMSO/NR-07) */}
-          <div className="col-span-12 md:col-span-4 order-3 relative rounded-2xl p-[1px] overflow-hidden"
+          <div className="col-span-12 md:col-span-4 order-3 relative rounded-2xl p-[1.5px] overflow-hidden self-start h-fit"
             style={{
-              background: "linear-gradient(135deg, rgba(167,139,250,0.55) 0%, rgba(34,211,238,0.15) 35%, rgba(16,185,129,0.45) 100%)",
-              boxShadow: "0 30px 60px -25px rgba(124,58,237,0.55), 0 20px 50px -20px rgba(16,185,129,0.35)",
+              background: "linear-gradient(135deg, rgba(167,139,250,0.95) 0%, rgba(34,211,238,0.55) 35%, rgba(16,185,129,0.90) 100%)",
+              boxShadow:
+                "0 0 0 1px rgba(167,139,250,0.35), " +
+                "0 0 24px rgba(167,139,250,0.55), " +
+                "0 0 48px rgba(16,185,129,0.45), " +
+                "0 30px 70px -20px rgba(124,58,237,0.75), " +
+                "0 20px 60px -20px rgba(16,185,129,0.60)",
             }}
           >
             <div className="relative rounded-2xl overflow-hidden"
