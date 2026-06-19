@@ -1014,17 +1014,30 @@ function TstPanel() {
                   <ComposedChart data={ddsPlanRealizado.series} margin={{ top: 14, right: 12, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradPlanReal" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#22d3ee" /><stop offset="100%" stopColor="#0891b2" />
+                        <stop offset="0%" stopColor="#67e8f9" stopOpacity={1} />
+                        <stop offset="55%" stopColor="#22d3ee" stopOpacity={0.95} />
+                        <stop offset="100%" stopColor="#0e7490" stopOpacity={0.85} />
                       </linearGradient>
+                      <linearGradient id="gradPlanBg" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#475569" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#1e293b" stopOpacity={0.15} />
+                      </linearGradient>
+                      <filter id="ddsGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="2.5" result="b" />
+                        <feMerge>
+                          <feMergeNode in="b" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
                     </defs>
                     <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="sem" tick={{ fontSize: 10, fill: "#cbd5e1" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
                     <Tooltip contentStyle={tooltipDark} />
-                    <Bar dataKey="plan" fill="rgba(148,163,184,0.18)" radius={[6, 6, 0, 0]} barSize={26} name="Planejado">
+                    <Bar dataKey="plan" fill="url(#gradPlanBg)" radius={[6, 6, 0, 0]} barSize={26} name="Planejado">
                       <LabelList dataKey="plan" position="top" style={{ fontSize: 9, fontWeight: 700, fill: "#94a3b8" }} />
                     </Bar>
-                    <Bar dataKey="real" fill="url(#gradPlanReal)" radius={[6, 6, 0, 0]} barSize={26} name="Realizado">
+                    <Bar dataKey="real" fill="url(#gradPlanReal)" radius={[6, 6, 0, 0]} barSize={26} name="Realizado" filter="url(#ddsGlow)">
                       <LabelList dataKey="real" position="top" style={{ fontSize: 11, fontWeight: 900, fill: "#22d3ee" }} />
                     </Bar>
                   </ComposedChart>
