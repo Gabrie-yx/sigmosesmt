@@ -695,7 +695,7 @@ function TstPanel() {
             <h1 className="text-2xl md:text-3xl font-black tracking-tight mt-1 bg-gradient-to-r from-cyan-300 via-cyan-200 to-emerald-300 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(34,211,238,0.35)]">
               Dashboard SESMT
             </h1>
-            <div className="text-[11px] text-slate-400 mt-0.5">Indicadores de Segurança · Medição &amp; Avaliação (FORCP-SGI-20)</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">Indicadores de Segurança · Medição &amp; Avaliação (FORCP-SGI-20) · <span className="text-cyan-300/80 font-bold">6 Oficiais para Auditoria</span></div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative">
@@ -824,8 +824,19 @@ function TstPanel() {
         {/* ===== QUADRO DOS 12 GRÁFICOS ===== */}
         <div className="grid grid-cols-12 gap-4">
 
+          {/* === Banner: INDICADORES OFICIAIS (auditoria) === */}
+          <div className="col-span-12 order-1 flex items-center gap-3 mt-1">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/60 to-cyan-500/30" />
+            <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 ring-1 ring-cyan-400/40">
+              <ShieldCheck className="h-3.5 w-3.5 text-cyan-300" />
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">Indicadores Oficiais · Auditoria SGI-SST</span>
+              <span className="text-[9px] font-bold text-cyan-400/70">(6 indicadores · NBR 14280 · ISO 45001)</span>
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent via-cyan-500/60 to-cyan-500/30" />
+          </div>
+
           {/* 1 · TF — Taxa de Frequência (NBR 14280) */}
-          <Card title="01 · TF · Taxa de Frequência" className="col-span-12 md:col-span-4"
+          <Card title="01 · TF · Taxa de Frequência" className="col-span-12 md:col-span-4 order-2"
             period="12 MESES" meta="= 0"
             metaTone={tf === 0 ? "ok" : tf <= 5 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-rose-300 flex items-center gap-1">
@@ -867,7 +878,7 @@ function TstPanel() {
           </Card>
 
           {/* 2 · TG — Taxa de Gravidade (NBR 14280) */}
-          <Card title="02 · TG · Taxa de Gravidade" className="col-span-12 md:col-span-4"
+          <Card title="02 · TG · Taxa de Gravidade" className="col-span-12 md:col-span-4 order-3"
             period="12 MESES" meta="≤ 100"
             metaTone={tg <= 100 ? "ok" : tg <= 500 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
@@ -908,7 +919,7 @@ function TstPanel() {
             </div>
           </Card>
           {/* 3 · % Treinamentos NR em dia */}
-          <Card title="03 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4"
+          <Card title="03 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4 order-4"
             period="MENSAL" meta="≥ 95%"
             metaTone={(() => {
               const avg = treinamentosNR.length > 0 ? Math.round(treinamentosNR.reduce((s, t) => s + t.value, 0) / treinamentosNR.length) : 100;
@@ -931,7 +942,7 @@ function TstPanel() {
           </Card>
 
           {/* 4 · Donut ASO Status (PCMSO/NR-07) */}
-          <Card title="04 · ASO · PCMSO" className="col-span-12 md:col-span-4"
+          <Card title="04 · ASO · PCMSO" className="col-span-12 md:col-span-4 order-5"
             period="MENSAL" meta="100%"
             metaTone={asoConformPct >= 95 ? "ok" : asoConformPct >= 80 ? "warn" : "crit"}
             ncPrefill={{ codigo: "IND-05", indicador: "ASOs em dia", mesRef: mesRefAtual }}>
@@ -950,7 +961,7 @@ function TstPanel() {
 
           {/* 5 · DDS Planejado vs Realizado (semanal) */}
           <Card title="05 · DDS · Planejado vs Realizado"
-            className="col-span-12 md:col-span-5"
+            className="col-span-12 md:col-span-4 order-6"
             period="SEMANAL"
             meta={`≥ 90% · ${ddsPlanRealizado.realizados}/${ddsPlanRealizado.planejados}`}
             metaTone={ddsPlanRealizado.pct >= 90 ? "ok" : ddsPlanRealizado.pct >= 70 ? "warn" : "crit"}
@@ -989,7 +1000,18 @@ function TstPanel() {
           </Card>
 
           {/* 6 · Reincidência EPI por colaborador */}
-          <Card title="06 · Reincidência EPI" className="col-span-12 md:col-span-3"
+          {/* === Banner: INDICADORES DE APOIO === */}
+          <div className="col-span-12 order-8 flex items-center gap-3 mt-2">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-600/60 to-slate-600/30" />
+            <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-slate-700/30 ring-1 ring-slate-600/40">
+              <Activity className="h-3.5 w-3.5 text-slate-300" />
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-200">Indicadores de Apoio · Operacional</span>
+              <span className="text-[9px] font-bold text-slate-400">(uso interno · gestão diária)</span>
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-600/60 to-slate-600/30" />
+          </div>
+
+          <Card title="11 · Reincidência EPI" className="col-span-12 md:col-span-3 order-9"
             period="MENSAL"
             meta={`≤ 5% · ${reincidenciaEPIPct.pct}%`}
             metaTone={reincidenciaEPIPct.pct <= 5 ? "ok" : reincidenciaEPIPct.pct <= 15 ? "warn" : "crit"}
@@ -1032,7 +1054,7 @@ function TstPanel() {
           </Card>
 
           {/* 7 · Barras Extintores por Status (NR-23) */}
-          <Card title="07 · Extintores · NR-23" className="col-span-12 md:col-span-3"
+          <Card title="06 · Inspeções · Extintores NR-23" className="col-span-12 md:col-span-4 order-7"
             period="MENSAL" meta="100% em dia"
             metaTone={extMetrics.vencidos > 0 ? "crit" : extMetrics.vencendo > 0 ? "warn" : "ok"}
             ncPrefill={{ codigo: "IND-07", indicador: "Inspeção/Recarga de Extintores", mesRef: mesRefAtual }}>
@@ -1061,7 +1083,7 @@ function TstPanel() {
           </Card>
 
           {/* 8 · Donut Conformidade Geral */}
-          <Card title="08 · Status Geral" className="col-span-12 md:col-span-3"
+          <Card title="12 · Status Geral" className="col-span-12 md:col-span-3 order-10"
             period={`${periodo}d`} meta="≥ 90%"
             metaTone={conformidadeFiltro >= 90 ? "ok" : conformidadeFiltro >= 70 ? "warn" : "crit"}
             ncPrefill={{ codigo: "IND-00", indicador: "Status Geral de Conformidade", mesRef: mesRefAtual }}>
@@ -1079,7 +1101,7 @@ function TstPanel() {
           </Card>
 
           {/* 9 · Linha Documentos Abertos × Resolvidos */}
-          <Card title="09 · Não Conformidades" className="col-span-12 md:col-span-6"
+          <Card title="13 · Não Conformidades" className="col-span-12 md:col-span-6 order-11"
             period="6 MESES" meta="Resolv. ≥ Abertos" metaTone="neutral">
             <div className="h-64">
               {docsMensal.every((d) => d.abertos === 0 && d.resolvidos === 0) ? <EmptyBlock label="Sem registros" /> : (
@@ -1109,7 +1131,7 @@ function TstPanel() {
           </Card>
 
           {/* 10 · Pareto Empresas por colaborador (Bar + acumulado %) */}
-          <Card title="10 · Pareto · Empresas" className="col-span-12 md:col-span-6"
+          <Card title="14 · Pareto · Empresas" className="col-span-12 md:col-span-6 order-[12]"
             action={<span className="text-[10px] font-bold text-slate-500">{totalEmp} colab.</span>}>
             <div className="h-64">
               {paretoEmpresas.length === 0 ? <EmptyBlock label="Sem dados" /> : (
@@ -1137,7 +1159,7 @@ function TstPanel() {
           </Card>
 
           {/* 11 · Área Fluxo Entregas EPI */}
-          <Card title="11 · Fluxo EPI · Tendência" className="col-span-12 md:col-span-6"
+          <Card title="15 · Fluxo EPI · Tendência" className="col-span-12 md:col-span-6 order-[13]"
             action={<span className="text-[10px] font-bold text-slate-500 flex items-center gap-1"><TrendingUp className="h-3 w-3" />{totalEntregas} · R$ {valorEntregas.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}</span>}>
             <div className="h-64">
               {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas" /> : (
@@ -1171,7 +1193,7 @@ function TstPanel() {
           </Card>
 
           {/* 12 · Score Top 5 Empresas (barras verticais) */}
-          <Card title="12 · Score · TOP 5" className="col-span-12 md:col-span-4">
+          <Card title="16 · Score · TOP 5" className="col-span-12 md:col-span-4 order-[14]">
             <div className="h-64">
               {top5Empresas.length === 0 ? <EmptyBlock label="Sem empresas" /> : (
                 <ResponsiveContainer>
@@ -1204,7 +1226,7 @@ function TstPanel() {
           </Card>
 
           {/* 13 · % Ações Plano no prazo */}
-          <Card title="13 · Plano de Ação · Prazo" className="col-span-12 md:col-span-4"
+          <Card title="17 · Plano de Ação · Prazo" className="col-span-12 md:col-span-4 order-[15]"
             period="MENSAL" meta="≥ 90%"
             metaTone={planoAcoesMetric.pct >= 90 ? "ok" : planoAcoesMetric.pct >= 70 ? "warn" : "crit"}
             ncPrefill={{ codigo: "IND-08", indicador: "Plano de Ação no prazo", mesRef: mesRefAtual }}>
@@ -1222,7 +1244,7 @@ function TstPanel() {
           </Card>
 
           {/* 14 · Near-miss / Quase-acidentes */}
-          <Card title="14 · Quase-Acidentes" className="col-span-12 md:col-span-4"
+          <Card title="18 · Quase-Acidentes" className="col-span-12 md:col-span-4 order-[16]"
             period="MENSAL" meta="≥ 5/mês"
             metaTone={nearMissMesAtual >= 5 ? "ok" : nearMissMesAtual >= 2 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
