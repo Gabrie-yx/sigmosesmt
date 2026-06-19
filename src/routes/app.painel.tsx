@@ -876,7 +876,7 @@ function TstPanel() {
           </div>
 
           {/* TF — movido para APOIO (pendente substituto Acidentes/Efetivo) */}
-          <Card title="TF · Taxa de Frequência (legado · pend. HHT)" className="col-span-12 md:col-span-4 order-[20]"
+          <Card title="TF · Taxa de Frequência (legado · pend. HHT)" className="col-span-12 md:col-span-6 order-[20]"
             period="12 MESES" meta="= 0"
             metaTone={tf === 0 ? "ok" : tf <= 5 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-rose-300 flex items-center gap-1">
@@ -918,7 +918,7 @@ function TstPanel() {
           </Card>
 
           {/* TG — movido para APOIO (pendente substituto Dias Perdidos) */}
-          <Card title="TG · Taxa de Gravidade (legado · pend. HHT)" className="col-span-12 md:col-span-4 order-[21]"
+          <Card title="TG · Taxa de Gravidade (legado · pend. HHT)" className="col-span-12 md:col-span-6 order-[21]"
             period="12 MESES" meta="≤ 100"
             metaTone={tg <= 100 ? "ok" : tg <= 500 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
@@ -1109,7 +1109,7 @@ function TstPanel() {
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-600/60 to-slate-600/30" />
           </div>
 
-          <Card title="11 · Reincidência EPI" className="col-span-12 md:col-span-3 order-9"
+          <Card title="11 · Reincidência EPI" className="col-span-12 md:col-span-4 order-6"
             period="MENSAL"
             meta={`≤ 5% · ${reincidenciaEPIPct.pct}%`}
             metaTone={reincidenciaEPIPct.pct <= 5 ? "ok" : reincidenciaEPIPct.pct <= 15 ? "warn" : "crit"}
@@ -1201,7 +1201,7 @@ function TstPanel() {
           </Card>
 
           {/* 8 · Donut Conformidade Geral */}
-          <Card title="12 · Status Geral" className="col-span-12 md:col-span-3 order-10"
+          <Card title="12 · Status Geral" className="col-span-12 md:col-span-4 order-7"
             period={`${periodo}d`} meta="≥ 90%"
             metaTone={conformidadeFiltro >= 90 ? "ok" : conformidadeFiltro >= 70 ? "warn" : "crit"}
             ncPrefill={{ codigo: "IND-00", indicador: "Status Geral de Conformidade", mesRef: mesRefAtual }}>
@@ -1277,7 +1277,7 @@ function TstPanel() {
           </Card>
 
           {/* 11 · Área Fluxo Entregas EPI */}
-          <Card title="15 · Fluxo EPI · Tendência" className="col-span-12 md:col-span-6 order-[13]"
+          <Card title="15 · Fluxo EPI · Tendência" className="col-span-12 order-[13]"
             action={<span className="text-[10px] font-bold text-slate-500 flex items-center gap-1"><TrendingUp className="h-3 w-3" />{totalEntregas} · R$ {valorEntregas.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}</span>}>
             <div className="h-64">
               {entregaSerie.length === 0 ? <EmptyBlock label="Sem entregas" /> : (
