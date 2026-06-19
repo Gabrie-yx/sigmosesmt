@@ -1650,11 +1650,27 @@ function HBarList({
                 {it.value}{suffix ?? ""}
               </span>
             </div>
-            <div className="h-3 bg-slate-800/60 rounded-full overflow-hidden shadow-inner">
+            <div
+              className="relative h-3 rounded-full overflow-hidden"
+              style={{
+                background: "linear-gradient(180deg, rgba(2,6,23,0.85), rgba(15,23,42,0.55))",
+                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.6), inset 0 -1px 0 rgba(255,255,255,0.04)",
+              }}
+            >
               <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${c}cc, ${c})` }}
-              />
+                className="relative h-full rounded-full transition-all duration-700"
+                style={{
+                  width: `${pct}%`,
+                  background: `linear-gradient(180deg, ${c}ff 0%, ${c}d9 45%, ${c}99 100%)`,
+                  boxShadow: `0 0 12px ${c}aa, 0 0 22px ${c}55, inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -1px 0 rgba(0,0,0,0.25)`,
+                }}
+              >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full"
+                  style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35), transparent)" }}
+                />
+              </div>
             </div>
           </div>
         );
