@@ -698,6 +698,21 @@ function TstPanel() {
 
   const mesRefAtual = `${MONTHS_PT[today.getMonth()]}/${today.getFullYear()}`;
 
+  // === Metas configuradas em /app/configuracoes-indicadores ===
+  const metas = useMemo(() => {
+    const s: any = (data as any)?.settings ?? {};
+    return {
+      treinPct: Number(s.meta_treinamentos_pct ?? 90),
+      asoPct: Number(s.meta_aso_pct ?? 95),
+      inspPct: Number(s.meta_inspecoes_pct ?? 90),
+      ddsSemana: Number(s.meta_dds_semana ?? 3),
+      acidTaxa: Number(s.meta_acidentes_taxa_max_pct ?? 2),
+      diasPerdidosMax: Number(s.meta_dias_perdidos_max_mes ?? 5),
+    };
+  }, [data]);
+  const tone = (pct: number, meta: number) =>
+    pct >= meta ? "ok" : pct >= meta * 0.8 ? "warn" : "crit";
+
   return (
     <div className="h-full overflow-y-auto custom-scrollbar relative"
       style={{
@@ -945,10 +960,10 @@ function TstPanel() {
           </Card>
           {/* OFICIAL 3 · % Treinamentos NR em dia */}
           <Card title="03 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4 order-2"
-            period="MENSAL" meta="≥ 95%"
+            period="MENSAL" meta={`≥ ${metas.treinPct}%`}
             metaTone={(() => {
               const avg = treinamentosNR.length > 0 ? Math.round(treinamentosNR.reduce((s, t) => s + t.value, 0) / treinamentosNR.length) : 100;
-              return avg >= 95 ? "ok" : avg >= 80 ? "warn" : "crit";
+              return tone(avg, metas.treinPct);
             })()}
             action={<GraduationCap className="h-3 w-3 text-cyan-400" />}
             ncPrefill={{ codigo: "IND-03", indicador: "Treinamentos NR em dia", mesRef: mesRefAtual }}>
@@ -959,7 +974,7 @@ function TstPanel() {
                 items={treinamentosNR.map((t) => ({
                   name: t.name,
                   value: t.value,
-                  color: t.value >= 90 ? "#10b981" : t.value >= 70 ? "#fbbf24" : "#f43f5e",
+                  color: t.value >= metas.treinPct ? "#10b981" : t.value >= metas.treinPct * 0.8 ? "#fbbf24" : "#f43f5e",
                 }))}
                 suffix="%" perItemColor
               />
@@ -968,14 +983,14 @@ function TstPanel() {
 
           {/* OFICIAL 4 · Donut ASO Status (PCMSO/NR-07) */}
           <Card title="04 · ASO · PCMSO" className="col-span-12 md:col-span-4 order-3"
-            period="MENSAL" meta="100%"
-            metaTone={asoConformPct >= 95 ? "ok" : asoConformPct >= 80 ? "warn" : "crit"}
+            period="MENSAL" meta={`≥ ${metas.asoPct}%`}
+            metaTone={tone(asoConformPct, metas.asoPct)}
             ncPrefill={{ codigo: "IND-05", indicador: "ASOs em dia", mesRef: mesRefAtual }}>
             <DonutCenter
               data={asoDonut.length > 0 ? asoDonut : [{ name: "—", value: 1, fill: "#1e293b" }]}
               centerValue={`${asoConformPct}%`}
               centerLabel="Em dia"
-              centerColor={asoConformPct >= 90 ? "#10b981" : asoConformPct >= 70 ? "#fbbf24" : "#f43f5e"}
+              centerColor={asoConformPct >= metas.asoPct ? "#10b981" : asoConformPct >= metas.asoPct * 0.8 ? "#fbbf24" : "#f43f5e"}
             />
             <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80">
               <LegendItem color="#10b981" label="OK" value={asoEmDia} />
@@ -988,8 +1003,8 @@ function TstPanel() {
           <Card title="05 · DDS · Planejado vs Realizado"
             className="col-span-12 md:col-span-4 order-4"
             period="SEMANAL"
-            meta={`≥ 90% · ${ddsPlanRealizado.realizados}/${ddsPlanRealizado.planejados}`}
-            metaTone={ddsPlanRealizado.pct >= 90 ? "ok" : ddsPlanRealizado.pct >= 70 ? "warn" : "crit"}
+            meta={`≥ 85% · ${ddsPlanRealizado.realizados}/${ddsPlanRealizado.planejados}`}
+            metaTone={tone(ddsPlanRealizado.pct, 85)}
             action={<MessageSquare className="h-3 w-3 text-cyan-300" />}
             ncPrefill={{ codigo: "IND-04", indicador: "DDS Planejado vs Realizado", mesRef: mesRefAtual }}
           >
@@ -1018,7 +1033,7 @@ function TstPanel() {
             </div>
             <div className="flex items-center justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
               <span className="text-slate-500">Aderência: <span className="font-black tabular-nums"
-                style={{ color: ddsPlanRealizado.pct >= 90 ? "#10b981" : ddsPlanRealizado.pct >= 70 ? "#fbbf24" : "#f43f5e" }}>
+                style={{ color: ddsPlanRealizado.pct >= 85 ? "#10b981" : ddsPlanRealizado.pct >= 68 ? "#fbbf24" : "#f43f5e" }}>
                 {ddsPlanRealizado.pct}%</span></span>
               <span className="text-slate-500">Aderência média (sessões): <span className="font-black text-cyan-300">{ddsAderencia}%</span></span>
             </div>
@@ -1080,8 +1095,20 @@ function TstPanel() {
 
           {/* OFICIAL 6 · Inspeções (Extintores NR-23) */}
           <Card title="06 · Inspeções · Extintores NR-23" className="col-span-12 md:col-span-4 order-5"
-            period="MENSAL" meta="100% em dia"
-            metaTone={extMetrics.vencidos > 0 ? "crit" : extMetrics.vencendo > 0 ? "warn" : "ok"}
+            period="MENSAL"
+            meta={(() => {
+              const pct = extMetrics.ativos > 0
+                ? Math.round(((extMetrics.ativos - extMetrics.semInspecao) / extMetrics.ativos) * 100)
+                : 100;
+              return `≥ ${metas.inspPct}% · ${pct}%`;
+            })()}
+            metaTone={(() => {
+              if (extMetrics.vencidos > 0) return "crit";
+              const pct = extMetrics.ativos > 0
+                ? Math.round(((extMetrics.ativos - extMetrics.semInspecao) / extMetrics.ativos) * 100)
+                : 100;
+              return tone(pct, metas.inspPct);
+            })()}
             ncPrefill={{ codigo: "IND-07", indicador: "Inspeção/Recarga de Extintores", mesRef: mesRefAtual }}>
             <div className="h-64">
               <ResponsiveContainer>
