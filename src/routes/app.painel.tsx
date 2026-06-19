@@ -695,7 +695,7 @@ function TstPanel() {
             <h1 className="text-2xl md:text-3xl font-black tracking-tight mt-1 bg-gradient-to-r from-cyan-300 via-cyan-200 to-emerald-300 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(34,211,238,0.35)]">
               Dashboard SESMT
             </h1>
-            <div className="text-[11px] text-slate-400 mt-0.5">Indicadores de Segurança · Medição &amp; Avaliação (FORCP-SGI-20)</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">Indicadores de Segurança · Medição &amp; Avaliação (FORCP-SGI-20) · <span className="text-cyan-300/80 font-bold">6 Oficiais para Auditoria</span></div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative">
@@ -824,8 +824,19 @@ function TstPanel() {
         {/* ===== QUADRO DOS 12 GRÁFICOS ===== */}
         <div className="grid grid-cols-12 gap-4">
 
+          {/* === Banner: INDICADORES OFICIAIS (auditoria) === */}
+          <div className="col-span-12 order-1 flex items-center gap-3 mt-1">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/60 to-cyan-500/30" />
+            <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 ring-1 ring-cyan-400/40">
+              <ShieldCheck className="h-3.5 w-3.5 text-cyan-300" />
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">Indicadores Oficiais · Auditoria SGI-SST</span>
+              <span className="text-[9px] font-bold text-cyan-400/70">(6 indicadores · NBR 14280 · ISO 45001)</span>
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent via-cyan-500/60 to-cyan-500/30" />
+          </div>
+
           {/* 1 · TF — Taxa de Frequência (NBR 14280) */}
-          <Card title="01 · TF · Taxa de Frequência" className="col-span-12 md:col-span-4"
+          <Card title="01 · TF · Taxa de Frequência" className="col-span-12 md:col-span-4 order-2"
             period="12 MESES" meta="= 0"
             metaTone={tf === 0 ? "ok" : tf <= 5 ? "warn" : "crit"}
             action={<span className="text-[10px] font-black uppercase tracking-wider text-rose-300 flex items-center gap-1">
