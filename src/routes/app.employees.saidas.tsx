@@ -74,6 +74,7 @@ function SaidasPage() {
   const [previewRowId, setPreviewRowId] = useState<string | null>(null);
   const [previewTerceira, setPreviewTerceira] = useState(false);
   const [sigOpen, setSigOpen] = useState<null | "FUNC" | "SESMT" | "SUPERVISOR">(null);
+  const [mesAberto, setMesAberto] = useState<string | null>(null);
   const [visualSignerBytes, setVisualSignerBytes] = useState<Uint8Array | null>(null);
   const [visualSignerName, setVisualSignerName] = useState("");
   const [visualSignerRef, setVisualSignerRef] = useState<string | undefined>(undefined);
