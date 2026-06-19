@@ -75,6 +75,11 @@ function TstPanel() {
         .from("oss_emissoes")
         .select("employee_id,status,expira_em")
         .eq("status", "ASSINADO");
+      const settingsRes = await supabase
+        .from("company_settings")
+        .select("meta_dds_semana,meta_dds_dias_semana,meta_inspecoes_pct,meta_treinamentos_pct,meta_aso_pct,meta_acidentes_taxa_max_pct,meta_dias_perdidos_max_mes")
+        .limit(1)
+        .maybeSingle();
       return {
         employees: emps.data ?? [],
         companies: comps.data ?? [],
@@ -97,6 +102,7 @@ function TstPanel() {
         recordes: recordesRes.data ?? [],
         acidentes: acidentes.data ?? [],
         hht: hht.data ?? [],
+        settings: settingsRes.data ?? null,
       };
     },
   });
