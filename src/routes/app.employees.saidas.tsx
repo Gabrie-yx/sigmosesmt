@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Plus, Eye, Pencil, Trash2, PenLine, LogOut, MousePointerClick, UserCog, Copy, FileSpreadsheet, Calendar as CalIcon } from "lucide-react";
+import { ArrowLeft, Plus, Eye, Pencil, Trash2, PenLine, LogOut, MousePointerClick, Copy, FileText, Calendar as CalIcon, ChevronRight } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,9 @@ import { PdfSignerDialog } from "@/components/pdf-signer-dialog";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { gerarSaidaExpedientePDF } from "@/lib/saida-expediente-pdf";
 import { formatDateBR } from "@/lib/utils-date";
-import type jsPDF from "jspdf";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { drawPdfHeader } from "@/lib/pdf-header";
 import dmnLogo from "@/assets/dmn-logo.png";
 
 export const Route = createFileRoute("/app/employees/saidas")({
@@ -57,19 +59,7 @@ function isoWeek(iso: string) {
   return { year: d.getFullYear(), week };
 }
 
-function csvEscape(v: any) {
-  const s = v == null ? "" : String(v);
-  if (/[",;\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-  return s;
-}
-function downloadCSV(filename: string, rows: string[][]) {
-  const csv = "\ufeff" + rows.map((r) => r.map(csvEscape).join(";")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
+
 
 function SaidasPage() {
   const qc = useQueryClient();
