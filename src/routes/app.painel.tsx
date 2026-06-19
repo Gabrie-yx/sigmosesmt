@@ -1003,8 +1003,8 @@ function TstPanel() {
           <Card title="05 · DDS · Planejado vs Realizado"
             className="col-span-12 md:col-span-4 order-4"
             period="SEMANAL"
-            meta={`≥ 90% · ${ddsPlanRealizado.realizados}/${ddsPlanRealizado.planejados}`}
-            metaTone={ddsPlanRealizado.pct >= 90 ? "ok" : ddsPlanRealizado.pct >= 70 ? "warn" : "crit"}
+            meta={`≥ 85% · ${ddsPlanRealizado.realizados}/${ddsPlanRealizado.planejados}`}
+            metaTone={tone(ddsPlanRealizado.pct, 85)}
             action={<MessageSquare className="h-3 w-3 text-cyan-300" />}
             ncPrefill={{ codigo: "IND-04", indicador: "DDS Planejado vs Realizado", mesRef: mesRefAtual }}
           >
@@ -1033,7 +1033,7 @@ function TstPanel() {
             </div>
             <div className="flex items-center justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
               <span className="text-slate-500">Aderência: <span className="font-black tabular-nums"
-                style={{ color: ddsPlanRealizado.pct >= 90 ? "#10b981" : ddsPlanRealizado.pct >= 70 ? "#fbbf24" : "#f43f5e" }}>
+                style={{ color: ddsPlanRealizado.pct >= 85 ? "#10b981" : ddsPlanRealizado.pct >= 68 ? "#fbbf24" : "#f43f5e" }}>
                 {ddsPlanRealizado.pct}%</span></span>
               <span className="text-slate-500">Aderência média (sessões): <span className="font-black text-cyan-300">{ddsAderencia}%</span></span>
             </div>
