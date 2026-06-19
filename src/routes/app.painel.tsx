@@ -698,6 +698,21 @@ function TstPanel() {
 
   const mesRefAtual = `${MONTHS_PT[today.getMonth()]}/${today.getFullYear()}`;
 
+  // === Metas configuradas em /app/configuracoes-indicadores ===
+  const metas = useMemo(() => {
+    const s: any = (data as any)?.settings ?? {};
+    return {
+      treinPct: Number(s.meta_treinamentos_pct ?? 90),
+      asoPct: Number(s.meta_aso_pct ?? 95),
+      inspPct: Number(s.meta_inspecoes_pct ?? 90),
+      ddsSemana: Number(s.meta_dds_semana ?? 3),
+      acidTaxa: Number(s.meta_acidentes_taxa_max_pct ?? 2),
+      diasPerdidosMax: Number(s.meta_dias_perdidos_max_mes ?? 5),
+    };
+  }, [data]);
+  const tone = (pct: number, meta: number) =>
+    pct >= meta ? "ok" : pct >= meta * 0.8 ? "warn" : "crit";
+
   return (
     <div className="h-full overflow-y-auto custom-scrollbar relative"
       style={{
