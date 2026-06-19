@@ -477,12 +477,12 @@ function MesCard({ ym, total, empresasCount, onClick }: { ym: string; total: num
       onClick={onClick}
       className="group relative rounded-2xl p-[1.5px] overflow-hidden text-left transition-transform hover:scale-[1.015] focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
       style={{
-        background: "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(167,139,250,0.55) 45%, rgba(34,211,238,0.65) 100%)",
+        background: "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(15,118,110,0.55) 45%, rgba(34,211,238,0.65) 100%)",
         boxShadow:
           "0 0 0 1px rgba(127,29,29,0.45), " +
-          "0 0 18px rgba(167,139,250,0.22), " +
+          "0 0 18px rgba(45,212,191,0.22), " +
           "0 0 36px rgba(16,185,129,0.18), " +
-          "0 24px 56px -22px rgba(124,58,237,0.30), " +
+          "0 24px 56px -22px rgba(13,148,136,0.35), " +
           "0 18px 48px -22px rgba(16,185,129,0.24)",
       }}
     >
@@ -498,11 +498,11 @@ function MesCard({ ym, total, empresasCount, onClick }: { ym: string; total: num
         {/* top highlight */}
         <div aria-hidden className="pointer-events-none absolute -top-3 left-[30%] h-6 w-40 rounded-full"
           style={{
-            background: "radial-gradient(ellipse at center, rgba(196,181,253,0.95) 0%, rgba(167,139,250,0.65) 30%, rgba(139,92,246,0.25) 60%, rgba(139,92,246,0) 80%)",
+            background: "radial-gradient(ellipse at center, rgba(207,250,254,0.95) 0%, rgba(103,232,249,0.65) 30%, rgba(34,211,238,0.25) 60%, rgba(34,211,238,0) 80%)",
             filter: "blur(6px)", mixBlendMode: "screen",
           }} />
         <div aria-hidden className="pointer-events-none absolute -top-1 left-[34%] h-1 w-28 rounded-full"
-          style={{ background: "linear-gradient(90deg, rgba(167,139,250,0) 0%, rgba(221,214,254,1) 50%, rgba(167,139,250,0) 100%)", filter: "blur(1.5px)" }} />
+          style={{ background: "linear-gradient(90deg, rgba(34,211,238,0) 0%, rgba(207,250,254,1) 50%, rgba(34,211,238,0) 100%)", filter: "blur(1.5px)" }} />
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
           style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 40%, transparent 100%)" }} />
         <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl"
