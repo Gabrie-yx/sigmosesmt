@@ -982,7 +982,7 @@ function TstPanel() {
           </Card>
 
           {/* OFICIAL 4 · Donut ASO Status (PCMSO/NR-07) */}
-          <div className="col-span-12 md:col-span-4 order-3 relative rounded-2xl p-[1.5px] overflow-hidden self-start h-fit"
+          <div className="col-span-12 md:col-span-4 order-3 relative rounded-2xl p-[1.5px] overflow-hidden flex"
             style={{
               background: "linear-gradient(135deg, rgba(167,139,250,0.95) 0%, rgba(34,211,238,0.55) 35%, rgba(16,185,129,0.90) 100%)",
               boxShadow:
@@ -993,7 +993,7 @@ function TstPanel() {
                 "0 18px 48px -22px rgba(16,185,129,0.24)",
             }}
           >
-            <div className="relative rounded-2xl overflow-hidden"
+            <div className="relative rounded-2xl overflow-hidden flex flex-col w-full"
               style={{
                 background:
                   "radial-gradient(120% 80% at 0% 0%, rgba(136,8,8,0.45) 0%, rgba(15,23,42,0) 55%), " +
