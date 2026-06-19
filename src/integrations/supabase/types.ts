@@ -3025,6 +3025,89 @@ export type Database = {
           },
         ]
       }
+      extintor_inspecoes_fotos: {
+        Row: {
+          assinado_por_cargo: string | null
+          assinado_por_nome: string | null
+          assinatura_path: string | null
+          confianca_ia: number | null
+          created_at: string
+          extintor_id: string | null
+          foto_etiqueta_path: string | null
+          foto_lacre_path: string | null
+          foto_manometro_path: string | null
+          gps_accuracy: number | null
+          gps_lat: number | null
+          gps_lng: number | null
+          id: string
+          inspecionado_em: string
+          inspecionado_por: string
+          laudo_ia: Json | null
+          laudo_revisado: Json | null
+          localizacao_descritiva: string | null
+          nao_conformidades: string[] | null
+          observacoes: string | null
+          status_geral: string
+          updated_at: string
+        }
+        Insert: {
+          assinado_por_cargo?: string | null
+          assinado_por_nome?: string | null
+          assinatura_path?: string | null
+          confianca_ia?: number | null
+          created_at?: string
+          extintor_id?: string | null
+          foto_etiqueta_path?: string | null
+          foto_lacre_path?: string | null
+          foto_manometro_path?: string | null
+          gps_accuracy?: number | null
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          inspecionado_em?: string
+          inspecionado_por: string
+          laudo_ia?: Json | null
+          laudo_revisado?: Json | null
+          localizacao_descritiva?: string | null
+          nao_conformidades?: string[] | null
+          observacoes?: string | null
+          status_geral?: string
+          updated_at?: string
+        }
+        Update: {
+          assinado_por_cargo?: string | null
+          assinado_por_nome?: string | null
+          assinatura_path?: string | null
+          confianca_ia?: number | null
+          created_at?: string
+          extintor_id?: string | null
+          foto_etiqueta_path?: string | null
+          foto_lacre_path?: string | null
+          foto_manometro_path?: string | null
+          gps_accuracy?: number | null
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          inspecionado_em?: string
+          inspecionado_por?: string
+          laudo_ia?: Json | null
+          laudo_revisado?: Json | null
+          localizacao_descritiva?: string | null
+          nao_conformidades?: string[] | null
+          observacoes?: string | null
+          status_geral?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extintor_inspecoes_fotos_extintor_id_fkey"
+            columns: ["extintor_id"]
+            isOneToOne: false
+            referencedRelation: "extintores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       extintores: {
         Row: {
           ano_teste_hidrostatico: number | null
