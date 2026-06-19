@@ -502,15 +502,18 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </Card>
       )}
 
-      {status && status.msgs.length > 0 && (
-        <Card className="p-4 flex flex-wrap gap-2">
-          {status.msgs.map((m, i) => (
-            <Badge key={i} variant="outline">{m}</Badge>
-          ))}
-        </Card>
-      )}
-
-      <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        {status && status.msgs.length > 0 ? (
+          <Card className="p-4 flex flex-wrap gap-2 self-start">
+            {status.msgs.map((m, i) => (
+              <Badge key={i} variant="outline">{m}</Badge>
+            ))}
+          </Card>
+        ) : (
+          <div className="hidden lg:block" />
+        )}
+        <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
+      </div>
 
       <Tabs value={tab} onValueChange={setTab}>
         <AnimatedTabsBar
