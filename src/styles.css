@@ -1215,25 +1215,26 @@
     background:
       radial-gradient(
         150% 100% at -15% -35%,
-        rgba(255, 220, 230, 0.58) 0%,
-        rgba(255, 170, 190, 0.32) 18%,
-        rgba(255, 110, 140, 0.14) 36%,
-        transparent 54%
+        rgba(255, 230, 240, 0.85) 0%,
+        rgba(255, 180, 200, 0.50) 16%,
+        rgba(255, 120, 150, 0.24) 34%,
+        transparent 56%
       ),
       linear-gradient(
         125deg,
         transparent 0%,
-        transparent 28%,
-        rgba(255, 240, 245, 0.16) 38%,
-        rgba(255, 240, 245, 0.34) 45%,
-        rgba(255, 240, 245, 0.10) 55%,
-        transparent 68%,
+        transparent 25%,
+        rgba(255, 245, 250, 0.24) 36%,
+        rgba(255, 245, 250, 0.55) 46%,
+        rgba(255, 245, 250, 0.18) 56%,
+        transparent 70%,
         transparent 100%
       ),
       radial-gradient(
         100% 80% at 115% 130%,
-        rgba(255, 60, 100, 0.26) 0%,
-        transparent 62%
+        rgba(255, 70, 110, 0.42) 0%,
+        rgba(255, 100, 140, 0.18) 30%,
+        transparent 65%
       );
     opacity: 1;
   }
