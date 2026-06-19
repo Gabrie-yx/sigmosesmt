@@ -477,9 +477,9 @@ function MesCard({ ym, total, empresasCount, onClick }: { ym: string; total: num
       onClick={onClick}
       className="group relative rounded-2xl p-[1.5px] overflow-hidden text-left transition-transform hover:scale-[1.015] focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
       style={{
-        background: "linear-gradient(135deg, rgba(244,63,94,0.85) 0%, rgba(167,139,250,0.55) 45%, rgba(34,211,238,0.65) 100%)",
+        background: "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(167,139,250,0.55) 45%, rgba(34,211,238,0.65) 100%)",
         boxShadow:
-          "0 0 0 1px rgba(244,63,94,0.30), " +
+          "0 0 0 1px rgba(127,29,29,0.45), " +
           "0 0 18px rgba(167,139,250,0.22), " +
           "0 0 36px rgba(16,185,129,0.18), " +
           "0 24px 56px -22px rgba(124,58,237,0.30), " +
