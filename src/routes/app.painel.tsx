@@ -1600,44 +1600,73 @@ function KpiBig({
 }) {
   return (
     <div
-      className={`relative rounded-xl border bg-slate-900/50 backdrop-blur-md p-4 flex items-center gap-3 transition-all overflow-hidden group ${
-        highlight
-          ? "border-rose-500/50 ring-1 ring-rose-500/20"
-          : "border-slate-800/80 hover:border-slate-700"
-      }`}
+      className="relative rounded-2xl p-[1.5px] overflow-hidden flex group"
       style={{
-        boxShadow: highlight
-          ? `0 0 40px -10px ${accent}66, inset 0 1px 0 rgba(255,255,255,0.04)`
-          : `0 8px 30px -15px ${accent}40, inset 0 1px 0 rgba(255,255,255,0.04)`,
+        background: `linear-gradient(135deg, ${accent}F2 0%, ${accent}66 40%, rgba(34,211,238,0.55) 100%)`,
+        boxShadow:
+          `0 0 0 1px ${accent}59, ` +
+          `0 0 18px ${accent}3D, ` +
+          `0 0 36px ${accent}2E, ` +
+          `0 24px 56px -22px ${accent}4D, ` +
+          (highlight ? `0 0 50px -8px ${accent}A6` : `0 18px 48px -22px ${accent}3D`),
       }}
     >
       <div
-        aria-hidden
-        className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity"
-        style={{ background: accent }}
-      />
-      <div
-        className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 relative z-10"
+        className="relative rounded-2xl overflow-hidden flex items-center gap-3 p-4 w-full"
         style={{
-          background: `linear-gradient(135deg, ${accent}30, ${accent}08)`,
-          color: accent,
-          boxShadow: `0 0 20px ${accent}50, inset 0 1px 0 ${accent}40`,
+          background:
+            `radial-gradient(120% 80% at 0% 0%, ${accent}40 0%, rgba(15,23,42,0) 55%), ` +
+            `radial-gradient(120% 80% at 100% 100%, ${accent}26 0%, rgba(15,23,42,0) 55%), ` +
+            `linear-gradient(160deg, #0b1228 0%, #0a0f22 45%, #070b1a 100%)`,
         }}
       >
-        <Icon className="h-6 w-6" />
-      </div>
-      <div className="min-w-0 flex-1 relative z-10">
-        <div className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">{label}</div>
-        <div
-          className="text-3xl font-black tabular-nums leading-tight"
+        {/* focused edge glow — hotspot na borda superior */}
+        <div aria-hidden className="pointer-events-none absolute -top-3 left-[28%] h-6 w-32 rounded-full"
           style={{
+            background: `radial-gradient(ellipse at center, ${accent}F2 0%, ${accent}A6 30%, ${accent}40 60%, ${accent}00 80%)`,
+            filter: "blur(6px)",
+            mixBlendMode: "screen",
+          }} />
+        <div aria-hidden className="pointer-events-none absolute -top-1 left-[32%] h-1 w-24 rounded-full"
+          style={{
+            background: `linear-gradient(90deg, ${accent}00 0%, #ffffff 50%, ${accent}00 100%)`,
+            filter: "blur(1.5px)",
+          }} />
+        {/* glossy top highlight */}
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
+          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 40%, transparent 100%)" }} />
+        {/* inner ring */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl"
+          style={{ boxShadow: `inset 0 1px 0 rgba(255,255,255,0.10), inset 0 0 0 1px rgba(148,163,184,0.08), inset 0 -40px 80px -40px ${accent}33` }} />
+        {/* corner glows */}
+        <div aria-hidden className="pointer-events-none absolute -top-20 -left-16 h-48 w-48 rounded-full"
+          style={{ background: `radial-gradient(circle, ${accent}73 0%, ${accent}00 70%)`, filter: "blur(10px)" }} />
+        <div aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 h-48 w-48 rounded-full"
+          style={{ background: `radial-gradient(circle, ${accent}40 0%, ${accent}00 70%)`, filter: "blur(10px)" }} />
+
+        <div
+          className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 relative z-10"
+          style={{
+            background: `linear-gradient(135deg, ${accent}30, ${accent}08)`,
             color: accent,
-            textShadow: `0 0 18px ${accent}99, 0 0 36px ${accent}33`,
+            boxShadow: `0 0 20px ${accent}50, inset 0 1px 0 ${accent}40`,
           }}
         >
-          {value}
+          <Icon className="h-6 w-6" />
         </div>
-        {sub && <div className="text-[10px] text-slate-500 truncate">{sub}</div>}
+        <div className="min-w-0 flex-1 relative z-10">
+          <div className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{label}</div>
+          <div
+            className="text-3xl font-black tabular-nums leading-tight"
+            style={{
+              color: accent,
+              textShadow: `0 0 18px ${accent}99, 0 0 36px ${accent}33`,
+            }}
+          >
+            {value}
+          </div>
+          {sub && <div className="text-[10px] text-slate-500 truncate">{sub}</div>}
+        </div>
       </div>
     </div>
   );
