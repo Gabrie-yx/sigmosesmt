@@ -950,3 +950,115 @@
   .app-glass-scope .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 220, 225, 0.18); }
   .app-glass-scope .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 220, 225, 0.32); }
 }
+
+/* ============================================================
+   THEME · LIQUID DMN EDITION
+   Ativado via <html class="theme-liquid">.
+   Mantém a paleta vinho/preto e intensifica o vidro:
+   blur mais profundo, sheen de topo mais luminoso,
+   halos de neon nas tonalidades do vinho DMN.
+   ============================================================ */
+@layer base {
+  /* Fundo mais cinematográfico, com brilho lateral em vinho DMN */
+  html.theme-liquid body {
+    background:
+      radial-gradient(1400px 800px at 12% -10%, rgba(220, 38, 70, 0.42), transparent 55%),
+      radial-gradient(1200px 800px at 95% 5%, rgba(150, 20, 50, 0.45), transparent 60%),
+      radial-gradient(1100px 700px at 55% 115%, rgba(40, 6, 14, 0.95), transparent 70%),
+      linear-gradient(165deg, #1a040a 0%, #0c0205 45%, #060103 100%);
+  }
+  html.theme-liquid body::before { opacity: 0.4; }
+
+  /* Cards: vidro mais profundo + sheen branco no topo */
+  html.theme-liquid .glass-card {
+    backdrop-filter: blur(34px) saturate(170%);
+    border: 1px solid rgba(255, 235, 240, 0.14);
+    box-shadow:
+      0 1px 0 0 rgba(255, 240, 245, 0.22) inset,
+      0 -1px 0 0 rgba(0, 0, 0, 0.55) inset,
+      0 30px 90px rgba(0, 0, 0, 0.6),
+      0 8px 22px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(220, 38, 70, 0.08) inset;
+  }
+  html.theme-liquid .glass-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 240, 245, 0.18) 0%,
+      rgba(255, 240, 245, 0.04) 18%,
+      transparent 45%
+    );
+    mix-blend-mode: screen;
+    opacity: 0.9;
+  }
+  html.theme-liquid .glass-card:hover {
+    border-color: rgba(244, 90, 120, 0.55);
+    box-shadow:
+      0 1px 0 0 rgba(255, 240, 245, 0.26) inset,
+      0 -1px 0 0 rgba(0, 0, 0, 0.6) inset,
+      0 0 0 1px rgba(244, 90, 120, 0.45),
+      0 0 48px -2px rgba(232, 50, 85, 0.65),
+      0 0 110px -10px rgba(232, 50, 85, 0.55),
+      0 28px 70px -20px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Painéis, header, sidebar com blur extra */
+  html.theme-liquid .glass-panel,
+  html.theme-liquid .glass-vinho,
+  html.theme-liquid .glass-sidebar,
+  html.theme-liquid .glass-header {
+    backdrop-filter: blur(30px) saturate(170%);
+  }
+
+  /* Sheen do glass-shine mais luminoso */
+  html.theme-liquid .glass-shine::after,
+  html.theme-liquid .dialog-glass-shine::after {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 240, 245, 0.45) 0%,
+      rgba(255, 240, 245, 0.06) 35%,
+      rgba(255, 240, 245, 0.04) 65%,
+      rgba(255, 240, 245, 0.40) 100%
+    );
+  }
+
+  /* Header: vidro líquido sobre o vinho atual */
+  html.theme-liquid header.bg-header {
+    background:
+      radial-gradient(80% 200% at 0% 50%, rgba(220, 40, 75, 0.40) 0%, transparent 60%),
+      radial-gradient(80% 200% at 100% 50%, rgba(180, 30, 60, 0.45) 0%, transparent 60%),
+      linear-gradient(180deg, rgba(46, 8, 18, 0.75) 0%, rgba(20, 4, 10, 0.55) 100%) !important;
+    backdrop-filter: blur(26px) saturate(170%);
+    border-bottom: 1px solid rgba(255, 240, 245, 0.14);
+    box-shadow:
+      0 1px 0 0 rgba(255, 240, 245, 0.18) inset,
+      0 14px 40px -16px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Prism pill mais luminoso */
+  html.theme-liquid .prism-pill {
+    background: linear-gradient(145deg, rgba(70, 22, 34, 0.85), rgba(28, 8, 14, 0.92));
+    backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgba(255, 240, 245, 0.10);
+  }
+
+  /* Botões primários ganham halo neon vinho */
+  html.theme-liquid .bg-primary,
+  html.theme-liquid [data-slot="button"].bg-primary,
+  html.theme-liquid button.bg-primary {
+    box-shadow:
+      0 0 0 1px rgba(244, 90, 120, 0.35) inset,
+      0 0 22px -4px rgba(232, 50, 85, 0.65),
+      0 8px 22px -10px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Transição suave ao alternar tema */
+  html.theme-liquid,
+  html.theme-liquid * {
+    transition: background-color .35s ease, border-color .35s ease, box-shadow .35s ease;
+  }
+}
