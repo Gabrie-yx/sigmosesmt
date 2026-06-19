@@ -3,19 +3,21 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LogOut, Download, Upload } from "lucide-react";
+import { LogOut, Download, Upload, Sparkles, Droplet } from "lucide-react";
 import { ShieldCheck } from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
 import dmnLogo from "@/assets/dmn-logo.png";
 import { PendenciasBadge } from "@/components/pendencias-badge";
+import { useTheme } from "@/hooks/use-theme";
 
 export function AppHeader() {
   const { user, roles } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const { theme, toggle } = useTheme();
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -58,6 +60,21 @@ export function AppHeader() {
 
         <div className="flex items-center gap-1.5 shrink-0 ml-auto">
           <PendenciasBadge />
+          <button
+            title={
+              theme === "liquid"
+                ? "Tema: Liquid Glass DMN (clique para voltar ao Vinho)"
+                : "Tema: Vinho DMN (clique para Liquid Glass)"
+            }
+            onClick={toggle}
+            className="h-8 w-8 rounded-md text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground flex items-center justify-center"
+          >
+            {theme === "liquid" ? (
+              <Droplet className="h-4 w-4" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+          </button>
           <div className="hidden md:flex items-center gap-0.5 border-l border-white/10 pl-2">
             <button
               title="Exportar backup"
