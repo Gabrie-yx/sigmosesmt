@@ -11,8 +11,8 @@ function apply(mode: ThemeMode) {
 
 export function useTheme() {
   const [theme, setThemeState] = useState<ThemeMode>(() => {
-    if (typeof window === "undefined") return "dmn";
-    return (localStorage.getItem(STORAGE_KEY) as ThemeMode) || "dmn";
+    if (typeof window === "undefined") return "crystal";
+    return (localStorage.getItem(STORAGE_KEY) as ThemeMode) || "crystal";
   });
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export function useTheme() {
   const toggle = useCallback(
     () =>
       setThemeState((t) =>
-        t === "dmn" ? "liquid" : t === "liquid" ? "crystal" : "dmn",
+        t === "crystal" ? "dmn" : t === "dmn" ? "liquid" : "crystal",
       ),
     [],
   );
