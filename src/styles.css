@@ -962,23 +962,50 @@
   /* Fundo mais cinematográfico, com brilho lateral em vinho DMN */
   html.theme-liquid body {
     background:
-      radial-gradient(1400px 800px at 12% -10%, rgba(220, 38, 70, 0.42), transparent 55%),
-      radial-gradient(1200px 800px at 95% 5%, rgba(150, 20, 50, 0.45), transparent 60%),
-      radial-gradient(1100px 700px at 55% 115%, rgba(40, 6, 14, 0.95), transparent 70%),
-      linear-gradient(165deg, #1a040a 0%, #0c0205 45%, #060103 100%);
+      radial-gradient(1200px 700px at 10% -5%, rgba(255, 40, 80, 0.85), transparent 55%),
+      radial-gradient(1400px 900px at 95% 0%, rgba(220, 25, 60, 0.75), transparent 60%),
+      radial-gradient(900px 700px at 50% 50%, rgba(150, 15, 45, 0.55), transparent 70%),
+      radial-gradient(1200px 900px at 55% 120%, rgba(60, 4, 16, 0.95), transparent 70%),
+      linear-gradient(160deg, #3a0612 0%, #1f0309 45%, #0a0103 100%);
+    background-attachment: fixed;
   }
-  html.theme-liquid body::before { opacity: 0.4; }
+  html.theme-liquid body::before { opacity: 0.55; }
+
+  /* Halos pulsantes de luz vinho cobrindo a tela inteira (acima do body, atrás do app) */
+  html.theme-liquid body::after {
+    content: "";
+    position: fixed;
+    inset: -10%;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(600px 400px at 20% 30%, rgba(255, 90, 130, 0.22), transparent 60%),
+      radial-gradient(700px 500px at 85% 70%, rgba(200, 30, 70, 0.28), transparent 65%),
+      radial-gradient(500px 350px at 60% 15%, rgba(255, 140, 170, 0.14), transparent 70%);
+    mix-blend-mode: screen;
+    animation: liquidFlow 22s ease-in-out infinite alternate;
+  }
+  @keyframes liquidFlow {
+    0%   { transform: translate3d(0,0,0) scale(1); opacity: .9; }
+    50%  { transform: translate3d(2%, -1.5%, 0) scale(1.06); opacity: 1; }
+    100% { transform: translate3d(-1.5%, 2%, 0) scale(1.02); opacity: .85; }
+  }
 
   /* Cards: vidro mais profundo + sheen branco no topo */
   html.theme-liquid .glass-card {
-    backdrop-filter: blur(34px) saturate(170%);
-    border: 1px solid rgba(255, 235, 240, 0.14);
+    background:
+      radial-gradient(135% 100% at 0% 0%, rgba(255, 90, 130, 0.30) 0%, rgba(180, 30, 60, 0.10) 35%, transparent 60%),
+      radial-gradient(125% 90% at 100% 100%, rgba(220, 50, 90, 0.30) 0%, rgba(120, 22, 45, 0.10) 40%, transparent 65%),
+      linear-gradient(165deg, rgba(70, 12, 26, 0.55) 0%, rgba(28, 5, 12, 0.62) 60%, rgba(10, 2, 5, 0.68) 100%);
+    backdrop-filter: blur(40px) saturate(200%);
+    border: 1px solid rgba(255, 235, 240, 0.22);
     box-shadow:
-      0 1px 0 0 rgba(255, 240, 245, 0.22) inset,
+      0 1px 0 0 rgba(255, 240, 245, 0.40) inset,
       0 -1px 0 0 rgba(0, 0, 0, 0.55) inset,
-      0 30px 90px rgba(0, 0, 0, 0.6),
-      0 8px 22px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(220, 38, 70, 0.08) inset;
+      0 30px 90px rgba(0, 0, 0, 0.55),
+      0 8px 22px rgba(0, 0, 0, 0.35),
+      0 0 0 1px rgba(255, 110, 140, 0.18) inset,
+      0 0 60px -20px rgba(255, 80, 120, 0.35);
   }
   html.theme-liquid .glass-card::before {
     content: "";
@@ -988,12 +1015,12 @@
     pointer-events: none;
     background: linear-gradient(
       180deg,
-      rgba(255, 240, 245, 0.18) 0%,
-      rgba(255, 240, 245, 0.04) 18%,
+      rgba(255, 240, 245, 0.32) 0%,
+      rgba(255, 240, 245, 0.06) 20%,
       transparent 45%
     );
     mix-blend-mode: screen;
-    opacity: 0.9;
+    opacity: 1;
   }
   html.theme-liquid .glass-card:hover {
     border-color: rgba(244, 90, 120, 0.55);
