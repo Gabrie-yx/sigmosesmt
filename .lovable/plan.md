@@ -1,106 +1,65 @@
-## Plano: OS integrada com assinador + cancelamento controlado
+# Inspeção de Extintor por Foto com IA
 
-### 1. Painel OS (`/app/oss`) — ações por linha
+Fluxo guiado de 2-3 fotos → IA (Lovable AI / Gemini) extrai dados → TST/usuário revisa → salva inspeção + evidências.
 
-Substituir o botão "Apagar" por um fluxo baseado em status:
+## Fluxo do usuário
 
-- **PENDENTE_ASSINATURA**
-  - `Assinar` (primário) → abre o assinador interno já com o PDF da OS carregado (sem download/upload manual)
-  - `Visualizar PDF`
-  - `Baixar PDF` (opcional, para o funcionário)
-  - `Cancelar OS` (admin/moderador)
-- **ASSINADO**
-  - `Visualizar PDF assinado`
-  - `Baixar`
-  - `Cancelar OS` (admin/moderador) → exige nova emissão depois
-- **SUBSTITUIDO / CANCELADO**
-  - Somente `Visualizar` e `Baixar` (read-only, histórico)
+1. Na tela `/app/extintores`, botão novo **"Inspeção por foto"** (também acessível dentro do detalhe de um extintor existente, pré-vinculado).
+2. Modal/página guiada em 3 passos:
+   - **Foto 1 — Etiqueta/corpo** (obrigatória): captura marca, tipo (ABC/BC/CO₂/K), capacidade, fabricante, data de fabricação, validade, nº de patrimônio (se legível).
+   - **Foto 2 — Manômetro** (obrigatória): lê pressão (verde/vermelho/amarelo) → status carga OK / descarregado / sobrecarga.
+   - **Foto 3 — Lacre/contexto** (opcional): lacre íntegro, mangueira, sinalização, obstrução.
+3. Captura GPS automática do celular (`navigator.geolocation`) + campo livre "Localização descritiva".
+4. IA processa as fotos → devolve laudo estruturado (JSON).
+5. Tela de revisão: TST/usuário confere cada campo (editável), marca conformidades/não conformidades, assina (assinatura desenhada — reaproveita componente já existente).
+6. Salvar → cria registro em `extintor_inspecoes_fotos` + fotos no Storage + atualiza `extintores` (próxima inspeção, status) se vinculado.
 
-Filtros:
-- Padrão: oculta `CANCELADO` e `SUBSTITUIDO`
-- Toggle "Mostrar arquivadas/canceladas" para auditoria
-- Badges coloridos por status
+## Banco (migração)
 
-### 2. Cancelamento de OS (sem delete)
+Bucket privado `extintores-inspecoes`.
 
-Regra: **OS nunca é apagada** (documento legal NR-1). "Cancelar" = mudar status para `CANCELADO`.
+Tabela `extintor_inspecoes_fotos`:
+- `extintor_id` (FK opcional — pode ser inspeção avulsa antes de cadastrar)
+- `inspecionado_por` (uuid do usuário), `inspecionado_em`
+- `foto_etiqueta_path`, `foto_manometro_path`, `foto_lacre_path`
+- `gps_lat`, `gps_lng`, `gps_accuracy`, `localizacao_descritiva`
+- `laudo_ia` (jsonb — saída bruta da IA)
+- `laudo_revisado` (jsonb — versão editada pelo TST)
+- `confianca_ia` (numeric 0-1)
+- `status_geral` (`conforme` / `nao_conforme` / `pendente_revisao`)
+- `nao_conformidades` (text[])
+- `assinatura_path` (svg/png da assinatura)
+- `assinado_por_nome`, `assinado_por_cargo`
+- `observacoes`
 
-- Permissão: `admin` **ou** `moderador`
-- Modal obrigatório com:
-  - Justificativa (textarea, mínimo 20 caracteres)
-  - Confirmação dupla ("Digite CANCELAR para confirmar")
-- Registra:
-  - `cancelado_em`, `cancelado_por`, `motivo_cancelamento`
-  - Entrada em `audit_logs` (já automático via trigger)
-- Ao cancelar uma OS `ASSINADO` do cargo vigente do funcionário:
-  - **Dispara pendência automática**: cria registro em `nao_conformidades` (ou tabela de pendências de OS) marcando "Funcionário X sem OS ativa para o cargo Y — emitir nova"
-  - Funcionário fica visível em uma aba/badge "OS pendente" no painel
-  - Sistema **não reativa** OS anterior automaticamente (mais seguro)
+RLS: SELECT/INSERT para `authenticated` (qualquer perfil pode inspecionar, conforme combinado); UPDATE/DELETE só admin/TST.
+GRANTs explícitos + trigger `updated_at`.
 
-### 3. Assinador integrado ao fluxo OS
+Policies do bucket: INSERT/SELECT para authenticated nas próprias inspeções; DELETE só admin.
 
-Botão `Assinar` no painel OS:
-1. Gera/recupera o PDF da OS (já existe a geração)
-2. Abre o `pdf-viewer-dialog` em modo assinatura, com PDF pré-carregado
-3. Usuário assina (assinatura salva ou desenhada)
-4. Ao confirmar:
-   - Gera PDF assinado
-   - Salva direto em `oss_emissoes.pdf_assinado_url` (storage)
-   - Atualiza `status = 'ASSINADO'`, `data_assinatura`, `assinante_id`, `hash_pdf`
-   - Fecha modal, atualiza painel
-5. **Sem download/upload manual** — fluxo 1-clique
+## Backend (server function)
 
-### 4. Ficha do funcionário → aba OS
+`src/lib/extintor-inspecao.functions.ts` com `analisarFotosExtintor`:
+- Recebe URLs assinadas das 3 fotos (já no bucket).
+- Chama Lovable AI Gateway (`google/gemini-3-flash-preview`) com prompt multimodal + structured output (Zod schema).
+- Schema de saída: `{ marca, tipo, capacidade_kg, fabricante, data_fabricacao, validade, num_patrimonio, pressao_manometro, lacre_integro, mangueira_ok, sinalizacao_ok, obstrucao, qualidade_foto, confianca, nao_conformidades[], observacoes }`.
+- Retorna o JSON + score de confiança.
 
-- **OS vigente** em destaque (último `ASSINADO` para o cargo atual)
-- Botão "Visualizar PDF assinado"
-- Accordion "Histórico" com `SUBSTITUIDO` e `CANCELADO` (read-only)
-- Badge "⚠ Sem OS ativa" quando cancelada e não reemitida
-- Vinculação automática (mesma tabela `oss_emissoes`, mesma linha)
+`salvarInspecao` com `requireSupabaseAuth`: persiste registro + atualiza extintor vinculado.
 
-### 5. Migration necessária
+## Frontend
 
-```sql
-ALTER TABLE public.oss_emissoes
-  ADD COLUMN IF NOT EXISTS cancelado_em timestamptz,
-  ADD COLUMN IF NOT EXISTS cancelado_por uuid REFERENCES auth.users(id),
-  ADD COLUMN IF NOT EXISTS motivo_cancelamento text;
+- `src/routes/_authenticated/app/extintores.inspecao-foto.tsx` (rota nova) — wizard de 3 passos.
+- Componente `FotoCapture` reutilizável (input file com `capture="environment"` para celular + preview + retake).
+- Componente `RevisaoLaudo` — formulário pré-preenchido pela IA, com badge de confiança por campo.
+- Reaproveita componente de assinatura existente (`assinaturas_salvas`).
+- Botão "Inspeção por foto" no header de `/app/extintores`.
+- Aba "Histórico de inspeções com foto" no detalhe do extintor.
 
--- Função RPC para cancelar com permissão e justificativa
-CREATE OR REPLACE FUNCTION public.cancelar_os(
-  _os_id uuid,
-  _motivo text
-) RETURNS void
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
-AS $$
-DECLARE v_user uuid := auth.uid();
-BEGIN
-  IF v_user IS NULL OR NOT public.is_moderator(v_user) THEN
-    RAISE EXCEPTION 'Apenas admin/moderador podem cancelar OS';
-  END IF;
-  IF _motivo IS NULL OR length(btrim(_motivo)) < 20 THEN
-    RAISE EXCEPTION 'Justificativa obrigatória (mínimo 20 caracteres)';
-  END IF;
-  UPDATE public.oss_emissoes
-     SET status = 'CANCELADO',
-         cancelado_em = now(),
-         cancelado_por = v_user,
-         motivo_cancelamento = _motivo,
-         updated_at = now()
-   WHERE id = _os_id;
-END; $$;
-```
+## Notas técnicas
 
-### Arquivos a alterar
-
-- `src/routes/app/oss.*` — botões de ação, filtros, modal de cancelamento, modal de assinatura integrada
-- `src/components/pdf-viewer-dialog.tsx` — modo "assinatura embarcada" com callback de salvamento direto na OS
-- `src/routes/app/employees/$id.tsx` (aba OS) — destacar OS vigente, accordion histórico, badge "sem OS ativa"
-- Migration nova com colunas + função `cancelar_os`
-
-### Ordem de execução
-
-1. Migration (colunas + RPC)
-2. Refactor do `pdf-viewer-dialog` para aceitar contexto OS e salvar direto
-3. Painel OS: botões + modal de cancelamento + assinatura integrada
-4. Aba OS na ficha do funcionário
+- GPS: `navigator.geolocation.getCurrentPosition` com fallback gracioso (sem GPS → continua, só marca campo vazio).
+- Compressão de imagem client-side antes do upload (máx 1600px lado maior, JPEG 0.85) — economiza storage e acelera IA.
+- Upload direto ao Storage com signed upload URL.
+- Modelo IA: `google/gemini-3-flash-preview` (multimodal, rápido, barato). Se confiança < 0.7 → força revisão obrigatória com aviso amarelo.
+- Tratamento de erros do gateway (429 / 402) com mensagens claras na UI.
