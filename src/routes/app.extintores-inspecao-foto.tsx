@@ -338,6 +338,18 @@ function InspecaoFotoPage() {
         divergente ? "pendente_revisao" : "nao_conforme";
 
       // Dados técnicos para gravar e enriquecer o cadastro
+      const toDate = (v: any): string | null => {
+        if (!v || typeof v !== "string") return null;
+        const s = v.trim();
+        if (!s) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        let m = s.match(/^(\d{1,2})\/(\d{4})$/); // MM/AAAA
+        if (m) return `${m[2]}-${m[1].padStart(2, "0")}-01`;
+        m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); // DD/MM/AAAA
+        if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+        if (/^\d{4}$/.test(s)) return `${s}-12-31`; // só ano
+        return null;
+      };
       const dadosTecnicos = {
         fabricante: laudo.fabricante ?? null,
         tipo: laudo.tipo ?? null,
@@ -347,9 +359,9 @@ function InspecaoFotoPage() {
         codigo_inmetro: laudo.codigo_inmetro ?? null,
         lote_inmetro: laudo.lote_inmetro ?? null,
         qr_inmetro_url: laudo.qr_inmetro_url ?? null,
-        data_fabricacao: laudo.data_fabricacao ?? null,
-        proxima_manutencao_n2: laudo.proxima_manutencao_n2 ?? null,
-        proxima_manutencao_n3: laudo.proxima_manutencao_n3 ?? null,
+        data_fabricacao: toDate(laudo.data_fabricacao),
+        proxima_manutencao_n2: toDate(laudo.proxima_manutencao_n2),
+        proxima_manutencao_n3: toDate(laudo.proxima_manutencao_n3),
         checklist: Object.fromEntries(ITENS_FOR_SFG_08.map((it) => [it.key, laudo[it.key]])),
       };
 
