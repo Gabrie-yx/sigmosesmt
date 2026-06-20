@@ -206,7 +206,14 @@ export function ExtintorInspecaoFotoDialog({
     reset();
     navigate({
       to: "/app/extintores-inspecao-foto",
-      search: () => ({ extintor: extintor.id, handoff: "1" }) as any,
+      search: {
+        extintor: extintor.id,
+        handoff: "1",
+        etiqueta: etiqueta.path,
+        manometro: manometro.path,
+        inmetro: inmetro.path,
+        extra: extra.path ?? undefined,
+      } as any,
     });
   };
 
