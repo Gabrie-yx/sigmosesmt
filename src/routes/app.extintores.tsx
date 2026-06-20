@@ -1437,25 +1437,39 @@ function HistoricoInspecoesDialog({
                   onChange={(e) => setManualForm((p) => ({ ...p, responsavel_registro: e.target.value }))}
                 />
               </div>
-              <div className="md:col-span-2 flex items-center gap-3">
-                <Label className="text-xs flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    checked={manualForm.conforme}
-                    onChange={() => setManualForm((p) => ({ ...p, conforme: true }))}
-                  />
-                  <span className="text-emerald-300 font-semibold">CONFORME</span>
-                </Label>
-                <Label className="text-xs flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    checked={!manualForm.conforme}
-                    onChange={() => setManualForm((p) => ({ ...p, conforme: false }))}
-                  />
-                  <span className="text-red-300 font-semibold">NÃO CONFORME</span>
-                </Label>
+              <div className="md:col-span-2 space-y-2">
+                <Label className="text-xs">Resultado da inspeção *</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setManualForm((p) => ({ ...p, conforme: true }))}
+                    className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-bold transition ${
+                      manualForm.conforme === true
+                        ? "border-emerald-500 bg-emerald-500/15 text-emerald-300 shadow-[0_0_12px_-4px_rgba(16,185,129,0.6)]"
+                        : "border-slate-700 text-slate-400 hover:border-emerald-500/40 hover:text-emerald-300"
+                    }`}
+                  >
+                    CONFORME
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setManualForm((p) => ({ ...p, conforme: false }))}
+                    className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-bold transition ${
+                      manualForm.conforme === false
+                        ? "border-red-500 bg-red-500/15 text-red-300 shadow-[0_0_12px_-4px_rgba(239,68,68,0.6)]"
+                        : "border-slate-700 text-slate-400 hover:border-red-500/40 hover:text-red-300"
+                    }`}
+                  >
+                    NÃO CONFORME
+                  </button>
+                </div>
+                {manualForm.conforme === null && (
+                  <div className="text-[11px] text-amber-400">
+                    Escolha CONFORME ou NÃO CONFORME — sem valor padrão. Digitar observação não conclui a inspeção.
+                  </div>
+                )}
               </div>
-              {!manualForm.conforme && (
+              {manualForm.conforme === false && (
                 <div className="md:col-span-2">
                   <Label className="text-xs">Descrição da não conformidade *</Label>
                   <Textarea
