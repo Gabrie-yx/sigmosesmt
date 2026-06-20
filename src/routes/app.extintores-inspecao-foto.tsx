@@ -161,8 +161,15 @@ function InspecaoFotoPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
 
-  const [etapa, setEtapa] = useState<0 | 1 | 2 | 3>(0);
+  const [etapa, setEtapa] = useState<0 | 1 | 2 | 3>(() => {
+    if (typeof window === "undefined") return 0;
+    return new URLSearchParams(window.location.search).get("handoff") === "1" ? 2 : 0;
+  });
   const [autoAnalisar, setAutoAnalisar] = useState<FotoPrefillPaths | null>(null);
+  const [handoffLoading, setHandoffLoading] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("handoff") === "1";
+  });
 
   // Seleção do extintor
   const [extintorId, setExtintorId] = useState<string>("");
@@ -170,8 +177,12 @@ function InspecaoFotoPage() {
   // Pré-seleção via ?extintor=...
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const id = new URLSearchParams(window.location.search).get("extintor");
-    if (id) { setExtintorId(id); setEtapa(1); }
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("extintor");
+    if (id) {
+      setExtintorId(id);
+      if (params.get("handoff") !== "1") setEtapa(1);
+    }
   }, []);
 
   // Pré-carrega fotos enviadas pelo modal de inspeção (sessionStorage)
@@ -184,6 +195,7 @@ function InspecaoFotoPage() {
     if (!raw) {
       if (veioDoModal) {
         toast.error("Não consegui recuperar as fotos do modal. Abra o extintor e tente novamente.");
+        setHandoffLoading(false);
         navigate({ to: "/app/extintores" });
       }
       return;
@@ -211,7 +223,10 @@ function InspecaoFotoPage() {
         });
       }
       sessionStorage.removeItem(key);
-    } catch {/* ignore */}
+    } catch {
+      setHandoffLoading(false);
+      toast.error("Não consegui preparar as fotos para análise. Tente novamente.");
+    }
   }, [extintorId, navigate]);
 
   const [busca, setBusca] = useState("");
