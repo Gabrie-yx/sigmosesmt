@@ -134,7 +134,23 @@ function ExtintoresPage() {
     const inspecionados = ativos.filter((e) => inspecoesMesPorExt.has(e.id)).length;
     const semInspecao = ativos.length - inspecionados;
     const pctInsp = ativos.length ? Math.round((inspecionados / ativos.length) * 100) : 0;
-    return { total: all.length, ativos: ativos.length, vencidos, vencendo, semInspecao, inspecionados, pctInsp };
+    const emManutencao = all.filter((e) => e.status === "EM_MANUTENCAO").length;
+    const baixados = all.filter((e) => e.status === "BAIXADO").length;
+    const vencidosStatus = all.filter(
+      (e) => e.status === "VENCIDO" || (e.status === "ATIVO" && e.proxima_recarga && e.proxima_recarga < hojeISO),
+    ).length;
+    return {
+      total: all.length,
+      ativos: ativos.length,
+      vencidos,
+      vencendo,
+      semInspecao,
+      inspecionados,
+      pctInsp,
+      emManutencao,
+      baixados,
+      vencidosStatus,
+    };
   }, [extintores.data, inspecoesMesPorExt]);
 
   const onInvalidate = () => {
@@ -211,13 +227,13 @@ function ExtintoresPage() {
         </div>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs (clicáveis = filtram a lista) */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Kpi icon={ShieldCheck} label="Total" value={stats.total} tone="slate" />
-        <Kpi icon={CheckCircle2} label="Ativos" value={stats.ativos} tone="green" />
-        <Kpi icon={AlertTriangle} label="Recarga vencida" value={stats.vencidos} tone="red" pulse={stats.vencidos > 0} />
-        <Kpi icon={CalendarClock} label="Vencendo 30d" value={stats.vencendo} tone="amber" />
-        <Kpi icon={ClipboardCheck} label="Sem inspeção" value={stats.semInspecao} tone={stats.semInspecao > 0 ? "amber" : "green"} />
+        <Kpi icon={ShieldCheck} label="Total" value={stats.total} tone="slate" active={fStatus === "TODOS"} onClick={() => setFStatus("TODOS")} />
+        <Kpi icon={CheckCircle2} label="Ativo" value={stats.ativos} tone="green" active={fStatus === "ATIVO"} onClick={() => setFStatus("ATIVO")} />
+        <Kpi icon={CalendarClock} label="Em manutenção" value={stats.emManutencao} tone="amber" active={fStatus === "EM_MANUTENCAO"} onClick={() => setFStatus("EM_MANUTENCAO")} />
+        <Kpi icon={ClipboardCheck} label="Baixado" value={stats.baixados} tone="slate" active={fStatus === "BAIXADO"} onClick={() => setFStatus("BAIXADO")} />
+        <Kpi icon={AlertTriangle} label="Vencido" value={stats.vencidosStatus} tone="red" pulse={stats.vencidosStatus > 0} active={fStatus === "VENCIDO"} onClick={() => setFStatus("VENCIDO")} />
       </div>
 
       {/* Banner normativa NBR 12962 */}
@@ -295,7 +311,7 @@ function ExtintoresPage() {
           Nenhum extintor encontrado.
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {filtered.map((e) => {
             const insp = inspecoesMesPorExt.get(e.id);
             const hojeISO = hoje.toISOString().slice(0, 10);
@@ -335,7 +351,10 @@ function ExtintoresPage() {
                       {e.numero || "—"}
                     </div>
                   </div>
-                  <Badge variant="outline" className="text-[10px] font-bold px-1.5 py-0 h-5 shrink-0 bg-slate-950/80 text-cyan-300 border-cyan-500/30">
+                  <Badge
+                    variant="outline"
+                    className="text-sm font-black tracking-wider px-2.5 py-1 h-7 shrink-0 bg-slate-950/90 text-cyan-300 border-cyan-500/40 shadow-[0_0_12px_-2px_rgba(34,211,238,0.55)]"
+                  >
                     {e.tipo_agente}
                   </Badge>
                 </div>
@@ -358,6 +377,37 @@ function ExtintoresPage() {
                     {e.proxima_recarga ? formatDateBR(e.proxima_recarga) : "—"}
                   </span>
                 </div>
+
+                {/* Volume / nível (efeito neon estilo print 2) */}
+                {(() => {
+                  const pct = (() => {
+                    if (vencido) return 15;
+                    if (iaStatus === "NAO_CONFORME") return 20;
+                    if (iaStatus === "PRECISA_REVISAO") return 55;
+                    if (insp?.conforme || iaStatus === "CONFORME") return 100;
+                    return 70;
+                  })();
+                  const barTone =
+                    vencido || iaStatus === "NAO_CONFORME"
+                      ? "from-red-500 to-red-400 shadow-[0_0_10px_rgba(239,68,68,0.7)]"
+                      : iaStatus === "PRECISA_REVISAO"
+                      ? "from-amber-500 to-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.7)]"
+                      : "from-emerald-500 to-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.7)]";
+                  return (
+                    <div>
+                      <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        <span>Nível</span>
+                        <span className="tabular-nums">{pct}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-950/70 ring-1 ring-slate-700/60 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${barTone} transition-all duration-700`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Inspeção do mês */}
                 <div>
@@ -470,8 +520,8 @@ function ExtintoresPage() {
 }
 
 function Kpi({
-  label, value, tone, icon: Icon, pulse,
-}: { label: string; value: number; tone: "red" | "amber" | "green" | "slate"; icon: any; pulse?: boolean }) {
+  label, value, tone, icon: Icon, pulse, active, onClick,
+}: { label: string; value: number; tone: "red" | "amber" | "green" | "slate"; icon: any; pulse?: boolean; active?: boolean; onClick?: () => void }) {
   const tones = {
     red: "from-red-500 to-red-700",
     amber: "from-amber-400 to-amber-600",
@@ -479,7 +529,11 @@ function Kpi({
     slate: "from-slate-600 to-slate-800",
   };
   return (
-    <div className={`relative rounded-xl bg-gradient-to-br ${tones[tone]} text-white p-3 shadow-md ring-1 ring-white/10 overflow-hidden group hover:shadow-lg hover:-translate-y-0.5 transition-all`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-left relative rounded-xl bg-gradient-to-br ${tones[tone]} text-white p-3 shadow-md ring-1 overflow-hidden group hover:shadow-lg hover:-translate-y-0.5 transition-all ${active ? "ring-white/70 shadow-[0_0_0_2px_rgba(255,255,255,0.35),0_8px_24px_-8px_rgba(0,0,0,0.5)]" : "ring-white/10"}`}
+    >
       <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-white/10 blur-xl group-hover:bg-white/20 transition" />
       <div className="relative flex items-start justify-between">
         <div>
@@ -490,7 +544,7 @@ function Kpi({
           <Icon className="h-4 w-4" />
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
