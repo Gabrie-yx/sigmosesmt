@@ -144,11 +144,11 @@ function ResetPasswordPage() {
             </form>
           ) : hasSession && mfaNeeded ? (
             <form onSubmit={submitMfa} className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+              <p className="rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-sm text-slate-200">
                 Sua conta tem verificação em duas etapas (MFA). Digite o código de 6 dígitos do seu app autenticador para concluir a troca de senha.
               </p>
               <div className="space-y-2">
-                <Label>Código do autenticador</Label>
+                <Label className="text-slate-200">Código do autenticador</Label>
                 <Input
                   inputMode="numeric"
                   autoComplete="one-time-code"
@@ -156,15 +156,16 @@ function ResetPasswordPage() {
                   value={mfaCode}
                   onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
+                  className="bg-white/10 border-white/20 font-mono text-lg tracking-widest text-white placeholder:text-slate-400 focus-visible:ring-red-500/60"
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>
+              <Button type="submit" className="w-full bg-red-600 text-white shadow-lg shadow-red-900/50 hover:bg-red-500" disabled={busy}>
                 {busy ? "Verificando..." : "Verificar e salvar senha"}
               </Button>
             </form>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-300">
               Se você chegou aqui sem clicar no link do convite, peça um novo convite ao administrador.
             </p>
           )}
