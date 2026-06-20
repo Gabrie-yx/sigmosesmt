@@ -43,6 +43,25 @@ type FotoPrefillPaths = {
 };
 const initialFoto = (): FotoState => ({ file: null, previewUrl: null, path: null, uploading: false });
 
+function readSearchValue(params: URLSearchParams, key: string): string | null {
+  const raw = params.get(key);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === "string") return parsed;
+    if (typeof parsed === "boolean") return parsed ? "true" : "false";
+    if (typeof parsed === "number") return String(parsed);
+  } catch {
+    // TanStack may leave plain values unquoted; URLSearchParams may also receive JSON-encoded values.
+  }
+  return raw;
+}
+
+function isHandoffParam(params: URLSearchParams): boolean {
+  const value = readSearchValue(params, "handoff");
+  return value === "1" || value === "true";
+}
+
 const SLOT_INFO: Record<Slot, { titulo: string; instrucao: string; obrigatoria: boolean; emoji: string }> = {
   etiqueta: {
     emoji: "🏷️",
@@ -163,13 +182,18 @@ function InspecaoFotoPage() {
 
   const [etapa, setEtapa] = useState<0 | 1 | 2 | 3>(() => {
     if (typeof window === "undefined") return 0;
-    return new URLSearchParams(window.location.search).get("handoff") === "1" ? 2 : 0;
+    return isHandoffParam(new URLSearchParams(window.location.search)) ? 2 : 0;
   });
   const [autoAnalisar, setAutoAnalisar] = useState<FotoPrefillPaths | null>(null);
+  const [fluxoModal] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return isHandoffParam(new URLSearchParams(window.location.search));
+  });
   const [handoffLoading, setHandoffLoading] = useState(() => {
     if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("handoff") === "1";
+    return isHandoffParam(new URLSearchParams(window.location.search));
   });
+  const [handoffError, setHandoffError] = useState<string | null>(null);
 
   // Seleção do extintor
   const [extintorId, setExtintorId] = useState<string>("");
@@ -178,25 +202,33 @@ function InspecaoFotoPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("extintor");
+    const id = readSearchValue(params, "extintor");
+    if (!isHandoffParam(params)) {
+      toast.info("A inspeção por foto agora começa pelo modal do painel de extintores.");
+      navigate({ to: "/app/extintores" });
+      return;
+    }
+    if (!id) {
+      toast.error("Escolha um extintor no painel antes de iniciar a inspeção por foto.");
+      navigate({ to: "/app/extintores" });
+      return;
+    }
     if (id) {
       setExtintorId(id);
-      if (params.get("handoff") !== "1") setEtapa(1);
     }
-  }, []);
+  }, [navigate]);
 
   // Pré-carrega fotos enviadas pelo modal de inspeção (sessionStorage)
   useEffect(() => {
     if (typeof window === "undefined" || !extintorId) return;
     const params = new URLSearchParams(window.location.search);
-    const veioDoModal = params.get("handoff") === "1";
+    const veioDoModal = isHandoffParam(params);
     const key = `inspecao-foto-prefill:${extintorId}`;
     const raw = sessionStorage.getItem(key);
     if (!raw) {
       if (veioDoModal) {
-        toast.error("Não consegui recuperar as fotos do modal. Abra o extintor e tente novamente.");
+        setHandoffError("Não consegui recuperar as fotos enviadas. Volte ao painel e tente iniciar a inspeção novamente.");
         setHandoffLoading(false);
-        navigate({ to: "/app/extintores" });
       }
       return;
     }
@@ -205,7 +237,9 @@ function InspecaoFotoPage() {
       if (Date.now() - (p.ts ?? 0) > 30 * 60 * 1000) {
         sessionStorage.removeItem(key);
         setHandoffLoading(false);
-        if (veioDoModal) toast.error("As fotos expiraram. Abra o extintor e envie novamente.");
+        if (veioDoModal) {
+          setHandoffError("As fotos expiraram. Volte ao painel e envie novamente.");
+        }
         return;
       }
       const mk = (path: string | null): FotoState => path
@@ -225,12 +259,12 @@ function InspecaoFotoPage() {
         });
       } else if (veioDoModal) {
         setHandoffLoading(false);
-        toast.error("Faltam fotos obrigatórias. Abra o extintor e envie novamente.");
+        setHandoffError("Faltam fotos obrigatórias. Volte ao painel e envie etiqueta, manômetro e INMETRO.");
       }
       sessionStorage.removeItem(key);
     } catch {
       setHandoffLoading(false);
-      toast.error("Não consegui preparar as fotos para análise. Tente novamente.");
+      if (veioDoModal) setHandoffError("Não consegui preparar as fotos para análise. Volte ao painel e tente novamente.");
     }
   }, [extintorId, navigate]);
 
@@ -361,12 +395,17 @@ function InspecaoFotoPage() {
       extraPath: extra.path ?? null,
     };
     if (!fotoPaths.etiquetaPath || !fotoPaths.manometroPath || !fotoPaths.inmetroPath) {
-      toast.error("Envie as 3 fotos obrigatórias (etiqueta, manômetro e INMETRO).");
+      const msg = "Envie as 3 fotos obrigatórias (etiqueta, manômetro e INMETRO).";
+      if (fluxoModal) setHandoffError(msg);
+      else toast.error(msg);
       setHandoffLoading(false);
       return;
     }
     if ([etiqueta, manometro, inmetro, extra].some((f) => f.uploading)) {
-      toast.error("Aguarde os uploads terminarem.");
+      const msg = "Aguarde os uploads terminarem.";
+      if (fluxoModal) setHandoffError(msg);
+      else toast.error(msg);
+      setHandoffLoading(false);
       return;
     }
     setAnalisando(true);
@@ -400,7 +439,9 @@ function InspecaoFotoPage() {
         toast.success("Laudo gerado! Revise antes de salvar.");
       }
     } catch (e: any) {
-      toast.error(e.message ?? String(e));
+      const msg = e.message ?? String(e);
+      if (fluxoModal) setHandoffError(msg);
+      else toast.error(msg);
     } finally {
       setHandoffLoading(false);
       setAnalisando(false);
@@ -529,6 +570,27 @@ function InspecaoFotoPage() {
               <div className="font-semibold">Analisando fotos com IA…</div>
               <div className="text-xs text-muted-foreground">Pulando a tela antiga de fotos e preparando o laudo.</div>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (fluxoModal && handoffError) {
+    return (
+      <div className="mx-auto flex min-h-[55vh] w-full max-w-3xl items-center justify-center px-4 md:px-6 py-6">
+        <Card className="w-full max-w-lg border-red-200">
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 text-red-600" />
+              <div>
+                <div className="font-semibold">A análise por IA não foi concluída</div>
+                <div className="mt-1 text-sm text-muted-foreground">{handoffError}</div>
+              </div>
+            </div>
+            <Button onClick={() => navigate({ to: "/app/extintores" })}>
+              Voltar ao painel de extintores
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -676,7 +738,7 @@ function InspecaoFotoPage() {
       )}
 
       {/* ========== ETAPA 1: Fotos ========== */}
-      {etapa === 1 && (
+      {!fluxoModal && etapa === 1 && (
         <div className="space-y-3">
           {extintorSelecionado && (
             <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs">
@@ -706,7 +768,7 @@ function InspecaoFotoPage() {
       )}
 
       {/* ========== ETAPA 2: Localização ========== */}
-      {etapa === 2 && (
+      {!fluxoModal && etapa === 2 && (
         <div className="space-y-4">
           <Card>
             <CardContent className="p-4 space-y-3">
@@ -916,7 +978,11 @@ function InspecaoFotoPage() {
           </Card>
 
           <div className="flex justify-between sticky bottom-0 bg-background py-2">
-            <Button variant="outline" onClick={() => setEtapa(2)}>← Voltar</Button>
+            {fluxoModal ? (
+              <Button variant="outline" onClick={() => navigate({ to: "/app/extintores" })}>← Voltar ao painel</Button>
+            ) : (
+              <Button variant="outline" onClick={() => setEtapa(2)}>← Voltar</Button>
+            )}
             <Button onClick={() => salvarMut.mutate()} disabled={salvarMut.isPending}>
               {salvarMut.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvando…</> : "Salvar inspeção"}
             </Button>

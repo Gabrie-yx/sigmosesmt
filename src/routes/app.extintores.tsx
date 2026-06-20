@@ -61,6 +61,17 @@ const IA_STATUS_LABEL: Record<string, string> = {
   NAO_CONFORME: "IA NC",
 };
 
+function readSearchString(params: URLSearchParams, key: string): string | null {
+  const raw = params.get(key);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed === "string" ? parsed : raw;
+  } catch {
+    return raw;
+  }
+}
+
 type Extintor = any;
 type Inspecao = any;
 
@@ -195,7 +206,7 @@ function ExtintoresPage() {
   useEffect(() => {
     if (typeof window === "undefined" || !extintores.data?.length) return;
     const params = new URLSearchParams(window.location.search);
-    const historicoId = params.get("historico");
+    const historicoId = readSearchString(params, "historico");
     if (!historicoId) return;
     const alvo = extintores.data.find((e) => e.id === historicoId);
     if (alvo) {
