@@ -1,4 +1,4 @@
-import { Flame } from "lucide-react";
+import { Flame, ClipboardCheck, Camera, ClipboardEdit } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -7,20 +7,45 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { ExtintorInspecaoFotoDialog } from "@/components/extintores/inspecao-foto-dialog";
+import { InspecaoManualDialog } from "@/components/extintores/inspecao-manual-dialog";
+import { useAuth } from "@/hooks/use-auth";
+
+const PREVIEW_EXTINTOR = {
+  id: "preview-005974",
+  numero: "005974",
+  tipo_agente: "ABC 6KG",
+  localizacao: "Galpão 2 · Pilar B3",
+};
 
 /**
  * Preview de card "vidro escuro" para os extintores.
  * Painel de vidro fumê com borda cromada brilhante e reflexo diagonal.
  */
 export function ExtintorGlassCardPreview() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [fotoOpen, setFotoOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
 
   return (
     <>
       <div className="bg-black p-10 rounded-3xl flex justify-center">
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") setOpen(true);
+          }}
           aria-label="Abrir extintor 005974"
           className="relative w-[360px] aspect-[3/2] group cursor-pointer focus:outline-none"
         >
@@ -59,14 +84,6 @@ export function ExtintorGlassCardPreview() {
                     "radial-gradient(140% 55% at 50% -25%, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.06) 35%, transparent 60%)",
                 }}
               />
-              {/* Reflexo diagonal (lower-left → upper-right) */}
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(45deg, transparent 35%, rgba(255,255,255,0.10) 48%, rgba(255,255,255,0.22) 52%, rgba(255,255,255,0.06) 58%, transparent 70%)",
-                }}
-              />
               {/* Vinheta inferior */}
               <div
                 className="pointer-events-none absolute inset-0"
@@ -95,28 +112,71 @@ export function ExtintorGlassCardPreview() {
                   </div>
                 </div>
 
-                <div className="flex items-end justify-between">
-                  <div className="min-w-0">
-                    <div className="text-[9px] uppercase tracking-[0.18em] text-white/40">
-                      Local no Pátio
+                <div className="space-y-3">
+                  <div className="flex items-end justify-between">
+                    <div className="min-w-0">
+                      <div className="text-[9px] uppercase tracking-[0.18em] text-white/40">
+                        Local no Pátio
+                      </div>
+                      <div className="text-sm font-semibold text-white/90 truncate">
+                        Galpão 2 · Pilar B3
+                      </div>
                     </div>
-                    <div className="text-sm font-semibold text-white/90 truncate">
-                      Galpão 2 · Pilar B3
+                    <div className="text-right">
+                      <div className="text-[9px] uppercase tracking-[0.18em] text-white/40">
+                        Próx. recarga
+                      </div>
+                      <div className="text-sm font-bold tabular-nums text-emerald-300/90">
+                        30/04/2027
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-[9px] uppercase tracking-[0.18em] text-white/40">
-                      Próx. recarga
-                    </div>
-                    <div className="text-sm font-bold tabular-nums text-emerald-300/90">
-                      30/04/2027
-                    </div>
-                  </div>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] active:bg-white/[0.18] backdrop-blur-sm py-2 text-xs font-semibold tracking-wide text-white/90 transition"
+                      >
+                        <ClipboardCheck className="h-3.5 w-3.5" />
+                        Inspeção
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="center"
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-56"
+                    >
+                      <DropdownMenuLabel className="text-xs">
+                        Escolha o tipo
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={() => setFotoOpen(true)}>
+                        <Camera className="h-4 w-4 mr-2 text-red-500" />
+                        <div className="flex flex-col">
+                          <span className="text-sm">Inspeção por Foto</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            IA analisa + cruza com cadastro
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setManualOpen(true)}>
+                        <ClipboardEdit className="h-4 w-4 mr-2 text-blue-500" />
+                        <div className="flex flex-col">
+                          <span className="text-sm">Inspeção Manual</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            Checklist preenchido em tela
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>
           </div>
-        </button>
+        </div>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -142,6 +202,19 @@ export function ExtintorGlassCardPreview() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ExtintorInspecaoFotoDialog
+        extintor={PREVIEW_EXTINTOR}
+        open={fotoOpen}
+        onOpenChange={setFotoOpen}
+      />
+      <InspecaoManualDialog
+        extintor={PREVIEW_EXTINTOR}
+        open={manualOpen}
+        onOpenChange={setManualOpen}
+        userId={user?.id}
+        userNome={user?.user_metadata?.full_name ?? user?.email ?? ""}
+      />
     </>
   );
 }
