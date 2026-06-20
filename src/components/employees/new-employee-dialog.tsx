@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Wizard, type WizardStep } from "@/components/wizard";
-import { maskCPF, maskCNPJ } from "@/lib/masks";
+import { maskCPF, maskCNPJ, onlyDigits } from "@/lib/masks";
 import { toast } from "sonner";
 
 type Props = {
@@ -16,8 +17,20 @@ type Props = {
   onCreated?: () => void;
 };
 
+function isCpfDuplicateError(error: any) {
+  const msg = `${error?.message ?? ""} ${error?.details ?? ""}`;
+  return error?.code === "23505" && msg.includes("employees_cpf_digits_unique");
+}
+
+function duplicateCpfMessage(employee: any) {
+  const companyName = employee?.companies?.name ? ` na empresa ${employee.companies.name}` : "";
+  const status = employee?.status ? ` · status ${employee.status}` : "";
+  return `CPF já cadastrado para ${employee?.nome ?? "outro funcionário"}${companyName}${status}. Abra o cadastro existente em vez de criar outro.`;
+}
+
 export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCreated }: Props) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [form, setForm] = useState<any>({ nome: "", cpf: "", matricula: "", status: "ATIVO", company_id: defaultCompanyId ?? "", role_id: "", tipo_cadastro: "NAO_MEI", cnpj: "" });
 
   useEffect(() => {
@@ -37,9 +50,28 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
 
   const create = useMutation({
     mutationFn: async (v: any) => {
+      const cpfDigits = onlyDigits(v.cpf);
+      const cpfFormatado = cpfDigits ? maskCPF(cpfDigits) : "";
+      if (cpfDigits && cpfDigits.length !== 11) {
+        throw new Error("CPF incompleto. Informe os 11 dígitos ou deixe o campo em branco.");
+      }
+      if (cpfDigits) {
+        const { data: existing, error: lookupError } = await supabase
+          .from("employees")
+          .select("id,nome,cpf,status,company_id,companies(name)")
+          .or(`cpf.eq.${cpfFormatado},cpf.eq.${cpfDigits}`)
+          .maybeSingle();
+        if (lookupError) throw lookupError;
+        if (existing) {
+          throw Object.assign(new Error(duplicateCpfMessage(existing)), {
+            code: "DUPLICATE_EMPLOYEE_CPF",
+            employee: existing,
+          });
+        }
+      }
       const { error } = await supabase.from("employees").insert({
         nome: v.nome,
-        cpf: v.cpf || null,
+        cpf: cpfFormatado || null,
         matricula: v.matricula || null,
         status: v.status,
         company_id: v.company_id || null,
@@ -47,7 +79,12 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
         tipo_cadastro: v.tipo_cadastro || "NAO_MEI",
         cnpj: v.tipo_cadastro === "MEI" ? (v.cnpj || null) : null,
       });
-      if (error) throw error;
+      if (error) {
+        if (isCpfDuplicateError(error)) {
+          throw new Error("CPF já cadastrado em outro funcionário. Busque pelo CPF na lista e abra o cadastro existente.");
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["employees"] });
@@ -56,7 +93,22 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
       onOpenChange(false);
       toast.success("Funcionário criado");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => {
+      if (e?.code === "DUPLICATE_EMPLOYEE_CPF" && e.employee?.id) {
+        toast.error("CPF já cadastrado", {
+          description: e.message,
+          action: {
+            label: "Abrir cadastro",
+            onClick: () => {
+              onOpenChange(false);
+              navigate({ to: "/app/employees/$id", params: { id: e.employee.id } });
+            },
+          },
+        });
+        return;
+      }
+      toast.error(e.message);
+    },
   });
 
   const selectedCompany = useMemo(() => (companies ?? []).find((c: any) => c.id === form.company_id), [companies, form.company_id]);
