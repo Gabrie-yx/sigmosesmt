@@ -271,7 +271,7 @@ function InspecaoFotoPage() {
     try {
       const parsed = raw ? JSON.parse(raw) : null;
       const paths = coercePrefillPaths(parsed) ?? directPhotos;
-      if (raw && Date.now() - (p.ts ?? 0) > 30 * 60 * 1000) {
+      if (raw && Date.now() - (Number(parsed?.ts) || 0) > 30 * 60 * 1000) {
         sessionStorage.removeItem(key);
         setHandoffLoading(false);
         if (veioDoModal) {
