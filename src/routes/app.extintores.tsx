@@ -427,31 +427,53 @@ function ExtintoresPage() {
                   </span>
                 </div>
 
-                {/* Volume / nível (efeito neon estilo print 2) */}
+                {/* Vida útil até a próxima recarga (12 meses NBR 12962) */}
                 {(() => {
-                  const pct = (() => {
-                    if (vencido) return 15;
-                    if (iaStatus === "NAO_CONFORME") return 20;
-                    if (iaStatus === "PRECISA_REVISAO") return 55;
-                    if (insp?.conforme || iaStatus === "CONFORME") return 100;
-                    return 70;
-                  })();
+                  const recargaStr = (e as any).data_ultima_recarga as string | null | undefined;
+                  if (!recargaStr) {
+                    return (
+                      <div>
+                        <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                          <span>Recarga</span>
+                          <span className="text-slate-500">Sem data</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-slate-950/70 ring-1 ring-slate-700/60 overflow-hidden" />
+                        <div className="text-[9px] text-slate-500 mt-0.5 italic">Cadastre a última recarga</div>
+                      </div>
+                    );
+                  }
+                  const recarga = new Date(recargaStr);
+                  const vence = new Date(recarga);
+                  vence.setMonth(vence.getMonth() + 12);
+                  const hoje = new Date();
+                  const totalMs = vence.getTime() - recarga.getTime();
+                  const restanteMs = vence.getTime() - hoje.getTime();
+                  const diasRestantes = Math.ceil(restanteMs / 86400000);
+                  const pct = Math.max(0, Math.min(100, Math.round((restanteMs / totalMs) * 100)));
+                  const venc = diasRestantes <= 0;
+                  const critico = diasRestantes > 0 && diasRestantes < 30;
+                  const alerta = diasRestantes >= 30 && diasRestantes <= 90;
                   const barTone =
-                    vencido || iaStatus === "NAO_CONFORME"
+                    venc || critico
                       ? "from-red-500 to-red-400 shadow-[0_0_10px_rgba(239,68,68,0.7)]"
-                      : iaStatus === "PRECISA_REVISAO"
+                      : alerta
                       ? "from-amber-500 to-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.7)]"
                       : "from-emerald-500 to-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.7)]";
+                  const label = venc
+                    ? "Vencida"
+                    : diasRestantes < 60
+                    ? `${diasRestantes}d`
+                    : `${Math.round(diasRestantes / 30)}m`;
                   return (
-                    <div>
+                    <div title={`Última recarga: ${formatDateBR(recargaStr)} · Vence: ${formatDateBR(vence.toISOString().slice(0, 10))}`}>
                       <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                        <span>Nível</span>
-                        <span className="tabular-nums">{pct}%</span>
+                        <span>Recarga</span>
+                        <span className={`tabular-nums ${venc || critico ? "text-red-400" : alerta ? "text-amber-300" : "text-emerald-300"}`}>{label}</span>
                       </div>
                       <div className="h-2 rounded-full bg-slate-950/70 ring-1 ring-slate-700/60 overflow-hidden">
                         <div
                           className={`h-full rounded-full bg-gradient-to-r ${barTone} transition-all duration-700`}
-                          style={{ width: `${pct}%` }}
+                          style={{ width: `${venc ? 100 : pct}%` }}
                         />
                       </div>
                     </div>
