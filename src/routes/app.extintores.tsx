@@ -17,6 +17,7 @@ import {
   Plus, Printer, Search, ClipboardCheck, Flame, AlertTriangle, CheckCircle2,
   Pencil, Camera, Upload, ShieldCheck, CalendarClock, Activity, X, Sparkles, CalendarDays, Droplet,
 } from "lucide-react";
+import { History } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
@@ -54,6 +55,7 @@ function ExtintoresPage() {
   const [novoOpen, setNovoOpen] = useState(false);
   const [editExt, setEditExt] = useState<Extintor | null>(null);
   const [inspecaoExt, setInspecaoExt] = useState<Extintor | null>(null);
+  const [histExt, setHistExt] = useState<Extintor | null>(null);
   const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
   const [sigOpen, setSigOpen] = useState(false);
