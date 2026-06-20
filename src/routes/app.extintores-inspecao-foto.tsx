@@ -156,6 +156,7 @@ function InspecaoFotoPage() {
   const qc = useQueryClient();
 
   const [etapa, setEtapa] = useState<0 | 1 | 2 | 3>(0);
+  const [autoAnalisar, setAutoAnalisar] = useState(false);
 
   // Seleção do extintor
   const [extintorId, setExtintorId] = useState<string>("");
@@ -188,6 +189,7 @@ function InspecaoFotoPage() {
       if (p.extra_path) setExtra(mk(p.extra_path));
       if (p.etiqueta_path && p.manometro_path && p.inmetro_path) {
         setEtapa(2);
+        setAutoAnalisar(true);
       }
       sessionStorage.removeItem(key);
     } catch {/* ignore */}
@@ -357,6 +359,18 @@ function InspecaoFotoPage() {
       setAnalisando(false);
     }
   };
+
+  // Quando o modal entrega as 3 fotos via sessionStorage, dispara a IA automaticamente
+  // e pula direto para a revisão (etapa 3), sem passar pela tela de fotos.
+  useEffect(() => {
+    if (!autoAnalisar) return;
+    if (!etiqueta.path || !manometro.path || !inmetro.path) return;
+    if ([etiqueta, manometro, inmetro, extra].some((f) => f.uploading)) return;
+    if (analisando) return;
+    setAutoAnalisar(false);
+    handleAnalisar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoAnalisar, etiqueta.path, manometro.path, inmetro.path]);
 
   const salvarMut = useMutation({
     mutationFn: async () => {
