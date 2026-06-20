@@ -167,6 +167,32 @@ function InspecaoFotoPage() {
     if (id) { setExtintorId(id); setEtapa(1); }
   }, []);
 
+  // Pré-carrega fotos enviadas pelo modal de inspeção (sessionStorage)
+  useEffect(() => {
+    if (typeof window === "undefined" || !extintorId) return;
+    const key = `inspecao-foto-prefill:${extintorId}`;
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return;
+    try {
+      const p = JSON.parse(raw);
+      if (Date.now() - (p.ts ?? 0) > 30 * 60 * 1000) {
+        sessionStorage.removeItem(key);
+        return;
+      }
+      const mk = (path: string | null): FotoState => path
+        ? { file: null, previewUrl: supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl, path, uploading: false }
+        : initialFoto();
+      if (p.etiqueta_path) setEtiqueta(mk(p.etiqueta_path));
+      if (p.manometro_path) setManometro(mk(p.manometro_path));
+      if (p.inmetro_path) setInmetro(mk(p.inmetro_path));
+      if (p.extra_path) setExtra(mk(p.extra_path));
+      if (p.etiqueta_path && p.manometro_path && p.inmetro_path) {
+        setEtapa(2);
+      }
+      sessionStorage.removeItem(key);
+    } catch {/* ignore */}
+  }, [extintorId]);
+
   const [busca, setBusca] = useState("");
   const [modoManual, setModoManual] = useState(false);
   const [manualNumero, setManualNumero] = useState("");
