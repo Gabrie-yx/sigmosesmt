@@ -410,6 +410,14 @@ function ExtintoresPage() {
       )}
 
       {/* Grid de cards compactos */}
+      {/* 🔬 PREVIEW: novo card glass — validar visual antes de aplicar em todos */}
+      <div className="rounded-2xl border border-dashed border-amber-400/40 bg-amber-50/5 p-2">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-amber-500/80 px-2 pb-1">
+          Preview do novo card (vidro escuro)
+        </div>
+        <ExtintorGlassCardPreview />
+      </div>
+
       {extintores.isLoading ? (
         <div className="text-center text-slate-400 py-8">Carregando…</div>
       ) : filtered.length === 0 ? (
