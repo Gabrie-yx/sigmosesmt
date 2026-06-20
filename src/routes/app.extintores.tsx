@@ -403,6 +403,13 @@ function ExtintoresPage() {
           onCreated={onInvalidate}
         />
       )}
+      {histExt && (
+        <HistoricoInspecoesDialog
+          extintor={histExt}
+          open={!!histExt}
+          onOpenChange={(v) => !v && setHistExt(null)}
+        />
+      )}
       <PDFPreviewDialog
         open={pdfOpen}
         onClose={() => setPdfOpen(false)}
