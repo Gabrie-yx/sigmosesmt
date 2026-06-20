@@ -885,6 +885,27 @@ function HistoricoInspecoesDialog({
     if (i >= 0) setViewerIdx(i);
   };
 
+  const [histPdfDoc, setHistPdfDoc] = useState<jsPDF | null>(null);
+  const [histPdfOpen, setHistPdfOpen] = useState(false);
+
+  const ultimaInsp =
+    (manuais.data?.[0] as any)?.data_inspecao
+      ? (manuais.data?.[0] as any).data_inspecao
+      : (ia.data?.[0] as any)?.inspecionado_em
+      ? String((ia.data?.[0] as any).inspecionado_em).slice(0, 10)
+      : null;
+  const passos = useMemo(() => calcularProximosPassos(extintor, ultimaInsp), [extintor, ultimaInsp]);
+
+  const gerarPdf = async () => {
+    try {
+      const doc = await gerarPdfHistoricoExtintor(extintor, ia.data ?? [], manuais.data ?? []);
+      setHistPdfDoc(doc);
+      setHistPdfOpen(true);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao gerar PDF");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto custom-scrollbar">
@@ -897,6 +918,45 @@ function HistoricoInspecoesDialog({
             {extintor.area} · {extintor.localizacao} · {extintor.tipo_agente} · {total} registro(s)
           </div>
         </DialogHeader>
+
+        {/* Próximos passos regulatórios (NBR 12962) */}
+        <div className="rounded-xl border border-emerald-500/30 bg-gradient-to-br from-slate-900 to-emerald-950/40 p-3 shadow-[0_0_18px_-6px_rgba(16,185,129,0.4)]">
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <CalendarRange className="h-4 w-4 text-emerald-300" />
+              <span className="text-xs font-black uppercase tracking-wider text-emerald-300">
+                Próximos passos regulatórios · NBR 12962
+              </span>
+            </div>
+            <Button
+              size="sm"
+              onClick={gerarPdf}
+              className="h-8 gap-1.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-xs font-bold shadow-[0_0_12px_-2px_rgba(239,68,68,0.55)] border-0"
+            >
+              <FileText className="h-3.5 w-3.5" /> Baixar histórico (PDF)
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <PassoCard
+              icon={ClipboardCheck}
+              label="Inspeção mensal (1º grau)"
+              value={formatMesAnoBR(passos.proximaInspecaoMensal)}
+              vencido={isVencido(passos.proximaInspecaoMensal)}
+            />
+            <PassoCard
+              icon={Wrench}
+              label="Recarga (2º grau)"
+              value={formatMesAnoBR(passos.proximaRecarga)}
+              vencido={isVencido(passos.proximaRecarga)}
+            />
+            <PassoCard
+              icon={Gauge}
+              label="Teste hidrostático (3º grau)"
+              value={formatMesAnoBR(passos.proximoTesteHidrostatico)}
+              vencido={isVencido(passos.proximoTesteHidrostatico)}
+            />
+          </div>
+        </div>
 
         {(ia.isLoading || manuais.isLoading) && (
           <div className="text-sm text-slate-400 py-6 text-center">Carregando histórico…</div>
@@ -1019,6 +1079,13 @@ function HistoricoInspecoesDialog({
         </div>
 
         <DialogFooter>
+          <Button
+            onClick={gerarPdf}
+            variant="outline"
+            className="gap-1.5 bg-slate-900/60 border-slate-700 text-slate-200 hover:bg-slate-800 hover:text-cyan-300"
+          >
+            <FileText className="h-3.5 w-3.5" /> PDF do histórico
+          </Button>
           <Button asChild variant="outline" className="gap-1">
             <Link to="/app/extintores-inspecao-foto" search={{ extintor: extintor.id } as any}>
               <Sparkles className="h-3.5 w-3.5" /> Nova inspeção por IA
@@ -1032,7 +1099,42 @@ function HistoricoInspecoesDialog({
           onClose={() => setViewerIdx(null)}
           onIndexChange={setViewerIdx}
         />
+        <PDFPreviewDialog
+          open={histPdfOpen}
+          onClose={() => setHistPdfOpen(false)}
+          doc={histPdfDoc}
+          fileName={`historico-extintor-${extintor.numero ?? extintor.id}.pdf`}
+          title={`Histórico do extintor ${extintor.numero ?? ""}`}
+        />
       </DialogContent>
     </Dialog>
+  );
+}
+
+function PassoCard({
+  icon: Icon, label, value, vencido,
+}: { icon: any; label: string; value: string; vencido: boolean }) {
+  return (
+    <div
+      className={`rounded-lg border p-2.5 flex items-center gap-2.5 ${
+        vencido
+          ? "border-red-500/40 bg-red-950/40 shadow-[0_0_12px_-4px_rgba(239,68,68,0.5)]"
+          : "border-slate-700/60 bg-slate-950/50"
+      }`}
+    >
+      <div
+        className={`h-9 w-9 rounded-md flex items-center justify-center shrink-0 ${
+          vencido ? "bg-red-500/20 text-red-300" : "bg-emerald-500/15 text-emerald-300"
+        }`}
+      >
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-tight">{label}</div>
+        <div className={`text-sm font-black leading-tight ${vencido ? "text-red-300" : "text-slate-100"}`}>
+          {value}{vencido && " · VENCIDO"}
+        </div>
+      </div>
+    </div>
   );
 }
