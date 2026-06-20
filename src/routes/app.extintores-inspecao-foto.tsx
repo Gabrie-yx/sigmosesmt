@@ -43,6 +43,15 @@ type FotoPrefillPaths = {
 };
 const initialFoto = (): FotoState => ({ file: null, previewUrl: null, path: null, uploading: false });
 
+const HANDOFF_TIMEOUT_MS = 90_000;
+
+function normalizePath(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "null" || trimmed === "undefined") return null;
+  return trimmed;
+}
+
 function readSearchValue(params: URLSearchParams, key: string): string | null {
   const raw = params.get(key);
   if (!raw) return null;
@@ -63,15 +72,28 @@ function isHandoffParam(params: URLSearchParams): boolean {
 }
 
 function readHandoffPhotos(params: URLSearchParams): FotoPrefillPaths | null {
-  const etiquetaPath = readSearchValue(params, "etiqueta");
-  const manometroPath = readSearchValue(params, "manometro");
-  const inmetroPath = readSearchValue(params, "inmetro");
+  const etiquetaPath = normalizePath(readSearchValue(params, "etiqueta"));
+  const manometroPath = normalizePath(readSearchValue(params, "manometro"));
+  const inmetroPath = normalizePath(readSearchValue(params, "inmetro"));
   if (!etiquetaPath || !manometroPath || !inmetroPath) return null;
   return {
     etiquetaPath,
     manometroPath,
     inmetroPath,
-    extraPath: readSearchValue(params, "extra"),
+    extraPath: normalizePath(readSearchValue(params, "extra")),
+  };
+}
+
+function coercePrefillPaths(raw: any): FotoPrefillPaths | null {
+  const etiquetaPath = normalizePath(raw?.etiqueta_path ?? raw?.etiquetaPath);
+  const manometroPath = normalizePath(raw?.manometro_path ?? raw?.manometroPath);
+  const inmetroPath = normalizePath(raw?.inmetro_path ?? raw?.inmetroPath);
+  if (!etiquetaPath || !manometroPath || !inmetroPath) return null;
+  return {
+    etiquetaPath,
+    manometroPath,
+    inmetroPath,
+    extraPath: normalizePath(raw?.extra_path ?? raw?.extraPath),
   };
 }
 
