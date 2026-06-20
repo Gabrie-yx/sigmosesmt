@@ -1029,10 +1029,15 @@ function HistoricoInspecoesDialog({
                       const url = urls[`extintores-inspecoes:${f.path}`];
                       if (!url) return null;
                       return (
-                        <a key={f.label} href={url} target="_blank" rel="noreferrer" className="block rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm">
+                        <button
+                          key={f.label}
+                          type="button"
+                          onClick={() => openByUrl(url)}
+                          className="block w-full text-left rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm"
+                        >
                           <img src={url} alt={f.label} className="h-24 w-full object-cover" />
                           <div className="text-xs font-semibold text-slate-100 text-center py-1 border-t border-white/10">{f.label}</div>
-                        </a>
+                        </button>
                       );
                     })}
                   </div>
@@ -1066,9 +1071,13 @@ function HistoricoInspecoesDialog({
                   <div className="text-sm text-slate-200"><span className="font-bold text-white">Obs:</span> {r.observacoes}</div>
                 )}
                 {url && (
-                  <a href={url} target="_blank" rel="noreferrer" className="inline-block rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => openByUrl(url)}
+                    className="inline-block rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm"
+                  >
                     <img src={url} alt="Evidência" className="h-32 object-cover" />
-                  </a>
+                  </button>
                 )}
               </div>
             );
