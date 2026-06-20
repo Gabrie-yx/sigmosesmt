@@ -16,7 +16,7 @@ import {
   Plus, Printer, Search, ClipboardCheck, Flame, AlertTriangle, CheckCircle2,
   Pencil, Camera, ShieldCheck, CalendarClock, Activity, Sparkles, CalendarDays, Droplet,
 } from "lucide-react";
-import { History } from "lucide-react";
+import { History, Trash2 } from "lucide-react";
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
@@ -64,7 +64,7 @@ type Extintor = any;
 type Inspecao = any;
 
 function ExtintoresPage() {
-  const { user } = useAuth();
+  const { user, isModerator } = useAuth();
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
   const [fStatus, setFStatus] = useState<string>("TODOS");
@@ -76,6 +76,24 @@ function ExtintoresPage() {
   const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
   const [sigOpen, setSigOpen] = useState(false);
+  const [excluirExt, setExcluirExt] = useState<Extintor | null>(null);
+
+  const excluirMut = useMutation({
+    mutationFn: async (ext: Extintor) => {
+      const { error } = await supabase.from("extintores").delete().eq("id", ext.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Extintor excluído");
+      setExcluirExt(null);
+      qc.invalidateQueries({ queryKey: ["extintores"] });
+    },
+    onError: (e: any) => {
+      toast.error(e?.message?.includes("foreign") || e?.code === "23503"
+        ? "Não foi possível excluir: existem inspeções vinculadas. Considere marcar como BAIXADO."
+        : `Erro ao excluir: ${e?.message ?? e}`);
+    },
+  });
 
   const extintores = useQuery({
     queryKey: ["extintores"],
@@ -537,6 +555,17 @@ function ExtintoresPage() {
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
+                  {isModerator && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 w-8 p-0 shrink-0 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-red-950 hover:text-red-300 hover:border-red-500/40"
+                      onClick={() => setExcluirExt(e)}
+                      title="Excluir extintor"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
               </div>
             );
@@ -586,6 +615,38 @@ function ExtintoresPage() {
           setPdfOpen(true);
         }}
       />
+      <Dialog open={!!excluirExt} onOpenChange={(v) => !v && setExcluirExt(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" /> Excluir extintor
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p>
+              Tem certeza que deseja excluir o extintor{" "}
+              <strong className="font-mono">{excluirExt?.numero}</strong> ({excluirExt?.tipo_agente})?
+            </p>
+            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800 text-xs">
+              <strong>Atenção:</strong> a exclusão é permanente. Se já houver inspeções vinculadas,
+              o sistema bloqueia a exclusão para preservar o histórico legal (NR-23 / Bombeiros).
+              Nesses casos, edite o cadastro e altere o status para <strong>BAIXADO</strong>.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExcluirExt(null)} disabled={excluirMut.isPending}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => excluirExt && excluirMut.mutate(excluirExt)}
+              disabled={excluirMut.isPending}
+            >
+              {excluirMut.isPending ? "Excluindo..." : "Excluir definitivamente"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
