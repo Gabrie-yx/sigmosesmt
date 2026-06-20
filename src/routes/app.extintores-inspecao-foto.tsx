@@ -159,6 +159,14 @@ function InspecaoFotoPage() {
 
   // Seleção do extintor
   const [extintorId, setExtintorId] = useState<string>("");
+
+  // Pré-seleção via ?extintor=...
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = new URLSearchParams(window.location.search).get("extintor");
+    if (id) { setExtintorId(id); setEtapa(1); }
+  }, []);
+
   const [busca, setBusca] = useState("");
   const [modoManual, setModoManual] = useState(false);
   const [manualNumero, setManualNumero] = useState("");
