@@ -289,7 +289,7 @@ export function ExtintorInspecaoFotoDialog({
             {uploading ? (
               <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando…</>
             ) : (
-              <><Sparkles className="h-4 w-4 mr-2" /> Iniciar análise IA →</>
+              <><Sparkles className="h-4 w-4 mr-2" /> Iniciar análise →</>
             )}
           </Button>
         </DialogFooter>

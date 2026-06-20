@@ -503,7 +503,7 @@ function InspecaoFotoPage() {
     const timeoutId = window.setTimeout(() => {
       setHandoffLoading(false);
       setAnalisando(false);
-      setHandoffError("A análise demorou mais que o esperado. As fotos foram recebidas; toque em tentar novamente para reenviar à IA.");
+      setHandoffError("A análise demorou mais que o esperado. As fotos foram recebidas; toque em tentar novamente para reenviar para análise.");
     }, HANDOFF_TIMEOUT_MS);
     return () => window.clearTimeout(timeoutId);
   }, [fluxoModal, handoffLoading]);
@@ -616,7 +616,7 @@ function InspecaoFotoPage() {
           <CardContent className="p-6 flex items-center gap-3">
             <Loader2 className="h-5 w-5 animate-spin text-red-600" />
             <div>
-              <div className="font-semibold">Analisando fotos com IA…</div>
+              <div className="font-semibold">Analisando fotos…</div>
               <div className="text-xs text-muted-foreground">Pulando a tela antiga de fotos e preparando o laudo.</div>
             </div>
           </CardContent>
@@ -633,7 +633,7 @@ function InspecaoFotoPage() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="mt-0.5 h-5 w-5 text-red-600" />
               <div>
-                <div className="font-semibold">A análise por IA não foi concluída</div>
+                <div className="font-semibold">A análise não foi concluída</div>
                 <div className="mt-1 text-sm text-muted-foreground">{handoffError}</div>
               </div>
             </div>
@@ -854,7 +854,7 @@ function InspecaoFotoPage() {
           <div className="flex justify-between">
             <Button variant="outline" onClick={() => setEtapa(1)}>← Voltar</Button>
             <Button onClick={() => handleAnalisar()} disabled={analisando}>
-              {analisando ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Analisando…</>) : (<><Sparkles className="h-4 w-4 mr-2" /> Analisar com IA</>)}
+              {analisando ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Analisando…</>) : (<><Sparkles className="h-4 w-4 mr-2" /> Analisar fotos</>)}
             </Button>
           </div>
         </div>

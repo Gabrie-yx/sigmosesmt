@@ -134,7 +134,7 @@ export async function gerarPdfHistoricoExtintor(
     });
     y = (doc as any).lastAutoTable.finalY + 4;
     doc.setFont("helvetica", "bold"); doc.setFontSize(8.5);
-    doc.text(`Inspeções por IA · ${inspecoesIa.length} registro(s)`, margin, y - 1);
+    doc.text(`Inspeções por foto · ${inspecoesIa.length} registro(s)`, margin, y - 1);
   }
 
   // ===== Histórico de inspeções manuais =====
