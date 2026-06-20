@@ -659,6 +659,14 @@ function ExtintoresPage() {
         open={!!inspecaoExt}
         onOpenChange={(v) => { if (!v) setInspecaoExt(null); }}
       />
+      <InspecaoManualDialog
+        extintor={manualExt}
+        open={!!manualExt}
+        onOpenChange={(v) => { if (!v) setManualExt(null); }}
+        userId={user?.id}
+        userNome={(user?.user_metadata as any)?.full_name ?? user?.email ?? ""}
+        onSaved={onInvalidate}
+      />
       <SignaturePadDialog
         open={sigOpen}
         onClose={() => setSigOpen(false)}
