@@ -26,7 +26,7 @@ import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
 import { gerarPdfHistoricoExtintor } from "@/lib/extintor-historico-pdf";
 import { calcularProximosPassos, formatMesAnoBR, isVencido } from "@/lib/extintor-regulatorio";
-import { FileText, CalendarRange, Wrench, Gauge } from "lucide-react";
+import { FileText, CalendarRange, Wrench, Gauge, ClipboardEdit, Info } from "lucide-react";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/extintores")({
@@ -398,6 +398,18 @@ function ExtintoresPage() {
             const vencido = e.proxima_recarga && e.proxima_recarga < hojeISO;
             const iaStatus = normalizeIaStatus(e.ultimo_status_inspecao);
 
+            // Lista de "o que precisa ser feito"
+            const acoesPendentes: string[] = [];
+            if (vencido) acoesPendentes.push("Recarga vencida — encaminhar para manutenção (2º grau)");
+            if (!insp) acoesPendentes.push("Inspeção mensal do mês ainda não registrada");
+            if (iaStatus === "NAO_CONFORME") acoesPendentes.push("IA detectou NÃO CONFORMIDADE — abrir histórico e tratar");
+            if (iaStatus === "PRECISA_REVISAO") acoesPendentes.push("IA marcou PRECISA REVISÃO — validar fotos no histórico");
+            const statusTone = vencido || iaStatus === "NAO_CONFORME"
+              ? "border-red-500/40 bg-red-950/40 text-red-200"
+              : iaStatus === "PRECISA_REVISAO" || !insp
+              ? "border-amber-500/40 bg-amber-950/40 text-amber-200"
+              : "border-emerald-500/40 bg-emerald-950/40 text-emerald-200";
+
             const ringTone =
               iaStatus === "NAO_CONFORME" || vencido
                 ? "ring-red-500/40 hover:ring-red-400/70 bg-gradient-to-br from-slate-900 to-red-950/60 shadow-[0_0_24px_-8px_rgba(239,68,68,0.45)]"
@@ -514,7 +526,14 @@ function ExtintoresPage() {
                 {/* Inspeção do mês */}
                 <div>
                   {insp ? (
-                    <Badge variant="outline" className={`w-full justify-center text-[10px] ${insp.conforme ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-red-500/10 text-red-300 border-red-500/30"}`}>
+                    <Badge
+                      variant="outline"
+                      className={`w-full justify-center text-[10px] ${
+                        insp.conforme
+                          ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/40 animate-pulse-emerald"
+                          : "bg-red-500/10 text-red-300 border-red-500/30"
+                      }`}
+                    >
                       {insp.conforme ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
                       Mês OK · {formatDateBR(insp.data_inspecao)}
                     </Badge>
@@ -539,6 +558,26 @@ function ExtintoresPage() {
                   )}
                 </div>
 
+                {/* O que precisa ser feito */}
+                <div
+                  className={`rounded-md border ${statusTone} px-2 py-1.5 text-[10px] leading-snug`}
+                  title={acoesPendentes.join(" · ") || "Tudo certo neste extintor"}
+                >
+                  <div className="flex items-center gap-1 font-black uppercase tracking-wider text-[9px] opacity-80 mb-0.5">
+                    {acoesPendentes.length ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                    {acoesPendentes.length ? "Pendências" : "Tudo em ordem"}
+                  </div>
+                  {acoesPendentes.length ? (
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {acoesPendentes.slice(0, 3).map((a, i) => (
+                        <li key={i} className="truncate" title={a}>{a}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="opacity-80">Sem ações pendentes este mês.</div>
+                  )}
+                </div>
+
                 {/* Ações */}
                 <div className="mt-auto pt-1 flex items-center gap-1">
                   <Button
@@ -546,7 +585,16 @@ function ExtintoresPage() {
                     onClick={() => setInspecaoExt(e)}
                     className="flex-1 h-8 gap-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-[11px] font-bold shadow-[0_0_12px_-2px_rgba(239,68,68,0.5)] border-0"
                   >
-                    <Sparkles className="h-3.5 w-3.5" /> Inspecionar
+                    <Sparkles className="h-3.5 w-3.5" /> Inspecionar (IA)
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-2 shrink-0 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-emerald-300 gap-1 text-[11px]"
+                    onClick={() => { setHistExt(e); setTimeout(() => window.dispatchEvent(new CustomEvent("abrir-inspecao-manual", { detail: e.id })), 50); }}
+                    title="Registrar inspeção manual (sem fotos / IA)"
+                  >
+                    <ClipboardEdit className="h-3.5 w-3.5" /> Manual
                   </Button>
                   <Button
                     size="sm"
