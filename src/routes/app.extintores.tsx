@@ -556,14 +556,18 @@ function ExtintorFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-red-600" />
-            {isEdit ? `Editar extintor ${extintor.numero ?? ""}` : "Novo extintor"}
+            {isEdit ? `Editar cadastro — Extintor ${extintor.numero ?? ""}` : "Novo extintor"}
           </DialogTitle>
+          {isEdit && (
+            <div className="text-sm text-slate-300">
+              Somente dados do cadastro. Inspeções e fotos ficam no botão Histórico.
+            </div>
+          )}
         </DialogHeader>
-        {isEdit && <UltimaInspecaoIAPanel extintorId={extintor.id} />}
         <div className="grid grid-cols-2 gap-3">
           {!isEdit && (
             <div><Label>Nº do extintor <span className="text-slate-400 font-normal">(opcional)</span></Label><Input value={form.numero} onChange={(e) => set("numero", e.target.value)} placeholder="auto" /></div>
