@@ -156,6 +156,7 @@ function InspecaoFotoPage() {
   const qc = useQueryClient();
 
   const [etapa, setEtapa] = useState<0 | 1 | 2 | 3>(0);
+  const [autoAnalisar, setAutoAnalisar] = useState(false);
 
   // Seleção do extintor
   const [extintorId, setExtintorId] = useState<string>("");
@@ -188,6 +189,7 @@ function InspecaoFotoPage() {
       if (p.extra_path) setExtra(mk(p.extra_path));
       if (p.etiqueta_path && p.manometro_path && p.inmetro_path) {
         setEtapa(2);
+        setAutoAnalisar(true);
       }
       sessionStorage.removeItem(key);
     } catch {/* ignore */}
