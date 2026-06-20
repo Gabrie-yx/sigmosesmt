@@ -65,6 +65,8 @@ function ExtintoresPage() {
       if (error) throw error;
       return (data ?? []) as Extintor[];
     },
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
   });
 
   const inspecoes = useQuery({
@@ -285,7 +287,25 @@ function ExtintoresPage() {
                 const vencido = e.proxima_recarga && e.proxima_recarga < hoje.toISOString().slice(0, 10);
                 return (
                   <TableRow key={e.id} className="hover:bg-red-50/30 transition-colors">
-                    <TableCell className="font-mono font-bold text-red-700">{e.numero}</TableCell>
+                    <TableCell className="font-mono font-bold text-red-700">
+                      <div className="flex items-center gap-2">
+                        {e.ultimo_status_inspecao ? (
+                          <span
+                            title={`Última inspeção IA: ${e.ultimo_status_inspecao}`}
+                            className={`inline-block h-2.5 w-2.5 rounded-full ring-2 ring-white shadow ${
+                              e.ultimo_status_inspecao === "CONFORME"
+                                ? "bg-emerald-500"
+                                : e.ultimo_status_inspecao === "PRECISA_REVISAO"
+                                ? "bg-amber-500"
+                                : "bg-red-500 animate-pulse"
+                            }`}
+                          />
+                        ) : (
+                          <span title="Sem inspeção IA" className="inline-block h-2.5 w-2.5 rounded-full bg-slate-300" />
+                        )}
+                        {e.numero}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-xs">{e.area}</TableCell>
                     <TableCell className="text-xs">{e.localizacao}</TableCell>
                     <TableCell className="text-xs font-semibold">{e.tipo_agente}</TableCell>
