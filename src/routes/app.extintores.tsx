@@ -1337,11 +1337,94 @@ function HistoricoInspecoesDialog({
           >
             <FileText className="h-3.5 w-3.5" /> PDF do histórico
           </Button>
+          <Button
+            variant="outline"
+            className="gap-1.5 bg-slate-900/60 border-emerald-600/40 text-emerald-200 hover:bg-emerald-950/40"
+            onClick={() => setManualOpen((v) => !v)}
+          >
+            <ClipboardEdit className="h-3.5 w-3.5" /> {manualOpen ? "Fechar inspeção manual" : "Nova inspeção manual"}
+          </Button>
           <Button variant="outline" className="gap-1" onClick={onNovaInspecao}>
             <Sparkles className="h-3.5 w-3.5" /> Nova inspeção por IA
           </Button>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Fechar</Button>
         </DialogFooter>
+        {manualOpen && (
+          <div className="rounded-xl border border-emerald-500/40 bg-slate-900/70 p-3 space-y-3 mt-3">
+            <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-emerald-300">
+              <ClipboardEdit className="h-4 w-4" /> Registrar inspeção manual (sem IA)
+            </div>
+            <div className="text-[11px] text-slate-300 flex items-start gap-1.5">
+              <Info className="h-3.5 w-3.5 mt-0.5 text-cyan-300 shrink-0" />
+              Use quando a inspeção for visual/no local (sem fotos para IA). A data é a de hoje. O responsável é preenchido com seu usuário logado.
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="md:col-span-1">
+                <Label className="text-xs">Responsável *</Label>
+                <Input
+                  value={manualForm.responsavel_nome}
+                  onChange={(e) => setManualForm((p) => ({ ...p, responsavel_nome: e.target.value }))}
+                />
+              </div>
+              <div className="md:col-span-1">
+                <Label className="text-xs">Registro / matrícula</Label>
+                <Input
+                  placeholder="Ex.: TST-2210"
+                  value={manualForm.responsavel_registro}
+                  onChange={(e) => setManualForm((p) => ({ ...p, responsavel_registro: e.target.value }))}
+                />
+              </div>
+              <div className="md:col-span-2 flex items-center gap-3">
+                <Label className="text-xs flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={manualForm.conforme}
+                    onChange={() => setManualForm((p) => ({ ...p, conforme: true }))}
+                  />
+                  <span className="text-emerald-300 font-semibold">CONFORME</span>
+                </Label>
+                <Label className="text-xs flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={!manualForm.conforme}
+                    onChange={() => setManualForm((p) => ({ ...p, conforme: false }))}
+                  />
+                  <span className="text-red-300 font-semibold">NÃO CONFORME</span>
+                </Label>
+              </div>
+              {!manualForm.conforme && (
+                <div className="md:col-span-2">
+                  <Label className="text-xs">Descrição da não conformidade *</Label>
+                  <Textarea
+                    rows={2}
+                    value={manualForm.nao_conformidade}
+                    onChange={(e) => setManualForm((p) => ({ ...p, nao_conformidade: e.target.value }))}
+                  />
+                </div>
+              )}
+              <div className="md:col-span-2">
+                <Label className="text-xs">Observações</Label>
+                <Textarea
+                  rows={2}
+                  placeholder="Ex.: manômetro na faixa verde, lacre íntegro, sinalização OK."
+                  value={manualForm.observacoes}
+                  onChange={(e) => setManualForm((p) => ({ ...p, observacoes: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setManualOpen(false)}>Cancelar</Button>
+              <Button
+                size="sm"
+                onClick={() => salvarManual.mutate()}
+                disabled={salvarManual.isPending}
+                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white"
+              >
+                {salvarManual.isPending ? "Salvando…" : "Salvar inspeção manual"}
+              </Button>
+            </div>
+          </div>
+        )}
         <MediaViewerDialog
           items={mediaItems}
           index={viewerIdx}
