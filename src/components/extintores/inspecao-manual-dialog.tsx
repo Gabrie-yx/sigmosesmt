@@ -433,13 +433,70 @@ export function InspecaoManualDialog({
                     </div>
                   </div>
                   {status === "nc" && (
-                    <Textarea
-                      rows={2}
-                      placeholder="Descreva a NC encontrada *"
-                      value={descNc[item.id] ?? ""}
-                      onChange={(e) => setDescNc((p) => ({ ...p, [item.id]: e.target.value }))}
-                      className="mt-2 text-sm"
-                    />
+                    <div className="mt-2 space-y-2">
+                      <Textarea
+                        rows={2}
+                        placeholder="Descreva a NC encontrada *"
+                        value={descNc[item.id] ?? ""}
+                        onChange={(e) => setDescNc((p) => ({ ...p, [item.id]: e.target.value }))}
+                        className="text-sm"
+                      />
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                            Evidências fotográficas *
+                          </Label>
+                          <label className="inline-flex items-center gap-1 cursor-pointer text-[11px] text-cyan-300 hover:text-cyan-200">
+                            <Camera className="h-3.5 w-3.5" />
+                            Adicionar foto
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              multiple
+                              className="hidden"
+                              onChange={(e) => {
+                                const files = Array.from(e.target.files ?? []);
+                                if (!files.length) return;
+                                const novos: FotoEvidencia[] = files.map((f) => ({
+                                  file: f,
+                                  previewUrl: URL.createObjectURL(f),
+                                }));
+                                setFotosNc((p) => ({
+                                  ...p,
+                                  [item.id]: [...(p[item.id] ?? []), ...novos],
+                                }));
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {(fotosNc[item.id] ?? []).map((f, i) => (
+                            <div key={i} className="relative h-16 w-16 rounded border border-red-500/40 overflow-hidden group">
+                              <img src={f.previewUrl} alt="" className="h-full w-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setFotosNc((p) => ({
+                                    ...p,
+                                    [item.id]: (p[item.id] ?? []).filter((_, idx) => idx !== i),
+                                  }))
+                                }
+                                className="absolute top-0.5 right-0.5 bg-black/70 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition"
+                              >
+                                <X className="h-3 w-3 text-white" />
+                              </button>
+                            </div>
+                          ))}
+                          {!(fotosNc[item.id]?.length) && (
+                            <div className="text-[10px] text-red-300/80 italic">
+                              Nenhuma foto anexada — obrigatório para registrar a NC.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               );
@@ -482,7 +539,7 @@ export function InspecaoManualDialog({
           </Button>
           <Button
             onClick={() => salvar.mutate()}
-            disabled={salvar.isPending || !todosRespondidos}
+            disabled={salvar.isPending}
             className={`gap-1.5 ${
               temCriticaNC
                 ? "bg-red-600 hover:bg-red-500 text-white"
