@@ -2,12 +2,34 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Sparkles, ClipboardEdit, History, Pencil, CheckCircle2 } from "lucide-react";
 
-export type PendenciaTipo = "mes" | "recarga" | "nao_conforme" | "precisa_revisao" | "hidrostatico";
+export type PendenciaTipo =
+  | "mes"
+  | "recarga"
+  | "nao_conforme"
+  | "precisa_revisao"
+  | "hidrostatico"
+  | "divergencia";
 
 export type Pendencia = {
   tipo: PendenciaTipo;
   label: string;
 };
+
+function actionForTipo(tipo: PendenciaTipo): { label: string; key: "foto" | "manual" | "cadastro" | "historico" } {
+  switch (tipo) {
+    case "mes":
+      return { label: "Inspecionar", key: "foto" };
+    case "nao_conforme":
+    case "precisa_revisao":
+      return { label: "Registrar correção", key: "manual" };
+    case "recarga":
+    case "hidrostatico":
+    case "divergencia":
+      return { label: "Atualizar cadastro", key: "cadastro" };
+    default:
+      return { label: "Abrir", key: "historico" };
+  }
+}
 
 export function PendenciasPopover({
   pendencias,
@@ -71,65 +93,49 @@ export function PendenciasPopover({
           <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
             Pendências deste extintor
           </div>
-          <ul className="space-y-1.5">
-            {pendencias.map((p, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs">
-                <AlertTriangle className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${
-                  p.tipo === "recarga" || p.tipo === "nao_conforme" || p.tipo === "hidrostatico"
-                    ? "text-red-400" : "text-amber-300"
-                }`} />
-                <span className="leading-snug">{p.label}</span>
-              </li>
-            ))}
+          <ul className="space-y-2">
+            {pendencias.map((p, i) => {
+              const act = actionForTipo(p.tipo);
+              const critica = p.tipo === "recarga" || p.tipo === "nao_conforme" || p.tipo === "hidrostatico";
+              const handler =
+                act.key === "foto" ? onInspecionarFoto
+                : act.key === "manual" ? onInspecionarManual
+                : act.key === "cadastro" ? onEditarCadastro
+                : onAbrirHistorico;
+              const Icon =
+                act.key === "foto" ? Sparkles
+                : act.key === "manual" ? ClipboardEdit
+                : act.key === "cadastro" ? Pencil
+                : History;
+              return (
+                <li key={i} className="rounded-md border border-slate-800 bg-slate-900/60 p-2">
+                  <div className="flex items-start gap-2 text-xs">
+                    <AlertTriangle className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${critica ? "text-red-400" : "text-amber-300"}`} />
+                    <span className="leading-snug flex-1">{p.label}</span>
+                  </div>
+                  <div className="flex justify-end mt-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handler}
+                      className="h-7 gap-1 text-[10px] border-slate-600 text-slate-100 hover:bg-slate-800"
+                    >
+                      <Icon className="h-3 w-3" /> {act.label}
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
-
-        <div className="border-t border-slate-700 pt-2.5 space-y-1.5">
-          <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-            Resolver agora
-          </div>
-
-          {pendencias.some((p) => p.tipo === "mes") && (
-            <div className="grid grid-cols-2 gap-1.5">
-              <Button
-                size="sm"
-                onClick={onInspecionarFoto}
-                className="h-8 gap-1 text-[11px] bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600"
-              >
-                <Sparkles className="h-3.5 w-3.5" /> Por foto
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={onInspecionarManual}
-                className="h-8 gap-1 text-[11px] border-emerald-600/40 text-emerald-200 hover:bg-emerald-950/40"
-              >
-                <ClipboardEdit className="h-3.5 w-3.5" /> Manual
-              </Button>
-            </div>
-          )}
-
-          {(pendencias.some((p) => p.tipo === "recarga") || pendencias.some((p) => p.tipo === "hidrostatico")) && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onEditarCadastro}
-              className="w-full h-8 gap-1 text-[11px] border-amber-600/40 text-amber-200 hover:bg-amber-950/40"
-            >
-              <Pencil className="h-3.5 w-3.5" /> Atualizar datas de recarga / hidrostático
-            </Button>
-          )}
-
-          {(pendencias.some((p) => p.tipo === "nao_conforme") || pendencias.some((p) => p.tipo === "precisa_revisao")) && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onAbrirHistorico}
-              className="w-full h-8 gap-1 text-[11px] border-slate-600 text-slate-200 hover:bg-slate-800"
-            >
-              <History className="h-3.5 w-3.5" /> Abrir histórico e tratar NC
-            </Button>
-          )}
+        <div className="border-t border-slate-700 pt-2 flex justify-end">
+          <button
+            type="button"
+            onClick={onAbrirHistorico}
+            className="text-[10px] text-slate-400 hover:text-slate-200 underline underline-offset-2"
+          >
+            Ver histórico completo
+          </button>
         </div>
       </PopoverContent>
     </Popover>
