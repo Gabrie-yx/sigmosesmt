@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { ExtintorInspecaoFotoDialog } from "@/components/extintores/inspecao-foto-dialog";
 import { InspecaoManualDialog } from "@/components/extintores/inspecao-manual-dialog";
 import { PendenciasPopover, type Pendencia } from "@/components/extintores/pendencias-popover";
+import { ExtintorGlassCardPreview } from "@/components/extintores/glass-card-preview";
 import { formatDateBR } from "@/lib/utils-date";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
