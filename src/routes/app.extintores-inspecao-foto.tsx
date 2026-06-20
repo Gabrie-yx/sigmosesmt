@@ -377,7 +377,6 @@ function InspecaoFotoPage() {
         : null;
       const { laudo: l } = await analisarFn({
         data: {
-          foto_etiqueta_path: etiqueta.path,
           foto_etiqueta_path: fotoPaths.etiquetaPath,
           foto_manometro_path: fotoPaths.manometroPath,
           foto_inmetro_path: fotoPaths.inmetroPath,
@@ -715,7 +714,7 @@ function InspecaoFotoPage() {
 
           <div className="flex justify-between">
             <Button variant="outline" onClick={() => setEtapa(1)}>← Voltar</Button>
-            <Button onClick={handleAnalisar} disabled={analisando}>
+            <Button onClick={() => handleAnalisar()} disabled={analisando}>
               {analisando ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Analisando…</>) : (<><Sparkles className="h-4 w-4 mr-2" /> Analisar com IA</>)}
             </Button>
           </div>
