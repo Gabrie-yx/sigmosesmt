@@ -127,15 +127,16 @@ function LoginPage() {
           {mfaChallengeId ? (
             <form onSubmit={verifyMfa} className="space-y-4">
               <div className="space-y-2">
-                <Label>Código MFA (6 dígitos)</Label>
+                <Label className="text-slate-200">Código MFA (6 dígitos)</Label>
                 <Input value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  className="font-mono text-lg tracking-widest" placeholder="000000" maxLength={6} autoFocus />
+                  className="font-mono text-lg tracking-widest bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60"
+                  placeholder="000000" maxLength={6} autoFocus />
               </div>
-              <Button type="submit" className="w-full" disabled={loading || mfaCode.length !== 6}>
+              <Button type="submit" className="w-full bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/50" disabled={loading || mfaCode.length !== 6}>
                 {loading ? "Verificando..." : "Confirmar"}
               </Button>
               <button type="button" onClick={() => { setMfaChallengeId(null); setMfaFactorId(null); setMfaCode(""); supabase.auth.signOut(); }}
-                className="w-full text-sm text-muted-foreground hover:text-foreground">
+                className="w-full text-sm text-slate-300 hover:text-white">
                 Cancelar
               </button>
             </form>
