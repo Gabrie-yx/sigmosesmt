@@ -105,20 +105,25 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-white to-red-50 px-4 py-10">
-      <Card className="w-full max-w-md shadow-xl border-slate-200">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-black px-4 py-10">
+      {/* Glows */}
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-red-600/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-orange-500/20 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500/10 blur-3xl" />
+
+      <Card className="relative w-full max-w-md border border-white/15 bg-white/10 text-white shadow-2xl shadow-red-900/30 backdrop-blur-xl">
         <CardHeader className="text-center space-y-3 pb-4">
           <div className="mx-auto relative h-36 w-36">
-            <img src={sigmoLogo} alt="SIGMO" className="h-36 w-36 object-contain" />
+            <img src={sigmoLogo} alt="SIGMO" className="h-36 w-36 object-contain drop-shadow-[0_0_20px_rgba(239,68,68,0.35)]" />
           </div>
-          <CardDescription className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
+          <CardDescription className="text-[11px] font-bold uppercase tracking-widest text-slate-300">
             Sistema Integrado de Gestão Modular
           </CardDescription>
-          <CardTitle className="text-2xl font-black uppercase tracking-tight text-slate-900">
+          <CardTitle className="text-2xl font-black uppercase tracking-tight text-white">
             Entrar
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="text-white">
           {mfaChallengeId ? (
             <form onSubmit={verifyMfa} className="space-y-4">
               <div className="space-y-2">
@@ -137,34 +142,36 @@ function LoginPage() {
           ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Label htmlFor="email" className="text-slate-200">Email</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+                className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+              <Label htmlFor="password" className="text-slate-200">Senha</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
+                className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60" />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/50" disabled={loading}>
               {loading ? "Aguarde..." : "Entrar"}
             </Button>
             <div className="text-center">
               <button
                 type="button"
                 onClick={() => { setForgotEmail(email); setForgotOpen(true); }}
-                className="text-xs font-semibold text-slate-600 hover:text-slate-900 hover:underline"
+                className="text-xs font-semibold text-slate-300 hover:text-white hover:underline"
               >
                 Esqueci minha senha
               </button>
             </div>
-            <div className="text-center text-xs text-muted-foreground">
+            <div className="text-center text-xs text-slate-400">
               Sistema interno — novas contas são criadas por convite de um administrador.
             </div>
-            <div className="border-t border-slate-200 pt-3 text-center text-[11px] text-muted-foreground space-x-3">
-              <Link to="/termos" className="hover:text-slate-900 hover:underline">Termos de Uso</Link>
+            <div className="border-t border-white/10 pt-3 text-center text-[11px] text-slate-400 space-x-3">
+              <Link to="/termos" className="hover:text-white hover:underline">Termos de Uso</Link>
               <span>·</span>
-              <Link to="/privacidade" className="hover:text-slate-900 hover:underline">Política de Privacidade</Link>
+              <Link to="/privacidade" className="hover:text-white hover:underline">Política de Privacidade</Link>
               <span>·</span>
-              <Link to="/" className="hover:text-slate-900 hover:underline">Início</Link>
+              <Link to="/" className="hover:text-white hover:underline">Início</Link>
             </div>
           </form>
           )}
