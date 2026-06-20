@@ -16,7 +16,7 @@ import {
   Plus, Printer, Search, ClipboardCheck, Flame, AlertTriangle, CheckCircle2,
   Pencil, Camera, ShieldCheck, CalendarClock, Activity, Sparkles, CalendarDays, Droplet,
 } from "lucide-react";
-import { History } from "lucide-react";
+import { History, Trash2 } from "lucide-react";
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
@@ -64,7 +64,7 @@ type Extintor = any;
 type Inspecao = any;
 
 function ExtintoresPage() {
-  const { user } = useAuth();
+  const { user, isModerator } = useAuth();
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
   const [fStatus, setFStatus] = useState<string>("TODOS");
@@ -76,6 +76,24 @@ function ExtintoresPage() {
   const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
   const [sigOpen, setSigOpen] = useState(false);
+  const [excluirExt, setExcluirExt] = useState<Extintor | null>(null);
+
+  const excluirMut = useMutation({
+    mutationFn: async (ext: Extintor) => {
+      const { error } = await supabase.from("extintores").delete().eq("id", ext.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Extintor excluído");
+      setExcluirExt(null);
+      qc.invalidateQueries({ queryKey: ["extintores"] });
+    },
+    onError: (e: any) => {
+      toast.error(e?.message?.includes("foreign") || e?.code === "23503"
+        ? "Não foi possível excluir: existem inspeções vinculadas. Considere marcar como BAIXADO."
+        : `Erro ao excluir: ${e?.message ?? e}`);
+    },
+  });
 
   const extintores = useQuery({
     queryKey: ["extintores"],
