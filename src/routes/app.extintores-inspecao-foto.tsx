@@ -403,7 +403,11 @@ function InspecaoFotoPage() {
       toast.success("Inspeção salva!");
       qc.invalidateQueries({ queryKey: ["extintor-inspecoes-foto"] });
       qc.invalidateQueries({ queryKey: ["extintores"] });
-      navigate({ to: "/app/extintores" });
+      if (extintorId) {
+        navigate({ to: "/app/extintores", search: { historico: extintorId } as any });
+      } else {
+        navigate({ to: "/app/extintores" });
+      }
     },
     onError: (e: any) => {
       if (e?.message === "justificativa obrigatória") return;

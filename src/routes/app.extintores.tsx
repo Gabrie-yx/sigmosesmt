@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,13 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Plus, Printer, Search, ClipboardCheck, Flame, AlertTriangle, CheckCircle2,
-  Pencil, Camera, Upload, ShieldCheck, CalendarClock, Activity, X, Sparkles, CalendarDays, Droplet,
+  Pencil, Camera, ShieldCheck, CalendarClock, Activity, Sparkles, CalendarDays, Droplet,
 } from "lucide-react";
 import { History } from "lucide-react";
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
@@ -23,7 +22,7 @@ import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
-import { EXTINTORES_CHECKLIST_NC as CHECKLIST_NC, gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
+import { gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/extintores")({
@@ -44,6 +43,20 @@ const STATUS_STYLES: Record<string, string> = {
   VENCIDO: "bg-red-100 text-red-700 border-red-300",
 };
 
+const normalizeIaStatus = (status?: string | null) => {
+  const s = (status ?? "").toUpperCase();
+  if (s === "CONFORME") return "CONFORME";
+  if (s === "PENDENTE_REVISAO" || s === "PRECISA_REVISAO") return "PRECISA_REVISAO";
+  if (s === "NAO_CONFORME" || s === "NÃO_CONFORME") return "NAO_CONFORME";
+  return null;
+};
+
+const IA_STATUS_LABEL: Record<string, string> = {
+  CONFORME: "IA conforme",
+  PRECISA_REVISAO: "IA revisar",
+  NAO_CONFORME: "IA NC",
+};
+
 type Extintor = any;
 type Inspecao = any;
 
@@ -55,7 +68,6 @@ function ExtintoresPage() {
   const [fArea, setFArea] = useState<string>("TODAS");
   const [novoOpen, setNovoOpen] = useState(false);
   const [editExt, setEditExt] = useState<Extintor | null>(null);
-  const [inspecaoExt, setInspecaoExt] = useState<Extintor | null>(null);
   const [histExt, setHistExt] = useState<Extintor | null>(null);
   const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
@@ -129,6 +141,20 @@ function ExtintoresPage() {
     qc.invalidateQueries({ queryKey: ["extintores"] });
     qc.invalidateQueries({ queryKey: ["extintor-inspecoes"] });
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !extintores.data?.length) return;
+    const params = new URLSearchParams(window.location.search);
+    const historicoId = params.get("historico");
+    if (!historicoId) return;
+    const alvo = extintores.data.find((e) => e.id === historicoId);
+    if (alvo) {
+      setHistExt(alvo);
+      params.delete("historico");
+      const qs = params.toString();
+      window.history.replaceState(null, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+    }
+  }, [extintores.data]);
 
   const abrirPdfPlanilha = () => {
     if (extintores.isLoading || inspecoes.isLoading) {
@@ -288,27 +314,28 @@ function ExtintoresPage() {
               {filtered.map((e) => {
                 const insp = inspecoesMesPorExt.get(e.id);
                 const vencido = e.proxima_recarga && e.proxima_recarga < hoje.toISOString().slice(0, 10);
+                const iaStatus = normalizeIaStatus(e.ultimo_status_inspecao);
                 return (
                   <TableRow key={e.id} className="hover:bg-red-50/30 transition-colors">
                     <TableCell className="font-mono font-bold text-red-700">
                       <div className="flex items-center gap-2">
-                        {e.ultimo_status_inspecao ? (
+                        {iaStatus ? (
                           (() => {
                             const gradient =
-                              e.ultimo_status_inspecao === "CONFORME"
+                              iaStatus === "CONFORME"
                                 ? "bg-[radial-gradient(circle_at_30%_30%,#6ee7b7,#10b981_55%,#047857)]"
-                                : e.ultimo_status_inspecao === "PRECISA_REVISAO"
+                                : iaStatus === "PRECISA_REVISAO"
                                 ? "bg-[radial-gradient(circle_at_30%_30%,#fde68a,#f59e0b_55%,#b45309)]"
                                 : "bg-[radial-gradient(circle_at_30%_30%,#fecaca,#ef4444_55%,#991b1b)]";
                             const glow =
-                              e.ultimo_status_inspecao === "CONFORME"
+                              iaStatus === "CONFORME"
                                 ? "shadow-[0_0_0_3px_rgba(16,185,129,0.18),0_4px_10px_-2px_rgba(16,185,129,0.55)]"
-                                : e.ultimo_status_inspecao === "PRECISA_REVISAO"
+                                : iaStatus === "PRECISA_REVISAO"
                                 ? "shadow-[0_0_0_3px_rgba(245,158,11,0.18),0_4px_10px_-2px_rgba(245,158,11,0.55)]"
                                 : "shadow-[0_0_0_3px_rgba(239,68,68,0.22),0_4px_12px_-2px_rgba(239,68,68,0.65)]";
                             return (
                               <span
-                                title={`Última inspeção IA: ${e.ultimo_status_inspecao}`}
+                                title={IA_STATUS_LABEL[iaStatus]}
                                 className="relative inline-flex h-3.5 w-3.5 items-center justify-center"
                               >
                                 <span className={`relative inline-flex h-3 w-3 rounded-full ${gradient} ${glow}`}>
@@ -346,15 +373,15 @@ function ExtintoresPage() {
                         <Badge
                           variant="outline"
                           className={
-                            e.ultimo_status_inspecao === "CONFORME"
+                            iaStatus === "CONFORME"
                               ? "bg-emerald-50 text-emerald-700 border-emerald-300"
-                              : e.ultimo_status_inspecao === "PRECISA_REVISAO"
+                              : iaStatus === "PRECISA_REVISAO"
                               ? "bg-amber-50 text-amber-700 border-amber-300"
                               : "bg-red-50 text-red-700 border-red-300"
                           }
-                          title={`Inspeção IA · ${e.ultimo_status_inspecao}`}
+                          title={iaStatus ? IA_STATUS_LABEL[iaStatus] : "Inspeção IA"}
                         >
-                          {e.ultimo_status_inspecao === "CONFORME"
+                          {iaStatus === "CONFORME"
                             ? <CheckCircle2 className="h-3 w-3 mr-1" />
                             : <AlertTriangle className="h-3 w-3 mr-1" />}
                           {formatDateBR(new Date(e.ultima_inspecao_em).toISOString().slice(0, 10))}
@@ -373,17 +400,19 @@ function ExtintoresPage() {
                           type="button"
                           onClick={() => setHistExt(e)}
                           title="Histórico de inspeções"
-                          className="group relative inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold uppercase tracking-wider text-white/90 hover:text-white border border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/15 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_14px_-4px_rgba(0,0,0,0.5)] transition"
+                          className="group relative inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-semibold uppercase tracking-wider text-white/90 hover:text-white border border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/15 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_14px_-4px_rgba(0,0,0,0.5)] transition"
                         >
                           <span className="pointer-events-none absolute inset-x-2 top-[1px] h-[1px] rounded-full bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-70" />
                           <History className="h-3.5 w-3.5 relative" />
                           <span className="relative">Histórico</span>
                         </button>
-                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setEditExt(e)} title="Editar">
+                        <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setEditExt(e)} title="Editar cadastro do extintor">
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button size="sm" className="gap-1 h-7 bg-red-700 hover:bg-red-800" onClick={() => setInspecaoExt(e)}>
-                          <ClipboardCheck className="h-3.5 w-3.5" /> Inspecionar
+                        <Button asChild size="sm" className="gap-1 h-8 bg-red-700 hover:bg-red-800">
+                          <Link to="/app/extintores-inspecao-foto" search={{ extintor: e.id } as any}>
+                            <Sparkles className="h-3.5 w-3.5" /> Inspecionar
+                          </Link>
                         </Button>
                       </div>
                     </TableCell>
@@ -410,15 +439,6 @@ function ExtintoresPage() {
           onOpenChange={(v) => !v && setEditExt(null)}
           userId={user?.id}
           onSaved={onInvalidate}
-        />
-      )}
-      {inspecaoExt && (
-        <InspecaoDialog
-          extintor={inspecaoExt}
-          open={!!inspecaoExt}
-          onOpenChange={(v) => !v && setInspecaoExt(null)}
-          userId={user?.id}
-          onCreated={onInvalidate}
         />
       )}
       {histExt && (
@@ -535,14 +555,18 @@ function ExtintorFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-red-600" />
-            {isEdit ? `Editar extintor ${extintor.numero ?? ""}` : "Novo extintor"}
+            {isEdit ? `Editar cadastro — Extintor ${extintor.numero ?? ""}` : "Novo extintor"}
           </DialogTitle>
+          {isEdit && (
+            <div className="text-sm text-slate-300">
+              Somente dados do cadastro. Inspeções e fotos ficam no botão Histórico.
+            </div>
+          )}
         </DialogHeader>
-        {isEdit && <UltimaInspecaoIAPanel extintorId={extintor.id} />}
         <div className="grid grid-cols-2 gap-3">
           {!isEdit && (
             <div><Label>Nº do extintor <span className="text-slate-400 font-normal">(opcional)</span></Label><Input value={form.numero} onChange={(e) => set("numero", e.target.value)} placeholder="auto" /></div>
@@ -588,152 +612,6 @@ function ExtintorFormDialog({
             className="bg-red-700 hover:bg-red-800"
           >
             {isEdit ? "Salvar alterações" : "Cadastrar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function InspecaoDialog({
-  extintor, open, onOpenChange, onCreated, userId,
-}: { extintor: Extintor; open: boolean; onOpenChange: (v: boolean) => void; onCreated: () => void; userId?: string }) {
-  const [data, setData] = useState(new Date().toISOString().slice(0, 10));
-  const [nome, setNome] = useState("");
-  const [registro, setRegistro] = useState("");
-  const [ncs, setNcs] = useState<number[]>([]);
-  const [nc, setNc] = useState("");
-  const [obs, setObs] = useState("");
-  const [foto, setFoto] = useState<File | null>(null);
-  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const toggle = (id: number) => setNcs((arr) => arr.includes(id) ? arr.filter((n) => n !== id) : [...arr, id]);
-
-  const onPickFile = (f: File | null) => {
-    setFoto(f);
-    if (fotoPreview) URL.revokeObjectURL(fotoPreview);
-    setFotoPreview(f ? URL.createObjectURL(f) : null);
-  };
-
-  const save = useMutation({
-    mutationFn: async () => {
-      let foto_path: string | null = null;
-      if (foto) {
-        setUploading(true);
-        const ext = foto.name.split(".").pop() || "jpg";
-        const path = `${extintor.id}/${Date.now()}.${ext}`;
-        const up = await supabase.storage.from("extintores-fotos").upload(path, foto, {
-          contentType: foto.type, upsert: false,
-        });
-        setUploading(false);
-        if (up.error) throw up.error;
-        foto_path = up.data.path;
-      }
-      const conforme = ncs.length === 0;
-      const { error } = await supabase.from("extintor_inspecoes").insert({
-        extintor_id: extintor.id,
-        data_inspecao: data,
-        responsavel_nome: nome,
-        responsavel_registro: registro || null,
-        nc_codigos: ncs,
-        nao_conformidade: nc || null,
-        observacoes: obs || null,
-        conforme,
-        foto_path,
-        created_by: userId ?? null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => { toast.success("Inspeção registrada"); onCreated(); onOpenChange(false); },
-    onError: (e: any) => { setUploading(false); toast.error(e.message ?? "Erro ao registrar"); },
-  });
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <DialogTitle className="flex items-center gap-2">
-                <ClipboardCheck className="h-5 w-5 text-red-600" />
-                Inspeção mensal — Extintor {extintor.numero}
-              </DialogTitle>
-              <div className="text-xs text-slate-500 mt-1">{extintor.area} · {extintor.localizacao} · {extintor.tipo_agente}</div>
-            </div>
-            <Button asChild size="sm" variant="outline" className="gap-1 shrink-0">
-              <Link to="/app/extintores-inspecao-foto" search={{ extintor: extintor.id } as any}>
-                <Sparkles className="h-3.5 w-3.5" /> Inspecionar com IA
-              </Link>
-            </Button>
-          </div>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-3">
-            <div><Label>Data *</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
-            <div className="col-span-2"><Label>Responsável *</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Téc. Segurança — Nome" /></div>
-            <div className="col-span-3"><Label>CRP/Registro</Label><Input value={registro} onChange={(e) => setRegistro(e.target.value)} placeholder="CRP-0000000/UF-MTE" /></div>
-          </div>
-          <div>
-            <Label>Não conformidades observadas (FOR-SFG 08)</Label>
-            <div className="grid grid-cols-2 gap-2 mt-2 p-3 rounded-md border bg-slate-50">
-              {CHECKLIST_NC.map((it) => (
-                <label key={it.id} className="flex items-center gap-2 text-xs cursor-pointer">
-                  <Checkbox checked={ncs.includes(it.id)} onCheckedChange={() => toggle(it.id)} />
-                  <span className="font-mono font-bold text-slate-400 w-5">{it.id}.</span>
-                  <span>{it.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div><Label>Detalhamento da não conformidade</Label><Textarea value={nc} onChange={(e) => setNc(e.target.value)} rows={2} /></div>
-          <div><Label>Observações</Label><Textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} /></div>
-
-          {/* EVIDÊNCIA / FOTO */}
-          <div>
-            <Label className="flex items-center gap-2"><Camera className="h-4 w-4 text-red-600" /> Evidência fotográfica</Label>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
-            />
-            {!fotoPreview ? (
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="mt-2 w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-red-400 hover:bg-red-50/40 transition rounded-lg py-6 text-slate-500 hover:text-red-700"
-              >
-                <Upload className="h-6 w-6" />
-                <span className="text-xs font-semibold">Tirar/anexar foto do extintor</span>
-                <span className="text-[10px] text-slate-400">JPG/PNG · obrigatório se houver não conformidade</span>
-              </button>
-            ) : (
-              <div className="mt-2 relative inline-block">
-                <img src={fotoPreview} alt="prévia" className="max-h-48 rounded-lg border border-slate-200 shadow-sm" />
-                <button
-                  type="button"
-                  onClick={() => onPickFile(null)}
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-600 text-white flex items-center justify-center shadow"
-                  title="Remover"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button
-            onClick={() => save.mutate()}
-            disabled={save.isPending || uploading || !nome}
-            className="bg-red-700 hover:bg-red-800"
-          >
-            {uploading ? "Enviando foto…" : save.isPending ? "Registrando…" : "Registrar inspeção"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -976,7 +854,7 @@ function HistoricoInspecoesDialog({
 
         <div className="space-y-3">
           {(ia.data ?? []).map((r: any) => {
-            const status = r.status_geral as string;
+            const status = normalizeIaStatus(r.status_geral) ?? "NAO_CONFORME";
             const tone =
               status === "CONFORME" ? "border-emerald-500/40 bg-slate-900/60"
               : status === "PRECISA_REVISAO" ? "border-amber-500/40 bg-slate-900/60"
@@ -999,7 +877,7 @@ function HistoricoInspecoesDialog({
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-red-400" />
                     <span className="text-sm font-black uppercase tracking-wider text-white">Inspeção por IA</span>
-                    <Badge variant="outline" className={badge}>{status ?? "—"}</Badge>
+                    <Badge variant="outline" className={badge}>{IA_STATUS_LABEL[status]}</Badge>
                   </div>
                   <div className="text-xs text-slate-300">
                     {r.inspecionado_em ? new Date(r.inspecionado_em).toLocaleString("pt-BR") : "—"}
