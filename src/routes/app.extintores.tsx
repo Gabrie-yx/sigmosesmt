@@ -1057,7 +1057,7 @@ function HistoricoInspecoesDialog({
   userNome?: string;
 }) {
   const qc = useQueryClient();
-  const [manualOpen, setManualOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(true);
   const [manualForm, setManualForm] = useState({
     conforme: true,
     nao_conformidade: "",
@@ -1070,6 +1070,7 @@ function HistoricoInspecoesDialog({
   }, [userNome]);
   useEffect(() => {
     if (!open) return;
+    setManualOpen(true);
     const handler = (ev: Event) => {
       const det = (ev as CustomEvent).detail;
       if (det && det !== extintor.id) return;
