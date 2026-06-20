@@ -71,8 +71,10 @@ function ResetPasswordPage() {
     if (pwd !== pwd2) return toast.error("As senhas não coincidem");
     setBusy(true);
     try {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const hasVerifiedTotp = (factors?.totp ?? []).some((f) => f.status === "verified");
       const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (aalData?.nextLevel === "aal2" && aalData.currentLevel !== "aal2") {
+      if (hasVerifiedTotp && aalData?.currentLevel !== "aal2") {
         await startMfaChallenge();
         return;
       }
@@ -96,12 +98,22 @@ function ResetPasswordPage() {
     if (!/^\d{6}$/.test(mfaCode)) return toast.error("Digite os 6 dígitos do código");
     setBusy(true);
     try {
-      const { error } = await supabase.auth.mfa.verify({
+      const { data, error } = await supabase.auth.mfa.verify({
         factorId: mfaFactorId,
         challengeId: mfaChallengeId,
         code: mfaCode,
       });
       if (error) throw error;
+      if (data?.session?.access_token && data.session.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+      }
+      const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aalData?.currentLevel !== "aal2") {
+        await supabase.auth.refreshSession();
+      }
       await finishPasswordUpdate();
     } catch (e: any) {
       if (isAal2Error(e)) {
