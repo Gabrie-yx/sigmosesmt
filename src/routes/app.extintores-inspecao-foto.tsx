@@ -636,9 +636,16 @@ function InspecaoFotoPage() {
                 <div className="mt-1 text-sm text-muted-foreground">{handoffError}</div>
               </div>
             </div>
-            <Button onClick={() => navigate({ to: "/app/extintores" })}>
-              Voltar ao painel de extintores
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {!!etiqueta.path && !!manometro.path && !!inmetro.path && (
+                <Button onClick={() => handleAnalisar()}>
+                  <Sparkles className="h-4 w-4 mr-2" /> Tentar novamente
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => navigate({ to: "/app/extintores" })}>
+                Voltar ao painel de extintores
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
