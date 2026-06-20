@@ -921,6 +921,36 @@ function HistoricoInspecoesDialog({
 
   const total = (ia.data?.length ?? 0) + (manuais.data?.length ?? 0);
 
+  const mediaItems: MediaItem[] = useMemo(() => {
+    const out: MediaItem[] = [];
+    for (const r of ia.data ?? []) {
+      const pares: { label: string; path: string | null }[] = [
+        { label: "Etiqueta", path: r.foto_etiqueta_path },
+        { label: "Manômetro", path: r.foto_manometro_path },
+        { label: "Lacre", path: r.foto_lacre_path },
+        { label: "INMETRO", path: r.foto_inmetro_path },
+        { label: "Extra", path: r.foto_extra_path },
+      ];
+      for (const p of pares) {
+        if (!p.path) continue;
+        const url = urls[`extintores-inspecoes:${p.path}`];
+        if (url) out.push({ url, name: `IA · ${p.label} · ${new Date(r.inspecionado_em).toLocaleDateString("pt-BR")}`, kind: "image" });
+      }
+    }
+    for (const r of manuais.data ?? []) {
+      if (!r.foto_path) continue;
+      const url = urls[`extintores-fotos:${r.foto_path}`];
+      if (url) out.push({ url, name: `Manual · ${new Date(r.data_inspecao + "T00:00").toLocaleDateString("pt-BR")}`, kind: "image" });
+    }
+    return out;
+  }, [ia.data, manuais.data, urls]);
+
+  const [viewerIdx, setViewerIdx] = useState<number | null>(null);
+  const openByUrl = (url: string) => {
+    const i = mediaItems.findIndex((m) => m.url === url);
+    if (i >= 0) setViewerIdx(i);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto custom-scrollbar">
