@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,10 +25,16 @@ type Props = {
 
 type Company = { id: string; name: string; type: string | null };
 type Role = { id: string; name: string };
-type EmployeeForm = Pick<
-  Database["public"]["Tables"]["employees"]["Insert"],
-  "nome" | "cpf" | "matricula" | "status" | "company_id" | "role_id" | "tipo_cadastro" | "cnpj"
->;
+type EmployeeForm = {
+  nome: string;
+  cpf: string;
+  matricula: string;
+  status: string;
+  company_id: string;
+  role_id: string;
+  tipo_cadastro: string;
+  cnpj: string;
+};
 type ExistingEmployee = {
   id: string;
   nome: string;
@@ -89,18 +94,19 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
   });
 
   const create = useMutation({
-    mutationFn: async (v: any) => {
+    mutationFn: async (v: EmployeeForm) => {
       const cpfDigits = onlyDigits(v.cpf);
       const cpfFormatado = cpfDigits ? maskCPF(cpfDigits) : "";
       if (cpfDigits && cpfDigits.length !== 11) {
         throw new Error("CPF incompleto. Informe os 11 dígitos ou deixe o campo em branco.");
       }
       if (cpfDigits) {
-        const { data: existing, error: lookupError } = await supabase
+        const { data, error: lookupError } = await supabase
           .from("employees")
           .select("id,nome,cpf,status,company_id,companies(name)")
           .or(`cpf.eq.${cpfFormatado},cpf.eq.${cpfDigits}`)
           .maybeSingle();
+        const existing = data as ExistingEmployee | null;
         if (lookupError) throw lookupError;
         if (existing) {
           throw Object.assign(new Error(duplicateCpfMessage(existing)), {
@@ -135,8 +141,8 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
       onOpenChange(false);
       toast.success("Funcionário criado");
     },
-    onError: (e: any) => {
-      if (e?.code === "DUPLICATE_EMPLOYEE_CPF" && e.employee?.id) {
+    onError: (e: unknown) => {
+      if (isDuplicateCpfMutationError(e)) {
         toast.error("CPF já cadastrado", {
           description: e.message,
           action: {
@@ -149,17 +155,17 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
         });
         return;
       }
-      toast.error(e.message);
+      toast.error(e instanceof Error ? e.message : "Não foi possível criar o funcionário.");
     },
   });
 
   const selectedCompany = useMemo(
-    () => (companies ?? []).find((c: any) => c.id === form.company_id),
+    () => (companies ?? []).find((c) => c.id === form.company_id),
     [companies, form.company_id],
   );
   const cName = selectedCompany?.name ?? "—";
   const isTerceiro = selectedCompany?.type === "TERCEIRIZADO";
-  const rName = (roles ?? []).find((r: any) => r.id === form.role_id)?.name ?? "—";
+  const rName = (roles ?? []).find((r) => r.id === form.role_id)?.name ?? "—";
 
   const steps: WizardStep[] = [
     {
