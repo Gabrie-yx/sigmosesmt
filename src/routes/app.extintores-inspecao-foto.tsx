@@ -107,7 +107,7 @@ const SLOT_INFO: Record<Slot, { titulo: string; instrucao: string; obrigatoria: 
   manometro: {
     emoji: "📊",
     titulo: "Foto 2 — Manômetro + lacre + pino + mangueira",
-    instrucao: "Aproxime o suficiente para a IA ver a AGULHA do manômetro, o LACRE plástico, o PINO de segurança e a MANGUEIRA.",
+    instrucao: "Aproxime o suficiente para enquadrar a AGULHA do manômetro, o LACRE plástico, o PINO de segurança e a MANGUEIRA.",
     obrigatoria: true,
   },
   inmetro: {
@@ -484,7 +484,7 @@ function InspecaoFotoPage() {
     }
   };
 
-  // Quando o modal entrega as 3 fotos via sessionStorage, dispara a IA automaticamente
+  // Quando o modal entrega as 3 fotos via sessionStorage, dispara a análise automaticamente
   // e pula direto para a revisão (etapa 3), sem passar pela tela de fotos.
   useEffect(() => {
     if (!autoAnalisar) return;
@@ -503,7 +503,7 @@ function InspecaoFotoPage() {
     const timeoutId = window.setTimeout(() => {
       setHandoffLoading(false);
       setAnalisando(false);
-      setHandoffError("A análise demorou mais que o esperado. As fotos foram recebidas; toque em tentar novamente para reenviar à IA.");
+      setHandoffError("A análise demorou mais que o esperado. As fotos foram recebidas; toque em tentar novamente para reenviar para análise.");
     }, HANDOFF_TIMEOUT_MS);
     return () => window.clearTimeout(timeoutId);
   }, [fluxoModal, handoffLoading]);
@@ -616,7 +616,7 @@ function InspecaoFotoPage() {
           <CardContent className="p-6 flex items-center gap-3">
             <Loader2 className="h-5 w-5 animate-spin text-red-600" />
             <div>
-              <div className="font-semibold">Analisando fotos com IA…</div>
+              <div className="font-semibold">Analisando fotos…</div>
               <div className="text-xs text-muted-foreground">Pulando a tela antiga de fotos e preparando o laudo.</div>
             </div>
           </CardContent>
@@ -633,7 +633,7 @@ function InspecaoFotoPage() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="mt-0.5 h-5 w-5 text-red-600" />
               <div>
-                <div className="font-semibold">A análise por IA não foi concluída</div>
+                <div className="font-semibold">A análise não foi concluída</div>
                 <div className="mt-1 text-sm text-muted-foreground">{handoffError}</div>
               </div>
             </div>
@@ -662,7 +662,7 @@ function InspecaoFotoPage() {
           </Button>
           <h1 className="text-xl font-semibold">Inspeção por Foto (FOR-SFG 08)</h1>
         </div>
-        <Badge variant="outline" className="gap-1"><Sparkles className="h-3 w-3" /> IA</Badge>
+        <Badge variant="outline" className="gap-1"><Sparkles className="h-3 w-3" /> Foto</Badge>
       </div>
 
       {/* Stepper */}
@@ -854,7 +854,7 @@ function InspecaoFotoPage() {
           <div className="flex justify-between">
             <Button variant="outline" onClick={() => setEtapa(1)}>← Voltar</Button>
             <Button onClick={() => handleAnalisar()} disabled={analisando}>
-              {analisando ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Analisando…</>) : (<><Sparkles className="h-4 w-4 mr-2" /> Analisar com IA</>)}
+              {analisando ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Analisando…</>) : (<><Sparkles className="h-4 w-4 mr-2" /> Analisar fotos</>)}
             </Button>
           </div>
         </div>
@@ -868,7 +868,7 @@ function InspecaoFotoPage() {
             <Card className="border-red-300 bg-red-50">
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center gap-2 font-bold text-red-700">
-                  <AlertTriangle className="h-5 w-5" /> Divergência detectada pela IA
+                  <AlertTriangle className="h-5 w-5" /> Divergência detectada na análise
                 </div>
                 <div className="text-sm text-red-800">
                   {laudo.divergencia_descricao ?? "Os dados da etiqueta lida não batem com o extintor selecionado."}
@@ -891,7 +891,7 @@ function InspecaoFotoPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-medium">Confiança da IA</div>
+                <div className="text-sm font-medium">Confiança da análise</div>
                 <Badge variant={laudoIA.confianca >= 0.7 ? "default" : "destructive"}>
                   {Math.round((laudoIA.confianca ?? 0) * 100)}%
                 </Badge>
@@ -964,7 +964,7 @@ function InspecaoFotoPage() {
           <Card>
             <CardContent className="p-4 space-y-3">
               <div className="font-semibold text-sm flex items-center gap-2">
-                ✅ Checklist FOR-SFG 08 — pré-marcado pela IA
+                ✅ Checklist FOR-SFG 08 — pré-marcado pela análise
               </div>
               <p className="text-xs text-muted-foreground">C = Conforme · NC = Não Conforme · NA = Não se aplica</p>
               <div className="space-y-1.5">
