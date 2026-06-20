@@ -290,16 +290,23 @@ function ExtintoresPage() {
                     <TableCell className="font-mono font-bold text-red-700">
                       <div className="flex items-center gap-2">
                         {e.ultimo_status_inspecao ? (
-                          <span
-                            title={`Última inspeção IA: ${e.ultimo_status_inspecao}`}
-                            className={`inline-block h-2.5 w-2.5 rounded-full ring-2 ring-white shadow ${
+                          (() => {
+                            const tone =
                               e.ultimo_status_inspecao === "CONFORME"
                                 ? "bg-emerald-500"
                                 : e.ultimo_status_inspecao === "PRECISA_REVISAO"
                                 ? "bg-amber-500"
-                                : "bg-red-500 animate-pulse"
-                            }`}
-                          />
+                                : "bg-red-500";
+                            return (
+                              <span
+                                title={`Última inspeção IA: ${e.ultimo_status_inspecao}`}
+                                className="relative inline-flex h-3 w-3 items-center justify-center"
+                              >
+                                <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping ${tone}`} />
+                                <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ring-2 ring-white shadow ${tone}`} />
+                              </span>
+                            );
+                          })()
                         ) : (
                           <span title="Sem inspeção IA" className="inline-block h-2.5 w-2.5 rounded-full bg-slate-300" />
                         )}
