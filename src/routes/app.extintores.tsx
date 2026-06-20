@@ -604,6 +604,11 @@ function ExtintoresPage() {
         fileName={`planilha-inspecao-extintores-${new Date().toISOString().slice(0, 10)}.pdf`}
         title="Planilha de Inspeção de Extintores"
       />
+      <ExtintorInspecaoFotoDialog
+        extintor={inspecaoExt}
+        open={!!inspecaoExt}
+        onOpenChange={(v) => { if (!v) setInspecaoExt(null); }}
+      />
       <SignaturePadDialog
         open={sigOpen}
         onClose={() => setSigOpen(false)}
