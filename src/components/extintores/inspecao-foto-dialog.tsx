@@ -204,7 +204,10 @@ export function ExtintorInspecaoFotoDialog({
     } catch {/* ignore */}
     onOpenChange(false);
     reset();
-    navigate({ to: "/app/extintores-inspecao-foto", search: { extintor: extintor.id, handoff: "1" } as any });
+    navigate({
+      to: "/app/extintores-inspecao-foto",
+      search: () => ({ extintor: extintor.id, handoff: "1" }) as any,
+    });
   };
 
   const irProxima = () => {
