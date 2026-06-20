@@ -44,6 +44,20 @@ const STATUS_STYLES: Record<string, string> = {
   VENCIDO: "bg-red-100 text-red-700 border-red-300",
 };
 
+const normalizeIaStatus = (status?: string | null) => {
+  const s = (status ?? "").toUpperCase();
+  if (s === "CONFORME") return "CONFORME";
+  if (s === "PENDENTE_REVISAO" || s === "PRECISA_REVISAO") return "PRECISA_REVISAO";
+  if (s === "NAO_CONFORME" || s === "NÃO_CONFORME") return "NAO_CONFORME";
+  return null;
+};
+
+const IA_STATUS_LABEL: Record<string, string> = {
+  CONFORME: "IA conforme",
+  PRECISA_REVISAO: "IA revisar",
+  NAO_CONFORME: "IA NC",
+};
+
 type Extintor = any;
 type Inspecao = any;
 
