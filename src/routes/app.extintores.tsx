@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,7 +23,6 @@ import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { EXTINTORES_CHECKLIST_NC as CHECKLIST_NC, gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
 import type jsPDF from "jspdf";
-import { useEffect } from "react";
 
 export const Route = createFileRoute("/app/extintores")({
   component: ExtintoresPage,
