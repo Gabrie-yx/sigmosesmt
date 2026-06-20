@@ -557,6 +557,7 @@ function InspecaoFotoPage() {
         proxima_manutencao_n2: toDate(laudo.proxima_manutencao_n2),
         proxima_manutencao_n3: toDate(laudo.proxima_manutencao_n3),
         checklist: Object.fromEntries(ITENS_FOR_SFG_08.map((it) => [it.key, laudo[it.key]])),
+        avarias_paths: avariasPaths,
       };
 
       return await salvarFn({
