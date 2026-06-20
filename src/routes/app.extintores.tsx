@@ -997,8 +997,65 @@ function UltimaInspecaoIAPanel({ extintorId }: { extintorId: string }) {
 }
 
 function HistoricoInspecoesDialog({
-  extintor, open, onOpenChange, onNovaInspecao,
-}: { extintor: Extintor; open: boolean; onOpenChange: (v: boolean) => void; onNovaInspecao: () => void }) {
+  extintor, open, onOpenChange, onNovaInspecao, userId, userNome,
+}: {
+  extintor: Extintor;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onNovaInspecao: () => void;
+  userId?: string;
+  userNome?: string;
+}) {
+  const qc = useQueryClient();
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    conforme: true,
+    nao_conformidade: "",
+    observacoes: "",
+    responsavel_nome: userNome ?? "",
+    responsavel_registro: "",
+  });
+  useEffect(() => {
+    setManualForm((p) => ({ ...p, responsavel_nome: userNome ?? p.responsavel_nome }));
+  }, [userNome]);
+  useEffect(() => {
+    if (!open) return;
+    const handler = (ev: Event) => {
+      const det = (ev as CustomEvent).detail;
+      if (det && det !== extintor.id) return;
+      setManualOpen(true);
+    };
+    window.addEventListener("abrir-inspecao-manual", handler as EventListener);
+    return () => window.removeEventListener("abrir-inspecao-manual", handler as EventListener);
+  }, [open, extintor.id]);
+
+  const salvarManual = useMutation({
+    mutationFn: async () => {
+      const nome = (manualForm.responsavel_nome || "").trim();
+      if (!nome) throw new Error("Informe o responsável pela inspeção");
+      const hoje = new Date().toISOString().slice(0, 10);
+      const { error } = await supabase.from("extintor_inspecoes").insert({
+        extintor_id: extintor.id,
+        data_inspecao: hoje,
+        conforme: manualForm.conforme,
+        nao_conformidade: manualForm.conforme ? null : (manualForm.nao_conformidade || null),
+        observacoes: manualForm.observacoes || null,
+        responsavel_nome: nome,
+        responsavel_registro: manualForm.responsavel_registro || null,
+        created_by: userId ?? null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Inspeção manual registrada");
+      setManualOpen(false);
+      setManualForm((p) => ({ ...p, nao_conformidade: "", observacoes: "" }));
+      qc.invalidateQueries({ queryKey: ["extintor-inspecoes"] });
+      qc.invalidateQueries({ queryKey: ["hist-manual", extintor.id] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao salvar inspeção"),
+  });
+
   const ia = useQuery({
     queryKey: ["hist-ia", extintor.id],
     queryFn: async () => {
