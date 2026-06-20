@@ -315,27 +315,28 @@ function ExtintoresPage() {
               {filtered.map((e) => {
                 const insp = inspecoesMesPorExt.get(e.id);
                 const vencido = e.proxima_recarga && e.proxima_recarga < hoje.toISOString().slice(0, 10);
+                const iaStatus = normalizeIaStatus(e.ultimo_status_inspecao);
                 return (
                   <TableRow key={e.id} className="hover:bg-red-50/30 transition-colors">
                     <TableCell className="font-mono font-bold text-red-700">
                       <div className="flex items-center gap-2">
-                        {e.ultimo_status_inspecao ? (
+                        {iaStatus ? (
                           (() => {
                             const gradient =
-                              e.ultimo_status_inspecao === "CONFORME"
+                              iaStatus === "CONFORME"
                                 ? "bg-[radial-gradient(circle_at_30%_30%,#6ee7b7,#10b981_55%,#047857)]"
-                                : e.ultimo_status_inspecao === "PRECISA_REVISAO"
+                                : iaStatus === "PRECISA_REVISAO"
                                 ? "bg-[radial-gradient(circle_at_30%_30%,#fde68a,#f59e0b_55%,#b45309)]"
                                 : "bg-[radial-gradient(circle_at_30%_30%,#fecaca,#ef4444_55%,#991b1b)]";
                             const glow =
-                              e.ultimo_status_inspecao === "CONFORME"
+                              iaStatus === "CONFORME"
                                 ? "shadow-[0_0_0_3px_rgba(16,185,129,0.18),0_4px_10px_-2px_rgba(16,185,129,0.55)]"
-                                : e.ultimo_status_inspecao === "PRECISA_REVISAO"
+                                : iaStatus === "PRECISA_REVISAO"
                                 ? "shadow-[0_0_0_3px_rgba(245,158,11,0.18),0_4px_10px_-2px_rgba(245,158,11,0.55)]"
                                 : "shadow-[0_0_0_3px_rgba(239,68,68,0.22),0_4px_12px_-2px_rgba(239,68,68,0.65)]";
                             return (
                               <span
-                                title={`Última inspeção IA: ${e.ultimo_status_inspecao}`}
+                                title={IA_STATUS_LABEL[iaStatus]}
                                 className="relative inline-flex h-3.5 w-3.5 items-center justify-center"
                               >
                                 <span className={`relative inline-flex h-3 w-3 rounded-full ${gradient} ${glow}`}>
@@ -373,15 +374,15 @@ function ExtintoresPage() {
                         <Badge
                           variant="outline"
                           className={
-                            e.ultimo_status_inspecao === "CONFORME"
+                            iaStatus === "CONFORME"
                               ? "bg-emerald-50 text-emerald-700 border-emerald-300"
-                              : e.ultimo_status_inspecao === "PRECISA_REVISAO"
+                              : iaStatus === "PRECISA_REVISAO"
                               ? "bg-amber-50 text-amber-700 border-amber-300"
                               : "bg-red-50 text-red-700 border-red-300"
                           }
-                          title={`Inspeção IA · ${e.ultimo_status_inspecao}`}
+                          title={iaStatus ? IA_STATUS_LABEL[iaStatus] : "Inspeção IA"}
                         >
-                          {e.ultimo_status_inspecao === "CONFORME"
+                          {iaStatus === "CONFORME"
                             ? <CheckCircle2 className="h-3 w-3 mr-1" />
                             : <AlertTriangle className="h-3 w-3 mr-1" />}
                           {formatDateBR(new Date(e.ultima_inspecao_em).toISOString().slice(0, 10))}
