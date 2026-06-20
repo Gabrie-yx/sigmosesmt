@@ -62,6 +62,19 @@ function isHandoffParam(params: URLSearchParams): boolean {
   return value === "1" || value === "true";
 }
 
+function readHandoffPhotos(params: URLSearchParams): FotoPrefillPaths | null {
+  const etiquetaPath = readSearchValue(params, "etiqueta");
+  const manometroPath = readSearchValue(params, "manometro");
+  const inmetroPath = readSearchValue(params, "inmetro");
+  if (!etiquetaPath || !manometroPath || !inmetroPath) return null;
+  return {
+    etiquetaPath,
+    manometroPath,
+    inmetroPath,
+    extraPath: readSearchValue(params, "extra"),
+  };
+}
+
 const SLOT_INFO: Record<Slot, { titulo: string; instrucao: string; obrigatoria: boolean; emoji: string }> = {
   etiqueta: {
     emoji: "🏷️",
@@ -225,7 +238,8 @@ function InspecaoFotoPage() {
     const veioDoModal = isHandoffParam(params);
     const key = `inspecao-foto-prefill:${extintorId}`;
     const raw = sessionStorage.getItem(key);
-    if (!raw) {
+    const directPhotos = readHandoffPhotos(params);
+    if (!raw && !directPhotos) {
       if (veioDoModal) {
         setHandoffError("Não consegui recuperar as fotos enviadas. Volte ao painel e tente iniciar a inspeção novamente.");
         setHandoffLoading(false);
@@ -233,8 +247,14 @@ function InspecaoFotoPage() {
       return;
     }
     try {
-      const p = JSON.parse(raw);
-      if (Date.now() - (p.ts ?? 0) > 30 * 60 * 1000) {
+      const p = raw ? JSON.parse(raw) : {
+        etiqueta_path: directPhotos!.etiquetaPath,
+        manometro_path: directPhotos!.manometroPath,
+        inmetro_path: directPhotos!.inmetroPath,
+        extra_path: directPhotos!.extraPath,
+        ts: Date.now(),
+      };
+      if (raw && Date.now() - (p.ts ?? 0) > 30 * 60 * 1000) {
         sessionStorage.removeItem(key);
         setHandoffLoading(false);
         if (veioDoModal) {
