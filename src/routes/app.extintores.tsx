@@ -1001,7 +1001,7 @@ function HistoricoInspecoesDialog({
 
         <div className="space-y-3">
           {(ia.data ?? []).map((r: any) => {
-            const status = r.status_geral as string;
+            const status = normalizeIaStatus(r.status_geral) ?? "NAO_CONFORME";
             const tone =
               status === "CONFORME" ? "border-emerald-500/40 bg-slate-900/60"
               : status === "PRECISA_REVISAO" ? "border-amber-500/40 bg-slate-900/60"
@@ -1024,7 +1024,7 @@ function HistoricoInspecoesDialog({
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-red-400" />
                     <span className="text-sm font-black uppercase tracking-wider text-white">Inspeção por IA</span>
-                    <Badge variant="outline" className={badge}>{status ?? "—"}</Badge>
+                    <Badge variant="outline" className={badge}>{IA_STATUS_LABEL[status]}</Badge>
                   </div>
                   <div className="text-xs text-slate-300">
                     {r.inspecionado_em ? new Date(r.inspecionado_em).toLocaleString("pt-BR") : "—"}
