@@ -849,3 +849,198 @@ function UltimaInspecaoIAPanel({ extintorId }: { extintorId: string }) {
     </div>
   );
 }
+
+function HistoricoInspecoesDialog({
+  extintor, open, onOpenChange,
+}: { extintor: Extintor; open: boolean; onOpenChange: (v: boolean) => void }) {
+  const ia = useQuery({
+    queryKey: ["hist-ia", extintor.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("extintor_inspecoes_fotos")
+        .select("*")
+        .eq("extintor_id", extintor.id)
+        .order("inspecionado_em", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open,
+  });
+  const manuais = useQuery({
+    queryKey: ["hist-manual", extintor.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("extintor_inspecoes")
+        .select("*")
+        .eq("extintor_id", extintor.id)
+        .order("data_inspecao", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open,
+  });
+
+  const [urls, setUrls] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!ia.data && !manuais.data) return;
+    (async () => {
+      const out: Record<string, string> = {};
+      const sign = async (bucket: string, path: string) => {
+        const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
+        if (data?.signedUrl) out[`${bucket}:${path}`] = data.signedUrl;
+      };
+      for (const r of ia.data ?? []) {
+        for (const p of [r.foto_etiqueta_path, r.foto_manometro_path, r.foto_lacre_path, r.foto_inmetro_path, r.foto_extra_path]) {
+          if (p) await sign("extintores-inspecoes", p);
+        }
+      }
+      for (const r of manuais.data ?? []) {
+        if (r.foto_path) await sign("extintores-fotos", r.foto_path);
+      }
+      setUrls(out);
+    })();
+  }, [ia.data, manuais.data]);
+
+  const total = (ia.data?.length ?? 0) + (manuais.data?.length ?? 0);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <History className="h-5 w-5 text-red-600" />
+            Histórico de inspeções — Extintor {extintor.numero}
+          </DialogTitle>
+          <div className="text-xs text-slate-500 mt-1">
+            {extintor.area} · {extintor.localizacao} · {extintor.tipo_agente} · {total} registro(s)
+          </div>
+        </DialogHeader>
+
+        {(ia.isLoading || manuais.isLoading) && (
+          <div className="text-sm text-slate-400 py-6 text-center">Carregando histórico…</div>
+        )}
+
+        {!ia.isLoading && !manuais.isLoading && total === 0 && (
+          <div className="text-sm text-slate-500 py-8 text-center border border-dashed rounded-lg">
+            Este extintor ainda não tem inspeções registradas.
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {(ia.data ?? []).map((r: any) => {
+            const status = r.status_geral as string;
+            const tone =
+              status === "CONFORME" ? "border-emerald-300 bg-emerald-50/40"
+              : status === "PRECISA_REVISAO" ? "border-amber-300 bg-amber-50/40"
+              : "border-red-300 bg-red-50/40";
+            const badge =
+              status === "CONFORME" ? "bg-emerald-100 text-emerald-700 border-emerald-300"
+              : status === "PRECISA_REVISAO" ? "bg-amber-100 text-amber-700 border-amber-300"
+              : "bg-red-100 text-red-700 border-red-300";
+            const fotos = [
+              { label: "Etiqueta", path: r.foto_etiqueta_path },
+              { label: "Manômetro", path: r.foto_manometro_path },
+              { label: "Lacre", path: r.foto_lacre_path },
+              { label: "INMETRO", path: r.foto_inmetro_path },
+              { label: "Extra", path: r.foto_extra_path },
+            ].filter((f) => f.path);
+            const ncs = Array.isArray(r.nao_conformidades) ? r.nao_conformidades : [];
+            return (
+              <div key={r.id} className={`rounded-xl border ${tone} p-3 space-y-2`}>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-red-600" />
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-700">Inspeção por IA</span>
+                    <Badge variant="outline" className={badge}>{status ?? "—"}</Badge>
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    {r.inspecionado_em ? new Date(r.inspecionado_em).toLocaleString("pt-BR") : "—"}
+                    {r.confianca_ia != null && <span className="ml-2">· confiança {Math.round(Number(r.confianca_ia) * 100)}%</span>}
+                  </div>
+                </div>
+                {ncs.length > 0 && (
+                  <div className="text-[11px]">
+                    <div className="font-bold text-red-700 mb-0.5">Não conformidades:</div>
+                    <ul className="list-disc list-inside text-slate-700 space-y-0.5">
+                      {ncs.map((n: any, i: number) => <li key={i}>{String(n)}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {r.observacoes && (
+                  <div className="text-[11px] text-slate-600"><span className="font-bold">Obs:</span> {r.observacoes}</div>
+                )}
+                {r.assinado_por_nome && (
+                  <div className="text-[11px] text-slate-500">
+                    Assinado por <span className="font-semibold text-slate-700">{r.assinado_por_nome}</span>
+                    {r.assinado_por_cargo ? ` · ${r.assinado_por_cargo}` : ""}
+                  </div>
+                )}
+                {fotos.length > 0 && (
+                  <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                    {fotos.map((f) => {
+                      const url = urls[`extintores-inspecoes:${f.path}`];
+                      if (!url) return null;
+                      return (
+                        <a key={f.label} href={url} target="_blank" rel="noreferrer" className="block rounded-md overflow-hidden border border-slate-200 hover:border-red-400 bg-white shadow-sm">
+                          <img src={url} alt={f.label} className="h-20 w-full object-cover" />
+                          <div className="text-[10px] font-semibold text-slate-600 text-center py-0.5 border-t border-slate-100">{f.label}</div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {(manuais.data ?? []).map((r: any) => {
+            const tone = r.conforme ? "border-emerald-300 bg-emerald-50/40" : "border-red-300 bg-red-50/40";
+            const badge = r.conforme ? "bg-emerald-100 text-emerald-700 border-emerald-300" : "bg-red-100 text-red-700 border-red-300";
+            const url = r.foto_path ? urls[`extintores-fotos:${r.foto_path}`] : null;
+            return (
+              <div key={r.id} className={`rounded-xl border ${tone} p-3 space-y-2`}>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <ClipboardCheck className="h-4 w-4 text-red-600" />
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-700">Inspeção manual</span>
+                    <Badge variant="outline" className={badge}>{r.conforme ? "CONFORME" : "NÃO CONFORME"}</Badge>
+                  </div>
+                  <div className="text-[11px] text-slate-500">{formatDateBR(r.data_inspecao)}</div>
+                </div>
+                <div className="text-[11px] text-slate-600">
+                  Responsável: <span className="font-semibold text-slate-700">{r.responsavel_nome || "—"}</span>
+                  {r.responsavel_registro ? ` · ${r.responsavel_registro}` : ""}
+                </div>
+                {Array.isArray(r.nc_codigos) && r.nc_codigos.length > 0 && (
+                  <div className="text-[11px] text-slate-700">
+                    <span className="font-bold text-red-700">NC FOR-SFG 08:</span> {r.nc_codigos.join(", ")}
+                  </div>
+                )}
+                {r.nao_conformidade && (
+                  <div className="text-[11px] text-slate-600"><span className="font-bold">Detalhe:</span> {r.nao_conformidade}</div>
+                )}
+                {r.observacoes && (
+                  <div className="text-[11px] text-slate-600"><span className="font-bold">Obs:</span> {r.observacoes}</div>
+                )}
+                {url && (
+                  <a href={url} target="_blank" rel="noreferrer" className="inline-block rounded-md overflow-hidden border border-slate-200 hover:border-red-400 bg-white shadow-sm">
+                    <img src={url} alt="Evidência" className="h-28 object-cover" />
+                  </a>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <DialogFooter>
+          <Button asChild variant="outline" className="gap-1">
+            <Link to="/app/extintores-inspecao-foto" search={{ extintor: extintor.id } as any}>
+              <Sparkles className="h-3.5 w-3.5" /> Nova inspeção por IA
+            </Link>
+          </Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
