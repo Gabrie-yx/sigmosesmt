@@ -177,6 +177,7 @@ export const analisarFotosExtintor = createServerFn({ method: "POST" })
 
     if (!aiResp.ok) {
       const txt = await aiResp.text();
+      console.error("[extintor-ia] Gateway retornou erro", { status: aiResp.status, body: txt.slice(0, 500) });
       if (aiResp.status === 429) throw new Error("Limite de requisições à IA atingido. Tente novamente em alguns instantes.");
       if (aiResp.status === 402) throw new Error("Créditos de IA esgotados. Recarregue em Configurações → Planos & créditos.");
       throw new Error(`Falha na IA (${aiResp.status}): ${txt.slice(0, 200)}`);
