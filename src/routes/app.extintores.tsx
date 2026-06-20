@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,13 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Plus, Printer, Search, ClipboardCheck, Flame, AlertTriangle, CheckCircle2,
-  Pencil, Camera, Upload, ShieldCheck, CalendarClock, Activity, X, Sparkles, CalendarDays, Droplet,
+  Pencil, Camera, ShieldCheck, CalendarClock, Activity, Sparkles, CalendarDays, Droplet,
 } from "lucide-react";
 import { History } from "lucide-react";
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
