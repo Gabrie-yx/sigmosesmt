@@ -262,12 +262,11 @@ function InspecaoFotoPage() {
         .insert({
           numero: manualNumero,
           numero_cilindro: manualCilindro,
-          tipo_agente: manualTipo,
-          localizacao: manualLocal || null,
-          area: null,
+          tipo_agente: manualTipo as any,
+          localizacao: manualLocal || undefined,
           status: "ATIVO",
           created_by: user!.id,
-        })
+        } as any)
         .select("id")
         .single();
       if (error) throw error;
