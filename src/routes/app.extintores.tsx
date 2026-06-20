@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -290,16 +290,23 @@ function ExtintoresPage() {
                     <TableCell className="font-mono font-bold text-red-700">
                       <div className="flex items-center gap-2">
                         {e.ultimo_status_inspecao ? (
-                          <span
-                            title={`Última inspeção IA: ${e.ultimo_status_inspecao}`}
-                            className={`inline-block h-2.5 w-2.5 rounded-full ring-2 ring-white shadow ${
+                          (() => {
+                            const tone =
                               e.ultimo_status_inspecao === "CONFORME"
                                 ? "bg-emerald-500"
                                 : e.ultimo_status_inspecao === "PRECISA_REVISAO"
                                 ? "bg-amber-500"
-                                : "bg-red-500 animate-pulse"
-                            }`}
-                          />
+                                : "bg-red-500";
+                            return (
+                              <span
+                                title={`Última inspeção IA: ${e.ultimo_status_inspecao}`}
+                                className="relative inline-flex h-3 w-3 items-center justify-center"
+                              >
+                                <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping ${tone}`} />
+                                <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ring-2 ring-white shadow ${tone}`} />
+                              </span>
+                            );
+                          })()
                         ) : (
                           <span title="Sem inspeção IA" className="inline-block h-2.5 w-2.5 rounded-full bg-slate-300" />
                         )}
@@ -505,6 +512,7 @@ function ExtintorFormDialog({
             {isEdit ? `Editar extintor ${extintor.numero ?? ""}` : "Novo extintor"}
           </DialogTitle>
         </DialogHeader>
+        {isEdit && <UltimaInspecaoIAPanel extintorId={extintor.id} />}
         <div className="grid grid-cols-2 gap-3">
           {!isEdit && (
             <div><Label>Nº do extintor <span className="text-slate-400 font-normal">(opcional)</span></Label><Input value={form.numero} onChange={(e) => set("numero", e.target.value)} placeholder="auto" /></div>
@@ -700,5 +708,132 @@ function InspecaoDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function UltimaInspecaoIAPanel({ extintorId }: { extintorId: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["extintor-ultima-insp-ia", extintorId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("extintor_inspecoes_fotos")
+        .select("*")
+        .eq("extintor_id", extintorId)
+        .order("inspecionado_em", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const [urls, setUrls] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!data) return;
+    const paths: { key: string; label: string; path: string | null }[] = [
+      { key: "etiqueta", label: "Etiqueta", path: data.foto_etiqueta_path },
+      { key: "manometro", label: "Manômetro", path: data.foto_manometro_path },
+      { key: "lacre", label: "Lacre", path: data.foto_lacre_path },
+      { key: "inmetro", label: "Selo INMETRO", path: data.foto_inmetro_path },
+      { key: "extra", label: "Extra", path: data.foto_extra_path },
+    ];
+    (async () => {
+      const out: Record<string, string> = {};
+      for (const p of paths) {
+        if (!p.path) continue;
+        const { data: signed } = await supabase.storage
+          .from("extintores-inspecoes")
+          .createSignedUrl(p.path, 3600);
+        if (signed?.signedUrl) out[p.key] = signed.signedUrl;
+      }
+      setUrls(out);
+    })();
+  }, [data]);
+
+  if (isLoading) {
+    return <div className="text-xs text-slate-400 py-2">Carregando última inspeção IA…</div>;
+  }
+  if (!data) {
+    return (
+      <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-500 flex items-center gap-2">
+        <Sparkles className="h-3.5 w-3.5 text-slate-400" />
+        Nenhuma inspeção por IA registrada para este extintor.
+      </div>
+    );
+  }
+
+  const status = data.status_geral as string | null;
+  const statusStyles =
+    status === "CONFORME"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+      : status === "PRECISA_REVISAO"
+      ? "bg-amber-50 text-amber-700 border-amber-300"
+      : "bg-red-50 text-red-700 border-red-300";
+
+  const fotos: { key: string; label: string }[] = [
+    { key: "etiqueta", label: "Etiqueta" },
+    { key: "manometro", label: "Manômetro" },
+    { key: "lacre", label: "Lacre" },
+    { key: "inmetro", label: "Selo INMETRO" },
+    { key: "extra", label: "Extra" },
+  ].filter((f) => urls[f.key]);
+
+  const ncs = Array.isArray(data.nao_conformidades) ? data.nao_conformidades : [];
+
+  return (
+    <div className="rounded-xl border border-red-200 bg-gradient-to-br from-red-50/60 via-white to-amber-50/40 p-3 space-y-3">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-red-600" />
+          <span className="text-xs font-black uppercase tracking-wider text-red-700">Última inspeção por IA</span>
+          <Badge variant="outline" className={statusStyles}>{status ?? "—"}</Badge>
+        </div>
+        <div className="text-[11px] text-slate-500">
+          {data.inspecionado_em ? new Date(data.inspecionado_em).toLocaleString("pt-BR") : "—"}
+          {data.confianca_ia != null && <span className="ml-2">· confiança {Math.round(Number(data.confianca_ia) * 100)}%</span>}
+        </div>
+      </div>
+
+      {ncs.length > 0 && (
+        <div className="text-[11px]">
+          <div className="font-bold text-red-700 mb-1">Não conformidades:</div>
+          <ul className="list-disc list-inside text-slate-700 space-y-0.5">
+            {ncs.map((n: any, i: number) => <li key={i}>{String(n)}</li>)}
+          </ul>
+        </div>
+      )}
+      {data.observacoes && (
+        <div className="text-[11px] text-slate-600"><span className="font-bold">Obs:</span> {data.observacoes}</div>
+      )}
+
+      {fotos.length > 0 ? (
+        <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+          {fotos.map((f) => (
+            <a
+              key={f.key}
+              href={urls[f.key]}
+              target="_blank"
+              rel="noreferrer"
+              className="group block rounded-md overflow-hidden border border-slate-200 hover:border-red-400 bg-white shadow-sm"
+              title={`Abrir foto: ${f.label}`}
+            >
+              <img src={urls[f.key]} alt={f.label} className="h-20 w-full object-cover group-hover:opacity-90" />
+              <div className="text-[10px] font-semibold text-slate-600 text-center py-0.5 border-t border-slate-100">{f.label}</div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div className="text-[11px] text-slate-400 italic">Sem fotos anexadas.</div>
+      )}
+
+      <div className="flex justify-end">
+        <Button asChild size="sm" variant="outline" className="gap-1 h-7 text-xs">
+          <Link to="/app/extintores-inspecao-foto" search={{ extintor: extintorId } as any}>
+            <Sparkles className="h-3 w-3" /> Nova inspeção por IA
+          </Link>
+        </Button>
+      </div>
+    </div>
   );
 }
