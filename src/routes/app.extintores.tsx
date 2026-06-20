@@ -407,7 +407,7 @@ function ExtintoresPage() {
         <HistoricoInspecoesDialog
           extintor={histExt}
           open={!!histExt}
-          onOpenChange={(v) => !v && setHistExt(null)}
+          onOpenChange={(v: boolean) => !v && setHistExt(null)}
         />
       )}
       <PDFPreviewDialog
