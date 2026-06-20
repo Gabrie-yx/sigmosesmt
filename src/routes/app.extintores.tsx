@@ -20,6 +20,8 @@ import { History, Trash2 } from "lucide-react";
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
 import { toast } from "sonner";
 import { ExtintorInspecaoFotoDialog } from "@/components/extintores/inspecao-foto-dialog";
+import { InspecaoManualDialog } from "@/components/extintores/inspecao-manual-dialog";
+import { PendenciasPopover, type Pendencia } from "@/components/extintores/pendencias-popover";
 import { formatDateBR } from "@/lib/utils-date";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
@@ -90,6 +92,7 @@ function ExtintoresPage() {
   const [sigOpen, setSigOpen] = useState(false);
   const [excluirExt, setExcluirExt] = useState<Extintor | null>(null);
   const [inspecaoExt, setInspecaoExt] = useState<Extintor | null>(null);
+  const [manualExt, setManualExt] = useState<Extintor | null>(null);
 
   const excluirMut = useMutation({
     mutationFn: async (ext: Extintor) => {
@@ -398,25 +401,21 @@ function ExtintoresPage() {
             const vencido = e.proxima_recarga && e.proxima_recarga < hojeISO;
             const iaStatus = normalizeIaStatus(e.ultimo_status_inspecao);
 
-            // Lista de "o que precisa ser feito"
-            const acoesPendentes: string[] = [];
-            if (vencido) acoesPendentes.push("Recarga vencida — encaminhar para manutenção (2º grau)");
-            if (!insp) acoesPendentes.push("Inspeção mensal do mês ainda não registrada");
-            if (iaStatus === "NAO_CONFORME") acoesPendentes.push("Inspeção por foto: NÃO CONFORMIDADE — abrir histórico e tratar");
-            if (iaStatus === "PRECISA_REVISAO") acoesPendentes.push("Inspeção marcada como PRECISA REVISÃO — validar fotos no histórico");
-            const statusTone = vencido || iaStatus === "NAO_CONFORME"
-              ? "border-red-500/40 bg-red-950/40 text-red-200"
-              : iaStatus === "PRECISA_REVISAO" || !insp
-              ? "border-amber-500/40 bg-amber-950/40 text-amber-200"
-              : "border-emerald-500/40 bg-emerald-950/40 text-emerald-200";
+            // Lista estruturada de pendências (com tipo para o popover saber o que oferecer)
+            const pendencias: Pendencia[] = [];
+            if (vencido) pendencias.push({ tipo: "recarga", label: "Recarga vencida — encaminhar para manutenção (2º grau)" });
+            if (!insp) pendencias.push({ tipo: "mes", label: "Inspeção mensal do mês ainda não registrada" });
+            if (iaStatus === "NAO_CONFORME") pendencias.push({ tipo: "nao_conforme", label: "Inspeção por foto: NÃO CONFORMIDADE — abrir histórico e tratar" });
+            if (iaStatus === "PRECISA_REVISAO") pendencias.push({ tipo: "precisa_revisao", label: "Inspeção marcada como PRECISA REVISÃO — validar fotos no histórico" });
+            const okMes = !!insp && pendencias.length === 0;
 
             const ringTone =
               iaStatus === "NAO_CONFORME" || vencido
                 ? "ring-red-500/40 hover:ring-red-400/70 bg-gradient-to-br from-slate-900 to-red-950/60 shadow-[0_0_24px_-8px_rgba(239,68,68,0.45)]"
                 : iaStatus === "PRECISA_REVISAO"
                 ? "ring-amber-500/40 hover:ring-amber-400/70 bg-gradient-to-br from-slate-900 to-amber-950/50 shadow-[0_0_24px_-8px_rgba(245,158,11,0.4)]"
-                : iaStatus === "CONFORME" || insp?.conforme
-                ? "ring-emerald-500/40 hover:ring-emerald-400/70 bg-gradient-to-br from-slate-900 to-emerald-950/40 shadow-[0_0_24px_-8px_rgba(16,185,129,0.4)]"
+                : okMes || iaStatus === "CONFORME"
+                ? "ring-emerald-400/60 hover:ring-emerald-300/80 bg-gradient-to-br from-slate-900 to-emerald-950/50 shadow-[0_0_32px_-6px_rgba(16,185,129,0.65)]"
                 : "ring-slate-700/60 hover:ring-slate-500/70 bg-gradient-to-br from-slate-900 to-slate-950";
 
             const dotClass = iaStatus
@@ -559,24 +558,13 @@ function ExtintoresPage() {
                 </div>
 
                 {/* O que precisa ser feito */}
-                <div
-                  className={`rounded-md border ${statusTone} px-2 py-1.5 text-[10px] leading-snug`}
-                  title={acoesPendentes.join(" · ") || "Tudo certo neste extintor"}
-                >
-                  <div className="flex items-center gap-1 font-black uppercase tracking-wider text-[9px] opacity-80 mb-0.5">
-                    {acoesPendentes.length ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
-                    {acoesPendentes.length ? "Pendências" : "Tudo em ordem"}
-                  </div>
-                  {acoesPendentes.length ? (
-                    <ul className="list-disc list-inside space-y-0.5">
-                      {acoesPendentes.slice(0, 3).map((a, i) => (
-                        <li key={i} className="truncate" title={a}>{a}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className="opacity-80">Sem ações pendentes este mês.</div>
-                  )}
-                </div>
+                <PendenciasPopover
+                  pendencias={pendencias}
+                  onInspecionarFoto={() => setInspecaoExt(e)}
+                  onInspecionarManual={() => setManualExt(e)}
+                  onAbrirHistorico={() => setHistExt(e)}
+                  onEditarCadastro={() => setEditExt(e)}
+                />
 
                 {/* Ações */}
                 <div className="mt-auto pt-1 flex items-center gap-1">
@@ -591,7 +579,7 @@ function ExtintoresPage() {
                     size="sm"
                     variant="outline"
                     className="h-8 px-2 shrink-0 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-emerald-300 gap-1 text-[11px]"
-                    onClick={() => { setHistExt(e); setTimeout(() => window.dispatchEvent(new CustomEvent("abrir-inspecao-manual", { detail: e.id })), 50); }}
+                    onClick={() => setManualExt(e)}
                     title="Registrar inspeção manual (sem fotos)"
                   >
                     <ClipboardEdit className="h-3.5 w-3.5" /> Manual
