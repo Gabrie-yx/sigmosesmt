@@ -497,6 +497,16 @@ function InspecaoFotoPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoAnalisar, analisando]);
 
+  useEffect(() => {
+    if (!fluxoModal || !handoffLoading) return;
+    const timeoutId = window.setTimeout(() => {
+      setHandoffLoading(false);
+      setAnalisando(false);
+      setHandoffError("A análise demorou mais que o esperado. As fotos foram recebidas; toque em tentar novamente para reenviar à IA.");
+    }, HANDOFF_TIMEOUT_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [fluxoModal, handoffLoading]);
+
   const salvarMut = useMutation({
     mutationFn: async () => {
       const ncs: string[] = Array.isArray(laudo.nao_conformidades) ? laudo.nao_conformidades : [];
