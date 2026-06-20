@@ -287,142 +287,141 @@ function ExtintoresPage() {
         </CardContent>
       </Card>
 
-      {/* Tabela */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead className="w-[80px]">Nº</TableHead>
-                <TableHead>Área</TableHead>
-                <TableHead>Localização</TableHead>
-                <TableHead className="w-[80px]">Tipo</TableHead>
-                <TableHead className="w-[80px]">Carga</TableHead>
-                <TableHead className="w-[120px]">Selo INMETRO</TableHead>
-                <TableHead className="w-[110px]">Próx. recarga</TableHead>
-                <TableHead className="w-[90px]">Hidrost.</TableHead>
-                <TableHead className="w-[130px]">Inspeção mês</TableHead>
-                <TableHead className="w-[100px]">Status</TableHead>
-                <TableHead className="w-[180px] text-right pr-4">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {extintores.isLoading && <TableRow><TableCell colSpan={11} className="text-center text-slate-400 py-8">Carregando…</TableCell></TableRow>}
-              {!extintores.isLoading && filtered.length === 0 && (
-                <TableRow><TableCell colSpan={11} className="text-center text-slate-400 py-8">Nenhum extintor encontrado.</TableCell></TableRow>
-              )}
-              {filtered.map((e) => {
-                const insp = inspecoesMesPorExt.get(e.id);
-                const vencido = e.proxima_recarga && e.proxima_recarga < hoje.toISOString().slice(0, 10);
-                const iaStatus = normalizeIaStatus(e.ultimo_status_inspecao);
-                return (
-                  <TableRow key={e.id} className="hover:bg-red-50/30 transition-colors">
-                    <TableCell className="font-mono font-bold text-red-700">
-                      <div className="flex items-center gap-2">
-                        {iaStatus ? (
-                          (() => {
-                            const gradient =
-                              iaStatus === "CONFORME"
-                                ? "bg-[radial-gradient(circle_at_30%_30%,#6ee7b7,#10b981_55%,#047857)]"
-                                : iaStatus === "PRECISA_REVISAO"
-                                ? "bg-[radial-gradient(circle_at_30%_30%,#fde68a,#f59e0b_55%,#b45309)]"
-                                : "bg-[radial-gradient(circle_at_30%_30%,#fecaca,#ef4444_55%,#991b1b)]";
-                            const glow =
-                              iaStatus === "CONFORME"
-                                ? "shadow-[0_0_0_3px_rgba(16,185,129,0.18),0_4px_10px_-2px_rgba(16,185,129,0.55)]"
-                                : iaStatus === "PRECISA_REVISAO"
-                                ? "shadow-[0_0_0_3px_rgba(245,158,11,0.18),0_4px_10px_-2px_rgba(245,158,11,0.55)]"
-                                : "shadow-[0_0_0_3px_rgba(239,68,68,0.22),0_4px_12px_-2px_rgba(239,68,68,0.65)]";
-                            return (
-                              <span
-                                title={IA_STATUS_LABEL[iaStatus]}
-                                className="relative inline-flex h-3.5 w-3.5 items-center justify-center"
-                              >
-                                <span className={`relative inline-flex h-3 w-3 rounded-full ${gradient} ${glow}`}>
-                                  <span className="absolute top-[1px] left-[2px] h-[3px] w-[3px] rounded-full bg-white/80 blur-[0.5px]" />
-                                </span>
-                              </span>
-                            );
-                          })()
-                        ) : (
-                          <span
-                            title="Sem inspeção IA"
-                            className="relative inline-block h-3 w-3 rounded-full bg-[radial-gradient(circle_at_30%_30%,#f8fafc,#94a3b8_60%,#475569)] shadow-[0_0_0_2px_rgba(148,163,184,0.15),0_2px_6px_-1px_rgba(0,0,0,0.3)]"
-                          />
-                        )}
-                        {e.numero}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs">{e.area}</TableCell>
-                    <TableCell className="text-xs">{e.localizacao}</TableCell>
-                    <TableCell className="text-xs font-semibold">{e.tipo_agente}</TableCell>
-                    <TableCell className="text-xs">{e.carga_nominal ? `${e.carga_nominal} ${e.carga_unidade || "kg"}` : "—"}</TableCell>
-                    <TableCell className="text-xs font-mono">{e.numero_selo_inmetro || "—"}</TableCell>
-                    <TableCell className={`text-xs ${vencido ? "text-red-700 font-bold" : ""}`}>
-                      {e.proxima_recarga ? formatDateBR(e.proxima_recarga) : "—"}
-                    </TableCell>
-                    <TableCell className="text-xs">{e.proximo_teste_hidrostatico || "—"}</TableCell>
-                    <TableCell>
-                      {insp ? (
-                        <Badge variant="outline" className={insp.conforme ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-red-50 text-red-700 border-red-300"}>
-                          {insp.conforme ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
-                          {formatDateBR(insp.data_inspecao)}
-                          {insp.foto_path && <Camera className="h-3 w-3 ml-1" />}
-                        </Badge>
-                      ) : e.ultima_inspecao_em ? (
-                        <Badge
-                          variant="outline"
-                          className={
-                            iaStatus === "CONFORME"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-300"
-                              : iaStatus === "PRECISA_REVISAO"
-                              ? "bg-amber-50 text-amber-700 border-amber-300"
-                              : "bg-red-50 text-red-700 border-red-300"
-                          }
-                          title={iaStatus ? IA_STATUS_LABEL[iaStatus] : "Inspeção IA"}
-                        >
-                          {iaStatus === "CONFORME"
-                            ? <CheckCircle2 className="h-3 w-3 mr-1" />
-                            : <AlertTriangle className="h-3 w-3 mr-1" />}
-                          {formatDateBR(new Date(e.ultima_inspecao_em).toISOString().slice(0, 10))}
-                          <Sparkles className="h-3 w-3 ml-1" />
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Pendente</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={STATUS_STYLES[e.status]}>{STATUS_LABEL[e.status]}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right pr-4">
-                      <div className="flex justify-end gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setHistExt(e)}
-                          title="Histórico de inspeções"
-                          className="group relative inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-semibold uppercase tracking-wider text-white/90 hover:text-white border border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/15 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_14px_-4px_rgba(0,0,0,0.5)] transition"
-                        >
-                          <span className="pointer-events-none absolute inset-x-2 top-[1px] h-[1px] rounded-full bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-70" />
-                          <History className="h-3.5 w-3.5 relative" />
-                          <span className="relative">Histórico</span>
-                        </button>
-                        <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setEditExt(e)} title="Editar cadastro do extintor">
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button asChild size="sm" className="gap-1 h-8 bg-red-700 hover:bg-red-800">
-                          <Link to="/app/extintores-inspecao-foto" search={{ extintor: e.id } as any}>
-                            <Sparkles className="h-3.5 w-3.5" /> Inspecionar
-                          </Link>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* Grid de cards compactos */}
+      {extintores.isLoading ? (
+        <div className="text-center text-slate-400 py-8">Carregando…</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center text-slate-400 py-12 rounded-2xl border border-dashed border-slate-300 bg-slate-50/50">
+          Nenhum extintor encontrado.
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          {filtered.map((e) => {
+            const insp = inspecoesMesPorExt.get(e.id);
+            const hojeISO = hoje.toISOString().slice(0, 10);
+            const vencido = e.proxima_recarga && e.proxima_recarga < hojeISO;
+            const iaStatus = normalizeIaStatus(e.ultimo_status_inspecao);
+
+            const ringTone =
+              iaStatus === "NAO_CONFORME" || vencido
+                ? "ring-red-300 hover:ring-red-400 bg-gradient-to-br from-white to-red-50/40"
+                : iaStatus === "PRECISA_REVISAO"
+                ? "ring-amber-300 hover:ring-amber-400 bg-gradient-to-br from-white to-amber-50/40"
+                : iaStatus === "CONFORME" || insp?.conforme
+                ? "ring-emerald-200 hover:ring-emerald-300 bg-gradient-to-br from-white to-emerald-50/40"
+                : "ring-slate-200 hover:ring-slate-300 bg-white";
+
+            const dotClass = iaStatus
+              ? iaStatus === "CONFORME"
+                ? "bg-[radial-gradient(circle_at_30%_30%,#6ee7b7,#10b981_55%,#047857)] shadow-[0_0_0_3px_rgba(16,185,129,0.18),0_4px_10px_-2px_rgba(16,185,129,0.55)]"
+                : iaStatus === "PRECISA_REVISAO"
+                ? "bg-[radial-gradient(circle_at_30%_30%,#fde68a,#f59e0b_55%,#b45309)] shadow-[0_0_0_3px_rgba(245,158,11,0.18),0_4px_10px_-2px_rgba(245,158,11,0.55)]"
+                : "bg-[radial-gradient(circle_at_30%_30%,#fecaca,#ef4444_55%,#991b1b)] shadow-[0_0_0_3px_rgba(239,68,68,0.22),0_4px_12px_-2px_rgba(239,68,68,0.65)]"
+              : "bg-[radial-gradient(circle_at_30%_30%,#f8fafc,#94a3b8_60%,#475569)] shadow-[0_0_0_2px_rgba(148,163,184,0.15)]";
+
+            return (
+              <div
+                key={e.id}
+                className={`group relative rounded-2xl ring-1 ${ringTone} shadow-sm hover:shadow-md transition-all p-3 flex flex-col gap-2`}
+              >
+                {/* Header: nº + tipo + status dot */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      title={iaStatus ? IA_STATUS_LABEL[iaStatus] : "Sem inspeção IA"}
+                      className={`relative inline-block h-3 w-3 rounded-full shrink-0 ${dotClass}`}
+                    />
+                    <div className="font-mono font-black text-red-700 text-base leading-none truncate">
+                      {e.numero || "—"}
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] font-bold px-1.5 py-0 h-5 shrink-0 bg-slate-900 text-white border-slate-900">
+                    {e.tipo_agente}
+                  </Badge>
+                </div>
+
+                {/* Localização */}
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none">Local</div>
+                  <div className="text-xs font-semibold text-slate-700 truncate" title={`${e.area || ""} · ${e.localizacao || ""}`}>
+                    {e.area || "—"}
+                  </div>
+                  <div className="text-[11px] text-slate-500 truncate">{e.localizacao || "—"}</div>
+                </div>
+
+                {/* Carga + recarga */}
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-600">
+                    {e.carga_nominal ? `${e.carga_nominal} ${e.carga_unidade || "kg"}` : "—"}
+                  </span>
+                  <span className={`tabular-nums ${vencido ? "text-red-700 font-bold" : "text-slate-500"}`}>
+                    {e.proxima_recarga ? formatDateBR(e.proxima_recarga) : "—"}
+                  </span>
+                </div>
+
+                {/* Inspeção do mês */}
+                <div>
+                  {insp ? (
+                    <Badge variant="outline" className={`w-full justify-center text-[10px] ${insp.conforme ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-red-50 text-red-700 border-red-300"}`}>
+                      {insp.conforme ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+                      Mês OK · {formatDateBR(insp.data_inspecao)}
+                    </Badge>
+                  ) : e.ultima_inspecao_em ? (
+                    <Badge
+                      variant="outline"
+                      className={`w-full justify-center text-[10px] ${
+                        iaStatus === "CONFORME"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                          : iaStatus === "PRECISA_REVISAO"
+                          ? "bg-amber-50 text-amber-700 border-amber-300"
+                          : "bg-red-50 text-red-700 border-red-300"
+                      }`}
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      {formatDateBR(new Date(e.ultima_inspecao_em).toISOString().slice(0, 10))}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="w-full justify-center text-[10px] bg-amber-50 text-amber-700 border-amber-300">
+                      Sem inspeção
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Ações */}
+                <div className="mt-auto pt-1 flex items-center gap-1">
+                  <Button
+                    asChild
+                    size="sm"
+                    className="flex-1 h-8 gap-1 bg-red-700 hover:bg-red-800 text-[11px] font-bold"
+                  >
+                    <Link to="/app/extintores-inspecao-foto" search={{ extintor: e.id } as any}>
+                      <Sparkles className="h-3.5 w-3.5" /> Inspecionar
+                    </Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 w-8 p-0 shrink-0"
+                    onClick={() => setHistExt(e)}
+                    title="Histórico"
+                  >
+                    <History className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 w-8 p-0 shrink-0"
+                    onClick={() => setEditExt(e)}
+                    title="Editar cadastro"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {novoOpen && (
         <ExtintorFormDialog
