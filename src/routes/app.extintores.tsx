@@ -317,6 +317,41 @@ function ExtintoresPage() {
         </CardContent>
       </Card>
 
+      {/* Pills de classes (clicáveis = filtram por agente) */}
+      {classesAgrupadas.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mr-1">Classe</span>
+          <button
+            type="button"
+            onClick={() => setFClasse("TODAS")}
+            className={`px-3 py-1.5 rounded-full text-xs font-black tracking-wider border transition-all ${
+              fClasse === "TODAS"
+                ? "bg-white text-slate-900 border-white shadow-[0_0_14px_-2px_rgba(255,255,255,0.5)]"
+                : "bg-slate-900/60 text-slate-300 border-slate-700 hover:border-slate-500"
+            }`}
+          >
+            TODAS · {extintores.data?.length ?? 0}
+          </button>
+          {classesAgrupadas.map(([cls, n]) => {
+            const active = fClasse === cls;
+            return (
+              <button
+                key={cls}
+                type="button"
+                onClick={() => setFClasse(active ? "TODAS" : cls)}
+                className={`px-3 py-1.5 rounded-full text-xs font-black tracking-wider border transition-all ${
+                  active
+                    ? "bg-cyan-500/20 text-cyan-200 border-cyan-400 shadow-[0_0_14px_-2px_rgba(34,211,238,0.7)]"
+                    : "bg-slate-950/80 text-cyan-300 border-cyan-500/30 hover:border-cyan-400/70 hover:shadow-[0_0_10px_-2px_rgba(34,211,238,0.45)]"
+                }`}
+              >
+                {cls} · {n}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Grid de cards compactos */}
       {extintores.isLoading ? (
         <div className="text-center text-slate-400 py-8">Carregando…</div>
@@ -325,7 +360,7 @@ function ExtintoresPage() {
           Nenhum extintor encontrado.
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filtered.map((e) => {
             const insp = inspecoesMesPorExt.get(e.id);
             const hojeISO = hoje.toISOString().slice(0, 10);
