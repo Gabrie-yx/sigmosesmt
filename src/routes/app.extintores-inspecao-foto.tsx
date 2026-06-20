@@ -410,7 +410,7 @@ function InspecaoFotoPage() {
   const podeAvancarSelecao = !!extintorSelecionado || (modoManual && manualNumero && manualCilindro);
 
   return (
-    <div className="container py-6 space-y-4 max-w-3xl">
+    <div className="container px-4 md:px-6 py-6 space-y-4 max-w-3xl">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
