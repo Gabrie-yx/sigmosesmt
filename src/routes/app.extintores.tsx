@@ -23,6 +23,9 @@ import { formatDateBR } from "@/lib/utils-date";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
+import { gerarPdfHistoricoExtintor } from "@/lib/extintor-historico-pdf";
+import { calcularProximosPassos, formatMesAnoBR, isVencido } from "@/lib/extintor-regulatorio";
+import { FileText, CalendarRange, Wrench, Gauge } from "lucide-react";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/extintores")({
