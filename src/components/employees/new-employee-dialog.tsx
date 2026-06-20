@@ -69,7 +69,10 @@ function duplicateCpfMessage(employee: ExistingEmployee) {
 }
 
 function isDuplicateCpfMutationError(error: unknown): error is DuplicateCpfError {
-  return error instanceof Error && (error as Partial<DuplicateCpfError>).code === "DUPLICATE_EMPLOYEE_CPF";
+  return (
+    error instanceof Error &&
+    (error as Partial<DuplicateCpfError>).code === "DUPLICATE_EMPLOYEE_CPF"
+  );
 }
 
 export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCreated }: Props) {
