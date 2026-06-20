@@ -293,24 +293,34 @@ function ExtintoresPage() {
                       <div className="flex items-center gap-2">
                         {e.ultimo_status_inspecao ? (
                           (() => {
-                            const tone =
+                            const gradient =
                               e.ultimo_status_inspecao === "CONFORME"
-                                ? "bg-emerald-500"
+                                ? "bg-[radial-gradient(circle_at_30%_30%,#6ee7b7,#10b981_55%,#047857)]"
                                 : e.ultimo_status_inspecao === "PRECISA_REVISAO"
-                                ? "bg-amber-500"
-                                : "bg-red-500";
+                                ? "bg-[radial-gradient(circle_at_30%_30%,#fde68a,#f59e0b_55%,#b45309)]"
+                                : "bg-[radial-gradient(circle_at_30%_30%,#fecaca,#ef4444_55%,#991b1b)]";
+                            const glow =
+                              e.ultimo_status_inspecao === "CONFORME"
+                                ? "shadow-[0_0_0_3px_rgba(16,185,129,0.18),0_4px_10px_-2px_rgba(16,185,129,0.55)]"
+                                : e.ultimo_status_inspecao === "PRECISA_REVISAO"
+                                ? "shadow-[0_0_0_3px_rgba(245,158,11,0.18),0_4px_10px_-2px_rgba(245,158,11,0.55)]"
+                                : "shadow-[0_0_0_3px_rgba(239,68,68,0.22),0_4px_12px_-2px_rgba(239,68,68,0.65)]";
                             return (
                               <span
                                 title={`Última inspeção IA: ${e.ultimo_status_inspecao}`}
-                                className="relative inline-flex h-3 w-3 items-center justify-center"
+                                className="relative inline-flex h-3.5 w-3.5 items-center justify-center"
                               >
-                                <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping ${tone}`} />
-                                <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ring-2 ring-white shadow ${tone}`} />
+                                <span className={`relative inline-flex h-3 w-3 rounded-full ${gradient} ${glow}`}>
+                                  <span className="absolute top-[1px] left-[2px] h-[3px] w-[3px] rounded-full bg-white/80 blur-[0.5px]" />
+                                </span>
                               </span>
                             );
                           })()
                         ) : (
-                          <span title="Sem inspeção IA" className="inline-block h-2.5 w-2.5 rounded-full bg-slate-300" />
+                          <span
+                            title="Sem inspeção IA"
+                            className="relative inline-block h-3 w-3 rounded-full bg-[radial-gradient(circle_at_30%_30%,#f8fafc,#94a3b8_60%,#475569)] shadow-[0_0_0_2px_rgba(148,163,184,0.15),0_2px_6px_-1px_rgba(0,0,0,0.3)]"
+                          />
                         )}
                         {e.numero}
                       </div>
@@ -358,9 +368,16 @@ function ExtintoresPage() {
                     </TableCell>
                     <TableCell className="text-right pr-4">
                       <div className="flex justify-end gap-1">
-                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setHistExt(e)} title="Histórico de inspeções">
-                          <History className="h-3.5 w-3.5" />
-                        </Button>
+                        <button
+                          type="button"
+                          onClick={() => setHistExt(e)}
+                          title="Histórico de inspeções"
+                          className="group relative inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold uppercase tracking-wider text-white/90 hover:text-white border border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/15 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_14px_-4px_rgba(0,0,0,0.5)] transition"
+                        >
+                          <span className="pointer-events-none absolute inset-x-2 top-[1px] h-[1px] rounded-full bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-70" />
+                          <History className="h-3.5 w-3.5 relative" />
+                          <span className="relative">Histórico</span>
+                        </button>
                         <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setEditExt(e)} title="Editar">
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
@@ -905,13 +922,13 @@ function HistoricoInspecoesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="h-5 w-5 text-red-600" />
             Histórico de inspeções — Extintor {extintor.numero}
           </DialogTitle>
-          <div className="text-xs text-slate-500 mt-1">
+          <div className="text-sm text-slate-300 mt-1">
             {extintor.area} · {extintor.localizacao} · {extintor.tipo_agente} · {total} registro(s)
           </div>
         </DialogHeader>
@@ -930,9 +947,9 @@ function HistoricoInspecoesDialog({
           {(ia.data ?? []).map((r: any) => {
             const status = r.status_geral as string;
             const tone =
-              status === "CONFORME" ? "border-emerald-300 bg-emerald-50/40"
-              : status === "PRECISA_REVISAO" ? "border-amber-300 bg-amber-50/40"
-              : "border-red-300 bg-red-50/40";
+              status === "CONFORME" ? "border-emerald-500/40 bg-slate-900/60"
+              : status === "PRECISA_REVISAO" ? "border-amber-500/40 bg-slate-900/60"
+              : "border-red-500/40 bg-slate-900/60";
             const badge =
               status === "CONFORME" ? "bg-emerald-100 text-emerald-700 border-emerald-300"
               : status === "PRECISA_REVISAO" ? "bg-amber-100 text-amber-700 border-amber-300"
@@ -949,29 +966,29 @@ function HistoricoInspecoesDialog({
               <div key={r.id} className={`rounded-xl border ${tone} p-3 space-y-2`}>
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-red-600" />
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-700">Inspeção por IA</span>
+                    <Sparkles className="h-4 w-4 text-red-400" />
+                    <span className="text-sm font-black uppercase tracking-wider text-white">Inspeção por IA</span>
                     <Badge variant="outline" className={badge}>{status ?? "—"}</Badge>
                   </div>
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-xs text-slate-300">
                     {r.inspecionado_em ? new Date(r.inspecionado_em).toLocaleString("pt-BR") : "—"}
                     {r.confianca_ia != null && <span className="ml-2">· confiança {Math.round(Number(r.confianca_ia) * 100)}%</span>}
                   </div>
                 </div>
                 {ncs.length > 0 && (
-                  <div className="text-[11px]">
-                    <div className="font-bold text-red-700 mb-0.5">Não conformidades:</div>
-                    <ul className="list-disc list-inside text-slate-700 space-y-0.5">
+                  <div className="text-sm">
+                    <div className="font-bold text-red-400 mb-1">Não conformidades:</div>
+                    <ul className="list-disc list-inside text-slate-100 space-y-1">
                       {ncs.map((n: any, i: number) => <li key={i}>{String(n)}</li>)}
                     </ul>
                   </div>
                 )}
                 {r.observacoes && (
-                  <div className="text-[11px] text-slate-600"><span className="font-bold">Obs:</span> {r.observacoes}</div>
+                  <div className="text-sm text-slate-200"><span className="font-bold text-white">Obs:</span> {r.observacoes}</div>
                 )}
                 {r.assinado_por_nome && (
-                  <div className="text-[11px] text-slate-500">
-                    Assinado por <span className="font-semibold text-slate-700">{r.assinado_por_nome}</span>
+                  <div className="text-xs text-slate-300">
+                    Assinado por <span className="font-semibold text-white">{r.assinado_por_nome}</span>
                     {r.assinado_por_cargo ? ` · ${r.assinado_por_cargo}` : ""}
                   </div>
                 )}
@@ -981,9 +998,9 @@ function HistoricoInspecoesDialog({
                       const url = urls[`extintores-inspecoes:${f.path}`];
                       if (!url) return null;
                       return (
-                        <a key={f.label} href={url} target="_blank" rel="noreferrer" className="block rounded-md overflow-hidden border border-slate-200 hover:border-red-400 bg-white shadow-sm">
-                          <img src={url} alt={f.label} className="h-20 w-full object-cover" />
-                          <div className="text-[10px] font-semibold text-slate-600 text-center py-0.5 border-t border-slate-100">{f.label}</div>
+                        <a key={f.label} href={url} target="_blank" rel="noreferrer" className="block rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm">
+                          <img src={url} alt={f.label} className="h-24 w-full object-cover" />
+                          <div className="text-xs font-semibold text-slate-100 text-center py-1 border-t border-white/10">{f.label}</div>
                         </a>
                       );
                     })}
@@ -994,37 +1011,32 @@ function HistoricoInspecoesDialog({
           })}
 
           {(manuais.data ?? []).map((r: any) => {
-            const tone = r.conforme ? "border-emerald-300 bg-emerald-50/40" : "border-red-300 bg-red-50/40";
+            const tone = r.conforme ? "border-emerald-500/40 bg-slate-900/60" : "border-red-500/40 bg-slate-900/60";
             const badge = r.conforme ? "bg-emerald-100 text-emerald-700 border-emerald-300" : "bg-red-100 text-red-700 border-red-300";
             const url = r.foto_path ? urls[`extintores-fotos:${r.foto_path}`] : null;
             return (
               <div key={r.id} className={`rounded-xl border ${tone} p-3 space-y-2`}>
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <ClipboardCheck className="h-4 w-4 text-red-600" />
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-700">Inspeção manual</span>
+                    <ClipboardCheck className="h-4 w-4 text-red-400" />
+                    <span className="text-sm font-black uppercase tracking-wider text-white">Inspeção manual</span>
                     <Badge variant="outline" className={badge}>{r.conforme ? "CONFORME" : "NÃO CONFORME"}</Badge>
                   </div>
-                  <div className="text-[11px] text-slate-500">{formatDateBR(r.data_inspecao)}</div>
+                  <div className="text-xs text-slate-300">{formatDateBR(r.data_inspecao)}</div>
                 </div>
-                <div className="text-[11px] text-slate-600">
-                  Responsável: <span className="font-semibold text-slate-700">{r.responsavel_nome || "—"}</span>
+                <div className="text-sm text-slate-200">
+                  Responsável: <span className="font-semibold text-white">{r.responsavel_nome || "—"}</span>
                   {r.responsavel_registro ? ` · ${r.responsavel_registro}` : ""}
                 </div>
-                {Array.isArray(r.nc_codigos) && r.nc_codigos.length > 0 && (
-                  <div className="text-[11px] text-slate-700">
-                    <span className="font-bold text-red-700">NC FOR-SFG 08:</span> {r.nc_codigos.join(", ")}
-                  </div>
-                )}
                 {r.nao_conformidade && (
-                  <div className="text-[11px] text-slate-600"><span className="font-bold">Detalhe:</span> {r.nao_conformidade}</div>
+                  <div className="text-sm text-slate-200"><span className="font-bold text-white">Detalhe:</span> {r.nao_conformidade}</div>
                 )}
                 {r.observacoes && (
-                  <div className="text-[11px] text-slate-600"><span className="font-bold">Obs:</span> {r.observacoes}</div>
+                  <div className="text-sm text-slate-200"><span className="font-bold text-white">Obs:</span> {r.observacoes}</div>
                 )}
                 {url && (
-                  <a href={url} target="_blank" rel="noreferrer" className="inline-block rounded-md overflow-hidden border border-slate-200 hover:border-red-400 bg-white shadow-sm">
-                    <img src={url} alt="Evidência" className="h-28 object-cover" />
+                  <a href={url} target="_blank" rel="noreferrer" className="inline-block rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm">
+                    <img src={url} alt="Evidência" className="h-32 object-cover" />
                   </a>
                 )}
               </div>
