@@ -113,11 +113,15 @@ function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-black px-4 py-10">
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-red-600/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-orange-500/20 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500/10 blur-3xl" />
+
+      <Card className="relative w-full max-w-md border border-white/15 bg-white/10 text-white shadow-2xl shadow-red-900/30 backdrop-blur-xl">
         <CardHeader>
-          <CardTitle>Definir senha</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-white">Definir senha</CardTitle>
+          <CardDescription className="text-slate-300">
             {hasSession
               ? "Crie uma senha para acessar sua conta."
               : "Validando link..."}
@@ -127,14 +131,14 @@ function ResetPasswordPage() {
           {hasSession && !mfaNeeded ? (
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-2">
-                <Label>Nova senha</Label>
-                <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} minLength={8} required />
+                <Label className="text-slate-200">Nova senha</Label>
+                <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} minLength={8} required className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60" />
               </div>
               <div className="space-y-2">
-                <Label>Confirmar senha</Label>
-                <Input type="password" value={pwd2} onChange={(e) => setPwd2(e.target.value)} minLength={8} required />
+                <Label className="text-slate-200">Confirmar senha</Label>
+                <Input type="password" value={pwd2} onChange={(e) => setPwd2(e.target.value)} minLength={8} required className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60" />
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>
+              <Button type="submit" className="w-full bg-red-600 text-white shadow-lg shadow-red-900/50 hover:bg-red-500" disabled={busy}>
                 {busy ? "Salvando..." : "Definir senha e entrar"}
               </Button>
             </form>
