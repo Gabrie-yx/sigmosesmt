@@ -40,6 +40,7 @@ type FotoPrefillPaths = {
   manometroPath: string;
   inmetroPath: string;
   extraPath: string | null;
+  avariasPaths: string[];
 };
 const initialFoto = (): FotoState => ({ file: null, previewUrl: null, path: null, uploading: false });
 
@@ -81,6 +82,7 @@ function readHandoffPhotos(params: URLSearchParams): FotoPrefillPaths | null {
     manometroPath,
     inmetroPath,
     extraPath: normalizePath(readSearchValue(params, "extra")),
+    avariasPaths: [],
   };
 }
 
@@ -89,11 +91,16 @@ function coercePrefillPaths(raw: any): FotoPrefillPaths | null {
   const manometroPath = normalizePath(raw?.manometro_path ?? raw?.manometroPath);
   const inmetroPath = normalizePath(raw?.inmetro_path ?? raw?.inmetroPath);
   if (!etiquetaPath || !manometroPath || !inmetroPath) return null;
+  const rawAvarias = raw?.avarias_paths ?? raw?.avariasPaths ?? [];
+  const avariasPaths = Array.isArray(rawAvarias)
+    ? rawAvarias.map((p: unknown) => normalizePath(p)).filter((p): p is string => !!p)
+    : [];
   return {
     etiquetaPath,
     manometroPath,
     inmetroPath,
     extraPath: normalizePath(raw?.extra_path ?? raw?.extraPath),
+    avariasPaths,
   };
 }
 
@@ -293,6 +300,7 @@ function InspecaoFotoPage() {
       setManometro(mk(paths.manometroPath));
       setInmetro(mk(paths.inmetroPath));
       setExtra(mk(paths.extraPath));
+      setAvariasPaths(paths.avariasPaths ?? []);
       setEtapa(2);
       setAutoAnalisar(paths);
       sessionStorage.removeItem(key);
@@ -314,6 +322,8 @@ function InspecaoFotoPage() {
   const [manometro, setManometro] = useState<FotoState>(initialFoto());
   const [inmetro, setInmetro] = useState<FotoState>(initialFoto());
   const [extra, setExtra] = useState<FotoState>(initialFoto());
+  // Fotos extras de avarias (corrosão, ferrugem, amassado etc) vindas do modal
+  const [avariasPaths, setAvariasPaths] = useState<string[]>([]);
 
   // Localização
   const [gps, setGps] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
@@ -547,6 +557,7 @@ function InspecaoFotoPage() {
         proxima_manutencao_n2: toDate(laudo.proxima_manutencao_n2),
         proxima_manutencao_n3: toDate(laudo.proxima_manutencao_n3),
         checklist: Object.fromEntries(ITENS_FOR_SFG_08.map((it) => [it.key, laudo[it.key]])),
+        avarias_paths: avariasPaths,
       };
 
       return await salvarFn({
