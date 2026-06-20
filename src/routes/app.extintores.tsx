@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
-import { EXTINTORES_CHECKLIST_NC as CHECKLIST_NC, gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
+import { gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/extintores")({
