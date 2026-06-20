@@ -56,9 +56,9 @@ const normalizeIaStatus = (status?: string | null) => {
 };
 
 const IA_STATUS_LABEL: Record<string, string> = {
-  CONFORME: "IA conforme",
-  PRECISA_REVISAO: "IA revisar",
-  NAO_CONFORME: "IA NC",
+  CONFORME: "Conforme",
+  PRECISA_REVISAO: "Revisar",
+  NAO_CONFORME: "Não conforme",
 };
 
 function readSearchString(params: URLSearchParams, key: string): string | null {
