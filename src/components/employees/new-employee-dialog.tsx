@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,52 +24,66 @@ type Props = {
   onCreated?: () => void;
 };
 
-function isCpfDuplicateError(error: any) {
-  const msg = `${error?.message ?? ""} ${error?.details ?? ""}`;
-  return error?.code === "23505" && msg.includes("employees_cpf_digits_unique");
+type Company = { id: string; name: string; type: string | null };
+type Role = { id: string; name: string };
+type EmployeeForm = Pick<
+  Database["public"]["Tables"]["employees"]["Insert"],
+  "nome" | "cpf" | "matricula" | "status" | "company_id" | "role_id" | "tipo_cadastro" | "cnpj"
+>;
+type ExistingEmployee = {
+  id: string;
+  nome: string;
+  cpf: string | null;
+  status: string;
+  company_id: string | null;
+  companies?: { name: string | null } | null;
+};
+type SupabaseLikeError = { code?: string; message?: string; details?: string };
+type DuplicateCpfError = Error & { code: "DUPLICATE_EMPLOYEE_CPF"; employee: ExistingEmployee };
+
+const EMPTY_FORM = (companyId?: string): EmployeeForm => ({
+  nome: "",
+  cpf: "",
+  matricula: "",
+  status: "ATIVO",
+  company_id: companyId ?? "",
+  role_id: "",
+  tipo_cadastro: "NAO_MEI",
+  cnpj: "",
+});
+
+function isCpfDuplicateError(error: SupabaseLikeError) {
+  const msg = `${error.message ?? ""} ${error.details ?? ""}`;
+  return error.code === "23505" && msg.includes("employees_cpf_digits_unique");
 }
 
-function duplicateCpfMessage(employee: any) {
-  const companyName = employee?.companies?.name ? ` na empresa ${employee.companies.name}` : "";
-  const status = employee?.status ? ` · status ${employee.status}` : "";
-  return `CPF já cadastrado para ${employee?.nome ?? "outro funcionário"}${companyName}${status}. Abra o cadastro existente em vez de criar outro.`;
+function duplicateCpfMessage(employee: ExistingEmployee) {
+  const companyName = employee.companies?.name ? ` na empresa ${employee.companies.name}` : "";
+  const status = employee.status ? ` · status ${employee.status}` : "";
+  return `CPF já cadastrado para ${employee.nome}${companyName}${status}. Abra o cadastro existente em vez de criar outro.`;
+}
+
+function isDuplicateCpfMutationError(error: unknown): error is DuplicateCpfError {
+  return error instanceof Error && (error as Partial<DuplicateCpfError>).code === "DUPLICATE_EMPLOYEE_CPF";
 }
 
 export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCreated }: Props) {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [form, setForm] = useState<any>({
-    nome: "",
-    cpf: "",
-    matricula: "",
-    status: "ATIVO",
-    company_id: defaultCompanyId ?? "",
-    role_id: "",
-    tipo_cadastro: "NAO_MEI",
-    cnpj: "",
-  });
+  const [form, setForm] = useState<EmployeeForm>(() => EMPTY_FORM(defaultCompanyId));
 
   useEffect(() => {
     if (open) {
-      setForm({
-        nome: "",
-        cpf: "",
-        matricula: "",
-        status: "ATIVO",
-        company_id: defaultCompanyId ?? "",
-        role_id: "",
-        tipo_cadastro: "NAO_MEI",
-        cnpj: "",
-      });
+      setForm(EMPTY_FORM(defaultCompanyId));
     }
   }, [open, defaultCompanyId]);
 
-  const { data: companies } = useQuery({
+  const { data: companies } = useQuery<Company[]>({
     queryKey: ["companies-with-type"],
     queryFn: async () =>
       (await supabase.from("companies").select("id,name,type").order("name")).data ?? [],
   });
-  const { data: roles } = useQuery({
+  const { data: roles } = useQuery<Role[]>({
     queryKey: ["roles"],
     queryFn: async () => (await supabase.from("roles").select("id,name").order("name")).data ?? [],
   });
