@@ -304,12 +304,12 @@ function ExtintoresPage() {
 
             const ringTone =
               iaStatus === "NAO_CONFORME" || vencido
-                ? "ring-red-300 hover:ring-red-400 bg-gradient-to-br from-white to-red-50/40"
+                ? "ring-red-500/40 hover:ring-red-400/70 bg-gradient-to-br from-slate-900 to-red-950/60 shadow-[0_0_24px_-8px_rgba(239,68,68,0.45)]"
                 : iaStatus === "PRECISA_REVISAO"
-                ? "ring-amber-300 hover:ring-amber-400 bg-gradient-to-br from-white to-amber-50/40"
+                ? "ring-amber-500/40 hover:ring-amber-400/70 bg-gradient-to-br from-slate-900 to-amber-950/50 shadow-[0_0_24px_-8px_rgba(245,158,11,0.4)]"
                 : iaStatus === "CONFORME" || insp?.conforme
-                ? "ring-emerald-200 hover:ring-emerald-300 bg-gradient-to-br from-white to-emerald-50/40"
-                : "ring-slate-200 hover:ring-slate-300 bg-white";
+                ? "ring-emerald-500/40 hover:ring-emerald-400/70 bg-gradient-to-br from-slate-900 to-emerald-950/40 shadow-[0_0_24px_-8px_rgba(16,185,129,0.4)]"
+                : "ring-slate-700/60 hover:ring-slate-500/70 bg-gradient-to-br from-slate-900 to-slate-950";
 
             const dotClass = iaStatus
               ? iaStatus === "CONFORME"
@@ -322,7 +322,7 @@ function ExtintoresPage() {
             return (
               <div
                 key={e.id}
-                className={`group relative rounded-2xl ring-1 ${ringTone} shadow-sm hover:shadow-md transition-all p-3 flex flex-col gap-2`}
+                className={`group relative rounded-2xl ring-1 ${ringTone} transition-all p-3 flex flex-col gap-2`}
               >
                 {/* Header: nº + tipo + status dot */}
                 <div className="flex items-start justify-between gap-2">
@@ -331,30 +331,30 @@ function ExtintoresPage() {
                       title={iaStatus ? IA_STATUS_LABEL[iaStatus] : "Sem inspeção IA"}
                       className={`relative inline-block h-3 w-3 rounded-full shrink-0 ${dotClass}`}
                     />
-                    <div className="font-mono font-black text-red-700 text-base leading-none truncate">
+                    <div className="font-mono font-black text-red-400 text-base leading-none truncate tracking-wide">
                       {e.numero || "—"}
                     </div>
                   </div>
-                  <Badge variant="outline" className="text-[10px] font-bold px-1.5 py-0 h-5 shrink-0 bg-slate-900 text-white border-slate-900">
+                  <Badge variant="outline" className="text-[10px] font-bold px-1.5 py-0 h-5 shrink-0 bg-slate-950/80 text-cyan-300 border-cyan-500/30">
                     {e.tipo_agente}
                   </Badge>
                 </div>
 
                 {/* Localização */}
                 <div className="min-w-0">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none">Local</div>
-                  <div className="text-xs font-semibold text-slate-700 truncate" title={`${e.area || ""} · ${e.localizacao || ""}`}>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 leading-none">Local</div>
+                  <div className="text-xs font-semibold text-slate-100 truncate" title={`${e.area || ""} · ${e.localizacao || ""}`}>
                     {e.area || "—"}
                   </div>
-                  <div className="text-[11px] text-slate-500 truncate">{e.localizacao || "—"}</div>
+                  <div className="text-[11px] text-slate-400 truncate">{e.localizacao || "—"}</div>
                 </div>
 
                 {/* Carga + recarga */}
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-600">
+                  <span className="text-slate-300">
                     {e.carga_nominal ? `${e.carga_nominal} ${e.carga_unidade || "kg"}` : "—"}
                   </span>
-                  <span className={`tabular-nums ${vencido ? "text-red-700 font-bold" : "text-slate-500"}`}>
+                  <span className={`tabular-nums ${vencido ? "text-red-400 font-bold" : "text-slate-400"}`}>
                     {e.proxima_recarga ? formatDateBR(e.proxima_recarga) : "—"}
                   </span>
                 </div>
@@ -362,7 +362,7 @@ function ExtintoresPage() {
                 {/* Inspeção do mês */}
                 <div>
                   {insp ? (
-                    <Badge variant="outline" className={`w-full justify-center text-[10px] ${insp.conforme ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-red-50 text-red-700 border-red-300"}`}>
+                    <Badge variant="outline" className={`w-full justify-center text-[10px] ${insp.conforme ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-red-500/10 text-red-300 border-red-500/30"}`}>
                       {insp.conforme ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
                       Mês OK · {formatDateBR(insp.data_inspecao)}
                     </Badge>
@@ -371,17 +371,17 @@ function ExtintoresPage() {
                       variant="outline"
                       className={`w-full justify-center text-[10px] ${
                         iaStatus === "CONFORME"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                          ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
                           : iaStatus === "PRECISA_REVISAO"
-                          ? "bg-amber-50 text-amber-700 border-amber-300"
-                          : "bg-red-50 text-red-700 border-red-300"
+                          ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                          : "bg-red-500/10 text-red-300 border-red-500/30"
                       }`}
                     >
                       <Sparkles className="h-3 w-3 mr-1" />
                       {formatDateBR(new Date(e.ultima_inspecao_em).toISOString().slice(0, 10))}
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="w-full justify-center text-[10px] bg-amber-50 text-amber-700 border-amber-300">
+                    <Badge variant="outline" className="w-full justify-center text-[10px] bg-amber-500/10 text-amber-300 border-amber-500/30">
                       Sem inspeção
                     </Badge>
                   )}
@@ -392,7 +392,7 @@ function ExtintoresPage() {
                   <Button
                     asChild
                     size="sm"
-                    className="flex-1 h-8 gap-1 bg-red-700 hover:bg-red-800 text-[11px] font-bold"
+                    className="flex-1 h-8 gap-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-[11px] font-bold shadow-[0_0_12px_-2px_rgba(239,68,68,0.5)] border-0"
                   >
                     <Link to="/app/extintores-inspecao-foto" search={{ extintor: e.id } as any}>
                       <Sparkles className="h-3.5 w-3.5" /> Inspecionar
@@ -401,7 +401,7 @@ function ExtintoresPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 w-8 p-0 shrink-0"
+                    className="h-8 w-8 p-0 shrink-0 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-cyan-300"
                     onClick={() => setHistExt(e)}
                     title="Histórico"
                   >
@@ -410,7 +410,7 @@ function ExtintoresPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 w-8 p-0 shrink-0"
+                    className="h-8 w-8 p-0 shrink-0 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-cyan-300"
                     onClick={() => setEditExt(e)}
                     title="Editar cadastro"
                   >
