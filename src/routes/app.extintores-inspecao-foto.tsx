@@ -35,6 +35,12 @@ type FotoState = {
   path: string | null;
   uploading: boolean;
 };
+type FotoPrefillPaths = {
+  etiquetaPath: string;
+  manometroPath: string;
+  inmetroPath: string;
+  extraPath: string | null;
+};
 const initialFoto = (): FotoState => ({ file: null, previewUrl: null, path: null, uploading: false });
 
 const SLOT_INFO: Record<Slot, { titulo: string; instrucao: string; obrigatoria: boolean; emoji: string }> = {
@@ -155,8 +161,15 @@ function InspecaoFotoPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
 
-  const [etapa, setEtapa] = useState<0 | 1 | 2 | 3>(0);
-  const [autoAnalisar, setAutoAnalisar] = useState(false);
+  const [etapa, setEtapa] = useState<0 | 1 | 2 | 3>(() => {
+    if (typeof window === "undefined") return 0;
+    return new URLSearchParams(window.location.search).get("handoff") === "1" ? 2 : 0;
+  });
+  const [autoAnalisar, setAutoAnalisar] = useState<FotoPrefillPaths | null>(null);
+  const [handoffLoading, setHandoffLoading] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("handoff") === "1";
+  });
 
   // Seleção do extintor
   const [extintorId, setExtintorId] = useState<string>("");
@@ -164,20 +177,35 @@ function InspecaoFotoPage() {
   // Pré-seleção via ?extintor=...
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const id = new URLSearchParams(window.location.search).get("extintor");
-    if (id) { setExtintorId(id); setEtapa(1); }
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("extintor");
+    if (id) {
+      setExtintorId(id);
+      if (params.get("handoff") !== "1") setEtapa(1);
+    }
   }, []);
 
   // Pré-carrega fotos enviadas pelo modal de inspeção (sessionStorage)
   useEffect(() => {
     if (typeof window === "undefined" || !extintorId) return;
+    const params = new URLSearchParams(window.location.search);
+    const veioDoModal = params.get("handoff") === "1";
     const key = `inspecao-foto-prefill:${extintorId}`;
     const raw = sessionStorage.getItem(key);
-    if (!raw) return;
+    if (!raw) {
+      if (veioDoModal) {
+        toast.error("Não consegui recuperar as fotos do modal. Abra o extintor e tente novamente.");
+        setHandoffLoading(false);
+        navigate({ to: "/app/extintores" });
+      }
+      return;
+    }
     try {
       const p = JSON.parse(raw);
       if (Date.now() - (p.ts ?? 0) > 30 * 60 * 1000) {
         sessionStorage.removeItem(key);
+        setHandoffLoading(false);
+        if (veioDoModal) toast.error("As fotos expiraram. Abra o extintor e envie novamente.");
         return;
       }
       const mk = (path: string | null): FotoState => path
@@ -189,11 +217,22 @@ function InspecaoFotoPage() {
       if (p.extra_path) setExtra(mk(p.extra_path));
       if (p.etiqueta_path && p.manometro_path && p.inmetro_path) {
         setEtapa(2);
-        setAutoAnalisar(true);
+        setAutoAnalisar({
+          etiquetaPath: p.etiqueta_path,
+          manometroPath: p.manometro_path,
+          inmetroPath: p.inmetro_path,
+          extraPath: p.extra_path ?? null,
+        });
+      } else if (veioDoModal) {
+        setHandoffLoading(false);
+        toast.error("Faltam fotos obrigatórias. Abra o extintor e envie novamente.");
       }
       sessionStorage.removeItem(key);
-    } catch {/* ignore */}
-  }, [extintorId]);
+    } catch {
+      setHandoffLoading(false);
+      toast.error("Não consegui preparar as fotos para análise. Tente novamente.");
+    }
+  }, [extintorId, navigate]);
 
   const [busca, setBusca] = useState("");
   const [modoManual, setModoManual] = useState(false);
@@ -314,9 +353,16 @@ function InspecaoFotoPage() {
     }
   };
 
-  const handleAnalisar = async () => {
-    if (!etiqueta.path || !manometro.path || !inmetro.path) {
+  const handleAnalisar = async (paths?: FotoPrefillPaths) => {
+    const fotoPaths = paths ?? {
+      etiquetaPath: etiqueta.path,
+      manometroPath: manometro.path,
+      inmetroPath: inmetro.path,
+      extraPath: extra.path ?? null,
+    };
+    if (!fotoPaths.etiquetaPath || !fotoPaths.manometroPath || !fotoPaths.inmetroPath) {
       toast.error("Envie as 3 fotos obrigatórias (etiqueta, manômetro e INMETRO).");
+      setHandoffLoading(false);
       return;
     }
     if ([etiqueta, manometro, inmetro, extra].some((f) => f.uploading)) {
@@ -336,10 +382,10 @@ function InspecaoFotoPage() {
         : null;
       const { laudo: l } = await analisarFn({
         data: {
-          foto_etiqueta_path: etiqueta.path,
-          foto_manometro_path: manometro.path,
-          foto_inmetro_path: inmetro.path,
-          foto_extra_path: extra.path ?? null,
+          foto_etiqueta_path: fotoPaths.etiquetaPath,
+          foto_manometro_path: fotoPaths.manometroPath,
+          foto_inmetro_path: fotoPaths.inmetroPath,
+          foto_extra_path: fotoPaths.extraPath,
           extintor_esperado: esperado,
         },
       });
@@ -356,6 +402,7 @@ function InspecaoFotoPage() {
     } catch (e: any) {
       toast.error(e.message ?? String(e));
     } finally {
+      setHandoffLoading(false);
       setAnalisando(false);
     }
   };
@@ -364,13 +411,12 @@ function InspecaoFotoPage() {
   // e pula direto para a revisão (etapa 3), sem passar pela tela de fotos.
   useEffect(() => {
     if (!autoAnalisar) return;
-    if (!etiqueta.path || !manometro.path || !inmetro.path) return;
-    if ([etiqueta, manometro, inmetro, extra].some((f) => f.uploading)) return;
     if (analisando) return;
-    setAutoAnalisar(false);
-    handleAnalisar();
+    setHandoffLoading(true);
+    setAutoAnalisar(null);
+    handleAnalisar(autoAnalisar);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoAnalisar, etiqueta.path, manometro.path, inmetro.path]);
+  }, [autoAnalisar, analisando]);
 
   const salvarMut = useMutation({
     mutationFn: async () => {
@@ -472,6 +518,22 @@ function InspecaoFotoPage() {
   };
 
   const podeAvancarSelecao = !!extintorSelecionado || (modoManual && manualNumero && manualCilindro);
+
+  if (handoffLoading) {
+    return (
+      <div className="mx-auto flex min-h-[55vh] w-full max-w-3xl items-center justify-center px-4 md:px-6 py-6">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-red-600" />
+            <div>
+              <div className="font-semibold">Analisando fotos com IA…</div>
+              <div className="text-xs text-muted-foreground">Pulando a tela antiga de fotos e preparando o laudo.</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 md:px-6 py-6 space-y-4">
@@ -673,7 +735,7 @@ function InspecaoFotoPage() {
 
           <div className="flex justify-between">
             <Button variant="outline" onClick={() => setEtapa(1)}>← Voltar</Button>
-            <Button onClick={handleAnalisar} disabled={analisando}>
+            <Button onClick={() => handleAnalisar()} disabled={analisando}>
               {analisando ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Analisando…</>) : (<><Sparkles className="h-4 w-4 mr-2" /> Analisar com IA</>)}
             </Button>
           </div>

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -204,7 +204,7 @@ export function ExtintorInspecaoFotoDialog({
     } catch {/* ignore */}
     onOpenChange(false);
     reset();
-    navigate({ to: "/app/extintores-inspecao-foto", search: { extintor: extintor.id } as any });
+    navigate({ to: "/app/extintores-inspecao-foto", search: { extintor: extintor.id, handoff: "1" } as any });
   };
 
   const irProxima = () => {
@@ -220,6 +220,9 @@ export function ExtintorInspecaoFotoDialog({
             <Sparkles className="h-5 w-5 text-red-500" />
             Inspeção por Foto (FOR-SFG 08)
           </DialogTitle>
+          <DialogDescription>
+            Envie as fotos obrigatórias para iniciar a análise automática do extintor.
+          </DialogDescription>
           {extintor && (
             <div className="text-xs text-muted-foreground mt-1">
               Inspecionando: <strong className="text-red-500 font-mono">{extintor.numero}</strong>
