@@ -293,24 +293,34 @@ function ExtintoresPage() {
                       <div className="flex items-center gap-2">
                         {e.ultimo_status_inspecao ? (
                           (() => {
-                            const tone =
+                            const gradient =
                               e.ultimo_status_inspecao === "CONFORME"
-                                ? "bg-emerald-500"
+                                ? "bg-[radial-gradient(circle_at_30%_30%,#6ee7b7,#10b981_55%,#047857)]"
                                 : e.ultimo_status_inspecao === "PRECISA_REVISAO"
-                                ? "bg-amber-500"
-                                : "bg-red-500";
+                                ? "bg-[radial-gradient(circle_at_30%_30%,#fde68a,#f59e0b_55%,#b45309)]"
+                                : "bg-[radial-gradient(circle_at_30%_30%,#fecaca,#ef4444_55%,#991b1b)]";
+                            const glow =
+                              e.ultimo_status_inspecao === "CONFORME"
+                                ? "shadow-[0_0_0_3px_rgba(16,185,129,0.18),0_4px_10px_-2px_rgba(16,185,129,0.55)]"
+                                : e.ultimo_status_inspecao === "PRECISA_REVISAO"
+                                ? "shadow-[0_0_0_3px_rgba(245,158,11,0.18),0_4px_10px_-2px_rgba(245,158,11,0.55)]"
+                                : "shadow-[0_0_0_3px_rgba(239,68,68,0.22),0_4px_12px_-2px_rgba(239,68,68,0.65)]";
                             return (
                               <span
                                 title={`Última inspeção IA: ${e.ultimo_status_inspecao}`}
-                                className="relative inline-flex h-3 w-3 items-center justify-center"
+                                className="relative inline-flex h-3.5 w-3.5 items-center justify-center"
                               >
-                                <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping ${tone}`} />
-                                <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ring-2 ring-white shadow ${tone}`} />
+                                <span className={`relative inline-flex h-3 w-3 rounded-full ${gradient} ${glow}`}>
+                                  <span className="absolute top-[1px] left-[2px] h-[3px] w-[3px] rounded-full bg-white/80 blur-[0.5px]" />
+                                </span>
                               </span>
                             );
                           })()
                         ) : (
-                          <span title="Sem inspeção IA" className="inline-block h-2.5 w-2.5 rounded-full bg-slate-300" />
+                          <span
+                            title="Sem inspeção IA"
+                            className="relative inline-block h-3 w-3 rounded-full bg-[radial-gradient(circle_at_30%_30%,#f8fafc,#94a3b8_60%,#475569)] shadow-[0_0_0_2px_rgba(148,163,184,0.15),0_2px_6px_-1px_rgba(0,0,0,0.3)]"
+                          />
                         )}
                         {e.numero}
                       </div>
