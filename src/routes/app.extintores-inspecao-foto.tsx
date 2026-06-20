@@ -204,6 +204,8 @@ function InspecaoFotoPage() {
       const p = JSON.parse(raw);
       if (Date.now() - (p.ts ?? 0) > 30 * 60 * 1000) {
         sessionStorage.removeItem(key);
+        setHandoffLoading(false);
+        if (veioDoModal) toast.error("As fotos expiraram. Abra o extintor e envie novamente.");
         return;
       }
       const mk = (path: string | null): FotoState => path
@@ -221,6 +223,9 @@ function InspecaoFotoPage() {
           inmetroPath: p.inmetro_path,
           extraPath: p.extra_path ?? null,
         });
+      } else if (veioDoModal) {
+        setHandoffLoading(false);
+        toast.error("Faltam fotos obrigatórias. Abra o extintor e envie novamente.");
       }
       sessionStorage.removeItem(key);
     } catch {
