@@ -555,6 +555,17 @@ function ExtintoresPage() {
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
+                  {isModerator && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 w-8 p-0 shrink-0 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-red-950 hover:text-red-300 hover:border-red-500/40"
+                      onClick={() => setExcluirExt(e)}
+                      title="Excluir extintor"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
               </div>
             );
