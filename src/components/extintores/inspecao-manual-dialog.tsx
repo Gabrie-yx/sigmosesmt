@@ -136,25 +136,42 @@ export function InspecaoManualDialog({
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md border px-3 py-2 bg-muted/30">
-            <div className="flex items-center gap-2">
-              {form.conforme
-                ? <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                : <AlertTriangle className="h-4 w-4 text-red-500" />}
-              <span className="text-sm font-semibold">
-                {form.conforme ? "CONFORME" : "NÃO CONFORME"}
-              </span>
-              <Badge variant="outline" className="text-[10px]">
-                {form.conforme ? "tudo ok" : "tem NC"}
-              </Badge>
+          <div className="rounded-md border px-3 py-2 bg-muted/30 space-y-2">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Resultado da inspeção *
             </div>
-            <Switch
-              checked={form.conforme}
-              onCheckedChange={(v) => setForm((p) => ({ ...p, conforme: v }))}
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setForm((p) => ({ ...p, conforme: true }))}
+                className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-bold transition ${
+                  form.conforme === true
+                    ? "border-emerald-500 bg-emerald-500/15 text-emerald-300 shadow-[0_0_12px_-4px_rgba(16,185,129,0.6)]"
+                    : "border-slate-700 text-slate-400 hover:border-emerald-500/40 hover:text-emerald-300"
+                }`}
+              >
+                <CheckCircle2 className="h-4 w-4" /> CONFORME
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm((p) => ({ ...p, conforme: false }))}
+                className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-bold transition ${
+                  form.conforme === false
+                    ? "border-red-500 bg-red-500/15 text-red-300 shadow-[0_0_12px_-4px_rgba(239,68,68,0.6)]"
+                    : "border-slate-700 text-slate-400 hover:border-red-500/40 hover:text-red-300"
+                }`}
+              >
+                <AlertTriangle className="h-4 w-4" /> NÃO CONFORME
+              </button>
+            </div>
+            {form.conforme === null && (
+              <div className="text-[11px] text-amber-400">
+                Escolha CONFORME ou NÃO CONFORME — não há valor padrão.
+              </div>
+            )}
           </div>
 
-          {!form.conforme && (
+          {form.conforme === false && (
             <div>
               <Label className="text-xs">Descrição da NC *</Label>
               <Textarea
