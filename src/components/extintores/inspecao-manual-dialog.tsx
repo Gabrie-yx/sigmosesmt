@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardEdit, Info, CheckCircle2, AlertTriangle, ShieldAlert, Ban } from "lucide-react";
+import { ClipboardEdit, Info, CheckCircle2, AlertTriangle, ShieldAlert, Ban, Camera, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -120,6 +120,8 @@ export type ResultadoInspecaoManual = {
   responsavel_registro: string;
 };
 
+type FotoEvidencia = { file: File; previewUrl: string };
+
 export function InspecaoManualDialog({
   extintor,
   open,
@@ -150,6 +152,7 @@ export function InspecaoManualDialog({
 
   const [itens, setItens] = useState<Record<ChecklistId, ItemStatus>>(emptyChecklist());
   const [descNc, setDescNc] = useState<Record<ChecklistId, string>>({} as any);
+  const [fotosNc, setFotosNc] = useState<Record<ChecklistId, FotoEvidencia[]>>({} as any);
   const [observacoes, setObservacoes] = useState("");
   const [respNome, setRespNome] = useState(userNome ?? "");
   const [respRegistro, setRespRegistro] = useState("");
@@ -162,6 +165,7 @@ export function InspecaoManualDialog({
     if (open) {
       setItens(emptyChecklist());
       setDescNc({} as any);
+      setFotosNc({} as any);
       setObservacoes("");
       setRespNome(userNome ?? "");
       setRespRegistro("");
@@ -229,11 +233,14 @@ export function InspecaoManualDialog({
     mutationFn: async () => {
       const nome = respNome.trim();
       if (!nome) throw new Error("Informe o responsável pela inspeção");
-      if (!todosRespondidos) throw new Error("Responda todos os 8 itens do checklist");
       for (const id of ncIds) {
         if (!descNc[id]?.trim()) {
           const t = CHECKLIST.find((c) => c.id === id)!.titulo;
           throw new Error(`Descreva a NC do item: ${t}`);
+        }
+        if (!(fotosNc[id]?.length)) {
+          const t = CHECKLIST.find((c) => c.id === id)!.titulo;
+          throw new Error(`Anexe pelo menos 1 foto de evidência da NC: ${t}`);
         }
       }
       const resultado = buildResultado();
@@ -246,13 +253,34 @@ export function InspecaoManualDialog({
 
       if (!extintor) throw new Error("Extintor não selecionado");
       const hoje = new Date().toISOString().slice(0, 10);
+
+      // Upload das fotos de evidência por NC
+      const fotosUrls: Record<string, string[]> = {};
+      for (const id of ncIds) {
+        const arr = fotosNc[id] ?? [];
+        const urls: string[] = [];
+        for (const f of arr) {
+          const ext = f.file.name.split(".").pop() || "jpg";
+          const path = `${extintor.id}/${Date.now()}-${id}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+          const up = await supabase.storage.from("extintores-inspecoes").upload(path, f.file, {
+            cacheControl: "3600",
+            upsert: false,
+          });
+          if (up.error) throw up.error;
+          const { data } = supabase.storage.from("extintores-inspecoes").getPublicUrl(path);
+          urls.push(data.publicUrl);
+        }
+        fotosUrls[id] = urls;
+      }
+
       const ncResumo =
         ncIds.length === 0
           ? null
           : ncIds
               .map((id) => {
                 const c = CHECKLIST.find((x) => x.id === id)!;
-                return `• [${SEV_LABEL[c.severidade]}] ${c.titulo}: ${descNc[id] ?? ""}`;
+                const links = (fotosUrls[id] ?? []).map((u, i) => `[foto ${i + 1}](${u})`).join(" ");
+                return `• [${SEV_LABEL[c.severidade]}] ${c.titulo}: ${descNc[id] ?? ""}${links ? ` — ${links}` : ""}`;
               })
               .join("\n");
 
@@ -405,13 +433,70 @@ export function InspecaoManualDialog({
                     </div>
                   </div>
                   {status === "nc" && (
-                    <Textarea
-                      rows={2}
-                      placeholder="Descreva a NC encontrada *"
-                      value={descNc[item.id] ?? ""}
-                      onChange={(e) => setDescNc((p) => ({ ...p, [item.id]: e.target.value }))}
-                      className="mt-2 text-sm"
-                    />
+                    <div className="mt-2 space-y-2">
+                      <Textarea
+                        rows={2}
+                        placeholder="Descreva a NC encontrada *"
+                        value={descNc[item.id] ?? ""}
+                        onChange={(e) => setDescNc((p) => ({ ...p, [item.id]: e.target.value }))}
+                        className="text-sm"
+                      />
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                            Evidências fotográficas *
+                          </Label>
+                          <label className="inline-flex items-center gap-1 cursor-pointer text-[11px] text-cyan-300 hover:text-cyan-200">
+                            <Camera className="h-3.5 w-3.5" />
+                            Adicionar foto
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              multiple
+                              className="hidden"
+                              onChange={(e) => {
+                                const files = Array.from(e.target.files ?? []);
+                                if (!files.length) return;
+                                const novos: FotoEvidencia[] = files.map((f) => ({
+                                  file: f,
+                                  previewUrl: URL.createObjectURL(f),
+                                }));
+                                setFotosNc((p) => ({
+                                  ...p,
+                                  [item.id]: [...(p[item.id] ?? []), ...novos],
+                                }));
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {(fotosNc[item.id] ?? []).map((f, i) => (
+                            <div key={i} className="relative h-16 w-16 rounded border border-red-500/40 overflow-hidden group">
+                              <img src={f.previewUrl} alt="" className="h-full w-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setFotosNc((p) => ({
+                                    ...p,
+                                    [item.id]: (p[item.id] ?? []).filter((_, idx) => idx !== i),
+                                  }))
+                                }
+                                className="absolute top-0.5 right-0.5 bg-black/70 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition"
+                              >
+                                <X className="h-3 w-3 text-white" />
+                              </button>
+                            </div>
+                          ))}
+                          {!(fotosNc[item.id]?.length) && (
+                            <div className="text-[10px] text-red-300/80 italic">
+                              Nenhuma foto anexada — obrigatório para registrar a NC.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               );
@@ -454,7 +539,7 @@ export function InspecaoManualDialog({
           </Button>
           <Button
             onClick={() => salvar.mutate()}
-            disabled={salvar.isPending || !todosRespondidos}
+            disabled={salvar.isPending}
             className={`gap-1.5 ${
               temCriticaNC
                 ? "bg-red-600 hover:bg-red-500 text-white"
