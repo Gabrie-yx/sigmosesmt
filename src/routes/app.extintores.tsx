@@ -23,6 +23,7 @@ import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { EXTINTORES_CHECKLIST_NC as CHECKLIST_NC, gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
 import type jsPDF from "jspdf";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/app/extintores")({
   component: ExtintoresPage,
@@ -512,6 +513,7 @@ function ExtintorFormDialog({
             {isEdit ? `Editar extintor ${extintor.numero ?? ""}` : "Novo extintor"}
           </DialogTitle>
         </DialogHeader>
+        {isEdit && <UltimaInspecaoIAPanel extintorId={extintor.id} />}
         <div className="grid grid-cols-2 gap-3">
           {!isEdit && (
             <div><Label>Nº do extintor <span className="text-slate-400 font-normal">(opcional)</span></Label><Input value={form.numero} onChange={(e) => set("numero", e.target.value)} placeholder="auto" /></div>
