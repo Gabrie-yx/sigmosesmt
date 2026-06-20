@@ -132,6 +132,27 @@ function ExtintoresPage() {
     },
   });
 
+  // Última inspeção IA por extintor (para expandir NCs concretas em pendências)
+  const inspecoesFotos = useQuery({
+    queryKey: ["extintor-inspecoes-fotos-recentes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("extintor_inspecoes_fotos")
+        .select("id, extintor_id, status_geral, nao_conformidades, divergencia_detectada, divergencia_descricao, inspecionado_em")
+        .order("inspecionado_em", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const ultimaIaPorExt = useMemo(() => {
+    const map = new Map<string, any>();
+    (inspecoesFotos.data ?? []).forEach((r) => {
+      if (!map.has(r.extintor_id)) map.set(r.extintor_id, r);
+    });
+    return map;
+  }, [inspecoesFotos.data]);
+
   const areas = useMemo(() => {
     const set = new Set<string>();
     (extintores.data ?? []).forEach((e) => e.area && set.add(e.area));
@@ -204,6 +225,7 @@ function ExtintoresPage() {
   const onInvalidate = () => {
     qc.invalidateQueries({ queryKey: ["extintores"] });
     qc.invalidateQueries({ queryKey: ["extintor-inspecoes"] });
+    qc.invalidateQueries({ queryKey: ["extintor-inspecoes-fotos-recentes"] });
   };
 
   useEffect(() => {
@@ -400,21 +422,53 @@ function ExtintoresPage() {
             const hojeISO = hoje.toISOString().slice(0, 10);
             const vencido = e.proxima_recarga && e.proxima_recarga < hojeISO;
             const iaStatus = normalizeIaStatus(e.ultimo_status_inspecao);
+            const ultimaIa = ultimaIaPorExt.get(e.id);
+            const manualConformeMes = !!insp && insp.conforme === true;
 
-            // Lista estruturada de pendências (com tipo para o popover saber o que oferecer)
+            // Lista estruturada de pendências
             const pendencias: Pendencia[] = [];
             if (vencido) pendencias.push({ tipo: "recarga", label: "Recarga vencida — encaminhar para manutenção (2º grau)" });
             if (!insp) pendencias.push({ tipo: "mes", label: "Inspeção mensal do mês ainda não registrada" });
-            if (iaStatus === "NAO_CONFORME") pendencias.push({ tipo: "nao_conforme", label: "Inspeção por foto: NÃO CONFORMIDADE — abrir histórico e tratar" });
-            if (iaStatus === "PRECISA_REVISAO") pendencias.push({ tipo: "precisa_revisao", label: "Inspeção marcada como PRECISA REVISÃO — validar fotos no histórico" });
-            const okMes = !!insp && pendencias.length === 0;
+
+            // NCs concretas da IA (uma por linha) — só se NÃO houver manual conforme neste mês
+            if (!manualConformeMes && ultimaIa) {
+              const st = normalizeIaStatus(ultimaIa.status_geral);
+              if (st === "NAO_CONFORME" || st === "PRECISA_REVISAO") {
+                const ncs: string[] = Array.isArray(ultimaIa.nao_conformidades) ? ultimaIa.nao_conformidades : [];
+                if (ncs.length > 0) {
+                  ncs.slice(0, 5).forEach((n) => {
+                    pendencias.push({
+                      tipo: st === "NAO_CONFORME" ? "nao_conforme" : "precisa_revisao",
+                      label: String(n),
+                    });
+                  });
+                } else {
+                  pendencias.push({
+                    tipo: st === "NAO_CONFORME" ? "nao_conforme" : "precisa_revisao",
+                    label: st === "NAO_CONFORME" ? "Inspeção por foto NÃO CONFORME" : "Inspeção por foto precisa de revisão",
+                  });
+                }
+              }
+              // Divergência cadastro × foto (FOR-SEG 08 implícito)
+              if (ultimaIa.divergencia_detectada) {
+                pendencias.push({
+                  tipo: "divergencia",
+                  label: `Divergência cadastro × foto: ${ultimaIa.divergencia_descricao || "campo identificado fora do cadastro"}`,
+                });
+              }
+            }
+
+            // glow verde: tem inspeção do mês conforme E nada crítico pendente
+            const okMes = manualConformeMes && pendencias.length === 0;
+            const iaRedAtiva = !manualConformeMes && iaStatus === "NAO_CONFORME";
+            const iaAmberAtiva = !manualConformeMes && iaStatus === "PRECISA_REVISAO";
 
             const ringTone =
-              iaStatus === "NAO_CONFORME" || vencido
+              iaRedAtiva || vencido
                 ? "ring-red-500/40 hover:ring-red-400/70 bg-gradient-to-br from-slate-900 to-red-950/60 shadow-[0_0_24px_-8px_rgba(239,68,68,0.45)]"
-                : iaStatus === "PRECISA_REVISAO"
+                : iaAmberAtiva
                 ? "ring-amber-500/40 hover:ring-amber-400/70 bg-gradient-to-br from-slate-900 to-amber-950/50 shadow-[0_0_24px_-8px_rgba(245,158,11,0.4)]"
-                : okMes || iaStatus === "CONFORME"
+                : okMes || (manualConformeMes) || iaStatus === "CONFORME"
                 ? "ring-emerald-400/60 hover:ring-emerald-300/80 bg-gradient-to-br from-slate-900 to-emerald-950/50 shadow-[0_0_32px_-6px_rgba(16,185,129,0.65)]"
                 : "ring-slate-700/60 hover:ring-slate-500/70 bg-gradient-to-br from-slate-900 to-slate-950";
 
