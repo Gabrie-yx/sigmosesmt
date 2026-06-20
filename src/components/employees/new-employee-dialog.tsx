@@ -222,7 +222,7 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(companies ?? []).map((c: any) => (
+                  {(companies ?? []).map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.name}
                       {c.type === "TERCEIRIZADO" ? " · TERCEIRO" : ""}
@@ -243,7 +243,7 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(roles ?? []).map((r: any) => (
+                  {(roles ?? []).map((r) => (
                     <SelectItem key={r.id} value={r.id}>
                       {r.name}
                     </SelectItem>
