@@ -300,6 +300,7 @@ function InspecaoFotoPage() {
       setManometro(mk(paths.manometroPath));
       setInmetro(mk(paths.inmetroPath));
       setExtra(mk(paths.extraPath));
+      setAvariasPaths(paths.avariasPaths ?? []);
       setEtapa(2);
       setAutoAnalisar(paths);
       sessionStorage.removeItem(key);
@@ -321,6 +322,8 @@ function InspecaoFotoPage() {
   const [manometro, setManometro] = useState<FotoState>(initialFoto());
   const [inmetro, setInmetro] = useState<FotoState>(initialFoto());
   const [extra, setExtra] = useState<FotoState>(initialFoto());
+  // Fotos extras de avarias (corrosão, ferrugem, amassado etc) vindas do modal
+  const [avariasPaths, setAvariasPaths] = useState<string[]>([]);
 
   // Localização
   const [gps, setGps] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
