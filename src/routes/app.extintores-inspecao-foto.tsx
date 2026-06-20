@@ -269,13 +269,8 @@ function InspecaoFotoPage() {
       return;
     }
     try {
-      const p = raw ? JSON.parse(raw) : {
-        etiqueta_path: directPhotos!.etiquetaPath,
-        manometro_path: directPhotos!.manometroPath,
-        inmetro_path: directPhotos!.inmetroPath,
-        extra_path: directPhotos!.extraPath,
-        ts: Date.now(),
-      };
+      const parsed = raw ? JSON.parse(raw) : null;
+      const paths = coercePrefillPaths(parsed) ?? directPhotos;
       if (raw && Date.now() - (p.ts ?? 0) > 30 * 60 * 1000) {
         sessionStorage.removeItem(key);
         setHandoffLoading(false);
@@ -284,25 +279,20 @@ function InspecaoFotoPage() {
         }
         return;
       }
+      if (!paths) {
+        setHandoffLoading(false);
+        if (veioDoModal) setHandoffError("Faltam fotos obrigatórias. Volte ao painel e envie etiqueta, manômetro e INMETRO.");
+        return;
+      }
       const mk = (path: string | null): FotoState => path
         ? { file: null, previewUrl: supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl, path, uploading: false }
         : initialFoto();
-      if (p.etiqueta_path) setEtiqueta(mk(p.etiqueta_path));
-      if (p.manometro_path) setManometro(mk(p.manometro_path));
-      if (p.inmetro_path) setInmetro(mk(p.inmetro_path));
-      if (p.extra_path) setExtra(mk(p.extra_path));
-      if (p.etiqueta_path && p.manometro_path && p.inmetro_path) {
-        setEtapa(2);
-        setAutoAnalisar({
-          etiquetaPath: p.etiqueta_path,
-          manometroPath: p.manometro_path,
-          inmetroPath: p.inmetro_path,
-          extraPath: p.extra_path ?? null,
-        });
-      } else if (veioDoModal) {
-        setHandoffLoading(false);
-        setHandoffError("Faltam fotos obrigatórias. Volte ao painel e envie etiqueta, manômetro e INMETRO.");
-      }
+      setEtiqueta(mk(paths.etiquetaPath));
+      setManometro(mk(paths.manometroPath));
+      setInmetro(mk(paths.inmetroPath));
+      setExtra(mk(paths.extraPath));
+      setEtapa(2);
+      setAutoAnalisar(paths);
       sessionStorage.removeItem(key);
     } catch {
       setHandoffLoading(false);
