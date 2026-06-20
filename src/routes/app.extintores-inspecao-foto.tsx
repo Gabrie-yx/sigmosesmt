@@ -216,7 +216,7 @@ function InspecaoFotoPage() {
   const buscaFiltrada = useMemo(() => {
     const q = busca.trim().toLowerCase();
     const todos = extintores.data ?? [];
-    if (!q) return todos.slice(0, 8);
+    if (!q) return todos;
     return todos.filter((e: any) =>
       [e.numero, e.numero_cilindro, e.localizacao, e.area]
         .some((v) => (v ?? "").toString().toLowerCase().includes(q))
