@@ -302,6 +302,24 @@ function ExtintoresPage() {
                           {formatDateBR(insp.data_inspecao)}
                           {insp.foto_path && <Camera className="h-3 w-3 ml-1" />}
                         </Badge>
+                      ) : e.ultima_inspecao_em ? (
+                        <Badge
+                          variant="outline"
+                          className={
+                            e.ultimo_status_inspecao === "CONFORME"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                              : e.ultimo_status_inspecao === "PRECISA_REVISAO"
+                              ? "bg-amber-50 text-amber-700 border-amber-300"
+                              : "bg-red-50 text-red-700 border-red-300"
+                          }
+                          title={`Inspeção IA · ${e.ultimo_status_inspecao}`}
+                        >
+                          {e.ultimo_status_inspecao === "CONFORME"
+                            ? <CheckCircle2 className="h-3 w-3 mr-1" />
+                            : <AlertTriangle className="h-3 w-3 mr-1" />}
+                          {formatDateBR(new Date(e.ultima_inspecao_em).toISOString().slice(0, 10))}
+                          <Sparkles className="h-3 w-3 ml-1" />
+                        </Badge>
                       ) : (
                         <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Pendente</Badge>
                       )}
