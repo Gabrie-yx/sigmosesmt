@@ -29,8 +29,14 @@ export function InspecaoManualDialog({
   onSaved?: () => void;
 }) {
   const qc = useQueryClient();
-  const [form, setForm] = useState({
-    conforme: true,
+  const [form, setForm] = useState<{
+    conforme: boolean | null;
+    nao_conformidade: string;
+    observacoes: string;
+    responsavel_nome: string;
+    responsavel_registro: string;
+  }>({
+    conforme: null,
     nao_conformidade: "",
     observacoes: "",
     responsavel_nome: userNome ?? "",
@@ -45,7 +51,7 @@ export function InspecaoManualDialog({
   useEffect(() => {
     if (open) {
       setForm({
-        conforme: true,
+        conforme: null,
         nao_conformidade: "",
         observacoes: "",
         responsavel_nome: userNome ?? "",
@@ -59,11 +65,15 @@ export function InspecaoManualDialog({
       if (!extintor) throw new Error("Extintor não selecionado");
       const nome = (form.responsavel_nome || "").trim();
       if (!nome) throw new Error("Informe o responsável pela inspeção");
+      if (form.conforme === null) throw new Error("Selecione CONFORME ou NÃO CONFORME antes de salvar");
+      if (form.conforme === false && !form.nao_conformidade.trim()) {
+        throw new Error("Descreva a não conformidade encontrada");
+      }
       const hoje = new Date().toISOString().slice(0, 10);
       const { error } = await supabase.from("extintor_inspecoes").insert({
         extintor_id: extintor.id,
         data_inspecao: hoje,
-        conforme: form.conforme,
+        conforme: form.conforme!,
         nao_conformidade: form.conforme ? null : (form.nao_conformidade || null),
         observacoes: form.observacoes || null,
         responsavel_nome: nome,
