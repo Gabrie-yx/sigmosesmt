@@ -46,6 +46,9 @@ const initialFoto = (): FotoState => ({ file: null, previewUrl: null, path: null
 
 const HANDOFF_TIMEOUT_MS = 90_000;
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isUuid = (v: string | null | undefined): v is string => !!v && UUID_RE.test(v);
+
 function normalizePath(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
@@ -520,6 +523,12 @@ function InspecaoFotoPage() {
 
   const salvarMut = useMutation({
     mutationFn: async () => {
+      // Modo demonstração: extintor com ID não-UUID (ex.: card "preview-XXXXXX")
+      // Não persiste no banco — só mostra prévia do resultado.
+      if (extintorId && !isUuid(extintorId)) {
+        await new Promise((r) => setTimeout(r, 400));
+        return { preview: true } as any;
+      }
       const ncs: string[] = Array.isArray(laudo.nao_conformidades) ? laudo.nao_conformidades : [];
       const itensNC = ITENS_FOR_SFG_08.filter((it) => laudo[it.key] === "NC").length;
       const divergente = !!laudo.divergencia_detectada;
@@ -560,9 +569,11 @@ function InspecaoFotoPage() {
         avarias_paths: avariasPaths,
       };
 
+      // Garante que extintor_id, quando enviado, é um UUID válido — senão envia null
+      const safeExtintorId = isUuid(extintorId) ? extintorId : null;
       return await salvarFn({
         data: {
-          extintor_id: extintorId || null,
+          extintor_id: safeExtintorId,
           foto_etiqueta_path: etiqueta.path!,
           foto_manometro_path: manometro.path!,
           foto_inmetro_path: inmetro.path ?? null,
@@ -586,7 +597,12 @@ function InspecaoFotoPage() {
         },
       });
     },
-    onSuccess: () => {
+    onSuccess: (result: any) => {
+      if (result?.preview) {
+        toast.success("✅ Demonstração: inspeção validada (não salva no banco — extintor de teste).");
+        navigate({ to: "/app/extintores" });
+        return;
+      }
       toast.success("Inspeção salva!");
       qc.invalidateQueries({ queryKey: ["extintor-inspecoes-foto"] });
       qc.invalidateQueries({ queryKey: ["extintores"] });
