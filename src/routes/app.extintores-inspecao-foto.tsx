@@ -420,6 +420,7 @@ function InspecaoFotoPage() {
   };
 
   const handleAnalisar = async (paths?: FotoPrefillPaths) => {
+    setHandoffError(null);
     const fotoPaths = paths ?? {
       etiquetaPath: etiqueta.path,
       manometroPath: manometro.path,
@@ -441,6 +442,7 @@ function InspecaoFotoPage() {
       return;
     }
     setAnalisando(true);
+    if (fluxoModal) setHandoffLoading(true);
     try {
       const esperado = extintorSelecionado
         ? {
