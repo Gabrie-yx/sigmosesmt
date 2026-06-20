@@ -3032,8 +3032,11 @@ export type Database = {
           assinatura_path: string | null
           confianca_ia: number | null
           created_at: string
+          dados_extraidos: Json | null
           extintor_id: string | null
           foto_etiqueta_path: string | null
+          foto_extra_path: string | null
+          foto_inmetro_path: string | null
           foto_lacre_path: string | null
           foto_manometro_path: string | null
           gps_accuracy: number | null
@@ -3042,11 +3045,13 @@ export type Database = {
           id: string
           inspecionado_em: string
           inspecionado_por: string
+          justificativa_divergencia: string | null
           laudo_ia: Json | null
           laudo_revisado: Json | null
           localizacao_descritiva: string | null
           nao_conformidades: string[] | null
           observacoes: string | null
+          precisa_revisao: boolean
           status_geral: string
           updated_at: string
         }
@@ -3056,8 +3061,11 @@ export type Database = {
           assinatura_path?: string | null
           confianca_ia?: number | null
           created_at?: string
+          dados_extraidos?: Json | null
           extintor_id?: string | null
           foto_etiqueta_path?: string | null
+          foto_extra_path?: string | null
+          foto_inmetro_path?: string | null
           foto_lacre_path?: string | null
           foto_manometro_path?: string | null
           gps_accuracy?: number | null
@@ -3066,11 +3074,13 @@ export type Database = {
           id?: string
           inspecionado_em?: string
           inspecionado_por: string
+          justificativa_divergencia?: string | null
           laudo_ia?: Json | null
           laudo_revisado?: Json | null
           localizacao_descritiva?: string | null
           nao_conformidades?: string[] | null
           observacoes?: string | null
+          precisa_revisao?: boolean
           status_geral?: string
           updated_at?: string
         }
@@ -3080,8 +3090,11 @@ export type Database = {
           assinatura_path?: string | null
           confianca_ia?: number | null
           created_at?: string
+          dados_extraidos?: Json | null
           extintor_id?: string | null
           foto_etiqueta_path?: string | null
+          foto_extra_path?: string | null
+          foto_inmetro_path?: string | null
           foto_lacre_path?: string | null
           foto_manometro_path?: string | null
           gps_accuracy?: number | null
@@ -3090,11 +3103,13 @@ export type Database = {
           id?: string
           inspecionado_em?: string
           inspecionado_por?: string
+          justificativa_divergencia?: string | null
           laudo_ia?: Json | null
           laudo_revisado?: Json | null
           localizacao_descritiva?: string | null
           nao_conformidades?: string[] | null
           observacoes?: string | null
+          precisa_revisao?: boolean
           status_geral?: string
           updated_at?: string
         }
@@ -3115,6 +3130,8 @@ export type Database = {
           capacidade_extintora: string | null
           carga_nominal: number | null
           carga_unidade: string | null
+          classes_fogo: string[] | null
+          codigo_inmetro: string | null
           created_at: string
           created_by: string | null
           data_fabricacao: string | null
@@ -3124,13 +3141,21 @@ export type Database = {
           foto_path: string | null
           id: string
           localizacao: string
+          lote_inmetro: string | null
           numero: string
+          numero_cilindro: string | null
           numero_selo_inmetro: string | null
           observacoes: string | null
+          proxima_manutencao_n2: string | null
+          proxima_manutencao_n3: string | null
           proxima_recarga: string | null
           proximo_teste_hidrostatico: number | null
+          qr_inmetro_url: string | null
           status: Database["public"]["Enums"]["extintor_status"]
           tipo_agente: Database["public"]["Enums"]["extintor_tipo_agente"]
+          ultima_inspecao_em: string | null
+          ultima_inspecao_foto_id: string | null
+          ultimo_status_inspecao: string | null
           updated_at: string
         }
         Insert: {
@@ -3139,6 +3164,8 @@ export type Database = {
           capacidade_extintora?: string | null
           carga_nominal?: number | null
           carga_unidade?: string | null
+          classes_fogo?: string[] | null
+          codigo_inmetro?: string | null
           created_at?: string
           created_by?: string | null
           data_fabricacao?: string | null
@@ -3148,13 +3175,21 @@ export type Database = {
           foto_path?: string | null
           id?: string
           localizacao: string
+          lote_inmetro?: string | null
           numero: string
+          numero_cilindro?: string | null
           numero_selo_inmetro?: string | null
           observacoes?: string | null
+          proxima_manutencao_n2?: string | null
+          proxima_manutencao_n3?: string | null
           proxima_recarga?: string | null
           proximo_teste_hidrostatico?: number | null
+          qr_inmetro_url?: string | null
           status?: Database["public"]["Enums"]["extintor_status"]
           tipo_agente: Database["public"]["Enums"]["extintor_tipo_agente"]
+          ultima_inspecao_em?: string | null
+          ultima_inspecao_foto_id?: string | null
+          ultimo_status_inspecao?: string | null
           updated_at?: string
         }
         Update: {
@@ -3163,6 +3198,8 @@ export type Database = {
           capacidade_extintora?: string | null
           carga_nominal?: number | null
           carga_unidade?: string | null
+          classes_fogo?: string[] | null
+          codigo_inmetro?: string | null
           created_at?: string
           created_by?: string | null
           data_fabricacao?: string | null
@@ -3172,16 +3209,32 @@ export type Database = {
           foto_path?: string | null
           id?: string
           localizacao?: string
+          lote_inmetro?: string | null
           numero?: string
+          numero_cilindro?: string | null
           numero_selo_inmetro?: string | null
           observacoes?: string | null
+          proxima_manutencao_n2?: string | null
+          proxima_manutencao_n3?: string | null
           proxima_recarga?: string | null
           proximo_teste_hidrostatico?: number | null
+          qr_inmetro_url?: string | null
           status?: Database["public"]["Enums"]["extintor_status"]
           tipo_agente?: Database["public"]["Enums"]["extintor_tipo_agente"]
+          ultima_inspecao_em?: string | null
+          ultima_inspecao_foto_id?: string | null
+          ultimo_status_inspecao?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "extintores_ultima_inspecao_foto_fk"
+            columns: ["ultima_inspecao_foto_id"]
+            isOneToOne: false
+            referencedRelation: "extintor_inspecoes_fotos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hht_mensal: {
         Row: {
