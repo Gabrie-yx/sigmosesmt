@@ -40,6 +40,7 @@ type FotoPrefillPaths = {
   manometroPath: string;
   inmetroPath: string;
   extraPath: string | null;
+  avariasPaths: string[];
 };
 const initialFoto = (): FotoState => ({ file: null, previewUrl: null, path: null, uploading: false });
 
@@ -81,6 +82,7 @@ function readHandoffPhotos(params: URLSearchParams): FotoPrefillPaths | null {
     manometroPath,
     inmetroPath,
     extraPath: normalizePath(readSearchValue(params, "extra")),
+    avariasPaths: [],
   };
 }
 
@@ -89,11 +91,16 @@ function coercePrefillPaths(raw: any): FotoPrefillPaths | null {
   const manometroPath = normalizePath(raw?.manometro_path ?? raw?.manometroPath);
   const inmetroPath = normalizePath(raw?.inmetro_path ?? raw?.inmetroPath);
   if (!etiquetaPath || !manometroPath || !inmetroPath) return null;
+  const rawAvarias = raw?.avarias_paths ?? raw?.avariasPaths ?? [];
+  const avariasPaths = Array.isArray(rawAvarias)
+    ? rawAvarias.map((p: unknown) => normalizePath(p)).filter((p): p is string => !!p)
+    : [];
   return {
     etiquetaPath,
     manometroPath,
     inmetroPath,
     extraPath: normalizePath(raw?.extra_path ?? raw?.extraPath),
+    avariasPaths,
   };
 }
 
