@@ -348,9 +348,16 @@ function InspecaoFotoPage() {
     }
   };
 
-  const handleAnalisar = async () => {
-    if (!etiqueta.path || !manometro.path || !inmetro.path) {
+  const handleAnalisar = async (paths?: FotoPrefillPaths) => {
+    const fotoPaths = paths ?? {
+      etiquetaPath: etiqueta.path,
+      manometroPath: manometro.path,
+      inmetroPath: inmetro.path,
+      extraPath: extra.path ?? null,
+    };
+    if (!fotoPaths.etiquetaPath || !fotoPaths.manometroPath || !fotoPaths.inmetroPath) {
       toast.error("Envie as 3 fotos obrigatórias (etiqueta, manômetro e INMETRO).");
+      setHandoffLoading(false);
       return;
     }
     if ([etiqueta, manometro, inmetro, extra].some((f) => f.uploading)) {
@@ -371,9 +378,10 @@ function InspecaoFotoPage() {
       const { laudo: l } = await analisarFn({
         data: {
           foto_etiqueta_path: etiqueta.path,
-          foto_manometro_path: manometro.path,
-          foto_inmetro_path: inmetro.path,
-          foto_extra_path: extra.path ?? null,
+          foto_etiqueta_path: fotoPaths.etiquetaPath,
+          foto_manometro_path: fotoPaths.manometroPath,
+          foto_inmetro_path: fotoPaths.inmetroPath,
+          foto_extra_path: fotoPaths.extraPath,
           extintor_esperado: esperado,
         },
       });
@@ -390,6 +398,7 @@ function InspecaoFotoPage() {
     } catch (e: any) {
       toast.error(e.message ?? String(e));
     } finally {
+      setHandoffLoading(false);
       setAnalisando(false);
     }
   };
@@ -398,13 +407,12 @@ function InspecaoFotoPage() {
   // e pula direto para a revisão (etapa 3), sem passar pela tela de fotos.
   useEffect(() => {
     if (!autoAnalisar) return;
-    if (!etiqueta.path || !manometro.path || !inmetro.path) return;
-    if ([etiqueta, manometro, inmetro, extra].some((f) => f.uploading)) return;
     if (analisando) return;
+    setHandoffLoading(true);
     setAutoAnalisar(null);
-    handleAnalisar();
+    handleAnalisar(autoAnalisar);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoAnalisar, etiqueta.path, manometro.path, inmetro.path]);
+  }, [autoAnalisar, analisando]);
 
   const salvarMut = useMutation({
     mutationFn: async () => {
