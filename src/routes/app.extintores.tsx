@@ -351,7 +351,10 @@ function ExtintoresPage() {
                       {e.numero || "—"}
                     </div>
                   </div>
-                  <Badge variant="outline" className="text-[10px] font-bold px-1.5 py-0 h-5 shrink-0 bg-slate-950/80 text-cyan-300 border-cyan-500/30">
+                  <Badge
+                    variant="outline"
+                    className="text-sm font-black tracking-wider px-2.5 py-1 h-7 shrink-0 bg-slate-950/90 text-cyan-300 border-cyan-500/40 shadow-[0_0_12px_-2px_rgba(34,211,238,0.55)]"
+                  >
                     {e.tipo_agente}
                   </Badge>
                 </div>
@@ -374,6 +377,37 @@ function ExtintoresPage() {
                     {e.proxima_recarga ? formatDateBR(e.proxima_recarga) : "—"}
                   </span>
                 </div>
+
+                {/* Volume / nível (efeito neon estilo print 2) */}
+                {(() => {
+                  const pct = (() => {
+                    if (vencido) return 15;
+                    if (iaStatus === "NAO_CONFORME") return 20;
+                    if (iaStatus === "PRECISA_REVISAO") return 55;
+                    if (insp?.conforme || iaStatus === "CONFORME") return 100;
+                    return 70;
+                  })();
+                  const barTone =
+                    vencido || iaStatus === "NAO_CONFORME"
+                      ? "from-red-500 to-red-400 shadow-[0_0_10px_rgba(239,68,68,0.7)]"
+                      : iaStatus === "PRECISA_REVISAO"
+                      ? "from-amber-500 to-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.7)]"
+                      : "from-emerald-500 to-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.7)]";
+                  return (
+                    <div>
+                      <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        <span>Nível</span>
+                        <span className="tabular-nums">{pct}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-950/70 ring-1 ring-slate-700/60 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${barTone} transition-all duration-700`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Inspeção do mês */}
                 <div>
