@@ -368,9 +368,16 @@ function ExtintoresPage() {
                     </TableCell>
                     <TableCell className="text-right pr-4">
                       <div className="flex justify-end gap-1">
-                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setHistExt(e)} title="Histórico de inspeções">
-                          <History className="h-3.5 w-3.5" />
-                        </Button>
+                        <button
+                          type="button"
+                          onClick={() => setHistExt(e)}
+                          title="Histórico de inspeções"
+                          className="group relative inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold uppercase tracking-wider text-white/90 hover:text-white border border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/15 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_14px_-4px_rgba(0,0,0,0.5)] transition"
+                        >
+                          <span className="pointer-events-none absolute inset-x-2 top-[1px] h-[1px] rounded-full bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-70" />
+                          <History className="h-3.5 w-3.5 relative" />
+                          <span className="relative">Histórico</span>
+                        </button>
                         <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setEditExt(e)} title="Editar">
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
