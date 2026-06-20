@@ -159,6 +159,14 @@ function InspecaoFotoPage() {
 
   // Seleção do extintor
   const [extintorId, setExtintorId] = useState<string>("");
+
+  // Pré-seleção via ?extintor=...
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = new URLSearchParams(window.location.search).get("extintor");
+    if (id) { setExtintorId(id); setEtapa(1); }
+  }, []);
+
   const [busca, setBusca] = useState("");
   const [modoManual, setModoManual] = useState(false);
   const [manualNumero, setManualNumero] = useState("");
@@ -422,7 +430,7 @@ function InspecaoFotoPage() {
   const podeAvancarSelecao = !!extintorSelecionado || (modoManual && manualNumero && manualCilindro);
 
   return (
-    <div className="container px-4 md:px-6 py-6 space-y-4 max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl px-4 md:px-6 py-6 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
@@ -488,7 +496,7 @@ function InspecaoFotoPage() {
                         <button
                           key={e.id}
                           type="button"
-                          onClick={() => setExtintorId(e.id)}
+                          onClick={() => { setExtintorId(e.id); setEtapa(1); }}
                           className={`w-full text-left rounded-md border px-3 py-2 transition-colors ${
                             sel ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:bg-muted/50"
                           }`}
