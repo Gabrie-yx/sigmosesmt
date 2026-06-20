@@ -486,8 +486,8 @@ function ExtintoresPage() {
 }
 
 function Kpi({
-  label, value, tone, icon: Icon, pulse,
-}: { label: string; value: number; tone: "red" | "amber" | "green" | "slate"; icon: any; pulse?: boolean }) {
+  label, value, tone, icon: Icon, pulse, active, onClick,
+}: { label: string; value: number; tone: "red" | "amber" | "green" | "slate"; icon: any; pulse?: boolean; active?: boolean; onClick?: () => void }) {
   const tones = {
     red: "from-red-500 to-red-700",
     amber: "from-amber-400 to-amber-600",
@@ -495,7 +495,11 @@ function Kpi({
     slate: "from-slate-600 to-slate-800",
   };
   return (
-    <div className={`relative rounded-xl bg-gradient-to-br ${tones[tone]} text-white p-3 shadow-md ring-1 ring-white/10 overflow-hidden group hover:shadow-lg hover:-translate-y-0.5 transition-all`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-left relative rounded-xl bg-gradient-to-br ${tones[tone]} text-white p-3 shadow-md ring-1 overflow-hidden group hover:shadow-lg hover:-translate-y-0.5 transition-all ${active ? "ring-white/70 shadow-[0_0_0_2px_rgba(255,255,255,0.35),0_8px_24px_-8px_rgba(0,0,0,0.5)]" : "ring-white/10"}`}
+    >
       <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-white/10 blur-xl group-hover:bg-white/20 transition" />
       <div className="relative flex items-start justify-between">
         <div>
@@ -506,7 +510,7 @@ function Kpi({
           <Icon className="h-4 w-4" />
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
