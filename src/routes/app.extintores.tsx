@@ -1058,8 +1058,14 @@ function HistoricoInspecoesDialog({
 }) {
   const qc = useQueryClient();
   const [manualOpen, setManualOpen] = useState(true);
-  const [manualForm, setManualForm] = useState({
-    conforme: true,
+  const [manualForm, setManualForm] = useState<{
+    conforme: boolean | null;
+    nao_conformidade: string;
+    observacoes: string;
+    responsavel_nome: string;
+    responsavel_registro: string;
+  }>({
+    conforme: null,
     nao_conformidade: "",
     observacoes: "",
     responsavel_nome: userNome ?? "",
@@ -1084,11 +1090,17 @@ function HistoricoInspecoesDialog({
     mutationFn: async () => {
       const nome = (manualForm.responsavel_nome || "").trim();
       if (!nome) throw new Error("Informe o responsável pela inspeção");
+      if (manualForm.conforme === null) {
+        throw new Error("Selecione CONFORME ou NÃO CONFORME antes de salvar");
+      }
+      if (manualForm.conforme === false && !manualForm.nao_conformidade.trim()) {
+        throw new Error("Descreva a não conformidade encontrada");
+      }
       const hoje = new Date().toISOString().slice(0, 10);
       const { error } = await supabase.from("extintor_inspecoes").insert({
         extintor_id: extintor.id,
         data_inspecao: hoje,
-        conforme: manualForm.conforme,
+        conforme: manualForm.conforme!,
         nao_conformidade: manualForm.conforme ? null : (manualForm.nao_conformidade || null),
         observacoes: manualForm.observacoes || null,
         responsavel_nome: nome,
