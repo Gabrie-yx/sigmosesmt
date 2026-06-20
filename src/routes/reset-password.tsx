@@ -25,6 +25,12 @@ function ResetPasswordPage() {
   const [mfaCode, setMfaCode] = useState("");
   const applyInvite = useServerFn(applyMyPendingInvite);
 
+  function isAal2Error(error: any) {
+    const code = (error?.code || error?.name || "").toString().toLowerCase();
+    const msg = (error?.message || error?.error_description || "").toString().toLowerCase();
+    return code.includes("insufficient_aal") || msg.includes("aal2") || msg.includes("mfa");
+  }
+
   useEffect(() => {
     // Supabase processa o token do hash automaticamente e cria sessão
     supabase.auth.getSession().then(({ data }) => {
@@ -65,11 +71,16 @@ function ResetPasswordPage() {
     if (pwd !== pwd2) return toast.error("As senhas não coincidem");
     setBusy(true);
     try {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const hasVerifiedTotp = (factors?.totp ?? []).some((f) => f.status === "verified");
+      const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (hasVerifiedTotp && aalData?.currentLevel !== "aal2") {
+        await startMfaChallenge();
+        return;
+      }
       await finishPasswordUpdate();
     } catch (e: any) {
-      const code = e?.code || "";
-      const msg = (e?.message || "").toLowerCase();
-      if (code === "insufficient_aal" || msg.includes("aal2")) {
+      if (isAal2Error(e)) {
         try {
           await startMfaChallenge();
         } catch (err: any) {
@@ -87,24 +98,41 @@ function ResetPasswordPage() {
     if (!/^\d{6}$/.test(mfaCode)) return toast.error("Digite os 6 dígitos do código");
     setBusy(true);
     try {
-      const { error } = await supabase.auth.mfa.verify({
+      const { data, error } = await supabase.auth.mfa.challengeAndVerify({
         factorId: mfaFactorId,
-        challengeId: mfaChallengeId,
         code: mfaCode,
       });
       if (error) throw error;
+      if (data?.access_token && data.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
+      }
+      const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aalData?.currentLevel !== "aal2") {
+        await supabase.auth.refreshSession();
+      }
       await finishPasswordUpdate();
     } catch (e: any) {
-      toast.error(e.message || "Código inválido");
+      if (isAal2Error(e)) {
+        toast.error("Ainda falta confirmar o MFA. Gere um novo código no autenticador e tente novamente.");
+      } else {
+        toast.error(e.message || "Código inválido");
+      }
     } finally { setBusy(false); }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-black px-4 py-10">
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-red-600/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-orange-500/20 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500/10 blur-3xl" />
+
+      <Card className="relative w-full max-w-md border border-white/15 bg-white/10 text-white shadow-2xl shadow-red-900/30 backdrop-blur-xl">
         <CardHeader>
-          <CardTitle>Definir senha</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-white">Definir senha</CardTitle>
+          <CardDescription className="text-slate-300">
             {hasSession
               ? "Crie uma senha para acessar sua conta."
               : "Validando link..."}
@@ -114,24 +142,24 @@ function ResetPasswordPage() {
           {hasSession && !mfaNeeded ? (
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-2">
-                <Label>Nova senha</Label>
-                <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} minLength={8} required />
+                <Label className="text-slate-200">Nova senha</Label>
+                <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} minLength={8} required className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60" />
               </div>
               <div className="space-y-2">
-                <Label>Confirmar senha</Label>
-                <Input type="password" value={pwd2} onChange={(e) => setPwd2(e.target.value)} minLength={8} required />
+                <Label className="text-slate-200">Confirmar senha</Label>
+                <Input type="password" value={pwd2} onChange={(e) => setPwd2(e.target.value)} minLength={8} required className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60" />
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>
+              <Button type="submit" className="w-full bg-red-600 text-white shadow-lg shadow-red-900/50 hover:bg-red-500" disabled={busy}>
                 {busy ? "Salvando..." : "Definir senha e entrar"}
               </Button>
             </form>
           ) : hasSession && mfaNeeded ? (
             <form onSubmit={submitMfa} className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+              <p className="rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-sm text-slate-200">
                 Sua conta tem verificação em duas etapas (MFA). Digite o código de 6 dígitos do seu app autenticador para concluir a troca de senha.
               </p>
               <div className="space-y-2">
-                <Label>Código do autenticador</Label>
+                <Label className="text-slate-200">Código do autenticador</Label>
                 <Input
                   inputMode="numeric"
                   autoComplete="one-time-code"
@@ -139,15 +167,16 @@ function ResetPasswordPage() {
                   value={mfaCode}
                   onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
+                  className="bg-white/10 border-white/20 font-mono text-lg tracking-widest text-white placeholder:text-slate-400 focus-visible:ring-red-500/60"
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>
+              <Button type="submit" className="w-full bg-red-600 text-white shadow-lg shadow-red-900/50 hover:bg-red-500" disabled={busy}>
                 {busy ? "Verificando..." : "Verificar e salvar senha"}
               </Button>
             </form>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-300">
               Se você chegou aqui sem clicar no link do convite, peça um novo convite ao administrador.
             </p>
           )}
