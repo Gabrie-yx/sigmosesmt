@@ -1092,6 +1092,12 @@ function HistoricoInspecoesDialog({
           </Button>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Fechar</Button>
         </DialogFooter>
+        <MediaViewerDialog
+          items={mediaItems}
+          index={viewerIdx}
+          onClose={() => setViewerIdx(null)}
+          onIndexChange={setViewerIdx}
+        />
       </DialogContent>
     </Dialog>
   );
