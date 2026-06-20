@@ -360,6 +360,18 @@ function InspecaoFotoPage() {
     }
   };
 
+  // Quando o modal entrega as 3 fotos via sessionStorage, dispara a IA automaticamente
+  // e pula direto para a revisão (etapa 3), sem passar pela tela de fotos.
+  useEffect(() => {
+    if (!autoAnalisar) return;
+    if (!etiqueta.path || !manometro.path || !inmetro.path) return;
+    if ([etiqueta, manometro, inmetro, extra].some((f) => f.uploading)) return;
+    if (analisando) return;
+    setAutoAnalisar(false);
+    handleAnalisar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoAnalisar, etiqueta.path, manometro.path, inmetro.path]);
+
   const salvarMut = useMutation({
     mutationFn: async () => {
       const ncs: string[] = Array.isArray(laudo.nao_conformidades) ? laudo.nao_conformidades : [];
