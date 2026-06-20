@@ -615,6 +615,38 @@ function ExtintoresPage() {
           setPdfOpen(true);
         }}
       />
+      <Dialog open={!!excluirExt} onOpenChange={(v) => !v && setExcluirExt(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" /> Excluir extintor
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p>
+              Tem certeza que deseja excluir o extintor{" "}
+              <strong className="font-mono">{excluirExt?.numero}</strong> ({excluirExt?.tipo_agente})?
+            </p>
+            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800 text-xs">
+              <strong>Atenção:</strong> a exclusão é permanente. Se já houver inspeções vinculadas,
+              o sistema bloqueia a exclusão para preservar o histórico legal (NR-23 / Bombeiros).
+              Nesses casos, edite o cadastro e altere o status para <strong>BAIXADO</strong>.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExcluirExt(null)} disabled={excluirMut.isPending}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => excluirExt && excluirMut.mutate(excluirExt)}
+              disabled={excluirMut.isPending}
+            >
+              {excluirMut.isPending ? "Excluindo..." : "Excluir definitivamente"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
