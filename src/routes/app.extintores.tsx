@@ -26,7 +26,7 @@ import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
 import { gerarPdfHistoricoExtintor } from "@/lib/extintor-historico-pdf";
 import { calcularProximosPassos, formatMesAnoBR, isVencido } from "@/lib/extintor-regulatorio";
-import { FileText, CalendarRange, Wrench, Gauge } from "lucide-react";
+import { FileText, CalendarRange, Wrench, Gauge, ClipboardEdit, Info } from "lucide-react";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/extintores")({
@@ -398,6 +398,18 @@ function ExtintoresPage() {
             const vencido = e.proxima_recarga && e.proxima_recarga < hojeISO;
             const iaStatus = normalizeIaStatus(e.ultimo_status_inspecao);
 
+            // Lista de "o que precisa ser feito"
+            const acoesPendentes: string[] = [];
+            if (vencido) acoesPendentes.push("Recarga vencida — encaminhar para manutenção (2º grau)");
+            if (!insp) acoesPendentes.push("Inspeção mensal do mês ainda não registrada");
+            if (iaStatus === "NAO_CONFORME") acoesPendentes.push("IA detectou NÃO CONFORMIDADE — abrir histórico e tratar");
+            if (iaStatus === "PRECISA_REVISAO") acoesPendentes.push("IA marcou PRECISA REVISÃO — validar fotos no histórico");
+            const statusTone = vencido || iaStatus === "NAO_CONFORME"
+              ? "border-red-500/40 bg-red-950/40 text-red-200"
+              : iaStatus === "PRECISA_REVISAO" || !insp
+              ? "border-amber-500/40 bg-amber-950/40 text-amber-200"
+              : "border-emerald-500/40 bg-emerald-950/40 text-emerald-200";
+
             const ringTone =
               iaStatus === "NAO_CONFORME" || vencido
                 ? "ring-red-500/40 hover:ring-red-400/70 bg-gradient-to-br from-slate-900 to-red-950/60 shadow-[0_0_24px_-8px_rgba(239,68,68,0.45)]"
@@ -514,7 +526,14 @@ function ExtintoresPage() {
                 {/* Inspeção do mês */}
                 <div>
                   {insp ? (
-                    <Badge variant="outline" className={`w-full justify-center text-[10px] ${insp.conforme ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-red-500/10 text-red-300 border-red-500/30"}`}>
+                    <Badge
+                      variant="outline"
+                      className={`w-full justify-center text-[10px] ${
+                        insp.conforme
+                          ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/40 animate-pulse-emerald"
+                          : "bg-red-500/10 text-red-300 border-red-500/30"
+                      }`}
+                    >
                       {insp.conforme ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
                       Mês OK · {formatDateBR(insp.data_inspecao)}
                     </Badge>
@@ -539,6 +558,26 @@ function ExtintoresPage() {
                   )}
                 </div>
 
+                {/* O que precisa ser feito */}
+                <div
+                  className={`rounded-md border ${statusTone} px-2 py-1.5 text-[10px] leading-snug`}
+                  title={acoesPendentes.join(" · ") || "Tudo certo neste extintor"}
+                >
+                  <div className="flex items-center gap-1 font-black uppercase tracking-wider text-[9px] opacity-80 mb-0.5">
+                    {acoesPendentes.length ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                    {acoesPendentes.length ? "Pendências" : "Tudo em ordem"}
+                  </div>
+                  {acoesPendentes.length ? (
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {acoesPendentes.slice(0, 3).map((a, i) => (
+                        <li key={i} className="truncate" title={a}>{a}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="opacity-80">Sem ações pendentes este mês.</div>
+                  )}
+                </div>
+
                 {/* Ações */}
                 <div className="mt-auto pt-1 flex items-center gap-1">
                   <Button
@@ -546,7 +585,16 @@ function ExtintoresPage() {
                     onClick={() => setInspecaoExt(e)}
                     className="flex-1 h-8 gap-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-[11px] font-bold shadow-[0_0_12px_-2px_rgba(239,68,68,0.5)] border-0"
                   >
-                    <Sparkles className="h-3.5 w-3.5" /> Inspecionar
+                    <Sparkles className="h-3.5 w-3.5" /> Inspecionar (IA)
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-2 shrink-0 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-emerald-300 gap-1 text-[11px]"
+                    onClick={() => { setHistExt(e); setTimeout(() => window.dispatchEvent(new CustomEvent("abrir-inspecao-manual", { detail: e.id })), 50); }}
+                    title="Registrar inspeção manual (sem fotos / IA)"
+                  >
+                    <ClipboardEdit className="h-3.5 w-3.5" /> Manual
                   </Button>
                   <Button
                     size="sm"
@@ -607,6 +655,8 @@ function ExtintoresPage() {
           open={!!histExt}
           onOpenChange={(v: boolean) => !v && setHistExt(null)}
           onNovaInspecao={() => { setHistExt(null); setInspecaoExt(histExt); }}
+          userId={user?.id}
+          userNome={(user?.user_metadata as any)?.full_name ?? user?.email ?? ""}
         />
       )}
       <PDFPreviewDialog
@@ -947,8 +997,65 @@ function UltimaInspecaoIAPanel({ extintorId }: { extintorId: string }) {
 }
 
 function HistoricoInspecoesDialog({
-  extintor, open, onOpenChange, onNovaInspecao,
-}: { extintor: Extintor; open: boolean; onOpenChange: (v: boolean) => void; onNovaInspecao: () => void }) {
+  extintor, open, onOpenChange, onNovaInspecao, userId, userNome,
+}: {
+  extintor: Extintor;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onNovaInspecao: () => void;
+  userId?: string;
+  userNome?: string;
+}) {
+  const qc = useQueryClient();
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    conforme: true,
+    nao_conformidade: "",
+    observacoes: "",
+    responsavel_nome: userNome ?? "",
+    responsavel_registro: "",
+  });
+  useEffect(() => {
+    setManualForm((p) => ({ ...p, responsavel_nome: userNome ?? p.responsavel_nome }));
+  }, [userNome]);
+  useEffect(() => {
+    if (!open) return;
+    const handler = (ev: Event) => {
+      const det = (ev as CustomEvent).detail;
+      if (det && det !== extintor.id) return;
+      setManualOpen(true);
+    };
+    window.addEventListener("abrir-inspecao-manual", handler as EventListener);
+    return () => window.removeEventListener("abrir-inspecao-manual", handler as EventListener);
+  }, [open, extintor.id]);
+
+  const salvarManual = useMutation({
+    mutationFn: async () => {
+      const nome = (manualForm.responsavel_nome || "").trim();
+      if (!nome) throw new Error("Informe o responsável pela inspeção");
+      const hoje = new Date().toISOString().slice(0, 10);
+      const { error } = await supabase.from("extintor_inspecoes").insert({
+        extintor_id: extintor.id,
+        data_inspecao: hoje,
+        conforme: manualForm.conforme,
+        nao_conformidade: manualForm.conforme ? null : (manualForm.nao_conformidade || null),
+        observacoes: manualForm.observacoes || null,
+        responsavel_nome: nome,
+        responsavel_registro: manualForm.responsavel_registro || null,
+        created_by: userId ?? null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Inspeção manual registrada");
+      setManualOpen(false);
+      setManualForm((p) => ({ ...p, nao_conformidade: "", observacoes: "" }));
+      qc.invalidateQueries({ queryKey: ["extintor-inspecoes"] });
+      qc.invalidateQueries({ queryKey: ["hist-manual", extintor.id] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao salvar inspeção"),
+  });
+
   const ia = useQuery({
     queryKey: ["hist-ia", extintor.id],
     queryFn: async () => {
@@ -1230,11 +1337,94 @@ function HistoricoInspecoesDialog({
           >
             <FileText className="h-3.5 w-3.5" /> PDF do histórico
           </Button>
+          <Button
+            variant="outline"
+            className="gap-1.5 bg-slate-900/60 border-emerald-600/40 text-emerald-200 hover:bg-emerald-950/40"
+            onClick={() => setManualOpen((v) => !v)}
+          >
+            <ClipboardEdit className="h-3.5 w-3.5" /> {manualOpen ? "Fechar inspeção manual" : "Nova inspeção manual"}
+          </Button>
           <Button variant="outline" className="gap-1" onClick={onNovaInspecao}>
             <Sparkles className="h-3.5 w-3.5" /> Nova inspeção por IA
           </Button>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Fechar</Button>
         </DialogFooter>
+        {manualOpen && (
+          <div className="rounded-xl border border-emerald-500/40 bg-slate-900/70 p-3 space-y-3 mt-3">
+            <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-emerald-300">
+              <ClipboardEdit className="h-4 w-4" /> Registrar inspeção manual (sem IA)
+            </div>
+            <div className="text-[11px] text-slate-300 flex items-start gap-1.5">
+              <Info className="h-3.5 w-3.5 mt-0.5 text-cyan-300 shrink-0" />
+              Use quando a inspeção for visual/no local (sem fotos para IA). A data é a de hoje. O responsável é preenchido com seu usuário logado.
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="md:col-span-1">
+                <Label className="text-xs">Responsável *</Label>
+                <Input
+                  value={manualForm.responsavel_nome}
+                  onChange={(e) => setManualForm((p) => ({ ...p, responsavel_nome: e.target.value }))}
+                />
+              </div>
+              <div className="md:col-span-1">
+                <Label className="text-xs">Registro / matrícula</Label>
+                <Input
+                  placeholder="Ex.: TST-2210"
+                  value={manualForm.responsavel_registro}
+                  onChange={(e) => setManualForm((p) => ({ ...p, responsavel_registro: e.target.value }))}
+                />
+              </div>
+              <div className="md:col-span-2 flex items-center gap-3">
+                <Label className="text-xs flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={manualForm.conforme}
+                    onChange={() => setManualForm((p) => ({ ...p, conforme: true }))}
+                  />
+                  <span className="text-emerald-300 font-semibold">CONFORME</span>
+                </Label>
+                <Label className="text-xs flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={!manualForm.conforme}
+                    onChange={() => setManualForm((p) => ({ ...p, conforme: false }))}
+                  />
+                  <span className="text-red-300 font-semibold">NÃO CONFORME</span>
+                </Label>
+              </div>
+              {!manualForm.conforme && (
+                <div className="md:col-span-2">
+                  <Label className="text-xs">Descrição da não conformidade *</Label>
+                  <Textarea
+                    rows={2}
+                    value={manualForm.nao_conformidade}
+                    onChange={(e) => setManualForm((p) => ({ ...p, nao_conformidade: e.target.value }))}
+                  />
+                </div>
+              )}
+              <div className="md:col-span-2">
+                <Label className="text-xs">Observações</Label>
+                <Textarea
+                  rows={2}
+                  placeholder="Ex.: manômetro na faixa verde, lacre íntegro, sinalização OK."
+                  value={manualForm.observacoes}
+                  onChange={(e) => setManualForm((p) => ({ ...p, observacoes: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setManualOpen(false)}>Cancelar</Button>
+              <Button
+                size="sm"
+                onClick={() => salvarManual.mutate()}
+                disabled={salvarManual.isPending}
+                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white"
+              >
+                {salvarManual.isPending ? "Salvando…" : "Salvar inspeção manual"}
+              </Button>
+            </div>
+          </div>
+        )}
         <MediaViewerDialog
           items={mediaItems}
           index={viewerIdx}
