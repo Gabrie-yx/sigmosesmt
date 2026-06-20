@@ -229,6 +229,7 @@ function InspecaoFotoPage() {
     return isHandoffParam(new URLSearchParams(window.location.search));
   });
   const [handoffError, setHandoffError] = useState<string | null>(null);
+  const autoAnalyzeKeyRef = useRef<string | null>(null);
 
   // Seleção do extintor
   const [extintorId, setExtintorId] = useState<string>("");
@@ -487,6 +488,9 @@ function InspecaoFotoPage() {
   useEffect(() => {
     if (!autoAnalisar) return;
     if (analisando) return;
+    const key = [autoAnalisar.etiquetaPath, autoAnalisar.manometroPath, autoAnalisar.inmetroPath, autoAnalisar.extraPath ?? ""].join("|");
+    if (autoAnalyzeKeyRef.current === key) return;
+    autoAnalyzeKeyRef.current = key;
     setHandoffLoading(true);
     setAutoAnalisar(null);
     handleAnalisar(autoAnalisar);
