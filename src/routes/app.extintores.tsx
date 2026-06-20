@@ -18,6 +18,7 @@ import {
   Pencil, Camera, Upload, ShieldCheck, CalendarClock, Activity, X, Sparkles, CalendarDays, Droplet,
 } from "lucide-react";
 import { History } from "lucide-react";
+import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
@@ -920,6 +921,36 @@ function HistoricoInspecoesDialog({
 
   const total = (ia.data?.length ?? 0) + (manuais.data?.length ?? 0);
 
+  const mediaItems: MediaItem[] = useMemo(() => {
+    const out: MediaItem[] = [];
+    for (const r of ia.data ?? []) {
+      const pares: { label: string; path: string | null }[] = [
+        { label: "Etiqueta", path: r.foto_etiqueta_path },
+        { label: "Manômetro", path: r.foto_manometro_path },
+        { label: "Lacre", path: r.foto_lacre_path },
+        { label: "INMETRO", path: r.foto_inmetro_path },
+        { label: "Extra", path: r.foto_extra_path },
+      ];
+      for (const p of pares) {
+        if (!p.path) continue;
+        const url = urls[`extintores-inspecoes:${p.path}`];
+        if (url) out.push({ url, name: `IA · ${p.label} · ${new Date(r.inspecionado_em).toLocaleDateString("pt-BR")}`, kind: "image" });
+      }
+    }
+    for (const r of manuais.data ?? []) {
+      if (!r.foto_path) continue;
+      const url = urls[`extintores-fotos:${r.foto_path}`];
+      if (url) out.push({ url, name: `Manual · ${new Date(r.data_inspecao + "T00:00").toLocaleDateString("pt-BR")}`, kind: "image" });
+    }
+    return out;
+  }, [ia.data, manuais.data, urls]);
+
+  const [viewerIdx, setViewerIdx] = useState<number | null>(null);
+  const openByUrl = (url: string) => {
+    const i = mediaItems.findIndex((m) => m.url === url);
+    if (i >= 0) setViewerIdx(i);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto custom-scrollbar">
@@ -998,10 +1029,15 @@ function HistoricoInspecoesDialog({
                       const url = urls[`extintores-inspecoes:${f.path}`];
                       if (!url) return null;
                       return (
-                        <a key={f.label} href={url} target="_blank" rel="noreferrer" className="block rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm">
+                        <button
+                          key={f.label}
+                          type="button"
+                          onClick={() => openByUrl(url)}
+                          className="block w-full text-left rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm"
+                        >
                           <img src={url} alt={f.label} className="h-24 w-full object-cover" />
                           <div className="text-xs font-semibold text-slate-100 text-center py-1 border-t border-white/10">{f.label}</div>
-                        </a>
+                        </button>
                       );
                     })}
                   </div>
@@ -1035,9 +1071,13 @@ function HistoricoInspecoesDialog({
                   <div className="text-sm text-slate-200"><span className="font-bold text-white">Obs:</span> {r.observacoes}</div>
                 )}
                 {url && (
-                  <a href={url} target="_blank" rel="noreferrer" className="inline-block rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => openByUrl(url)}
+                    className="inline-block rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm"
+                  >
                     <img src={url} alt="Evidência" className="h-32 object-cover" />
-                  </a>
+                  </button>
                 )}
               </div>
             );
@@ -1052,6 +1092,12 @@ function HistoricoInspecoesDialog({
           </Button>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Fechar</Button>
         </DialogFooter>
+        <MediaViewerDialog
+          items={mediaItems}
+          index={viewerIdx}
+          onClose={() => setViewerIdx(null)}
+          onIndexChange={setViewerIdx}
+        />
       </DialogContent>
     </Dialog>
   );
