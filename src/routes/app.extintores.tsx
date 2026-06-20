@@ -655,6 +655,8 @@ function ExtintoresPage() {
           open={!!histExt}
           onOpenChange={(v: boolean) => !v && setHistExt(null)}
           onNovaInspecao={() => { setHistExt(null); setInspecaoExt(histExt); }}
+          userId={user?.id}
+          userNome={(user?.user_metadata as any)?.full_name ?? user?.email ?? ""}
         />
       )}
       <PDFPreviewDialog
