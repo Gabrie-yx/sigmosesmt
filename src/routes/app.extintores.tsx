@@ -922,13 +922,13 @@ function HistoricoInspecoesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="h-5 w-5 text-red-600" />
             Histórico de inspeções — Extintor {extintor.numero}
           </DialogTitle>
-          <div className="text-xs text-slate-500 mt-1">
+          <div className="text-sm text-slate-300 mt-1">
             {extintor.area} · {extintor.localizacao} · {extintor.tipo_agente} · {total} registro(s)
           </div>
         </DialogHeader>
@@ -947,9 +947,9 @@ function HistoricoInspecoesDialog({
           {(ia.data ?? []).map((r: any) => {
             const status = r.status_geral as string;
             const tone =
-              status === "CONFORME" ? "border-emerald-300 bg-emerald-50/40"
-              : status === "PRECISA_REVISAO" ? "border-amber-300 bg-amber-50/40"
-              : "border-red-300 bg-red-50/40";
+              status === "CONFORME" ? "border-emerald-500/40 bg-slate-900/60"
+              : status === "PRECISA_REVISAO" ? "border-amber-500/40 bg-slate-900/60"
+              : "border-red-500/40 bg-slate-900/60";
             const badge =
               status === "CONFORME" ? "bg-emerald-100 text-emerald-700 border-emerald-300"
               : status === "PRECISA_REVISAO" ? "bg-amber-100 text-amber-700 border-amber-300"
@@ -966,29 +966,29 @@ function HistoricoInspecoesDialog({
               <div key={r.id} className={`rounded-xl border ${tone} p-3 space-y-2`}>
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-red-600" />
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-700">Inspeção por IA</span>
+                    <Sparkles className="h-4 w-4 text-red-400" />
+                    <span className="text-sm font-black uppercase tracking-wider text-white">Inspeção por IA</span>
                     <Badge variant="outline" className={badge}>{status ?? "—"}</Badge>
                   </div>
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-xs text-slate-300">
                     {r.inspecionado_em ? new Date(r.inspecionado_em).toLocaleString("pt-BR") : "—"}
                     {r.confianca_ia != null && <span className="ml-2">· confiança {Math.round(Number(r.confianca_ia) * 100)}%</span>}
                   </div>
                 </div>
                 {ncs.length > 0 && (
-                  <div className="text-[11px]">
-                    <div className="font-bold text-red-700 mb-0.5">Não conformidades:</div>
-                    <ul className="list-disc list-inside text-slate-700 space-y-0.5">
+                  <div className="text-sm">
+                    <div className="font-bold text-red-400 mb-1">Não conformidades:</div>
+                    <ul className="list-disc list-inside text-slate-100 space-y-1">
                       {ncs.map((n: any, i: number) => <li key={i}>{String(n)}</li>)}
                     </ul>
                   </div>
                 )}
                 {r.observacoes && (
-                  <div className="text-[11px] text-slate-600"><span className="font-bold">Obs:</span> {r.observacoes}</div>
+                  <div className="text-sm text-slate-200"><span className="font-bold text-white">Obs:</span> {r.observacoes}</div>
                 )}
                 {r.assinado_por_nome && (
-                  <div className="text-[11px] text-slate-500">
-                    Assinado por <span className="font-semibold text-slate-700">{r.assinado_por_nome}</span>
+                  <div className="text-xs text-slate-300">
+                    Assinado por <span className="font-semibold text-white">{r.assinado_por_nome}</span>
                     {r.assinado_por_cargo ? ` · ${r.assinado_por_cargo}` : ""}
                   </div>
                 )}
@@ -998,9 +998,9 @@ function HistoricoInspecoesDialog({
                       const url = urls[`extintores-inspecoes:${f.path}`];
                       if (!url) return null;
                       return (
-                        <a key={f.label} href={url} target="_blank" rel="noreferrer" className="block rounded-md overflow-hidden border border-slate-200 hover:border-red-400 bg-white shadow-sm">
-                          <img src={url} alt={f.label} className="h-20 w-full object-cover" />
-                          <div className="text-[10px] font-semibold text-slate-600 text-center py-0.5 border-t border-slate-100">{f.label}</div>
+                        <a key={f.label} href={url} target="_blank" rel="noreferrer" className="block rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm">
+                          <img src={url} alt={f.label} className="h-24 w-full object-cover" />
+                          <div className="text-xs font-semibold text-slate-100 text-center py-1 border-t border-white/10">{f.label}</div>
                         </a>
                       );
                     })}
@@ -1011,37 +1011,32 @@ function HistoricoInspecoesDialog({
           })}
 
           {(manuais.data ?? []).map((r: any) => {
-            const tone = r.conforme ? "border-emerald-300 bg-emerald-50/40" : "border-red-300 bg-red-50/40";
+            const tone = r.conforme ? "border-emerald-500/40 bg-slate-900/60" : "border-red-500/40 bg-slate-900/60";
             const badge = r.conforme ? "bg-emerald-100 text-emerald-700 border-emerald-300" : "bg-red-100 text-red-700 border-red-300";
             const url = r.foto_path ? urls[`extintores-fotos:${r.foto_path}`] : null;
             return (
               <div key={r.id} className={`rounded-xl border ${tone} p-3 space-y-2`}>
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <ClipboardCheck className="h-4 w-4 text-red-600" />
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-700">Inspeção manual</span>
+                    <ClipboardCheck className="h-4 w-4 text-red-400" />
+                    <span className="text-sm font-black uppercase tracking-wider text-white">Inspeção manual</span>
                     <Badge variant="outline" className={badge}>{r.conforme ? "CONFORME" : "NÃO CONFORME"}</Badge>
                   </div>
-                  <div className="text-[11px] text-slate-500">{formatDateBR(r.data_inspecao)}</div>
+                  <div className="text-xs text-slate-300">{formatDateBR(r.data_inspecao)}</div>
                 </div>
-                <div className="text-[11px] text-slate-600">
-                  Responsável: <span className="font-semibold text-slate-700">{r.responsavel_nome || "—"}</span>
+                <div className="text-sm text-slate-200">
+                  Responsável: <span className="font-semibold text-white">{r.responsavel_nome || "—"}</span>
                   {r.responsavel_registro ? ` · ${r.responsavel_registro}` : ""}
                 </div>
-                {Array.isArray(r.nc_codigos) && r.nc_codigos.length > 0 && (
-                  <div className="text-[11px] text-slate-700">
-                    <span className="font-bold text-red-700">NC FOR-SFG 08:</span> {r.nc_codigos.join(", ")}
-                  </div>
-                )}
                 {r.nao_conformidade && (
-                  <div className="text-[11px] text-slate-600"><span className="font-bold">Detalhe:</span> {r.nao_conformidade}</div>
+                  <div className="text-sm text-slate-200"><span className="font-bold text-white">Detalhe:</span> {r.nao_conformidade}</div>
                 )}
                 {r.observacoes && (
-                  <div className="text-[11px] text-slate-600"><span className="font-bold">Obs:</span> {r.observacoes}</div>
+                  <div className="text-sm text-slate-200"><span className="font-bold text-white">Obs:</span> {r.observacoes}</div>
                 )}
                 {url && (
-                  <a href={url} target="_blank" rel="noreferrer" className="inline-block rounded-md overflow-hidden border border-slate-200 hover:border-red-400 bg-white shadow-sm">
-                    <img src={url} alt="Evidência" className="h-28 object-cover" />
+                  <a href={url} target="_blank" rel="noreferrer" className="inline-block rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm">
+                    <img src={url} alt="Evidência" className="h-32 object-cover" />
                   </a>
                 )}
               </div>
