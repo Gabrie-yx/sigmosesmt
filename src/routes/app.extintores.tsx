@@ -55,7 +55,6 @@ function ExtintoresPage() {
   const [fArea, setFArea] = useState<string>("TODAS");
   const [novoOpen, setNovoOpen] = useState(false);
   const [editExt, setEditExt] = useState<Extintor | null>(null);
-  const [inspecaoExt, setInspecaoExt] = useState<Extintor | null>(null);
   const [histExt, setHistExt] = useState<Extintor | null>(null);
   const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
@@ -129,6 +128,20 @@ function ExtintoresPage() {
     qc.invalidateQueries({ queryKey: ["extintores"] });
     qc.invalidateQueries({ queryKey: ["extintor-inspecoes"] });
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !extintores.data?.length) return;
+    const params = new URLSearchParams(window.location.search);
+    const historicoId = params.get("historico");
+    if (!historicoId) return;
+    const alvo = extintores.data.find((e) => e.id === historicoId);
+    if (alvo) {
+      setHistExt(alvo);
+      params.delete("historico");
+      const qs = params.toString();
+      window.history.replaceState(null, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+    }
+  }, [extintores.data]);
 
   const abrirPdfPlanilha = () => {
     if (extintores.isLoading || inspecoes.isLoading) {
@@ -373,17 +386,19 @@ function ExtintoresPage() {
                           type="button"
                           onClick={() => setHistExt(e)}
                           title="Histórico de inspeções"
-                          className="group relative inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold uppercase tracking-wider text-white/90 hover:text-white border border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/15 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_14px_-4px_rgba(0,0,0,0.5)] transition"
+                          className="group relative inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-semibold uppercase tracking-wider text-white/90 hover:text-white border border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/15 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_14px_-4px_rgba(0,0,0,0.5)] transition"
                         >
                           <span className="pointer-events-none absolute inset-x-2 top-[1px] h-[1px] rounded-full bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-70" />
                           <History className="h-3.5 w-3.5 relative" />
                           <span className="relative">Histórico</span>
                         </button>
-                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setEditExt(e)} title="Editar">
+                        <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setEditExt(e)} title="Editar cadastro do extintor">
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button size="sm" className="gap-1 h-7 bg-red-700 hover:bg-red-800" onClick={() => setInspecaoExt(e)}>
-                          <ClipboardCheck className="h-3.5 w-3.5" /> Inspecionar
+                        <Button asChild size="sm" className="gap-1 h-8 bg-red-700 hover:bg-red-800">
+                          <Link to="/app/extintores-inspecao-foto" search={{ extintor: e.id } as any}>
+                            <Sparkles className="h-3.5 w-3.5" /> Inspecionar IA
+                          </Link>
                         </Button>
                       </div>
                     </TableCell>
@@ -410,15 +425,6 @@ function ExtintoresPage() {
           onOpenChange={(v) => !v && setEditExt(null)}
           userId={user?.id}
           onSaved={onInvalidate}
-        />
-      )}
-      {inspecaoExt && (
-        <InspecaoDialog
-          extintor={inspecaoExt}
-          open={!!inspecaoExt}
-          onOpenChange={(v) => !v && setInspecaoExt(null)}
-          userId={user?.id}
-          onCreated={onInvalidate}
         />
       )}
       {histExt && (
