@@ -35,6 +35,12 @@ type FotoState = {
   path: string | null;
   uploading: boolean;
 };
+type FotoPrefillPaths = {
+  etiquetaPath: string;
+  manometroPath: string;
+  inmetroPath: string;
+  extraPath: string | null;
+};
 const initialFoto = (): FotoState => ({ file: null, previewUrl: null, path: null, uploading: false });
 
 const SLOT_INFO: Record<Slot, { titulo: string; instrucao: string; obrigatoria: boolean; emoji: string }> = {
@@ -156,7 +162,7 @@ function InspecaoFotoPage() {
   const qc = useQueryClient();
 
   const [etapa, setEtapa] = useState<0 | 1 | 2 | 3>(0);
-  const [autoAnalisar, setAutoAnalisar] = useState(false);
+  const [autoAnalisar, setAutoAnalisar] = useState<FotoPrefillPaths | null>(null);
 
   // Seleção do extintor
   const [extintorId, setExtintorId] = useState<string>("");
@@ -171,9 +177,17 @@ function InspecaoFotoPage() {
   // Pré-carrega fotos enviadas pelo modal de inspeção (sessionStorage)
   useEffect(() => {
     if (typeof window === "undefined" || !extintorId) return;
+    const params = new URLSearchParams(window.location.search);
+    const veioDoModal = params.get("handoff") === "1";
     const key = `inspecao-foto-prefill:${extintorId}`;
     const raw = sessionStorage.getItem(key);
-    if (!raw) return;
+    if (!raw) {
+      if (veioDoModal) {
+        toast.error("Não consegui recuperar as fotos do modal. Abra o extintor e tente novamente.");
+        navigate({ to: "/app/extintores" });
+      }
+      return;
+    }
     try {
       const p = JSON.parse(raw);
       if (Date.now() - (p.ts ?? 0) > 30 * 60 * 1000) {
@@ -189,11 +203,16 @@ function InspecaoFotoPage() {
       if (p.extra_path) setExtra(mk(p.extra_path));
       if (p.etiqueta_path && p.manometro_path && p.inmetro_path) {
         setEtapa(2);
-        setAutoAnalisar(true);
+        setAutoAnalisar({
+          etiquetaPath: p.etiqueta_path,
+          manometroPath: p.manometro_path,
+          inmetroPath: p.inmetro_path,
+          extraPath: p.extra_path ?? null,
+        });
       }
       sessionStorage.removeItem(key);
     } catch {/* ignore */}
-  }, [extintorId]);
+  }, [extintorId, navigate]);
 
   const [busca, setBusca] = useState("");
   const [modoManual, setModoManual] = useState(false);
