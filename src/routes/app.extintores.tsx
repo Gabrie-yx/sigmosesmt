@@ -927,10 +927,8 @@ function UltimaInspecaoIAPanel({ extintorId }: { extintorId: string }) {
       )}
 
       <div className="flex justify-end">
-        <Button asChild size="sm" variant="outline" className="gap-1 h-7 text-xs">
-          <Link to="/app/extintores-inspecao-foto" search={{ extintor: extintorId } as any}>
-            <Sparkles className="h-3 w-3" /> Nova inspeção por IA
-          </Link>
+        <Button size="sm" variant="outline" className="gap-1 h-7 text-xs" onClick={() => toast.info("Use o botão Inspecionar no card do extintor.") }>
+          <Sparkles className="h-3 w-3" /> Nova inspeção por IA
         </Button>
       </div>
     </div>
@@ -938,8 +936,8 @@ function UltimaInspecaoIAPanel({ extintorId }: { extintorId: string }) {
 }
 
 function HistoricoInspecoesDialog({
-  extintor, open, onOpenChange,
-}: { extintor: Extintor; open: boolean; onOpenChange: (v: boolean) => void }) {
+  extintor, open, onOpenChange, onNovaInspecao,
+}: { extintor: Extintor; open: boolean; onOpenChange: (v: boolean) => void; onNovaInspecao: () => void }) {
   const ia = useQuery({
     queryKey: ["hist-ia", extintor.id],
     queryFn: async () => {
@@ -1221,10 +1219,8 @@ function HistoricoInspecoesDialog({
           >
             <FileText className="h-3.5 w-3.5" /> PDF do histórico
           </Button>
-          <Button asChild variant="outline" className="gap-1">
-            <Link to="/app/extintores-inspecao-foto" search={{ extintor: extintor.id } as any}>
-              <Sparkles className="h-3.5 w-3.5" /> Nova inspeção por IA
-            </Link>
+          <Button variant="outline" className="gap-1" onClick={onNovaInspecao}>
+            <Sparkles className="h-3.5 w-3.5" /> Nova inspeção por IA
           </Button>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Fechar</Button>
         </DialogFooter>
