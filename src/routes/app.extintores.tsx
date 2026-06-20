@@ -596,11 +596,20 @@ function InspecaoDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ClipboardCheck className="h-5 w-5 text-red-600" />
-            Inspeção mensal — Extintor {extintor.numero}
-          </DialogTitle>
-          <div className="text-xs text-slate-500">{extintor.area} · {extintor.localizacao} · {extintor.tipo_agente}</div>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <DialogTitle className="flex items-center gap-2">
+                <ClipboardCheck className="h-5 w-5 text-red-600" />
+                Inspeção mensal — Extintor {extintor.numero}
+              </DialogTitle>
+              <div className="text-xs text-slate-500 mt-1">{extintor.area} · {extintor.localizacao} · {extintor.tipo_agente}</div>
+            </div>
+            <Button asChild size="sm" variant="outline" className="gap-1 shrink-0">
+              <Link to="/app/extintores-inspecao-foto" search={{ extintor: extintor.id } as any}>
+                <Sparkles className="h-3.5 w-3.5" /> Inspecionar com IA
+              </Link>
+            </Button>
+          </div>
         </DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
