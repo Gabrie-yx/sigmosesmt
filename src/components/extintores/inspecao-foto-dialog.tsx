@@ -33,7 +33,7 @@ const SLOT_INFO: Record<Slot, { titulo: string; abaCurta: string; instrucao: str
     emoji: "📊",
     abaCurta: "Manômetro",
     titulo: "Foto 2 — Manômetro + lacre + pino + mangueira",
-    instrucao: "Aproxime o suficiente para a IA ver a AGULHA do manômetro, o LACRE plástico, o PINO de segurança e a MANGUEIRA.",
+    instrucao: "Aproxime o suficiente para enquadrar a AGULHA do manômetro, o LACRE plástico, o PINO de segurança e a MANGUEIRA.",
     obrigatoria: true,
   },
   inmetro: {

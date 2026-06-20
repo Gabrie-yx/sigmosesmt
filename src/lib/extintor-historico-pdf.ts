@@ -105,13 +105,13 @@ export async function gerarPdfHistoricoExtintor(
   });
   y = (doc as any).lastAutoTable.finalY + 4;
 
-  // ===== Histórico de inspeções IA =====
+  // ===== Histórico de inspeções por foto =====
   if (inspecoesIa.length > 0) {
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
       theme: "grid",
-      head: [["DATA", "STATUS IA", "CONFIANÇA", "RESPONSÁVEL", "OBSERVAÇÕES / NÃO CONFORMIDADES"]],
+      head: [["DATA", "STATUS", "CONFIANÇA", "RESPONSÁVEL", "OBSERVAÇÕES / NÃO CONFORMIDADES"]],
       body: inspecoesIa.map((r) => [
         fmtDT(r.inspecionado_em),
         String(r.status_geral ?? "—"),
