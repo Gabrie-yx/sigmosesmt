@@ -98,12 +98,18 @@ function ResetPasswordPage() {
     if (!/^\d{6}$/.test(mfaCode)) return toast.error("Digite os 6 dígitos do código");
     setBusy(true);
     try {
-      const { error } = await supabase.auth.mfa.verify({
+      const { data, error } = await supabase.auth.mfa.verify({
         factorId: mfaFactorId,
         challengeId: mfaChallengeId,
         code: mfaCode,
       });
       if (error) throw error;
+      if (data?.access_token && data.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
+      }
       const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       if (aalData?.currentLevel !== "aal2") {
         await supabase.auth.refreshSession();
