@@ -531,19 +531,12 @@ function ExtintoresPage() {
                 {/* Ações */}
                 <div className="mt-auto pt-1 flex items-center gap-1">
                   <Button
-                    asChild
-                    size="sm"
-                    className="flex-1 h-8 gap-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-[11px] font-bold shadow-[0_0_12px_-2px_rgba(239,68,68,0.5)] border-0"
-                  >
-                    <Link to="/app/extintores-inspecao-foto" search={{ extintor: e.id } as any}>
-                      <Sparkles className="h-3.5 w-3.5" /> Inspecionar
-                    </Link>
-                  </Button>
-                  <Button
                     size="sm"
                     onClick={() => setInspecaoExt(e)}
-                    className="hidden"
-                  />
+                    className="flex-1 h-8 gap-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-[11px] font-bold shadow-[0_0_12px_-2px_rgba(239,68,68,0.5)] border-0"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" /> Inspecionar
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
