@@ -78,6 +78,7 @@ function ExtintoresPage() {
   const [pdfOpen, setPdfOpen] = useState(false);
   const [sigOpen, setSigOpen] = useState(false);
   const [excluirExt, setExcluirExt] = useState<Extintor | null>(null);
+  const [inspecaoExt, setInspecaoExt] = useState<Extintor | null>(null);
 
   const excluirMut = useMutation({
     mutationFn: async (ext: Extintor) => {
@@ -538,6 +539,11 @@ function ExtintoresPage() {
                       <Sparkles className="h-3.5 w-3.5" /> Inspecionar
                     </Link>
                   </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setInspecaoExt(e)}
+                    className="hidden"
+                  />
                   <Button
                     size="sm"
                     variant="outline"
