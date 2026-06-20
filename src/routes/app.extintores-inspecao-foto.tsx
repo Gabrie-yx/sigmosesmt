@@ -514,6 +514,22 @@ function InspecaoFotoPage() {
 
   const podeAvancarSelecao = !!extintorSelecionado || (modoManual && manualNumero && manualCilindro);
 
+  if (handoffLoading) {
+    return (
+      <div className="mx-auto flex min-h-[55vh] w-full max-w-3xl items-center justify-center px-4 md:px-6 py-6">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-red-600" />
+            <div>
+              <div className="font-semibold">Analisando fotos com IA…</div>
+              <div className="text-xs text-muted-foreground">Pulando a tela antiga de fotos e preparando o laudo.</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-3xl px-4 md:px-6 py-6 space-y-4">
       <div className="flex items-center justify-between">
