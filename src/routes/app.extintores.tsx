@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -235,8 +235,8 @@ function ExtintoresPage() {
             <Button variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90" onClick={abrirPdfPlanilha}>
               <Printer className="h-4 w-4" /> Visualizar PDF
             </Button>
-            <Button asChild variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90">
-              <Link to="/app/extintores-inspecao-foto"><Sparkles className="h-4 w-4" /> Inspeção por foto (IA)</Link>
+            <Button variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90" onClick={() => toast.info("Escolha um extintor na lista e clique em Inspecionar.") }>
+              <Sparkles className="h-4 w-4" /> Inspeção por foto (IA)
             </Button>
             <Button onClick={() => setNovoOpen(true)} className="gap-2 bg-slate-900 hover:bg-slate-800 text-white">
               <Plus className="h-4 w-4" /> Novo extintor
@@ -595,6 +595,7 @@ function ExtintoresPage() {
           extintor={histExt}
           open={!!histExt}
           onOpenChange={(v: boolean) => !v && setHistExt(null)}
+          onNovaInspecao={() => { setHistExt(null); setInspecaoExt(histExt); }}
         />
       )}
       <PDFPreviewDialog
