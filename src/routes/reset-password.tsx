@@ -98,9 +98,8 @@ function ResetPasswordPage() {
     if (!/^\d{6}$/.test(mfaCode)) return toast.error("Digite os 6 dígitos do código");
     setBusy(true);
     try {
-      const { data, error } = await supabase.auth.mfa.verify({
+      const { data, error } = await supabase.auth.mfa.challengeAndVerify({
         factorId: mfaFactorId,
-        challengeId: mfaChallengeId,
         code: mfaCode,
       });
       if (error) throw error;
