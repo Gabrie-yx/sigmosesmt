@@ -134,7 +134,23 @@ function ExtintoresPage() {
     const inspecionados = ativos.filter((e) => inspecoesMesPorExt.has(e.id)).length;
     const semInspecao = ativos.length - inspecionados;
     const pctInsp = ativos.length ? Math.round((inspecionados / ativos.length) * 100) : 0;
-    return { total: all.length, ativos: ativos.length, vencidos, vencendo, semInspecao, inspecionados, pctInsp };
+    const emManutencao = all.filter((e) => e.status === "EM_MANUTENCAO").length;
+    const baixados = all.filter((e) => e.status === "BAIXADO").length;
+    const vencidosStatus = all.filter(
+      (e) => e.status === "VENCIDO" || (e.status === "ATIVO" && e.proxima_recarga && e.proxima_recarga < hojeISO),
+    ).length;
+    return {
+      total: all.length,
+      ativos: ativos.length,
+      vencidos,
+      vencendo,
+      semInspecao,
+      inspecionados,
+      pctInsp,
+      emManutencao,
+      baixados,
+      vencidosStatus,
+    };
   }, [extintores.data, inspecoesMesPorExt]);
 
   const onInvalidate = () => {
@@ -211,13 +227,13 @@ function ExtintoresPage() {
         </div>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs (clicáveis = filtram a lista) */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Kpi icon={ShieldCheck} label="Total" value={stats.total} tone="slate" />
-        <Kpi icon={CheckCircle2} label="Ativos" value={stats.ativos} tone="green" />
-        <Kpi icon={AlertTriangle} label="Recarga vencida" value={stats.vencidos} tone="red" pulse={stats.vencidos > 0} />
-        <Kpi icon={CalendarClock} label="Vencendo 30d" value={stats.vencendo} tone="amber" />
-        <Kpi icon={ClipboardCheck} label="Sem inspeção" value={stats.semInspecao} tone={stats.semInspecao > 0 ? "amber" : "green"} />
+        <Kpi icon={ShieldCheck} label="Total" value={stats.total} tone="slate" active={fStatus === "TODOS"} onClick={() => setFStatus("TODOS")} />
+        <Kpi icon={CheckCircle2} label="Ativo" value={stats.ativos} tone="green" active={fStatus === "ATIVO"} onClick={() => setFStatus("ATIVO")} />
+        <Kpi icon={CalendarClock} label="Em manutenção" value={stats.emManutencao} tone="amber" active={fStatus === "EM_MANUTENCAO"} onClick={() => setFStatus("EM_MANUTENCAO")} />
+        <Kpi icon={ClipboardCheck} label="Baixado" value={stats.baixados} tone="slate" active={fStatus === "BAIXADO"} onClick={() => setFStatus("BAIXADO")} />
+        <Kpi icon={AlertTriangle} label="Vencido" value={stats.vencidosStatus} tone="red" pulse={stats.vencidosStatus > 0} active={fStatus === "VENCIDO"} onClick={() => setFStatus("VENCIDO")} />
       </div>
 
       {/* Banner normativa NBR 12962 */}
@@ -295,7 +311,7 @@ function ExtintoresPage() {
           Nenhum extintor encontrado.
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {filtered.map((e) => {
             const insp = inspecoesMesPorExt.get(e.id);
             const hojeISO = hoje.toISOString().slice(0, 10);
