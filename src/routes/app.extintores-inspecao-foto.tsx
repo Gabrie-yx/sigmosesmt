@@ -386,7 +386,7 @@ function InspecaoFotoPage() {
     if (!etiqueta.path || !manometro.path || !inmetro.path) return;
     if ([etiqueta, manometro, inmetro, extra].some((f) => f.uploading)) return;
     if (analisando) return;
-    setAutoAnalisar(false);
+    setAutoAnalisar(null);
     handleAnalisar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoAnalisar, etiqueta.path, manometro.path, inmetro.path]);
