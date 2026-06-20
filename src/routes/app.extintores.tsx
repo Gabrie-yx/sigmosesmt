@@ -412,7 +412,7 @@ function ExtintoresPage() {
                         </Button>
                         <Button asChild size="sm" className="gap-1 h-8 bg-red-700 hover:bg-red-800">
                           <Link to="/app/extintores-inspecao-foto" search={{ extintor: e.id } as any}>
-                            <Sparkles className="h-3.5 w-3.5" /> Inspecionar IA
+                            <Sparkles className="h-3.5 w-3.5" /> Inspecionar
                           </Link>
                         </Button>
                       </div>
