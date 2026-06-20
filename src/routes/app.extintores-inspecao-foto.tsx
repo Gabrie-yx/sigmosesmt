@@ -43,6 +43,15 @@ type FotoPrefillPaths = {
 };
 const initialFoto = (): FotoState => ({ file: null, previewUrl: null, path: null, uploading: false });
 
+const HANDOFF_TIMEOUT_MS = 90_000;
+
+function normalizePath(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "null" || trimmed === "undefined") return null;
+  return trimmed;
+}
+
 function readSearchValue(params: URLSearchParams, key: string): string | null {
   const raw = params.get(key);
   if (!raw) return null;
@@ -63,15 +72,28 @@ function isHandoffParam(params: URLSearchParams): boolean {
 }
 
 function readHandoffPhotos(params: URLSearchParams): FotoPrefillPaths | null {
-  const etiquetaPath = readSearchValue(params, "etiqueta");
-  const manometroPath = readSearchValue(params, "manometro");
-  const inmetroPath = readSearchValue(params, "inmetro");
+  const etiquetaPath = normalizePath(readSearchValue(params, "etiqueta"));
+  const manometroPath = normalizePath(readSearchValue(params, "manometro"));
+  const inmetroPath = normalizePath(readSearchValue(params, "inmetro"));
   if (!etiquetaPath || !manometroPath || !inmetroPath) return null;
   return {
     etiquetaPath,
     manometroPath,
     inmetroPath,
-    extraPath: readSearchValue(params, "extra"),
+    extraPath: normalizePath(readSearchValue(params, "extra")),
+  };
+}
+
+function coercePrefillPaths(raw: any): FotoPrefillPaths | null {
+  const etiquetaPath = normalizePath(raw?.etiqueta_path ?? raw?.etiquetaPath);
+  const manometroPath = normalizePath(raw?.manometro_path ?? raw?.manometroPath);
+  const inmetroPath = normalizePath(raw?.inmetro_path ?? raw?.inmetroPath);
+  if (!etiquetaPath || !manometroPath || !inmetroPath) return null;
+  return {
+    etiquetaPath,
+    manometroPath,
+    inmetroPath,
+    extraPath: normalizePath(raw?.extra_path ?? raw?.extraPath),
   };
 }
 
@@ -207,6 +229,7 @@ function InspecaoFotoPage() {
     return isHandoffParam(new URLSearchParams(window.location.search));
   });
   const [handoffError, setHandoffError] = useState<string | null>(null);
+  const autoAnalyzeKeyRef = useRef<string | null>(null);
 
   // Seleção do extintor
   const [extintorId, setExtintorId] = useState<string>("");
@@ -247,14 +270,10 @@ function InspecaoFotoPage() {
       return;
     }
     try {
-      const p = raw ? JSON.parse(raw) : {
-        etiqueta_path: directPhotos!.etiquetaPath,
-        manometro_path: directPhotos!.manometroPath,
-        inmetro_path: directPhotos!.inmetroPath,
-        extra_path: directPhotos!.extraPath,
-        ts: Date.now(),
-      };
-      if (raw && Date.now() - (p.ts ?? 0) > 30 * 60 * 1000) {
+      const parsed = raw ? JSON.parse(raw) : null;
+      const rawExpired = !!raw && Date.now() - (Number(parsed?.ts) || 0) > 30 * 60 * 1000;
+      const paths = rawExpired ? directPhotos : coercePrefillPaths(parsed) ?? directPhotos;
+      if (rawExpired && !directPhotos) {
         sessionStorage.removeItem(key);
         setHandoffLoading(false);
         if (veioDoModal) {
@@ -262,25 +281,20 @@ function InspecaoFotoPage() {
         }
         return;
       }
+      if (!paths) {
+        setHandoffLoading(false);
+        if (veioDoModal) setHandoffError("Faltam fotos obrigatórias. Volte ao painel e envie etiqueta, manômetro e INMETRO.");
+        return;
+      }
       const mk = (path: string | null): FotoState => path
         ? { file: null, previewUrl: supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl, path, uploading: false }
         : initialFoto();
-      if (p.etiqueta_path) setEtiqueta(mk(p.etiqueta_path));
-      if (p.manometro_path) setManometro(mk(p.manometro_path));
-      if (p.inmetro_path) setInmetro(mk(p.inmetro_path));
-      if (p.extra_path) setExtra(mk(p.extra_path));
-      if (p.etiqueta_path && p.manometro_path && p.inmetro_path) {
-        setEtapa(2);
-        setAutoAnalisar({
-          etiquetaPath: p.etiqueta_path,
-          manometroPath: p.manometro_path,
-          inmetroPath: p.inmetro_path,
-          extraPath: p.extra_path ?? null,
-        });
-      } else if (veioDoModal) {
-        setHandoffLoading(false);
-        setHandoffError("Faltam fotos obrigatórias. Volte ao painel e envie etiqueta, manômetro e INMETRO.");
-      }
+      setEtiqueta(mk(paths.etiquetaPath));
+      setManometro(mk(paths.manometroPath));
+      setInmetro(mk(paths.inmetroPath));
+      setExtra(mk(paths.extraPath));
+      setEtapa(2);
+      setAutoAnalisar(paths);
       sessionStorage.removeItem(key);
     } catch {
       setHandoffLoading(false);
@@ -408,6 +422,7 @@ function InspecaoFotoPage() {
   };
 
   const handleAnalisar = async (paths?: FotoPrefillPaths) => {
+    setHandoffError(null);
     const fotoPaths = paths ?? {
       etiquetaPath: etiqueta.path,
       manometroPath: manometro.path,
@@ -429,6 +444,7 @@ function InspecaoFotoPage() {
       return;
     }
     setAnalisando(true);
+    if (fluxoModal) setHandoffLoading(true);
     try {
       const esperado = extintorSelecionado
         ? {
@@ -473,11 +489,24 @@ function InspecaoFotoPage() {
   useEffect(() => {
     if (!autoAnalisar) return;
     if (analisando) return;
+    const key = [autoAnalisar.etiquetaPath, autoAnalisar.manometroPath, autoAnalisar.inmetroPath, autoAnalisar.extraPath ?? ""].join("|");
+    if (autoAnalyzeKeyRef.current === key) return;
+    autoAnalyzeKeyRef.current = key;
     setHandoffLoading(true);
     setAutoAnalisar(null);
     handleAnalisar(autoAnalisar);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoAnalisar, analisando]);
+
+  useEffect(() => {
+    if (!fluxoModal || !handoffLoading) return;
+    const timeoutId = window.setTimeout(() => {
+      setHandoffLoading(false);
+      setAnalisando(false);
+      setHandoffError("A análise demorou mais que o esperado. As fotos foram recebidas; toque em tentar novamente para reenviar à IA.");
+    }, HANDOFF_TIMEOUT_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [fluxoModal, handoffLoading]);
 
   const salvarMut = useMutation({
     mutationFn: async () => {
@@ -608,9 +637,16 @@ function InspecaoFotoPage() {
                 <div className="mt-1 text-sm text-muted-foreground">{handoffError}</div>
               </div>
             </div>
-            <Button onClick={() => navigate({ to: "/app/extintores" })}>
-              Voltar ao painel de extintores
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {!!etiqueta.path && !!manometro.path && !!inmetro.path && (
+                <Button onClick={() => handleAnalisar()}>
+                  <Sparkles className="h-4 w-4 mr-2" /> Tentar novamente
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => navigate({ to: "/app/extintores" })}>
+                Voltar ao painel de extintores
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
