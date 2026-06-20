@@ -25,6 +25,12 @@ function ResetPasswordPage() {
   const [mfaCode, setMfaCode] = useState("");
   const applyInvite = useServerFn(applyMyPendingInvite);
 
+  function isAal2Error(error: any) {
+    const code = (error?.code || error?.name || "").toString().toLowerCase();
+    const msg = (error?.message || error?.error_description || "").toString().toLowerCase();
+    return code.includes("insufficient_aal") || msg.includes("aal2") || msg.includes("mfa");
+  }
+
   useEffect(() => {
     // Supabase processa o token do hash automaticamente e cria sessão
     supabase.auth.getSession().then(({ data }) => {
@@ -65,11 +71,14 @@ function ResetPasswordPage() {
     if (pwd !== pwd2) return toast.error("As senhas não coincidem");
     setBusy(true);
     try {
+      const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aalData?.nextLevel === "aal2" && aalData.currentLevel !== "aal2") {
+        await startMfaChallenge();
+        return;
+      }
       await finishPasswordUpdate();
     } catch (e: any) {
-      const code = e?.code || "";
-      const msg = (e?.message || "").toLowerCase();
-      if (code === "insufficient_aal" || msg.includes("aal2")) {
+      if (isAal2Error(e)) {
         try {
           await startMfaChallenge();
         } catch (err: any) {
@@ -95,7 +104,11 @@ function ResetPasswordPage() {
       if (error) throw error;
       await finishPasswordUpdate();
     } catch (e: any) {
-      toast.error(e.message || "Código inválido");
+      if (isAal2Error(e)) {
+        toast.error("Ainda falta confirmar o MFA. Gere um novo código no autenticador e tente novamente.");
+      } else {
+        toast.error(e.message || "Código inválido");
+      }
     } finally { setBusy(false); }
   }
 
