@@ -30,6 +30,8 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
   const qc = useQueryClient();
   const [done, setDone] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [mode, setMode] = useState<"padrao" | "data">("padrao");
+  const [customDate, setCustomDate] = useState<string>("");
 
   const auto = useMemo(
     () => items.filter((i) => !i.exige_pte || i.ptesVinculadas > 0),
@@ -43,12 +45,20 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
   const revalidar = useMutation({
     mutationFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
+      if (mode === "data" && !customDate) {
+        throw new Error("Informe a nova data de validade");
+      }
       const results: { id: string; ok: boolean; error?: string }[] = [];
       for (const it of auto) {
         if (done.has(it.id)) continue;
-        const d = new Date(today + "T00:00:00");
-        d.setDate(d.getDate() + (it.validade_dias || 0));
-        const novaValidade = d.toISOString().slice(0, 10);
+        let novaValidade: string;
+        if (mode === "data") {
+          novaValidade = customDate;
+        } else {
+          const d = new Date(today + "T00:00:00");
+          d.setDate(d.getDate() + (it.validade_dias || 0));
+          novaValidade = d.toISOString().slice(0, 10);
+        }
         const { error } = await supabase
           .from("aprs")
           .update({
@@ -94,6 +104,8 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
   function close() {
     setDone(new Set());
     setErrors({});
+    setMode("padrao");
+    setCustomDate("");
     onOpenChange(false);
   }
 
@@ -107,6 +119,43 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
         </DialogHeader>
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+          {items.length > 0 && (
+            <section className="rounded-lg border border-rose-500/30 bg-rose-950/15 p-3 space-y-2">
+              <div className="text-xs font-black uppercase text-rose-200">Nova validade</div>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-rose-100">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={mode === "padrao"}
+                    onChange={() => setMode("padrao")}
+                    className="accent-emerald-500"
+                  />
+                  Regra padrão (hoje + validade_dias de cada APR)
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={mode === "data"}
+                    onChange={() => setMode("data")}
+                    className="accent-emerald-500"
+                  />
+                  Data específica:
+                </label>
+                <input
+                  type="date"
+                  value={customDate}
+                  onChange={(e) => { setCustomDate(e.target.value); setMode("data"); }}
+                  className="bg-black/40 border border-rose-500/30 rounded px-2 py-1 text-rose-100 text-xs"
+                />
+              </div>
+              {mode === "data" && customDate && (
+                <p className="text-[10px] text-emerald-200/80">
+                  Todas as APRs revalidadas terão validade até {formatDateBR(customDate)}.
+                </p>
+              )}
+            </section>
+          )}
+
           {auto.length > 0 && (
             <section className="rounded-lg border border-emerald-500/30 bg-emerald-950/15">
               <header className="flex items-center justify-between px-3 py-2 border-b border-emerald-500/20">
