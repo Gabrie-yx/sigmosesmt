@@ -1073,6 +1073,19 @@ function HistoricoInspecoesDialog({
       const url = urls[`extintores-fotos:${r.foto_path}`];
       if (url) out.push({ url, name: `Manual · ${new Date(r.data_inspecao + "T00:00").toLocaleDateString("pt-BR")}`, kind: "image" });
     }
+    // NC photos embedded in nao_conformidade markdown
+    for (const r of manuais.data ?? []) {
+      const txt: string = r.nao_conformidade ?? "";
+      const re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(txt)) !== null) {
+        const pm = /\/storage\/v1\/object\/(?:public|sign)\/extintores-inspecoes\/([^\s?)]+)/.exec(m[2]);
+        const path = pm ? decodeURIComponent(pm[1]) : null;
+        const signed = path ? urls[`extintores-inspecoes:${path}`] : null;
+        const finalUrl = signed || m[2];
+        out.push({ url: finalUrl, name: `Manual · ${m[1]} · ${new Date(r.data_inspecao + "T00:00").toLocaleDateString("pt-BR")}`, kind: "image" });
+      }
+    }
     return out;
   }, [ia.data, manuais.data, urls]);
 
