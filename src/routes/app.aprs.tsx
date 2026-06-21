@@ -28,10 +28,10 @@ export const Route = createFileRoute("/app/aprs")({
 });
 
 const STATUS_TONE: Record<string, string> = {
-  RASCUNHO: "bg-slate-200 text-slate-700",
-  ATIVA: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  ENCERRADA: "bg-slate-100 text-slate-600",
-  CANCELADA: "bg-rose-100 text-rose-700",
+  RASCUNHO: "bg-white/10 text-rose-100/80 border border-white/15",
+  ATIVA: "bg-gradient-to-br from-emerald-600/80 to-emerald-900/80 text-emerald-50 border-emerald-400/40 shadow-[0_0_12px_-2px_rgba(16,185,129,0.5)]",
+  ENCERRADA: "bg-black/40 text-rose-200/50 border border-white/10",
+  CANCELADA: "bg-gradient-to-br from-rose-700/80 to-rose-900/80 text-rose-50 border border-rose-400/30",
 };
 
 const newAprDraft = {
@@ -252,14 +252,14 @@ function AprsPage() {
   });
 
   return (
-    <div className="p-4 md:p-8 h-full flex flex-col bg-slate-50 overflow-x-hidden">
+    <div className="p-4 md:p-8 h-full flex flex-col overflow-x-hidden">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5 md:mb-6 shrink-0">
         <div className="min-w-0">
-          <h1 className="text-2xl md:text-3xl font-black text-[#991b1b] flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-black text-rose-100 flex items-center gap-2">
             <FileText className="h-6 w-6 md:h-7 md:w-7 shrink-0" />
             <span className="truncate">APR — Análise Preliminar de Risco</span>
           </h1>
-          <p className="text-sm text-slate-500 mt-1">{filtered.length} APR(s) listadas</p>
+          <p className="text-sm text-rose-200/60 mt-1">{filtered.length} APR(s) listadas</p>
         </div>
         {isEditor && (
           <div className="flex flex-wrap gap-2">
@@ -267,7 +267,7 @@ function AprsPage() {
               onClick={() => { setLoteModeloId(null); setLoteCascoId(null); setLoteOpen(true); }}
               size="lg"
               variant="outline"
-              className="border-[#991b1b] text-[#991b1b] hover:bg-[#991b1b]/5"
+              className="border-rose-400/40 text-rose-100 bg-white/5 hover:bg-white/10"
             >
               <LayoutGrid className="h-4 w-4 mr-1" /> Aplicar a vários cascos
             </Button>
@@ -275,7 +275,7 @@ function AprsPage() {
               onClick={() => setModeloPickerOpen(true)}
               size="lg"
               variant="outline"
-              className="border-amber-500 text-amber-700 hover:bg-amber-50"
+              className="border-amber-400/40 text-amber-200 bg-white/5 hover:bg-white/10"
             >
               <Zap className="h-4 w-4 mr-1" /> Modelo (editar)
             </Button>
@@ -286,7 +286,7 @@ function AprsPage() {
                 setEditing("new");
               }}
               size="lg"
-              className="bg-[#991b1b] hover:bg-[#7f1d1d]"
+              className="bg-gradient-to-br from-rose-600 to-rose-900 hover:from-rose-500 hover:to-rose-800 text-white shadow-[0_0_20px_-4px_rgba(220,38,70,0.7)]"
             >
               <Plus className="h-4 w-4 mr-1" /> Nova APR
             </Button>
@@ -294,9 +294,9 @@ function AprsPage() {
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3 sm:p-4 mb-4 flex flex-wrap gap-2 sm:gap-3 shrink-0">
+      <div className="rounded-2xl bg-gradient-to-br from-rose-950/60 to-black/40 border border-white/10 shadow-[inset_0_1px_0_rgba(255,230,235,0.05)] p-3 sm:p-4 mb-4 flex flex-wrap gap-2 sm:gap-3 shrink-0">
         <div className="relative w-full sm:flex-1 sm:min-w-[240px]">
-          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-rose-200/60" />
           <Input placeholder="Buscar por número, atividade, local..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -330,18 +330,18 @@ function AprsPage() {
 
       {/* Matriz de cobertura: Modelo × Casco */}
       {cascos.length > 0 && modelos.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-4 shrink-0">
+        <div className="rounded-2xl bg-gradient-to-br from-rose-950/60 to-black/40 border border-white/10 shadow-[inset_0_1px_0_rgba(255,230,235,0.05)] mb-4 shrink-0">
           <button
             type="button"
             onClick={() => setMatrizOpen((v) => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 rounded-t-2xl"
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 rounded-t-2xl"
           >
             <div className="flex items-center gap-2">
-              <LayoutGrid className="h-4 w-4 text-[#991b1b]" />
-              <span className="font-black text-sm text-slate-800">Cobertura por casco</span>
-              <span className="text-[11px] text-slate-500">— modelos × cascos. Clique na célula vazia para gerar APR.</span>
+              <LayoutGrid className="h-4 w-4 text-rose-300" />
+              <span className="font-black text-sm text-rose-100">Cobertura por casco</span>
+              <span className="text-[11px] text-rose-200/60">— modelos × cascos. Clique na célula vazia para gerar APR.</span>
             </div>
-            {matrizOpen ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+            {matrizOpen ? <ChevronUp className="h-4 w-4 text-rose-200/60" /> : <ChevronDown className="h-4 w-4 text-rose-200/60" />}
           </button>
           {matrizOpen && (() => {
             // Set: `${modeloId}::${cascoId}` quando existe APR ATIVA/RASCUNHO
@@ -352,25 +352,25 @@ function AprsPage() {
               }
             }
             return (
-              <div className="overflow-x-auto border-t">
+              <div className="overflow-x-auto border-t border-white/10">
                 <table className="w-full text-xs">
-                  <thead className="bg-slate-50">
+                  <thead className="bg-black/30">
                     <tr>
-                      <th className="text-left font-black text-slate-600 px-3 py-2 sticky left-0 bg-slate-50 z-10 min-w-[180px]">
+                      <th className="text-left font-black text-rose-200/80 px-3 py-2 sticky left-0 bg-black/30 z-10 min-w-[180px]">
                         Modelo
                       </th>
                       {cascos.map((c: any) => (
-                        <th key={c.id} className="font-black text-[#991b1b] px-2 py-2 text-center whitespace-nowrap">
+                        <th key={c.id} className="font-black text-rose-100 px-2 py-2 text-center whitespace-nowrap">
                           {c.numero}
-                          {c.nome && <div className="text-[9px] font-normal text-slate-500 truncate max-w-[80px]">{c.nome}</div>}
+                          {c.nome && <div className="text-[9px] font-normal text-rose-200/50 truncate max-w-[80px]">{c.nome}</div>}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {modelos.map((m: any) => (
-                      <tr key={m.id} className="border-t hover:bg-slate-50/50">
-                        <td className="px-3 py-1.5 font-bold text-slate-700 sticky left-0 bg-white hover:bg-slate-50/50 z-10">
+                      <tr key={m.id} className="border-t border-white/5 hover:bg-white/5">
+                        <td className="px-3 py-1.5 font-bold text-rose-100/90 sticky left-0 bg-[#1a0510] hover:bg-white/5 z-10">
                           {m.nome}
                         </td>
                         {cascos.map((c: any) => {
@@ -380,7 +380,7 @@ function AprsPage() {
                               {tem ? (
                                 <button
                                   type="button"
-                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-emerald-100 text-emerald-700 border border-emerald-300 hover:bg-emerald-200"
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 hover:bg-emerald-500/30"
                                   title="APR já existe — clique pra filtrar"
                                   onClick={() => {
                                     setFilterCasco(c.id);
@@ -392,14 +392,14 @@ function AprsPage() {
                               ) : isEditor ? (
                                 <button
                                   type="button"
-                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-dashed border-slate-300 text-slate-400 hover:border-[#991b1b] hover:text-[#991b1b] hover:bg-[#991b1b]/5"
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-dashed border-white/20 text-rose-200/50 hover:border-rose-300 hover:text-rose-200 hover:bg-white/10"
                                   title={`Gerar APR "${m.nome}" para CASCO ${c.numero}`}
                                   onClick={() => { setLoteModeloId(m.id); setLoteCascoId(c.id); setLoteOpen(true); }}
                                 >
                                   <Plus className="h-3.5 w-3.5" />
                                 </button>
                               ) : (
-                                <span className="text-slate-300">—</span>
+                                <span className="text-rose-200/30">—</span>
                               )}
                             </td>
                           );
@@ -414,38 +414,38 @@ function AprsPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex-1 overflow-hidden flex flex-col min-h-0">
+      <div className="rounded-2xl bg-gradient-to-br from-rose-950/60 to-black/40 border border-white/10 shadow-[inset_0_1px_0_rgba(255,230,235,0.05)] flex-1 overflow-hidden flex flex-col min-h-0">
         <div className="overflow-y-auto flex-1 p-2">
           {isLoading ? (
-            <div className="text-center py-8 text-slate-400">Carregando…</div>
+            <div className="text-center py-8 text-rose-200/60">Carregando…</div>
           ) : grouped.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">Nenhuma APR encontrada</div>
+            <div className="text-center py-12 text-rose-200/60">Nenhuma APR encontrada</div>
           ) : (
             <Accordion type="multiple" defaultValue={grouped.map((g) => g.key)} className="space-y-2">
               {grouped.map((g) => (
-                <AccordionItem key={g.key} value={g.key} className="border border-slate-200 rounded-xl bg-slate-50/50 px-3">
+                <AccordionItem key={g.key} value={g.key} className="border border-white/10 rounded-xl bg-black/30 px-3">
                   <AccordionTrigger className="hover:no-underline py-3">
                     <div className="flex flex-wrap items-center gap-3 w-full">
-                      <span className="font-black text-[#991b1b] text-base">
+                      <span className="font-black text-rose-100 text-base">
                         CASCO {g.casco?.numero ?? "—"}
                       </span>
-                      {g.casco?.nome && <span className="text-xs text-slate-500">{g.casco.nome}</span>}
+                      {g.casco?.nome && <span className="text-xs text-rose-200/60">{g.casco.nome}</span>}
                       <span className="ml-auto flex items-center gap-2 mr-3">
-                        <Badge variant="outline" className="bg-white text-[10px] font-black">
+                        <Badge variant="outline" className="bg-white/10 border-white/20 text-rose-100 text-[10px] font-black">
                           {g.aprs.length} APR{g.aprs.length !== 1 ? "s" : ""}
                         </Badge>
                         {g.ativas > 0 && (
-                          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] font-black">
+                          <Badge className="bg-emerald-500/20 text-emerald-200 border-emerald-400/40 text-[10px] font-black">
                             {g.ativas} ATIVA{g.ativas !== 1 ? "S" : ""}
                           </Badge>
                         )}
                         {g.vencendo > 0 && (
-                          <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] font-black">
+                          <Badge className="bg-amber-500/20 text-amber-200 border-amber-400/40 text-[10px] font-black">
                             {g.vencendo} vencendo ≤2d
                           </Badge>
                         )}
                         {g.pendentes > 0 && (
-                          <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-[10px] font-black">
+                          <Badge className="bg-orange-500/20 text-orange-200 border-orange-400/40 text-[10px] font-black">
                             {g.pendentes} PTE pendente{g.pendentes !== 1 ? "s" : ""}
                           </Badge>
                         )}
@@ -453,7 +453,7 @@ function AprsPage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-3">
-                    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                    <div className="rounded-lg border border-white/10 bg-black/20 overflow-hidden">
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -475,8 +475,8 @@ function AprsPage() {
                               : [];
                             const linkedPtes = [...byApr, ...legacy];
                             return (
-                              <TableRow key={a.id} className={a._vencida ? "bg-rose-50/50" : ""}>
-                                <TableCell className="font-bold text-[#991b1b]">{a.numero}</TableCell>
+                              <TableRow key={a.id} className={a._vencida ? "bg-rose-900/20" : ""}>
+                                <TableCell className="font-bold text-rose-200">{a.numero}</TableCell>
                                 <TableCell className="text-sm">{formatDateBR(a.data_emissao)}</TableCell>
                                 <TableCell className="text-sm">{a.empresa_id ? companyMap.get(a.empresa_id) ?? "—" : "—"}</TableCell>
                                 <TableCell className="text-sm max-w-[280px] truncate" title={a.atividade_descricao}>{a.atividade_descricao}</TableCell>
@@ -487,17 +487,17 @@ function AprsPage() {
                                 <TableCell className="text-sm">
                                   {a.exige_pte ? (
                                     linkedPtes.length > 0 ? (
-                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-black"
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 text-[10px] font-black"
                                         title={linkedPtes.map((p: any) => p.numero).join(", ")}>
                                         ✓ {linkedPtes.length} emitida{linkedPtes.length > 1 ? "s" : ""}
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-black">
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/20 text-amber-200 border border-amber-400/30 text-[10px] font-black">
                                         <ShieldAlert className="h-3 w-3" /> Pendente
                                       </span>
                                     )
                                   ) : (
-                                    <span className="text-slate-400 text-[10px]">N/A</span>
+                                    <span className="text-rose-200/40 text-[10px]">N/A</span>
                                   )}
                                 </TableCell>
                                 <TableCell>
@@ -691,7 +691,7 @@ function AprsPage() {
             <div className="flex justify-end gap-2 pt-2 border-t">
               <Button variant="ghost" onClick={() => { setDupSource(null); setDupCascoIds([]); }}>Cancelar</Button>
               <Button
-                className="bg-[#991b1b] hover:bg-[#7f1d1d]"
+                className="bg-gradient-to-br from-rose-600 to-rose-900 hover:from-rose-500 hover:to-rose-800 text-white shadow-[0_0_20px_-4px_rgba(220,38,70,0.7)]"
                 disabled={dupCascoIds.length === 0 || duplicate.isPending}
                 onClick={() => dupSource && duplicate.mutate({ srcId: dupSource.id, cascoIds: dupCascoIds })}
               >
