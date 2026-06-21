@@ -1028,3 +1028,95 @@
   .dialog-glass-shine::after { z-index: 3; }
 
 }
+
+/* ======================================================================
+   .light-paper — opt-out do glass-scope para superfícies que precisam
+   manter aparência de papel claro (formulários estilo impressão como
+   APR, Sheet de PTE, etc.). Reverte as transformações aplicadas pelo
+   .app-glass-scope e .modal-glass-scope nas classes Tailwind comuns.
+   Usar adicionando a classe `light-paper` no container raiz.
+   ====================================================================== */
+.light-paper,
+.light-paper * {
+  color: rgb(15 23 42);
+}
+.light-paper :is(.bg-white, .bg-white\/60, .bg-white\/70, .bg-white\/80) {
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+  border-color: rgb(226 232 240) !important;
+  color: rgb(15 23 42) !important;
+  box-shadow: none !important;
+}
+.light-paper :is(.bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-gray-100, .bg-zinc-50, .bg-neutral-50) {
+  background-color: rgb(248 250 252) !important;
+  backdrop-filter: none !important;
+  color: rgb(15 23 42) !important;
+  box-shadow: none !important;
+}
+.light-paper .bg-amber-50 { background-color: rgb(255 251 235) !important; box-shadow: none !important; border-color: rgb(253 230 138) !important; }
+.light-paper .bg-amber-100 { background-color: rgb(254 243 199) !important; box-shadow: none !important; }
+.light-paper .bg-emerald-50 { background-color: rgb(236 253 245) !important; box-shadow: none !important; border-color: rgb(167 243 208) !important; }
+.light-paper .bg-emerald-100 { background-color: rgb(209 250 229) !important; box-shadow: none !important; }
+.light-paper .bg-orange-50, .light-paper .bg-orange-50\/40 { background-color: rgb(255 247 237) !important; box-shadow: none !important; border-color: rgb(254 215 170) !important; }
+.light-paper .bg-rose-50 { background-color: rgb(255 241 242) !important; box-shadow: none !important; }
+.light-paper .bg-red-50 { background-color: rgb(254 242 242) !important; box-shadow: none !important; }
+.light-paper .bg-yellow-50 { background-color: rgb(254 252 232) !important; box-shadow: none !important; }
+.light-paper .bg-blue-50 { background-color: rgb(239 246 255) !important; box-shadow: none !important; }
+.light-paper .bg-sky-50 { background-color: rgb(240 249 255) !important; box-shadow: none !important; }
+
+/* Hovers translúcidos restaurados */
+.light-paper .hover\:bg-white:hover,
+.light-paper .hover\:bg-slate-50:hover,
+.light-paper .hover\:bg-slate-100:hover,
+.light-paper .hover\:bg-gray-50:hover {
+  background-color: rgb(248 250 252) !important;
+  color: rgb(15 23 42) !important;
+  backdrop-filter: none !important;
+}
+
+/* Texto colorido pastel — restaura as cores Tailwind originais */
+.light-paper .text-amber-700 { color: rgb(180 83 9) !important; }
+.light-paper .text-amber-800 { color: rgb(146 64 14) !important; }
+.light-paper .text-amber-900 { color: rgb(120 53 15) !important; }
+.light-paper .text-orange-700 { color: rgb(194 65 12) !important; }
+.light-paper .text-orange-900 { color: rgb(124 45 18) !important; }
+.light-paper .text-yellow-700 { color: rgb(161 98 7) !important; }
+.light-paper .text-yellow-800 { color: rgb(133 77 14) !important; }
+.light-paper .text-emerald-600 { color: rgb(5 150 105) !important; }
+.light-paper .text-emerald-700 { color: rgb(4 120 87) !important; }
+.light-paper .text-emerald-800 { color: rgb(6 95 70) !important; }
+.light-paper .text-emerald-900 { color: rgb(6 78 59) !important; }
+.light-paper .text-green-700 { color: rgb(21 128 61) !important; }
+.light-paper .text-rose-600 { color: rgb(225 29 72) !important; }
+.light-paper .text-rose-700 { color: rgb(190 18 60) !important; }
+.light-paper .text-red-600 { color: rgb(220 38 38) !important; }
+.light-paper .text-red-700 { color: rgb(185 28 28) !important; }
+.light-paper .text-blue-700 { color: rgb(29 78 216) !important; }
+.light-paper .text-sky-700 { color: rgb(3 105 161) !important; }
+.light-paper .text-slate-400 { color: rgb(148 163 184) !important; }
+.light-paper .text-slate-500 { color: rgb(100 116 139) !important; }
+.light-paper .text-slate-600 { color: rgb(71 85 105) !important; }
+.light-paper .text-slate-700 { color: rgb(51 65 85) !important; }
+.light-paper .text-slate-800 { color: rgb(30 41 59) !important; }
+.light-paper .text-slate-900 { color: rgb(15 23 42) !important; }
+
+/* Ícones com fundos saturados (badges ✓ !) — restaura cor sólida */
+.light-paper :is(.bg-emerald-500, .bg-emerald-600, .bg-green-500, .bg-green-600) {
+  background-color: rgb(5 150 105) !important;
+  box-shadow: none !important;
+  color: #fff !important;
+}
+.light-paper :is(.bg-amber-500, .bg-amber-600, .bg-yellow-500, .bg-yellow-600, .bg-orange-500, .bg-orange-600) {
+  background-color: rgb(217 119 6) !important;
+  box-shadow: none !important;
+  color: #fff !important;
+}
+.light-paper :is(.bg-rose-500, .bg-rose-600, .bg-red-500, .bg-red-600) {
+  background-color: rgb(225 29 72) !important;
+  box-shadow: none !important;
+  color: #fff !important;
+}
+
+/* Botões "orange" usados como CTA dentro do papel */
+.light-paper .bg-orange-600 { background-color: rgb(234 88 12) !important; color: #fff !important; }
+.light-paper .hover\:bg-orange-700:hover { background-color: rgb(194 65 12) !important; }
