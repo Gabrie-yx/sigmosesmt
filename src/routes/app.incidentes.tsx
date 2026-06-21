@@ -44,6 +44,9 @@ function IncidentesPage() {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [evidOpen, setEvidOpen] = useState<string | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const inlineFileRef = useRef<HTMLInputElement>(null);
+  const inlineCamRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     descricao: "", tipo: "QUASE_ACIDENTE", gravidade: "LEVE",
     data_ocorrencia: new Date().toISOString().slice(0, 16), local: "",
@@ -72,16 +75,36 @@ function IncidentesPage() {
         created_by: user?.id ?? null,
       }).select("id").single();
       if (error) throw error;
-      return data?.id as string;
+      const newId = data?.id as string;
+      // upload das fotos anexadas no próprio formulário
+      for (const file of pendingFiles) {
+        const ext = file.name.split(".").pop() || "bin";
+        const path = `${newId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("incident-photos")
+          .upload(path, file, { contentType: file.type });
+        if (upErr) throw upErr;
+        const { error: insErr } = await supabase.from("incidente_evidencias").insert({
+          incidente_id: newId,
+          file_path: path,
+          tipo: file.type.startsWith("image/") ? "FOTO" : "ANEXO",
+          descricao: file.name,
+          uploaded_by: user?.id ?? null,
+        });
+        if (insErr) throw insErr;
+      }
+      return newId;
     },
-    onSuccess: (newId) => {
-      toast.success("Incidente registrado — agora anexe as fotos");
+    onSuccess: () => {
+      toast.success(pendingFiles.length
+        ? `Incidente registrado com ${pendingFiles.length} evidência(s)`
+        : "Incidente registrado");
       setOpen(false);
       setForm({ descricao: "", tipo: "QUASE_ACIDENTE", gravidade: "LEVE",
         data_ocorrencia: new Date().toISOString().slice(0, 16), local: "",
         causa_raiz: "", acoes_corretivas: "", cat_numero: "", cat_emitida: false });
+      setPendingFiles([]);
       qc.invalidateQueries({ queryKey: ["incidentes"] });
-      if (newId) setEvidOpen(newId);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
@@ -154,9 +177,72 @@ function IncidentesPage() {
                 </div>
                 <div className="col-span-2"><Label>Nº da CAT</Label><Input value={form.cat_numero} onChange={(e) => setForm({ ...form, cat_numero: e.target.value })} disabled={!form.cat_emitida} /></div>
               </div>
-              <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
-                <Camera className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>Ao salvar, o painel de <b>Evidências</b> abre automaticamente para você tirar fotos ou anexar arquivos do local, danos e EPIs.</span>
+              <div className="border rounded-md p-3 space-y-2">
+                <Label className="flex items-center gap-2 text-sm">
+                  <Camera className="h-4 w-4 text-red-600" /> Evidências (fotos / anexos)
+                </Label>
+                <div className="flex gap-2 flex-wrap">
+                  <Button type="button" size="sm" variant="outline" onClick={() => inlineCamRef.current?.click()}>
+                    <Camera className="h-4 w-4 mr-1" /> Tirar foto
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => inlineFileRef.current?.click()}>
+                    <Paperclip className="h-4 w-4 mr-1" /> Anexar arquivos
+                  </Button>
+                  <input
+                    ref={inlineCamRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    multiple
+                    hidden
+                    onChange={(e) => {
+                      if (e.target.files) setPendingFiles((p) => [...p, ...Array.from(e.target.files!)]);
+                      e.target.value = "";
+                    }}
+                  />
+                  <input
+                    ref={inlineFileRef}
+                    type="file"
+                    accept="image/*,application/pdf,video/*"
+                    multiple
+                    hidden
+                    onChange={(e) => {
+                      if (e.target.files) setPendingFiles((p) => [...p, ...Array.from(e.target.files!)]);
+                      e.target.value = "";
+                    }}
+                  />
+                </div>
+                {pendingFiles.length === 0 ? (
+                  <div className="text-xs text-slate-500">Nenhuma foto anexada. Use os botões acima para registrar local, danos e EPIs.</div>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {pendingFiles.map((f, idx) => {
+                      const url = URL.createObjectURL(f);
+                      const isImg = f.type.startsWith("image/");
+                      return (
+                        <div key={idx} className="relative group border rounded overflow-hidden bg-slate-50 aspect-square">
+                          {isImg ? (
+                            <img src={url} alt={f.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-400">
+                              <FileText className="h-8 w-8" />
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setPendingFiles((p) => p.filter((_, i) => i !== idx))}
+                            className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                          <div className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[10px] px-1 truncate">
+                            {f.name}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter>
