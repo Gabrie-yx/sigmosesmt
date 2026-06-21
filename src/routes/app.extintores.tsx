@@ -356,47 +356,62 @@ function ExtintoresPage() {
       </div>
 
       {/* Indicadores do período (mês corrente) */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-white/[0.04] backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
-        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-amber-300/10 blur-3xl pointer-events-none" />
-        <div className="absolute -left-10 -bottom-10 h-32 w-32 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
-        <div className="relative grid grid-cols-2 md:grid-cols-4 gap-px bg-white/5">
-          <div className="flex items-center gap-3 p-4 bg-slate-950/40">
-            <div className="h-10 w-10 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center">
-              <CalendarClock className="h-5 w-5 text-amber-300" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="relative overflow-hidden rounded-2xl border border-amber-400/25 bg-gradient-to-br from-amber-500/10 via-white/[0.04] to-transparent backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+          <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-amber-400/15 blur-2xl pointer-events-none" />
+          <div className="relative flex items-start gap-4">
+            <div className="h-12 w-12 shrink-0 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shadow-inner">
+              <CalendarClock className="h-6 w-6 text-amber-300" />
             </div>
-            <div className="leading-tight">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">A vencer · 30 dias</div>
-              <div className="text-2xl font-black text-white tabular-nums">{stats.vencendo}</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4 bg-slate-950/40">
-            <div className="h-10 w-10 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center">
-              <Activity className="h-5 w-5 text-cyan-300" />
-            </div>
-            <div className="leading-tight">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">Inspeções no mês</div>
-              <div className="text-2xl font-black text-white tabular-nums">{stats.totalInspMes}</div>
+            <div className="flex-1 leading-tight">
+              <div className="text-[13px] font-bold uppercase tracking-wide text-amber-200/90">A vencer · 30 dias</div>
+              <div className="mt-1 text-4xl font-black text-white tabular-nums drop-shadow">{stats.vencendo}</div>
+              <div className="mt-1 text-xs text-white/60">Recargas próximas do vencimento</div>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-4 bg-slate-950/40">
-            <div className="h-10 w-10 rounded-xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center">
-              <AlertTriangle className="h-5 w-5 text-rose-300" />
+        </div>
+
+        <div className="relative overflow-hidden rounded-2xl border border-cyan-400/25 bg-gradient-to-br from-cyan-500/10 via-white/[0.04] to-transparent backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+          <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-cyan-400/15 blur-2xl pointer-events-none" />
+          <div className="relative flex items-start gap-4">
+            <div className="h-12 w-12 shrink-0 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center shadow-inner">
+              <Activity className="h-6 w-6 text-cyan-300" />
             </div>
-            <div className="leading-tight">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">Pendências / revisão</div>
-              <div className="text-2xl font-black text-white tabular-nums">{stats.pendencias}</div>
+            <div className="flex-1 leading-tight">
+              <div className="text-[13px] font-bold uppercase tracking-wide text-cyan-200/90">Inspeções no mês</div>
+              <div className="mt-1 text-4xl font-black text-white tabular-nums drop-shadow">{stats.totalInspMes}</div>
+              <div className="mt-1 text-xs text-white/60">Manuais + por foto / IA</div>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-4 bg-slate-950/40">
-            <div className="h-10 w-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center">
-              <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+        </div>
+
+        <div className="relative overflow-hidden rounded-2xl border border-rose-400/25 bg-gradient-to-br from-rose-500/10 via-white/[0.04] to-transparent backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+          <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-rose-400/15 blur-2xl pointer-events-none" />
+          <div className="relative flex items-start gap-4">
+            <div className="h-12 w-12 shrink-0 rounded-xl bg-rose-500/20 border border-rose-400/40 flex items-center justify-center shadow-inner">
+              <AlertTriangle className="h-6 w-6 text-rose-300" />
             </div>
-            <div className="leading-tight flex-1">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">% Conformidade · período</div>
-              <div className="flex items-baseline gap-2">
-                <div className="text-2xl font-black text-white tabular-nums">{stats.conformidadePct}%</div>
-                <div className="text-[10px] text-white/50 tabular-nums">{stats.totalInspMes - stats.naoConformesMes}/{stats.totalInspMes}</div>
+            <div className="flex-1 leading-tight">
+              <div className="text-[13px] font-bold uppercase tracking-wide text-rose-200/90">Pendências / revisão</div>
+              <div className="mt-1 text-4xl font-black text-white tabular-nums drop-shadow">{stats.pendencias}</div>
+              <div className="mt-1 text-xs text-white/60">Vencidos, em manutenção e NCs</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-400/25 bg-gradient-to-br from-emerald-500/10 via-white/[0.04] to-transparent backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+          <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-400/15 blur-2xl pointer-events-none" />
+          <div className="relative flex items-start gap-4">
+            <div className="h-12 w-12 shrink-0 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shadow-inner">
+              <CheckCircle2 className="h-6 w-6 text-emerald-300" />
+            </div>
+            <div className="flex-1 leading-tight">
+              <div className="text-[13px] font-bold uppercase tracking-wide text-emerald-200/90">% Conformidade · período</div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <div className="text-4xl font-black text-white tabular-nums drop-shadow">{stats.conformidadePct}%</div>
+                <div className="text-xs text-white/60 tabular-nums">{stats.totalInspMes - stats.naoConformesMes}/{stats.totalInspMes}</div>
               </div>
+              <div className="mt-1 text-xs text-white/60">Inspeções conformes no mês</div>
             </div>
           </div>
         </div>
