@@ -14,15 +14,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Plus, Printer, Search, ClipboardCheck, Flame, AlertTriangle, CheckCircle2,
-  Pencil, Camera, ShieldCheck, CalendarClock, Activity, Sparkles, CalendarDays, Droplet,
+  ShieldCheck, CalendarClock, Activity, Sparkles, CalendarDays, Droplet,
 } from "lucide-react";
 import { History, Trash2 } from "lucide-react";
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
 import { toast } from "sonner";
 import { ExtintorInspecaoFotoDialog } from "@/components/extintores/inspecao-foto-dialog";
 import { InspecaoManualDialog } from "@/components/extintores/inspecao-manual-dialog";
-import { PendenciasPopover, type Pendencia } from "@/components/extintores/pendencias-popover";
-import { ExtintorGlassCardPreview } from "@/components/extintores/glass-card-preview";
+import { ExtintorGlassCard } from "@/components/extintores/glass-card-preview";
 import { formatDateBR } from "@/lib/utils-date";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
@@ -434,15 +433,7 @@ function ExtintoresPage() {
         </div>
       )}
 
-      {/* Grid de cards compactos */}
-      {/* 🔬 PREVIEW: novo card glass — validar visual antes de aplicar em todos */}
-      <div className="rounded-2xl border border-dashed border-amber-400/40 bg-amber-50/5 p-2">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-amber-500/80 px-2 pb-1">
-          Preview do novo card (vidro escuro)
-        </div>
-        <ExtintorGlassCardPreview />
-      </div>
-
+      {/* Grid de cards — padrão visual: vidro escuro */}
       {extintores.isLoading ? (
         <div className="text-center text-slate-400 py-8">Carregando…</div>
       ) : filtered.length === 0 ? (
@@ -450,270 +441,31 @@ function ExtintoresPage() {
           Nenhum extintor encontrado.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="bg-black/40 rounded-3xl p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 justify-items-center">
           {filtered.map((e) => {
             const insp = inspecoesMesPorExt.get(e.id);
-            const hojeISO = hoje.toISOString().slice(0, 10);
-            const vencido = e.proxima_recarga && e.proxima_recarga < hojeISO;
             const iaStatus = normalizeIaStatus(e.ultimo_status_inspecao);
-            const ultimaIa = ultimaIaPorExt.get(e.id);
             const manualConformeMes = !!insp && insp.conforme === true;
-
-            // Lista estruturada de pendências
-            const pendencias: Pendencia[] = [];
-            if (vencido) pendencias.push({ tipo: "recarga", label: "Recarga vencida — encaminhar para manutenção (2º grau)" });
-            if (!insp) pendencias.push({ tipo: "mes", label: "Inspeção mensal do mês ainda não registrada" });
-
-            // NCs concretas da IA (uma por linha) — só se NÃO houver manual conforme neste mês
-            if (!manualConformeMes && ultimaIa) {
-              const st = normalizeIaStatus(ultimaIa.status_geral);
-              if (st === "NAO_CONFORME" || st === "PRECISA_REVISAO") {
-                const ncs: string[] = Array.isArray(ultimaIa.nao_conformidades) ? ultimaIa.nao_conformidades : [];
-                if (ncs.length > 0) {
-                  ncs.slice(0, 5).forEach((n) => {
-                    pendencias.push({
-                      tipo: st === "NAO_CONFORME" ? "nao_conforme" : "precisa_revisao",
-                      label: String(n),
-                    });
-                  });
-                } else {
-                  pendencias.push({
-                    tipo: st === "NAO_CONFORME" ? "nao_conforme" : "precisa_revisao",
-                    label: st === "NAO_CONFORME" ? "Inspeção por foto NÃO CONFORME" : "Inspeção por foto precisa de revisão",
-                  });
-                }
-              }
-              // Divergência cadastro × foto (FOR-SEG 08 implícito)
-              if (ultimaIa.divergencia_detectada) {
-                pendencias.push({
-                  tipo: "divergencia",
-                  label: `Divergência cadastro × foto: ${ultimaIa.divergencia_descricao || "campo identificado fora do cadastro"}`,
-                });
-              }
-            }
-
-            // glow verde: tem inspeção do mês conforme E nada crítico pendente
-            const okMes = manualConformeMes && pendencias.length === 0;
-            const iaRedAtiva = !manualConformeMes && iaStatus === "NAO_CONFORME";
-            const iaAmberAtiva = !manualConformeMes && iaStatus === "PRECISA_REVISAO";
-
-            const ringTone =
-              iaRedAtiva || vencido
-                ? "ring-red-500/40 hover:ring-red-400/70 bg-gradient-to-br from-slate-900 to-red-950/60 shadow-[0_0_24px_-8px_rgba(239,68,68,0.45)]"
-                : iaAmberAtiva
-                ? "ring-amber-500/40 hover:ring-amber-400/70 bg-gradient-to-br from-slate-900 to-amber-950/50 shadow-[0_0_24px_-8px_rgba(245,158,11,0.4)]"
-                : okMes || (manualConformeMes) || iaStatus === "CONFORME"
-                ? "ring-emerald-400/60 hover:ring-emerald-300/80 bg-gradient-to-br from-slate-900 to-emerald-950/50 shadow-[0_0_32px_-6px_rgba(16,185,129,0.65)]"
-                : "ring-slate-700/60 hover:ring-slate-500/70 bg-gradient-to-br from-slate-900 to-slate-950";
-
-            const dotClass = iaStatus
-              ? iaStatus === "CONFORME"
-                ? "bg-[radial-gradient(circle_at_30%_30%,#6ee7b7,#10b981_55%,#047857)] shadow-[0_0_0_3px_rgba(16,185,129,0.18),0_4px_10px_-2px_rgba(16,185,129,0.55)]"
-                : iaStatus === "PRECISA_REVISAO"
-                ? "bg-[radial-gradient(circle_at_30%_30%,#fde68a,#f59e0b_55%,#b45309)] shadow-[0_0_0_3px_rgba(245,158,11,0.18),0_4px_10px_-2px_rgba(245,158,11,0.55)]"
-                : "bg-[radial-gradient(circle_at_30%_30%,#fecaca,#ef4444_55%,#991b1b)] shadow-[0_0_0_3px_rgba(239,68,68,0.22),0_4px_12px_-2px_rgba(239,68,68,0.65)]"
-              : "bg-[radial-gradient(circle_at_30%_30%,#f8fafc,#94a3b8_60%,#475569)] shadow-[0_0_0_2px_rgba(148,163,184,0.15)]";
-
+            const hojeISO = hoje.toISOString().slice(0, 10);
+            const vencido = !!e.proxima_recarga && e.proxima_recarga < hojeISO;
+            const indisponivel =
+              vencido ||
+              e.status === "BAIXADO" ||
+              e.status === "VENCIDO" ||
+              (!manualConformeMes && iaStatus === "NAO_CONFORME");
             return (
-              <div
+              <ExtintorGlassCard
                 key={e.id}
-                className={`group relative rounded-2xl ring-1 ${ringTone} transition-all duration-300 ease-out p-3 flex flex-col gap-2 hover:scale-[1.03] hover:-translate-y-0.5 hover:shadow-xl hover:z-10 will-change-transform`}
-              >
-                {/* Header: nº + tipo + status dot */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      title={iaStatus ? IA_STATUS_LABEL[iaStatus] : "Sem inspeção por foto"}
-                      className={`relative inline-block h-3 w-3 rounded-full shrink-0 ${dotClass}`}
-                    />
-                    <div className="font-mono font-black text-red-400 text-base leading-none truncate tracking-wide">
-                      {e.numero || "—"}
-                    </div>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className="text-sm font-black tracking-wider px-2.5 py-1 h-7 shrink-0 bg-slate-950/90 text-cyan-300 border-cyan-500/40 shadow-[0_0_12px_-2px_rgba(34,211,238,0.55)]"
-                  >
-                    {e.tipo_agente}
-                  </Badge>
-                </div>
-
-                {/* Localização */}
-                <div className="min-w-0">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 leading-none">Local</div>
-                  <div className="text-xs font-semibold text-slate-100 truncate" title={`${e.area || ""} · ${e.localizacao || ""}`}>
-                    {e.area || "—"}
-                  </div>
-                  <div className="text-[11px] text-slate-400 truncate">{e.localizacao || "—"}</div>
-                </div>
-
-                {/* Carga + recarga */}
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-300">
-                    {e.carga_nominal ? `${e.carga_nominal} ${e.carga_unidade || "kg"}` : "—"}
-                  </span>
-                  <span className={`tabular-nums ${vencido ? "text-red-400 font-bold" : "text-slate-400"}`}>
-                    {e.proxima_recarga ? formatDateBR(e.proxima_recarga) : "—"}
-                  </span>
-                </div>
-
-                {/* Vida útil até a próxima recarga (12 meses NBR 12962) */}
-                {(() => {
-                  const recargaStr = (e as any).data_ultima_recarga as string | null | undefined;
-                  if (!recargaStr) {
-                    return (
-                      <div>
-                        <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                          <span>Recarga</span>
-                          <span className="text-slate-500">Sem data</span>
-                        </div>
-                        <div className="h-2 rounded-full bg-slate-950/70 ring-1 ring-slate-700/60 overflow-hidden" />
-                        <div className="text-[9px] text-slate-500 mt-0.5 italic">Cadastre a última recarga</div>
-                      </div>
-                    );
-                  }
-                  const recarga = new Date(recargaStr);
-                  const vence = new Date(recarga);
-                  vence.setMonth(vence.getMonth() + 12);
-                  const hoje = new Date();
-                  const totalMs = vence.getTime() - recarga.getTime();
-                  const restanteMs = vence.getTime() - hoje.getTime();
-                  const diasRestantes = Math.ceil(restanteMs / 86400000);
-                  const pct = Math.max(0, Math.min(100, Math.round((restanteMs / totalMs) * 100)));
-                  const venc = diasRestantes <= 0;
-                  const critico = diasRestantes > 0 && diasRestantes < 30;
-                  const alerta = diasRestantes >= 30 && diasRestantes <= 90;
-                  const barTone =
-                    venc || critico
-                      ? "from-red-500 to-red-400 shadow-[0_0_10px_rgba(239,68,68,0.7)]"
-                      : alerta
-                      ? "from-amber-500 to-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.7)]"
-                      : "from-emerald-500 to-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.7)]";
-                  const label = venc
-                    ? "Vencida"
-                    : diasRestantes < 60
-                    ? `${diasRestantes}d`
-                    : `${Math.round(diasRestantes / 30)}m`;
-                  return (
-                    <div title={`Última recarga: ${formatDateBR(recargaStr)} · Vence: ${formatDateBR(vence.toISOString().slice(0, 10))}`}>
-                      <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                        <span>Recarga</span>
-                        <span className={`tabular-nums ${venc || critico ? "text-red-400" : alerta ? "text-amber-300" : "text-emerald-300"}`}>{label}</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-slate-950/70 ring-1 ring-slate-700/60 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full bg-gradient-to-r ${barTone} transition-all duration-700`}
-                          style={{ width: `${venc ? 100 : pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Inspeção do mês */}
-                <div>
-                  {insp ? (
-                    <Badge
-                      variant="outline"
-                      className={`w-full justify-center text-[10px] ${
-                        insp.conforme
-                          ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/40 animate-pulse-emerald"
-                          : "bg-red-500/10 text-red-300 border-red-500/30"
-                      }`}
-                    >
-                      {insp.conforme ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
-                      Mês OK · {formatDateBR(insp.data_inspecao)}
-                    </Badge>
-                  ) : e.ultima_inspecao_em ? (
-                    <Badge
-                      variant="outline"
-                      className={`w-full justify-center text-[10px] ${
-                        iaStatus === "CONFORME"
-                          ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
-                          : iaStatus === "PRECISA_REVISAO"
-                          ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
-                          : "bg-red-500/10 text-red-300 border-red-500/30"
-                      }`}
-                    >
-                      <Sparkles className="h-3 w-3 mr-1" />
-                      {formatDateBR(new Date(e.ultima_inspecao_em).toISOString().slice(0, 10))}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="w-full justify-center text-[10px] bg-amber-500/10 text-amber-300 border-amber-500/30">
-                      Sem inspeção
-                    </Badge>
-                  )}
-                </div>
-
-                {/* O que precisa ser feito */}
-                <PendenciasPopover
-                  pendencias={pendencias}
-                  onInspecionarFoto={() => setInspecaoExt(e)}
-                  onInspecionarManual={() => setManualExt(e)}
-                  onAbrirHistorico={() => setHistExt(e)}
-                  onEditarCadastro={() => setEditExt(e)}
-                />
-
-                {/* Ações */}
-                <div className="mt-auto pt-1 flex items-center gap-1">
-                  <Button
-                    size="sm"
-                    onClick={() => setInspecaoExt(e)}
-                    className="flex-1 h-8 gap-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-[11px] font-bold shadow-[0_0_12px_-2px_rgba(239,68,68,0.5)] border-0"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" /> Inspecionar (foto)
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-2 shrink-0 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-emerald-300 gap-1 text-[11px]"
-                    onClick={() => setManualExt(e)}
-                    title="Registrar inspeção manual (sem fotos)"
-                  >
-                    <ClipboardEdit className="h-3.5 w-3.5" /> Manual
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-2 shrink-0 bg-cyan-950/40 border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/60 hover:text-cyan-100 hover:border-cyan-400 gap-1 text-[11px] font-bold shadow-[0_0_10px_-3px_rgba(34,211,238,0.5)]"
-                    onClick={() => setHistExt(e)}
-                    title="Ver todas as inspeções deste extintor"
-                  >
-                    <History className="h-3.5 w-3.5" />
-                    Histórico
-                    {(() => {
-                      const n = totalInspecoesPorExt.get(e.id) ?? 0;
-                      return n > 0 ? (
-                        <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[16px] px-1 rounded-full bg-cyan-500 text-slate-950 text-[10px] font-black tabular-nums">
-                          {n}
-                        </span>
-                      ) : null;
-                    })()}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-2 shrink-0 gap-1 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-cyan-300"
-                    onClick={() => setEditExt(e)}
-                    title="Editar cadastro"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                    <span className="text-xs">Editar</span>
-                  </Button>
-                  {isModerator && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 px-2 shrink-0 gap-1 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-red-950 hover:text-red-300 hover:border-red-500/40"
-                      onClick={() => setExcluirExt(e)}
-                      title="Excluir extintor"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span className="text-xs">Excluir</span>
-                    </Button>
-                  )}
-                </div>
-              </div>
+                extintor={e}
+                totalInspecoes={totalInspecoesPorExt.get(e.id) ?? 0}
+                podeExcluir={isModerator}
+                indisponivel={indisponivel}
+                onInspecaoFoto={() => setInspecaoExt(e)}
+                onInspecaoManual={() => setManualExt(e)}
+                onHistorico={() => setHistExt(e)}
+                onEditar={() => setEditExt(e)}
+                onExcluir={() => setExcluirExt(e)}
+              />
             );
           })}
         </div>
