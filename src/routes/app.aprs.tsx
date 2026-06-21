@@ -303,6 +303,15 @@ function AprsPage() {
         </div>
         {isEditor && (
           <div className="flex flex-wrap gap-2">
+            {selectedIds.size > 0 && (
+              <Button
+                onClick={() => setRevalidarOpen(true)}
+                size="lg"
+                className="bg-gradient-to-br from-emerald-600 to-emerald-900 hover:from-emerald-500 hover:to-emerald-800 text-white shadow-[0_0_20px_-4px_rgba(16,185,129,0.6)]"
+              >
+                <ShieldAlert className="h-4 w-4 mr-1" /> Revalidar selecionadas ({selectedIds.size})
+              </Button>
+            )}
             <Button
               onClick={() => { setLoteModeloId(null); setLoteCascoId(null); setLoteOpen(true); }}
               size="lg"
