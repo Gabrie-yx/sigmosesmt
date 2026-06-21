@@ -163,7 +163,7 @@ export function PteLookupSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-xl flex flex-col p-0 gap-0">
+      <SheetContent side="right" className="light-paper w-full sm:max-w-xl flex flex-col p-0 gap-0 bg-white">
         <SheetHeader className="px-5 py-4 border-b shrink-0">
           <SheetTitle className="flex items-center gap-2 text-orange-700">
             <ShieldAlert className="h-5 w-5" /> Vincular PTE à APR
