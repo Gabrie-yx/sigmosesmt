@@ -154,6 +154,18 @@ function ExtintoresPage() {
     return map;
   }, [inspecoesFotos.data]);
 
+  // Contador total de inspeções (foto + manual) por extintor, pra mostrar no card
+  const totalInspecoesPorExt = useMemo(() => {
+    const map = new Map<string, number>();
+    (inspecoesFotos.data ?? []).forEach((r) => {
+      map.set(r.extintor_id, (map.get(r.extintor_id) ?? 0) + 1);
+    });
+    (inspecoes.data ?? []).forEach((r) => {
+      map.set(r.extintor_id, (map.get(r.extintor_id) ?? 0) + 1);
+    });
+    return map;
+  }, [inspecoesFotos.data, inspecoes.data]);
+
   const areas = useMemo(() => {
     const set = new Set<string>();
     (extintores.data ?? []).forEach((e) => e.area && set.add(e.area));
