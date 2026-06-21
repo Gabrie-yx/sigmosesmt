@@ -323,12 +323,13 @@ function ExtintoresPage() {
       </div>
 
       {/* KPIs (clicáveis = filtram a lista) */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Kpi icon={ShieldCheck} label="Total" value={stats.total} tone="slate" active={fStatus === "TODOS"} onClick={() => setFStatus("TODOS")} />
-        <Kpi icon={CheckCircle2} label="Ativo" value={stats.ativos} tone="green" active={fStatus === "ATIVO"} onClick={() => setFStatus("ATIVO")} />
-        <Kpi icon={CalendarClock} label="Em manutenção" value={stats.emManutencao} tone="amber" active={fStatus === "EM_MANUTENCAO"} onClick={() => setFStatus("EM_MANUTENCAO")} />
-        <Kpi icon={ClipboardCheck} label="Baixado" value={stats.baixados} tone="slate" active={fStatus === "BAIXADO"} onClick={() => setFStatus("BAIXADO")} />
-        <Kpi icon={AlertTriangle} label="Vencido" value={stats.vencidosStatus} tone="red" pulse={stats.vencidosStatus > 0} active={fStatus === "VENCIDO"} onClick={() => setFStatus("VENCIDO")} />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <Kpi icon={ShieldCheck}    label="Total"          value={stats.total}          tone="slate"   active={fStatus === "TODOS"}                  onClick={() => setFStatus("TODOS")} />
+        <Kpi icon={CheckCircle2}   label="Ativos"         value={stats.ativos}         tone="emerald" active={fStatus === "ATIVO"}                  onClick={() => setFStatus("ATIVO")} />
+        <Kpi icon={Activity}       label="Inspecionados" value={stats.inspecionados}  tone="cyan"    active={fStatus === "INSPECIONADOS_MES"}      onClick={() => setFStatus("INSPECIONADOS_MES")} />
+        <Kpi icon={CalendarClock}  label="Em manutenção" value={stats.emManutencao}   tone="amber"   active={fStatus === "EM_MANUTENCAO"}          onClick={() => setFStatus("EM_MANUTENCAO")} />
+        <Kpi icon={AlertTriangle}  label="Vencidos"       value={stats.vencidosStatus} tone="red"     pulse={stats.vencidosStatus > 0} active={fStatus === "VENCIDO"} onClick={() => setFStatus("VENCIDO")} />
+        <Kpi icon={ClipboardCheck} label="Baixados"       value={stats.baixados}       tone="violet"  active={fStatus === "BAIXADO"}                onClick={() => setFStatus("BAIXADO")} />
       </div>
 
       {/* Banner normativa NBR 12962 */}
