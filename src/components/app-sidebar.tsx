@@ -1,4 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
+import { useEffect } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -166,8 +167,15 @@ const MANUTENCAO_LOCKED: LockedItem[] = [
 export function AppSidebar() {
   const location = useLocation();
   const { roles, hasModule, hasMenu } = useAuth();
-  const { state, setOpen, isMobile } = useSidebar();
+  const { state, setOpen, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
+
+  // Fecha o drawer mobile automaticamente ao navegar
+  useEffect(() => {
+    if (isMobile) setOpenMobile(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
   const hoverTimer = (typeof window !== "undefined") ? (window as any) : null;
   const handleMouseEnter = () => {
     if (isMobile) return;
