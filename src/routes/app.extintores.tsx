@@ -1234,6 +1234,12 @@ function HistoricoInspecoesDialog({
             const tone = r.conforme ? "border-emerald-500/40 bg-slate-900/60" : "border-red-500/40 bg-slate-900/60";
             const badge = r.conforme ? "bg-emerald-100 text-emerald-700 border-emerald-300" : "bg-red-100 text-red-700 border-red-300";
             const url = r.foto_path ? urls[`extintores-fotos:${r.foto_path}`] : null;
+            const ncText: string = r.nao_conformidade ?? "";
+            const linkRe = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+            const ncFotos: { label: string; url: string }[] = [];
+            let m: RegExpExecArray | null;
+            while ((m = linkRe.exec(ncText)) !== null) ncFotos.push({ label: m[1], url: m[2] });
+            const ncTextClean = ncText.replace(linkRe, "").replace(/\s+—\s*$/gm, "").replace(/[ \t]+\n/g, "\n").trim();
             return (
               <div key={r.id} className={`rounded-xl border ${tone} p-3 space-y-2`}>
                 <div className="flex items-center justify-between flex-wrap gap-2">
@@ -1248,8 +1254,23 @@ function HistoricoInspecoesDialog({
                   Responsável: <span className="font-semibold text-white">{r.responsavel_nome || "—"}</span>
                   {r.responsavel_registro ? ` · ${r.responsavel_registro}` : ""}
                 </div>
-                {r.nao_conformidade && (
-                  <div className="text-sm text-slate-200"><span className="font-bold text-white">Detalhe:</span> {r.nao_conformidade}</div>
+                {ncTextClean && (
+                  <div className="text-sm text-slate-200 whitespace-pre-line"><span className="font-bold text-white">Detalhe:</span> {ncTextClean}</div>
+                )}
+                {ncFotos.length > 0 && (
+                  <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                    {ncFotos.map((f, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => openByUrl(f.url)}
+                        className="block w-full text-left rounded-md overflow-hidden border border-white/15 hover:border-red-400 bg-slate-950/60 shadow-sm"
+                      >
+                        <img src={f.url} alt={f.label} className="h-24 w-full object-cover" />
+                        <div className="text-xs font-semibold text-slate-100 text-center py-1 border-t border-white/10">{f.label}</div>
+                      </button>
+                    ))}
+                  </div>
                 )}
                 {r.observacoes && (
                   <div className="text-sm text-slate-200"><span className="font-bold text-white">Obs:</span> {r.observacoes}</div>
