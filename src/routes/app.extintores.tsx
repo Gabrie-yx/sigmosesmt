@@ -232,6 +232,23 @@ function ExtintoresPage() {
     const vencidosStatus = all.filter(
       (e) => e.status === "VENCIDO" || (e.status === "ATIVO" && e.proxima_recarga && e.proxima_recarga < hojeISO),
     ).length;
+    // Inspeções do mês (manual + foto/IA) e conformidade
+    const inicioMesISO = inicioMes.toISOString().slice(0, 10);
+    const manuaisMes = (inspecoes.data ?? []).filter((i: any) => i.data_inspecao && i.data_inspecao >= inicioMesISO);
+    const fotosMes = (inspecoesFotos.data ?? []).filter((r: any) => {
+      const d: string = (r.inspecionado_em ?? "").slice(0, 10);
+      return d && d >= inicioMesISO;
+    });
+    const totalInspMes = manuaisMes.length + fotosMes.length;
+    const conformesMes =
+      manuaisMes.filter((i: any) => i.conforme === true).length +
+      fotosMes.filter((r: any) => {
+        const s = (r.status_geral ?? "").toString().toUpperCase();
+        return s === "OK" || s === "CONFORME";
+      }).length;
+    const naoConformesMes = totalInspMes - conformesMes;
+    const conformidadePct = totalInspMes ? Math.round((conformesMes / totalInspMes) * 100) : 0;
+    const pendencias = vencidosStatus + emManutencao + naoConformesMes;
     return {
       total: all.length,
       ativos: ativos.length,
@@ -243,8 +260,12 @@ function ExtintoresPage() {
       emManutencao,
       baixados,
       vencidosStatus,
+      totalInspMes,
+      naoConformesMes,
+      conformidadePct,
+      pendencias,
     };
-  }, [extintores.data, inspecoesMesPorExt]);
+  }, [extintores.data, inspecoesMesPorExt, inspecoes.data, inspecoesFotos.data, inicioMes]);
 
   const onInvalidate = () => {
     qc.invalidateQueries({ queryKey: ["extintores"] });
