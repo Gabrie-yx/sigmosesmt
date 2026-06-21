@@ -128,23 +128,23 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
           <DialogTitle>{title ?? "Visualizar PDF"} — {fileName}</DialogTitle>
         </DialogHeader>
         {signable && (
-          <div className="flex flex-wrap items-center gap-2 border rounded p-2 bg-slate-50 text-xs">
-            <span className="font-bold uppercase text-slate-600">Assinaturas:</span>
+          <div className="flex flex-wrap items-center gap-2 rounded p-2 text-xs border border-rose-900/40 bg-gradient-to-r from-[#1a0510] via-[#2a0814] to-[#1a0510] text-rose-100">
+            <span className="font-bold uppercase tracking-wide text-rose-300/80">Assinaturas:</span>
             {([
               { label: "Encarregado", val: encSig ?? null, set: onChangeEncSig },
               { label: "SESMT", val: sesmtSig ?? null, set: onChangeSesmtSig },
             ] as const).map((s) => (
               <div key={s.label} className="flex items-center gap-1.5">
-                <span className="text-slate-500">{s.label}:</span>
+                <span className="text-rose-200/80">{s.label}:</span>
                 {s.val ? (
                   <>
-                    <img src={s.val} alt={s.label} className="h-7 border bg-white object-contain px-1 rounded" />
-                    <Button type="button" variant="ghost" size="sm" onClick={() => s.set?.(null)}>
+                    <img src={s.val} alt={s.label} className="h-7 border border-rose-900/40 bg-white object-contain px-1 rounded" />
+                    <Button type="button" variant="ghost" size="sm" className="text-rose-200 hover:text-rose-50 hover:bg-rose-900/40" onClick={() => s.set?.(null)}>
                       <X className="h-3.5 w-3.5" />
                     </Button>
                   </>
                 ) : (
-                  <Button type="button" variant="outline" size="sm" onClick={() => s.set && pickSignature(s.set)}>
+                  <Button type="button" variant="outline" size="sm" className="border-rose-500/50 bg-rose-950/40 text-rose-100 hover:bg-rose-900/60 hover:text-rose-50" onClick={() => s.set && pickSignature(s.set)}>
                     <PenLine className="h-3.5 w-3.5 mr-1" />Assinar
                   </Button>
                 )}
