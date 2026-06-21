@@ -887,6 +887,20 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     if (currentStepIdx > 0) setTab(STEPS[currentStepIdx - 1].key as any);
   }
 
+  function emitirDireto() {
+    for (let i = 0; i < STEPS.length; i++) {
+      const err = validateStep(i);
+      if (err) {
+        setTab(STEPS[i].key as any);
+        setStepError(err);
+        toast.error(`Passo ${i + 1}: ${err}`);
+        return;
+      }
+    }
+    setStepError(null);
+    save.mutate(true);
+  }
+
   return (
     <div className="light-paper flex flex-col h-full bg-slate-100">
       {/* Toolbar com stepper linear */}
