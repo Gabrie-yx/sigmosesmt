@@ -154,6 +154,10 @@ function IncidentesPage() {
                 </div>
                 <div className="col-span-2"><Label>Nº da CAT</Label><Input value={form.cat_numero} onChange={(e) => setForm({ ...form, cat_numero: e.target.value })} disabled={!form.cat_emitida} /></div>
               </div>
+              <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
+                <Camera className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>Ao salvar, o painel de <b>Evidências</b> abre automaticamente para você tirar fotos ou anexar arquivos do local, danos e EPIs.</span>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
