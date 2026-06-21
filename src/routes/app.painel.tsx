@@ -1598,47 +1598,55 @@ function KpiBig({
     <div
       className="relative rounded-2xl p-[1.5px] overflow-hidden flex group"
       style={{
-        background: `linear-gradient(135deg, ${accent}F2 0%, ${accent}66 40%, rgba(34,211,238,0.55) 100%)`,
+        background: `linear-gradient(135deg, ${accent} 0%, ${accent}99 50%, ${accent} 100%)`,
         boxShadow:
-          `0 0 0 1px ${accent}59, ` +
-          `0 0 18px ${accent}3D, ` +
-          `0 0 36px ${accent}2E, ` +
-          `0 24px 56px -22px ${accent}4D, ` +
-          (highlight ? `0 0 50px -8px ${accent}A6` : `0 18px 48px -22px ${accent}3D`),
+          `0 0 0 1px ${accent}, ` +
+          `0 0 22px ${accent}B3, ` +
+          `0 0 48px ${accent}80, ` +
+          `0 0 90px ${accent}55, ` +
+          (highlight ? `0 0 70px -4px ${accent}` : `0 22px 60px -18px ${accent}80`),
       }}
     >
       <div
         className="relative rounded-2xl overflow-hidden flex items-center gap-3 p-4 w-full"
-        style={{
-          background:
-            `radial-gradient(120% 80% at 0% 0%, ${accent}40 0%, rgba(15,23,42,0) 55%), ` +
-            `radial-gradient(120% 80% at 100% 100%, ${accent}26 0%, rgba(15,23,42,0) 55%), ` +
-            `linear-gradient(160deg, #0b1228 0%, #0a0f22 45%, #070b1a 100%)`,
-        }}
+        style={{ background: "#0a0f1f" }}
       >
-        {/* focused edge glow — hotspot na borda superior */}
-        <div aria-hidden className="pointer-events-none absolute -top-3 left-[28%] h-6 w-32 rounded-full"
+        {/* TOP edge flare — hotspot intenso */}
+        <div aria-hidden className="pointer-events-none absolute -top-4 left-[20%] h-8 w-40 rounded-full"
           style={{
-            background: `radial-gradient(ellipse at center, ${accent}F2 0%, ${accent}A6 30%, ${accent}40 60%, ${accent}00 80%)`,
+            background: `radial-gradient(ellipse at center, #ffffff 0%, ${accent} 25%, ${accent}CC 50%, ${accent}00 80%)`,
+            filter: "blur(8px)",
+            mixBlendMode: "screen",
+          }} />
+        <div aria-hidden className="pointer-events-none absolute -top-[2px] left-[26%] h-[2px] w-28 rounded-full"
+          style={{
+            background: `linear-gradient(90deg, ${accent}00 0%, #ffffff 50%, ${accent}00 100%)`,
+            filter: "blur(1px)",
+          }} />
+        {/* BOTTOM edge flare — espelho do topo, mais sutil */}
+        <div aria-hidden className="pointer-events-none absolute -bottom-4 right-[20%] h-7 w-36 rounded-full"
+          style={{
+            background: `radial-gradient(ellipse at center, ${accent} 0%, ${accent}99 40%, ${accent}00 80%)`,
+            filter: "blur(8px)",
+            mixBlendMode: "screen",
+          }} />
+        {/* LEFT edge flare */}
+        <div aria-hidden className="pointer-events-none absolute top-[35%] -left-3 h-16 w-6 rounded-full"
+          style={{
+            background: `radial-gradient(ellipse at center, ${accent}E6 0%, ${accent}66 40%, ${accent}00 80%)`,
             filter: "blur(6px)",
             mixBlendMode: "screen",
           }} />
-        <div aria-hidden className="pointer-events-none absolute -top-1 left-[32%] h-1 w-24 rounded-full"
+        {/* RIGHT edge flare */}
+        <div aria-hidden className="pointer-events-none absolute top-[35%] -right-3 h-16 w-6 rounded-full"
           style={{
-            background: `linear-gradient(90deg, ${accent}00 0%, #ffffff 50%, ${accent}00 100%)`,
-            filter: "blur(1.5px)",
+            background: `radial-gradient(ellipse at center, ${accent}E6 0%, ${accent}66 40%, ${accent}00 80%)`,
+            filter: "blur(6px)",
+            mixBlendMode: "screen",
           }} />
-        {/* glossy top highlight */}
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
-          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 40%, transparent 100%)" }} />
-        {/* inner ring */}
+        {/* inner ring — destaca a borda por dentro */}
         <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl"
-          style={{ boxShadow: `inset 0 1px 0 rgba(255,255,255,0.10), inset 0 0 0 1px rgba(148,163,184,0.08), inset 0 -40px 80px -40px ${accent}33` }} />
-        {/* corner glows */}
-        <div aria-hidden className="pointer-events-none absolute -top-20 -left-16 h-48 w-48 rounded-full"
-          style={{ background: `radial-gradient(circle, ${accent}73 0%, ${accent}00 70%)`, filter: "blur(10px)" }} />
-        <div aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 h-48 w-48 rounded-full"
-          style={{ background: `radial-gradient(circle, ${accent}40 0%, ${accent}00 70%)`, filter: "blur(10px)" }} />
+          style={{ boxShadow: `inset 0 0 0 1px ${accent}40, inset 0 0 24px -4px ${accent}55` }} />
 
         <div
           className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 relative z-10"
