@@ -276,30 +276,30 @@ export function PteLookupSheet({
 
           <TabsContent value="nova" className="flex-1 overflow-y-auto p-5 pt-3 m-0 space-y-3">
             <div>
-              <Label className="text-[10px] font-black uppercase text-slate-500">Data</Label>
-              <Input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} className="mt-1" />
+              <Label className="text-[10px] font-black uppercase text-rose-200/70">Data</Label>
+              <Input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} className="mt-1 border-rose-900/60 bg-black/35 text-rose-50" />
             </div>
             <div>
-              <Label className="text-[10px] font-black uppercase text-slate-500">Classificação de risco</Label>
+              <Label className="text-[10px] font-black uppercase text-rose-200/70">Classificação de risco</Label>
               <Select value={form.risco} onValueChange={(v) => setForm({ ...form, risco: v })}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1 border-rose-900/60 bg-black/35 text-rose-50"><SelectValue /></SelectTrigger>
                 <SelectContent>{PTE_RISCOS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-[10px] font-black uppercase text-slate-500">Local do trabalho</Label>
+              <Label className="text-[10px] font-black uppercase text-rose-200/70">Local do trabalho</Label>
               <Input value={form.local} onChange={(e) => setForm({ ...form, local: e.target.value })}
-                placeholder="Ex.: Casco 23, deck superior" className="mt-1" />
+                placeholder="Ex.: Casco 23, deck superior" className="mt-1 border-rose-900/60 bg-black/35 text-rose-50 placeholder:text-rose-200/40" />
             </div>
             <div>
-              <Label className="text-[10px] font-black uppercase text-slate-500">
+              <Label className="text-[10px] font-black uppercase text-rose-200/70">
                 Empresa {empresaId ? "(pré-selecionada pela APR)" : ""}
               </Label>
               <Select
                 value={selectedCompanyId || "none"}
                 onValueChange={(v) => setForm({ ...form, company_id: v === "none" ? "" : v, employee_id: "" })}
               >
-                <SelectTrigger className="mt-1"><SelectValue placeholder="Selecionar empresa..." /></SelectTrigger>
+                <SelectTrigger className="mt-1 border-rose-900/60 bg-black/35 text-rose-50"><SelectValue placeholder="Selecionar empresa..." /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Nenhuma —</SelectItem>
                   {companies.map((c: any) => (
@@ -309,7 +309,7 @@ export function PteLookupSheet({
               </Select>
             </div>
             <div>
-              <Label className="text-[10px] font-black uppercase text-slate-500">
+              <Label className="text-[10px] font-black uppercase text-rose-200/70">
                 Executante {selectedCompanyId ? "(filtrado pela empresa)" : "(selecione uma empresa)"}
               </Label>
               <Select
@@ -317,7 +317,7 @@ export function PteLookupSheet({
                 onValueChange={(v) => setForm({ ...form, employee_id: v === "none" ? "" : v })}
                 disabled={!selectedCompanyId}
               >
-                <SelectTrigger className="mt-1"><SelectValue placeholder={selectedCompanyId ? "Selecionar..." : "Escolha a empresa primeiro"} /></SelectTrigger>
+                <SelectTrigger className="mt-1 border-rose-900/60 bg-black/35 text-rose-50"><SelectValue placeholder={selectedCompanyId ? "Selecionar..." : "Escolha a empresa primeiro"} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Nenhum —</SelectItem>
                   {emps.map((e: any) => {
@@ -333,13 +333,13 @@ export function PteLookupSheet({
             </div>
 
             {!aprId && (
-              <div className="text-[10px] bg-amber-50 border border-amber-200 rounded px-2 py-1.5 text-amber-800">
+              <div className="text-[10px] bg-rose-950/35 border border-rose-800/50 rounded px-2 py-1.5 text-rose-100/80">
                 A APR ainda não foi salva — a nova PTE será criada sem vínculo. Salve a APR e use "Buscar existente" para vincular depois.
               </div>
             )}
 
             <Button onClick={() => criar.mutate()} disabled={criar.isPending}
-              className="w-full bg-orange-600 hover:bg-orange-700 text-xs font-black uppercase">
+              className="w-full bg-gradient-to-br from-rose-700 to-rose-950 hover:from-rose-600 hover:to-rose-900 text-xs font-black uppercase text-rose-50">
               <FileText className="h-4 w-4 mr-1" /> Criar PTE{aprId ? " e vincular" : ""}
             </Button>
           </TabsContent>
