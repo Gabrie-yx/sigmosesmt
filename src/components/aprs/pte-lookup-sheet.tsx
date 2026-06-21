@@ -1,13 +1,13 @@
 import { useMemo, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ShieldAlert, Search, Link2, Plus, FileText, AlertTriangle } from "lucide-react";
+import { ShieldAlert, Search, Link2, Plus, FileText, AlertTriangle, X } from "lucide-react";
 import { toast } from "sonner";
 import { PTE_RISCOS } from "@/lib/constants";
 import { formatDateBR } from "@/lib/utils-date";
@@ -27,6 +27,7 @@ export function PteLookupSheet({
   open, onOpenChange, aprId, aprNumero, aprLocal, riscoSugerido, empresaId, onPick,
 }: Props) {
   const qc = useQueryClient();
+  const [mounted, setMounted] = useState(false);
   const [tab, setTab] = useState<"buscar" | "nova">("buscar");
   const [search, setSearch] = useState("");
   const [filtrarPorRisco, setFiltrarPorRisco] = useState(true);
@@ -44,6 +45,24 @@ export function PteLookupSheet({
     employee_id: "",
     company_id: "",
   });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open || !mounted) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onOpenChange(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open, mounted, onOpenChange]);
 
   useEffect(() => {
     if (open) {
@@ -161,26 +180,36 @@ export function PteLookupSheet({
     onError: (e: any) => toast.error(e.message),
   });
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full sm:max-w-xl flex flex-col p-0 gap-0 border-l border-rose-900/40 text-rose-50"
-        style={{
-          background:
-            "linear-gradient(160deg, rgba(15,5,8,0.98) 0%, rgba(45,8,18,0.98) 55%, rgba(15,5,8,0.99) 100%)",
-          backdropFilter: "none",
-        }}
-      >
-        <SheetHeader className="px-5 py-4 border-b border-rose-900/40 shrink-0">
-          <SheetTitle className="flex items-center gap-2 text-rose-100">
+  if (!mounted || !open) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[120] flex justify-end" role="dialog" aria-modal="true" aria-label="Vincular PTE à APR">
+      <button
+        type="button"
+        aria-label="Fechar PTE"
+        className="absolute inset-0 cursor-default bg-black/70 backdrop-blur-sm"
+        onClick={() => onOpenChange(false)}
+      />
+      <section className="relative z-[121] flex h-full w-full flex-col border-l border-rose-800/50 bg-[#120307] text-rose-50 shadow-[-30px_0_80px_rgba(0,0,0,0.65)] sm:max-w-xl">
+        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(160deg,rgba(15,5,8,0.99)_0%,rgba(55,8,22,0.98)_52%,rgba(10,2,4,0.99)_100%)]" />
+        <div className="relative z-10 flex h-full min-h-0 flex-col">
+        <header className="px-5 py-4 border-b border-rose-900/50 shrink-0">
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/5 text-rose-100 hover:bg-white/10"
+            aria-label="Fechar"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <h2 className="flex items-center gap-2 pr-10 text-lg font-black text-rose-100">
             <ShieldAlert className="h-5 w-5" /> Vincular PTE à APR
-          </SheetTitle>
-          <SheetDescription className="text-xs text-rose-200/70">
+          </h2>
+          <p className="mt-1 text-xs text-rose-200/70">
             {aprNumero ? <>APR <b className="text-rose-100">{aprNumero}</b></> : "Nova APR (não salva)"} ·
             Selecione uma PTE existente ou crie uma nova sem sair da APR.
-          </SheetDescription>
-        </SheetHeader>
+          </p>
+        </header>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0">
           <TabsList className="mx-5 mt-3 grid grid-cols-2 shrink-0">
@@ -315,7 +344,9 @@ export function PteLookupSheet({
             </Button>
           </TabsContent>
         </Tabs>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </section>
+    </div>,
+    document.body,
   );
 }
