@@ -164,25 +164,29 @@ export function ExtintorGlassCard({
                 </div>
 
                 <div className="space-y-3 mt-auto">
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-3 gap-y-1">
-                    <div className="text-[9px] uppercase tracking-[0.18em] text-white/40">
-                      Local no Pátio
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[9px] uppercase tracking-[0.18em] text-white/40">
+                        Local no Pátio
+                      </div>
+                      <div
+                        className="text-sm font-semibold text-white/90 leading-snug break-words line-clamp-2"
+                        title={local}
+                      >
+                        {local}
+                      </div>
                     </div>
-                    <div className="text-[9px] uppercase tracking-[0.18em] text-white/40 text-right">
-                      Próx. recarga
-                    </div>
-                    <div
-                      className="min-w-0 text-sm font-semibold text-white/90 truncate"
-                      title={local}
-                    >
-                      {local}
-                    </div>
-                    <div
-                      className={`text-sm font-bold tabular-nums text-right shrink-0 ${
-                        vencido ? "text-red-400" : "text-emerald-300/90"
-                      }`}
-                    >
-                      {proxRecarga}
+                    <div className="shrink-0 text-right">
+                      <div className="text-[9px] uppercase tracking-[0.18em] text-white/40">
+                        Próx. recarga
+                      </div>
+                      <div
+                        className={`text-sm font-bold tabular-nums ${
+                          vencido ? "text-red-400" : "text-emerald-300/90"
+                        }`}
+                      >
+                        {proxRecarga}
+                      </div>
                     </div>
                   </div>
 
