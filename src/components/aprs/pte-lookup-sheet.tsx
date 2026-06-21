@@ -219,14 +219,14 @@ export function PteLookupSheet({
 
           <TabsContent value="buscar" className="flex-1 overflow-hidden flex flex-col p-5 pt-3 m-0">
             {riscoSugerido && (
-              <div className="mb-2 flex items-center justify-between gap-2 rounded-md border border-orange-200 bg-orange-50 px-2.5 py-1.5">
-                <div className="text-[11px] text-orange-900">
+              <div className="mb-2 flex items-center justify-between gap-2 rounded-md border border-rose-800/50 bg-black/35 px-2.5 py-1.5">
+                <div className="text-[11px] text-rose-100">
                   Categoria pendente: <b>{riscoSugerido}</b>
                 </div>
                 <button
                   type="button"
                   onClick={() => setFiltrarPorRisco((v) => !v)}
-                  className="text-[10px] font-black uppercase text-orange-700 hover:underline"
+                  className="text-[10px] font-black uppercase text-rose-200 hover:text-white hover:underline"
                 >
                   {filtrarPorRisco ? "Mostrar todas" : "Filtrar por risco"}
                 </button>
@@ -234,11 +234,11 @@ export function PteLookupSheet({
             )}
             <Input
               placeholder="Buscar por número, risco, local, executante..."
-              value={search} onChange={(e) => setSearch(e.target.value)} className="mb-3 shrink-0"
+              value={search} onChange={(e) => setSearch(e.target.value)} className="mb-3 shrink-0 border-rose-900/60 bg-black/35 text-rose-50 placeholder:text-rose-200/40"
             />
             <div className="flex-1 overflow-y-auto space-y-2 pr-1">
               {filtered.length === 0 ? (
-                <div className="text-center text-xs text-slate-400 py-8">
+                <div className="text-center text-xs text-rose-200/60 py-8">
                   Nenhuma PTE encontrada
                   {filtrarPorRisco && riscoSugerido && (
                     <div className="mt-1 text-[10px]">Tente "Mostrar todas" ou crie uma nova na aba ao lado.</div>
@@ -247,24 +247,24 @@ export function PteLookupSheet({
               ) : filtered.map((p: any) => {
                 const mismatch = !!riscoSugerido && (p.risco ?? "") !== riscoSugerido;
                 return (
-                <div key={p.id} className={`border rounded-lg p-3 transition ${mismatch ? "border-amber-300 bg-amber-50/40 hover:border-amber-400" : "border-slate-200 hover:border-orange-400 hover:bg-orange-50/40"}`}>
+                <div key={p.id} className={`border rounded-lg p-3 transition ${mismatch ? "border-rose-500/50 bg-rose-950/35 hover:border-rose-400" : "border-rose-900/45 bg-black/30 hover:border-rose-600/70 hover:bg-rose-950/25"}`}>
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="text-xs font-black text-[#991b1b]">{p.numero ?? p.id.slice(0, 8)}</span>
-                    <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${p.status === "ATIVA" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>{p.status}</span>
+                    <span className="text-xs font-black text-rose-100">{p.numero ?? p.id.slice(0, 8)}</span>
+                    <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${p.status === "ATIVA" ? "bg-emerald-500/15 text-emerald-200 border border-emerald-400/25" : "bg-white/10 text-rose-200"}`}>{p.status}</span>
                   </div>
-                  <div className="text-[11px] text-slate-700"><b>Risco:</b> {p.risco ?? "—"}</div>
-                  <div className="text-[11px] text-slate-700"><b>Local:</b> {p.local ?? "—"}</div>
-                  {p.employee_name && <div className="text-[11px] text-slate-600"><b>Executante:</b> {p.employee_name}</div>}
-                  <div className="text-[10px] text-slate-400 mt-1">Emitida em {formatDateBR(p.data_emissao || p.data)}</div>
+                  <div className="text-[11px] text-rose-100/85"><b>Risco:</b> {p.risco ?? "—"}</div>
+                  <div className="text-[11px] text-rose-100/85"><b>Local:</b> {p.local ?? "—"}</div>
+                  {p.employee_name && <div className="text-[11px] text-rose-200/70"><b>Executante:</b> {p.employee_name}</div>}
+                  <div className="text-[10px] text-rose-200/45 mt-1">Emitida em {formatDateBR(p.data_emissao || p.data)}</div>
                   {p.apr_id && p.apr_id !== aprId && (
-                    <div className="text-[10px] text-amber-700 mt-0.5">⚠ Já vinculada a outra APR — vínculo será atualizado</div>
+                    <div className="text-[10px] text-rose-200/75 mt-0.5">⚠ Já vinculada a outra APR — vínculo será atualizado</div>
                   )}
                   {mismatch && (
-                    <div className="text-[10px] text-amber-800 mt-0.5 flex items-center gap-1">
+                    <div className="text-[10px] text-rose-100 mt-0.5 flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" /> Não cobre a categoria pendente "{riscoSugerido}"
                     </div>
                   )}
-                  <Button size="sm" className="w-full mt-2 bg-orange-600 hover:bg-orange-700 text-xs h-8"
+                  <Button size="sm" className="w-full mt-2 h-8 bg-gradient-to-br from-rose-700 to-rose-950 text-xs text-rose-50 hover:from-rose-600 hover:to-rose-900"
                     onClick={() => vincular.mutate(p.id)} disabled={vincular.isPending}>
                     <Link2 className="h-3.5 w-3.5 mr-1" /> Vincular esta PTE
                   </Button>
