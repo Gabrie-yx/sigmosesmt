@@ -28,15 +28,15 @@ const fmt = (d: Date) => d.toISOString().slice(0, 10);
 const today = new Date();
 
 function adColor(p: number) {
-  if (p >= 90) return "text-emerald-600";
-  if (p >= 70) return "text-amber-600";
-  return "text-red-600";
+  if (p >= 90) return "text-emerald-400";
+  if (p >= 70) return "text-amber-300";
+  return "text-red-400";
 }
 function adBg(p: number) {
-  if (p === 0) return "bg-slate-100";
-  if (p >= 90) return "bg-emerald-500";
-  if (p >= 70) return "bg-amber-400";
-  return "bg-red-500";
+  if (p === 0) return "bg-slate-700/60 text-slate-300";
+  if (p >= 90) return "bg-emerald-500 text-white";
+  if (p >= 70) return "bg-amber-400 text-slate-900";
+  return "bg-red-500 text-white";
 }
 
 function DDSPainelPage() {
@@ -186,56 +186,56 @@ function DDSPainelPage() {
         <AlertCard label="Sem DDS há 90+ dias" count={sem90} tone="red" />
       </div>
 
-      <div className="bg-white border rounded-lg p-4">
-        <div className="text-sm font-bold mb-2">Tendência semanal</div>
+      <div className="bg-card text-card-foreground border rounded-lg p-4 shadow-sm">
+        <div className="text-sm font-bold mb-2 text-foreground">Tendência semanal</div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="semana" />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
-              <Tooltip />
-              <Legend />
-              <Line yAxisId="left" type="monotone" dataKey="qtd" stroke="#C8102E" name="Qtd DDS" strokeWidth={2} />
-              <Line yAxisId="right" type="monotone" dataKey="aderencia" stroke="#64748b" name="% Aderência" strokeWidth={2} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+              <XAxis dataKey="semana" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+              <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+              <YAxis yAxisId="right" orientation="right" domain={[0, 100]} stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+              <Tooltip contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", color: "hsl(var(--popover-foreground))", borderRadius: 8 }} />
+              <Legend wrapperStyle={{ color: "hsl(var(--foreground))" }} />
+              <Line yAxisId="left" type="monotone" dataKey="qtd" stroke="#f87171" name="Qtd DDS" strokeWidth={3} dot={{ r: 4, fill: "#f87171" }} activeDot={{ r: 6 }} />
+              <Line yAxisId="right" type="monotone" dataKey="aderencia" stroke="#38bdf8" name="% Aderência" strokeWidth={3} dot={{ r: 4, fill: "#38bdf8" }} activeDot={{ r: 6 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <div className="bg-white border rounded-lg p-4">
-          <div className="text-sm font-bold mb-2">Top temas no período</div>
+        <div className="bg-card text-card-foreground border rounded-lg p-4 shadow-sm">
+          <div className="text-sm font-bold mb-2 text-foreground">Top temas no período</div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={temaCount} layout="vertical" margin={{ left: 80 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis type="category" dataKey="titulo" width={140} tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Bar dataKey="qtd" fill="#a01818" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+                <XAxis type="number" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} allowDecimals={false} />
+                <YAxis type="category" dataKey="titulo" width={140} tick={{ fontSize: 10, fill: "hsl(var(--foreground))" }} stroke="hsl(var(--muted-foreground))" />
+                <Tooltip contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", color: "hsl(var(--popover-foreground))", borderRadius: 8 }} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
+                <Bar dataKey="qtd" fill="#f87171" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white border rounded-lg p-4 overflow-auto">
-          <div className="text-sm font-bold mb-2">Heatmap Setor × Semana</div>
+        <div className="bg-card text-card-foreground border rounded-lg p-4 overflow-auto shadow-sm">
+          <div className="text-sm font-bold mb-2 text-foreground">Heatmap Setor × Semana</div>
           {setores.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">Sem dados de setor</div>
           ) : (
             <table className="text-xs border-collapse">
               <thead>
                 <tr>
-                  <th className="px-2 py-1 text-left font-bold sticky left-0 bg-white">Setor</th>
-                  {semanas.map((s) => <th key={s} className="px-1 py-1 font-mono">{s}</th>)}
+                  <th className="px-2 py-1 text-left font-bold sticky left-0 bg-card text-foreground">Setor</th>
+                  {semanas.map((s) => <th key={s} className="px-1 py-1 font-mono text-muted-foreground">{s}</th>)}
                 </tr>
               </thead>
               <tbody>
                 {setores.map((sec) => (
                   <tr key={sec}>
-                    <td className="px-2 py-1 font-semibold sticky left-0 bg-white">{sec}</td>
+                    <td className="px-2 py-1 font-semibold sticky left-0 bg-card text-foreground">{sec}</td>
                     {semanas.map((s) => {
                       const cell = heatmap.get(`${sec}|${s}`);
                       const ad = cell && cell.n > 0 ? cell.ad / cell.n : 0;
@@ -243,7 +243,7 @@ function DDSPainelPage() {
                         <td key={s} className="p-0.5">
                           <div
                             title={cell ? `${cell.qtd} DDS · ${ad.toFixed(0)}%` : "Sem DDS"}
-                            className={`h-7 w-9 rounded text-white text-[10px] font-bold flex items-center justify-center ${adBg(ad)}`}
+                            className={`h-7 w-9 rounded text-[11px] font-bold flex items-center justify-center ${adBg(cell ? ad : 0)}`}
                           >
                             {cell?.qtd ?? ""}
                           </div>
@@ -258,24 +258,24 @@ function DDSPainelPage() {
         </div>
       </div>
 
-      <div className="bg-white border rounded-lg overflow-hidden">
-        <div className="px-4 py-2 border-b bg-slate-50 text-sm font-bold flex items-center justify-between">
+      <div className="bg-card text-card-foreground border rounded-lg overflow-hidden shadow-sm">
+        <div className="px-4 py-2 border-b bg-muted/40 text-sm font-bold flex items-center justify-between text-foreground">
           <span>Funcionários ativos × tempo sem DDS</span>
           <span className="text-xs text-muted-foreground">{semDDS.length} colaboradores</span>
         </div>
-        <div className="max-h-80 overflow-auto divide-y">
+        <div className="max-h-80 overflow-auto divide-y divide-border">
           {semDDS.slice(0, 100).map((s) => (
-            <div key={s.id} className="grid grid-cols-12 px-4 py-1.5 text-sm items-center">
-              <div className="col-span-7 truncate">{s.nome}</div>
+            <div key={s.id} className="grid grid-cols-12 px-4 py-1.5 text-sm items-center hover:bg-muted/30">
+              <div className="col-span-7 truncate text-foreground">{s.nome}</div>
               <div className="col-span-3 text-xs text-muted-foreground">
                 {s.ultima ? `Último: ${new Date(s.ultima + "T00:00").toLocaleDateString("pt-BR")}` : "Nunca"}
               </div>
               <div className="col-span-2 text-right">
                 <Badge variant="outline" className={
-                  s.dias >= 90 ? "border-red-300 text-red-700 bg-red-50"
-                  : s.dias >= 60 ? "border-orange-300 text-orange-700 bg-orange-50"
-                  : s.dias >= 30 ? "border-amber-300 text-amber-700 bg-amber-50"
-                  : "border-emerald-300 text-emerald-700 bg-emerald-50"
+                  s.dias >= 90 ? "border-red-500/50 text-red-300 bg-red-500/10"
+                  : s.dias >= 60 ? "border-orange-500/50 text-orange-300 bg-orange-500/10"
+                  : s.dias >= 30 ? "border-amber-500/50 text-amber-300 bg-amber-500/10"
+                  : "border-emerald-500/50 text-emerald-300 bg-emerald-500/10"
                 }>
                   {s.ultima ? `${s.dias}d` : "nunca"}
                 </Badge>
@@ -291,26 +291,26 @@ function DDSPainelPage() {
 
 function KPI({ icon: Icon, label, value, hint, valueCls }: { icon: any; label: string; value: string | number; hint?: string; valueCls?: string }) {
   return (
-    <div className="bg-white border rounded-lg p-3">
-      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+    <div className="bg-card text-card-foreground border rounded-lg p-3 shadow-sm hover:border-primary/40 transition-colors">
+      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
         <Icon className="h-3 w-3" />{label}
       </div>
-      <div className={`text-2xl font-bold mt-1 ${valueCls ?? ""}`}>{value}</div>
+      <div className={`text-2xl font-bold mt-1 ${valueCls ?? "text-foreground"}`}>{value}</div>
       {hint && <div className="text-[10px] text-muted-foreground">{hint}</div>}
     </div>
   );
 }
 
 function AlertCard({ label, count, tone }: { label: string; count: number; tone: "amber" | "orange" | "red" }) {
-  const cls = tone === "red" ? "border-red-300 bg-red-50 text-red-800"
-    : tone === "orange" ? "border-orange-300 bg-orange-50 text-orange-800"
-    : "border-amber-300 bg-amber-50 text-amber-800";
+  const cls = tone === "red" ? "border-red-500/60 bg-red-500/10 text-red-300"
+    : tone === "orange" ? "border-orange-500/60 bg-orange-500/10 text-orange-300"
+    : "border-amber-500/60 bg-amber-500/10 text-amber-300";
   return (
-    <div className={`border-2 rounded-lg p-3 flex items-center gap-3 ${cls}`}>
+    <div className={`border-2 rounded-lg p-3 flex items-center gap-3 ${cls} shadow-sm`}>
       <AlertTriangle className="h-6 w-6" />
       <div className="flex-1">
         <div className="text-xs font-bold uppercase tracking-wide">{label}</div>
-        <div className="text-2xl font-black">{count}</div>
+        <div className="text-3xl font-black">{count}</div>
       </div>
     </div>
   );
