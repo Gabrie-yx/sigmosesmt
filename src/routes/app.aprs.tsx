@@ -22,6 +22,7 @@ import { abrirAprPdf, imprimirAprPdf, baixarAprPdf, buildAprPdf } from "@/lib/ap
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
+import { RevalidarLoteDialog, type RevalidarItem } from "@/components/aprs/revalidar-lote-dialog";
 
 export const Route = createFileRoute("/app/aprs")({
   component: AprsPage,
@@ -69,6 +70,25 @@ function AprsPage() {
   const [tstSig, setTstSig] = useState<string | null>(null);
   const [dupSource, setDupSource] = useState<any | null>(null);
   const [dupCascoIds, setDupCascoIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [revalidarOpen, setRevalidarOpen] = useState(false);
+
+  function toggleSel(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function selecionarVencidas(aprsDoGrupo: any[]) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      aprsDoGrupo.forEach((a) => { if (a._vencida) next.add(a.id); });
+      return next;
+    });
+  }
+
 
   async function openPreview(aprId: string, numero?: string | null, eSig?: string | null, tSig?: string | null) {
     try {
@@ -177,6 +197,26 @@ function AprsPage() {
       });
   }, [filtered, cascoMap, ptesByApr, ptesLink]);
 
+  const itensRevalidar: RevalidarItem[] = useMemo(() => {
+    return (filtered as any[])
+      .filter((a) => selectedIds.has(a.id))
+      .map((a) => {
+        const byApr = ptesByApr.get(a.id) ?? [];
+        const legacy = a.pte_id
+          ? (ptesLink as any[]).filter((p) => p.id === a.pte_id && p.apr_id !== a.id)
+          : [];
+        return {
+          id: a.id,
+          numero: a.numero,
+          cascoLabel: a.casco_id ? `CASCO ${cascoMap.get(a.casco_id)?.numero ?? "—"}` : null,
+          data_validade: a.data_validade,
+          validade_dias: a.validade_dias ?? 7,
+          exige_pte: !!a.exige_pte,
+          ptesVinculadas: byApr.length + legacy.length,
+        };
+      });
+  }, [filtered, selectedIds, ptesByApr, ptesLink, cascoMap]);
+
   const del = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("aprs").delete().eq("id", id);
@@ -263,6 +303,15 @@ function AprsPage() {
         </div>
         {isEditor && (
           <div className="flex flex-wrap gap-2">
+            {selectedIds.size > 0 && (
+              <Button
+                onClick={() => setRevalidarOpen(true)}
+                size="lg"
+                className="bg-gradient-to-br from-emerald-600 to-emerald-900 hover:from-emerald-500 hover:to-emerald-800 text-white shadow-[0_0_20px_-4px_rgba(16,185,129,0.6)]"
+              >
+                <ShieldAlert className="h-4 w-4 mr-1" /> Revalidar selecionadas ({selectedIds.size})
+              </Button>
+            )}
             <Button
               onClick={() => { setLoteModeloId(null); setLoteCascoId(null); setLoteOpen(true); }}
               size="lg"
@@ -449,6 +498,15 @@ function AprsPage() {
                             {g.pendentes} PTE pendente{g.pendentes !== 1 ? "s" : ""}
                           </Badge>
                         )}
+                        {isEditor && g.aprs.some((a: any) => a._vencida) && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); selecionarVencidas(g.aprs); }}
+                            className="text-[10px] font-black uppercase px-2 py-0.5 rounded border border-rose-400/40 bg-rose-950/40 text-rose-100 hover:bg-rose-900/60"
+                          >
+                            Selecionar vencidas
+                          </button>
+                        )}
                       </span>
                     </div>
                   </AccordionTrigger>
@@ -457,6 +515,7 @@ function AprsPage() {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            {isEditor && <TableHead className="w-8"></TableHead>}
                             <TableHead>Número</TableHead>
                             <TableHead>Data</TableHead>
                             <TableHead>Empresa</TableHead>
@@ -476,6 +535,15 @@ function AprsPage() {
                             const linkedPtes = [...byApr, ...legacy];
                             return (
                               <TableRow key={a.id} className={a._vencida ? "bg-rose-900/20" : ""}>
+                                {isEditor && (
+                                  <TableCell className="w-8 pr-0">
+                                    <Checkbox
+                                      checked={selectedIds.has(a.id)}
+                                      onCheckedChange={() => toggleSel(a.id)}
+                                      aria-label={`Selecionar APR ${a.numero}`}
+                                    />
+                                  </TableCell>
+                                )}
                                 <TableCell className="font-bold text-rose-200">{a.numero}</TableCell>
                                 <TableCell className="text-sm">{formatDateBR(a.data_emissao)}</TableCell>
                                 <TableCell className="text-sm">{a.empresa_id ? companyMap.get(a.empresa_id) ?? "—" : "—"}</TableCell>
@@ -634,6 +702,13 @@ function AprsPage() {
         sesmtSig={tstSig}
         onChangeEncSig={(v) => { setEncSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), v, tstSig); }}
         onChangeSesmtSig={(v) => { setTstSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), encSig, v); }}
+      />
+
+      <RevalidarLoteDialog
+        open={revalidarOpen}
+        onOpenChange={setRevalidarOpen}
+        items={itensRevalidar}
+        onOpenApr={(id) => { setRevalidarOpen(false); setEditing(id); }}
       />
 
       <Dialog open={!!dupSource} onOpenChange={(o) => { if (!o) { setDupSource(null); setDupCascoIds([]); } }}>
