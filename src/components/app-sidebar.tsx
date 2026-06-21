@@ -137,8 +137,6 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
 
 const DDS_SUBMENU: LeafItem[] = [
   { to: "/app/dds", label: "DDS" },
-  { to: "/app/dds/historico", label: "Histórico Mensal" },
-  { to: "/app/dds/painel", label: "Painel de Qualidade" },
 ];
 
 const ESTOQUE_ITEMS: LeafItem[] = [
