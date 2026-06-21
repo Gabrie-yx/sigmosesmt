@@ -274,7 +274,7 @@ function DDSPainelPage() {
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={trendData}>
+              <ComposedChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" strokeOpacity={0.18} />
                 <XAxis dataKey="semana" stroke="#cbd5e1" tick={{ fill: "#f1f5f9", fontSize: 12, fontWeight: 600 }} tickLine={{ stroke: "#cbd5e1" }} axisLine={{ stroke: "#cbd5e1" }} />
                 <YAxis domain={[0, 100]} stroke="#cbd5e1" tick={{ fill: "#f1f5f9", fontSize: 12, fontWeight: 600 }} tickLine={{ stroke: "#cbd5e1" }} axisLine={{ stroke: "#cbd5e1" }} />
@@ -286,7 +286,7 @@ function DDSPainelPage() {
                   ))}
                 </Bar>
                 <Line type="monotone" dataKey="meta" stroke="#38bdf8" strokeWidth={2} strokeDasharray="6 4" dot={false} name="Meta 90%" />
-              </BarChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
