@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, AlertTriangle, TrendingUp, Users, BookOpen, Activity, Target } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  LineChart, Line, Legend,
+  LineChart, Line, Legend, Cell, ComposedChart,
 } from "recharts";
 
 export const Route = createFileRoute("/app/dds/painel")({
