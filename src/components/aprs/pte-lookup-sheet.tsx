@@ -183,7 +183,7 @@ export function PteLookupSheet({
   if (!mounted || !open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] flex justify-end" role="dialog" aria-modal="true" aria-label="Vincular PTE à APR">
+    <div className="pointer-events-auto fixed inset-0 z-[120] flex justify-end" role="dialog" aria-modal="true" aria-label="Vincular PTE à APR">
       <button
         type="button"
         aria-label="Fechar PTE"
