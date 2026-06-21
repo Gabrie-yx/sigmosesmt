@@ -769,13 +769,14 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
 
       return id!;
     },
-    onSuccess: (id) => {
+    onSuccess: (id, publish) => {
       qc.invalidateQueries({ queryKey: ["aprs"] });
       qc.invalidateQueries({ queryKey: ["ptes-by-apr"] });
       qc.invalidateQueries({ queryKey: ["ptes-linked-apr", id] });
       qc.invalidateQueries({ queryKey: ["ptes-light"] });
-      toast.success("APR salva");
+      toast.success(publish ? "APR emitida" : "APR salva");
       setApr((a) => ({ ...a, id }));
+      if (publish) onClose();
     },
     onError: (e: any) => toast.error(e.message),
   });
