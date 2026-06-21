@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Siren, Plus, Search, AlertTriangle, ShieldAlert, FileText } from "lucide-react";
+import { Siren, Plus, Search, AlertTriangle, ShieldAlert, FileText, Camera, Paperclip, Trash2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/incidentes")({
@@ -43,6 +43,7 @@ function IncidentesPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [evidOpen, setEvidOpen] = useState<string | null>(null);
   const [form, setForm] = useState({
     descricao: "", tipo: "QUASE_ACIDENTE", gravidade: "LEVE",
     data_ocorrencia: new Date().toISOString().slice(0, 16), local: "",
@@ -99,6 +100,9 @@ function IncidentesPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {evidOpen && (
+        <EvidenciasDialog incidenteId={evidOpen} onClose={() => setEvidOpen(null)} userId={user?.id ?? null} />
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -188,6 +192,9 @@ function IncidentesPage() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-1 shrink-0 justify-end">
+                      <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => setEvidOpen(i.id)}>
+                        <ImageIcon className="h-3.5 w-3.5" /> Evidências
+                      </Button>
                       <Badge variant="outline" className="bg-slate-50 text-slate-600">{TIPO_LABEL[i.tipo]}</Badge>
                       <Badge variant="outline" className={GRAV_STYLES[i.gravidade]}>{i.gravidade}</Badge>
                       <Badge variant="outline" className={STATUS_STYLES[i.status]}>{i.status.replace("_", " ")}</Badge>
@@ -201,4 +208,157 @@ function IncidentesPage() {
       </Card>
     </div>
   );
+}
+
+function EvidenciasDialog({ incidenteId, onClose, userId }: { incidenteId: string; onClose: () => void; userId: string | null }) {
+  const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const camRef = useRef<HTMLInputElement>(null);
+
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ["incidente-evid", incidenteId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("incidente_evidencias")
+        .select("*")
+        .eq("incidente_id", incidenteId)
+        .order("uploaded_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const upload = useMutation({
+    mutationFn: async ({ file, tipo }: { file: File; tipo: string }) => {
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `${incidenteId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("incident-photos").upload(path, file, { contentType: file.type });
+      if (upErr) throw upErr;
+      const { error } = await supabase.from("incidente_evidencias").insert({
+        incidente_id: incidenteId,
+        file_path: path,
+        tipo,
+        descricao: file.name,
+        uploaded_by: userId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Evidência anexada");
+      qc.invalidateQueries({ queryKey: ["incidente-evid", incidenteId] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro no upload"),
+  });
+
+  const del = useMutation({
+    mutationFn: async (item: any) => {
+      await supabase.storage.from("incident-photos").remove([item.file_path]);
+      const { error } = await supabase.from("incidente_evidencias").delete().eq("id", item.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Evidência removida");
+      qc.invalidateQueries({ queryKey: ["incidente-evid", incidenteId] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro"),
+  });
+
+  const abrir = async (path: string) => {
+    const { data, error } = await supabase.storage.from("incident-photos").createSignedUrl(path, 60 * 60);
+    if (error || !data?.signedUrl) return toast.error("Não foi possível abrir");
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const handleFiles = (files: FileList | null, tipo: string) => {
+    if (!files) return;
+    Array.from(files).forEach((file) => upload.mutate({ file, tipo }));
+  };
+
+  const isImage = (p: string) => /\.(jpg|jpeg|png|webp|gif|heic)$/i.test(p);
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Camera className="h-5 w-5 text-red-600" /> Evidências do incidente
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="flex gap-2 flex-wrap">
+            <Button onClick={() => camRef.current?.click()} className="bg-red-700 hover:bg-red-800">
+              <Camera className="h-4 w-4 mr-1" /> Tirar foto
+            </Button>
+            <Button variant="outline" onClick={() => fileRef.current?.click()}>
+              <Paperclip className="h-4 w-4 mr-1" /> Anexar arquivos
+            </Button>
+            <input
+              ref={camRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              hidden
+              onChange={(e) => { handleFiles(e.target.files, "FOTO"); e.target.value = ""; }}
+            />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*,application/pdf,video/*"
+              multiple
+              hidden
+              onChange={(e) => { handleFiles(e.target.files, "ANEXO"); e.target.value = ""; }}
+            />
+          </div>
+          {isLoading ? (
+            <div className="text-sm text-slate-500">Carregando...</div>
+          ) : items.length === 0 ? (
+            <div className="text-sm text-slate-500 text-center py-8 border-2 border-dashed rounded-lg">
+              Nenhuma evidência ainda. Tire fotos do local, danos, EPIs, etc.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {items.map((it: any) => (
+                <div key={it.id} className="group relative border rounded-lg overflow-hidden bg-slate-50">
+                  <button
+                    onClick={() => abrir(it.file_path)}
+                    className="w-full aspect-square flex items-center justify-center text-slate-400 hover:bg-slate-100"
+                  >
+                    {isImage(it.file_path) ? (
+                      <ThumbImg path={it.file_path} />
+                    ) : (
+                      <FileText className="h-10 w-10" />
+                    )}
+                  </button>
+                  <div className="px-2 py-1 text-[10px] text-slate-600 truncate" title={it.descricao}>
+                    {it.descricao}
+                  </div>
+                  <button
+                    onClick={() => { if (confirm("Remover esta evidência?")) del.mutate(it); }}
+                    className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ThumbImg({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useMemo(() => {
+    supabase.storage.from("incident-photos").createSignedUrl(path, 60 * 60).then(({ data }) => {
+      if (data?.signedUrl) setUrl(data.signedUrl);
+    });
+  }, [path]);
+  if (!url) return <ImageIcon className="h-8 w-8" />;
+  return <img src={url} alt="" className="w-full h-full object-cover" />;
 }

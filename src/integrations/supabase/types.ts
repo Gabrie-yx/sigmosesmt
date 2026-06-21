@@ -3444,6 +3444,44 @@ export type Database = {
           },
         ]
       }
+      incidente_evidencias: {
+        Row: {
+          descricao: string | null
+          file_path: string
+          id: string
+          incidente_id: string
+          tipo: string | null
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          descricao?: string | null
+          file_path: string
+          id?: string
+          incidente_id: string
+          tipo?: string | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          descricao?: string | null
+          file_path?: string
+          id?: string
+          incidente_id?: string
+          tipo?: string | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidente_evidencias_incidente_id_fkey"
+            columns: ["incidente_id"]
+            isOneToOne: false
+            referencedRelation: "incidentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidentes: {
         Row: {
           acoes_corretivas: string | null
