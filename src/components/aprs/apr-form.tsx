@@ -887,7 +887,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-100">
+    <div className="light-paper flex flex-col h-full bg-slate-100">
       {/* Toolbar com stepper linear */}
       <div className="p-3 bg-white border-b border-slate-300 space-y-2">
         <div className="flex items-center gap-2">
