@@ -943,12 +943,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
               setPteSheetRiscoSugerido(categoriasPendentes[0]?.riscoLabel ?? null);
               setPteSheetOpen(true);
             }}
-            className={categoriasPendentes.length > 0 ? "bg-orange-600 hover:bg-orange-700 text-white animate-pulse" : ""}
+            className={
+              categoriasPendentes.length > 0
+                ? "h-8 px-2.5 text-[11px] bg-gradient-to-br from-rose-700 to-rose-950 hover:from-rose-600 hover:to-rose-900 text-rose-50 border border-rose-400/30 shadow-[0_0_12px_-4px_rgba(220,38,70,0.5)]"
+                : ""
+            }
             title="Vincular ou criar PTE sem sair da APR"
           >
             <FileText className="h-4 w-4 mr-1" />
             {categoriasPendentes.length > 0
-              ? `Resolver ${categoriasPendentes.length} PTE${categoriasPendentes.length > 1 ? "s" : ""} pendente${categoriasPendentes.length > 1 ? "s" : ""}`
+              ? `Resolver ${categoriasPendentes.length} PTE${categoriasPendentes.length > 1 ? "s" : ""}`
               : todasPtesVinculadas.length > 0
               ? "Gerenciar PTEs"
               : "Vincular/Nova PTE"}
