@@ -212,7 +212,7 @@ function DDSPainelPage() {
               <BarChart data={temaCount} layout="vertical" margin={{ left: 80 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
                 <XAxis type="number" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} allowDecimals={false} />
-                <YAxis type="category" dataKey="titulo" width={140} tick={{ fontSize: 10, fill: "hsl(var(--foreground))" }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis type="category" dataKey="titulo" width={150} tick={{ fontSize: 11, fill: "#f1f5f9", fontWeight: 600 }} stroke="#94a3b8" />
                 <Tooltip contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", color: "hsl(var(--popover-foreground))", borderRadius: 8 }} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
                 <Bar dataKey="qtd" fill="#f87171" radius={[0, 4, 4, 0]} />
               </BarChart>
