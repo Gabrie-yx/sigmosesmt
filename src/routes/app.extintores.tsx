@@ -441,7 +441,7 @@ function ExtintoresPage() {
           Nenhum extintor encontrado.
         </div>
       ) : (
-        <div className="bg-black/40 rounded-3xl p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 justify-items-center">
+        <div className="bg-black/40 rounded-3xl p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10 justify-items-stretch">
           {filtered.map((e) => {
             const insp = inspecoesMesPorExt.get(e.id);
             const iaStatus = normalizeIaStatus(e.ultimo_status_inspecao);

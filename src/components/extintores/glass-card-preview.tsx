@@ -70,16 +70,10 @@ export function ExtintorGlassCard({
 
   return (
     <>
-      <div className="flex flex-col items-center gap-2">
+      <div className="w-full">
         <div
-          role="button"
-          tabIndex={0}
-          onClick={() => setOpen(true)}
-          onKeyDown={(ev) => {
-            if (ev.key === "Enter" || ev.key === " ") setOpen(true);
-          }}
-          aria-label={`Abrir extintor ${numero}`}
-          className="relative w-full max-w-[360px] aspect-[3/2] group cursor-pointer focus:outline-none"
+          aria-label={`Extintor ${numero}`}
+          className="relative w-full group focus:outline-none"
         >
           {/* Halo externo — cromado padrão OU vermelho pulsante quando bloqueado */}
           <div
@@ -95,7 +89,7 @@ export function ExtintorGlassCard({
 
           {/* Borda — cromada OU vermelha quando bloqueado */}
           <div
-            className="absolute inset-0 rounded-[26px] p-[1.5px]"
+            className="relative rounded-[26px] p-[1.5px]"
             style={{
               background: indisponivel
                 ? "linear-gradient(135deg, #ff6b6b 0%, #ef4444 25%, #b91c1c 50%, #ef4444 75%, #ff6b6b 100%)"
@@ -107,7 +101,7 @@ export function ExtintorGlassCard({
           >
             {/* Vidro escuro */}
             <div
-              className="relative w-full h-full rounded-[24px] overflow-hidden"
+              className="relative w-full rounded-[24px] overflow-hidden"
               style={{
                 background:
                   "radial-gradient(120% 80% at 50% 0%, #2a2a2a 0%, #161616 40%, #050505 100%)",
@@ -143,7 +137,7 @@ export function ExtintorGlassCard({
               )}
 
               {/* Conteúdo */}
-              <div className="relative z-10 h-full p-5 flex flex-col justify-between text-white text-left">
+              <div className="relative z-10 h-full p-5 flex flex-col gap-4 text-white text-left">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50">
@@ -161,7 +155,7 @@ export function ExtintorGlassCard({
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 mt-auto">
                   <div className="flex items-end justify-between">
                     <div className="min-w-0">
                       <div className="text-[9px] uppercase tracking-[0.18em] text-white/40">
@@ -189,7 +183,6 @@ export function ExtintorGlassCard({
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        onClick={(ev) => ev.stopPropagation()}
                         className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] active:bg-white/[0.18] backdrop-blur-sm py-2 text-xs font-semibold tracking-wide text-white/90 transition"
                       >
                         <ClipboardCheck className="h-3.5 w-3.5" />
@@ -198,7 +191,6 @@ export function ExtintorGlassCard({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="center"
-                      onClick={(ev) => ev.stopPropagation()}
                       className="w-56"
                     >
                       <DropdownMenuLabel className="text-xs">
@@ -225,52 +217,54 @@ export function ExtintorGlassCard({
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+
+                  {/* Barra de ações integrada ao card */}
+                  <div className="flex items-center gap-1.5 pt-2 border-t border-white/10">
+                    <button
+                      type="button"
+                      onClick={onHistorico}
+                      title="Ver todas as inspeções deste extintor"
+                      className="flex-1 h-8 inline-flex items-center justify-center gap-1 rounded-md border border-cyan-500/40 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-200 hover:text-cyan-100 text-[11px] font-bold transition"
+                    >
+                      <History className="h-3.5 w-3.5" />
+                      Histórico
+                      {totalInspecoes > 0 && (
+                        <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[16px] px-1 rounded-full bg-cyan-500 text-slate-950 text-[10px] font-black tabular-nums">
+                          {totalInspecoes}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOpen(true)}
+                      title="Ver detalhes do cadastro"
+                      className="h-8 px-2 inline-flex items-center justify-center gap-1 rounded-md border border-white/15 bg-white/[0.04] hover:bg-white/[0.10] text-white/80 text-[11px] font-semibold transition"
+                    >
+                      Detalhes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onEditar}
+                      title="Editar cadastro"
+                      className="h-8 px-2 inline-flex items-center justify-center gap-1 rounded-md border border-white/15 bg-white/[0.04] hover:bg-white/[0.10] text-white/80 text-[11px] font-semibold transition"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    {podeExcluir && (
+                      <button
+                        type="button"
+                        onClick={onExcluir}
+                        title="Excluir extintor"
+                        className="h-8 px-2 inline-flex items-center justify-center gap-1 rounded-md border border-red-500/30 bg-red-950/30 hover:bg-red-900/50 text-red-300 hover:text-red-200 text-[11px] font-semibold transition"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Barra de ações abaixo do card */}
-        <div className="w-full max-w-[360px] flex items-center gap-1.5">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={onHistorico}
-            className="flex-1 h-8 gap-1 bg-cyan-950/40 border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/60 hover:text-cyan-100 hover:border-cyan-400 text-[11px] font-bold"
-            title="Ver todas as inspeções deste extintor"
-          >
-            <History className="h-3.5 w-3.5" />
-            Histórico
-            {totalInspecoes > 0 && (
-              <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[16px] px-1 rounded-full bg-cyan-500 text-slate-950 text-[10px] font-black tabular-nums">
-                {totalInspecoes}
-              </span>
-            )}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={onEditar}
-            className="h-8 px-2 gap-1 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-cyan-300 text-[11px]"
-            title="Editar cadastro"
-          >
-            <Pencil className="h-3.5 w-3.5" /> Editar
-          </Button>
-          {podeExcluir && (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={onExcluir}
-              className="h-8 px-2 gap-1 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-red-950 hover:text-red-300 hover:border-red-500/40 text-[11px]"
-              title="Excluir extintor"
-            >
-              <Trash2 className="h-3.5 w-3.5" /> Excluir
-            </Button>
-          )}
         </div>
       </div>
 
