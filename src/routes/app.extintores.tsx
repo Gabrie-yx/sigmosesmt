@@ -294,6 +294,9 @@ function ExtintoresPage() {
             <Button variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90" onClick={abrirPdfPlanilha}>
               <Printer className="h-4 w-4" /> Visualizar PDF
             </Button>
+            <Button variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90" onClick={() => setAudOpen(true)}>
+              <ClipboardCheck className="h-4 w-4" /> Relatório de Auditoria
+            </Button>
             <Button variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90" onClick={() => toast.info("Escolha um extintor na lista e clique em Inspecionar.") }>
               <Sparkles className="h-4 w-4" /> Inspeção por foto
             </Button>
