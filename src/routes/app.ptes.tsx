@@ -639,7 +639,7 @@ function PtesPage() {
         </div>
 
         {/* HISTORY */}
-        <div className="glass-card glass-shine rounded-2xl p-8">
+        <div className="glass-card glass-shine rounded-2xl p-4 sm:p-6 md:p-8">
           <h3 className="text-sm font-black text-rose-100 uppercase tracking-widest mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
             <Files className="h-5 w-5" /> Histórico de Permissões
           </h3>
