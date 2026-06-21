@@ -1038,6 +1038,13 @@ function HistoricoInspecoesDialog({
       }
       for (const r of manuais.data ?? []) {
         if (r.foto_path) await sign("extintores-fotos", r.foto_path);
+        const txt: string = r.nao_conformidade ?? "";
+        const re = /\(https?:\/\/[^\s)]*\/storage\/v1\/object\/(?:public|sign)\/extintores-inspecoes\/([^\s?)]+)(?:\?[^\s)]*)?\)/g;
+        let mm: RegExpExecArray | null;
+        while ((mm = re.exec(txt)) !== null) {
+          const p = decodeURIComponent(mm[1]);
+          await sign("extintores-inspecoes", p);
+        }
       }
       setUrls(out);
     })();
@@ -1238,7 +1245,12 @@ function HistoricoInspecoesDialog({
             const linkRe = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
             const ncFotos: { label: string; url: string }[] = [];
             let m: RegExpExecArray | null;
-            while ((m = linkRe.exec(ncText)) !== null) ncFotos.push({ label: m[1], url: m[2] });
+            while ((m = linkRe.exec(ncText)) !== null) {
+              const pm = /\/storage\/v1\/object\/(?:public|sign)\/extintores-inspecoes\/([^\s?)]+)/.exec(m[2]);
+              const path = pm ? decodeURIComponent(pm[1]) : null;
+              const signed = path ? urls[`extintores-inspecoes:${path}`] : null;
+              ncFotos.push({ label: m[1], url: signed || m[2] });
+            }
             const ncTextClean = ncText.replace(linkRe, "").replace(/\s+—\s*$/gm, "").replace(/[ \t]+\n/g, "\n").trim();
             return (
               <div key={r.id} className={`rounded-xl border ${tone} p-3 space-y-2`}>
