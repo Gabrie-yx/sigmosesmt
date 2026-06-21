@@ -29,6 +29,24 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDateBR } from "@/lib/utils-date";
 
+function compactarLocalExtintor(valor: string) {
+  return valor
+    .replace(/PR[EÉ]-?FABRICA[CÇ][AÃ]O/gi, "PRÉ-FAB.")
+    .replace(/PRODU[CÇ][AÃ]O/gi, "PROD.")
+    .replace(/[AÁ]REA DE ABASTECIMENTO/gi, "ÁREA ABAST.")
+    .replace(/ABASTECIMENTO/gi, "ABAST.")
+    .replace(/ESCRIT[OÓ]RIO/gi, "ESCRIT.")
+    .replace(/MANUTEN[CÇ][AÃ]O/gi, "MANUT.")
+    .replace(/AO LADO/gi, "LADO")
+    .replace(/DIREITO/gi, "DIR.")
+    .replace(/ESQUERDO/gi, "ESQ.")
+    .replace(/\b(DO|DA|DE)\b/gi, "")
+    .replace(/\s+·\s+/g, " · ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\.\s*\./g, ".")
+    .trim();
+}
+
 export interface ExtintorGlassCardProps {
   extintor: any;
   totalInspecoes?: number;
@@ -64,6 +82,7 @@ export function ExtintorGlassCard({
     : "—";
   const local =
     [e?.area, e?.localizacao].filter(Boolean).join(" · ") || "—";
+  const localCompacto = compactarLocalExtintor(local);
   const proxRecarga = e?.proxima_recarga ? formatDateBR(e.proxima_recarga) : "—";
   const hojeISO = new Date().toISOString().slice(0, 10);
   const vencido = !!e?.proxima_recarga && e.proxima_recarga < hojeISO;
@@ -170,10 +189,10 @@ export function ExtintorGlassCard({
                         Local no Pátio
                       </div>
                       <div
-                        className="text-sm font-semibold text-white/90 leading-snug break-words line-clamp-2"
+                        className="text-[12px] font-semibold uppercase text-white/90 leading-tight break-words line-clamp-2"
                         title={local}
                       >
-                        {local}
+                        {localCompacto}
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
