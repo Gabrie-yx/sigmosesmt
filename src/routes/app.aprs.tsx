@@ -573,7 +573,11 @@ function AprsPage() {
             <DialogTitle>{editing === "new" ? "Nova APR" : "Editar APR"}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
-            <AprForm key={editing ?? "closed"} aprId={editing === "new" ? null : editing} onClose={() => setEditing(null)} />
+            <AprForm
+              key={editing ?? "closed"}
+              aprId={editing === "new" ? null : editing}
+              onClose={() => setEditing(null)}
+            />
           </div>
         </DialogContent>
       </Dialog>
