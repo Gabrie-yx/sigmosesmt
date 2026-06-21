@@ -56,11 +56,12 @@ export function AppHeader() {
         <button
           type="button"
           onClick={toggleSidebar}
-          className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-white hover:bg-white/10 shrink-0"
+          className="md:hidden inline-flex h-10 items-center gap-1.5 rounded-lg bg-white/15 hover:bg-white/25 active:bg-white/30 px-2.5 text-white shrink-0 ring-1 ring-white/30 shadow-sm"
           aria-label="Abrir menu"
           title="Menu"
         >
           <Menu className="h-5 w-5" />
+          <span className="text-[11px] font-black uppercase tracking-wider">Menu</span>
         </button>
 
         <Link to="/app" className="flex items-center gap-2 hover:opacity-90 transition-opacity shrink-0 min-w-0">
@@ -150,7 +151,7 @@ export function AppHeader() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-white hover:bg-white/10 shrink-0"
+                className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/15 hover:bg-white/25 active:bg-white/30 text-white shrink-0 ring-1 ring-white/30 shadow-sm"
                 aria-label="Mais opções"
                 title="Mais"
               >
