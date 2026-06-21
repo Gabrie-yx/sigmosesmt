@@ -769,13 +769,14 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
 
       return id!;
     },
-    onSuccess: (id) => {
+    onSuccess: (id, publish) => {
       qc.invalidateQueries({ queryKey: ["aprs"] });
       qc.invalidateQueries({ queryKey: ["ptes-by-apr"] });
       qc.invalidateQueries({ queryKey: ["ptes-linked-apr", id] });
       qc.invalidateQueries({ queryKey: ["ptes-light"] });
-      toast.success("APR salva");
+      toast.success(publish ? "APR emitida" : "APR salva");
       setApr((a) => ({ ...a, id }));
+      if (publish) onClose();
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -886,6 +887,20 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
     if (currentStepIdx > 0) setTab(STEPS[currentStepIdx - 1].key as any);
   }
 
+  function emitirDireto() {
+    for (let i = 0; i < STEPS.length; i++) {
+      const err = validateStep(i);
+      if (err) {
+        setTab(STEPS[i].key as any);
+        setStepError(err);
+        toast.error(`Passo ${i + 1}: ${err}`);
+        return;
+      }
+    }
+    setStepError(null);
+    save.mutate(true);
+  }
+
   return (
     <div className="light-paper flex flex-col h-full bg-slate-100">
       {/* Toolbar com stepper linear */}
@@ -960,6 +975,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           <Button variant="outline" size="sm" onClick={handleAbrir} disabled={!apr.id}><FileText className="h-4 w-4 mr-1" /> Abrir PDF</Button>
           <Button variant="outline" size="sm" onClick={handleImprimir} disabled={!apr.id}><Printer className="h-4 w-4 mr-1" /> Imprimir</Button>
           <Button variant="outline" size="sm" onClick={() => save.mutate(false)} disabled={save.isPending}><Save className="h-4 w-4 mr-1" /> Salvar Rascunho</Button>
+          <Button
+            size="sm"
+            onClick={emitirDireto}
+            disabled={save.isPending}
+            style={{ background: APR_RED }}
+            className="text-white font-black uppercase tracking-widest text-[11px] h-8 px-3 shadow-[0_0_12px_-4px_rgba(220,38,70,0.6)]"
+            title="Validar todos os passos e emitir esta APR sem percorrer o wizard"
+          >
+            <Check className="h-4 w-4 mr-1" /> Salvar e Emitir
+          </Button>
           </div>
         </div>
       </div>
