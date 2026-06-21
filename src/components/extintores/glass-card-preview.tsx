@@ -94,17 +94,19 @@ export function ExtintorGlassCard({
           aria-label={`Extintor ${numero}`}
           className="relative w-full group focus:outline-none"
         >
-          {/* Halo externo — cromado padrão OU vermelho pulsante quando bloqueado */}
-          <div
-            className={`pointer-events-none absolute -inset-3 rounded-[34px] blur-xl ${
-              indisponivel ? "animate-pulse opacity-100" : "opacity-90"
-            }`}
-            style={{
-              background: indisponivel
-                ? "radial-gradient(60% 50% at 50% 50%, rgba(239,68,68,0.95) 0%, rgba(239,68,68,0.35) 40%, transparent 75%)"
-                : "radial-gradient(60% 50% at 50% 50%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.15) 35%, transparent 70%)",
-            }}
-          />
+          {/* Halo externo — apenas quando há status relevante (indisponível ou vencido) */}
+          {(indisponivel || vencido) && (
+            <div
+              className={`pointer-events-none absolute -inset-3 rounded-[34px] blur-xl ${
+                indisponivel ? "animate-pulse opacity-100" : "opacity-80"
+              }`}
+              style={{
+                background: indisponivel
+                  ? "radial-gradient(60% 50% at 50% 50%, rgba(239,68,68,0.95) 0%, rgba(239,68,68,0.35) 40%, transparent 75%)"
+                  : "radial-gradient(60% 50% at 50% 50%, rgba(251,191,36,0.7) 0%, rgba(251,191,36,0.25) 40%, transparent 75%)",
+              }}
+            />
+          )}
 
           {/* Borda — cromada OU vermelha quando bloqueado */}
           <div
@@ -115,7 +117,9 @@ export function ExtintorGlassCard({
                 : "linear-gradient(135deg, #ffffff 0%, #b8b8b8 25%, #5a5a5a 50%, #d8d8d8 75%, #ffffff 100%)",
               boxShadow: indisponivel
                 ? "0 0 32px rgba(239,68,68,0.7), 0 0 80px rgba(239,68,68,0.4)"
-                : "0 0 24px rgba(255,255,255,0.35), 0 0 60px rgba(255,255,255,0.15)",
+                : vencido
+                ? "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.2)"
+                : "0 6px 18px rgba(0,0,0,0.45)",
             }}
           >
             {/* Vidro escuro */}
