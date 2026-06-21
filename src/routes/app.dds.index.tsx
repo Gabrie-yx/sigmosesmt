@@ -15,6 +15,7 @@ import { Plus, BookOpen, Users, Search, Calendar, Trash2, Eye, BarChart3, X, Fil
 import { toast } from "sonner";
 import { DDSEvidencias } from "@/components/dds-evidencias";
 import { DDSAttendeesEditor } from "@/components/dds-attendees-editor";
+import { DDSTabsNav } from "@/components/dds-tabs-nav";
 import { gerarFormularioSemanalDDS } from "@/lib/dds-formulario-semanal-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
@@ -110,20 +111,28 @@ function DDSPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-xl md:text-2xl font-bold flex-1">Diálogos Diários de Segurança</h1>
-        <Button asChild variant="outline" size="sm"><Link to="/app/dds/painel"><BarChart3 className="h-4 w-4 mr-1" />Painel</Link></Button>
-        <Button asChild variant="outline" size="sm"><Link to="/app/dds/temas"><BookOpen className="h-4 w-4 mr-1" />Temas</Link></Button>
-        <Button asChild variant="outline" size="sm"><Link to="/app/dds/gestores"><Users className="h-4 w-4 mr-1" />Gestores</Link></Button>
-        {isEditor && <Button onClick={() => setCreating(true)}><Plus className="h-4 w-4 mr-1" />Novo DDS</Button>}
+        <DDSTabsNav />
+        {isEditor && (
+          <Button onClick={() => setCreating(true)} className="bg-gradient-to-br from-rose-600 to-rose-800 hover:from-rose-500 hover:to-rose-700 shadow-[0_4px_18px_-4px_rgba(244,63,94,0.6)]">
+            <Plus className="h-4 w-4 mr-1" />Novo DDS
+          </Button>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPI label="Total (últimos 200)" value={dds.length} />
-        <KPI label="Aderência média" value={`${(dds.reduce((s, d) => s + Number(d.aderencia || 0), 0) / Math.max(dds.length, 1)).toFixed(0)}%`} />
-        <KPI label="Temas ativos" value={temas.length} />
-        <KPI label="Gestores" value={gestores.length} />
-      </div>
+      {(() => {
+        const ad = Math.round(dds.reduce((s, d) => s + Number(d.aderencia || 0), 0) / Math.max(dds.length, 1));
+        const adTone = ad >= 90 ? "emerald" : ad >= 70 ? "amber" : "rose";
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KPI label="Total (últimos 200)" value={dds.length} icon={ClipboardList} tone="cyan" hint="sessões registradas" />
+            <KPI label="Aderência média" value={`${ad}%`} icon={BarChart3} tone={adTone as any} hint={ad >= 90 ? "meta atingida" : ad >= 70 ? "abaixo da meta" : "crítico"} />
+            <KPI label="Temas ativos" value={temas.length} icon={BookOpen} tone="indigo" hint="no catálogo" />
+            <KPI label="Gestores" value={gestores.length} icon={Users} tone="violet" hint="cadastrados" />
+          </div>
+        );
+      })()}
 
       <div className="bg-white border rounded-lg p-3">
         <div className="relative">
@@ -218,11 +227,31 @@ function DDSPage() {
   );
 }
 
-function KPI({ label, value }: { label: string; value: string | number }) {
+function KPI({
+  label, value, icon: Icon, tone = "cyan", hint,
+}: { label: string; value: string | number; icon: typeof ClipboardList; tone?: "cyan" | "emerald" | "amber" | "rose" | "indigo" | "violet"; hint?: string }) {
+  const tones: Record<string, { grad: string; ring: string; iconBg: string; iconColor: string; glow: string; valueColor: string }> = {
+    cyan:    { grad: "from-cyan-500/10 to-cyan-700/5",     ring: "ring-cyan-500/20",    iconBg: "bg-cyan-500/15",    iconColor: "text-cyan-300",    glow: "shadow-[0_8px_30px_-12px_rgba(6,182,212,0.4)]",  valueColor: "text-cyan-200" },
+    emerald: { grad: "from-emerald-500/10 to-emerald-700/5",ring: "ring-emerald-500/25", iconBg: "bg-emerald-500/15", iconColor: "text-emerald-300", glow: "shadow-[0_8px_30px_-12px_rgba(16,185,129,0.45)]",valueColor: "text-emerald-200" },
+    amber:   { grad: "from-amber-500/10 to-amber-700/5",   ring: "ring-amber-500/25",   iconBg: "bg-amber-500/15",   iconColor: "text-amber-300",   glow: "shadow-[0_8px_30px_-12px_rgba(245,158,11,0.4)]", valueColor: "text-amber-200" },
+    rose:    { grad: "from-rose-500/10 to-rose-700/5",     ring: "ring-rose-500/25",    iconBg: "bg-rose-500/15",    iconColor: "text-rose-300",    glow: "shadow-[0_8px_30px_-12px_rgba(244,63,94,0.5)]",  valueColor: "text-rose-200" },
+    indigo:  { grad: "from-indigo-500/10 to-indigo-700/5", ring: "ring-indigo-500/25",  iconBg: "bg-indigo-500/15",  iconColor: "text-indigo-300",  glow: "shadow-[0_8px_30px_-12px_rgba(99,102,241,0.4)]", valueColor: "text-indigo-200" },
+    violet:  { grad: "from-violet-500/10 to-violet-700/5", ring: "ring-violet-500/25",  iconBg: "bg-violet-500/15",  iconColor: "text-violet-300",  glow: "shadow-[0_8px_30px_-12px_rgba(139,92,246,0.4)]", valueColor: "text-violet-200" },
+  };
+  const t = tones[tone];
   return (
-    <div className="bg-white border rounded-lg p-3">
-      <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="text-2xl font-bold mt-1">{value}</div>
+    <div className={`group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br ${t.grad} ring-1 ${t.ring} ${t.glow} p-4 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5`}>
+      <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/[0.03] blur-2xl pointer-events-none" />
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">{label}</div>
+          <div className={`text-3xl font-black mt-1 ${t.valueColor} tabular-nums leading-none`}>{value}</div>
+          {hint && <div className="text-[10px] text-slate-500 mt-1.5 uppercase tracking-wide">{hint}</div>}
+        </div>
+        <div className={`shrink-0 ${t.iconBg} ${t.iconColor} rounded-lg p-2 ring-1 ring-inset ring-white/10 group-hover:scale-110 transition-transform`}>
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
     </div>
   );
 }
