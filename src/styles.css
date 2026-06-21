@@ -1036,8 +1036,7 @@
    .app-glass-scope e .modal-glass-scope nas classes Tailwind comuns.
    Usar adicionando a classe `light-paper` no container raiz.
    ====================================================================== */
-.light-paper,
-.light-paper * {
+.light-paper {
   color: rgb(15 23 42);
 }
 .light-paper :is(.bg-white, .bg-white\/60, .bg-white\/70, .bg-white\/80) {
