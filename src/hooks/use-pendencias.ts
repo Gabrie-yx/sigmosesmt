@@ -111,6 +111,7 @@ export function usePendencias() {
       const seteAtras = daqui(-7);
       const { count } = await supabase
         .from("ptes").select("id", { count: "exact", head: true })
+        .eq("status", "ATIVA")
         .lt("data_emissao", seteAtras);
       return count ?? 0;
     },
