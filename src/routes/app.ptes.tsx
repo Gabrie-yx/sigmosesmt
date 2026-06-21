@@ -245,7 +245,11 @@ function PtesPage() {
       };
 
       if (editingId) {
-        const { error } = await supabase.from("ptes").update(commonPayload).eq("id", editingId);
+        // Reemissão: ao atualizar, considera como nova emissão (zera o "envelhecimento" de 7 dias)
+        const { error } = await supabase
+          .from("ptes")
+          .update({ ...commonPayload, data_emissao: new Date().toISOString() })
+          .eq("id", editingId);
         if (error) throw error;
       } else {
         const numero = `${f.tipo_pt}-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`;
