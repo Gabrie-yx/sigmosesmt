@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { PanelLeft } from "lucide-react";
+import { PanelLeft, X } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -189,26 +189,40 @@ const Sidebar = React.forwardRef<
     }
 
     if (isMobile) {
+      if (!openMobile) return null;
+
       return (
-        <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-          <SheetContent
+        <>
+          <button
+            type="button"
+            aria-label="Fechar menu"
+            className="fixed inset-0 z-40 bg-background/80"
+            onClick={() => setOpenMobile(false)}
+          />
+          <aside
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-(--sidebar-width) p-0 text-sidebar-foreground [&>button]:hidden bg-[#1a0510] border-r border-[#a01818]/70 shadow-2xl"
+            className="mobile-sidebar-panel fixed inset-y-0 left-0 z-50 flex max-w-[88vw] flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+                width: SIDEBAR_WIDTH_MOBILE,
               } as React.CSSProperties
             }
-            side={side}
+            ref={ref}
+            {...props}
           >
-            <SheetHeader className="sr-only">
-              <SheetTitle>Sidebar</SheetTitle>
-              <SheetDescription>Displays the mobile sidebar.</SheetDescription>
-            </SheetHeader>
-            <div className="flex h-full w-full flex-col">{children}</div>
-          </SheetContent>
-        </Sheet>
+            <button
+              type="button"
+              aria-label="Fechar menu"
+              className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-md border border-sidebar-border bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+              onClick={() => setOpenMobile(false)}
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex h-full w-full flex-col overflow-hidden pt-12">{children}</div>
+          </aside>
+        </>
       );
     }
 
