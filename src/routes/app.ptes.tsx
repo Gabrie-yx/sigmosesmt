@@ -534,7 +534,12 @@ function PtesPage() {
                   {empOptions.map(({ e, st, compName }) => {
                     const blocked = !st.acessoPermitido;
                     return (
-                      <option key={e.id} value={e.id} disabled={blocked && f.requisitante_id !== e.id}>
+                      <option
+                        key={e.id}
+                        value={e.id}
+                        disabled={blocked && f.requisitante_id !== e.id}
+                        style={{ color: blocked ? "#9f1239" : "#0f172a", background: "#fff" }}
+                      >
                         {blocked ? "🚫" : "✅"} {e.nome} - [{compName}]
                       </option>
                     );
@@ -576,7 +581,12 @@ function PtesPage() {
                   {empOptions
                     .filter(({ e }) => !f.executantes_ids.includes(e.id))
                     .map(({ e, st, compName }) => (
-                      <option key={e.id} value={e.id} disabled={!st.acessoPermitido}>
+                      <option
+                        key={e.id}
+                        value={e.id}
+                        disabled={!st.acessoPermitido}
+                        style={{ color: st.acessoPermitido ? "#0f172a" : "#9f1239", background: "#fff" }}
+                      >
                         {st.acessoPermitido ? "✅" : "🚫"} {e.nome} - [{compName}]
                       </option>
                     ))}
