@@ -154,6 +154,18 @@ function ExtintoresPage() {
     return map;
   }, [inspecoesFotos.data]);
 
+  // Contador total de inspeções (foto + manual) por extintor, pra mostrar no card
+  const totalInspecoesPorExt = useMemo(() => {
+    const map = new Map<string, number>();
+    (inspecoesFotos.data ?? []).forEach((r) => {
+      map.set(r.extintor_id, (map.get(r.extintor_id) ?? 0) + 1);
+    });
+    (inspecoes.data ?? []).forEach((r) => {
+      map.set(r.extintor_id, (map.get(r.extintor_id) ?? 0) + 1);
+    });
+    return map;
+  }, [inspecoesFotos.data, inspecoes.data]);
+
   const areas = useMemo(() => {
     const set = new Set<string>();
     (extintores.data ?? []).forEach((e) => e.area && set.add(e.area));
@@ -650,11 +662,20 @@ function ExtintoresPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 w-8 p-0 shrink-0 bg-slate-900/60 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-cyan-300"
+                    className="h-8 px-2 shrink-0 bg-cyan-950/40 border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/60 hover:text-cyan-100 hover:border-cyan-400 gap-1 text-[11px] font-bold shadow-[0_0_10px_-3px_rgba(34,211,238,0.5)]"
                     onClick={() => setHistExt(e)}
-                    title="Histórico"
+                    title="Ver todas as inspeções deste extintor"
                   >
                     <History className="h-3.5 w-3.5" />
+                    Histórico
+                    {(() => {
+                      const n = totalInspecoesPorExt.get(e.id) ?? 0;
+                      return n > 0 ? (
+                        <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[16px] px-1 rounded-full bg-cyan-500 text-slate-950 text-[10px] font-black tabular-nums">
+                          {n}
+                        </span>
+                      ) : null;
+                    })()}
                   </Button>
                   <Button
                     size="sm"
