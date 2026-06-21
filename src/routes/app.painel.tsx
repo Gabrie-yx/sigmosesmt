@@ -582,49 +582,45 @@ function TstPanel() {
     return { atual, recorde, dataInicio: atualRec?.data_inicio ?? null };
   }, [data, filterCompany]);
 
-  // === DDS Planejado vs Realizado (config: meta por dia da semana em company_settings) ===
+  // === DDS Planejado vs Realizado ===
+  // Regra de negócio: o DDS é aplicado seg/qua/sex e os colaboradores assinam
+  // de segunda a sexta — uma sessão na semana cobre todos os dias úteis daquela semana.
+  // Portanto contamos DIAS ÚTEIS (seg-sex) cobertos por semanas com ≥1 DDS.
   const ddsPlanRealizado = useMemo(() => {
-    const settings: any = (data as any)?.settings;
-    const diasSemanaCfg: number[] = settings?.meta_dds_dias_semana ?? [1, 3, 5]; // seg/qua/sex
     const inicio = new Date(today.getTime() - dias * dayMs);
-    // conta dias do período que caem nos dias-da-semana configurados
-    let planejados = 0;
-    for (let d = new Date(inicio); d <= today; d.setDate(d.getDate() + 1)) {
-      if (diasSemanaCfg.includes(d.getDay())) planejados++;
-    }
-    planejados = Math.max(1, planejados);
-    const realizados = ddsCount;
-    const pct = Math.min(100, Math.round((realizados / planejados) * 100));
-    // Serie por semana
-    const map = new Map<string, { sem: string; real: number; plan: number }>();
-    const semanas = Math.max(1, Math.ceil(dias / 7));
-    // popula buckets de semana com plan = nº de dias config naquela semana
+    // semanas que tiveram ≥1 DDS (chave = segunda-feira da semana)
+    const semanasComDDS = new Set<string>();
+    (data?.dds ?? []).forEach((d: any) => {
+      const dt = new Date(d.data + "T00:00");
+      const day = (dt.getDay() + 6) % 7; // 0 = seg
+      const wk = new Date(dt.getTime() - day * dayMs);
+      semanasComDDS.add(fmt(wk));
+    });
+    // monta buckets de semana e conta dias úteis (seg-sex) dentro do período
+    const map = new Map<string, { sem: string; real: number; plan: number; key: string }>();
+    const semanas = Math.max(1, Math.ceil(dias / 7) + 1);
     for (let i = 0; i < semanas; i++) {
       const ref = new Date(today.getTime() - i * 7 * dayMs);
       const day = (ref.getDay() + 6) % 7;
       const wk = new Date(ref.getTime() - day * dayMs);
       const key = fmt(wk);
-      const label = `${String(wk.getDate()).padStart(2, "0")}/${MONTHS_PT[wk.getMonth()]}`;
+      if (map.has(key)) continue;
       let planSem = 0;
-      for (let k = 0; k < 7; k++) {
+      for (let k = 0; k < 5; k++) { // seg..sex
         const d2 = new Date(wk.getTime() + k * dayMs);
-        if (d2 <= today && d2 >= inicio && diasSemanaCfg.includes(d2.getDay())) planSem++;
+        if (d2 <= today && d2 >= inicio) planSem++;
       }
-      map.set(key, { sem: label, real: 0, plan: planSem });
+      if (planSem === 0) continue;
+      const real = semanasComDDS.has(key) ? planSem : 0;
+      const label = `${String(wk.getDate()).padStart(2, "0")}/${MONTHS_PT[wk.getMonth()]}`;
+      map.set(key, { sem: label, real, plan: planSem, key });
     }
-    (data?.dds ?? []).forEach((d: any) => {
-      const dt = new Date(d.data + "T00:00");
-      const day = (dt.getDay() + 6) % 7;
-      const wk = new Date(dt.getTime() - day * dayMs);
-      const key = fmt(wk);
-      const cur = map.get(key);
-      if (cur) cur.real += 1;
-    });
-    const series = Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([, v]) => v);
+    const series = Array.from(map.values()).sort((a, b) => a.key.localeCompare(b.key));
+    const planejados = Math.max(1, series.reduce((s, v) => s + v.plan, 0));
+    const realizados = series.reduce((s, v) => s + v.real, 0);
+    const pct = Math.min(100, Math.round((realizados / planejados) * 100));
     return { planejados, realizados, pct, series };
-  }, [data, dias, ddsCount]);
+  }, [data, dias]);
 
   // === TF / TG (acumulado 12 meses) — NBR 14280 ===
   // TF = (nº acidentes com afastamento × 1.000.000) ÷ HHT
