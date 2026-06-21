@@ -975,6 +975,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           <Button variant="outline" size="sm" onClick={handleAbrir} disabled={!apr.id}><FileText className="h-4 w-4 mr-1" /> Abrir PDF</Button>
           <Button variant="outline" size="sm" onClick={handleImprimir} disabled={!apr.id}><Printer className="h-4 w-4 mr-1" /> Imprimir</Button>
           <Button variant="outline" size="sm" onClick={() => save.mutate(false)} disabled={save.isPending}><Save className="h-4 w-4 mr-1" /> Salvar Rascunho</Button>
+          <Button
+            size="sm"
+            onClick={emitirDireto}
+            disabled={save.isPending}
+            style={{ background: APR_RED }}
+            className="text-white font-black uppercase tracking-widest text-[11px] h-8 px-3 shadow-[0_0_12px_-4px_rgba(220,38,70,0.6)]"
+            title="Validar todos os passos e emitir esta APR sem percorrer o wizard"
+          >
+            <Check className="h-4 w-4 mr-1" /> Salvar e Emitir
+          </Button>
           </div>
         </div>
       </div>
