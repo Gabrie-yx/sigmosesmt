@@ -89,26 +89,6 @@ function AprsPage() {
     });
   }
 
-  const itensRevalidar: RevalidarItem[] = useMemo(() => {
-    return (filtered as any[])
-      .filter((a) => selectedIds.has(a.id))
-      .map((a) => {
-        const byApr = ptesByApr.get(a.id) ?? [];
-        const legacy = a.pte_id
-          ? (ptesLink as any[]).filter((p) => p.id === a.pte_id && p.apr_id !== a.id)
-          : [];
-        return {
-          id: a.id,
-          numero: a.numero,
-          cascoLabel: a.casco_id ? `CASCO ${cascoMap.get(a.casco_id)?.numero ?? "—"}` : null,
-          data_validade: a.data_validade,
-          validade_dias: a.validade_dias ?? 7,
-          exige_pte: !!a.exige_pte,
-          ptesVinculadas: byApr.length + legacy.length,
-        };
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtered, selectedIds, ptesByApr, ptesLink, cascoMap]);
 
   async function openPreview(aprId: string, numero?: string | null, eSig?: string | null, tSig?: string | null) {
     try {
