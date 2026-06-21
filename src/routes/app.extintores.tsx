@@ -1038,6 +1038,13 @@ function HistoricoInspecoesDialog({
       }
       for (const r of manuais.data ?? []) {
         if (r.foto_path) await sign("extintores-fotos", r.foto_path);
+        const txt: string = r.nao_conformidade ?? "";
+        const re = /\(https?:\/\/[^\s)]*\/storage\/v1\/object\/(?:public|sign)\/extintores-inspecoes\/([^\s?)]+)(?:\?[^\s)]*)?\)/g;
+        let mm: RegExpExecArray | null;
+        while ((mm = re.exec(txt)) !== null) {
+          const p = decodeURIComponent(mm[1]);
+          await sign("extintores-inspecoes", p);
+        }
       }
       setUrls(out);
     })();
