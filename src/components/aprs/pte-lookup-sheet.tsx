@@ -163,13 +163,21 @@ export function PteLookupSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="light-paper w-full sm:max-w-xl flex flex-col p-0 gap-0 bg-white">
-        <SheetHeader className="px-5 py-4 border-b shrink-0">
-          <SheetTitle className="flex items-center gap-2 text-orange-700">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-xl flex flex-col p-0 gap-0 border-l border-rose-900/40 text-rose-50"
+        style={{
+          background:
+            "linear-gradient(160deg, rgba(15,5,8,0.98) 0%, rgba(45,8,18,0.98) 55%, rgba(15,5,8,0.99) 100%)",
+          backdropFilter: "none",
+        }}
+      >
+        <SheetHeader className="px-5 py-4 border-b border-rose-900/40 shrink-0">
+          <SheetTitle className="flex items-center gap-2 text-rose-100">
             <ShieldAlert className="h-5 w-5" /> Vincular PTE à APR
           </SheetTitle>
-          <SheetDescription className="text-xs">
-            {aprNumero ? <>APR <b>{aprNumero}</b></> : "Nova APR (não salva)"} ·
+          <SheetDescription className="text-xs text-rose-200/70">
+            {aprNumero ? <>APR <b className="text-rose-100">{aprNumero}</b></> : "Nova APR (não salva)"} ·
             Selecione uma PTE existente ou crie uma nova sem sair da APR.
           </SheetDescription>
         </SheetHeader>
