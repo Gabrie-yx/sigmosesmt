@@ -93,7 +93,14 @@ function PtesPage() {
   }, [search.apr_id, aprsAll]);
   const { data: emps = [] } = useQuery({
     queryKey: ["employees-light"],
-    queryFn: async () => (await supabase.from("employees").select("id,nome,matricula,company_id,role_id,nrs,status,data_aso").order("nome")).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("employees")
+          .select("id,nome,matricula,company_id,role_id,nrs,status,data_aso")
+          .eq("status", "ATIVO")
+          .order("nome")
+      ).data ?? [],
   });
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
