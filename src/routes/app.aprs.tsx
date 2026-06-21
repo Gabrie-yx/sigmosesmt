@@ -511,7 +511,7 @@ function AprsPage() {
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="w-52">
-                                      <DropdownMenuItem onClick={() => abrirAprPdf(a.id).catch((e) => toast.error(e.message))}>
+                                      <DropdownMenuItem onClick={() => openPreview(a.id, a.numero)}>
                                         <Eye className="h-4 w-4 mr-2" /> Visualizar PDF
                                       </DropdownMenuItem>
                                       <DropdownMenuItem onClick={() => imprimirAprPdf(a.id).catch((e) => toast.error(e.message))}>
