@@ -314,19 +314,19 @@ function PtesPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 animate-fadeIn h-full overflow-y-auto custom-scrollbar">
-      <div className="mb-8">
-        <h2 className="heading-display text-3xl md:text-4xl text-rose-100 drop-shadow-[0_2px_12px_rgba(220,38,70,0.45)]">
+    <div className="p-4 md:p-8 animate-fadeIn h-full overflow-y-auto custom-scrollbar">
+      <div className="mb-6 md:mb-8">
+        <h2 className="heading-display text-2xl md:text-4xl text-rose-100 drop-shadow-[0_2px_12px_rgba(220,38,70,0.45)]">
           Permissões de Trabalho
         </h2>
-        <p className="text-xs font-bold uppercase tracking-widest text-rose-200/60 mt-1">
+        <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-rose-200/60 mt-1">
           PT • PTE • PET • emissão, validade e impressão
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 items-start">
         {/* FORM */}
-        <div className="glass-card glass-shine rounded-2xl p-8">
+        <div className="glass-card glass-shine rounded-2xl p-4 sm:p-6 md:p-8">
           <h3 className="text-sm font-black text-rose-100 uppercase tracking-widest mb-6 border-b border-white/10 pb-4 flex items-center justify-between">
             <span className="flex items-center gap-2"><FileText className="h-5 w-5" />
               {editingId ? "Editar Permissão" : "Nova Permissão de Trabalho"}
