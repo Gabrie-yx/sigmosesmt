@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, ArrowLeft, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { DDSTabsNav } from "@/components/dds-tabs-nav";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/dds/temas")({
@@ -116,7 +117,7 @@ function DDSTemasPage() {
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="sm"><Link to="/app/dds"><ArrowLeft className="h-4 w-4 mr-1" />DDS</Link></Button>
+        <DDSTabsNav />
         <h1 className="text-xl md:text-2xl font-bold flex-1">Biblioteca de Temas — DDS</h1>
         {isEditor && (
           <Button onClick={() => setEditing({ ...empty })}><Plus className="h-4 w-4 mr-1" />Novo tema</Button>

@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, FileText, FileDown, Paperclip, Loader2 } from "lucide-react";
+import { FileText, FileDown, Paperclip, Loader2 } from "lucide-react";
+import { DDSTabsNav } from "@/components/dds-tabs-nav";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/dds/historico")({
@@ -150,7 +151,7 @@ function DDSHistoricoPage() {
   return (
     <div className="container mx-auto px-4 py-6 space-y-4">
       <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="sm"><Link to="/app/dds"><ArrowLeft className="h-4 w-4 mr-1" />DDS</Link></Button>
+        <DDSTabsNav />
         <h1 className="text-xl font-bold">Histórico Mensal de DDS</h1>
       </div>
 
