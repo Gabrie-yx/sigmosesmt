@@ -704,6 +704,13 @@ function AprsPage() {
         onChangeSesmtSig={(v) => { setTstSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), encSig, v); }}
       />
 
+      <RevalidarLoteDialog
+        open={revalidarOpen}
+        onOpenChange={setRevalidarOpen}
+        items={itensRevalidar}
+        onOpenApr={(id) => { setRevalidarOpen(false); setEditing(id); }}
+      />
+
       <Dialog open={!!dupSource} onOpenChange={(o) => { if (!o) { setDupSource(null); setDupCascoIds([]); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
