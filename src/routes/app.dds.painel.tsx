@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, AlertTriangle, TrendingUp, Users, BookOpen, Activity, Target } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  LineChart, Line, Legend,
+  LineChart, Line, Legend, Cell, ComposedChart,
 } from "recharts";
 
 export const Route = createFileRoute("/app/dds/painel")({
@@ -124,37 +124,60 @@ function DDSPainelPage() {
   }, [dds, temaMap]);
 
   const trendData = useMemo(() => {
-    const buckets = new Map<string, { semana: string; qtd: number; aderencia: number; n: number }>();
+    const buckets = new Map<string, { semana: string; qtd: number; aderencia: number; n: number; esperados: number; presentes: number }>();
     for (const d of dds) {
       const date = new Date(d.data + "T00:00");
       const monday = new Date(date);
       monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
       const k = fmt(monday);
-      const cur = buckets.get(k) ?? { semana: k.slice(5), qtd: 0, aderencia: 0, n: 0 };
-      cur.qtd += 1; cur.aderencia += Number(d.aderencia || 0); cur.n += 1;
+      const cur = buckets.get(k) ?? { semana: k.slice(5), qtd: 0, aderencia: 0, n: 0, esperados: 0, presentes: 0 };
+      cur.qtd += 1;
+      cur.aderencia += Number(d.aderencia || 0);
+      cur.n += 1;
+      cur.esperados += Number(d.participantes_esperados || 0);
+      cur.presentes += Number(d.participantes_presentes || 0);
       buckets.set(k, cur);
     }
     return Array.from(buckets.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([, v]) => ({ semana: v.semana, qtd: v.qtd, aderencia: v.n > 0 ? Math.round(v.aderencia / v.n) : 0 }));
+      .map(([, v]) => ({
+        semana: v.semana,
+        esperados: v.esperados,
+        presentes: v.presentes,
+        aderencia: v.n > 0 ? Math.round(v.aderencia / v.n) : 0,
+        meta: 90,
+      }));
   }, [dds]);
 
-  const setores = useMemo(() => Array.from(new Set(dds.map((d) => d.setor).filter(Boolean) as string[])).sort(), [dds]);
-  const semanas = useMemo(() => Array.from(new Set(trendData.map((t) => t.semana))), [trendData]);
-  const heatmap = useMemo(() => {
-    const m = new Map<string, { qtd: number; ad: number; n: number }>();
+  // Top temas: agrupado por CATEGORIA + CRITICIDADE (alcance = soma de presentes)
+  const categoriaData = useMemo(() => {
+    const m = new Map<string, { categoria: string; qtd: number; alcance: number }>();
     for (const d of dds) {
-      if (!d.setor) continue;
-      const date = new Date(d.data + "T00:00");
-      const monday = new Date(date);
-      monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
-      const k = `${d.setor}|${fmt(monday).slice(5)}`;
-      const cur = m.get(k) ?? { qtd: 0, ad: 0, n: 0 };
-      cur.qtd += 1; cur.ad += Number(d.aderencia || 0); cur.n += 1;
-      m.set(k, cur);
+      const t = d.tema_id ? temaMap[d.tema_id] : null;
+      const cat = t?.categoria || (d.tema_livre ? "LIVRE" : "—");
+      const cur = m.get(cat) ?? { categoria: cat, qtd: 0, alcance: 0 };
+      cur.qtd += 1;
+      cur.alcance += Number(d.participantes_presentes || 0);
+      m.set(cat, cur);
     }
-    return m;
-  }, [dds]);
+    return Array.from(m.values()).sort((a, b) => b.qtd - a.qtd);
+  }, [dds, temaMap]);
+
+  const criticidadeData = useMemo(() => {
+    const order = ["ALTA", "MEDIA", "MÉDIA", "BAIXA", "—"];
+    const m = new Map<string, number>();
+    for (const d of dds) {
+      const t = d.tema_id ? temaMap[d.tema_id] : null;
+      const c = (t?.criticidade || "—").toUpperCase();
+      m.set(c, (m.get(c) ?? 0) + 1);
+    }
+    return Array.from(m.entries())
+      .map(([criticidade, qtd]) => ({ criticidade, qtd }))
+      .sort((a, b) => order.indexOf(a.criticidade) - order.indexOf(b.criticidade));
+  }, [dds, temaMap]);
+
+  const critColor = (c: string) =>
+    c === "ALTA" ? "#f87171" : c === "MEDIA" || c === "MÉDIA" ? "#fbbf24" : c === "BAIXA" ? "#34d399" : "#94a3b8";
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
@@ -187,7 +210,10 @@ function DDSPainelPage() {
       </div>
 
       <div className="bg-card text-card-foreground border rounded-lg p-4 shadow-sm">
-        <div className="text-sm font-bold mb-2 text-foreground">Tendência semanal</div>
+        <div className="flex items-baseline justify-between mb-2">
+          <div className="text-sm font-bold text-foreground">Tendência semanal — Participação vs Aderência</div>
+          <div className="text-[11px] text-muted-foreground">Meta de aderência: 90%</div>
+        </div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={trendData}>
@@ -197,8 +223,10 @@ function DDSPainelPage() {
               <YAxis yAxisId="right" orientation="right" domain={[0, 100]} stroke="#cbd5e1" tick={{ fill: "#f1f5f9", fontSize: 12, fontWeight: 600 }} tickLine={{ stroke: "#cbd5e1" }} axisLine={{ stroke: "#cbd5e1" }} />
               <Tooltip contentStyle={{ background: "#1a0a10", border: "1px solid #f87171", color: "#f1f5f9", borderRadius: 8, fontWeight: 600 }} labelStyle={{ color: "#f1f5f9" }} />
               <Legend wrapperStyle={{ color: "#f1f5f9", fontWeight: 600 }} />
-              <Line yAxisId="left" type="monotone" dataKey="qtd" stroke="#f87171" name="Qtd DDS" strokeWidth={3} dot={{ r: 4, fill: "#f87171" }} activeDot={{ r: 6 }} />
+              <Line yAxisId="left" type="monotone" dataKey="esperados" stroke="#94a3b8" name="Esperados" strokeWidth={2} strokeDasharray="4 4" dot={{ r: 3, fill: "#94a3b8" }} />
+              <Line yAxisId="left" type="monotone" dataKey="presentes" stroke="#f87171" name="Presentes" strokeWidth={3} dot={{ r: 4, fill: "#f87171" }} activeDot={{ r: 6 }} />
               <Line yAxisId="right" type="monotone" dataKey="aderencia" stroke="#38bdf8" name="% Aderência" strokeWidth={3} dot={{ r: 4, fill: "#38bdf8" }} activeDot={{ r: 6 }} />
+              <Line yAxisId="right" type="monotone" dataKey="meta" stroke="#fbbf24" name="Meta 90%" strokeWidth={2} strokeDasharray="6 4" dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -206,55 +234,61 @@ function DDSPainelPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <div className="bg-card text-card-foreground border rounded-lg p-4 shadow-sm">
-          <div className="text-sm font-bold mb-2 text-foreground">Top temas no período</div>
+          <div className="flex items-baseline justify-between mb-2">
+            <div className="text-sm font-bold text-foreground">Temas por Categoria</div>
+            <div className="text-[11px] text-muted-foreground">qtd de DDS · alcance = presentes</div>
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={temaCount} layout="vertical" margin={{ left: 80 }}>
+              <BarChart data={categoriaData} layout="vertical" margin={{ left: 80 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" strokeOpacity={0.18} />
                 <XAxis type="number" stroke="#cbd5e1" tick={{ fill: "#f1f5f9", fontSize: 12, fontWeight: 600 }} tickLine={{ stroke: "#cbd5e1" }} axisLine={{ stroke: "#cbd5e1" }} allowDecimals={false} />
-                <YAxis type="category" dataKey="titulo" width={150} tick={{ fontSize: 11, fill: "#f1f5f9", fontWeight: 600 }} stroke="#cbd5e1" tickLine={{ stroke: "#cbd5e1" }} axisLine={{ stroke: "#cbd5e1" }} />
+                <YAxis type="category" dataKey="categoria" width={120} tick={{ fontSize: 11, fill: "#f1f5f9", fontWeight: 600 }} stroke="#cbd5e1" tickLine={{ stroke: "#cbd5e1" }} axisLine={{ stroke: "#cbd5e1" }} />
                 <Tooltip contentStyle={{ background: "#1a0a10", border: "1px solid #f87171", color: "#f1f5f9", borderRadius: 8, fontWeight: 600 }} cursor={{ fill: "#f87171", opacity: 0.15 }} />
-                <Bar dataKey="qtd" fill="#f87171" radius={[0, 4, 4, 0]} />
+                <Legend wrapperStyle={{ color: "#f1f5f9", fontWeight: 600 }} />
+                <Bar dataKey="qtd" name="DDS" fill="#f87171" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="alcance" name="Alcance" fill="#38bdf8" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
+          {criticidadeData.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-border/50">
+              <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-2">Distribuição por criticidade</div>
+              <div className="flex flex-wrap gap-2">
+                {criticidadeData.map((c) => (
+                  <div key={c.criticidade} className="flex items-center gap-2 px-2 py-1 rounded border" style={{ borderColor: critColor(c.criticidade), background: `${critColor(c.criticidade)}1a` }}>
+                    <div className="h-2 w-2 rounded-full" style={{ background: critColor(c.criticidade) }} />
+                    <span className="text-xs font-bold text-foreground">{c.criticidade}</span>
+                    <span className="text-xs font-mono text-foreground">{c.qtd}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="bg-card text-card-foreground border rounded-lg p-4 overflow-auto shadow-sm">
-          <div className="text-sm font-bold mb-2 text-foreground">Heatmap Setor × Semana</div>
-          {setores.length === 0 ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">Sem dados de setor</div>
-          ) : (
-            <table className="text-xs border-collapse">
-              <thead>
-                <tr>
-                  <th className="px-2 py-1 text-left font-bold sticky left-0 bg-card text-foreground">Setor</th>
-                  {semanas.map((s) => <th key={s} className="px-1 py-1 font-mono text-muted-foreground">{s}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {setores.map((sec) => (
-                  <tr key={sec}>
-                    <td className="px-2 py-1 font-semibold sticky left-0 bg-card text-foreground">{sec}</td>
-                    {semanas.map((s) => {
-                      const cell = heatmap.get(`${sec}|${s}`);
-                      const ad = cell && cell.n > 0 ? cell.ad / cell.n : 0;
-                      return (
-                        <td key={s} className="p-0.5">
-                          <div
-                            title={cell ? `${cell.qtd} DDS · ${ad.toFixed(0)}%` : "Sem DDS"}
-                            className={`h-7 w-9 rounded text-[11px] font-bold flex items-center justify-center ${adBg(cell ? ad : 0)}`}
-                          >
-                            {cell?.qtd ?? ""}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+        <div className="bg-card text-card-foreground border rounded-lg p-4 shadow-sm">
+          <div className="flex items-baseline justify-between mb-2">
+            <div className="text-sm font-bold text-foreground">Aderência semanal × Meta</div>
+            <div className="text-[11px] text-muted-foreground">Meta: 90% · Alerta: &lt;70%</div>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" strokeOpacity={0.18} />
+                <XAxis dataKey="semana" stroke="#cbd5e1" tick={{ fill: "#f1f5f9", fontSize: 12, fontWeight: 600 }} tickLine={{ stroke: "#cbd5e1" }} axisLine={{ stroke: "#cbd5e1" }} />
+                <YAxis domain={[0, 100]} stroke="#cbd5e1" tick={{ fill: "#f1f5f9", fontSize: 12, fontWeight: 600 }} tickLine={{ stroke: "#cbd5e1" }} axisLine={{ stroke: "#cbd5e1" }} />
+                <Tooltip contentStyle={{ background: "#1a0a10", border: "1px solid #f87171", color: "#f1f5f9", borderRadius: 8, fontWeight: 600 }} cursor={{ fill: "#f87171", opacity: 0.15 }} formatter={(v: any) => `${v}%`} />
+                <Legend wrapperStyle={{ color: "#f1f5f9", fontWeight: 600 }} />
+                <Bar dataKey="aderencia" name="Aderência %" radius={[4, 4, 0, 0]}>
+                  {trendData.map((d, i) => (
+                    <Cell key={i} fill={d.aderencia >= 90 ? "#34d399" : d.aderencia >= 70 ? "#fbbf24" : "#f87171"} />
+                  ))}
+                </Bar>
+                <Line type="monotone" dataKey="meta" stroke="#38bdf8" strokeWidth={2} strokeDasharray="6 4" dot={false} name="Meta 90%" />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
