@@ -28,6 +28,7 @@ import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
 import { gerarPdfHistoricoExtintor } from "@/lib/extintor-historico-pdf";
+import { gerarPdfAuditoriaExtintores } from "@/lib/extintor-auditoria-pdf";
 import { calcularProximosPassos, formatMesAnoBR, isVencido } from "@/lib/extintor-regulatorio";
 import { FileText, CalendarRange, Wrench, Gauge, ClipboardEdit, Info } from "lucide-react";
 import type jsPDF from "jspdf";
@@ -94,6 +95,15 @@ function ExtintoresPage() {
   const [excluirExt, setExcluirExt] = useState<Extintor | null>(null);
   const [inspecaoExt, setInspecaoExt] = useState<Extintor | null>(null);
   const [manualExt, setManualExt] = useState<Extintor | null>(null);
+  const [audOpen, setAudOpen] = useState(false);
+  const [audIni, setAudIni] = useState<string>(() => {
+    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 2);
+    return d.toISOString().slice(0, 10);
+  });
+  const [audFim, setAudFim] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [audGerando, setAudGerando] = useState(false);
+  const [audPdf, setAudPdf] = useState<jsPDF | null>(null);
+  const [audPdfOpen, setAudPdfOpen] = useState(false);
 
   const excluirMut = useMutation({
     mutationFn: async (ext: Extintor) => {
