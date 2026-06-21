@@ -14,14 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Plus, Printer, Search, ClipboardCheck, Flame, AlertTriangle, CheckCircle2,
-  Pencil, Camera, ShieldCheck, CalendarClock, Activity, Sparkles, CalendarDays, Droplet,
+  ShieldCheck, CalendarClock, Activity, Sparkles, CalendarDays, Droplet,
 } from "lucide-react";
 import { History, Trash2 } from "lucide-react";
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
 import { toast } from "sonner";
 import { ExtintorInspecaoFotoDialog } from "@/components/extintores/inspecao-foto-dialog";
 import { InspecaoManualDialog } from "@/components/extintores/inspecao-manual-dialog";
-import { PendenciasPopover, type Pendencia } from "@/components/extintores/pendencias-popover";
 import { ExtintorGlassCard } from "@/components/extintores/glass-card-preview";
 import { formatDateBR } from "@/lib/utils-date";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
