@@ -1,0 +1,1 @@
+UPDATE public.extintores SET numero_cilindro='121876', updated_at=now() WHERE id='f165b4b6-0f22-4270-9170-c73f8a828efc';
