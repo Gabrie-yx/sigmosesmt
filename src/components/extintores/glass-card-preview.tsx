@@ -1,4 +1,4 @@
-import { Flame, ClipboardCheck, Camera, ClipboardEdit, Ban, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Flame, ClipboardCheck, Camera, ClipboardEdit, Ban, AlertTriangle, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -22,6 +23,7 @@ import {
 } from "@/components/extintores/inspecao-manual-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const PREVIEW_EXTINTOR = {
   id: "preview-005974",
@@ -265,6 +267,19 @@ export function ExtintorGlassCardPreview() {
             <Field label="Empresa" value="Norte Extintores / Rimatec" />
             <Field label="Local no Pátio" value="Galpão 2 · Pilar B3" />
           </div>
+          <DialogFooter className="gap-2 sm:justify-between border-t pt-3 mt-2">
+            <div className="text-[10px] text-muted-foreground italic">
+              Preview — os botões abaixo já existem nos cards reais abaixo desta seção.
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="gap-1.5" disabled title="Disponível nos cards reais">
+                <Pencil className="h-3.5 w-3.5" /> Editar cadastro
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 text-red-600 hover:text-red-700" disabled title="Disponível para admin/moderador nos cards reais">
+                <Trash2 className="h-3.5 w-3.5" /> Excluir
+              </Button>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
