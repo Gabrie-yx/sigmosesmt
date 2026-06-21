@@ -425,14 +425,14 @@ function ExtintoresPage() {
             <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar nº, localização, selo INMETRO…" className="pl-8" />
           </div>
           <Select value={fStatus} onValueChange={setFStatus}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="flex-1 min-w-[140px] sm:flex-none sm:w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="TODOS">Todos status</SelectItem>
               {STATUS.map((s) => <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={fArea} onValueChange={setFArea}>
-            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="flex-1 min-w-[140px] sm:flex-none sm:w-[200px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="TODAS">Todas áreas</SelectItem>
               {areas.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
