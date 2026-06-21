@@ -252,16 +252,17 @@ function AprsPage() {
   });
 
   return (
-    <div className="p-6 md:p-8 h-full flex flex-col bg-slate-50 overflow-hidden">
-      <div className="flex items-center justify-between mb-6 shrink-0">
-        <div>
-          <h1 className="text-3xl font-black text-[#991b1b] flex items-center gap-2">
-            <FileText className="h-7 w-7" /> APR — Análise Preliminar de Risco
+    <div className="p-4 md:p-8 h-full flex flex-col bg-slate-50 overflow-x-hidden">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5 md:mb-6 shrink-0">
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-3xl font-black text-[#991b1b] flex items-center gap-2">
+            <FileText className="h-6 w-6 md:h-7 md:w-7 shrink-0" />
+            <span className="truncate">APR — Análise Preliminar de Risco</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">{filtered.length} APR(s) listadas</p>
         </div>
         {isEditor && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               onClick={() => { setLoteModeloId(null); setLoteCascoId(null); setLoteOpen(true); }}
               size="lg"
@@ -293,13 +294,13 @@ function AprsPage() {
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 mb-4 flex flex-wrap gap-3 shrink-0">
-        <div className="relative flex-1 min-w-[240px]">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3 sm:p-4 mb-4 flex flex-wrap gap-2 sm:gap-3 shrink-0">
+        <div className="relative w-full sm:flex-1 sm:min-w-[240px]">
           <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input placeholder="Buscar por número, atividade, local..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[160px]"><Filter className="h-3.5 w-3.5 mr-1" /><SelectValue /></SelectTrigger>
+          <SelectTrigger className="flex-1 min-w-[140px] sm:flex-none sm:w-[160px]"><Filter className="h-3.5 w-3.5 mr-1" /><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ATIVAS">Ativas (padrão)</SelectItem>
             <SelectItem value="ALL">Todos status</SelectItem>
@@ -310,7 +311,7 @@ function AprsPage() {
           </SelectContent>
         </Select>
         <Select value={filterPeriodo} onValueChange={setFilterPeriodo}>
-          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="flex-1 min-w-[140px] sm:flex-none sm:w-[160px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="today">Hoje</SelectItem>
             <SelectItem value="7d">Últimos 7 dias</SelectItem>
@@ -319,7 +320,7 @@ function AprsPage() {
           </SelectContent>
         </Select>
         <Select value={filterCasco} onValueChange={setFilterCasco}>
-          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="flex-1 min-w-[160px] sm:flex-none sm:w-[200px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">Todos cascos</SelectItem>
             {cascos.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.numero}</SelectItem>)}
