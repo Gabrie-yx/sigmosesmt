@@ -967,58 +967,88 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
             <PaperFullHeader apr={apr} setApr={setApr} empresa={empresa} casco={casco} enc={enc} tst={tst}
               employees={employees} companies={companies} pagina={1} />
 
-            {/* Painel de cobertura de PTE por categoria de risco detectada */}
-            {coberturaCategorias.length > 0 && (
-              <div className={`border-x border-b border-black px-3 py-2 ${categoriasPendentes.length > 0 ? "bg-amber-50" : "bg-emerald-50"}`}>
-                <div className="flex items-center gap-2 mb-1.5">
-                  {categoriasPendentes.length > 0 ? (
-                    <AlertTriangle className="h-4 w-4 text-amber-700 shrink-0" />
-                  ) : (
-                    <FileText className="h-4 w-4 text-emerald-700 shrink-0" />
-                  )}
-                  <div className={`text-[11px] font-black uppercase ${categoriasPendentes.length > 0 ? "text-amber-900" : "text-emerald-900"}`}>
-                    {categoriasPendentes.length > 0
-                      ? `PTE OBRIGATÓRIA — ${categoriasCobertas.length}/${coberturaCategorias.length} categoria(s) coberta(s)`
-                      : `PTE — Todas as ${categoriasCobertas.length} categoria(s) cobertas`}
+            {/* Painel de cobertura de PTE — design dark/vinho coeso com o sistema */}
+            {coberturaCategorias.length > 0 && (() => {
+              const hasPendente = categoriasPendentes.length > 0;
+              const accent = hasPendente
+                ? { border: "border-[#f59e0b]/40", glow: "shadow-[0_0_24px_-8px_rgba(245,158,11,0.45)]", chipBg: "bg-[#f59e0b]/15", chipText: "text-[#fbbf24]", icon: "text-[#fbbf24]", title: "text-[#fde68a]" }
+                : { border: "border-emerald-400/30", glow: "shadow-[0_0_24px_-10px_rgba(16,185,129,0.45)]", chipBg: "bg-emerald-500/15", chipText: "text-emerald-200", icon: "text-emerald-300", title: "text-emerald-100" };
+              return (
+                <div
+                  className={`relative border-x border-b border-[#7f1d1d]/50 ${accent.glow}`}
+                  style={{ background: "linear-gradient(135deg, rgba(60,10,20,0.92) 0%, rgba(20,5,10,0.96) 100%)" }}
+                >
+                  {/* Faixa de status */}
+                  <div className={`flex items-center gap-3 px-4 py-2.5 border-b border-white/5 ${accent.border} border-l-2`}>
+                    {hasPendente ? (
+                      <AlertTriangle className={`h-4 w-4 ${accent.icon} shrink-0`} />
+                    ) : (
+                      <FileText className={`h-4 w-4 ${accent.icon} shrink-0`} />
+                    )}
+                    <div className={`text-[11px] font-black uppercase tracking-wider ${accent.title}`}>
+                      {hasPendente
+                        ? "PTE obrigatória — cobertura incompleta"
+                        : "PTE — Todas as categorias cobertas"}
+                    </div>
+                    <span className={`ml-auto text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${accent.chipBg} ${accent.chipText} border border-current/20`}>
+                      {categoriasCobertas.length}/{coberturaCategorias.length} cobertas
+                    </span>
+                  </div>
+
+                  {/* Lista de categorias */}
+                  <div className="divide-y divide-white/5">
+                    {coberturaCategorias.map((c) => {
+                      if (c.pte) {
+                        const pte: any = c.pte;
+                        return (
+                          <div key={c.categoria} className="flex items-center gap-3 px-4 py-2 hover:bg-white/[0.03]">
+                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/90 text-white font-black text-[10px] shrink-0">✓</span>
+                            <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
+                              <span className="text-[11px] font-bold text-emerald-100">{c.categoria}</span>
+                              <span className="text-[10px] text-emerald-200/70">
+                                PTE Nº <b className="text-emerald-100">{pte.numero ?? String(pte.id).slice(0, 8)}</b>
+                                <span className="mx-1 text-emerald-200/40">·</span>
+                                {formatDateBR(pte.data_emissao)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (c.riscoLabel) {
+                        return (
+                          <div key={c.categoria} className="flex items-center gap-3 px-4 py-2 hover:bg-white/[0.03]">
+                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#f59e0b] text-[#1a0510] font-black text-[10px] shrink-0">!</span>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[11px] font-bold text-[#fde68a]">{c.categoria}</div>
+                              <div className="text-[10px] text-[#fcd34d]/70 truncate">{c.motivo}</div>
+                            </div>
+                            <Button
+                              size="sm"
+                              className="h-7 px-3 text-[10px] font-black uppercase tracking-wider bg-gradient-to-br from-[#f59e0b] to-[#b45309] hover:from-[#fbbf24] hover:to-[#d97706] text-[#1a0510] shadow-[0_0_16px_-4px_rgba(245,158,11,0.6)] shrink-0"
+                              onClick={() => {
+                                setPteSheetRiscoSugerido(c.riscoLabel);
+                                setPteSheetOpen(true);
+                              }}
+                            >
+                              Resolver
+                            </Button>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={c.categoria} className="flex items-center gap-3 px-4 py-2">
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/10 text-white/70 font-black text-[10px] shrink-0">i</span>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[11px] font-bold text-white/80">{c.categoria}</span>
+                            <span className="text-[10px] text-white/50 ml-2">{c.motivo} (informativo)</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-                <div className="space-y-1">
-                  {coberturaCategorias.map((c) => (
-                    <div key={c.categoria} className="flex items-center gap-2 text-[10px]">
-                      {c.pte ? (
-                        <>
-                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600 text-white font-black text-[9px]">✓</span>
-                          <span className="font-bold text-emerald-900">{c.categoria}</span>
-                          <span className="text-emerald-700">— PTE Nº <b>{(c.pte as any).numero ?? String((c.pte as any).id).slice(0, 8)}</b> · {formatDateBR((c.pte as any).data_emissao)}</span>
-                        </>
-                      ) : c.riscoLabel ? (
-                        <>
-                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-600 text-white font-black text-[9px]">!</span>
-                          <span className="font-bold text-amber-900">{c.categoria}</span>
-                          <span className="text-amber-800">— {c.motivo}</span>
-                          <Button
-                            size="sm"
-                            className="h-5 px-2 text-[9px] bg-orange-600 hover:bg-orange-700 ml-auto"
-                            onClick={() => {
-                              setPteSheetRiscoSugerido(c.riscoLabel);
-                              setPteSheetOpen(true);
-                            }}
-                          >
-                            Resolver
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-400 text-white font-black text-[9px]">i</span>
-                          <span className="font-bold text-slate-700">{c.categoria}</span>
-                          <span className="text-slate-600">— {c.motivo} (advisory)</span>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Casco | PTE — Validade subiu para o cabeçalho */}
             <div className="grid grid-cols-2">
