@@ -89,7 +89,7 @@ export function ExtintorGlassCard({
 
           {/* Borda — cromada OU vermelha quando bloqueado */}
           <div
-            className="absolute inset-0 rounded-[26px] p-[1.5px]"
+            className="relative rounded-[26px] p-[1.5px]"
             style={{
               background: indisponivel
                 ? "linear-gradient(135deg, #ff6b6b 0%, #ef4444 25%, #b91c1c 50%, #ef4444 75%, #ff6b6b 100%)"
@@ -101,7 +101,7 @@ export function ExtintorGlassCard({
           >
             {/* Vidro escuro */}
             <div
-              className="relative w-full h-full rounded-[24px] overflow-hidden"
+              className="relative w-full rounded-[24px] overflow-hidden"
               style={{
                 background:
                   "radial-gradient(120% 80% at 50% 0%, #2a2a2a 0%, #161616 40%, #050505 100%)",
