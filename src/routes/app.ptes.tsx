@@ -260,6 +260,7 @@ function PtesPage() {
         const k = q.queryKey?.[0];
         return k === "ptes-linked-apr" || k === "ptes-light";
       } });
+      qc.invalidateQueries({ predicate: (q) => typeof q.queryKey?.[0] === "string" && (q.queryKey[0] as string).startsWith("pend-") });
       setEditingId(null);
       setLinkedAprId(null);
       setF(emptyForm);
@@ -278,6 +279,7 @@ function PtesPage() {
         const k = q.queryKey?.[0];
         return k === "ptes" || k === "ptes-by-apr" || k === "ptes-linked-apr" || k === "ptes-light";
       } });
+      qc.invalidateQueries({ predicate: (q) => typeof q.queryKey?.[0] === "string" && (q.queryKey[0] as string).startsWith("pend-") });
       toast.success("PTE encerrada");
     },
   });
@@ -288,6 +290,7 @@ function PtesPage() {
         const k = q.queryKey?.[0];
         return k === "ptes" || k === "ptes-by-apr" || k === "ptes-linked-apr" || k === "ptes-light";
       } });
+      qc.invalidateQueries({ predicate: (q) => typeof q.queryKey?.[0] === "string" && (q.queryKey[0] as string).startsWith("pend-") });
       toast.success("Removido");
     },
   });
