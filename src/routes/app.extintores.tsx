@@ -355,43 +355,47 @@ function ExtintoresPage() {
         <Kpi icon={ClipboardCheck} label="Baixados"       value={stats.baixados}       tone="violet"  active={fStatus === "BAIXADO"}                onClick={() => setFStatus("BAIXADO")} />
       </div>
 
-      {/* Banner normativa NBR 12962 */}
-      <div className="relative overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 via-white to-rose-50 shadow-sm">
-        <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-amber-500 via-orange-500 to-red-600" />
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-200/40 blur-2xl" />
-        <div className="relative flex flex-wrap items-center gap-4 p-4 pl-6">
-          <div className="relative">
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-400 to-red-600 blur-md opacity-60" />
-            <div className="relative h-12 w-12 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-600 flex items-center justify-center ring-2 ring-white shadow-lg">
-              <Sparkles className="h-6 w-6 text-white" />
+      {/* Indicadores do período (mês corrente) */}
+      <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-white/[0.04] backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
+        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-amber-300/10 blur-3xl pointer-events-none" />
+        <div className="absolute -left-10 -bottom-10 h-32 w-32 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
+        <div className="relative grid grid-cols-2 md:grid-cols-4 gap-px bg-white/5">
+          <div className="flex items-center gap-3 p-4 bg-slate-950/40">
+            <div className="h-10 w-10 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center">
+              <CalendarClock className="h-5 w-5 text-amber-300" />
+            </div>
+            <div className="leading-tight">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">A vencer · 30 dias</div>
+              <div className="text-2xl font-black text-white tabular-nums">{stats.vencendo}</div>
             </div>
           </div>
-          <div className="flex-1 min-w-[240px]">
-            <div className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-700">Normativa · ABNT NBR 12962</div>
-            <div className="text-sm font-semibold text-slate-800 leading-snug">
-              Rotina recomendada para extintores de incêndio
+          <div className="flex items-center gap-3 p-4 bg-slate-950/40">
+            <div className="h-10 w-10 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center">
+              <Activity className="h-5 w-5 text-cyan-300" />
+            </div>
+            <div className="leading-tight">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">Inspeções no mês</div>
+              <div className="text-2xl font-black text-white tabular-nums">{stats.totalInspMes}</div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 shadow-sm">
-              <ClipboardCheck className="h-4 w-4 text-emerald-700" />
-              <div className="text-[11px] leading-tight">
-                <div className="font-bold text-emerald-800 uppercase tracking-wide">Inspeção visual</div>
-                <div className="text-emerald-700">Mensal</div>
-              </div>
+          <div className="flex items-center gap-3 p-4 bg-slate-950/40">
+            <div className="h-10 w-10 rounded-xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center">
+              <AlertTriangle className="h-5 w-5 text-rose-300" />
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50/80 px-3 py-2 shadow-sm">
-              <CalendarDays className="h-4 w-4 text-sky-700" />
-              <div className="text-[11px] leading-tight">
-                <div className="font-bold text-sky-800 uppercase tracking-wide">Recarga</div>
-                <div className="text-sky-700">Anual (12 meses)</div>
-              </div>
+            <div className="leading-tight">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">Pendências / revisão</div>
+              <div className="text-2xl font-black text-white tabular-nums">{stats.pendencias}</div>
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50/80 px-3 py-2 shadow-sm">
-              <Droplet className="h-4 w-4 text-violet-700" />
-              <div className="text-[11px] leading-tight">
-                <div className="font-bold text-violet-800 uppercase tracking-wide">Teste hidrostático</div>
-                <div className="text-violet-700">A cada 5 anos</div>
+          </div>
+          <div className="flex items-center gap-3 p-4 bg-slate-950/40">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center">
+              <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+            </div>
+            <div className="leading-tight flex-1">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">% Conformidade · período</div>
+              <div className="flex items-baseline gap-2">
+                <div className="text-2xl font-black text-white tabular-nums">{stats.conformidadePct}%</div>
+                <div className="text-[10px] text-white/50 tabular-nums">{stats.totalInspMes - stats.naoConformesMes}/{stats.totalInspMes}</div>
               </div>
             </div>
           </div>
