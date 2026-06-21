@@ -498,6 +498,15 @@ function AprsPage() {
                             {g.pendentes} PTE pendente{g.pendentes !== 1 ? "s" : ""}
                           </Badge>
                         )}
+                        {isEditor && g.aprs.some((a: any) => a._vencida) && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); selecionarVencidas(g.aprs); }}
+                            className="text-[10px] font-black uppercase px-2 py-0.5 rounded border border-rose-400/40 bg-rose-950/40 text-rose-100 hover:bg-rose-900/60"
+                          >
+                            Selecionar vencidas
+                          </button>
+                        )}
                       </span>
                     </div>
                   </AccordionTrigger>
@@ -506,6 +515,7 @@ function AprsPage() {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            {isEditor && <TableHead className="w-8"></TableHead>}
                             <TableHead>Número</TableHead>
                             <TableHead>Data</TableHead>
                             <TableHead>Empresa</TableHead>
@@ -525,6 +535,15 @@ function AprsPage() {
                             const linkedPtes = [...byApr, ...legacy];
                             return (
                               <TableRow key={a.id} className={a._vencida ? "bg-rose-900/20" : ""}>
+                                {isEditor && (
+                                  <TableCell className="w-8 pr-0">
+                                    <Checkbox
+                                      checked={selectedIds.has(a.id)}
+                                      onCheckedChange={() => toggleSel(a.id)}
+                                      aria-label={`Selecionar APR ${a.numero}`}
+                                    />
+                                  </TableCell>
+                                )}
                                 <TableCell className="font-bold text-rose-200">{a.numero}</TableCell>
                                 <TableCell className="text-sm">{formatDateBR(a.data_emissao)}</TableCell>
                                 <TableCell className="text-sm">{a.empresa_id ? companyMap.get(a.empresa_id) ?? "—" : "—"}</TableCell>
