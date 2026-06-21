@@ -22,6 +22,7 @@ import { abrirAprPdf, imprimirAprPdf, baixarAprPdf, buildAprPdf } from "@/lib/ap
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
+import { RevalidarLoteDialog, type RevalidarItem } from "@/components/aprs/revalidar-lote-dialog";
 
 export const Route = createFileRoute("/app/aprs")({
   component: AprsPage,
@@ -69,6 +70,45 @@ function AprsPage() {
   const [tstSig, setTstSig] = useState<string | null>(null);
   const [dupSource, setDupSource] = useState<any | null>(null);
   const [dupCascoIds, setDupCascoIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [revalidarOpen, setRevalidarOpen] = useState(false);
+
+  function toggleSel(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function selecionarVencidas(aprsDoGrupo: any[]) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      aprsDoGrupo.forEach((a) => { if (a._vencida) next.add(a.id); });
+      return next;
+    });
+  }
+
+  const itensRevalidar: RevalidarItem[] = useMemo(() => {
+    return (filtered as any[])
+      .filter((a) => selectedIds.has(a.id))
+      .map((a) => {
+        const byApr = ptesByApr.get(a.id) ?? [];
+        const legacy = a.pte_id
+          ? (ptesLink as any[]).filter((p) => p.id === a.pte_id && p.apr_id !== a.id)
+          : [];
+        return {
+          id: a.id,
+          numero: a.numero,
+          cascoLabel: a.casco_id ? `CASCO ${cascoMap.get(a.casco_id)?.numero ?? "—"}` : null,
+          data_validade: a.data_validade,
+          validade_dias: a.validade_dias ?? 7,
+          exige_pte: !!a.exige_pte,
+          ptesVinculadas: byApr.length + legacy.length,
+        };
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered, selectedIds, ptesByApr, ptesLink, cascoMap]);
 
   async function openPreview(aprId: string, numero?: string | null, eSig?: string | null, tSig?: string | null) {
     try {
