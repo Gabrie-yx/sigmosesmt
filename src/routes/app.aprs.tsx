@@ -563,13 +563,21 @@ function AprsPage() {
         </div>
       </div>
 
-      <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>
+      <Dialog
+        modal={false}
+        open={editing !== null}
+        onOpenChange={(o) => !o && setEditing(null)}
+      >
         <DialogContent className="max-w-[95vw] w-[1200px] h-[92vh] flex flex-col p-0 gap-0">
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <DialogTitle>{editing === "new" ? "Nova APR" : "Editar APR"}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
-            <AprForm key={editing ?? "closed"} aprId={editing === "new" ? null : editing} onClose={() => setEditing(null)} />
+            <AprForm
+              key={editing ?? "closed"}
+              aprId={editing === "new" ? null : editing}
+              onClose={() => setEditing(null)}
+            />
           </div>
         </DialogContent>
       </Dialog>
