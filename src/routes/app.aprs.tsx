@@ -711,6 +711,29 @@ function AprsPage() {
         onOpenApr={(id) => { setRevalidarOpen(false); setEditing(id); }}
       />
 
+      {isEditor && selectedIds.size > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-500/40 bg-gradient-to-br from-[#0a1f15] via-[#0d2a1c] to-[#0a1f15] shadow-[0_8px_40px_-8px_rgba(16,185,129,0.6)] backdrop-blur">
+          <span className="text-sm text-emerald-100 font-semibold">
+            {selectedIds.size} APR(s) selecionada(s)
+          </span>
+          <Button
+            onClick={() => setRevalidarOpen(true)}
+            size="sm"
+            className="bg-gradient-to-br from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white"
+          >
+            <ShieldAlert className="h-4 w-4 mr-1" /> Revalidar em lote
+          </Button>
+          <Button
+            onClick={() => setSelectedIds(new Set())}
+            size="sm"
+            variant="outline"
+            className="border-rose-400/40 text-rose-100 bg-white/5 hover:bg-white/10"
+          >
+            Limpar
+          </Button>
+        </div>
+      )}
+
       <Dialog open={!!dupSource} onOpenChange={(o) => { if (!o) { setDupSource(null); setDupCascoIds([]); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
