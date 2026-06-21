@@ -197,6 +197,26 @@ function AprsPage() {
       });
   }, [filtered, cascoMap, ptesByApr, ptesLink]);
 
+  const itensRevalidar: RevalidarItem[] = useMemo(() => {
+    return (filtered as any[])
+      .filter((a) => selectedIds.has(a.id))
+      .map((a) => {
+        const byApr = ptesByApr.get(a.id) ?? [];
+        const legacy = a.pte_id
+          ? (ptesLink as any[]).filter((p) => p.id === a.pte_id && p.apr_id !== a.id)
+          : [];
+        return {
+          id: a.id,
+          numero: a.numero,
+          cascoLabel: a.casco_id ? `CASCO ${cascoMap.get(a.casco_id)?.numero ?? "—"}` : null,
+          data_validade: a.data_validade,
+          validade_dias: a.validade_dias ?? 7,
+          exige_pte: !!a.exige_pte,
+          ptesVinculadas: byApr.length + legacy.length,
+        };
+      });
+  }, [filtered, selectedIds, ptesByApr, ptesLink, cascoMap]);
+
   const del = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("aprs").delete().eq("id", id);
