@@ -147,9 +147,11 @@ export function ExtintorGlassCard({
                       {numero}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/25 bg-white/5 backdrop-blur-sm">
-                    <Flame className="h-3 w-3 text-red-400" />
-                    <span className="text-[10px] font-bold tracking-wider text-white/85">
+                  <div
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-amber-300/80 bg-gradient-to-br from-amber-400 to-orange-500 shadow-[0_0_18px_rgba(251,146,60,0.55)]"
+                  >
+                    <Flame className="h-3.5 w-3.5 text-white drop-shadow" />
+                    <span className="text-[12px] font-black uppercase tracking-wider text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
                       {tipo}
                     </span>
                   </div>
