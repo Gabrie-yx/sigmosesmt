@@ -3,19 +3,29 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LogOut, Download, Upload } from "lucide-react";
+import { LogOut, Download, Upload, Menu, MoreVertical } from "lucide-react";
 import { ShieldCheck } from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
 import dmnLogo from "@/assets/dmn-logo.png";
 import { PendenciasBadge } from "@/components/pendencias-badge";
+import { useSidebar } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function AppHeader() {
   const { user, roles } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const { toggleSidebar, isMobile } = useSidebar();
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -41,8 +51,19 @@ export function AppHeader() {
 
   return (
     <header className="bg-header sticky top-0 z-30 shadow-md bg-gradient-to-b from-[#a01818] to-[#7f1212] relative overflow-visible before:absolute before:inset-y-0 before:right-full before:w-[var(--sidebar-width-icon,3rem)] before:bg-gradient-to-b before:from-[#a01818] before:to-[#7f1212] before:content-['']">
-      <div className="flex h-14 items-center gap-3 px-3 md:px-4">
-        <Link to="/app" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity shrink-0 min-w-0">
+      <div className="flex h-14 items-center gap-2 px-2 md:gap-3 md:px-4">
+        {/* Hambúrguer mobile — abre a sidebar como drawer */}
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-white hover:bg-white/10 shrink-0"
+          aria-label="Abrir menu"
+          title="Menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        <Link to="/app" className="flex items-center gap-2 hover:opacity-90 transition-opacity shrink-0 min-w-0">
           <div className="flex h-9 items-center justify-center rounded bg-white/95 px-1.5 py-1 shadow-sm shrink-0">
             <img src={dmnLogo} alt="DMN Estaleiro" className="h-7 w-auto object-contain" />
           </div>
@@ -56,7 +77,7 @@ export function AppHeader() {
           </div>
         </Link>
 
-        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+        <div className="flex items-center gap-1 md:gap-1.5 shrink-0 ml-auto">
           <PendenciasBadge />
           <div className="hidden md:flex items-center gap-0.5 border-l border-white/10 pl-2">
             <button
@@ -123,6 +144,54 @@ export function AppHeader() {
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
+
+          {/* Menu compacto mobile (conta, backup, sair) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-white hover:bg-white/10 shrink-0"
+                aria-label="Mais opções"
+                title="Mais"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60">
+              <DropdownMenuLabel className="truncate">
+                <div className="text-[11px] font-bold truncate">{user?.email}</div>
+                <div className="flex gap-1 mt-1 flex-wrap">
+                  {roles.length === 0 && (
+                    <Badge variant="outline" className="text-[9px] py-0 px-1.5">sem papel</Badge>
+                  )}
+                  {roles.map((r) => (
+                    <Badge key={r} className="text-[9px] py-0 px-1.5">{r}</Badge>
+                  ))}
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate({ to: "/app/conta/seguranca" })}>
+                <ShieldCheck className="h-4 w-4 mr-2" /> Minha conta / Segurança
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportBackup()}>
+                <Download className="h-4 w-4 mr-2" /> Exportar backup
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled={importing} onClick={() => fileRef.current?.click()}>
+                <Upload className="h-4 w-4 mr-2" /> Importar backup
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-rose-600 focus:text-rose-600">
+                <LogOut className="h-4 w-4 mr-2" /> Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={(e) => e.target.files?.[0] && handleImport(e.target.files[0])}
+          />
         </div>
       </div>
     </header>

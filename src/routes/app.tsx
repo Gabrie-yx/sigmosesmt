@@ -46,12 +46,12 @@ function AppLayout() {
           <AppHeader />
           <QuickActionsBar />
           {requiresMfa && !mfaSatisfied && !location.pathname.startsWith("/app/conta/seguranca") && (
-            <div className="bg-amber-100 border-b border-amber-300 text-amber-900 px-4 py-2 text-sm flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4" />
-                <span>Seu papel exige MFA. Ative agora para acessar áreas sensíveis.</span>
+            <div className="bg-amber-100 border-b border-amber-300 text-amber-900 px-3 py-2 text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex items-start sm:items-center gap-2 min-w-0">
+                <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5 sm:mt-0" />
+                <span className="min-w-0">Seu papel exige MFA. Ative agora para acessar áreas sensíveis.</span>
               </div>
-              <Link to="/app/conta/seguranca" className="font-bold underline">Configurar MFA</Link>
+              <Link to="/app/conta/seguranca" className="font-bold underline whitespace-nowrap self-end sm:self-auto">Configurar MFA</Link>
             </div>
           )}
           <main className="flex-1">
@@ -59,8 +59,9 @@ function AppLayout() {
               <Outlet />
             </ModuleRouteGuard>
           </main>
-          <footer className="border-t bg-white/60 backdrop-blur py-3 px-4 text-center text-[11px] text-muted-foreground">
-            Copyright© 2026. Todos os Direitos Reservados para Francisco Bandeira (fbandeira.br@gmail.com) — SIGMO - Sistema de Gerenciamento de SST.
+          <footer className="border-t bg-white/60 backdrop-blur py-2 px-3 text-center text-[10px] sm:text-[11px] text-muted-foreground">
+            <span className="hidden sm:inline">Copyright© 2026. Todos os Direitos Reservados para Francisco Bandeira (fbandeira.br@gmail.com) — SIGMO - Sistema de Gerenciamento de SST.</span>
+            <span className="sm:hidden">© 2026 SIGMO · F. Bandeira</span>
           </footer>
           <CommandPalette />
         </div>
