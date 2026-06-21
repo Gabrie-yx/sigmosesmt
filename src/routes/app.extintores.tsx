@@ -205,14 +205,16 @@ function ExtintoresPage() {
   const filtered = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return (extintores.data ?? []).filter((e) => {
-      if (fStatus !== "TODOS" && e.status !== fStatus) return false;
+      if (fStatus === "INSPECIONADOS_MES") {
+        if (e.status !== "ATIVO" || !inspecoesMesPorExt.has(e.id)) return false;
+      } else if (fStatus !== "TODOS" && e.status !== fStatus) return false;
       if (fArea !== "TODAS" && e.area !== fArea) return false;
       if (fClasse !== "TODAS" && (e.tipo_agente || "").toUpperCase() !== fClasse) return false;
       if (!q) return true;
       return [e.numero, e.localizacao, e.area, e.numero_selo_inmetro, e.tipo_agente]
         .some((v) => (v ?? "").toString().toLowerCase().includes(q));
     });
-  }, [extintores.data, busca, fStatus, fArea, fClasse]);
+  }, [extintores.data, busca, fStatus, fArea, fClasse, inspecoesMesPorExt]);
 
   const stats = useMemo(() => {
     const all = extintores.data ?? [];
@@ -401,15 +403,15 @@ function ExtintoresPage() {
 
       {/* Pills de classes (clicáveis = filtram por agente) */}
       {classesAgrupadas.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mr-1">Classe</span>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1">Classe</span>
           <button
             type="button"
             onClick={() => setFClasse("TODAS")}
-            className={`px-3 py-1.5 rounded-full text-xs font-black tracking-wider border transition-all ${
+            className={`px-4 py-2 rounded-full text-sm font-black tracking-wider border-2 transition-all ${
               fClasse === "TODAS"
-                ? "bg-white text-slate-900 border-white shadow-[0_0_14px_-2px_rgba(255,255,255,0.5)]"
-                : "bg-slate-900/60 text-slate-300 border-slate-700 hover:border-slate-500"
+                ? "bg-gradient-to-br from-amber-300 to-amber-500 text-slate-900 border-amber-200 shadow-[0_0_18px_-2px_rgba(251,191,36,0.7)]"
+                : "bg-slate-900/60 text-slate-200 border-slate-700 hover:border-amber-400/60"
             }`}
           >
             TODAS · {extintores.data?.length ?? 0}
@@ -421,10 +423,10 @@ function ExtintoresPage() {
                 key={cls}
                 type="button"
                 onClick={() => setFClasse(active ? "TODAS" : cls)}
-                className={`px-3 py-1.5 rounded-full text-xs font-black tracking-wider border transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-black tracking-wider border-2 transition-all ${
                   active
-                    ? "bg-cyan-500/20 text-cyan-200 border-cyan-400 shadow-[0_0_14px_-2px_rgba(34,211,238,0.7)]"
-                    : "bg-slate-950/80 text-cyan-300 border-cyan-500/30 hover:border-cyan-400/70 hover:shadow-[0_0_10px_-2px_rgba(34,211,238,0.45)]"
+                    ? "bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 border-amber-300 shadow-[0_0_20px_-2px_rgba(251,146,60,0.8)] scale-105"
+                    : "bg-slate-950/80 text-amber-300 border-amber-500/40 hover:border-amber-400 hover:bg-amber-500/10 hover:shadow-[0_0_14px_-2px_rgba(251,191,36,0.5)]"
                 }`}
               >
                 {cls} · {n}
@@ -638,27 +640,33 @@ function ExtintoresPage() {
 
 function Kpi({
   label, value, tone, icon: Icon, pulse, active, onClick,
-}: { label: string; value: number; tone: "red" | "amber" | "green" | "slate"; icon: any; pulse?: boolean; active?: boolean; onClick?: () => void }) {
-  const tones = {
-    red: "from-red-500 to-red-700",
-    amber: "from-amber-400 to-amber-600",
-    green: "from-emerald-500 to-emerald-700",
-    slate: "from-slate-600 to-slate-800",
+}: { label: string; value: number; tone: "red" | "amber" | "emerald" | "slate" | "cyan" | "violet"; icon: any; pulse?: boolean; active?: boolean; onClick?: () => void }) {
+  const tones: Record<string, { ring: string; glow: string; icon: string; accent: string }> = {
+    slate:   { ring: "ring-slate-400/30",   glow: "shadow-[0_0_24px_-6px_rgba(148,163,184,0.5)]",  icon: "text-slate-200",   accent: "from-slate-400/30 to-transparent" },
+    emerald: { ring: "ring-emerald-400/40", glow: "shadow-[0_0_24px_-6px_rgba(16,185,129,0.6)]",   icon: "text-emerald-300", accent: "from-emerald-400/30 to-transparent" },
+    cyan:    { ring: "ring-cyan-400/40",    glow: "shadow-[0_0_24px_-6px_rgba(34,211,238,0.6)]",   icon: "text-cyan-300",    accent: "from-cyan-400/30 to-transparent" },
+    amber:   { ring: "ring-amber-400/40",   glow: "shadow-[0_0_24px_-6px_rgba(251,191,36,0.6)]",   icon: "text-amber-300",   accent: "from-amber-400/30 to-transparent" },
+    red:     { ring: "ring-red-400/40",     glow: "shadow-[0_0_24px_-6px_rgba(248,113,113,0.7)]",  icon: "text-red-300",     accent: "from-red-500/30 to-transparent" },
+    violet:  { ring: "ring-violet-400/40",  glow: "shadow-[0_0_24px_-6px_rgba(167,139,250,0.6)]",  icon: "text-violet-300",  accent: "from-violet-400/30 to-transparent" },
   };
+  const t = tones[tone];
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`text-left relative rounded-xl bg-gradient-to-br ${tones[tone]} text-white p-3 shadow-md ring-1 overflow-hidden group hover:shadow-lg hover:-translate-y-0.5 transition-all ${active ? "ring-white/70 shadow-[0_0_0_2px_rgba(255,255,255,0.35),0_8px_24px_-8px_rgba(0,0,0,0.5)]" : "ring-white/10"}`}
+      className={`text-left relative rounded-2xl p-3.5 text-white overflow-hidden group transition-all hover:-translate-y-0.5
+        bg-white/5 backdrop-blur-xl border border-white/10 ring-1 ${t.ring} ${active ? `${t.glow} border-white/30 -translate-y-0.5` : "shadow-md"}`}
     >
-      <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-white/10 blur-xl group-hover:bg-white/20 transition" />
+      <div className={`absolute inset-0 bg-gradient-to-br ${t.accent} opacity-60 pointer-events-none`} />
+      <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
       <div className="relative flex items-start justify-between">
         <div>
-          <div className="text-[9px] font-black uppercase tracking-widest opacity-90">{label}</div>
-          <div className="text-2xl font-black tabular-nums leading-tight">{value}</div>
+          <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/70">{label}</div>
+          <div className="text-2xl font-black tabular-nums leading-tight mt-0.5 drop-shadow">{value}</div>
         </div>
-        <div className={`h-8 w-8 rounded-lg bg-white/15 flex items-center justify-center ${pulse ? "animate-pulse" : ""}`}>
-          <Icon className="h-4 w-4" />
+        <div className={`h-9 w-9 rounded-xl bg-white/10 border border-white/15 backdrop-blur flex items-center justify-center ${pulse ? "animate-pulse" : ""}`}>
+          <Icon className={`h-4 w-4 ${t.icon}`} />
         </div>
       </div>
     </button>
