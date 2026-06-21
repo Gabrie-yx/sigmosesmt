@@ -1245,7 +1245,12 @@ function HistoricoInspecoesDialog({
             const linkRe = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
             const ncFotos: { label: string; url: string }[] = [];
             let m: RegExpExecArray | null;
-            while ((m = linkRe.exec(ncText)) !== null) ncFotos.push({ label: m[1], url: m[2] });
+            while ((m = linkRe.exec(ncText)) !== null) {
+              const pm = /\/storage\/v1\/object\/(?:public|sign)\/extintores-inspecoes\/([^\s?)]+)/.exec(m[2]);
+              const path = pm ? decodeURIComponent(pm[1]) : null;
+              const signed = path ? urls[`extintores-inspecoes:${path}`] : null;
+              ncFotos.push({ label: m[1], url: signed || m[2] });
+            }
             const ncTextClean = ncText.replace(linkRe, "").replace(/\s+—\s*$/gm, "").replace(/[ \t]+\n/g, "\n").trim();
             return (
               <div key={r.id} className={`rounded-xl border ${tone} p-3 space-y-2`}>
