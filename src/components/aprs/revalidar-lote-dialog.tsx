@@ -16,6 +16,8 @@ export type RevalidarItem = {
   validade_dias: number;
   exige_pte: boolean;
   ptesVinculadas: number;
+  categoriasNecessarias?: string[];
+  categoriasFaltantes?: string[];
 };
 
 interface Props {
@@ -34,11 +36,25 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
   const [customDate, setCustomDate] = useState<string>("");
 
   const auto = useMemo(
-    () => items.filter((i) => !i.exige_pte || i.ptesVinculadas > 0),
+    () => items.filter((i) => {
+      if (!i.exige_pte) return true;
+      // Se temos detecção por categoria, exige cobertura completa
+      if (i.categoriasNecessarias && i.categoriasNecessarias.length > 0) {
+        return (i.categoriasFaltantes?.length ?? 0) === 0;
+      }
+      // Fallback: pelo menos 1 PTE vinculada
+      return i.ptesVinculadas > 0;
+    }),
     [items],
   );
   const manual = useMemo(
-    () => items.filter((i) => i.exige_pte && i.ptesVinculadas === 0),
+    () => items.filter((i) => {
+      if (!i.exige_pte) return false;
+      if (i.categoriasNecessarias && i.categoriasNecessarias.length > 0) {
+        return (i.categoriasFaltantes?.length ?? 0) > 0;
+      }
+      return i.ptesVinculadas === 0;
+    }),
     [items],
   );
 
@@ -46,23 +62,19 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
     mutationFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
       if (mode === "data" && !customDate) {
-        throw new Error("Informe a nova data de validade");
+        throw new Error("Informe a data de início");
       }
+      const baseInicio = mode === "data" ? customDate : today;
       const results: { id: string; ok: boolean; error?: string }[] = [];
       for (const it of auto) {
         if (done.has(it.id)) continue;
-        let novaValidade: string;
-        if (mode === "data") {
-          novaValidade = customDate;
-        } else {
-          const d = new Date(today + "T00:00:00");
-          d.setDate(d.getDate() + (it.validade_dias || 0));
-          novaValidade = d.toISOString().slice(0, 10);
-        }
+        const d = new Date(baseInicio + "T00:00:00");
+        d.setDate(d.getDate() + (it.validade_dias || 0));
+        const novaValidade = d.toISOString().slice(0, 10);
         const { error } = await supabase
           .from("aprs")
           .update({
-            data_emissao: today,
+            data_emissao: baseInicio,
             data_validade: novaValidade,
             status: "ATIVA",
           })
@@ -121,7 +133,7 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
           {items.length > 0 && (
             <section className="rounded-lg border border-rose-500/30 bg-rose-950/15 p-3 space-y-2">
-              <div className="text-xs font-black uppercase text-rose-200">Nova validade</div>
+              <div className="text-xs font-black uppercase text-rose-200">Nova validade (Fim = Início + validade_dias de cada APR)</div>
               <div className="flex flex-wrap items-center gap-3 text-xs text-rose-100">
                 <label className="flex items-center gap-1.5 cursor-pointer">
                   <input
@@ -130,7 +142,7 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
                     onChange={() => setMode("padrao")}
                     className="accent-emerald-500"
                   />
-                  Regra padrão (hoje + validade_dias de cada APR)
+                  Início = hoje
                 </label>
                 <label className="flex items-center gap-1.5 cursor-pointer">
                   <input
@@ -139,7 +151,7 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
                     onChange={() => setMode("data")}
                     className="accent-emerald-500"
                   />
-                  Data específica:
+                  Início específico:
                 </label>
                 <input
                   type="date"
@@ -148,11 +160,10 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
                   className="bg-black/40 border border-rose-500/30 rounded px-2 py-1 text-rose-100 text-xs"
                 />
               </div>
-              {mode === "data" && customDate && (
-                <p className="text-[10px] text-emerald-200/80">
-                  Todas as APRs revalidadas terão validade até {formatDateBR(customDate)}.
-                </p>
-              )}
+              <p className="text-[10px] text-emerald-200/80">
+                Início: <b>{formatDateBR(mode === "data" ? customDate : new Date().toISOString().slice(0,10))}</b>
+                {" · "}Fim calculado individualmente por APR.
+              </p>
             </section>
           )}
 
@@ -188,7 +199,14 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
                       <span className="text-rose-200/50 ml-auto">
                         vencia {it.data_validade ? formatDateBR(it.data_validade) : "—"}
                       </span>
-                      <span className="text-rose-200/60">+{it.validade_dias}d</span>
+                      <span className="text-emerald-200/70">
+                        +{it.validade_dias}d → {(() => {
+                          const base = mode === "data" && customDate ? customDate : new Date().toISOString().slice(0,10);
+                          const d = new Date(base + "T00:00:00");
+                          d.setDate(d.getDate() + (it.validade_dias || 0));
+                          return formatDateBR(d.toISOString().slice(0,10));
+                        })()}
+                      </span>
                       {ok ? (
                         <Badge className="bg-emerald-500/20 text-emerald-200 border-emerald-400/40 text-[9px]">
                           OK
@@ -217,7 +235,9 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
                     {it.cascoLabel && (
                       <span className="text-rose-200/70">{it.cascoLabel}</span>
                     )}
-                    <span className="text-amber-200/80 ml-auto">PTE pendente</span>
+                    <span className="text-amber-200/80 ml-auto truncate max-w-[260px]" title={(it.categoriasFaltantes ?? []).join(", ")}>
+                      Falta: {(it.categoriasFaltantes ?? ["PTE"]).join(", ")}
+                    </span>
                     <Button
                       size="sm"
                       variant="outline"
@@ -230,7 +250,7 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
                 ))}
               </ul>
               <p className="px-3 py-2 text-[10px] text-amber-200/70">
-                Resolva a PTE dentro da APR, salve, e ela some daqui automaticamente.
+                Vincule uma PTE para cada categoria faltante dentro da APR. Ao salvar, a APR aparece na lista de "Prontas".
               </p>
             </section>
           )}

@@ -23,6 +23,7 @@ import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 import { RevalidarLoteDialog, type RevalidarItem } from "@/components/aprs/revalidar-lote-dialog";
+import { detectarCategoriasPTE, CATEGORIA_PTE_TO_RISCO_LABEL, type CategoriaPTE } from "@/lib/apr-pte-rules";
 
 export const Route = createFileRoute("/app/aprs")({
   component: AprsPage,
@@ -107,7 +108,7 @@ function AprsPage() {
   });
   const { data: ptesLink = [] } = useQuery({
     queryKey: ["ptes-by-apr"],
-    queryFn: async () => (await supabase.from("ptes").select("id,numero,apr_id,status")).data ?? [],
+    queryFn: async () => (await supabase.from("ptes").select("id,numero,apr_id,status,risco")).data ?? [],
   });
   const { data: cascos = [] } = useQuery({
     queryKey: ["cascos-light-list"],
@@ -134,6 +135,26 @@ function AprsPage() {
     });
     return m;
   }, [ptesLink]);
+
+  const selectedIdArr = useMemo(() => Array.from(selectedIds), [selectedIds]);
+  const { data: riscosSelecionados = [] } = useQuery({
+    queryKey: ["apr-riscos-selecionados", selectedIdArr],
+    enabled: selectedIdArr.length > 0,
+    queryFn: async () =>
+      (await supabase
+        .from("apr_riscos")
+        .select("apr_id,risco_nome,nrs")
+        .in("apr_id", selectedIdArr)).data ?? [],
+  });
+  const riscosByApr = useMemo(() => {
+    const m = new Map<string, any[]>();
+    (riscosSelecionados as any[]).forEach((r) => {
+      const arr = m.get(r.apr_id) ?? [];
+      arr.push(r);
+      m.set(r.apr_id, arr);
+    });
+    return m;
+  }, [riscosSelecionados]);
 
   const filtered = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -205,6 +226,19 @@ function AprsPage() {
         const legacy = a.pte_id
           ? (ptesLink as any[]).filter((p) => p.id === a.pte_id && p.apr_id !== a.id)
           : [];
+        const riscos = riscosByApr.get(a.id) ?? [];
+        const categorias = detectarCategoriasPTE(
+          riscos.map((r) => ({ risco_nome: r.risco_nome, nrs: r.nrs })),
+        );
+        const necessarias = categorias
+          .map((c) => CATEGORIA_PTE_TO_RISCO_LABEL[c.categoria])
+          .filter((l): l is string => !!l);
+        const necessariasUniq = Array.from(new Set(necessarias));
+        const ptesAll = [...byApr, ...legacy];
+        const labelsCobertos = new Set(
+          ptesAll.map((p: any) => (p.risco ?? "").toString()).filter(Boolean),
+        );
+        const faltantes = necessariasUniq.filter((l) => !labelsCobertos.has(l));
         return {
           id: a.id,
           numero: a.numero,
@@ -212,10 +246,12 @@ function AprsPage() {
           data_validade: a.data_validade,
           validade_dias: a.validade_dias ?? 7,
           exige_pte: !!a.exige_pte,
-          ptesVinculadas: byApr.length + legacy.length,
+          ptesVinculadas: ptesAll.length,
+          categoriasNecessarias: necessariasUniq,
+          categoriasFaltantes: faltantes,
         };
       });
-  }, [filtered, selectedIds, ptesByApr, ptesLink, cascoMap]);
+  }, [filtered, selectedIds, ptesByApr, ptesLink, cascoMap, riscosByApr]);
 
   const del = useMutation({
     mutationFn: async (id: string) => {
