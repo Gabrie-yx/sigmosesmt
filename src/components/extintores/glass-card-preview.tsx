@@ -148,10 +148,16 @@ export function ExtintorGlassCard({
                     </div>
                   </div>
                   <div
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-amber-300/80 bg-gradient-to-br from-amber-400 to-orange-500 shadow-[0_0_18px_rgba(251,146,60,0.55)]"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-red-300/60"
+                    style={{
+                      background:
+                        "linear-gradient(180deg, #ff6b6b 0%, #ef4444 45%, #b91c1c 100%)",
+                      boxShadow:
+                        "inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 4px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.4), 0 0 14px rgba(239,68,68,0.35)",
+                    }}
                   >
-                    <Flame className="h-3.5 w-3.5 text-white drop-shadow" />
-                    <span className="text-[12px] font-black uppercase tracking-wider text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
+                    <Flame className="h-3.5 w-3.5 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" />
+                    <span className="text-[12px] font-black uppercase tracking-wider text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
                       {tipo}
                     </span>
                   </div>
