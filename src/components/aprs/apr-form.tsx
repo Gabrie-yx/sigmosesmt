@@ -943,12 +943,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
               setPteSheetRiscoSugerido(categoriasPendentes[0]?.riscoLabel ?? null);
               setPteSheetOpen(true);
             }}
-            className={categoriasPendentes.length > 0 ? "bg-orange-600 hover:bg-orange-700 text-white animate-pulse" : ""}
+            className={
+              categoriasPendentes.length > 0
+                ? "h-8 px-2.5 text-[11px] bg-gradient-to-br from-rose-700 to-rose-950 hover:from-rose-600 hover:to-rose-900 text-rose-50 border border-rose-400/30 shadow-[0_0_12px_-4px_rgba(220,38,70,0.5)]"
+                : ""
+            }
             title="Vincular ou criar PTE sem sair da APR"
           >
             <FileText className="h-4 w-4 mr-1" />
             {categoriasPendentes.length > 0
-              ? `Resolver ${categoriasPendentes.length} PTE${categoriasPendentes.length > 1 ? "s" : ""} pendente${categoriasPendentes.length > 1 ? "s" : ""}`
+              ? `Resolver ${categoriasPendentes.length} PTE${categoriasPendentes.length > 1 ? "s" : ""}`
               : todasPtesVinculadas.length > 0
               ? "Gerenciar PTEs"
               : "Vincular/Nova PTE"}
@@ -971,7 +975,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
             {coberturaCategorias.length > 0 && (() => {
               const hasPendente = categoriasPendentes.length > 0;
               const accent = hasPendente
-                ? { border: "border-[#f59e0b]/40", glow: "shadow-[0_0_24px_-8px_rgba(245,158,11,0.45)]", chipBg: "bg-[#f59e0b]/15", chipText: "text-[#fbbf24]", icon: "text-[#fbbf24]", title: "text-[#fde68a]" }
+                ? { border: "border-rose-500/50", glow: "shadow-[0_0_24px_-8px_rgba(220,38,70,0.55)]", chipBg: "bg-rose-500/20", chipText: "text-rose-100", icon: "text-rose-300", title: "text-rose-100" }
                 : { border: "border-emerald-400/30", glow: "shadow-[0_0_24px_-10px_rgba(16,185,129,0.45)]", chipBg: "bg-emerald-500/15", chipText: "text-emerald-200", icon: "text-emerald-300", title: "text-emerald-100" };
               return (
                 <div
@@ -1017,14 +1021,14 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                       if (c.riscoLabel) {
                         return (
                           <div key={c.categoria} className="flex items-center gap-3 px-4 py-2 hover:bg-white/[0.03]">
-                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#f59e0b] text-[#1a0510] font-black text-[10px] shrink-0">!</span>
+                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-600 text-white font-black text-[10px] shrink-0">!</span>
                             <div className="min-w-0 flex-1">
-                              <div className="text-[11px] font-bold text-[#fde68a]">{c.categoria}</div>
-                              <div className="text-[10px] text-[#fcd34d]/70 truncate">{c.motivo}</div>
+                              <div className="text-[11px] font-bold text-rose-100">{c.categoria}</div>
+                              <div className="text-[10px] text-rose-200/70 truncate">{c.motivo}</div>
                             </div>
                             <Button
                               size="sm"
-                              className="h-7 px-3 text-[10px] font-black uppercase tracking-wider bg-gradient-to-br from-[#f59e0b] to-[#b45309] hover:from-[#fbbf24] hover:to-[#d97706] text-[#1a0510] shadow-[0_0_16px_-4px_rgba(245,158,11,0.6)] shrink-0"
+                              className="h-6 px-2 text-[10px] font-bold uppercase tracking-wide bg-gradient-to-br from-rose-600 to-rose-900 hover:from-rose-500 hover:to-rose-800 text-rose-50 border border-rose-400/30 shadow-[0_0_10px_-3px_rgba(220,38,70,0.5)] shrink-0"
                               onClick={() => {
                                 setPteSheetRiscoSugerido(c.riscoLabel);
                                 setPteSheetOpen(true);
