@@ -28,6 +28,7 @@ import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
 import { gerarPdfHistoricoExtintor } from "@/lib/extintor-historico-pdf";
+import { gerarPdfAuditoriaExtintores } from "@/lib/extintor-auditoria-pdf";
 import { calcularProximosPassos, formatMesAnoBR, isVencido } from "@/lib/extintor-regulatorio";
 import { FileText, CalendarRange, Wrench, Gauge, ClipboardEdit, Info } from "lucide-react";
 import type jsPDF from "jspdf";
@@ -94,6 +95,15 @@ function ExtintoresPage() {
   const [excluirExt, setExcluirExt] = useState<Extintor | null>(null);
   const [inspecaoExt, setInspecaoExt] = useState<Extintor | null>(null);
   const [manualExt, setManualExt] = useState<Extintor | null>(null);
+  const [audOpen, setAudOpen] = useState(false);
+  const [audIni, setAudIni] = useState<string>(() => {
+    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 2);
+    return d.toISOString().slice(0, 10);
+  });
+  const [audFim, setAudFim] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [audGerando, setAudGerando] = useState(false);
+  const [audPdf, setAudPdf] = useState<jsPDF | null>(null);
+  const [audPdfOpen, setAudPdfOpen] = useState(false);
 
   const excluirMut = useMutation({
     mutationFn: async (ext: Extintor) => {
@@ -283,6 +293,9 @@ function ExtintoresPage() {
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90" onClick={abrirPdfPlanilha}>
               <Printer className="h-4 w-4" /> Visualizar PDF
+            </Button>
+            <Button variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90" onClick={() => setAudOpen(true)}>
+              <ClipboardCheck className="h-4 w-4" /> Relatório de Auditoria
             </Button>
             <Button variant="secondary" className="gap-2 bg-white text-red-700 hover:bg-white/90" onClick={() => toast.info("Escolha um extintor na lista e clique em Inspecionar.") }>
               <Sparkles className="h-4 w-4" /> Inspeção por foto
@@ -738,6 +751,76 @@ function ExtintoresPage() {
         fileName={`planilha-inspecao-extintores-${new Date().toISOString().slice(0, 10)}.pdf`}
         title="Planilha de Inspeção de Extintores"
       />
+      <PDFPreviewDialog
+        open={audPdfOpen}
+        onClose={() => setAudPdfOpen(false)}
+        doc={audPdf}
+        fileName={`relatorio-auditoria-extintores-${audIni}_a_${audFim}.pdf`}
+        title="Relatório de Auditoria de Extintores"
+      />
+      <Dialog open={audOpen} onOpenChange={(v) => !v && setAudOpen(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-700">
+              <ClipboardCheck className="h-5 w-5" /> Relatório de Auditoria
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              Define o período a ser auditado. O relatório vai trazer o resumo executivo,
+              vencimentos regulatórios, inspeções do período e não conformidades identificadas.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Início</Label>
+                <Input type="date" value={audIni} onChange={(e) => setAudIni(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Fim</Label>
+                <Input type="date" value={audFim} onChange={(e) => setAudFim(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setAudOpen(false)} disabled={audGerando}>Cancelar</Button>
+            <Button
+              className="bg-red-700 hover:bg-red-800 text-white"
+              disabled={audGerando || !audIni || !audFim || audIni > audFim}
+              onClick={async () => {
+                if (extintores.isLoading || inspecoes.isLoading || inspecoesFotos.isLoading) {
+                  toast.info("Aguarde carregar os dados…"); return;
+                }
+                try {
+                  setAudGerando(true);
+                  // Busca completa de inspeções foto (a query existente projeta só alguns campos)
+                  const { data: fotosFull, error: fErr } = await supabase
+                    .from("extintor_inspecoes_fotos")
+                    .select("id, extintor_id, status_geral, nao_conformidades, inspecionado_em, assinado_por_nome")
+                    .order("inspecionado_em", { ascending: false });
+                  if (fErr) throw fErr;
+                  const doc = await gerarPdfAuditoriaExtintores({
+                    periodoInicio: audIni,
+                    periodoFim: audFim,
+                    extintores: extintores.data ?? [],
+                    inspecoesFoto: (fotosFull ?? []) as any[],
+                    inspecoesManual: inspecoes.data ?? [],
+                    emitidoPor: (user?.user_metadata as any)?.full_name ?? user?.email ?? null,
+                  });
+                  setAudPdf(doc);
+                  setAudOpen(false);
+                  setAudPdfOpen(true);
+                } catch (e: any) {
+                  toast.error(`Erro ao gerar relatório: ${e?.message ?? e}`);
+                } finally {
+                  setAudGerando(false);
+                }
+              }}
+            >
+              {audGerando ? "Gerando…" : "Gerar relatório"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <ExtintorInspecaoFotoDialog
         extintor={inspecaoExt}
         open={!!inspecaoExt}
