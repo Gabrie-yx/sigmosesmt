@@ -1,13 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ClipboardList, BarChart3, History, BookOpen, Users } from "lucide-react";
 
-const tabs = [
+type Tab = { to: string; label: string; icon: typeof ClipboardList; exact?: boolean };
+const tabs: Tab[] = [
   { to: "/app/dds", label: "Sessões", icon: ClipboardList, exact: true },
   { to: "/app/dds/painel", label: "Painel", icon: BarChart3 },
   { to: "/app/dds/historico", label: "Histórico", icon: History },
   { to: "/app/dds/temas", label: "Temas", icon: BookOpen },
   { to: "/app/dds/gestores", label: "Gestores", icon: Users },
-] as const;
+];
 
 export function DDSTabsNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -19,7 +20,7 @@ export function DDSTabsNav() {
         return (
           <Link
             key={t.to}
-            to={t.to}
+            to={t.to as any}
             className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all duration-200 ${
               active
                 ? "bg-gradient-to-br from-rose-600 to-rose-800 text-white shadow-[0_4px_18px_-4px_rgba(244,63,94,0.6)] scale-[1.02]"
