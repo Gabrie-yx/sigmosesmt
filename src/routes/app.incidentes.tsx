@@ -63,23 +63,25 @@ function IncidentesPage() {
   const create = useMutation({
     mutationFn: async () => {
       if (!form.descricao.trim()) throw new Error("Informe a descrição");
-      const { error } = await supabase.from("incidentes").insert({
+      const { data, error } = await supabase.from("incidentes").insert({
         descricao: form.descricao, tipo: form.tipo, gravidade: form.gravidade,
         data_ocorrencia: new Date(form.data_ocorrencia).toISOString(),
         local: form.local || null,
         causa_raiz: form.causa_raiz || null, acoes_corretivas: form.acoes_corretivas || null,
         cat_emitida: form.cat_emitida, cat_numero: form.cat_numero || null,
         created_by: user?.id ?? null,
-      });
+      }).select("id").single();
       if (error) throw error;
+      return data?.id as string;
     },
-    onSuccess: () => {
-      toast.success("Incidente registrado");
+    onSuccess: (newId) => {
+      toast.success("Incidente registrado — agora anexe as fotos");
       setOpen(false);
       setForm({ descricao: "", tipo: "QUASE_ACIDENTE", gravidade: "LEVE",
         data_ocorrencia: new Date().toISOString().slice(0, 16), local: "",
         causa_raiz: "", acoes_corretivas: "", cat_numero: "", cat_emitida: false });
       qc.invalidateQueries({ queryKey: ["incidentes"] });
+      if (newId) setEvidOpen(newId);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
@@ -151,6 +153,10 @@ function IncidentesPage() {
                   <Label htmlFor="cat" className="text-sm">CAT emitida</Label>
                 </div>
                 <div className="col-span-2"><Label>Nº da CAT</Label><Input value={form.cat_numero} onChange={(e) => setForm({ ...form, cat_numero: e.target.value })} disabled={!form.cat_emitida} /></div>
+              </div>
+              <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
+                <Camera className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>Ao salvar, o painel de <b>Evidências</b> abre automaticamente para você tirar fotos ou anexar arquivos do local, danos e EPIs.</span>
               </div>
             </div>
             <DialogFooter>
