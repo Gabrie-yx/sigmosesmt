@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, AlertTriangle, TrendingUp, Users, BookOpen, Activity, Target } from "lucide-react";
+import { AlertTriangle, TrendingUp, Users, BookOpen, Activity, Target } from "lucide-react";
+import { DDSTabsNav } from "@/components/dds-tabs-nav";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   LineChart, Line, Legend, Cell, ComposedChart,
@@ -182,7 +183,7 @@ function DDSPainelPage() {
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <Button asChild variant="ghost" size="sm"><Link to="/app/dds"><ArrowLeft className="h-4 w-4 mr-1" />DDS</Link></Button>
+        <DDSTabsNav />
         <h1 className="text-xl md:text-2xl font-bold flex-1">Painel de Qualidade — DDS</h1>
         <Select value={periodo} onValueChange={(v) => setPeriodo(v as any)}>
           <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
