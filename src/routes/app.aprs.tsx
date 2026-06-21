@@ -564,7 +564,6 @@ function AprsPage() {
       </div>
 
       <Dialog
-        modal={false}
         open={editing !== null}
         onOpenChange={(o) => !o && setEditing(null)}
       >
