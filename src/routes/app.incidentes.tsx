@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Siren, Plus, Search, AlertTriangle, ShieldAlert, FileText } from "lucide-react";
+import { Siren, Plus, Search, AlertTriangle, ShieldAlert, FileText, Camera, Paperclip, Trash2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/incidentes")({
@@ -43,6 +43,7 @@ function IncidentesPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [evidOpen, setEvidOpen] = useState<string | null>(null);
   const [form, setForm] = useState({
     descricao: "", tipo: "QUASE_ACIDENTE", gravidade: "LEVE",
     data_ocorrencia: new Date().toISOString().slice(0, 16), local: "",
@@ -99,6 +100,9 @@ function IncidentesPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {evidOpen && (
+        <EvidenciasDialog incidenteId={evidOpen} onClose={() => setEvidOpen(null)} userId={user?.id ?? null} />
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
