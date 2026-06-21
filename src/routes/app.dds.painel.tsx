@@ -196,12 +196,12 @@ function DDSPainelPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <KPI icon={Activity} label="DDS realizados" value={total} hint={`em ${dias} dias`} />
-        <KPI icon={Target} label="Aderência média" value={`${aderenciaMedia.toFixed(0)}%`} valueCls={adColor(aderenciaMedia)} />
-        <KPI icon={Users} label="Cobertura ativos" value={`${cobertura.toFixed(0)}%`} hint={`${empComDDS.size}/${employees.length}`} valueCls={adColor(cobertura)} />
-        <KPI icon={BookOpen} label="Temas únicos" value={temasUnicos} hint={`de ${temas.length}`} />
-        <KPI icon={TrendingUp} label="DDS / colaborador" value={ddsPorColab.toFixed(1)} hint="média no período" />
-        <KPI icon={AlertTriangle} label="EPI: DDS x perdas" value={`${ddsEPI} / ${perdasEPI}`} hint="ações EPI vs perdas" valueCls={ddsEPI < perdasEPI ? "text-red-600" : "text-emerald-600"} />
+        <KPI icon={Activity}      label="DDS realizados"     value={total}                              hint={`em ${dias} dias`}                  accent="#22d3ee" />
+        <KPI icon={Target}        label="Aderência média"    value={`${aderenciaMedia.toFixed(0)}%`}    accent={aderenciaMedia >= 90 ? "#10b981" : aderenciaMedia >= 70 ? "#fbbf24" : "#f43f5e"} />
+        <KPI icon={Users}         label="Cobertura ativos"   value={`${cobertura.toFixed(0)}%`}         hint={`${empComDDS.size}/${employees.length}`} accent={cobertura >= 90 ? "#10b981" : cobertura >= 70 ? "#fbbf24" : "#f43f5e"} />
+        <KPI icon={BookOpen}      label="Temas únicos"       value={temasUnicos}                        hint={`de ${temas.length}`}                accent="#818cf8" />
+        <KPI icon={TrendingUp}    label="DDS / colaborador"  value={ddsPorColab.toFixed(1)}             hint="média no período"                    accent="#a78bfa" />
+        <KPI icon={AlertTriangle} label="EPI: DDS x perdas"  value={`${ddsEPI} / ${perdasEPI}`}         hint="ações EPI vs perdas"                 accent={ddsEPI < perdasEPI ? "#f43f5e" : "#10b981"} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -324,14 +324,47 @@ function DDSPainelPage() {
   );
 }
 
-function KPI({ icon: Icon, label, value, hint, valueCls }: { icon: any; label: string; value: string | number; hint?: string; valueCls?: string }) {
+function KPI({ icon: Icon, label, value, hint, accent = "#22d3ee" }: { icon: any; label: string; value: string | number; hint?: string; accent?: string }) {
   return (
-    <div className="bg-card text-card-foreground border rounded-lg p-3 shadow-sm hover:border-primary/40 transition-colors">
-      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-        <Icon className="h-3 w-3" />{label}
+    <div
+      className="relative rounded-2xl p-[1.5px] overflow-hidden flex group"
+      style={{
+        background: `linear-gradient(135deg, ${accent}CC 0%, ${accent}66 50%, ${accent}CC 100%)`,
+        boxShadow:
+          `0 0 0 1px ${accent}80, ` +
+          `0 0 14px ${accent}66, ` +
+          `0 0 28px ${accent}33, ` +
+          `0 16px 40px -22px ${accent}55`,
+      }}
+    >
+      <div className="relative rounded-2xl overflow-hidden flex items-center gap-2.5 p-3 w-full" style={{ background: "#0a0f1f" }}>
+        {/* TOP edge flare */}
+        <div aria-hidden className="pointer-events-none absolute -top-3 left-[22%] h-5 w-24 rounded-full"
+          style={{ background: `radial-gradient(ellipse at center, ${accent}CC 0%, ${accent}66 45%, ${accent}00 80%)`, filter: "blur(6px)", mixBlendMode: "screen" }} />
+        <div aria-hidden className="pointer-events-none absolute -top-[1px] left-[28%] h-[1.5px] w-16 rounded-full"
+          style={{ background: `linear-gradient(90deg, ${accent}00 0%, ${accent} 50%, ${accent}00 100%)`, filter: "blur(1px)" }} />
+        {/* BOTTOM edge flare */}
+        <div aria-hidden className="pointer-events-none absolute -bottom-3 right-[22%] h-4 w-20 rounded-full"
+          style={{ background: `radial-gradient(ellipse at center, ${accent}99 0%, ${accent}40 45%, ${accent}00 80%)`, filter: "blur(6px)", mixBlendMode: "screen" }} />
+        {/* LEFT / RIGHT edge flares */}
+        <div aria-hidden className="pointer-events-none absolute top-[40%] -left-2 h-8 w-3 rounded-full"
+          style={{ background: `radial-gradient(ellipse at center, ${accent}99 0%, ${accent}33 45%, ${accent}00 80%)`, filter: "blur(5px)", mixBlendMode: "screen" }} />
+        <div aria-hidden className="pointer-events-none absolute top-[40%] -right-2 h-8 w-3 rounded-full"
+          style={{ background: `radial-gradient(ellipse at center, ${accent}99 0%, ${accent}33 45%, ${accent}00 80%)`, filter: "blur(5px)", mixBlendMode: "screen" }} />
+        {/* inner ring sutil */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl"
+          style={{ boxShadow: `inset 0 0 0 1px ${accent}26, inset 0 0 14px -6px ${accent}33` }} />
+
+        <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 relative z-10"
+          style={{ background: `${accent}1A`, color: accent, boxShadow: `inset 0 0 0 1px ${accent}33` }}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="relative z-10 min-w-0 flex-1">
+          <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 truncate">{label}</div>
+          <div className="text-2xl font-black leading-none mt-0.5 tabular-nums" style={{ color: accent }}>{value}</div>
+          {hint && <div className="text-[10px] text-slate-500 mt-0.5 truncate">{hint}</div>}
+        </div>
       </div>
-      <div className={`text-2xl font-bold mt-1 ${valueCls ?? "text-foreground"}`}>{value}</div>
-      {hint && <div className="text-[10px] text-muted-foreground">{hint}</div>}
     </div>
   );
 }
