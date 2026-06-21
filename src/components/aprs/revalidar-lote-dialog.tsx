@@ -16,6 +16,8 @@ export type RevalidarItem = {
   validade_dias: number;
   exige_pte: boolean;
   ptesVinculadas: number;
+  categoriasNecessarias?: string[];
+  categoriasFaltantes?: string[];
 };
 
 interface Props {
@@ -34,11 +36,25 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
   const [customDate, setCustomDate] = useState<string>("");
 
   const auto = useMemo(
-    () => items.filter((i) => !i.exige_pte || i.ptesVinculadas > 0),
+    () => items.filter((i) => {
+      if (!i.exige_pte) return true;
+      // Se temos detecção por categoria, exige cobertura completa
+      if (i.categoriasNecessarias && i.categoriasNecessarias.length > 0) {
+        return (i.categoriasFaltantes?.length ?? 0) === 0;
+      }
+      // Fallback: pelo menos 1 PTE vinculada
+      return i.ptesVinculadas > 0;
+    }),
     [items],
   );
   const manual = useMemo(
-    () => items.filter((i) => i.exige_pte && i.ptesVinculadas === 0),
+    () => items.filter((i) => {
+      if (!i.exige_pte) return false;
+      if (i.categoriasNecessarias && i.categoriasNecessarias.length > 0) {
+        return (i.categoriasFaltantes?.length ?? 0) > 0;
+      }
+      return i.ptesVinculadas === 0;
+    }),
     [items],
   );
 
@@ -46,23 +62,19 @@ export function RevalidarLoteDialog({ open, onOpenChange, items, onOpenApr, onDo
     mutationFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
       if (mode === "data" && !customDate) {
-        throw new Error("Informe a nova data de validade");
+        throw new Error("Informe a data de início");
       }
+      const baseInicio = mode === "data" ? customDate : today;
       const results: { id: string; ok: boolean; error?: string }[] = [];
       for (const it of auto) {
         if (done.has(it.id)) continue;
-        let novaValidade: string;
-        if (mode === "data") {
-          novaValidade = customDate;
-        } else {
-          const d = new Date(today + "T00:00:00");
-          d.setDate(d.getDate() + (it.validade_dias || 0));
-          novaValidade = d.toISOString().slice(0, 10);
-        }
+        const d = new Date(baseInicio + "T00:00:00");
+        d.setDate(d.getDate() + (it.validade_dias || 0));
+        const novaValidade = d.toISOString().slice(0, 10);
         const { error } = await supabase
           .from("aprs")
           .update({
-            data_emissao: today,
+            data_emissao: baseInicio,
             data_validade: novaValidade,
             status: "ATIVA",
           })
