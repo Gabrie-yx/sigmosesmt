@@ -126,7 +126,7 @@ export function EstoqueLookupSheet({ triggerLabel = "Consultar Estoque SESMT", o
             const baixo = i.quantidade_atual <= i.estoque_minimo;
             const caVencido = i.ca_validade && i.ca_validade < today;
             return (
-              <div key={i.id} className="group border border-white/10 rounded-lg p-2.5 hover:bg-red-900/30 hover:border-red-400/40 hover:shadow-[0_0_18px_-6px_rgba(220,38,70,0.45)] transition flex gap-3">
+              <div key={i.id} className="group border border-white/10 rounded-lg p-2.5 transition-all duration-200 flex gap-3 hover:bg-gradient-to-r hover:from-red-600/25 hover:via-rose-500/15 hover:to-transparent hover:border-rose-300/60 hover:shadow-[0_0_28px_-4px_rgba(244,63,94,0.65),inset_0_0_0_1px_rgba(255,255,255,0.08)] hover:-translate-y-0.5">
                 {i.imagem_url ? (
                   <img src={i.imagem_url} alt="" className="h-14 w-14 rounded object-cover border flex-shrink-0" />
                 ) : (
