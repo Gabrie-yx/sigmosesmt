@@ -425,7 +425,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </div>
         <div className="mt-6 pt-5 border-t border-rose-100/10 flex flex-nowrap items-center justify-between gap-3">
           {/* Navegação de seções */}
-          <div className="inline-flex shrink-0 items-center gap-2.5 rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
+          <div className="inline-flex shrink-0 items-center gap-4 rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
             <QuickTabBtn icon={HeartPulse} label="ASO" tone={asoTone} active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
             <QuickTabBtn icon={Award} label="NR" tone={nrTone} active={tab === "nrs"} onClick={() => setTab("nrs")} />
             <QuickTabBtn icon={FolderOpen} label="Docs" tone={docsTone} active={tab === "docs"} onClick={() => setTab("docs")} />
@@ -434,7 +434,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
 
           {/* Ações documentais */}
           <div className="flex flex-nowrap items-center gap-2 ml-auto shrink-0">
-            <div className="inline-flex shrink-0 items-center gap-1.5 rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
+            <div className="inline-flex shrink-0 items-center gap-3 rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
               <Link
                 to="/app/audit"
                 className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-black uppercase tracking-widest text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors"
