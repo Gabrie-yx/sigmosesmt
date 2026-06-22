@@ -230,26 +230,49 @@ function DDSPage() {
 function KPI({
   label, value, icon: Icon, tone = "cyan", hint,
 }: { label: string; value: string | number; icon: typeof ClipboardList; tone?: "cyan" | "emerald" | "amber" | "rose" | "indigo" | "violet"; hint?: string }) {
-  const tones: Record<string, { grad: string; ring: string; iconBg: string; iconColor: string; glow: string; valueColor: string }> = {
-    cyan:    { grad: "from-cyan-500/10 to-cyan-700/5",     ring: "ring-cyan-500/20",    iconBg: "bg-cyan-500/15",    iconColor: "text-cyan-300",    glow: "shadow-[0_8px_30px_-12px_rgba(6,182,212,0.4)]",  valueColor: "text-cyan-200" },
-    emerald: { grad: "from-emerald-500/10 to-emerald-700/5",ring: "ring-emerald-500/25", iconBg: "bg-emerald-500/15", iconColor: "text-emerald-300", glow: "shadow-[0_8px_30px_-12px_rgba(16,185,129,0.45)]",valueColor: "text-emerald-200" },
-    amber:   { grad: "from-amber-500/10 to-amber-700/5",   ring: "ring-amber-500/25",   iconBg: "bg-amber-500/15",   iconColor: "text-amber-300",   glow: "shadow-[0_8px_30px_-12px_rgba(245,158,11,0.4)]", valueColor: "text-amber-200" },
-    rose:    { grad: "from-rose-500/10 to-rose-700/5",     ring: "ring-rose-500/25",    iconBg: "bg-rose-500/15",    iconColor: "text-rose-300",    glow: "shadow-[0_8px_30px_-12px_rgba(244,63,94,0.5)]",  valueColor: "text-rose-200" },
-    indigo:  { grad: "from-indigo-500/10 to-indigo-700/5", ring: "ring-indigo-500/25",  iconBg: "bg-indigo-500/15",  iconColor: "text-indigo-300",  glow: "shadow-[0_8px_30px_-12px_rgba(99,102,241,0.4)]", valueColor: "text-indigo-200" },
-    violet:  { grad: "from-violet-500/10 to-violet-700/5", ring: "ring-violet-500/25",  iconBg: "bg-violet-500/15",  iconColor: "text-violet-300",  glow: "shadow-[0_8px_30px_-12px_rgba(139,92,246,0.4)]", valueColor: "text-violet-200" },
+  const accentMap: Record<string, string> = {
+    cyan: "#22d3ee",
+    emerald: "#10b981",
+    amber: "#f59e0b",
+    rose: "#f43f5e",
+    indigo: "#818cf8",
+    violet: "#a78bfa",
   };
-  const t = tones[tone];
+  const accent = accentMap[tone];
   return (
-    <div className={`group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br ${t.grad} ring-1 ${t.ring} ${t.glow} p-4 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5`}>
-      <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/[0.03] blur-2xl pointer-events-none" />
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">{label}</div>
-          <div className={`text-3xl font-black mt-1 ${t.valueColor} tabular-nums leading-none`}>{value}</div>
-          {hint && <div className="text-[10px] text-slate-500 mt-1.5 uppercase tracking-wide">{hint}</div>}
-        </div>
-        <div className={`shrink-0 ${t.iconBg} ${t.iconColor} rounded-lg p-2 ring-1 ring-inset ring-white/10 group-hover:scale-110 transition-transform`}>
+    <div
+      className="relative rounded-2xl p-[1.5px] overflow-hidden flex group"
+      style={{
+        background: `linear-gradient(135deg, ${accent}CC 0%, ${accent}66 50%, ${accent}CC 100%)`,
+        boxShadow:
+          `0 0 0 1px ${accent}80, ` +
+          `0 0 14px ${accent}66, ` +
+          `0 0 28px ${accent}33, ` +
+          `0 16px 40px -22px ${accent}55`,
+      }}
+    >
+      <div className="relative rounded-2xl overflow-hidden flex items-center gap-2.5 p-3 w-full" style={{ background: "#0a0f1f" }}>
+        <div aria-hidden className="pointer-events-none absolute -top-3 left-[22%] h-5 w-24 rounded-full"
+          style={{ background: `radial-gradient(ellipse at center, ${accent}CC 0%, ${accent}66 45%, ${accent}00 80%)`, filter: "blur(6px)", mixBlendMode: "screen" }} />
+        <div aria-hidden className="pointer-events-none absolute -top-[1px] left-[28%] h-[1.5px] w-16 rounded-full"
+          style={{ background: `linear-gradient(90deg, ${accent}00 0%, ${accent} 50%, ${accent}00 100%)`, filter: "blur(1px)" }} />
+        <div aria-hidden className="pointer-events-none absolute -bottom-3 right-[22%] h-4 w-20 rounded-full"
+          style={{ background: `radial-gradient(ellipse at center, ${accent}99 0%, ${accent}40 45%, ${accent}00 80%)`, filter: "blur(6px)", mixBlendMode: "screen" }} />
+        <div aria-hidden className="pointer-events-none absolute top-[40%] -left-2 h-8 w-3 rounded-full"
+          style={{ background: `radial-gradient(ellipse at center, ${accent}99 0%, ${accent}33 45%, ${accent}00 80%)`, filter: "blur(5px)", mixBlendMode: "screen" }} />
+        <div aria-hidden className="pointer-events-none absolute top-[40%] -right-2 h-8 w-3 rounded-full"
+          style={{ background: `radial-gradient(ellipse at center, ${accent}99 0%, ${accent}33 45%, ${accent}00 80%)`, filter: "blur(5px)", mixBlendMode: "screen" }} />
+        <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl"
+          style={{ boxShadow: `inset 0 0 0 1px ${accent}26, inset 0 0 14px -6px ${accent}33` }} />
+
+        <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 relative z-10"
+          style={{ background: `${accent}1A`, color: accent, boxShadow: `inset 0 0 0 1px ${accent}33` }}>
           <Icon className="h-4 w-4" />
+        </div>
+        <div className="relative z-10 min-w-0 flex-1">
+          <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 truncate">{label}</div>
+          <div className="text-2xl font-black leading-none mt-0.5 tabular-nums" style={{ color: accent }}>{value}</div>
+          {hint && <div className="text-[10px] text-slate-500 mt-0.5 truncate uppercase tracking-wide">{hint}</div>}
         </div>
       </div>
     </div>
