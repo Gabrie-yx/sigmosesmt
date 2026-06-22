@@ -961,7 +961,7 @@ function TstPanel() {
             </div>
           </Card>
           {/* OFICIAL 3 · % Treinamentos NR em dia */}
-          <Card title="03 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4 order-2"
+          <Card title="02 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4 order-3"
             period="MENSAL" meta={`≥ ${metas.treinPct}%`}
             metaTone={(() => {
               const avg = treinamentosNR.length > 0 ? Math.round(treinamentosNR.reduce((s, t) => s + t.value, 0) / treinamentosNR.length) : 100;
