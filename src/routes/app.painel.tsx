@@ -1594,9 +1594,46 @@ function Card({
     : "#94a3b8";
   const showNC = ncPrefill && (metaTone === "crit" || metaTone === "warn");
   const sev = metaTone === "crit" ? "ALTA" : "MEDIA";
+  // Pattern de flares varia por card (hash do título) → tr+bl, t, b, tl+br
+  const hash = (title ?? "").split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const pattern = hash % 4;
+  const flareTL = pattern === 3;
+  const flareTR = pattern === 0;
+  const flareBL = pattern === 0;
+  const flareBR = pattern === 3;
+  const flareTop = pattern === 1;
+  const flareBot = pattern === 2;
   return (
-    <div className={`relative rounded-xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-md shadow-[0_8px_30px_-12px_rgba(0,0,0,0.5)] p-4 overflow-hidden ${className ?? ""}`}>
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
+    <div className={`group/card relative rounded-2xl border border-slate-700/60 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/70 backdrop-blur-xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7),0_0_0_1px_rgba(148,163,184,0.04)_inset,0_1px_0_0_rgba(255,255,255,0.04)_inset] p-4 overflow-hidden transition-shadow hover:shadow-[0_25px_70px_-20px_rgba(34,211,238,0.18),0_0_0_1px_rgba(34,211,238,0.15)_inset] ${className ?? ""}`}>
+      {/* highlight line topo */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
+      {/* flares de canto / borda — variam por card */}
+      {flareTL && (
+        <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 h-56 w-56 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(34,211,238,0.22) 0%, rgba(34,211,238,0) 65%)" }} />
+      )}
+      {flareTR && (
+        <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(34,211,238,0.22) 0%, rgba(34,211,238,0) 65%)" }} />
+      )}
+      {flareBL && (
+        <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(16,185,129,0.18) 0%, rgba(16,185,129,0) 65%)" }} />
+      )}
+      {flareBR && (
+        <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-24 h-56 w-56 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(16,185,129,0.18) 0%, rgba(16,185,129,0) 65%)" }} />
+      )}
+      {flareTop && (
+        <div aria-hidden className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-56 w-[120%] rounded-full"
+          style={{ background: "radial-gradient(ellipse at center, rgba(34,211,238,0.18) 0%, rgba(34,211,238,0) 60%)" }} />
+      )}
+      {flareBot && (
+        <div aria-hidden className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 h-56 w-[120%] rounded-full"
+          style={{ background: "radial-gradient(ellipse at center, rgba(16,185,129,0.16) 0%, rgba(16,185,129,0) 60%)" }} />
+      )}
+      {/* conteúdo */}
+      <div className="relative">
       {title && (
         <div className="flex items-center justify-between mb-3 gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -1639,6 +1676,7 @@ function Card({
           <FilePlus2 className="h-3 w-3" /> Abrir NC
         </Link>
       )}
+      </div>
     </div>
   );
 }
