@@ -60,7 +60,8 @@ export function EmployeeListagemDialog({
       if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
       if (companyFilter !== "TODAS" && e.company_id !== companyFilter)
         return false;
-      const adm = (e.admissao ?? "").slice(0, 10);
+      // fallback: se admissao não foi preenchida, usa a data de cadastro (created_at)
+      const adm = ((e.admissao ?? e.created_at ?? "") as string).slice(0, 10);
       if (admIni && (!adm || adm < admIni)) return false;
       if (admFim && (!adm || adm > admFim)) return false;
       const des = (e.data_desligamento ?? "").slice(0, 10);
