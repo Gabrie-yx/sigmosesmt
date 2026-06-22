@@ -1033,7 +1033,7 @@ function TstPanel() {
           </Card>
 
           {/* OFICIAL 4 · Donut ASO Status (PCMSO/NR-07) */}
-          <div className="col-span-12 md:col-span-4 order-3 relative rounded-2xl p-[1.5px] overflow-hidden flex"
+          <div className="col-span-12 md:col-span-4 order-4 relative rounded-2xl p-[1.5px] overflow-hidden flex"
             style={{
               background: "linear-gradient(135deg, rgba(167,139,250,0.95) 0%, rgba(34,211,238,0.55) 35%, rgba(16,185,129,0.90) 100%)",
               boxShadow:
