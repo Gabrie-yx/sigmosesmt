@@ -221,6 +221,67 @@ export function EmployeeListagemDialog({
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+              <div className="rounded-2xl ring-1 ring-emerald-300/40 bg-emerald-50/60 p-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700 mb-2">
+                  Admissões no período
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={admIni}
+                    onChange={(e) => setAdmIni(e.target.value)}
+                    className="h-10 flex-1 rounded-xl border border-emerald-300 bg-white px-3 text-sm"
+                  />
+                  <span className="text-xs text-emerald-700 font-bold">até</span>
+                  <input
+                    type="date"
+                    value={admFim}
+                    onChange={(e) => setAdmFim(e.target.value)}
+                    className="h-10 flex-1 rounded-xl border border-emerald-300 bg-white px-3 text-sm"
+                  />
+                  {(admIni || admFim) && (
+                    <button
+                      type="button"
+                      onClick={() => { setAdmIni(""); setAdmFim(""); }}
+                      className="text-[10px] font-black uppercase tracking-widest text-emerald-700 hover:text-emerald-900"
+                    >
+                      limpar
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="rounded-2xl ring-1 ring-rose-300/40 bg-rose-50/60 p-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-rose-700 mb-2">
+                  Desligamentos no período
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={desIni}
+                    onChange={(e) => setDesIni(e.target.value)}
+                    className="h-10 flex-1 rounded-xl border border-rose-300 bg-white px-3 text-sm"
+                  />
+                  <span className="text-xs text-rose-700 font-bold">até</span>
+                  <input
+                    type="date"
+                    value={desFim}
+                    onChange={(e) => setDesFim(e.target.value)}
+                    className="h-10 flex-1 rounded-xl border border-rose-300 bg-white px-3 text-sm"
+                  />
+                  {(desIni || desFim) && (
+                    <button
+                      type="button"
+                      onClick={() => { setDesIni(""); setDesFim(""); }}
+                      className="text-[10px] font-black uppercase tracking-widest text-rose-700 hover:text-rose-900"
+                    >
+                      limpar
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
