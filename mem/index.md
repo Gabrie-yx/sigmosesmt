@@ -12,3 +12,4 @@ Arquivar TUDO que o usuário disser na memória (pendência/decisão/contexto) p
 - [PGR Genérico](mem://pgr-generico) — Decisões do PGR Fase 1 (GHE, AIHA 5×5, PDF moderno, PT-APR flag) + roadmap das 6 camadas para gerar PGR de qualquer empresa/segmento (multi-tenant, CNAE, biblioteca de perigos, branding, wizard). Perguntas abertas registradas.
 - [Organograma DMN Rev. 06](mem://features/organograma-dmn-rev06) — Quadro de pessoal DMN 14/04/2026 (~21 CLT + 2 ATEM/CSC) e 6 não conformidades cruzadas com PGR Rev. 05 (base da matriz GHE real vs PGR).
 - [Arquivar tudo](mem://preferences/arquivar-tudo) — Toda fala do usuário vira memória (pendência/decisão/contexto) para tratar depois.
+- [SIGMO aguardando Rev.06 PGR/PCMSO](mem://features/sigmo-pgr-pcmso-rev06-pendente.md) — Plano faseado (psicossocial, plano vivo, AEP, GHE adm com campo) só executar após chegada das revisões.
