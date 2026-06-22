@@ -126,7 +126,7 @@ export function EstoqueLookupSheet({ triggerLabel = "Consultar Estoque SESMT", o
             const baixo = i.quantidade_atual <= i.estoque_minimo;
             const caVencido = i.ca_validade && i.ca_validade < today;
             return (
-              <div key={i.id} className="border border-white/10 rounded-lg p-2.5 hover:bg-white/5 hover:border-white/20 transition flex gap-3">
+              <div key={i.id} className="group border border-white/10 rounded-lg p-2.5 hover:bg-red-900/30 hover:border-red-400/40 hover:shadow-[0_0_18px_-6px_rgba(220,38,70,0.45)] transition flex gap-3">
                 {i.imagem_url ? (
                   <img src={i.imagem_url} alt="" className="h-14 w-14 rounded object-cover border flex-shrink-0" />
                 ) : (
@@ -134,19 +134,19 @@ export function EstoqueLookupSheet({ triggerLabel = "Consultar Estoque SESMT", o
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-sm text-slate-900 truncate">{i.nome_material}</span>
-                    <Badge variant="outline" className="text-[10px]">Cód. {i.codigo_material}</Badge>
+                    <span className="font-bold text-sm text-slate-50 truncate">{i.nome_material}</span>
+                    <Badge variant="outline" className="text-[10px] text-slate-100 border-white/20">Cód. {i.codigo_material}</Badge>
                     {baixo && (
                       <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-800 border-amber-300 gap-1">
                         <AlertTriangle className="h-3 w-3" /> Estoque baixo
                       </Badge>
                     )}
                   </div>
-                  <div className="text-[11px] text-slate-600 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                  <div className="text-[11px] text-slate-300 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
                     <span>
                       CA: <strong>{i.ca || "—"}</strong>
                       {i.ca_validade && (
-                        <span className={caVencido ? "text-rose-700 ml-1" : "text-slate-500 ml-1"}>
+                        <span className={caVencido ? "text-rose-300 ml-1" : "text-slate-400 ml-1"}>
                           (val. {formatDateBR(i.ca_validade)}{caVencido ? " — vencido" : ""})
                         </span>
                       )}
