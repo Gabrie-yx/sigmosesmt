@@ -625,7 +625,7 @@ function TstPanel() {
   // === TF / TG (acumulado 12 meses) — NBR 14280 ===
   // TF = (nº acidentes com afastamento × 1.000.000) ÷ HHT
   // TG = (dias perdidos × 1.000.000) ÷ HHT
-  const { tf, tg, tfSerie, totalAcid12m, totalDias12m, totalHHT12m } = useMemo(() => {
+  const { tf, tg, tfSerie, totalAcid12m, totalDias12m, totalHHT12m, acidMensal12m, mesesSemAcid } = useMemo(() => {
     const acid = (((data as any)?.acidentes) ?? []) as any[];
     const hhtArr = (((data as any)?.hht) ?? []) as any[];
     const compFilter = (cid: string | null) =>
@@ -650,6 +650,7 @@ function TstPanel() {
     const tgVal = totalHHT > 0 ? (dias * 1_000_000) / totalHHT : 0;
     // Série mensal 12m
     const series: { mes: string; tf: number; tg: number }[] = [];
+    const acidSerie: { mes: string; acid: number }[] = [];
     for (let i = 11; i >= 0; i--) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const next = new Date(today.getFullYear(), today.getMonth() - i + 1, 1);
@@ -657,12 +658,15 @@ function TstPanel() {
       const aCAF = acidFiltered.filter((a) => a.data_acidente >= sIso && a.data_acidente < eIso && (a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL")).length;
       const dp = acidFiltered.filter((a) => a.data_acidente >= sIso && a.data_acidente < eIso).reduce((s, a) => s + Number(a.dias_perdidos || 0), 0);
       const hMes = hhtFiltered.filter((h) => Number(h.ano) === d.getFullYear() && Number(h.mes) === d.getMonth() + 1).reduce((s, h) => s + Number(h.hht || 0), 0);
+      const mesLabel = `${MONTHS_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
       series.push({
-        mes: `${MONTHS_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`,
+        mes: mesLabel,
         tf: hMes > 0 ? Number(((aCAF * 1_000_000) / hMes).toFixed(2)) : 0,
         tg: hMes > 0 ? Number(((dp * 1_000_000) / hMes).toFixed(2)) : 0,
       });
+      acidSerie.push({ mes: mesLabel, acid: aCAF });
     }
+    const mesesZero = acidSerie.filter((m) => m.acid === 0).length;
     return {
       tf: Number(tfVal.toFixed(2)),
       tg: Number(tgVal.toFixed(2)),
@@ -670,6 +674,8 @@ function TstPanel() {
       totalAcid12m: acidCAF.length,
       totalDias12m: dias,
       totalHHT12m: totalHHT,
+      acidMensal12m: acidSerie,
+      mesesSemAcid: mesesZero,
     };
   }, [data, filterCompany]);
 
