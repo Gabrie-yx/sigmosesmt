@@ -14,7 +14,7 @@ export function gerarPdfListagemFuncionarios(
   employees: Emp[],
   companyMap: Map<string, string>,
   roleMap: Map<string, string>,
-  opts: { empresaLabel?: string; statusLabel?: string; periodoAdmissao?: string; periodoDesligamento?: string } = {},
+  opts: { empresaLabel?: string; statusLabel?: string; periodoAdmissao?: string; periodoDesligamento?: string; avisoSemAdmissao?: string } = {},
 ) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = 210;
@@ -62,13 +62,21 @@ export function gerarPdfListagemFuncionarios(
     }
     doc.setFontSize(7.5);
     doc.text(`Emitido em ${hojeBR}`, pageW - margin - 3, y + 5, { align: "right" });
+    if (opts.avisoSemAdmissao) {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(7);
+      doc.setTextColor(180, 100, 0);
+      doc.text(`⚠ ${opts.avisoSemAdmissao}`, pageW / 2, y + headerH + 3, { align: "center" });
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+    }
   };
 
   drawHeader();
 
   autoTable(doc, {
-    startY: margin + (opts.periodoAdmissao || opts.periodoDesligamento ? 27 : 22),
-    margin: { top: margin + (opts.periodoAdmissao || opts.periodoDesligamento ? 27 : 22), left: margin, right: margin, bottom: 20 },
+    startY: margin + (opts.periodoAdmissao || opts.periodoDesligamento ? 27 : 22) + (opts.avisoSemAdmissao ? 5 : 0),
+    margin: { top: margin + (opts.periodoAdmissao || opts.periodoDesligamento ? 27 : 22) + (opts.avisoSemAdmissao ? 5 : 0), left: margin, right: margin, bottom: 20 },
     theme: "grid",
     tableWidth: contentW,
     head: [["Nº", "Matrícula", "Nome", "CPF", "Cargo", "Empresa", "Admissão", "Desligamento", "Status"]],
