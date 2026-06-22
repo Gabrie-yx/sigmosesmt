@@ -872,7 +872,7 @@ function TstPanel() {
             <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 ring-1 ring-cyan-400/40">
               <ShieldCheck className="h-3.5 w-3.5 text-cyan-300" />
               <span className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">Indicadores Oficiais · Auditoria SGI-SST</span>
-              <span className="text-[9px] font-bold text-cyan-400/70">(6 indicadores oficiais · ISO 45001 · NR-01 / NR-07)</span>
+              <span className="text-[9px] font-bold text-cyan-400/70">(5 indicadores oficiais · ISO 45001 · NR-01 / NR-07 / NR-23)</span>
             </div>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-cyan-500/60 to-cyan-500/30" />
           </div>
