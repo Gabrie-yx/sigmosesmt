@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, FileText, Eye, Printer } from "lucide-react";
+import { ArrowLeft, FileText, Eye, Printer, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { gerarPdfListagemFuncionarios } from "@/lib/employees-listagem-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
@@ -16,6 +17,10 @@ export const Route = createFileRoute("/app/employees/listagem")({
 function ListagemFuncionariosPage() {
   const [companyFilter, setCompanyFilter] = useState<string>("TODAS");
   const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO" | "DESLIGADO">("ATIVO");
+  const [admIni, setAdmIni] = useState("");
+  const [admFim, setAdmFim] = useState("");
+  const [desIni, setDesIni] = useState("");
+  const [desFim, setDesFim] = useState("");
   const [preview, setPreview] = useState<{ doc: jsPDF; fileName: string } | null>(null);
 
   const { data: emps, isLoading } = useQuery({
@@ -42,19 +47,37 @@ function ListagemFuncionariosPage() {
     return (emps ?? []).filter((e: any) => {
       if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
       if (companyFilter !== "TODAS" && e.company_id !== companyFilter) return false;
+      const adm = (e.admissao ?? "").slice(0, 10);
+      if (admIni && (!adm || adm < admIni)) return false;
+      if (admFim && (!adm || adm > admFim)) return false;
+      const des = (e.data_desligamento ?? "").slice(0, 10);
+      if (desIni && (!des || des < desIni)) return false;
+      if (desFim && (!des || des > desFim)) return false;
       return true;
     });
-  }, [emps, statusFilter, companyFilter]);
+  }, [emps, statusFilter, companyFilter, admIni, admFim, desIni, desFim]);
 
   const empresaLabel = companyFilter === "TODAS"
     ? "Todas as empresas"
     : (cMap.get(companyFilter) ?? "—");
   const statusLabel = statusFilter === "TODOS" ? "Todos" : statusFilter;
+  const fmtBR = (s: string) => {
+    const [y, m, d] = s.split("-");
+    return y && m && d ? `${d}/${m}/${y}` : s;
+  };
+  const periodoAdm = admIni || admFim
+    ? `${admIni ? fmtBR(admIni) : "início"} a ${admFim ? fmtBR(admFim) : "hoje"}`
+    : "";
+  const periodoDes = desIni || desFim
+    ? `${desIni ? fmtBR(desIni) : "início"} a ${desFim ? fmtBR(desFim) : "hoje"}`
+    : "";
 
   function buildDoc() {
     return gerarPdfListagemFuncionarios(filtered, cMap as Map<string, string>, rMap as Map<string, string>, {
       empresaLabel,
       statusLabel,
+      periodoAdmissao: periodoAdm,
+      periodoDesligamento: periodoDes,
     });
   }
 
@@ -108,7 +131,7 @@ function ListagemFuncionariosPage() {
       </div>
 
       {/* Filtros */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-5">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-3">
         <div className="md:col-span-5">
           <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Empresa</label>
           <Select value={companyFilter} onValueChange={setCompanyFilter}>
@@ -142,6 +165,48 @@ function ListagemFuncionariosPage() {
         </div>
       </div>
 
+      {/* Filtros por período */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">Admissões — período</p>
+            {(admIni || admFim) && (
+              <button type="button" onClick={() => { setAdmIni(""); setAdmFim(""); }} className="text-[10px] text-emerald-800 hover:text-emerald-900 inline-flex items-center gap-1"><X className="h-3 w-3" />limpar</button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 block mb-0.5">De</label>
+              <Input type="date" value={admIni} onChange={(e) => setAdmIni(e.target.value)} className="h-10 bg-white" />
+            </div>
+            <div>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 block mb-0.5">Até</label>
+              <Input type="date" value={admFim} onChange={(e) => setAdmFim(e.target.value)} className="h-10 bg-white" />
+            </div>
+          </div>
+          <p className="text-[10px] text-slate-500 mt-1.5">Vazio = traz todos.</p>
+        </div>
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/40 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-rose-800">Desligamentos — período</p>
+            {(desIni || desFim) && (
+              <button type="button" onClick={() => { setDesIni(""); setDesFim(""); }} className="text-[10px] text-rose-800 hover:text-rose-900 inline-flex items-center gap-1"><X className="h-3 w-3" />limpar</button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 block mb-0.5">De</label>
+              <Input type="date" value={desIni} onChange={(e) => setDesIni(e.target.value)} className="h-10 bg-white" />
+            </div>
+            <div>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 block mb-0.5">Até</label>
+              <Input type="date" value={desFim} onChange={(e) => setDesFim(e.target.value)} className="h-10 bg-white" />
+            </div>
+          </div>
+          <p className="text-[10px] text-slate-500 mt-1.5">Vazio = traz todos. Setar período já filtra só desligados.</p>
+        </div>
+      </div>
+
       {/* Prévia tabela */}
       <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
@@ -154,14 +219,16 @@ function ListagemFuncionariosPage() {
                 <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest">CPF</th>
                 <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest">Cargo</th>
                 <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest">Empresa</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest">Admissão</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest">Desligamento</th>
                 <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
-                <tr><td colSpan={7} className="px-3 py-8 text-center text-slate-400">Carregando…</td></tr>
+                <tr><td colSpan={9} className="px-3 py-8 text-center text-slate-400">Carregando…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="px-3 py-8 text-center text-slate-400">Nenhum funcionário encontrado.</td></tr>
+                <tr><td colSpan={9} className="px-3 py-8 text-center text-slate-400">Nenhum funcionário encontrado.</td></tr>
               ) : (
                 filtered.map((e: any, i: number) => (
                   <tr key={e.id} className="transition-colors hover:bg-white/[0.06] hover:backdrop-blur-md">
@@ -171,6 +238,8 @@ function ListagemFuncionariosPage() {
                     <td className="px-3 py-2 tabular-nums text-slate-600">{e.cpf ?? "—"}</td>
                     <td className="px-3 py-2 text-slate-700">{rMap.get(e.role_id) ?? "—"}</td>
                     <td className="px-3 py-2 text-slate-700">{cMap.get(e.company_id) ?? "—"}</td>
+                    <td className="px-3 py-2 tabular-nums text-slate-600">{e.admissao ? new Date(e.admissao + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</td>
+                    <td className="px-3 py-2 tabular-nums text-slate-600">{e.data_desligamento ? new Date(e.data_desligamento + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</td>
                     <td className="px-3 py-2">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ring-1 ${
                         e.status === "ATIVO" ? "bg-emerald-100 text-emerald-700 ring-emerald-200" :
