@@ -961,6 +961,55 @@ function TstPanel() {
             </div>
           </Card>
           {/* OFICIAL 3 · % Treinamentos NR em dia */}
+          {/* OFICIAL 1 · Zero Acidentes (mensal) */}
+          <Card title="01 · Zero Acidentes" className="col-span-12 md:col-span-4 order-2"
+            period="MENSAL" meta="= 0"
+            metaTone={totalAcid12m === 0 ? "ok" : "crit"}
+            action={<span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1"
+              style={{ color: totalAcid12m === 0 ? "#34d399" : "#fb7185" }}>
+              <ShieldAlert className="h-3 w-3" /> {totalAcid12m}
+            </span>}
+            ncPrefill={{ codigo: "IND-01", indicador: "Zero Acidentes (mensal)", mesRef: mesRefAtual }}>
+            <div className="h-56">
+              <ResponsiveContainer>
+                <BarChart data={acidMensal12m} margin={{ top: 18, right: 8, left: -25, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gradZeroOk" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.25} />
+                    </linearGradient>
+                    <linearGradient id="gradZeroBad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f43f5e" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.4} />
+                    </linearGradient>
+                    <filter id="zeroGlow" x="-30%" y="-30%" width="160%" height="160%">
+                      <feGaussianBlur stdDeviation="2.5" result="b" />
+                      <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                    </filter>
+                  </defs>
+                  <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip contentStyle={tooltipDark} formatter={(v: any) => [v, "Acidentes c/ afast."]} />
+                  <ReferenceLine y={0} stroke="#10b981" strokeDasharray="4 4" strokeWidth={2}
+                    label={{ value: "META = 0", position: "insideTopRight", fill: "#10b981", fontSize: 9, fontWeight: 900 }} />
+                  <Bar dataKey="acid" radius={[6, 6, 0, 0]} barSize={18} filter="url(#zeroGlow)">
+                    {acidMensal12m.map((m, i) => (
+                      <Cell key={i} fill={m.acid === 0 ? "url(#gradZeroOk)" : "url(#gradZeroBad)"} />
+                    ))}
+                    <LabelList dataKey="acid" position="top" style={{ fontSize: 9, fontWeight: 900, fill: "#f1f5f9" }} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
+              <span className="text-slate-500">12m: <span className="font-black tabular-nums"
+                style={{ color: totalAcid12m === 0 ? "#34d399" : "#fb7185" }}>{totalAcid12m}</span></span>
+              <span className="text-slate-500">Meses sem acidente: <span className="font-black text-emerald-300 tabular-nums">{mesesSemAcid}/12</span></span>
+            </div>
+          </Card>
+
+          {/* OFICIAL 2 · % Treinamentos NR em dia */}
           <Card title="02 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4 order-3"
             period="MENSAL" meta={`≥ ${metas.treinPct}%`}
             metaTone={(() => {
