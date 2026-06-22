@@ -196,12 +196,12 @@ function DDSPainelPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <KPI icon={Activity}      label="DDS realizados"     value={total}                              hint={`em ${dias} dias`}                  accent="#22d3ee" />
-        <KPI icon={Target}        label="Aderência média"    value={`${aderenciaMedia.toFixed(0)}%`}    accent={aderenciaMedia >= 90 ? "#10b981" : aderenciaMedia >= 70 ? "#fbbf24" : "#f43f5e"} />
-        <KPI icon={Users}         label="Cobertura ativos"   value={`${cobertura.toFixed(0)}%`}         hint={`${empComDDS.size}/${employees.length}`} accent={cobertura >= 90 ? "#10b981" : cobertura >= 70 ? "#fbbf24" : "#f43f5e"} />
-        <KPI icon={BookOpen}      label="Temas únicos"       value={temasUnicos}                        hint={`de ${temas.length}`}                accent="#818cf8" />
-        <KPI icon={TrendingUp}    label="DDS / colaborador"  value={ddsPorColab.toFixed(1)}             hint="média no período"                    accent="#a78bfa" />
-        <KPI icon={AlertTriangle} label="EPI: DDS x perdas"  value={`${ddsEPI} / ${perdasEPI}`}         hint="ações EPI vs perdas"                 accent={ddsEPI < perdasEPI ? "#f43f5e" : "#10b981"} />
+        <KPI icon={Activity}      label="DDS realizados"     value={total}                              hint={`em ${dias} dias`}                  accent="#a3e635" />
+        <KPI icon={Target}        label="Aderência média"    value={`${aderenciaMedia.toFixed(0)}%`}    accent={aderenciaMedia >= 90 ? "#00ff9d" : aderenciaMedia >= 70 ? "#ffd93d" : "#ff2d6f"} />
+        <KPI icon={Users}         label="Cobertura ativos"   value={`${cobertura.toFixed(0)}%`}         hint={`${empComDDS.size}/${employees.length}`} accent={cobertura >= 90 ? "#00ff9d" : cobertura >= 70 ? "#ffd93d" : "#ff2d6f"} />
+        <KPI icon={BookOpen}      label="Temas únicos"       value={temasUnicos}                        hint={`de ${temas.length}`}                accent="#f0abfc" />
+        <KPI icon={TrendingUp}    label="DDS / colaborador"  value={ddsPorColab.toFixed(1)}             hint="média no período"                    accent="#ff9f43" />
+        <KPI icon={AlertTriangle} label="EPI: DDS x perdas"  value={`${ddsEPI} / ${perdasEPI}`}         hint="ações EPI vs perdas"                 accent={ddsEPI < perdasEPI ? "#ff2d6f" : "#00ff9d"} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
