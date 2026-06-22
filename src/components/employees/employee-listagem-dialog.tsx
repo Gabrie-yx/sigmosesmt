@@ -60,16 +60,35 @@ export function EmployeeListagemDialog({
       if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
       if (companyFilter !== "TODAS" && e.company_id !== companyFilter)
         return false;
-      // fallback: se admissao não foi preenchida, usa a data de cadastro (created_at)
-      const adm = ((e.admissao ?? e.created_at ?? "") as string).slice(0, 10);
-      if (admIni && (!adm || adm < admIni)) return false;
-      if (admFim && (!adm || adm > admFim)) return false;
+      // ESTRITO: filtro por período usa SOMENTE a data de admissão real.
+      // Quem não tem admissao cadastrada não entra quando há período definido.
+      const adm = ((e.admissao ?? "") as string).slice(0, 10);
+      if (admIni || admFim) {
+        if (!adm) return false;
+        if (admIni && adm < admIni) return false;
+        if (admFim && adm > admFim) return false;
+      }
       const des = (e.data_desligamento ?? "").slice(0, 10);
-      if (desIni && (!des || des < desIni)) return false;
-      if (desFim && (!des || des > desFim)) return false;
+      if (desIni || desFim) {
+        if (!des) return false;
+        if (desIni && des < desIni) return false;
+        if (desFim && des > desFim) return false;
+      }
       return true;
     });
   }, [emps, statusFilter, companyFilter, admIni, admFim, desIni, desFim]);
+
+  // Contagem de funcionários sem data de admissão (afetados pelo filtro estrito)
+  const semAdmissao = useMemo(
+    () =>
+      (emps ?? []).filter((e: any) => {
+        if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
+        if (companyFilter !== "TODAS" && e.company_id !== companyFilter)
+          return false;
+        return !e.admissao;
+      }).length,
+    [emps, statusFilter, companyFilter]
+  );
 
   const empresaLabel =
     companyFilter === "TODAS"
@@ -101,6 +120,10 @@ export function EmployeeListagemDialog({
         statusLabel,
         periodoAdmissao,
         periodoDesligamento,
+        avisoSemAdmissao:
+          (admIni || admFim) && semAdmissao > 0
+            ? `${semAdmissao} funcionário(s) sem data de admissão cadastrada não aparecem neste relatório.`
+            : undefined,
       }
     );
   }
