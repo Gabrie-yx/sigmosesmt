@@ -1255,8 +1255,8 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 8 · Donut Conformidade Geral */}
-          <Card title="12 · Status Geral" className="col-span-12 md:col-span-4 order-7"
+          {/* Donut Conformidade Geral (apoio) */}
+          <Card title="12 · Status Geral" className="col-span-12 md:col-span-4 order-9"
             period={`${periodo}d`} meta="≥ 90%"
             metaTone={conformidadeFiltro >= 90 ? "ok" : conformidadeFiltro >= 70 ? "warn" : "crit"}
             ncPrefill={{ codigo: "IND-00", indicador: "Status Geral de Conformidade", mesRef: mesRefAtual }}>
