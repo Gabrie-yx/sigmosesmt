@@ -1076,7 +1076,7 @@ function TstPanel() {
               <div aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 h-56 w-56 rounded-full"
                 style={{ background: "radial-gradient(circle, rgba(52,211,153,0.40) 0%, rgba(52,211,153,0) 70%)", filter: "blur(10px)" }} />
 
-              <Card title="04 · ASO · PCMSO" className="!bg-transparent !border-0 !shadow-none !backdrop-blur-0"
+              <Card title="03 · ASO · PCMSO" className="!bg-transparent !border-0 !shadow-none !backdrop-blur-0"
                 period="MENSAL" meta={`≥ ${metas.asoPct}%`}
                 metaTone={tone(asoConformPct, metas.asoPct)}
                 ncPrefill={{ codigo: "IND-05", indicador: "ASOs em dia", mesRef: mesRefAtual }}>
@@ -1096,8 +1096,8 @@ function TstPanel() {
           </div>
 
           {/* OFICIAL 5 · DDS Planejado vs Realizado (semanal) */}
-          <Card title="05 · DDS · Planejado vs Realizado"
-            className="col-span-12 md:col-span-4 order-4"
+          <Card title="04 · DDS · Planejado vs Realizado"
+            className="col-span-12 md:col-span-6 order-5"
             period="SEMANAL"
             meta={`≥ 85% · ${ddsPlanRealizado.realizados}/${ddsPlanRealizado.planejados}`}
             metaTone={tone(ddsPlanRealizado.pct, 85)}
