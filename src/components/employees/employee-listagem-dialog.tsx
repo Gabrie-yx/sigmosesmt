@@ -37,6 +37,10 @@ export function EmployeeListagemDialog({
   const [statusFilter, setStatusFilter] = useState<
     "TODOS" | "ATIVO" | "INATIVO" | "AFASTADO"
   >("ATIVO");
+  const [admIni, setAdmIni] = useState<string>("");
+  const [admFim, setAdmFim] = useState<string>("");
+  const [desIni, setDesIni] = useState<string>("");
+  const [desFim, setDesFim] = useState<string>("");
   const [preview, setPreview] = useState<{
     doc: jsPDF;
     fileName: string;
@@ -56,15 +60,35 @@ export function EmployeeListagemDialog({
       if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
       if (companyFilter !== "TODAS" && e.company_id !== companyFilter)
         return false;
+      const adm = (e.admissao ?? "").slice(0, 10);
+      if (admIni && (!adm || adm < admIni)) return false;
+      if (admFim && (!adm || adm > admFim)) return false;
+      const des = (e.data_desligamento ?? "").slice(0, 10);
+      if (desIni && (!des || des < desIni)) return false;
+      if (desFim && (!des || des > desFim)) return false;
       return true;
     });
-  }, [emps, statusFilter, companyFilter]);
+  }, [emps, statusFilter, companyFilter, admIni, admFim, desIni, desFim]);
 
   const empresaLabel =
     companyFilter === "TODAS"
       ? "Todas as empresas"
       : (cMap.get(companyFilter) ?? "—");
   const statusLabel = statusFilter === "TODOS" ? "Todos" : statusFilter;
+
+  const fmtBR = (d: string) => {
+    if (!d) return "";
+    const [y, m, day] = d.split("-");
+    return `${day}/${m}/${y}`;
+  };
+  const periodoAdmissao =
+    admIni || admFim
+      ? `${fmtBR(admIni) || "início"} até ${fmtBR(admFim) || "hoje"}`
+      : undefined;
+  const periodoDesligamento =
+    desIni || desFim
+      ? `${fmtBR(desIni) || "início"} até ${fmtBR(desFim) || "hoje"}`
+      : undefined;
 
   function buildDoc() {
     return gerarPdfListagemFuncionarios(
@@ -74,6 +98,8 @@ export function EmployeeListagemDialog({
       {
         empresaLabel,
         statusLabel,
+        periodoAdmissao,
+        periodoDesligamento,
       }
     );
   }
