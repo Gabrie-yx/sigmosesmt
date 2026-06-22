@@ -231,12 +231,12 @@ function KPI({
   label, value, icon: Icon, tone = "cyan", hint,
 }: { label: string; value: string | number; icon: typeof ClipboardList; tone?: "cyan" | "emerald" | "amber" | "rose" | "indigo" | "violet"; hint?: string }) {
   const accentMap: Record<string, string> = {
-    cyan: "#22d3ee",
-    emerald: "#10b981",
-    amber: "#f59e0b",
-    rose: "#f43f5e",
-    indigo: "#818cf8",
-    violet: "#a78bfa",
+    cyan: "#00e5ff",
+    emerald: "#00ff9d",
+    amber: "#ffc233",
+    rose: "#ff2d6f",
+    indigo: "#7c5cff",
+    violet: "#c084fc",
   };
   const accent = accentMap[tone];
   return (
