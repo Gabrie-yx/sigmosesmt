@@ -12,7 +12,7 @@ import { type SafetyOverride } from "@/lib/safety-overrides";
 import {
   ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid,
   ComposedChart, Line, Area, Bar, BarChart, PieChart, Pie, Cell, LabelList,
-  RadialBarChart, RadialBar, LineChart, Legend,
+  RadialBarChart, RadialBar, LineChart, Legend, ReferenceLine,
 } from "recharts";
 
 export const Route = createFileRoute("/app/painel")({
@@ -625,7 +625,7 @@ function TstPanel() {
   // === TF / TG (acumulado 12 meses) — NBR 14280 ===
   // TF = (nº acidentes com afastamento × 1.000.000) ÷ HHT
   // TG = (dias perdidos × 1.000.000) ÷ HHT
-  const { tf, tg, tfSerie, totalAcid12m, totalDias12m, totalHHT12m } = useMemo(() => {
+  const { tf, tg, tfSerie, totalAcid12m, totalDias12m, totalHHT12m, acidMensal12m, mesesSemAcid } = useMemo(() => {
     const acid = (((data as any)?.acidentes) ?? []) as any[];
     const hhtArr = (((data as any)?.hht) ?? []) as any[];
     const compFilter = (cid: string | null) =>
@@ -650,6 +650,7 @@ function TstPanel() {
     const tgVal = totalHHT > 0 ? (dias * 1_000_000) / totalHHT : 0;
     // Série mensal 12m
     const series: { mes: string; tf: number; tg: number }[] = [];
+    const acidSerie: { mes: string; acid: number }[] = [];
     for (let i = 11; i >= 0; i--) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const next = new Date(today.getFullYear(), today.getMonth() - i + 1, 1);
@@ -657,12 +658,15 @@ function TstPanel() {
       const aCAF = acidFiltered.filter((a) => a.data_acidente >= sIso && a.data_acidente < eIso && (a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL")).length;
       const dp = acidFiltered.filter((a) => a.data_acidente >= sIso && a.data_acidente < eIso).reduce((s, a) => s + Number(a.dias_perdidos || 0), 0);
       const hMes = hhtFiltered.filter((h) => Number(h.ano) === d.getFullYear() && Number(h.mes) === d.getMonth() + 1).reduce((s, h) => s + Number(h.hht || 0), 0);
+      const mesLabel = `${MONTHS_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
       series.push({
-        mes: `${MONTHS_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`,
+        mes: mesLabel,
         tf: hMes > 0 ? Number(((aCAF * 1_000_000) / hMes).toFixed(2)) : 0,
         tg: hMes > 0 ? Number(((dp * 1_000_000) / hMes).toFixed(2)) : 0,
       });
+      acidSerie.push({ mes: mesLabel, acid: aCAF });
     }
+    const mesesZero = acidSerie.filter((m) => m.acid === 0).length;
     return {
       tf: Number(tfVal.toFixed(2)),
       tg: Number(tgVal.toFixed(2)),
@@ -670,6 +674,8 @@ function TstPanel() {
       totalAcid12m: acidCAF.length,
       totalDias12m: dias,
       totalHHT12m: totalHHT,
+      acidMensal12m: acidSerie,
+      mesesSemAcid: mesesZero,
     };
   }, [data, filterCompany]);
 
@@ -866,7 +872,7 @@ function TstPanel() {
             <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 ring-1 ring-cyan-400/40">
               <ShieldCheck className="h-3.5 w-3.5 text-cyan-300" />
               <span className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">Indicadores Oficiais · Auditoria SGI-SST</span>
-              <span className="text-[9px] font-bold text-cyan-400/70">(6 indicadores oficiais · ISO 45001 · NR-01 / NR-07)</span>
+              <span className="text-[9px] font-bold text-cyan-400/70">(5 indicadores oficiais · ISO 45001 · NR-01 / NR-07 / NR-23)</span>
             </div>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-cyan-500/60 to-cyan-500/30" />
           </div>
@@ -955,7 +961,56 @@ function TstPanel() {
             </div>
           </Card>
           {/* OFICIAL 3 · % Treinamentos NR em dia */}
-          <Card title="03 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4 order-2"
+          {/* OFICIAL 1 · Zero Acidentes (mensal) */}
+          <Card title="01 · Zero Acidentes" className="col-span-12 md:col-span-4 order-2"
+            period="MENSAL" meta="= 0"
+            metaTone={totalAcid12m === 0 ? "ok" : "crit"}
+            action={<span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1"
+              style={{ color: totalAcid12m === 0 ? "#34d399" : "#fb7185" }}>
+              <ShieldAlert className="h-3 w-3" /> {totalAcid12m}
+            </span>}
+            ncPrefill={{ codigo: "IND-01", indicador: "Zero Acidentes (mensal)", mesRef: mesRefAtual }}>
+            <div className="h-56">
+              <ResponsiveContainer>
+                <BarChart data={acidMensal12m} margin={{ top: 18, right: 8, left: -25, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gradZeroOk" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.25} />
+                    </linearGradient>
+                    <linearGradient id="gradZeroBad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f43f5e" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.4} />
+                    </linearGradient>
+                    <filter id="zeroGlow" x="-30%" y="-30%" width="160%" height="160%">
+                      <feGaussianBlur stdDeviation="2.5" result="b" />
+                      <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                    </filter>
+                  </defs>
+                  <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip contentStyle={tooltipDark} formatter={(v: any) => [v, "Acidentes c/ afast."]} />
+                  <ReferenceLine y={0} stroke="#10b981" strokeDasharray="4 4" strokeWidth={2}
+                    label={{ value: "META = 0", position: "insideTopRight", fill: "#10b981", fontSize: 9, fontWeight: 900 }} />
+                  <Bar dataKey="acid" radius={[6, 6, 0, 0]} barSize={18} filter="url(#zeroGlow)">
+                    {acidMensal12m.map((m, i) => (
+                      <Cell key={i} fill={m.acid === 0 ? "url(#gradZeroOk)" : "url(#gradZeroBad)"} />
+                    ))}
+                    <LabelList dataKey="acid" position="top" style={{ fontSize: 9, fontWeight: 900, fill: "#f1f5f9" }} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center justify-around pt-2 mt-1 border-t border-slate-800/80 text-[10px]">
+              <span className="text-slate-500">12m: <span className="font-black tabular-nums"
+                style={{ color: totalAcid12m === 0 ? "#34d399" : "#fb7185" }}>{totalAcid12m}</span></span>
+              <span className="text-slate-500">Meses sem acidente: <span className="font-black text-emerald-300 tabular-nums">{mesesSemAcid}/12</span></span>
+            </div>
+          </Card>
+
+          {/* OFICIAL 2 · % Treinamentos NR em dia */}
+          <Card title="02 · Treinamentos NR · Em dia" className="col-span-12 md:col-span-4 order-3"
             period="MENSAL" meta={`≥ ${metas.treinPct}%`}
             metaTone={(() => {
               const avg = treinamentosNR.length > 0 ? Math.round(treinamentosNR.reduce((s, t) => s + t.value, 0) / treinamentosNR.length) : 100;
@@ -978,7 +1033,7 @@ function TstPanel() {
           </Card>
 
           {/* OFICIAL 4 · Donut ASO Status (PCMSO/NR-07) */}
-          <div className="col-span-12 md:col-span-4 order-3 relative rounded-2xl p-[1.5px] overflow-hidden flex"
+          <div className="col-span-12 md:col-span-4 order-4 relative rounded-2xl p-[1.5px] overflow-hidden flex"
             style={{
               background: "linear-gradient(135deg, rgba(167,139,250,0.95) 0%, rgba(34,211,238,0.55) 35%, rgba(16,185,129,0.90) 100%)",
               boxShadow:
@@ -1021,7 +1076,7 @@ function TstPanel() {
               <div aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 h-56 w-56 rounded-full"
                 style={{ background: "radial-gradient(circle, rgba(52,211,153,0.40) 0%, rgba(52,211,153,0) 70%)", filter: "blur(10px)" }} />
 
-              <Card title="04 · ASO · PCMSO" className="!bg-transparent !border-0 !shadow-none !backdrop-blur-0"
+              <Card title="03 · ASO · PCMSO" className="!bg-transparent !border-0 !shadow-none !backdrop-blur-0"
                 period="MENSAL" meta={`≥ ${metas.asoPct}%`}
                 metaTone={tone(asoConformPct, metas.asoPct)}
                 ncPrefill={{ codigo: "IND-05", indicador: "ASOs em dia", mesRef: mesRefAtual }}>
@@ -1041,8 +1096,8 @@ function TstPanel() {
           </div>
 
           {/* OFICIAL 5 · DDS Planejado vs Realizado (semanal) */}
-          <Card title="05 · DDS · Planejado vs Realizado"
-            className="col-span-12 md:col-span-4 order-4"
+          <Card title="04 · DDS · Planejado vs Realizado"
+            className="col-span-12 md:col-span-6 order-5"
             period="SEMANAL"
             meta={`≥ 85% · ${ddsPlanRealizado.realizados}/${ddsPlanRealizado.planejados}`}
             metaTone={tone(ddsPlanRealizado.pct, 85)}
@@ -1075,6 +1130,11 @@ function TstPanel() {
                     <XAxis dataKey="sem" tick={{ fontSize: 10, fill: "#cbd5e1" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
                     <Tooltip contentStyle={tooltipDark} />
+                    <ReferenceLine
+                      y={Math.max(...ddsPlanRealizado.series.map((s: any) => Number(s.plan) || 0)) * 0.9}
+                      stroke="#10b981" strokeDasharray="4 4" strokeWidth={2}
+                      label={{ value: "META 90%", position: "insideTopRight", fill: "#34d399", fontSize: 9, fontWeight: 900 }}
+                    />
                     <Bar dataKey="plan" fill="url(#gradPlanBg)" radius={[6, 6, 0, 0]} barSize={26} name="Planejado">
                       <LabelList dataKey="plan" position="top" style={{ fontSize: 9, fontWeight: 700, fill: "#94a3b8" }} />
                     </Bar>
@@ -1093,9 +1153,8 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 6 · Reincidência EPI por colaborador */}
           {/* === Banner: INDICADORES DE APOIO === */}
-          <div className="col-span-12 order-8 flex items-center gap-3 mt-2">
+          <div className="col-span-12 order-7 flex items-center gap-3 mt-2">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-600/60 to-slate-600/30" />
             <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-slate-700/30 ring-1 ring-slate-600/40">
               <Activity className="h-3.5 w-3.5 text-slate-300" />
@@ -1105,7 +1164,7 @@ function TstPanel() {
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-600/60 to-slate-600/30" />
           </div>
 
-          <Card title="11 · Reincidência EPI" className="col-span-12 md:col-span-4 order-6"
+          <Card title="11 · Reincidência EPI" className="col-span-12 md:col-span-4 order-8"
             period="MENSAL"
             meta={`≤ 5% · ${reincidenciaEPIPct.pct}%`}
             metaTone={reincidenciaEPIPct.pct <= 5 ? "ok" : reincidenciaEPIPct.pct <= 15 ? "warn" : "crit"}
@@ -1148,7 +1207,7 @@ function TstPanel() {
           </Card>
 
           {/* OFICIAL 6 · Inspeções (Extintores NR-23) */}
-          <Card title="06 · Inspeções · Extintores NR-23" className="col-span-12 md:col-span-4 order-5"
+          <Card title="05 · Inspeções · Extintores NR-23" className="col-span-12 md:col-span-6 order-6"
             period="MENSAL"
             meta={(() => {
               const pct = extMetrics.ativos > 0
@@ -1196,8 +1255,8 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 8 · Donut Conformidade Geral */}
-          <Card title="12 · Status Geral" className="col-span-12 md:col-span-4 order-7"
+          {/* Donut Conformidade Geral (apoio) */}
+          <Card title="12 · Status Geral" className="col-span-12 md:col-span-4 order-9"
             period={`${periodo}d`} meta="≥ 90%"
             metaTone={conformidadeFiltro >= 90 ? "ok" : conformidadeFiltro >= 70 ? "warn" : "crit"}
             ncPrefill={{ codigo: "IND-00", indicador: "Status Geral de Conformidade", mesRef: mesRefAtual }}>
