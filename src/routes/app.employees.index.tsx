@@ -425,19 +425,20 @@ function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?:
           <>
             <div
               aria-hidden
-              className="pointer-events-none absolute -top-4 left-1/2 -translate-x-1/2 h-6 w-2/3 rounded-full"
+              className="pointer-events-none absolute -top-5 left-1/2 -translate-x-1/2 h-9 w-3/4 rounded-full"
               style={{
-                background: `radial-gradient(ellipse at center, ${accent}CC 0%, ${accent}66 45%, ${accent}00 80%)`,
-                filter: "blur(7px)",
+                background: `radial-gradient(ellipse at center, #ffffffCC 0%, ${accent} 25%, ${accent}AA 55%, ${accent}00 85%)`,
+                filter: "blur(8px)",
                 mixBlendMode: "screen",
               }}
             />
             <div
               aria-hidden
-              className="pointer-events-none absolute top-0 left-[18%] h-[1.5px] w-[64%] rounded-full"
+              className="pointer-events-none absolute top-0 left-[12%] h-[2px] w-[76%] rounded-full"
               style={{
-                background: `linear-gradient(90deg, ${accent}00 0%, ${accent} 50%, ${accent}00 100%)`,
-                filter: "blur(1px)",
+                background: `linear-gradient(90deg, ${accent}00 0%, #ffffff 50%, ${accent}00 100%)`,
+                filter: "blur(0.6px)",
+                boxShadow: `0 0 10px ${accent}, 0 0 20px ${accent}99`,
               }}
             />
           </>
