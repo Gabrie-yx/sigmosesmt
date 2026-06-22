@@ -1825,13 +1825,24 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     // Empréstimo, perda e 1ª entrega seguem direto (registram nova entrega).
     if (f.motivo_entrega === "TROCA_DESGASTE") {
       const norm = (s: any) => String(s ?? "").trim().toLowerCase();
-      const prev = (epis ?? []).find(
-        (e: any) => !e.data_devolucao && norm(e.item) === norm(selected.nome_material),
-      );
-      if (prev) {
-        setSubstitution({ prev, motivo: "Desgaste Natural", data: f.data_entrega, obs: "" });
+      const ativos = (epis ?? []).filter((e: any) => !e.data_devolucao);
+      if (ativos.length === 0) {
+        toast.error(
+          "Este colaborador não possui nenhum EPI ativo para substituir. Se for a primeira vez que ele recebe este item, use '1ª Entrega'.",
+        );
         return;
       }
+      // pré-seleciona o item de mesmo nome, se houver
+      const prev =
+        ativos.find((e: any) => norm(e.item) === norm(selected.nome_material)) ?? ativos[0];
+      setSubstitution({
+        prev,
+        candidates: ativos,
+        motivo: "Desgaste Natural",
+        data: f.data_entrega,
+        obs: "",
+      });
+      return;
     }
     create.mutate();
   }
