@@ -14,7 +14,7 @@ export function gerarPdfListagemFuncionarios(
   employees: Emp[],
   companyMap: Map<string, string>,
   roleMap: Map<string, string>,
-  opts: { empresaLabel?: string; statusLabel?: string } = {},
+  opts: { empresaLabel?: string; statusLabel?: string; periodoAdmissao?: string; periodoDesligamento?: string } = {},
 ) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = 210;
@@ -34,12 +34,14 @@ export function gerarPdfListagemFuncionarios(
     roleMap.get(e.role_id) ?? "—",
     companyMap.get(e.company_id) ?? "—",
     fmtBR(e.admissao) || "—",
+    fmtBR(e.data_desligamento) || "—",
     e.status ?? "—",
   ]);
 
   const drawHeader = () => {
     const y = margin;
-    const headerH = 18;
+    const hasPeriodo = !!(opts.periodoAdmissao || opts.periodoDesligamento);
+    const headerH = hasPeriodo ? 23 : 18;
     doc.setDrawColor(0);
     doc.setLineWidth(0.3);
     doc.rect(margin, y, contentW, headerH);
@@ -51,6 +53,13 @@ export function gerarPdfListagemFuncionarios(
     doc.setFontSize(8.5);
     const sub = `Empresa: ${opts.empresaLabel ?? "Todas"}   •   Status: ${opts.statusLabel ?? "Todos"}   •   Total: ${employees.length}`;
     doc.text(sub, pageW / 2, y + 13.5, { align: "center" });
+    if (hasPeriodo) {
+      doc.setFontSize(7.5);
+      const parts: string[] = [];
+      if (opts.periodoAdmissao) parts.push(`Admissões: ${opts.periodoAdmissao}`);
+      if (opts.periodoDesligamento) parts.push(`Desligamentos: ${opts.periodoDesligamento}`);
+      doc.text(parts.join("   •   "), pageW / 2, y + 18, { align: "center" });
+    }
     doc.setFontSize(7.5);
     doc.text(`Emitido em ${hojeBR}`, pageW - margin - 3, y + 5, { align: "right" });
   };
@@ -58,14 +67,14 @@ export function gerarPdfListagemFuncionarios(
   drawHeader();
 
   autoTable(doc, {
-    startY: margin + 22,
-    margin: { top: margin + 22, left: margin, right: margin, bottom: 20 },
+    startY: margin + (opts.periodoAdmissao || opts.periodoDesligamento ? 27 : 22),
+    margin: { top: margin + (opts.periodoAdmissao || opts.periodoDesligamento ? 27 : 22), left: margin, right: margin, bottom: 20 },
     theme: "grid",
     tableWidth: contentW,
-    head: [["Nº", "Matrícula", "Nome", "CPF", "Cargo", "Empresa", "Admissão", "Status"]],
+    head: [["Nº", "Matrícula", "Nome", "CPF", "Cargo", "Empresa", "Admissão", "Desligamento", "Status"]],
     body: rows,
     styles: {
-      fontSize: 7.5,
+      fontSize: 7,
       cellPadding: 1.6,
       lineColor: [0, 0, 0],
       lineWidth: 0.15,
@@ -78,18 +87,19 @@ export function gerarPdfListagemFuncionarios(
       textColor: [255, 255, 255],
       fontStyle: "bold",
       halign: "center",
-      fontSize: 7.5,
+      fontSize: 7,
     },
     alternateRowStyles: { fillColor: [248, 250, 252] },
     columnStyles: {
-      0: { cellWidth: 10, halign: "center" },
-      1: { cellWidth: 18, halign: "center" },
-      2: { cellWidth: 50 },
-      3: { cellWidth: 24, halign: "center" },
-      4: { cellWidth: 28 },
-      5: { cellWidth: 30 },
-      6: { cellWidth: 16, halign: "center" },
-      7: { cellWidth: 14, halign: "center" },
+      0: { cellWidth: 9, halign: "center" },
+      1: { cellWidth: 16, halign: "center" },
+      2: { cellWidth: 44 },
+      3: { cellWidth: 22, halign: "center" },
+      4: { cellWidth: 24 },
+      5: { cellWidth: 26 },
+      6: { cellWidth: 15, halign: "center" },
+      7: { cellWidth: 15, halign: "center" },
+      8: { cellWidth: 19, halign: "center" },
     },
     didDrawPage: (data) => {
       drawHeader();
