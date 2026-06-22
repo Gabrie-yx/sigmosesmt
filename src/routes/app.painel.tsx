@@ -1153,9 +1153,8 @@ function TstPanel() {
             </div>
           </Card>
 
-          {/* 6 · Reincidência EPI por colaborador */}
           {/* === Banner: INDICADORES DE APOIO === */}
-          <div className="col-span-12 order-8 flex items-center gap-3 mt-2">
+          <div className="col-span-12 order-7 flex items-center gap-3 mt-2">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-600/60 to-slate-600/30" />
             <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-slate-700/30 ring-1 ring-slate-600/40">
               <Activity className="h-3.5 w-3.5 text-slate-300" />
@@ -1165,7 +1164,7 @@ function TstPanel() {
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-600/60 to-slate-600/30" />
           </div>
 
-          <Card title="11 · Reincidência EPI" className="col-span-12 md:col-span-4 order-6"
+          <Card title="11 · Reincidência EPI" className="col-span-12 md:col-span-4 order-8"
             period="MENSAL"
             meta={`≤ 5% · ${reincidenciaEPIPct.pct}%`}
             metaTone={reincidenciaEPIPct.pct <= 5 ? "ok" : reincidenciaEPIPct.pct <= 15 ? "warn" : "crit"}
