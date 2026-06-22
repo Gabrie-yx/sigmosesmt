@@ -378,6 +378,22 @@ function avatarGradient(name: string) {
   return palettes[h % palettes.length];
 }
 
+function avatarAccent(name: string) {
+  const accents = [
+    "#f43f5e", // rose
+    "#f59e0b", // amber
+    "#10b981", // emerald
+    "#0ea5e9", // sky
+    "#a855f7", // violet
+    "#06b6d4", // cyan
+    "#84cc16", // lime
+    "#ef4444", // red
+  ];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return accents[h % accents.length];
+}
+
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
   const first = parts[0]?.[0] ?? "";
@@ -403,7 +419,30 @@ function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?:
       params={{ id: emp.id }}
       className="glass-card glass-shine group relative block rounded-2xl p-4 hover:-translate-y-0.5 hover:shadow-2xl transition-all duration-200 overflow-hidden"
     >
-      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${avatarGradient(emp.nome)}`} />
+      {(() => {
+        const accent = avatarAccent(emp.nome);
+        return (
+          <>
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -top-4 left-1/2 -translate-x-1/2 h-6 w-2/3 rounded-full"
+              style={{
+                background: `radial-gradient(ellipse at center, ${accent}CC 0%, ${accent}66 45%, ${accent}00 80%)`,
+                filter: "blur(7px)",
+                mixBlendMode: "screen",
+              }}
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute top-0 left-[18%] h-[1.5px] w-[64%] rounded-full"
+              style={{
+                background: `linear-gradient(90deg, ${accent}00 0%, ${accent} 50%, ${accent}00 100%)`,
+                filter: "blur(1px)",
+              }}
+            />
+          </>
+        );
+      })()}
       <div className="flex items-start gap-3">
         {emp.foto_url ? (
           <img
