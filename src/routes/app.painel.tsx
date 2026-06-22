@@ -12,7 +12,7 @@ import { type SafetyOverride } from "@/lib/safety-overrides";
 import {
   ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid,
   ComposedChart, Line, Area, Bar, BarChart, PieChart, Pie, Cell, LabelList,
-  RadialBarChart, RadialBar, LineChart, Legend,
+  RadialBarChart, RadialBar, LineChart, Legend, ReferenceLine,
 } from "recharts";
 
 export const Route = createFileRoute("/app/painel")({
