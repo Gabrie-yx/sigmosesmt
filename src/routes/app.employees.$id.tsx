@@ -1705,7 +1705,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
   });
   const selected = stockItems.find((s) => s.id === f.epi_id) ?? null;
   const MOTIVOS_DEV = ["Danificado", "Desgaste Natural", "Extravio", "Mal Uso", "Furto", "Uso Temporário"];
-  const [substitution, setSubstitution] = useState<{ prev: any; motivo: string; data: string; obs: string } | null>(null);
+  const [substitution, setSubstitution] = useState<{ prev: any; candidates: any[]; motivo: string; data: string; obs: string } | null>(null);
 
   // Alerta de reincidência: mesmo EPI entregue ao colaborador nos últimos 30 dias
   const reincidencia = (() => {
