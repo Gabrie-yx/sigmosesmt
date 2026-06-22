@@ -1130,6 +1130,11 @@ function TstPanel() {
                     <XAxis dataKey="sem" tick={{ fontSize: 10, fill: "#cbd5e1" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
                     <Tooltip contentStyle={tooltipDark} />
+                    <ReferenceLine
+                      y={Math.max(...ddsPlanRealizado.series.map((s: any) => Number(s.plan) || 0)) * 0.9}
+                      stroke="#10b981" strokeDasharray="4 4" strokeWidth={2}
+                      label={{ value: "META 90%", position: "insideTopRight", fill: "#34d399", fontSize: 9, fontWeight: 900 }}
+                    />
                     <Bar dataKey="plan" fill="url(#gradPlanBg)" radius={[6, 6, 0, 0]} barSize={26} name="Planejado">
                       <LabelList dataKey="plan" position="top" style={{ fontSize: 9, fontWeight: 700, fill: "#94a3b8" }} />
                     </Bar>
