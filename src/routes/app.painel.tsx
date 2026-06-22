@@ -1207,7 +1207,7 @@ function TstPanel() {
           </Card>
 
           {/* OFICIAL 6 · Inspeções (Extintores NR-23) */}
-          <Card title="06 · Inspeções · Extintores NR-23" className="col-span-12 md:col-span-4 order-5"
+          <Card title="05 · Inspeções · Extintores NR-23" className="col-span-12 md:col-span-6 order-6"
             period="MENSAL"
             meta={(() => {
               const pct = extMetrics.ativos > 0
