@@ -2489,8 +2489,32 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           {substitution && (
             <div className="space-y-4">
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs">
-                Já existe uma entrega ativa de <strong className="uppercase">{substitution.prev.item}</strong> para este colaborador.
-                Vamos finalizar a entrega anterior e registrar a nova.
+                Para registrar uma <strong>troca por desgaste</strong>, escolha qual EPI ativo está sendo substituído.
+                O item antigo será baixado automaticamente com o motivo informado.
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  EPI antigo sendo substituído
+                </Label>
+                <Select
+                  value={substitution.prev?.id ?? ""}
+                  onValueChange={(v) => {
+                    const novo = substitution.candidates.find((c) => c.id === v);
+                    if (novo) setSubstitution({ ...substitution, prev: novo });
+                  }}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione o EPI antigo" /></SelectTrigger>
+                  <SelectContent>
+                    {substitution.candidates.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.item} {c.ca ? `(CA ${c.ca})` : ""} — entregue em {c.data_entrega?.split("-").reverse().join("/")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-slate-500">
+                  Listando todos os EPIs ativos deste colaborador. Pré-selecionado: item de mesmo nome do novo, se houver.
+                </p>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Motivo da substituição</Label>
