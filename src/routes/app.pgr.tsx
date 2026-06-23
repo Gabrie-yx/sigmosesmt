@@ -22,11 +22,12 @@ import {
 import {
   ShieldAlert, Plus, Pencil, Trash2, Users, Layers, Grid3x3, ListChecks, AlertTriangle, Save, HardHat,
   Sparkles, Wand2, Loader2,
-  ClipboardList,
+  ClipboardList, Bot,
 } from "lucide-react";
 import { toast } from "sonner";
 import { GheMembrosDialog } from "@/components/pgr/ghe-membros-dialog";
 import { GheFichaDialog } from "@/components/pgr/ghe-ficha-dialog";
+import { PgrCopilot } from "@/components/pgr/pgr-copilot";
 import {
   classifyAiha, AIHA_LABEL, AIHA_COLOR, AIHA_CELL, AIHA_PRIORIZACAO,
   PROB_LABELS, SEV_LABELS, CATEGORIA_LABEL, type AihaClass,
@@ -96,11 +97,13 @@ function PgrPage() {
             <TabsTrigger value="ghe" className="gap-2"><Layers className="h-4 w-4" />GHEs</TabsTrigger>
             <TabsTrigger value="inv" className="gap-2"><Grid3x3 className="h-4 w-4" />Inventário de Riscos</TabsTrigger>
             <TabsTrigger value="plano" className="gap-2"><ListChecks className="h-4 w-4" />Plano de Ação (5W2H)</TabsTrigger>
+            <TabsTrigger value="copiloto" className="gap-2"><Bot className="h-4 w-4" />Copiloto IA</TabsTrigger>
           </TabsList>
 
           <TabsContent value="ghe"><GheTab /></TabsContent>
           <TabsContent value="inv"><InventarioTab /></TabsContent>
           <TabsContent value="plano"><PlanoTab /></TabsContent>
+          <TabsContent value="copiloto"><PgrCopilot /></TabsContent>
         </Tabs>
       </div>
     </div>

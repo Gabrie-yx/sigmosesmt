@@ -41,6 +41,7 @@ import { Route as AppAssinadorRouteImport } from './routes/app.assinador'
 import { Route as AppAprsRouteImport } from './routes/app.aprs'
 import { Route as AppAcoesRouteImport } from './routes/app.acoes'
 import { Route as AppAcidentesRouteImport } from './routes/app.acidentes'
+import { Route as ApiPgrChatRouteImport } from './routes/api/pgr-chat'
 import { Route as AppOssIndexRouteImport } from './routes/app.oss.index'
 import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
@@ -240,6 +241,11 @@ const AppAcidentesRoute = AppAcidentesRouteImport.update({
   path: '/acidentes',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPgrChatRoute = ApiPgrChatRouteImport.update({
+  id: '/api/pgr-chat',
+  path: '/api/pgr-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppOssIndexRoute = AppOssIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -437,6 +443,7 @@ export interface FileRoutesByFullPath {
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
+  '/api/pgr-chat': typeof ApiPgrChatRoute
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
@@ -506,6 +513,7 @@ export interface FileRoutesByTo {
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
+  '/api/pgr-chat': typeof ApiPgrChatRoute
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
@@ -575,6 +583,7 @@ export interface FileRoutesById {
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
+  '/api/pgr-chat': typeof ApiPgrChatRoute
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
   '/app/aprs': typeof AppAprsRoute
@@ -647,6 +656,7 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/reset-password'
     | '/termos'
+    | '/api/pgr-chat'
     | '/app/acidentes'
     | '/app/acoes'
     | '/app/aprs'
@@ -716,6 +726,7 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/reset-password'
     | '/termos'
+    | '/api/pgr-chat'
     | '/app/acidentes'
     | '/app/acoes'
     | '/app/aprs'
@@ -784,6 +795,7 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/reset-password'
     | '/termos'
+    | '/api/pgr-chat'
     | '/app/acidentes'
     | '/app/acoes'
     | '/app/aprs'
@@ -855,6 +867,7 @@ export interface RootRouteChildren {
   PrivacidadeRoute: typeof PrivacidadeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
+  ApiPgrChatRoute: typeof ApiPgrChatRoute
   RcTokenRoute: typeof RcTokenRoute
 }
 
@@ -1083,6 +1096,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/acidentes'
       preLoaderRoute: typeof AppAcidentesRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/api/pgr-chat': {
+      id: '/api/pgr-chat'
+      path: '/api/pgr-chat'
+      fullPath: '/api/pgr-chat'
+      preLoaderRoute: typeof ApiPgrChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/oss/': {
       id: '/app/oss/'
@@ -1508,18 +1528,9 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacidadeRoute: PrivacidadeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
+  ApiPgrChatRoute: ApiPgrChatRoute,
   RcTokenRoute: RcTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
