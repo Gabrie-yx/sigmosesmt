@@ -1020,7 +1020,7 @@ function PainelListaTecnicaPage() {
                             <div className="relative h-full w-full">
                               <ResponsiveContainer width="100%" height="100%">
                                 <RadarChart data={data} margin={{ top: 18, right: 28, bottom: 20, left: 28 }} outerRadius="72%">
-                                  <PolarGrid stroke="hsl(var(--border))" />
+                                  <PolarGrid stroke="#ffffff" opacity={0.12} />
                                   <PolarAngleAxis
                                     dataKey="label"
                                     tick={(props: any) => {
@@ -1105,14 +1105,14 @@ function PainelListaTecnicaPage() {
                             <div className="relative h-full w-full">
                               <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={data} margin={{ left: 4, right: 8, top: 22, bottom: 4 }} barCategoryGap={24}>
-                                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.12} vertical={false} />
                                   <XAxis
                                     type="category"
                                     dataKey="label"
                                     tickLine={false}
                                     axisLine={false}
                                     interval={0}
-                                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontWeight: 600 }}
+                                    tick={{ fontSize: 10, fill: "#ffffff", fontWeight: 600 }}
                                   />
                                   <YAxis type="number" hide domain={[0, maxY]} />
                                   <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit={focoItem.ume} />} />
@@ -1148,8 +1148,8 @@ function PainelListaTecnicaPage() {
                             <div className="relative h-full w-full">
                               <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={data} margin={{ left: 8, right: 16, top: 20, bottom: 18 }}>
-                                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                                  <XAxis dataKey="x" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.12} vertical={false} />
+                                  <XAxis dataKey="x" stroke="#ffffff" fontSize={10} />
                                   <YAxis domain={[0, maxY]} hide />
                                   <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit={focoItem.ume} />} />
                                   <Line
@@ -1241,7 +1241,7 @@ function PainelListaTecnicaPage() {
                                 className="cursor-pointer focus:outline-none"
                                 label={(e: any) => `${e.label} · ${fmt(Number(e.value), 0)}`}
                                 labelLine={false}
-                                style={{ fontSize: 10, fill: "hsl(var(--foreground))" }}
+                                style={{ fontSize: 10, fill: "#ffffff" }}
                               >
                                 {data2.map((b, i) => (
                                   <Cell key={i} fill={i === 0 ? cor : cor2} stroke="hsl(var(--background))" strokeWidth={1} />
@@ -1294,15 +1294,15 @@ function PainelListaTecnicaPage() {
                             <BarChart
                               data={data}
                               margin={{ left: 4, right: 8, top: 18, bottom: 4 }}
-                              barCategoryGap={6}
+                              barCategoryGap="22%"
                             >
-                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.12} vertical={false} />
                               <XAxis
                                 type="category"
                                 dataKey="label"
                                 tickLine={false}
                                 axisLine={false}
-                                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontWeight: 600 }}
+                                tick={{ fontSize: 10, fill: "#ffffff", fontWeight: 600 }}
                                 interval={0}
                                 onClick={(e: any) => {
                                   const lbl = e?.value;
@@ -1327,7 +1327,7 @@ function PainelListaTecnicaPage() {
                               />
                               <Bar
                                 dataKey="valor"
-                                radius={[3, 3, 3, 3]}
+                                radius={[6, 6, 0, 0]}
                                 onClick={(d: any) => setUnidadeSel((p) => (p === d.label ? null : d.label))}
                                 className="cursor-pointer"
                                 isAnimationActive
@@ -1365,7 +1365,7 @@ function PainelListaTecnicaPage() {
                                         textAnchor="middle"
                                         fontSize={11}
                                         fontWeight={800}
-                                        fill={cor}
+                                        fill="#ffffff"
                                       >
                                         {fmt(Number(real), 0)}
                                       </text>
@@ -1420,10 +1420,10 @@ function PainelListaTecnicaPage() {
                         return (
                           <ResponsiveContainer width="100%" height="100%">
                             <RadarChart data={data} margin={{ top: 16, right: 22, bottom: 16, left: 22 }}>
-                              <PolarGrid stroke="hsl(var(--border))" />
+                              <PolarGrid stroke="#ffffff" opacity={0.12} />
                               <PolarAngleAxis
                                 dataKey="label"
-                                tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                                tick={{ fontSize: 9, fill: "#ffffff" }}
                               />
                               <PolarRadiusAxis tick={false} axisLine={false} />
                               <Tooltip content={<FancyTooltip accent={cor} />} />
@@ -1449,18 +1449,18 @@ function PainelListaTecnicaPage() {
                 </Card>
 
                 {/* Card de série temporal */}
-                <Card className="shadow-sm">
+                <Card className="shadow-lg bg-slate-950 border border-white/10">
                   <CardHeader className="pb-1 pt-3 px-4 flex flex-row items-center justify-between space-y-0">
-                    <CardTitle className="text-xs text-muted-foreground font-medium">
+                    <CardTitle className="text-xs text-slate-200 font-medium">
                       <>Consumo mensal — <span className="font-bold" style={{ color: cor }}>{cat}</span></>
                     </CardTitle>
                     {serieMensal.length > 0 && (
-                      <span className="text-[10px] text-muted-foreground">{serieMensal.length} mês(es)</span>
+                      <span className="text-[10px] text-slate-400">{serieMensal.length} mês(es)</span>
                     )}
                   </CardHeader>
                   <CardContent className="h-44 p-2">
                     {serieMensal.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem movimentos com data</div>
+                      <div className="h-full flex items-center justify-center text-xs text-slate-400">Sem movimentos com data</div>
                     ) : (
                       (() => {
                         // Forçado para LINE em todos os cards de Consumo Mensal (preferência do usuário)
@@ -1478,8 +1478,8 @@ function PainelListaTecnicaPage() {
                           return (
                             <ResponsiveContainer width="100%" height="100%">
                               <BarChart data={dadosBase} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                                <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.12} vertical={false} />
+                                <XAxis dataKey="mes" stroke="#ffffff" fontSize={9} interval="preserveStartEnd" minTickGap={12} />
                                 <YAxis hide />
                                 <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Bar
@@ -1501,9 +1501,9 @@ function PainelListaTecnicaPage() {
                           return (
                             <ResponsiveContainer width="100%" height="100%">
                               <BarChart data={dadosBase} layout="vertical" margin={{ left: 6, right: 28, top: 4, bottom: 4 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.12} horizontal={false} />
                                 <XAxis type="number" hide />
-                                <YAxis type="category" dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} width={70} />
+                                <YAxis type="category" dataKey="mes" stroke="#ffffff" fontSize={9} width={70} />
                                 <Tooltip cursor={{ fill: `color-mix(in oklch, ${cor} 8%, transparent)` }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Bar
                                   dataKey="valor"
@@ -1517,7 +1517,7 @@ function PainelListaTecnicaPage() {
                                     const dim = focoItem && !isFoco;
                                     return <Cell key={i} fill={d.fill} fillOpacity={dim ? 0.35 : 1} />;
                                   })}
-                                  <LabelList dataKey="valor" position="right" formatter={(v: any) => fmt(Number(v), 0)} style={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
+                                  <LabelList dataKey="valor" position="right" formatter={(v: any) => fmt(Number(v), 0)} style={{ fontSize: 10, fill: "#ffffff", fontWeight: 700 }} />
                                 </Bar>
                               </BarChart>
                             </ResponsiveContainer>
@@ -1535,8 +1535,8 @@ function PainelListaTecnicaPage() {
                                     <stop offset="100%" stopColor={cor} stopOpacity={0.04} />
                                   </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                                <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.12} vertical={false} />
+                                <XAxis dataKey="mes" stroke="#ffffff" fontSize={9} interval="preserveStartEnd" minTickGap={12} />
                                 <YAxis hide />
                                 <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Area
@@ -1575,8 +1575,8 @@ function PainelListaTecnicaPage() {
                                     <stop offset="100%" stopColor={cor} stopOpacity={0.05} />
                                   </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                                <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.12} vertical={false} />
+                                <XAxis dataKey="mes" stroke="#ffffff" fontSize={9} interval="preserveStartEnd" minTickGap={12} />
                                 <YAxis hide />
                                 <Tooltip cursor={{ stroke: cor, strokeDasharray: "3 3" }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
                                 <Area
@@ -1613,8 +1613,8 @@ function PainelListaTecnicaPage() {
                         return (
                           <ResponsiveContainer width="100%" height="100%">
                             <ScatterChart margin={{ left: 4, right: 12, top: 8, bottom: 28 }}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                              <XAxis dataKey="mes" type="category" stroke="hsl(var(--muted-foreground))" fontSize={9} interval={0} angle={-25} textAnchor="end" height={36} />
+                              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.12} />
+                              <XAxis dataKey="mes" type="category" stroke="#ffffff" fontSize={9} interval="preserveStartEnd" minTickGap={12} />
                               <YAxis dataKey="valor" hide />
                               <ZAxis dataKey="valor" range={[60, 360]} />
                               <Tooltip cursor={{ strokeDasharray: "3 3", stroke: cor }} content={<FancyTooltip accent={cor} unit={umeUnica} />} />
