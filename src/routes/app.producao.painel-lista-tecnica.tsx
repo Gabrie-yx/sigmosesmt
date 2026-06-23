@@ -663,13 +663,13 @@ function PainelListaTecnicaPage() {
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="icon" className="h-9 w-9" title="O que enviar aqui?">
-              <Info className="h-4 w-4 text-blue-600" />
+              <Info className="h-4 w-4 text-blue-400" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80 text-xs space-y-2">
-            <p className="font-bold text-sm text-blue-700">📊 MB51 — Consumo Real (.xlsx)</p>
+            <p className="font-bold text-sm text-blue-300">📊 MB51 — Consumo Real (.xlsx)</p>
             <p>Envie aqui o relatório <strong>MB51 do SAP</strong> — movimentos de saída de materiais para as Ordens SAP (consumo real do casco).</p>
-            <p className="text-red-700"><strong>⚠️ NÃO envie aqui:</strong> Base de Matéria-Prima nem Lista Técnica (B51).</p>
+            <p className="text-red-300"><strong>⚠️ NÃO envie aqui:</strong> Base de Matéria-Prima nem Lista Técnica (B51).</p>
             <p className="text-muted-foreground">Cada Ordem SAP vira uma OP neste dashboard.</p>
           </PopoverContent>
         </Popover>
@@ -738,10 +738,10 @@ function PainelListaTecnicaPage() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           { label: "Planejado Lista Técnica", value: `${fmt(kpi.pesoEst, 0)} kg`, icon: Layers, accent: "from-accent/20 to-accent/5", textCls: "text-accent-foreground" },
-          { label: "Peso Real (B51)", value: `${fmt(Number(listaPlan?.peso_total_real ?? 0), 0)} kg`, icon: Layers, accent: "from-emerald-500/20 to-emerald-500/5", textCls: "text-emerald-700" },
+          { label: "Peso Real (B51)", value: `${fmt(Number(listaPlan?.peso_total_real ?? 0), 0)} kg`, icon: Layers, accent: "from-emerald-500/20 to-emerald-500/5", textCls: "text-emerald-300" },
           { label: "Consumo Ferro/Aço", value: `${fmt(kpi.consumoOrdem, 0)} kg`, icon: TrendingUp, accent: "from-primary/20 to-primary/5", textCls: "text-primary" },
-          { label: "Códigos Distintos", value: fmt(kpi.distintos, 0), icon: Filter, accent: "from-blue-500/15 to-blue-500/5", textCls: "text-blue-600" },
-          { label: "Movimentos MB51", value: fmt(kpi.pecas, 0), icon: Package, accent: "from-amber-500/15 to-amber-500/5", textCls: "text-amber-700" },
+          { label: "Códigos Distintos", value: fmt(kpi.distintos, 0), icon: Filter, accent: "from-blue-500/15 to-blue-500/5", textCls: "text-blue-400" },
+          { label: "Movimentos MB51", value: fmt(kpi.pecas, 0), icon: Package, accent: "from-amber-500/15 to-amber-500/5", textCls: "text-amber-300" },
         ].map((k) => (
           <Card key={k.label} className={`shadow-sm bg-gradient-to-br ${k.accent} border-0`}>
             <CardContent className="p-3">
@@ -761,19 +761,19 @@ function PainelListaTecnicaPage() {
           <CardContent className="p-3">
             <div className="flex items-center gap-2 mb-2">
               {alertasAtivos.length > 0 ? (
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertTriangle className="h-4 w-4 text-amber-400" />
               ) : (
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <CheckCircle2 className="h-4 w-4 text-green-400" />
               )}
               <span className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
                 Realizado vs. Orçado (B51)
               </span>
               {alertasAtivos.length > 0 ? (
-                <span className="text-[10px] text-amber-700 font-medium">
+                <span className="text-[10px] text-amber-300 font-medium">
                   {alertasAtivos.length} categoria(s) acima do previsto
                 </span>
               ) : (
-                <span className="text-[10px] text-green-700 font-medium">Dentro do previsto</span>
+                <span className="text-[10px] text-green-300 font-medium">Dentro do previsto</span>
               )}
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">

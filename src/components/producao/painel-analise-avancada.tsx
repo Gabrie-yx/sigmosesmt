@@ -255,22 +255,22 @@ function AbaPerda({
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <Card><CardContent className="p-3">
           <div className="text-[10px] uppercase text-muted-foreground font-semibold">Códigos com sobreconsumo</div>
-          <div className="text-xl font-bold text-red-600">{totais.codigos}</div>
+          <div className="text-xl font-bold text-red-400">{totais.codigos}</div>
         </CardContent></Card>
         <Card><CardContent className="p-3">
           <div className="text-[10px] uppercase text-muted-foreground font-semibold">Não previstos (consumidos sem B51)</div>
-          <div className="text-xl font-bold text-amber-600">{totais.naoPrev}</div>
+          <div className="text-xl font-bold text-amber-400">{totais.naoPrev}</div>
         </CardContent></Card>
         <Card><CardContent className="p-3">
           <div className="text-[10px] uppercase text-muted-foreground font-semibold">Sobreconsumo total (qtd)</div>
-          <div className="text-xl font-bold text-red-600">{fmt(totais.sobre, 0)}</div>
+          <div className="text-xl font-bold text-red-400">{fmt(totais.sobre, 0)}</div>
         </CardContent></Card>
       </div>
 
       <Card>
         <CardHeader className="pb-2 pt-3 px-4 flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-bold flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertTriangle className="h-4 w-4 text-red-400" />
             Ranking de desperdício (real &gt; previsto)
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -321,13 +321,13 @@ function AbaPerda({
                   </td>
                   <td className="px-2 py-1.5 text-right tabular-nums">{fmt(l.previsto, 0)}</td>
                   <td className="px-2 py-1.5 text-right tabular-nums font-semibold">{fmt(l.real, 0)}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums font-bold text-red-600">+{fmt(l.desvio_abs, 0)}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums font-semibold text-red-600">
+                  <td className="px-2 py-1.5 text-right tabular-nums font-bold text-red-400">+{fmt(l.desvio_abs, 0)}</td>
+                  <td className="px-2 py-1.5 text-right tabular-nums font-semibold text-red-400">
                     {l.previsto > 0 ? `+${fmt(l.desvio_pct, 1)}%` : "novo"}
                   </td>
                   <td className="px-2 py-1.5 text-right text-[10px] text-muted-foreground uppercase">{l.unidade}</td>
                   <td className="px-2 py-1.5 text-right text-[10px] text-muted-foreground">
-                    {l.movimentos}{l.estornos > 0 && <span className="text-amber-600"> ({l.estornos} est.)</span>}
+                    {l.movimentos}{l.estornos > 0 && <span className="text-amber-400"> ({l.estornos} est.)</span>}
                   </td>
                 </tr>
               ))}
@@ -339,7 +339,7 @@ function AbaPerda({
       {naoConsumidos.length > 0 && (
         <Card>
           <CardHeader className="pb-2 pt-3 px-4">
-            <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-700">
+            <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-300">
               <AlertTriangle className="h-4 w-4" />
               Códigos previstos mas ainda não consumidos ({naoConsumidos.length})
             </CardTitle>
@@ -739,7 +739,7 @@ function AbaHistorico({
                   <td className="px-2 py-1.5 tabular-nums">{m.data_lancamento ?? "—"}</td>
                   <td className="px-2 py-1.5 font-mono text-[10px]">
                     {m.tipo_movimento ?? "—"}
-                    {est && <span title="Estorno/devolução" className="ml-1 text-amber-600">⟲</span>}
+                    {est && <span title="Estorno/devolução" className="ml-1 text-amber-400">⟲</span>}
                   </td>
                   <td className="px-2 py-1.5 font-mono">{m.material}</td>
                   <td className="px-2 py-1.5 max-w-[260px] truncate" title={m.descricao ?? ""}>{m.descricao}</td>
@@ -747,7 +747,7 @@ function AbaHistorico({
                     <span className="inline-block h-2 w-2 rounded-sm mr-1 align-middle" style={{ background: CAT_COLOR[m.categoria] }} />
                     <span className="text-[10px]">{m.categoria}</span>
                   </td>
-                  <td className={`px-2 py-1.5 text-right tabular-nums ${m.quantidade > 0 ? "text-amber-700" : ""}`}>{fmt(m.quantidade, 2)}</td>
+                  <td className={`px-2 py-1.5 text-right tabular-nums ${m.quantidade > 0 ? "text-amber-300" : ""}`}>{fmt(m.quantidade, 2)}</td>
                   <td className="px-2 py-1.5 text-right tabular-nums font-semibold">{fmt(m.consumo, 2)}</td>
                   <td className="px-2 py-1.5 text-[10px] uppercase text-muted-foreground">{m.unidade ?? "—"}</td>
                   <td className="px-2 py-1.5 text-[10px] text-muted-foreground truncate max-w-[120px]" title={m.classificacao_mb51 ?? ""}>{m.classificacao_mb51 ?? "—"}</td>
@@ -856,9 +856,9 @@ function AbaDrillDown({
                 const pct = l.previsto > 0 ? (l.real / l.previsto) * 100 : null;
                 const corPct =
                   pct == null ? "text-muted-foreground"
-                  : pct > 110 ? "text-red-600 font-bold"
-                  : pct > 100 ? "text-amber-600 font-semibold"
-                  : "text-emerald-700";
+                  : pct > 110 ? "text-red-400 font-bold"
+                  : pct > 100 ? "text-amber-400 font-semibold"
+                  : "text-emerald-300";
                 return (
                   <tr
                     key={l.codigo}
@@ -877,7 +877,7 @@ function AbaDrillDown({
                       {pct == null ? "novo" : `${fmt(pct, 0)}%`}
                     </td>
                     <td className="px-2 py-1.5 text-right text-[10px] text-muted-foreground">
-                      {l.movimentos}{l.estornos > 0 && <span className="text-amber-600"> ⟲{l.estornos}</span>}
+                      {l.movimentos}{l.estornos > 0 && <span className="text-amber-400"> ⟲{l.estornos}</span>}
                     </td>
                     <td className="px-2 py-1.5 text-right text-[10px] tabular-nums text-muted-foreground">{l.ultima ?? "—"}</td>
                   </tr>
@@ -919,9 +919,9 @@ function AbaDrillDown({
                         <tr key={m.id} className={`border-t ${est ? "bg-amber-50/40" : ""}`}>
                           <td className="px-2 py-1.5 tabular-nums">{m.data_lancamento ?? "—"}</td>
                           <td className="px-2 py-1.5 font-mono text-[10px]">
-                            {m.tipo_movimento ?? "—"}{est && <span className="ml-1 text-amber-600">⟲</span>}
+                            {m.tipo_movimento ?? "—"}{est && <span className="ml-1 text-amber-400">⟲</span>}
                           </td>
-                          <td className={`px-2 py-1.5 text-right tabular-nums ${m.quantidade > 0 ? "text-amber-700" : ""}`}>{fmt(m.quantidade, 2)}</td>
+                          <td className={`px-2 py-1.5 text-right tabular-nums ${m.quantidade > 0 ? "text-amber-300" : ""}`}>{fmt(m.quantidade, 2)}</td>
                           <td className="px-2 py-1.5 text-[10px] uppercase text-muted-foreground">{m.unidade ?? "—"}</td>
                           <td className="px-2 py-1.5 text-[10px] text-muted-foreground truncate max-w-[150px]" title={m.classificacao_mb51 ?? ""}>{m.classificacao_mb51 ?? "—"}</td>
                         </tr>
