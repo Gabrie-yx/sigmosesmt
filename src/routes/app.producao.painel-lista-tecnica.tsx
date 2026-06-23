@@ -697,16 +697,16 @@ function PainelListaTecnicaPage() {
             <select
               value={ordemAtivaId ?? ""}
               onChange={(e) => { setOrdemSel(e.target.value || null); limparFiltros(); }}
-              className="px-4 py-2 rounded-md text-sm font-bold border border-primary/30 bg-primary/5 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 min-w-[340px]"
+              className="px-4 py-2 rounded-md text-sm font-bold border border-primary/40 bg-slate-950 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 min-w-[340px] [&>option]:bg-slate-950 [&>option]:text-white"
             >
-              {(mb51Ordens as any[]).length === 0 && <option value="">Nenhuma MB51 importada — use o botão "Upload MB51" acima</option>}
+              {(mb51Ordens as any[]).length === 0 && <option value="" className="bg-slate-950 text-white">Nenhuma MB51 importada — use o botão "Upload MB51" acima</option>}
               {(mb51Ordens as any[]).map((o) => {
                 const c = o.casco_id ? cascoById.get(o.casco_id) : null;
                 const label = c
                   ? (c.nome ? String(c.nome).toUpperCase() : String(c.numero).replace(/^CASCO\s*/i, ""))
                   : (o.texto_documento ?? "—");
                 return (
-                  <option key={o.id} value={o.id}>
+                  <option key={o.id} value={o.id} className="bg-slate-950 text-white">
                     SAP {String(o.numero_sap).startsWith("PEND") ? "PEND" : o.numero_sap} · {label}
                   </option>
                 );
