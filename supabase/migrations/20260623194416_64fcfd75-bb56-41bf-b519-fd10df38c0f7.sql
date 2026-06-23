@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.producao_mb51_movimentos_dedup_uidx;
