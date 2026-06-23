@@ -735,13 +735,11 @@ function PainelListaTecnicaPage() {
         </TabsList>
         <TabsContent value="visao" className="space-y-3 mt-3">
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {[
           { label: "Planejado Lista Técnica", value: `${fmt(kpi.pesoEst, 0)} kg`, icon: Layers, accent: "from-accent/20 to-accent/5", textCls: "text-accent-foreground" },
           { label: "Peso Real (B51)", value: `${fmt(Number(listaPlan?.peso_total_real ?? 0), 0)} kg`, icon: Layers, accent: "from-emerald-500/20 to-emerald-500/5", textCls: "text-emerald-300" },
           { label: "Consumo Ferro/Aço", value: `${fmt(kpi.consumoOrdem, 0)} kg`, icon: TrendingUp, accent: "from-primary/20 to-primary/5", textCls: "text-primary" },
-          { label: "Códigos Distintos", value: fmt(kpi.distintos, 0), icon: Filter, accent: "from-blue-500/15 to-blue-500/5", textCls: "text-blue-400" },
-          { label: "Movimentos MB51", value: fmt(kpi.pecas, 0), icon: Package, accent: "from-amber-500/15 to-amber-500/5", textCls: "text-amber-300" },
         ].map((k) => (
           <Card key={k.label} className={`shadow-sm bg-gradient-to-br ${k.accent} border-0`}>
             <CardContent className="p-3">
