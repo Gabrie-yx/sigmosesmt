@@ -754,7 +754,7 @@ function PainelListaTecnicaPage() {
       </div>
 
       {/* Linha: Realizado vs Orçado (esq) + Curva S (dir) */}
-      <div className="grid gap-3 grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="grid gap-3 grid-cols-1 lg:grid-cols-[400px_minmax(0,1fr)]">
       {listaAtivaId && (
         <Card className="shadow-sm border-0 bg-gradient-to-r from-muted/30 via-background to-muted/30">
           <CardContent className="p-2.5 h-full flex flex-col">
