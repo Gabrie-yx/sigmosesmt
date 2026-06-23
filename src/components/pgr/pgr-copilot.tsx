@@ -57,19 +57,19 @@ export function PgrCopilot() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-260px)] min-h-[500px] gap-3">
-      <Card className="p-4 bg-gradient-to-r from-rose-50 to-amber-50 border-rose-200">
+      <Card className="p-4 bg-card/40 backdrop-blur-xl border-border/60 shadow-lg">
         <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-rose-600 to-[#7f1212] text-white shadow">
+          <div className="p-2 rounded-lg bg-primary/15 backdrop-blur border border-primary/30 text-primary">
             <Bot className="h-5 w-5" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-slate-900">Copiloto PGR</h3>
-              <Badge variant="secondary" className="gap-1 bg-rose-100 text-rose-800 border-rose-200">
+              <h3 className="font-bold text-foreground">Copiloto PGR</h3>
+              <Badge variant="secondary" className="gap-1 bg-primary/15 text-primary border-primary/30 backdrop-blur">
                 <Sparkles className="h-3 w-3" /> IA
               </Badge>
             </div>
-            <p className="text-xs text-slate-600 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Crie, audite ou corrija um PGR conforme NR-01, Manual GRO e demais NRs. Funciona para qualquer empresa/segmento.
             </p>
           </div>
@@ -78,14 +78,14 @@ export function PgrCopilot() {
 
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto space-y-3 p-4 bg-slate-50/50 rounded-lg border border-slate-200"
+        className="flex-1 min-h-0 overflow-y-auto space-y-3 p-4 bg-card/30 backdrop-blur-xl rounded-lg border border-border/60"
       >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-8">
-            <Bot className="h-12 w-12 text-slate-300" />
+            <Bot className="h-12 w-12 text-muted-foreground/50" />
             <div>
-              <p className="font-medium text-slate-700">Como posso ajudar com o PGR?</p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="font-medium text-foreground">Como posso ajudar com o PGR?</p>
+              <p className="text-xs text-muted-foreground mt-1">
                 Escolha uma ação rápida ou descreva o que precisa.
               </p>
             </div>
@@ -94,10 +94,10 @@ export function PgrCopilot() {
                 <button
                   key={a.label}
                   onClick={() => handleSend(a.prompt)}
-                  className="p-3 text-left bg-white border border-slate-200 rounded-lg hover:border-rose-400 hover:shadow-sm transition group"
+                  className="p-3 text-left bg-card/40 backdrop-blur-md border border-border/60 rounded-lg hover:border-primary/60 hover:bg-card/60 hover:shadow-md transition group"
                 >
-                  <a.icon className="h-4 w-4 text-rose-600 mb-2" />
-                  <p className="text-sm font-medium text-slate-900 group-hover:text-rose-700">
+                  <a.icon className="h-4 w-4 text-primary mb-2" />
+                  <p className="text-sm font-medium text-foreground group-hover:text-primary">
                     {a.label}
                   </p>
                 </button>
@@ -117,27 +117,27 @@ export function PgrCopilot() {
               className={`flex gap-2 ${isUser ? "justify-end" : "justify-start"}`}
             >
               {!isUser && (
-                <div className="shrink-0 p-1.5 rounded-md bg-gradient-to-br from-rose-600 to-[#7f1212] text-white h-fit">
+                <div className="shrink-0 p-1.5 rounded-md bg-primary/15 border border-primary/30 backdrop-blur text-primary h-fit">
                   <Bot className="h-3.5 w-3.5" />
                 </div>
               )}
               <div
                 className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                   isUser
-                    ? "bg-rose-600 text-white"
-                    : "bg-white border border-slate-200 text-slate-800"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card/60 backdrop-blur border border-border/60 text-foreground"
                 }`}
               >
                 {isUser ? (
                   <p className="whitespace-pre-wrap">{text}</p>
                 ) : (
-                  <div className="prose prose-sm max-w-none prose-headings:mt-2 prose-headings:mb-1 prose-p:my-1 prose-ul:my-1 prose-table:text-xs">
+                  <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:mt-2 prose-headings:mb-1 prose-p:my-1 prose-ul:my-1 prose-table:text-xs">
                     <ReactMarkdown>{text}</ReactMarkdown>
                   </div>
                 )}
               </div>
               {isUser && (
-                <div className="shrink-0 p-1.5 rounded-md bg-slate-700 text-white h-fit">
+                <div className="shrink-0 p-1.5 rounded-md bg-muted/60 backdrop-blur border border-border/60 text-foreground h-fit">
                   <User className="h-3.5 w-3.5" />
                 </div>
               )}
@@ -146,7 +146,7 @@ export function PgrCopilot() {
         })}
 
         {isLoading && (
-          <div className="flex gap-2 items-center text-xs text-slate-500 pl-9">
+          <div className="flex gap-2 items-center text-xs text-muted-foreground pl-9">
             <Loader2 className="h-3 w-3 animate-spin" /> pensando...
           </div>
         )}
@@ -163,13 +163,13 @@ export function PgrCopilot() {
             }
           }}
           placeholder="Descreva o que precisa, cole trechos do PGR, ou peça uma matriz de risco... (Enter para enviar, Shift+Enter para quebrar linha)"
-          className="flex-1 min-h-[60px] max-h-[200px] resize-none"
+          className="flex-1 min-h-[60px] max-h-[200px] resize-none bg-card/40 backdrop-blur-xl border-border/60"
           disabled={isLoading}
         />
         <Button
           onClick={() => handleSend()}
           disabled={isLoading || !input.trim()}
-          className="bg-rose-600 hover:bg-rose-700 h-[60px] px-4"
+          className="h-[60px] px-4"
         >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
