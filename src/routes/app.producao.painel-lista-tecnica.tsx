@@ -830,7 +830,7 @@ function PainelListaTecnicaPage() {
       {/* Layout principal: esquerda (categorias) + direita (tabela de materiais) */}
       {/* Curva S — consumo acumulado ao longo do tempo */}
       {curvaSPlot.length > 0 && (
-        <Card className="shadow-sm border-0 bg-gradient-to-r from-muted/30 via-background to-muted/30">
+        <Card className="shadow-lg border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-primary/5 max-w-3xl mx-auto">
           <CardContent className="p-3">
             <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
               <div className="flex items-center gap-2">
@@ -868,18 +868,18 @@ function PainelListaTecnicaPage() {
                 )}
               </div>
             </div>
-            <div style={{ width: "100%", height: 220 }}>
+            <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer>
                 <AreaChart data={curvaSPlot} margin={{ top: 6, right: 12, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="grad-total" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.85} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-                  <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={20} />
-                  <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => fmt(Number(v), 0)} width={55} />
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.35} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--foreground))" }} stroke="hsl(var(--border))" interval="preserveStartEnd" minTickGap={20} />
+                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--foreground))" }} stroke="hsl(var(--border))" tickFormatter={(v) => fmt(Number(v), 0)} width={55} />
                   <Tooltip
                     cursor={{ stroke: "hsl(0 0% 100%)", strokeWidth: 1.5, strokeDasharray: "0" }}
                     content={<FancyTooltip accent="hsl(var(--primary))" />}
@@ -888,7 +888,7 @@ function PainelListaTecnicaPage() {
                       type="monotone"
                       dataKey="TOTAL"
                       stroke="hsl(var(--primary))"
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       fill="url(#grad-total)"
                       name="Realizado acumulado"
                     />
@@ -896,8 +896,8 @@ function PainelListaTecnicaPage() {
                     <Area
                       type="linear"
                       dataKey="IDEAL"
-                      stroke="hsl(142 70% 40%)"
-                      strokeWidth={1.5}
+                      stroke="hsl(142 70% 55%)"
+                      strokeWidth={2}
                       strokeDasharray="5 4"
                       fill="transparent"
                       dot={false}
@@ -907,9 +907,10 @@ function PainelListaTecnicaPage() {
                   {previstoTotal > 0 && (
                     <ReferenceLine
                       y={previstoTotal}
-                      stroke="hsl(0 72% 50%)"
+                      stroke="hsl(0 80% 65%)"
+                      strokeWidth={1.5}
                       strokeDasharray="4 4"
-                      label={{ value: `Previsto ${fmt(previstoTotal, 0)}`, position: "insideTopRight", fontSize: 10, fill: "hsl(0 72% 50%)" }}
+                      label={{ value: `Previsto ${fmt(previstoTotal, 0)}`, position: "insideTopRight", fontSize: 10, fill: "hsl(0 80% 70%)" }}
                     />
                   )}
                 </AreaChart>
