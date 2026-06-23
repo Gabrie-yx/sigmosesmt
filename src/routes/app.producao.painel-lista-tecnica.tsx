@@ -938,19 +938,19 @@ function PainelListaTecnicaPage() {
               <div key={cat} className="grid gap-3 grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
                 {/* Card de barras por UME */}
                 <Card
-                  className={`shadow-sm cursor-pointer transition ${ativoCat ? "ring-2 ring-offset-1" : "hover:shadow-md"}`}
+                  className={`shadow-lg cursor-pointer transition bg-slate-950 border border-white/10 ${ativoCat ? "ring-2 ring-offset-1" : "hover:shadow-xl hover:border-white/20"}`}
                   style={ativoCat ? { boxShadow: `0 0 0 2px ${cor}` } : undefined}
                   onClick={() => setCatSel((p) => (p === cat ? null : cat))}
                 >
                   <CardHeader className="pb-1 pt-3 px-4 flex flex-row items-center justify-between space-y-0">
-                    <CardTitle className="text-sm font-bold tracking-wide flex items-center gap-2">
+                    <CardTitle className="text-sm font-bold tracking-wide flex items-center gap-2 text-white">
                       <span className="inline-block h-3 w-3 rounded-sm" style={{ background: cor }} />
                       <span style={{ color: cor }}>{CAT_ICON[cat]}</span> {cat}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="h-44 p-2">
                     {vazio ? (
-                      <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem dados</div>
+                      <div className="h-full flex items-center justify-center text-xs text-slate-400">Sem dados</div>
                     ) : focoItem && (false as boolean) ? (
                       (() => {
                         // Foco: item selecionado vs restante da categoria
