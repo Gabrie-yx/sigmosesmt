@@ -881,9 +881,8 @@ function PainelListaTecnicaPage() {
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={20} />
                   <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => fmt(Number(v), 0)} width={55} />
                   <Tooltip
-                    formatter={(v: any, name: any) => [fmt(Number(v), 1), String(name)]}
-                    labelFormatter={(l) => `Data: ${l}`}
-                    contentStyle={{ fontSize: 11, borderRadius: 6 }}
+                    cursor={{ stroke: "hsl(0 0% 100%)", strokeWidth: 1.5, strokeDasharray: "0" }}
+                    content={<FancyTooltip accent="hsl(var(--primary))" />}
                   />
                   <Area
                       type="monotone"
