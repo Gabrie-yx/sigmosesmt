@@ -21,6 +21,42 @@ async function loadPdfJs(): Promise<PdfJsModule> {
   return pdfjsPromise;
 }
 
+function printViaHiddenIframe(pages: string[], fileName: string) {
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  document.body.appendChild(iframe);
+  const cw = iframe.contentWindow;
+  const cd = iframe.contentDocument;
+  if (!cw || !cd) { iframe.remove(); return; }
+  const imgs = pages.map((p) => `<img src="${p}" />`).join("");
+  cd.open();
+  cd.write(`<!DOCTYPE html><html><head><title>${fileName}</title><style>
+    @page { size: A4; margin: 0; }
+    html, body { margin: 0; padding: 0; }
+    img { display: block; width: 100%; page-break-after: always; }
+    img:last-child { page-break-after: auto; }
+  </style></head><body>${imgs}</body></html>`);
+  cd.close();
+  const images = cd.images;
+  let pending = images.length;
+  const trigger = () => {
+    try { cw.focus(); cw.print(); } catch { /* noop */ }
+    setTimeout(() => iframe.remove(), 1000);
+  };
+  const done = () => { if (--pending <= 0) setTimeout(trigger, 50); };
+  if (!pending) { trigger(); return; }
+  for (let i = 0; i < images.length; i++) {
+    const im = images[i];
+    if (im.complete && im.naturalWidth > 0) done();
+    else { im.addEventListener("load", done); im.addEventListener("error", done); }
+  }
+}
+
 export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, encSig, sesmtSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature }: {
   open: boolean;
   onClose: () => void;
