@@ -118,13 +118,13 @@ function criarOficioPDF(
 
   // Box "DADOS DA SOLICITAÇÃO"
   const boxH = 26;
-  doc.setDrawColor(203, 213, 225);
-  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(100, 116, 139);
+  doc.setFillColor(241, 245, 249);
   doc.setLineWidth(0.2);
   doc.roundedRect(MARGIN, y, maxW, boxH, 1.5, 1.5, "FD");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
-  doc.setTextColor(71, 85, 105);
+  doc.setTextColor(15, 23, 42);
   doc.text("DADOS DA SOLICITAÇÃO", MARGIN + 3, y + 4.5);
   doc.setFontSize(9.5);
   doc.setTextColor(15, 23, 42);
@@ -161,7 +161,7 @@ function criarOficioPDF(
   if (cargo) dest.push(`Cargo: ${cargo}`);
   if (empresa) dest.push(`Lotação: ${empresa}`);
   if (dest.length) {
-    doc.setTextColor(71, 85, 105);
+    doc.setTextColor(30, 41, 59);
     doc.text(dest.join("   ·   "), MARGIN, y);
     y += 5;
   }
@@ -208,7 +208,7 @@ function criarOficioPDF(
   doc.text(ctx.solicitante || "SESMT — DMN", MARGIN + colW / 2, y + 5, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.setTextColor(71, 85, 105);
+  doc.setTextColor(30, 41, 59);
   doc.text(ctx.setor || "Segurança e Saúde no Trabalho", MARGIN + colW / 2, y + 9, { align: "center" });
   // Ciência
   doc.setTextColor(15, 23, 42);
@@ -218,12 +218,12 @@ function criarOficioPDF(
   doc.text("Ciência do(a) Colaborador(a)", MARGIN + colW + 10 + colW / 2, y + 5, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.setTextColor(71, 85, 105);
+  doc.setTextColor(30, 41, 59);
   doc.text(`Recebido em ____/____/______`, MARGIN + colW + 10 + colW / 2, y + 9, { align: "center" });
 
   // Rodapé
   doc.setFontSize(7.5);
-  doc.setTextColor(120);
+  doc.setTextColor(60, 60, 60);
   doc.text(
     `${EMPRESA_INFO.razao_social} · CNPJ ${EMPRESA_INFO.cnpj} · ${EMPRESA_INFO.endereco} · ${EMPRESA_INFO.cidade_uf_cep}`,
     W / 2,
