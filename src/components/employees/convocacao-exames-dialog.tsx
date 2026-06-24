@@ -451,12 +451,19 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
               value={setor}
               onChange={(e) => setSetor(e.target.value)}
             />
-            <Input
-              className="md:col-span-4 h-9 bg-white/5 border-white/10 text-white placeholder:text-slate-400"
-              placeholder="Tipo de exame"
-              value={tipoExame}
-              onChange={(e) => setTipoExame(e.target.value)}
-            />
+            <Select value={tipoExame} onValueChange={setTipoExame}>
+              <SelectTrigger className="md:col-span-4 h-9 bg-white/5 border-white/10 text-white">
+                <SelectValue placeholder="Tipo de exame" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Exame Médico Admissional">Admissional</SelectItem>
+                <SelectItem value="Exame Médico Periódico">Periódico</SelectItem>
+                <SelectItem value="Exame Médico de Retorno ao Trabalho">Retorno ao Trabalho</SelectItem>
+                <SelectItem value="Exame Médico de Mudança de Função">Mudança de Função</SelectItem>
+                <SelectItem value="Exame Médico Demissional">Demissional</SelectItem>
+                <SelectItem value="Exame Médico Complementar">Complementar</SelectItem>
+              </SelectContent>
+            </Select>
             <Input
               className="md:col-span-7 h-9 bg-white/5 border-white/10 text-white placeholder:text-slate-400"
               placeholder="Local de comparecimento (ex.: Ambulatório Médico — DMN)"
