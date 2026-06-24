@@ -185,3 +185,68 @@ export async function printPdf(input: ArrayBuffer | Uint8Array | Blob, fileName 
   const pages = await renderPdfToImagePages(input);
   await printImagePages(pages, fileName);
 }
+
+export async function printHtmlContent(html: string, title = "documento", extraCss = "") {
+  const previousTitle = document.title;
+  document.querySelectorAll(".sigmo-print-html-root, #sigmo-print-html-style").forEach((el) => el.remove());
+
+  const style = document.createElement("style");
+  style.id = "sigmo-print-html-style";
+  style.textContent = `
+    @media screen {
+      .sigmo-print-html-root {
+        position: fixed !important;
+        left: -100000px !important;
+        top: 0 !important;
+        width: 210mm !important;
+        background: #fff !important;
+        color: #0f172a !important;
+      }
+    }
+    @media print {
+      @page { size: A4; margin: 12mm; }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important;
+        min-width: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        background: #fff !important;
+      }
+      body > *:not(.sigmo-print-html-root) { display: none !important; }
+      .sigmo-print-html-root {
+        display: block !important;
+        position: static !important;
+        inset: auto !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        color: #0f172a !important;
+      }
+      ${extraCss}
+    }
+  `;
+
+  const root = document.createElement("div");
+  root.className = "sigmo-print-html-root";
+  root.innerHTML = html;
+
+  const cleanup = () => {
+    document.title = previousTitle;
+    root.remove();
+    style.remove();
+    window.removeEventListener("afterprint", cleanup);
+  };
+
+  document.head.appendChild(style);
+  document.body.appendChild(root);
+  document.title = title;
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  window.addEventListener("afterprint", cleanup, { once: true });
+  window.focus();
+  window.print();
+  window.setTimeout(cleanup, 120000);
+}
