@@ -111,7 +111,7 @@ function SaidasPage() {
   async function gerarPdf(id: string) {
     const { data: row, error } = await supabase
       .from("employee_saidas_expediente")
-        .select("*, employees(id,nome,cpf,rg,role_id,roles(name)), companies(id,name,type,encarregado1,encarregado2)")
+        .select("*, employees(id,nome,cpf,rg,role_id,assinatura_url,roles(name)), companies(id,name,type,encarregado1,encarregado2)")
       .eq("id", id).maybeSingle();
     if (error || !row) return toast.error(error?.message ?? "Não encontrado");
     const emp: any = (row as any).employees;
@@ -129,7 +129,7 @@ function SaidasPage() {
       comRetorno: row.com_retorno, horarioRetorno: row.horario_retorno,
       motivo: row.motivo, observacao: row.observacao,
       logoDataUrl: logo,
-      assinaturaFuncionarioDataUrl: row.assinatura_funcionario,
+      assinaturaFuncionarioDataUrl: row.assinatura_funcionario ?? emp?.assinatura_url ?? null,
       assinaturaSesmtDataUrl: row.assinatura_sesmt,
       assinaturaSupervisorDataUrl: (row as any).assinatura_supervisor ?? null,
       sesmtNome: (user as any)?.user_metadata?.full_name ?? null,

@@ -212,6 +212,21 @@ function criarOficioPDF(
   doc.text(ctx.setor || "Segurança e Saúde no Trabalho", MARGIN + colW / 2, y + 9, { align: "center" });
   // Ciência
   doc.setTextColor(15, 23, 42);
+  if (emp?.assinatura_url) {
+    try {
+      const props = doc.getImageProperties(emp.assinatura_url);
+      const maxW = colW - 6;
+      const maxH = 12;
+      const ratio = Math.min(maxW / props.width, maxH / props.height);
+      const imgW = Math.max(8, props.width * ratio);
+      const imgH = Math.max(4, props.height * ratio);
+      const cx = MARGIN + colW + 10 + colW / 2;
+      const imgX = cx - imgW / 2;
+      const imgY = y - imgH + 0.5;
+      const fmt = (props.fileType || "PNG").toString().toUpperCase().includes("JPEG") ? "JPEG" : "PNG";
+      doc.addImage(emp.assinatura_url, fmt as any, imgX, imgY, imgW, imgH, undefined, "FAST");
+    } catch {}
+  }
   doc.line(MARGIN + colW + 10, y, MARGIN + colW * 2 + 10, y);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
@@ -303,7 +318,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
-        .select("id, nome, matricula, whatsapp, foto_url, data_aso, company_id, role_id, status")
+        .select("id, nome, matricula, whatsapp, foto_url, assinatura_url, data_aso, company_id, role_id, status")
         .eq("status", "ATIVO")
         .order("data_aso", { ascending: true, nullsFirst: true });
       if (error) throw error;
