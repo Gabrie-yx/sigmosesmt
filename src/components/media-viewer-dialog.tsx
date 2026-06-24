@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Download, Printer, RotateCw, RotateCcw, ZoomIn, ZoomOut, X } from "lucide-react";
+import { printPdf } from "@/lib/pdf-print";
 
 export type MediaItem = { url: string; name: string; kind?: "image" | "pdf" };
 
@@ -57,15 +58,21 @@ export function MediaViewerDialog({
     }
   }
 
-  function printItem() {
-    const w = window.open("", "_blank", "width=900,height=700");
-    if (!w) { toast(); return; }
+  async function printItem() {
     const safeName = item.name.replace(/[<>&"']/g, "");
     if (isPdf) {
-      w.document.write(`<!doctype html><title>${safeName}</title><body style="margin:0"><iframe src="${item.url}" style="border:0;width:100vw;height:100vh" onload="setTimeout(()=>{this.contentWindow.focus();this.contentWindow.print();},400)"></iframe></body>`);
-    } else {
-      w.document.write(`<!doctype html><title>${safeName}</title><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#fff"><img src="${item.url}" style="max-width:100%;max-height:100vh;transform:rotate(${rotation}deg)" onload="setTimeout(()=>{window.focus();window.print();},300)"/></body>`);
+      try {
+        const res = await fetch(item.url);
+        const blob = await res.blob();
+        await printPdf(blob, safeName || "documento.pdf");
+      } catch {
+        toast();
+      }
+      return;
     }
+    const w = window.open("", "_blank", "width=900,height=700");
+    if (!w) { toast(); return; }
+    w.document.write(`<!doctype html><title>${safeName}</title><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#fff"><img src="${item.url}" style="max-width:100%;max-height:100vh;transform:rotate(${rotation}deg)" onload="setTimeout(()=>{window.focus();window.print();},300)"/></body>`);
     w.document.close();
   }
   function toast() { /* no-op stub to avoid extra import */ }
