@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Download, Printer, X, PenLine, ImagePlus } from "lucide-react";
 import type jsPDF from "jspdf";
+import { printImagePages, renderPdfToImagePages } from "@/lib/pdf-print";
 // pdfjs-dist depends on DOM globals (DOMMatrix, Path2D) only available in the
 // browser — importing it at module scope crashes SSR. Load lazily on demand.
 type PdfJsModule = typeof import("pdfjs-dist");
@@ -19,42 +20,6 @@ async function loadPdfJs(): Promise<PdfJsModule> {
     })();
   }
   return pdfjsPromise;
-}
-
-function printViaHiddenIframe(pages: string[], fileName: string) {
-  const iframe = document.createElement("iframe");
-  iframe.style.position = "fixed";
-  iframe.style.right = "0";
-  iframe.style.bottom = "0";
-  iframe.style.width = "0";
-  iframe.style.height = "0";
-  iframe.style.border = "0";
-  document.body.appendChild(iframe);
-  const cw = iframe.contentWindow;
-  const cd = iframe.contentDocument;
-  if (!cw || !cd) { iframe.remove(); return; }
-  const imgs = pages.map((p) => `<img src="${p}" />`).join("");
-  cd.open();
-  cd.write(`<!DOCTYPE html><html><head><title>${fileName}</title><style>
-    @page { size: A4; margin: 0; }
-    html, body { margin: 0; padding: 0; }
-    img { display: block; width: 100%; page-break-after: always; }
-    img:last-child { page-break-after: auto; }
-  </style></head><body>${imgs}</body></html>`);
-  cd.close();
-  const images = cd.images;
-  let pending = images.length;
-  const trigger = () => {
-    try { cw.focus(); cw.print(); } catch { /* noop */ }
-    setTimeout(() => iframe.remove(), 1000);
-  };
-  const done = () => { if (--pending <= 0) setTimeout(trigger, 50); };
-  if (!pending) { trigger(); return; }
-  for (let i = 0; i < images.length; i++) {
-    const im = images[i];
-    if (im.complete && im.naturalWidth > 0) done();
-    else { im.addEventListener("load", done); im.addEventListener("error", done); }
-  }
 }
 
 export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, encSig, sesmtSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature }: {
@@ -87,22 +52,7 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
     setPages([]);
     (async () => {
       try {
-        const buf = doc.output("arraybuffer") as ArrayBuffer;
-        const pdfjsLib = await loadPdfJs();
-        const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
-        if (renderTokenRef.current !== token) return;
-        const imgs: string[] = [];
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale: 2 });
-          const canvas = document.createElement("canvas");
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          const ctx = canvas.getContext("2d")!;
-          await page.render({ canvasContext: ctx, viewport, canvas }).promise;
-          imgs.push(canvas.toDataURL("image/png"));
-          if (renderTokenRef.current !== token) return;
-        }
+        const imgs = await renderPdfToImagePages(doc);
         if (renderTokenRef.current !== token) return;
         setPages(imgs);
       } catch (e: any) {
@@ -131,12 +81,12 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
       doc.save(fileName);
     }
   }
-  function print() {
+  async function print() {
     if (!pages.length) return;
-    // Sempre imprime via iframe oculto — evita abrir nova aba/janela do navegador
-    // antes do diálogo de impressão do SO. A impressão acontece no contexto
-    // do próprio app, então o usuário só vê o painel nativo de impressão.
-    printViaHiddenIframe(pages, fileName);
+    // Imprime no documento atual com CSS @media print. No preview/sandbox,
+    // imprimir iframe/blob costuma gerar folha em branco; assim o conteúdo
+    // renderizado em imagem é exatamente o que vai para a impressora.
+    await printImagePages(pages, fileName);
   }
 
   async function pickSignature(set: (v: string | null) => void) {
