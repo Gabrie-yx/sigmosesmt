@@ -318,7 +318,7 @@ function OssIndexPage() {
       active: filterStatus === "PENDENTE_ASSINATURA",
       border: "linear-gradient(135deg, #fcd34d 0%, #f59e0b 25%, #b45309 50%, #f59e0b 75%, #fcd34d 100%)",
       halo: "radial-gradient(60% 50% at 50% 50%, rgba(251,191,36,0.7) 0%, rgba(251,191,36,0.25) 40%, transparent 75%)",
-      accent: "text-amber-300",
+      accent: "text-amber-100",
       pulse: kpis.pendentes > 0,
     },
     {
@@ -328,7 +328,7 @@ function OssIndexPage() {
       active: filterVenc === "VENCIDA",
       border: "linear-gradient(135deg, #ff6b6b 0%, #ef4444 25%, #b91c1c 50%, #ef4444 75%, #ff6b6b 100%)",
       halo: "radial-gradient(60% 50% at 50% 50%, rgba(239,68,68,0.95) 0%, rgba(239,68,68,0.35) 40%, transparent 75%)",
-      accent: "text-red-300",
+      accent: "text-red-100",
       pulse: kpis.vencidas > 0,
     },
     {
@@ -338,7 +338,7 @@ function OssIndexPage() {
       active: filterVenc === "VENCE_30D",
       border: "linear-gradient(135deg, #fdba74 0%, #fb923c 25%, #c2410c 50%, #fb923c 75%, #fdba74 100%)",
       halo: "radial-gradient(60% 50% at 50% 50%, rgba(251,146,60,0.7) 0%, rgba(251,146,60,0.25) 40%, transparent 75%)",
-      accent: "text-orange-300",
+      accent: "text-orange-100",
     },
     {
       key: "v90", label: "Vencem em 90d", value: kpis.vence90,
@@ -347,7 +347,7 @@ function OssIndexPage() {
       active: filterVenc === "VENCE_90D",
       border: "linear-gradient(135deg, #fde68a 0%, #facc15 25%, #a16207 50%, #facc15 75%, #fde68a 100%)",
       halo: "radial-gradient(60% 50% at 50% 50%, rgba(250,204,21,0.55) 0%, rgba(250,204,21,0.2) 40%, transparent 75%)",
-      accent: "text-amber-200",
+      accent: "text-amber-100",
     },
     {
       key: "ok", label: "Em dia", value: kpis.ok,
@@ -356,7 +356,7 @@ function OssIndexPage() {
       active: filterVenc === "OK",
       border: "linear-gradient(135deg, #6ee7b7 0%, #10b981 25%, #047857 50%, #10b981 75%, #6ee7b7 100%)",
       halo: "radial-gradient(60% 50% at 50% 50%, rgba(16,185,129,0.55) 0%, rgba(16,185,129,0.2) 40%, transparent 75%)",
-      accent: "text-emerald-300",
+      accent: "text-emerald-100",
     },
   ];
 
