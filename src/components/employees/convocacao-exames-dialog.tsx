@@ -5,8 +5,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink } from "lucide-react";
 import jsPDF from "jspdf";
+import { toast } from "sonner";
 
 /**
  * Convocação Inteligente de Exames (Modal-First)
@@ -40,26 +43,34 @@ function statusOf(dias: number | null): { tone: string; label: string; bg: strin
   return { tone: "text-emerald-300", label: "Em dia", bg: "bg-emerald-500/10 border-emerald-400/30" };
 }
 
-function buildWhatsappLink(emp: any, proximoStr: string) {
-  const nome = (emp.nome ?? "").split(" ")[0];
-  const msg =
-    `Olá, ${nome}! 👋\n\n` +
-    `Aqui é da Segurança do Trabalho da DMN. Seu *Atestado de Saúde Ocupacional (ASO)* ` +
-    `vence em *${proximoStr}*.\n\n` +
-    `Precisamos agendar seu exame periódico. Pode confirmar um horário esta semana?\n\n` +
-    `Obrigado! 🙏`;
+function normalizeWhatsappPhone(emp: any) {
   const fone = (emp.whatsapp ?? "").replace(/\D/g, "");
-  const phone = fone.startsWith("55") ? fone : `55${fone}`;
-  const text = encodeURIComponent(msg);
-  const isMobile = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-  // Em desktop vai direto pro WhatsApp Web (evita o api.whatsapp.com bloqueado em muitas redes corporativas).
-  // Em mobile usa wa.me que abre o app nativo.
-  return isMobile
-    ? `https://wa.me/${phone}?text=${text}`
-    : `https://web.whatsapp.com/send?phone=${phone}&text=${text}`;
+  if (!fone) return "";
+  return fone.startsWith("55") ? fone : `55${fone}`;
 }
 
-function baixarOficioPDF(emp: any, asoData: Date | null, proximo: Date | null, cargo: string, empresa: string) {
+function buildWhatsappMessage(emp: any, proximoStr: string) {
+  const nome = (emp.nome ?? "").split(" ")[0];
+  const situacao = proximoStr && proximoStr !== "—"
+    ? `vence em *${proximoStr}*`
+    : "está pendente de regularização no SIGMO";
+  return (
+    `Olá, ${nome}! 👋\n\n` +
+    `Aqui é da Segurança do Trabalho da DMN. Seu *Atestado de Saúde Ocupacional (ASO)* ${situacao}.\n\n` +
+    `Precisamos agendar seu exame periódico. Pode confirmar um horário esta semana?\n\n` +
+    `Obrigado! 🙏`
+  );
+}
+
+function buildWhatsappLinks(phone: string, message: string) {
+  const text = encodeURIComponent(message);
+  return {
+    app: `https://wa.me/${phone}?text=${text}`,
+    web: `https://web.whatsapp.com/send?phone=${phone}&text=${text}`,
+  };
+}
+
+function criarOficioPDF(emp: any, asoData: Date | null, proximo: Date | null, cargo: string, empresa: string) {
   const hoje = new Date().toLocaleDateString("pt-BR");
   const proxStr = proximo ? proximo.toLocaleDateString("pt-BR") : "—";
   const asoStr = asoData ? asoData.toLocaleDateString("pt-BR") : "—";
@@ -138,13 +149,36 @@ function baixarOficioPDF(emp: any, asoData: Date | null, proximo: Date | null, c
   doc.text(`Documento gerado pelo SIGMO em ${hoje} — PROCO-SGI-SST-01 (NR-7 / PCMSO)`, W / 2, 287, { align: "center" });
 
   const nomeArq = `oficio-convocacao-${(emp.nome ?? "servidor").toString().toLowerCase().replace(/\s+/g, "-").slice(0, 40)}.pdf`;
-  doc.save(nomeArq);
+  return { doc, fileName: nomeArq };
+}
+
+async function copyText(text: string, label: string) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    toast.success(`${label} copiado`);
+  } catch {
+    toast.error("Não consegui copiar automaticamente. Selecione e copie manualmente.");
+  }
 }
 
 export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [janela, setJanela] = useState<Janela>("90");
   const [companyFilter, setCompanyFilter] = useState<string>("TODAS");
   const [q, setQ] = useState("");
+  const [pdfPreview, setPdfPreview] = useState<{ doc: jsPDF; fileName: string; title: string } | null>(null);
+  const [whatsPreview, setWhatsPreview] = useState<{ nome: string; phone: string; message: string } | null>(null);
 
   const { data: emps } = useQuery({
     queryKey: ["employees-convocacao"],
@@ -216,6 +250,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
   }, [emps]);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[92vh] overflow-hidden flex flex-col bg-gradient-to-br from-[#1a0612] via-[#2a0a1a] to-[#1a0612] border-white/10 text-white">
         <DialogHeader>
@@ -314,16 +349,21 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                     </div>
                     <div className="flex gap-2">
                       {hasWhats ? (
-                        <a
-                          href={buildWhatsappLink(emp, proxStr)}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
                           className="inline-flex items-center h-9 px-3 rounded-md text-sm font-medium border bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-400/30 text-emerald-200"
                           title="Enviar WhatsApp"
+                          onClick={() => setWhatsPreview({
+                            nome: emp.nome ?? "Funcionário",
+                            phone: normalizeWhatsappPhone(emp),
+                            message: buildWhatsappMessage(emp, proxStr),
+                          })}
                         >
                           <MessageCircle className="h-4 w-4 mr-1" />
                           WhatsApp
-                        </a>
+                        </Button>
                       ) : (
                         <Button size="sm" variant="outline" disabled className="bg-emerald-500/15 border-emerald-400/30 text-emerald-200 opacity-30" title="Funcionário sem WhatsApp cadastrado">
                           <MessageCircle className="h-4 w-4 mr-1" />
@@ -334,11 +374,14 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                         size="sm"
                         variant="outline"
                         className="bg-white/5 hover:bg-white/10 border-white/15 text-white"
-                        onClick={() => baixarOficioPDF(emp, asoData, proximo, rMap.get(emp.role_id) as string ?? "", cMap.get(emp.company_id) as string ?? "")}
-                        title="Baixar ofício em PDF"
+                        onClick={() => {
+                          const pdf = criarOficioPDF(emp, asoData, proximo, rMap.get(emp.role_id) as string ?? "", cMap.get(emp.company_id) as string ?? "");
+                          setPdfPreview({ ...pdf, title: `Ofício de convocação — ${emp.nome ?? "Funcionário"}` });
+                        }}
+                        title="Visualizar ofício em PDF"
                       >
                         <FileDown className="h-4 w-4 mr-1" />
-                        Ofício PDF
+                        Ofício
                       </Button>
                     </div>
                   </div>
@@ -351,6 +394,78 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
         <div className="text-[10px] text-slate-400 border-t border-white/10 pt-3">
           💡 Periodicidade padrão = 12 meses. Em breve: por cargo/risco (NR-7 6 meses para insalubres).
         </div>
+      </DialogContent>
+    </Dialog>
+    <PDFPreviewDialog
+      open={!!pdfPreview}
+      onClose={() => setPdfPreview(null)}
+      doc={pdfPreview?.doc ?? null}
+      fileName={pdfPreview?.fileName ?? "oficio-convocacao.pdf"}
+      title={pdfPreview?.title ?? "Ofício de convocação"}
+    />
+    <WhatsappPreviewDialog value={whatsPreview} onClose={() => setWhatsPreview(null)} />
+    </>
+  );
+}
+
+function WhatsappPreviewDialog({ value, onClose }: { value: { nome: string; phone: string; message: string } | null; onClose: () => void }) {
+  const links = value ? buildWhatsappLinks(value.phone, value.message) : null;
+  return (
+    <Dialog open={!!value} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl bg-gradient-to-br from-[#071b13] via-[#092418] to-[#071b13] border-emerald-400/20 text-white">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <MessageCircle className="h-5 w-5 text-emerald-300" />
+            Mensagem de WhatsApp
+          </DialogTitle>
+          <DialogDescription className="text-emerald-100/75">
+            Revise a convocação antes de abrir o WhatsApp. Se a rede bloquear, copie o texto e envie manualmente.
+          </DialogDescription>
+        </DialogHeader>
+
+        {value && links && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-widest text-emerald-200/70">Funcionário</div>
+                <div className="font-semibold truncate">{value.nome}</div>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-widest text-emerald-200/70">Telefone</div>
+                <div className="font-mono">+{value.phone}</div>
+              </div>
+            </div>
+
+            <Textarea
+              readOnly
+              value={value.message}
+              className="min-h-[180px] resize-none bg-white/95 text-slate-950 border-white/20"
+            />
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" className="bg-white/5 border-white/15 text-white hover:bg-white/10" onClick={() => copyText(value.message, "Mensagem")}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copiar mensagem
+                </Button>
+                <Button type="button" variant="outline" className="bg-white/5 border-white/15 text-white hover:bg-white/10" onClick={() => copyText(`+${value.phone}`, "Telefone")}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copiar telefone
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <a href={links.app} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center justify-center rounded-md border border-emerald-300/40 bg-emerald-500/20 px-4 text-sm font-medium text-emerald-50 hover:bg-emerald-500/30">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Abrir app
+                </a>
+                <a href={links.web} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center justify-center rounded-md border border-emerald-300/40 bg-emerald-500/20 px-4 text-sm font-medium text-emerald-50 hover:bg-emerald-500/30">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  WhatsApp Web
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
