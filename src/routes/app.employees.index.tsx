@@ -6,9 +6,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText, UserRoundX } from "lucide-react";
+import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText, UserRoundX, Stethoscope } from "lucide-react";
 import { EmployeeListagemDialog } from "@/components/employees/employee-listagem-dialog";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
+import { ConvocacaoExamesDialog } from "@/components/employees/convocacao-exames-dialog";
 
 export const Route = createFileRoute("/app/employees/")({
   component: EmployeesPage,
@@ -50,6 +51,7 @@ function EmployeesPage() {
     sessionStorage.setItem(FILTERS_KEY, JSON.stringify({ q, statusFilter, companyFilter, roleFilter, vinculoFilter, visibleCount }));
   }, [q, statusFilter, companyFilter, roleFilter, vinculoFilter, visibleCount]);
   const [listagemOpen, setListagemOpen] = useState(false);
+  const [convocacaoOpen, setConvocacaoOpen] = useState(false);
 
   const { data: emps, isLoading } = useQuery({
     queryKey: ["employees"],
@@ -129,6 +131,15 @@ function EmployeesPage() {
               >
                 <FileText className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3" />
                 <span>Listagem</span>
+              </button>
+              <span className="h-6 w-px bg-white/15" />
+              <button
+                type="button"
+                onClick={() => setConvocacaoOpen(true)}
+                className="nav-pill group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-white/95 hover:text-white"
+              >
+                <Stethoscope className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3" />
+                <span>Convocar exames</span>
               </button>
               <span className="h-6 w-px bg-white/15" />
               <Link
@@ -330,6 +341,7 @@ function EmployeesPage() {
         companies={companies ?? []}
         roles={roles ?? []}
       />
+      <ConvocacaoExamesDialog open={convocacaoOpen} onOpenChange={setConvocacaoOpen} />
     </div>
   );
 }
