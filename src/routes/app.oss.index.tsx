@@ -465,22 +465,73 @@ function OssIndexPage() {
           </div>
         </div>
         {/* KPIs clicáveis */}
-        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {kpiCards.map((k) => {
             const Icon = k.icon;
+            const showHalo = k.active || k.pulse;
             return (
               <button
                 key={k.key}
                 onClick={k.onClick}
-                className={`text-left p-2.5 rounded-lg border bg-gradient-to-br ${k.cls} transition-all hover:shadow-md hover:-translate-y-0.5 ${
-                  k.active ? "ring-2 ring-rose-400 shadow-md" : ""
-                }`}
+                className="relative w-full text-left group focus:outline-none transition-transform hover:-translate-y-0.5"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-wide font-bold opacity-80">{k.label}</span>
-                  <Icon className="h-3.5 w-3.5 opacity-70" />
+                {/* Halo externo — pulsa quando há valor crítico ou está ativo */}
+                {showHalo && (
+                  <div
+                    className={`pointer-events-none absolute -inset-2 rounded-[22px] blur-xl ${
+                      k.pulse ? "animate-pulse opacity-90" : "opacity-70"
+                    }`}
+                    style={{ background: k.halo }}
+                  />
+                )}
+                {/* Borda cromada gradiente */}
+                <div
+                  className="relative rounded-[16px] p-[1.5px]"
+                  style={{
+                    background: k.border,
+                    boxShadow: showHalo
+                      ? "0 0 20px rgba(0,0,0,0.4), 0 6px 16px rgba(0,0,0,0.35)"
+                      : "0 4px 12px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  {/* Vidro escuro */}
+                  <div
+                    className="relative w-full rounded-[14px] overflow-hidden p-3"
+                    style={{
+                      background:
+                        "radial-gradient(120% 80% at 50% 0%, #2a2a2a 0%, #161616 40%, #050505 100%)",
+                    }}
+                  >
+                    {/* Highlight superior — curva de luz */}
+                    <div
+                      className="pointer-events-none absolute inset-0"
+                      style={{
+                        background:
+                          "radial-gradient(140% 55% at 50% -25%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 35%, transparent 60%)",
+                      }}
+                    />
+                    {/* Vinheta inferior */}
+                    <div
+                      className="pointer-events-none absolute inset-0"
+                      style={{
+                        background:
+                          "radial-gradient(120% 60% at 50% 120%, rgba(0,0,0,0.5) 0%, transparent 60%)",
+                      }}
+                    />
+                    {/* Conteúdo */}
+                    <div className="relative">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-white/70 leading-tight">
+                          {k.label}
+                        </span>
+                        <Icon className={`h-3.5 w-3.5 ${k.accent} drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]`} />
+                      </div>
+                      <div className={`text-3xl font-black mt-2 leading-none tabular-nums ${k.accent} drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]`}>
+                        {k.value}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-2xl font-black mt-1 leading-none">{k.value}</div>
               </button>
             );
           })}
