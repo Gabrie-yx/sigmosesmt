@@ -521,7 +521,7 @@ function OssIndexPage() {
                     {/* Conteúdo */}
                     <div className="relative">
                       <div className="flex items-center justify-between">
-                        <span className="text-[9px] uppercase tracking-wider font-bold text-white/70 leading-tight">
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-white/95 leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
                           {k.label}
                         </span>
                         <Icon className={`h-3.5 w-3.5 ${k.accent} drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]`} />
