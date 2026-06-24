@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf";
 import { formatDateBR } from "@/lib/utils-date";
 import dmnLogo from "@/assets/dmn-logo.png";
+import { printPdf } from "@/lib/pdf-print";
 
 export async function buildAprPdf(aprId: string, opts?: { encSig?: string | null; tstSig?: string | null }) {
   const [{ data: a }, { data: rs }, { data: ass }] = await Promise.all([
@@ -90,8 +91,7 @@ export async function abrirAprPdf(aprId: string) {
 
 export async function imprimirAprPdf(aprId: string) {
   const doc = await buildAprPdf(aprId);
-  doc.autoPrint();
-  window.open(doc.output("bloburl"), "_blank");
+  await printPdf(doc.output("arraybuffer") as ArrayBuffer, "apr.pdf");
 }
 
 export async function baixarAprPdf(aprId: string, numero?: string | null) {
