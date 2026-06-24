@@ -829,7 +829,7 @@ function PainelListaTecnicaPage() {
                       )}
                     </div>
                     <div className="mt-1 text-[11px] text-muted-foreground tabular-nums flex justify-between">
-                      <span>real <span className="font-semibold text-foreground">{fmt(a.real, 0)} kg</span></span>
+                      <span>real <span className="font-semibold text-foreground">{fmt(a.real, 0)} {a.um}</span></span>
                       <span>prev <span className="font-semibold text-foreground">{semPlano ? "—" : `${fmt(a.prev, 0)} kg`}</span></span>
                     </div>
                   </button>
