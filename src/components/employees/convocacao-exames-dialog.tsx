@@ -6,12 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { lazy, Suspense } from "react";
 import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink } from "lucide-react";
-import jsPDF from "jspdf";
-import { drawPdfHeader } from "@/lib/pdf-header";
+import type jsPDFType from "jspdf";
 import { EMPRESA_INFO } from "@/lib/empresa-info";
 import { toast } from "sonner";
+
+// Lazy: PDFPreviewDialog (e suas libs de render) e jspdf só carregam ao gerar/visualizar PDF.
+const PDFPreviewDialog = lazy(() =>
+  import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog })),
+);
 
 /**
  * Convocação Inteligente de Exames (Modal-First)
@@ -81,7 +85,7 @@ type OficioCtx = {
   numeroOficio: string;
 };
 
-function criarOficioPDF(
+async function criarOficioPDF(
   emp: any,
   asoData: Date | null,
   proximo: Date | null,
@@ -94,7 +98,11 @@ function criarOficioPDF(
   const proxStr = proximo ? proximo.toLocaleDateString("pt-BR") : "—";
   const asoStr = asoData ? asoData.toLocaleDateString("pt-BR") : "—";
 
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const [{ default: JsPDF }, { drawPdfHeader }] = await Promise.all([
+    import("jspdf"),
+    import("@/lib/pdf-header"),
+  ]);
+  const doc = new JsPDF({ unit: "mm", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const MARGIN = 18;
   const maxW = W - MARGIN * 2;
@@ -559,7 +567,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                             return;
                           }
                           const numeroOficio = `${String(Date.now()).slice(-6)}/${new Date().getFullYear()}`;
-                          const pdf = criarOficioPDF(
+                          const pdf = await criarOficioPDF(
                             emp,
                             asoData,
                             proximo,
