@@ -313,26 +313,32 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                       </span>
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={!hasWhats}
-                        className="bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-400/30 text-emerald-200 disabled:opacity-30"
-                        onClick={() => window.open(buildWhatsappLink(emp, proxStr), "_blank")}
-                        title={hasWhats ? "Enviar WhatsApp" : "Funcionário sem WhatsApp cadastrado"}
-                      >
-                        <MessageCircle className="h-4 w-4 mr-1" />
-                        WhatsApp
-                      </Button>
+                      {hasWhats ? (
+                        <a
+                          href={buildWhatsappLink(emp, proxStr)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center h-9 px-3 rounded-md text-sm font-medium border bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-400/30 text-emerald-200"
+                          title="Enviar WhatsApp"
+                        >
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          WhatsApp
+                        </a>
+                      ) : (
+                        <Button size="sm" variant="outline" disabled className="bg-emerald-500/15 border-emerald-400/30 text-emerald-200 opacity-30" title="Funcionário sem WhatsApp cadastrado">
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          WhatsApp
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
                         className="bg-white/5 hover:bg-white/10 border-white/15 text-white"
-                        onClick={() => abrirOficioPDF(emp, asoData, proximo, rMap.get(emp.role_id) as string ?? "", cMap.get(emp.company_id) as string ?? "")}
-                        title="Visualizar ofício e salvar como PDF"
+                        onClick={() => baixarOficioPDF(emp, asoData, proximo, rMap.get(emp.role_id) as string ?? "", cMap.get(emp.company_id) as string ?? "")}
+                        title="Baixar ofício em PDF"
                       >
                         <FileDown className="h-4 w-4 mr-1" />
-                        Ofício
+                        Ofício PDF
                       </Button>
                     </div>
                   </div>
