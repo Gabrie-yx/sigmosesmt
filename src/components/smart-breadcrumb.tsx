@@ -149,7 +149,7 @@ export function SmartBreadcrumb() {
   return (
     <nav
       aria-label="Navegação"
-      className="flex items-center gap-2 px-3 sm:px-4 py-1.5 border-b border-white/5 bg-black/20 text-[12px] text-rose-100/70 backdrop-blur w-full"
+      className="relative flex items-center gap-2 px-3 sm:px-4 py-1.5 text-[12px] text-rose-100/70 w-full bg-white/[0.03] backdrop-blur-md border-y border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]"
     >
       {canGoBack && (
         <button
@@ -162,7 +162,9 @@ export function SmartBreadcrumb() {
         </button>
       )}
       <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block shrink-0" />
-      <ol className="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto scrollbar-thin">
+      <ol
+        className="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         <li className="flex items-center gap-1 shrink-0">
           <Home className="h-3.5 w-3.5 shrink-0" />
         </li>
@@ -196,6 +198,9 @@ export function SmartBreadcrumb() {
           <span className="hidden sm:inline">Limpar</span>
         </button>
       )}
+      {/* flare superior fininho */}
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+      <span className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
     </nav>
   );
 }
