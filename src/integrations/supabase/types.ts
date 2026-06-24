@@ -1817,6 +1817,76 @@ export type Database = {
           },
         ]
       }
+      convocacoes_exames: {
+        Row: {
+          atendida_em: string | null
+          atendida_exam_id: string | null
+          convocado_em: string
+          convocado_por: string | null
+          created_at: string
+          data_limite: string | null
+          employee_id: string
+          id: string
+          janela: string
+          observacoes: string | null
+          status: string
+          tipos_exame: string[]
+          updated_at: string
+        }
+        Insert: {
+          atendida_em?: string | null
+          atendida_exam_id?: string | null
+          convocado_em?: string
+          convocado_por?: string | null
+          created_at?: string
+          data_limite?: string | null
+          employee_id: string
+          id?: string
+          janela: string
+          observacoes?: string | null
+          status?: string
+          tipos_exame?: string[]
+          updated_at?: string
+        }
+        Update: {
+          atendida_em?: string | null
+          atendida_exam_id?: string | null
+          convocado_em?: string
+          convocado_por?: string | null
+          created_at?: string
+          data_limite?: string | null
+          employee_id?: string
+          id?: string
+          janela?: string
+          observacoes?: string | null
+          status?: string
+          tipos_exame?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convocacoes_exames_atendida_exam_id_fkey"
+            columns: ["atendida_exam_id"]
+            isOneToOne: false
+            referencedRelation: "employee_exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convocacoes_exames_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convocacoes_exames_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       dds: {
         Row: {
           aderencia: number | null
@@ -6591,6 +6661,7 @@ export type Database = {
       is_editor: { Args: { _user_id: string }; Returns: boolean }
       is_moderator: { Args: { _user_id: string }; Returns: boolean }
       is_viewer_or_above: { Args: { _user_id: string }; Returns: boolean }
+      marcar_convocacoes_vencidas: { Args: never; Returns: number }
       mfa_ok: { Args: never; Returns: boolean }
       oss_marcar_vencidas: { Args: never; Returns: number }
       peek_proximo_numero_apr: { Args: never; Returns: string }
