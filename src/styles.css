@@ -213,6 +213,21 @@
   .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+  /* Scrollbar fino estilo vidro para a SmartBreadcrumb */
+  .smart-breadcrumb-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.25) transparent;
+  }
+  .smart-breadcrumb-scroll::-webkit-scrollbar { height: 4px; }
+  .smart-breadcrumb-scroll::-webkit-scrollbar-track { background: transparent; }
+  .smart-breadcrumb-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, rgba(255,255,255,0.10), rgba(255,255,255,0.35), rgba(255,255,255,0.10));
+    border-radius: 999px;
+  }
+  .smart-breadcrumb-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, rgba(255,255,255,0.20), rgba(255,255,255,0.55), rgba(255,255,255,0.20));
+  }
+
   /* === Elegant elevation / floating utilities === */
   .surface-elevated {
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
