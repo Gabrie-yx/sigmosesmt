@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer, X, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { printImagePages, renderPdfToImagePages } from "@/lib/pdf-print";
 
 type PdfJsModule = typeof import("pdfjs-dist");
 let pdfjsPromise: Promise<PdfJsModule> | null = null;
@@ -66,21 +67,7 @@ export function PDFViewerDialog({
         createdBlobUrl = URL.createObjectURL(pdfBlob);
         setBlobUrl(createdBlobUrl);
 
-        const pdfjsLib = await loadPdfJs();
-        const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
-        const renderedPages: string[] = [];
-        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-          if (cancelled) return;
-          const page = await pdf.getPage(pageNumber);
-          const viewport = page.getViewport({ scale: 2 });
-          const canvas = document.createElement("canvas");
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          const context = canvas.getContext("2d");
-          if (!context) throw new Error("Canvas indisponível");
-          await page.render({ canvasContext: context, viewport, canvas }).promise;
-          renderedPages.push(canvas.toDataURL("image/png"));
-        }
+        const renderedPages = await renderPdfToImagePages(arrayBuffer);
         if (!cancelled) setPages(renderedPages);
       } catch (err: any) {
         console.error("Erro ao carregar PDF:", err);
@@ -106,20 +93,9 @@ export function PDFViewerDialog({
     a.click();
   }
 
-  function print() {
+  async function print() {
     if (!pages.length) return;
-    const w = window.open("", "_blank");
-    if (!w) return;
-    const imgs = pages.map((page) => `<img src="${page}" />`).join("");
-    w.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title><style>
-      @page { size: A4; margin: 0; }
-      * { margin: 0; padding: 0; }
-      img { display: block; width: 100%; page-break-after: always; }
-      img:last-child { page-break-after: auto; }
-    </style></head><body>${imgs}</body></html>`);
-    w.document.close();
-    w.focus();
-    setTimeout(() => { try { w.print(); } catch { /* noop */ } }, 400);
+    await printImagePages(pages, fileName);
   }
 
   return (
