@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink } from "lucide-react";
 import jsPDF from "jspdf";
+import { drawPdfHeader } from "@/lib/pdf-header";
+import { EMPRESA_INFO } from "@/lib/empresa-info";
 import { toast } from "sonner";
 
 /**
@@ -70,83 +72,170 @@ function buildWhatsappLinks(phone: string, message: string) {
   };
 }
 
-function criarOficioPDF(emp: any, asoData: Date | null, proximo: Date | null, cargo: string, empresa: string) {
-  const hoje = new Date().toLocaleDateString("pt-BR");
+type OficioCtx = {
+  solicitante: string;
+  setor: string;
+  destino: string;
+  horario: string;
+  tipoExame: string;
+  numeroOficio: string;
+};
+
+function criarOficioPDF(
+  emp: any,
+  asoData: Date | null,
+  proximo: Date | null,
+  cargo: string,
+  empresa: string,
+  ctx: OficioCtx,
+) {
+  const hojeDate = new Date();
+  const hoje = hojeDate.toLocaleDateString("pt-BR");
   const proxStr = proximo ? proximo.toLocaleDateString("pt-BR") : "—";
   const asoStr = asoData ? asoData.toLocaleDateString("pt-BR") : "—";
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const W = 210, MARGIN = 22;
+  const W = doc.internal.pageSize.getWidth();
+  const MARGIN = 18;
   const maxW = W - MARGIN * 2;
-  let y = 24;
 
-  // Cabeçalho
-  doc.setFont("times", "bold");
-  doc.setFontSize(13);
-  doc.text("OFÍCIO DE CONVOCAÇÃO — EXAME MÉDICO OCUPACIONAL", W / 2, y, { align: "center" });
-  y += 6;
-  doc.setFont("times", "italic");
-  doc.setFontSize(10);
-  doc.setTextColor(80);
-  doc.text("Serviço Especializado em Segurança e Medicina do Trabalho — SESMT / DMN", W / 2, y, { align: "center" });
-  doc.setTextColor(0);
-  y += 4;
-  doc.setDrawColor(180);
-  doc.line(MARGIN, y, W - MARGIN, y);
-  y += 8;
-
-  // Meta
-  doc.setFont("times", "normal");
-  doc.setFontSize(11);
-  const meta: [string, string][] = [
-    ["Servidor(a):", emp.nome ?? "—"],
-    ...(emp.matricula ? [["Matrícula:", String(emp.matricula)]] as [string, string][] : []),
-    ...(cargo ? [["Cargo/Função:", cargo]] as [string, string][] : []),
-    ...(empresa ? [["Lotação:", empresa]] as [string, string][] : []),
-    ["Último ASO:", asoStr],
-    ["Vencimento previsto:", proxStr],
-    ["Data:", hoje],
-  ];
-  meta.forEach(([k, v]) => {
-    doc.setFont("times", "bold");
-    doc.text(k, MARGIN, y);
-    doc.setFont("times", "normal");
-    doc.text(v, MARGIN + 42, y);
-    y += 6;
+  // Cabeçalho institucional padrão (logo DMN + CNPJ + endereço)
+  let y = drawPdfHeader(doc, {
+    titulo: "Ofício de convocação — Exame Médico Ocupacional",
+    subtitulo: "SESMT · NR-7 / PCMSO",
+    responsavel: ctx.solicitante || "SESMT — Segurança e Saúde no Trabalho",
   });
+  y += 2;
 
-  y += 4;
-  doc.setFont("times", "normal");
+  // Cabeçalho do ofício (nº + cidade/data)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(`OFÍCIO Nº ${ctx.numeroOficio}`, MARGIN, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Manaus/AM, ${hoje}`, W - MARGIN, y, { align: "right" });
+  y += 7;
+
+  // Box "DADOS DA SOLICITAÇÃO"
+  const boxH = 26;
+  doc.setDrawColor(203, 213, 225);
+  doc.setFillColor(248, 250, 252);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(MARGIN, y, maxW, boxH, 1.5, 1.5, "FD");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(71, 85, 105);
+  doc.text("DADOS DA SOLICITAÇÃO", MARGIN + 3, y + 4.5);
+  doc.setFontSize(9.5);
+  doc.setTextColor(15, 23, 42);
+  const col1X = MARGIN + 3;
+  const col2X = MARGIN + maxW / 2 + 2;
+  const drawKV = (k: string, v: string, x: number, yy: number) => {
+    doc.setFont("helvetica", "bold");
+    doc.text(k, x, yy);
+    doc.setFont("helvetica", "normal");
+    const kw = doc.getTextWidth(k) + 1.5;
+    doc.text(v || "—", x + kw, yy);
+  };
+  drawKV("Solicitante:", ctx.solicitante, col1X, y + 11);
+  drawKV("Setor:", ctx.setor, col1X, y + 17);
+  drawKV("Tipo de exame:", ctx.tipoExame, col1X, y + 23);
+  drawKV("Local:", ctx.destino, col2X, y + 11);
+  drawKV("Horário:", ctx.horario, col2X, y + 17);
+  drawKV("Data emissão:", hoje, col2X, y + 23);
+  y += boxH + 6;
+
+  // Destinatário
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(15, 23, 42);
+  doc.text("AO(À) COLABORADOR(A):", MARGIN, y);
+  y += 5.5;
   doc.setFontSize(11);
+  doc.text((emp.nome ?? "—").toUpperCase(), MARGIN, y);
+  y += 5;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  const dest: string[] = [];
+  if (emp.matricula) dest.push(`Matrícula ${emp.matricula}`);
+  if (cargo) dest.push(`Cargo: ${cargo}`);
+  if (empresa) dest.push(`Lotação: ${empresa}`);
+  if (dest.length) {
+    doc.setTextColor(71, 85, 105);
+    doc.text(dest.join("   ·   "), MARGIN, y);
+    y += 5;
+  }
+  doc.setTextColor(15, 23, 42);
+  y += 3;
 
+  // Assunto
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(
+    `Assunto: Convocação para ${ctx.tipoExame || "Exame Médico Ocupacional"} (ASO).`,
+    MARGIN,
+    y,
+  );
+  y += 7;
+
+  // Corpo
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10.5);
   const paragrafos = [
-    "Prezado(a) Servidor(a),",
-    "Conforme determina a Norma Regulamentadora nº 7 (NR-7) do Ministério do Trabalho e Emprego, que dispõe sobre o Programa de Controle Médico de Saúde Ocupacional (PCMSO), e em cumprimento ao Sistema de Gestão Integrado de Segurança e Saúde no Trabalho (SGI-SST) da DMN, fica V.S.ª CONVOCADO(A) a comparecer ao Serviço Médico para realização do Exame Médico Periódico.",
-    "A realização do exame é obrigatória e tem por objetivo a preservação da sua saúde, bem como o cumprimento das obrigações legais por parte desta instituição.",
-    "Solicitamos o agendamento no prazo máximo de 15 (quinze) dias a contar do recebimento deste ofício, mediante contato com a área de Segurança e Saúde Ocupacional.",
+    "Prezado(a) Colaborador(a),",
+    `Em cumprimento à Norma Regulamentadora nº 7 (NR-7) do Ministério do Trabalho e Emprego, que dispõe sobre o Programa de Controle Médico de Saúde Ocupacional (PCMSO), e em conformidade com o Sistema de Gestão Integrado de SST (SGI-SST) da ${EMPRESA_INFO.razao_social}, fica V.S.ª CONVOCADO(A) a comparecer para realização de ${ctx.tipoExame || "Exame Médico Ocupacional"}.`,
+    `Último ASO realizado em ${asoStr}. Vencimento previsto em ${proxStr}.`,
+    `Local de comparecimento: ${ctx.destino || "—"}.`,
+    `Horário: ${ctx.horario || "a confirmar com o SESMT"}.`,
+    "A realização do exame é OBRIGATÓRIA e tem por objetivo preservar sua saúde ocupacional, bem como cumprir as obrigações legais da empresa. O não comparecimento sem justificativa formal poderá acarretar as medidas administrativas previstas em norma interna.",
+    "Solicitamos o comparecimento no prazo máximo de 15 (quinze) dias a contar do recebimento deste ofício. Em caso de dúvidas, contate o SESMT pelo e-mail sesmt@dmnestaleiro.com.br.",
     "Atenciosamente,",
   ];
   paragrafos.forEach((p) => {
     const lines = doc.splitTextToSize(p, maxW);
     doc.text(lines, MARGIN, y, { align: "justify", maxWidth: maxW });
-    y += lines.length * 6 + 3;
+    y += lines.length * 5.5 + 3;
   });
 
-  // Assinatura
-  y += 18;
-  doc.line(W / 2 - 35, y, W / 2 + 35, y);
-  y += 5;
-  doc.setFont("times", "bold");
-  doc.text("SESMT — DMN", W / 2, y, { align: "center" });
-  y += 5;
-  doc.setFont("times", "normal");
-  doc.setFontSize(10);
-  doc.text("Segurança e Saúde no Trabalho", W / 2, y, { align: "center" });
+  // Assinaturas (lado a lado: solicitante + ciência do colaborador)
+  y = Math.max(y + 14, 220);
+  const colW = (maxW - 10) / 2;
+  // Solicitante
+  doc.setDrawColor(15, 23, 42);
+  doc.line(MARGIN, y, MARGIN + colW, y);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.text(ctx.solicitante || "SESMT — DMN", MARGIN + colW / 2, y + 5, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text(ctx.setor || "Segurança e Saúde no Trabalho", MARGIN + colW / 2, y + 9, { align: "center" });
+  // Ciência
+  doc.setTextColor(15, 23, 42);
+  doc.line(MARGIN + colW + 10, y, MARGIN + colW * 2 + 10, y);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.text("Ciência do(a) Colaborador(a)", MARGIN + colW + 10 + colW / 2, y + 5, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`Recebido em ____/____/______`, MARGIN + colW + 10 + colW / 2, y + 9, { align: "center" });
 
   // Rodapé
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(120);
-  doc.text(`Documento gerado pelo SIGMO em ${hoje} — PROCO-SGI-SST-01 (NR-7 / PCMSO)`, W / 2, 287, { align: "center" });
+  doc.text(
+    `${EMPRESA_INFO.razao_social} · CNPJ ${EMPRESA_INFO.cnpj} · ${EMPRESA_INFO.endereco} · ${EMPRESA_INFO.cidade_uf_cep}`,
+    W / 2,
+    287,
+    { align: "center" },
+  );
+  doc.text(
+    `Documento gerado pelo SIGMO em ${hoje} — PROCO-SGI-SST-01 (NR-7 / PCMSO)`,
+    W / 2,
+    290.5,
+    { align: "center" },
+  );
 
   const nomeArq = `oficio-convocacao-${(emp.nome ?? "servidor").toString().toLowerCase().replace(/\s+/g, "-").slice(0, 40)}.pdf`;
   return { doc, fileName: nomeArq };
