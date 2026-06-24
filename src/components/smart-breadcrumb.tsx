@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
-import { ChevronRight, ArrowLeft, Home } from "lucide-react";
+import { ChevronRight, ArrowLeft, Home, X } from "lucide-react";
 
 /**
  * Mapa de rótulos por segmento de rota.
@@ -45,6 +45,7 @@ const LABELS: Record<string, string> = {
 
 const STACK_KEY = "sigmo.navstack";
 const MAX_STACK = 25;
+const STACK_EVT = "sigmo.navstack.changed";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function labelFor(seg: string): string {
@@ -52,6 +53,20 @@ function labelFor(seg: string): string {
   if (UUID_RE.test(seg)) return "Detalhe";
   // título com primeira maiúscula
   return seg.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function labelForPath(path: string): string {
+  const parts = path.split("/").filter(Boolean).filter((p) => p !== "app");
+  if (parts.length === 0) return "Início";
+  // Pega os 2 últimos segmentos significativos pro rótulo
+  const meaningful = parts.filter((p) => !UUID_RE.test(p));
+  const last = meaningful[meaningful.length - 1] ?? parts[parts.length - 1];
+  // Se o último é UUID, mostra "Pai · Detalhe"
+  const lastIsUuid = UUID_RE.test(parts[parts.length - 1]);
+  if (lastIsUuid && meaningful.length > 0) {
+    return `${labelFor(last)} · Detalhe`;
+  }
+  return labelFor(last);
 }
 
 function readStack(): string[] {
@@ -65,6 +80,7 @@ function readStack(): string[] {
 function writeStack(s: string[]) {
   try {
     sessionStorage.setItem(STACK_KEY, JSON.stringify(s.slice(-MAX_STACK)));
+    window.dispatchEvent(new Event(STACK_EVT));
   } catch {}
 }
 
@@ -72,39 +88,52 @@ export function SmartBreadcrumb() {
   const location = useLocation();
   const router = useRouter();
   const pathname = location.pathname;
+  const [stack, setStack] = useState<string[]>(() => readStack());
 
   // Empilha histórico sempre que o pathname muda (ignora duplicados consecutivos)
   useEffect(() => {
     if (!pathname.startsWith("/app")) return;
-    const stack = readStack();
-    if (stack[stack.length - 1] !== pathname) {
-      stack.push(pathname);
-      writeStack(stack);
+    const s = readStack();
+    if (s[s.length - 1] !== pathname) {
+      s.push(pathname);
+      writeStack(s);
     }
+    setStack(readStack());
   }, [pathname]);
 
-  const segments = useMemo(() => {
-    const parts = pathname.split("/").filter(Boolean); // ex: ["app","employees","abc-uuid"]
-    // monta crumbs acumulando href
-    const crumbs: { href: string; label: string }[] = [];
-    let acc = "";
-    parts.forEach((seg) => {
-      acc += "/" + seg;
-      crumbs.push({ href: acc, label: labelFor(seg) });
-    });
-    return crumbs;
-  }, [pathname]);
+  // escuta mudanças externas no stack (clear de outras abas/limpeza)
+  useEffect(() => {
+    const sync = () => setStack(readStack());
+    window.addEventListener(STACK_EVT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(STACK_EVT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
 
-  const canGoBack = useMemo(() => readStack().length > 1, [pathname]);
+  // Trilha = histórico de páginas visitadas (sem duplicatas consecutivas)
+  const trail = useMemo(() => {
+    const seen = new Set<string>();
+    const out: { href: string; label: string }[] = [];
+    for (const p of stack) {
+      if (seen.has(p)) continue;
+      seen.add(p);
+      out.push({ href: p, label: labelForPath(p) });
+    }
+    return out;
+  }, [stack]);
 
-  if (!pathname.startsWith("/app") || segments.length <= 1) return null;
+  const canGoBack = stack.length > 1;
+
+  if (!pathname.startsWith("/app")) return null;
 
   const goBack = () => {
-    const stack = readStack();
+    const s = readStack();
     // remove a entrada atual e pega a anterior
-    stack.pop();
-    const prev = stack.pop();
-    writeStack(stack);
+    s.pop();
+    const prev = s.pop();
+    writeStack(s);
     if (prev) {
       router.navigate({ to: prev });
     } else {
@@ -112,34 +141,42 @@ export function SmartBreadcrumb() {
     }
   };
 
+  const clearTrail = () => {
+    writeStack([pathname]);
+    setStack([pathname]);
+  };
+
   return (
     <nav
       aria-label="Navegação"
-      className="flex items-center gap-2 px-3 sm:px-4 py-1.5 border-b border-white/5 bg-black/20 text-[12px] text-rose-100/70 backdrop-blur"
+      className="flex items-center gap-2 px-3 sm:px-4 py-1.5 border-b border-white/5 bg-black/20 text-[12px] text-rose-100/70 backdrop-blur w-full"
     >
       {canGoBack && (
         <button
           onClick={goBack}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 hover:bg-white/10 hover:text-white transition"
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 hover:bg-white/10 hover:text-white transition shrink-0"
           title="Voltar para a página anterior"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Voltar</span>
         </button>
       )}
-      <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block" />
-      <ol className="flex items-center gap-1 min-w-0 overflow-hidden">
-        {segments.map((c, i) => {
-          const isLast = i === segments.length - 1;
+      <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block shrink-0" />
+      <ol className="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto scrollbar-thin">
+        <li className="flex items-center gap-1 shrink-0">
+          <Home className="h-3.5 w-3.5 shrink-0" />
+        </li>
+        {trail.length > 0 && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
+        {trail.map((c, i) => {
+          const isLast = i === trail.length - 1;
           return (
-            <li key={c.href} className="flex items-center gap-1 min-w-0">
-              {i === 0 ? <Home className="h-3.5 w-3.5 shrink-0" /> : null}
+            <li key={c.href + i} className="flex items-center gap-1 shrink-0">
               {isLast ? (
-                <span className="text-white font-medium truncate">{c.label}</span>
+                <span className="text-white font-medium">{c.label}</span>
               ) : (
                 <Link
                   to={c.href}
-                  className="hover:text-white truncate transition"
+                  className="hover:text-white transition opacity-80"
                 >
                   {c.label}
                 </Link>
@@ -149,6 +186,16 @@ export function SmartBreadcrumb() {
           );
         })}
       </ol>
+      {trail.length > 1 && (
+        <button
+          onClick={clearTrail}
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 hover:bg-white/10 hover:text-white transition shrink-0 text-rose-100/60"
+          title="Limpar histórico de navegação"
+        >
+          <X className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Limpar</span>
+        </button>
+      )}
     </nav>
   );
 }
