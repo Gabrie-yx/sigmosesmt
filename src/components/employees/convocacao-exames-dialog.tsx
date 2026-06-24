@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2 } from "lucide-react";
+import jsPDF from "jspdf";
 
 /**
  * Convocação Inteligente de Exames (Modal-First)
@@ -58,68 +59,86 @@ function buildWhatsappLink(emp: any, proximoStr: string) {
     : `https://web.whatsapp.com/send?phone=${phone}&text=${text}`;
 }
 
-function abrirOficioPDF(emp: any, asoData: Date | null, proximo: Date | null, cargo: string, empresa: string) {
+function baixarOficioPDF(emp: any, asoData: Date | null, proximo: Date | null, cargo: string, empresa: string) {
   const hoje = new Date().toLocaleDateString("pt-BR");
   const proxStr = proximo ? proximo.toLocaleDateString("pt-BR") : "—";
   const asoStr = asoData ? asoData.toLocaleDateString("pt-BR") : "—";
-  const html = `<!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"/>
-<title>Ofício de Convocação — ${emp.nome ?? ""}</title>
-<style>
-  @page { size: A4; margin: 20mm 22mm; }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #f1f5f9; font-family: Georgia, 'Times New Roman', serif; color: #0f172a; }
-  .toolbar { position: sticky; top: 0; background: #0f172a; color: #fff; padding: 12px 16px; display: flex; gap: 8px; justify-content: flex-end; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
-  .toolbar button { background: #be123c; color:#fff; border: 0; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; }
-  .toolbar button.alt { background: #475569; }
-  .page { max-width: 210mm; min-height: 297mm; margin: 16px auto; background: #fff; padding: 28mm 24mm; box-shadow: 0 4px 24px rgba(0,0,0,.15); font-size: 12pt; line-height: 1.55; }
-  h1 { text-align: center; font-size: 14pt; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 4mm; }
-  .sub { text-align: center; font-size: 10pt; color: #475569; margin-bottom: 12mm; }
-  .meta { font-size: 10pt; margin-bottom: 8mm; }
-  .meta b { color:#0f172a; }
-  p { text-align: justify; margin: 0 0 4mm; }
-  .assinatura { margin-top: 22mm; text-align: center; font-size: 10pt; }
-  .assinatura .linha { border-top: 1px solid #0f172a; width: 70mm; margin: 0 auto 2mm; }
-  @media print {
-    body { background: #fff; }
-    .toolbar { display: none; }
-    .page { box-shadow: none; margin: 0; padding: 0; min-height: auto; }
-  }
-</style></head>
-<body>
-  <div class="toolbar">
-    <button onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
-    <button class="alt" onclick="window.close()">Fechar</button>
-  </div>
-  <div class="page">
-    <h1>Ofício de Convocação — Exame Médico Ocupacional</h1>
-    <div class="sub">Serviço Especializado em Segurança e Medicina do Trabalho — SESMT / DMN</div>
-    <div class="meta">
-      <div><b>Servidor(a):</b> ${emp.nome ?? "—"}</div>
-      ${emp.matricula ? `<div><b>Matrícula:</b> ${emp.matricula}</div>` : ""}
-      ${cargo ? `<div><b>Cargo/Função:</b> ${cargo}</div>` : ""}
-      ${empresa ? `<div><b>Lotação:</b> ${empresa}</div>` : ""}
-      <div><b>Último ASO:</b> ${asoStr} &nbsp; · &nbsp; <b>Vencimento:</b> ${proxStr}</div>
-      <div style="margin-top:4mm"><b>Data:</b> ${hoje}</div>
-    </div>
-    <p>Prezado(a) Servidor(a),</p>
-    <p>Conforme determina a <b>Norma Regulamentadora nº 7 (NR-7)</b> do Ministério do Trabalho e Emprego, que dispõe sobre o Programa de Controle Médico de Saúde Ocupacional (PCMSO), e em cumprimento ao Sistema de Gestão Integrado de Segurança e Saúde no Trabalho (SGI-SST) da DMN, fica V.S.ª <b>convocado(a)</b> a comparecer ao Serviço Médico para realização do <b>Exame Médico Periódico</b>.</p>
-    <p>A realização do exame é <b>obrigatória</b> e tem por objetivo a preservação da sua saúde, bem como o cumprimento das obrigações legais por parte desta instituição.</p>
-    <p>Solicitamos o agendamento no prazo máximo de <b>15 (quinze) dias</b> a contar do recebimento deste ofício, mediante contato com a área de Segurança e Saúde Ocupacional.</p>
-    <p>Atenciosamente,</p>
-    <div class="assinatura">
-      <div class="linha"></div>
-      <div><b>SESMT — DMN</b></div>
-      <div>Segurança e Saúde no Trabalho</div>
-    </div>
-  </div>
-  <script>setTimeout(()=>{}, 0);</script>
-</body></html>`;
-  const w = window.open("", "_blank", "width=900,height=1100");
-  if (!w) { alert("Habilite pop-ups para visualizar o ofício."); return; }
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
+
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const W = 210, MARGIN = 22;
+  const maxW = W - MARGIN * 2;
+  let y = 24;
+
+  // Cabeçalho
+  doc.setFont("times", "bold");
+  doc.setFontSize(13);
+  doc.text("OFÍCIO DE CONVOCAÇÃO — EXAME MÉDICO OCUPACIONAL", W / 2, y, { align: "center" });
+  y += 6;
+  doc.setFont("times", "italic");
+  doc.setFontSize(10);
+  doc.setTextColor(80);
+  doc.text("Serviço Especializado em Segurança e Medicina do Trabalho — SESMT / DMN", W / 2, y, { align: "center" });
+  doc.setTextColor(0);
+  y += 4;
+  doc.setDrawColor(180);
+  doc.line(MARGIN, y, W - MARGIN, y);
+  y += 8;
+
+  // Meta
+  doc.setFont("times", "normal");
+  doc.setFontSize(11);
+  const meta: [string, string][] = [
+    ["Servidor(a):", emp.nome ?? "—"],
+    ...(emp.matricula ? [["Matrícula:", String(emp.matricula)]] as [string, string][] : []),
+    ...(cargo ? [["Cargo/Função:", cargo]] as [string, string][] : []),
+    ...(empresa ? [["Lotação:", empresa]] as [string, string][] : []),
+    ["Último ASO:", asoStr],
+    ["Vencimento previsto:", proxStr],
+    ["Data:", hoje],
+  ];
+  meta.forEach(([k, v]) => {
+    doc.setFont("times", "bold");
+    doc.text(k, MARGIN, y);
+    doc.setFont("times", "normal");
+    doc.text(v, MARGIN + 42, y);
+    y += 6;
+  });
+
+  y += 4;
+  doc.setFont("times", "normal");
+  doc.setFontSize(11);
+
+  const paragrafos = [
+    "Prezado(a) Servidor(a),",
+    "Conforme determina a Norma Regulamentadora nº 7 (NR-7) do Ministério do Trabalho e Emprego, que dispõe sobre o Programa de Controle Médico de Saúde Ocupacional (PCMSO), e em cumprimento ao Sistema de Gestão Integrado de Segurança e Saúde no Trabalho (SGI-SST) da DMN, fica V.S.ª CONVOCADO(A) a comparecer ao Serviço Médico para realização do Exame Médico Periódico.",
+    "A realização do exame é obrigatória e tem por objetivo a preservação da sua saúde, bem como o cumprimento das obrigações legais por parte desta instituição.",
+    "Solicitamos o agendamento no prazo máximo de 15 (quinze) dias a contar do recebimento deste ofício, mediante contato com a área de Segurança e Saúde Ocupacional.",
+    "Atenciosamente,",
+  ];
+  paragrafos.forEach((p) => {
+    const lines = doc.splitTextToSize(p, maxW);
+    doc.text(lines, MARGIN, y, { align: "justify", maxWidth: maxW });
+    y += lines.length * 6 + 3;
+  });
+
+  // Assinatura
+  y += 18;
+  doc.line(W / 2 - 35, y, W / 2 + 35, y);
+  y += 5;
+  doc.setFont("times", "bold");
+  doc.text("SESMT — DMN", W / 2, y, { align: "center" });
+  y += 5;
+  doc.setFont("times", "normal");
+  doc.setFontSize(10);
+  doc.text("Segurança e Saúde no Trabalho", W / 2, y, { align: "center" });
+
+  // Rodapé
+  doc.setFontSize(8);
+  doc.setTextColor(120);
+  doc.text(`Documento gerado pelo SIGMO em ${hoje} — PROCO-SGI-SST-01 (NR-7 / PCMSO)`, W / 2, 287, { align: "center" });
+
+  const nomeArq = `oficio-convocacao-${(emp.nome ?? "servidor").toString().toLowerCase().replace(/\s+/g, "-").slice(0, 40)}.pdf`;
+  doc.save(nomeArq);
 }
 
 export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
