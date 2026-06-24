@@ -135,7 +135,7 @@ const META: Record<string, CardMeta> = {
     titulo: <>Convocações de <Sigla>ASO</Sigla> pendentes</>,
     descricaoPend: (n) => `${n} colaborador(es) convocado(s) e ainda sem ASO registrado.`,
     descricaoOk: "Nenhuma convocação em aberto.",
-    to: "/app/employees", icon: Stethoscope, ctaPend: "Acompanhar",
+    to: "/app/sesmt/convocacoes-aso", icon: Stethoscope, ctaPend: "Acompanhar",
   },
 };
 
