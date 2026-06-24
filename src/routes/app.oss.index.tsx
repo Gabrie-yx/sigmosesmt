@@ -298,43 +298,65 @@ function OssIndexPage() {
 
   // KPI cards (clicáveis = aplicam filtro)
   const kpiCards: Array<{
-    key: string; label: string; value: number; cls: string; icon: any;
+    key: string; label: string; value: number; icon: any;
     onClick: () => void; active: boolean;
+    // Cores do efeito glass: borda gradiente, halo, accent do valor
+    border: string; halo: string; accent: string; pulse?: boolean;
   }> = [
     {
-      key: "total", label: "Ativas no total", value: kpis.total, cls: "from-slate-50 to-white text-slate-700 border-slate-200",
+      key: "total", label: "Ativas no total", value: kpis.total,
       icon: FileSignature,
       onClick: () => { limparFiltros(); }, active: !algumFiltro,
+      border: "linear-gradient(135deg, #ffffff 0%, #b8b8b8 25%, #5a5a5a 50%, #d8d8d8 75%, #ffffff 100%)",
+      halo: "radial-gradient(60% 50% at 50% 50%, rgba(148,163,184,0.45) 0%, rgba(148,163,184,0.15) 40%, transparent 75%)",
+      accent: "text-white",
     },
     {
-      key: "pend", label: "Pendentes assinatura", value: kpis.pendentes, cls: "from-amber-50 to-white text-amber-800 border-amber-200",
+      key: "pend", label: "Pendentes assinatura", value: kpis.pendentes,
       icon: Clock,
       onClick: () => { setFilterStatus("PENDENTE_ASSINATURA"); setFilterVenc("TODOS"); setPage(1); },
       active: filterStatus === "PENDENTE_ASSINATURA",
+      border: "linear-gradient(135deg, #fcd34d 0%, #f59e0b 25%, #b45309 50%, #f59e0b 75%, #fcd34d 100%)",
+      halo: "radial-gradient(60% 50% at 50% 50%, rgba(251,191,36,0.7) 0%, rgba(251,191,36,0.25) 40%, transparent 75%)",
+      accent: "text-amber-300",
+      pulse: kpis.pendentes > 0,
     },
     {
-      key: "venc", label: "Vencidas", value: kpis.vencidas, cls: "from-red-50 to-white text-red-800 border-red-200",
+      key: "venc", label: "Vencidas", value: kpis.vencidas,
       icon: AlertCircle,
       onClick: () => { setFilterStatus("ATIVAS"); setFilterVenc("VENCIDA"); setPage(1); },
       active: filterVenc === "VENCIDA",
+      border: "linear-gradient(135deg, #ff6b6b 0%, #ef4444 25%, #b91c1c 50%, #ef4444 75%, #ff6b6b 100%)",
+      halo: "radial-gradient(60% 50% at 50% 50%, rgba(239,68,68,0.95) 0%, rgba(239,68,68,0.35) 40%, transparent 75%)",
+      accent: "text-red-300",
+      pulse: kpis.vencidas > 0,
     },
     {
-      key: "v30", label: "Vencem em 30d", value: kpis.vence30, cls: "from-orange-50 to-white text-orange-800 border-orange-200",
+      key: "v30", label: "Vencem em 30d", value: kpis.vence30,
       icon: AlertTriangle,
       onClick: () => { setFilterStatus("ATIVAS"); setFilterVenc("VENCE_30D"); setPage(1); },
       active: filterVenc === "VENCE_30D",
+      border: "linear-gradient(135deg, #fdba74 0%, #fb923c 25%, #c2410c 50%, #fb923c 75%, #fdba74 100%)",
+      halo: "radial-gradient(60% 50% at 50% 50%, rgba(251,146,60,0.7) 0%, rgba(251,146,60,0.25) 40%, transparent 75%)",
+      accent: "text-orange-300",
     },
     {
-      key: "v90", label: "Vencem em 90d", value: kpis.vence90, cls: "from-amber-50 to-white text-amber-700 border-amber-200",
+      key: "v90", label: "Vencem em 90d", value: kpis.vence90,
       icon: Clock,
       onClick: () => { setFilterStatus("ATIVAS"); setFilterVenc("VENCE_90D"); setPage(1); },
       active: filterVenc === "VENCE_90D",
+      border: "linear-gradient(135deg, #fde68a 0%, #facc15 25%, #a16207 50%, #facc15 75%, #fde68a 100%)",
+      halo: "radial-gradient(60% 50% at 50% 50%, rgba(250,204,21,0.55) 0%, rgba(250,204,21,0.2) 40%, transparent 75%)",
+      accent: "text-amber-200",
     },
     {
-      key: "ok", label: "Em dia", value: kpis.ok, cls: "from-emerald-50 to-white text-emerald-800 border-emerald-200",
+      key: "ok", label: "Em dia", value: kpis.ok,
       icon: CheckCircle2,
       onClick: () => { setFilterStatus("ATIVAS"); setFilterVenc("OK"); setPage(1); },
       active: filterVenc === "OK",
+      border: "linear-gradient(135deg, #6ee7b7 0%, #10b981 25%, #047857 50%, #10b981 75%, #6ee7b7 100%)",
+      halo: "radial-gradient(60% 50% at 50% 50%, rgba(16,185,129,0.55) 0%, rgba(16,185,129,0.2) 40%, transparent 75%)",
+      accent: "text-emerald-300",
     },
   ];
 
