@@ -178,7 +178,7 @@ export async function printImagePages(pages: string[], fileName = "documento.pdf
   document.body.appendChild(root);
   document.title = fileName;
   await waitImages(root);
-  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
   window.addEventListener("afterprint", cleanup, { once: true });
   window.focus();
   window.print();
@@ -248,7 +248,7 @@ export async function printHtmlContent(html: string, title = "documento", extraC
   document.head.appendChild(style);
   document.body.appendChild(root);
   document.title = title;
-  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
   window.addEventListener("afterprint", cleanup, { once: true });
   window.focus();
   window.print();
