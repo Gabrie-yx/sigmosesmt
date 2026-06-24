@@ -298,43 +298,65 @@ function OssIndexPage() {
 
   // KPI cards (clicáveis = aplicam filtro)
   const kpiCards: Array<{
-    key: string; label: string; value: number; cls: string; icon: any;
+    key: string; label: string; value: number; icon: any;
     onClick: () => void; active: boolean;
+    // Cores do efeito glass: borda gradiente, halo, accent do valor
+    border: string; halo: string; accent: string; pulse?: boolean;
   }> = [
     {
-      key: "total", label: "Ativas no total", value: kpis.total, cls: "from-slate-50 to-white text-slate-700 border-slate-200",
+      key: "total", label: "Ativas no total", value: kpis.total,
       icon: FileSignature,
       onClick: () => { limparFiltros(); }, active: !algumFiltro,
+      border: "linear-gradient(135deg, #ffffff 0%, #b8b8b8 25%, #5a5a5a 50%, #d8d8d8 75%, #ffffff 100%)",
+      halo: "radial-gradient(60% 50% at 50% 50%, rgba(148,163,184,0.45) 0%, rgba(148,163,184,0.15) 40%, transparent 75%)",
+      accent: "text-white",
     },
     {
-      key: "pend", label: "Pendentes assinatura", value: kpis.pendentes, cls: "from-amber-50 to-white text-amber-800 border-amber-200",
+      key: "pend", label: "Pendentes assinatura", value: kpis.pendentes,
       icon: Clock,
       onClick: () => { setFilterStatus("PENDENTE_ASSINATURA"); setFilterVenc("TODOS"); setPage(1); },
       active: filterStatus === "PENDENTE_ASSINATURA",
+      border: "linear-gradient(135deg, #fcd34d 0%, #f59e0b 25%, #b45309 50%, #f59e0b 75%, #fcd34d 100%)",
+      halo: "radial-gradient(60% 50% at 50% 50%, rgba(251,191,36,0.7) 0%, rgba(251,191,36,0.25) 40%, transparent 75%)",
+      accent: "text-amber-300",
+      pulse: kpis.pendentes > 0,
     },
     {
-      key: "venc", label: "Vencidas", value: kpis.vencidas, cls: "from-red-50 to-white text-red-800 border-red-200",
+      key: "venc", label: "Vencidas", value: kpis.vencidas,
       icon: AlertCircle,
       onClick: () => { setFilterStatus("ATIVAS"); setFilterVenc("VENCIDA"); setPage(1); },
       active: filterVenc === "VENCIDA",
+      border: "linear-gradient(135deg, #ff6b6b 0%, #ef4444 25%, #b91c1c 50%, #ef4444 75%, #ff6b6b 100%)",
+      halo: "radial-gradient(60% 50% at 50% 50%, rgba(239,68,68,0.95) 0%, rgba(239,68,68,0.35) 40%, transparent 75%)",
+      accent: "text-red-300",
+      pulse: kpis.vencidas > 0,
     },
     {
-      key: "v30", label: "Vencem em 30d", value: kpis.vence30, cls: "from-orange-50 to-white text-orange-800 border-orange-200",
+      key: "v30", label: "Vencem em 30d", value: kpis.vence30,
       icon: AlertTriangle,
       onClick: () => { setFilterStatus("ATIVAS"); setFilterVenc("VENCE_30D"); setPage(1); },
       active: filterVenc === "VENCE_30D",
+      border: "linear-gradient(135deg, #fdba74 0%, #fb923c 25%, #c2410c 50%, #fb923c 75%, #fdba74 100%)",
+      halo: "radial-gradient(60% 50% at 50% 50%, rgba(251,146,60,0.7) 0%, rgba(251,146,60,0.25) 40%, transparent 75%)",
+      accent: "text-orange-300",
     },
     {
-      key: "v90", label: "Vencem em 90d", value: kpis.vence90, cls: "from-amber-50 to-white text-amber-700 border-amber-200",
+      key: "v90", label: "Vencem em 90d", value: kpis.vence90,
       icon: Clock,
       onClick: () => { setFilterStatus("ATIVAS"); setFilterVenc("VENCE_90D"); setPage(1); },
       active: filterVenc === "VENCE_90D",
+      border: "linear-gradient(135deg, #fde68a 0%, #facc15 25%, #a16207 50%, #facc15 75%, #fde68a 100%)",
+      halo: "radial-gradient(60% 50% at 50% 50%, rgba(250,204,21,0.55) 0%, rgba(250,204,21,0.2) 40%, transparent 75%)",
+      accent: "text-amber-200",
     },
     {
-      key: "ok", label: "Em dia", value: kpis.ok, cls: "from-emerald-50 to-white text-emerald-800 border-emerald-200",
+      key: "ok", label: "Em dia", value: kpis.ok,
       icon: CheckCircle2,
       onClick: () => { setFilterStatus("ATIVAS"); setFilterVenc("OK"); setPage(1); },
       active: filterVenc === "OK",
+      border: "linear-gradient(135deg, #6ee7b7 0%, #10b981 25%, #047857 50%, #10b981 75%, #6ee7b7 100%)",
+      halo: "radial-gradient(60% 50% at 50% 50%, rgba(16,185,129,0.55) 0%, rgba(16,185,129,0.2) 40%, transparent 75%)",
+      accent: "text-emerald-300",
     },
   ];
 
@@ -443,22 +465,73 @@ function OssIndexPage() {
           </div>
         </div>
         {/* KPIs clicáveis */}
-        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {kpiCards.map((k) => {
             const Icon = k.icon;
+            const showHalo = k.active || k.pulse;
             return (
               <button
                 key={k.key}
                 onClick={k.onClick}
-                className={`text-left p-2.5 rounded-lg border bg-gradient-to-br ${k.cls} transition-all hover:shadow-md hover:-translate-y-0.5 ${
-                  k.active ? "ring-2 ring-rose-400 shadow-md" : ""
-                }`}
+                className="relative w-full text-left group focus:outline-none transition-transform hover:-translate-y-0.5"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-wide font-bold opacity-80">{k.label}</span>
-                  <Icon className="h-3.5 w-3.5 opacity-70" />
+                {/* Halo externo — pulsa quando há valor crítico ou está ativo */}
+                {showHalo && (
+                  <div
+                    className={`pointer-events-none absolute -inset-2 rounded-[22px] blur-xl ${
+                      k.pulse ? "animate-pulse opacity-90" : "opacity-70"
+                    }`}
+                    style={{ background: k.halo }}
+                  />
+                )}
+                {/* Borda cromada gradiente */}
+                <div
+                  className="relative rounded-[16px] p-[1.5px]"
+                  style={{
+                    background: k.border,
+                    boxShadow: showHalo
+                      ? "0 0 20px rgba(0,0,0,0.4), 0 6px 16px rgba(0,0,0,0.35)"
+                      : "0 4px 12px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  {/* Vidro escuro */}
+                  <div
+                    className="relative w-full rounded-[14px] overflow-hidden p-3"
+                    style={{
+                      background:
+                        "radial-gradient(120% 80% at 50% 0%, #2a2a2a 0%, #161616 40%, #050505 100%)",
+                    }}
+                  >
+                    {/* Highlight superior — curva de luz */}
+                    <div
+                      className="pointer-events-none absolute inset-0"
+                      style={{
+                        background:
+                          "radial-gradient(140% 55% at 50% -25%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 35%, transparent 60%)",
+                      }}
+                    />
+                    {/* Vinheta inferior */}
+                    <div
+                      className="pointer-events-none absolute inset-0"
+                      style={{
+                        background:
+                          "radial-gradient(120% 60% at 50% 120%, rgba(0,0,0,0.5) 0%, transparent 60%)",
+                      }}
+                    />
+                    {/* Conteúdo */}
+                    <div className="relative">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-white/70 leading-tight">
+                          {k.label}
+                        </span>
+                        <Icon className={`h-3.5 w-3.5 ${k.accent} drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]`} />
+                      </div>
+                      <div className={`text-3xl font-black mt-2 leading-none tabular-nums ${k.accent} drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]`}>
+                        {k.value}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-2xl font-black mt-1 leading-none">{k.value}</div>
               </button>
             );
           })}
