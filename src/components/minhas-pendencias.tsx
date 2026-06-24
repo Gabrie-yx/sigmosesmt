@@ -131,6 +131,12 @@ const META: Record<string, CardMeta> = {
     descricaoOk: "Todas as OSS estão em dia.",
     to: "/app/oss", icon: FileSignature, ctaPend: "Tratar OSS",
   },
+  "convocacoes-pendentes": {
+    titulo: <>Convocações de <Sigla>ASO</Sigla> pendentes</>,
+    descricaoPend: (n) => `${n} colaborador(es) convocado(s) e ainda sem ASO registrado.`,
+    descricaoOk: "Nenhuma convocação em aberto.",
+    to: "/app/employees", icon: Stethoscope, ctaPend: "Acompanhar",
+  },
 };
 
 const SEV_PALETTE = {
