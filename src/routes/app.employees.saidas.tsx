@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,16 +11,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { toast } from "sonner";
-import { SaidaExpedienteDialog } from "@/components/saida-expediente-dialog";
-import { SignaturePadDialog } from "@/components/signature-pad-dialog";
-import { PdfSignerDialog } from "@/components/pdf-signer-dialog";
-import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
-import { gerarSaidaExpedientePDF } from "@/lib/saida-expediente-pdf";
 import { formatDateBR } from "@/lib/utils-date";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { drawPdfHeader } from "@/lib/pdf-header";
+import type jsPDF from "jspdf";
 import dmnLogo from "@/assets/dmn-logo.png";
+
+// Code-splitting: dialogs pesados (PDF/assinatura) só baixam quando abrem.
+const SaidaExpedienteDialog = lazy(() =>
+  import("@/components/saida-expediente-dialog").then((m) => ({ default: m.SaidaExpedienteDialog })),
+);
+const SignaturePadDialog = lazy(() =>
+  import("@/components/signature-pad-dialog").then((m) => ({ default: m.SignaturePadDialog })),
+);
+const PdfSignerDialog = lazy(() =>
+  import("@/components/pdf-signer-dialog").then((m) => ({ default: m.PdfSignerDialog })),
+);
+const PDFPreviewDialog = lazy(() =>
+  import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog })),
+);
 
 export const Route = createFileRoute("/app/employees/saidas")({
   component: SaidasPage,
