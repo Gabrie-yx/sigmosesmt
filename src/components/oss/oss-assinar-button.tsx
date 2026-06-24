@@ -22,6 +22,7 @@ type EmInput = {
     matricula: string | null;
     admissao: string | null;
     rg?: string | null;
+    assinatura_url?: string | null;
     companies?: { name: string | null; cnpj: string | null } | null;
     roles?: { name: string | null; cbo?: string | null } | null;
   } | null;
@@ -69,6 +70,7 @@ export function OssAssinarButton({ em }: { em: EmInput }) {
         empresa_cnpj: em.employees?.companies?.cnpj ?? null,
         conteudo: em.conteudo_snapshot,
         episCatalog,
+        assinaturaColaboradorDataUrl: em.employees?.assinatura_url ?? null,
       });
       const ab = doc.output("arraybuffer") as ArrayBuffer;
       return new Uint8Array(ab);

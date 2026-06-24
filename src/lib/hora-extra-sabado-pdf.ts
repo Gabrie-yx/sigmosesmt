@@ -7,6 +7,9 @@ export type HoraExtraFuncionario = {
   alimentacao: boolean;
   presenca?: string | null;
   empresa?: string | null;
+  /** Assinatura digital cadastrada na ficha do colaborador (PNG dataURL).
+   * Quando presente é renderizada automaticamente sobre a linha de assinatura. */
+  assinaturaDataUrl?: string | null;
 };
 
 export type HoraExtraPaginaEmpresa = {
@@ -277,6 +280,28 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       const sx1 = x + colIt + colNome + colTrans + colAlim + colPres + 3;
       const sx2 = x + w - 3;
       doc.line(sx1, yy + rowH - 1.6, sx2, yy + rowH - 1.6);
+
+      if (f.assinaturaDataUrl) {
+        try {
+          const url = f.assinaturaDataUrl;
+          const m = /^data:image\/(png|jpeg|jpg|webp);base64,/i.exec(url);
+          const fmt = (m?.[1] ?? "png").toUpperCase().replace("JPG", "JPEG");
+          const props = (doc as any).getImageProperties?.(url);
+          const maxH = rowH - 1.8;
+          const maxW = sx2 - sx1;
+          let imgH = maxH;
+          let imgW = imgH * 2.5;
+          if (props?.width && props?.height) {
+            const ratio = props.width / props.height;
+            imgH = maxH;
+            imgW = imgH * ratio;
+            if (imgW > maxW) { imgW = maxW; imgH = imgW / ratio; }
+          }
+          const cx = (sx1 + sx2) / 2;
+          doc.addImage(url, fmt === "WEBP" ? "PNG" : fmt, cx - imgW / 2, yy + rowH - 1.6 - imgH, imgW, imgH, undefined, "FAST");
+        } catch {}
+      }
+
       yy += rowH;
     });
     return headRowH + funcionarios.length * rowH;

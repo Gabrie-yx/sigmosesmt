@@ -84,7 +84,7 @@ function HoraExtraSabadoPage() {
     if (!rec) return toast.error("Registro não encontrado");
     const { data: list, error: listError } = await supabase
       .from("hora_extra_sabado_funcionarios")
-      .select("*, employees(id, company_id, companies(name))")
+      .select("*, employees(id, company_id, assinatura_url, companies(name))")
       .eq("hora_extra_id", id)
       .order("ordem");
     if (listError) return toast.error(listError.message);
@@ -119,6 +119,7 @@ function HoraExtraSabadoPage() {
         transporte: f.transporte,
         alimentacao: f.alimentacao,
         presenca: f.presenca,
+        assinaturaDataUrl: f.employees?.assinatura_url ?? null,
       })),
     }));
 
