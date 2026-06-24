@@ -1768,6 +1768,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         valor_unitario: valor,
         data_entrega: f.data_entrega,
         observacoes: f.observacoes,
+        assinaturaColaboradorDataUrl: (emp as any)?.assinatura_url ?? null,
       });
       // Em vez de openFileViewer, usamos o PdfSignerDialog para ver e poder salvar
       setSignerSrc({ bytes, name: fname, modulo: "termo_perda", referenciaId: undefined });

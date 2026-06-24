@@ -11,6 +11,7 @@ type Args = {
   valor_unitario?: number | null;
   data_entrega: string;
   observacoes?: string | null;
+  assinaturaColaboradorDataUrl?: string | null;
 };
 
 function brDate(s?: string | null) {
@@ -122,6 +123,22 @@ export function openTermoPerdaPdf(a: Args) {
   // Assinaturas
   const sigW = 75;
   doc.setDrawColor(0);
+  // Assinatura digital do colaborador (se cadastrada na ficha) — fica logo acima da linha
+  if (a.assinaturaColaboradorDataUrl) {
+    try {
+      const props = doc.getImageProperties(a.assinaturaColaboradorDataUrl);
+      const maxW = sigW - 4;
+      const maxH = 14;
+      const ratio = Math.min(maxW / props.width, maxH / props.height);
+      const imgW = Math.max(8, props.width * ratio);
+      const imgH = Math.max(4, props.height * ratio);
+      const cx = margin + 5 + sigW / 2;
+      const imgX = cx - imgW / 2;
+      const imgY = y - imgH + 0.5;
+      const fmt = (props.fileType || "PNG").toString().toUpperCase().includes("JPEG") ? "JPEG" : "PNG";
+      doc.addImage(a.assinaturaColaboradorDataUrl, fmt as any, imgX, imgY, imgW, imgH, undefined, "FAST");
+    } catch {}
+  }
   doc.line(margin + 5, y, margin + 5 + sigW, y);
   doc.line(W - margin - 5 - sigW, y, W - margin - 5, y);
   y += 4;
