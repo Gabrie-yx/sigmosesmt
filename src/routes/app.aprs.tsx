@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,7 +19,9 @@ import { AprModeloPicker, type AprModelo } from "@/components/aprs/apr-modelo-pi
 import { AplicarModeloLoteDialog } from "@/components/aprs/aplicar-modelo-lote-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { abrirAprPdf, imprimirAprPdf, baixarAprPdf, buildAprPdf } from "@/lib/apr-pdf-loader";
-import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+const PDFPreviewDialog = lazy(() =>
+  import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog })),
+);
 import type jsPDF from "jspdf";
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 import { RevalidarLoteDialog, type RevalidarItem } from "@/components/aprs/revalidar-lote-dialog";
@@ -727,18 +729,22 @@ function AprsPage() {
         cascoPreselecionadoId={loteCascoId}
       />
 
-      <PDFPreviewDialog
-        open={!!pdfDoc}
-        onClose={() => { setPdfDoc(null); setPdfAprId(null); setEncSig(null); setTstSig(null); }}
-        doc={pdfDoc}
-        fileName={pdfName}
-        title="Visualizar / Assinar APR"
-        signable
-        encSig={encSig}
-        sesmtSig={tstSig}
-        onChangeEncSig={(v) => { setEncSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), v, tstSig); }}
-        onChangeSesmtSig={(v) => { setTstSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), encSig, v); }}
-      />
+      {!!pdfDoc && (
+        <Suspense fallback={null}>
+          <PDFPreviewDialog
+            open={!!pdfDoc}
+            onClose={() => { setPdfDoc(null); setPdfAprId(null); setEncSig(null); setTstSig(null); }}
+            doc={pdfDoc}
+            fileName={pdfName}
+            title="Visualizar / Assinar APR"
+            signable
+            encSig={encSig}
+            sesmtSig={tstSig}
+            onChangeEncSig={(v) => { setEncSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), v, tstSig); }}
+            onChangeSesmtSig={(v) => { setTstSig(v); if (pdfAprId) openPreview(pdfAprId, pdfName.replace(/\.pdf$/, ""), encSig, v); }}
+          />
+        </Suspense>
+      )}
 
       <RevalidarLoteDialog
         open={revalidarOpen}
