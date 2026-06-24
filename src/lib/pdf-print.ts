@@ -39,7 +39,7 @@ async function toArrayBuffer(input: ArrayBuffer | Uint8Array | Blob): Promise<Ar
   throw new Error("Formato de PDF não suportado para impressão");
 }
 
-export async function renderPdfToImagePages(input: ArrayBuffer | Uint8Array | Blob, scale = 2): Promise<string[]> {
+export async function renderPdfToImagePages(input: ArrayBuffer | Uint8Array | Blob, scale = 3): Promise<string[]> {
   const buf = await toArrayBuffer(input);
   const pdfjsLib = await loadPdfJs();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
@@ -51,9 +51,11 @@ export async function renderPdfToImagePages(input: ArrayBuffer | Uint8Array | Bl
     const canvas = document.createElement("canvas");
     canvas.width = viewport.width;
     canvas.height = viewport.height;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) throw new Error("Canvas indisponível para impressão");
-    await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: ctx, viewport, canvas, background: "#ffffff", intent: "print" }).promise;
     pages.push(canvas.toDataURL("image/png"));
   }
 
