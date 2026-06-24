@@ -546,7 +546,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                         size="sm"
                         variant="outline"
                         className="bg-white/5 hover:bg-white/10 border-white/15 text-white"
-                        onClick={() => {
+                        onClick={async () => {
                           if (!solicitante.trim()) {
                             toast.error("Preencha quem está solicitando o ASO antes de gerar o ofício.");
                             return;
@@ -561,6 +561,24 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                             { solicitante, setor, destino, horario, tipoExame, numeroOficio },
                           );
                           setPdfPreview({ ...pdf, title: `Ofício de convocação — ${emp.nome ?? "Funcionário"}` });
+                          // Grava convocação no banco (fecha automaticamente quando o ASO for registrado)
+                          try {
+                            const { data: userRes } = await supabase.auth.getUser();
+                            const dl = new Date();
+                            dl.setDate(dl.getDate() + 30);
+                            const { error: insErr } = await supabase.from("convocacoes_exames").insert({
+                              employee_id: emp.id,
+                              janela,
+                              tipos_exame: [tipoExame || "ASO Periódico"],
+                              data_limite: dl.toISOString().slice(0, 10),
+                              convocado_por: userRes.user?.id ?? null,
+                              observacoes: `Ofício ${numeroOficio} — destino: ${destino}`,
+                            });
+                            if (insErr) throw insErr;
+                            toast.success("Convocação registrada — será baixada automaticamente quando o ASO for anexado.");
+                          } catch (err: any) {
+                            toast.error(`PDF gerado, mas não consegui registrar a convocação: ${err.message ?? err}`);
+                          }
                         }}
                         title="Visualizar ofício em PDF"
                       >
