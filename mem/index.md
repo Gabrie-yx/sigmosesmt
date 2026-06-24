@@ -16,3 +16,4 @@ Padrão **Modal-First**: ações novas abrem como modal/sheet/drawer sobre a tel
 - [SIGMO aguardando Rev.06 PGR/PCMSO](mem://features/sigmo-pgr-pcmso-rev06-pendente.md) — Plano faseado (psicossocial, plano vivo, AEP, GHE adm com campo) só executar após chegada das revisões.
 - [Anti-MDI — roubos do Senior](mem://design/anti-mdi-roubos-senior.md) — Manifesto: 6 pecados do Senior (MDI, abas empilhadas, FRSELEMP) + 8 roubos com classe (drawer, switcher de obra, ação em massa, preview, Cmd+K, chip de status).
 - [Padrão Modal-First](mem://preferences/modal-first.md) — Antes de criar rota nova, tentar modal/sheet/drawer sobre a tela contextual. Rota só para wizard longo, URL compartilhável, PDF dedicado ou módulo top-level.
+- [ASO upload validação](mem://features/aso-upload-validacao.md) — Hoje não valida conteúdo do PDF; plano em 5 níveis registrado; manter como está até priorizar Nível 1+3 (validação básica + extração IA cruzando com convocação).
