@@ -10,6 +10,7 @@ import { degrees } from "pdf-lib";
 import { SignaturePadDialog, type AssinaturaResult } from "@/components/signature-pad-dialog";
 import { SignatureGallery } from "@/components/signature-gallery";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { printPdf } from "@/lib/pdf-print";
 
 // pdfjs-dist usa DOMMatrix / Path2D — só pode carregar no browser.
 type PdfJsModule = typeof import("pdfjs-dist");
@@ -697,31 +698,11 @@ export function PdfSignerDialog({
               onClick={async () => {
                 const bytes = placements.length > 0 ? await saveSignedPdf() : bytesRef.current;
                 if (!bytes) { toast.error("PDF ainda não carregado"); return; }
-                const blob = new Blob([bytes.slice()], { type: "application/pdf" });
-                const url = URL.createObjectURL(blob);
-                const iframe = document.createElement("iframe");
-                iframe.style.position = "fixed";
-                iframe.style.right = "0";
-                iframe.style.bottom = "0";
-                iframe.style.width = "0";
-                iframe.style.height = "0";
-                iframe.style.border = "0";
-                iframe.src = url;
-                iframe.onload = () => {
-                  setTimeout(() => {
-                    try {
-                      iframe.contentWindow?.focus();
-                      iframe.contentWindow?.print();
-                    } catch (e) {
-                      toast.error("Não foi possível abrir a impressão");
-                    }
-                  }, 300);
-                };
-                document.body.appendChild(iframe);
-                setTimeout(() => {
-                  URL.revokeObjectURL(url);
-                  iframe.remove();
-                }, 60000);
+                try {
+                  await printPdf(bytes.slice(), nomeArquivo || "documento.pdf");
+                } catch (e) {
+                  toast.error("Não foi possível abrir a impressão");
+                }
               }}
             >
               <Printer className="h-4 w-4 mr-1" /> Imprimir

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { printPdf } from "@/lib/pdf-print";
 
 type ViewerPayload = { url: string; name: string; mime?: string; downloadUrl?: string; objectUrl?: string };
 const listeners = new Set<(p: ViewerPayload | null) => void>();
@@ -56,12 +57,17 @@ export function FileViewerHost() {
   const isImage = payload?.mime?.startsWith("image/");
   const isPdf = payload?.mime === "application/pdf";
 
-  function handlePrint() {
+  async function handlePrint() {
     if (!payload) return;
     if (isPdf) {
-      const frame = document.getElementById("file-viewer-iframe") as HTMLIFrameElement | null;
-      if (frame?.contentWindow) {
-        try { frame.contentWindow.focus(); frame.contentWindow.print(); return; } catch {}
+      try {
+        const res = await fetch(payload.downloadUrl ?? payload.url);
+        const blob = await res.blob();
+        await printPdf(blob, payload.name);
+        return;
+      } catch (e: any) {
+        toast.error(e.message ?? "Falha ao imprimir PDF");
+        return;
       }
     }
     const w = window.open(payload.url, "_blank");

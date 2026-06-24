@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Printer, X, Download } from "lucide-react";
 import { formatDateBR } from "@/lib/utils-date";
 import { PT_TIPOS } from "@/lib/constants";
+import { printHtmlContent } from "@/lib/pdf-print";
 
 interface Props {
   open: boolean;
@@ -25,15 +26,11 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company }: Props) 
   if (!pt) return null;
   const tipoInfo = PT_TIPOS.find((t) => t.value === pt.tipo_pt) ?? PT_TIPOS[0];
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     const node = document.getElementById("pt-print-area");
     if (!node) return window.print();
-    const w = window.open("", "_blank", "width=900,height=700");
-    if (!w) return;
-    w.document.write(`<!DOCTYPE html><html><head><title>${pt.numero}</title>
-      <style>
-        @page { size: A4; margin: 12mm; }
-        body { font-family: -apple-system, system-ui, sans-serif; color: #0f172a; font-size: 11px; }
+    await printHtmlContent(node.innerHTML, pt.numero, `
+        .sigmo-print-html-root { font-family: -apple-system, system-ui, sans-serif; color: #0f172a; font-size: 11px; }
         h1,h2,h3 { margin: 0; }
         table { width: 100%; border-collapse: collapse; margin-top: 8px; }
         td, th { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; vertical-align: top; }
@@ -44,10 +41,7 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company }: Props) 
         .value { font-size: 11px; font-weight: 600; color: #0f172a; }
         .sig { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         .sig-box { border-top: 1px solid #64748b; padding-top: 4px; text-align: center; font-size: 9px; text-transform: uppercase; }
-      </style></head><body>${node.innerHTML}</body></html>`);
-    w.document.close();
-    w.focus();
-    setTimeout(() => { w.print(); w.close(); }, 250);
+    `);
   };
 
   return (

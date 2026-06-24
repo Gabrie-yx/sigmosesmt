@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dmnLogo from "@/assets/dmn-logo.png";
+import { printPdf } from "@/lib/pdf-print";
 
 export type OrdemFull = {
   id: string;
@@ -222,12 +223,7 @@ export function gerarPdfOrdem(ordem: OrdemFull) {
   doc.save(`${ordem.numero.replace(/\//g, "-")}.pdf`);
 }
 
-export function imprimirOrdem(ordem: OrdemFull) {
+export async function imprimirOrdem(ordem: OrdemFull) {
   const doc = build(ordem);
-  doc.autoPrint();
-  const blob = doc.output("bloburl");
-  const w = window.open(blob as any, "_blank");
-  if (!w) {
-    doc.save(`${ordem.numero.replace(/\//g, "-")}.pdf`);
-  }
+  await printPdf(doc.output("arraybuffer") as ArrayBuffer, `${ordem.numero.replace(/\//g, "-")}.pdf`);
 }

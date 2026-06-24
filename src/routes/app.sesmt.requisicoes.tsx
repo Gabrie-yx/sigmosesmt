@@ -30,6 +30,7 @@ import { SignatureGallery } from "@/components/signature-gallery";
 import { Wizard, type WizardStep } from "@/components/wizard";
 import { useDraftAutosave } from "@/hooks/use-draft-autosave";
 import { deleteDraft, loadDraft } from "@/lib/draft-store";
+import { printPdf } from "@/lib/pdf-print";
 
 export const Route = createFileRoute("/app/sesmt/requisicoes")({
   component: RequisicoesPage,
@@ -266,24 +267,22 @@ async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "do
     doc.text(`Motivo: ${req.motivo_indeferimento}`, M, finalY + sigH + 12, { maxWidth: W - 2*M });
   }
 
+  const fileName = `requisicao-${req.numero || req.id.slice(0,8)}.pdf`;
+
   if (mode === "print") {
-    doc.autoPrint();
-    const url = URL.createObjectURL(doc.output("blob"));
-    const printWindow = window.open(url, "_blank");
-    if (!printWindow) doc.save(`requisicao-${req.numero || req.id.slice(0,8)}.pdf`);
-    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+    await printPdf(doc.output("arraybuffer") as ArrayBuffer, fileName);
     return;
   }
 
   if (mode === "preview") {
     const url = URL.createObjectURL(doc.output("blob"));
     const win = window.open(url, "_blank");
-    if (!win) doc.save(`requisicao-${req.numero || req.id.slice(0,8)}.pdf`);
+    if (!win) doc.save(fileName);
     window.setTimeout(() => URL.revokeObjectURL(url), 120000);
     return;
   }
 
-  doc.save(`requisicao-${req.numero || req.id.slice(0,8)}.pdf`);
+  doc.save(fileName);
 }
 
 async function gerarRelatorio(reqs: Req[], periodo: string) {
