@@ -705,27 +705,37 @@ function PainelListaTecnicaPage() {
       <Card className="shadow-sm border-primary/10">
         <CardContent className="p-3 flex items-center gap-3 flex-wrap justify-between">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold pr-1">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold pr-1 shrink-0">
               Ordem SAP / Casco:
             </span>
-            <select
-              value={ordemAtivaId ?? ""}
-              onChange={(e) => { setOrdemSel(e.target.value || null); limparFiltros(); }}
-              className="px-4 py-2 rounded-md text-sm font-bold border border-primary/40 bg-slate-950 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 min-w-[340px] [&>option]:bg-slate-950 [&>option]:text-white"
-            >
-              {(mb51Ordens as any[]).length === 0 && <option value="" className="bg-slate-950 text-white">Nenhuma MB51 importada — use o botão "Upload MB51" acima</option>}
-              {(mb51Ordens as any[]).map((o) => {
-                const c = o.casco_id ? cascoById.get(o.casco_id) : null;
-                const label = c
-                  ? (c.nome ? String(c.nome).toUpperCase() : String(c.numero).replace(/^CASCO\s*/i, ""))
-                  : (o.texto_documento ?? "—");
-                return (
-                  <option key={o.id} value={o.id} className="bg-slate-950 text-white">
-                    SAP {String(o.numero_sap).startsWith("PEND") ? "PEND" : o.numero_sap} · {label}
-                  </option>
-                );
-              })}
-            </select>
+            {(mb51Ordens as any[]).length === 0 ? (
+              <span className="text-xs text-muted-foreground italic">Nenhuma MB51 importada — use o botão "Upload MB51" acima</span>
+            ) : (
+              <div className="flex items-center gap-2 flex-wrap">
+                {(mb51Ordens as any[]).map((o) => {
+                  const c = o.casco_id ? cascoById.get(o.casco_id) : null;
+                  const label = c
+                    ? (c.nome ? String(c.nome).toUpperCase() : String(c.numero).replace(/^CASCO\s*/i, ""))
+                    : (o.texto_documento ?? "—");
+                  const sap = String(o.numero_sap).startsWith("PEND") ? "PEND" : o.numero_sap;
+                  const isActive = ordemAtivaId === o.id;
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => { setOrdemSel(o.id); limparFiltros(); }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 whitespace-nowrap ${
+                        isActive
+                          ? "bg-primary text-primary-foreground border-primary shadow-[0_0_14px_2px_hsl(var(--primary)/0.55)]"
+                          : "bg-slate-950/60 text-white/90 border-primary/30 shadow-[0_0_6px_0_hsl(var(--primary)/0.25)] hover:border-primary/70 hover:shadow-[0_0_12px_2px_hsl(var(--primary)/0.45)] hover:bg-slate-900"
+                      }`}
+                    >
+                      SAP {sap} · {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {algumFiltro && (
               <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={limparFiltros}>
                 <Filter className="h-3 w-3 mr-1" /> Limpar filtros
