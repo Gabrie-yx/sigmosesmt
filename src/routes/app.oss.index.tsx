@@ -17,6 +17,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Plus, FileSignature, Download, Upload, Search, Settings2, AlertCircle, CheckCircle2, Clock, FileWarning, Eye, Ban,
+  Briefcase, AlertTriangle, FileDown, ChevronDown, ChevronRight, X as XIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
@@ -68,11 +69,45 @@ const STATUS_META_EXTRA: Record<string, { label: string; cls: string; icon: any 
   CANCELADO: { label: "Cancelado", cls: "bg-red-50 text-red-700 border-red-200 line-through", icon: Ban },
 };
 
+// Semáforo de vencimento — calcula a partir de expira_em e status
+type VencBucket = "VENCIDA" | "VENCE_30D" | "VENCE_90D" | "OK" | "SEM_DATA";
+const VENC_META: Record<VencBucket, { label: string; cls: string; dot: string }> = {
+  VENCIDA:    { label: "Vencida",       cls: "bg-red-100 text-red-800 border-red-300",          dot: "bg-red-500" },
+  VENCE_30D:  { label: "Vence ≤ 30d",   cls: "bg-orange-100 text-orange-800 border-orange-300", dot: "bg-orange-500" },
+  VENCE_90D:  { label: "Vence ≤ 90d",   cls: "bg-amber-100 text-amber-800 border-amber-300",    dot: "bg-amber-500" },
+  OK:         { label: "Em dia",        cls: "bg-emerald-100 text-emerald-800 border-emerald-300", dot: "bg-emerald-500" },
+  SEM_DATA:   { label: "Sem validade",  cls: "bg-slate-100 text-slate-600 border-slate-300",    dot: "bg-slate-400" },
+};
+
+function diasAteVencer(expira_em: string | null): number | null {
+  if (!expira_em) return null;
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const venc = new Date(expira_em.slice(0, 10) + "T00:00:00");
+  return Math.floor((venc.getTime() - hoje.getTime()) / 86400000);
+}
+function bucketVencimento(em: Emissao): VencBucket {
+  if (em.status === "VENCIDO") return "VENCIDA";
+  const d = diasAteVencer(em.expira_em);
+  if (d === null) return "SEM_DATA";
+  if (d < 0) return "VENCIDA";
+  if (d <= 30) return "VENCE_30D";
+  if (d <= 90) return "VENCE_90D";
+  return "OK";
+}
+
+const PAGE_SIZE = 50;
+
 function OssIndexPage() {
   const qc = useQueryClient();
   const { isEditor } = useAuth();
   const [q, setQ] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ATIVAS");
+  const [filterCargo, setFilterCargo] = useState<string>("TODOS");
+  const [filterMotivo, setFilterMotivo] = useState<string>("TODOS");
+  const [filterVenc, setFilterVenc] = useState<string>("TODOS");
+  const [agruparCargo, setAgruparCargo] = useState(false);
+  const [page, setPage] = useState(1);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [emitirOpen, setEmitirOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<{ doc: jsPDF; name: string } | null>(null);
 
@@ -93,6 +128,9 @@ function OssIndexPage() {
     return emissoes.filter((e) => {
       if (filterStatus === "ATIVAS" && (e.status === "SUBSTITUIDO" || e.status === "VENCIDO" || (e.status as string) === "CANCELADO")) return false;
       if (filterStatus !== "ATIVAS" && filterStatus !== "TODAS" && e.status !== filterStatus) return false;
+      if (filterCargo !== "TODOS" && e.cargo_snapshot !== filterCargo) return false;
+      if (filterMotivo !== "TODOS" && e.motivo_emissao !== filterMotivo) return false;
+      if (filterVenc !== "TODOS" && bucketVencimento(e) !== filterVenc) return false;
       if (!s) return true;
       return (
         (e.employees?.nome ?? "").toLowerCase().includes(s) ||
@@ -100,7 +138,96 @@ function OssIndexPage() {
         (e.employees?.cpf ?? "").includes(s)
       );
     });
-  }, [emissoes, q, filterStatus]);
+  }, [emissoes, q, filterStatus, filterCargo, filterMotivo, filterVenc]);
+
+  // KPIs sempre calculados sobre as ATIVAS (ignora substituídas/canceladas)
+  const kpis = useMemo(() => {
+    const ativas = emissoes.filter(
+      (e) => e.status !== "SUBSTITUIDO" && (e.status as string) !== "CANCELADO",
+    );
+    let pendentes = 0, vencidas = 0, vence30 = 0, vence90 = 0, ok = 0;
+    for (const e of ativas) {
+      if (e.status === "PENDENTE_ASSINATURA") pendentes++;
+      const b = bucketVencimento(e);
+      if (b === "VENCIDA") vencidas++;
+      else if (b === "VENCE_30D") vence30++;
+      else if (b === "VENCE_90D") vence90++;
+      else if (b === "OK") ok++;
+    }
+    return { pendentes, vencidas, vence30, vence90, ok, total: ativas.length };
+  }, [emissoes]);
+
+  // Opções únicas para os selects de Cargo e Motivo
+  const cargosUnicos = useMemo(() => {
+    const set = new Set<string>();
+    emissoes.forEach((e) => e.cargo_snapshot && set.add(e.cargo_snapshot));
+    return Array.from(set).sort();
+  }, [emissoes]);
+  const motivosUnicos = useMemo(() => {
+    const set = new Set<string>();
+    emissoes.forEach((e) => e.motivo_emissao && set.add(e.motivo_emissao));
+    return Array.from(set).sort();
+  }, [emissoes]);
+
+  // Paginação
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageSafe = Math.min(page, totalPages);
+  const pageItems = useMemo(
+    () => (agruparCargo ? filtered : filtered.slice((pageSafe - 1) * PAGE_SIZE, pageSafe * PAGE_SIZE)),
+    [filtered, pageSafe, agruparCargo],
+  );
+
+  // Agrupamento por cargo (quando ligado)
+  const grouped = useMemo(() => {
+    if (!agruparCargo) return null;
+    const map = new Map<string, Emissao[]>();
+    for (const e of filtered) {
+      const k = e.cargo_snapshot || "(sem cargo)";
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push(e);
+    }
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [filtered, agruparCargo]);
+
+  const algumFiltro =
+    !!q || filterStatus !== "ATIVAS" || filterCargo !== "TODOS" ||
+    filterMotivo !== "TODOS" || filterVenc !== "TODOS";
+
+  const limparFiltros = () => {
+    setQ(""); setFilterStatus("ATIVAS"); setFilterCargo("TODOS");
+    setFilterMotivo("TODOS"); setFilterVenc("TODOS"); setPage(1);
+  };
+
+  const exportCSV = () => {
+    const rows = [
+      ["Funcionário", "CPF", "Cargo", "Revisão", "Status", "Vencimento", "Dias", "Emitido", "Motivo"],
+      ...filtered.map((e) => {
+        const d = diasAteVencer(e.expira_em);
+        return [
+          e.employees?.nome ?? "",
+          e.employees?.cpf ?? "",
+          e.cargo_snapshot,
+          `Rev.${e.template_revisao}`,
+          STATUS_META_EXTRA[e.status]?.label ?? e.status,
+          e.expira_em ? formatDateBR(e.expira_em.slice(0, 10)) : "",
+          d === null ? "" : String(d),
+          formatDateBR(e.emitido_em.slice(0, 10)),
+          e.motivo_emissao.replace(/_/g, " "),
+        ];
+      }),
+    ];
+    const csv = rows
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"))
+      .join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `OSS-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exportado ${filtered.length} registros`);
+  };
 
   const baixarPdf = async (em: Emissao) => {
     // Busca catálogo de EPIs do estoque pra preencher os C.A. automaticamente
@@ -169,6 +296,126 @@ function OssIndexPage() {
 
   const [quickViewEmpId, setQuickViewEmpId] = useState<string | null>(null);
 
+  // KPI cards (clicáveis = aplicam filtro)
+  const kpiCards: Array<{
+    key: string; label: string; value: number; cls: string; icon: any;
+    onClick: () => void; active: boolean;
+  }> = [
+    {
+      key: "total", label: "Ativas no total", value: kpis.total, cls: "from-slate-50 to-white text-slate-700 border-slate-200",
+      icon: FileSignature,
+      onClick: () => { limparFiltros(); }, active: !algumFiltro,
+    },
+    {
+      key: "pend", label: "Pendentes assinatura", value: kpis.pendentes, cls: "from-amber-50 to-white text-amber-800 border-amber-200",
+      icon: Clock,
+      onClick: () => { setFilterStatus("PENDENTE_ASSINATURA"); setFilterVenc("TODOS"); setPage(1); },
+      active: filterStatus === "PENDENTE_ASSINATURA",
+    },
+    {
+      key: "venc", label: "Vencidas", value: kpis.vencidas, cls: "from-red-50 to-white text-red-800 border-red-200",
+      icon: AlertCircle,
+      onClick: () => { setFilterStatus("ATIVAS"); setFilterVenc("VENCIDA"); setPage(1); },
+      active: filterVenc === "VENCIDA",
+    },
+    {
+      key: "v30", label: "Vencem em 30d", value: kpis.vence30, cls: "from-orange-50 to-white text-orange-800 border-orange-200",
+      icon: AlertTriangle,
+      onClick: () => { setFilterStatus("ATIVAS"); setFilterVenc("VENCE_30D"); setPage(1); },
+      active: filterVenc === "VENCE_30D",
+    },
+    {
+      key: "v90", label: "Vencem em 90d", value: kpis.vence90, cls: "from-amber-50 to-white text-amber-700 border-amber-200",
+      icon: Clock,
+      onClick: () => { setFilterStatus("ATIVAS"); setFilterVenc("VENCE_90D"); setPage(1); },
+      active: filterVenc === "VENCE_90D",
+    },
+    {
+      key: "ok", label: "Em dia", value: kpis.ok, cls: "from-emerald-50 to-white text-emerald-800 border-emerald-200",
+      icon: CheckCircle2,
+      onClick: () => { setFilterStatus("ATIVAS"); setFilterVenc("OK"); setPage(1); },
+      active: filterVenc === "OK",
+    },
+  ];
+
+  const renderRow = (em: Emissao) => {
+    const meta = STATUS_META_EXTRA[em.status] ?? STATUS_META.PENDENTE_ASSINATURA;
+    const Icon = meta.icon;
+    const vb = bucketVencimento(em);
+    const vMeta = VENC_META[vb];
+    const dias = diasAteVencer(em.expira_em);
+    return (
+      <TableRow key={em.id}>
+        <TableCell>
+          <button
+            type="button"
+            onClick={() => setQuickViewEmpId(em.employee_id)}
+            className="text-left group"
+            title="Ver resumo do funcionário"
+          >
+            <div className="font-medium text-sm text-slate-900 group-hover:text-rose-600 group-hover:underline underline-offset-2 transition-colors">
+              {em.employees?.nome ?? "—"}
+            </div>
+            <div className="text-[10px] text-slate-500">{em.employees?.cpf ?? ""}</div>
+          </button>
+        </TableCell>
+        <TableCell className="text-sm">{em.cargo_snapshot} <span className="text-[10px] text-slate-400">Rev.{em.template_revisao}</span></TableCell>
+        <TableCell>
+          <Badge variant="outline" className={`${meta.cls} text-[10px]`}>
+            <Icon className="h-3 w-3 mr-1" />{meta.label}
+          </Badge>
+        </TableCell>
+        <TableCell className="text-xs">{formatDateBR(em.emitido_em.slice(0, 10))}</TableCell>
+        <TableCell>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs">{em.expira_em ? formatDateBR(em.expira_em.slice(0, 10)) : "—"}</span>
+            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] w-fit ${vMeta.cls}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${vMeta.dot}`} />
+              {dias !== null && dias >= 0 && vb !== "SEM_DATA" ? `${dias}d` : vMeta.label}
+            </span>
+          </div>
+        </TableCell>
+        <TableCell className="text-[10px] text-slate-600">{em.motivo_emissao.replace(/_/g, " ")}</TableCell>
+        <TableCell className="text-right">
+          <div className="flex justify-end gap-1">
+            <Button variant="ghost" size="sm" onClick={() => baixarPdf(em)} title="Visualizar / Baixar PDF">
+              <Eye className="h-3.5 w-3.5" />
+            </Button>
+            {em.pdf_assinado_path && (
+              <Button variant="ghost" size="sm" onClick={() => downloadAssinado(em)} title="Baixar assinado">
+                <Download className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            {isEditor && em.status === "PENDENTE_ASSINATURA" && (
+              <>
+                <OssAssinarButton em={em} />
+                <UploadAssinadoButton
+                  onPick={(f) => uploadAssinado.mutate({ em, file: f })}
+                  disabled={uploadAssinado.isPending}
+                />
+              </>
+            )}
+            <OssRowActions em={em} invalidateKeys={[["oss-emissoes"], ["employee-oss", em.employee_id]]} />
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+  const tableHeader = (
+    <TableHeader>
+      <TableRow>
+        <TableHead>Funcionário</TableHead>
+        <TableHead>Cargo</TableHead>
+        <TableHead>Status</TableHead>
+        <TableHead>Emitido</TableHead>
+        <TableHead>Vencimento</TableHead>
+        <TableHead>Motivo</TableHead>
+        <TableHead className="text-right">Ações</TableHead>
+      </TableRow>
+    </TableHeader>
+  );
+
   return (
     <div className="h-full flex flex-col bg-slate-50">
       <div className="px-6 pt-5 pb-3 border-b border-rose-100 bg-gradient-to-r from-rose-50 via-white to-amber-50 shadow-sm">
@@ -195,23 +442,91 @@ function OssIndexPage() {
             )}
           </div>
         </div>
-        <div className="mt-3 flex gap-2 flex-wrap">
-          <div className="relative flex-1 max-w-sm">
+        {/* KPIs clicáveis */}
+        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {kpiCards.map((k) => {
+            const Icon = k.icon;
+            return (
+              <button
+                key={k.key}
+                onClick={k.onClick}
+                className={`text-left p-2.5 rounded-lg border bg-gradient-to-br ${k.cls} transition-all hover:shadow-md hover:-translate-y-0.5 ${
+                  k.active ? "ring-2 ring-rose-400 shadow-md" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wide font-bold opacity-80">{k.label}</span>
+                  <Icon className="h-3.5 w-3.5 opacity-70" />
+                </div>
+                <div className="text-2xl font-black mt-1 leading-none">{k.value}</div>
+              </button>
+            );
+          })}
+        </div>
+        {/* Filtros */}
+        <div className="mt-3 flex gap-2 flex-wrap items-center">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar funcionário, cargo, CPF..." className="pl-8 h-9" />
+            <Input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Buscar funcionário, cargo, CPF..." className="pl-8 h-9" />
           </div>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="h-9 w-48"><SelectValue /></SelectTrigger>
+          <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setPage(1); }}>
+            <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="ATIVAS">Ativas (pendentes + assinadas)</SelectItem>
+              <SelectItem value="ATIVAS">Ativas</SelectItem>
               <SelectItem value="TODAS">Todas</SelectItem>
-              <SelectItem value="PENDENTE_ASSINATURA">Apenas pendentes</SelectItem>
-              <SelectItem value="ASSINADO">Apenas assinadas</SelectItem>
-              <SelectItem value="VENCIDO">Apenas vencidas</SelectItem>
-              <SelectItem value="SUBSTITUIDO">Apenas substituídas</SelectItem>
-              <SelectItem value="CANCELADO">Apenas canceladas</SelectItem>
+              <SelectItem value="PENDENTE_ASSINATURA">Pendentes</SelectItem>
+              <SelectItem value="ASSINADO">Assinadas</SelectItem>
+              <SelectItem value="VENCIDO">Vencidas</SelectItem>
+              <SelectItem value="SUBSTITUIDO">Substituídas</SelectItem>
+              <SelectItem value="CANCELADO">Canceladas</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={filterCargo} onValueChange={(v) => { setFilterCargo(v); setPage(1); }}>
+            <SelectTrigger className="h-9 w-48"><Briefcase className="h-3.5 w-3.5 mr-1" /><SelectValue placeholder="Cargo" /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value="TODOS">Todos cargos</SelectItem>
+              {cargosUnicos.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterMotivo} onValueChange={(v) => { setFilterMotivo(v); setPage(1); }}>
+            <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Motivo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TODOS">Todos motivos</SelectItem>
+              {motivosUnicos.map((m) => <SelectItem key={m} value={m}>{m.replace(/_/g, " ")}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterVenc} onValueChange={(v) => { setFilterVenc(v); setPage(1); }}>
+            <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Vencimento" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TODOS">Qualquer vencimento</SelectItem>
+              <SelectItem value="VENCIDA">Vencidas</SelectItem>
+              <SelectItem value="VENCE_30D">Vencem ≤ 30d</SelectItem>
+              <SelectItem value="VENCE_90D">Vencem ≤ 90d</SelectItem>
+              <SelectItem value="OK">Em dia</SelectItem>
+              <SelectItem value="SEM_DATA">Sem validade</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant={agruparCargo ? "default" : "outline"}
+            size="sm"
+            className="h-9"
+            onClick={() => setAgruparCargo((v) => !v)}
+            title="Agrupar a lista por cargo"
+          >
+            <Briefcase className="h-3.5 w-3.5 mr-1" />
+            {agruparCargo ? "Agrupado por cargo" : "Agrupar por cargo"}
+          </Button>
+          <Button variant="outline" size="sm" className="h-9" onClick={exportCSV} title="Baixar CSV filtrado">
+            <FileDown className="h-3.5 w-3.5 mr-1" />CSV
+          </Button>
+          {algumFiltro && (
+            <Button variant="ghost" size="sm" className="h-9 text-rose-700" onClick={limparFiltros}>
+              <XIcon className="h-3.5 w-3.5 mr-1" />Limpar filtros
+            </Button>
+          )}
+          <span className="text-[11px] text-slate-500 ml-auto">
+            {filtered.length} de {emissoes.length} registros
+          </span>
         </div>
       </div>
 
@@ -229,74 +544,59 @@ function OssIndexPage() {
               )}
             </div>
           )}
-          {!isLoading && filtered.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Funcionário</TableHead>
-                  <TableHead>Cargo</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Emitido</TableHead>
-                  <TableHead>Vence</TableHead>
-                  <TableHead>Motivo</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((em) => {
-                  const meta = STATUS_META_EXTRA[em.status] ?? STATUS_META.PENDENTE_ASSINATURA;
-                  const Icon = meta.icon;
-                  return (
-                    <TableRow key={em.id}>
-                      <TableCell>
-                        <button
-                          type="button"
-                          onClick={() => setQuickViewEmpId(em.employee_id)}
-                          className="text-left group"
-                          title="Ver resumo do funcionário"
-                        >
-                          <div className="font-medium text-sm text-slate-900 group-hover:text-rose-600 group-hover:underline underline-offset-2 transition-colors">
-                            {em.employees?.nome ?? "—"}
-                          </div>
-                          <div className="text-[10px] text-slate-500">{em.employees?.cpf ?? ""}</div>
-                        </button>
-                      </TableCell>
-                      <TableCell className="text-sm">{em.cargo_snapshot} <span className="text-[10px] text-slate-400">Rev.{em.template_revisao}</span></TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={`${meta.cls} text-[10px]`}>
-                          <Icon className="h-3 w-3 mr-1" />{meta.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs">{formatDateBR(em.emitido_em.slice(0, 10))}</TableCell>
-                      <TableCell className="text-xs">{em.expira_em ? formatDateBR(em.expira_em.slice(0, 10)) : "—"}</TableCell>
-                      <TableCell className="text-[10px] text-slate-600">{em.motivo_emissao.replace(/_/g, " ")}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => baixarPdf(em)} title="Visualizar / Baixar PDF">
-                            <Eye className="h-3.5 w-3.5" />
-                          </Button>
-                          {em.pdf_assinado_path && (
-                            <Button variant="ghost" size="sm" onClick={() => downloadAssinado(em)} title="Baixar assinado">
-                              <Download className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                          {isEditor && em.status === "PENDENTE_ASSINATURA" && (
-                            <>
-                              <OssAssinarButton em={em} />
-                              <UploadAssinadoButton
-                                onPick={(f) => uploadAssinado.mutate({ em, file: f })}
-                                disabled={uploadAssinado.isPending}
-                              />
-                            </>
-                          )}
-                          <OssRowActions em={em} invalidateKeys={[["oss-emissoes"], ["employee-oss", em.employee_id]]} />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+          {!isLoading && filtered.length > 0 && !agruparCargo && (
+            <>
+              <Table>
+                {tableHeader}
+                <TableBody>
+                  {(pageItems as Emissao[]).map(renderRow)}
+                </TableBody>
+              </Table>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between p-3 border-t bg-slate-50 text-xs">
+                  <span className="text-slate-600">
+                    Página {pageSafe} de {totalPages} · mostrando {pageItems.length} de {filtered.length}
+                  </span>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="outline" disabled={pageSafe <= 1} onClick={() => setPage(1)}>«</Button>
+                    <Button size="sm" variant="outline" disabled={pageSafe <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>‹ Anterior</Button>
+                    <Button size="sm" variant="outline" disabled={pageSafe >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Próxima ›</Button>
+                    <Button size="sm" variant="outline" disabled={pageSafe >= totalPages} onClick={() => setPage(totalPages)}>»</Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+          {!isLoading && filtered.length > 0 && agruparCargo && grouped && (
+            <div className="divide-y">
+              {grouped.map(([cargo, items]) => {
+                const collapsed = collapsedGroups[cargo] ?? false;
+                const pend = items.filter((i) => i.status === "PENDENTE_ASSINATURA").length;
+                const venc = items.filter((i) => bucketVencimento(i) === "VENCIDA").length;
+                return (
+                  <div key={cargo}>
+                    <button
+                      type="button"
+                      onClick={() => setCollapsedGroups((s) => ({ ...s, [cargo]: !collapsed }))}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 text-left transition"
+                    >
+                      {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      <Briefcase className="h-3.5 w-3.5 text-slate-500" />
+                      <span className="font-bold text-sm text-slate-800">{cargo}</span>
+                      <Badge variant="outline" className="text-[10px]">{items.length}</Badge>
+                      {pend > 0 && <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-800 border-amber-300">{pend} pend.</Badge>}
+                      {venc > 0 && <Badge variant="outline" className="text-[10px] bg-red-50 text-red-800 border-red-300">{venc} venc.</Badge>}
+                    </button>
+                    {!collapsed && (
+                      <Table>
+                        {tableHeader}
+                        <TableBody>{items.map(renderRow)}</TableBody>
+                      </Table>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </Card>
       </div>
