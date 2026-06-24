@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import logoUrl from "@/assets/dmn-logo.png";
+import { printPdf } from "@/lib/pdf-print";
 
 function br(d?: string | null) {
   if (!d) return "";
@@ -428,6 +429,5 @@ export async function downloadTNC(nc: NCData) {
 
 export async function printTNC(nc: NCData) {
   const doc = await generateTNCPdf(nc);
-  doc.autoPrint();
-  window.open(doc.output("bloburl"), "_blank");
+  await printPdf(doc.output("arraybuffer") as ArrayBuffer, `TNC-${nc.numero ?? "rascunho"}.pdf`);
 }
