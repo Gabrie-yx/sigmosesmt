@@ -1977,6 +1977,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         valor_unitario: valor ?? notReturning.valor_unitario ?? null,
         data_entrega: notReturning.data_entrega,
         observacoes: nrForm.obs || "Item não devolvido pelo colaborador.",
+        assinaturaColaboradorDataUrl: (emp as any)?.assinatura_url ?? null,
       });
       setSignerSrc({ bytes, name: fname, modulo: "termo_perda", referenciaId: notReturning.id });
     },
@@ -2090,6 +2091,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                 valor_unitario: p.valor_unitario,
                 data_entrega: p.data_entrega,
                 observacoes: p.observacoes,
+                assinaturaColaboradorDataUrl: (emp as any)?.assinatura_url ?? null,
               });
               setSignerSrc({
                 bytes, name: fname,
