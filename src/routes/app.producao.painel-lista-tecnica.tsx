@@ -594,7 +594,7 @@ function PainelListaTecnicaPage() {
           const { data: ins, error: e2 } = await (supabase as any)
             .from("producao_mb51_movimentos")
             .upsert(slice, {
-              onConflict: "numero_sap,material,data_lancamento,quantidade,unidade,tipo_movimento,classificacao_mb51",
+              onConflict: "ordem_id,material,data_lancamento,quantidade,unidade,tipo_movimento",
               ignoreDuplicates: true,
             })
             .select("id");
