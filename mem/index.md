@@ -13,3 +13,4 @@ Arquivar TUDO que o usuário disser na memória (pendência/decisão/contexto) p
 - [Organograma DMN Rev. 06](mem://features/organograma-dmn-rev06) — Quadro de pessoal DMN 14/04/2026 (~21 CLT + 2 ATEM/CSC) e 6 não conformidades cruzadas com PGR Rev. 05 (base da matriz GHE real vs PGR).
 - [Arquivar tudo](mem://preferences/arquivar-tudo) — Toda fala do usuário vira memória (pendência/decisão/contexto) para tratar depois.
 - [SIGMO aguardando Rev.06 PGR/PCMSO](mem://features/sigmo-pgr-pcmso-rev06-pendente.md) — Plano faseado (psicossocial, plano vivo, AEP, GHE adm com campo) só executar após chegada das revisões.
+- [Anti-MDI — roubos do Senior](mem://design/anti-mdi-roubos-senior.md) — Manifesto: 6 pecados do Senior (MDI, abas empilhadas, FRSELEMP) + 8 roubos com classe (drawer, switcher de obra, ação em massa, preview, Cmd+K, chip de status).
