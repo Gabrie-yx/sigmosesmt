@@ -258,6 +258,17 @@ export function usePendencias() {
     },
   });
 
+  // Convocações de exames pendentes (colaborador convocado mas ainda sem ASO)
+  const convocacoesPendentes = useQuery({
+    queryKey: ["pend-convocacoes"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("convocacoes_exames").select("id", { count: "exact", head: true })
+        .eq("status", "PENDENTE");
+      return count ?? 0;
+    },
+  });
+
   // Inspeção mensal de EPI — dia útil ≥ 25 do mês, sem registro no mês
   // Sem tabela própria: marca como pendente nos últimos 5 dias úteis do mês
   const dia = hojeDateObj.getDate();
@@ -446,6 +457,13 @@ export function usePendencias() {
       severity: (ossPendentes.data ?? 0) > 0 ? "alto" : "ok",
       ok: (ossPendentes.data ?? 0) === 0,
       loading: ossPendentes.isLoading,
+    },
+    {
+      key: "convocacoes-pendentes",
+      count: convocacoesPendentes.data ?? 0,
+      severity: (convocacoesPendentes.data ?? 0) > 0 ? "alto" : "ok",
+      ok: (convocacoesPendentes.data ?? 0) === 0,
+      loading: convocacoesPendentes.isLoading,
     },
   ];
 
