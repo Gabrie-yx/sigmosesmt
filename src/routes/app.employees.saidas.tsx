@@ -234,7 +234,11 @@ function SaidasPage() {
         </div>
       )}
 
-      <SaidaExpedienteDialog open={open} onOpenChange={setOpen} editId={editId} duplicateData={duplicateData} />
+      <Suspense fallback={null}>
+        {open && (
+          <SaidaExpedienteDialog open={open} onOpenChange={setOpen} editId={editId} duplicateData={duplicateData} />
+        )}
+      </Suspense>
 
       <RelatorioSaidasDialog
         open={relOpen}
@@ -286,14 +290,18 @@ function SaidasPage() {
         }}
       />
 
-      <PDFPreviewDialog
-        open={!!previewDoc}
-        onClose={() => { setPreviewDoc(null); setPreviewRowId(null); }}
-        doc={previewDoc}
-        fileName={previewFileName}
-        title="Autorização de saída"
-        signable={false}
-      />
+      <Suspense fallback={null}>
+        {!!previewDoc && (
+          <PDFPreviewDialog
+            open={!!previewDoc}
+            onClose={() => { setPreviewDoc(null); setPreviewRowId(null); }}
+            doc={previewDoc}
+            fileName={previewFileName}
+            title="Autorização de saída"
+            signable={false}
+          />
+        )}
+      </Suspense>
       {!!previewDoc && previewRowId && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex flex-wrap items-center justify-center gap-2 bg-white/95 backdrop-blur border-2 border-red-500 shadow-2xl rounded-xl px-3 py-2">
           <span className="text-[10px] font-black uppercase tracking-widest text-red-800 mr-1">Assinar:</span>
@@ -321,20 +329,28 @@ function SaidasPage() {
           </Button>
         </div>
       )}
-      <SignaturePadDialog
-        open={!!sigOpen}
-        onClose={() => setSigOpen(null)}
-        onConfirm={async (r) => { const t = sigOpen; setSigOpen(null); if (t) await salvarAssinatura(t, r.dataUrl); }}
-        title={sigOpen === "FUNC" ? "Assinatura do funcionário" : sigOpen === "SESMT" ? "Assinatura do TST" : (previewTerceira ? "Assinatura do Encarregado" : "Assinatura do Supervisor Geral")}
-      />
-      <PdfSignerDialog
-        open={!!visualSignerBytes}
-        onClose={() => setVisualSignerBytes(null)}
-        source={visualSignerBytes}
-        nomeArquivo={visualSignerName}
-        modulo="saida_expediente"
-        referenciaId={visualSignerRef}
-      />
+      <Suspense fallback={null}>
+        {!!sigOpen && (
+          <SignaturePadDialog
+            open={!!sigOpen}
+            onClose={() => setSigOpen(null)}
+            onConfirm={async (r) => { const t = sigOpen; setSigOpen(null); if (t) await salvarAssinatura(t, r.dataUrl); }}
+            title={sigOpen === "FUNC" ? "Assinatura do funcionário" : sigOpen === "SESMT" ? "Assinatura do TST" : (previewTerceira ? "Assinatura do Encarregado" : "Assinatura do Supervisor Geral")}
+          />
+        )}
+      </Suspense>
+      <Suspense fallback={null}>
+        {!!visualSignerBytes && (
+          <PdfSignerDialog
+            open={!!visualSignerBytes}
+            onClose={() => setVisualSignerBytes(null)}
+            source={visualSignerBytes}
+            nomeArquivo={visualSignerName}
+            modulo="saida_expediente"
+            referenciaId={visualSignerRef}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
