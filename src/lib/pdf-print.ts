@@ -30,7 +30,11 @@ function escapeHtml(value: string) {
 
 async function toArrayBuffer(input: ArrayBuffer | Uint8Array | Blob): Promise<ArrayBuffer> {
   if (input instanceof ArrayBuffer) return input.slice(0);
-  if (input instanceof Uint8Array) return input.slice().buffer;
+  if (input instanceof Uint8Array) {
+    const copy = new ArrayBuffer(input.byteLength);
+    new Uint8Array(copy).set(input);
+    return copy;
+  }
   if (typeof Blob !== "undefined" && input instanceof Blob) return input.arrayBuffer();
   throw new Error("Formato de PDF não suportado para impressão");
 }
