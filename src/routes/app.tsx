@@ -6,6 +6,7 @@ import { ModuleRouteGuard } from "@/components/module-guard";
 import { CommandPalette } from "@/components/command-palette";
 import { AppSidebar } from "@/components/app-sidebar";
 import { QuickActionsBar } from "@/components/quick-actions-bar";
+import { SmartBreadcrumb } from "@/components/smart-breadcrumb";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ShieldAlert } from "lucide-react";
 
@@ -45,6 +46,7 @@ function AppLayout() {
         <div className="flex-1 flex flex-col min-w-0">
           <AppHeader />
           <QuickActionsBar />
+          <SmartBreadcrumb />
           {requiresMfa && !mfaSatisfied && !location.pathname.startsWith("/app/conta/seguranca") && (
             <div className="bg-amber-100 border-b border-amber-300 text-amber-900 px-3 py-2 text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-start sm:items-center gap-2 min-w-0">
