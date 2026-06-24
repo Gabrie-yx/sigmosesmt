@@ -85,17 +85,33 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
   function print() {
     if (!pages.length) return;
     const w = window.open("", "_blank");
-    if (!w) return;
-    const imgs = pages.map((p) => `<img src="${p}" />`).join("");
+    if (!w) {
+      // popup bloqueado (comum no preview do Lovable em iframe) — cai para iframe oculto
+      printViaHiddenIframe(pages, fileName);
+      return;
+    }
+    const imgs = pages.map((p, i) => `<img src="${p}" data-i="${i}" />`).join("");
+    w.document.open();
     w.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title><style>
       @page { size: A4; margin: 0; }
-      * { margin: 0; padding: 0; }
+      html, body { margin: 0; padding: 0; }
       img { display: block; width: 100%; page-break-after: always; }
       img:last-child { page-break-after: auto; }
-    </style></head><body>${imgs}</body></html>`);
+    </style></head><body>${imgs}<script>
+      (function(){
+        var imgs = document.images;
+        var pending = imgs.length;
+        if (!pending) { window.print(); return; }
+        function done(){ if (--pending <= 0) { setTimeout(function(){ window.focus(); window.print(); }, 50); } }
+        for (var i = 0; i < imgs.length; i++) {
+          var im = imgs[i];
+          if (im.complete && im.naturalWidth > 0) { done(); }
+          else { im.addEventListener('load', done); im.addEventListener('error', done); }
+        }
+      })();
+    <\/script></body></html>`);
     w.document.close();
     w.focus();
-    setTimeout(() => { try { w.print(); } catch { /* noop */ } }, 400);
   }
 
   async function pickSignature(set: (v: string | null) => void) {
