@@ -269,6 +269,35 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
   const [pdfPreview, setPdfPreview] = useState<{ doc: jsPDF; fileName: string; title: string } | null>(null);
   const [whatsPreview, setWhatsPreview] = useState<{ nome: string; phone: string; message: string } | null>(null);
 
+  // Dados da solicitação do ofício (persistidos localmente)
+  const [solicitante, setSolicitante] = useState("");
+  const [setor, setSetor] = useState("SESMT — Segurança e Saúde no Trabalho");
+  const [destino, setDestino] = useState("Ambulatório Médico — DMN Estaleiro");
+  const [horario, setHorario] = useState("Seg. a Sex., 08:00 às 16:00");
+  const [tipoExame, setTipoExame] = useState("Exame Médico Periódico");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("sigmo:oficio-aso-ctx");
+      if (raw) {
+        const v = JSON.parse(raw);
+        if (v.solicitante) setSolicitante(v.solicitante);
+        if (v.setor) setSetor(v.setor);
+        if (v.destino) setDestino(v.destino);
+        if (v.horario) setHorario(v.horario);
+        if (v.tipoExame) setTipoExame(v.tipoExame);
+      }
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "sigmo:oficio-aso-ctx",
+        JSON.stringify({ solicitante, setor, destino, horario, tipoExame }),
+      );
+    } catch { /* ignore */ }
+  }, [solicitante, setor, destino, horario, tipoExame]);
+
   const { data: emps } = useQuery({
     queryKey: ["employees-convocacao"],
     queryFn: async () => {
@@ -464,7 +493,19 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                         variant="outline"
                         className="bg-white/5 hover:bg-white/10 border-white/15 text-white"
                         onClick={() => {
-                          const pdf = criarOficioPDF(emp, asoData, proximo, rMap.get(emp.role_id) as string ?? "", cMap.get(emp.company_id) as string ?? "");
+                          if (!solicitante.trim()) {
+                            toast.error("Preencha quem está solicitando o ASO antes de gerar o ofício.");
+                            return;
+                          }
+                          const numeroOficio = `${String(Date.now()).slice(-6)}/${new Date().getFullYear()}`;
+                          const pdf = criarOficioPDF(
+                            emp,
+                            asoData,
+                            proximo,
+                            (rMap.get(emp.role_id) as string) ?? "",
+                            (cMap.get(emp.company_id) as string) ?? "",
+                            { solicitante, setor, destino, horario, tipoExame, numeroOficio },
+                          );
                           setPdfPreview({ ...pdf, title: `Ofício de convocação — ${emp.nome ?? "Funcionário"}` });
                         }}
                         title="Visualizar ofício em PDF"
