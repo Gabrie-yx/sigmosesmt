@@ -2,10 +2,6 @@
 // Evita window.open()/autoPrint(), que em iframe/sandbox costuma gerar folha em branco.
 type PdfJsModule = typeof import("pdfjs-dist");
 
-type JsPdfLike = {
-  output: (type: "arraybuffer" | "blob") => ArrayBuffer | Blob;
-};
-
 let pdfjsPromise: Promise<PdfJsModule> | null = null;
 
 async function loadPdfJs(): Promise<PdfJsModule> {
@@ -32,14 +28,14 @@ function escapeHtml(value: string) {
   }[c] ?? c));
 }
 
-async function toArrayBuffer(input: ArrayBuffer | Uint8Array | Blob | JsPdfLike): Promise<ArrayBuffer> {
+async function toArrayBuffer(input: ArrayBuffer | Uint8Array | Blob): Promise<ArrayBuffer> {
   if (input instanceof ArrayBuffer) return input.slice(0);
   if (input instanceof Uint8Array) return input.slice().buffer;
   if (typeof Blob !== "undefined" && input instanceof Blob) return input.arrayBuffer();
-  return (input as JsPdfLike).output("arraybuffer") as ArrayBuffer;
+  throw new Error("Formato de PDF não suportado para impressão");
 }
 
-export async function renderPdfToImagePages(input: ArrayBuffer | Uint8Array | Blob | JsPdfLike, scale = 2): Promise<string[]> {
+export async function renderPdfToImagePages(input: ArrayBuffer | Uint8Array | Blob, scale = 2): Promise<string[]> {
   const buf = await toArrayBuffer(input);
   const pdfjsLib = await loadPdfJs();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
@@ -185,7 +181,7 @@ export async function printImagePages(pages: string[], fileName = "documento.pdf
   window.setTimeout(cleanup, 120000);
 }
 
-export async function printPdf(input: ArrayBuffer | Uint8Array | Blob | JsPdfLike, fileName = "documento.pdf") {
+export async function printPdf(input: ArrayBuffer | Uint8Array | Blob, fileName = "documento.pdf") {
   const pages = await renderPdfToImagePages(input);
   await printImagePages(pages, fileName);
 }
