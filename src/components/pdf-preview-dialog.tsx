@@ -4,23 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer, X, PenLine, ImagePlus } from "lucide-react";
 import type jsPDF from "jspdf";
 import { printImagePages, renderPdfToImagePages } from "@/lib/pdf-print";
-// pdfjs-dist depends on DOM globals (DOMMatrix, Path2D) only available in the
-// browser — importing it at module scope crashes SSR. Load lazily on demand.
-type PdfJsModule = typeof import("pdfjs-dist");
-let pdfjsPromise: Promise<PdfJsModule> | null = null;
-async function loadPdfJs(): Promise<PdfJsModule> {
-  if (typeof window === "undefined") throw new Error("pdfjs only available in browser");
-  if (!pdfjsPromise) {
-    pdfjsPromise = (async () => {
-      const lib = await import("pdfjs-dist");
-      // @ts-ignore
-      const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
-      lib.GlobalWorkerOptions.workerSrc = workerUrl;
-      return lib;
-    })();
-  }
-  return pdfjsPromise;
-}
 
 export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, encSig, sesmtSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature }: {
   open: boolean;
@@ -52,7 +35,7 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
     setPages([]);
     (async () => {
       try {
-        const imgs = await renderPdfToImagePages(doc);
+        const imgs = await renderPdfToImagePages(doc.output("arraybuffer") as ArrayBuffer);
         if (renderTokenRef.current !== token) return;
         setPages(imgs);
       } catch (e: any) {
