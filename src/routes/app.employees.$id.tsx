@@ -36,7 +36,9 @@ const PdfSignerDialog = lazy(() =>
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import { openFichaMensalPdf } from "@/lib/epi-ficha-mensal-pdf";
 import { gerarFichaFuncionarioPdf, loadEmployeePhotoDataUrl } from "@/lib/employee-ficha-pdf";
-import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+const PDFPreviewDialog = lazy(() =>
+  import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog }))
+);
 import { PPPEditorDialog } from "@/components/ppp/ppp-editor-dialog";
 import type jsPDF from "jspdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban, ChevronDown } from "lucide-react";
@@ -46,7 +48,9 @@ import { Save } from "lucide-react";
 import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
 import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.functions";
 import { AtestadosTab } from "@/components/employees/atestados-tab";
-import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+const SignaturePadDialog = lazy(() =>
+  import("@/components/signature-pad-dialog").then((m) => ({ default: m.SignaturePadDialog }))
+);
 import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { UserMinus, RotateCcw } from "lucide-react";
@@ -585,13 +589,17 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </TabsContent>
       </Tabs>
       <FileViewerHost />
-      <PDFPreviewDialog
-        open={!!fichaDoc}
-        onClose={() => setFichaDoc(null)}
-        doc={fichaDoc}
-        fileName={`ficha_${(emp?.nome ?? "funcionario").toLowerCase().replace(/\s+/g, "_")}.pdf`}
-        title="Ficha do Colaborador"
-      />
+      {!!fichaDoc && (
+        <Suspense fallback={null}>
+          <PDFPreviewDialog
+            open={!!fichaDoc}
+            onClose={() => setFichaDoc(null)}
+            doc={fichaDoc}
+            fileName={`ficha_${(emp?.nome ?? "funcionario").toLowerCase().replace(/\s+/g, "_")}.pdf`}
+            title="Ficha do Colaborador"
+          />
+        </Suspense>
+      )}
       <PPPEditorDialog
         open={pppOpen}
         onOpenChange={setPppOpen}
@@ -858,12 +866,16 @@ function AssinaturaField({ value, onChange, disabled }: { value: string | null; 
           )}
         </div>
       </Field>
-      <SignaturePadDialog
-        open={open}
-        onClose={() => setOpen(false)}
-        onConfirm={(r) => { onChange(r.dataUrl); setOpen(false); }}
-        title="Assinatura do funcionário"
-      />
+      {open && (
+        <Suspense fallback={null}>
+          <SignaturePadDialog
+            open={open}
+            onClose={() => setOpen(false)}
+            onConfirm={(r) => { onChange(r.dataUrl); setOpen(false); }}
+            title="Assinatura do funcionário"
+          />
+        </Suspense>
+      )}
     </>
   );
 }
