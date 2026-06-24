@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -21,7 +21,9 @@ import {
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { buildOssPdf } from "@/lib/oss-pdf";
-import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+const PDFPreviewDialog = lazy(() =>
+  import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog })),
+);
 import { OssRowActions } from "@/components/oss/oss-row-actions";
 import { OssAssinarButton } from "@/components/oss/oss-assinar-button";
 import { EmployeeQuickView } from "@/components/employees/employee-quick-view";
@@ -306,13 +308,17 @@ function OssIndexPage() {
           onIssued={() => qc.invalidateQueries({ queryKey: ["oss-emissoes"] })}
         />
       )}
-      <PDFPreviewDialog
-        open={!!previewDoc}
-        onClose={() => setPreviewDoc(null)}
-        doc={previewDoc?.doc ?? null}
-        fileName={previewDoc?.name ?? "OSS.pdf"}
-        title="Ordem de Serviço de Segurança"
-      />
+      {!!previewDoc && (
+        <Suspense fallback={null}>
+          <PDFPreviewDialog
+            open={!!previewDoc}
+            onClose={() => setPreviewDoc(null)}
+            doc={previewDoc?.doc ?? null}
+            fileName={previewDoc?.name ?? "OSS.pdf"}
+            title="Ordem de Serviço de Segurança"
+          />
+        </Suspense>
+      )}
       <EmployeeQuickView
         employeeId={quickViewEmpId}
         open={!!quickViewEmpId}
