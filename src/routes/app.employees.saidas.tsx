@@ -82,13 +82,21 @@ function SaidasPage() {
   const { data: rows, isLoading } = useQuery({
     queryKey: ["saidas-expediente"],
     queryFn: async () => {
+      // Limita a janela aos últimos 12 meses para o painel abrir rápido
+      // (relatórios maiores usam filtro próprio com período custom).
+      const desde = new Date();
+      desde.setMonth(desde.getMonth() - 12);
+      const isoDesde = desde.toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from("employee_saidas_expediente")
         .select("*, employees(id,nome,cpf,rg,role_id,foto_url,roles(name)), companies(id,name)")
+        .gte("data", isoDesde)
         .order("data", { ascending: false }).order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
   });
 
   const del = useMutation({
