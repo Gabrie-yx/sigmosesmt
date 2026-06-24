@@ -149,7 +149,7 @@ export function SmartBreadcrumb() {
   return (
     <nav
       aria-label="Navegação"
-      className="relative flex items-center gap-2 px-3 sm:px-4 py-1.5 text-[12px] text-rose-100/70 w-full bg-white/[0.03] backdrop-blur-md border-y border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]"
+      className="smart-breadcrumb relative flex items-center gap-2 px-3 sm:px-4 py-1.5 text-[12px] text-rose-100/70 w-full bg-gradient-to-b from-white/[0.06] via-white/[0.02] to-transparent backdrop-blur-xl border-y border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),inset_0_-1px_0_0_rgba(255,255,255,0.04)]"
     >
       {canGoBack && (
         <button
@@ -163,7 +163,7 @@ export function SmartBreadcrumb() {
       )}
       <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block shrink-0" />
       <ol
-        className="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="smart-breadcrumb-scroll flex items-center gap-1 min-w-0 flex-1 overflow-x-auto pb-0.5"
       >
         <li className="flex items-center gap-1 shrink-0">
           <Home className="h-3.5 w-3.5 shrink-0" />
