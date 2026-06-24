@@ -418,6 +418,45 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
           </div>
         </div>
 
+        {/* Dados da solicitação (vão para o cabeçalho do ofício) */}
+        <details className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white">
+          <summary className="cursor-pointer text-[11px] font-black uppercase tracking-widest text-rose-200 select-none">
+            Dados da solicitação do ofício {solicitante ? "✓" : "(obrigatório)"}
+          </summary>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-2 mt-3">
+            <Input
+              className="md:col-span-4 h-9 bg-white/5 border-white/10 text-white placeholder:text-slate-400"
+              placeholder="Solicitante (nome de quem pede o ASO) *"
+              value={solicitante}
+              onChange={(e) => setSolicitante(e.target.value)}
+            />
+            <Input
+              className="md:col-span-4 h-9 bg-white/5 border-white/10 text-white placeholder:text-slate-400"
+              placeholder="Setor solicitante"
+              value={setor}
+              onChange={(e) => setSetor(e.target.value)}
+            />
+            <Input
+              className="md:col-span-4 h-9 bg-white/5 border-white/10 text-white placeholder:text-slate-400"
+              placeholder="Tipo de exame"
+              value={tipoExame}
+              onChange={(e) => setTipoExame(e.target.value)}
+            />
+            <Input
+              className="md:col-span-7 h-9 bg-white/5 border-white/10 text-white placeholder:text-slate-400"
+              placeholder="Local de comparecimento (ex.: Ambulatório Médico — DMN)"
+              value={destino}
+              onChange={(e) => setDestino(e.target.value)}
+            />
+            <Input
+              className="md:col-span-5 h-9 bg-white/5 border-white/10 text-white placeholder:text-slate-400"
+              placeholder="Horário (ex.: Seg-Sex 08:00–16:00)"
+              value={horario}
+              onChange={(e) => setHorario(e.target.value)}
+            />
+          </div>
+        </details>
+
         {/* Lista */}
         <div className="flex-1 overflow-y-auto -mx-6 px-6">
           {linha.length === 0 ? (
