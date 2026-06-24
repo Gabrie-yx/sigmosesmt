@@ -6,22 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { printImagePages, renderPdfToImagePages } from "@/lib/pdf-print";
 
-type PdfJsModule = typeof import("pdfjs-dist");
-let pdfjsPromise: Promise<PdfJsModule> | null = null;
-async function loadPdfJs(): Promise<PdfJsModule> {
-  if (typeof window === "undefined") throw new Error("pdfjs only available in browser");
-  if (!pdfjsPromise) {
-    pdfjsPromise = (async () => {
-      const lib = await import("pdfjs-dist");
-      // @ts-ignore
-      const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
-      lib.GlobalWorkerOptions.workerSrc = workerUrl;
-      return lib;
-    })();
-  }
-  return pdfjsPromise;
-}
-
 export function PDFViewerDialog({ 
   open, 
   onClose, 
