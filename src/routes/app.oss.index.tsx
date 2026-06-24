@@ -79,7 +79,7 @@ function OssIndexPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("oss_emissoes")
-        .select("*, employees(nome, cpf, matricula, admissao, rg, companies(name, cnpj), roles(name, cbo)), oss_templates(titulo, setor, cbo)")
+        .select("*, employees(nome, cpf, matricula, admissao, rg, assinatura_url, companies(name, cnpj), roles(name, cbo)), oss_templates(titulo, setor, cbo)")
         .order("emitido_em", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as Emissao[];

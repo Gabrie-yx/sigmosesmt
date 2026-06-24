@@ -44,6 +44,9 @@ export type OSSPdfData = {
   };
   /** Catálogo de EPIs do estoque (nome → CA) para enriquecer linhas que vierem sem CA. */
   episCatalog?: Array<{ nome: string; ca: string | null }>;
+  /** Assinatura cadastrada do colaborador (PNG dataURL). Quando presente é
+   * renderizada automaticamente sobre a linha "Assinatura do Empregado". */
+  assinaturaColaboradorDataUrl?: string | null;
 };
 
 function brDate(s?: string | null) {
@@ -440,6 +443,30 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
   doc.setLineWidth(0.3);
   doc.line(margin + 10, sigY, margin + innerW / 2 - 10, sigY);
   doc.line(margin + innerW / 2 + 10, sigY, margin + innerW - 10, sigY);
+
+  // Assinatura digital do colaborador, se cadastrada na ficha
+  if (data.assinaturaColaboradorDataUrl) {
+    try {
+      const url = data.assinaturaColaboradorDataUrl;
+      const m = /^data:image\/(png|jpeg|jpg|webp);base64,/i.exec(url);
+      const fmt = (m?.[1] ?? "png").toUpperCase().replace("JPG", "JPEG");
+      const props = (doc as any).getImageProperties?.(url);
+      const maxH = 12;
+      const maxW = innerW / 2 - 24;
+      let imgH = maxH;
+      let imgW = imgH * 2.5;
+      if (props?.width && props?.height) {
+        const ratio = props.width / props.height;
+        imgH = maxH;
+        imgW = imgH * ratio;
+        if (imgW > maxW) { imgW = maxW; imgH = imgW / ratio; }
+      }
+      const cx = margin + innerW / 4;
+      doc.addImage(url, fmt === "WEBP" ? "PNG" : fmt, cx - imgW / 2, sigY - imgH - 0.5, imgW, imgH, undefined, "FAST");
+    } catch (err) {
+      console.error("[oss-pdf] falha ao inserir assinatura do colaborador:", err);
+    }
+  }
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
