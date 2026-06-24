@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,16 +11,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { toast } from "sonner";
-import { SaidaExpedienteDialog } from "@/components/saida-expediente-dialog";
-import { SignaturePadDialog } from "@/components/signature-pad-dialog";
-import { PdfSignerDialog } from "@/components/pdf-signer-dialog";
-import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
-import { gerarSaidaExpedientePDF } from "@/lib/saida-expediente-pdf";
 import { formatDateBR } from "@/lib/utils-date";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { drawPdfHeader } from "@/lib/pdf-header";
+import type jsPDF from "jspdf";
 import dmnLogo from "@/assets/dmn-logo.png";
+
+// Code-splitting: dialogs pesados (PDF/assinatura) só baixam quando abrem.
+const SaidaExpedienteDialog = lazy(() =>
+  import("@/components/saida-expediente-dialog").then((m) => ({ default: m.SaidaExpedienteDialog })),
+);
+const SignaturePadDialog = lazy(() =>
+  import("@/components/signature-pad-dialog").then((m) => ({ default: m.SignaturePadDialog })),
+);
+const PdfSignerDialog = lazy(() =>
+  import("@/components/pdf-signer-dialog").then((m) => ({ default: m.PdfSignerDialog })),
+);
+const PDFPreviewDialog = lazy(() =>
+  import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog })),
+);
 
 export const Route = createFileRoute("/app/employees/saidas")({
   component: SaidasPage,
@@ -118,6 +125,7 @@ function SaidasPage() {
     const comp: any = (row as any).companies;
     const terceira = comp?.type === "TERCEIRIZADO";
     const logo = await imageToDataUrl(dmnLogo);
+    const { gerarSaidaExpedientePDF } = await import("@/lib/saida-expediente-pdf");
     const doc = gerarSaidaExpedientePDF({
       funcionarioNome: emp?.nome ?? "—",
       rg: emp?.rg ?? null, cpf: emp?.cpf ?? null,
@@ -226,7 +234,11 @@ function SaidasPage() {
         </div>
       )}
 
-      <SaidaExpedienteDialog open={open} onOpenChange={setOpen} editId={editId} duplicateData={duplicateData} />
+      <Suspense fallback={null}>
+        {open && (
+          <SaidaExpedienteDialog open={open} onOpenChange={setOpen} editId={editId} duplicateData={duplicateData} />
+        )}
+      </Suspense>
 
       <RelatorioSaidasDialog
         open={relOpen}
@@ -278,14 +290,18 @@ function SaidasPage() {
         }}
       />
 
-      <PDFPreviewDialog
-        open={!!previewDoc}
-        onClose={() => { setPreviewDoc(null); setPreviewRowId(null); }}
-        doc={previewDoc}
-        fileName={previewFileName}
-        title="Autorização de saída"
-        signable={false}
-      />
+      <Suspense fallback={null}>
+        {!!previewDoc && (
+          <PDFPreviewDialog
+            open={!!previewDoc}
+            onClose={() => { setPreviewDoc(null); setPreviewRowId(null); }}
+            doc={previewDoc}
+            fileName={previewFileName}
+            title="Autorização de saída"
+            signable={false}
+          />
+        )}
+      </Suspense>
       {!!previewDoc && previewRowId && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex flex-wrap items-center justify-center gap-2 bg-white/95 backdrop-blur border-2 border-red-500 shadow-2xl rounded-xl px-3 py-2">
           <span className="text-[10px] font-black uppercase tracking-widest text-red-800 mr-1">Assinar:</span>
@@ -313,20 +329,28 @@ function SaidasPage() {
           </Button>
         </div>
       )}
-      <SignaturePadDialog
-        open={!!sigOpen}
-        onClose={() => setSigOpen(null)}
-        onConfirm={async (r) => { const t = sigOpen; setSigOpen(null); if (t) await salvarAssinatura(t, r.dataUrl); }}
-        title={sigOpen === "FUNC" ? "Assinatura do funcionário" : sigOpen === "SESMT" ? "Assinatura do TST" : (previewTerceira ? "Assinatura do Encarregado" : "Assinatura do Supervisor Geral")}
-      />
-      <PdfSignerDialog
-        open={!!visualSignerBytes}
-        onClose={() => setVisualSignerBytes(null)}
-        source={visualSignerBytes}
-        nomeArquivo={visualSignerName}
-        modulo="saida_expediente"
-        referenciaId={visualSignerRef}
-      />
+      <Suspense fallback={null}>
+        {!!sigOpen && (
+          <SignaturePadDialog
+            open={!!sigOpen}
+            onClose={() => setSigOpen(null)}
+            onConfirm={async (r) => { const t = sigOpen; setSigOpen(null); if (t) await salvarAssinatura(t, r.dataUrl); }}
+            title={sigOpen === "FUNC" ? "Assinatura do funcionário" : sigOpen === "SESMT" ? "Assinatura do TST" : (previewTerceira ? "Assinatura do Encarregado" : "Assinatura do Supervisor Geral")}
+          />
+        )}
+      </Suspense>
+      <Suspense fallback={null}>
+        {!!visualSignerBytes && (
+          <PdfSignerDialog
+            open={!!visualSignerBytes}
+            onClose={() => setVisualSignerBytes(null)}
+            source={visualSignerBytes}
+            nomeArquivo={visualSignerName}
+            modulo="saida_expediente"
+            referenciaId={visualSignerRef}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
@@ -361,7 +385,7 @@ function RelatorioSaidasDialog({ open, onClose, rows, onPreview }: { open: boole
     return { from: de, to: ate };
   }
 
-  function gerar() {
+  async function gerar() {
     const { from, to } = resolverIntervalo();
     const filtradas = (rows ?? []).filter((r: any) => {
       if (!r.data) return false;
@@ -378,7 +402,12 @@ function RelatorioSaidasDialog({ open, onClose, rows, onPreview }: { open: boole
     const periodoLbl = periodo === "semana" ? "Semana atual" : periodo === "mes" ? "Mês atual" : "Período personalizado";
     const totalRet = ordenadas.filter((r: any) => r.com_retorno).length;
 
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const [{ default: JsPDF }, { default: autoTable }, { drawPdfHeader }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+      import("@/lib/pdf-header"),
+    ]);
+    const doc = new JsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     const yStart = drawPdfHeader(doc, {
       titulo: "Relatório de Saídas durante o Expediente",
       subtitulo: `${periodoLbl} · ${formatDateBR(from)} → ${formatDateBR(to)}`,

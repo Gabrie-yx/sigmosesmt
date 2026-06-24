@@ -18,6 +18,10 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
+    // Pré-carrega o chunk da rota no hover/focus do <Link>.
+    // Reduz drasticamente o "tempo branco" entre clique e renderização.
+    defaultPreload: "intent",
+    defaultPreloadDelay: 50,
   });
 
   return router;
