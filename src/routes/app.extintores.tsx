@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,8 +23,12 @@ import { ExtintorInspecaoFotoDialog } from "@/components/extintores/inspecao-fot
 import { InspecaoManualDialog } from "@/components/extintores/inspecao-manual-dialog";
 import { ExtintorGlassCard } from "@/components/extintores/glass-card-preview";
 import { formatDateBR } from "@/lib/utils-date";
-import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
-import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+const PDFPreviewDialog = lazy(() =>
+  import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog })),
+);
+const SignaturePadDialog = lazy(() =>
+  import("@/components/signature-pad-dialog").then((m) => ({ default: m.SignaturePadDialog })),
+);
 import { gerarPdfPlanilhaExtintores } from "@/lib/extintores-pdf";
 import { gerarPdfHistoricoExtintor } from "@/lib/extintor-historico-pdf";
 import { gerarPdfAuditoriaExtintores } from "@/lib/extintor-auditoria-pdf";
@@ -541,20 +545,26 @@ function ExtintoresPage() {
           userNome={(user?.user_metadata as any)?.full_name ?? user?.email ?? ""}
         />
       )}
-      <PDFPreviewDialog
-        open={pdfOpen}
-        onClose={() => setPdfOpen(false)}
-        doc={pdfDoc}
-        fileName={`planilha-inspecao-extintores-${new Date().toISOString().slice(0, 10)}.pdf`}
-        title="Planilha de Inspeção de Extintores"
-      />
-      <PDFPreviewDialog
-        open={audPdfOpen}
-        onClose={() => setAudPdfOpen(false)}
-        doc={audPdf}
-        fileName={`relatorio-auditoria-extintores-${audIni}_a_${audFim}.pdf`}
-        title="Relatório de Auditoria de Extintores"
-      />
+      <Suspense fallback={null}>
+        {pdfOpen && (
+          <PDFPreviewDialog
+            open={pdfOpen}
+            onClose={() => setPdfOpen(false)}
+            doc={pdfDoc}
+            fileName={`planilha-inspecao-extintores-${new Date().toISOString().slice(0, 10)}.pdf`}
+            title="Planilha de Inspeção de Extintores"
+          />
+        )}
+        {audPdfOpen && (
+          <PDFPreviewDialog
+            open={audPdfOpen}
+            onClose={() => setAudPdfOpen(false)}
+            doc={audPdf}
+            fileName={`relatorio-auditoria-extintores-${audIni}_a_${audFim}.pdf`}
+            title="Relatório de Auditoria de Extintores"
+          />
+        )}
+      </Suspense>
       <Dialog open={audOpen} onOpenChange={(v) => !v && setAudOpen(false)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -631,17 +641,21 @@ function ExtintoresPage() {
         userNome={(user?.user_metadata as any)?.full_name ?? user?.email ?? ""}
         onSaved={onInvalidate}
       />
-      <SignaturePadDialog
-        open={sigOpen}
-        onClose={() => setSigOpen(false)}
-        title="Assinar planilha de inspeção"
-        onConfirm={async (sig) => {
-          const doc = await gerarPdfPlanilhaExtintores(extintores.data ?? [], inspecoes.data ?? [], sig);
-          setPdfDoc(doc);
-          setSigOpen(false);
-          setPdfOpen(true);
-        }}
-      />
+      {sigOpen && (
+        <Suspense fallback={null}>
+          <SignaturePadDialog
+            open={sigOpen}
+            onClose={() => setSigOpen(false)}
+            title="Assinar planilha de inspeção"
+            onConfirm={async (sig) => {
+              const doc = await gerarPdfPlanilhaExtintores(extintores.data ?? [], inspecoes.data ?? [], sig);
+              setPdfDoc(doc);
+              setSigOpen(false);
+              setPdfOpen(true);
+            }}
+          />
+        </Suspense>
+      )}
       <Dialog open={!!excluirExt} onOpenChange={(v) => !v && setExcluirExt(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -1470,13 +1484,17 @@ function HistoricoInspecoesDialog({
           onClose={() => setViewerIdx(null)}
           onIndexChange={setViewerIdx}
         />
-        <PDFPreviewDialog
-          open={histPdfOpen}
-          onClose={() => setHistPdfOpen(false)}
-          doc={histPdfDoc}
-          fileName={`historico-extintor-${extintor.numero ?? extintor.id}.pdf`}
-          title={`Histórico do extintor ${extintor.numero ?? ""}`}
-        />
+        {histPdfOpen && (
+          <Suspense fallback={null}>
+            <PDFPreviewDialog
+              open={histPdfOpen}
+              onClose={() => setHistPdfOpen(false)}
+              doc={histPdfDoc}
+              fileName={`historico-extintor-${extintor.numero ?? extintor.id}.pdf`}
+              title={`Histórico do extintor ${extintor.numero ?? ""}`}
+            />
+          </Suspense>
+        )}
       </DialogContent>
     </Dialog>
   );

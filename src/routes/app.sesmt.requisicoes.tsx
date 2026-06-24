@@ -22,8 +22,16 @@ import {
   ShoppingCart, Plus, FileDown, Printer, Check, X as XIcon, Trash2, Eye, Filter, Pencil, Link2,
 } from "lucide-react";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import type jsPDF from "jspdf";
+
+// Lazy loader: jspdf + jspdf-autotable só baixam quando alguém gera/imprime PDF.
+async function loadPdfLibs() {
+  const [{ default: JsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
+  return { JsPDF, autoTable };
+}
 import dmnLogo from "@/assets/dmn-logo.png";
 import { EstoqueLookupSheet, type PickedItem } from "@/components/estoque-lookup-sheet";
 import { SignatureGallery } from "@/components/signature-gallery";
@@ -119,7 +127,8 @@ async function logoDataUrl(): Promise<string | null> {
 }
 
 async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "download") {
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const { JsPDF, autoTable } = await loadPdfLibs();
+  const doc = new JsPDF({ unit: "mm", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const M = 10;
   const logo = await logoDataUrl();
@@ -286,7 +295,8 @@ async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "do
 }
 
 async function gerarRelatorio(reqs: Req[], periodo: string) {
-  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
+  const { JsPDF, autoTable } = await loadPdfLibs();
+  const doc = new JsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
   const W = doc.internal.pageSize.getWidth();
   doc.setFont("helvetica","bold"); doc.setFontSize(14);
   doc.text("RELATÓRIO DE REQUISIÇÕES DE COMPRA", W/2, 14, { align: "center" });
