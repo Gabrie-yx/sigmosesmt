@@ -309,8 +309,8 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                         size="sm"
                         variant="outline"
                         className="bg-white/5 hover:bg-white/10 border-white/15 text-white"
-                        onClick={() => window.print()}
-                        title="Em breve: ofício PDF individual"
+                        onClick={() => abrirOficioPDF(emp, asoData, proximo, rMap.get(emp.role_id) as string ?? "", cMap.get(emp.company_id) as string ?? "")}
+                        title="Visualizar ofício e salvar como PDF"
                       >
                         <FileDown className="h-4 w-4 mr-1" />
                         Ofício
