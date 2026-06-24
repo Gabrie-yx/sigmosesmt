@@ -613,13 +613,17 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
         </div>
       </DialogContent>
     </Dialog>
-    <PDFPreviewDialog
-      open={!!pdfPreview}
-      onClose={() => setPdfPreview(null)}
-      doc={pdfPreview?.doc ?? null}
-      fileName={pdfPreview?.fileName ?? "oficio-convocacao.pdf"}
-      title={pdfPreview?.title ?? "Ofício de convocação"}
-    />
+    {!!pdfPreview && (
+      <Suspense fallback={null}>
+        <PDFPreviewDialog
+          open={!!pdfPreview}
+          onClose={() => setPdfPreview(null)}
+          doc={pdfPreview?.doc ?? null}
+          fileName={pdfPreview?.fileName ?? "oficio-convocacao.pdf"}
+          title={pdfPreview?.title ?? "Ofício de convocação"}
+        />
+      </Suspense>
+    )}
     <WhatsappPreviewDialog value={whatsPreview} onClose={() => setWhatsPreview(null)} />
     </>
   );
