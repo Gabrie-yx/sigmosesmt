@@ -125,6 +125,7 @@ function SaidasPage() {
     const comp: any = (row as any).companies;
     const terceira = comp?.type === "TERCEIRIZADO";
     const logo = await imageToDataUrl(dmnLogo);
+    const { gerarSaidaExpedientePDF } = await import("@/lib/saida-expediente-pdf");
     const doc = gerarSaidaExpedientePDF({
       funcionarioNome: emp?.nome ?? "—",
       rg: emp?.rg ?? null, cpf: emp?.cpf ?? null,
@@ -368,7 +369,7 @@ function RelatorioSaidasDialog({ open, onClose, rows, onPreview }: { open: boole
     return { from: de, to: ate };
   }
 
-  function gerar() {
+  async function gerar() {
     const { from, to } = resolverIntervalo();
     const filtradas = (rows ?? []).filter((r: any) => {
       if (!r.data) return false;
@@ -385,7 +386,12 @@ function RelatorioSaidasDialog({ open, onClose, rows, onPreview }: { open: boole
     const periodoLbl = periodo === "semana" ? "Semana atual" : periodo === "mes" ? "Mês atual" : "Período personalizado";
     const totalRet = ordenadas.filter((r: any) => r.com_retorno).length;
 
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const [{ default: JsPDF }, { default: autoTable }, { drawPdfHeader }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+      import("@/lib/pdf-header"),
+    ]);
+    const doc = new JsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     const yStart = drawPdfHeader(doc, {
       titulo: "Relatório de Saídas durante o Expediente",
       subtitulo: `${periodoLbl} · ${formatDateBR(from)} → ${formatDateBR(to)}`,
