@@ -22,6 +22,7 @@ import {
 import { PteLookupSheet } from "@/components/aprs/pte-lookup-sheet";
 import { hasGlobalOverride, type SafetyOverride } from "@/lib/safety-overrides";
 import { useAuth } from "@/hooks/use-auth";
+import { printPdf } from "@/lib/pdf-print";
 
 /* ---------- tipos ---------- */
 type APR = {
@@ -837,8 +838,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   async function handleImprimir() {
     if (!apr.id) { toast.error("Salve a APR antes"); return; }
     const doc = await buildPdf();
-    doc.autoPrint();
-    window.open(doc.output("bloburl"), "_blank");
+    await printPdf(doc.output("arraybuffer") as ArrayBuffer, `${apr.numero ?? "apr"}.pdf`);
   }
 
   /* ---------- render ---------- */
