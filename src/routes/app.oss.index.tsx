@@ -128,6 +128,7 @@ function OssIndexPage() {
       empresa_cnpj: em.employees?.companies?.cnpj ?? null,
       conteudo: em.conteudo_snapshot,
       episCatalog,
+      assinaturaColaboradorDataUrl: (em.employees as any)?.assinatura_url ?? null,
     });
     setPreviewDoc({ doc, name: `OSS-${em.cargo_snapshot}-${em.employees?.nome ?? "func"}.pdf` });
   };
