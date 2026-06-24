@@ -1,5 +1,5 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,7 +18,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { generateTNCPdf, type NCData } from "@/lib/nc-tnc-pdf";
-import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+const PDFPreviewDialog = lazy(() =>
+  import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog })),
+);
 import type jsPDF from "jspdf";
 import { Eye } from "lucide-react";
 
@@ -570,13 +572,17 @@ function NCsPage() {
         </DialogContent>
       </Dialog>
 
-      <PDFPreviewDialog
-        open={pdfOpen}
-        onClose={() => setPdfOpen(false)}
-        doc={pdfDoc}
-        fileName={pdfName}
-        title="Visualizar TNC"
-      />
+      {pdfOpen && (
+        <Suspense fallback={null}>
+          <PDFPreviewDialog
+            open={pdfOpen}
+            onClose={() => setPdfOpen(false)}
+            doc={pdfDoc}
+            fileName={pdfName}
+            title="Visualizar TNC"
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
