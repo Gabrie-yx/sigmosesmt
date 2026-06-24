@@ -392,20 +392,34 @@ function PainelListaTecnicaPage() {
 
   // Alertas: por categoria, comparar realizado (MB51) × previsto (B51)
   const alertasCategoria = useMemo(() => {
-    // Realizado por categoria = consumo LÍQUIDO em KG (mesma base do KPI "PESO REAL B51").
-    // Usar Math.abs do totalPeso somava todas as UMEs (KG, PC, M, L) e incluía estornos
-    // como se fossem consumo — inflando o "real" para valores irreais (ex.: FERRO 598.703).
-    const realPorCat: Record<CategoriaMaterial, number> = {
-      FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0,
+    // Realizado por categoria × UME: soma LÍQUIDA (consumo − estornos).
+    // FERRO usa KG (mesma base do Planejado B51).
+    // Demais categorias (TINTA/SOLDA/GÁS/OUTROS) raramente aparecem em KG na MB51
+    // (vêm em PC, GAL, UN, L). Por isso usamos a UME dominante daquela categoria
+    // para o card não ficar zerado.
+    const realPorCatUm: Record<CategoriaMaterial, Map<string, number>> = {
+      FERRO: new Map(), SOLDA: new Map(), "GÁS": new Map(), TINTA: new Map(), OUTROS: new Map(),
     };
     itensEnriq.forEach((it) => {
-      const um = String(it.unidade ?? "").toUpperCase();
-      if (um !== "KG") return;
-      realPorCat[it.categoria as CategoriaMaterial] += Number(it.consumo ?? 0);
+      const um = String(it.unidade ?? "—").toUpperCase();
+      const cat = it.categoria as CategoriaMaterial;
+      const m = realPorCatUm[cat];
+      m.set(um, (m.get(um) ?? 0) + Number(it.consumo ?? 0));
     });
     return CATEGORIAS.map((cat) => {
-      const prev = previstoPorCategoria[cat] || 0;
-      const real = Math.max(0, realPorCat[cat] || 0);
+      const prev = previstoPorCategoria[cat] || 0; // sempre em KG (Lista Técnica)
+      const m = realPorCatUm[cat];
+      // UME dominante (maior consumo líquido positivo)
+      const entries = Array.from(m.entries())
+        .map(([um, v]) => ({ um, v: Math.max(0, v) }))
+        .sort((a, b) => b.v - a.v);
+      const dom = entries[0];
+      // Para FERRO: comparar em KG. Demais: se houver plano em kg, comparar com
+      // consumo em kg; senão, mostrar a UME dominante (PC/GAL/UN/L…).
+      const realKg = Math.max(0, m.get("KG") ?? 0);
+      const usaKg = cat === "FERRO" || prev > 0;
+      const real = usaKg ? realKg : (dom?.v ?? 0);
+      const um = usaKg ? "kg" : (dom?.um?.toLowerCase() ?? "—");
       const pct = prev > 0 ? ((real - prev) / prev) * 100 : 0;
       let status: "ok" | "warn" | "crit" | "na" = "na";
       if (prev > 0) {
@@ -413,7 +427,7 @@ function PainelListaTecnicaPage() {
         else if (real > prev) status = "warn";
         else status = "ok";
       }
-      return { cat, prev, real, pct, status };
+      return { cat, prev, real, um, pct, status };
     });
   }, [previstoPorCategoria, itensEnriq]);
 
@@ -594,7 +608,7 @@ function PainelListaTecnicaPage() {
           const { data: ins, error: e2 } = await (supabase as any)
             .from("producao_mb51_movimentos")
             .upsert(slice, {
-              onConflict: "numero_sap,material,data_lancamento,quantidade,unidade,tipo_movimento,classificacao_mb51",
+              onConflict: "ordem_id,material,data_lancamento,quantidade,unidade,tipo_movimento",
               ignoreDuplicates: true,
             })
             .select("id");
@@ -815,7 +829,7 @@ function PainelListaTecnicaPage() {
                       )}
                     </div>
                     <div className="mt-1 text-[11px] text-muted-foreground tabular-nums flex justify-between">
-                      <span>real <span className="font-semibold text-foreground">{fmt(a.real, 0)} kg</span></span>
+                      <span>real <span className="font-semibold text-foreground">{fmt(a.real, 0)} {a.um}</span></span>
                       <span>prev <span className="font-semibold text-foreground">{semPlano ? "—" : `${fmt(a.prev, 0)} kg`}</span></span>
                     </div>
                   </button>
