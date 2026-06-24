@@ -289,7 +289,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
   const [janela, setJanela] = useState<Janela>("90");
   const [companyFilter, setCompanyFilter] = useState<string>("TODAS");
   const [q, setQ] = useState("");
-  const [pdfPreview, setPdfPreview] = useState<{ doc: jsPDF; fileName: string; title: string } | null>(null);
+  const [pdfPreview, setPdfPreview] = useState<{ doc: jsPDFType; fileName: string; title: string } | null>(null);
   const [whatsPreview, setWhatsPreview] = useState<{ nome: string; phone: string; message: string } | null>(null);
 
   // Dados da solicitação do ofício (persistidos localmente)
