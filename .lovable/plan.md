@@ -1,65 +1,67 @@
-# Inspeção de Extintor por Foto com IA
+## Objetivo
+Entregar os 3 blocos (A → C → B) com visual elegante glassmorphism (mesmo padrão do painel OSS/Breadcrumb), sem cara de SOC.
 
-Fluxo guiado de 2-3 fotos → IA (Lovable AI / Gemini) extrai dados → TST/usuário revisa → salva inspeção + evidências.
+## Ordem de execução
 
-## Fluxo do usuário
+### Fase 1 — Catálogo de Prestadores (base de tudo)
+Sem isso, guia e convocação não têm endereço/clínica. Atacar primeiro.
 
-1. Na tela `/app/extintores`, botão novo **"Inspeção por foto"** (também acessível dentro do detalhe de um extintor existente, pré-vinculado).
-2. Modal/página guiada em 3 passos:
-   - **Foto 1 — Etiqueta/corpo** (obrigatória): captura marca, tipo (ABC/BC/CO₂/K), capacidade, fabricante, data de fabricação, validade, nº de patrimônio (se legível).
-   - **Foto 2 — Manômetro** (obrigatória): lê pressão (verde/vermelho/amarelo) → status carga OK / descarregado / sobrecarga.
-   - **Foto 3 — Lacre/contexto** (opcional): lacre íntegro, mangueira, sinalização, obstrução.
-3. Captura GPS automática do celular (`navigator.geolocation`) + campo livre "Localização descritiva".
-4. IA processa as fotos → devolve laudo estruturado (JSON).
-5. Tela de revisão: TST/usuário confere cada campo (editável), marca conformidades/não conformidades, assina (assinatura desenhada — reaproveita componente já existente).
-6. Salvar → cria registro em `extintor_inspecoes_fotos` + fotos no Storage + atualiza `extintores` (próxima inspeção, status) se vinculado.
+- Migration: tabela `prestadores_saude` (razão social, fantasia, CNPJ, endereço completo, contatos, especialidades[], tipos_guia_esocial[], ativo)
+- Rota `/app/sesmt/prestadores` com listagem glass + KPIs (total, ativos, por especialidade)
+- Dialog cadastro/edição com máscaras CNPJ/CEP (auto-preenche endereço via ViaCEP)
+- Seed dos prestadores já conhecidos (Medical Clin, Multimagem etc.) se você me passar; senão deixo vazio pra você cadastrar
 
-## Banco (migração)
+### Fase 2 — Ficha Viva do Funcionário (Bloco A)
+Completar a ficha com gaps mapeados do SOC, **sem scroll infinito**.
 
-Bucket privado `extintores-inspecoes`.
+- Migration: adicionar campos faltantes em `employees` (RG, nome_mae, nome_pai, naturalidade, estado_civil, escolaridade, PIS, CTPS, título eleitor, reservista, endereço completo, telefone, e-mail, dependentes JSON, log_alteracoes JSON)
+- Refatorar `employees/$id` com **tabs glass** (já temos `animated-tabs-bar`):
+  - 📇 Dados Pessoais
+  - 💼 Vínculo (cargo/setor/admissão/salário)
+  - 📍 Endereço & Contato
+  - 👨‍👩‍👧 Dependentes
+  - 🩺 Saúde (ASOs, convocações, atestados)
+  - 🦺 EPI (entregas, devoluções, perdas)
+  - 📚 Treinamentos
+  - 🚪 Saídas/Hora Extra
+  - 📜 Histórico (timeline + log de alterações)
+- Modal-first: edição inline com drawer glass, não nova rota
 
-Tabela `extintor_inspecoes_fotos`:
-- `extintor_id` (FK opcional — pode ser inspeção avulsa antes de cadastrar)
-- `inspecionado_por` (uuid do usuário), `inspecionado_em`
-- `foto_etiqueta_path`, `foto_manometro_path`, `foto_lacre_path`
-- `gps_lat`, `gps_lng`, `gps_accuracy`, `localizacao_descritiva`
-- `laudo_ia` (jsonb — saída bruta da IA)
-- `laudo_revisado` (jsonb — versão editada pelo TST)
-- `confianca_ia` (numeric 0-1)
-- `status_geral` (`conforme` / `nao_conforme` / `pendente_revisao`)
-- `nao_conformidades` (text[])
-- `assinatura_path` (svg/png da assinatura)
-- `assinado_por_nome`, `assinado_por_cargo`
-- `observacoes`
+### Fase 3 — Guia de Encaminhamento + Smart Agenda (Bloco C + B)
+- Migration: tabela `guias_encaminhamento` (numero auto, prestador_id, employee_id, tipo_eSocial, exames[], data_emissao, atendido, anexos)
+- Estender `convocacoes_exames` com `guia_id`, `data_agendada`, `clinica_id`, `status` (pendente/agendado/realizado/faltou/reagendado)
+- Rota `/app/sesmt/agenda-exames` com:
+  - Visão **Kanban glass** (Pendente → Agendado → Realizado → Faltou) — substitui scroll do SOC
+  - Visão **Calendário** alternativa
+  - Drag-and-drop pra mudar status
+  - Reagendamento em lote
+  - Lista de faltosos com 1 clique pra reconvocar
+- Geração PDF da Guia com header DMN + riscos do cargo (cruza PGR/PCMSO) + exames sugeridos automaticamente
+- Geração PDF "Itinerário do Funcionário" (mapa dos exames do dia)
 
-RLS: SELECT/INSERT para `authenticated` (qualquer perfil pode inspecionar, conforme combinado); UPDATE/DELETE só admin/TST.
-GRANTs explícitos + trigger `updated_at`.
+## Visual (não negociável)
+- Glass cards: `bg-white/5 backdrop-blur-xl border border-white/10` + flare gradient sutil
+- KPIs com chrome border (mesmo dos OSS)
+- Tabs animadas (`animated-tabs-bar`)
+- Modal-first para edição
+- Texto `text-white/95` (alto contraste, lição aprendida do print)
+- Sem ícones XP, sem códigos crípticos tipo "Cód. 675"
 
-Policies do bucket: INSERT/SELECT para authenticated nas próprias inspeções; DELETE só admin.
+## Detalhes técnicos
+- Todas as tabelas novas: GRANT + RLS por role (admin/sesmt_admin escrita; sesmt_leitor read)
+- Triggers: fechar guia quando atendido=true, gerar nº sequencial da guia, propagar status pra convocacao
+- ViaCEP via fetch direto (sem server function)
+- PDFs via `pdf-print.ts` central (já padronizado)
+- Realtime na agenda (Supabase channel) pra refletir mudanças entre usuários
 
-## Backend (server function)
+## Entregáveis ao final
+- 3 rotas novas (prestadores, agenda-exames) + 1 refatorada (employees/$id)
+- 4 PDFs novos (guia, itinerário, ASO standalone, lista faltosos)
+- Memória atualizada em `mem://features/`
 
-`src/lib/extintor-inspecao.functions.ts` com `analisarFotosExtintor`:
-- Recebe URLs assinadas das 3 fotos (já no bucket).
-- Chama Lovable AI Gateway (`google/gemini-3-flash-preview`) com prompt multimodal + structured output (Zod schema).
-- Schema de saída: `{ marca, tipo, capacidade_kg, fabricante, data_fabricacao, validade, num_patrimonio, pressao_manometro, lacre_integro, mangueira_ok, sinalizacao_ok, obstrucao, qualidade_foto, confianca, nao_conformidades[], observacoes }`.
-- Retorna o JSON + score de confiança.
+## Estimativa
+Fase 1: ~3 arquivos novos + 1 migration
+Fase 2: ~6 arquivos (split em tabs) + 1 migration
+Fase 3: ~5 arquivos + 2 migrations + 2 PDFs
 
-`salvarInspecao` com `requireSupabaseAuth`: persiste registro + atualiza extintor vinculado.
-
-## Frontend
-
-- `src/routes/_authenticated/app/extintores.inspecao-foto.tsx` (rota nova) — wizard de 3 passos.
-- Componente `FotoCapture` reutilizável (input file com `capture="environment"` para celular + preview + retake).
-- Componente `RevisaoLaudo` — formulário pré-preenchido pela IA, com badge de confiança por campo.
-- Reaproveita componente de assinatura existente (`assinaturas_salvas`).
-- Botão "Inspeção por foto" no header de `/app/extintores`.
-- Aba "Histórico de inspeções com foto" no detalhe do extintor.
-
-## Notas técnicas
-
-- GPS: `navigator.geolocation.getCurrentPosition` com fallback gracioso (sem GPS → continua, só marca campo vazio).
-- Compressão de imagem client-side antes do upload (máx 1600px lado maior, JPEG 0.85) — economiza storage e acelera IA.
-- Upload direto ao Storage com signed upload URL.
-- Modelo IA: `google/gemini-3-flash-preview` (multimodal, rápido, barato). Se confiança < 0.7 → força revisão obrigatória com aviso amarelo.
-- Tratamento de erros do gateway (429 / 402) com mensagens claras na UI.
+Posso atacar tudo numa sequência. Confirma que vou de Fase 1 → 2 → 3?
