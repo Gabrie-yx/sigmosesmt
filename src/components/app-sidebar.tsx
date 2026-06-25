@@ -58,6 +58,7 @@ import {
   Flame,
   BookOpenCheck,
   FileSignature,
+  Stethoscope,
   ShieldAlert,
   Wind,
   Target,
