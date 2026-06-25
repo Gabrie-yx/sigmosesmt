@@ -324,6 +324,180 @@ async function criarOficioPDF(
   return { doc, fileName: nomeArq };
 }
 
+type FuncionarioConvocado = {
+  emp: any;
+  cargo: string;
+  asoData: Date | null;
+  proximo: Date | null;
+};
+
+async function criarOficioColetivoPDF(
+  empresaNome: string,
+  funcionarios: FuncionarioConvocado[],
+  exames: ExameResolvido[],
+  ctx: OficioCtx,
+) {
+  const hoje = new Date().toLocaleDateString("pt-BR");
+  const [{ default: JsPDF }, { drawPdfHeader }] = await Promise.all([
+    import("jspdf"),
+    import("@/lib/pdf-header"),
+  ]);
+  const doc = new JsPDF({ unit: "mm", format: "a4" });
+  const W = doc.internal.pageSize.getWidth();
+  const MARGIN = 14;
+  const maxW = W - MARGIN * 2;
+
+  let y = drawPdfHeader(doc, {
+    titulo: "Ofício Coletivo — Convocação de Exames Médicos Ocupacionais",
+    subtitulo: "SESMT · NR-7 / PCMSO",
+    responsavel: ctx.solicitante || "SESMT",
+  });
+  y += 2;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(`OFÍCIO Nº ${ctx.numeroOficio}`, MARGIN, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Manaus/AM, ${hoje}`, W - MARGIN, y, { align: "right" });
+  y += 7;
+
+  // Cabeçalho dados solicitação
+  doc.setDrawColor(100, 116, 139);
+  doc.setFillColor(241, 245, 249);
+  doc.roundedRect(MARGIN, y, maxW, 24, 1.5, 1.5, "FD");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+  doc.text("DADOS DA SOLICITAÇÃO", MARGIN + 3, y + 4.5);
+  doc.setFontSize(9.5);
+  const drawKV = (k: string, v: string, x: number, yy: number) => {
+    doc.setFont("helvetica", "bold"); doc.text(k, x, yy);
+    doc.setFont("helvetica", "normal");
+    const kw = doc.getTextWidth(k) + 1.5;
+    doc.text(v || "—", x + kw, yy);
+  };
+  drawKV("Solicitante:", ctx.solicitante, MARGIN + 3, y + 11);
+  drawKV("Setor:", ctx.setor, MARGIN + 3, y + 17);
+  drawKV("Tipo:", ctx.tipoExame, MARGIN + 3, y + 22);
+  drawKV("Local:", ctx.destino, MARGIN + maxW / 2 + 2, y + 11);
+  drawKV("Horário:", ctx.horario, MARGIN + maxW / 2 + 2, y + 17);
+  drawKV("Empresa:", empresaNome || "—", MARGIN + maxW / 2 + 2, y + 22);
+  y += 30;
+
+  doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+  doc.text("CONVOCADOS", MARGIN, y); y += 5;
+
+  // Tabela funcionários
+  const cols = [
+    { k: "n", t: "#", w: 8 },
+    { k: "nome", t: "Nome", w: 70 },
+    { k: "mat", t: "Matrícula", w: 22 },
+    { k: "cargo", t: "Função", w: 50 },
+    { k: "aso", t: "Último ASO", w: 22 },
+    { k: "prox", t: "Vence em", w: 20 },
+  ];
+  const totalW = cols.reduce((s, c) => s + c.w, 0);
+  const scale = maxW / totalW;
+  cols.forEach((c) => (c.w = c.w * scale));
+  const headH = 6, rowH = 6;
+  doc.setFillColor(15, 23, 42);
+  doc.rect(MARGIN, y, maxW, headH, "F");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8.5);
+  doc.setTextColor(255, 255, 255);
+  let cx = MARGIN;
+  cols.forEach((c) => { doc.text(c.t, cx + 1.5, y + 4); cx += c.w; });
+  y += headH;
+  doc.setTextColor(15, 23, 42);
+  doc.setFont("helvetica", "normal");
+  funcionarios.forEach((f, idx) => {
+    if (y > 255) { doc.addPage(); y = 20; }
+    if (idx % 2 === 0) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(MARGIN, y, maxW, rowH, "F");
+    }
+    cx = MARGIN;
+    const vals = [
+      String(idx + 1),
+      String(f.emp.nome ?? "—").toUpperCase(),
+      String(f.emp.matricula ?? "—"),
+      f.cargo || "—",
+      f.asoData ? f.asoData.toLocaleDateString("pt-BR") : "—",
+      f.proximo ? f.proximo.toLocaleDateString("pt-BR") : "—",
+    ];
+    cols.forEach((c, i) => {
+      const txt = doc.splitTextToSize(vals[i], c.w - 2)[0] || vals[i];
+      doc.text(txt, cx + 1.5, y + 4);
+      cx += c.w;
+    });
+    y += rowH;
+  });
+  doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.2);
+  doc.rect(MARGIN, y - rowH * funcionarios.length - headH, maxW, headH + rowH * funcionarios.length, "S");
+  y += 6;
+
+  // Corpo
+  if (y > 230) { doc.addPage(); y = 20; }
+  doc.setFont("helvetica", "normal"); doc.setFontSize(10.5);
+  const corpo = [
+    `Em cumprimento à NR-7 (PCMSO) e ao SGI-SST da ${EMPRESA_INFO.razao_social}, ficam CONVOCADOS os colaboradores listados acima para realização de ${ctx.tipoExame}.`,
+    `Local: ${ctx.destino || "—"} — Horário: ${ctx.horario || "a confirmar"}.`,
+    "Prazo máximo para comparecimento: 15 (quinze) dias a contar do recebimento. O não comparecimento sem justificativa formal poderá acarretar as medidas administrativas previstas.",
+  ];
+  corpo.forEach((p) => {
+    const lines = doc.splitTextToSize(p, maxW);
+    doc.text(lines, MARGIN, y, { align: "justify", maxWidth: maxW });
+    y += lines.length * 5.5 + 3;
+  });
+
+  // Exames a realizar (comuns ao grupo)
+  if (exames.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+    doc.text("EXAMES A REALIZAR (TODOS DO GRUPO)", MARGIN, y);
+    y += 4;
+    doc.setFillColor(241, 245, 249);
+    doc.rect(MARGIN, y, maxW, headH, "FD");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(8.5);
+    doc.text("Código", MARGIN + 2, y + 4);
+    doc.text("Procedimento", MARGIN + 22, y + 4);
+    doc.text("Motivo / Base", MARGIN + maxW - 70, y + 4);
+    y += headH;
+    doc.setFont("helvetica", "normal");
+    exames.forEach((ex, idx) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      if (idx % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(MARGIN, y, maxW, rowH, "F");
+      }
+      doc.setTextColor(15, 23, 42);
+      doc.text(ex.codigo || "—", MARGIN + 2, y + 4);
+      const proc = doc.splitTextToSize(ex.procedimento, maxW - 94)[0] || ex.procedimento;
+      doc.text(proc, MARGIN + 22, y + 4);
+      doc.setTextColor(71, 85, 105);
+      const motivo = doc.splitTextToSize(ex.motivo || ex.origem, 68)[0] || ex.motivo;
+      doc.text(motivo, MARGIN + maxW - 70, y + 4);
+      y += rowH;
+    });
+  }
+
+  // Rodapé padrão em todas as páginas
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for (let p = 1; p <= pageCount; p++) {
+    doc.setPage(p);
+    doc.setFontSize(7.5); doc.setTextColor(60, 60, 60);
+    doc.text(
+      `${EMPRESA_INFO.razao_social} · CNPJ ${EMPRESA_INFO.cnpj} · ${EMPRESA_INFO.endereco} · ${EMPRESA_INFO.cidade_uf_cep}`,
+      W / 2, 287, { align: "center" },
+    );
+    doc.text(
+      `SIGMO — Ofício coletivo · ${hoje} · Pág. ${p}/${pageCount}`,
+      W / 2, 290.5, { align: "center" },
+    );
+  }
+
+  const fname = `oficio-coletivo-${empresaNome.toLowerCase().replace(/\s+/g, "-").slice(0, 30)}-${ctx.numeroOficio.replace(/\W/g, "")}.pdf`;
+  return { doc, fileName: fname };
+}
+
 async function copyText(text: string, label: string) {
   try {
     if (navigator.clipboard?.writeText) {
