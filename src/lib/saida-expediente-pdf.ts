@@ -49,13 +49,14 @@ export function gerarSaidaExpedientePDF(p: SaidaExpedientePdfParams): jsPDF {
   // Título
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.setTextColor(20, 20, 20);
+  doc.setTextColor(0, 0, 0);
   doc.text("AUTORIZAÇÃO DE SAÍDA DURANTE O EXPEDIENTE", pageW / 2, y, { align: "center" });
   y += 18;
 
   // Corpo
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
+  doc.setTextColor(0, 0, 0);
   const ident: string[] = [];
   if (p.rg) ident.push(`RG nº ${p.rg}`);
   if (p.cpf) ident.push(`CPF ${p.cpf}`);
@@ -70,7 +71,7 @@ export function gerarSaidaExpedientePDF(p: SaidaExpedientePdfParams): jsPDF {
 
   // Checkboxes
   const box = (x: number, yy: number, marked: boolean) => {
-    doc.setDrawColor(0); doc.setLineWidth(0.3);
+    doc.setDrawColor(0); doc.setLineWidth(0.5);
     doc.rect(x, yy - 3.5, 4, 4);
     if (marked) { doc.setFont("helvetica","bold"); doc.text("X", x + 0.8, yy); doc.setFont("helvetica","normal"); }
   };
@@ -123,11 +124,11 @@ export function gerarSaidaExpedientePDF(p: SaidaExpedientePdfParams): jsPDF {
         doc.addImage(dataUrl, fmt as any, imgX, imgY, imgW, imgH, undefined, "FAST");
       } catch {}
     }
-    doc.setDrawColor(0); doc.setLineWidth(0.3);
+    doc.setDrawColor(0); doc.setLineWidth(0.5);
     doc.line(x, lineY, x + sigW, lineY);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0,0,0);
     doc.text(label, cx, sigY + 9, { align: "center" });
-    if (sub) { doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(80,80,80); doc.text(sub, cx, sigY + 13.5, { align: "center" }); doc.setTextColor(20,20,20); }
+    if (sub) { doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(40,40,40); doc.text(sub, cx, sigY + 13.5, { align: "center" }); doc.setTextColor(0,0,0); }
   };
 
   const leftCx = margin + sigW / 2;
