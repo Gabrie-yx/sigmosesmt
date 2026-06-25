@@ -937,6 +937,12 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                             return;
                           }
                           const numeroOficio = `${String(Date.now()).slice(-6)}/${new Date().getFullYear()}`;
+                          let exames: ExameResolvido[] = [];
+                          try {
+                            exames = await resolverExamesFuncionario(emp.id, naturezaFromTipoExame(tipoExame));
+                          } catch (err: any) {
+                            toast.warning(`Não consegui resolver exames automaticamente: ${err.message ?? err}`);
+                          }
                           const pdf = await criarOficioPDF(
                             emp,
                             asoData,
@@ -944,6 +950,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                             (rMap.get(emp.role_id) as string) ?? "",
                             (cMap.get(emp.company_id) as string) ?? "",
                             { solicitante, setor, destino, horario, tipoExame, numeroOficio },
+                            exames,
                           );
                           setPdfPreview({ ...pdf, title: `Ofício de convocação — ${emp.nome ?? "Funcionário"}` });
                           // Grava convocação no banco (fecha automaticamente quando o ASO for registrado)
@@ -954,7 +961,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                             const { error: insErr } = await supabase.from("convocacoes_exames").insert({
                               employee_id: emp.id,
                               janela,
-                              tipos_exame: [tipoExame || "ASO Periódico"],
+                              tipos_exame: [tipoExame || "ASO Periódico", ...exames.map((e) => e.procedimento)].slice(0, 20),
                               data_limite: dl.toISOString().slice(0, 10),
                               convocado_por: userRes.user?.id ?? null,
                               observacoes: `Ofício ${numeroOficio} — destino: ${destino}`,
