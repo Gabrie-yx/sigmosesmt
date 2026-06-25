@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { formatDateBR } from "@/lib/utils-date";
 import { useMemo } from "react";
-import { openStorageFile } from "@/components/file-viewer";
+import { openStorageFile, FileViewerHost } from "@/components/file-viewer";
 
 type Props = {
   employeeId: string | null;
@@ -203,6 +203,7 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
 
   return (
     <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <FileViewerHost />
       <SheetContent
         side="right"
         className="w-full sm:max-w-2xl border-l border-rose-300/15 bg-gradient-to-br from-[#1a0408]/95 via-rose-950/40 to-[#1a0408]/95 backdrop-blur-xl text-rose-50 p-0 flex flex-col"
