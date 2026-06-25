@@ -12,6 +12,7 @@ import { gerarFormularioSemanalDDS } from "@/lib/dds-formulario-semanal-pdf";
 import { toast } from "sonner";
 import { FileDown } from "lucide-react";
 import { ImagePlus, X } from "lucide-react";
+import { EmployeeSignatureToggle } from "@/components/employee-signature-toggle";
 
 function getMonday(d: Date) {
   const x = new Date(d);
@@ -41,6 +42,9 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
   const [dataDoc, setDataDoc] = useState("30/08/2025");
   const [assinaturaUrl, setAssinaturaUrl] = useState<string>("");
   const [assinaturaEncUrl, setAssinaturaEncUrl] = useState<string>("");
+  // Funcionários vinculados para puxar a assinatura cadastrada
+  const [encarregadoEmpId, setEncarregadoEmpId] = useState<string>("");
+  const [sesmtEmpId, setSesmtEmpId] = useState<string>("");
 
   async function processarAssinatura(f: File, setter: (s: string) => void) {
     if (f.size > 5 * 1024 * 1024) { toast.error("Imagem muito grande (máx 5MB)"); return; }
@@ -76,7 +80,7 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
     queryFn: async () => {
       const { data } = await supabase
         .from("employees")
-        .select("id,nome,roles(name)")
+        .select("id,nome,roles(name),assinatura_url")
         .eq("status", "ATIVO")
         .eq("company_id", companyId)
         .order("nome");
@@ -156,6 +160,61 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
             <div><Label>Encarregado / Designado</Label><Input value={encarregado} onChange={(e) => setEncarregado(e.target.value)} /></div>
             <div><Label>Responsável SESMT</Label><Input value={sesmt} onChange={(e) => setSesmt(e.target.value)} /></div>
           </div>
+
+          {companyId && employees.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[11px] font-bold uppercase text-slate-500">Vincular Encarregado (cadastro)</Label>
+                <Select value={encarregadoEmpId || "_none"} onValueChange={(v) => {
+                  const id = v === "_none" ? "" : v;
+                  setEncarregadoEmpId(id);
+                  const emp = employees.find((e: any) => e.id === id);
+                  if (emp) setEncarregado(emp.nome);
+                }}>
+                  <SelectTrigger className="h-9 mt-1"><SelectValue placeholder="— livre —" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">— livre / texto manual —</SelectItem>
+                    {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {encarregadoEmpId && (
+                  <div className="mt-2">
+                    <EmployeeSignatureToggle
+                      employeeId={encarregadoEmpId}
+                      context="dds-encarregado"
+                      onChange={(url) => setAssinaturaEncUrl(url ?? "")}
+                      label="Assinatura digital do Encarregado"
+                    />
+                  </div>
+                )}
+              </div>
+              <div>
+                <Label className="text-[11px] font-bold uppercase text-slate-500">Vincular Responsável SESMT (cadastro)</Label>
+                <Select value={sesmtEmpId || "_none"} onValueChange={(v) => {
+                  const id = v === "_none" ? "" : v;
+                  setSesmtEmpId(id);
+                  const emp = employees.find((e: any) => e.id === id);
+                  if (emp) setSesmt(emp.nome);
+                }}>
+                  <SelectTrigger className="h-9 mt-1"><SelectValue placeholder="— livre —" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">— livre / texto manual —</SelectItem>
+                    {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {sesmtEmpId && (
+                  <div className="mt-2">
+                    <EmployeeSignatureToggle
+                      employeeId={sesmtEmpId}
+                      context="dds-sesmt"
+                      onChange={(url) => setAssinaturaUrl(url ?? "")}
+                      label="Assinatura digital do SESMT"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div>
             <Label>Assinaturas (PNG, fundo transparente recomendado)</Label>
