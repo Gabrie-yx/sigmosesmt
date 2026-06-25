@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Stethoscope, FileDown, Building2, MapPin, Phone } from "lucide-react";
+import type jsPDFType from "jspdf";
 import { toast } from "sonner";
 
 const PDFPreviewDialog = lazy(() =>
@@ -45,13 +46,13 @@ export function GuiaEncaminhamentoDialog({ open, onClose, employeeId, natureza =
   const [setor, setSetor] = useState("SESMT");
   const [obs, setObs] = useState("");
   const [naturezaSel, setNaturezaSel] = useState(natureza);
-  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [pdfDoc, setPdfDoc] = useState<jsPDFType | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
   const [gerando, setGerando] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setPdfBlob(null);
+      setPdfDoc(null);
       setPdfOpen(false);
     }
   }, [open]);
@@ -105,7 +106,7 @@ export function GuiaEncaminhamentoDialog({ open, onClose, employeeId, natureza =
     try {
       const { gerarGuiaEncaminhamentoPDF } = await import("@/lib/guia-encaminhamento-pdf");
       const numero = `${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
-      const blob = await gerarGuiaEncaminhamentoPDF({
+      const doc = await gerarGuiaEncaminhamentoPDF({
         numero,
         data: new Date(),
         solicitante,
@@ -122,7 +123,7 @@ export function GuiaEncaminhamentoDialog({ open, onClose, employeeId, natureza =
         natureza: naturezaSel,
         observacoes: obs || undefined,
       });
-      setPdfBlob(blob);
+      setPdfDoc(doc);
       setPdfOpen(true);
     } catch (e: any) {
       toast.error("Erro ao gerar guia: " + (e?.message ?? "desconhecido"));
@@ -252,12 +253,12 @@ export function GuiaEncaminhamentoDialog({ open, onClose, employeeId, natureza =
         </DialogContent>
       </Dialog>
 
-      {pdfBlob && (
+      {pdfDoc && (
         <Suspense fallback={null}>
           <PDFPreviewDialog
             open={pdfOpen}
-            onOpenChange={setPdfOpen}
-            pdfBlob={pdfBlob}
+            onClose={() => setPdfOpen(false)}
+            doc={pdfDoc}
             title={`Guia · ${emp?.nome ?? ""}`}
             fileName={`guia-${emp?.nome?.split(" ")[0] ?? "func"}-${Date.now()}.pdf`}
           />
