@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { EmployeeSignatureToggle } from "@/components/employee-signature-toggle";
 import { PenLine, Check, UserPlus, Pencil } from "lucide-react";
 
 type SignatureTarget = "FUNC" | "SESMT" | "SUPERVISOR";
@@ -300,6 +301,14 @@ export function SaidaExpedienteDialog({
           </div>
           <div className="space-y-2 pt-2 border-t border-white/10">
             <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Assinaturas do documento</Label>
+            {selectedEmployeeIds.length === 1 && (
+              <EmployeeSignatureToggle
+                employeeId={selectedEmployeeIds[0]}
+                context="saida-expediente"
+                onChange={(url) => setForm((f: any) => ({ ...f, assinatura_funcionario: url ?? f.assinatura_funcionario }))}
+                label="Usar assinatura digital do funcionário"
+              />
+            )}
             <div className={`grid gap-2 ${editId ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
               {renderSignatureOption("SESMT", "TST/SESMT", form.assinatura_sesmt)}
               {editId && renderSignatureOption("FUNC", "Funcionário", form.assinatura_funcionario)}
