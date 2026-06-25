@@ -180,9 +180,9 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
     convPend > 0 ? { tone: "amber", label: `${convPend} pendente(s)` } : { tone: "green", label: "nenhuma" };
 
   const timeline = useMemo(() => {
-    const items: { date: string; icon: any; tone: string; title: string; subtitle?: string }[] = [];
+    const items: { date: string; icon: any; tone: string; title: string; subtitle?: string; anexo?: string }[] = [];
     (exams ?? []).forEach((e: any) =>
-      items.push({ date: e.data_realizacao, icon: Stethoscope, tone: "emerald", title: `ASO ${e.natureza ?? e.tipo_exame}`, subtitle: e.aptidao }));
+      items.push({ date: e.data_realizacao, icon: Stethoscope, tone: "emerald", title: `ASO ${e.natureza ?? e.tipo_exame}`, subtitle: e.aptidao, anexo: e.anexo_path ?? undefined }));
     (epis ?? []).forEach((e: any) =>
       items.push({ date: e.data_entrega, icon: HardHat, tone: "amber", title: `EPI · ${e.item}`, subtitle: `CA ${e.ca ?? "—"} · qtd ${e.qtd}` }));
     (trainings ?? []).forEach((t: any) => t.trainings?.data_realizacao &&
@@ -403,11 +403,15 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
                         {timeline.map((t, i) => (
                           <li key={i} className="ml-4">
                             <div className="absolute -left-[5px] mt-1 h-2.5 w-2.5 rounded-full bg-rose-400 border border-rose-200/40" />
-                            <div className="flex items-start gap-2 p-2 rounded-lg bg-rose-100/[0.03] border border-rose-100/10">
+                            <div className={`flex items-start gap-2 p-2 rounded-lg bg-rose-100/[0.03] border border-rose-100/10 ${t.anexo ? "cursor-pointer hover:bg-rose-100/[0.08]" : ""}`}
+                              onClick={t.anexo ? () => openStorageFile("employee-docs", t.anexo!, "ASO.pdf") : undefined}>
                               <t.icon className="h-3.5 w-3.5 text-rose-300/80 mt-0.5 shrink-0" />
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-2">
-                                  <div className="text-[12px] font-medium text-rose-50 truncate">{t.title}</div>
+                                  <div className="text-[12px] font-medium text-rose-50 truncate flex items-center gap-1">
+                                    {t.title}
+                                    {t.anexo && <FileText className="h-3 w-3 text-emerald-300" />}
+                                  </div>
                                   <div className="text-[10px] text-rose-200/50 shrink-0">{formatDateBR(t.date)}</div>
                                 </div>
                                 {t.subtitle && <div className="text-[10px] text-rose-200/60 truncate">{t.subtitle}</div>}
