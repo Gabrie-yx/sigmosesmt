@@ -74,6 +74,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
     title: "Visão Geral",
     items: [
       { to: "/app/painel", label: "Dashboard SESMT", icon: BarChart3 },
+      { to: "/app/sesmt/organograma", label: "Organograma Vivo", icon: Building2 },
     ],
   },
   {
