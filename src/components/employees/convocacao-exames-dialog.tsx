@@ -986,7 +986,8 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
         </div>
 
         <div className="text-[10px] text-slate-400 border-t border-white/10 pt-3">
-          💡 Periodicidade padrão = 12 meses. Em breve: por cargo/risco (NR-7 6 meses para insalubres).
+          💡 Os exames de cada ofício são resolvidos automaticamente cruzando os <b>riscos do cargo (PGR)</b> com a <b>matriz risco × exames (NR-7)</b>.
+          Selecione vários funcionários e clique <b>Convocar X</b> — quem compartilha a mesma lista de exames entra no mesmo ofício coletivo; cargas diferentes geram ofícios separados.
         </div>
       </DialogContent>
     </Dialog>
