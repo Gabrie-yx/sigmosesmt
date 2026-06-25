@@ -865,6 +865,17 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                     className={`flex flex-col md:flex-row md:items-center gap-3 rounded-xl border p-3 ${st.bg}`}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Checkbox
+                        checked={selectedIds.has(emp.id)}
+                        onCheckedChange={(v) => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (v) next.add(emp.id); else next.delete(emp.id);
+                            return next;
+                          });
+                        }}
+                        className="border-white/30 data-[state=checked]:bg-rose-500 data-[state=checked]:border-rose-500"
+                      />
                       <div className="h-11 w-11 rounded-full bg-white/10 overflow-hidden flex-shrink-0 ring-1 ring-white/20">
                         {emp.foto_url ? (
                           <img src={emp.foto_url} alt="" className="h-full w-full object-cover" />
