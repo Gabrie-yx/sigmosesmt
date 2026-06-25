@@ -50,7 +50,7 @@ function fullAddress(p: GuiaCtx["prestador"]) {
   return [linha1, linha2].filter(Boolean).join(" · ");
 }
 
-export async function gerarGuiaEncaminhamentoPDF(ctx: GuiaCtx): Promise<Blob> {
+export async function gerarGuiaEncaminhamentoPDF(ctx: GuiaCtx) {
   const [{ default: JsPDF }, { drawPdfHeader }, QR] = await Promise.all([
     import("jspdf"),
     import("@/lib/pdf-header"),
@@ -240,5 +240,5 @@ export async function gerarGuiaEncaminhamentoPDF(ctx: GuiaCtx): Promise<Blob> {
     W / 2, 290.5, { align: "center" },
   );
 
-  return doc.output("blob");
+  return doc;
 }
