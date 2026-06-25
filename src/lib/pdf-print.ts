@@ -188,8 +188,96 @@ export async function printImagePages(pages: string[], fileName = "documento.pdf
 }
 
 export async function printPdf(input: ArrayBuffer | Uint8Array | Blob, fileName = "documento.pdf") {
+  // 1) Tenta impressão nativa via iframe (vetor — texto preto sólido, sem
+  // rasterização). Funciona no Chrome/Edge/Firefox com PDF viewer integrado.
+  try {
+    await printPdfNative(input, fileName);
+    return;
+  } catch (e) {
+    console.warn("[printPdf] nativo falhou, caindo para fallback raster:", e);
+  }
+  // 2) Fallback: rasteriza com pdf.js (último recurso — pode sair acinzentado).
   const pages = await renderPdfToImagePages(input);
   await printImagePages(pages, fileName);
+}
+
+async function printPdfNative(input: ArrayBuffer | Uint8Array | Blob, fileName: string): Promise<void> {
+  let blob: Blob;
+  if (input instanceof Blob) {
+    blob = input;
+  } else {
+    const buf = await toArrayBuffer(input);
+    blob = new Blob([buf], { type: "application/pdf" });
+  }
+  const url = URL.createObjectURL(blob);
+
+  return await new Promise<void>((resolve, reject) => {
+    document.querySelectorAll("iframe.sigmo-print-iframe").forEach((el) => el.remove());
+
+    const iframe = document.createElement("iframe");
+    iframe.className = "sigmo-print-iframe";
+    iframe.title = fileName;
+    iframe.setAttribute("aria-hidden", "true");
+    Object.assign(iframe.style, {
+      position: "fixed",
+      right: "0",
+      bottom: "0",
+      width: "1px",
+      height: "1px",
+      border: "0",
+      opacity: "0",
+      pointerEvents: "none",
+    } as CSSStyleDeclaration);
+
+    let settled = false;
+    const cleanup = () => {
+      window.removeEventListener("afterprint", onAfter);
+      setTimeout(() => {
+        try { iframe.remove(); } catch {}
+        URL.revokeObjectURL(url);
+      }, 1500);
+    };
+    const onAfter = () => { if (!settled) { settled = true; cleanup(); resolve(); } };
+
+    const timeout = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error("Tempo esgotado aguardando viewer de PDF"));
+    }, 8000);
+
+    iframe.onload = () => {
+      // Dá um respiro pro viewer interno do navegador montar o PDF antes do print.
+      window.setTimeout(() => {
+        try {
+          const win = iframe.contentWindow;
+          if (!win) throw new Error("iframe sem contentWindow");
+          window.clearTimeout(timeout);
+          window.addEventListener("afterprint", onAfter, { once: true });
+          win.focus();
+          win.print();
+          // Fallback: alguns navegadores não disparam afterprint para iframes.
+          window.setTimeout(() => { if (!settled) { settled = true; cleanup(); resolve(); } }, 60000);
+        } catch (e) {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeout);
+          cleanup();
+          reject(e as Error);
+        }
+      }, 350);
+    };
+    iframe.onerror = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      cleanup();
+      reject(new Error("Falha ao carregar PDF no iframe"));
+    };
+
+    iframe.src = url;
+    document.body.appendChild(iframe);
+  });
 }
 
 export async function printHtmlContent(html: string, title = "documento", extraCss = "") {

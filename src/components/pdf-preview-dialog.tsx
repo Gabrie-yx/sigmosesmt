@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Download, Printer, X, PenLine, ImagePlus } from "lucide-react";
 import type jsPDF from "jspdf";
-import { printImagePages, renderPdfToImagePages } from "@/lib/pdf-print";
+import { printPdf, renderPdfToImagePages } from "@/lib/pdf-print";
 
 export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, encSig, sesmtSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature }: {
   open: boolean;
@@ -65,11 +65,11 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
     }
   }
   async function print() {
-    if (!pages.length) return;
-    // Imprime no documento atual com CSS @media print. No preview/sandbox,
-    // imprimir iframe/blob costuma gerar folha em branco; assim o conteúdo
-    // renderizado em imagem é exatamente o que vai para a impressora.
-    await printImagePages(pages, fileName);
+    if (!doc) return;
+    // Impressão nativa do PDF (vetor) — preserva o texto preto sólido.
+    // Fallback automático para raster está dentro de printPdf().
+    const blob = doc.output("blob") as Blob;
+    await printPdf(blob, fileName);
   }
 
   async function pickSignature(set: (v: string | null) => void) {
