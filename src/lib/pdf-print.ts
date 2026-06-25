@@ -202,10 +202,13 @@ export async function printPdf(input: ArrayBuffer | Uint8Array | Blob, fileName 
 }
 
 async function printPdfNative(input: ArrayBuffer | Uint8Array | Blob, fileName: string): Promise<void> {
-  const blob =
-    input instanceof Blob
-      ? input
-      : new Blob([input instanceof Uint8Array ? input : new Uint8Array(input)], { type: "application/pdf" });
+  let blob: Blob;
+  if (input instanceof Blob) {
+    blob = input;
+  } else {
+    const buf = await toArrayBuffer(input);
+    blob = new Blob([buf], { type: "application/pdf" });
+  }
   const url = URL.createObjectURL(blob);
 
   return await new Promise<void>((resolve, reject) => {
