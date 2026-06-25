@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { formatDateBR } from "@/lib/utils-date";
 import { useMemo } from "react";
+import { openStorageFile, FileViewerHost } from "@/components/file-viewer";
 
 type Props = {
   employeeId: string | null;
@@ -67,7 +68,7 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
     queryFn: async () => {
       const { data } = await supabase
         .from("employee_exams")
-        .select("id, tipo_exame, natureza, data_realizacao, data_vencimento, aptidao, periodicidade_meses")
+        .select("id, tipo_exame, natureza, data_realizacao, data_vencimento, aptidao, periodicidade_meses, anexo_path")
         .eq("employee_id", employeeId!)
         .order("data_realizacao", { ascending: false });
       return data ?? [];
@@ -123,7 +124,7 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
     queryFn: async () => {
       const { data } = await supabase
         .from("convocacoes_exames")
-        .select("id, tipos_exame, convocado_em, data_limite, status")
+        .select("id, tipos_exame, convocado_em, data_limite, status, atendida_exam_id, atendida_em, employee_exams:atendida_exam_id(anexo_path)")
         .eq("employee_id", employeeId!)
         .order("convocado_em", { ascending: false })
         .limit(20);
@@ -179,9 +180,9 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
     convPend > 0 ? { tone: "amber", label: `${convPend} pendente(s)` } : { tone: "green", label: "nenhuma" };
 
   const timeline = useMemo(() => {
-    const items: { date: string; icon: any; tone: string; title: string; subtitle?: string }[] = [];
+    const items: { date: string; icon: any; tone: string; title: string; subtitle?: string; anexo?: string }[] = [];
     (exams ?? []).forEach((e: any) =>
-      items.push({ date: e.data_realizacao, icon: Stethoscope, tone: "emerald", title: `ASO ${e.natureza ?? e.tipo_exame}`, subtitle: e.aptidao }));
+      items.push({ date: e.data_realizacao, icon: Stethoscope, tone: "emerald", title: `ASO ${e.natureza ?? e.tipo_exame}`, subtitle: e.aptidao, anexo: e.anexo_path ?? undefined }));
     (epis ?? []).forEach((e: any) =>
       items.push({ date: e.data_entrega, icon: HardHat, tone: "amber", title: `EPI · ${e.item}`, subtitle: `CA ${e.ca ?? "—"} · qtd ${e.qtd}` }));
     (trainings ?? []).forEach((t: any) => t.trainings?.data_realizacao &&
@@ -202,6 +203,7 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
 
   return (
     <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <FileViewerHost />
       <SheetContent
         side="right"
         className="w-full sm:max-w-2xl border-l border-rose-300/15 bg-gradient-to-br from-[#1a0408]/95 via-rose-950/40 to-[#1a0408]/95 backdrop-blur-xl text-rose-50 p-0 flex flex-col"
@@ -305,24 +307,45 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
                             icon={Stethoscope}
                             title={`${e.natureza ?? e.tipo_exame}`}
                             subtitle={`Realizado ${formatDateBR(e.data_realizacao)}${e.aptidao ? " · " + e.aptidao : ""}`}
-                            right={<Badge variant="outline" className={`${toneCls[sem.tone]} text-[10px]`}>{sem.label}</Badge>}
+                            right={
+                              <div className="flex items-center gap-1.5">
+                                {e.anexo_path && (
+                                  <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-rose-200 hover:text-white hover:bg-rose-500/20"
+                                    onClick={() => openStorageFile("employee-docs", e.anexo_path, `ASO_${e.natureza ?? e.tipo_exame}_${e.data_realizacao}.pdf`)}>
+                                    <FileText className="h-3 w-3 mr-1" />PDF
+                                  </Button>
+                                )}
+                                <Badge variant="outline" className={`${toneCls[sem.tone]} text-[10px]`}>{sem.label}</Badge>
+                              </div>
+                            }
                           />
                         );
                       })}
                     </Section>
                     <Section title="Convocações" empty={(convocacoes?.length ?? 0) === 0}>
-                      {(convocacoes ?? []).map((c: any) => (
-                        <Row key={c.id}
-                          icon={FileText}
-                          title={(c.tipos_exame ?? []).join(", ") || "Convocação"}
-                          subtitle={`Convocado ${formatDateBR(c.convocado_em?.slice(0, 10))}${c.data_limite ? " · prazo " + formatDateBR(c.data_limite) : ""}`}
-                          right={
-                            <Badge variant="outline" className={`text-[10px] ${c.status === "ATENDIDA" ? toneCls.green : c.status === "PENDENTE" ? toneCls.amber : toneCls.muted}`}>
-                              {c.status}
-                            </Badge>
-                          }
-                        />
-                      ))}
+                      {(convocacoes ?? []).map((c: any) => {
+                        const asoPath = c.employee_exams?.anexo_path as string | undefined;
+                        return (
+                          <Row key={c.id}
+                            icon={FileText}
+                            title={(c.tipos_exame ?? []).join(", ") || "Convocação"}
+                            subtitle={`Convocado ${formatDateBR(c.convocado_em?.slice(0, 10))}${c.data_limite ? " · prazo " + formatDateBR(c.data_limite) : ""}${c.atendida_em ? " · atendida " + formatDateBR(c.atendida_em.slice(0,10)) : ""}`}
+                            right={
+                              <div className="flex items-center gap-1.5">
+                                {asoPath && (
+                                  <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-emerald-200 hover:text-white hover:bg-emerald-500/20"
+                                    onClick={() => openStorageFile("employee-docs", asoPath, `ASO_convocacao.pdf`)}>
+                                    <FileText className="h-3 w-3 mr-1" />ASO
+                                  </Button>
+                                )}
+                                <Badge variant="outline" className={`text-[10px] ${c.status === "ATENDIDA" ? toneCls.green : c.status === "PENDENTE" ? toneCls.amber : toneCls.muted}`}>
+                                  {c.status}
+                                </Badge>
+                              </div>
+                            }
+                          />
+                        );
+                      })}
                     </Section>
                     <Section title="Atestados" empty={(atestados?.length ?? 0) === 0}>
                       {(atestados ?? []).map((a: any) => (
@@ -381,11 +404,15 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
                         {timeline.map((t, i) => (
                           <li key={i} className="ml-4">
                             <div className="absolute -left-[5px] mt-1 h-2.5 w-2.5 rounded-full bg-rose-400 border border-rose-200/40" />
-                            <div className="flex items-start gap-2 p-2 rounded-lg bg-rose-100/[0.03] border border-rose-100/10">
+                            <div className={`flex items-start gap-2 p-2 rounded-lg bg-rose-100/[0.03] border border-rose-100/10 ${t.anexo ? "cursor-pointer hover:bg-rose-100/[0.08]" : ""}`}
+                              onClick={t.anexo ? () => openStorageFile("employee-docs", t.anexo!, "ASO.pdf") : undefined}>
                               <t.icon className="h-3.5 w-3.5 text-rose-300/80 mt-0.5 shrink-0" />
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-2">
-                                  <div className="text-[12px] font-medium text-rose-50 truncate">{t.title}</div>
+                                  <div className="text-[12px] font-medium text-rose-50 truncate flex items-center gap-1">
+                                    {t.title}
+                                    {t.anexo && <FileText className="h-3 w-3 text-emerald-300" />}
+                                  </div>
                                   <div className="text-[10px] text-rose-200/50 shrink-0">{formatDateBR(t.date)}</div>
                                 </div>
                                 {t.subtitle && <div className="text-[10px] text-rose-200/60 truncate">{t.subtitle}</div>}

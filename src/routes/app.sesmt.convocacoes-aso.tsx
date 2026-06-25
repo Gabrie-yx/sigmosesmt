@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Stethoscope, Upload, AlertTriangle, Clock, ArrowLeft } from "lucide-react";
+import { Stethoscope, Upload, AlertTriangle, Clock, ArrowLeft, FileText, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 
 export const Route = createFileRoute("/app/sesmt/convocacoes-aso")({
   component: ConvocacoesAsoPage,
@@ -25,11 +26,26 @@ function ConvocacoesAsoPage() {
     },
   });
 
+  const { data: atendidas } = useQuery({
+    queryKey: ["convocacoes-aso-atendidas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("convocacoes_exames")
+        .select("id, employee_id, status, convocado_em, atendida_em, tipos_exame, employees(id, nome, matricula), employee_exams:atendida_exam_id(anexo_path, aptidao, data_realizacao)")
+        .eq("status", "ATENDIDA")
+        .order("atendida_em", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-4">
+      <FileViewerHost />
       <div className="flex items-center gap-3">
         <Link to="/app/hoje" className="text-slate-400 hover:text-white inline-flex items-center gap-1 text-sm">
           <ArrowLeft className="h-4 w-4" /> Hoje
@@ -97,6 +113,40 @@ function ConvocacoesAsoPage() {
           );
         })}
       </div>
+
+      {(atendidas?.length ?? 0) > 0 && (
+        <div className="space-y-2 pt-2">
+          <div className="flex items-center gap-2 text-emerald-300 text-sm font-semibold uppercase tracking-wider">
+            <CheckCircle2 className="h-4 w-4" /> Últimas atendidas — ASO arquivado
+          </div>
+          <div className="grid gap-2">
+            {atendidas?.map((r: any) => {
+              const emp = r.employees;
+              const path = r.employee_exams?.anexo_path as string | undefined;
+              return (
+                <div key={r.id} className="rounded-lg border border-emerald-400/20 bg-emerald-500/[0.04] p-3 flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm text-white truncate">{emp?.nome ?? "—"}</div>
+                    <div className="text-[11px] text-slate-400">
+                      {(r.tipos_exame ?? []).join(", ") || "ASO"}
+                      {r.atendida_em && ` • atendida ${new Date(r.atendida_em).toLocaleDateString("pt-BR")}`}
+                      {r.employee_exams?.aptidao && ` • ${r.employee_exams.aptidao}`}
+                    </div>
+                  </div>
+                  {path ? (
+                    <Button size="sm" variant="outline" className="gap-1.5 border-emerald-400/30 text-emerald-200 hover:bg-emerald-500/20"
+                      onClick={() => openStorageFile("employee-docs", path, `ASO_${emp?.nome ?? "func"}.pdf`)}>
+                      <FileText className="h-3.5 w-3.5" /> Ver ASO
+                    </Button>
+                  ) : (
+                    <span className="text-[10px] text-amber-300/70">sem anexo</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
