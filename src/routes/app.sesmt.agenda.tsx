@@ -7,18 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   CalendarCheck2, Stethoscope, GraduationCap, FileText, Search,
-  AlertTriangle, Clock, Activity, ListChecks,
+  AlertTriangle, Clock, Activity, ListChecks, UserX, Printer,
 } from "lucide-react";
 import { formatDateBR } from "@/lib/utils-date";
 import { EmployeeQuickView } from "@/components/employees/employee-quick-view";
 import { GuiaEncaminhamentoDialog } from "@/components/employees/guia-encaminhamento-dialog";
+import { gerarAgendaInteligentePDF } from "@/lib/agenda-pdf";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/sesmt/agenda")({
   component: AgendaInteligente,
 });
 
 type Janela = "VENCIDOS" | "7" | "30" | "60" | "90" | "TODOS";
-type Tipo = "ASO" | "CONVOCACAO" | "TREINAMENTO";
+type Tipo = "ASO" | "CONVOCACAO" | "TREINAMENTO" | "SEM_ASO";
 
 type Item = {
   id: string;
@@ -52,6 +55,7 @@ function AgendaInteligente() {
   const [busca, setBusca] = useState("");
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const [guiaId, setGuiaId] = useState<string | null>(null);
+  const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
 
   const { data: asoItems = [] } = useQuery({
     queryKey: ["agenda-aso"],
@@ -128,7 +132,44 @@ function AgendaInteligente() {
     },
   });
 
-  const all = useMemo(() => [...asoItems, ...convItems, ...trainItems], [asoItems, convItems, trainItems]);
+  // 4ª fonte: colaboradores ATIVOS sem nenhum ASO registrado.
+  // Entram como "vencidos" — a base do dias = data de admissão.
+  const { data: semAsoItems = [] } = useQuery({
+    queryKey: ["agenda-sem-aso"],
+    queryFn: async () => {
+      const { data: ativos } = await supabase
+        .from("employees")
+        .select("id, nome, admissao, roles(name)")
+        .eq("status", "ATIVO")
+        .limit(2000);
+      const { data: exames } = await supabase
+        .from("employee_exams")
+        .select("employee_id")
+        .limit(5000);
+      const comAso = new Set((exames ?? []).map((e: any) => e.employee_id));
+      return (ativos ?? [])
+        .filter((e: any) => !comAso.has(e.id))
+        .map<Item>((e: any) => {
+          const adm = e.admissao ?? new Date().toISOString().slice(0, 10);
+          return {
+            id: `semaso-${e.id}`,
+            tipo: "SEM_ASO" as Tipo,
+            employeeId: e.id,
+            employeeNome: e.nome ?? "—",
+            cargo: e.roles?.name,
+            titulo: "Sem ASO cadastrado",
+            data: adm,
+            diasAteVencer: -Math.max(1, Math.abs(daysBetween(adm))),
+            detalhe: e.admissao ? `Admitido em ${formatDateBR(e.admissao)}` : "Sem data de admissão",
+          };
+        });
+    },
+  });
+
+  const all = useMemo(
+    () => [...asoItems, ...convItems, ...trainItems, ...semAsoItems],
+    [asoItems, convItems, trainItems, semAsoItems],
+  );
 
   const filtered = useMemo(() => {
     const limite =
@@ -154,17 +195,48 @@ function AgendaInteligente() {
     proximos: all.filter(i => i.diasAteVencer > 30 && i.diasAteVencer <= 90).length,
   };
 
+  function imprimirPDF() {
+    const janelaLabel =
+      janela === "VENCIDOS" ? "Vencidos" : janela === "TODOS" ? "Todos" : `Próximos ${janela} dias`;
+    const tipoLabel =
+      tipo === "TODOS" ? "Todos" :
+      tipo === "ASO" ? "ASO" :
+      tipo === "CONVOCACAO" ? "Convocações" :
+      tipo === "SEM_ASO" ? "Sem ASO" : "Treinamentos";
+    const doc = gerarAgendaInteligentePDF({
+      janelaLabel,
+      tipoLabel,
+      itens: filtered.map(i => ({
+        tipo: i.tipo as any,
+        employeeNome: i.employeeNome,
+        cargo: i.cargo,
+        titulo: i.titulo,
+        data: i.data,
+        diasAteVencer: i.diasAteVencer,
+        detalhe: i.detalhe,
+      })),
+    });
+    setPdfDoc(doc);
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a0408] via-rose-950/30 to-[#1a0408] p-4 md:p-6 text-rose-50">
       <div className="max-w-7xl mx-auto space-y-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-700 grid place-items-center shadow-lg shadow-rose-900/40">
             <CalendarCheck2 className="h-6 w-6 text-white" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-xl md:text-2xl font-bold">Agenda Inteligente — SST</h1>
             <p className="text-xs text-rose-200/60">Cruza ASOs, Convocações e Treinamentos em uma linha do tempo única (NR-7 + NR-1).</p>
           </div>
+          <Button
+            onClick={imprimirPDF}
+            disabled={filtered.length === 0}
+            className="bg-rose-600 hover:bg-rose-700 text-white h-9"
+          >
+            <Printer className="h-4 w-4 mr-2" /> Imprimir PDF
+          </Button>
         </div>
 
         {/* KPIs */}
@@ -188,11 +260,11 @@ function AgendaInteligente() {
           </div>
           <div className="w-px h-6 bg-rose-100/15" />
           <div className="flex gap-1">
-            {(["TODOS", "ASO", "CONVOCACAO", "TREINAMENTO"] as const).map(t => (
+            {(["TODOS", "ASO", "CONVOCACAO", "SEM_ASO", "TREINAMENTO"] as const).map(t => (
               <Button key={t} size="sm" variant={tipo === t ? "default" : "outline"}
                 onClick={() => setTipo(t)}
                 className={tipo === t ? "bg-rose-600 hover:bg-rose-700 h-8 text-xs" : "h-8 text-xs bg-transparent border-rose-100/20 text-rose-100 hover:bg-rose-100/5"}>
-                {t === "TODOS" ? "Todos" : t === "ASO" ? "ASO" : t === "CONVOCACAO" ? "Convocações" : "Treinos"}
+                {t === "TODOS" ? "Todos" : t === "ASO" ? "ASO" : t === "CONVOCACAO" ? "Convocações" : t === "SEM_ASO" ? "Sem ASO" : "Treinos"}
               </Button>
             ))}
           </div>
@@ -212,7 +284,10 @@ function AgendaInteligente() {
           ) : (
             filtered.map(item => {
               const tone = toneFor(item.diasAteVencer);
-              const Icon = item.tipo === "ASO" ? Stethoscope : item.tipo === "TREINAMENTO" ? GraduationCap : FileText;
+              const Icon =
+                item.tipo === "ASO" ? Stethoscope :
+                item.tipo === "TREINAMENTO" ? GraduationCap :
+                item.tipo === "SEM_ASO" ? UserX : FileText;
               return (
                 <div key={item.id}
                   className={`p-3 rounded-xl border ${tone.bg} backdrop-blur-md flex items-center gap-3 hover:bg-rose-100/[0.06] transition`}>
@@ -253,6 +328,13 @@ function AgendaInteligente() {
           onClose={() => setGuiaId(null)}
         />
       )}
+      <PDFPreviewDialog
+        open={!!pdfDoc}
+        onClose={() => setPdfDoc(null)}
+        doc={pdfDoc}
+        fileName={`agenda-sst-${new Date().toISOString().slice(0, 10)}.pdf`}
+        title="Agenda Inteligente — SST"
+      />
     </div>
   );
 }
