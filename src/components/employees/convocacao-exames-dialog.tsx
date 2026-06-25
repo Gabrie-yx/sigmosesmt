@@ -725,6 +725,129 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
 
         {/* Lista */}
         <div className="flex-1 overflow-y-auto -mx-6 px-6">
+          {/* Barra de ação em massa */}
+          {selectedIds.size > 0 && (
+            <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 mb-2 rounded-xl border border-rose-400/40 bg-gradient-to-r from-rose-500/20 to-rose-600/10 px-3 py-2 backdrop-blur">
+              <Users className="h-4 w-4 text-rose-200" />
+              <span className="text-xs font-bold text-rose-100">
+                {selectedIds.size} selecionado{selectedIds.size > 1 ? "s" : ""}
+              </span>
+              <span className="text-[10px] text-rose-200/70 hidden sm:inline">
+                · agrupa por mesma lista de exames; cargas diferentes geram ofícios separados
+              </span>
+              <div className="ml-auto flex gap-2">
+                <Button
+                  size="sm" variant="outline"
+                  className="h-8 bg-white/5 border-white/15 text-white hover:bg-white/10"
+                  onClick={() => setSelectedIds(new Set())}
+                >Limpar</Button>
+                <Button
+                  size="sm"
+                  disabled={batchLoading}
+                  className="h-8 bg-rose-500/30 border border-rose-300/50 text-rose-50 hover:bg-rose-500/50"
+                  onClick={async () => {
+                    if (!solicitante.trim()) { toast.error("Preencha o solicitante antes."); return; }
+                    setBatchLoading(true);
+                    try {
+                      const natureza = naturezaFromTipoExame(tipoExame);
+                      const selecionados = (linha as any[]).filter((r) => selectedIds.has(r.emp.id));
+                      // Resolve exames de cada funcionário
+                      const enriched = await Promise.all(
+                        selecionados.map(async (r) => {
+                          const exames = await resolverExamesFuncionario(r.emp.id, natureza);
+                          return { ...r, exames };
+                        }),
+                      );
+                      // Agrupa por (empresa + assinatura de exames)
+                      const grupos = new Map<string, { empresaNome: string; exames: ExameResolvido[]; funcs: any[] }>();
+                      enriched.forEach((r) => {
+                        const sig = `${r.emp.company_id ?? "-"}::${assinaturaExames(r.exames)}`;
+                        const cur = grupos.get(sig);
+                        if (cur) cur.funcs.push(r);
+                        else grupos.set(sig, {
+                          empresaNome: (cMap.get(r.emp.company_id) as string) ?? "",
+                          exames: r.exames,
+                          funcs: [r],
+                        });
+                      });
+
+                      const { data: userRes } = await supabase.auth.getUser();
+                      const dl = new Date(); dl.setDate(dl.getDate() + 30);
+                      let idx = 0;
+                      let lastPdf: { doc: jsPDFType; fileName: string; title: string } | null = null;
+                      for (const [, grupo] of grupos) {
+                        idx++;
+                        const numeroOficio = `${String(Date.now()).slice(-5)}-${idx}/${new Date().getFullYear()}`;
+                        const ctx: OficioCtx = { solicitante, setor, destino, horario, tipoExame, numeroOficio };
+
+                        if (grupo.funcs.length >= 2) {
+                          const pdf = await criarOficioColetivoPDF(
+                            grupo.empresaNome,
+                            grupo.funcs.map((f: any) => ({
+                              emp: f.emp,
+                              cargo: (rMap.get(f.emp.role_id) as string) ?? "",
+                              asoData: f.asoData,
+                              proximo: f.proximo,
+                            })),
+                            grupo.exames,
+                            ctx,
+                          );
+                          // Persiste 1 convocação por funcionário
+                          for (const f of grupo.funcs) {
+                            await supabase.from("convocacoes_exames").insert({
+                              employee_id: f.emp.id,
+                              janela,
+                              tipos_exame: [tipoExame, ...grupo.exames.map((e) => e.procedimento)].slice(0, 20),
+                              data_limite: dl.toISOString().slice(0, 10),
+                              convocado_por: userRes.user?.id ?? null,
+                              observacoes: `Ofício coletivo ${numeroOficio} — ${grupo.funcs.length} convocados — destino: ${destino}`,
+                            });
+                          }
+                          if (!lastPdf) {
+                            lastPdf = { ...pdf, title: `Ofício coletivo — ${grupo.funcs.length} convocados` };
+                          } else {
+                            pdf.doc.save(pdf.fileName);
+                          }
+                        } else {
+                          const f = grupo.funcs[0];
+                          const pdf = await criarOficioPDF(
+                            f.emp, f.asoData, f.proximo,
+                            (rMap.get(f.emp.role_id) as string) ?? "",
+                            grupo.empresaNome,
+                            ctx, grupo.exames,
+                          );
+                          await supabase.from("convocacoes_exames").insert({
+                            employee_id: f.emp.id,
+                            janela,
+                            tipos_exame: [tipoExame, ...grupo.exames.map((e) => e.procedimento)].slice(0, 20),
+                            data_limite: dl.toISOString().slice(0, 10),
+                            convocado_por: userRes.user?.id ?? null,
+                            observacoes: `Ofício ${numeroOficio} — destino: ${destino}`,
+                          });
+                          if (!lastPdf) {
+                            lastPdf = { ...pdf, title: `Ofício — ${f.emp.nome}` };
+                          } else {
+                            pdf.doc.save(pdf.fileName);
+                          }
+                        }
+                      }
+                      if (lastPdf) setPdfPreview(lastPdf);
+                      toast.success(`${grupos.size} ofício${grupos.size > 1 ? "s" : ""} gerado${grupos.size > 1 ? "s" : ""} para ${selectedIds.size} convocado${selectedIds.size > 1 ? "s" : ""}.`);
+                      setSelectedIds(new Set());
+                    } catch (err: any) {
+                      toast.error(`Falha ao gerar em massa: ${err.message ?? err}`);
+                    } finally {
+                      setBatchLoading(false);
+                    }
+                  }}
+                >
+                  <ListChecks className="h-4 w-4 mr-1" />
+                  {batchLoading ? "Gerando…" : `Convocar ${selectedIds.size}`}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {linha.length === 0 ? (
             <div className="text-center py-16 text-slate-400">
               <CalendarCheck className="h-12 w-12 mx-auto mb-3 opacity-50" />
