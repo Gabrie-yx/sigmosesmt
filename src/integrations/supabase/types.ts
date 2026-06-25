@@ -4492,6 +4492,81 @@ export type Database = {
           },
         ]
       }
+      prestadores_saude: {
+        Row: {
+          ativo: boolean
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          complemento: string | null
+          contato_responsavel: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          especialidades: string[]
+          horario_atendimento: string | null
+          id: string
+          logradouro: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          observacoes: string | null
+          razao_social: string
+          telefone: string | null
+          tipos_guia_esocial: string[]
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          complemento?: string | null
+          contato_responsavel?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          especialidades?: string[]
+          horario_atendimento?: string | null
+          id?: string
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          razao_social: string
+          telefone?: string | null
+          tipos_guia_esocial?: string[]
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          complemento?: string | null
+          contato_responsavel?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          especialidades?: string[]
+          horario_atendimento?: string | null
+          id?: string
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          razao_social?: string
+          telefone?: string | null
+          tipos_guia_esocial?: string[]
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       procedimento_cientes: {
         Row: {
           created_at: string
