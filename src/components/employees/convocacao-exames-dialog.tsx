@@ -703,12 +703,9 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                 <SelectValue placeholder="Tipo de exame" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Exame Médico Admissional">Admissional</SelectItem>
-                <SelectItem value="Exame Médico Periódico">Periódico</SelectItem>
-                <SelectItem value="Exame Médico de Retorno ao Trabalho">Retorno ao Trabalho</SelectItem>
-                <SelectItem value="Exame Médico de Mudança de Função">Mudança de Função</SelectItem>
-                <SelectItem value="Exame Médico Demissional">Demissional</SelectItem>
-                <SelectItem value="Exame Médico Complementar">Complementar</SelectItem>
+                {TIPO_EXAME_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.value.replace("Exame Médico ", "")}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Input
