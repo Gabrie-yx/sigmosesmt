@@ -95,6 +95,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
     title: "Catálogos",
     items: [
       { to: "/app/sesmt/catalogos/gases", label: "Gases Atmosféricos (NR-33)", icon: Wind },
+      { to: "/app/sesmt/prestadores", label: "Prestadores de Saúde", icon: Stethoscope },
     ],
   },
   {
