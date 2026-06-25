@@ -36,6 +36,7 @@ function classifyEmp(emp: Emp, role: Role | undefined): Health {
   if (!role.req_aso) return "ok";
   if (!emp.data_aso) return "danger";
   const d = daysUntil(emp.data_aso);
+  if (d == null) return "danger";
   if (d < 0) return "danger";
   if (d <= 30) return "warn";
   return "ok";
