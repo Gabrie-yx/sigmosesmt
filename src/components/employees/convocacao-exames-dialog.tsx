@@ -525,6 +525,8 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
   const [q, setQ] = useState("");
   const [pdfPreview, setPdfPreview] = useState<{ doc: jsPDFType; fileName: string; title: string } | null>(null);
   const [whatsPreview, setWhatsPreview] = useState<{ nome: string; phone: string; message: string } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchLoading, setBatchLoading] = useState(false);
 
   // Dados da solicitação do ofício (persistidos localmente)
   const [solicitante, setSolicitante] = useState("");
@@ -554,6 +556,9 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
       );
     } catch { /* ignore */ }
   }, [solicitante, setor, destino, horario, tipoExame]);
+
+  // Reseta seleção ao trocar filtros para evitar manter IDs invisíveis
+  useEffect(() => { setSelectedIds(new Set()); }, [companyFilter, janela]);
 
   const { data: emps } = useQuery({
     queryKey: ["employees-convocacao"],
