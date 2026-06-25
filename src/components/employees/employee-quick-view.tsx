@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { formatDateBR } from "@/lib/utils-date";
 import { useMemo } from "react";
+import { openStorageFile } from "@/components/file-viewer";
 
 type Props = {
   employeeId: string | null;
@@ -67,7 +68,7 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
     queryFn: async () => {
       const { data } = await supabase
         .from("employee_exams")
-        .select("id, tipo_exame, natureza, data_realizacao, data_vencimento, aptidao, periodicidade_meses")
+        .select("id, tipo_exame, natureza, data_realizacao, data_vencimento, aptidao, periodicidade_meses, anexo_path")
         .eq("employee_id", employeeId!)
         .order("data_realizacao", { ascending: false });
       return data ?? [];
@@ -123,7 +124,7 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
     queryFn: async () => {
       const { data } = await supabase
         .from("convocacoes_exames")
-        .select("id, tipos_exame, convocado_em, data_limite, status")
+        .select("id, tipos_exame, convocado_em, data_limite, status, atendida_exam_id, atendida_em, employee_exams:atendida_exam_id(anexo_path)")
         .eq("employee_id", employeeId!)
         .order("convocado_em", { ascending: false })
         .limit(20);
@@ -305,24 +306,45 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
                             icon={Stethoscope}
                             title={`${e.natureza ?? e.tipo_exame}`}
                             subtitle={`Realizado ${formatDateBR(e.data_realizacao)}${e.aptidao ? " · " + e.aptidao : ""}`}
-                            right={<Badge variant="outline" className={`${toneCls[sem.tone]} text-[10px]`}>{sem.label}</Badge>}
+                            right={
+                              <div className="flex items-center gap-1.5">
+                                {e.anexo_path && (
+                                  <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-rose-200 hover:text-white hover:bg-rose-500/20"
+                                    onClick={() => openStorageFile("employee-docs", e.anexo_path, `ASO_${e.natureza ?? e.tipo_exame}_${e.data_realizacao}.pdf`)}>
+                                    <FileText className="h-3 w-3 mr-1" />PDF
+                                  </Button>
+                                )}
+                                <Badge variant="outline" className={`${toneCls[sem.tone]} text-[10px]`}>{sem.label}</Badge>
+                              </div>
+                            }
                           />
                         );
                       })}
                     </Section>
                     <Section title="Convocações" empty={(convocacoes?.length ?? 0) === 0}>
-                      {(convocacoes ?? []).map((c: any) => (
-                        <Row key={c.id}
-                          icon={FileText}
-                          title={(c.tipos_exame ?? []).join(", ") || "Convocação"}
-                          subtitle={`Convocado ${formatDateBR(c.convocado_em?.slice(0, 10))}${c.data_limite ? " · prazo " + formatDateBR(c.data_limite) : ""}`}
-                          right={
-                            <Badge variant="outline" className={`text-[10px] ${c.status === "ATENDIDA" ? toneCls.green : c.status === "PENDENTE" ? toneCls.amber : toneCls.muted}`}>
-                              {c.status}
-                            </Badge>
-                          }
-                        />
-                      ))}
+                      {(convocacoes ?? []).map((c: any) => {
+                        const asoPath = c.employee_exams?.anexo_path as string | undefined;
+                        return (
+                          <Row key={c.id}
+                            icon={FileText}
+                            title={(c.tipos_exame ?? []).join(", ") || "Convocação"}
+                            subtitle={`Convocado ${formatDateBR(c.convocado_em?.slice(0, 10))}${c.data_limite ? " · prazo " + formatDateBR(c.data_limite) : ""}${c.atendida_em ? " · atendida " + formatDateBR(c.atendida_em.slice(0,10)) : ""}`}
+                            right={
+                              <div className="flex items-center gap-1.5">
+                                {asoPath && (
+                                  <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-emerald-200 hover:text-white hover:bg-emerald-500/20"
+                                    onClick={() => openStorageFile("employee-docs", asoPath, `ASO_convocacao.pdf`)}>
+                                    <FileText className="h-3 w-3 mr-1" />ASO
+                                  </Button>
+                                )}
+                                <Badge variant="outline" className={`text-[10px] ${c.status === "ATENDIDA" ? toneCls.green : c.status === "PENDENTE" ? toneCls.amber : toneCls.muted}`}>
+                                  {c.status}
+                                </Badge>
+                              </div>
+                            }
+                          />
+                        );
+                      })}
                     </Section>
                     <Section title="Atestados" empty={(atestados?.length ?? 0) === 0}>
                       {(atestados ?? []).map((a: any) => (
