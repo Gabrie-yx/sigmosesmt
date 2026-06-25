@@ -6,11 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { lazy, Suspense } from "react";
-import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink } from "lucide-react";
+import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink, Users, ListChecks } from "lucide-react";
 import type jsPDFType from "jspdf";
 import { EMPRESA_INFO } from "@/lib/empresa-info";
 import { toast } from "sonner";
+import {
+  resolverExamesFuncionario,
+  naturezaFromTipoExame,
+  assinaturaExames,
+  TIPO_EXAME_OPTIONS,
+  type ExameResolvido,
+} from "@/lib/resolver-exames";
 
 // Lazy: PDFPreviewDialog (e suas libs de render) e jspdf só carregam ao gerar/visualizar PDF.
 const PDFPreviewDialog = lazy(() =>
@@ -92,6 +100,7 @@ async function criarOficioPDF(
   cargo: string,
   empresa: string,
   ctx: OficioCtx,
+  exames: ExameResolvido[] = [],
 ) {
   const hojeDate = new Date();
   const hoje = hojeDate.toLocaleDateString("pt-BR");
@@ -205,6 +214,57 @@ async function criarOficioPDF(
     y += lines.length * 5.5 + 3;
   });
 
+  // Lista de exames a realizar (resolvida via risco_exames + base por natureza)
+  if (exames.length > 0) {
+    y += 2;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(15, 23, 42);
+    doc.text("EXAMES A REALIZAR", MARGIN, y);
+    y += 4;
+    doc.setDrawColor(100, 116, 139);
+    doc.setLineWidth(0.2);
+    const rowH = 6;
+    const headH = 6;
+    doc.setFillColor(241, 245, 249);
+    doc.rect(MARGIN, y, maxW, headH, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.text("Código", MARGIN + 2, y + 4);
+    doc.text("Procedimento", MARGIN + 22, y + 4);
+    doc.text("Motivo / Base", MARGIN + maxW - 60, y + 4);
+    y += headH;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    exames.forEach((ex, idx) => {
+      if (y > 250) { doc.addPage(); y = 20; }
+      if (idx % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(MARGIN, y, maxW, rowH, "F");
+      }
+      doc.setTextColor(15, 23, 42);
+      doc.text(ex.codigo || "—", MARGIN + 2, y + 4);
+      const proc = doc.splitTextToSize(ex.procedimento, maxW - 84)[0] || ex.procedimento;
+      doc.text(proc, MARGIN + 22, y + 4);
+      const motivo = doc.splitTextToSize(ex.motivo || ex.origem, 58)[0] || ex.motivo;
+      doc.setTextColor(71, 85, 105);
+      doc.text(motivo, MARGIN + maxW - 60, y + 4);
+      y += rowH;
+    });
+    doc.setDrawColor(100, 116, 139);
+    doc.rect(MARGIN, y - rowH * exames.length - headH, maxW, headH + rowH * exames.length, "S");
+    doc.setTextColor(15, 23, 42);
+    y += 4;
+    doc.setFontSize(7.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(
+      "Lista gerada automaticamente pelo SIGMO cruzando os riscos do cargo (PGR) com a matriz risco-exames NR-7.",
+      MARGIN, y,
+    );
+    doc.setTextColor(15, 23, 42);
+    y += 6;
+  }
+
   // Assinaturas (lado a lado: solicitante + ciência do colaborador)
   y = Math.max(y + 14, 220);
   const colW = (maxW - 10) / 2;
@@ -264,6 +324,180 @@ async function criarOficioPDF(
   return { doc, fileName: nomeArq };
 }
 
+type FuncionarioConvocado = {
+  emp: any;
+  cargo: string;
+  asoData: Date | null;
+  proximo: Date | null;
+};
+
+async function criarOficioColetivoPDF(
+  empresaNome: string,
+  funcionarios: FuncionarioConvocado[],
+  exames: ExameResolvido[],
+  ctx: OficioCtx,
+) {
+  const hoje = new Date().toLocaleDateString("pt-BR");
+  const [{ default: JsPDF }, { drawPdfHeader }] = await Promise.all([
+    import("jspdf"),
+    import("@/lib/pdf-header"),
+  ]);
+  const doc = new JsPDF({ unit: "mm", format: "a4" });
+  const W = doc.internal.pageSize.getWidth();
+  const MARGIN = 14;
+  const maxW = W - MARGIN * 2;
+
+  let y = drawPdfHeader(doc, {
+    titulo: "Ofício Coletivo — Convocação de Exames Médicos Ocupacionais",
+    subtitulo: "SESMT · NR-7 / PCMSO",
+    responsavel: ctx.solicitante || "SESMT",
+  });
+  y += 2;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(`OFÍCIO Nº ${ctx.numeroOficio}`, MARGIN, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Manaus/AM, ${hoje}`, W - MARGIN, y, { align: "right" });
+  y += 7;
+
+  // Cabeçalho dados solicitação
+  doc.setDrawColor(100, 116, 139);
+  doc.setFillColor(241, 245, 249);
+  doc.roundedRect(MARGIN, y, maxW, 24, 1.5, 1.5, "FD");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+  doc.text("DADOS DA SOLICITAÇÃO", MARGIN + 3, y + 4.5);
+  doc.setFontSize(9.5);
+  const drawKV = (k: string, v: string, x: number, yy: number) => {
+    doc.setFont("helvetica", "bold"); doc.text(k, x, yy);
+    doc.setFont("helvetica", "normal");
+    const kw = doc.getTextWidth(k) + 1.5;
+    doc.text(v || "—", x + kw, yy);
+  };
+  drawKV("Solicitante:", ctx.solicitante, MARGIN + 3, y + 11);
+  drawKV("Setor:", ctx.setor, MARGIN + 3, y + 17);
+  drawKV("Tipo:", ctx.tipoExame, MARGIN + 3, y + 22);
+  drawKV("Local:", ctx.destino, MARGIN + maxW / 2 + 2, y + 11);
+  drawKV("Horário:", ctx.horario, MARGIN + maxW / 2 + 2, y + 17);
+  drawKV("Empresa:", empresaNome || "—", MARGIN + maxW / 2 + 2, y + 22);
+  y += 30;
+
+  doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+  doc.text("CONVOCADOS", MARGIN, y); y += 5;
+
+  // Tabela funcionários
+  const cols = [
+    { k: "n", t: "#", w: 8 },
+    { k: "nome", t: "Nome", w: 70 },
+    { k: "mat", t: "Matrícula", w: 22 },
+    { k: "cargo", t: "Função", w: 50 },
+    { k: "aso", t: "Último ASO", w: 22 },
+    { k: "prox", t: "Vence em", w: 20 },
+  ];
+  const totalW = cols.reduce((s, c) => s + c.w, 0);
+  const scale = maxW / totalW;
+  cols.forEach((c) => (c.w = c.w * scale));
+  const headH = 6, rowH = 6;
+  doc.setFillColor(15, 23, 42);
+  doc.rect(MARGIN, y, maxW, headH, "F");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8.5);
+  doc.setTextColor(255, 255, 255);
+  let cx = MARGIN;
+  cols.forEach((c) => { doc.text(c.t, cx + 1.5, y + 4); cx += c.w; });
+  y += headH;
+  doc.setTextColor(15, 23, 42);
+  doc.setFont("helvetica", "normal");
+  funcionarios.forEach((f, idx) => {
+    if (y > 255) { doc.addPage(); y = 20; }
+    if (idx % 2 === 0) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(MARGIN, y, maxW, rowH, "F");
+    }
+    cx = MARGIN;
+    const vals = [
+      String(idx + 1),
+      String(f.emp.nome ?? "—").toUpperCase(),
+      String(f.emp.matricula ?? "—"),
+      f.cargo || "—",
+      f.asoData ? f.asoData.toLocaleDateString("pt-BR") : "—",
+      f.proximo ? f.proximo.toLocaleDateString("pt-BR") : "—",
+    ];
+    cols.forEach((c, i) => {
+      const txt = doc.splitTextToSize(vals[i], c.w - 2)[0] || vals[i];
+      doc.text(txt, cx + 1.5, y + 4);
+      cx += c.w;
+    });
+    y += rowH;
+  });
+  doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.2);
+  doc.rect(MARGIN, y - rowH * funcionarios.length - headH, maxW, headH + rowH * funcionarios.length, "S");
+  y += 6;
+
+  // Corpo
+  if (y > 230) { doc.addPage(); y = 20; }
+  doc.setFont("helvetica", "normal"); doc.setFontSize(10.5);
+  const corpo = [
+    `Em cumprimento à NR-7 (PCMSO) e ao SGI-SST da ${EMPRESA_INFO.razao_social}, ficam CONVOCADOS os colaboradores listados acima para realização de ${ctx.tipoExame}.`,
+    `Local: ${ctx.destino || "—"} — Horário: ${ctx.horario || "a confirmar"}.`,
+    "Prazo máximo para comparecimento: 15 (quinze) dias a contar do recebimento. O não comparecimento sem justificativa formal poderá acarretar as medidas administrativas previstas.",
+  ];
+  corpo.forEach((p) => {
+    const lines = doc.splitTextToSize(p, maxW);
+    doc.text(lines, MARGIN, y, { align: "justify", maxWidth: maxW });
+    y += lines.length * 5.5 + 3;
+  });
+
+  // Exames a realizar (comuns ao grupo)
+  if (exames.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+    doc.text("EXAMES A REALIZAR (TODOS DO GRUPO)", MARGIN, y);
+    y += 4;
+    doc.setFillColor(241, 245, 249);
+    doc.rect(MARGIN, y, maxW, headH, "FD");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(8.5);
+    doc.text("Código", MARGIN + 2, y + 4);
+    doc.text("Procedimento", MARGIN + 22, y + 4);
+    doc.text("Motivo / Base", MARGIN + maxW - 70, y + 4);
+    y += headH;
+    doc.setFont("helvetica", "normal");
+    exames.forEach((ex, idx) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      if (idx % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(MARGIN, y, maxW, rowH, "F");
+      }
+      doc.setTextColor(15, 23, 42);
+      doc.text(ex.codigo || "—", MARGIN + 2, y + 4);
+      const proc = doc.splitTextToSize(ex.procedimento, maxW - 94)[0] || ex.procedimento;
+      doc.text(proc, MARGIN + 22, y + 4);
+      doc.setTextColor(71, 85, 105);
+      const motivo = doc.splitTextToSize(ex.motivo || ex.origem, 68)[0] || ex.motivo;
+      doc.text(motivo, MARGIN + maxW - 70, y + 4);
+      y += rowH;
+    });
+  }
+
+  // Rodapé padrão em todas as páginas
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for (let p = 1; p <= pageCount; p++) {
+    doc.setPage(p);
+    doc.setFontSize(7.5); doc.setTextColor(60, 60, 60);
+    doc.text(
+      `${EMPRESA_INFO.razao_social} · CNPJ ${EMPRESA_INFO.cnpj} · ${EMPRESA_INFO.endereco} · ${EMPRESA_INFO.cidade_uf_cep}`,
+      W / 2, 287, { align: "center" },
+    );
+    doc.text(
+      `SIGMO — Ofício coletivo · ${hoje} · Pág. ${p}/${pageCount}`,
+      W / 2, 290.5, { align: "center" },
+    );
+  }
+
+  const fname = `oficio-coletivo-${empresaNome.toLowerCase().replace(/\s+/g, "-").slice(0, 30)}-${ctx.numeroOficio.replace(/\W/g, "")}.pdf`;
+  return { doc, fileName: fname };
+}
+
 async function copyText(text: string, label: string) {
   try {
     if (navigator.clipboard?.writeText) {
@@ -291,6 +525,8 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
   const [q, setQ] = useState("");
   const [pdfPreview, setPdfPreview] = useState<{ doc: jsPDFType; fileName: string; title: string } | null>(null);
   const [whatsPreview, setWhatsPreview] = useState<{ nome: string; phone: string; message: string } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchLoading, setBatchLoading] = useState(false);
 
   // Dados da solicitação do ofício (persistidos localmente)
   const [solicitante, setSolicitante] = useState("");
@@ -320,6 +556,9 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
       );
     } catch { /* ignore */ }
   }, [solicitante, setor, destino, horario, tipoExame]);
+
+  // Reseta seleção ao trocar filtros para evitar manter IDs invisíveis
+  useEffect(() => { setSelectedIds(new Set()); }, [companyFilter, janela]);
 
   const { data: emps } = useQuery({
     queryKey: ["employees-convocacao"],
@@ -464,12 +703,9 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                 <SelectValue placeholder="Tipo de exame" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Exame Médico Admissional">Admissional</SelectItem>
-                <SelectItem value="Exame Médico Periódico">Periódico</SelectItem>
-                <SelectItem value="Exame Médico de Retorno ao Trabalho">Retorno ao Trabalho</SelectItem>
-                <SelectItem value="Exame Médico de Mudança de Função">Mudança de Função</SelectItem>
-                <SelectItem value="Exame Médico Demissional">Demissional</SelectItem>
-                <SelectItem value="Exame Médico Complementar">Complementar</SelectItem>
+                {TIPO_EXAME_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.value.replace("Exame Médico ", "")}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Input
@@ -489,6 +725,129 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
 
         {/* Lista */}
         <div className="flex-1 overflow-y-auto -mx-6 px-6">
+          {/* Barra de ação em massa */}
+          {selectedIds.size > 0 && (
+            <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 mb-2 rounded-xl border border-rose-400/40 bg-gradient-to-r from-rose-500/20 to-rose-600/10 px-3 py-2 backdrop-blur">
+              <Users className="h-4 w-4 text-rose-200" />
+              <span className="text-xs font-bold text-rose-100">
+                {selectedIds.size} selecionado{selectedIds.size > 1 ? "s" : ""}
+              </span>
+              <span className="text-[10px] text-rose-200/70 hidden sm:inline">
+                · agrupa por mesma lista de exames; cargas diferentes geram ofícios separados
+              </span>
+              <div className="ml-auto flex gap-2">
+                <Button
+                  size="sm" variant="outline"
+                  className="h-8 bg-white/5 border-white/15 text-white hover:bg-white/10"
+                  onClick={() => setSelectedIds(new Set())}
+                >Limpar</Button>
+                <Button
+                  size="sm"
+                  disabled={batchLoading}
+                  className="h-8 bg-rose-500/30 border border-rose-300/50 text-rose-50 hover:bg-rose-500/50"
+                  onClick={async () => {
+                    if (!solicitante.trim()) { toast.error("Preencha o solicitante antes."); return; }
+                    setBatchLoading(true);
+                    try {
+                      const natureza = naturezaFromTipoExame(tipoExame);
+                      const selecionados = (linha as any[]).filter((r) => selectedIds.has(r.emp.id));
+                      // Resolve exames de cada funcionário
+                      const enriched = await Promise.all(
+                        selecionados.map(async (r) => {
+                          const exames = await resolverExamesFuncionario(r.emp.id, natureza);
+                          return { ...r, exames };
+                        }),
+                      );
+                      // Agrupa por (empresa + assinatura de exames)
+                      const grupos = new Map<string, { empresaNome: string; exames: ExameResolvido[]; funcs: any[] }>();
+                      enriched.forEach((r) => {
+                        const sig = `${r.emp.company_id ?? "-"}::${assinaturaExames(r.exames)}`;
+                        const cur = grupos.get(sig);
+                        if (cur) cur.funcs.push(r);
+                        else grupos.set(sig, {
+                          empresaNome: (cMap.get(r.emp.company_id) as string) ?? "",
+                          exames: r.exames,
+                          funcs: [r],
+                        });
+                      });
+
+                      const { data: userRes } = await supabase.auth.getUser();
+                      const dl = new Date(); dl.setDate(dl.getDate() + 30);
+                      let idx = 0;
+                      let lastPdf: { doc: jsPDFType; fileName: string; title: string } | null = null;
+                      for (const [, grupo] of grupos) {
+                        idx++;
+                        const numeroOficio = `${String(Date.now()).slice(-5)}-${idx}/${new Date().getFullYear()}`;
+                        const ctx: OficioCtx = { solicitante, setor, destino, horario, tipoExame, numeroOficio };
+
+                        if (grupo.funcs.length >= 2) {
+                          const pdf = await criarOficioColetivoPDF(
+                            grupo.empresaNome,
+                            grupo.funcs.map((f: any) => ({
+                              emp: f.emp,
+                              cargo: (rMap.get(f.emp.role_id) as string) ?? "",
+                              asoData: f.asoData,
+                              proximo: f.proximo,
+                            })),
+                            grupo.exames,
+                            ctx,
+                          );
+                          // Persiste 1 convocação por funcionário
+                          for (const f of grupo.funcs) {
+                            await supabase.from("convocacoes_exames").insert({
+                              employee_id: f.emp.id,
+                              janela,
+                              tipos_exame: [tipoExame, ...grupo.exames.map((e) => e.procedimento)].slice(0, 20),
+                              data_limite: dl.toISOString().slice(0, 10),
+                              convocado_por: userRes.user?.id ?? null,
+                              observacoes: `Ofício coletivo ${numeroOficio} — ${grupo.funcs.length} convocados — destino: ${destino}`,
+                            });
+                          }
+                          if (!lastPdf) {
+                            lastPdf = { ...pdf, title: `Ofício coletivo — ${grupo.funcs.length} convocados` };
+                          } else {
+                            pdf.doc.save(pdf.fileName);
+                          }
+                        } else {
+                          const f = grupo.funcs[0];
+                          const pdf = await criarOficioPDF(
+                            f.emp, f.asoData, f.proximo,
+                            (rMap.get(f.emp.role_id) as string) ?? "",
+                            grupo.empresaNome,
+                            ctx, grupo.exames,
+                          );
+                          await supabase.from("convocacoes_exames").insert({
+                            employee_id: f.emp.id,
+                            janela,
+                            tipos_exame: [tipoExame, ...grupo.exames.map((e) => e.procedimento)].slice(0, 20),
+                            data_limite: dl.toISOString().slice(0, 10),
+                            convocado_por: userRes.user?.id ?? null,
+                            observacoes: `Ofício ${numeroOficio} — destino: ${destino}`,
+                          });
+                          if (!lastPdf) {
+                            lastPdf = { ...pdf, title: `Ofício — ${f.emp.nome}` };
+                          } else {
+                            pdf.doc.save(pdf.fileName);
+                          }
+                        }
+                      }
+                      if (lastPdf) setPdfPreview(lastPdf);
+                      toast.success(`${grupos.size} ofício${grupos.size > 1 ? "s" : ""} gerado${grupos.size > 1 ? "s" : ""} para ${selectedIds.size} convocado${selectedIds.size > 1 ? "s" : ""}.`);
+                      setSelectedIds(new Set());
+                    } catch (err: any) {
+                      toast.error(`Falha ao gerar em massa: ${err.message ?? err}`);
+                    } finally {
+                      setBatchLoading(false);
+                    }
+                  }}
+                >
+                  <ListChecks className="h-4 w-4 mr-1" />
+                  {batchLoading ? "Gerando…" : `Convocar ${selectedIds.size}`}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {linha.length === 0 ? (
             <div className="text-center py-16 text-slate-400">
               <CalendarCheck className="h-12 w-12 mx-auto mb-3 opacity-50" />
@@ -506,6 +865,17 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                     className={`flex flex-col md:flex-row md:items-center gap-3 rounded-xl border p-3 ${st.bg}`}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Checkbox
+                        checked={selectedIds.has(emp.id)}
+                        onCheckedChange={(v) => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (v) next.add(emp.id); else next.delete(emp.id);
+                            return next;
+                          });
+                        }}
+                        className="border-white/30 data-[state=checked]:bg-rose-500 data-[state=checked]:border-rose-500"
+                      />
                       <div className="h-11 w-11 rounded-full bg-white/10 overflow-hidden flex-shrink-0 ring-1 ring-white/20">
                         {emp.foto_url ? (
                           <img src={emp.foto_url} alt="" className="h-full w-full object-cover" />
@@ -567,6 +937,12 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                             return;
                           }
                           const numeroOficio = `${String(Date.now()).slice(-6)}/${new Date().getFullYear()}`;
+                          let exames: ExameResolvido[] = [];
+                          try {
+                            exames = await resolverExamesFuncionario(emp.id, naturezaFromTipoExame(tipoExame));
+                          } catch (err: any) {
+                            toast.warning(`Não consegui resolver exames automaticamente: ${err.message ?? err}`);
+                          }
                           const pdf = await criarOficioPDF(
                             emp,
                             asoData,
@@ -574,6 +950,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                             (rMap.get(emp.role_id) as string) ?? "",
                             (cMap.get(emp.company_id) as string) ?? "",
                             { solicitante, setor, destino, horario, tipoExame, numeroOficio },
+                            exames,
                           );
                           setPdfPreview({ ...pdf, title: `Ofício de convocação — ${emp.nome ?? "Funcionário"}` });
                           // Grava convocação no banco (fecha automaticamente quando o ASO for registrado)
@@ -584,7 +961,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                             const { error: insErr } = await supabase.from("convocacoes_exames").insert({
                               employee_id: emp.id,
                               janela,
-                              tipos_exame: [tipoExame || "ASO Periódico"],
+                              tipos_exame: [tipoExame || "ASO Periódico", ...exames.map((e) => e.procedimento)].slice(0, 20),
                               data_limite: dl.toISOString().slice(0, 10),
                               convocado_por: userRes.user?.id ?? null,
                               observacoes: `Ofício ${numeroOficio} — destino: ${destino}`,
@@ -609,7 +986,8 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
         </div>
 
         <div className="text-[10px] text-slate-400 border-t border-white/10 pt-3">
-          💡 Periodicidade padrão = 12 meses. Em breve: por cargo/risco (NR-7 6 meses para insalubres).
+          💡 Os exames de cada ofício são resolvidos automaticamente cruzando os <b>riscos do cargo (PGR)</b> com a <b>matriz risco × exames (NR-7)</b>.
+          Selecione vários funcionários e clique <b>Convocar X</b> — quem compartilha a mesma lista de exames entra no mesmo ofício coletivo; cargas diferentes geram ofícios separados.
         </div>
       </DialogContent>
     </Dialog>
