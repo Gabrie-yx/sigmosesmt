@@ -3042,6 +3042,47 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_natureza_base: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          exam_id: string
+          id: string
+          natureza: string
+          obrigatorio: boolean
+          observacao: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          exam_id: string
+          id?: string
+          natureza: string
+          obrigatorio?: boolean
+          observacao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          exam_id?: string
+          id?: string
+          natureza?: string
+          obrigatorio?: boolean
+          observacao?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_natureza_base_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exam_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       extintor_inspecoes: {
         Row: {
           conforme: boolean
@@ -5880,6 +5921,66 @@ export type Database = {
           },
         ]
       }
+      risco_exames: {
+        Row: {
+          ativo: boolean
+          base_legal: string | null
+          created_at: string
+          created_by: string | null
+          exam_id: string
+          id: string
+          naturezas: string[]
+          obrigatorio: boolean
+          observacao: string | null
+          periodicidade_meses: number | null
+          risco_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          base_legal?: string | null
+          created_at?: string
+          created_by?: string | null
+          exam_id: string
+          id?: string
+          naturezas?: string[]
+          obrigatorio?: boolean
+          observacao?: string | null
+          periodicidade_meses?: number | null
+          risco_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          base_legal?: string | null
+          created_at?: string
+          created_by?: string | null
+          exam_id?: string
+          id?: string
+          naturezas?: string[]
+          obrigatorio?: boolean
+          observacao?: string | null
+          periodicidade_meses?: number | null
+          risco_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risco_exames_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exam_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "risco_exames_risco_id_fkey"
+            columns: ["risco_id"]
+            isOneToOne: false
+            referencedRelation: "catalogo_riscos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roles: {
         Row: {
           atividades: string | null
@@ -6771,6 +6872,17 @@ export type Database = {
         Returns: string
       }
       requires_mfa: { Args: { _user_id: string }; Returns: boolean }
+      resolver_exames_funcionario: {
+        Args: { _employee_id: string; _natureza: string }
+        Returns: {
+          codigo: string
+          exam_id: string
+          motivo: string
+          obrigatorio: boolean
+          origem: string
+          procedimento: string
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       snapshot_estoque_epi_monthly: { Args: never; Returns: undefined }
