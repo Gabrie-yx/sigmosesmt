@@ -214,6 +214,57 @@ async function criarOficioPDF(
     y += lines.length * 5.5 + 3;
   });
 
+  // Lista de exames a realizar (resolvida via risco_exames + base por natureza)
+  if (exames.length > 0) {
+    y += 2;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(15, 23, 42);
+    doc.text("EXAMES A REALIZAR", MARGIN, y);
+    y += 4;
+    doc.setDrawColor(100, 116, 139);
+    doc.setLineWidth(0.2);
+    const rowH = 6;
+    const headH = 6;
+    doc.setFillColor(241, 245, 249);
+    doc.rect(MARGIN, y, maxW, headH, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.text("Código", MARGIN + 2, y + 4);
+    doc.text("Procedimento", MARGIN + 22, y + 4);
+    doc.text("Motivo / Base", MARGIN + maxW - 60, y + 4);
+    y += headH;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    exames.forEach((ex, idx) => {
+      if (y > 250) { doc.addPage(); y = 20; }
+      if (idx % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(MARGIN, y, maxW, rowH, "F");
+      }
+      doc.setTextColor(15, 23, 42);
+      doc.text(ex.codigo || "—", MARGIN + 2, y + 4);
+      const proc = doc.splitTextToSize(ex.procedimento, maxW - 84)[0] || ex.procedimento;
+      doc.text(proc, MARGIN + 22, y + 4);
+      const motivo = doc.splitTextToSize(ex.motivo || ex.origem, 58)[0] || ex.motivo;
+      doc.setTextColor(71, 85, 105);
+      doc.text(motivo, MARGIN + maxW - 60, y + 4);
+      y += rowH;
+    });
+    doc.setDrawColor(100, 116, 139);
+    doc.rect(MARGIN, y - rowH * exames.length - headH, maxW, headH + rowH * exames.length, "S");
+    doc.setTextColor(15, 23, 42);
+    y += 4;
+    doc.setFontSize(7.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(
+      "Lista gerada automaticamente pelo SIGMO cruzando os riscos do cargo (PGR) com a matriz risco-exames NR-7.",
+      MARGIN, y,
+    );
+    doc.setTextColor(15, 23, 42);
+    y += 6;
+  }
+
   // Assinaturas (lado a lado: solicitante + ciência do colaborador)
   y = Math.max(y + 14, 220);
   const colW = (maxW - 10) / 2;
