@@ -55,6 +55,7 @@ import { Route as AppSesmtGuiaDocumentosRouteImport } from './routes/app.sesmt.g
 import { Route as AppSesmtEquipamentosMoveisRouteImport } from './routes/app.sesmt.equipamentos-moveis'
 import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
 import { Route as AppSesmtConvocacoesAsoRouteImport } from './routes/app.sesmt.convocacoes-aso'
+import { Route as AppSesmtAgendaRouteImport } from './routes/app.sesmt.agenda'
 import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.relatorios.reincidencia-epi'
 import { Route as AppProducaoTiposProdutoRouteImport } from './routes/app.producao.tipos-produto'
 import { Route as AppProducaoPainelListaTecnicaRouteImport } from './routes/app.producao.painel-lista-tecnica'
@@ -315,6 +316,11 @@ const AppSesmtConvocacoesAsoRoute = AppSesmtConvocacoesAsoRouteImport.update({
   path: '/sesmt/convocacoes-aso',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSesmtAgendaRoute = AppSesmtAgendaRouteImport.update({
+  id: '/sesmt/agenda',
+  path: '/sesmt/agenda',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppRelatoriosReincidenciaEpiRoute =
   AppRelatoriosReincidenciaEpiRouteImport.update({
     id: '/relatorios/reincidencia-epi',
@@ -509,6 +515,7 @@ export interface FileRoutesByFullPath {
   '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
+  '/app/sesmt/agenda': typeof AppSesmtAgendaRoute
   '/app/sesmt/convocacoes-aso': typeof AppSesmtConvocacoesAsoRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
@@ -580,6 +587,7 @@ export interface FileRoutesByTo {
   '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
+  '/app/sesmt/agenda': typeof AppSesmtAgendaRoute
   '/app/sesmt/convocacoes-aso': typeof AppSesmtConvocacoesAsoRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
@@ -655,6 +663,7 @@ export interface FileRoutesById {
   '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
+  '/app/sesmt/agenda': typeof AppSesmtAgendaRoute
   '/app/sesmt/convocacoes-aso': typeof AppSesmtConvocacoesAsoRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
@@ -731,6 +740,7 @@ export interface FileRouteTypes {
     | '/app/producao/painel-lista-tecnica'
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
+    | '/app/sesmt/agenda'
     | '/app/sesmt/convocacoes-aso'
     | '/app/sesmt/docs'
     | '/app/sesmt/equipamentos-moveis'
@@ -802,6 +812,7 @@ export interface FileRouteTypes {
     | '/app/producao/painel-lista-tecnica'
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
+    | '/app/sesmt/agenda'
     | '/app/sesmt/convocacoes-aso'
     | '/app/sesmt/docs'
     | '/app/sesmt/equipamentos-moveis'
@@ -876,6 +887,7 @@ export interface FileRouteTypes {
     | '/app/producao/painel-lista-tecnica'
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
+    | '/app/sesmt/agenda'
     | '/app/sesmt/convocacoes-aso'
     | '/app/sesmt/docs'
     | '/app/sesmt/equipamentos-moveis'
@@ -1231,6 +1243,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtConvocacoesAsoRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/sesmt/agenda': {
+      id: '/app/sesmt/agenda'
+      path: '/sesmt/agenda'
+      fullPath: '/app/sesmt/agenda'
+      preLoaderRoute: typeof AppSesmtAgendaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/relatorios/reincidencia-epi': {
       id: '/app/relatorios/reincidencia-epi'
       path: '/relatorios/reincidencia-epi'
@@ -1504,6 +1523,7 @@ interface AppRouteChildren {
   AppProducaoPainelListaTecnicaRoute: typeof AppProducaoPainelListaTecnicaRoute
   AppProducaoTiposProdutoRoute: typeof AppProducaoTiposProdutoRoute
   AppRelatoriosReincidenciaEpiRoute: typeof AppRelatoriosReincidenciaEpiRoute
+  AppSesmtAgendaRoute: typeof AppSesmtAgendaRoute
   AppSesmtConvocacoesAsoRoute: typeof AppSesmtConvocacoesAsoRoute
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
   AppSesmtEquipamentosMoveisRoute: typeof AppSesmtEquipamentosMoveisRoute
@@ -1562,6 +1582,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProducaoPainelListaTecnicaRoute: AppProducaoPainelListaTecnicaRoute,
   AppProducaoTiposProdutoRoute: AppProducaoTiposProdutoRoute,
   AppRelatoriosReincidenciaEpiRoute: AppRelatoriosReincidenciaEpiRoute,
+  AppSesmtAgendaRoute: AppSesmtAgendaRoute,
   AppSesmtConvocacoesAsoRoute: AppSesmtConvocacoesAsoRoute,
   AppSesmtDocsRoute: AppSesmtDocsRoute,
   AppSesmtEquipamentosMoveisRoute: AppSesmtEquipamentosMoveisRoute,
