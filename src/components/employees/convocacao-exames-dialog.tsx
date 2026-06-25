@@ -6,11 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { lazy, Suspense } from "react";
-import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink } from "lucide-react";
+import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink, Users, ListChecks } from "lucide-react";
 import type jsPDFType from "jspdf";
 import { EMPRESA_INFO } from "@/lib/empresa-info";
 import { toast } from "sonner";
+import {
+  resolverExamesFuncionario,
+  naturezaFromTipoExame,
+  assinaturaExames,
+  TIPO_EXAME_OPTIONS,
+  type ExameResolvido,
+} from "@/lib/resolver-exames";
 
 // Lazy: PDFPreviewDialog (e suas libs de render) e jspdf só carregam ao gerar/visualizar PDF.
 const PDFPreviewDialog = lazy(() =>
@@ -92,6 +100,7 @@ async function criarOficioPDF(
   cargo: string,
   empresa: string,
   ctx: OficioCtx,
+  exames: ExameResolvido[] = [],
 ) {
   const hojeDate = new Date();
   const hoje = hojeDate.toLocaleDateString("pt-BR");
