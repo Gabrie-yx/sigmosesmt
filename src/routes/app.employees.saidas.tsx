@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import type jsPDF from "jspdf";
 import dmnLogo from "@/assets/dmn-logo.png";
+import { compressSignatureForPdf } from "@/lib/signature-utils";
 
 // Code-splitting: dialogs pesados (PDF/assinatura) só baixam quando abrem.
 const SaidaExpedienteDialog = lazy(() =>
@@ -99,7 +100,7 @@ function SaidasPage() {
         // ⚡ Otimização: NÃO carrega as colunas de assinatura (texto data-URL ~250KB/linha).
         // As assinaturas só são necessárias na geração do PDF (gerarPdf refetch específico).
         .select(
-          "id, employee_id, company_id, data, horario_saida, tipo, com_retorno, horario_retorno, motivo, observacao, created_at, assinado_sesmt_em, assinado_supervisor_em, employees(id,nome,cpf,rg,role_id,foto_url,roles(name)), companies(id,name)"
+          "id, employee_id, company_id, data, horario_saida, tipo, com_retorno, horario_retorno, motivo, observacao, created_at, assinado_sesmt_em, assinado_supervisor_em, sig_func, sig_sesmt, sig_supervisor, employees(id,nome,cpf,rg,role_id,foto_url,roles(name)), companies(id,name)"
         )
         .gte("data", isoDesde)
         .order("data", { ascending: false }).order("created_at", { ascending: false });
@@ -130,6 +131,12 @@ function SaidasPage() {
     const terceira = comp?.type === "TERCEIRIZADO";
     const logo = await imageToDataUrl(dmnLogo);
     const { gerarSaidaExpedientePDF } = await import("@/lib/saida-expediente-pdf");
+    // Comprime as 3 assinaturas em paralelo antes de estampar (PDF até 10× mais rápido).
+    const [sFunc, sSesmt, sSup] = await Promise.all([
+      compressSignatureForPdf(row.assinatura_funcionario ?? emp?.assinatura_url ?? null),
+      compressSignatureForPdf(row.assinatura_sesmt ?? null),
+      compressSignatureForPdf((row as any).assinatura_supervisor ?? null),
+    ]);
     const doc = gerarSaidaExpedientePDF({
       funcionarioNome: emp?.nome ?? "—",
       rg: emp?.rg ?? null, cpf: emp?.cpf ?? null,
@@ -141,9 +148,9 @@ function SaidasPage() {
       comRetorno: row.com_retorno, horarioRetorno: row.horario_retorno,
       motivo: row.motivo, observacao: row.observacao,
       logoDataUrl: logo,
-      assinaturaFuncionarioDataUrl: row.assinatura_funcionario ?? emp?.assinatura_url ?? null,
-      assinaturaSesmtDataUrl: row.assinatura_sesmt,
-      assinaturaSupervisorDataUrl: (row as any).assinatura_supervisor ?? null,
+      assinaturaFuncionarioDataUrl: sFunc,
+      assinaturaSesmtDataUrl: sSesmt,
+      assinaturaSupervisorDataUrl: sSup,
       sesmtNome: (user as any)?.user_metadata?.full_name ?? null,
       empresaNome: comp?.name ?? null,
       empresaTerceira: terceira,
@@ -648,9 +655,9 @@ function MesDetalheDialog({
               </div>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {meses[ym][data].map((r: any) => {
-                  const sigFunc = !!r.assinatura_funcionario;
-                  const sigSesmt = !!r.assinatura_sesmt;
-                  const sigSupervisor = !!r.assinatura_supervisor;
+                  const sigFunc = !!r.sig_func;
+                  const sigSesmt = !!r.sig_sesmt;
+                  const sigSupervisor = !!r.sig_supervisor;
                   const emp = r.employees;
                   const iniciais = (emp?.nome ?? "—").split(" ").filter(Boolean).slice(0, 2).map((s: string) => s[0]?.toUpperCase()).join("");
                   return (
