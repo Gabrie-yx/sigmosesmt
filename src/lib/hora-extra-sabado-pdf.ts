@@ -33,6 +33,10 @@ export type HoraExtraPdfParams = {
   logoDataUrl?: string | null;
   assinaturaDataUrl?: string | null;
   assinaturaHeight?: number;
+  /** Assinatura do Técnico em Segurança (rodapé esquerdo). Quando ausente, cai no `assinaturaDataUrl`. */
+  assinaturaTstDataUrl?: string | null;
+  /** Assinatura do Aprovador / Gestor (rodapé direito). */
+  assinaturaGestorDataUrl?: string | null;
   solicitanteNome?: string | null;
 };
 

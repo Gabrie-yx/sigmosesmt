@@ -3437,6 +3437,8 @@ export type Database = {
       }
       hora_extra_sabado: {
         Row: {
+          assinatura_gestor_data: string | null
+          assinatura_tst_data: string | null
           centro_custo: string | null
           company_id: string | null
           created_at: string
@@ -3452,6 +3454,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assinatura_gestor_data?: string | null
+          assinatura_tst_data?: string | null
           centro_custo?: string | null
           company_id?: string | null
           created_at?: string
@@ -3467,6 +3471,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assinatura_gestor_data?: string | null
+          assinatura_tst_data?: string | null
           centro_custo?: string | null
           company_id?: string | null
           created_at?: string
