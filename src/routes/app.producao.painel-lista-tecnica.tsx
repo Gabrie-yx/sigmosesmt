@@ -2050,7 +2050,7 @@ function MateriaisComparativoCards({
               <div className="text-[10px] text-muted-foreground mt-1">{c.hint}</div>
             </div>
             {c.itens !== undefined && (
-              <div className="flex-1 min-h-0 mt-1 rounded-md border border-border/50 bg-background/40 overflow-hidden flex flex-col">
+              <div className="flex-1 min-h-0 mt-1 rounded-md border border-border/50 bg-background/40 overflow-hidden flex flex-col max-h-[260px]">
                 {c.itens.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center px-2 py-4 text-[10px] text-muted-foreground text-center">
                     {c.emptyLabel}
@@ -2061,7 +2061,10 @@ function MateriaisComparativoCards({
                       <span>{c.itensLabel}</span>
                       <span>{c.itens.length}</span>
                     </div>
-                    <div className="overflow-y-auto flex-1">
+                    <div
+                      className="overflow-y-auto flex-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gradient-to-b [&::-webkit-scrollbar-thumb]:from-primary/40 [&::-webkit-scrollbar-thumb]:to-primary/10 hover:[&::-webkit-scrollbar-thumb]:from-primary/70 hover:[&::-webkit-scrollbar-thumb]:to-primary/30 [&::-webkit-scrollbar-thumb]:shadow-[0_0_6px_var(--tw-shadow-color)] [&::-webkit-scrollbar-thumb]:shadow-primary/40"
+                      style={{ scrollbarWidth: "thin", scrollbarColor: `${c.accent} transparent` }}
+                    >
                       <table className="w-full text-[11px] table-fixed">
                         <tbody>
                           {c.itens.map((it: any) => (
