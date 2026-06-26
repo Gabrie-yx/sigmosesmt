@@ -1200,6 +1200,7 @@ function PainelListaTecnicaPage() {
         planejadoItens={planejadoList}
         aplicadoItens={aplicadoList}
         consumidoItens={consumidoList}
+        estimativa={compCardData.estimativa}
       />
       </div>
 
