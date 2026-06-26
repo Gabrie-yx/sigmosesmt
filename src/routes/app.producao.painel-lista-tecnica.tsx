@@ -769,7 +769,7 @@ function PainelListaTecnicaPage() {
         ))}
       </div>
 
-      {/* Linha: Realizado vs Orçado (esq) + Curva S (dir) */}
+      {/* Linha: Realizado vs Orçado (esq) + 3 cards de comparação (dir) */}
       <div className="grid gap-3 grid-cols-1 lg:grid-cols-[400px_minmax(0,1fr)]">
       {listaAtivaId && (
         <Card className="shadow-sm border-0 bg-gradient-to-r from-muted/30 via-background to-muted/30">
@@ -842,7 +842,16 @@ function PainelListaTecnicaPage() {
         </Card>
       )}
 
-      {/* Curva S — consumo acumulado ao longo do tempo */}
+      {/* 3 cards: Material Planejado · Material Aplicado · Consumido (Aplicado − Planejado) */}
+      <MateriaisComparativoCards
+        planejadoKg={Number(listaPlan?.peso_total_real ?? listaPlan?.peso_total_estimado ?? 0)}
+        aplicadoKg={itensEnriq
+          .filter((it) => String(it.unidade ?? "").toUpperCase() === "KG")
+          .reduce((s, it) => s + Math.max(0, Number(it.consumo ?? 0)), 0)}
+      />
+      </div>
+
+      {/* Curva S — consumo acumulado ao longo do tempo (largura total) */}
       {curvaSPlot.length > 0 && (
         <Card className="shadow-lg border border-primary/30 bg-slate-950 h-full">
           <CardContent className="p-3 h-full flex flex-col">
@@ -933,7 +942,6 @@ function PainelListaTecnicaPage() {
           </CardContent>
         </Card>
       )}
-      </div>
 
       {/* Layout principal: esquerda (categorias) + direita (tabela de materiais) */}
 
