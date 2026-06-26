@@ -5,6 +5,7 @@ Comando "listar pendencias" → ler mem://pendencias e mostrar itens `[ ]`.
 Quando o usuário falar em "outras empresas", "multi-empresa", "white-label", "SaaS", "CNAE", "qualquer segmento", "vender o SIGMO" → consultar mem://pgr-generico.
 Arquivar TUDO que o usuário disser na memória (pendência/decisão/contexto) para tratamento posterior — ver mem://preferences/arquivar-tudo.
 Padrão **Modal-First**: ações novas abrem como modal/sheet/drawer sobre a tela contextual. Rota nova só com justificativa (ver mem://preferences/modal-first).
+MB51: Base MP é fonte da verdade ABSOLUTA p/ tipo do material (inclusive OUTROS). Nunca cair em fallback de classificacao_mb51 quando material já tem cadastro — ver mem://features/mb51-classificacao-base-mp.
 
 ## Memories
 - [Pendências](mem://pendencias) — Tarefas pendentes acordadas com o usuário (geradores PDF Eficácia/Reação, etc.)
@@ -19,3 +20,4 @@ Padrão **Modal-First**: ações novas abrem como modal/sheet/drawer sobre a tel
 - [ASO upload validação](mem://features/aso-upload-validacao.md) — Hoje não valida conteúdo do PDF; plano em 5 níveis registrado; manter como está até priorizar Nível 1+3 (validação básica + extração IA cruzando com convocação).
 - [Indicadores Executivos + Notificações (pausado)](mem://features/indicadores-notificacoes-pausado.md) — Turbinada SOC aprovada mas em espera: dashboard executivo SST (TF/TG/TFCA) + notificações inteligentes. Retomar após documentação técnica do Parecer TI Rev00.
 - [DDS Semanal assinaturas (teste pendente)](mem://features/dds-assinaturas-teste-pendente.md) — Toggle de assinatura digital implementado; falta validar E2E. Auth externa bloqueia Playwright; depende da Arteniza validar manual.
+- [MB51 classificação — Base MP vence](mem://features/mb51-classificacao-base-mp.md) — Regra inviolável do resolveTipo: Base MP é fonte da verdade absoluta; classificacao_mb51 só como último recurso para material sem cadastro. Caso real CORRENTE SOLD ZINC vazando p/ GÁS.
