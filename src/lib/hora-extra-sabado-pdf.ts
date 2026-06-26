@@ -93,7 +93,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.text("FORMULÁRIO DE HORA EXTRA", x + 38, y + 9);
     doc.setFont("helvetica", "normal").setFontSize(7);
     doc.setTextColor(...muted);
-    doc.text("Controle interno · não homologado", x + 38, y + 13.5);
+    doc.text("Controle interno", x + 38, y + 13.5);
     return h;
   };
 
@@ -401,8 +401,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const drawRodapePagina = (idx: number, total: number, primeiraEmpresa: string) => {
     doc.setTextColor(...muted);
     doc.setFont("helvetica", "normal").setFontSize(6.5);
-    doc.text(`Página ${idx + 1} de ${total} · ${primeiraEmpresa.toUpperCase()}`, margin, pageH - 4);
-    doc.text("Documento interno · não homologado", margin + contentW, pageH - 4, { align: "right" });
+    doc.text(`Página ${idx + 1} de ${total}`, margin + contentW / 2, pageH - 4, { align: "center" });
   };
 
   // ===== Montagem dos blocos-empresa =====
