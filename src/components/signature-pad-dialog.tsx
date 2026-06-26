@@ -10,8 +10,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type AssinaturaResult = { dataUrl: string; height: number };
 
-// Recorta bordas vazias e (para JPG/WEBP) remove fundo branco -> transparente
-function processUploadedSignature(img: HTMLImageElement, isPng: boolean): string {
+// Recorta bordas vazias e remove fundo claro -> transparente.
+// IMPORTANTE: preserva a COR original do traço (caneta azul fica azul).
+// Antes este processamento darkenava o pixel (k=0.85) e só removia fundo
+// quando o arquivo era JPG/WEBP — PNGs de scanner mantinham o fundo branco
+// e qualquer PNG já em escala de cinza era estampado preto. Agora aplicamos
+// a mesma limpeza para todos os formatos e não tocamos no RGB.
+function processUploadedSignature(img: HTMLImageElement, _isPng: boolean): string {
   const MAX = 1200;
   const scale = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
   const w = Math.max(1, Math.round(img.naturalWidth * scale));
@@ -23,23 +28,24 @@ function processUploadedSignature(img: HTMLImageElement, isPng: boolean): string
   const imgData = sctx.getImageData(0, 0, w, h);
   const d = imgData.data;
 
-  // Se não for PNG, remove fundo claro -> alpha 0
-  if (!isPng) {
-    for (let i = 0; i < d.length; i += 4) {
-      const r = d[i], g = d[i + 1], b = d[i + 2];
-      // pixel claro -> transparente
-      if (r > 230 && g > 230 && b > 230) {
-        d[i + 3] = 0;
-      } else {
-        // escurece levemente para o traço ficar nítido
-        const k = 0.85;
-        d[i] = Math.round(r * k);
-        d[i + 1] = Math.round(g * k);
-        d[i + 2] = Math.round(b * k);
-      }
+  // Remove fundo claro (papel) -> alpha 0, com transição suave nas bordas.
+  // Faixa: muito claro = transparente; claro = semi-transparente; resto = mantém
+  // RGB original (azul/preto/qualquer cor da caneta).
+  const HARD = 235; // acima disso vira 100% transparente
+  const SOFT = 200; // abaixo de HARD e acima de SOFT vira semi-transparente
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    const minC = Math.min(r, g, b);
+    if (minC >= HARD) {
+      d[i + 3] = 0;
+    } else if (minC >= SOFT) {
+      // Suaviza serrilhado entre traço e papel mantendo a cor original
+      const t = (minC - SOFT) / (HARD - SOFT); // 0..1
+      d[i + 3] = Math.round(d[i + 3] * (1 - t));
     }
-    sctx.putImageData(imgData, 0, 0);
+    // RGB intocado -> cor original da caneta é preservada
   }
+  sctx.putImageData(imgData, 0, 0);
 
   // Bounding box dos pixels visíveis (alpha > 10)
   let minX = w, minY = h, maxX = 0, maxY = 0, found = false;
