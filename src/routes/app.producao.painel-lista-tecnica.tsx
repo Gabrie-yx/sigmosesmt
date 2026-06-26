@@ -1947,6 +1947,8 @@ function MateriaisComparativoCards({
   semPlano,
   accent,
   planejadoItens,
+  aplicadoItens,
+  consumidoItens,
 }: {
   planejado: number;
   aplicado: number;
@@ -1955,6 +1957,8 @@ function MateriaisComparativoCards({
   semPlano: boolean;
   accent?: string;
   planejadoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
+  aplicadoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
+  consumidoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
 }) {
   const podeComparar = !semPlano && planejado > 0;
   const consumido = podeComparar ? aplicado - planejado : 0;
@@ -1979,6 +1983,9 @@ function MateriaisComparativoCards({
       accent: planAccent,
       muted: semPlano,
       itens: planejadoItens ?? [],
+      itensLabel: "Itens planejados",
+      emptyLabel: semPlano ? "Sem plano em KG nesta categoria" : "Sem itens planejados",
+      signedItens: false,
     },
     {
       label: `Material Aplicado · ${escopo}`,
@@ -1988,6 +1995,10 @@ function MateriaisComparativoCards({
       icon: Package,
       accent: aplAccent,
       muted: false,
+      itens: aplicadoItens ?? [],
+      itensLabel: "Itens aplicados",
+      emptyLabel: "Sem movimentos nesta categoria",
+      signedItens: false,
     },
     {
       label: `Consumido · ${escopo}`,
@@ -2000,6 +2011,10 @@ function MateriaisComparativoCards({
       accent: corConsumo,
       signed: true,
       muted: !podeComparar,
+      itens: podeComparar ? (consumidoItens ?? []) : [],
+      itensLabel: "Diferenças por código",
+      emptyLabel: podeComparar ? "Sem diferenças nesta categoria" : "Sem plano para comparar",
+      signedItens: true,
     },
   ];
 
@@ -2038,12 +2053,12 @@ function MateriaisComparativoCards({
               <div className="flex-1 min-h-0 mt-1 rounded-md border border-border/50 bg-background/40 overflow-hidden flex flex-col">
                 {c.itens.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center px-2 py-4 text-[10px] text-muted-foreground text-center">
-                    {semPlano ? "Sem plano em KG nesta categoria" : "Sem itens planejados"}
+                    {c.emptyLabel}
                   </div>
                 ) : (
                   <>
                     <div className="flex items-center justify-between px-2 py-1 border-b border-border/50 bg-muted/40 text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">
-                      <span>Itens planejados</span>
+                      <span>{c.itensLabel}</span>
                       <span>{c.itens.length}</span>
                     </div>
                     <div className="overflow-y-auto flex-1">
@@ -2055,7 +2070,12 @@ function MateriaisComparativoCards({
                                 <div className="truncate font-medium">{it.nome}</div>
                                 <div className="truncate font-mono text-[9px] text-muted-foreground">{it.codigo}</div>
                               </td>
-                              <td className="px-1 py-1 text-right tabular-nums font-semibold w-[70px]">{fmt(it.qtd, 0)}</td>
+                              <td
+                                className="px-1 py-1 text-right tabular-nums font-semibold w-[70px]"
+                                style={c.signedItens ? { color: it.qtd > 0 ? "hsl(0 80% 65%)" : "hsl(142 70% 55%)" } : undefined}
+                              >
+                                {c.signedItens && it.qtd > 0 ? "+" : ""}{fmt(it.qtd, 0)}
+                              </td>
                               <td className="px-1 py-1 text-muted-foreground uppercase text-[9px] w-[30px]">{it.ume}</td>
                             </tr>
                           ))}
