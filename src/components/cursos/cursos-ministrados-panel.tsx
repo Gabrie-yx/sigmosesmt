@@ -505,22 +505,9 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
       const compMap = Object.fromEntries((compRes.data ?? []).map((c: any) => [c.id, c.name]));
       const roleMap = Object.fromEntries((roleRes.data ?? []).map((r: any) => [r.id, r.name]));
 
-      // Helper: URL pública da assinatura → data URL (pra estampar no PDF)
-      async function urlToDataUrl(url: string | null | undefined): Promise<string | null> {
-        if (!url) return null;
-        try {
-          const res = await fetch(url, { cache: "force-cache" });
-          if (!res.ok) return null;
-          const blob = await res.blob();
-          return await new Promise<string>((resolve) => {
-            const fr = new FileReader();
-            fr.onloadend = () => resolve(fr.result as string);
-            fr.readAsDataURL(blob);
-          });
-        } catch {
-          return null;
-        }
-      }
+      // Helper: URL pública da assinatura → data URL PNG com fundo transparente.
+      // Preserva a COR ORIGINAL do traço (caneta azul fica azul).
+      const { fetchSignatureAsCleanDataUrl: urlToDataUrl } = await import("@/lib/signature-utils");
 
       const enriched = (empData ?? []).map((e: any) => ({
         nome: e.nome ?? "",
