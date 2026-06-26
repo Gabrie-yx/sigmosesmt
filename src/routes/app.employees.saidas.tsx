@@ -96,7 +96,11 @@ function SaidasPage() {
       const isoDesde = desde.toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from("employee_saidas_expediente")
-        .select("*, employees(id,nome,cpf,rg,role_id,foto_url,roles(name)), companies(id,name)")
+        // ⚡ Otimização: NÃO carrega as colunas de assinatura (texto data-URL ~250KB/linha).
+        // As assinaturas só são necessárias na geração do PDF (gerarPdf refetch específico).
+        .select(
+          "id, employee_id, company_id, data, horario_saida, tipo, com_retorno, horario_retorno, motivo, observacao, created_at, assinado_sesmt_em, assinado_supervisor_em, employees(id,nome,cpf,rg,role_id,foto_url,roles(name)), companies(id,name)"
+        )
         .gte("data", isoDesde)
         .order("data", { ascending: false }).order("created_at", { ascending: false });
       if (error) throw error;
