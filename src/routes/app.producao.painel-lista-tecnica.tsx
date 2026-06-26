@@ -455,14 +455,17 @@ function PainelListaTecnicaPage() {
     itensEnriq.forEach((it) => {
       const cat = it.categoria as CategoriaMaterial;
       const um = String(it.unidade ?? "—").toUpperCase();
-      const v = Math.max(0, Number(it.consumo ?? 0));
+      // Soma LÍQUIDA (saídas − estornos). Não clampar por movimento,
+      // senão estornos somem e o aplicado fica inflado.
+      const v = Number(it.consumo ?? 0);
       tmpUm[cat].set(um, (tmpUm[cat].get(um) ?? 0) + v);
     });
     CATEGORIAS.forEach((c) => {
       map[c].planKg = previstoPorCategoria[c] || 0;
-      map[c].aplKg = tmpUm[c].get("KG") ?? 0;
+      // Clampa só no agregado final (não deixar negativo "engolir" outro UM)
+      map[c].aplKg = Math.max(0, tmpUm[c].get("KG") ?? 0);
       const sorted = Array.from(tmpUm[c].entries())
-        .map(([um, v]) => ({ um, v }))
+        .map(([um, v]) => ({ um, v: Math.max(0, v) }))
         .sort((a, b) => b.v - a.v);
       map[c].aplDom = sorted[0] ?? null;
     });
@@ -543,8 +546,10 @@ function PainelListaTecnicaPage() {
       if (!codigo) return;
       const cat = it.categoria as CategoriaMaterial;
       const ume = String(it.unidade ?? "—").toUpperCase();
-      const v = Math.max(0, Number(it.consumo ?? 0));
-      if (v <= 0) return;
+      // Soma LÍQUIDA por código+UM (saídas − estornos).
+      // Clamp só na agregação final, abaixo.
+      const v = Number(it.consumo ?? 0);
+      if (v === 0) return;
       const cur = map[cat].get(codigo) ?? {
         codigo,
         nome: String(it.descricao_sap ?? baseMpDescMap.get(codigo) ?? codigo),
@@ -557,10 +562,18 @@ function PainelListaTecnicaPage() {
       FERRO: [], SOLDA: [], "GÁS": [], TINTA: [], OUTROS: [],
     };
     CATEGORIAS.forEach((c) => {
-      out[c] = Array.from(map[c].values()).map((r) => {
-        const dom = Array.from(r.qtdPorUm.entries()).sort((a, b) => b[1] - a[1])[0];
-        return { codigo: r.codigo, nome: r.nome, qtd: dom?.[1] ?? 0, ume: dom?.[0] ?? "—" };
-      }).sort((a, b) => b.qtd - a.qtd);
+      out[c] = Array.from(map[c].values())
+        .map((r) => {
+          // Para cada código, descarta UMs com saldo líquido ≤ 0 (estorno total)
+          // e pega a UM dominante pelo valor líquido positivo restante.
+          const dom = Array.from(r.qtdPorUm.entries())
+            .map(([um, v]) => ({ um, v: Math.max(0, v) }))
+            .filter((e) => e.v > 0)
+            .sort((a, b) => b.v - a.v)[0];
+          return { codigo: r.codigo, nome: r.nome, qtd: dom?.v ?? 0, ume: dom?.um ?? "—" };
+        })
+        .filter((r) => r.qtd > 0)
+        .sort((a, b) => b.qtd - a.qtd);
     });
     return out;
   }, [itensEnriq, baseMpDescMap]);
