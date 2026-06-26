@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import type jsPDF from "jspdf";
 import dmnLogo from "@/assets/dmn-logo.png";
+import { compressSignatureForPdf } from "@/lib/signature-utils";
 
 // Code-splitting: dialogs pesados (PDF/assinatura) só baixam quando abrem.
 const SaidaExpedienteDialog = lazy(() =>
@@ -130,6 +131,12 @@ function SaidasPage() {
     const terceira = comp?.type === "TERCEIRIZADO";
     const logo = await imageToDataUrl(dmnLogo);
     const { gerarSaidaExpedientePDF } = await import("@/lib/saida-expediente-pdf");
+    // Comprime as 3 assinaturas em paralelo antes de estampar (PDF até 10× mais rápido).
+    const [sFunc, sSesmt, sSup] = await Promise.all([
+      compressSignatureForPdf(row.assinatura_funcionario ?? emp?.assinatura_url ?? null),
+      compressSignatureForPdf(row.assinatura_sesmt ?? null),
+      compressSignatureForPdf((row as any).assinatura_supervisor ?? null),
+    ]);
     const doc = gerarSaidaExpedientePDF({
       funcionarioNome: emp?.nome ?? "—",
       rg: emp?.rg ?? null, cpf: emp?.cpf ?? null,
@@ -141,9 +148,9 @@ function SaidasPage() {
       comRetorno: row.com_retorno, horarioRetorno: row.horario_retorno,
       motivo: row.motivo, observacao: row.observacao,
       logoDataUrl: logo,
-      assinaturaFuncionarioDataUrl: row.assinatura_funcionario ?? emp?.assinatura_url ?? null,
-      assinaturaSesmtDataUrl: row.assinatura_sesmt,
-      assinaturaSupervisorDataUrl: (row as any).assinatura_supervisor ?? null,
+      assinaturaFuncionarioDataUrl: sFunc,
+      assinaturaSesmtDataUrl: sSesmt,
+      assinaturaSupervisorDataUrl: sSup,
       sesmtNome: (user as any)?.user_metadata?.full_name ?? null,
       empresaNome: comp?.name ?? null,
       empresaTerceira: terceira,
