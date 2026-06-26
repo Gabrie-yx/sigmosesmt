@@ -815,11 +815,12 @@ function GerarListaDialog({ training, onClose }: { training: any; onClose: () =>
   }, [rows]);
 
   // Inicializa: todas as empresas marcadas quando carregar
-  const initRef = useState({ done: false })[0];
-  if (!initRef.done && empresas.length && companiesSel.size === 0) {
-    initRef.done = true;
-    setCompaniesSel(new Set(empresas.map((e) => e.id)));
-  }
+  useEffect(() => {
+    if (empresas.length && companiesSel.size === 0) {
+      setCompaniesSel(new Set(empresas.map((e) => e.id)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [empresas.length]);
 
   const selecionados = useMemo(
     () =>
