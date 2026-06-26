@@ -134,7 +134,7 @@ function PainelListaTecnicaPage() {
     queryKey: ["cascos-list"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("cascos").select("id, numero, nome").order("numero");
+        .from("cascos").select("id, numero, nome, tipo_embarcacao").order("numero");
       if (error) throw error;
       return data ?? [];
     },
