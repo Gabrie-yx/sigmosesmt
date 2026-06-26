@@ -455,14 +455,17 @@ function PainelListaTecnicaPage() {
     itensEnriq.forEach((it) => {
       const cat = it.categoria as CategoriaMaterial;
       const um = String(it.unidade ?? "—").toUpperCase();
-      const v = Math.max(0, Number(it.consumo ?? 0));
+      // Soma LÍQUIDA (saídas − estornos). Não clampar por movimento,
+      // senão estornos somem e o aplicado fica inflado.
+      const v = Number(it.consumo ?? 0);
       tmpUm[cat].set(um, (tmpUm[cat].get(um) ?? 0) + v);
     });
     CATEGORIAS.forEach((c) => {
       map[c].planKg = previstoPorCategoria[c] || 0;
-      map[c].aplKg = tmpUm[c].get("KG") ?? 0;
+      // Clampa só no agregado final (não deixar negativo "engolir" outro UM)
+      map[c].aplKg = Math.max(0, tmpUm[c].get("KG") ?? 0);
       const sorted = Array.from(tmpUm[c].entries())
-        .map(([um, v]) => ({ um, v }))
+        .map(([um, v]) => ({ um, v: Math.max(0, v) }))
         .sort((a, b) => b.v - a.v);
       map[c].aplDom = sorted[0] ?? null;
     });
