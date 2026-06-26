@@ -526,11 +526,21 @@ function PainelListaTecnicaPage() {
       const codigo = String(it.codigo_sap ?? "").trim();
       if (!codigo) return;
       const cat = resolveTipo(codigo, null, baseMpMap, baseMpDescMap.get(codigo) ?? null);
-      const ume = String(it.unidade ?? "—").toUpperCase();
-      const qtd = Math.abs(Number(it.quantidade ?? 0));
+      const umeOrig = String(it.unidade ?? "—").toUpperCase();
+      // FERRO: força KG via peso_real (B51 lista chapas/perfis em m²/m).
+      // Outras categorias raramente vêm na B51, então mantém UM original.
+      const pesoKgFerro = cat === "FERRO"
+        ? (Number(it.peso_real ?? 0) ||
+           Number(it.peso_total_estimado ?? 0) ||
+           Number(it.peso_chapa ?? 0) * Number(it.qtd_pecas ?? 0) ||
+           (umeOrig === "KG" ? Math.abs(Number(it.quantidade ?? 0)) : 0))
+        : 0;
+      const qtd = cat === "FERRO" ? pesoKgFerro : Math.abs(Number(it.quantidade ?? 0));
+      const ume = cat === "FERRO" ? "KG" : umeOrig;
+      if (qtd <= 0) return;
       const cur = map[cat].get(codigo) ?? {
         codigo,
-        nome: baseMpDescMap.get(codigo) || codigo,
+        nome: String(it.descricao_sap ?? baseMpDescMap.get(codigo) ?? codigo),
         qtd: 0,
         ume,
       };
