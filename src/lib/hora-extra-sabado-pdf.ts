@@ -504,31 +504,24 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     }
   }
 
-  // Desenha
-  drawFlowPages({
-    pages,
-    startY: margin, // overridden by beforePage logic via local Y? we draw blocks via drawFlowPages which uses startY
-    x: margin,
-    gap: BLOCK_GAP,
-    userCtx: { grupoIndex: 0 },
-    newPage: () => doc.addPage(),
-    beforePage: (i) => {
-      // Não usado — desenhamos o master header dentro do afterPage path? Não:
-      // precisa ser ANTES dos blocos. Vamos desenhar aqui mesmo.
-      if (i === 0) {
-        let yy = margin;
-        yy += drawMasterHeader(margin, yy, contentW);
-        yy += 3;
-        drawMasterCards(margin, yy, contentW);
-      }
-    },
-    afterPage: (i, total, page) => {
-      // Assinatura ancorada no rodapé (uma por página)
-      drawAssinaturaRodape(margin, pageH - margin - SIG_H, contentW);
-      // Rodapé: primeira empresa da página
-      const primeira = (page.blocks[0]?.meta as any)?.empresaNome ?? "—";
-      drawRodapePagina(i, total, String(primeira));
-    },
+  // Desenha manualmente: pág 1 começa abaixo do cabeçalho mestre.
+  pages.forEach((page, i) => {
+    if (i > 0) doc.addPage();
+    let y = margin;
+    if (i === 0) {
+      y += drawMasterHeader(margin, y, contentW);
+      y += 3;
+      y += drawMasterCards(margin, y, contentW);
+      y += BLOCK_GAP;
+    }
+    page.blocks.forEach((b, idx) => {
+      if (idx > 0) y += BLOCK_GAP;
+      b.draw({ x: margin, y, pageIndex: i, pageTotal: pages.length, userCtx: { grupoIndex: 0 } });
+      y += b.height;
+    });
+    drawAssinaturaRodape(margin, pageH - margin - SIG_H, contentW);
+    const primeira = (page.blocks[0]?.meta as any)?.empresaNome ?? "—";
+    drawRodapePagina(i, pages.length, String(primeira));
   });
 
   return doc;
