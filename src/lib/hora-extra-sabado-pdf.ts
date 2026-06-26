@@ -423,8 +423,8 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   // Overhead fixo de um bloco-empresa: header(14)+gap(3)+tab-head(7) = 24
   const BLOCK_OVERHEAD = 24;
   const ROW_H = 6.6;
-  // Cabeçalho mestre (só na pág 1): header(19)+gap(3)+cards(13)+gap(4 block_gap) ~ 39
-  const MASTER_HEADER_H = 19 + 3 + 13;
+  // Cabeçalho mestre (só na pág 1): header(19)+gap(3)+cards(15)
+  const MASTER_HEADER_H = 19 + 3 + 15;
   // O master header é desenhado fora do flow no topo da página 1 → reduz capacidade só na primeira página.
   // Para empacotar com segurança, calculamos MAX_ROWS usando a capacidade da página 1 (mais apertada).
   const PAGE1_CAPACITY = PAGE_CAPACITY - MASTER_HEADER_H - BLOCK_GAP;
@@ -505,7 +505,10 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     }
     pages.push({ blocks: firstPagePack, contentHeight: used });
     if (remaining.length > 0) {
-      const rest = packBlocksIntoPages(remaining, PAGE_CAPACITY, BLOCK_GAP, { lookahead: true });
+      // ORDEM ESTRITA: sem lookahead. Lookahead reordenava blocos pequenos
+      // (ex.: PORTARIA) na frente de blocos grandes (ex.: NB CONSTRUÇÃO pt 1/2),
+      // quebrando a sequência alfabética e duplicando visualmente a empresa.
+      const rest = packBlocksIntoPages(remaining, PAGE_CAPACITY, BLOCK_GAP);
       pages = pages.concat(rest);
     }
   }
