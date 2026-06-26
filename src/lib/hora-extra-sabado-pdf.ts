@@ -404,16 +404,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.text(`Página ${idx + 1} de ${total}`, margin + contentW / 2, pageH - 4, { align: "center" });
   };
 
-  // ===== Montagem dos blocos-empresa =====
-  type GrupoEmpresa = {
-    empresaNome: string;
-    funcionarios: HoraExtraFuncionario[];
-    totalFuncionarios: number;
-    linhaInicial: number;
-    parte: number;
-    partes: number;
-  };
-
+  // ===== Montagem das páginas (size-desc + smart slicing) =====
   // Capacidade útil da página: 297 - margin*2 - assinatura(26) - rodapé(6) ≈ 245mm
   const SIG_H = 26;
   const FOOTER_RESERVE = 6;
@@ -424,96 +415,121 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const ROW_H = 6.6;
   // Cabeçalho mestre (só na pág 1): header(19)+gap(3)+cards(15)
   const MASTER_HEADER_H = 19 + 3 + 15;
-  // O master header é desenhado fora do flow no topo da página 1 → reduz capacidade só na primeira página.
-  // Para empacotar com segurança, calculamos MAX_ROWS usando a capacidade da página 1 (mais apertada).
   const PAGE1_CAPACITY = PAGE_CAPACITY - MASTER_HEADER_H - BLOCK_GAP;
-  const MAX_ROWS_BLOCO = Math.floor((PAGE_CAPACITY - BLOCK_OVERHEAD) / ROW_H);
+  const MIN_SLICE_ROWS = 5; // só fatia se couber pelo menos N linhas — "fatia com bom senso"
 
-  const paginas = p.paginas.length > 0 ? p.paginas : [{ empresaNome: "—", funcionarios: [] as HoraExtraFuncionario[] }];
+  const paginasIn = p.paginas.length > 0 ? p.paginas : [{ empresaNome: "—", funcionarios: [] as HoraExtraFuncionario[] }];
 
-  // Pré-dividir empresas que não cabem em uma página inteira (caso raro mas evita overflow)
-  const grupos: GrupoEmpresa[] = [];
-  paginas.forEach((pag) => {
-    const total = pag.funcionarios.length;
-    if (total <= MAX_ROWS_BLOCO) {
-      grupos.push({
-        empresaNome: pag.empresaNome,
-        funcionarios: pag.funcionarios,
-        totalFuncionarios: total,
-        linhaInicial: 1,
-        parte: 1,
-        partes: 1,
-      });
-      return;
-    }
-    const partes = Math.ceil(total / MAX_ROWS_BLOCO);
-    for (let i = 0; i < partes; i++) {
-      const slice = pag.funcionarios.slice(i * MAX_ROWS_BLOCO, (i + 1) * MAX_ROWS_BLOCO);
-      grupos.push({
-        empresaNome: pag.empresaNome,
-        funcionarios: slice,
-        totalFuncionarios: total,
-        linhaInicial: i * MAX_ROWS_BLOCO + 1,
-        parte: i + 1,
-        partes,
-      });
-    }
-  });
+  // Ordena empresas por nº de funcionários DESC — as maiores entram primeiro;
+  // as pequenas naturalmente "preenchem o rabo" das páginas finais.
+  type EmpresaRest = {
+    empresaNome: string;
+    funcionarios: HoraExtraFuncionario[];
+    total: number;
+    cursor: number; // próxima linha a desenhar (0-based)
+  };
+  const restantes: EmpresaRest[] = paginasIn
+    .filter((p) => p.funcionarios.length > 0)
+    .sort((a, b) => b.funcionarios.length - a.funcionarios.length)
+    .map((p) => ({
+      empresaNome: p.empresaNome,
+      funcionarios: p.funcionarios,
+      total: p.funcionarios.length,
+      cursor: 0,
+    }));
 
-  // Cria os FlowBlocks (cada grupo = 1 bloco atômico)
-  const blocks: FlowBlock<{ grupoIndex: number }>[] = grupos.map((g, gIdx) => {
-    const height = BLOCK_OVERHEAD + g.funcionarios.length * ROW_H;
-    return {
-      height,
-      meta: { empresaNome: g.empresaNome, grupoIndex: gIdx },
-      draw: ({ x, y }) => {
-        let yy = y;
-        yy += drawHeaderEmpresa(x, yy, contentW, g.empresaNome, g.totalFuncionarios, g.partes > 1 ? { atual: g.parte, total: g.partes } : undefined);
-        yy += 3;
-        drawTabelaEquipe(x, yy, contentW, g.funcionarios, g.linhaInicial);
-      },
-    };
-  });
+  type Slice = {
+    empresaNome: string;
+    funcionarios: HoraExtraFuncionario[];
+    total: number;
+    linhaInicial: number;
+    parteAtual: number; // 1-based; resolvido depois
+    partesTotais: number;
+  };
+  const pagesSlices: Slice[][] = [];
+  // contador de partes por empresa (preenchido em duas passadas)
+  const parteCounter = new Map<string, number>();
 
-  // Empacota: 1ª página tem capacidade reduzida (cabeçalho mestre fixo no topo).
-  // Estratégia simples: empacotamos tudo com capacidade total e depois verificamos
-  // se a 1ª página excede PAGE1_CAPACITY; se exceder, movemos blocos pro flow seguinte.
-  // Implementação direta: empacota com capacidade da página 1, depois resto com PAGE_CAPACITY.
-  let pages: ReturnType<typeof packBlocksIntoPages<{ grupoIndex: number }>> = [];
-  if (blocks.length > 0) {
-    // Tenta primeiro bloco (ou primeiros blocos) na pág 1
-    const firstPagePack: FlowBlock<{ grupoIndex: number }>[] = [];
+  while (restantes.some((r) => r.cursor < r.total)) {
+    const pageIdx = pagesSlices.length;
+    const cap = pageIdx === 0 ? PAGE1_CAPACITY : PAGE_CAPACITY;
     let used = 0;
-    const remaining = [...blocks];
-    while (remaining.length > 0) {
-      const b = remaining[0];
-      const needs = b.height + (firstPagePack.length > 0 ? BLOCK_GAP : 0);
-      if (used + needs <= PAGE1_CAPACITY) {
-        firstPagePack.push(b);
-        used += firstPagePack.length === 1 ? b.height : needs;
-        remaining.shift();
-      } else if (firstPagePack.length === 0) {
-        // bloco isolado não cabe nem na pág 1 reduzida — força mesmo assim
-        firstPagePack.push(b);
-        used = b.height;
-        remaining.shift();
-        break;
-      } else {
-        break;
+    const pageBlocks: Slice[] = [];
+
+    // Passada 1: encaixa empresas inteiras (mais quantidade primeiro, na ordem que sobrou)
+    let placedAny = true;
+    while (placedAny) {
+      placedAny = false;
+      for (let i = 0; i < restantes.length; i++) {
+        const emp = restantes[i];
+        const rowsLeft = emp.total - emp.cursor;
+        if (rowsLeft <= 0) continue;
+        const gap = pageBlocks.length > 0 ? BLOCK_GAP : 0;
+        const fullH = BLOCK_OVERHEAD + rowsLeft * ROW_H;
+        if (used + gap + fullH <= cap) {
+          const linhaInicial = emp.cursor + 1;
+          const parte = (parteCounter.get(emp.empresaNome) ?? 0) + 1;
+          parteCounter.set(emp.empresaNome, parte);
+          pageBlocks.push({
+            empresaNome: emp.empresaNome,
+            funcionarios: emp.funcionarios.slice(emp.cursor, emp.cursor + rowsLeft),
+            total: emp.total,
+            linhaInicial,
+            parteAtual: parte,
+            partesTotais: 0,
+          });
+          used += gap + fullH;
+          emp.cursor = emp.total;
+          placedAny = true;
+        }
       }
     }
-    pages.push({ blocks: firstPagePack, contentHeight: used });
-    if (remaining.length > 0) {
-      // ORDEM ESTRITA: sem lookahead. Lookahead reordenava blocos pequenos
-      // (ex.: PORTARIA) na frente de blocos grandes (ex.: NB CONSTRUÇÃO pt 1/2),
-      // quebrando a sequência alfabética e duplicando visualmente a empresa.
-      const rest = packBlocksIntoPages(remaining, PAGE_CAPACITY, BLOCK_GAP);
-      pages = pages.concat(rest);
+
+    // Passada 2: ninguém inteiro coube — fatia a próxima empresa restante (a maior ainda em fila)
+    if (pageBlocks.length === 0 || !restantes.some((r) => r.cursor < r.total) === false) {
+      const next = restantes.find((r) => r.cursor < r.total);
+      if (next) {
+        const gap = pageBlocks.length > 0 ? BLOCK_GAP : 0;
+        const avail = cap - used - gap - BLOCK_OVERHEAD;
+        const rowsFit = Math.floor(avail / ROW_H);
+        const rowsLeft = next.total - next.cursor;
+        const shouldSlice =
+          rowsFit > 0 &&
+          (pageBlocks.length === 0 // página vazia: fatia o que der pra não travar
+            ? true
+            : rowsFit >= MIN_SLICE_ROWS); // página com conteúdo: só fatia se valer a pena
+        if (shouldSlice) {
+          const take = Math.min(rowsFit, rowsLeft);
+          const linhaInicial = next.cursor + 1;
+          const parte = (parteCounter.get(next.empresaNome) ?? 0) + 1;
+          parteCounter.set(next.empresaNome, parte);
+          pageBlocks.push({
+            empresaNome: next.empresaNome,
+            funcionarios: next.funcionarios.slice(next.cursor, next.cursor + take),
+            total: next.total,
+            linhaInicial,
+            parteAtual: parte,
+            partesTotais: 0,
+          });
+          next.cursor += take;
+          used += gap + BLOCK_OVERHEAD + take * ROW_H;
+        }
+      }
     }
+
+    if (pageBlocks.length === 0) break; // segurança
+    pagesSlices.push(pageBlocks);
   }
 
-  // Desenha manualmente: pág 1 começa abaixo do cabeçalho mestre.
-  pages.forEach((page, i) => {
+  // Resolve partesTotais (quantas partes cada empresa acabou virando)
+  pagesSlices.forEach((page) =>
+    page.forEach((b) => {
+      b.partesTotais = parteCounter.get(b.empresaNome) ?? 1;
+    }),
+  );
+
+  // Desenho
+  pagesSlices.forEach((page, i) => {
     if (i > 0) doc.addPage();
     let y = margin;
     if (i === 0) {
@@ -522,14 +538,16 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       y += drawMasterCards(margin, y, contentW);
       y += BLOCK_GAP;
     }
-    page.blocks.forEach((b, idx) => {
+    page.forEach((b, idx) => {
       if (idx > 0) y += BLOCK_GAP;
-      b.draw({ x: margin, y, pageIndex: i, pageTotal: pages.length, userCtx: { grupoIndex: 0 } });
-      y += b.height;
+      const partes = b.partesTotais > 1 ? { atual: b.parteAtual, total: b.partesTotais } : undefined;
+      y += drawHeaderEmpresa(margin, y, contentW, b.empresaNome, b.total, partes);
+      y += 3;
+      drawTabelaEquipe(margin, y, contentW, b.funcionarios, b.linhaInicial);
+      y += 7 + b.funcionarios.length * ROW_H; // tab-head + linhas
     });
     drawAssinaturaRodape(margin, pageH - margin - SIG_H, contentW);
-    const primeira = (page.blocks[0]?.meta as any)?.empresaNome ?? "—";
-    drawRodapePagina(i, pages.length, String(primeira));
+    drawRodapePagina(i, pagesSlices.length, "");
   });
 
   return doc;
