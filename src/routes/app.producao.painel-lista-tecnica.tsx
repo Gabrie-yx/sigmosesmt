@@ -495,6 +495,42 @@ function PainelListaTecnicaPage() {
     return { planejado: planTot, aplicado: aplTot, unit: "kg", escopo: "Total", semPlano: planTot === 0 };
   }, [catSel, compPorCategoria]);
 
+  // Lista de itens planejados (Lista Técnica) por categoria — para exibir
+  // dentro do card "Material Planejado", semelhante à tabela de "Materiais aplicados".
+  const planejadosPorCategoria = useMemo(() => {
+    const map: Record<CategoriaMaterial, Map<string, { codigo: string; nome: string; qtd: number; ume: string }>> = {
+      FERRO: new Map(), SOLDA: new Map(), "GÁS": new Map(), TINTA: new Map(), OUTROS: new Map(),
+    };
+    (listaItens as any[]).forEach((it) => {
+      const codigo = String(it.codigo_sap ?? "").trim();
+      if (!codigo) return;
+      const cat = resolveTipo(codigo, null, baseMpMap, baseMpDescMap.get(codigo) ?? null);
+      const ume = String(it.unidade ?? "—").toUpperCase();
+      const qtd = Math.abs(Number(it.quantidade ?? 0));
+      const cur = map[cat].get(codigo) ?? {
+        codigo,
+        nome: baseMpDescMap.get(codigo) || codigo,
+        qtd: 0,
+        ume,
+      };
+      cur.qtd += qtd;
+      map[cat].set(codigo, cur);
+    });
+    const out: Record<CategoriaMaterial, Array<{ codigo: string; nome: string; qtd: number; ume: string }>> = {
+      FERRO: [], SOLDA: [], "GÁS": [], TINTA: [], OUTROS: [],
+    };
+    CATEGORIAS.forEach((c) => {
+      out[c] = Array.from(map[c].values()).sort((a, b) => b.qtd - a.qtd);
+    });
+    return out;
+  }, [listaItens, baseMpMap, baseMpDescMap]);
+
+  // Itens planejados a exibir no card (reage ao catSel: categoria ou Total)
+  const planejadoList = useMemo(() => {
+    if (catSel) return planejadosPorCategoria[catSel];
+    return CATEGORIAS.flatMap((c) => planejadosPorCategoria[c]).sort((a, b) => b.qtd - a.qtd);
+  }, [catSel, planejadosPorCategoria]);
+
   // ===== Curva S: consumo acumulado ao longo do tempo (Total) =====
   // Agrupa movimentos por mês e compara com o previsto total (B51).
   const curvaS = useMemo(() => {
