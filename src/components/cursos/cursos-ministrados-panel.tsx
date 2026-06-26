@@ -494,7 +494,7 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
       }
       const { data: empData } = await supabase
         .from("employees")
-        .select("id, nome, company_id, role_id")
+        .select("id, nome, company_id, role_id, assinatura_url")
         .in("id", empIds);
       const compIds = Array.from(new Set((empData ?? []).map((e: any) => e.company_id).filter(Boolean)));
       const roleIds = Array.from(new Set((empData ?? []).map((e: any) => e.role_id).filter(Boolean)));
@@ -504,10 +504,45 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
       ]);
       const compMap = Object.fromEntries((compRes.data ?? []).map((c: any) => [c.id, c.name]));
       const roleMap = Object.fromEntries((roleRes.data ?? []).map((r: any) => [r.id, r.name]));
-      const participantes = (empData ?? []).map((e: any) => ({
+
+      // Helper: URL pública da assinatura → data URL (pra estampar no PDF)
+      async function urlToDataUrl(url: string | null | undefined): Promise<string | null> {
+        if (!url) return null;
+        try {
+          const res = await fetch(url, { cache: "force-cache" });
+          if (!res.ok) return null;
+          const blob = await res.blob();
+          return await new Promise<string>((resolve) => {
+            const fr = new FileReader();
+            fr.onloadend = () => resolve(fr.result as string);
+            fr.readAsDataURL(blob);
+          });
+        } catch {
+          return null;
+        }
+      }
+
+      const enriched = (empData ?? []).map((e: any) => ({
         nome: e.nome ?? "",
         empresa: compMap[e.company_id] ?? "",
         cargo: roleMap[e.role_id] ?? "",
+        assinatura_url: e.assinatura_url ?? null,
+      }));
+      // Ordena empresa A→Z, depois nome A→Z (igual DDS)
+      enriched.sort(
+        (a, b) =>
+          (a.empresa || "").localeCompare(b.empresa || "", "pt-BR") ||
+          (a.nome || "").localeCompare(b.nome || "", "pt-BR"),
+      );
+      // Estampa assinaturas digitais automaticamente
+      const sigs = await Promise.all(enriched.map((r) => urlToDataUrl(r.assinatura_url)));
+      const empresasUnicas = new Set(enriched.map((r) => r.empresa || "(sem empresa)"));
+      const agruparPorEmpresa = empresasUnicas.size > 1;
+      const participantes = enriched.map((r, i) => ({
+        nome: r.nome,
+        empresa: r.empresa,
+        cargo: r.cargo,
+        assinaturaDataUrl: sigs[i] ?? null,
       }));
       const tipoMap: Record<string, "INTERNO" | "EXTERNO" | "IN COMPANY"> = {
         INTERNO: "INTERNO", EXTERNO: "EXTERNO", IN_COMPANY: "IN COMPANY",
@@ -522,8 +557,14 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
         instituicao: turma.instituicao ?? "",
         local: turma.local ?? "",
         participantes,
+        agruparPorEmpresa,
       });
       doc.save(`lista-presenca-${course.codigo}-${turma.data_realizacao}.pdf`);
+      const comSig = sigs.filter(Boolean).length;
+      toast.success(
+        `Lista gerada com ${participantes.length} participante(s)` +
+          (comSig ? ` — ${comSig} assinatura(s) estampada(s).` : "."),
+      );
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao gerar lista");
     }
