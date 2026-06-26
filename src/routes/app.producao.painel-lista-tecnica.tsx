@@ -433,6 +433,61 @@ function PainelListaTecnicaPage() {
 
   const alertasAtivos = alertasCategoria.filter((a) => a.status === "warn" || a.status === "crit");
 
+  // ===== Realizado/Planejado por categoria (para os 3 cards dinâmicos) =====
+  const compPorCategoria = useMemo(() => {
+    const map: Record<CategoriaMaterial, { planKg: number; aplKg: number; aplDom: { um: string; v: number } | null }> = {
+      FERRO: { planKg: 0, aplKg: 0, aplDom: null },
+      SOLDA: { planKg: 0, aplKg: 0, aplDom: null },
+      "GÁS": { planKg: 0, aplKg: 0, aplDom: null },
+      TINTA: { planKg: 0, aplKg: 0, aplDom: null },
+      OUTROS: { planKg: 0, aplKg: 0, aplDom: null },
+    };
+    const tmpUm: Record<CategoriaMaterial, Map<string, number>> = {
+      FERRO: new Map(), SOLDA: new Map(), "GÁS": new Map(), TINTA: new Map(), OUTROS: new Map(),
+    };
+    itensEnriq.forEach((it) => {
+      const cat = it.categoria as CategoriaMaterial;
+      const um = String(it.unidade ?? "—").toUpperCase();
+      const v = Math.max(0, Number(it.consumo ?? 0));
+      tmpUm[cat].set(um, (tmpUm[cat].get(um) ?? 0) + v);
+    });
+    CATEGORIAS.forEach((c) => {
+      map[c].planKg = previstoPorCategoria[c] || 0;
+      map[c].aplKg = tmpUm[c].get("KG") ?? 0;
+      const sorted = Array.from(tmpUm[c].entries())
+        .map(([um, v]) => ({ um, v }))
+        .sort((a, b) => b.v - a.v);
+      map[c].aplDom = sorted[0] ?? null;
+    });
+    return map;
+  }, [previstoPorCategoria, itensEnriq]);
+
+  // Valores a exibir nos 3 cards (reagem ao catSel)
+  const compCardData = useMemo(() => {
+    if (catSel) {
+      const c = compPorCategoria[catSel];
+      if (c.planKg > 0) {
+        return {
+          planejado: c.planKg,
+          aplicado: c.aplKg,
+          unit: "kg",
+          escopo: catSel as string,
+          semPlano: false,
+        };
+      }
+      return {
+        planejado: 0,
+        aplicado: c.aplDom?.v ?? 0,
+        unit: c.aplDom?.um?.toLowerCase() ?? "—",
+        escopo: catSel as string,
+        semPlano: true,
+      };
+    }
+    const planTot = CATEGORIAS.reduce((s, c) => s + compPorCategoria[c].planKg, 0);
+    const aplTot = CATEGORIAS.reduce((s, c) => s + compPorCategoria[c].aplKg, 0);
+    return { planejado: planTot, aplicado: aplTot, unit: "kg", escopo: "Total", semPlano: planTot === 0 };
+  }, [catSel, compPorCategoria]);
+
   // ===== Curva S: consumo acumulado ao longo do tempo (Total) =====
   // Agrupa movimentos por mês e compara com o previsto total (B51).
   const curvaS = useMemo(() => {
@@ -769,6 +824,98 @@ function PainelListaTecnicaPage() {
         ))}
       </div>
 
+      {/* Curva S — consumo acumulado (estreita, no topo) */}
+      {curvaSPlot.length > 0 && (
+        <Card className="shadow-lg border border-primary/30 bg-slate-950">
+          <CardContent className="p-2.5">
+            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-200">
+                  Curva S — Consumo acumulado
+                </span>
+                {previstoTotal > 0 && (
+                  <span className="text-[10px] text-slate-300">
+                    previsto total: <span className="font-semibold text-white tabular-nums">{fmt(previstoTotal, 0)}</span>
+                    {" · "}realizado: <span className="font-semibold text-white tabular-nums">{fmt(curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0, 0)}</span>
+                    {" · "}
+                    <span className="font-semibold tabular-nums" style={{ color: (curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0) > previstoTotal ? "hsl(0 85% 70%)" : "hsl(142 70% 60%)" }}>
+                      {fmt(((curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0) / previstoTotal) * 100, 1)}% do total
+                    </span>
+                    {aderenciaPct != null && (
+                      <>
+                        {" · aderência ao plano: "}
+                        <span
+                          className="font-semibold tabular-nums"
+                          style={{
+                            color:
+                              aderenciaPct > 110 ? "hsl(0 85% 70%)"
+                              : aderenciaPct > 100 ? "hsl(28 95% 65%)"
+                              : aderenciaPct >= 90 ? "hsl(142 70% 60%)"
+                              : "hsl(200 90% 65%)",
+                          }}
+                          title="Realizado ÷ ideal-no-momento. >100% = adiantado/sobreconsumo; <100% = atrasado/abaixo do plano."
+                        >
+                          {fmt(aderenciaPct, 0)}%
+                        </span>
+                      </>
+                    )}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div style={{ width: "100%", height: 140 }}>
+              <ResponsiveContainer>
+                <AreaChart data={curvaSPlot} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="grad-total" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(200 100% 65%)" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="hsl(200 100% 65%)" stopOpacity={0.1} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.25} stroke="#ffffff" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#ffffff" }} stroke="#ffffff" interval="preserveStartEnd" minTickGap={20} />
+                  <YAxis tick={{ fontSize: 10, fill: "#ffffff" }} stroke="#ffffff" tickFormatter={(v) => fmt(Number(v), 0)} width={55} />
+                  <Tooltip
+                    cursor={{ stroke: "hsl(0 0% 100%)", strokeWidth: 1.5, strokeDasharray: "0" }}
+                    content={<FancyTooltip accent="hsl(200 100% 65%)" />}
+                  />
+                  <Area
+                      type="monotone"
+                      dataKey="TOTAL"
+                      stroke="hsl(200 100% 70%)"
+                      strokeWidth={3}
+                      fill="url(#grad-total)"
+                      name="Realizado acumulado"
+                    />
+                  {previstoTotal > 0 && (
+                    <Area
+                      type="linear"
+                      dataKey="IDEAL"
+                      stroke="hsl(142 80% 65%)"
+                      strokeWidth={2.5}
+                      strokeDasharray="5 4"
+                      fill="transparent"
+                      dot={false}
+                      name="Plano linear (ideal)"
+                    />
+                  )}
+                  {previstoTotal > 0 && (
+                    <ReferenceLine
+                      y={previstoTotal}
+                      stroke="hsl(0 90% 70%)"
+                      strokeWidth={2}
+                      strokeDasharray="4 4"
+                      label={{ value: `Previsto ${fmt(previstoTotal, 0)}`, position: "insideTopRight", fontSize: 10, fill: "hsl(0 90% 75%)", fontWeight: 600 }}
+                    />
+                  )}
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Linha: Realizado vs Orçado (esq) + 3 cards de comparação (dir) */}
       <div className="grid gap-3 grid-cols-1 lg:grid-cols-[400px_minmax(0,1fr)]">
       {listaAtivaId && (
@@ -844,104 +991,14 @@ function PainelListaTecnicaPage() {
 
       {/* 3 cards: Material Planejado · Material Aplicado · Consumido (Aplicado − Planejado) */}
       <MateriaisComparativoCards
-        planejadoKg={Number(listaPlan?.peso_total_real ?? listaPlan?.peso_total_estimado ?? 0)}
-        aplicadoKg={itensEnriq
-          .filter((it) => String(it.unidade ?? "").toUpperCase() === "KG")
-          .reduce((s, it) => s + Math.max(0, Number(it.consumo ?? 0)), 0)}
+        planejado={compCardData.planejado}
+        aplicado={compCardData.aplicado}
+        unit={compCardData.unit}
+        escopo={compCardData.escopo}
+        semPlano={compCardData.semPlano}
+        accent={catSel ? CAT_COLOR[catSel] : undefined}
       />
       </div>
-
-      {/* Curva S — consumo acumulado ao longo do tempo (largura total) */}
-      {curvaSPlot.length > 0 && (
-        <Card className="shadow-lg border border-primary/30 bg-slate-950 h-full">
-          <CardContent className="p-3 h-full flex flex-col">
-            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-primary" />
-                <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-200">
-                  Curva S — Consumo acumulado
-                </span>
-                {previstoTotal > 0 && (
-                  <span className="text-[10px] text-slate-300">
-                    previsto total: <span className="font-semibold text-white tabular-nums">{fmt(previstoTotal, 0)}</span>
-                    {" · "}realizado: <span className="font-semibold text-white tabular-nums">{fmt(curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0, 0)}</span>
-                    {" · "}
-                    <span className="font-semibold tabular-nums" style={{ color: (curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0) > previstoTotal ? "hsl(0 85% 70%)" : "hsl(142 70% 60%)" }}>
-                      {fmt(((curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0) / previstoTotal) * 100, 1)}% do total
-                    </span>
-                    {aderenciaPct != null && (
-                      <>
-                        {" · aderência ao plano: "}
-                        <span
-                          className="font-semibold tabular-nums"
-                          style={{
-                            color:
-                              aderenciaPct > 110 ? "hsl(0 85% 70%)"
-                              : aderenciaPct > 100 ? "hsl(28 95% 65%)"
-                              : aderenciaPct >= 90 ? "hsl(142 70% 60%)"
-                              : "hsl(200 90% 65%)",
-                          }}
-                          title="Realizado ÷ ideal-no-momento. >100% = adiantado/sobreconsumo; <100% = atrasado/abaixo do plano."
-                        >
-                          {fmt(aderenciaPct, 0)}%
-                        </span>
-                      </>
-                    )}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex-1 min-h-[320px]" style={{ width: "100%" }}>
-              <ResponsiveContainer>
-                <AreaChart data={curvaSPlot} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="grad-total" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(200 100% 65%)" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="hsl(200 100% 65%)" stopOpacity={0.1} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.25} stroke="#ffffff" />
-                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#ffffff" }} stroke="#ffffff" interval="preserveStartEnd" minTickGap={20} />
-                  <YAxis tick={{ fontSize: 10, fill: "#ffffff" }} stroke="#ffffff" tickFormatter={(v) => fmt(Number(v), 0)} width={55} />
-                  <Tooltip
-                    cursor={{ stroke: "hsl(0 0% 100%)", strokeWidth: 1.5, strokeDasharray: "0" }}
-                    content={<FancyTooltip accent="hsl(200 100% 65%)" />}
-                  />
-                  <Area
-                      type="monotone"
-                      dataKey="TOTAL"
-                      stroke="hsl(200 100% 70%)"
-                      strokeWidth={3}
-                      fill="url(#grad-total)"
-                      name="Realizado acumulado"
-                    />
-                  {previstoTotal > 0 && (
-                    <Area
-                      type="linear"
-                      dataKey="IDEAL"
-                      stroke="hsl(142 80% 65%)"
-                      strokeWidth={2.5}
-                      strokeDasharray="5 4"
-                      fill="transparent"
-                      dot={false}
-                      name="Plano linear (ideal)"
-                    />
-                  )}
-                  {previstoTotal > 0 && (
-                    <ReferenceLine
-                      y={previstoTotal}
-                      stroke="hsl(0 90% 70%)"
-                      strokeWidth={2}
-                      strokeDasharray="4 4"
-                      label={{ value: `Previsto ${fmt(previstoTotal, 0)}`, position: "insideTopRight", fontSize: 10, fill: "hsl(0 90% 75%)", fontWeight: 600 }}
-                    />
-                  )}
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Layout principal: esquerda (categorias) + direita (tabela de materiais) */}
 
@@ -1752,48 +1809,63 @@ function PainelListaTecnicaPage() {
 }
 
 function MateriaisComparativoCards({
-  planejadoKg,
-  aplicadoKg,
+  planejado,
+  aplicado,
+  unit,
+  escopo,
+  semPlano,
+  accent,
 }: {
-  planejadoKg: number;
-  aplicadoKg: number;
+  planejado: number;
+  aplicado: number;
+  unit: string;
+  escopo: string;
+  semPlano: boolean;
+  accent?: string;
 }) {
-  const consumido = aplicadoKg - planejadoKg;
-  const pct = planejadoKg > 0 ? (aplicadoKg / planejadoKg) * 100 : 0;
+  const podeComparar = !semPlano && planejado > 0;
+  const consumido = podeComparar ? aplicado - planejado : 0;
+  const pct = podeComparar ? (aplicado / planejado) * 100 : 0;
   const acima = consumido > 0;
-  const corConsumo = !planejadoKg
+  const corConsumo = !podeComparar
     ? "hsl(var(--muted-foreground))"
     : acima
       ? "hsl(0 80% 65%)"
       : "hsl(142 70% 55%)";
 
+  const planAccent = accent ?? "hsl(200 90% 65%)";
+  const aplAccent = accent ?? "hsl(38 95% 60%)";
+
   const cards = [
     {
-      label: "Material Planejado",
-      hint: "Lista Técnica · peso real",
-      value: planejadoKg,
-      unit: "kg",
+      label: `Material Planejado · ${escopo}`,
+      hint: semPlano ? "Sem plano em KG nesta categoria" : "Lista Técnica · peso real",
+      value: planejado,
+      unit: semPlano ? "—" : "kg",
       icon: Layers,
-      accent: "hsl(200 90% 65%)",
+      accent: planAccent,
+      muted: semPlano,
     },
     {
-      label: "Material Aplicado",
-      hint: "MB51 · consumo líquido (KG)",
-      value: aplicadoKg,
-      unit: "kg",
+      label: `Material Aplicado · ${escopo}`,
+      hint: `MB51 · consumo líquido (${unit.toUpperCase()})`,
+      value: aplicado,
+      unit,
       icon: Package,
-      accent: "hsl(38 95% 60%)",
+      accent: aplAccent,
+      muted: false,
     },
     {
-      label: "Consumido",
-      hint: planejadoKg > 0
+      label: `Consumido · ${escopo}`,
+      hint: podeComparar
         ? `Aplicado − Planejado · ${fmt(pct, 1)}% do plano`
-        : "Aplicado − Planejado",
+        : "Sem plano para comparar",
       value: consumido,
-      unit: "kg",
+      unit: podeComparar ? unit : "—",
       icon: TrendingUp,
       accent: corConsumo,
       signed: true,
+      muted: !podeComparar,
     },
   ];
 
@@ -1816,10 +1888,14 @@ function MateriaisComparativoCards({
                 className="text-2xl font-bold tabular-nums leading-tight"
                 style={{ color: c.accent }}
               >
-                {c.signed && c.value > 0 ? "+" : ""}
-                {fmt(c.value, 0)}
+                {c.muted ? "—" : (
+                  <>
+                    {c.signed && c.value > 0 ? "+" : ""}
+                    {fmt(c.value, 0)}
+                  </>
+                )}
                 <span className="text-xs font-medium text-muted-foreground ml-1">
-                  {c.unit}
+                  {c.muted ? "" : c.unit}
                 </span>
               </div>
               <div className="text-[10px] text-muted-foreground mt-1">{c.hint}</div>
