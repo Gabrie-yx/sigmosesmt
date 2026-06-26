@@ -170,6 +170,13 @@ function PainelListaTecnicaPage() {
     return m;
   }, [baseMp]);
 
+  // Mapa código → descrição da Base MP (para exibir nome dos itens planejados)
+  const baseMpDescMap = useMemo(() => {
+    const m = new Map<string, string>();
+    (baseMp as any[]).forEach((b) => m.set(String(b.codigo), String(b.descricao ?? "")));
+    return m;
+  }, [baseMp]);
+
   // ===== Listas técnicas (planejado) — para KPI plan × real =====
   const { data: listasAtuais = [] } = useQuery({
     queryKey: ["listas-tecnicas-latest"],
@@ -487,6 +494,42 @@ function PainelListaTecnicaPage() {
     const aplTot = CATEGORIAS.reduce((s, c) => s + compPorCategoria[c].aplKg, 0);
     return { planejado: planTot, aplicado: aplTot, unit: "kg", escopo: "Total", semPlano: planTot === 0 };
   }, [catSel, compPorCategoria]);
+
+  // Lista de itens planejados (Lista Técnica) por categoria — para exibir
+  // dentro do card "Material Planejado", semelhante à tabela de "Materiais aplicados".
+  const planejadosPorCategoria = useMemo(() => {
+    const map: Record<CategoriaMaterial, Map<string, { codigo: string; nome: string; qtd: number; ume: string }>> = {
+      FERRO: new Map(), SOLDA: new Map(), "GÁS": new Map(), TINTA: new Map(), OUTROS: new Map(),
+    };
+    (listaItens as any[]).forEach((it) => {
+      const codigo = String(it.codigo_sap ?? "").trim();
+      if (!codigo) return;
+      const cat = resolveTipo(codigo, null, baseMpMap, baseMpDescMap.get(codigo) ?? null);
+      const ume = String(it.unidade ?? "—").toUpperCase();
+      const qtd = Math.abs(Number(it.quantidade ?? 0));
+      const cur = map[cat].get(codigo) ?? {
+        codigo,
+        nome: baseMpDescMap.get(codigo) || codigo,
+        qtd: 0,
+        ume,
+      };
+      cur.qtd += qtd;
+      map[cat].set(codigo, cur);
+    });
+    const out: Record<CategoriaMaterial, Array<{ codigo: string; nome: string; qtd: number; ume: string }>> = {
+      FERRO: [], SOLDA: [], "GÁS": [], TINTA: [], OUTROS: [],
+    };
+    CATEGORIAS.forEach((c) => {
+      out[c] = Array.from(map[c].values()).sort((a, b) => b.qtd - a.qtd);
+    });
+    return out;
+  }, [listaItens, baseMpMap, baseMpDescMap]);
+
+  // Itens planejados a exibir no card (reage ao catSel: categoria ou Total)
+  const planejadoList = useMemo(() => {
+    if (catSel) return planejadosPorCategoria[catSel];
+    return CATEGORIAS.flatMap((c) => planejadosPorCategoria[c]).sort((a, b) => b.qtd - a.qtd);
+  }, [catSel, planejadosPorCategoria]);
 
   // ===== Curva S: consumo acumulado ao longo do tempo (Total) =====
   // Agrupa movimentos por mês e compara com o previsto total (B51).
@@ -997,6 +1040,7 @@ function PainelListaTecnicaPage() {
         escopo={compCardData.escopo}
         semPlano={compCardData.semPlano}
         accent={catSel ? CAT_COLOR[catSel] : undefined}
+        planejadoItens={planejadoList}
       />
       </div>
 
@@ -1815,6 +1859,7 @@ function MateriaisComparativoCards({
   escopo,
   semPlano,
   accent,
+  planejadoItens,
 }: {
   planejado: number;
   aplicado: number;
@@ -1822,6 +1867,7 @@ function MateriaisComparativoCards({
   escopo: string;
   semPlano: boolean;
   accent?: string;
+  planejadoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
 }) {
   const podeComparar = !semPlano && planejado > 0;
   const consumido = podeComparar ? aplicado - planejado : 0;
@@ -1845,6 +1891,7 @@ function MateriaisComparativoCards({
       icon: Layers,
       accent: planAccent,
       muted: semPlano,
+      itens: planejadoItens ?? [],
     },
     {
       label: `Material Aplicado · ${escopo}`,
@@ -1871,21 +1918,21 @@ function MateriaisComparativoCards({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 h-full">
-      {cards.map((c) => (
+      {cards.map((c: any) => (
         <Card
           key={c.label}
           className="shadow-sm border-0 bg-gradient-to-br from-muted/40 via-background to-muted/20 h-full"
         >
-          <CardContent className="p-3 h-full flex flex-col justify-between">
+          <CardContent className="p-3 h-full flex flex-col gap-2 min-h-0">
             <div className="flex items-center justify-between">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
                 {c.label}
               </span>
               <c.icon className="h-4 w-4" style={{ color: c.accent }} />
             </div>
-            <div className="mt-2">
+            <div>
               <div
-                className="text-2xl font-bold tabular-nums leading-tight"
+                className="text-xl font-bold tabular-nums leading-tight"
                 style={{ color: c.accent }}
               >
                 {c.muted ? "—" : (
@@ -1900,6 +1947,38 @@ function MateriaisComparativoCards({
               </div>
               <div className="text-[10px] text-muted-foreground mt-1">{c.hint}</div>
             </div>
+            {c.itens !== undefined && (
+              <div className="flex-1 min-h-0 mt-1 rounded-md border border-border/50 bg-background/40 overflow-hidden flex flex-col">
+                {c.itens.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center px-2 py-4 text-[10px] text-muted-foreground text-center">
+                    {semPlano ? "Sem plano em KG nesta categoria" : "Sem itens planejados"}
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between px-2 py-1 border-b border-border/50 bg-muted/40 text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">
+                      <span>Itens planejados</span>
+                      <span>{c.itens.length}</span>
+                    </div>
+                    <div className="overflow-y-auto flex-1">
+                      <table className="w-full text-[11px] table-fixed">
+                        <tbody>
+                          {c.itens.map((it: any) => (
+                            <tr key={it.codigo} className="border-b border-border/40 last:border-0 hover:bg-muted/30">
+                              <td className="px-2 py-1 truncate" title={`${it.codigo} · ${it.nome}`}>
+                                <div className="truncate font-medium">{it.nome}</div>
+                                <div className="truncate font-mono text-[9px] text-muted-foreground">{it.codigo}</div>
+                              </td>
+                              <td className="px-1 py-1 text-right tabular-nums font-semibold w-[70px]">{fmt(it.qtd, 0)}</td>
+                              <td className="px-1 py-1 text-muted-foreground uppercase text-[9px] w-[30px]">{it.ume}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}
