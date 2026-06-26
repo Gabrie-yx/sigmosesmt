@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import { assertSheetKind } from "./sheet-detect";
-import { inferTipoByText } from "./mb51-parser";
+import { normalizeBaseMpTipo } from "./mb51-parser";
 
 export type TipoMP = "FERRO" | "GÁS" | "SOLDA" | "TINTA" | "OUTROS";
 
@@ -66,8 +66,9 @@ export async function parseBaseMpXlsx(file: File): Promise<BaseMpItem[]> {
     const codigo = String(cod).replace(/\.0$/, "").trim();
     const descricao = cDesc !== -1 && r[cDesc] != null ? String(r[cDesc]).trim() : null;
     const tipoCol = mapTipo(r[cTipo]);
-    // Se a coluna Tipo cair em OUTROS, tenta refinar pela descrição
-    const tipoFinal: TipoMP = tipoCol === "OUTROS" ? (inferTipoByText(descricao) ?? "OUTROS") : tipoCol;
+    // OUTROS é residual: se a descrição indicar claramente um card próprio,
+    // salva a categoria efetiva para não poluir o card OUTROS no painel.
+    const tipoFinal = normalizeBaseMpTipo(tipoCol, descricao);
     dedup.set(codigo, {
       codigo,
       descricao,

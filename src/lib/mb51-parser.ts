@@ -171,9 +171,8 @@ export async function parseMb51Xlsx(file: File): Promise<Mb51ParseResult> {
   return { ordens: Array.from(ordensMap.values()), total_linhas: total };
 }
 
-/** Resolve o tipo do material usando a Base MP. Faz fallback para a classificação inline da MB51. */
-/** Heurística por descrição/classificação — usada como reforço quando a Base MP
- * traz tipo genérico ("OUTROS") ou quando o material não está cadastrado. */
+/** Heurística por texto — usada para sanear OUTROS da Base MP pela descrição
+ * oficial e, só em material sem cadastro, como fallback da descrição/MB51. */
 export function inferTipoByText(...textos: (string | null | undefined)[]): TipoMP | null {
   const t = textos
     .filter(Boolean)
@@ -186,10 +185,27 @@ export function inferTipoByText(...textos: (string | null | undefined)[]): TipoM
   if (/\b(solda|eletrod|arame.*(?:weld|tubular|mig|solda)|denver|inox.*solda|fluxo.*sold|vareta|tig|mig)\b/.test(t)) return "SOLDA";
   if (/\b(weld|7018|6013|e71t|er70|er-?70)\b/.test(t)) return "SOLDA";
   // TINTA — primer, esmalte, epóxi, thinner, diluente, solvente
-  if (/\b(tinta|primer|esmalte|epox|thinner|diluen|solvent|verniz|fundo)\b/.test(t)) return "TINTA";
+  if (/\b(tinta|primer|esmalte|epox|thinner|diluen|solvent|verniz|fundo|interlac|interprime|intergard|interseal)\b/.test(t)) return "TINTA";
+  if (/\b(international\b.*\b(redutor|gta\d*)|\bredutor\b.*\b(gta\d*|international))\b/.test(t)) return "TINTA";
   // FERRO/AÇO — chapas, perfis, cantoneiras, barras, tubos, vergalhão
-  if (/\b(ferro|chapa|cantone|perfil|barra|vergalh|tubo|tarugo|trefilad|aco|a36|laminad|redondo|quadrado|sextavad|cantonei)\b/.test(t)) return "FERRO";
+  if (/\b(ferro|chapa|cantone|perfil|barra|vergalh|tubo|tarugo|trefilad|aco|a36|astm|laminad|redondo|quadrado|sextavad|cantonei|parafuso|porca|arruela|flange|cotovelo|reducao|valvula|niple|luva|bocal|terminal|galvaniz|gonzo|estrutura)\b/.test(t)) return "FERRO";
   return null;
+}
+
+export function normalizeBaseMpTipo(tipo: TipoMP | string | null | undefined, descricao?: string | null): TipoMP {
+  const raw = norm(tipo);
+  const tipoBase: TipoMP = raw.startsWith("ferr") ? "FERRO"
+    : raw.startsWith("gas") ? "GÁS"
+    : raw.startsWith("sold") ? "SOLDA"
+    : raw.startsWith("tint") ? "TINTA"
+    : "OUTROS";
+
+  if (tipoBase !== "OUTROS") return tipoBase;
+
+  // OUTROS é categoria residual. Se o cadastro veio como OUTROS, mas a
+  // descrição aponta claramente para um card próprio (TINTA/SOLDA/GÁS/FERRO),
+  // corrigimos a categoria efetiva para impedir vazamento no card OUTROS.
+  return inferTipoByText(descricao) ?? "OUTROS";
 }
 
 export function resolveTipo(
@@ -199,11 +215,11 @@ export function resolveTipo(
   descricao?: string | null,
 ): TipoMP {
   const t = baseMp.get(material);
-  // Se o material existe na Base MP, ela é a fonte da verdade — INCLUSIVE
-  // quando o tipo cadastrado é "OUTROS". A classificacao_mb51 é digitada
-  // pelo operador linha a linha e frequentemente erra (ex.: "CORRENTE SOLD
-  // ZINC 6MM" é cadastrado como OUTROS na Base MP, mas aparece classificado
-  // como "Gás" em alguns movimentos, o que jogaria o item no card errado).
+  // Se o material existe na Base MP, ela é a fonte da verdade. O mapa recebido
+  // pelo painel já vem saneado por normalizeBaseMpTipo: OUTROS só permanece
+  // OUTROS quando a descrição não pertence claramente a FERRO/GÁS/SOLDA/TINTA.
+  // A classificacao_mb51 nunca reforça material já cadastrado, pois é digitada
+  // linha a linha e frequentemente erra (caso real: CORRENTE SOLD ZINC 6MM).
   if (t) return t;
   // Material não cadastrado na Base MP: tenta inferir pela descrição
   // (estável por código SAP) e, em último caso, pela classificação inline.

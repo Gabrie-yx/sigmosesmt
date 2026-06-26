@@ -5,7 +5,7 @@ Comando "listar pendencias" → ler mem://pendencias e mostrar itens `[ ]`.
 Quando o usuário falar em "outras empresas", "multi-empresa", "white-label", "SaaS", "CNAE", "qualquer segmento", "vender o SIGMO" → consultar mem://pgr-generico.
 Arquivar TUDO que o usuário disser na memória (pendência/decisão/contexto) para tratamento posterior — ver mem://preferences/arquivar-tudo.
 Padrão **Modal-First**: ações novas abrem como modal/sheet/drawer sobre a tela contextual. Rota nova só com justificativa (ver mem://preferences/modal-first).
-MB51: Base MP é fonte da verdade ABSOLUTA p/ tipo do material (inclusive OUTROS). Nunca cair em fallback de classificacao_mb51 quando material já tem cadastro — ver mem://features/mb51-classificacao-base-mp.
+MB51: Base MP vence, mas OUTROS é residual saneado por descrição; classificacao_mb51 nunca reforça material cadastrado — ver mem://features/mb51-classificacao-base-mp.
 
 ## Memories
 - [Pendências](mem://pendencias) — Tarefas pendentes acordadas com o usuário (geradores PDF Eficácia/Reação, etc.)

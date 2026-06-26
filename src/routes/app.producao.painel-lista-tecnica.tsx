@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import { LayoutDashboard, RefreshCw, Filter, Package, TrendingUp, Layers, AlertTriangle, CheckCircle2, Upload, Loader2, Info } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { resolveTipo } from "@/lib/mb51-parser";
+import { normalizeBaseMpTipo, resolveTipo } from "@/lib/mb51-parser";
 import type { TipoMP } from "@/lib/base-mp-parser";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PainelAnaliseAvancada } from "@/components/producao/painel-analise-avancada";
@@ -159,14 +159,14 @@ function PainelListaTecnicaPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("producao_base_materia_prima")
-        .select("codigo, tipo");
+        .select("codigo, descricao, tipo");
       if (error) throw error;
       return data ?? [];
     },
   });
   const baseMpMap = useMemo(() => {
     const m = new Map<string, TipoMP>();
-    (baseMp as any[]).forEach((b) => m.set(String(b.codigo), b.tipo));
+    (baseMp as any[]).forEach((b) => m.set(String(b.codigo), normalizeBaseMpTipo(b.tipo, b.descricao)));
     return m;
   }, [baseMp]);
 
@@ -588,14 +588,7 @@ function PainelListaTecnicaPage() {
           data_lancamento: m.data_lancamento,
           tipo_movimento: m.tipo_movimento,
           classificacao_mb51: m.classificacao_mb51,
-          tipo_resolvido: (() => {
-            const c = String(m.classificacao_mb51 ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-            if (c.startsWith("ferr")) return "FERRO";
-            if (c.startsWith("gas")) return "GÁS";
-            if (c.startsWith("sold")) return "SOLDA";
-            if (c.startsWith("tint")) return "TINTA";
-            return "OUTROS";
-          })(),
+          tipo_resolvido: resolveTipo(m.material, m.classificacao_mb51, baseMpMap, m.descricao),
           }))
           .filter((p) => {
             const key = [p.numero_sap, p.material, p.data_lancamento, p.quantidade, p.unidade, p.tipo_movimento, p.classificacao_mb51 ?? ""].join("|");
