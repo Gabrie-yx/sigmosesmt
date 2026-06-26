@@ -40,6 +40,7 @@ function TrainingsPage() {
   const { isEditor, isAdmin } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [openAttendees, setOpenAttendees] = useState<string | null>(null);
+  const [gerarListaFor, setGerarListaFor] = useState<any | null>(null);
   const [f, setF] = useState({
     tipo: TIPOS_FIXOS[0],
     titulo: "",
