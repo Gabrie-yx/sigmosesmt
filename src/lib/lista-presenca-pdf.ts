@@ -11,7 +11,7 @@ export type ListaPresencaParams = {
   cargaHoraria: string;
   instituicao: string;
   local: string;
-  participantes: { nome: string; empresa: string; cargo: string }[];
+  participantes: { nome: string; empresa: string; cargo: string; assinaturaDataUrl?: string | null }[];
   codigo?: string;
   revisao?: string;
   dataDocumento?: string;
