@@ -255,6 +255,12 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
       for (let i = 0; i < 5; i++) {
         doc.rect(margin + partW + i * rubCol, ry, rubCol, rowH);
       }
+      // Estampa assinatura digital (se houver) na 1ª célula de rubrica
+      if (part?.assinaturaDataUrl) {
+        try {
+          drawImageContain(part.assinaturaDataUrl, margin + partW + 0.6, ry + 0.6, rubCol - 1.2, rowH - 1.2);
+        } catch {}
+      }
       ry += rowH;
     }
     return ry;
