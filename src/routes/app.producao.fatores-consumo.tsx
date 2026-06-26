@@ -12,7 +12,9 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Calculator, Lock, LockOpen, RefreshCw, Save, Sparkles } from "lucide-react";
-import { resolveTipo, type CategoriaMaterial } from "@/lib/mb51-parser";
+import { resolveTipo } from "@/lib/mb51-parser";
+import type { TipoMP } from "@/lib/base-mp-parser";
+type CategoriaMaterial = TipoMP;
 
 export const Route = createFileRoute("/app/producao/fatores-consumo")({
   component: FatoresConsumoPage,
@@ -101,10 +103,10 @@ function FatoresConsumoPage() {
       const { data: baseMp } = await supabase
         .from("producao_base_materia_prima")
         .select("codigo_sap, tipo, descricao_sap");
-      const baseMpMap = new Map<string, string | null>();
+      const baseMpMap = new Map<string, TipoMP>();
       const baseMpDescMap = new Map<string, string | null>();
       (baseMp ?? []).forEach((b: any) => {
-        baseMpMap.set(String(b.codigo_sap), b.tipo);
+        if (b.tipo) baseMpMap.set(String(b.codigo_sap), b.tipo as TipoMP);
         baseMpDescMap.set(String(b.codigo_sap), b.descricao_sap);
       });
 
@@ -114,7 +116,7 @@ function FatoresConsumoPage() {
         toast.warning("Nenhum casco com tipo de embarcação cadastrado.");
         return;
       }
-      const { data: listas } = await supabase
+      const { data: listas } = await (supabase as any)
         .from("producao_listas_tecnicas")
         .select("id, casco_id, ativa")
         .in("casco_id", cascoIds)
