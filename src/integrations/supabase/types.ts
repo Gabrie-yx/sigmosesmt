@@ -2414,6 +2414,9 @@ export type Database = {
           id: string
           motivo: string | null
           observacao: string | null
+          sig_func: boolean | null
+          sig_sesmt: boolean | null
+          sig_supervisor: boolean | null
           tipo: string
           updated_at: string
         }
@@ -2436,6 +2439,9 @@ export type Database = {
           id?: string
           motivo?: string | null
           observacao?: string | null
+          sig_func?: boolean | null
+          sig_sesmt?: boolean | null
+          sig_supervisor?: boolean | null
           tipo: string
           updated_at?: string
         }
@@ -2458,6 +2464,9 @@ export type Database = {
           id?: string
           motivo?: string | null
           observacao?: string | null
+          sig_func?: boolean | null
+          sig_sesmt?: boolean | null
+          sig_supervisor?: boolean | null
           tipo?: string
           updated_at?: string
         }
