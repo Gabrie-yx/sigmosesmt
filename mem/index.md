@@ -22,3 +22,4 @@ MB51: Base MP vence, mas OUTROS é residual saneado por descrição; classificac
 - [DDS Semanal assinaturas (teste pendente)](mem://features/dds-assinaturas-teste-pendente.md) — Toggle de assinatura digital implementado; falta validar E2E. Auth externa bloqueia Playwright; depende da Arteniza validar manual.
 - [MB51 classificação — Base MP vence](mem://features/mb51-classificacao-base-mp.md) — Regra inviolável do resolveTipo: Base MP é fonte da verdade absoluta; classificacao_mb51 só como último recurso para material sem cadastro. Caso real CORRENTE SOLD ZINC vazando p/ GÁS.
 - [Israel - Almoxarifado](mem://team/israel-almoxarifado.md) — Responsável pelo almox no pátio; valida fatores de consumo (SOLDA/GÁS/TINTA) em /app/producao/fatores-consumo.
+- [ASO Mudança de Risco - gap](mem://features/aso-mudanca-risco-gap.md) — Falta trava validando mudança real de GHE/função + histórico antes/depois atrelado ao ASO. Pausado.
