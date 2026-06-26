@@ -11,7 +11,7 @@ export type ListaPresencaParams = {
   cargaHoraria: string;
   instituicao: string;
   local: string;
-  participantes: { nome: string; empresa: string; cargo: string }[];
+  participantes: { nome: string; empresa: string; cargo: string; assinaturaDataUrl?: string | null }[];
   codigo?: string;
   revisao?: string;
   dataDocumento?: string;
@@ -254,6 +254,12 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
       // 5 rubrica empty
       for (let i = 0; i < 5; i++) {
         doc.rect(margin + partW + i * rubCol, ry, rubCol, rowH);
+      }
+      // Estampa assinatura digital (se houver) na 1ª célula de rubrica
+      if (part?.assinaturaDataUrl) {
+        try {
+          drawImageContain(part.assinaturaDataUrl, margin + partW + 0.6, ry + 0.6, rubCol - 1.2, rowH - 1.2);
+        } catch {}
       }
       ry += rowH;
     }

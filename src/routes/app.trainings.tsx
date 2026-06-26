@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -40,6 +40,7 @@ function TrainingsPage() {
   const { isEditor, isAdmin } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [openAttendees, setOpenAttendees] = useState<string | null>(null);
+  const [gerarListaFor, setGerarListaFor] = useState<any | null>(null);
   const [f, setF] = useState({
     tipo: TIPOS_FIXOS[0],
     titulo: "",
@@ -412,7 +413,7 @@ function TrainingsPage() {
                     <button onClick={() => setOpenAttendees(t.id)} className="w-7 h-7 rounded bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors" title="Participantes">
                       <Users className="h-3.5 w-3.5" />
                     </button>
-                    <button onClick={() => gerarLista(t)} className="w-7 h-7 rounded bg-violet-100 text-violet-600 hover:bg-violet-600 hover:text-white flex items-center justify-center" title="Gerar Lista de Presença (PDF)">
+                    <button onClick={() => setGerarListaFor(t)} className="w-7 h-7 rounded bg-violet-100 text-violet-600 hover:bg-violet-600 hover:text-white flex items-center justify-center" title="Gerar Lista de Presença (PDF)">
                       <ClipboardList className="h-3.5 w-3.5" />
                     </button>
                     {t.anexo_path && (
@@ -458,6 +459,12 @@ function TrainingsPage() {
           trainingId={openAttendees}
           training={trainings.find((t: any) => t.id === openAttendees)}
           onClose={() => setOpenAttendees(null)}
+        />
+      )}
+      {gerarListaFor && (
+        <GerarListaDialog
+          training={gerarListaFor}
+          onClose={() => setGerarListaFor(null)}
         />
       )}
     </div>
@@ -739,6 +746,279 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
               );
             })
           )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+async function urlToDataUrl(url: string | null | undefined): Promise<string | null> {
+  if (!url) return null;
+  try {
+    const res = await fetch(url, { cache: "force-cache" });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve) => {
+      const fr = new FileReader();
+      fr.onloadend = () => resolve(fr.result as string);
+      fr.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+function GerarListaDialog({ training, onClose }: { training: any; onClose: () => void }) {
+  const [companiesSel, setCompaniesSel] = useState<Set<string>>(new Set());
+  const [excluded, setExcluded] = useState<Set<string>>(new Set());
+  const [autoSig, setAutoSig] = useState<boolean>(true);
+  const [generating, setGenerating] = useState(false);
+
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ["lista-presenca-participantes", training.id],
+    queryFn: async () => {
+      const { data: atts } = await supabase
+        .from("training_attendees")
+        .select("employee_id")
+        .eq("training_id", training.id);
+      const ids = Array.from(new Set((atts ?? []).map((a: any) => a.employee_id).filter(Boolean)));
+      if (!ids.length) return [] as any[];
+      const [empRes, compRes, roleRes] = await Promise.all([
+        supabase.from("employees").select("id,nome,company_id,role_id,assinatura_url").in("id", ids),
+        supabase.from("companies").select("id,name"),
+        supabase.from("roles").select("id,name"),
+      ]);
+      const cMap = Object.fromEntries((compRes.data ?? []).map((c: any) => [c.id, c.name]));
+      const rMap = Object.fromEntries((roleRes.data ?? []).map((r: any) => [r.id, r.name]));
+      return (empRes.data ?? []).map((e: any) => ({
+        id: e.id,
+        nome: e.nome ?? "",
+        empresa: cMap[e.company_id] ?? "",
+        empresaId: e.company_id ?? "",
+        cargo: rMap[e.role_id] ?? "",
+        assinatura_url: e.assinatura_url ?? null,
+      }));
+    },
+  });
+
+  const empresas = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; total: number; comSig: number }>();
+    rows.forEach((r: any) => {
+      const k = r.empresaId || "—";
+      const name = r.empresa || "(sem empresa)";
+      const cur = map.get(k) ?? { id: k, name, total: 0, comSig: 0 };
+      cur.total += 1;
+      if (r.assinatura_url) cur.comSig += 1;
+      map.set(k, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  }, [rows]);
+
+  // Inicializa: todas as empresas marcadas quando carregar
+  useEffect(() => {
+    if (empresas.length && companiesSel.size === 0) {
+      setCompaniesSel(new Set(empresas.map((e) => e.id)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [empresas.length]);
+
+  const selecionados = useMemo(
+    () =>
+      rows.filter(
+        (r: any) => companiesSel.has(r.empresaId || "—") && !excluded.has(r.id),
+      ),
+    [rows, companiesSel, excluded],
+  );
+  const comSigTotal = selecionados.filter((r: any) => r.assinatura_url).length;
+
+  function toggleEmpresa(id: string) {
+    const n = new Set(companiesSel);
+    if (n.has(id)) n.delete(id);
+    else n.add(id);
+    setCompaniesSel(n);
+  }
+  function togglePessoa(id: string) {
+    const n = new Set(excluded);
+    if (n.has(id)) n.delete(id);
+    else n.add(id);
+    setExcluded(n);
+  }
+
+  async function pathToDataUrl(path: string | null | undefined): Promise<string | null> {
+    if (!path) return null;
+    const { data } = await supabase.storage.from("training-docs").download(path);
+    if (!data) return null;
+    return await new Promise<string>((r) => {
+      const fr = new FileReader();
+      fr.onloadend = () => r(fr.result as string);
+      fr.readAsDataURL(data);
+    });
+  }
+
+  async function handleGerar() {
+    if (!selecionados.length) {
+      toast.error("Selecione ao menos 1 participante.");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const sigs = autoSig
+        ? await Promise.all(selecionados.map((r: any) => urlToDataUrl(r.assinatura_url)))
+        : selecionados.map(() => null);
+      const assinaturaDataUrl = await pathToDataUrl(training.assinatura_path);
+      const participantes = selecionados.map((r: any, i: number) => ({
+        nome: r.nome,
+        empresa: r.empresa,
+        cargo: r.cargo,
+        assinaturaDataUrl: sigs[i] ?? null,
+      }));
+      const doc = gerarListaPresenca({
+        titulo: `${training.tipo}${training.titulo ? " — " + training.titulo : ""}`,
+        instrutor: training.instrutor ?? "",
+        assinaturaDataUrl,
+        assunto: training.observacoes ?? training.titulo ?? training.tipo,
+        tipo: "INTERNO",
+        data: formatDateBR(training.data_realizacao),
+        cargaHoraria: `${training.carga_horaria_h}h`,
+        instituicao: training.instituicao ?? "",
+        local: training.local ?? "",
+        participantes,
+      });
+      const empresaTag =
+        companiesSel.size === empresas.length
+          ? "todas"
+          : empresas
+              .filter((e) => companiesSel.has(e.id))
+              .map((e) => e.name.replace(/[^\w]+/g, ""))
+              .join("-")
+              .slice(0, 40) || "filtrada";
+      doc.save(
+        `lista-presenca-${(training.titulo || training.tipo).replace(/[^\w-]/g, "_")}-${empresaTag}.pdf`,
+      );
+      toast.success(`PDF gerado com ${selecionados.length} participante(s).`);
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao gerar lista");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <Dialog open={true} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-rose-400" />
+            Gerar Lista de Presença
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <Label className="text-[11px] font-bold uppercase tracking-wide">
+                  Estampar assinatura digital automaticamente
+                </Label>
+                <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                  {comSigTotal} de {selecionados.length} selecionados têm assinatura cadastrada na ficha. Os demais aparecem com a célula em branco para rubrica manual.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={autoSig}
+                onChange={(e) => setAutoSig(e.target.checked)}
+                className="h-5 w-5 accent-rose-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-[11px] font-bold uppercase tracking-wide mb-2 block">
+              Filtrar por empresa
+            </Label>
+            {isLoading ? (
+              <p className="text-xs text-muted-foreground">Carregando…</p>
+            ) : empresas.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Nenhum participante nesta turma.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {empresas.map((e) => {
+                  const on = companiesSel.has(e.id);
+                  return (
+                    <button
+                      key={e.id}
+                      type="button"
+                      onClick={() => toggleEmpresa(e.id)}
+                      className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left transition ${
+                        on
+                          ? "border-rose-500/50 bg-rose-500/10"
+                          : "border-white/10 bg-white/[0.02] opacity-60"
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold truncate">{e.name}</div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {e.total} pessoas · {e.comSig} c/ assinatura
+                        </div>
+                      </div>
+                      <input type="checkbox" readOnly checked={on} className="h-4 w-4 accent-rose-500 pointer-events-none" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {selecionados.length > 0 && (
+            <details className="rounded-xl border border-white/10 bg-white/[0.03]">
+              <summary className="cursor-pointer px-3 py-2 text-[11px] font-bold uppercase tracking-wide">
+                Refinar manualmente ({selecionados.length} selecionados)
+              </summary>
+              <div className="max-h-56 overflow-y-auto custom-scrollbar px-3 py-2 space-y-1">
+                {rows
+                  .filter((r: any) => companiesSel.has(r.empresaId || "—"))
+                  .sort((a: any, b: any) => a.nome.localeCompare(b.nome, "pt-BR"))
+                  .map((r: any) => {
+                    const included = !excluded.has(r.id);
+                    return (
+                      <label
+                        key={r.id}
+                        className="flex items-center gap-2 text-xs py-1 cursor-pointer hover:bg-white/5 rounded px-1"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={included}
+                          onChange={() => togglePessoa(r.id)}
+                          className="h-3.5 w-3.5 accent-rose-500"
+                        />
+                        <span className={included ? "" : "line-through opacity-50"}>
+                          {r.nome}
+                          <span className="text-muted-foreground ml-2">· {r.empresa}</span>
+                          {r.assinatura_url && (
+                            <span className="ml-2 text-[9px] text-emerald-400 font-bold">ASSIN.</span>
+                          )}
+                        </span>
+                      </label>
+                    );
+                  })}
+              </div>
+            </details>
+          )}
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={onClose} disabled={generating}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleGerar}
+              disabled={generating || !selecionados.length}
+              className="bg-gradient-to-br from-rose-600 to-rose-800 text-white"
+            >
+              {generating ? "Gerando…" : `Gerar PDF (${selecionados.length})`}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
