@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
 import { gerarHoraExtraSabadoPDF } from "@/lib/hora-extra-sabado-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { compressSignatureForPdf, compressSignaturesBatch } from "@/lib/signature-utils";
 import type jsPDF from "jspdf";
 import dmnLogo from "@/assets/dmn-logo.png";
 
@@ -76,8 +77,13 @@ function HoraExtraSabadoPage() {
       .eq("id", id)
       .maybeSingle();
     if (!rec) return toast.error("Registro não encontrado");
-    const tst = (rec as any).assinatura_tst_data ?? null;
-    const gestor = (rec as any).assinatura_gestor_data ?? null;
+    const tstRaw = (rec as any).assinatura_tst_data ?? null;
+    const gestorRaw = (rec as any).assinatura_gestor_data ?? null;
+    // Comprime as 2 assinaturas do rodapé em paralelo (60-100KB → ~6KB cada).
+    const [tst, gestor] = await Promise.all([
+      compressSignatureForPdf(tstRaw),
+      compressSignatureForPdf(gestorRaw),
+    ]);
     setTstSig(tst);
     setGestorSig(gestor);
     const { data: list, error: listError } = await supabase
@@ -94,14 +100,19 @@ function HoraExtraSabadoPage() {
 
     const logo = await imageToDataUrl(dmnLogo);
 
+    // Comprime TODAS as assinaturas dos funcionários em paralelo ANTES de
+    // montar o PDF. Antes: cada addImage parseava um PNG ~17KB; agora ~3KB.
+    const sigsCompactas = await compressSignaturesBatch(
+      (list ?? []).map((f: any) => f.employees?.assinatura_url ?? null),
+    );
     const empresaPadrao = (rec as any).companies?.name ?? "EXTERNOS";
     const grupos = new Map<string, any[]>();
-    (list ?? []).forEach((f: any) => {
+    (list ?? []).forEach((f: any, idx: number) => {
       const empNome =
         f.employees?.companies?.name ??
         (f.externo ? "EXTERNOS" : empresaPadrao);
       if (!grupos.has(empNome)) grupos.set(empNome, []);
-      grupos.get(empNome)!.push(f);
+      grupos.get(empNome)!.push({ ...f, _sigCompacta: sigsCompactas[idx] });
     });
     // Sempre 1 página por empresa, ordem alfabética (EXTERNOS por último).
     const ordenadas = Array.from(grupos.entries()).sort(([a], [b]) => {
@@ -117,7 +128,7 @@ function HoraExtraSabadoPage() {
         transporte: f.transporte,
         alimentacao: f.alimentacao,
         presenca: f.presenca,
-        assinaturaDataUrl: f.employees?.assinatura_url ?? null,
+        assinaturaDataUrl: f._sigCompacta ?? f.employees?.assinatura_url ?? null,
       })),
     }));
 
