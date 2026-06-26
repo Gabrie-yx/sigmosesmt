@@ -47,6 +47,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/producao/tipos-produto", label: "Tipos de Produto", module: "producao" },
   { key: "/app/producao/lista-tecnica", label: "Lista Técnica", module: "producao" },
   { key: "/app/producao/expedicao", label: "Expedição", module: "producao" },
+  { key: "/app/producao/fatores-consumo", label: "Fatores de Consumo", module: "producao" },
 
   // ----- USUÁRIOS -----
   { key: "/app/users", label: "Usuários", module: "usuarios" },
