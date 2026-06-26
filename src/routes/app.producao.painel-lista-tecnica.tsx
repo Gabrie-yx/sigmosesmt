@@ -531,6 +531,91 @@ function PainelListaTecnicaPage() {
     return CATEGORIAS.flatMap((c) => planejadosPorCategoria[c]).sort((a, b) => b.qtd - a.qtd);
   }, [catSel, planejadosPorCategoria]);
 
+  // ===== Aplicados (MB51) por categoria — agregado por código SAP =====
+  // Mostra a lista dentro do card "Material Aplicado", no mesmo formato
+  // do "Material Planejado". A UME exibida é a dominante daquele código.
+  const aplicadosPorCategoria = useMemo(() => {
+    const map: Record<CategoriaMaterial, Map<string, { codigo: string; nome: string; qtdPorUm: Map<string, number> }>> = {
+      FERRO: new Map(), SOLDA: new Map(), "GÁS": new Map(), TINTA: new Map(), OUTROS: new Map(),
+    };
+    itensEnriq.forEach((it) => {
+      const codigo = String(it.codigo_sap ?? "").trim();
+      if (!codigo) return;
+      const cat = it.categoria as CategoriaMaterial;
+      const ume = String(it.unidade ?? "—").toUpperCase();
+      const v = Math.max(0, Number(it.consumo ?? 0));
+      if (v <= 0) return;
+      const cur = map[cat].get(codigo) ?? {
+        codigo,
+        nome: String(it.descricao_sap ?? baseMpDescMap.get(codigo) ?? codigo),
+        qtdPorUm: new Map<string, number>(),
+      };
+      cur.qtdPorUm.set(ume, (cur.qtdPorUm.get(ume) ?? 0) + v);
+      map[cat].set(codigo, cur);
+    });
+    const out: Record<CategoriaMaterial, Array<{ codigo: string; nome: string; qtd: number; ume: string }>> = {
+      FERRO: [], SOLDA: [], "GÁS": [], TINTA: [], OUTROS: [],
+    };
+    CATEGORIAS.forEach((c) => {
+      out[c] = Array.from(map[c].values()).map((r) => {
+        const dom = Array.from(r.qtdPorUm.entries()).sort((a, b) => b[1] - a[1])[0];
+        return { codigo: r.codigo, nome: r.nome, qtd: dom?.[1] ?? 0, ume: dom?.[0] ?? "—" };
+      }).sort((a, b) => b.qtd - a.qtd);
+    });
+    return out;
+  }, [itensEnriq, baseMpDescMap]);
+
+  const aplicadoList = useMemo(() => {
+    if (catSel) return aplicadosPorCategoria[catSel];
+    return CATEGORIAS.flatMap((c) => aplicadosPorCategoria[c]).sort((a, b) => b.qtd - a.qtd);
+  }, [catSel, aplicadosPorCategoria]);
+
+  // ===== Consumido por categoria (Aplicado − Planejado por código) =====
+  // Merge por código entre Planejado (KG, da Lista Técnica) e Aplicado
+  // (KG, da MB51). Faz sentido apenas onde o plano existe em KG.
+  const consumidosPorCategoria = useMemo(() => {
+    const aplKgPorCat: Record<CategoriaMaterial, Map<string, number>> = {
+      FERRO: new Map(), SOLDA: new Map(), "GÁS": new Map(), TINTA: new Map(), OUTROS: new Map(),
+    };
+    itensEnriq.forEach((it) => {
+      if (String(it.unidade ?? "").toUpperCase() !== "KG") return;
+      const codigo = String(it.codigo_sap ?? "").trim();
+      if (!codigo) return;
+      const cat = it.categoria as CategoriaMaterial;
+      aplKgPorCat[cat].set(codigo, (aplKgPorCat[cat].get(codigo) ?? 0) + Math.max(0, Number(it.consumo ?? 0)));
+    });
+    const out: Record<CategoriaMaterial, Array<{ codigo: string; nome: string; qtd: number; ume: string }>> = {
+      FERRO: [], SOLDA: [], "GÁS": [], TINTA: [], OUTROS: [],
+    };
+    CATEGORIAS.forEach((c) => {
+      const plan = new Map<string, { nome: string; qtd: number }>();
+      planejadosPorCategoria[c].forEach((p) => {
+        if (p.ume === "KG") plan.set(p.codigo, { nome: p.nome, qtd: p.qtd });
+      });
+      const codigos = new Set<string>([...plan.keys(), ...aplKgPorCat[c].keys()]);
+      const linhas: Array<{ codigo: string; nome: string; qtd: number; ume: string }> = [];
+      codigos.forEach((cod) => {
+        const p = plan.get(cod)?.qtd ?? 0;
+        const a = aplKgPorCat[c].get(cod) ?? 0;
+        const diff = a - p;
+        if (diff === 0) return;
+        linhas.push({
+          codigo: cod,
+          nome: plan.get(cod)?.nome ?? baseMpDescMap.get(cod) ?? cod,
+          qtd: diff,
+          ume: "KG",
+        });
+      });
+      out[c] = linhas.sort((a, b) => Math.abs(b.qtd) - Math.abs(a.qtd));
+    });
+    return out;
+  }, [itensEnriq, planejadosPorCategoria, baseMpDescMap]);
+
+  const consumidoList = useMemo(() => {
+    if (catSel) return consumidosPorCategoria[catSel];
+    return CATEGORIAS.flatMap((c) => consumidosPorCategoria[c]).sort((a, b) => Math.abs(b.qtd) - Math.abs(a.qtd));
+  }, [catSel, consumidosPorCategoria]);
+
   // ===== Curva S: consumo acumulado ao longo do tempo (Total) =====
   // Agrupa movimentos por mês e compara com o previsto total (B51).
   const curvaS = useMemo(() => {
@@ -1041,6 +1126,8 @@ function PainelListaTecnicaPage() {
         semPlano={compCardData.semPlano}
         accent={catSel ? CAT_COLOR[catSel] : undefined}
         planejadoItens={planejadoList}
+        aplicadoItens={aplicadoList}
+        consumidoItens={consumidoList}
       />
       </div>
 
@@ -1860,6 +1947,8 @@ function MateriaisComparativoCards({
   semPlano,
   accent,
   planejadoItens,
+  aplicadoItens,
+  consumidoItens,
 }: {
   planejado: number;
   aplicado: number;
@@ -1868,6 +1957,8 @@ function MateriaisComparativoCards({
   semPlano: boolean;
   accent?: string;
   planejadoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
+  aplicadoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
+  consumidoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
 }) {
   const podeComparar = !semPlano && planejado > 0;
   const consumido = podeComparar ? aplicado - planejado : 0;
@@ -1892,6 +1983,9 @@ function MateriaisComparativoCards({
       accent: planAccent,
       muted: semPlano,
       itens: planejadoItens ?? [],
+      itensLabel: "Itens planejados",
+      emptyLabel: semPlano ? "Sem plano em KG nesta categoria" : "Sem itens planejados",
+      signedItens: false,
     },
     {
       label: `Material Aplicado · ${escopo}`,
@@ -1901,6 +1995,10 @@ function MateriaisComparativoCards({
       icon: Package,
       accent: aplAccent,
       muted: false,
+      itens: aplicadoItens ?? [],
+      itensLabel: "Itens aplicados",
+      emptyLabel: "Sem movimentos nesta categoria",
+      signedItens: false,
     },
     {
       label: `Consumido · ${escopo}`,
@@ -1913,6 +2011,10 @@ function MateriaisComparativoCards({
       accent: corConsumo,
       signed: true,
       muted: !podeComparar,
+      itens: podeComparar ? (consumidoItens ?? []) : [],
+      itensLabel: "Diferenças por código",
+      emptyLabel: podeComparar ? "Sem diferenças nesta categoria" : "Sem plano para comparar",
+      signedItens: true,
     },
   ];
 
@@ -1951,12 +2053,12 @@ function MateriaisComparativoCards({
               <div className="flex-1 min-h-0 mt-1 rounded-md border border-border/50 bg-background/40 overflow-hidden flex flex-col">
                 {c.itens.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center px-2 py-4 text-[10px] text-muted-foreground text-center">
-                    {semPlano ? "Sem plano em KG nesta categoria" : "Sem itens planejados"}
+                    {c.emptyLabel}
                   </div>
                 ) : (
                   <>
                     <div className="flex items-center justify-between px-2 py-1 border-b border-border/50 bg-muted/40 text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">
-                      <span>Itens planejados</span>
+                      <span>{c.itensLabel}</span>
                       <span>{c.itens.length}</span>
                     </div>
                     <div className="overflow-y-auto flex-1">
@@ -1968,7 +2070,12 @@ function MateriaisComparativoCards({
                                 <div className="truncate font-medium">{it.nome}</div>
                                 <div className="truncate font-mono text-[9px] text-muted-foreground">{it.codigo}</div>
                               </td>
-                              <td className="px-1 py-1 text-right tabular-nums font-semibold w-[70px]">{fmt(it.qtd, 0)}</td>
+                              <td
+                                className="px-1 py-1 text-right tabular-nums font-semibold w-[70px]"
+                                style={c.signedItens ? { color: it.qtd > 0 ? "hsl(0 80% 65%)" : "hsl(142 70% 55%)" } : undefined}
+                              >
+                                {c.signedItens && it.qtd > 0 ? "+" : ""}{fmt(it.qtd, 0)}
+                              </td>
                               <td className="px-1 py-1 text-muted-foreground uppercase text-[9px] w-[30px]">{it.ume}</td>
                             </tr>
                           ))}
