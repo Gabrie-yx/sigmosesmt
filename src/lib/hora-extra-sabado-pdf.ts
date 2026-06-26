@@ -1,5 +1,5 @@
 import jsPDF from "jspdf";
-import { packBlocksIntoPages, drawFlowPages, type FlowBlock } from "@/lib/pdf-flow-engine";
+import { packBlocksIntoPages, type FlowBlock } from "@/lib/pdf-flow-engine";
 
 export type HoraExtraFuncionario = {
   nome: string;
@@ -72,7 +72,11 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
 
   // ===== Helpers de desenho (recebem coords e devolvem altura consumida em mm) =====
 
-  const drawHeaderEmpresa = (x: number, y: number, w: number, empresaNome: string, idx: number, total: number, parte?: { atual: number; total: number }): number => {
+  // Total geral de colaboradores convocados (soma todas as empresas)
+  const totalGeralColabs = p.paginas.reduce((s, pag) => s + pag.funcionarios.length, 0);
+
+  // Cabeçalho mestre: aparece APENAS na primeira página
+  const drawMasterHeader = (x: number, y: number, w: number): number => {
     const h = 19;
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(x, y, w, h, 2, 2, "F");
@@ -90,41 +94,18 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.setFont("helvetica", "normal").setFontSize(7);
     doc.setTextColor(...muted);
     doc.text("Controle interno · não homologado", x + 38, y + 13.5);
-
-    // Pílula EMPRESA (direita)
-    const pillW = 60, pillH = 11;
-    const pillX = x + w - pillW - 4;
-    const pillY = y + (h - pillH) / 2;
-    doc.setFillColor(...soft);
-    doc.roundedRect(pillX, pillY, pillW, pillH, 1.5, 1.5, "F");
-    doc.setDrawColor(...line); doc.setLineWidth(0.3);
-    doc.roundedRect(pillX, pillY, pillW, pillH, 1.5, 1.5, "S");
-    doc.setTextColor(...muted);
-    doc.setFont("helvetica", "bold").setFontSize(6.5);
-    doc.text("EMPRESA", pillX + 3, pillY + 4);
-    doc.setTextColor(...brand);
-    doc.setFontSize(8);
-    const empName = empresaNome.toUpperCase();
-    const empTrim = empName.length > 24 ? empName.slice(0, 23) + "…" : empName;
-    doc.text(empTrim, pillX + 3, pillY + 9);
-    doc.setFont("helvetica", "normal").setFontSize(6.5);
-    doc.setTextColor(...muted);
-    const pageLabel = parte && parte.total > 1
-      ? `${idx + 1}/${total} · pt ${parte.atual}/${parte.total}`
-      : `${idx + 1}/${total}`;
-    doc.text(pageLabel, pillX + pillW - 3, pillY + 9, { align: "right" });
     return h;
   };
 
-  const drawCardsInfo = (x: number, y: number, w: number, totalColabs: number): number => {
-    const cardH = 11;
+  const drawMasterCards = (x: number, y: number, w: number): number => {
+    const cardH = 13;
     const cardGap = 2.5;
     const cardW = (w - cardGap * 3) / 4;
     const cards = [
       { label: "DATA", value: p.data, sub: p.diaSemana.toUpperCase() },
       { label: "TURNO", value: p.turno ?? "—", sub: p.horario ?? "" },
       { label: "SETOR", value: p.setor ?? "—", sub: p.centroCusto ? `C.C. ${p.centroCusto}` : "" },
-      { label: "COLABORADORES", value: String(totalColabs).padStart(2, "0"), sub: totalColabs === 1 ? "PESSOA" : "PESSOAS" },
+      { label: "TOTAL DE COLABORADORES EM EXTRA", value: String(totalGeralColabs).padStart(2, "0"), sub: totalGeralColabs === 1 ? "PESSOA" : "PESSOAS" },
     ];
     cards.forEach((c, i) => {
       const cx = x + i * (cardW + cardGap);
@@ -134,31 +115,59 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       doc.roundedRect(cx, y, cardW, cardH, 2, 2, "S");
       doc.setFillColor(...accent); doc.rect(cx, y, 1.5, cardH, "F");
       doc.setTextColor(...muted);
-      doc.setFont("helvetica", "bold").setFontSize(6);
-      doc.text(c.label, cx + 3.5, y + 3.5);
+      doc.setFont("helvetica", "bold").setFontSize(5.8);
+      // Label pode quebrar em 2 linhas (TOTAL DE COLABORADORES EM EXTRA)
+      const labelLines = doc.splitTextToSize(c.label, cardW - 5) as string[];
+      const labelToShow = labelLines.slice(0, 2);
+      labelToShow.forEach((ln, li) => doc.text(ln, cx + 3.5, y + 3.5 + li * 2.4));
+      const labelBaseline = 3.5 + (labelToShow.length - 1) * 2.4;
       doc.setTextColor(...brand);
-      const maxValW = cardW - 5;
-      let valSize = 9;
-      doc.setFont("helvetica", "bold").setFontSize(valSize);
-      let valLines = doc.splitTextToSize(c.value, maxValW) as string[];
-      while (valLines.length > 2 && valSize > 6.5) {
-        valSize -= 0.5;
-        doc.setFontSize(valSize);
-        valLines = doc.splitTextToSize(c.value, maxValW) as string[];
-      }
-      if (valLines.length > 2) valLines = [valLines[0], (valLines[1] ?? "").replace(/.{1,3}$/, "…")];
-      if (valLines.length === 1) doc.text(valLines[0], cx + 3.5, y + 7.5);
-      else {
-        doc.text(valLines[0], cx + 3.5, y + 6.6);
-        doc.text(valLines[1], cx + 3.5, y + 6.6 + valSize * 0.42);
-      }
+      doc.setFont("helvetica", "bold").setFontSize(9);
+      doc.text(c.value, cx + 3.5, y + labelBaseline + 4);
       if (c.sub) {
         doc.setTextColor(...muted);
         doc.setFont("helvetica", "normal").setFontSize(6);
-        doc.text(c.sub, cx + 3.5, y + 10.3);
+        doc.text(c.sub, cx + 3.5, y + cardH - 2);
       }
     });
     return cardH;
+  };
+
+  const drawHeaderEmpresa = (x: number, y: number, w: number, empresaNome: string, totalColabs: number, parte?: { atual: number; total: number }): number => {
+    const h = 14;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(x, y, w, h, 2, 2, "F");
+    doc.setDrawColor(...line); doc.setLineWidth(0.3);
+    doc.roundedRect(x, y, w, h, 2, 2, "S");
+    doc.setFillColor(...accent);
+    doc.rect(x, y, 1.8, h, "F");
+
+    doc.setTextColor(...muted);
+    doc.setFont("helvetica", "bold").setFontSize(6.5);
+    doc.text("EMPRESA", x + 5, y + 5);
+    doc.setTextColor(...brand);
+    doc.setFont("helvetica", "bold").setFontSize(11);
+    const empName = empresaNome.toUpperCase();
+    // Pílula CONVOCADOS (direita)
+    const pillW = 52, pillH = 9;
+    const pillX = x + w - pillW - 4;
+    const pillY = y + (h - pillH) / 2;
+    const empMaxW = pillX - (x + 5) - 4;
+    const empFit = (doc.splitTextToSize(empName, empMaxW)[0] as string) ?? empName;
+    doc.text(empFit, x + 5, y + 11);
+
+    doc.setFillColor(...soft);
+    doc.roundedRect(pillX, pillY, pillW, pillH, 1.5, 1.5, "F");
+    doc.setDrawColor(...line); doc.setLineWidth(0.3);
+    doc.roundedRect(pillX, pillY, pillW, pillH, 1.5, 1.5, "S");
+    doc.setTextColor(...muted);
+    doc.setFont("helvetica", "bold").setFontSize(6);
+    doc.text("CONVOCADOS", pillX + 3, pillY + 3.5);
+    doc.setTextColor(...accent);
+    doc.setFont("helvetica", "bold").setFontSize(10);
+    const partTxt = parte && parte.total > 1 ? ` (pt ${parte.atual}/${parte.total})` : "";
+    doc.text(`${String(totalColabs).padStart(2, "0")}${partTxt}`, pillX + 3, pillY + 8);
+    return h;
   };
 
   const drawFaixaFolha = (x: number, y: number, w: number, empresaNome: string): number => {
@@ -402,9 +411,14 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const FOOTER_RESERVE = 6;
   const PAGE_CAPACITY = pageH - margin * 2 - SIG_H - FOOTER_RESERVE;
   const BLOCK_GAP = 4; // gap visual entre blocos-empresa
-  // Overhead fixo de um bloco-empresa: header(19)+gap(3)+cards(11)+gap(3)+faixa(6.5)+gap(3)+titulo(6)+tab-head(7) = 58.5
-  const BLOCK_OVERHEAD = 58.5;
+  // Overhead fixo de um bloco-empresa: header(14)+gap(3)+faixa(6.5)+gap(3)+titulo(6)+tab-head(7) = 39.5
+  const BLOCK_OVERHEAD = 39.5;
   const ROW_H = 6.6;
+  // Cabeçalho mestre (só na pág 1): header(19)+gap(3)+cards(13)+gap(4 block_gap) ~ 39
+  const MASTER_HEADER_H = 19 + 3 + 13;
+  // O master header é desenhado fora do flow no topo da página 1 → reduz capacidade só na primeira página.
+  // Para empacotar com segurança, calculamos MAX_ROWS usando a capacidade da página 1 (mais apertada).
+  const PAGE1_CAPACITY = PAGE_CAPACITY - MASTER_HEADER_H - BLOCK_GAP;
   const MAX_ROWS_BLOCO = Math.floor((PAGE_CAPACITY - BLOCK_OVERHEAD) / ROW_H);
 
   const paginas = p.paginas.length > 0 ? p.paginas : [{ empresaNome: "—", funcionarios: [] as HoraExtraFuncionario[] }];
@@ -444,11 +458,9 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     return {
       height,
       meta: { empresaNome: g.empresaNome, grupoIndex: gIdx },
-      draw: ({ x, y, pageIndex, pageTotal }) => {
+      draw: ({ x, y }) => {
         let yy = y;
-        yy += drawHeaderEmpresa(x, yy, contentW, g.empresaNome, pageIndex, pageTotal, g.partes > 1 ? { atual: g.parte, total: g.partes } : undefined);
-        yy += 3;
-        yy += drawCardsInfo(x, yy, contentW, g.totalFuncionarios);
+        yy += drawHeaderEmpresa(x, yy, contentW, g.empresaNome, g.totalFuncionarios, g.partes > 1 ? { atual: g.parte, total: g.partes } : undefined);
         yy += 3;
         yy += drawFaixaFolha(x, yy, contentW, g.empresaNome);
         yy += 3;
@@ -458,26 +470,58 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     };
   });
 
-  // Empacota em páginas
-  // lookahead=true: se o próximo bloco não couber, tenta encaixar os seguintes
-  // antes de virar a página (maximiza aproveitamento).
-  const pages = packBlocksIntoPages(blocks, PAGE_CAPACITY, BLOCK_GAP, { lookahead: true });
+  // Empacota: 1ª página tem capacidade reduzida (cabeçalho mestre fixo no topo).
+  // Estratégia simples: empacotamos tudo com capacidade total e depois verificamos
+  // se a 1ª página excede PAGE1_CAPACITY; se exceder, movemos blocos pro flow seguinte.
+  // Implementação direta: empacota com capacidade da página 1, depois resto com PAGE_CAPACITY.
+  let pages: ReturnType<typeof packBlocksIntoPages<{ grupoIndex: number }>> = [];
+  if (blocks.length > 0) {
+    // Tenta primeiro bloco (ou primeiros blocos) na pág 1
+    const firstPagePack: FlowBlock<{ grupoIndex: number }>[] = [];
+    let used = 0;
+    const remaining = [...blocks];
+    while (remaining.length > 0) {
+      const b = remaining[0];
+      const needs = b.height + (firstPagePack.length > 0 ? BLOCK_GAP : 0);
+      if (used + needs <= PAGE1_CAPACITY) {
+        firstPagePack.push(b);
+        used += firstPagePack.length === 1 ? b.height : needs;
+        remaining.shift();
+      } else if (firstPagePack.length === 0) {
+        // bloco isolado não cabe nem na pág 1 reduzida — força mesmo assim
+        firstPagePack.push(b);
+        used = b.height;
+        remaining.shift();
+        break;
+      } else {
+        break;
+      }
+    }
+    pages.push({ blocks: firstPagePack, contentHeight: used });
+    if (remaining.length > 0) {
+      const rest = packBlocksIntoPages(remaining, PAGE_CAPACITY, BLOCK_GAP, { lookahead: true });
+      pages = pages.concat(rest);
+    }
+  }
 
-  // Desenha
-  drawFlowPages({
-    pages,
-    startY: margin,
-    x: margin,
-    gap: BLOCK_GAP,
-    userCtx: { grupoIndex: 0 },
-    newPage: () => doc.addPage(),
-    afterPage: (i, total, page) => {
-      // Assinatura ancorada no rodapé (uma por página)
-      drawAssinaturaRodape(margin, pageH - margin - SIG_H, contentW);
-      // Rodapé: primeira empresa da página
-      const primeira = (page.blocks[0]?.meta as any)?.empresaNome ?? "—";
-      drawRodapePagina(i, total, String(primeira));
-    },
+  // Desenha manualmente: pág 1 começa abaixo do cabeçalho mestre.
+  pages.forEach((page, i) => {
+    if (i > 0) doc.addPage();
+    let y = margin;
+    if (i === 0) {
+      y += drawMasterHeader(margin, y, contentW);
+      y += 3;
+      y += drawMasterCards(margin, y, contentW);
+      y += BLOCK_GAP;
+    }
+    page.blocks.forEach((b, idx) => {
+      if (idx > 0) y += BLOCK_GAP;
+      b.draw({ x: margin, y, pageIndex: i, pageTotal: pages.length, userCtx: { grupoIndex: 0 } });
+      y += b.height;
+    });
+    drawAssinaturaRodape(margin, pageH - margin - SIG_H, contentW);
+    const primeira = (page.blocks[0]?.meta as any)?.empresaNome ?? "—";
+    drawRodapePagina(i, pages.length, String(primeira));
   });
 
   return doc;
