@@ -866,11 +866,22 @@ function GerarListaDialog({ training, onClose }: { training: any; onClose: () =>
         ? await Promise.all(selecionados.map((r: any) => urlToDataUrl(r.assinatura_url)))
         : selecionados.map(() => null);
       const assinaturaDataUrl = await pathToDataUrl(training.assinatura_path);
-      const participantes = selecionados.map((r: any, i: number) => ({
+      // Ordena: empresa A→Z, depois nome A→Z (igual DDS).
+      // Quando há mais de uma empresa, agrupa páginas — começa nova página a cada troca.
+      const comSig = selecionados.map((r: any, i: number) => ({ ...r, _sig: sigs[i] ?? null }));
+      comSig.sort(
+        (a: any, b: any) =>
+          (a.empresa || "").localeCompare(b.empresa || "", "pt-BR") ||
+          (a.nome || "").localeCompare(b.nome || "", "pt-BR"),
+      );
+      const empresasUnicas = new Set(comSig.map((r: any) => r.empresaId || "—"));
+      const agruparPorEmpresa = empresasUnicas.size > 1;
+      const participantes = comSig.map((r: any) => ({
         nome: r.nome,
         empresa: r.empresa,
         cargo: r.cargo,
-        assinaturaDataUrl: sigs[i] ?? null,
+        assinaturaDataUrl: r._sig ?? null,
+        _empresaId: r.empresaId || "—",
       }));
       const doc = gerarListaPresenca({
         titulo: `${training.tipo}${training.titulo ? " — " + training.titulo : ""}`,
