@@ -1,5 +1,5 @@
 import jsPDF from "jspdf";
-import { packBlocksIntoPages, drawFlowPages, type FlowBlock } from "@/lib/pdf-flow-engine";
+import { packBlocksIntoPages, type FlowBlock } from "@/lib/pdf-flow-engine";
 
 export type HoraExtraFuncionario = {
   nome: string;
