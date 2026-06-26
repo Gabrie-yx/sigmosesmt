@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import atemLogoUrl from "@/assets/atem-logo.png";
 
 export type ListaPresencaParams = {
   titulo: string;
@@ -94,21 +95,11 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     doc.line(margin + c1W, headerY, margin + c1W, headerY + headerH);
     doc.line(margin + c1W + c2W, headerY, margin + c1W + c2W, headerY + headerH);
 
-    // Logo: ATEM stylized
-    if (p.logoDataUrl) {
-      try { doc.addImage(p.logoDataUrl, "PNG", margin + 4, headerY + 2, 32, 12); } catch {}
-    } else {
-      // fallback ATEM wordmark
-      doc.setFillColor(255, 165, 0);
-      [0,1,2,3,4].forEach((i) => doc.circle(margin + 8 + i * 2, headerY + 4, 0.8, "F"));
-      [0,1,2,3,4].forEach((i) => doc.circle(margin + 8 + i * 2, headerY + 6, 0.8, "F"));
-      doc.setTextColor(20, 20, 80);
-      doc.setFont("helvetica", "bold").setFontSize(18);
-      doc.text("atem", margin + 20, headerY + 9);
-      doc.setFontSize(6);
-      doc.text("G R U P O", margin + 20, headerY + 13);
-      doc.setTextColor(0, 0, 0);
-    }
+    // Logo oficial Grupo Atem
+    const logoSrc = p.logoDataUrl || atemLogoUrl;
+    try {
+      drawImageContain(logoSrc as string, margin + 2, headerY + 1, c1W - 4, headerH - 2);
+    } catch {}
 
     // Title
     doc.setFont("helvetica", "bold").setFontSize(16);
