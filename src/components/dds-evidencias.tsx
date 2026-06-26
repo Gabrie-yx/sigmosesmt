@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DDSAttendeesEditor } from "@/components/dds-attendees-editor";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { PDFDocument } from "pdf-lib";
+import { openStorageFile, FileViewerHost } from "@/components/file-viewer";
 
 export function DDSEvidencias({ ddsId }: { ddsId: string }) {
   const qc = useQueryClient();
@@ -59,8 +60,8 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
   });
 
   async function abrir(path: string) {
-    const { data } = await supabase.storage.from("dds-anexos").createSignedUrl(path, 60 * 5);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    const name = path.split("/").pop();
+    await openStorageFile("dds-anexos", path, name);
   }
 
   async function assinarPdf(item: any, dataUrl: string, height: number) {
@@ -235,6 +236,7 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
         onConfirm={(r) => signTarget && assinarPdf(signTarget, r.dataUrl, r.height)}
         title="Carimbar assinatura no PDF"
       />
+      <FileViewerHost />
     </div>
   );
 }
