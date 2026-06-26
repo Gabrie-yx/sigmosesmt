@@ -199,18 +199,17 @@ export function resolveTipo(
   descricao?: string | null,
 ): TipoMP {
   const t = baseMp.get(material);
-  // Se Base MP traz algo específico (não "OUTROS"), confia.
-  if (t && t !== "OUTROS") return t;
-  // Se for "OUTROS" ou ausente, inferimos APENAS pela descrição do material —
-  // que é estável por código SAP. A classificacao_mb51 vem digitada pelo
-  // operador linha a linha e frequentemente diverge entre movimentos do
-  // mesmo material (ex.: DENVER BH 7018 aparece 71x como "Solda" e 1x como
-  // "Gás"), o que jogaria o item na categoria errada do painel.
+  // Se o material existe na Base MP, ela é a fonte da verdade — INCLUSIVE
+  // quando o tipo cadastrado é "OUTROS". A classificacao_mb51 é digitada
+  // pelo operador linha a linha e frequentemente erra (ex.: "CORRENTE SOLD
+  // ZINC 6MM" é cadastrado como OUTROS na Base MP, mas aparece classificado
+  // como "Gás" em alguns movimentos, o que jogaria o item no card errado).
+  if (t) return t;
+  // Material não cadastrado na Base MP: tenta inferir pela descrição
+  // (estável por código SAP) e, em último caso, pela classificação inline.
   const porDescricao = inferTipoByText(descricao);
   if (porDescricao) return porDescricao;
-  // Último recurso: classificação inline da MB51.
   const porClassif = inferTipoByText(classificacaoMb51);
   if (porClassif) return porClassif;
-  // Mantém o que a Base MP disse ("OUTROS") ou cai no fallback "OUTROS".
-  return t ?? "OUTROS";
+  return "OUTROS";
 }
