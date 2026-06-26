@@ -16,6 +16,8 @@ export type ListaPresencaParams = {
   revisao?: string;
   dataDocumento?: string;
   logoDataUrl?: string | null;
+  /** Quando true, inicia uma nova página a cada troca de empresa (participantes já devem vir ordenados). */
+  agruparPorEmpresa?: boolean;
 };
 
 const ROWS_FIRST = 15;
@@ -29,10 +31,27 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 6;
   const contentW = pageW - margin * 2;
-  const total = p.participantes.length;
-  const totalPages = Math.max(1, 1 + Math.ceil(Math.max(0, total - ROWS_FIRST) / ROWS_NEXT));
+  // Monta blocos: 1 bloco = lista contínua. Sem agrupamento = 1 bloco com todos.
+  // Com agrupamento = 1 bloco por empresa (página nova a cada troca).
+  type Bloco = { itens: ListaPresencaParams["participantes"] };
+  const blocos: Bloco[] = [];
+  if (p.agruparPorEmpresa) {
+    const map = new Map<string, Bloco>();
+    p.participantes.forEach((it) => {
+      const k = it.empresa || "(sem empresa)";
+      if (!map.has(k)) map.set(k, { itens: [] });
+      map.get(k)!.itens.push(it);
+    });
+    blocos.push(...Array.from(map.values()));
+  } else {
+    blocos.push({ itens: p.participantes });
+  }
+  const pagesPorBloco = blocos.map((b) =>
+    Math.max(1, 1 + Math.ceil(Math.max(0, b.itens.length - ROWS_FIRST) / ROWS_NEXT)),
+  );
+  const totalPages = pagesPorBloco.reduce((a, b) => a + b, 0);
 
-  let pageIdx = 0;
+  let currentItens: ListaPresencaParams["participantes"] = blocos[0].itens;
   let participantIdx = 0;
 
   function getFooterLines() {
@@ -233,7 +252,7 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     for (let r = 0; r < rowsCount; r++) {
       cx = margin;
       const rowNum = participantIdx + 1;
-      const part = p.participantes[participantIdx];
+      const part = currentItens[participantIdx];
       participantIdx++;
       // N°
       doc.rect(cx, ry, subCols[0], rowH);
@@ -277,12 +296,21 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     });
   }
 
-  for (pageIdx = 0; pageIdx < totalPages; pageIdx++) {
-    if (pageIdx > 0) doc.addPage();
-    const y = drawHeader(pageIdx + 1);
-    const rowsThisPage = pageIdx === 0 ? ROWS_FIRST : ROWS_NEXT;
-    drawTable(y, rowsThisPage);
-    drawFooter();
+  let pageNumGlobal = 0;
+  for (let bi = 0; bi < blocos.length; bi++) {
+    currentItens = blocos[bi].itens;
+    participantIdx = 0;
+    const pages = pagesPorBloco[bi];
+    for (let pi = 0; pi < pages; pi++) {
+      pageNumGlobal++;
+      if (pageNumGlobal > 1) doc.addPage();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _tp = totalPages;
+      const y = drawHeader(pageNumGlobal);
+      const rowsThisPage = pi === 0 ? ROWS_FIRST : ROWS_NEXT;
+      drawTable(y, rowsThisPage);
+      drawFooter();
+    }
   }
 
   return doc;
