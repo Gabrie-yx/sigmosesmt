@@ -694,15 +694,15 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
 
         <div className="space-y-2 max-h-[400px] overflow-y-auto">
           {attendees.length === 0 ? (
-            <div className="text-center text-slate-400 py-8 text-xs uppercase font-bold">Nenhum participante.</div>
+            <div className="text-center text-rose-200/60 py-8 text-xs uppercase font-bold">Nenhum participante.</div>
           ) : (
             attendees.map((a: any) => {
               const c = companies.find((x: any) => x.id === a.employees?.company_id);
               return (
-                <div key={a.id} className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg bg-white">
+                <div key={a.id} className="flex items-center gap-3 p-3 border border-white/10 rounded-lg bg-white/[0.03]">
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-slate-800 truncate">{a.employees?.nome ?? "—"}</div>
-                    <div className="text-[10px] text-slate-500 uppercase font-bold">
+                    <div className="text-sm font-bold text-rose-50 truncate">{a.employees?.nome ?? "—"}</div>
+                    <div className="text-[10px] text-rose-200/60 uppercase font-bold">
                       {a.employees?.matricula && `MAT: ${a.employees.matricula} • `}{c?.name ?? "S/ EMPRESA"}
                     </div>
                   </div>
@@ -710,10 +710,10 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
                     {a.situacao}
                   </div>
                   {a.nota !== null && a.nota !== undefined && (
-                    <div className="text-xs font-bold text-slate-700">Nota: {a.nota}</div>
+                    <div className="text-xs font-bold text-rose-100">Nota: {a.nota}</div>
                   )}
                   {a.data_vencimento && (
-                    <div className="text-[10px] text-slate-500 font-bold">
+                    <div className="text-[10px] text-rose-200/60 font-bold">
                       Vence: {formatDateBR(a.data_vencimento)}
                     </div>
                   )}
