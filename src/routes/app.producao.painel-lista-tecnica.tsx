@@ -492,6 +492,23 @@ function PainelListaTecnicaPage() {
 
   // Valores a exibir nos 3 cards (reagem ao catSel)
   const compCardData = useMemo(() => {
+    const tipoEmb = cascoAtivo?.tipo_embarcacao ?? null;
+    const ferroTon = (previstoPorCategoria.FERRO || 0) / 1000;
+    const fatorFor = (cat: CategoriaMaterial) => {
+      if (!tipoEmb || ferroTon <= 0) return null;
+      const f = (fatoresConsumo as any[]).find(
+        (x) => x.tipo_embarcacao === tipoEmb && x.categoria === cat,
+      );
+      if (!f) return null;
+      return {
+        planKgEst: Number(f.fator_por_ton_aco) * ferroTon,
+        fator: Number(f.fator_por_ton_aco),
+        fonte: f.fonte as "AUTO" | "MANUAL",
+        cascosBase: Number(f.cascos_base ?? 0),
+        unidade: String(f.unidade ?? "KG"),
+      };
+    };
+
     if (catSel) {
       const c = compPorCategoria[catSel];
       if (c.planKg > 0) {
@@ -501,6 +518,19 @@ function PainelListaTecnicaPage() {
           unit: "kg",
           escopo: catSel as string,
           semPlano: false,
+          estimativa: null as null | { fator: number; fonte: string; cascosBase: number; ferroTon: number },
+        };
+      }
+      // Tenta estimar pelo fator histórico do tipo de embarcação
+      const est = fatorFor(catSel);
+      if (est) {
+        return {
+          planejado: est.planKgEst,
+          aplicado: c.aplKg || (c.aplDom?.v ?? 0),
+          unit: "kg",
+          escopo: catSel as string,
+          semPlano: false,
+          estimativa: { fator: est.fator, fonte: est.fonte, cascosBase: est.cascosBase, ferroTon },
         };
       }
       return {
@@ -509,12 +539,13 @@ function PainelListaTecnicaPage() {
         unit: c.aplDom?.um?.toLowerCase() ?? "—",
         escopo: catSel as string,
         semPlano: true,
+        estimativa: null,
       };
     }
     const planTot = CATEGORIAS.reduce((s, c) => s + compPorCategoria[c].planKg, 0);
     const aplTot = CATEGORIAS.reduce((s, c) => s + compPorCategoria[c].aplKg, 0);
-    return { planejado: planTot, aplicado: aplTot, unit: "kg", escopo: "Total", semPlano: planTot === 0 };
-  }, [catSel, compPorCategoria]);
+    return { planejado: planTot, aplicado: aplTot, unit: "kg", escopo: "Total", semPlano: planTot === 0, estimativa: null };
+  }, [catSel, compPorCategoria, cascoAtivo, previstoPorCategoria, fatoresConsumo]);
 
   // Lista de itens planejados (Lista Técnica) por categoria — para exibir
   // dentro do card "Material Planejado", semelhante à tabela de "Materiais aplicados".
