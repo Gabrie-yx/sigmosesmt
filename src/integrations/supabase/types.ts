@@ -4877,6 +4877,57 @@ export type Database = {
         }
         Relationships: []
       }
+      producao_fatores_consumo: {
+        Row: {
+          cascos_base: number
+          cascos_ids: Json | null
+          categoria: string
+          created_at: string
+          fator_por_ton_aco: number
+          fonte: string
+          id: string
+          observacao: string | null
+          recalculado_em: string | null
+          tipo_embarcacao: string
+          travado: boolean
+          unidade: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cascos_base?: number
+          cascos_ids?: Json | null
+          categoria: string
+          created_at?: string
+          fator_por_ton_aco: number
+          fonte?: string
+          id?: string
+          observacao?: string | null
+          recalculado_em?: string | null
+          tipo_embarcacao: string
+          travado?: boolean
+          unidade?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cascos_base?: number
+          cascos_ids?: Json | null
+          categoria?: string
+          created_at?: string
+          fator_por_ton_aco?: number
+          fonte?: string
+          id?: string
+          observacao?: string | null
+          recalculado_em?: string | null
+          tipo_embarcacao?: string
+          travado?: boolean
+          unidade?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       producao_grupo_mercadorias: {
         Row: {
           ativo: boolean
