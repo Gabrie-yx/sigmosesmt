@@ -171,9 +171,8 @@ export async function parseMb51Xlsx(file: File): Promise<Mb51ParseResult> {
   return { ordens: Array.from(ordensMap.values()), total_linhas: total };
 }
 
-/** Resolve o tipo do material usando a Base MP. Faz fallback para a classificação inline da MB51. */
-/** Heurística por descrição/classificação — usada como reforço quando a Base MP
- * traz tipo genérico ("OUTROS") ou quando o material não está cadastrado. */
+/** Heurística por texto — usada para sanear OUTROS da Base MP pela descrição
+ * oficial e, só em material sem cadastro, como fallback da descrição/MB51. */
 export function inferTipoByText(...textos: (string | null | undefined)[]): TipoMP | null {
   const t = textos
     .filter(Boolean)
