@@ -740,14 +740,14 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
             </div>
             {imageAnexos.length > 0 && (
               <div className="mb-3">
-                <div className="text-[10px] font-bold uppercase text-slate-400 mb-1">Fotos ({imageAnexos.length})</div>
+                <div className="text-[10px] font-bold uppercase text-rose-200/60 mb-1">Fotos ({imageAnexos.length})</div>
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                   {imageAnexos.map((a: any, i: number) => (
                     <button
                       key={a.id}
                       type="button"
                       onClick={() => setViewerIndex(i)}
-                      className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-100 hover:border-[#991b1b] transition"
+                      className="relative group aspect-square rounded-lg overflow-hidden border border-white/10 bg-black/40 hover:border-rose-500/60 transition"
                       title="Clique para ampliar"
                     >
                       {signedUrls[a.file_path] ? (
@@ -758,7 +758,7 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
                           loading="lazy"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <div className="w-full h-full flex items-center justify-center text-rose-200/40">
                           <ImageIcon className="h-6 w-6" />
                         </div>
                       )}
@@ -768,7 +768,7 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
               </div>
             )}
             {anexos.length === 0 ? (
-              <div className="text-xs text-slate-400 italic py-3 text-center border border-dashed border-slate-200 rounded">
+              <div className="text-xs text-rose-200/50 italic py-3 text-center border border-dashed border-white/15 rounded">
                 Nenhum anexo. Use os botões acima para enviar os documentos homologados.
               </div>
             ) : (
@@ -778,19 +778,19 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
                   const Icon = a.tipo === "REACAO" ? MessageSquare : meta?.icon ?? Upload;
                   const label = meta?.label ?? (a.tipo === "REACAO" ? "Avaliação de Reação" : a.tipo);
                   return (
-                    <div key={a.id} className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg bg-slate-50">
-                      <Icon className="h-4 w-4 text-slate-500" />
+                    <div key={a.id} className="flex items-center gap-2 p-2 border border-white/10 rounded-lg bg-white/[0.03]">
+                      <Icon className="h-4 w-4 text-rose-200/70" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-slate-700 truncate">{label}</div>
-                        <div className="text-[10px] text-slate-500 truncate">
+                        <div className="text-xs font-bold text-rose-50 truncate">{label}</div>
+                        <div className="text-[10px] text-rose-200/60 truncate">
                           {a.file_path.split("/").pop()}
                         </div>
                       </div>
-                      <button onClick={() => abrirAnexo(a.file_path)} className="w-6 h-6 rounded bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center" title="Visualizar">
+                      <button onClick={() => abrirAnexo(a.file_path)} className="w-6 h-6 rounded bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500 hover:text-white flex items-center justify-center" title="Visualizar">
                         <Eye className="h-3 w-3" />
                       </button>
                       {isAdmin && (
-                        <button onClick={() => { if (confirm("Remover este anexo?")) removeAnexo.mutate(a); }} className="w-6 h-6 rounded bg-red-100 text-red-600 hover:bg-red-600 hover:text-white flex items-center justify-center" title="Remover">
+                        <button onClick={() => { if (confirm("Remover este anexo?")) removeAnexo.mutate(a); }} className="w-6 h-6 rounded bg-rose-500/15 text-rose-300 hover:bg-rose-500 hover:text-white flex items-center justify-center" title="Remover">
                           <Trash2 className="h-3 w-3" />
                         </button>
                       )}
