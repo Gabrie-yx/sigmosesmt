@@ -411,8 +411,8 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   const FOOTER_RESERVE = 6;
   const PAGE_CAPACITY = pageH - margin * 2 - SIG_H - FOOTER_RESERVE;
   const BLOCK_GAP = 4; // gap visual entre blocos-empresa
-  // Overhead fixo de um bloco-empresa: header(14)+gap(3)+faixa(6.5)+gap(3)+titulo(6)+tab-head(7) = 39.5
-  const BLOCK_OVERHEAD = 39.5;
+  // Overhead fixo de um bloco-empresa: header(14)+gap(3)+tab-head(7) = 24
+  const BLOCK_OVERHEAD = 24;
   const ROW_H = 6.6;
   // Cabeçalho mestre (só na pág 1): header(19)+gap(3)+cards(13)+gap(4 block_gap) ~ 39
   const MASTER_HEADER_H = 19 + 3 + 13;
@@ -462,9 +462,6 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
         let yy = y;
         yy += drawHeaderEmpresa(x, yy, contentW, g.empresaNome, g.totalFuncionarios, g.partes > 1 ? { atual: g.parte, total: g.partes } : undefined);
         yy += 3;
-        yy += drawFaixaFolha(x, yy, contentW, g.empresaNome);
-        yy += 3;
-        yy += drawTituloEquipe(x, yy, contentW, g.empresaNome, g.totalFuncionarios);
         drawTabelaEquipe(x, yy, contentW, g.funcionarios, g.linhaInicial);
       },
     };
