@@ -1859,6 +1859,7 @@ function MateriaisComparativoCards({
   escopo,
   semPlano,
   accent,
+  planejadoItens,
 }: {
   planejado: number;
   aplicado: number;
@@ -1866,6 +1867,7 @@ function MateriaisComparativoCards({
   escopo: string;
   semPlano: boolean;
   accent?: string;
+  planejadoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
 }) {
   const podeComparar = !semPlano && planejado > 0;
   const consumido = podeComparar ? aplicado - planejado : 0;
@@ -1889,6 +1891,7 @@ function MateriaisComparativoCards({
       icon: Layers,
       accent: planAccent,
       muted: semPlano,
+      itens: planejadoItens ?? [],
     },
     {
       label: `Material Aplicado · ${escopo}`,
@@ -1915,21 +1918,21 @@ function MateriaisComparativoCards({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 h-full">
-      {cards.map((c) => (
+      {cards.map((c: any) => (
         <Card
           key={c.label}
           className="shadow-sm border-0 bg-gradient-to-br from-muted/40 via-background to-muted/20 h-full"
         >
-          <CardContent className="p-3 h-full flex flex-col justify-between">
+          <CardContent className="p-3 h-full flex flex-col gap-2 min-h-0">
             <div className="flex items-center justify-between">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
                 {c.label}
               </span>
               <c.icon className="h-4 w-4" style={{ color: c.accent }} />
             </div>
-            <div className="mt-2">
+            <div>
               <div
-                className="text-2xl font-bold tabular-nums leading-tight"
+                className="text-xl font-bold tabular-nums leading-tight"
                 style={{ color: c.accent }}
               >
                 {c.muted ? "—" : (
@@ -1944,6 +1947,38 @@ function MateriaisComparativoCards({
               </div>
               <div className="text-[10px] text-muted-foreground mt-1">{c.hint}</div>
             </div>
+            {c.itens !== undefined && (
+              <div className="flex-1 min-h-0 mt-1 rounded-md border border-border/50 bg-background/40 overflow-hidden flex flex-col">
+                {c.itens.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center px-2 py-4 text-[10px] text-muted-foreground text-center">
+                    {semPlano ? "Sem plano em KG nesta categoria" : "Sem itens planejados"}
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between px-2 py-1 border-b border-border/50 bg-muted/40 text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">
+                      <span>Itens planejados</span>
+                      <span>{c.itens.length}</span>
+                    </div>
+                    <div className="overflow-y-auto flex-1">
+                      <table className="w-full text-[11px] table-fixed">
+                        <tbody>
+                          {c.itens.map((it: any) => (
+                            <tr key={it.codigo} className="border-b border-border/40 last:border-0 hover:bg-muted/30">
+                              <td className="px-2 py-1 truncate" title={`${it.codigo} · ${it.nome}`}>
+                                <div className="truncate font-medium">{it.nome}</div>
+                                <div className="truncate font-mono text-[9px] text-muted-foreground">{it.codigo}</div>
+                              </td>
+                              <td className="px-1 py-1 text-right tabular-nums font-semibold w-[70px]">{fmt(it.qtd, 0)}</td>
+                              <td className="px-1 py-1 text-muted-foreground uppercase text-[9px] w-[30px]">{it.ume}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}
