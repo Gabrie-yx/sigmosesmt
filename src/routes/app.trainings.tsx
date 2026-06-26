@@ -484,7 +484,14 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
 
   const { data: emps = [] } = useQuery({
     queryKey: ["employees-light"],
-    queryFn: async () => (await supabase.from("employees").select("id,nome,matricula,company_id").order("nome")).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("employees")
+          .select("id,nome,matricula,company_id,status")
+          .eq("status", "ATIVO")
+          .order("nome")
+      ).data ?? [],
   });
 
   const { data: companies = [] } = useQuery({
@@ -624,8 +631,14 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
               >
                 <option value="">-- selecione empresa --</option>
                 {companies.map((c: any) => {
-                  const total = emps.filter((e: any) => e.company_id === c.id && !enrolled.has(e.id)).length;
-                  return <option key={c.id} value={c.id}>{c.name} ({total} disponíveis)</option>;
+                  const ativos = emps.filter((e: any) => e.company_id === c.id).length;
+                  const jaAdd = emps.filter((e: any) => e.company_id === c.id && enrolled.has(e.id)).length;
+                  const restantes = ativos - jaAdd;
+                  return (
+                    <option key={c.id} value={c.id}>
+                      {c.name} — {jaAdd}/{ativos} já na turma · {restantes} a adicionar
+                    </option>
+                  );
                 })}
               </select>
               <Select value={bulkSituacao} onValueChange={(v) => setBulkSituacao(v as any)}>
