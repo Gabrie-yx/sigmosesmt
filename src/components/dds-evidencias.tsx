@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DDSAttendeesEditor } from "@/components/dds-attendees-editor";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { PDFDocument } from "pdf-lib";
-import { openStorageFile } from "@/components/file-viewer";
+import { openStorageFile, FileViewerHost } from "@/components/file-viewer";
 
 export function DDSEvidencias({ ddsId }: { ddsId: string }) {
   const qc = useQueryClient();
