@@ -400,11 +400,17 @@ function PainelListaTecnicaPage() {
       FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0,
     };
     (listaItens as any[]).forEach((it) => {
-      // Comparação justa com o Realizado (PESO REAL B51): apenas itens em KG.
-      const um = String(it.unidade ?? "").toUpperCase();
-      if (um !== "KG") return;
       const cat = resolveTipo(String(it.codigo_sap ?? ""), null, baseMpMap);
-      r[cat] += Math.abs(Number(it.quantidade ?? 0));
+      // Comparação em KG com o Aplicado (MB51). Como a B51 lista FERRO em m²/m
+      // (engenharia naval), usamos peso_real (calculado pela B51) ou fallbacks
+      // para sempre ter o plano em KG.
+      const um = String(it.unidade ?? "").toUpperCase();
+      const pesoKg =
+        Number(it.peso_real ?? 0) ||
+        Number(it.peso_total_estimado ?? 0) ||
+        Number(it.peso_chapa ?? 0) * Number(it.qtd_pecas ?? 0) ||
+        (um === "KG" ? Math.abs(Number(it.quantidade ?? 0)) : 0);
+      r[cat] += pesoKg;
     });
     return r;
   }, [listaItens, baseMpMap]);
