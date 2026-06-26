@@ -894,6 +894,7 @@ function GerarListaDialog({ training, onClose }: { training: any; onClose: () =>
         instituicao: training.instituicao ?? "",
         local: training.local ?? "",
         participantes,
+        agruparPorEmpresa,
       });
       const empresaTag =
         companiesSel.size === empresas.length
