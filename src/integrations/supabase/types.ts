@@ -2345,10 +2345,12 @@ export type Database = {
           data_realizacao: string
           data_vencimento: string
           employee_id: string
+          ghe_id_at_exam: string | null
           id: string
           natureza: string
           observacoes: string | null
           periodicidade_meses: number
+          role_id_at_exam: string | null
           tipo_exame: string
         }
         Insert: {
@@ -2358,10 +2360,12 @@ export type Database = {
           data_realizacao: string
           data_vencimento: string
           employee_id: string
+          ghe_id_at_exam?: string | null
           id?: string
           natureza?: string
           observacoes?: string | null
           periodicidade_meses?: number
+          role_id_at_exam?: string | null
           tipo_exame: string
         }
         Update: {
@@ -2371,10 +2375,12 @@ export type Database = {
           data_realizacao?: string
           data_vencimento?: string
           employee_id?: string
+          ghe_id_at_exam?: string | null
           id?: string
           natureza?: string
           observacoes?: string | null
           periodicidade_meses?: number
+          role_id_at_exam?: string | null
           tipo_exame?: string
         }
         Relationships: [
@@ -2391,6 +2397,130 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_colaborador_pgr"
             referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "employee_exams_ghe_id_at_exam_fkey"
+            columns: ["ghe_id_at_exam"]
+            isOneToOne: false
+            referencedRelation: "pgr_ghe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_exams_ghe_id_at_exam_fkey"
+            columns: ["ghe_id_at_exam"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["ghe_id"]
+          },
+          {
+            foreignKeyName: "employee_exams_role_id_at_exam_fkey"
+            columns: ["role_id_at_exam"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_role_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          employee_exam_id: string | null
+          employee_id: string
+          ghe_id_anterior: string | null
+          ghe_id_novo: string | null
+          id: string
+          motivo: string | null
+          role_id_anterior: string | null
+          role_id_novo: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          employee_exam_id?: string | null
+          employee_id: string
+          ghe_id_anterior?: string | null
+          ghe_id_novo?: string | null
+          id?: string
+          motivo?: string | null
+          role_id_anterior?: string | null
+          role_id_novo?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          employee_exam_id?: string | null
+          employee_id?: string
+          ghe_id_anterior?: string | null
+          ghe_id_novo?: string | null
+          id?: string
+          motivo?: string | null
+          role_id_anterior?: string | null
+          role_id_novo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_role_history_employee_exam_id_fkey"
+            columns: ["employee_exam_id"]
+            isOneToOne: false
+            referencedRelation: "employee_exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_role_history_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_role_history_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "employee_role_history_ghe_id_anterior_fkey"
+            columns: ["ghe_id_anterior"]
+            isOneToOne: false
+            referencedRelation: "pgr_ghe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_role_history_ghe_id_anterior_fkey"
+            columns: ["ghe_id_anterior"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["ghe_id"]
+          },
+          {
+            foreignKeyName: "employee_role_history_ghe_id_novo_fkey"
+            columns: ["ghe_id_novo"]
+            isOneToOne: false
+            referencedRelation: "pgr_ghe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_role_history_ghe_id_novo_fkey"
+            columns: ["ghe_id_novo"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["ghe_id"]
+          },
+          {
+            foreignKeyName: "employee_role_history_role_id_anterior_fkey"
+            columns: ["role_id_anterior"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_role_history_role_id_novo_fkey"
+            columns: ["role_id_novo"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
           },
         ]
       }
