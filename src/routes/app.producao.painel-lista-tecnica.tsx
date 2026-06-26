@@ -899,10 +899,12 @@ function PainelListaTecnicaPage() {
 
       {/* 3 cards: Material Planejado · Material Aplicado · Consumido (Aplicado − Planejado) */}
       <MateriaisComparativoCards
-        planejadoKg={Number(listaPlan?.peso_total_real ?? listaPlan?.peso_total_estimado ?? 0)}
-        aplicadoKg={itensEnriq
-          .filter((it) => String(it.unidade ?? "").toUpperCase() === "KG")
-          .reduce((s, it) => s + Math.max(0, Number(it.consumo ?? 0)), 0)}
+        planejado={compCardData.planejado}
+        aplicado={compCardData.aplicado}
+        unit={compCardData.unit}
+        escopo={compCardData.escopo}
+        semPlano={compCardData.semPlano}
+        accent={catSel ? CAT_COLOR[catSel] : undefined}
       />
       </div>
 
