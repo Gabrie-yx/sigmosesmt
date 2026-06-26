@@ -752,21 +752,11 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
   );
 }
 
-async function urlToDataUrl(url: string | null | undefined): Promise<string | null> {
-  if (!url) return null;
-  try {
-    const res = await fetch(url, { cache: "force-cache" });
-    if (!res.ok) return null;
-    const blob = await res.blob();
-    return await new Promise<string>((resolve) => {
-      const fr = new FileReader();
-      fr.onloadend = () => resolve(fr.result as string);
-      fr.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
-}
+import { fetchSignatureAsCleanDataUrl } from "@/lib/signature-utils";
+
+// Mantém o nome antigo, mas agora preserva a cor original da caneta
+// (azul fica azul) e remove apenas o fundo branco do papel.
+const urlToDataUrl = fetchSignatureAsCleanDataUrl;
 
 function GerarListaDialog({ training, onClose }: { training: any; onClose: () => void }) {
   const [companiesSel, setCompaniesSel] = useState<Set<string>>(new Set());
