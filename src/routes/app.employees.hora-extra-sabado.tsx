@@ -5,11 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowLeft, FileDown, Pencil, Trash2, Calendar, Eye } from "lucide-react";
+import { Plus, ArrowLeft, Pencil, Trash2, Calendar, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
 import { gerarHoraExtraSabadoPDF } from "@/lib/hora-extra-sabado-pdf";
-import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
 import dmnLogo from "@/assets/dmn-logo.png";
@@ -40,13 +39,11 @@ function HoraExtraSabadoPage() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
-  const [sigOpen, setSigOpen] = useState(false);
-  const [pendingPdfId, setPendingPdfId] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [previewFileName, setPreviewFileName] = useState("hora-extra.pdf");
   const [previewFichaId, setPreviewFichaId] = useState<string | null>(null);
-  const [previewAssinado, setPreviewAssinado] = useState(false);
-  const [signFromPreview, setSignFromPreview] = useState(false);
+  const [tstSig, setTstSig] = useState<string | null>(null);
+  const [gestorSig, setGestorSig] = useState<string | null>(null);
 
   const { data: fichas, isLoading } = useQuery({
     queryKey: ["hora-extra-sabado"],
@@ -72,16 +69,17 @@ function HoraExtraSabadoPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  async function gerarPdf(
-    id: string,
-    assinatura?: { dataUrl: string; height: number } | null,
-  ) {
+  async function gerarPdf(id: string) {
     const { data: rec } = await supabase
       .from("hora_extra_sabado")
       .select("*, companies(name)")
       .eq("id", id)
       .maybeSingle();
     if (!rec) return toast.error("Registro não encontrado");
+    const tst = (rec as any).assinatura_tst_data ?? null;
+    const gestor = (rec as any).assinatura_gestor_data ?? null;
+    setTstSig(tst);
+    setGestorSig(gestor);
     const { data: list, error: listError } = await supabase
       .from("hora_extra_sabado_funcionarios")
       .select("*, employees(id, company_id, assinatura_url, companies(name))")
@@ -133,8 +131,8 @@ function HoraExtraSabadoPage() {
       tipoEfetivo: rec.tipo_efetivo as any,
       observacao: rec.observacao,
       logoDataUrl: logo,
-      assinaturaDataUrl: assinatura?.dataUrl ?? null,
-      assinaturaHeight: assinatura?.height,
+      assinaturaTstDataUrl: tst,
+      assinaturaGestorDataUrl: gestor,
       solicitanteNome:
         (user as any)?.user_metadata?.full_name ??
         (user as any)?.email?.split("@")[0] ??
@@ -145,12 +143,21 @@ function HoraExtraSabadoPage() {
     setPreviewFileName(`hora-extra-${rec.data}.pdf`);
     setPreviewDoc(doc);
     setPreviewFichaId(id);
-    setPreviewAssinado(!!assinatura);
   }
 
-  function abrirAssinatura(id: string) {
-    setPendingPdfId(id);
-    setSigOpen(true);
+  async function saveSig(field: "assinatura_tst_data" | "assinatura_gestor_data", value: string | null) {
+    if (!previewFichaId) return;
+    const patch = (field === "assinatura_tst_data"
+      ? { assinatura_tst_data: value }
+      : { assinatura_gestor_data: value });
+    const { error } = await supabase
+      .from("hora_extra_sabado")
+      .update(patch)
+      .eq("id", previewFichaId);
+    if (error) return toast.error(error.message);
+    toast.success(value ? "Assinatura salva" : "Assinatura removida");
+    // Regenera o PDF mantendo o preview aberto
+    await gerarPdf(previewFichaId);
   }
 
   const filtradas = (fichas ?? []).filter((f: any) => {
@@ -227,9 +234,6 @@ function HoraExtraSabadoPage() {
                     <Button size="sm" variant="outline" onClick={() => gerarPdf(f.id)}>
                       <Eye className="h-3.5 w-3.5 mr-1.5" />Prévia PDF
                     </Button>
-                    <Button size="sm" onClick={() => abrirAssinatura(f.id)} className="bg-rose-700 hover:bg-rose-800 text-white">
-                      <FileDown className="h-3.5 w-3.5 mr-1.5" />Assinar + PDF
-                    </Button>
                     {isEditor && (
                       <Button size="icon" variant="ghost" onClick={() => { setEditId(f.id); setOpen(true); }}>
                         <Pencil className="h-4 w-4" />
@@ -251,31 +255,17 @@ function HoraExtraSabadoPage() {
       <HoraExtraSabadoDialog open={open} onOpenChange={setOpen} editId={editId} />
       <PDFPreviewDialog
         open={!!previewDoc}
-        onClose={() => { setPreviewDoc(null); setPreviewFichaId(null); setPreviewAssinado(false); }}
+        onClose={() => { setPreviewDoc(null); setPreviewFichaId(null); setTstSig(null); setGestorSig(null); }}
         doc={previewDoc}
         fileName={previewFileName}
         title="Prévia da ficha de hora extra"
-        onRequestSign={() => setSignFromPreview(true)}
-        hasSignature={previewAssinado}
-      />
-      <SignaturePadDialog
-        open={sigOpen}
-        onClose={() => { setSigOpen(false); setPendingPdfId(null); }}
-        onConfirm={async (r) => {
-          const id = pendingPdfId;
-          setSigOpen(false); setPendingPdfId(null);
-          if (id) await gerarPdf(id, r);
-        }}
-        title="Assinatura do solicitante"
-      />
-      <SignaturePadDialog
-        open={signFromPreview}
-        onClose={() => setSignFromPreview(false)}
-        onConfirm={async (r) => {
-          setSignFromPreview(false);
-          if (previewFichaId) await gerarPdf(previewFichaId, r);
-        }}
-        title="Assinatura do solicitante"
+        signable
+        useSignatureGallery
+        signatureLabels={{ enc: "Téc. Segurança", sesmt: "Aprovação / Gestor" }}
+        encSig={tstSig}
+        sesmtSig={gestorSig}
+        onChangeEncSig={(v) => saveSig("assinatura_tst_data", v)}
+        onChangeSesmtSig={(v) => saveSig("assinatura_gestor_data", v)}
       />
     </div>
   );

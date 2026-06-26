@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer, X, PenLine, ImagePlus } from "lucide-react";
 import type jsPDF from "jspdf";
 import { printPdf, renderPdfToImagePages } from "@/lib/pdf-print";
+import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 
-export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, encSig, sesmtSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature }: {
+export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, encSig, sesmtSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature, signatureLabels, useSignatureGallery }: {
   open: boolean;
   onClose: () => void;
   doc: jsPDF | null;
@@ -18,6 +19,10 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
   onChangeSesmtSig?: (v: string | null) => void;
   onRequestSign?: () => void;
   hasSignature?: boolean;
+  /** Sobrescreve as labels dos dois slots de assinatura. */
+  signatureLabels?: { enc?: string; sesmt?: string };
+  /** Quando true, ao clicar em "Assinar" abre o SignaturePadDialog (galeria/desenhar/importar). */
+  useSignatureGallery?: boolean;
 }) {
   // Renderizamos as páginas com PDF.js em <canvas> — o visualizador nativo de
   // PDF do Chrome é desativado dentro de iframes com sandbox (preview do
@@ -26,6 +31,7 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const renderTokenRef = useRef(0);
+  const [galleryTarget, setGalleryTarget] = useState<null | ((v: string | null) => void)>(null);
 
   useEffect(() => {
     if (!doc || !open) { setPages([]); setLoadError(null); return; }
@@ -73,6 +79,10 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
   }
 
   async function pickSignature(set: (v: string | null) => void) {
+    if (useSignatureGallery) {
+      setGalleryTarget(() => set);
+      return;
+    }
     const inp = document.createElement("input");
     inp.type = "file";
     inp.accept = "image/png,image/jpeg";
@@ -105,8 +115,8 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
           <div className="flex flex-wrap items-center gap-2 rounded p-2 text-xs border border-rose-900/40 bg-gradient-to-r from-[#1a0510] via-[#2a0814] to-[#1a0510] text-rose-100">
             <span className="font-bold uppercase tracking-wide text-rose-300/80">Assinaturas:</span>
             {([
-              { label: "Encarregado", val: encSig ?? null, set: onChangeEncSig },
-              { label: "SESMT", val: sesmtSig ?? null, set: onChangeSesmtSig },
+              { label: signatureLabels?.enc ?? "Encarregado", val: encSig ?? null, set: onChangeEncSig },
+              { label: signatureLabels?.sesmt ?? "SESMT", val: sesmtSig ?? null, set: onChangeSesmtSig },
             ] as const).map((s) => (
               <div key={s.label} className="flex items-center gap-1.5">
                 <span className="text-rose-200/80">{s.label}:</span>
@@ -158,6 +168,16 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
           <Button variant="outline" onClick={print}><Printer className="h-4 w-4 mr-1" />Imprimir</Button>
           <Button onClick={download}><Download className="h-4 w-4 mr-1" />Baixar PDF</Button>
         </DialogFooter>
+        <SignaturePadDialog
+          open={!!galleryTarget}
+          onClose={() => setGalleryTarget(null)}
+          onConfirm={(r) => {
+            const set = galleryTarget;
+            setGalleryTarget(null);
+            if (set) set(r.dataUrl);
+          }}
+          title="Inserir assinatura no PDF"
+        />
       </DialogContent>
     </Dialog>
   );
