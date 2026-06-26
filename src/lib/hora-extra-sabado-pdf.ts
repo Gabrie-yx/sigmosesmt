@@ -321,11 +321,12 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
 
     const sigColW = w * 0.55;
     const sigCenterX = x + sigColW / 2;
-    if (p.assinaturaDataUrl) {
+    const tstSig = p.assinaturaTstDataUrl ?? p.assinaturaDataUrl ?? null;
+    if (tstSig) {
       try {
-        const m = /^data:image\/(png|jpeg|jpg|webp);base64,/i.exec(p.assinaturaDataUrl);
+        const m = /^data:image\/(png|jpeg|jpg|webp);base64,/i.exec(tstSig);
         const fmt = (m?.[1] ?? "png").toUpperCase().replace("JPG", "JPEG");
-        const props = (doc as any).getImageProperties?.(p.assinaturaDataUrl);
+        const props = (doc as any).getImageProperties?.(tstSig);
         const previewH = p.assinaturaHeight ?? 80;
         const maxH = Math.max(6, Math.min(16, 4 + previewH * 0.09));
         const maxW = sigColW - 16;
@@ -335,7 +336,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
           imgH = maxH; imgW = imgH * ratio;
           if (imgW > maxW) { imgW = maxW; imgH = imgW / ratio; }
         }
-        doc.addImage(p.assinaturaDataUrl, fmt === "WEBP" ? "PNG" : fmt, sigCenterX - imgW / 2, y + 15 - imgH, imgW, imgH, undefined, "FAST");
+        doc.addImage(tstSig, fmt === "WEBP" ? "PNG" : fmt, sigCenterX - imgW / 2, y + 15 - imgH, imgW, imgH, undefined, "FAST");
       } catch (err) { console.error("[hora-extra-pdf] falha ao inserir assinatura:", err); }
     }
     doc.setDrawColor(...brand); doc.setLineWidth(0.4);
@@ -351,6 +352,23 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     doc.line(x + sigColW, y + 4, x + sigColW, y + h - 4);
 
     const apvX = x + sigColW, apvW = w - sigColW, apvCenter = apvX + apvW / 2;
+    if (p.assinaturaGestorDataUrl) {
+      try {
+        const u = p.assinaturaGestorDataUrl;
+        const m = /^data:image\/(png|jpeg|jpg|webp);base64,/i.exec(u);
+        const fmt = (m?.[1] ?? "png").toUpperCase().replace("JPG", "JPEG");
+        const props = (doc as any).getImageProperties?.(u);
+        const maxH = 14;
+        const maxW = apvW - 16;
+        let imgH = maxH, imgW = imgH * 2.5;
+        if (props?.width && props?.height) {
+          const ratio = props.width / props.height;
+          imgH = maxH; imgW = imgH * ratio;
+          if (imgW > maxW) { imgW = maxW; imgH = imgW / ratio; }
+        }
+        doc.addImage(u, fmt === "WEBP" ? "PNG" : fmt, apvCenter - imgW / 2, y + 15 - imgH, imgW, imgH, undefined, "FAST");
+      } catch (err) { console.error("[hora-extra-pdf] falha ao inserir assinatura gestor:", err); }
+    }
     doc.setDrawColor(...brand); doc.setLineWidth(0.4);
     doc.line(apvX + 12, y + 17, apvX + apvW - 12, y + 17);
     doc.setTextColor(...brand);
