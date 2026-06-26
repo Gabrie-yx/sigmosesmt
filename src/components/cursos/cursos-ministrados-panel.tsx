@@ -266,15 +266,15 @@ function TurmasDialog({ courseId, course, onClose }: { courseId: string; course:
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-[#991b1b]" />
-            <span className="font-black text-[#991b1b]">{course?.codigo}</span>
-            <span className="text-slate-600">— {course?.nome}</span>
+            <GraduationCap className="h-5 w-5 text-rose-300" />
+            <span className="font-black text-rose-200">{course?.codigo}</span>
+            <span className="text-rose-100/80">— {course?.nome}</span>
           </DialogTitle>
         </DialogHeader>
 
         {isEditor && (
           <div className="flex justify-end">
-            <Button onClick={() => setNovaOpen(true)} className="bg-[#991b1b] hover:bg-[#7f1d1d]">
+            <Button onClick={() => setNovaOpen(true)} className="bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-[0_0_18px_-4px_rgba(220,38,70,0.6)]">
               <Plus className="h-4 w-4 mr-2" /> Nova Turma
             </Button>
           </div>
@@ -282,7 +282,7 @@ function TurmasDialog({ courseId, course, onClose }: { courseId: string; course:
 
         <div className="space-y-3">
           {turmas.length === 0 ? (
-            <div className="text-center text-slate-400 py-10 text-xs uppercase font-bold border border-dashed border-slate-200 rounded-xl">
+            <div className="text-center text-rose-200/60 py-10 text-xs uppercase font-bold border border-dashed border-white/15 rounded-xl">
               Nenhuma turma realizada ainda.
             </div>
           ) : (
@@ -532,12 +532,12 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
   const fotosCount = anexos.filter((a: any) => a.tipo === "FOTO").length;
 
   return (
-    <div className="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
+    <div className="rounded-xl border border-rose-500/20 bg-black/30 backdrop-blur-sm overflow-hidden shadow-[0_0_24px_-12px_rgba(220,38,70,0.35)]">
       <button
         onClick={onToggle}
-        className="w-full p-4 flex items-center gap-4 hover:bg-white transition-colors text-left"
+        className="w-full p-4 flex items-center gap-4 hover:bg-rose-950/30 transition-colors text-left"
       >
-        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#991b1b] text-white flex flex-col items-center justify-center">
+        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-rose-600 to-rose-800 text-white flex flex-col items-center justify-center shadow-[0_0_14px_-4px_rgba(220,38,70,0.7)] ring-1 ring-rose-400/30">
           {(() => {
             const [yy, mm, dd] = String(turma.data_realizacao).split("T")[0].split("-");
             const localDate = new Date(Number(yy), Number(mm) - 1, Number(dd));
@@ -552,16 +552,16 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
           })()}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-bold text-slate-800 truncate">
+          <div className="text-sm font-bold text-rose-50 truncate">
             {turma.titulo || `Turma ${formatDateBR(turma.data_realizacao)}`}
           </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[10px] font-bold uppercase text-slate-500">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[10px] font-bold uppercase text-rose-200/70">
             <span><Clock className="h-3 w-3 inline mr-1" />{turma.carga_horaria_h}h</span>
             {turma.modalidade && (
-              <Badge variant="outline" className="text-[9px] py-0 h-4">{MOD_LABEL[turma.modalidade] ?? turma.modalidade}</Badge>
+              <Badge variant="outline" className="text-[9px] py-0 h-4 bg-rose-950/60 text-rose-100 border-rose-500/30">{MOD_LABEL[turma.modalidade] ?? turma.modalidade}</Badge>
             )}
             {turma.tipo_realizacao && (
-              <Badge variant="outline" className="text-[9px] py-0 h-4">{TIPOS_REAL_LABEL[turma.tipo_realizacao] ?? turma.tipo_realizacao}</Badge>
+              <Badge variant="outline" className="text-[9px] py-0 h-4 bg-rose-950/60 text-rose-100 border-rose-500/30">{TIPOS_REAL_LABEL[turma.tipo_realizacao] ?? turma.tipo_realizacao}</Badge>
             )}
             {turma.instrutor && <span>👤 {turma.instrutor}</span>}
             <span><Users className="h-3 w-3 inline mr-1" />{participantesCount} part.</span>
@@ -570,33 +570,33 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
                 variant="outline"
                 className={`text-[9px] py-0 h-4 ${
                   matrizSync.sincronizados === matrizSync.total
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : "bg-amber-50 text-amber-700 border-amber-200"
+                    ? "bg-emerald-950/60 text-emerald-200 border-emerald-500/30"
+                    : "bg-amber-950/60 text-amber-200 border-amber-500/30"
                 }`}
               >
                 Matriz: {matrizSync.sincronizados}/{matrizSync.total}
               </Badge>
             )}
             {!turma.course_id && (
-              <Badge variant="outline" className="text-[9px] py-0 h-4 bg-red-50 text-red-700 border-red-200">
+              <Badge variant="outline" className="text-[9px] py-0 h-4 bg-rose-950/60 text-rose-200 border-rose-500/30">
                 Sem vínculo c/ matriz
               </Badge>
             )}
           </div>
         </div>
-        <ChevronRight className={`h-5 w-5 text-slate-400 transition-transform ${expanded ? "rotate-90" : ""}`} />
+        <ChevronRight className={`h-5 w-5 text-rose-300/70 transition-transform ${expanded ? "rotate-90" : ""}`} />
       </button>
 
       {expanded && (
-        <div className="p-4 border-t border-slate-200 bg-white space-y-4">
+        <div className="p-4 border-t border-rose-500/15 bg-black/40 space-y-4">
           {/* === 1) GESTÃO DA TURMA === */}
           {isEditor && (
-            <section className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
-              <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
+            <section className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+              <div className="text-[10px] font-black uppercase tracking-widest text-rose-200/80 mb-2 flex items-center gap-1.5">
                 <Users className="h-3 w-3" /> 1. Gestão da turma
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => setParticipantesOpen(true)}>
+                <Button size="sm" variant="outline" onClick={() => setParticipantesOpen(true)} className="border-white/15 bg-white/5 text-rose-50 hover:bg-rose-950/40 hover:border-rose-500/40">
                   <Users className="h-4 w-4 mr-1" /> Participantes
                 </Button>
                 <Button
@@ -604,19 +604,19 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
                   variant="outline"
                   onClick={() => setExtrairIAOpen(true)}
                   disabled={!(anexos as any[]).some((a) => a.tipo === "LISTA_PRESENCA")}
-                  className="border-violet-300 text-violet-700 hover:bg-violet-50 disabled:opacity-50"
+                  className="border-violet-400/40 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20 disabled:opacity-40"
                   title={(anexos as any[]).some((a) => a.tipo === "LISTA_PRESENCA") ? "Extrair participantes da Lista de Presença com IA" : "Anexe uma Lista de Presença primeiro"}
                 >
                   <Sparkles className="h-4 w-4 mr-1" /> Extrair participantes (IA)
                 </Button>
-                <Button size="sm" variant="outline" onClick={onEdit}>
+                <Button size="sm" variant="outline" onClick={onEdit} className="border-white/15 bg-white/5 text-rose-50 hover:bg-rose-950/40 hover:border-rose-500/40">
                   <Pencil className="h-4 w-4 mr-1" /> Editar turma
                 </Button>
                 {isAdmin && (
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-red-600 border-red-200 hover:bg-red-50 ml-auto"
+                    className="text-rose-200 border-rose-500/40 bg-rose-950/30 hover:bg-rose-900/50 ml-auto"
                     onClick={() => {
                       if (confirm("Excluir esta turma? Anexos e participantes vinculados também serão removidos. A matriz NÃO é revertida automaticamente.")) {
                         excluirTurma.mutate();
@@ -627,39 +627,39 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
                   </Button>
                 )}
               </div>
-              <p className="text-[10px] text-slate-500 mt-2">
+              <p className="text-[10px] text-rose-200/50 mt-2">
                 Adicione participantes manualmente ou extraia automaticamente da Lista de Presença anexada.
               </p>
             </section>
           )}
 
           {/* === 2) GERAR DOCUMENTOS (PDF em branco) === */}
-          <section className="rounded-lg border border-violet-200 bg-violet-50/40 p-3">
-            <div className="text-[10px] font-black uppercase tracking-widest text-violet-700 mb-2 flex items-center gap-1.5">
+          <section className="rounded-lg border border-sky-500/25 bg-sky-500/[0.06] p-3">
+            <div className="text-[10px] font-black uppercase tracking-widest text-sky-200 mb-2 flex items-center gap-1.5">
               <Download className="h-3 w-3" /> 2. Gerar documentos (PDF em branco para impressão)
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={gerarLista} className="border-violet-300 text-violet-700 hover:bg-violet-100">
+              <Button size="sm" variant="outline" onClick={gerarLista} className="border-sky-400/40 bg-sky-500/10 text-sky-100 hover:bg-sky-500/20">
                 <ClipboardList className="h-4 w-4 mr-1" /> Lista de Presença
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setReacaoOpen(true)}
-                className="border-violet-300 text-violet-700 hover:bg-violet-100"
+                className="border-sky-400/40 bg-sky-500/10 text-sky-100 hover:bg-sky-500/20"
               >
                 <MessageSquare className="h-4 w-4 mr-1" /> Avaliações de Reação
               </Button>
             </div>
-            <p className="text-[10px] text-slate-500 mt-2">
+            <p className="text-[10px] text-sky-200/60 mt-2">
               PDFs prontos para imprimir e os participantes assinarem. Depois, escaneie e anexe abaixo.
             </p>
           </section>
 
           {/* === 3) ANEXAR COMPROVANTES (após o treinamento) === */}
           {isEditor && (
-            <section className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3">
-              <div className="text-[10px] font-black uppercase tracking-widest text-emerald-700 mb-2 flex items-center gap-1.5">
+            <section className="rounded-lg border border-emerald-500/25 bg-emerald-500/[0.06] p-3">
+              <div className="text-[10px] font-black uppercase tracking-widest text-emerald-200 mb-2 flex items-center gap-1.5">
                 <Upload className="h-3 w-3" /> 3. Anexar comprovantes preenchidos
               </div>
               <div className="flex flex-wrap gap-2">
@@ -676,8 +676,8 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
                         e.target.value = "";
                       }}
                     />
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-md border border-slate-300 bg-white hover:bg-slate-50 transition">
-                      <Upload className="h-3.5 w-3.5 text-slate-500" />
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-md border border-emerald-400/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20 transition">
+                      <Upload className="h-3.5 w-3.5 text-emerald-200/80" />
                       <Icon className="h-3.5 w-3.5" />
                       {label} assinada
                     </span>
@@ -696,8 +696,8 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
                       e.target.value = "";
                     }}
                   />
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-md border border-slate-300 bg-white hover:bg-slate-50 transition">
-                    <Upload className="h-3.5 w-3.5 text-slate-500" />
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-md border border-emerald-400/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20 transition">
+                    <Upload className="h-3.5 w-3.5 text-emerald-200/80" />
                     <MessageSquare className="h-3.5 w-3.5" />
                     Reações preenchidas
                   </span>
@@ -720,34 +720,34 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
                         e.target.value = "";
                       }}
                     />
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-md border border-slate-300 bg-white hover:bg-slate-50 transition">
-                      <Upload className="h-3.5 w-3.5 text-slate-500" />
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-md border border-emerald-400/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20 transition">
+                      <Upload className="h-3.5 w-3.5 text-emerald-200/80" />
                       <Icon className="h-3.5 w-3.5" />
                       {label}
                     </span>
                   </label>
                 ))}
               </div>
-              <p className="text-[10px] text-slate-500 mt-2">
+              <p className="text-[10px] text-emerald-200/60 mt-2">
                 Envie a lista assinada, as avaliações de reação preenchidas, fotos do treinamento, avaliação de eficácia e certificados.
               </p>
             </section>
           )}
 
           <div>
-            <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">
+            <div className="text-[10px] font-black uppercase text-rose-200/70 tracking-widest mb-2">
               Anexos ({anexos.length})
             </div>
             {imageAnexos.length > 0 && (
               <div className="mb-3">
-                <div className="text-[10px] font-bold uppercase text-slate-400 mb-1">Fotos ({imageAnexos.length})</div>
+                <div className="text-[10px] font-bold uppercase text-rose-200/60 mb-1">Fotos ({imageAnexos.length})</div>
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                   {imageAnexos.map((a: any, i: number) => (
                     <button
                       key={a.id}
                       type="button"
                       onClick={() => setViewerIndex(i)}
-                      className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-100 hover:border-[#991b1b] transition"
+                      className="relative group aspect-square rounded-lg overflow-hidden border border-white/10 bg-black/40 hover:border-rose-500/60 transition"
                       title="Clique para ampliar"
                     >
                       {signedUrls[a.file_path] ? (
@@ -758,7 +758,7 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
                           loading="lazy"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <div className="w-full h-full flex items-center justify-center text-rose-200/40">
                           <ImageIcon className="h-6 w-6" />
                         </div>
                       )}
@@ -768,7 +768,7 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
               </div>
             )}
             {anexos.length === 0 ? (
-              <div className="text-xs text-slate-400 italic py-3 text-center border border-dashed border-slate-200 rounded">
+              <div className="text-xs text-rose-200/50 italic py-3 text-center border border-dashed border-white/15 rounded">
                 Nenhum anexo. Use os botões acima para enviar os documentos homologados.
               </div>
             ) : (
@@ -778,19 +778,19 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
                   const Icon = a.tipo === "REACAO" ? MessageSquare : meta?.icon ?? Upload;
                   const label = meta?.label ?? (a.tipo === "REACAO" ? "Avaliação de Reação" : a.tipo);
                   return (
-                    <div key={a.id} className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg bg-slate-50">
-                      <Icon className="h-4 w-4 text-slate-500" />
+                    <div key={a.id} className="flex items-center gap-2 p-2 border border-white/10 rounded-lg bg-white/[0.03]">
+                      <Icon className="h-4 w-4 text-rose-200/70" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-slate-700 truncate">{label}</div>
-                        <div className="text-[10px] text-slate-500 truncate">
+                        <div className="text-xs font-bold text-rose-50 truncate">{label}</div>
+                        <div className="text-[10px] text-rose-200/60 truncate">
                           {a.file_path.split("/").pop()}
                         </div>
                       </div>
-                      <button onClick={() => abrirAnexo(a.file_path)} className="w-6 h-6 rounded bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center" title="Visualizar">
+                      <button onClick={() => abrirAnexo(a.file_path)} className="w-6 h-6 rounded bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500 hover:text-white flex items-center justify-center" title="Visualizar">
                         <Eye className="h-3 w-3" />
                       </button>
                       {isAdmin && (
-                        <button onClick={() => { if (confirm("Remover este anexo?")) removeAnexo.mutate(a); }} className="w-6 h-6 rounded bg-red-100 text-red-600 hover:bg-red-600 hover:text-white flex items-center justify-center" title="Remover">
+                        <button onClick={() => { if (confirm("Remover este anexo?")) removeAnexo.mutate(a); }} className="w-6 h-6 rounded bg-rose-500/15 text-rose-300 hover:bg-rose-500 hover:text-white flex items-center justify-center" title="Remover">
                           <Trash2 className="h-3 w-3" />
                         </button>
                       )}

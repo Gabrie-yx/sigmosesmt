@@ -592,13 +592,13 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
   });
 
   function statusColor(a: any) {
-    if (a.situacao === "REPROVADO" || a.situacao === "AUSENTE") return "bg-red-100 text-red-700 border-red-200";
+    if (a.situacao === "REPROVADO" || a.situacao === "AUSENTE") return "bg-rose-950/60 text-rose-200 border-rose-500/40";
     if (a.data_vencimento) {
       const d = daysUntil(a.data_vencimento);
-      if (d !== null && d < 0) return "bg-red-100 text-red-700 border-red-200";
-      if (d !== null && d <= 30) return "bg-amber-100 text-amber-700 border-amber-200";
+      if (d !== null && d < 0) return "bg-rose-950/60 text-rose-200 border-rose-500/40";
+      if (d !== null && d <= 30) return "bg-amber-950/60 text-amber-200 border-amber-500/40";
     }
-    return "bg-emerald-100 text-emerald-700 border-emerald-200";
+    return "bg-emerald-950/60 text-emerald-200 border-emerald-500/40";
   }
 
   return (
@@ -612,15 +612,15 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
         </DialogHeader>
 
         {isEditor && (
-          <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-            <Label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-1">
+          <div className="rounded-xl p-4 border border-rose-500/20 bg-black/30 backdrop-blur-sm shadow-[0_0_24px_-12px_rgba(220,38,70,0.35)]">
+            <Label className="text-[10px] font-black text-rose-200/80 uppercase flex items-center gap-1">
               <Building2 className="h-3 w-3" /> Adicionar em massa por empresa
             </Label>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-2 mt-2 mb-4">
               <select
                 value={bulkCompany}
                 onChange={(e) => setBulkCompany(e.target.value)}
-                className="md:col-span-7 bg-white border border-slate-200 rounded-md px-3 py-2 text-xs font-semibold"
+                className="md:col-span-7 bg-black/40 border border-white/15 text-rose-50 rounded-md px-3 py-2 text-xs font-semibold focus:outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30 [&>option]:bg-slate-900 [&>option]:text-rose-50"
               >
                 <option value="">-- selecione empresa --</option>
                 {companies.map((c: any) => {
@@ -629,10 +629,10 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
                 })}
               </select>
               <Select value={bulkSituacao} onValueChange={(v) => setBulkSituacao(v as any)}>
-                <SelectTrigger className="md:col-span-3"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="md:col-span-3 bg-black/40 border-white/15 text-rose-50"><SelectValue /></SelectTrigger>
                 <SelectContent>{SITUACOES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
-              <Button onClick={() => bulkAdd.mutate()} disabled={bulkAdd.isPending || !bulkCompany} className="md:col-span-2 bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => bulkAdd.mutate()} disabled={bulkAdd.isPending || !bulkCompany} className="md:col-span-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-[0_0_18px_-4px_rgba(220,38,70,0.6)]">
                 <Users className="h-4 w-4 mr-1" /> Add Todos
               </Button>
             </div>
@@ -646,7 +646,7 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
                   onClick={() => {
                     if (confirm(`Remover TODOS os participantes da empresa selecionada?`)) bulkRemoveCompany.mutate();
                   }}
-                  className="border-red-200 text-red-700 hover:bg-red-50"
+                  className="border-rose-500/40 bg-rose-950/30 text-rose-200 hover:bg-rose-900/50"
                 >
                   <X className="h-4 w-4 mr-1" /> Excluir da empresa selecionada
                 </Button>
@@ -663,8 +663,8 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
               </div>
             )}
 
-            <Label className="text-[10px] font-black text-slate-500 uppercase">Funcionários da empresa selecionada</Label>
-            <div className="mt-2 max-h-56 overflow-y-auto rounded-md border border-border bg-background">
+            <Label className="text-[10px] font-black text-rose-200/70 uppercase">Funcionários da empresa selecionada</Label>
+            <div className="mt-2 max-h-56 overflow-y-auto rounded-md border border-white/10 bg-black/30">
               {!bulkCompany ? (
                 <div className="px-3 py-4 text-xs font-bold uppercase text-muted-foreground">Selecione uma empresa acima para carregar os funcionários.</div>
               ) : companyEmployees.length === 0 ? (
@@ -694,15 +694,15 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
 
         <div className="space-y-2 max-h-[400px] overflow-y-auto">
           {attendees.length === 0 ? (
-            <div className="text-center text-slate-400 py-8 text-xs uppercase font-bold">Nenhum participante.</div>
+            <div className="text-center text-rose-200/60 py-8 text-xs uppercase font-bold">Nenhum participante.</div>
           ) : (
             attendees.map((a: any) => {
               const c = companies.find((x: any) => x.id === a.employees?.company_id);
               return (
-                <div key={a.id} className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg bg-white">
+                <div key={a.id} className="flex items-center gap-3 p-3 border border-white/10 rounded-lg bg-white/[0.03]">
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-slate-800 truncate">{a.employees?.nome ?? "—"}</div>
-                    <div className="text-[10px] text-slate-500 uppercase font-bold">
+                    <div className="text-sm font-bold text-rose-50 truncate">{a.employees?.nome ?? "—"}</div>
+                    <div className="text-[10px] text-rose-200/60 uppercase font-bold">
                       {a.employees?.matricula && `MAT: ${a.employees.matricula} • `}{c?.name ?? "S/ EMPRESA"}
                     </div>
                   </div>
@@ -710,10 +710,10 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
                     {a.situacao}
                   </div>
                   {a.nota !== null && a.nota !== undefined && (
-                    <div className="text-xs font-bold text-slate-700">Nota: {a.nota}</div>
+                    <div className="text-xs font-bold text-rose-100">Nota: {a.nota}</div>
                   )}
                   {a.data_vencimento && (
-                    <div className="text-[10px] text-slate-500 font-bold">
+                    <div className="text-[10px] text-rose-200/60 font-bold">
                       Vence: {formatDateBR(a.data_vencimento)}
                     </div>
                   )}
