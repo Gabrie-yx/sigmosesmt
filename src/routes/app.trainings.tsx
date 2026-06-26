@@ -413,7 +413,7 @@ function TrainingsPage() {
                     <button onClick={() => setOpenAttendees(t.id)} className="w-7 h-7 rounded bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors" title="Participantes">
                       <Users className="h-3.5 w-3.5" />
                     </button>
-                    <button onClick={() => gerarLista(t)} className="w-7 h-7 rounded bg-violet-100 text-violet-600 hover:bg-violet-600 hover:text-white flex items-center justify-center" title="Gerar Lista de Presença (PDF)">
+                    <button onClick={() => setGerarListaFor(t)} className="w-7 h-7 rounded bg-violet-100 text-violet-600 hover:bg-violet-600 hover:text-white flex items-center justify-center" title="Gerar Lista de Presença (PDF)">
                       <ClipboardList className="h-3.5 w-3.5" />
                     </button>
                     {t.anexo_path && (
