@@ -1040,6 +1040,7 @@ function PainelListaTecnicaPage() {
         escopo={compCardData.escopo}
         semPlano={compCardData.semPlano}
         accent={catSel ? CAT_COLOR[catSel] : undefined}
+        planejadoItens={planejadoList}
       />
       </div>
 
