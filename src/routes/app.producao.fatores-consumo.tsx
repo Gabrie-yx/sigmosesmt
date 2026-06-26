@@ -4,14 +4,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Calculator, Lock, LockOpen, RefreshCw, Save, Sparkles } from "lucide-react";
+import { Calculator, Lock, LockOpen, RefreshCw, Save, Sparkles, History, MessageSquare, ArrowRight } from "lucide-react";
 import { resolveTipo } from "@/lib/mb51-parser";
 import type { TipoMP } from "@/lib/base-mp-parser";
 type CategoriaMaterial = TipoMP;
@@ -29,7 +36,7 @@ type Fator = {
   fonte: "AUTO" | "MANUAL";
   cascos_base: number;
   travado: boolean;
-  observacoes?: string | null;
+  observacao?: string | null;
 };
 
 const CATEGORIAS: CategoriaMaterial[] = ["FERRO", "SOLDA", "GÁS", "TINTA", "OUTROS"];
@@ -292,6 +299,9 @@ function FatoresConsumoPage() {
   }
 
   const dirty = Object.keys(editBuffer).length > 0;
+
+  // Estado do modal de histórico
+  const [histOpen, setHistOpen] = useState<{ tipo: string; cat: CategoriaMaterial } | null>(null);
 
   return (
     <div className="p-4 space-y-4">
