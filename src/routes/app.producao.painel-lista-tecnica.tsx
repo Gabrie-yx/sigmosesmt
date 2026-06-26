@@ -2022,6 +2022,7 @@ function MateriaisComparativoCards({
   planejadoItens,
   aplicadoItens,
   consumidoItens,
+  estimativa,
 }: {
   planejado: number;
   aplicado: number;
@@ -2032,6 +2033,7 @@ function MateriaisComparativoCards({
   planejadoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
   aplicadoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
   consumidoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
+  estimativa?: null | { fator: number; fonte: string; cascosBase: number; ferroTon: number };
 }) {
   const podeComparar = !semPlano && planejado > 0;
   const consumido = podeComparar ? aplicado - planejado : 0;
@@ -2049,7 +2051,11 @@ function MateriaisComparativoCards({
   const cards = [
     {
       label: `Material Planejado · ${escopo}`,
-      hint: semPlano ? "Sem plano em KG nesta categoria" : "Lista Técnica · peso real",
+      hint: semPlano
+        ? "Sem plano em KG nesta categoria"
+        : estimativa
+          ? `Estimado · ${fmt(estimativa.fator, 1)} kg/ton aço · base ${estimativa.cascosBase} casco(s)`
+          : "Lista Técnica · peso real",
       value: planejado,
       unit: semPlano ? "—" : "kg",
       icon: Layers,
@@ -2057,7 +2063,11 @@ function MateriaisComparativoCards({
       muted: semPlano,
       itens: planejadoItens ?? [],
       itensLabel: "Itens planejados",
-      emptyLabel: semPlano ? "Sem plano em KG nesta categoria" : "Sem itens planejados",
+      emptyLabel: semPlano
+        ? "Sem plano em KG nesta categoria"
+        : estimativa
+          ? `Plano estimado pelo histórico (${fmt(estimativa.ferroTon, 1)} t aço × ${fmt(estimativa.fator, 1)} kg/t)`
+          : "Sem itens planejados",
       signedItens: false,
     },
     {
