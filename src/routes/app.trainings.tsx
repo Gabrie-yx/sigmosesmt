@@ -592,13 +592,13 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
   });
 
   function statusColor(a: any) {
-    if (a.situacao === "REPROVADO" || a.situacao === "AUSENTE") return "bg-red-100 text-red-700 border-red-200";
+    if (a.situacao === "REPROVADO" || a.situacao === "AUSENTE") return "bg-rose-950/60 text-rose-200 border-rose-500/40";
     if (a.data_vencimento) {
       const d = daysUntil(a.data_vencimento);
-      if (d !== null && d < 0) return "bg-red-100 text-red-700 border-red-200";
-      if (d !== null && d <= 30) return "bg-amber-100 text-amber-700 border-amber-200";
+      if (d !== null && d < 0) return "bg-rose-950/60 text-rose-200 border-rose-500/40";
+      if (d !== null && d <= 30) return "bg-amber-950/60 text-amber-200 border-amber-500/40";
     }
-    return "bg-emerald-100 text-emerald-700 border-emerald-200";
+    return "bg-emerald-950/60 text-emerald-200 border-emerald-500/40";
   }
 
   return (
