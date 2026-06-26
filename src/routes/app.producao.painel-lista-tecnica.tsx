@@ -531,6 +531,91 @@ function PainelListaTecnicaPage() {
     return CATEGORIAS.flatMap((c) => planejadosPorCategoria[c]).sort((a, b) => b.qtd - a.qtd);
   }, [catSel, planejadosPorCategoria]);
 
+  // ===== Aplicados (MB51) por categoria — agregado por código SAP =====
+  // Mostra a lista dentro do card "Material Aplicado", no mesmo formato
+  // do "Material Planejado". A UME exibida é a dominante daquele código.
+  const aplicadosPorCategoria = useMemo(() => {
+    const map: Record<CategoriaMaterial, Map<string, { codigo: string; nome: string; qtdPorUm: Map<string, number> }>> = {
+      FERRO: new Map(), SOLDA: new Map(), "GÁS": new Map(), TINTA: new Map(), OUTROS: new Map(),
+    };
+    itensEnriq.forEach((it) => {
+      const codigo = String(it.codigo_sap ?? "").trim();
+      if (!codigo) return;
+      const cat = it.categoria as CategoriaMaterial;
+      const ume = String(it.unidade ?? "—").toUpperCase();
+      const v = Math.max(0, Number(it.consumo ?? 0));
+      if (v <= 0) return;
+      const cur = map[cat].get(codigo) ?? {
+        codigo,
+        nome: String(it.descricao_sap ?? baseMpDescMap.get(codigo) ?? codigo),
+        qtdPorUm: new Map<string, number>(),
+      };
+      cur.qtdPorUm.set(ume, (cur.qtdPorUm.get(ume) ?? 0) + v);
+      map[cat].set(codigo, cur);
+    });
+    const out: Record<CategoriaMaterial, Array<{ codigo: string; nome: string; qtd: number; ume: string }>> = {
+      FERRO: [], SOLDA: [], "GÁS": [], TINTA: [], OUTROS: [],
+    };
+    CATEGORIAS.forEach((c) => {
+      out[c] = Array.from(map[c].values()).map((r) => {
+        const dom = Array.from(r.qtdPorUm.entries()).sort((a, b) => b[1] - a[1])[0];
+        return { codigo: r.codigo, nome: r.nome, qtd: dom?.[1] ?? 0, ume: dom?.[0] ?? "—" };
+      }).sort((a, b) => b.qtd - a.qtd);
+    });
+    return out;
+  }, [itensEnriq, baseMpDescMap]);
+
+  const aplicadoList = useMemo(() => {
+    if (catSel) return aplicadosPorCategoria[catSel];
+    return CATEGORIAS.flatMap((c) => aplicadosPorCategoria[c]).sort((a, b) => b.qtd - a.qtd);
+  }, [catSel, aplicadosPorCategoria]);
+
+  // ===== Consumido por categoria (Aplicado − Planejado por código) =====
+  // Merge por código entre Planejado (KG, da Lista Técnica) e Aplicado
+  // (KG, da MB51). Faz sentido apenas onde o plano existe em KG.
+  const consumidosPorCategoria = useMemo(() => {
+    const aplKgPorCat: Record<CategoriaMaterial, Map<string, number>> = {
+      FERRO: new Map(), SOLDA: new Map(), "GÁS": new Map(), TINTA: new Map(), OUTROS: new Map(),
+    };
+    itensEnriq.forEach((it) => {
+      if (String(it.unidade ?? "").toUpperCase() !== "KG") return;
+      const codigo = String(it.codigo_sap ?? "").trim();
+      if (!codigo) return;
+      const cat = it.categoria as CategoriaMaterial;
+      aplKgPorCat[cat].set(codigo, (aplKgPorCat[cat].get(codigo) ?? 0) + Math.max(0, Number(it.consumo ?? 0)));
+    });
+    const out: Record<CategoriaMaterial, Array<{ codigo: string; nome: string; qtd: number; ume: string }>> = {
+      FERRO: [], SOLDA: [], "GÁS": [], TINTA: [], OUTROS: [],
+    };
+    CATEGORIAS.forEach((c) => {
+      const plan = new Map<string, { nome: string; qtd: number }>();
+      planejadosPorCategoria[c].forEach((p) => {
+        if (p.ume === "KG") plan.set(p.codigo, { nome: p.nome, qtd: p.qtd });
+      });
+      const codigos = new Set<string>([...plan.keys(), ...aplKgPorCat[c].keys()]);
+      const linhas: Array<{ codigo: string; nome: string; qtd: number; ume: string }> = [];
+      codigos.forEach((cod) => {
+        const p = plan.get(cod)?.qtd ?? 0;
+        const a = aplKgPorCat[c].get(cod) ?? 0;
+        const diff = a - p;
+        if (diff === 0) return;
+        linhas.push({
+          codigo: cod,
+          nome: plan.get(cod)?.nome ?? baseMpDescMap.get(cod) ?? cod,
+          qtd: diff,
+          ume: "KG",
+        });
+      });
+      out[c] = linhas.sort((a, b) => Math.abs(b.qtd) - Math.abs(a.qtd));
+    });
+    return out;
+  }, [itensEnriq, planejadosPorCategoria, baseMpDescMap]);
+
+  const consumidoList = useMemo(() => {
+    if (catSel) return consumidosPorCategoria[catSel];
+    return CATEGORIAS.flatMap((c) => consumidosPorCategoria[c]).sort((a, b) => Math.abs(b.qtd) - Math.abs(a.qtd));
+  }, [catSel, consumidosPorCategoria]);
+
   // ===== Curva S: consumo acumulado ao longo do tempo (Total) =====
   // Agrupa movimentos por mês e compara com o previsto total (B51).
   const curvaS = useMemo(() => {
