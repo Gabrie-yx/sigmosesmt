@@ -170,6 +170,13 @@ function PainelListaTecnicaPage() {
     return m;
   }, [baseMp]);
 
+  // Mapa código → descrição da Base MP (para exibir nome dos itens planejados)
+  const baseMpDescMap = useMemo(() => {
+    const m = new Map<string, string>();
+    (baseMp as any[]).forEach((b) => m.set(String(b.codigo), String(b.descricao ?? "")));
+    return m;
+  }, [baseMp]);
+
   // ===== Listas técnicas (planejado) — para KPI plan × real =====
   const { data: listasAtuais = [] } = useQuery({
     queryKey: ["listas-tecnicas-latest"],
