@@ -4928,6 +4928,63 @@ export type Database = {
         }
         Relationships: []
       }
+      producao_fatores_consumo_historico: {
+        Row: {
+          acao: string
+          alterado_em: string
+          alterado_por: string | null
+          categoria: string
+          fator_anterior: number | null
+          fator_id: string | null
+          fator_novo: number | null
+          fonte_anterior: string | null
+          fonte_nova: string | null
+          id: string
+          observacao_anterior: string | null
+          observacao_nova: string | null
+          tipo_embarcacao: string
+          travado_anterior: boolean | null
+          travado_novo: boolean | null
+          unidade: string | null
+        }
+        Insert: {
+          acao: string
+          alterado_em?: string
+          alterado_por?: string | null
+          categoria: string
+          fator_anterior?: number | null
+          fator_id?: string | null
+          fator_novo?: number | null
+          fonte_anterior?: string | null
+          fonte_nova?: string | null
+          id?: string
+          observacao_anterior?: string | null
+          observacao_nova?: string | null
+          tipo_embarcacao: string
+          travado_anterior?: boolean | null
+          travado_novo?: boolean | null
+          unidade?: string | null
+        }
+        Update: {
+          acao?: string
+          alterado_em?: string
+          alterado_por?: string | null
+          categoria?: string
+          fator_anterior?: number | null
+          fator_id?: string | null
+          fator_novo?: number | null
+          fonte_anterior?: string | null
+          fonte_nova?: string | null
+          id?: string
+          observacao_anterior?: string | null
+          observacao_nova?: string | null
+          tipo_embarcacao?: string
+          travado_anterior?: boolean | null
+          travado_novo?: boolean | null
+          unidade?: string | null
+        }
+        Relationships: []
+      }
       producao_grupo_mercadorias: {
         Row: {
           ativo: boolean
