@@ -31,12 +31,10 @@ export async function openStorageFile(bucket: string, path: string, name?: strin
     if (!response.ok) throw new Error("Não foi possível carregar o arquivo");
     const blob = await response.blob();
     const objectUrl = URL.createObjectURL(blob);
-    const url = ext === "pdf" ? `${objectUrl}#toolbar=1&navpanes=0&view=FitH` : objectUrl;
-    openFileViewer({ url, name: fname, mime: blob.type || mime, downloadUrl: objectUrl, objectUrl });
+    openFileViewer({ url: objectUrl, name: fname, mime: blob.type || mime, downloadUrl: objectUrl, objectUrl });
   } catch (e: any) {
     toast.error(e.message ?? "Não foi possível visualizar o arquivo");
-    const url = ext === "pdf" ? `${data.signedUrl}#toolbar=1&navpanes=0&view=FitH` : data.signedUrl;
-    openFileViewer({ url, name: fname, mime, downloadUrl: data.signedUrl });
+      openFileViewer({ url: data.signedUrl, name: fname, mime, downloadUrl: data.signedUrl });
   }
 }
 
@@ -115,8 +113,12 @@ export function FileViewerHost() {
               <div className="w-full h-full flex items-center justify-center p-4">
                 <img src={payload.url} alt={payload.name} className="max-w-full max-h-full object-contain" />
               </div>
+            ) : isPdf ? (
+              <object data={payload.url} type="application/pdf" className="w-full h-full">
+                <iframe src={payload.url} title={payload.name} className="w-full h-full border-0" />
+              </object>
             ) : (
-              <iframe id="file-viewer-iframe" src={payload.url} title={payload.name} className="w-full h-full border-0" />
+              <iframe src={payload.url} title={payload.name} className="w-full h-full border-0" />
             )
           )}
         </div>
