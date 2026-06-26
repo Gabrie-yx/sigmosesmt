@@ -824,6 +824,98 @@ function PainelListaTecnicaPage() {
         ))}
       </div>
 
+      {/* Curva S — consumo acumulado (estreita, no topo) */}
+      {curvaSPlot.length > 0 && (
+        <Card className="shadow-lg border border-primary/30 bg-slate-950">
+          <CardContent className="p-2.5">
+            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-200">
+                  Curva S — Consumo acumulado
+                </span>
+                {previstoTotal > 0 && (
+                  <span className="text-[10px] text-slate-300">
+                    previsto total: <span className="font-semibold text-white tabular-nums">{fmt(previstoTotal, 0)}</span>
+                    {" · "}realizado: <span className="font-semibold text-white tabular-nums">{fmt(curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0, 0)}</span>
+                    {" · "}
+                    <span className="font-semibold tabular-nums" style={{ color: (curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0) > previstoTotal ? "hsl(0 85% 70%)" : "hsl(142 70% 60%)" }}>
+                      {fmt(((curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0) / previstoTotal) * 100, 1)}% do total
+                    </span>
+                    {aderenciaPct != null && (
+                      <>
+                        {" · aderência ao plano: "}
+                        <span
+                          className="font-semibold tabular-nums"
+                          style={{
+                            color:
+                              aderenciaPct > 110 ? "hsl(0 85% 70%)"
+                              : aderenciaPct > 100 ? "hsl(28 95% 65%)"
+                              : aderenciaPct >= 90 ? "hsl(142 70% 60%)"
+                              : "hsl(200 90% 65%)",
+                          }}
+                          title="Realizado ÷ ideal-no-momento. >100% = adiantado/sobreconsumo; <100% = atrasado/abaixo do plano."
+                        >
+                          {fmt(aderenciaPct, 0)}%
+                        </span>
+                      </>
+                    )}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div style={{ width: "100%", height: 140 }}>
+              <ResponsiveContainer>
+                <AreaChart data={curvaSPlot} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="grad-total" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(200 100% 65%)" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="hsl(200 100% 65%)" stopOpacity={0.1} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.25} stroke="#ffffff" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#ffffff" }} stroke="#ffffff" interval="preserveStartEnd" minTickGap={20} />
+                  <YAxis tick={{ fontSize: 10, fill: "#ffffff" }} stroke="#ffffff" tickFormatter={(v) => fmt(Number(v), 0)} width={55} />
+                  <Tooltip
+                    cursor={{ stroke: "hsl(0 0% 100%)", strokeWidth: 1.5, strokeDasharray: "0" }}
+                    content={<FancyTooltip accent="hsl(200 100% 65%)" />}
+                  />
+                  <Area
+                      type="monotone"
+                      dataKey="TOTAL"
+                      stroke="hsl(200 100% 70%)"
+                      strokeWidth={3}
+                      fill="url(#grad-total)"
+                      name="Realizado acumulado"
+                    />
+                  {previstoTotal > 0 && (
+                    <Area
+                      type="linear"
+                      dataKey="IDEAL"
+                      stroke="hsl(142 80% 65%)"
+                      strokeWidth={2.5}
+                      strokeDasharray="5 4"
+                      fill="transparent"
+                      dot={false}
+                      name="Plano linear (ideal)"
+                    />
+                  )}
+                  {previstoTotal > 0 && (
+                    <ReferenceLine
+                      y={previstoTotal}
+                      stroke="hsl(0 90% 70%)"
+                      strokeWidth={2}
+                      strokeDasharray="4 4"
+                      label={{ value: `Previsto ${fmt(previstoTotal, 0)}`, position: "insideTopRight", fontSize: 10, fill: "hsl(0 90% 75%)", fontWeight: 600 }}
+                    />
+                  )}
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Linha: Realizado vs Orçado (esq) + 3 cards de comparação (dir) */}
       <div className="grid gap-3 grid-cols-1 lg:grid-cols-[400px_minmax(0,1fr)]">
       {listaAtivaId && (
@@ -907,98 +999,6 @@ function PainelListaTecnicaPage() {
         accent={catSel ? CAT_COLOR[catSel] : undefined}
       />
       </div>
-
-      {/* Curva S — consumo acumulado ao longo do tempo (largura total) */}
-      {curvaSPlot.length > 0 && (
-        <Card className="shadow-lg border border-primary/30 bg-slate-950 h-full">
-          <CardContent className="p-3 h-full flex flex-col">
-            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-primary" />
-                <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-200">
-                  Curva S — Consumo acumulado
-                </span>
-                {previstoTotal > 0 && (
-                  <span className="text-[10px] text-slate-300">
-                    previsto total: <span className="font-semibold text-white tabular-nums">{fmt(previstoTotal, 0)}</span>
-                    {" · "}realizado: <span className="font-semibold text-white tabular-nums">{fmt(curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0, 0)}</span>
-                    {" · "}
-                    <span className="font-semibold tabular-nums" style={{ color: (curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0) > previstoTotal ? "hsl(0 85% 70%)" : "hsl(142 70% 60%)" }}>
-                      {fmt(((curvaSPlot[curvaSPlot.length - 1]?.TOTAL ?? 0) / previstoTotal) * 100, 1)}% do total
-                    </span>
-                    {aderenciaPct != null && (
-                      <>
-                        {" · aderência ao plano: "}
-                        <span
-                          className="font-semibold tabular-nums"
-                          style={{
-                            color:
-                              aderenciaPct > 110 ? "hsl(0 85% 70%)"
-                              : aderenciaPct > 100 ? "hsl(28 95% 65%)"
-                              : aderenciaPct >= 90 ? "hsl(142 70% 60%)"
-                              : "hsl(200 90% 65%)",
-                          }}
-                          title="Realizado ÷ ideal-no-momento. >100% = adiantado/sobreconsumo; <100% = atrasado/abaixo do plano."
-                        >
-                          {fmt(aderenciaPct, 0)}%
-                        </span>
-                      </>
-                    )}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex-1 min-h-[320px]" style={{ width: "100%" }}>
-              <ResponsiveContainer>
-                <AreaChart data={curvaSPlot} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="grad-total" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(200 100% 65%)" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="hsl(200 100% 65%)" stopOpacity={0.1} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.25} stroke="#ffffff" />
-                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#ffffff" }} stroke="#ffffff" interval="preserveStartEnd" minTickGap={20} />
-                  <YAxis tick={{ fontSize: 10, fill: "#ffffff" }} stroke="#ffffff" tickFormatter={(v) => fmt(Number(v), 0)} width={55} />
-                  <Tooltip
-                    cursor={{ stroke: "hsl(0 0% 100%)", strokeWidth: 1.5, strokeDasharray: "0" }}
-                    content={<FancyTooltip accent="hsl(200 100% 65%)" />}
-                  />
-                  <Area
-                      type="monotone"
-                      dataKey="TOTAL"
-                      stroke="hsl(200 100% 70%)"
-                      strokeWidth={3}
-                      fill="url(#grad-total)"
-                      name="Realizado acumulado"
-                    />
-                  {previstoTotal > 0 && (
-                    <Area
-                      type="linear"
-                      dataKey="IDEAL"
-                      stroke="hsl(142 80% 65%)"
-                      strokeWidth={2.5}
-                      strokeDasharray="5 4"
-                      fill="transparent"
-                      dot={false}
-                      name="Plano linear (ideal)"
-                    />
-                  )}
-                  {previstoTotal > 0 && (
-                    <ReferenceLine
-                      y={previstoTotal}
-                      stroke="hsl(0 90% 70%)"
-                      strokeWidth={2}
-                      strokeDasharray="4 4"
-                      label={{ value: `Previsto ${fmt(previstoTotal, 0)}`, position: "insideTopRight", fontSize: 10, fill: "hsl(0 90% 75%)", fontWeight: 600 }}
-                    />
-                  )}
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Layout principal: esquerda (categorias) + direita (tabela de materiais) */}
 
