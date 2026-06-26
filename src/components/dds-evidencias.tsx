@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DDSAttendeesEditor } from "@/components/dds-attendees-editor";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { PDFDocument } from "pdf-lib";
-import { openStorageFile, FileViewerHost } from "@/components/file-viewer";
+import { PDFViewerDialog } from "@/components/pdf-viewer-dialog";
+import { MediaViewerDialog } from "@/components/media-viewer-dialog";
 
 export function DDSEvidencias({ ddsId }: { ddsId: string }) {
   const qc = useQueryClient();
@@ -19,6 +20,8 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [esperados, setEsperados] = useState(0);
   const [signTarget, setSignTarget] = useState<any | null>(null);
+  const [pdfTarget, setPdfTarget] = useState<{ path: string; name: string } | null>(null);
+  const [imgTarget, setImgTarget] = useState<{ path: string; name: string } | null>(null);
 
   const { data: itens = [] } = useQuery({
     queryKey: ["dds-evid", ddsId],
@@ -60,8 +63,14 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
   });
 
   async function abrir(path: string) {
-    const name = path.split("/").pop();
-    await openStorageFile("dds-anexos", path, name);
+    const name = path.split("/").pop() ?? "arquivo";
+    const ext = name.split(".").pop()?.toLowerCase();
+    if (ext === "pdf") {
+      setPdfTarget({ path, name });
+    } else {
+      const { data } = await supabase.storage.from("dds-anexos").createSignedUrl(path, 600);
+      if (data?.signedUrl) setImgTarget({ path: data.signedUrl, name });
+    }
   }
 
   async function assinarPdf(item: any, dataUrl: string, height: number) {
@@ -236,7 +245,18 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
         onConfirm={(r) => signTarget && assinarPdf(signTarget, r.dataUrl, r.height)}
         title="Carimbar assinatura no PDF"
       />
-      <FileViewerHost />
+      <PDFViewerDialog
+        open={!!pdfTarget}
+        onClose={() => setPdfTarget(null)}
+        pdfPath={pdfTarget?.path ?? null}
+        fileName={pdfTarget?.name ?? ""}
+      />
+      <MediaViewerDialog
+        open={!!imgTarget}
+        onOpenChange={(o) => { if (!o) setImgTarget(null); }}
+        src={imgTarget?.path ?? ""}
+        title={imgTarget?.name}
+      />
     </div>
   );
 }
