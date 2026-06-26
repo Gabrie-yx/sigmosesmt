@@ -98,7 +98,7 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   };
 
   const drawMasterCards = (x: number, y: number, w: number): number => {
-    const cardH = 13;
+    const cardH = 15;
     const cardGap = 2.5;
     const cardW = (w - cardGap * 3) / 4;
     const cards = [
@@ -115,19 +115,28 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
       doc.roundedRect(cx, y, cardW, cardH, 2, 2, "S");
       doc.setFillColor(...accent); doc.rect(cx, y, 1.5, cardH, "F");
       doc.setTextColor(...muted);
-      doc.setFont("helvetica", "bold").setFontSize(5.8);
-      // Label pode quebrar em 2 linhas (TOTAL DE COLABORADORES EM EXTRA)
+      doc.setFont("helvetica", "bold").setFontSize(5.4);
       const labelLines = doc.splitTextToSize(c.label, cardW - 5) as string[];
       const labelToShow = labelLines.slice(0, 2);
-      labelToShow.forEach((ln, li) => doc.text(ln, cx + 3.5, y + 3.5 + li * 2.4));
-      const labelBaseline = 3.5 + (labelToShow.length - 1) * 2.4;
+      labelToShow.forEach((ln, li) => doc.text(ln, cx + 3.5, y + 3.2 + li * 2.2));
+      const labelBaseline = 3.2 + (labelToShow.length - 1) * 2.2;
+      // Auto-shrink do valor: começa em 9pt e reduz até caber em cardW-7
       doc.setTextColor(...brand);
-      doc.setFont("helvetica", "bold").setFontSize(9);
-      doc.text(c.value, cx + 3.5, y + labelBaseline + 4);
+      let valFs = 9;
+      doc.setFont("helvetica", "bold").setFontSize(valFs);
+      const maxValW = cardW - 7;
+      while (doc.getTextWidth(c.value) > maxValW && valFs > 5.5) {
+        valFs -= 0.5;
+        doc.setFontSize(valFs);
+      }
+      // Valor pode usar até 2 linhas (ex.: "Administrativo, Almoxarifado")
+      const valLines = doc.splitTextToSize(c.value, maxValW) as string[];
+      const valShow = valLines.slice(0, 2);
+      valShow.forEach((ln, li) => doc.text(ln, cx + 3.5, y + labelBaseline + 4 + li * (valFs * 0.38)));
       if (c.sub) {
         doc.setTextColor(...muted);
-        doc.setFont("helvetica", "normal").setFontSize(6);
-        doc.text(c.sub, cx + 3.5, y + cardH - 2);
+        doc.setFont("helvetica", "normal").setFontSize(5.6);
+        doc.text(c.sub, cx + 3.5, y + cardH - 1.8);
       }
     });
     return cardH;
@@ -414,8 +423,8 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
   // Overhead fixo de um bloco-empresa: header(14)+gap(3)+tab-head(7) = 24
   const BLOCK_OVERHEAD = 24;
   const ROW_H = 6.6;
-  // Cabeçalho mestre (só na pág 1): header(19)+gap(3)+cards(13)+gap(4 block_gap) ~ 39
-  const MASTER_HEADER_H = 19 + 3 + 13;
+  // Cabeçalho mestre (só na pág 1): header(19)+gap(3)+cards(15)
+  const MASTER_HEADER_H = 19 + 3 + 15;
   // O master header é desenhado fora do flow no topo da página 1 → reduz capacidade só na primeira página.
   // Para empacotar com segurança, calculamos MAX_ROWS usando a capacidade da página 1 (mais apertada).
   const PAGE1_CAPACITY = PAGE_CAPACITY - MASTER_HEADER_H - BLOCK_GAP;
@@ -496,7 +505,10 @@ export function gerarHoraExtraSabadoPDF(p: HoraExtraPdfParams): jsPDF {
     }
     pages.push({ blocks: firstPagePack, contentHeight: used });
     if (remaining.length > 0) {
-      const rest = packBlocksIntoPages(remaining, PAGE_CAPACITY, BLOCK_GAP, { lookahead: true });
+      // ORDEM ESTRITA: sem lookahead. Lookahead reordenava blocos pequenos
+      // (ex.: PORTARIA) na frente de blocos grandes (ex.: NB CONSTRUÇÃO pt 1/2),
+      // quebrando a sequência alfabética e duplicando visualmente a empresa.
+      const rest = packBlocksIntoPages(remaining, PAGE_CAPACITY, BLOCK_GAP);
       pages = pages.concat(rest);
     }
   }
