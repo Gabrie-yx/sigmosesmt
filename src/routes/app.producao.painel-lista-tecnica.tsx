@@ -1809,48 +1809,63 @@ function PainelListaTecnicaPage() {
 }
 
 function MateriaisComparativoCards({
-  planejadoKg,
-  aplicadoKg,
+  planejado,
+  aplicado,
+  unit,
+  escopo,
+  semPlano,
+  accent,
 }: {
-  planejadoKg: number;
-  aplicadoKg: number;
+  planejado: number;
+  aplicado: number;
+  unit: string;
+  escopo: string;
+  semPlano: boolean;
+  accent?: string;
 }) {
-  const consumido = aplicadoKg - planejadoKg;
-  const pct = planejadoKg > 0 ? (aplicadoKg / planejadoKg) * 100 : 0;
+  const podeComparar = !semPlano && planejado > 0;
+  const consumido = podeComparar ? aplicado - planejado : 0;
+  const pct = podeComparar ? (aplicado / planejado) * 100 : 0;
   const acima = consumido > 0;
-  const corConsumo = !planejadoKg
+  const corConsumo = !podeComparar
     ? "hsl(var(--muted-foreground))"
     : acima
       ? "hsl(0 80% 65%)"
       : "hsl(142 70% 55%)";
 
+  const planAccent = accent ?? "hsl(200 90% 65%)";
+  const aplAccent = accent ?? "hsl(38 95% 60%)";
+
   const cards = [
     {
-      label: "Material Planejado",
-      hint: "Lista Técnica · peso real",
-      value: planejadoKg,
-      unit: "kg",
+      label: `Material Planejado · ${escopo}`,
+      hint: semPlano ? "Sem plano em KG nesta categoria" : "Lista Técnica · peso real",
+      value: planejado,
+      unit: semPlano ? "—" : "kg",
       icon: Layers,
-      accent: "hsl(200 90% 65%)",
+      accent: planAccent,
+      muted: semPlano,
     },
     {
-      label: "Material Aplicado",
-      hint: "MB51 · consumo líquido (KG)",
-      value: aplicadoKg,
-      unit: "kg",
+      label: `Material Aplicado · ${escopo}`,
+      hint: `MB51 · consumo líquido (${unit.toUpperCase()})`,
+      value: aplicado,
+      unit,
       icon: Package,
-      accent: "hsl(38 95% 60%)",
+      accent: aplAccent,
+      muted: false,
     },
     {
-      label: "Consumido",
-      hint: planejadoKg > 0
+      label: `Consumido · ${escopo}`,
+      hint: podeComparar
         ? `Aplicado − Planejado · ${fmt(pct, 1)}% do plano`
-        : "Aplicado − Planejado",
+        : "Sem plano para comparar",
       value: consumido,
-      unit: "kg",
+      unit: podeComparar ? unit : "—",
       icon: TrendingUp,
       accent: corConsumo,
       signed: true,
+      muted: !podeComparar,
     },
   ];
 
@@ -1873,10 +1888,14 @@ function MateriaisComparativoCards({
                 className="text-2xl font-bold tabular-nums leading-tight"
                 style={{ color: c.accent }}
               >
-                {c.signed && c.value > 0 ? "+" : ""}
-                {fmt(c.value, 0)}
+                {c.muted ? "—" : (
+                  <>
+                    {c.signed && c.value > 0 ? "+" : ""}
+                    {fmt(c.value, 0)}
+                  </>
+                )}
                 <span className="text-xs font-medium text-muted-foreground ml-1">
-                  {c.unit}
+                  {c.muted ? "" : c.unit}
                 </span>
               </div>
               <div className="text-[10px] text-muted-foreground mt-1">{c.hint}</div>
