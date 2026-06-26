@@ -1126,6 +1126,8 @@ function PainelListaTecnicaPage() {
         semPlano={compCardData.semPlano}
         accent={catSel ? CAT_COLOR[catSel] : undefined}
         planejadoItens={planejadoList}
+        aplicadoItens={aplicadoList}
+        consumidoItens={consumidoList}
       />
       </div>
 
