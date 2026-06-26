@@ -134,7 +134,7 @@ function PainelListaTecnicaPage() {
     queryKey: ["cascos-list"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("cascos").select("id, numero, nome").order("numero");
+        .from("cascos").select("id, numero, nome, tipo_embarcacao").order("numero");
       if (error) throw error;
       return data ?? [];
     },
@@ -256,8 +256,20 @@ function PainelListaTecnicaPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("producao_lista_tecnica_itens")
-        .select("codigo_sap, quantidade, unidade")
+        .select("codigo_sap, descricao_sap, quantidade, unidade, peso_real, peso_total_estimado, peso_chapa, qtd_pecas")
         .eq("lista_id", listaAtivaId);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Fatores de consumo cadastrados (estimam plano de insumos a partir do aço)
+  const { data: fatoresConsumo = [] } = useQuery({
+    queryKey: ["fatores-consumo"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("producao_fatores_consumo")
+        .select("*");
       if (error) throw error;
       return data ?? [];
     },
@@ -388,11 +400,17 @@ function PainelListaTecnicaPage() {
       FERRO: 0, SOLDA: 0, "GÁS": 0, TINTA: 0, OUTROS: 0,
     };
     (listaItens as any[]).forEach((it) => {
-      // Comparação justa com o Realizado (PESO REAL B51): apenas itens em KG.
-      const um = String(it.unidade ?? "").toUpperCase();
-      if (um !== "KG") return;
       const cat = resolveTipo(String(it.codigo_sap ?? ""), null, baseMpMap);
-      r[cat] += Math.abs(Number(it.quantidade ?? 0));
+      // Comparação em KG com o Aplicado (MB51). Como a B51 lista FERRO em m²/m
+      // (engenharia naval), usamos peso_real (calculado pela B51) ou fallbacks
+      // para sempre ter o plano em KG.
+      const um = String(it.unidade ?? "").toUpperCase();
+      const pesoKg =
+        Number(it.peso_real ?? 0) ||
+        Number(it.peso_total_estimado ?? 0) ||
+        Number(it.peso_chapa ?? 0) * Number(it.qtd_pecas ?? 0) ||
+        (um === "KG" ? Math.abs(Number(it.quantidade ?? 0)) : 0);
+      r[cat] += pesoKg;
     });
     return r;
   }, [listaItens, baseMpMap]);
@@ -474,6 +492,23 @@ function PainelListaTecnicaPage() {
 
   // Valores a exibir nos 3 cards (reagem ao catSel)
   const compCardData = useMemo(() => {
+    const tipoEmb = cascoAtivo?.tipo_embarcacao ?? null;
+    const ferroTon = (previstoPorCategoria.FERRO || 0) / 1000;
+    const fatorFor = (cat: CategoriaMaterial) => {
+      if (!tipoEmb || ferroTon <= 0) return null;
+      const f = (fatoresConsumo as any[]).find(
+        (x) => x.tipo_embarcacao === tipoEmb && x.categoria === cat,
+      );
+      if (!f) return null;
+      return {
+        planKgEst: Number(f.fator_por_ton_aco) * ferroTon,
+        fator: Number(f.fator_por_ton_aco),
+        fonte: f.fonte as "AUTO" | "MANUAL",
+        cascosBase: Number(f.cascos_base ?? 0),
+        unidade: String(f.unidade ?? "KG"),
+      };
+    };
+
     if (catSel) {
       const c = compPorCategoria[catSel];
       if (c.planKg > 0) {
@@ -483,6 +518,19 @@ function PainelListaTecnicaPage() {
           unit: "kg",
           escopo: catSel as string,
           semPlano: false,
+          estimativa: null as null | { fator: number; fonte: string; cascosBase: number; ferroTon: number },
+        };
+      }
+      // Tenta estimar pelo fator histórico do tipo de embarcação
+      const est = fatorFor(catSel);
+      if (est) {
+        return {
+          planejado: est.planKgEst,
+          aplicado: c.aplKg || (c.aplDom?.v ?? 0),
+          unit: "kg",
+          escopo: catSel as string,
+          semPlano: false,
+          estimativa: { fator: est.fator, fonte: est.fonte, cascosBase: est.cascosBase, ferroTon },
         };
       }
       return {
@@ -491,12 +539,13 @@ function PainelListaTecnicaPage() {
         unit: c.aplDom?.um?.toLowerCase() ?? "—",
         escopo: catSel as string,
         semPlano: true,
+        estimativa: null,
       };
     }
     const planTot = CATEGORIAS.reduce((s, c) => s + compPorCategoria[c].planKg, 0);
     const aplTot = CATEGORIAS.reduce((s, c) => s + compPorCategoria[c].aplKg, 0);
-    return { planejado: planTot, aplicado: aplTot, unit: "kg", escopo: "Total", semPlano: planTot === 0 };
-  }, [catSel, compPorCategoria]);
+    return { planejado: planTot, aplicado: aplTot, unit: "kg", escopo: "Total", semPlano: planTot === 0, estimativa: null };
+  }, [catSel, compPorCategoria, cascoAtivo, previstoPorCategoria, fatoresConsumo]);
 
   // Lista de itens planejados (Lista Técnica) por categoria — para exibir
   // dentro do card "Material Planejado", semelhante à tabela de "Materiais aplicados".
@@ -508,11 +557,21 @@ function PainelListaTecnicaPage() {
       const codigo = String(it.codigo_sap ?? "").trim();
       if (!codigo) return;
       const cat = resolveTipo(codigo, null, baseMpMap, baseMpDescMap.get(codigo) ?? null);
-      const ume = String(it.unidade ?? "—").toUpperCase();
-      const qtd = Math.abs(Number(it.quantidade ?? 0));
+      const umeOrig = String(it.unidade ?? "—").toUpperCase();
+      // FERRO: força KG via peso_real (B51 lista chapas/perfis em m²/m).
+      // Outras categorias raramente vêm na B51, então mantém UM original.
+      const pesoKgFerro = cat === "FERRO"
+        ? (Number(it.peso_real ?? 0) ||
+           Number(it.peso_total_estimado ?? 0) ||
+           Number(it.peso_chapa ?? 0) * Number(it.qtd_pecas ?? 0) ||
+           (umeOrig === "KG" ? Math.abs(Number(it.quantidade ?? 0)) : 0))
+        : 0;
+      const qtd = cat === "FERRO" ? pesoKgFerro : Math.abs(Number(it.quantidade ?? 0));
+      const ume = cat === "FERRO" ? "KG" : umeOrig;
+      if (qtd <= 0) return;
       const cur = map[cat].get(codigo) ?? {
         codigo,
-        nome: baseMpDescMap.get(codigo) || codigo,
+        nome: String(it.descricao_sap ?? baseMpDescMap.get(codigo) ?? codigo),
         qtd: 0,
         ume,
       };
@@ -595,7 +654,12 @@ function PainelListaTecnicaPage() {
       const codigo = String(it.codigo_sap ?? "").trim();
       if (!codigo) return;
       const cat = it.categoria as CategoriaMaterial;
-      aplKgPorCat[cat].set(codigo, (aplKgPorCat[cat].get(codigo) ?? 0) + Math.max(0, Number(it.consumo ?? 0)));
+      // Soma líquida por código (entradas reduzem). Clamp só no agregado final.
+      aplKgPorCat[cat].set(codigo, (aplKgPorCat[cat].get(codigo) ?? 0) + Number(it.consumo ?? 0));
+    });
+    // Clamp por código (não admite negativo na visualização)
+    CATEGORIAS.forEach((c) => {
+      aplKgPorCat[c].forEach((v, k) => aplKgPorCat[c].set(k, Math.max(0, v)));
     });
     const out: Record<CategoriaMaterial, Array<{ codigo: string; nome: string; qtd: number; ume: string }>> = {
       FERRO: [], SOLDA: [], "GÁS": [], TINTA: [], OUTROS: [],
@@ -1141,6 +1205,7 @@ function PainelListaTecnicaPage() {
         planejadoItens={planejadoList}
         aplicadoItens={aplicadoList}
         consumidoItens={consumidoList}
+        estimativa={compCardData.estimativa}
       />
       </div>
 
@@ -1962,6 +2027,7 @@ function MateriaisComparativoCards({
   planejadoItens,
   aplicadoItens,
   consumidoItens,
+  estimativa,
 }: {
   planejado: number;
   aplicado: number;
@@ -1972,6 +2038,7 @@ function MateriaisComparativoCards({
   planejadoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
   aplicadoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
   consumidoItens?: Array<{ codigo: string; nome: string; qtd: number; ume: string }>;
+  estimativa?: null | { fator: number; fonte: string; cascosBase: number; ferroTon: number };
 }) {
   const podeComparar = !semPlano && planejado > 0;
   const consumido = podeComparar ? aplicado - planejado : 0;
@@ -1989,7 +2056,11 @@ function MateriaisComparativoCards({
   const cards = [
     {
       label: `Material Planejado · ${escopo}`,
-      hint: semPlano ? "Sem plano em KG nesta categoria" : "Lista Técnica · peso real",
+      hint: semPlano
+        ? "Sem plano em KG nesta categoria"
+        : estimativa
+          ? `Estimado · ${fmt(estimativa.fator, 1)} kg/ton aço · base ${estimativa.cascosBase} casco(s)`
+          : "Lista Técnica · peso real",
       value: planejado,
       unit: semPlano ? "—" : "kg",
       icon: Layers,
@@ -1997,7 +2068,11 @@ function MateriaisComparativoCards({
       muted: semPlano,
       itens: planejadoItens ?? [],
       itensLabel: "Itens planejados",
-      emptyLabel: semPlano ? "Sem plano em KG nesta categoria" : "Sem itens planejados",
+      emptyLabel: semPlano
+        ? "Sem plano em KG nesta categoria"
+        : estimativa
+          ? `Plano estimado pelo histórico (${fmt(estimativa.ferroTon, 1)} t aço × ${fmt(estimativa.fator, 1)} kg/t)`
+          : "Sem itens planejados",
       signedItens: false,
     },
     {
