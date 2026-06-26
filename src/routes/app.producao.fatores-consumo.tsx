@@ -371,6 +371,8 @@ function FatoresConsumoPage() {
                     <TableHead className="w-[100px]">Fonte</TableHead>
                     <TableHead className="w-[100px]">Base</TableHead>
                     <TableHead className="w-[120px]">Travado</TableHead>
+                    <TableHead className="w-[120px]">Observação</TableHead>
+                    <TableHead className="w-[100px]">Histórico</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -413,6 +415,47 @@ function FatoresConsumoPage() {
                             {f.travado ? <Lock className="h-3 w-3 text-amber-500" /> : <LockOpen className="h-3 w-3 text-muted-foreground" />}
                           </div>
                         </TableCell>
+                        <TableCell>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`h-8 gap-1 ${f.observacao ? "text-primary" : "text-muted-foreground"}`}
+                              >
+                                <MessageSquare className="h-3.5 w-3.5" />
+                                {f.observacao ? "Editar" : "Adicionar"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80" align="end">
+                              <div className="space-y-2">
+                                <div className="text-xs font-medium">
+                                  Justificativa — {cat}
+                                </div>
+                                <Textarea
+                                  rows={4}
+                                  placeholder="Ex.: graneleira com duplo fundo reforçado, consumo de solda 20% acima da média padrão."
+                                  value={f.observacao ?? ""}
+                                  onChange={(e) => setCell(tipo, cat, { observacao: e.target.value })}
+                                />
+                                <p className="text-[10px] text-muted-foreground">
+                                  Documente o porquê do ajuste — vira rastreabilidade ISO 9001.
+                                </p>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 gap-1"
+                            onClick={() => setHistOpen({ tipo, cat })}
+                          >
+                            <History className="h-3.5 w-3.5" />
+                            Ver
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -422,6 +465,142 @@ function FatoresConsumoPage() {
           </Card>
         ))
       )}
+
+      <HistoricoDialog
+        open={!!histOpen}
+        onOpenChange={(o) => !o && setHistOpen(null)}
+        tipo={histOpen?.tipo ?? null}
+        categoria={histOpen?.cat ?? null}
+      />
     </div>
+  );
+}
+
+// ============= Dialog de Histórico =============
+function HistoricoDialog({
+  open, onOpenChange, tipo, categoria,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  tipo: string | null;
+  categoria: CategoriaMaterial | null;
+}) {
+  const { data: hist = [], isLoading } = useQuery({
+    queryKey: ["fator-consumo-historico", tipo, categoria],
+    enabled: !!tipo && !!categoria && open,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("producao_fatores_consumo_historico")
+        .select("*")
+        .eq("tipo_embarcacao", tipo!)
+        .eq("categoria", categoria!)
+        .order("alterado_em", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Busca emails dos usuários para exibir
+  const userIds = useMemo(() => {
+    const s = new Set<string>();
+    (hist as any[]).forEach((h) => h.alterado_por && s.add(h.alterado_por));
+    return Array.from(s);
+  }, [hist]);
+
+  const { data: users = {} } = useQuery({
+    queryKey: ["fator-consumo-historico-users", userIds],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+      const m: Record<string, string> = {};
+      (data ?? []).forEach((p: any) => { m[p.id] = p.full_name ?? p.id.slice(0, 8); });
+      return m;
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <History className="h-5 w-5 text-primary" />
+            Histórico de alterações
+          </DialogTitle>
+          <DialogDescription>
+            {tipo} · {categoria} — últimas 50 alterações registradas.
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground py-6 text-center">Carregando…</div>
+        ) : (hist as any[]).length === 0 ? (
+          <div className="text-sm text-muted-foreground py-6 text-center">
+            Nenhuma alteração registrada ainda.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {(hist as any[]).map((h) => {
+              const who = h.alterado_por ? ((users as any)[h.alterado_por] ?? "Sistema") : "Sistema/Recálculo";
+              const when = new Date(h.alterado_em).toLocaleString("pt-BR");
+              const badgeVariant =
+                h.acao === "INSERT" ? "default" :
+                h.acao === "DELETE" ? "destructive" : "secondary";
+              return (
+                <div key={h.id} className="border rounded-lg p-3 space-y-1 text-sm">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={badgeVariant as any}>{h.acao}</Badge>
+                      <span className="font-medium">{who}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{when}</span>
+                  </div>
+
+                  {h.acao === "UPDATE" && h.fator_anterior !== h.fator_novo && (
+                    <div className="flex items-center gap-2 text-xs tabular-nums">
+                      <span className="text-muted-foreground">Fator:</span>
+                      <span className="line-through text-muted-foreground">{Number(h.fator_anterior ?? 0).toFixed(2)}</span>
+                      <ArrowRight className="h-3 w-3" />
+                      <span className="font-semibold text-primary">{Number(h.fator_novo ?? 0).toFixed(2)}</span>
+                      <span className="text-muted-foreground">{h.unidade}/ton</span>
+                    </div>
+                  )}
+
+                  {h.acao === "INSERT" && (
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">Criado: </span>
+                      <span className="font-semibold">{Number(h.fator_novo ?? 0).toFixed(2)} {h.unidade}/ton</span>
+                      {h.fonte_nova && <Badge variant="outline" className="ml-2 text-[10px]">{h.fonte_nova}</Badge>}
+                    </div>
+                  )}
+
+                  {h.fonte_anterior && h.fonte_nova && h.fonte_anterior !== h.fonte_nova && (
+                    <div className="text-xs text-muted-foreground">
+                      Fonte: {h.fonte_anterior} → <b>{h.fonte_nova}</b>
+                    </div>
+                  )}
+
+                  {h.travado_anterior !== h.travado_novo && (
+                    <div className="text-xs text-muted-foreground">
+                      {h.travado_novo ? "🔒 Travado" : "🔓 Destravado"}
+                    </div>
+                  )}
+
+                  {h.observacao_nova && h.observacao_nova !== h.observacao_anterior && (
+                    <div className="text-xs bg-muted/40 rounded p-2 mt-1">
+                      <span className="text-muted-foreground">Observação:</span>{" "}
+                      <span className="italic">"{h.observacao_nova}"</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
