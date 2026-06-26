@@ -881,7 +881,6 @@ function GerarListaDialog({ training, onClose }: { training: any; onClose: () =>
         empresa: r.empresa,
         cargo: r.cargo,
         assinaturaDataUrl: r._sig ?? null,
-        _empresaId: r.empresaId || "—",
       }));
       const doc = gerarListaPresenca({
         titulo: `${training.tipo}${training.titulo ? " — " + training.titulo : ""}`,
