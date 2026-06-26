@@ -256,8 +256,20 @@ function PainelListaTecnicaPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("producao_lista_tecnica_itens")
-        .select("codigo_sap, quantidade, unidade")
+        .select("codigo_sap, descricao_sap, quantidade, unidade, peso_real, peso_total_estimado, peso_chapa, qtd_pecas")
         .eq("lista_id", listaAtivaId);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Fatores de consumo cadastrados (estimam plano de insumos a partir do aço)
+  const { data: fatoresConsumo = [] } = useQuery({
+    queryKey: ["fatores-consumo"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("producao_fatores_consumo")
+        .select("*");
       if (error) throw error;
       return data ?? [];
     },
