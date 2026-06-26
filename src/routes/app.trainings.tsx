@@ -461,6 +461,12 @@ function TrainingsPage() {
           onClose={() => setOpenAttendees(null)}
         />
       )}
+      {gerarListaFor && (
+        <GerarListaDialog
+          training={gerarListaFor}
+          onClose={() => setGerarListaFor(null)}
+        />
+      )}
     </div>
   );
 }
