@@ -147,9 +147,12 @@ function HoraExtraSabadoPage() {
 
   async function saveSig(field: "assinatura_tst_data" | "assinatura_gestor_data", value: string | null) {
     if (!previewFichaId) return;
+    const patch = (field === "assinatura_tst_data"
+      ? { assinatura_tst_data: value }
+      : { assinatura_gestor_data: value });
     const { error } = await supabase
       .from("hora_extra_sabado")
-      .update({ [field]: value })
+      .update(patch)
       .eq("id", previewFichaId);
     if (error) return toast.error(error.message);
     toast.success(value ? "Assinatura salva" : "Assinatura removida");
