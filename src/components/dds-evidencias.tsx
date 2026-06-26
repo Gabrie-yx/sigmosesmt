@@ -236,6 +236,7 @@ export function DDSEvidencias({ ddsId }: { ddsId: string }) {
         onConfirm={(r) => signTarget && assinarPdf(signTarget, r.dataUrl, r.height)}
         title="Carimbar assinatura no PDF"
       />
+      <FileViewerHost />
     </div>
   );
 }
