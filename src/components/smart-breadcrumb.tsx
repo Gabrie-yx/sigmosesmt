@@ -170,19 +170,20 @@ export function SmartBreadcrumb() {
         </li>
         {trail.length > 0 && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
         {trail.map((c, i) => {
+          const isActive = c.href === pathname;
           const isLast = i === trail.length - 1;
           return (
             <li key={c.href + i} className="flex items-center gap-1 shrink-0">
-              {isLast ? (
-                <span className="text-white font-medium">{c.label}</span>
-              ) : (
-                <Link
-                  to={c.href}
-                  className="hover:text-white transition opacity-80"
-                >
-                  {c.label}
-                </Link>
-              )}
+              <Link
+                to={c.href}
+                className={
+                  isActive
+                    ? "text-white font-semibold px-1.5 py-0.5 rounded-md bg-rose-500/15 ring-1 ring-rose-300/30 shadow-[0_0_12px_-2px_rgba(244,63,94,0.55)] animate-[crumb-pulse_2.2s_ease-in-out_infinite]"
+                    : "hover:text-white transition opacity-80"
+                }
+              >
+                {c.label}
+              </Link>
               {!isLast && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
             </li>
           );
