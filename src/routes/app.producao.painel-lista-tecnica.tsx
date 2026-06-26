@@ -654,7 +654,12 @@ function PainelListaTecnicaPage() {
       const codigo = String(it.codigo_sap ?? "").trim();
       if (!codigo) return;
       const cat = it.categoria as CategoriaMaterial;
-      aplKgPorCat[cat].set(codigo, (aplKgPorCat[cat].get(codigo) ?? 0) + Math.max(0, Number(it.consumo ?? 0)));
+      // Soma líquida por código (entradas reduzem). Clamp só no agregado final.
+      aplKgPorCat[cat].set(codigo, (aplKgPorCat[cat].get(codigo) ?? 0) + Number(it.consumo ?? 0));
+    });
+    // Clamp por código (não admite negativo na visualização)
+    CATEGORIAS.forEach((c) => {
+      aplKgPorCat[c].forEach((v, k) => aplKgPorCat[c].set(k, Math.max(0, v)));
     });
     const out: Record<CategoriaMaterial, Array<{ codigo: string; nome: string; qtd: number; ume: string }>> = {
       FERRO: [], SOLDA: [], "GÁS": [], TINTA: [], OUTROS: [],
