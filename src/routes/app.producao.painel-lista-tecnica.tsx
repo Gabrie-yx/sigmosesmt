@@ -433,6 +433,61 @@ function PainelListaTecnicaPage() {
 
   const alertasAtivos = alertasCategoria.filter((a) => a.status === "warn" || a.status === "crit");
 
+  // ===== Realizado/Planejado por categoria (para os 3 cards dinâmicos) =====
+  const compPorCategoria = useMemo(() => {
+    const map: Record<CategoriaMaterial, { planKg: number; aplKg: number; aplDom: { um: string; v: number } | null }> = {
+      FERRO: { planKg: 0, aplKg: 0, aplDom: null },
+      SOLDA: { planKg: 0, aplKg: 0, aplDom: null },
+      "GÁS": { planKg: 0, aplKg: 0, aplDom: null },
+      TINTA: { planKg: 0, aplKg: 0, aplDom: null },
+      OUTROS: { planKg: 0, aplKg: 0, aplDom: null },
+    };
+    const tmpUm: Record<CategoriaMaterial, Map<string, number>> = {
+      FERRO: new Map(), SOLDA: new Map(), "GÁS": new Map(), TINTA: new Map(), OUTROS: new Map(),
+    };
+    itensEnriq.forEach((it) => {
+      const cat = it.categoria as CategoriaMaterial;
+      const um = String(it.unidade ?? "—").toUpperCase();
+      const v = Math.max(0, Number(it.consumo ?? 0));
+      tmpUm[cat].set(um, (tmpUm[cat].get(um) ?? 0) + v);
+    });
+    CATEGORIAS.forEach((c) => {
+      map[c].planKg = previstoPorCategoria[c] || 0;
+      map[c].aplKg = tmpUm[c].get("KG") ?? 0;
+      const sorted = Array.from(tmpUm[c].entries())
+        .map(([um, v]) => ({ um, v }))
+        .sort((a, b) => b.v - a.v);
+      map[c].aplDom = sorted[0] ?? null;
+    });
+    return map;
+  }, [previstoPorCategoria, itensEnriq]);
+
+  // Valores a exibir nos 3 cards (reagem ao catSel)
+  const compCardData = useMemo(() => {
+    if (catSel) {
+      const c = compPorCategoria[catSel];
+      if (c.planKg > 0) {
+        return {
+          planejado: c.planKg,
+          aplicado: c.aplKg,
+          unit: "kg",
+          escopo: catSel as string,
+          semPlano: false,
+        };
+      }
+      return {
+        planejado: 0,
+        aplicado: c.aplDom?.v ?? 0,
+        unit: c.aplDom?.um?.toLowerCase() ?? "—",
+        escopo: catSel as string,
+        semPlano: true,
+      };
+    }
+    const planTot = CATEGORIAS.reduce((s, c) => s + compPorCategoria[c].planKg, 0);
+    const aplTot = CATEGORIAS.reduce((s, c) => s + compPorCategoria[c].aplKg, 0);
+    return { planejado: planTot, aplicado: aplTot, unit: "kg", escopo: "Total", semPlano: planTot === 0 };
+  }, [catSel, compPorCategoria]);
+
   // ===== Curva S: consumo acumulado ao longo do tempo (Total) =====
   // Agrupa movimentos por mês e compara com o previsto total (B51).
   const curvaS = useMemo(() => {
