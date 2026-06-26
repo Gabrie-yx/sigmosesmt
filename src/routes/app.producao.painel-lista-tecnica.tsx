@@ -1750,3 +1750,83 @@ function PainelListaTecnicaPage() {
     </div>
   );
 }
+
+function MateriaisComparativoCards({
+  planejadoKg,
+  aplicadoKg,
+}: {
+  planejadoKg: number;
+  aplicadoKg: number;
+}) {
+  const consumido = aplicadoKg - planejadoKg;
+  const pct = planejadoKg > 0 ? (aplicadoKg / planejadoKg) * 100 : 0;
+  const acima = consumido > 0;
+  const corConsumo = !planejadoKg
+    ? "hsl(var(--muted-foreground))"
+    : acima
+      ? "hsl(0 80% 65%)"
+      : "hsl(142 70% 55%)";
+
+  const cards = [
+    {
+      label: "Material Planejado",
+      hint: "Lista Técnica · peso real",
+      value: planejadoKg,
+      unit: "kg",
+      icon: Layers,
+      accent: "hsl(200 90% 65%)",
+    },
+    {
+      label: "Material Aplicado",
+      hint: "MB51 · consumo líquido (KG)",
+      value: aplicadoKg,
+      unit: "kg",
+      icon: Package,
+      accent: "hsl(38 95% 60%)",
+    },
+    {
+      label: "Consumido",
+      hint: planejadoKg > 0
+        ? `Aplicado − Planejado · ${fmt(pct, 1)}% do plano`
+        : "Aplicado − Planejado",
+      value: consumido,
+      unit: "kg",
+      icon: TrendingUp,
+      accent: corConsumo,
+      signed: true,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 h-full">
+      {cards.map((c) => (
+        <Card
+          key={c.label}
+          className="shadow-sm border-0 bg-gradient-to-br from-muted/40 via-background to-muted/20 h-full"
+        >
+          <CardContent className="p-3 h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                {c.label}
+              </span>
+              <c.icon className="h-4 w-4" style={{ color: c.accent }} />
+            </div>
+            <div className="mt-2">
+              <div
+                className="text-2xl font-bold tabular-nums leading-tight"
+                style={{ color: c.accent }}
+              >
+                {c.signed && c.value > 0 ? "+" : ""}
+                {fmt(c.value, 0)}
+                <span className="text-xs font-medium text-muted-foreground ml-1">
+                  {c.unit}
+                </span>
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-1">{c.hint}</div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
