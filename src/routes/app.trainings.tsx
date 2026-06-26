@@ -484,7 +484,14 @@ export function AttendeesDialog({ trainingId, training, onClose }: { trainingId:
 
   const { data: emps = [] } = useQuery({
     queryKey: ["employees-light"],
-    queryFn: async () => (await supabase.from("employees").select("id,nome,matricula,company_id").order("nome")).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("employees")
+          .select("id,nome,matricula,company_id,status")
+          .eq("status", "ATIVO")
+          .order("nome")
+      ).data ?? [],
   });
 
   const { data: companies = [] } = useQuery({
