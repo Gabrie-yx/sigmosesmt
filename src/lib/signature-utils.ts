@@ -53,6 +53,58 @@ export async function cleanSignatureDataUrl(
   }
 }
 
+/**
+ * Reduz drasticamente o peso de uma assinatura ANTES de estampar no PDF.
+ * - Limita largura/altura máximas (default 600×200) — a assinatura nunca é
+ *   impressa em tamanho maior que ~6cm, então 600px já é mais que suficiente
+ *   para impressão a 300 DPI.
+ * - Mantém transparência (PNG) e cor original do traço.
+ * - Resultado típico: 60-100KB → 4-12KB. jsPDF.addImage fica MUITO mais rápido
+ *   (não precisa parsear PNG gigante) e o PDF gerado é menor.
+ */
+export async function compressSignatureForPdf(
+  dataUrl: string | null | undefined,
+  maxW = 600,
+  maxH = 200,
+): Promise<string | null> {
+  if (!dataUrl) return null;
+  if (typeof window === "undefined") return dataUrl;
+  try {
+    const img = await loadImage(dataUrl);
+    const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+    const w = Math.max(1, Math.round(img.naturalWidth * ratio));
+    const h = Math.max(1, Math.round(img.naturalHeight * ratio));
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const ctx = c.getContext("2d");
+    if (!ctx) return dataUrl;
+    ctx.drawImage(img, 0, 0, w, h);
+    return c.toDataURL("image/png");
+  } catch {
+    return dataUrl;
+  }
+}
+
+/** Versão em lote — processa muitas assinaturas em paralelo com cache simples. */
+const _sigCache = new Map<string, string>();
+export async function compressSignaturesBatch(
+  urls: (string | null | undefined)[],
+  maxW = 600,
+  maxH = 200,
+): Promise<(string | null)[]> {
+  return Promise.all(
+    urls.map(async (u) => {
+      if (!u) return null;
+      const cacheKey = u.length < 200 ? u : u.slice(0, 64) + ":" + u.length;
+      const hit = _sigCache.get(cacheKey);
+      if (hit) return hit;
+      const out = (await compressSignatureForPdf(u, maxW, maxH)) ?? null;
+      if (out) _sigCache.set(cacheKey, out);
+      return out;
+    }),
+  );
+}
+
 /** Baixa uma URL pública de assinatura e devolve uma PNG com fundo transparente. */
 export async function fetchSignatureAsCleanDataUrl(
   url: string | null | undefined,
