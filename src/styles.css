@@ -1134,3 +1134,9 @@
 /* Botões "orange" usados como CTA dentro do papel */
 .light-paper .bg-orange-600 { background-color: rgb(234 88 12) !important; color: #fff !important; }
 .light-paper .hover\:bg-orange-700:hover { background-color: rgb(194 65 12) !important; }
+
+/* Pulse sutil no breadcrumb ativo */
+@keyframes crumb-pulse {
+  0%, 100% { box-shadow: 0 0 8px -2px rgba(244,63,94,0.35); }
+  50%      { box-shadow: 0 0 16px -1px rgba(244,63,94,0.7); }
+}
