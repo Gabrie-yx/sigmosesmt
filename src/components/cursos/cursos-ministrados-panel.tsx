@@ -266,15 +266,15 @@ function TurmasDialog({ courseId, course, onClose }: { courseId: string; course:
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-[#991b1b]" />
-            <span className="font-black text-[#991b1b]">{course?.codigo}</span>
-            <span className="text-slate-600">— {course?.nome}</span>
+            <GraduationCap className="h-5 w-5 text-rose-300" />
+            <span className="font-black text-rose-200">{course?.codigo}</span>
+            <span className="text-rose-100/80">— {course?.nome}</span>
           </DialogTitle>
         </DialogHeader>
 
         {isEditor && (
           <div className="flex justify-end">
-            <Button onClick={() => setNovaOpen(true)} className="bg-[#991b1b] hover:bg-[#7f1d1d]">
+            <Button onClick={() => setNovaOpen(true)} className="bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-[0_0_18px_-4px_rgba(220,38,70,0.6)]">
               <Plus className="h-4 w-4 mr-2" /> Nova Turma
             </Button>
           </div>
@@ -282,7 +282,7 @@ function TurmasDialog({ courseId, course, onClose }: { courseId: string; course:
 
         <div className="space-y-3">
           {turmas.length === 0 ? (
-            <div className="text-center text-slate-400 py-10 text-xs uppercase font-bold border border-dashed border-slate-200 rounded-xl">
+            <div className="text-center text-rose-200/60 py-10 text-xs uppercase font-bold border border-dashed border-white/15 rounded-xl">
               Nenhuma turma realizada ainda.
             </div>
           ) : (
