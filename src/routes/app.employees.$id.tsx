@@ -2785,6 +2785,90 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
     { key: "psicossociais", label: "Psicossociais" },
   ];
 
+  // ===== Agrupamento Ativas/Condicionais para o Drawer =====
+  const ACTIVE_KEYS = new Set(["ADMISSIONAL", "PERIODICO", "SEMESTRAL", "MUDANCA_RISCO"]);
+  const CONDITIONAL_KEYS = new Set(["RETORNO_TRABALHO", "DEMISSIONAL"]);
+  const naturezasAvaliadas = NATUREZA_LABELS.map(({ key, label }) => {
+    const reqs: string[] = exMatrix?.[key] ?? [];
+    return { key, label, reqs, apt: naturezaAptidao(key, reqs) };
+  });
+  const aggActive = naturezasAvaliadas.filter(n => ACTIVE_KEYS.has(n.key));
+  const aggCount = {
+    apto: aggActive.filter(n => n.apt === "APTO").length,
+    pendente: aggActive.filter(n => n.apt === "PENDENTE").length,
+    inapto: aggActive.filter(n => n.apt === "INAPTO").length,
+    semExig: aggActive.filter(n => n.apt === "SEM_EXIGENCIA").length,
+    total: aggActive.length,
+  };
+  const aggBadge =
+    aggCount.inapto > 0 ? <Badge variant="destructive"><Ban className="h-3 w-3 mr-1" />{aggCount.inapto} INAPTO</Badge> :
+    aggCount.pendente > 0 ? <Badge className="bg-amber-500 hover:bg-amber-500 text-white"><AlertTriangle className="h-3 w-3 mr-1" />{aggCount.pendente} PENDENTE{aggCount.pendente > 1 ? "S" : ""}</Badge> :
+    aggCount.apto > 0 ? <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white"><CheckCircle2 className="h-3 w-3 mr-1" />TODAS APTAS</Badge> :
+    <Badge variant="outline">SEM EXIGÊNCIA</Badge>;
+
+  function renderNaturezaCard(key: string, label: string, reqs: string[], apt: string, opts: { dimmed?: boolean } = {}) {
+    const tone =
+      apt === "APTO" ? "border-emerald-300 bg-emerald-50" :
+      apt === "INAPTO" ? "border-rose-300 bg-rose-50" :
+      apt === "PENDENTE" ? "border-amber-300 bg-amber-50" :
+      "border-slate-200 bg-slate-50";
+    const badge =
+      apt === "APTO" ? <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white"><CheckCircle2 className="h-3 w-3 mr-1" />APTO</Badge> :
+      apt === "INAPTO" ? <Badge variant="destructive"><Ban className="h-3 w-3 mr-1" />INAPTO</Badge> :
+      apt === "PENDENTE" ? <Badge className="bg-amber-500 hover:bg-amber-500 text-white"><AlertTriangle className="h-3 w-3 mr-1" />PENDENTE</Badge> :
+      <Badge variant="outline">SEM EXIGÊNCIA</Badge>;
+    return (
+      <div key={key} className={`rounded-md border p-3 ${tone} ${opts.dimmed ? "opacity-60" : ""}`}>
+        <div className="flex items-center justify-between mb-2 gap-2">
+          <span className="text-xs font-black uppercase tracking-widest">{label}</span>
+          <div className="flex items-center gap-1.5">
+            {opts.dimmed && <Badge variant="outline" className="text-[9px] uppercase">aguarda evento</Badge>}
+            {badge}
+          </div>
+        </div>
+        {reqs.length === 0 ? (
+          <div className="text-[11px] text-slate-500 italic">Nenhum procedimento exigido pelo cargo.</div>
+        ) : (
+          <ul className="space-y-1">
+            {reqs.map((tipo) => {
+              const s = statusForReq(key, tipo);
+              const icon =
+                s.state === "OK" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> :
+                s.state === "INAPTO" ? <Ban className="h-3.5 w-3.5 text-rose-600" /> :
+                s.state === "VENCIDO" ? <Clock className="h-3.5 w-3.5 text-amber-600" /> :
+                <AlertCircle className="h-3.5 w-3.5 text-slate-500" />;
+              const txt =
+                s.state === "OK" ? `válido até ${formatDateBR(s.ex.data_vencimento)}` :
+                s.state === "INAPTO" ? `INAPTO em ${formatDateBR(s.ex!.data_realizacao)}` :
+                s.state === "VENCIDO" ? `vencido em ${formatDateBR(s.ex!.data_vencimento)}` :
+                "não realizado";
+              return (
+                <li key={tipo} className="flex items-center gap-2 text-xs">
+                  {icon}
+                  <span className="font-medium">{tipo}</span>
+                  <span className="text-slate-500">— {txt}</span>
+                  {canEdit && s.state !== "OK" && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-[10px] ml-auto"
+                      onClick={() => {
+                        setF((p: any) => ({ ...p, tipo_exame: TIPOS_EXAME.includes(tipo as any) ? tipo : p.tipo_exame, natureza: NATUREZA_LABELS.find(n => n.key === key)!.label }));
+                        setAptidaoOpen(false);
+                      }}
+                    >
+                      Registrar
+                    </Button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    );
+  }
+
   return (
     <Card className="p-6 space-y-6">
       {/* Painel PCMSO / ISO 9001 — Exigências do Cargo */}
