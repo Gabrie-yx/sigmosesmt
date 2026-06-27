@@ -145,7 +145,7 @@ function HomePage() {
                 <div className="pointer-events-none absolute -top-12 -right-12 w-40 h-40 rounded-full bg-amber-400/45 blur-2xl" />
                 <div className="pointer-events-none absolute -bottom-16 -right-16 w-48 h-48 rounded-full bg-red-600/50 blur-2xl" />
                 <div className="pointer-events-none absolute -bottom-12 -left-12 w-40 h-40 rounded-full bg-orange-500/40 blur-2xl" />
-                <div className={`relative absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${accent} rounded-t-2xl`} />
+                <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${accent} rounded-t-2xl z-10`} />
                 <div className={`relative inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${accent} text-white shadow-lg mb-5`}>
                   <Icon className="h-6 w-6" />
                 </div>
