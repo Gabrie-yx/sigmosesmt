@@ -503,38 +503,38 @@ export function PdfSignerDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-        <DialogContent className="pdf-dialog light-paper bg-white max-w-[95vw] w-[1400px] h-[90vh] flex flex-col p-0 overflow-hidden">
-          <DialogHeader className="px-4 py-3 border-b bg-white">
-            <DialogTitle className="flex items-center gap-2 text-slate-900">
-              <MousePointerClick className="h-5 w-5 text-rose-600" />
+        <DialogContent className="pdf-dialog max-w-[95vw] w-[1400px] h-[90vh] flex flex-col p-0 overflow-hidden border-white/10 bg-[#1a0608]/95 backdrop-blur-xl text-white shadow-2xl">
+          <DialogHeader className="px-4 py-3 border-b border-white/10 bg-white/[0.03]">
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <MousePointerClick className="h-5 w-5 text-rose-400" />
               Assinador Visual — {nomeArquivo}
             </DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 grid grid-cols-[1fr_320px] min-h-0">
             {/* Viewer */}
-            <div className="bg-slate-100 flex flex-col min-h-0">
+            <div className="bg-black/40 flex flex-col min-h-0">
               {/* Controls */}
-              <div className="px-3 py-2 border-b bg-white flex items-center gap-2 flex-wrap">
-                <Button size="sm" variant="outline" onClick={() => setPageNum((p) => Math.max(1, p - 1))} disabled={pageNum <= 1}>
+              <div className="px-3 py-2 border-b border-white/10 bg-white/[0.03] flex items-center gap-2 flex-wrap text-white">
+                <Button size="sm" variant="outline" className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white" onClick={() => setPageNum((p) => Math.max(1, p - 1))} disabled={pageNum <= 1}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-sm font-medium">
+                <span className="text-sm font-medium text-white/90">
                   Página {pageNum} de {numPages || "…"}
                 </span>
-                <Button size="sm" variant="outline" onClick={() => setPageNum((p) => Math.min(numPages, p + 1))} disabled={pageNum >= numPages}>
+                <Button size="sm" variant="outline" className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white" onClick={() => setPageNum((p) => Math.min(numPages, p + 1))} disabled={pageNum >= numPages}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
                 <div className="ml-2 flex gap-1">
-                  <Button size="sm" variant="ghost" onClick={() => setRenderScale((s) => Math.max(0.75, s - 0.25))}>-</Button>
-                  <span className="text-xs self-center">{Math.round(renderScale * 100)}%</span>
-                  <Button size="sm" variant="ghost" onClick={() => setRenderScale((s) => Math.min(3, s + 0.25))}>+</Button>
+                  <Button size="sm" variant="ghost" className="text-white hover:bg-white/10 hover:text-white" onClick={() => setRenderScale((s) => Math.max(0.75, s - 0.25))}>-</Button>
+                  <span className="text-xs self-center text-white/80">{Math.round(renderScale * 100)}%</span>
+                  <Button size="sm" variant="ghost" className="text-white hover:bg-white/10 hover:text-white" onClick={() => setRenderScale((s) => Math.min(3, s + 0.25))}>+</Button>
                 </div>
                 {picking && pendingSig && (
-                  <div className="ml-auto flex items-center gap-2 bg-rose-50 border border-rose-300 rounded px-2 py-1 text-xs">
-                    <span className="font-bold text-rose-700">Clique no PDF para posicionar:</span>
+                  <div className="ml-auto flex items-center gap-2 bg-rose-500/15 border border-rose-400/40 rounded px-2 py-1 text-xs text-rose-100">
+                    <span className="font-bold text-rose-200">Clique no PDF para posicionar:</span>
                     <span>{pendingSig.nome}{pendingSig.cargo ? ` — ${pendingSig.cargo}` : ""}</span>
-                    <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setPicking(false); setPendingSig(null); }}>
+                    <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-rose-100 hover:bg-white/10 hover:text-white" onClick={() => { setPicking(false); setPendingSig(null); }}>
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
@@ -544,9 +544,9 @@ export function PdfSignerDialog({
               <ScrollArea className="flex-1">
                 <div className="p-4 flex justify-center">
                   {loadError ? (
-                    <div className="text-sm text-destructive p-8">Erro ao carregar PDF: {loadError}</div>
+                    <div className="text-sm text-rose-300 p-8">Erro ao carregar PDF: {loadError}</div>
                   ) : (
-                    <div className="relative inline-block shadow-lg" style={{ cursor: picking ? "crosshair" : "default" }}>
+                    <div className="relative inline-block shadow-2xl ring-1 ring-white/10" style={{ cursor: picking ? "crosshair" : "default" }}>
                       <canvas ref={canvasRef} className="block bg-white" />
                       <div
                         ref={overlayRef}
@@ -598,15 +598,15 @@ export function PdfSignerDialog({
             </div>
 
             {/* Right panel: signature picker */}
-            <div className="border-l bg-white flex flex-col min-h-0">
-              <div className="px-3 py-2 border-b flex items-center justify-between">
+            <div className="border-l border-white/10 bg-white/[0.03] flex flex-col min-h-0">
+              <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Library className="h-4 w-4 text-rose-600" />
-                  <span className="font-bold text-sm">Galeria</span>
+                  <Library className="h-4 w-4 text-rose-400" />
+                  <span className="font-bold text-sm text-white">Galeria</span>
                 </div>
                 <SignatureGallery 
                   trigger={
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-600">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-400 hover:bg-white/10 hover:text-rose-300">
                       <PenTool className="h-4 w-4" />
                     </Button>
                   }
@@ -617,7 +617,7 @@ export function PdfSignerDialog({
                   {/* Minhas Assinaturas (user_signatures) */}
                   {userSigs.length > 0 && (
                     <div className="space-y-2">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Minhas Assinaturas</div>
+                      <div className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Minhas Assinaturas</div>
                       {userSigs.map((s) => (
                         <button
                           key={s.id}
@@ -626,12 +626,12 @@ export function PdfSignerDialog({
                             setPendingSig({ dataUrl: s.signature_data, nome: s.label, cargo: "" });
                             setPicking(true);
                           }}
-                          className={`w-full border rounded-md p-2 hover:border-rose-400 hover:bg-rose-50 text-left transition ${
-                            pendingSig?.dataUrl === s.signature_data ? "border-rose-500 ring-2 ring-rose-200" : "border-slate-200"
+                          className={`w-full border rounded-md p-2 hover:border-rose-400/60 hover:bg-white/5 text-left transition ${
+                            pendingSig?.dataUrl === s.signature_data ? "border-rose-400 ring-2 ring-rose-400/30 bg-rose-500/10" : "border-white/10"
                           }`}
                         >
-                          <img src={s.signature_data} alt={s.label} className="h-12 w-full object-contain bg-slate-50 rounded mb-1" />
-                          <div className="text-xs font-semibold truncate">{s.label}</div>
+                          <img src={s.signature_data} alt={s.label} className="h-12 w-full object-contain bg-white/90 rounded mb-1" />
+                          <div className="text-xs font-semibold truncate text-white/90">{s.label}</div>
                         </button>
                       ))}
                     </div>
@@ -639,9 +639,9 @@ export function PdfSignerDialog({
 
                   {/* Assinaturas do Sistema (assinaturas_salvas) */}
                   <div className="space-y-2">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assinaturas do Sistema</div>
+                    <div className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Assinaturas do Sistema</div>
                     {savedSigs.length === 0 && userSigs.length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-4">
+                      <p className="text-xs text-white/50 text-center py-4">
                         Nenhuma assinatura encontrada.
                       </p>
                     )}
@@ -650,33 +650,34 @@ export function PdfSignerDialog({
                         key={s.id}
                         type="button"
                         onClick={() => pickSaved(s)}
-                        className={`w-full border rounded-md p-2 hover:border-rose-400 hover:bg-rose-50 text-left transition ${
-                          pendingSig?.dataUrl === s.imagem_data_url ? "border-rose-500 ring-2 ring-rose-200" : "border-slate-200"
+                        className={`w-full border rounded-md p-2 hover:border-rose-400/60 hover:bg-white/5 text-left transition ${
+                          pendingSig?.dataUrl === s.imagem_data_url ? "border-rose-400 ring-2 ring-rose-400/30 bg-rose-500/10" : "border-white/10"
                         }`}
                       >
-                        <img src={s.imagem_data_url} alt={s.nome} className="h-12 w-full object-contain bg-slate-50 rounded mb-1" />
-                        <div className="text-xs font-semibold truncate">{s.nome}</div>
-                        <div className="text-[10px] text-muted-foreground truncate">{s.cargo || "—"}</div>
+                        <img src={s.imagem_data_url} alt={s.nome} className="h-12 w-full object-contain bg-white/90 rounded mb-1" />
+                        <div className="text-xs font-semibold truncate text-white/90">{s.nome}</div>
+                        <div className="text-[10px] text-white/50 truncate">{s.cargo || "—"}</div>
                       </button>
                     ))}
                   </div>
                 </div>
               </ScrollArea>
-              <div className="border-t p-2 space-y-2">
-                <Button variant="outline" size="sm" className="w-full" onClick={() => setOpenPad(true)}>
+              <div className="border-t border-white/10 p-2 space-y-2">
+                <Button variant="outline" size="sm" className="w-full border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white" onClick={() => setOpenPad(true)}>
                   <Pencil className="h-4 w-4 mr-1" /> Desenhar / Importar
                 </Button>
-                <div className="text-[11px] text-muted-foreground px-1">
+                <div className="text-[11px] text-white/50 px-1">
                   {placements.length} assinatura(s) posicionada(s)
                 </div>
               </div>
             </div>
           </div>
 
-          <DialogFooter className="border-t px-4 py-3 flex-shrink-0">
-            <Button variant="outline" onClick={onClose} disabled={saving}>Cancelar</Button>
+          <DialogFooter className="border-t border-white/10 bg-white/[0.03] px-4 py-3 flex-shrink-0">
+            <Button variant="outline" className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white" onClick={onClose} disabled={saving}>Cancelar</Button>
             <Button
               variant="outline"
+              className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
               onClick={async () => {
                 const bytes = placements.length > 0 ? await saveSignedPdf() : bytesRef.current;
                 if (!bytes) { toast.error("PDF ainda não carregado"); return; }
@@ -695,6 +696,7 @@ export function PdfSignerDialog({
             </Button>
             <Button
               variant="outline"
+              className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
               onClick={async () => {
                 const bytes = placements.length > 0 ? await saveSignedPdf() : bytesRef.current;
                 if (!bytes) { toast.error("PDF ainda não carregado"); return; }
@@ -709,12 +711,13 @@ export function PdfSignerDialog({
             </Button>
             <Button
               variant="outline"
+              className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white disabled:opacity-40"
               onClick={() => setPlacements([])}
               disabled={saving || placements.length === 0}
             >
               <Trash2 className="h-4 w-4 mr-1" /> Limpar tudo
             </Button>
-            <Button onClick={handleSave} disabled={saving || placements.length === 0} className="bg-rose-600 hover:bg-rose-700">
+            <Button onClick={handleSave} disabled={saving || placements.length === 0} className="bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-900/40">
               <Save className="h-4 w-4 mr-1" />
               {saving ? "Salvando…" : "Salvar"}
             </Button>
