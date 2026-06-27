@@ -94,56 +94,65 @@ function HomePage() {
       </section>
 
       {/* MISSÃO · VISÃO · VALORES */}
-      <section className="px-6 md:px-14 py-16 max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#7f1d1d]/10 border border-[#7f1d1d]/20 mb-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#7f1d1d]">
-              Nosso DNA
-            </span>
-          </div>
-          <h2 className="heading-display text-3xl md:text-5xl text-slate-900 tracking-tight">
-            Missão · Visão · Valores
-          </h2>
-          <div className="h-1 w-20 bg-gradient-to-r from-[#7f1d1d] to-red-400 rounded-full mx-auto mt-4" />
+      <section className="relative overflow-hidden">
+        {/* fundo vermelho/vinho com brilhos */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#3b0a14] via-[#5b0f1c] to-[#2a060d]" />
+        <div className="absolute inset-0 opacity-40 pointer-events-none">
+          <div className="absolute -top-32 -left-20 w-96 h-96 rounded-full bg-red-600/30 blur-3xl" />
+          <div className="absolute -bottom-32 -right-20 w-96 h-96 rounded-full bg-amber-500/20 blur-3xl" />
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            {
-              icon: Compass,
-              tag: "Missão",
-              text: "Construir embarcações com qualidade e tecnologia, buscando a melhoria contínua, prezando a Segurança e o Meio Ambiente.",
-              accent: "from-red-500 to-red-700",
-            },
-            {
-              icon: Anchor,
-              tag: "Visão",
-              text: "Ser reconhecida como uma empresa de referência no setor da construção naval e estar entre os melhores estaleiros da região norte, priorizando a confiabilidade e qualidade nos produtos e serviços, sempre almejando a satisfação do cliente.",
-              accent: "from-amber-500 to-orange-600",
-            },
-            {
-              icon: Gem,
-              tag: "Valores",
-              text: "Comprometimento dos colaboradores, preservação do meio ambiente e segurança do trabalho, ética e transparência no relacionamento com clientes e acionistas.",
-              accent: "from-slate-700 to-slate-900",
-            },
-          ].map(({ icon: Icon, tag, text, accent }) => (
-            <article
-              key={tag}
-              className="group relative bg-white rounded-2xl p-8 shadow-sm border border-slate-200 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
-            >
-              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${accent} rounded-t-2xl`} />
-              <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${accent} text-white shadow-lg mb-5`}>
-                <Icon className="h-6 w-6" />
-              </div>
-              <div className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-2">
-                {tag}
-              </div>
-              <p className="text-sm leading-relaxed text-slate-700 font-medium">
-                {text}
-              </p>
-            </article>
-          ))}
+        <div className="relative px-6 md:px-14 py-20 max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-4">
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white">
+                Nosso DNA
+              </span>
+            </div>
+            <h2 className="heading-display text-3xl md:text-5xl text-white tracking-tight drop-shadow-lg">
+              Missão · Visão · Valores
+            </h2>
+            <div className="h-1 w-20 bg-gradient-to-r from-amber-400 to-red-300 rounded-full mx-auto mt-4" />
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: Compass,
+                tag: "Missão",
+                text: "Construir embarcações com qualidade e tecnologia, buscando a melhoria contínua, prezando a Segurança e o Meio Ambiente.",
+                accent: "from-red-500 to-red-700",
+              },
+              {
+                icon: Anchor,
+                tag: "Visão",
+                text: "Ser reconhecida como uma empresa de referência no setor da construção naval e estar entre os melhores estaleiros da região norte, priorizando a confiabilidade e qualidade nos produtos e serviços, sempre almejando a satisfação do cliente.",
+                accent: "from-amber-500 to-orange-600",
+              },
+              {
+                icon: Gem,
+                tag: "Valores",
+                text: "Comprometimento dos colaboradores, preservação do meio ambiente e segurança do trabalho, ética e transparência no relacionamento com clientes e acionistas.",
+                accent: "from-slate-300 to-slate-500",
+              },
+            ].map(({ icon: Icon, tag, text, accent }) => (
+              <article
+                key={tag}
+                className="group relative rounded-2xl p-8 bg-gradient-to-br from-[#1a0510]/80 to-[#2a0810]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:-translate-y-1 hover:border-white/25 transition-all duration-300 overflow-hidden"
+              >
+                <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${accent} rounded-t-2xl`} />
+                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${accent} text-white shadow-lg mb-5`}>
+                  <Icon className="h-6 w-6" />
+                </div>
+                <div className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-300/90 mb-2">
+                  {tag}
+                </div>
+                <p className="text-sm leading-relaxed text-white/90 font-medium">
+                  {text}
+                </p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
