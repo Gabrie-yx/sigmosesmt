@@ -6247,6 +6247,7 @@ export type Database = {
           ghe_id: string | null
           id: string
           name: string
+          periodicidade_integracao_meses: number | null
           req_aso: boolean
           req_exames: string[]
           req_integra: boolean
@@ -6269,6 +6270,7 @@ export type Database = {
           ghe_id?: string | null
           id?: string
           name: string
+          periodicidade_integracao_meses?: number | null
           req_aso?: boolean
           req_exames?: string[]
           req_integra?: boolean
@@ -6291,6 +6293,7 @@ export type Database = {
           ghe_id?: string | null
           id?: string
           name?: string
+          periodicidade_integracao_meses?: number | null
           req_aso?: boolean
           req_exames?: string[]
           req_integra?: boolean

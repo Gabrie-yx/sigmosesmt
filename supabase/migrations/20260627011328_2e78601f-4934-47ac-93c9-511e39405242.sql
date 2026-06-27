@@ -1,0 +1,2 @@
+ALTER TABLE public.roles ADD COLUMN IF NOT EXISTS periodicidade_integracao_meses integer;
+COMMENT ON COLUMN public.roles.periodicidade_integracao_meses IS 'Periodicidade de reciclagem da Integração em meses. NULL = não vence (default, alinhado ao MTE). Preencher apenas se política interna exigir reciclagem (ex.: 12).';
