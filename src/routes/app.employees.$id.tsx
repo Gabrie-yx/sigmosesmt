@@ -2672,6 +2672,21 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
   const riscos = role?.riscos ?? {};
   const today = new Date().toISOString().slice(0, 10);
 
+  // Fonte nova: cargo_riscos + catalogo_riscos (usada quando o JSONB legado em roles.riscos está vazio)
+  const { data: cargoRiscosNova = [] } = useQuery({
+    queryKey: ["cargo_riscos_ficha", role?.id],
+    enabled: !!role?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cargo_riscos")
+        .select("id, intensidade, unidade, limite_tolerancia, insalubridade_grau, periculosidade, status_avaliacao, catalogo_riscos(nome, categoria)")
+        .eq("role_id", role!.id)
+        .eq("ativo", true);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   // último exame por (natureza-key + tipo)
   function latestFor(naturezaKey: string, tipo: string) {
     const list = (exams ?? []).filter((ex: any) => {
@@ -2726,20 +2741,11 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
           {/* Riscos do GHE */}
           <div className="space-y-1.5">
             <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Riscos Ocupacionais do GHE</div>
-            <div className="flex flex-wrap gap-1.5">
-              {todasCategoriasRisco.map((cat) => {
-                const items: string[] = riscos?.[cat.key] ?? [];
-                if (!items.length) return null;
-                return items.map((it) => (
-                  <Badge key={`${cat.key}-${it}`} variant="secondary" className="text-[10px]">
-                    <span className="opacity-60 mr-1">{cat.label}:</span>{it}
-                  </Badge>
-                ));
-              })}
-              {todasCategoriasRisco.every((c) => !(riscos?.[c.key]?.length)) && (
-                <span className="text-xs text-muted-foreground italic">Sem riscos cadastrados no cargo.</span>
-              )}
-            </div>
+            <RiscosBadges
+              legado={riscos}
+              novos={cargoRiscosNova}
+              categorias={todasCategoriasRisco}
+            />
             {riscos?.descricao && <div className="text-xs text-slate-600 italic">{riscos.descricao}</div>}
           </div>
 
@@ -3262,5 +3268,81 @@ function OssUploadAssinadoButton({ onPick, disabled }: { onPick: (f: File) => vo
         <span><Upload className="h-3.5 w-3.5 mr-1" />Anexar assinada</span>
       </Button>
     </label>
+  );
+}
+
+// ============================================================
+// Riscos do cargo — prioriza cargo_riscos (fonte nova) e cai pro JSONB legado
+// ============================================================
+const CAT_NOVA_TO_LEGADO: Record<string, string> = {
+  FISICO: "fisicos",
+  QUIMICO: "quimicos",
+  BIOLOGICO: "biologicos",
+  ERGONOMICO: "ergonomicos",
+  ACIDENTE: "acidente_mecanico",
+  PSICOSSOCIAL: "psicossociais",
+};
+
+function RiscosBadges({
+  legado,
+  novos,
+  categorias,
+}: {
+  legado: any;
+  novos: any[];
+  categorias: { key: string; label: string }[];
+}) {
+  // Agrupa cargo_riscos por categoria legada
+  const porCat = new Map<string, { nome: string; periculosidade: boolean; insalub: string | null }[]>();
+  for (const r of novos) {
+    const catNova = r.catalogo_riscos?.categoria;
+    const nome = r.catalogo_riscos?.nome;
+    if (!catNova || !nome) continue;
+    const catLegada = CAT_NOVA_TO_LEGADO[catNova] ?? "acidente_mecanico";
+    if (!porCat.has(catLegada)) porCat.set(catLegada, []);
+    porCat.get(catLegada)!.push({
+      nome,
+      periculosidade: !!r.periculosidade,
+      insalub: r.insalubridade_grau && r.insalubridade_grau !== "NAO_INSALUBRE" ? r.insalubridade_grau : null,
+    });
+  }
+
+  const temNovos = porCat.size > 0;
+  const temLegado = categorias.some((c) => (legado?.[c.key] ?? []).length > 0);
+
+  if (!temNovos && !temLegado) {
+    return (
+      <div className="flex flex-wrap gap-1.5">
+        <span className="text-xs text-muted-foreground italic">
+          Sem riscos cadastrados no cargo. Cadastre em <strong>Matriz de Riscos</strong>.
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {categorias.map((cat) => {
+        const fromNovos = porCat.get(cat.key) ?? [];
+        const fromLegado: string[] = !fromNovos.length ? (legado?.[cat.key] ?? []) : [];
+        return (
+          <>
+            {fromNovos.map((it) => (
+              <Badge key={`n-${cat.key}-${it.nome}`} variant="secondary" className="text-[10px]">
+                <span className="opacity-60 mr-1">{cat.label}:</span>
+                {it.nome}
+                {it.periculosidade && <span className="ml-1 text-red-700 font-black">⚡</span>}
+                {it.insalub && <span className="ml-1 text-orange-700 font-black">⚠</span>}
+              </Badge>
+            ))}
+            {fromLegado.map((it) => (
+              <Badge key={`l-${cat.key}-${it}`} variant="secondary" className="text-[10px]">
+                <span className="opacity-60 mr-1">{cat.label}:</span>{it}
+              </Badge>
+            ))}
+          </>
+        );
+      })}
+    </div>
   );
 }
