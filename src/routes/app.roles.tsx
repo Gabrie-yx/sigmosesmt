@@ -76,6 +76,7 @@ type Role = {
   id: string; name: string; ativo: boolean;
   ghe: string | null; setor: string | null; cbo: string | null; cbo_titulo: string | null;
   req_aso: boolean; req_integra: boolean;
+  periodicidade_integracao_meses: number | null;
   req_nrs: string[]; req_exames: string[]; req_vacinas: string[];
   risco_biologico: boolean; riscos: Riscos;
   exames_por_natureza: ExamesPorNatureza;
@@ -99,6 +100,7 @@ const emptyExames: ExamesPorNatureza = {
 const empty: Partial<Role> = {
   name: "", ativo: true, ghe: "", setor: "", cbo: "", cbo_titulo: "",
   req_aso: true, req_integra: true,
+  periodicidade_integracao_meses: null,
   req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos,
   exames_por_natureza: emptyExames,
 };
@@ -126,6 +128,7 @@ function RolesPage() {
         cbo_titulo: r.cbo_titulo ?? "",
         req_aso: r.req_aso ?? true,
         req_integra: r.req_integra ?? true,
+        periodicidade_integracao_meses: r.periodicidade_integracao_meses ?? null,
         req_nrs: Array.isArray(r.req_nrs) ? r.req_nrs : [],
         req_exames: Array.isArray(r.req_exames) ? r.req_exames : [],
         req_vacinas: Array.isArray(r.req_vacinas) ? r.req_vacinas : [],
@@ -166,6 +169,10 @@ function RolesPage() {
         cbo_titulo: v.cbo_titulo || null,
         req_aso: !!v.req_aso,
         req_integra: !!v.req_integra,
+        periodicidade_integracao_meses:
+          v.periodicidade_integracao_meses && v.periodicidade_integracao_meses > 0
+            ? v.periodicidade_integracao_meses
+            : null,
         req_nrs: v.req_nrs ?? [],
         req_exames: v.req_exames ?? [],
         req_vacinas: v.req_vacinas ?? [],
@@ -571,6 +578,31 @@ function RolesPage() {
                       onChange={(v) => setEditing({ ...editing, req_aso: v })} disabled={!isEditor} divider />
                     <ToggleRow label="Exige Integração de Segurança" checked={!!editing.req_integra}
                       onChange={(v) => setEditing({ ...editing, req_integra: v })} disabled={!isEditor} />
+                    {editing.req_integra && (
+                      <div className="mt-3 pt-3 border-t border-rose-100">
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                          Periodicidade de Reciclagem (meses)
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={editing.periodicidade_integracao_meses ?? ""}
+                          onChange={(e) =>
+                            setEditing({
+                              ...editing,
+                              periodicidade_integracao_meses: e.target.value ? Number(e.target.value) : null,
+                            })
+                          }
+                          placeholder="Vazio = não vence (padrão MTE)"
+                          disabled={!isEditor}
+                          className="w-full bg-white border border-rose-100 rounded-xl px-3 py-2 text-sm font-bold text-slate-700 focus:border-[#991b1b] focus:ring-2 focus:ring-rose-200/40 outline-none placeholder:text-slate-300 placeholder:font-normal disabled:opacity-60 shadow-sm"
+                        />
+                        <p className="mt-1.5 text-[10px] text-slate-500 leading-snug">
+                          O MTE não exige reciclagem da Integração. Preencha (ex.: 12, 24) só se for política interna.
+                        </p>
+                      </div>
+                    )}
                   </Section>
 
                   <Section icon={<Award className="h-4 w-4" />} title="Normas Regulamentadoras (NRs)">
