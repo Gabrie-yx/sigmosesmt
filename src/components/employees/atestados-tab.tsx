@@ -32,6 +32,16 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Plus, FileText, CheckCircle2, XCircle, Trash2, Download, Eye, ShieldOff, Pencil, Upload } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Props = {
   empId: string;
@@ -65,6 +75,7 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
   const [viewing, setViewing] = useState<{ url: string; name: string; isPdf: boolean } | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [homologTarget, setHomologTarget] = useState<any | null>(null);
 
   const { data: atestados = [], isLoading } = useQuery({
     queryKey: ["employee-atestados", empId],
@@ -83,39 +94,7 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
     await qc.invalidateQueries({ queryKey: ["employee-atestados", empId] });
   }
 
-  async function homologar(at: any) {
-    // Determina se o atestado é totalmente retroativo (período já encerrado)
-    const hojeISO = new Date().toISOString().slice(0, 10);
-    const retorno: string | null = at.data_retorno ?? null;
-    const inicio: string | null = at.data_inicio ?? null;
-    const isRetroativo = !!retorno && retorno < hojeISO;
-    const inicioFuturo = !!inicio && inicio > hojeISO;
-    const dias = at.dias_afastamento ?? 0;
-
-    let msg =
-      "Confirmar homologação?\n\n" +
-      "• O atestado foi assinado/validado pelo Supervisor Geral (Anderson)?\n" +
-      "• Os dados (CID, CRM, datas) foram conferidos?\n\n";
-
-    if (dias <= 0) {
-      msg +=
-        "Este registro não gera afastamento (0 dias). Apenas arquivamento no histórico — " +
-        "nenhum bloqueio na portaria será criado.";
-    } else if (isRetroativo) {
-      msg +=
-        `ATESTADO RETROATIVO: o período (${fmt(inicio)} → ${fmt(retorno)}) já se encerrou. ` +
-        "Apenas arquivamento no histórico — nenhum bloqueio na portaria será criado.";
-    } else if (inicioFuturo) {
-      msg +=
-        `Bloqueio programado: vigorará de ${fmt(inicio)} até ${fmt(retorno)} (${dias} dia(s)).`;
-    } else {
-      msg +=
-        `Bloqueio ativo de hoje até ${fmt(retorno)} (${dias} dia(s) de afastamento). ` +
-        "O período já iniciado anteriormente não retroage.";
-    }
-
-    const ok = window.confirm(msg);
-    if (!ok) return;
+  async function confirmarHomologacao(at: any) {
     const { data: u } = await supabase.auth.getUser();
     const { error } = await (supabase as any)
       .from("employee_atestados")
@@ -126,8 +105,12 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
         motivo_recusa: null,
       })
       .eq("id", at.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Atestado homologado");
+    setHomologTarget(null);
     refresh();
   }
 
@@ -349,7 +332,7 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
                       )}
                       {canEdit && a.status === "PENDENTE" && (
                         <>
-                          <Button size="icon" variant="ghost" onClick={() => homologar(a)} title="Homologar">
+                          <Button size="icon" variant="ghost" onClick={() => setHomologTarget(a)} title="Homologar">
                             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                           </Button>
                           <Button size="icon" variant="ghost" onClick={() => recusar(a)} title="Recusar">
