@@ -1227,33 +1227,40 @@ function DocsTab({ empId }: any) {
     queryKey: ["docs", empId],
     queryFn: async () => (await supabase.from("employee_docs").select("*").eq("employee_id", empId).order("uploaded_at", { ascending: false })).data ?? [],
   });
-  const [uploadingTipo, setUploadingTipo] = useState<string | null>(null);
   const [extraTipo, setExtraTipo] = useState("CNH");
   const [extraFile, setExtraFile] = useState<File | null>(null);
 
-  async function uploadFor(tipo: string, file: File) {
-    setUploadingTipo(tipo);
-    try {
-      const safe = file.name.replace(/[^\w.\-]+/g, "_");
-      const path = `${empId}/${Date.now()}_${safe}`;
-      const { error: upErr } = await supabase.storage.from("employee-docs").upload(path, file, { upsert: false });
+  // Upload em background — não bloqueia a UI nem trava se o usuário sair da tela.
+  // O queryClient é singleton, então o invalidate funciona mesmo depois do componente desmontar.
+  function uploadFor(tipo: string, file: File) {
+    const safe = file.name.replace(/[^\w.\-]+/g, "_");
+    const path = `${empId}/${Date.now()}_${safe}`;
+    const promise = (async () => {
+      const { error: upErr } = await supabase.storage
+        .from("employee-docs")
+        .upload(path, file, { upsert: false });
       if (upErr) throw upErr;
-      const { error } = await supabase.from("employee_docs").insert({ employee_id: empId, tipo, file_path: path });
+      const { error } = await supabase
+        .from("employee_docs")
+        .insert({ employee_id: empId, tipo, file_path: path });
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["docs", empId] });
       qc.invalidateQueries({ queryKey: ["docs-summary", empId] });
-      toast.success(`${tipo} enviado`);
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally {
-      setUploadingTipo(null);
-    }
+      return tipo;
+    })();
+    toast.promise(promise, {
+      loading: `Enviando ${tipo}…`,
+      success: (t) => `${t} enviado com sucesso`,
+      error: (e: any) => `Falha no upload: ${e?.message ?? e}`,
+    });
+    return promise;
   }
 
   const uploadExtra = useMutation({
     mutationFn: async () => {
       if (!extraFile) throw new Error("Selecione um arquivo");
-      await uploadFor(extraTipo, extraFile);
+      // dispara em background — não esperamos terminar pra liberar a UI
+      uploadFor(extraTipo, extraFile);
     },
     onSuccess: () => setExtraFile(null),
   });
@@ -1351,12 +1358,11 @@ function DocsTab({ empId }: any) {
                         type="file"
                         accept="application/pdf,image/*"
                         className="hidden"
-                        disabled={uploadingTipo === tipo}
                         onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadFor(tipo, file); e.target.value = ""; }}
                       />
                       <span className="inline-flex items-center px-2.5 py-1.5 text-xs font-bold rounded-md bg-brand text-white hover:bg-brand/90 cursor-pointer">
                         <Upload className="h-3.5 w-3.5 mr-1" />
-                        {uploadingTipo === tipo ? "Enviando..." : has ? "Substituir" : "Enviar"}
+                        {has ? "Substituir" : "Enviar"}
                       </span>
                     </label>
                   )}
