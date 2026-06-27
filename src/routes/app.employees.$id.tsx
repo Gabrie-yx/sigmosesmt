@@ -2851,7 +2851,7 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-6 px-2 text-[10px] ml-auto text-brand hover:text-brand hover:bg-brand/10"
+                      className="h-7 px-2.5 text-xs font-semibold ml-auto text-amber-300 hover:text-amber-200 hover:bg-amber-400/10 border border-amber-400/30"
                       onClick={() => {
                         setF((p: any) => ({ ...p, tipo_exame: TIPOS_EXAME.includes(tipo as any) ? tipo : p.tipo_exame, natureza: NATUREZA_LABELS.find(n => n.key === key)!.label }));
                         setAptidaoOpen(false);
