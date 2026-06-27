@@ -2691,6 +2691,7 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
     aptidao: "SIM", observacoes: "",
   });
   const [examFile, setExamFile] = useState<File | null>(null);
+  const [aptidaoOpen, setAptidaoOpen] = useState(false);
 
   const create = useMutation({
     mutationFn: async () => {
