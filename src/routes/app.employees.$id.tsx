@@ -2452,15 +2452,15 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       </Card>
 
       <Dialog open={!!returning} onOpenChange={(o) => !o && setReturning(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
+        <DialogContent className="max-w-md flex flex-col max-h-[calc(100dvh-2rem)] p-0">
+          <DialogHeader className="p-6 pb-2 shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Undo2 className="h-5 w-5 text-amber-600" />
               Devolução de EPI
             </DialogTitle>
           </DialogHeader>
           {returning && (
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto px-6 flex-1 min-h-0">
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
                 <div className="font-black uppercase text-slate-700">{returning.item}</div>
                 <div className="text-slate-500 mt-0.5">QTD: {returning.qtd} • Entregue em {formatDateBR(returning.data_entrega)}</div>
@@ -2484,7 +2484,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="p-6 pt-3 border-t border-white/10 shrink-0 bg-inherit">
             <Button variant="ghost" onClick={() => setReturning(null)}>Cancelar</Button>
             <Button onClick={() => returnMut.mutate()} disabled={returnMut.isPending || !retForm.data || !retForm.motivo} className="bg-amber-600 hover:bg-amber-700 text-white">
               <Undo2 className="h-4 w-4 mr-2" /> Registrar devolução
