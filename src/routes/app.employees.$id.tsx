@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText, Camera, X, AlertTriangle, Undo2, CheckCircle2, User, ShieldCheck, FileText as FileIcon, HeartPulse, Building2, IdCard, UserCog, Briefcase, Users, Award, FolderOpen, UserPlus, Download, Pencil, ClipboardCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -2690,6 +2691,7 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
     aptidao: "SIM", observacoes: "",
   });
   const [examFile, setExamFile] = useState<File | null>(null);
+  const [aptidaoOpen, setAptidaoOpen] = useState(false);
 
   const create = useMutation({
     mutationFn: async () => {
@@ -2783,93 +2785,176 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
     { key: "psicossociais", label: "Psicossociais" },
   ];
 
+  // ===== Agrupamento Ativas/Condicionais para o Drawer =====
+  const ACTIVE_KEYS = new Set(["ADMISSIONAL", "PERIODICO", "SEMESTRAL", "MUDANCA_RISCO"]);
+  const CONDITIONAL_KEYS = new Set(["RETORNO_TRABALHO", "DEMISSIONAL"]);
+  const naturezasAvaliadas = NATUREZA_LABELS.map(({ key, label }) => {
+    const reqs: string[] = exMatrix?.[key] ?? [];
+    return { key, label, reqs, apt: naturezaAptidao(key, reqs) };
+  });
+  const aggActive = naturezasAvaliadas.filter(n => ACTIVE_KEYS.has(n.key));
+  const aggCount = {
+    apto: aggActive.filter(n => n.apt === "APTO").length,
+    pendente: aggActive.filter(n => n.apt === "PENDENTE").length,
+    inapto: aggActive.filter(n => n.apt === "INAPTO").length,
+    semExig: aggActive.filter(n => n.apt === "SEM_EXIGENCIA").length,
+    total: aggActive.length,
+  };
+  const aggBadge =
+    aggCount.inapto > 0 ? <Badge variant="destructive"><Ban className="h-3 w-3 mr-1" />{aggCount.inapto} INAPTO</Badge> :
+    aggCount.pendente > 0 ? <Badge className="bg-amber-500 hover:bg-amber-500 text-white"><AlertTriangle className="h-3 w-3 mr-1" />{aggCount.pendente} PENDENTE{aggCount.pendente > 1 ? "S" : ""}</Badge> :
+    aggCount.apto > 0 ? <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white"><CheckCircle2 className="h-3 w-3 mr-1" />TODAS APTAS</Badge> :
+    <Badge variant="outline">SEM EXIGÊNCIA</Badge>;
+
+  function renderNaturezaCard(key: string, label: string, reqs: string[], apt: string, opts: { dimmed?: boolean } = {}) {
+    const tone =
+      apt === "APTO" ? "border-emerald-300 bg-emerald-50" :
+      apt === "INAPTO" ? "border-rose-300 bg-rose-50" :
+      apt === "PENDENTE" ? "border-amber-300 bg-amber-50" :
+      "border-slate-200 bg-slate-50";
+    const badge =
+      apt === "APTO" ? <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white"><CheckCircle2 className="h-3 w-3 mr-1" />APTO</Badge> :
+      apt === "INAPTO" ? <Badge variant="destructive"><Ban className="h-3 w-3 mr-1" />INAPTO</Badge> :
+      apt === "PENDENTE" ? <Badge className="bg-amber-500 hover:bg-amber-500 text-white"><AlertTriangle className="h-3 w-3 mr-1" />PENDENTE</Badge> :
+      <Badge variant="outline">SEM EXIGÊNCIA</Badge>;
+    return (
+      <div key={key} className={`rounded-md border p-3 ${tone} ${opts.dimmed ? "opacity-60" : ""}`}>
+        <div className="flex items-center justify-between mb-2 gap-2">
+          <span className="text-xs font-black uppercase tracking-widest">{label}</span>
+          <div className="flex items-center gap-1.5">
+            {opts.dimmed && <Badge variant="outline" className="text-[9px] uppercase">aguarda evento</Badge>}
+            {badge}
+          </div>
+        </div>
+        {reqs.length === 0 ? (
+          <div className="text-[11px] text-slate-500 italic">Nenhum procedimento exigido pelo cargo.</div>
+        ) : (
+          <ul className="space-y-1">
+            {reqs.map((tipo) => {
+              const s = statusForReq(key, tipo);
+              const icon =
+                s.state === "OK" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> :
+                s.state === "INAPTO" ? <Ban className="h-3.5 w-3.5 text-rose-600" /> :
+                s.state === "VENCIDO" ? <Clock className="h-3.5 w-3.5 text-amber-600" /> :
+                <AlertCircle className="h-3.5 w-3.5 text-slate-500" />;
+              const txt =
+                s.state === "OK" ? `válido até ${formatDateBR(s.ex.data_vencimento)}` :
+                s.state === "INAPTO" ? `INAPTO em ${formatDateBR(s.ex!.data_realizacao)}` :
+                s.state === "VENCIDO" ? `vencido em ${formatDateBR(s.ex!.data_vencimento)}` :
+                "não realizado";
+              return (
+                <li key={tipo} className="flex items-center gap-2 text-xs">
+                  {icon}
+                  <span className="font-medium">{tipo}</span>
+                  <span className="text-slate-500">— {txt}</span>
+                  {canEdit && s.state !== "OK" && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-[10px] ml-auto"
+                      onClick={() => {
+                        setF((p: any) => ({ ...p, tipo_exame: TIPOS_EXAME.includes(tipo as any) ? tipo : p.tipo_exame, natureza: NATUREZA_LABELS.find(n => n.key === key)!.label }));
+                        setAptidaoOpen(false);
+                      }}
+                    >
+                      Registrar
+                    </Button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    );
+  }
+
   return (
     <Card className="p-6 space-y-6">
       {/* Painel PCMSO / ISO 9001 — Exigências do Cargo */}
       {role && (
-        <div className="rounded-lg border-2 border-brand/30 bg-gradient-to-br from-brand/5 to-transparent p-4 space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-black uppercase tracking-widest text-brand">Aptidão por Natureza · PCMSO/ISO 9001</span>
-            {role.ghe && <Badge variant="outline" className="font-bold">GHE {role.ghe}</Badge>}
-            {role.setor && <Badge variant="outline">{role.setor}</Badge>}
-            {role.cbo && <Badge variant="outline">CBO {role.cbo}</Badge>}
-            <span className="text-xs text-muted-foreground">· Cargo: <strong>{role.name}</strong></span>
-          </div>
-
-          {/* Riscos do GHE */}
-          <div className="space-y-1.5">
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Riscos Ocupacionais do GHE</div>
-            <RiscosBadges
-              legado={riscos}
-              novos={cargoRiscosNova}
-              categorias={todasCategoriasRisco}
-            />
-            {riscos?.descricao && <div className="text-xs text-slate-600 italic">{riscos.descricao}</div>}
-          </div>
-
-          {/* Matriz de exames por natureza */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {NATUREZA_LABELS.map(({ key, label }) => {
-              const reqs: string[] = exMatrix?.[key] ?? [];
-              const apt = naturezaAptidao(key, reqs);
-              const tone =
-                apt === "APTO" ? "border-emerald-300 bg-emerald-50" :
-                apt === "INAPTO" ? "border-rose-300 bg-rose-50" :
-                apt === "PENDENTE" ? "border-amber-300 bg-amber-50" :
-                "border-slate-200 bg-slate-50";
-              const badge =
-                apt === "APTO" ? <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white"><CheckCircle2 className="h-3 w-3 mr-1" />APTO</Badge> :
-                apt === "INAPTO" ? <Badge variant="destructive"><Ban className="h-3 w-3 mr-1" />INAPTO</Badge> :
-                apt === "PENDENTE" ? <Badge className="bg-amber-500 hover:bg-amber-500 text-white"><AlertTriangle className="h-3 w-3 mr-1" />PENDENTE</Badge> :
-                <Badge variant="outline">SEM EXIGÊNCIA</Badge>;
-              return (
-                <div key={key} className={`rounded-md border p-3 ${tone}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-black uppercase tracking-widest">{label}</span>
-                    {badge}
-                  </div>
-                  {reqs.length === 0 ? (
-                    <div className="text-[11px] text-slate-500 italic">Nenhum procedimento exigido pelo cargo.</div>
-                  ) : (
-                    <ul className="space-y-1">
-                      {reqs.map((tipo) => {
-                        const s = statusForReq(key, tipo);
-                        const icon =
-                          s.state === "OK" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> :
-                          s.state === "INAPTO" ? <Ban className="h-3.5 w-3.5 text-rose-600" /> :
-                          s.state === "VENCIDO" ? <Clock className="h-3.5 w-3.5 text-amber-600" /> :
-                          <AlertCircle className="h-3.5 w-3.5 text-slate-500" />;
-                        const txt =
-                          s.state === "OK" ? `válido até ${formatDateBR(s.ex.data_vencimento)}` :
-                          s.state === "INAPTO" ? `INAPTO em ${formatDateBR(s.ex!.data_realizacao)}` :
-                          s.state === "VENCIDO" ? `vencido em ${formatDateBR(s.ex!.data_vencimento)}` :
-                          "não realizado";
-                        return (
-                          <li key={tipo} className="flex items-center gap-2 text-xs">
-                            {icon}
-                            <span className="font-medium">{tipo}</span>
-                            <span className="text-slate-500">— {txt}</span>
-                            {canEdit && s.state !== "OK" && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 px-2 text-[10px] ml-auto"
-                                onClick={() => setF((p: any) => ({ ...p, tipo_exame: TIPOS_EXAME.includes(tipo as any) ? tipo : p.tipo_exame, natureza: NATUREZA_LABELS.find(n => n.key === key)!.label }))}
-                              >
-                                Registrar
-                              </Button>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </div>
-              );
-            })}
+        <div className="rounded-lg border border-brand/30 bg-gradient-to-r from-brand/5 to-transparent px-4 py-3 flex flex-wrap items-center gap-3">
+          <span className="text-[11px] font-black uppercase tracking-widest text-brand">Aptidão · PCMSO/ISO 9001</span>
+          {role.ghe && <Badge variant="outline" className="font-bold">GHE {role.ghe}</Badge>}
+          {role.setor && <Badge variant="outline">{role.setor}</Badge>}
+          {role.cbo && <Badge variant="outline">CBO {role.cbo}</Badge>}
+          <span className="text-xs text-muted-foreground hidden md:inline">· {role.name}</span>
+          <div className="flex items-center gap-2 ml-auto">
+            {aggBadge}
+            <span className="text-[11px] text-slate-500">
+              {aggCount.apto}/{aggCount.total} OK
+            </span>
+            <Button size="sm" variant="outline" onClick={() => setAptidaoOpen(true)}>
+              Ver detalhes
+            </Button>
           </div>
         </div>
       )}
+
+      {/* Drawer lateral — Aptidão por Natureza */}
+      <Sheet open={aptidaoOpen} onOpenChange={setAptidaoOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-brand" />
+              Aptidão por Natureza
+            </SheetTitle>
+            <SheetDescription className="text-xs">
+              PCMSO / ISO 9001 — {role?.name} · GHE {role?.ghe ?? "—"} · CBO {role?.cbo ?? "—"}
+            </SheetDescription>
+          </SheetHeader>
+
+          {role && (
+            <div className="mt-4 space-y-4">
+              {/* Riscos do GHE (colapsável visual) */}
+              <details className="rounded-md border bg-slate-50/60 p-3" open>
+                <summary className="text-[10px] font-black uppercase tracking-widest text-slate-600 cursor-pointer">
+                  Perfil de Risco do Cargo
+                </summary>
+                <div className="mt-2 space-y-2">
+                  <RiscosBadges
+                    legado={riscos}
+                    novos={cargoRiscosNova}
+                    categorias={todasCategoriasRisco}
+                  />
+                  {riscos?.descricao && <div className="text-xs text-slate-600 italic">{riscos.descricao}</div>}
+                </div>
+              </details>
+
+              <Tabs defaultValue="ativas" className="w-full">
+                <TabsList className="grid grid-cols-2 w-full">
+                  <TabsTrigger value="ativas">
+                    Ativas
+                    <Badge variant="outline" className="ml-2 text-[10px]">{aggActive.length}</Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="condicionais">
+                    Condicionais
+                    <Badge variant="outline" className="ml-2 text-[10px]">{naturezasAvaliadas.filter(n => CONDITIONAL_KEYS.has(n.key)).length}</Badge>
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="ativas" className="mt-3 space-y-3">
+                  <div className="text-[11px] text-slate-500">
+                    Exigências que se aplicam <strong>agora</strong> ao funcionário ativo no cargo.
+                  </div>
+                  {naturezasAvaliadas
+                    .filter(n => ACTIVE_KEYS.has(n.key))
+                    .map(n => renderNaturezaCard(n.key, n.label, n.reqs, n.apt))}
+                </TabsContent>
+
+                <TabsContent value="condicionais" className="mt-3 space-y-3">
+                  <div className="text-[11px] text-slate-500">
+                    Só disparam mediante <strong>evento</strong> (retorno após afastamento ≥30d, ou desligamento).
+                  </div>
+                  {naturezasAvaliadas
+                    .filter(n => CONDITIONAL_KEYS.has(n.key))
+                    .map(n => renderNaturezaCard(n.key, n.label, n.reqs, n.apt, { dimmed: true }))}
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
       {canEdit && (
         <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="grid grid-cols-2 md:grid-cols-4 gap-3 items-end border-b pb-4">
