@@ -1,11 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowLeft, Pencil, Trash2, Calendar, Eye } from "lucide-react";
+import { Plus, ArrowLeft, Pencil, Trash2, Calendar, Eye, Users, Clock, Building2, MapPin, X } from "lucide-react";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from "@/components/ui/sheet";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
 import { gerarHoraExtraSabadoPDF } from "@/lib/hora-extra-sabado-pdf";
@@ -45,6 +51,10 @@ function HoraExtraSabadoPage() {
   const [previewFichaId, setPreviewFichaId] = useState<string | null>(null);
   const [tstSig, setTstSig] = useState<string | null>(null);
   const [gestorSig, setGestorSig] = useState<string | null>(null);
+  const [periodo, setPeriodo] = useState<"todos" | "mes" | "mes_passado" | "30d">("mes");
+  const [empresaFiltro, setEmpresaFiltro] = useState<string>("todas");
+  const [turnoFiltro, setTurnoFiltro] = useState<string>("todos");
+  const [detalheId, setDetalheId] = useState<string | null>(null);
 
   const { data: fichas, isLoading } = useQuery({
     queryKey: ["hora-extra-sabado"],
@@ -172,6 +182,22 @@ function HoraExtraSabadoPage() {
   }
 
   const filtradas = (fichas ?? []).filter((f: any) => {
+    // Período
+    if (periodo !== "todos") {
+      const d = new Date(f.data + "T12:00:00");
+      const hoje = new Date();
+      if (periodo === "mes") {
+        if (d.getMonth() !== hoje.getMonth() || d.getFullYear() !== hoje.getFullYear()) return false;
+      } else if (periodo === "mes_passado") {
+        const ref = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+        if (d.getMonth() !== ref.getMonth() || d.getFullYear() !== ref.getFullYear()) return false;
+      } else if (periodo === "30d") {
+        const limite = new Date(); limite.setDate(limite.getDate() - 30);
+        if (d < limite) return false;
+      }
+    }
+    if (empresaFiltro !== "todas" && (f.companies?.name ?? "") !== empresaFiltro) return false;
+    if (turnoFiltro !== "todos" && String(f.turno ?? "") !== turnoFiltro) return false;
     if (!busca.trim()) return true;
     const s = busca.toLowerCase();
     return (
@@ -181,6 +207,25 @@ function HoraExtraSabadoPage() {
       f.data.includes(s)
     );
   });
+
+  const empresasUnicas = useMemo(() => {
+    const s = new Set<string>();
+    (fichas ?? []).forEach((f: any) => { if (f.companies?.name) s.add(f.companies.name); });
+    return Array.from(s).sort();
+  }, [fichas]);
+
+  const turnosUnicos = useMemo(() => {
+    const s = new Set<string>();
+    (fichas ?? []).forEach((f: any) => { if (f.turno) s.add(String(f.turno)); });
+    return Array.from(s).sort();
+  }, [fichas]);
+
+  const fichaDetalhe = (fichas ?? []).find((f: any) => f.id === detalheId);
+
+  const temFiltro = periodo !== "todos" || empresaFiltro !== "todas" || turnoFiltro !== "todos" || busca.trim() !== "";
+  function limparFiltros() {
+    setPeriodo("todos"); setEmpresaFiltro("todas"); setTurnoFiltro("todos"); setBusca("");
+  }
 
   return (
     <div className="p-6 md:p-8 animate-fadeIn">
@@ -201,12 +246,60 @@ function HoraExtraSabadoPage() {
         )}
       </div>
 
-      <Input
-        className="mb-4 max-w-md"
-        placeholder="Buscar por data, setor, empresa…"
-        value={busca}
-        onChange={(e) => setBusca(e.target.value)}
-      />
+      {/* Chips + filtros */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {[
+          { id: "mes", label: "Este mês" },
+          { id: "mes_passado", label: "Mês passado" },
+          { id: "30d", label: "Últimos 30d" },
+          { id: "todos", label: "Todos" },
+        ].map((p) => (
+          <button
+            key={p.id}
+            onClick={() => setPeriodo(p.id as any)}
+            className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border transition-all ${
+              periodo === p.id
+                ? "bg-rose-500/20 border-rose-400/40 text-rose-100"
+                : "bg-white/[0.03] border-white/10 text-slate-300 hover:bg-white/[0.06]"
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+        <div className="h-5 w-px bg-white/10 mx-1" />
+        <Select value={empresaFiltro} onValueChange={setEmpresaFiltro}>
+          <SelectTrigger className="h-8 w-[180px] text-xs bg-white/[0.03] border-white/10 text-slate-200">
+            <SelectValue placeholder="Empresa" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todas">Todas as empresas</SelectItem>
+            {empresasUnicas.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={turnoFiltro} onValueChange={setTurnoFiltro}>
+          <SelectTrigger className="h-8 w-[120px] text-xs bg-white/[0.03] border-white/10 text-slate-200">
+            <SelectValue placeholder="Turno" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos turnos</SelectItem>
+            {turnosUnicos.map((t) => <SelectItem key={t} value={t}>{t}º turno</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Input
+          className="h-8 max-w-[220px] text-xs bg-white/[0.03] border-white/10 text-slate-200 placeholder:text-slate-500"
+          placeholder="Buscar…"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+        {temFiltro && (
+          <button onClick={limparFiltros} className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-rose-300 inline-flex items-center gap-1">
+            <X className="h-3 w-3" /> Limpar
+          </button>
+        )}
+        <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-slate-400">
+          {filtradas.length} ficha{filtradas.length === 1 ? "" : "s"}
+        </span>
+      </div>
 
       {isLoading ? (
         <div className="grid gap-3">
@@ -219,49 +312,99 @@ function HoraExtraSabadoPage() {
           <p className="text-xs text-slate-400 mt-1">Crie a primeira clicando em "Nova ficha".</p>
         </div>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid gap-1.5">
           {filtradas.map((f: any) => {
             const d = new Date(f.data + "T12:00:00");
-            const dia = DIAS[d.getDay()];
+            const dia = DIAS[d.getDay()].slice(0, 3).toUpperCase();
+            const dataCurta = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+            const horario = f.horario_inicio ? `${f.horario_inicio}–${f.horario_fim ?? ""}` : "—";
+            const qtd = f.hora_extra_sabado_funcionarios?.length ?? 0;
             return (
-              <div key={f.id} className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <p className="text-lg font-black text-slate-900">{d.toLocaleDateString("pt-BR")}</p>
-                      <span className="text-[10px] font-black uppercase tracking-widest bg-rose-100 text-rose-700 px-2 py-0.5 rounded">{dia}</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-700 px-2 py-0.5 rounded">{f.tipo_efetivo}</span>
-                      {f.companies?.name && <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{f.companies.name}</span>}
-                    </div>
-                    <div className="mt-1.5 flex items-center gap-4 text-xs text-slate-500 flex-wrap">
-                      {f.turno && <span><b>Turno:</b> {f.turno}</span>}
-                      {f.horario_inicio && <span><b>Horário:</b> {f.horario_inicio} às {f.horario_fim ?? ""}</span>}
-                      {f.setor && <span><b>Setor:</b> {f.setor}</span>}
-                      {f.centro_custo && <span><b>C.C.:</b> {f.centro_custo}</span>}
-                      <span><b>Funcionários:</b> {f.hora_extra_sabado_funcionarios?.length ?? 0}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button size="sm" variant="outline" onClick={() => gerarPdf(f.id)}>
-                      <Eye className="h-3.5 w-3.5 mr-1.5" />Prévia PDF
-                    </Button>
-                    {isEditor && (
-                      <Button size="icon" variant="ghost" onClick={() => { setEditId(f.id); setOpen(true); }}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {isAdmin && (
-                      <Button size="icon" variant="ghost" onClick={() => { if (confirm("Excluir esta ficha?")) del.mutate(f.id); }}>
-                        <Trash2 className="h-4 w-4 text-rose-500" />
-                      </Button>
-                    )}
-                  </div>
+              <button
+                key={f.id}
+                onClick={() => setDetalheId(f.id)}
+                className="group w-full text-left rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-rose-400/30 px-3 py-2 transition-all"
+              >
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="font-black text-slate-100 tabular-nums w-[58px]">{dataCurta}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest bg-rose-500/15 text-rose-200 px-1.5 py-0.5 rounded w-[42px] text-center">{dia}</span>
+                  {f.companies?.name && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300 truncate max-w-[180px]">{f.companies.name}</span>
+                  )}
+                  <span className="text-xs text-slate-400 inline-flex items-center gap-1 tabular-nums">
+                    <Clock className="h-3 w-3" /> {horario}
+                  </span>
+                  {f.setor && (
+                    <span className="text-xs text-slate-400 inline-flex items-center gap-1 truncate max-w-[200px]">
+                      <MapPin className="h-3 w-3" /> {f.setor}
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-slate-300 inline-flex items-center gap-1 font-semibold tabular-nums">
+                    <Users className="h-3 w-3" /> {qtd}
+                  </span>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
       )}
+
+      {/* Drawer de detalhes */}
+      <Sheet open={!!detalheId} onOpenChange={(o) => !o && setDetalheId(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-md bg-[#1a0608]/95 backdrop-blur-sm border-l border-white/10 text-slate-100">
+          {fichaDetalhe && (() => {
+            const d = new Date(fichaDetalhe.data + "T12:00:00");
+            const dia = DIAS[d.getDay()];
+            return (
+              <>
+                <SheetHeader>
+                  <SheetTitle className="text-2xl font-black text-rose-200">
+                    {d.toLocaleDateString("pt-BR")}
+                  </SheetTitle>
+                  <SheetDescription className="text-slate-400">
+                    {dia} · {fichaDetalhe.tipo_efetivo} · {fichaDetalhe.hora_extra_sabado_funcionarios?.length ?? 0} funcionários
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="mt-6 space-y-4 text-sm">
+                  {fichaDetalhe.companies?.name && (
+                    <div className="flex items-start gap-2"><Building2 className="h-4 w-4 text-rose-300 mt-0.5" /><div><div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Empresa</div><div>{fichaDetalhe.companies.name}</div></div></div>
+                  )}
+                  {fichaDetalhe.turno && (
+                    <div className="flex items-start gap-2"><Clock className="h-4 w-4 text-rose-300 mt-0.5" /><div><div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Turno / Horário</div><div>{fichaDetalhe.turno}º — {fichaDetalhe.horario_inicio} às {fichaDetalhe.horario_fim ?? "—"}</div></div></div>
+                  )}
+                  {fichaDetalhe.setor && (
+                    <div className="flex items-start gap-2"><MapPin className="h-4 w-4 text-rose-300 mt-0.5" /><div><div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Setor</div><div>{fichaDetalhe.setor}</div></div></div>
+                  )}
+                  {fichaDetalhe.centro_custo && (
+                    <div className="flex items-start gap-2"><MapPin className="h-4 w-4 text-rose-300 mt-0.5" /><div><div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Centro de custo</div><div>{fichaDetalhe.centro_custo}</div></div></div>
+                  )}
+                  {fichaDetalhe.observacao && (
+                    <div className="rounded-lg bg-white/[0.03] border border-white/10 p-3 text-xs text-slate-300">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Observação</div>
+                      {fichaDetalhe.observacao}
+                    </div>
+                  )}
+                </div>
+                <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-white/10">
+                  <Button onClick={() => gerarPdf(fichaDetalhe.id)} className="bg-rose-500 hover:bg-rose-600 text-white">
+                    <Eye className="h-4 w-4 mr-1.5" />Prévia PDF
+                  </Button>
+                  {isEditor && (
+                    <Button variant="outline" className="border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.08]" onClick={() => { setEditId(fichaDetalhe.id); setDetalheId(null); setOpen(true); }}>
+                      <Pencil className="h-4 w-4 mr-1.5" />Editar
+                    </Button>
+                  )}
+                  {isAdmin && (
+                    <Button variant="outline" className="border-rose-400/30 text-rose-300 hover:bg-rose-500/10 ml-auto" onClick={() => { if (confirm("Excluir esta ficha?")) { del.mutate(fichaDetalhe.id); setDetalheId(null); } }}>
+                      <Trash2 className="h-4 w-4 mr-1.5" />Excluir
+                    </Button>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </SheetContent>
+      </Sheet>
 
       <HoraExtraSabadoDialog open={open} onOpenChange={setOpen} editId={editId} />
       <PDFPreviewDialog
