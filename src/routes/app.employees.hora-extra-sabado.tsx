@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowLeft, Pencil, Trash2, Calendar, Eye, Clock, Building2, MapPin, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, ArrowLeft, Calendar, Clock, Building2, MapPin, X, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
@@ -291,71 +291,33 @@ function HoraExtraSabadoPage() {
           <p className="text-xs text-slate-400 mt-1">Crie a primeira clicando em "Nova ficha".</p>
         </div>
       ) : (
-        (() => {
-          const ano = cursorMes.getFullYear();
-          const mes = cursorMes.getMonth();
-          const primeiroDia = new Date(ano, mes, 1).getDay();
-          const diasNoMes = new Date(ano, mes + 1, 0).getDate();
-          const porDia = new Map<number, any[]>();
-          filtradas.forEach((f: any) => {
-            const dia = new Date(f.data + "T12:00:00").getDate();
-            if (!porDia.has(dia)) porDia.set(dia, []);
-            porDia.get(dia)!.push(f);
-          });
-          const celulas: Array<{ dia: number | null }> = [];
-          for (let i = 0; i < primeiroDia; i++) celulas.push({ dia: null });
-          for (let i = 1; i <= diasNoMes; i++) celulas.push({ dia: i });
-          const hojeRef = new Date();
-          const isHoje = (d: number) => hojeRef.getDate() === d && hojeRef.getMonth() === mes && hojeRef.getFullYear() === ano;
-          return (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
-              <div className="grid grid-cols-7 gap-1 mb-1">
-                {["DOM","SEG","TER","QUA","QUI","SEX","SÁB"].map((d) => (
-                  <div key={d} className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-center py-1">{d}</div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1">
-                {celulas.map((c, idx) => {
-                  if (c.dia === null) return <div key={idx} />;
-                  const fs = porDia.get(c.dia) ?? [];
-                  const temFichas = fs.length > 0;
-                  const dow = new Date(ano, mes, c.dia).getDay();
-                  const fimDeSemana = dow === 0 || dow === 6;
-                  return (
-                    <div
-                      key={idx}
-                      className={`min-h-[78px] rounded-lg border p-1.5 flex flex-col gap-1 transition-all ${
-                        temFichas ? "border-rose-400/30 bg-rose-500/[0.06]" : "border-white/5 bg-white/[0.01]"
-                      } ${fimDeSemana ? "ring-1 ring-white/5" : ""}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`text-[11px] font-black tabular-nums ${isHoje(c.dia) ? "text-rose-200 bg-rose-500/30 rounded-full w-5 h-5 inline-flex items-center justify-center" : "text-slate-300"}`}>{c.dia}</span>
-                        {temFichas && <span className="text-[9px] font-bold text-rose-200">{fs.length}</span>}
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        {fs.slice(0, 2).map((f: any) => (
-                          <button
-                            key={f.id}
-                            onClick={() => setDetalheId(f.id)}
-                            className="text-left rounded bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 px-1 py-0.5 text-[9px] font-bold text-rose-100 truncate"
-                            title={`${f.companies?.name ?? ""} · ${f.horario_inicio ?? ""}`}
-                          >
-                            {f.companies?.name?.split(" ")[0] ?? "Ficha"} · {f.hora_extra_sabado_funcionarios?.length ?? 0}
-                          </button>
-                        ))}
-                        {fs.length > 2 && (
-                          <button onClick={() => setDetalheId(fs[2].id)} className="text-left text-[9px] font-bold text-slate-400 hover:text-rose-200">
-                            +{fs.length - 2}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })()
+        <div className="grid gap-2">
+          {filtradas.map((f: any) => {
+            const d = new Date(f.data + "T12:00:00");
+            const dia = DIAS[d.getDay()];
+            const qtd = f.hora_extra_sabado_funcionarios?.length ?? 0;
+            return (
+              <button
+                key={f.id}
+                onClick={() => setDetalheId(f.id)}
+                className="w-full text-left rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-rose-400/40 transition-all px-4 py-3 flex items-center gap-4"
+              >
+                <div className="flex flex-col items-center justify-center w-14 shrink-0">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-rose-300">{dia.slice(0,3)}</span>
+                  <span className="text-xl font-black tabular-nums text-slate-100 leading-none">{d.getDate().toString().padStart(2,"0")}</span>
+                  <span className="text-[9px] font-bold tabular-nums text-slate-400">{d.toLocaleDateString("pt-BR",{month:"short"})}</span>
+                </div>
+                <div className="h-10 w-px bg-white/10" />
+                <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-4 gap-2 items-center">
+                  <span className="text-xs font-bold text-slate-100 truncate inline-flex items-center gap-1.5"><Building2 className="h-3 w-3 text-rose-300" />{f.companies?.name ?? "—"}</span>
+                  <span className="text-xs text-slate-300 truncate inline-flex items-center gap-1.5"><Clock className="h-3 w-3 text-rose-300" />{f.horario_inicio ?? "—"}{f.horario_fim ? ` – ${f.horario_fim}` : ""} · {f.turno ?? "—"}º</span>
+                  <span className="text-xs text-slate-300 truncate inline-flex items-center gap-1.5"><MapPin className="h-3 w-3 text-rose-300" />{f.setor ?? "—"}</span>
+                  <span className="text-xs text-rose-200 font-bold inline-flex items-center gap-1.5"><Users className="h-3 w-3" />{qtd} func.</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       )}
 
       {/* Drawer de detalhes */}
