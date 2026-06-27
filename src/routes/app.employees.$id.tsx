@@ -1358,12 +1358,11 @@ function DocsTab({ empId }: any) {
                         type="file"
                         accept="application/pdf,image/*"
                         className="hidden"
-                        disabled={uploadingTipo === tipo}
                         onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadFor(tipo, file); e.target.value = ""; }}
                       />
                       <span className="inline-flex items-center px-2.5 py-1.5 text-xs font-bold rounded-md bg-brand text-white hover:bg-brand/90 cursor-pointer">
                         <Upload className="h-3.5 w-3.5 mr-1" />
-                        {uploadingTipo === tipo ? "Enviando..." : has ? "Substituir" : "Enviar"}
+                        {has ? "Substituir" : "Enviar"}
                       </span>
                     </label>
                   )}
