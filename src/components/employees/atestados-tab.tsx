@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, FileText, CheckCircle2, XCircle, Trash2, Download, Eye, ShieldOff, Pencil } from "lucide-react";
+import { Plus, FileText, CheckCircle2, XCircle, Trash2, Download, Eye, ShieldOff, Pencil, Upload } from "lucide-react";
 
 type Props = {
   empId: string;
@@ -63,6 +63,8 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
   const [openNew, setOpenNew] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [viewing, setViewing] = useState<{ url: string; name: string; isPdf: boolean } | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const { data: atestados = [], isLoading } = useQuery({
     queryKey: ["employee-atestados", empId],
@@ -184,6 +186,32 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
     setViewing({ url: data.signedUrl, name: path.split("/").pop() || "Arquivo", isPdf });
   }
 
+  async function anexarArquivo(at: any, file: File) {
+    setUploadingId(at.id);
+    try {
+      const ext = file.name.split(".").pop();
+      const newPath = `atestados/${empId}/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("employee-docs")
+        .upload(newPath, file, { upsert: false });
+      if (upErr) throw upErr;
+      if (at.arquivo_path) {
+        await supabase.storage.from("employee-docs").remove([at.arquivo_path]);
+      }
+      const { error } = await (supabase as any)
+        .from("employee_atestados")
+        .update({ arquivo_path: newPath })
+        .eq("id", at.id);
+      if (error) throw error;
+      toast.success("Arquivo anexado");
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao anexar");
+    } finally {
+      setUploadingId(null);
+    }
+  }
+
   const ativo = atestados.find(
     (a: any) =>
       a.status === "HOMOLOGADO" &&
@@ -281,13 +309,36 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      {a.arquivo_path && (
+                      {a.arquivo_path ? (
                         <>
                           <Button size="icon" variant="ghost" onClick={() => visualizar(a.arquivo_path)} title="Visualizar">
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button size="icon" variant="ghost" onClick={() => baixar(a.arquivo_path)} title="Baixar arquivo">
                             <Download className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : canEdit && (
+                        <>
+                          <input
+                            ref={(el) => { fileInputs.current[a.id] = el; }}
+                            type="file"
+                            accept="application/pdf,image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) anexarArquivo(a, f);
+                              e.target.value = "";
+                            }}
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            disabled={uploadingId === a.id}
+                            onClick={() => fileInputs.current[a.id]?.click()}
+                            title="Anexar arquivo (PDF ou imagem)"
+                          >
+                            <Upload className="h-4 w-4 text-blue-600" />
                           </Button>
                         </>
                       )}
