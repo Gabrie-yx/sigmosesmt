@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowLeft, Pencil, Trash2, Calendar, Eye, Users, Clock, Building2, MapPin, X } from "lucide-react";
+import { Plus, ArrowLeft, Pencil, Trash2, Calendar, Eye, Users, Clock, Building2, MapPin, X, List, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
@@ -55,6 +55,8 @@ function HoraExtraSabadoPage() {
   const [empresaFiltro, setEmpresaFiltro] = useState<string>("todas");
   const [turnoFiltro, setTurnoFiltro] = useState<string>("todos");
   const [detalheId, setDetalheId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"lista" | "calendario">("lista");
+  const [cursorMes, setCursorMes] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
 
   const { data: fichas, isLoading } = useQuery({
     queryKey: ["hora-extra-sabado"],
@@ -81,6 +83,7 @@ function HoraExtraSabadoPage() {
   });
 
   async function gerarPdf(id: string) {
+    setDetalheId(null);
     const { data: rec } = await supabase
       .from("hora_extra_sabado")
       .select("*, companies(name)")
@@ -182,9 +185,10 @@ function HoraExtraSabadoPage() {
   }
 
   const filtradas = (fichas ?? []).filter((f: any) => {
-    // Período
-    if (periodo !== "todos") {
-      const d = new Date(f.data + "T12:00:00");
+    const d = new Date(f.data + "T12:00:00");
+    if (viewMode === "calendario") {
+      if (d.getMonth() !== cursorMes.getMonth() || d.getFullYear() !== cursorMes.getFullYear()) return false;
+    } else if (periodo !== "todos") {
       const hoje = new Date();
       if (periodo === "mes") {
         if (d.getMonth() !== hoje.getMonth() || d.getFullYear() !== hoje.getFullYear()) return false;
@@ -246,26 +250,55 @@ function HoraExtraSabadoPage() {
         )}
       </div>
 
-      {/* Chips + filtros */}
+      {/* Toggle + filtros */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        {[
-          { id: "mes", label: "Este mês" },
-          { id: "mes_passado", label: "Mês passado" },
-          { id: "30d", label: "Últimos 30d" },
-          { id: "todos", label: "Todos" },
-        ].map((p) => (
-          <button
-            key={p.id}
-            onClick={() => setPeriodo(p.id as any)}
-            className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border transition-all ${
-              periodo === p.id
-                ? "bg-rose-500/20 border-rose-400/40 text-rose-100"
-                : "bg-white/[0.03] border-white/10 text-slate-300 hover:bg-white/[0.06]"
-            }`}
-          >
-            {p.label}
-          </button>
-        ))}
+        <div className="inline-flex rounded-full border border-white/10 bg-white/[0.03] p-0.5">
+          {([
+            { id: "lista", label: "Lista", Icon: List },
+            { id: "calendario", label: "Calendário", Icon: Calendar },
+          ] as const).map((v) => (
+            <button
+              key={v.id}
+              onClick={() => setViewMode(v.id)}
+              className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition-all ${
+                viewMode === v.id ? "bg-rose-500/20 text-rose-100" : "text-slate-300 hover:text-slate-100"
+              }`}
+            >
+              <v.Icon className="h-3 w-3" />{v.label}
+            </button>
+          ))}
+        </div>
+        {viewMode === "lista" ? (
+          <>
+            {[
+              { id: "mes", label: "Este mês" },
+              { id: "mes_passado", label: "Mês passado" },
+              { id: "30d", label: "Últimos 30d" },
+              { id: "todos", label: "Todos" },
+            ].map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setPeriodo(p.id as any)}
+                className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border transition-all ${
+                  periodo === p.id
+                    ? "bg-rose-500/20 border-rose-400/40 text-rose-100"
+                    : "bg-white/[0.03] border-white/10 text-slate-300 hover:bg-white/[0.06]"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </>
+        ) : (
+          <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-1">
+            <button onClick={() => setCursorMes(new Date(cursorMes.getFullYear(), cursorMes.getMonth() - 1, 1))} className="p-1 rounded-full hover:bg-white/[0.06] text-slate-300"><ChevronLeft className="h-3.5 w-3.5" /></button>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-100 px-2 min-w-[110px] text-center">
+              {cursorMes.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+            </span>
+            <button onClick={() => setCursorMes(new Date(cursorMes.getFullYear(), cursorMes.getMonth() + 1, 1))} className="p-1 rounded-full hover:bg-white/[0.06] text-slate-300"><ChevronRight className="h-3.5 w-3.5" /></button>
+            <button onClick={() => { const d = new Date(); setCursorMes(new Date(d.getFullYear(), d.getMonth(), 1)); }} className="text-[9px] font-black uppercase tracking-widest text-rose-200 hover:text-rose-100 px-2">Hoje</button>
+          </div>
+        )}
         <div className="h-5 w-px bg-white/10 mx-1" />
         <Select value={empresaFiltro} onValueChange={setEmpresaFiltro}>
           <SelectTrigger className="h-8 w-[180px] text-xs bg-white/[0.03] border-white/10 text-slate-200">
@@ -311,6 +344,72 @@ function HoraExtraSabadoPage() {
           <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Nenhuma ficha registrada</p>
           <p className="text-xs text-slate-400 mt-1">Crie a primeira clicando em "Nova ficha".</p>
         </div>
+      ) : viewMode === "calendario" ? (
+        (() => {
+          const ano = cursorMes.getFullYear();
+          const mes = cursorMes.getMonth();
+          const primeiroDia = new Date(ano, mes, 1).getDay();
+          const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+          const porDia = new Map<number, any[]>();
+          filtradas.forEach((f: any) => {
+            const dia = new Date(f.data + "T12:00:00").getDate();
+            if (!porDia.has(dia)) porDia.set(dia, []);
+            porDia.get(dia)!.push(f);
+          });
+          const celulas: Array<{ dia: number | null }> = [];
+          for (let i = 0; i < primeiroDia; i++) celulas.push({ dia: null });
+          for (let i = 1; i <= diasNoMes; i++) celulas.push({ dia: i });
+          const hojeRef = new Date();
+          const isHoje = (d: number) => hojeRef.getDate() === d && hojeRef.getMonth() === mes && hojeRef.getFullYear() === ano;
+          return (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {["DOM","SEG","TER","QUA","QUI","SEX","SÁB"].map((d) => (
+                  <div key={d} className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-center py-1">{d}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {celulas.map((c, idx) => {
+                  if (c.dia === null) return <div key={idx} />;
+                  const fs = porDia.get(c.dia) ?? [];
+                  const temFichas = fs.length > 0;
+                  const dow = new Date(ano, mes, c.dia).getDay();
+                  const fimDeSemana = dow === 0 || dow === 6;
+                  return (
+                    <div
+                      key={idx}
+                      className={`min-h-[78px] rounded-lg border p-1.5 flex flex-col gap-1 transition-all ${
+                        temFichas ? "border-rose-400/30 bg-rose-500/[0.06]" : "border-white/5 bg-white/[0.01]"
+                      } ${fimDeSemana ? "ring-1 ring-white/5" : ""}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[11px] font-black tabular-nums ${isHoje(c.dia) ? "text-rose-200 bg-rose-500/30 rounded-full w-5 h-5 inline-flex items-center justify-center" : "text-slate-300"}`}>{c.dia}</span>
+                        {temFichas && <span className="text-[9px] font-bold text-rose-200">{fs.length}</span>}
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        {fs.slice(0, 2).map((f: any) => (
+                          <button
+                            key={f.id}
+                            onClick={() => setDetalheId(f.id)}
+                            className="text-left rounded bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 px-1 py-0.5 text-[9px] font-bold text-rose-100 truncate"
+                            title={`${f.companies?.name ?? ""} · ${f.horario_inicio ?? ""}`}
+                          >
+                            {f.companies?.name?.split(" ")[0] ?? "Ficha"} · {f.hora_extra_sabado_funcionarios?.length ?? 0}
+                          </button>
+                        ))}
+                        {fs.length > 2 && (
+                          <button onClick={() => setDetalheId(fs[2].id)} className="text-left text-[9px] font-bold text-slate-400 hover:text-rose-200">
+                            +{fs.length - 2}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()
       ) : (
         <div className="grid gap-1.5">
           {filtradas.map((f: any) => {
