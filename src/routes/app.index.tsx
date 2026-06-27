@@ -157,52 +157,66 @@ function HomePage() {
       </section>
 
       {/* SOBRE NÓS */}
-      <section className="px-6 md:px-14 py-16 max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-2 gap-10 items-center bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="relative h-72 lg:h-full min-h-[420px]">
-            <img src={shipyardImg} alt="Estaleiro DMN às margens do Rio Amazonas" className="absolute inset-0 w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            <div className="absolute bottom-6 left-6 right-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30">
-                <Waves className="h-3 w-3 text-white" />
-                <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white">
-                  Margens do Rio Amazonas
-                </span>
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#2a060d] via-[#5b0f1c] to-[#3b0a14]" />
+        <div className="absolute inset-0 opacity-50 pointer-events-none">
+          <div className="absolute -top-24 right-1/4 w-[28rem] h-[28rem] rounded-full bg-red-600/30 blur-3xl" />
+          <div className="absolute -bottom-24 left-1/4 w-[28rem] h-[28rem] rounded-full bg-amber-500/20 blur-3xl" />
+        </div>
+
+        <div className="relative px-6 md:px-14 py-20 max-w-7xl mx-auto">
+          <div className="relative grid lg:grid-cols-2 gap-10 items-center rounded-3xl overflow-hidden bg-gradient-to-br from-[#1a0510]/80 to-[#2a0810]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_40px_rgba(0,0,0,0.5)]">
+            {/* flares intensos nos cantos */}
+            <div className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-red-500/50 blur-3xl" />
+            <div className="pointer-events-none absolute -top-20 -right-20 w-64 h-64 rounded-full bg-amber-400/40 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -left-20 w-64 h-64 rounded-full bg-orange-500/40 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-red-600/50 blur-3xl" />
+
+            <div className="relative h-72 lg:h-full min-h-[420px]">
+              <img src={shipyardImg} alt="Estaleiro DMN às margens do Rio Amazonas" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <div className="absolute bottom-6 left-6 right-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30">
+                  <Waves className="h-3 w-3 text-white" />
+                  <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white">
+                    Margens do Rio Amazonas
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="p-8 md:p-12">
-            <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[#7f1d1d] mb-3">
-              Sobre Nós
-            </div>
-            <h3 className="heading-display text-3xl md:text-4xl text-slate-900 leading-tight tracking-tight mb-5">
-              Uma década forjando a <span className="text-[#7f1d1d]">indústria naval</span> amazônica
-            </h3>
-            <p className="text-sm md:text-[15px] leading-relaxed text-slate-600 mb-4">
-              A DMN Estaleiro nasceu com o propósito de fortalecer a indústria
-              naval na Amazônia. Com raízes firmes na região e olhos voltados
-              para o futuro, crescemos com ousadia, investindo em tecnologia,
-              sustentabilidade e excelência.
-            </p>
-            <p className="text-sm md:text-[15px] leading-relaxed text-slate-600 mb-6">
-              Localizada estrategicamente às margens do Rio Amazonas, possuímos
-              infraestrutura completa para construção, manutenção e reforma de
-              embarcações de grande porte — diques flutuantes, áreas cobertas
-              de produção, guindastes e equipamentos de última geração.
-            </p>
+            <div className="relative p-8 md:p-12">
+              <div className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-300 mb-3">
+                Sobre Nós
+              </div>
+              <h3 className="heading-display text-3xl md:text-4xl text-white leading-tight tracking-tight mb-5 drop-shadow-lg">
+                Uma década forjando a <span className="text-amber-300">indústria naval</span> amazônica
+              </h3>
+              <p className="text-sm md:text-[15px] leading-relaxed text-white/85 mb-4">
+                A DMN Estaleiro nasceu com o propósito de fortalecer a indústria
+                naval na Amazônia. Com raízes firmes na região e olhos voltados
+                para o futuro, crescemos com ousadia, investindo em tecnologia,
+                sustentabilidade e excelência.
+              </p>
+              <p className="text-sm md:text-[15px] leading-relaxed text-white/85 mb-6">
+                Localizada estrategicamente às margens do Rio Amazonas, possuímos
+                infraestrutura completa para construção, manutenção e reforma de
+                embarcações de grande porte — diques flutuantes, áreas cobertas
+                de produção, guindastes e equipamentos de última geração.
+              </p>
 
-            <div className="grid grid-cols-3 gap-3 pt-6 border-t border-slate-100">
-              {[
-                { icon: Building2, n: "10+", l: "Anos" },
-                { icon: Factory, n: "100%", l: "Naval" },
-                { icon: Award, n: "ISO", l: "9001" },
-              ].map(({ icon: Icon, n, l }) => (
-                <div key={l} className="text-center">
-                  <Icon className="h-5 w-5 text-[#7f1d1d] mx-auto mb-1.5" />
-                  <div className="text-xl font-black text-slate-900 tracking-tight">{n}</div>
-                  <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">{l}</div>
-                </div>
-              ))}
+              <div className="grid grid-cols-3 gap-3 pt-6 border-t border-white/10">
+                {[
+                  { icon: Building2, n: "10+", l: "Anos" },
+                  { icon: Factory, n: "100%", l: "Naval" },
+                  { icon: Award, n: "ISO", l: "9001" },
+                ].map(({ icon: Icon, n, l }) => (
+                  <div key={l} className="text-center">
+                    <Icon className="h-5 w-5 text-amber-300 mx-auto mb-1.5" />
+                    <div className="text-xl font-black text-white tracking-tight">{n}</div>
+                    <div className="text-[9px] font-black uppercase tracking-widest text-white/60">{l}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
