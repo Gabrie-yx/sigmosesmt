@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowLeft, Pencil, Trash2, Calendar, Eye, Users, Clock, Building2, MapPin, X, List, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, ArrowLeft, Pencil, Trash2, Calendar, Eye, Clock, Building2, MapPin, X, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
@@ -51,11 +51,9 @@ function HoraExtraSabadoPage() {
   const [previewFichaId, setPreviewFichaId] = useState<string | null>(null);
   const [tstSig, setTstSig] = useState<string | null>(null);
   const [gestorSig, setGestorSig] = useState<string | null>(null);
-  const [periodo, setPeriodo] = useState<"todos" | "mes" | "mes_passado" | "30d">("mes");
   const [empresaFiltro, setEmpresaFiltro] = useState<string>("todas");
   const [turnoFiltro, setTurnoFiltro] = useState<string>("todos");
   const [detalheId, setDetalheId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"lista" | "calendario">("lista");
   const [cursorMes, setCursorMes] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
 
   const { data: fichas, isLoading } = useQuery({
@@ -186,20 +184,7 @@ function HoraExtraSabadoPage() {
 
   const filtradas = (fichas ?? []).filter((f: any) => {
     const d = new Date(f.data + "T12:00:00");
-    if (viewMode === "calendario") {
-      if (d.getMonth() !== cursorMes.getMonth() || d.getFullYear() !== cursorMes.getFullYear()) return false;
-    } else if (periodo !== "todos") {
-      const hoje = new Date();
-      if (periodo === "mes") {
-        if (d.getMonth() !== hoje.getMonth() || d.getFullYear() !== hoje.getFullYear()) return false;
-      } else if (periodo === "mes_passado") {
-        const ref = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
-        if (d.getMonth() !== ref.getMonth() || d.getFullYear() !== ref.getFullYear()) return false;
-      } else if (periodo === "30d") {
-        const limite = new Date(); limite.setDate(limite.getDate() - 30);
-        if (d < limite) return false;
-      }
-    }
+    if (d.getMonth() !== cursorMes.getMonth() || d.getFullYear() !== cursorMes.getFullYear()) return false;
     if (empresaFiltro !== "todas" && (f.companies?.name ?? "") !== empresaFiltro) return false;
     if (turnoFiltro !== "todos" && String(f.turno ?? "") !== turnoFiltro) return false;
     if (!busca.trim()) return true;
@@ -226,9 +211,9 @@ function HoraExtraSabadoPage() {
 
   const fichaDetalhe = (fichas ?? []).find((f: any) => f.id === detalheId);
 
-  const temFiltro = periodo !== "todos" || empresaFiltro !== "todas" || turnoFiltro !== "todos" || busca.trim() !== "";
+  const temFiltro = empresaFiltro !== "todas" || turnoFiltro !== "todos" || busca.trim() !== "";
   function limparFiltros() {
-    setPeriodo("todos"); setEmpresaFiltro("todas"); setTurnoFiltro("todos"); setBusca("");
+    setEmpresaFiltro("todas"); setTurnoFiltro("todos"); setBusca("");
   }
 
   return (
@@ -250,55 +235,16 @@ function HoraExtraSabadoPage() {
         )}
       </div>
 
-      {/* Toggle + filtros */}
+      {/* Calendário + filtros */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-full border border-white/10 bg-white/[0.03] p-0.5">
-          {([
-            { id: "lista", label: "Lista", Icon: List },
-            { id: "calendario", label: "Calendário", Icon: Calendar },
-          ] as const).map((v) => (
-            <button
-              key={v.id}
-              onClick={() => setViewMode(v.id)}
-              className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition-all ${
-                viewMode === v.id ? "bg-rose-500/20 text-rose-100" : "text-slate-300 hover:text-slate-100"
-              }`}
-            >
-              <v.Icon className="h-3 w-3" />{v.label}
-            </button>
-          ))}
+        <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-1">
+          <button onClick={() => setCursorMes(new Date(cursorMes.getFullYear(), cursorMes.getMonth() - 1, 1))} className="p-1 rounded-full hover:bg-white/[0.06] text-slate-300"><ChevronLeft className="h-3.5 w-3.5" /></button>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-100 px-2 min-w-[120px] text-center">
+            {cursorMes.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+          </span>
+          <button onClick={() => setCursorMes(new Date(cursorMes.getFullYear(), cursorMes.getMonth() + 1, 1))} className="p-1 rounded-full hover:bg-white/[0.06] text-slate-300"><ChevronRight className="h-3.5 w-3.5" /></button>
+          <button onClick={() => { const d = new Date(); setCursorMes(new Date(d.getFullYear(), d.getMonth(), 1)); }} className="text-[9px] font-black uppercase tracking-widest text-rose-200 hover:text-rose-100 px-2">Hoje</button>
         </div>
-        {viewMode === "lista" ? (
-          <>
-            {[
-              { id: "mes", label: "Este mês" },
-              { id: "mes_passado", label: "Mês passado" },
-              { id: "30d", label: "Últimos 30d" },
-              { id: "todos", label: "Todos" },
-            ].map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setPeriodo(p.id as any)}
-                className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border transition-all ${
-                  periodo === p.id
-                    ? "bg-rose-500/20 border-rose-400/40 text-rose-100"
-                    : "bg-white/[0.03] border-white/10 text-slate-300 hover:bg-white/[0.06]"
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </>
-        ) : (
-          <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-1">
-            <button onClick={() => setCursorMes(new Date(cursorMes.getFullYear(), cursorMes.getMonth() - 1, 1))} className="p-1 rounded-full hover:bg-white/[0.06] text-slate-300"><ChevronLeft className="h-3.5 w-3.5" /></button>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-100 px-2 min-w-[110px] text-center">
-              {cursorMes.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
-            </span>
-            <button onClick={() => setCursorMes(new Date(cursorMes.getFullYear(), cursorMes.getMonth() + 1, 1))} className="p-1 rounded-full hover:bg-white/[0.06] text-slate-300"><ChevronRight className="h-3.5 w-3.5" /></button>
-            <button onClick={() => { const d = new Date(); setCursorMes(new Date(d.getFullYear(), d.getMonth(), 1)); }} className="text-[9px] font-black uppercase tracking-widest text-rose-200 hover:text-rose-100 px-2">Hoje</button>
-          </div>
-        )}
         <div className="h-5 w-px bg-white/10 mx-1" />
         <Select value={empresaFiltro} onValueChange={setEmpresaFiltro}>
           <SelectTrigger className="h-8 w-[180px] text-xs bg-white/[0.03] border-white/10 text-slate-200">
@@ -344,7 +290,7 @@ function HoraExtraSabadoPage() {
           <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Nenhuma ficha registrada</p>
           <p className="text-xs text-slate-400 mt-1">Crie a primeira clicando em "Nova ficha".</p>
         </div>
-      ) : viewMode === "calendario" ? (
+      ) : (
         (() => {
           const ano = cursorMes.getFullYear();
           const mes = cursorMes.getMonth();
@@ -410,42 +356,6 @@ function HoraExtraSabadoPage() {
             </div>
           );
         })()
-      ) : (
-        <div className="grid gap-1.5">
-          {filtradas.map((f: any) => {
-            const d = new Date(f.data + "T12:00:00");
-            const dia = DIAS[d.getDay()].slice(0, 3).toUpperCase();
-            const dataCurta = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-            const horario = f.horario_inicio ? `${f.horario_inicio}–${f.horario_fim ?? ""}` : "—";
-            const qtd = f.hora_extra_sabado_funcionarios?.length ?? 0;
-            return (
-              <button
-                key={f.id}
-                onClick={() => setDetalheId(f.id)}
-                className="group w-full text-left rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-rose-400/30 px-3 py-2 transition-all"
-              >
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="font-black text-slate-100 tabular-nums w-[58px]">{dataCurta}</span>
-                  <span className="text-[9px] font-black uppercase tracking-widest bg-rose-500/15 text-rose-200 px-1.5 py-0.5 rounded w-[42px] text-center">{dia}</span>
-                  {f.companies?.name && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300 truncate max-w-[180px]">{f.companies.name}</span>
-                  )}
-                  <span className="text-xs text-slate-400 inline-flex items-center gap-1 tabular-nums">
-                    <Clock className="h-3 w-3" /> {horario}
-                  </span>
-                  {f.setor && (
-                    <span className="text-xs text-slate-400 inline-flex items-center gap-1 truncate max-w-[200px]">
-                      <MapPin className="h-3 w-3" /> {f.setor}
-                    </span>
-                  )}
-                  <span className="ml-auto text-xs text-slate-300 inline-flex items-center gap-1 font-semibold tabular-nums">
-                    <Users className="h-3 w-3" /> {qtd}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
       )}
 
       {/* Drawer de detalhes */}

@@ -1056,6 +1056,23 @@
 .light-paper {
   color: rgb(15 23 42);
 }
+
+.pdf-dialog {
+  background: #ffffff !important;
+  color: rgb(15 23 42) !important;
+  border-color: rgb(226 232 240) !important;
+  backdrop-filter: none !important;
+}
+.pdf-dialog.dialog-glass-shine::after {
+  display: none !important;
+}
+.pdf-dialog .bg-slate-200 {
+  background-color: rgb(226 232 240) !important;
+}
+.pdf-dialog .bg-white {
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+}
 .light-paper :is(.bg-white, .bg-white\/60, .bg-white\/70, .bg-white\/80) {
   background-color: #ffffff !important;
   backdrop-filter: none !important;
