@@ -845,8 +845,49 @@ function EmployeeContextSidebar({ id }: { id: string }) {
 }
 
 /* ============ PROFILE ============ */
-function AssinaturaField({ value, onChange, disabled }: { value: string | null; onChange: (v: string | null) => void; disabled?: boolean }) {
+function AssinaturaField({
+  employeeId,
+  value,
+  onChange,
+  disabled,
+}: {
+  employeeId: string | null | undefined;
+  value: string | null;
+  onChange: (v: string | null) => void;
+  disabled?: boolean;
+}) {
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const qc = useQueryClient();
+
+  // Persiste a assinatura IMEDIATAMENTE no banco, sem depender do botão "Salvar"
+  // do perfil. O save do perfil exclui `assinatura_url` do payload (para não
+  // sobrescrever com valor estagnado), então este é o único caminho de gravação.
+  async function persist(next: string | null) {
+    if (!employeeId) {
+      toast.error("Funcionário não identificado. Recarregue a página.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("employees")
+        .update({ assinatura_url: next })
+        .eq("id", employeeId);
+      if (error) throw error;
+      onChange(next); // atualiza o estado local pra UI refletir na hora
+      qc.invalidateQueries({ queryKey: ["employee", employeeId] });
+      qc.invalidateQueries({ queryKey: ["employees"] });
+      qc.invalidateQueries({ queryKey: ["employee-signature", employeeId] });
+      toast.success(next ? "Assinatura salva no perfil" : "Assinatura removida");
+    } catch (e: any) {
+      console.error("[assinatura] erro ao salvar:", e);
+      toast.error("Erro ao salvar assinatura: " + (e?.message || "desconhecido"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <>
       <Field label="Assinatura digital">
@@ -856,11 +897,11 @@ function AssinaturaField({ value, onChange, disabled }: { value: string | null; 
           ) : (
             <div className="h-10 w-32 border border-dashed border-slate-300 rounded grid place-items-center text-[10px] text-slate-400 uppercase tracking-widest">Sem assinatura</div>
           )}
-          <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)} disabled={disabled}>
-            {value ? "Substituir" : "Capturar"}
+          <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)} disabled={disabled || saving}>
+            {saving ? "Salvando…" : value ? "Substituir" : "Capturar"}
           </Button>
           {value && !disabled && (
-            <Button type="button" size="sm" variant="ghost" className="text-rose-600" onClick={() => onChange(null)}>
+            <Button type="button" size="sm" variant="ghost" className="text-rose-600" onClick={() => persist(null)} disabled={saving}>
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           )}
@@ -871,7 +912,7 @@ function AssinaturaField({ value, onChange, disabled }: { value: string | null; 
           <SignaturePadDialog
             open={open}
             onClose={() => setOpen(false)}
-            onConfirm={(r) => { onChange(r.dataUrl); setOpen(false); }}
+            onConfirm={(r) => { setOpen(false); persist(r.dataUrl); }}
             title="Assinatura do funcionário"
           />
         </Suspense>
@@ -1033,7 +1074,7 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
           </Select>
         </Field>
         <Field label="PIS / NIT (eSocial)"><Input inputMode="numeric" maxLength={14} placeholder="00000000000" value={f.pis ?? ""} onChange={(e) => setF({ ...f, pis: e.target.value.replace(/\D/g, "").slice(0, 14) })} disabled={!canEdit} /></Field>
-        <AssinaturaField value={f.assinatura_url ?? null} onChange={(v) => setF({ ...f, assinatura_url: v })} disabled={!canEdit} />
+        <AssinaturaField employeeId={emp?.id} value={f.assinatura_url ?? null} onChange={(v) => setF({ ...f, assinatura_url: v })} disabled={!canEdit} />
         <Field label="Tipo cadastro">
           <Select value={f.tipo_cadastro} onValueChange={(v) => setF({ ...f, tipo_cadastro: v })} disabled={!canEdit}>
             <SelectTrigger><SelectValue /></SelectTrigger>
