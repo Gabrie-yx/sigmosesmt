@@ -185,9 +185,10 @@ function HoraExtraSabadoPage() {
   }
 
   const filtradas = (fichas ?? []).filter((f: any) => {
-    // Período
-    if (periodo !== "todos") {
-      const d = new Date(f.data + "T12:00:00");
+    const d = new Date(f.data + "T12:00:00");
+    if (viewMode === "calendario") {
+      if (d.getMonth() !== cursorMes.getMonth() || d.getFullYear() !== cursorMes.getFullYear()) return false;
+    } else if (periodo !== "todos") {
       const hoje = new Date();
       if (periodo === "mes") {
         if (d.getMonth() !== hoje.getMonth() || d.getFullYear() !== hoje.getFullYear()) return false;
