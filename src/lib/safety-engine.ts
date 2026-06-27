@@ -1,4 +1,4 @@
-import { daysUntil, addYearsToDate } from "./utils-date";
+import { daysUntil, addYearsToDate, addMonthsToDate } from "./utils-date";
 import { type SafetyOverride, filterActiveOverrides, hasGlobalOverride, isMessageOverridden } from "./safety-overrides";
 
 export type SafetyLabel = "APTO" | "ALERTA" | "BLOQUEADO" | "INATIVO" | "AFASTADO" | "SEM CARGO";
@@ -24,6 +24,8 @@ export interface EngineRole {
   name: string;
   req_aso: boolean;
   req_integra: boolean;
+  /** Periodicidade de reciclagem da Integração em meses. null/undefined = não vence (default, alinhado ao MTE). */
+  periodicidade_integracao_meses?: number | null;
   req_nrs: string[];
   req_exames?: string[];
   req_vacinas?: string[];
@@ -137,7 +139,25 @@ export function calculateSafetyStatus(
   };
 
   if (role.req_aso) checkLegacy(emp.data_aso, "ASO", true);
-  if (role.req_integra) checkLegacy(emp.data_integracao, "Integração");
+  if (role.req_integra) {
+    if (!emp.data_integracao) {
+      isRed = true;
+      msgs.push("Falta Integração");
+    } else if (role.periodicidade_integracao_meses && role.periodicidade_integracao_meses > 0) {
+      const exp = addMonthsToDate(emp.data_integracao, role.periodicidade_integracao_meses);
+      const d = daysUntil(exp);
+      if (d !== null) {
+        if (d < 0) {
+          isRed = true;
+          msgs.push("Integração Vencida");
+        } else if (d <= 30) {
+          isYellow = true;
+          msgs.push(`Integração Vence em ${d}d`);
+        }
+      }
+    }
+    // sem periodicidade → não vence (MTE não exige reciclagem da Integração geral)
+  }
 
   // OS (Ordem de Serviço – NR-01 1.4.1 "c") — só bloqueia se foi explicitamente avaliado (false).
   // null = check não foi feito pelo chamador (modo legado, não bloqueia).
