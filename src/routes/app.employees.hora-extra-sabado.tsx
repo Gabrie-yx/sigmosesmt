@@ -344,6 +344,72 @@ function HoraExtraSabadoPage() {
           <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Nenhuma ficha registrada</p>
           <p className="text-xs text-slate-400 mt-1">Crie a primeira clicando em "Nova ficha".</p>
         </div>
+      ) : viewMode === "calendario" ? (
+        (() => {
+          const ano = cursorMes.getFullYear();
+          const mes = cursorMes.getMonth();
+          const primeiroDia = new Date(ano, mes, 1).getDay();
+          const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+          const porDia = new Map<number, any[]>();
+          filtradas.forEach((f: any) => {
+            const dia = new Date(f.data + "T12:00:00").getDate();
+            if (!porDia.has(dia)) porDia.set(dia, []);
+            porDia.get(dia)!.push(f);
+          });
+          const celulas: Array<{ dia: number | null }> = [];
+          for (let i = 0; i < primeiroDia; i++) celulas.push({ dia: null });
+          for (let i = 1; i <= diasNoMes; i++) celulas.push({ dia: i });
+          const hojeRef = new Date();
+          const isHoje = (d: number) => hojeRef.getDate() === d && hojeRef.getMonth() === mes && hojeRef.getFullYear() === ano;
+          return (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {["DOM","SEG","TER","QUA","QUI","SEX","SÁB"].map((d) => (
+                  <div key={d} className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-center py-1">{d}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {celulas.map((c, idx) => {
+                  if (c.dia === null) return <div key={idx} />;
+                  const fs = porDia.get(c.dia) ?? [];
+                  const temFichas = fs.length > 0;
+                  const dow = new Date(ano, mes, c.dia).getDay();
+                  const fimDeSemana = dow === 0 || dow === 6;
+                  return (
+                    <div
+                      key={idx}
+                      className={`min-h-[78px] rounded-lg border p-1.5 flex flex-col gap-1 transition-all ${
+                        temFichas ? "border-rose-400/30 bg-rose-500/[0.06]" : "border-white/5 bg-white/[0.01]"
+                      } ${fimDeSemana ? "ring-1 ring-white/5" : ""}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[11px] font-black tabular-nums ${isHoje(c.dia) ? "text-rose-200 bg-rose-500/30 rounded-full w-5 h-5 inline-flex items-center justify-center" : "text-slate-300"}`}>{c.dia}</span>
+                        {temFichas && <span className="text-[9px] font-bold text-rose-200">{fs.length}</span>}
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        {fs.slice(0, 2).map((f: any) => (
+                          <button
+                            key={f.id}
+                            onClick={() => setDetalheId(f.id)}
+                            className="text-left rounded bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 px-1 py-0.5 text-[9px] font-bold text-rose-100 truncate"
+                            title={`${f.companies?.name ?? ""} · ${f.horario_inicio ?? ""}`}
+                          >
+                            {f.companies?.name?.split(" ")[0] ?? "Ficha"} · {f.hora_extra_sabado_funcionarios?.length ?? 0}
+                          </button>
+                        ))}
+                        {fs.length > 2 && (
+                          <button onClick={() => setDetalheId(fs[2].id)} className="text-left text-[9px] font-bold text-slate-400 hover:text-rose-200">
+                            +{fs.length - 2}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()
       ) : (
         <div className="grid gap-1.5">
           {filtradas.map((f: any) => {
