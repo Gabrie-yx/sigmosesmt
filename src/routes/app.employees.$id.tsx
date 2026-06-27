@@ -936,7 +936,18 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
         if (!ok) throw new Error("Alteração de nome cancelada pelo usuário.");
       }
       const { id: _id, created_at, updated_at, ...rest } = f;
-      const payload = { ...rest, nome: toTitleCasePT(rest.nome) };
+      // Campos gerenciados por handlers próprios (upload de foto/assinatura,
+      // desligamento, troca de cargo com histórico). NUNCA mandar no update
+      // do perfil — senão o save sobrescreve com o valor estagnado no estado
+      // local `f` (ex.: foto recém-enviada some porque `f.foto_url` ainda é
+      // o valor antigo).
+      const {
+        foto_url: _foto,
+        assinatura_url: _assin,
+        assinatura_data: _assinData,
+        ...safe
+      } = rest;
+      const payload = { ...safe, nome: toTitleCasePT(safe.nome) };
       const { error } = await supabase.from("employees").update(payload).eq("id", emp.id);
       if (error) throw error;
     },
