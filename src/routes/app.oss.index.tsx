@@ -17,7 +17,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Plus, FileSignature, Download, Upload, Search, Settings2, AlertCircle, CheckCircle2, Clock, FileWarning, Eye, Ban,
-  Briefcase, AlertTriangle, FileDown, ChevronDown, ChevronRight, X as XIcon,
+  Briefcase, AlertTriangle, FileDown, ChevronDown, ChevronRight, X as XIcon, UserX,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
@@ -122,6 +122,82 @@ function OssIndexPage() {
       return (data ?? []) as unknown as Emissao[];
     },
   });
+
+  // Lista de funcionários ATIVOS pra cruzar com OSS vigentes (4ª fonte: faltantes)
+  const { data: ativosAll = [] } = useQuery({
+    queryKey: ["oss-employees-ativos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, nome, cpf, matricula, admissao, role_id, company_id, roles(name), companies(name)")
+        .eq("status", "ATIVO")
+        .order("nome");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  // Funcionário ATIVO sem OSS vigente para o cargo atual
+  type Faltante = {
+    employee_id: string; nome: string; cpf: string | null; matricula: string | null;
+    admissao: string | null; cargo: string | null; empresa: string | null;
+    motivo: "NUNCA_RECEBEU" | "CARGO_MUDOU" | "VENCIDA";
+    detalhe: string;
+  };
+  const norm = (s: string | null | undefined) =>
+    (s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase();
+  const faltantes: Faltante[] = useMemo(() => {
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    // Agrupa emissões vigentes por employee_id
+    const porEmp = new Map<string, Emissao[]>();
+    for (const e of emissoes) {
+      if (e.status === "SUBSTITUIDO" || (e.status as string) === "CANCELADO") continue;
+      if (!porEmp.has(e.employee_id)) porEmp.set(e.employee_id, []);
+      porEmp.get(e.employee_id)!.push(e);
+    }
+    const out: Faltante[] = [];
+    for (const emp of ativosAll) {
+      const cargoAtual = emp.roles?.name ?? null;
+      const lista = porEmp.get(emp.id) ?? [];
+      // OSS válida = mesmo cargo (case/acento-insensitive), status ASSINADO ou PENDENTE_ASSINATURA, não vencida
+      const vigente = lista.find((e) => {
+        if (norm(e.cargo_snapshot) !== norm(cargoAtual)) return false;
+        if (e.status === "VENCIDO") return false;
+        if (e.expira_em) {
+          const venc = new Date(e.expira_em.slice(0, 10) + "T00:00:00");
+          if (venc.getTime() < hoje.getTime()) return false;
+        }
+        return true;
+      });
+      if (vigente) continue;
+      let motivo: Faltante["motivo"] = "NUNCA_RECEBEU";
+      let detalhe = "Nunca recebeu OSS";
+      if (lista.length > 0) {
+        const ultima = lista[0];
+        if (norm(ultima.cargo_snapshot) !== norm(cargoAtual)) {
+          motivo = "CARGO_MUDOU";
+          detalhe = `Última OSS para "${ultima.cargo_snapshot}" — cargo atual "${cargoAtual ?? "—"}"`;
+        } else {
+          motivo = "VENCIDA";
+          detalhe = ultima.expira_em
+            ? `OSS vencida em ${formatDateBR(ultima.expira_em.slice(0, 10))}`
+            : "Última OSS marcada como vencida";
+        }
+      }
+      out.push({
+        employee_id: emp.id,
+        nome: emp.nome,
+        cpf: emp.cpf,
+        matricula: emp.matricula,
+        admissao: emp.admissao,
+        cargo: cargoAtual,
+        empresa: emp.companies?.name ?? null,
+        motivo,
+        detalhe,
+      });
+    }
+    return out.sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [emissoes, ativosAll]);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
