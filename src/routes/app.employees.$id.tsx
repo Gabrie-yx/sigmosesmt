@@ -2808,35 +2808,35 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
 
   function renderNaturezaCard(key: string, label: string, reqs: string[], apt: string, opts: { dimmed?: boolean } = {}) {
     const tone =
-      apt === "APTO" ? "border-emerald-300 bg-emerald-50" :
-      apt === "INAPTO" ? "border-rose-300 bg-rose-50" :
-      apt === "PENDENTE" ? "border-amber-300 bg-amber-50" :
-      "border-slate-200 bg-slate-50";
+      apt === "APTO" ? "border-emerald-500/30 bg-emerald-500/5 shadow-[inset_0_1px_0_0_rgba(16,185,129,0.08)]" :
+      apt === "INAPTO" ? "border-rose-500/40 bg-rose-500/10 shadow-[inset_0_1px_0_0_rgba(244,63,94,0.12)]" :
+      apt === "PENDENTE" ? "border-amber-500/30 bg-amber-500/5 shadow-[inset_0_1px_0_0_rgba(245,158,11,0.10)]" :
+      "border-white/10 bg-white/[0.03]";
     const badge =
       apt === "APTO" ? <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white"><CheckCircle2 className="h-3 w-3 mr-1" />APTO</Badge> :
       apt === "INAPTO" ? <Badge variant="destructive"><Ban className="h-3 w-3 mr-1" />INAPTO</Badge> :
       apt === "PENDENTE" ? <Badge className="bg-amber-500 hover:bg-amber-500 text-white"><AlertTriangle className="h-3 w-3 mr-1" />PENDENTE</Badge> :
-      <Badge variant="outline">SEM EXIGÊNCIA</Badge>;
+      <Badge variant="outline" className="border-white/15 text-white/70 bg-white/[0.04]">SEM EXIGÊNCIA</Badge>;
     return (
-      <div key={key} className={`rounded-md border p-3 ${tone} ${opts.dimmed ? "opacity-60" : ""}`}>
+      <div key={key} className={`rounded-lg border p-3 backdrop-blur-sm ${tone} ${opts.dimmed ? "opacity-55" : ""}`}>
         <div className="flex items-center justify-between mb-2 gap-2">
-          <span className="text-xs font-black uppercase tracking-widest">{label}</span>
+          <span className="text-xs font-black uppercase tracking-widest text-white/90">{label}</span>
           <div className="flex items-center gap-1.5">
-            {opts.dimmed && <Badge variant="outline" className="text-[9px] uppercase">aguarda evento</Badge>}
+            {opts.dimmed && <Badge variant="outline" className="text-[9px] uppercase border-white/15 text-white/60 bg-white/[0.04]">aguarda evento</Badge>}
             {badge}
           </div>
         </div>
         {reqs.length === 0 ? (
-          <div className="text-[11px] text-slate-500 italic">Nenhum procedimento exigido pelo cargo.</div>
+          <div className="text-[11px] text-white/50 italic">Nenhum procedimento exigido pelo cargo.</div>
         ) : (
           <ul className="space-y-1">
             {reqs.map((tipo) => {
               const s = statusForReq(key, tipo);
               const icon =
-                s.state === "OK" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> :
-                s.state === "INAPTO" ? <Ban className="h-3.5 w-3.5 text-rose-600" /> :
-                s.state === "VENCIDO" ? <Clock className="h-3.5 w-3.5 text-amber-600" /> :
-                <AlertCircle className="h-3.5 w-3.5 text-slate-500" />;
+                s.state === "OK" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> :
+                s.state === "INAPTO" ? <Ban className="h-3.5 w-3.5 text-rose-400" /> :
+                s.state === "VENCIDO" ? <Clock className="h-3.5 w-3.5 text-amber-400" /> :
+                <AlertCircle className="h-3.5 w-3.5 text-white/50" />;
               const txt =
                 s.state === "OK" ? `válido até ${formatDateBR(s.ex.data_vencimento)}` :
                 s.state === "INAPTO" ? `INAPTO em ${formatDateBR(s.ex!.data_realizacao)}` :
@@ -2845,13 +2845,13 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
               return (
                 <li key={tipo} className="flex items-center gap-2 text-xs">
                   {icon}
-                  <span className="font-medium">{tipo}</span>
-                  <span className="text-slate-500">— {txt}</span>
+                  <span className="font-medium text-white/85">{tipo}</span>
+                  <span className="text-white/50">— {txt}</span>
                   {canEdit && s.state !== "OK" && (
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-6 px-2 text-[10px] ml-auto"
+                      className="h-6 px-2 text-[10px] ml-auto text-brand hover:text-brand hover:bg-brand/10"
                       onClick={() => {
                         setF((p: any) => ({ ...p, tipo_exame: TIPOS_EXAME.includes(tipo as any) ? tipo : p.tipo_exame, natureza: NATUREZA_LABELS.find(n => n.key === key)!.label }));
                         setAptidaoOpen(false);
@@ -2893,13 +2893,13 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
 
       {/* Drawer lateral — Aptidão por Natureza */}
       <Sheet open={aptidaoOpen} onOpenChange={setAptidaoOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto border-l border-white/10">
           <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
+            <SheetTitle className="flex items-center gap-2 text-white">
               <ShieldCheck className="h-5 w-5 text-brand" />
               Aptidão por Natureza
             </SheetTitle>
-            <SheetDescription className="text-xs">
+            <SheetDescription className="text-xs text-white/60">
               PCMSO / ISO 9001 — {role?.name} · GHE {role?.ghe ?? "—"} · CBO {role?.cbo ?? "—"}
             </SheetDescription>
           </SheetHeader>
@@ -2907,8 +2907,8 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
           {role && (
             <div className="mt-4 space-y-4">
               {/* Riscos do GHE (colapsável visual) */}
-              <details className="rounded-md border bg-slate-50/60 p-3" open>
-                <summary className="text-[10px] font-black uppercase tracking-widest text-slate-600 cursor-pointer">
+              <details className="rounded-lg border border-white/10 bg-white/[0.03] backdrop-blur-sm p-3" open>
+                <summary className="text-[10px] font-black uppercase tracking-widest text-brand cursor-pointer">
                   Perfil de Risco do Cargo
                 </summary>
                 <div className="mt-2 space-y-2">
@@ -2917,24 +2917,24 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
                     novos={cargoRiscosNova}
                     categorias={todasCategoriasRisco}
                   />
-                  {riscos?.descricao && <div className="text-xs text-slate-600 italic">{riscos.descricao}</div>}
+                  {riscos?.descricao && <div className="text-xs text-white/60 italic">{riscos.descricao}</div>}
                 </div>
               </details>
 
               <Tabs defaultValue="ativas" className="w-full">
-                <TabsList className="grid grid-cols-2 w-full">
-                  <TabsTrigger value="ativas">
+                <TabsList className="grid grid-cols-2 w-full bg-white/[0.04] border border-white/10">
+                  <TabsTrigger value="ativas" className="data-[state=active]:bg-brand/20 data-[state=active]:text-white">
                     Ativas
-                    <Badge variant="outline" className="ml-2 text-[10px]">{aggActive.length}</Badge>
+                    <Badge variant="outline" className="ml-2 text-[10px] border-white/20 text-white/80">{aggActive.length}</Badge>
                   </TabsTrigger>
-                  <TabsTrigger value="condicionais">
+                  <TabsTrigger value="condicionais" className="data-[state=active]:bg-brand/20 data-[state=active]:text-white">
                     Condicionais
-                    <Badge variant="outline" className="ml-2 text-[10px]">{naturezasAvaliadas.filter(n => CONDITIONAL_KEYS.has(n.key)).length}</Badge>
+                    <Badge variant="outline" className="ml-2 text-[10px] border-white/20 text-white/80">{naturezasAvaliadas.filter(n => CONDITIONAL_KEYS.has(n.key)).length}</Badge>
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="ativas" className="mt-3 space-y-3">
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-[11px] text-white/55">
                     Exigências que se aplicam <strong>agora</strong> ao funcionário ativo no cargo.
                   </div>
                   {naturezasAvaliadas
@@ -2943,7 +2943,7 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
                 </TabsContent>
 
                 <TabsContent value="condicionais" className="mt-3 space-y-3">
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-[11px] text-white/55">
                     Só disparam mediante <strong>evento</strong> (retorno após afastamento ≥30d, ou desligamento).
                   </div>
                   {naturezasAvaliadas
