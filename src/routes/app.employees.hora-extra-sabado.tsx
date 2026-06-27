@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowLeft, Pencil, Trash2, Calendar, Eye, Users, Clock, Building2, MapPin, X } from "lucide-react";
+import { Plus, ArrowLeft, Pencil, Trash2, Calendar, Eye, Users, Clock, Building2, MapPin, X, List, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
@@ -55,6 +55,8 @@ function HoraExtraSabadoPage() {
   const [empresaFiltro, setEmpresaFiltro] = useState<string>("todas");
   const [turnoFiltro, setTurnoFiltro] = useState<string>("todos");
   const [detalheId, setDetalheId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"lista" | "calendario">("lista");
+  const [cursorMes, setCursorMes] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
 
   const { data: fichas, isLoading } = useQuery({
     queryKey: ["hora-extra-sabado"],
@@ -81,6 +83,7 @@ function HoraExtraSabadoPage() {
   });
 
   async function gerarPdf(id: string) {
+    setDetalheId(null);
     const { data: rec } = await supabase
       .from("hora_extra_sabado")
       .select("*, companies(name)")
