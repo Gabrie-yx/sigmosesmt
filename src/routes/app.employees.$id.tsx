@@ -2672,6 +2672,21 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
   const riscos = role?.riscos ?? {};
   const today = new Date().toISOString().slice(0, 10);
 
+  // Fonte nova: cargo_riscos + catalogo_riscos (usada quando o JSONB legado em roles.riscos está vazio)
+  const { data: cargoRiscosNova = [] } = useQuery({
+    queryKey: ["cargo_riscos_ficha", role?.id],
+    enabled: !!role?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cargo_riscos")
+        .select("id, intensidade, unidade, limite_tolerancia, insalubridade_grau, periculosidade, status_avaliacao, catalogo_riscos(nome, categoria)")
+        .eq("role_id", role!.id)
+        .eq("ativo", true);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   // último exame por (natureza-key + tipo)
   function latestFor(naturezaKey: string, tipo: string) {
     const list = (exams ?? []).filter((ex: any) => {
@@ -2726,20 +2741,11 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
           {/* Riscos do GHE */}
           <div className="space-y-1.5">
             <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Riscos Ocupacionais do GHE</div>
-            <div className="flex flex-wrap gap-1.5">
-              {todasCategoriasRisco.map((cat) => {
-                const items: string[] = riscos?.[cat.key] ?? [];
-                if (!items.length) return null;
-                return items.map((it) => (
-                  <Badge key={`${cat.key}-${it}`} variant="secondary" className="text-[10px]">
-                    <span className="opacity-60 mr-1">{cat.label}:</span>{it}
-                  </Badge>
-                ));
-              })}
-              {todasCategoriasRisco.every((c) => !(riscos?.[c.key]?.length)) && (
-                <span className="text-xs text-muted-foreground italic">Sem riscos cadastrados no cargo.</span>
-              )}
-            </div>
+            <RiscosBadges
+              legado={riscos}
+              novos={cargoRiscosNova}
+              categorias={todasCategoriasRisco}
+            />
             {riscos?.descricao && <div className="text-xs text-slate-600 italic">{riscos.descricao}</div>}
           </div>
 
