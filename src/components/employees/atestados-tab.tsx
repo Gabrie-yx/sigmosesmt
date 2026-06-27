@@ -384,7 +384,105 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <HomologarAlert
+        atestado={homologTarget}
+        onCancel={() => setHomologTarget(null)}
+        onConfirm={() => homologTarget && confirmarHomologacao(homologTarget)}
+      />
     </div>
+  );
+}
+
+function HomologarAlert({
+  atestado,
+  onCancel,
+  onConfirm,
+}: {
+  atestado: any | null;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const hojeISO = new Date().toISOString().slice(0, 10);
+  const retorno: string | null = atestado?.data_retorno ?? null;
+  const inicio: string | null = atestado?.data_inicio ?? null;
+  const dias: number = atestado?.dias_afastamento ?? 0;
+  const isRetroativo = !!retorno && retorno < hojeISO;
+  const inicioFuturo = !!inicio && inicio > hojeISO;
+
+  let bloqueio: { tone: "info" | "warn" | "ok"; title: string; text: string } | null = null;
+  if (atestado) {
+    if (dias <= 0) {
+      bloqueio = {
+        tone: "info",
+        title: "Sem afastamento",
+        text: "Registro com 0 dias — apenas arquivamento no histórico. Nenhum bloqueio na portaria será criado.",
+      };
+    } else if (isRetroativo) {
+      bloqueio = {
+        tone: "info",
+        title: "Atestado retroativo",
+        text: `Período ${fmt(inicio)} → ${fmt(retorno)} já se encerrou. Apenas arquivamento — nenhum bloqueio na portaria.`,
+      };
+    } else if (inicioFuturo) {
+      bloqueio = {
+        tone: "warn",
+        title: "Bloqueio programado",
+        text: `Vigorará de ${fmt(inicio)} até ${fmt(retorno)} (${dias} dia(s)).`,
+      };
+    } else {
+      bloqueio = {
+        tone: "warn",
+        title: "Bloqueio ativo",
+        text: `De hoje até ${fmt(retorno)} (${dias} dia(s) de afastamento). O período já iniciado anteriormente não retroage.`,
+      };
+    }
+  }
+
+  const toneCls =
+    bloqueio?.tone === "warn"
+      ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+      : bloqueio?.tone === "ok"
+        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+        : "border-sky-500/30 bg-sky-500/10 text-sky-200";
+
+  return (
+    <AlertDialog open={!!atestado} onOpenChange={(o) => !o && onCancel()}>
+      <AlertDialogContent className="max-w-md">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+            Confirmar homologação
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-3 text-sm">
+              <div className="rounded-md border border-border/60 bg-muted/30 p-3">
+                <p className="font-medium text-foreground mb-2">Antes de homologar, confirme:</p>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>• Atestado assinado/validado pelo Supervisor Geral (Anderson)</li>
+                  <li>• Dados (CID, CRM, datas) conferidos</li>
+                </ul>
+              </div>
+              {bloqueio && (
+                <div className={`rounded-md border p-3 ${toneCls}`}>
+                  <p className="font-semibold mb-1">{bloqueio.title}</p>
+                  <p className="text-xs leading-relaxed opacity-90">{bloqueio.text}</p>
+                </div>
+              )}
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
+            Homologar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
