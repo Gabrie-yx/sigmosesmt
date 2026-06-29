@@ -249,6 +249,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "acidentes_trabalho_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+          {
             foreignKeyName: "acidentes_trabalho_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
@@ -580,6 +587,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprs_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
           },
           {
             foreignKeyName: "aprs_encarregado_id_fkey"
@@ -914,6 +928,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cascos_empresa_responsavel_id_fkey"
+            columns: ["empresa_responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
           },
           {
             foreignKeyName: "cascos_encarregado_id_fkey"
@@ -1484,6 +1505,13 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "company_frentes_servico_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
         ]
       }
       company_settings: {
@@ -1527,6 +1555,198 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      contratada_acordos_adequacao: {
+        Row: {
+          aprovador_cargo: string | null
+          aprovador_id: string
+          aprovador_nome: string
+          arquivo_path: string | null
+          company_id: string
+          created_at: string
+          data_aprovacao: string
+          data_cumprimento: string | null
+          data_limite: string
+          documento_id: string | null
+          id: string
+          justificativa: string
+          motivo_cancelamento: string | null
+          num_prorrogacoes: number
+          plano_acao: string
+          status: string
+          tipo_documento: string
+          updated_at: string
+        }
+        Insert: {
+          aprovador_cargo?: string | null
+          aprovador_id: string
+          aprovador_nome: string
+          arquivo_path?: string | null
+          company_id: string
+          created_at?: string
+          data_aprovacao?: string
+          data_cumprimento?: string | null
+          data_limite: string
+          documento_id?: string | null
+          id?: string
+          justificativa: string
+          motivo_cancelamento?: string | null
+          num_prorrogacoes?: number
+          plano_acao: string
+          status?: string
+          tipo_documento: string
+          updated_at?: string
+        }
+        Update: {
+          aprovador_cargo?: string | null
+          aprovador_id?: string
+          aprovador_nome?: string
+          arquivo_path?: string | null
+          company_id?: string
+          created_at?: string
+          data_aprovacao?: string
+          data_cumprimento?: string | null
+          data_limite?: string
+          documento_id?: string | null
+          id?: string
+          justificativa?: string
+          motivo_cancelamento?: string | null
+          num_prorrogacoes?: number
+          plano_acao?: string
+          status?: string
+          tipo_documento?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratada_acordos_adequacao_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratada_acordos_adequacao_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+          {
+            foreignKeyName: "contratada_acordos_adequacao_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "contratada_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contratada_acordos_historico: {
+        Row: {
+          acao: string
+          acordo_id: string
+          created_at: string
+          data_limite_anterior: string | null
+          data_limite_nova: string | null
+          id: string
+          justificativa: string
+          responsavel_id: string
+          responsavel_nome: string
+        }
+        Insert: {
+          acao: string
+          acordo_id: string
+          created_at?: string
+          data_limite_anterior?: string | null
+          data_limite_nova?: string | null
+          id?: string
+          justificativa: string
+          responsavel_id: string
+          responsavel_nome: string
+        }
+        Update: {
+          acao?: string
+          acordo_id?: string
+          created_at?: string
+          data_limite_anterior?: string | null
+          data_limite_nova?: string | null
+          id?: string
+          justificativa?: string
+          responsavel_id?: string
+          responsavel_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratada_acordos_historico_acordo_id_fkey"
+            columns: ["acordo_id"]
+            isOneToOne: false
+            referencedRelation: "contratada_acordos_adequacao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contratada_documentos: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_path: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          data_emissao: string | null
+          data_validade: string | null
+          id: string
+          numero: string | null
+          observacoes: string | null
+          responsavel_envio: string | null
+          tipo_documento: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          data_emissao?: string | null
+          data_validade?: string | null
+          id?: string
+          numero?: string | null
+          observacoes?: string | null
+          responsavel_envio?: string | null
+          tipo_documento: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_emissao?: string | null
+          data_validade?: string | null
+          id?: string
+          numero?: string | null
+          observacoes?: string | null
+          responsavel_envio?: string | null
+          tipo_documento?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratada_documentos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratada_documentos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+        ]
       }
       controle_doc_anexos: {
         Row: {
@@ -2161,6 +2381,13 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "dias_sem_acidente_recordes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
         ]
       }
       documentos_assinados: {
@@ -2609,6 +2836,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "employee_saidas_expediente_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+          {
             foreignKeyName: "employee_saidas_expediente_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
@@ -2818,6 +3052,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
           },
           {
             foreignKeyName: "employees_empresa_terceira_fk"
@@ -3543,6 +3784,13 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "hht_mensal_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
         ]
       }
       historico_entregas: {
@@ -3645,6 +3893,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hora_extra_sabado_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
           },
         ]
       }
@@ -3825,6 +4080,13 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "incidentes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
         ]
       }
       nao_conformidades: {
@@ -3958,6 +4220,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nao_conformidades_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
           },
         ]
       }
@@ -4563,6 +4832,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "plano_acoes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+          {
             foreignKeyName: "plano_acoes_eficacia_validada_por_fkey"
             columns: ["eficacia_validada_por"]
             isOneToOne: false
@@ -4666,6 +4942,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ppp_emissoes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
           },
           {
             foreignKeyName: "ppp_emissoes_employee_id_fkey"
@@ -5961,6 +6244,13 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ptes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
         ]
       }
       purchase_requisition_items: {
@@ -6994,6 +7284,20 @@ export type Database = {
         }
         Relationships: []
       }
+      v_contratada_dossie_status: {
+        Row: {
+          acordos_ativos: number | null
+          acordos_vencidos: number | null
+          cnpj: string | null
+          company_id: string | null
+          docs_vencidos: number | null
+          docs_vigentes: number | null
+          empresa: string | null
+          status_geral: string | null
+          tipo_empresa: string | null
+        }
+        Relationships: []
+      }
       vw_colaborador_pgr: {
         Row: {
           agravo: string | null
@@ -7054,6 +7358,13 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "hht_mensal_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
         ]
       }
     }
@@ -7064,11 +7375,13 @@ export type Database = {
         Args: { _epi_id: string; _novo_saldo: number }
         Returns: undefined
       }
+      can_approve_acordo: { Args: { _user_id: string }; Returns: boolean }
       cancelar_os: {
         Args: { _motivo: string; _os_id: string }
         Returns: undefined
       }
       current_aal: { Args: never; Returns: string }
+      expirar_acordos_vencidos: { Args: never; Returns: number }
       fn_dias_sem_acidente: {
         Args: { _company_id?: string }
         Returns: {
