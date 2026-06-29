@@ -283,6 +283,7 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
                 <SelectContent>
                   <SelectItem value="NAO_MEI">CLT</SelectItem>
                   <SelectItem value="MEI">MEI</SelectItem>
+                  <SelectItem value="TERCEIRIZADO">TERCEIRIZADO</SelectItem>
                 </SelectContent>
               </Select>
             </div>
