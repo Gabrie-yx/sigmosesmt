@@ -110,6 +110,7 @@ function CompaniesPage() {
   });
 
   const selected = useMemo(() => companies.find((c) => c.id === selectedId) || null, [companies, selectedId]);
+  const isContratante = (selected?.name ?? "").toUpperCase().includes("DMN");
   const compEmps = useMemo(
     () => {
       if (!selected) return [];
