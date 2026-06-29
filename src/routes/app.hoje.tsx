@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, CalendarClock } from "lucide-react";
 import { MinhasPendencias } from "@/components/minhas-pendencias";
+import { DossieContratadasCard } from "@/components/dossie-contratadas-card";
 
 export const Route = createFileRoute("/app/hoje")({
   component: HojePage,
@@ -19,6 +20,8 @@ function HojePage() {
       </div>
 
       <MinhasPendencias />
+
+      <DossieContratadasCard />
 
       <div className="max-w-7xl mx-auto px-6 md:px-14 pb-12">
         <div className="glass-card p-6">
