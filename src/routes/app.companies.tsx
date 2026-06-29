@@ -300,6 +300,25 @@ function CompaniesPage() {
           const entrada = (c as any).data_entrada
             ? new Date((c as any).data_entrada + "T00:00:00").toLocaleDateString("pt-BR")
             : "N/A";
+          const isContratanteCard = (c.name ?? "").toUpperCase().includes("DMN");
+          const ds = dossieByCompany[c.id];
+          const dossieBadge = !isContratanteCard && ds ? (() => {
+            const map: Record<string, { label: string; cls: string; title: string }> = {
+              REGULAR: { label: "REGULAR", cls: "bg-emerald-500/25 text-emerald-100 ring-emerald-300/40", title: "Dossiê NR-01 regular" },
+              EM_ADEQUACAO: { label: "EM ACORDO", cls: "bg-amber-500/25 text-amber-100 ring-amber-300/40", title: "Acordo de adequação ativo" },
+              IRREGULAR: { label: "IRREGULAR", cls: "bg-rose-600/40 text-rose-50 ring-rose-300/60 shadow-[0_0_12px_-2px_rgba(244,80,110,0.9)]", title: "Documentos vencidos sem acordo" },
+              SEM_DOCS: { label: "S/ DOSSIÊ", cls: "bg-slate-600/40 text-slate-100 ring-slate-300/40", title: "Nenhum documento NR-01 cadastrado" },
+            };
+            const m = map[ds.status] ?? map.SEM_DOCS;
+            return (
+              <span
+                title={m.title}
+                className={`text-[8px] font-black px-1.5 py-1 rounded inline-flex items-center gap-1 ring-1 backdrop-blur ${m.cls}`}
+              >
+                <Shield className="h-3 w-3" /> {m.label}
+              </span>
+            );
+          })() : null;
           return (
             <div
               key={c.id}
@@ -317,8 +336,11 @@ function CompaniesPage() {
                 </>
               )}
               <div className="relative flex justify-between items-start mb-2">
-                <div className={`text-[9px] font-black px-2 py-1 rounded inline-flex items-center gap-1 ${isSel ? "text-white bg-white/15 ring-1 ring-white/20 backdrop-blur" : "bg-black/40 text-rose-100 ring-1 ring-rose-500/30 backdrop-blur"}`}>
-                  <Briefcase className="h-3 w-3" /> {c.type}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <div className={`text-[9px] font-black px-2 py-1 rounded inline-flex items-center gap-1 ${isSel ? "text-white bg-white/15 ring-1 ring-white/20 backdrop-blur" : "bg-black/40 text-rose-100 ring-1 ring-rose-500/30 backdrop-blur"}`}>
+                    <Briefcase className="h-3 w-3" /> {c.type}
+                  </div>
+                  {dossieBadge}
                 </div>
                 <div className="group/pill flex items-center gap-2 rounded-full pl-1 pr-3 py-1 backdrop-blur-xl bg-gradient-to-br from-rose-600/40 via-rose-700/30 to-rose-950/40 ring-1 ring-rose-400/40 shadow-[0_0_24px_-4px_rgba(244,80,110,0.75),inset_0_1px_0_rgba(255,230,235,0.15)] transition-all hover:shadow-[0_0_36px_-2px_rgba(244,80,110,1),inset_0_1px_0_rgba(255,230,235,0.25)]">
                   <span className="h-8 w-8 rounded-full flex items-center justify-center ring-1 ring-rose-300/60 bg-gradient-to-br from-rose-500 to-rose-800 shadow-[0_0_16px_-2px_rgba(244,80,110,0.9)]">
