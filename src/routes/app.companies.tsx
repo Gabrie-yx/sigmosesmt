@@ -17,6 +17,7 @@ import { EmployeeDetailContent } from "./app.employees.$id";
 import { maskCNPJ } from "@/lib/masks";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { CompanyDossieDialog } from "@/components/companies/company-dossie-dialog";
+import { FileViewerHost } from "@/components/file-viewer";
 
 export const Route = createFileRoute("/app/companies")({
   component: CompaniesPage,
@@ -569,6 +570,7 @@ function CompaniesPage() {
         companyId={selected?.id ?? null}
         companyName={selected?.name ?? ""}
       />
+      <FileViewerHost />
     </div>
   );
 }
