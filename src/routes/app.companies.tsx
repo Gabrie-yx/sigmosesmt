@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { EmployeeDetailContent } from "./app.employees.$id";
 import { maskCNPJ } from "@/lib/masks";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
+import { CompanyDossieDialog } from "@/components/companies/company-dossie-dialog";
 
 export const Route = createFileRoute("/app/companies")({
   component: CompaniesPage,
@@ -55,6 +56,7 @@ function CompaniesPage() {
   const [showForm, setShowForm] = useState(true);
   const [empSearch, setEmpSearch] = useState("");
   const [newEmpOpen, setNewEmpOpen] = useState(false);
+  const [dossieOpen, setDossieOpen] = useState(false);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -216,6 +218,15 @@ function CompaniesPage() {
               <div className="relative mt-4 pt-4 border-t text-xs font-bold border-white/20 text-white/90">
                 <div className="flex items-center gap-2"><User className="h-3.5 w-3.5 text-white" /> {selected.encarregado1 ? `Empreiteiro: ${selected.encarregado1}` : "S/ Empreiteiro"}</div>
                 <div className="flex items-center gap-2 mt-1"><UserCog className="h-3.5 w-3.5 text-white" /> {selected.encarregado2 ? `Encarregado: ${selected.encarregado2}` : "S/ Encarregado"}</div>
+              </div>
+              <div className="relative mt-3">
+                <Button
+                  size="sm"
+                  onClick={() => setDossieOpen(true)}
+                  className="w-full bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur"
+                >
+                  <Shield className="h-4 w-4 mr-1.5" /> Dossiê NR-01 (Docs & Acordos)
+                </Button>
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -505,6 +516,12 @@ function CompaniesPage() {
         </div>
       )}
       <NewEmployeeDialog open={newEmpOpen} onOpenChange={setNewEmpOpen} defaultCompanyId={selected?.id} />
+      <CompanyDossieDialog
+        open={dossieOpen}
+        onOpenChange={setDossieOpen}
+        companyId={selected?.id ?? null}
+        companyName={selected?.name ?? ""}
+      />
     </div>
   );
 }
