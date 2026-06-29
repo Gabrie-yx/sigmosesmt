@@ -34,6 +34,10 @@ type EmployeeForm = {
   role_id: string;
   tipo_cadastro: string;
   cnpj: string;
+  mei_contrato_numero: string;
+  mei_contrato_validade: string;
+  avulso_ogmo_matricula: string;
+  avulso_sindicato: string;
 };
 type ExistingEmployee = {
   id: string;
@@ -55,6 +59,10 @@ const EMPTY_FORM = (companyId?: string): EmployeeForm => ({
   role_id: "",
   tipo_cadastro: "NAO_MEI",
   cnpj: "",
+  mei_contrato_numero: "",
+  mei_contrato_validade: "",
+  avulso_ogmo_matricula: "",
+  avulso_sindicato: "",
 });
 
 function isCpfDuplicateError(error: SupabaseLikeError) {
@@ -127,6 +135,14 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
         role_id: v.role_id || null,
         tipo_cadastro: v.tipo_cadastro || "NAO_MEI",
         cnpj: v.tipo_cadastro === "MEI" ? v.cnpj || null : null,
+        mei_contrato_numero:
+          v.tipo_cadastro === "MEI" ? v.mei_contrato_numero || null : null,
+        mei_contrato_validade:
+          v.tipo_cadastro === "MEI" ? v.mei_contrato_validade || null : null,
+        avulso_ogmo_matricula:
+          v.tipo_cadastro === "AVULSO" ? v.avulso_ogmo_matricula || null : null,
+        avulso_sindicato:
+          v.tipo_cadastro === "AVULSO" ? v.avulso_sindicato || null : null,
       });
       if (error) {
         if (isCpfDuplicateError(error)) {
@@ -283,6 +299,7 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
                 <SelectContent>
                   <SelectItem value="NAO_MEI">CLT</SelectItem>
                   <SelectItem value="MEI">MEI</SelectItem>
+                  <SelectItem value="AVULSO">AVULSO (OGMO/Sindicato)</SelectItem>
                   <SelectItem value="TERCEIRIZADO">TERCEIRIZADO</SelectItem>
                 </SelectContent>
               </Select>
@@ -300,6 +317,54 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
               </div>
             )}
           </div>
+          {form.tipo_cadastro === "MEI" && (
+            <div className="grid grid-cols-2 gap-3 rounded-lg border border-amber-300/40 bg-amber-50/40 p-3">
+              <div className="space-y-2">
+                <Label>Nº do contrato PJ</Label>
+                <Input
+                  placeholder="Ex.: CT-2026/001"
+                  value={form.mei_contrato_numero}
+                  onChange={(e) =>
+                    setForm({ ...form, mei_contrato_numero: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Validade do contrato</Label>
+                <Input
+                  type="date"
+                  value={form.mei_contrato_validade}
+                  onChange={(e) =>
+                    setForm({ ...form, mei_contrato_validade: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+          )}
+          {form.tipo_cadastro === "AVULSO" && (
+            <div className="grid grid-cols-2 gap-3 rounded-lg border border-sky-300/40 bg-sky-50/40 p-3">
+              <div className="space-y-2">
+                <Label>Matrícula OGMO</Label>
+                <Input
+                  placeholder="Nº de registro"
+                  value={form.avulso_ogmo_matricula}
+                  onChange={(e) =>
+                    setForm({ ...form, avulso_ogmo_matricula: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Sindicato</Label>
+                <Input
+                  placeholder="Ex.: SINDESTIVA-AM"
+                  value={form.avulso_sindicato}
+                  onChange={(e) =>
+                    setForm({ ...form, avulso_sindicato: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+          )}
         </div>
       ),
     },
@@ -317,8 +382,20 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
             ["Cargo", rName],
             ["Status", form.status],
             ["Vínculo", isTerceiro ? "TERCEIRO" : "PRÓPRIO (DMN)"],
-            ["Tipo", form.tipo_cadastro === "MEI" ? "MEI" : "CLT"],
+            ["Tipo", form.tipo_cadastro === "NAO_MEI" ? "CLT" : form.tipo_cadastro],
             ...(form.tipo_cadastro === "MEI" ? [["CNPJ MEI", form.cnpj || "—"]] : []),
+            ...(form.tipo_cadastro === "MEI" && form.mei_contrato_numero
+              ? [["Contrato PJ", form.mei_contrato_numero]]
+              : []),
+            ...(form.tipo_cadastro === "MEI" && form.mei_contrato_validade
+              ? [["Validade contrato", form.mei_contrato_validade]]
+              : []),
+            ...(form.tipo_cadastro === "AVULSO"
+              ? [
+                  ["Matrícula OGMO", form.avulso_ogmo_matricula || "—"],
+                  ["Sindicato", form.avulso_sindicato || "—"],
+                ]
+              : []),
           ].map(([k, v]) => (
             <div key={k} className="flex items-center justify-between px-3 py-2">
               <dt className="text-[10px] font-black uppercase tracking-widest text-slate-500">
