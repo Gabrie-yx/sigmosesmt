@@ -88,7 +88,7 @@ function CompaniesPage() {
       const { data } = await supabase
         .from("v_contratada_dossie_status" as any)
         .select("company_id,status_geral,docs_vencidos,acordos_ativos");
-      return (data ?? []) as Array<{ company_id: string; status_geral: string; docs_vencidos: number; acordos_ativos: number }>;
+      return ((data ?? []) as unknown) as Array<{ company_id: string; status_geral: string; docs_vencidos: number; acordos_ativos: number }>;
     },
   });
   const dossieByCompany = useMemo(() => {
