@@ -120,8 +120,8 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
 
   // ===== Identificação: foto + nome/cargo =====
   // foto 3x4 — proporção real, sem distorção
-  const photoBoxW = 27;
-  const photoBoxH = 36; // 27x36 ≈ 3:4
+  const photoBoxW = 30;
+  const photoBoxH = 40; // 30x40 = 3:4
   doc.setDrawColor(...WINE);
   doc.setLineWidth(0.2);
   doc.rect(margin, y, photoBoxW, photoBoxH);
@@ -151,6 +151,15 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
   const linhaCargo = `${d.roleName ?? "—"}   •   ${d.companyName ?? "—"}`;
   doc.text(linhaCargo, infoX, y + 9, { maxWidth: infoW });
 
+  // Mapeia o tipo de vínculo de forma legível
+  const tipoRaw = String(emp.tipo_cadastro ?? "").toUpperCase();
+  const tipoLabel =
+    tipoRaw === "MEI" ? "MEI"
+    : tipoRaw === "TERCEIRIZADO" ? "TERCEIRIZADO"
+    : tipoRaw === "NAO_MEI" || tipoRaw === "CLT" ? "CLT"
+    : "—";
+  const isMei = tipoLabel === "MEI";
+
   // bloco-resumo (chave: valor)
   const pairs: [string, string][] = [
     ["Matrícula", emp.matricula ?? "—"],
@@ -159,8 +168,10 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
     ["CNH", emp.cnh ?? "—"],
     ["Admissão", fmtBR(emp.admissao)],
     ["Status", emp.status ?? "—"],
+    ["Empresa", d.companyName ?? "—"],
+    ["Vínculo", tipoLabel],
     ["Setor", emp.setor ?? "—"],
-    ["CNPJ MEI", emp.cnpj ?? "—"],
+    [isMei ? "CNPJ (MEI)" : "CNPJ", isMei ? (emp.cnpj ?? "—") : (emp.cnpj ?? "—")],
   ];
   const colW = infoW / 2;
   doc.setFontSize(8);
