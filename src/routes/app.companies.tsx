@@ -516,6 +516,12 @@ function CompaniesPage() {
         </div>
       )}
       <NewEmployeeDialog open={newEmpOpen} onOpenChange={setNewEmpOpen} defaultCompanyId={selected?.id} />
+      <CompanyDossieDialog
+        open={dossieOpen}
+        onOpenChange={setDossieOpen}
+        companyId={selected?.id ?? null}
+        companyName={selected?.name ?? ""}
+      />
     </div>
   );
 }
