@@ -1082,7 +1082,7 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
             <SelectContent>
               <SelectItem value="NAO_MEI">CLT</SelectItem>
               <SelectItem value="MEI">MEI</SelectItem>
-              <SelectItem value="AVULSO">AVULSO (OGMO/Sindicato)</SelectItem>
+              <SelectItem value="AVULSO">AVULSO</SelectItem>
             </SelectContent>
           </Select>
         </Field>

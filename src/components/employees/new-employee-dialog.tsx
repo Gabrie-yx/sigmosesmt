@@ -36,8 +36,6 @@ type EmployeeForm = {
   cnpj: string;
   mei_contrato_numero: string;
   mei_contrato_validade: string;
-  avulso_ogmo_matricula: string;
-  avulso_sindicato: string;
 };
 type ExistingEmployee = {
   id: string;
@@ -61,8 +59,6 @@ const EMPTY_FORM = (companyId?: string): EmployeeForm => ({
   cnpj: "",
   mei_contrato_numero: "",
   mei_contrato_validade: "",
-  avulso_ogmo_matricula: "",
-  avulso_sindicato: "",
 });
 
 function isCpfDuplicateError(error: SupabaseLikeError) {
@@ -139,10 +135,6 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
           v.tipo_cadastro === "MEI" ? v.mei_contrato_numero || null : null,
         mei_contrato_validade:
           v.tipo_cadastro === "MEI" ? v.mei_contrato_validade || null : null,
-        avulso_ogmo_matricula:
-          v.tipo_cadastro === "AVULSO" ? v.avulso_ogmo_matricula || null : null,
-        avulso_sindicato:
-          v.tipo_cadastro === "AVULSO" ? v.avulso_sindicato || null : null,
       });
       if (error) {
         if (isCpfDuplicateError(error)) {
@@ -299,7 +291,7 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
                 <SelectContent>
                   <SelectItem value="NAO_MEI">CLT</SelectItem>
                   <SelectItem value="MEI">MEI</SelectItem>
-                  <SelectItem value="AVULSO">AVULSO (OGMO/Sindicato)</SelectItem>
+                  <SelectItem value="AVULSO">AVULSO</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -341,27 +333,8 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
             </div>
           )}
           {form.tipo_cadastro === "AVULSO" && (
-            <div className="grid grid-cols-2 gap-3 rounded-lg border border-sky-300/40 bg-sky-50/40 p-3">
-              <div className="space-y-2">
-                <Label>Matrícula OGMO</Label>
-                <Input
-                  placeholder="Nº de registro"
-                  value={form.avulso_ogmo_matricula}
-                  onChange={(e) =>
-                    setForm({ ...form, avulso_ogmo_matricula: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Sindicato</Label>
-                <Input
-                  placeholder="Ex.: SINDESTIVA-AM"
-                  value={form.avulso_sindicato}
-                  onChange={(e) =>
-                    setForm({ ...form, avulso_sindicato: e.target.value })
-                  }
-                />
-              </div>
+            <div className="rounded-lg border border-sky-300/40 bg-sky-50/40 p-3 text-xs text-sky-900">
+              Trabalhador avulso / sem vínculo formal — sem CNPJ MEI nem carteira assinada pela empresa selecionada.
             </div>
           )}
         </div>
@@ -388,12 +361,6 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
               : []),
             ...(form.tipo_cadastro === "MEI" && form.mei_contrato_validade
               ? [["Validade contrato", form.mei_contrato_validade]]
-              : []),
-            ...(form.tipo_cadastro === "AVULSO"
-              ? [
-                  ["Matrícula OGMO", form.avulso_ogmo_matricula || "—"],
-                  ["Sindicato", form.avulso_sindicato || "—"],
-                ]
               : []),
           ].map(([k, v]) => (
             <div key={k} className="flex items-center justify-between px-3 py-2">
