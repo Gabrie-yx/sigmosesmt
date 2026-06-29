@@ -36,8 +36,6 @@ type EmployeeForm = {
   cnpj: string;
   mei_contrato_numero: string;
   mei_contrato_validade: string;
-  avulso_ogmo_matricula: string;
-  avulso_sindicato: string;
 };
 type ExistingEmployee = {
   id: string;
@@ -61,8 +59,6 @@ const EMPTY_FORM = (companyId?: string): EmployeeForm => ({
   cnpj: "",
   mei_contrato_numero: "",
   mei_contrato_validade: "",
-  avulso_ogmo_matricula: "",
-  avulso_sindicato: "",
 });
 
 function isCpfDuplicateError(error: SupabaseLikeError) {
@@ -139,10 +135,6 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
           v.tipo_cadastro === "MEI" ? v.mei_contrato_numero || null : null,
         mei_contrato_validade:
           v.tipo_cadastro === "MEI" ? v.mei_contrato_validade || null : null,
-        avulso_ogmo_matricula:
-          v.tipo_cadastro === "AVULSO" ? v.avulso_ogmo_matricula || null : null,
-        avulso_sindicato:
-          v.tipo_cadastro === "AVULSO" ? v.avulso_sindicato || null : null,
       });
       if (error) {
         if (isCpfDuplicateError(error)) {
@@ -369,12 +361,6 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
               : []),
             ...(form.tipo_cadastro === "MEI" && form.mei_contrato_validade
               ? [["Validade contrato", form.mei_contrato_validade]]
-              : []),
-            ...(form.tipo_cadastro === "AVULSO"
-              ? [
-                  ["Matrícula OGMO", form.avulso_ogmo_matricula || "—"],
-                  ["Sindicato", form.avulso_sindicato || "—"],
-                ]
               : []),
           ].map(([k, v]) => (
             <div key={k} className="flex items-center justify-between px-3 py-2">
