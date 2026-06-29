@@ -120,8 +120,8 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
 
   // ===== Identificação: foto + nome/cargo =====
   // foto 3x4 — proporção real, sem distorção
-  const photoBoxW = 27;
-  const photoBoxH = 36; // 27x36 ≈ 3:4
+  const photoBoxW = 30;
+  const photoBoxH = 40; // 30x40 = 3:4
   doc.setDrawColor(...WINE);
   doc.setLineWidth(0.2);
   doc.rect(margin, y, photoBoxW, photoBoxH);
