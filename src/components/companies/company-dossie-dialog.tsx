@@ -111,7 +111,7 @@ export function CompanyDossieDialog({
   const addDoc = useMutation({
     mutationFn: async (payload: any) => {
       const { error } = await supabase.from("contratada_documentos").insert({
-        company_id: companyId,
+        company_id: companyId!,
         tipo_documento: payload.tipo_documento,
         numero: payload.numero || null,
         data_emissao: payload.data_emissao || null,
@@ -139,12 +139,12 @@ export function CompanyDossieDialog({
         throw new Error("Prazo máximo de 90 dias por acordo");
       }
       const { error } = await supabase.from("contratada_acordos_adequacao").insert({
-        company_id: companyId,
+        company_id: companyId!,
         tipo_documento: payload.tipo_documento,
         justificativa: payload.justificativa,
         plano_acao: payload.plano_acao,
         data_limite: payload.data_limite,
-        aprovador_id: user?.id,
+        aprovador_id: user!.id,
         aprovador_nome: payload.aprovador_nome || user?.email || "—",
         aprovador_cargo: payload.aprovador_cargo || null,
       });
@@ -178,7 +178,7 @@ export function CompanyDossieDialog({
         data_limite_anterior: acordo.data_limite,
         data_limite_nova: novaData,
         justificativa: just,
-        responsavel_id: user?.id,
+        responsavel_id: user!.id,
         responsavel_nome: user?.email || "—",
       });
       if (e2) throw e2;
@@ -202,7 +202,7 @@ export function CompanyDossieDialog({
         acordo_id: acordo.id,
         acao: "CUMPRIDO",
         justificativa: "Documento regularizado",
-        responsavel_id: user?.id,
+        responsavel_id: user!.id,
         responsavel_nome: user?.email || "—",
       });
     },
