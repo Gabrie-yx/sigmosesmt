@@ -394,6 +394,12 @@ function CompaniesPage() {
               <Button onClick={exportCSV} className="bg-slate-700 hover:bg-slate-800 text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
                 <Download className="h-3.5 w-3.5 mr-1.5" /> Exportar CSV
               </Button>
+              <Button
+                onClick={() => setDossieOpen(true)}
+                className="bg-gradient-to-br from-rose-600 to-rose-800 hover:from-rose-700 hover:to-rose-900 text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2 shadow-md shadow-rose-500/30"
+              >
+                <Shield className="h-3.5 w-3.5 mr-1.5" /> Dossiê NR-01
+              </Button>
               {isEditor && (
                 <Button onClick={startEdit} className="bg-[#0f172a] hover:bg-[#991b1b] text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
                   <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar Empresa
