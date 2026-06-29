@@ -155,7 +155,8 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
   const tipoRaw = String(emp.tipo_cadastro ?? "").toUpperCase();
   const tipoLabel =
     tipoRaw === "MEI" ? "MEI"
-    : tipoRaw === "TERCEIRIZADO" ? "TERCEIRIZADO"
+    : tipoRaw === "AVULSO" ? "AVULSO"
+    : tipoRaw === "TERCEIRIZADO" ? "AVULSO"
     : tipoRaw === "NAO_MEI" || tipoRaw === "CLT" ? "CLT"
     : "—";
   const isMei = tipoLabel === "MEI";
