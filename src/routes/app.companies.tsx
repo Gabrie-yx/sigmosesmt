@@ -82,6 +82,20 @@ function CompaniesPage() {
     queryKey: ["docs-all"],
     queryFn: async () => (await supabase.from("employee_docs").select("*")).data ?? [],
   });
+  const { data: dossieStatus = [] } = useQuery({
+    queryKey: ["dossie-status"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("v_contratada_dossie_status" as any)
+        .select("company_id,status_geral,docs_vencidos,acordos_ativos");
+      return (data ?? []) as Array<{ company_id: string; status_geral: string; docs_vencidos: number; acordos_ativos: number }>;
+    },
+  });
+  const dossieByCompany = useMemo(() => {
+    const m: Record<string, { status: string; docs_vencidos: number; acordos_ativos: number }> = {};
+    for (const d of dossieStatus) m[d.company_id] = { status: d.status_geral, docs_vencidos: d.docs_vencidos, acordos_ativos: d.acordos_ativos };
+    return m;
+  }, [dossieStatus]);
 
   const save = useMutation({
     mutationFn: async (v: Partial<Company>) => {
