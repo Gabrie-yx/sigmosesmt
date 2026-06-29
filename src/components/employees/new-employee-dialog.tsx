@@ -299,7 +299,7 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
                 <SelectContent>
                   <SelectItem value="NAO_MEI">CLT</SelectItem>
                   <SelectItem value="MEI">MEI</SelectItem>
-                  <SelectItem value="AVULSO">AVULSO (OGMO/Sindicato)</SelectItem>
+                  <SelectItem value="AVULSO">AVULSO</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -341,27 +341,8 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
             </div>
           )}
           {form.tipo_cadastro === "AVULSO" && (
-            <div className="grid grid-cols-2 gap-3 rounded-lg border border-sky-300/40 bg-sky-50/40 p-3">
-              <div className="space-y-2">
-                <Label>Matrícula OGMO</Label>
-                <Input
-                  placeholder="Nº de registro"
-                  value={form.avulso_ogmo_matricula}
-                  onChange={(e) =>
-                    setForm({ ...form, avulso_ogmo_matricula: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Sindicato</Label>
-                <Input
-                  placeholder="Ex.: SINDESTIVA-AM"
-                  value={form.avulso_sindicato}
-                  onChange={(e) =>
-                    setForm({ ...form, avulso_sindicato: e.target.value })
-                  }
-                />
-              </div>
+            <div className="rounded-lg border border-sky-300/40 bg-sky-50/40 p-3 text-xs text-sky-900">
+              Trabalhador avulso / sem vínculo formal — sem CNPJ MEI nem carteira assinada pela empresa selecionada.
             </div>
           )}
         </div>
