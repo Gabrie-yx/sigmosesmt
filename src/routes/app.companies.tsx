@@ -57,7 +57,6 @@ function CompaniesPage() {
   const [empSearch, setEmpSearch] = useState("");
   const [newEmpOpen, setNewEmpOpen] = useState(false);
   const [dossieOpen, setDossieOpen] = useState(false);
-  const isContratante = (selected?.name ?? "").toUpperCase().includes("DMN");
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
