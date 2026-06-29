@@ -2670,6 +2670,8 @@ export type Database = {
         Row: {
           admissao: string | null
           assinatura_url: string | null
+          avulso_ogmo_matricula: string | null
+          avulso_sindicato: string | null
           bairro: string | null
           cep: string | null
           cidade: string | null
@@ -2692,6 +2694,8 @@ export type Database = {
           ghe_id: string | null
           id: string
           matricula: string | null
+          mei_contrato_numero: string | null
+          mei_contrato_validade: string | null
           motivo_desligamento: string | null
           nome: string
           nome_contato: string | null
@@ -2714,6 +2718,8 @@ export type Database = {
         Insert: {
           admissao?: string | null
           assinatura_url?: string | null
+          avulso_ogmo_matricula?: string | null
+          avulso_sindicato?: string | null
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
@@ -2736,6 +2742,8 @@ export type Database = {
           ghe_id?: string | null
           id?: string
           matricula?: string | null
+          mei_contrato_numero?: string | null
+          mei_contrato_validade?: string | null
           motivo_desligamento?: string | null
           nome: string
           nome_contato?: string | null
@@ -2758,6 +2766,8 @@ export type Database = {
         Update: {
           admissao?: string | null
           assinatura_url?: string | null
+          avulso_ogmo_matricula?: string | null
+          avulso_sindicato?: string | null
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
@@ -2780,6 +2790,8 @@ export type Database = {
           ghe_id?: string | null
           id?: string
           matricula?: string | null
+          mei_contrato_numero?: string | null
+          mei_contrato_validade?: string | null
           motivo_desligamento?: string | null
           nome?: string
           nome_contato?: string | null
