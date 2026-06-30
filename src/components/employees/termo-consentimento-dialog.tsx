@@ -155,6 +155,7 @@ export function TermoConsentimentoDialog({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl bg-[#1a0a0e] border-rose-900/40 text-rose-50">
         <DialogHeader>
