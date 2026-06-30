@@ -179,6 +179,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [gerandoFicha, setGerandoFicha] = useState(false);
   const [pppOpen, setPppOpen] = useState(false);
   const [integOpen, setIntegOpen] = useState(false);
+  const [termoOpen, setTermoOpen] = useState(false);
   const [desligamentoOpen, setDesligamentoOpen] = useState(false);
 
   async function gerarFichaPdf() {
@@ -478,6 +479,22 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               >
                 <FileText className="h-4 w-4" /> Integração
               </button>
+              <span className="h-4 w-px bg-rose-200/20" />
+              <button
+                type="button"
+                onClick={() => setTermoOpen(true)}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-black uppercase tracking-widest transition-colors ${
+                  (emp as any)?.termo_consentimento_id
+                    ? "text-emerald-50/95 hover:bg-emerald-400/15 hover:text-white"
+                    : (emp as any)?.assinatura_url
+                      ? "text-amber-100 hover:bg-amber-400/15 hover:text-white animate-pulse"
+                      : "text-rose-200/70 hover:bg-rose-400/10 hover:text-white"
+                }`}
+                title="Termo de Consentimento — Assinatura Eletrônica (Lei 14.063/2020)"
+              >
+                <FileSignature className="h-4 w-4" />
+                {(emp as any)?.termo_consentimento_id ? "Termo ✓" : "Termo"}
+              </button>
             </div>
           </div>
         </div>
@@ -624,6 +641,11 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         open={integOpen}
         onOpenChange={setIntegOpen}
         preselectedEmployeeId={emp?.id}
+      />
+      <TermoConsentimentoDialog
+        open={termoOpen}
+        onOpenChange={setTermoOpen}
+        employeeId={emp?.id}
       />
       <DesligamentoDialog
         emp={emp as any}
