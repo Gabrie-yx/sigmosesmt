@@ -432,9 +432,9 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
         </div>
         </div>
-        <div className="mt-6 pt-5 border-t border-rose-100/10 flex flex-nowrap items-center justify-between gap-3">
+        <div className="mt-6 pt-5 border-t border-rose-100/10 flex flex-wrap items-center justify-between gap-3">
           {/* Navegação de seções */}
-          <div className="inline-flex shrink-0 items-center gap-4 rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
+          <div className="inline-flex shrink-0 items-center gap-3 rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
             <QuickTabBtn icon={HeartPulse} label="ASO" tone={asoTone} active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
             <QuickTabBtn icon={Award} label="NR" tone={nrTone} active={tab === "nrs"} onClick={() => setTab("nrs")} />
             <QuickTabBtn icon={FolderOpen} label="Docs" tone={docsTone} active={tab === "docs"} onClick={() => setTab("docs")} />
@@ -442,48 +442,48 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
 
           {/* Ações documentais */}
-          <div className="flex flex-nowrap items-center gap-2 ml-auto shrink-0">
-            <div className="inline-flex shrink-0 items-center gap-3 rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
+          <div className="flex min-w-0 flex-1 items-center gap-2 ml-auto justify-end">
+            <div className="inline-flex max-w-full items-center gap-1 rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 px-2 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)] overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               <Link
                 to="/app/audit"
-                className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-black uppercase tracking-widest text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-[10px] font-black uppercase tracking-wider text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors"
                 title="Auditar"
               >
                 <ClipboardCheck className="h-4 w-4" /> Auditar
               </Link>
-              <span className="h-4 w-px bg-rose-200/20" />
+              <span className="h-4 w-px shrink-0 bg-rose-200/20" />
               <button
                 type="button"
                 onClick={gerarFichaPdf}
                 disabled={gerandoFicha}
-                className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-black uppercase tracking-widest text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors disabled:opacity-60 disabled:cursor-wait"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-[10px] font-black uppercase tracking-wider text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors disabled:opacity-60 disabled:cursor-wait"
                 title="Gerar ficha em PDF"
               >
                 <FileText className="h-4 w-4" /> {gerandoFicha ? "Gerando…" : "Ficha"}
               </button>
-              <span className="h-4 w-px bg-rose-200/20" />
+              <span className="h-4 w-px shrink-0 bg-rose-200/20" />
               <button
                 type="button"
                 onClick={() => setPppOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-black uppercase tracking-widest text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-[10px] font-black uppercase tracking-wider text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors"
                 title="Emitir PPP (Perfil Profissiográfico Previdenciário)"
               >
                 <FileSignature className="h-4 w-4" /> PPP
               </button>
-              <span className="h-4 w-px bg-rose-200/20" />
+              <span className="h-4 w-px shrink-0 bg-rose-200/20" />
               <button
                 type="button"
                 onClick={() => setIntegOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-black uppercase tracking-widest text-emerald-50/95 hover:bg-emerald-400/15 hover:text-white transition-colors"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-[10px] font-black uppercase tracking-wider text-emerald-50/95 hover:bg-emerald-400/15 hover:text-white transition-colors"
                 title="Registrar Integração NR-01"
               >
                 <FileText className="h-4 w-4" /> Integração
               </button>
-              <span className="h-4 w-px bg-rose-200/20" />
+              <span className="h-4 w-px shrink-0 bg-rose-200/20" />
               <button
                 type="button"
                 onClick={() => setTermoOpen(true)}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-black uppercase tracking-widest transition-colors ${
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-[10px] font-black uppercase tracking-wider transition-colors ${
                   (emp as any)?.termo_consentimento_id
                     ? "text-emerald-50/95 hover:bg-emerald-400/15 hover:text-white"
                     : (emp as any)?.assinatura_url
