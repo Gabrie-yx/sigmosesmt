@@ -138,15 +138,15 @@ export function RequisicaoMedicamentosDialog({ defaultSolicitante = "", trigger 
               </div>
             </div>
 
-            <div className="rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50/60 dark:bg-rose-950/20 p-3">
-              <Label className="text-xs flex items-center gap-1 mb-1">
+            <div className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3">
+              <Label className="text-xs flex items-center gap-1 mb-1 text-slate-900 dark:text-slate-100">
                 <Search className="h-3 w-3" /> Buscar e adicionar medicamento (ex: dipirona 1g, buscopan, oxímetro…)
               </Label>
               <Input
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 placeholder="Digite o nome do medicamento ou insumo"
-                className="h-9 bg-white dark:bg-slate-900"
+                className="h-9 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-500"
               />
               {sugestoesFiltradas.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
