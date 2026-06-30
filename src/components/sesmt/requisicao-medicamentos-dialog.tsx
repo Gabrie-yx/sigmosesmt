@@ -8,11 +8,12 @@ import { Trash2, Plus, Pill, FileDown, Eye } from "lucide-react";
 import { toast } from "sonner";
 import {
   MEDICAMENTOS_AMBULATORIO_PADRAO,
+  buildRequisicaoMedicamentosPdf,
   downloadRequisicaoMedicamentosPdf,
-  previewRequisicaoMedicamentosPdf,
   type MedItem,
 } from "@/lib/requisicao-medicamentos-pdf";
-import { PdfPreviewDialog } from "@/components/pdf-preview-dialog";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import type jsPDF from "jspdf";
 
 type Props = {
   defaultSolicitante?: string;
@@ -26,7 +27,7 @@ export function RequisicaoMedicamentosDialog({ defaultSolicitante = "", trigger 
   const [responsavelTST, setResponsavelTST] = useState("Aline (TST)");
   const [observacoes, setObservacoes] = useState("");
   const [itens, setItens] = useState<MedItem[]>(() => MEDICAMENTOS_AMBULATORIO_PADRAO.map((i) => ({ ...i })));
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
 
   const updateItem = (idx: number, patch: Partial<MedItem>) => {
     setItens((arr) => arr.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
@@ -55,7 +56,7 @@ export function RequisicaoMedicamentosDialog({ defaultSolicitante = "", trigger 
   };
   const visualizar = () => {
     if (!validar()) return;
-    setPreviewUrl(previewRequisicaoMedicamentosPdf({ solicitante, setor, responsavelTST, observacoes, itens }));
+    setPreviewDoc(buildRequisicaoMedicamentosPdf({ solicitante, setor, responsavelTST, observacoes, itens }));
   };
 
   return (
@@ -171,11 +172,12 @@ export function RequisicaoMedicamentosDialog({ defaultSolicitante = "", trigger 
         </DialogContent>
       </Dialog>
 
-      {previewUrl && (
-        <PdfPreviewDialog
-          open={!!previewUrl}
-          onOpenChange={(o) => !o && setPreviewUrl(null)}
-          url={previewUrl}
+      {previewDoc && (
+        <PDFPreviewDialog
+          open={!!previewDoc}
+          onClose={() => setPreviewDoc(null)}
+          doc={previewDoc}
+          fileName={`requisicao-medicamentos-${new Date().toISOString().slice(0, 10)}.pdf`}
           title="Pré-visualização — Requisição de Medicamentos"
         />
       )}
