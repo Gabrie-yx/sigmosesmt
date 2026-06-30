@@ -6,23 +6,27 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText, UserRoundX, Stethoscope } from "lucide-react";
+import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText, UserRoundX, Stethoscope, AlertTriangle, X } from "lucide-react";
 import { EmployeeListagemDialog } from "@/components/employees/employee-listagem-dialog";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { ConvocacaoExamesDialog } from "@/components/employees/convocacao-exames-dialog";
+import { daysUntil, addYearsToDate } from "@/lib/utils-date";
 
 export const Route = createFileRoute("/app/employees/")({
   component: EmployeesPage,
   validateSearch: (search: Record<string, unknown>) => ({
     new: search.new === 1 || search.new === "1" ? 1 : undefined,
     company: typeof search.company === "string" ? search.company : undefined,
+    filter: typeof search.filter === "string" ? search.filter : undefined,
   }),
 });
+
+type ComplianceFilter = "TODOS" | "aso_vencido" | "aso_vencendo" | "sem_docs";
 
 function EmployeesPage() {
   const { isEditor } = useAuth();
   const navigate = useNavigate();
-  const { new: openNew, company: openCompany } = Route.useSearch();
+  const { new: openNew, company: openCompany, filter: filterSearch } = Route.useSearch();
   const [open, setOpen] = useState(false);
   const [newEmployeeCompanyId, setNewEmployeeCompanyId] = useState<string | undefined>();
   useEffect(() => {
@@ -45,6 +49,15 @@ function EmployeesPage() {
   const [companyFilter, setCompanyFilter] = useState<string>(initialFilters?.companyFilter ?? "TODAS");
   const [roleFilter, setRoleFilter] = useState<string>(initialFilters?.roleFilter ?? "TODOS");
   const [vinculoFilter, setVinculoFilter] = useState<"TODOS" | "PROPRIO" | "TERCEIRO" | "MEI">(initialFilters?.vinculoFilter ?? "TODOS");
+  const [complianceFilter, setComplianceFilter] = useState<ComplianceFilter>("TODOS");
+  // Deep-link vindo do painel Hoje
+  useEffect(() => {
+    if (filterSearch === "aso_vencido" || filterSearch === "aso_vencendo" || filterSearch === "sem_docs") {
+      setComplianceFilter(filterSearch as ComplianceFilter);
+      setStatusFilter("ATIVO");
+      navigate({ to: "/app/employees", search: {}, replace: true });
+    }
+  }, [filterSearch, navigate]);
   const [visibleCount, setVisibleCount] = useState<number>(initialFilters?.visibleCount ?? 48);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -70,6 +83,49 @@ function EmployeesPage() {
     queryFn: async () => (await supabase.from("roles").select("id,name").order("name")).data ?? [],
   });
 
+  // Status de conformidade ASO por funcionário (latest exam ASO Clínico OU legado data_aso + 1 ano)
+  const { data: asoMap } = useQuery({
+    queryKey: ["employees-aso-vencimentos"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("employee_exams")
+        .select("employee_id, tipo_exame, data_vencimento")
+        .eq("tipo_exame", "ASO Clínico")
+        .order("data_vencimento", { ascending: false });
+      const m = new Map<string, string>();
+      (data ?? []).forEach((r: any) => {
+        if (r.data_vencimento && !m.has(r.employee_id)) m.set(r.employee_id, r.data_vencimento);
+      });
+      return m;
+    },
+  });
+
+  // Map: employee_id → status ASO ("vencido" | "vencendo" | "ok" | "sem")
+  type AsoStatus = "vencido" | "vencendo" | "ok" | "sem";
+  const asoStatusOf = (emp: any): { status: AsoStatus; dias: number | null; venc: string | null } => {
+    const venc = asoMap?.get(emp.id) ?? (emp.data_aso ? addYearsToDate(emp.data_aso, 1) : null);
+    if (!venc) return { status: "sem", dias: null, venc: null };
+    const d = daysUntil(venc);
+    if (d === null) return { status: "sem", dias: null, venc };
+    if (d < 0) return { status: "vencido", dias: d, venc };
+    if (d <= 30) return { status: "vencendo", dias: d, venc };
+    return { status: "ok", dias: d, venc };
+  };
+
+  // Contadores para os chips
+  const complianceCounts = useMemo(() => {
+    const list = (emps ?? []).filter((e: any) => e.status === "ATIVO");
+    let vencido = 0, vencendo = 0, sem = 0;
+    list.forEach((e: any) => {
+      const s = asoStatusOf(e).status;
+      if (s === "vencido") vencido++;
+      else if (s === "vencendo") vencendo++;
+      else if (s === "sem") sem++;
+    });
+    return { vencido, vencendo, sem };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emps, asoMap]);
+
   const filtered = useMemo(() => {
     const norm = (v: string) =>
       (v ?? "")
@@ -86,6 +142,12 @@ function EmployeesPage() {
       if (vinculoFilter === "PROPRIO" && e.tipo_vinculo !== "PROPRIO") return false;
       if (vinculoFilter === "TERCEIRO" && e.tipo_vinculo !== "TERCEIRO") return false;
       if (vinculoFilter === "MEI" && e.tipo_cadastro !== "MEI") return false;
+      if (complianceFilter !== "TODOS") {
+        const s2 = asoStatusOf(e).status;
+        if (complianceFilter === "aso_vencido" && s2 !== "vencido") return false;
+        if (complianceFilter === "aso_vencendo" && s2 !== "vencendo") return false;
+        if (complianceFilter === "sem_docs" && s2 !== "sem") return false;
+      }
       if (!s) return true;
       const cpfDigits = (e.cpf ?? "").replace(/\D/g, "");
       return (
@@ -95,7 +157,8 @@ function EmployeesPage() {
         (sDigits.length >= 3 && cpfDigits.includes(sDigits))
       );
     });
-  }, [emps, q, statusFilter, companyFilter, roleFilter, vinculoFilter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emps, q, statusFilter, companyFilter, roleFilter, vinculoFilter, complianceFilter, asoMap]);
 
   const cMap = new Map((companies ?? []).map((c: any) => [c.id, c.name]));
   const cTypeMap = new Map((companies ?? []).map((c: any) => [c.id, c.type]));
@@ -199,6 +262,47 @@ function EmployeesPage() {
         <KpiCard icon={UserRoundX} label="Desligados" value={stats.desligados} tone="rose"
           active={statusFilter === "DESLIGADO"} onClick={() => setStatusFilter("DESLIGADO")} />
       </div>
+
+      {/* Chips de conformidade — semáforo NR-07/NR-01 */}
+      {(complianceCounts.vencido + complianceCounts.vencendo + complianceCounts.sem > 0 || complianceFilter !== "TODOS") && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-rose-200/80 mr-1">
+            <AlertTriangle className="h-3 w-3 inline mr-1" />
+            Conformidade ASO:
+          </span>
+          <ComplianceChip
+            label="ASO vencido"
+            count={complianceCounts.vencido}
+            tone="rose"
+            pulse
+            active={complianceFilter === "aso_vencido"}
+            onClick={() => setComplianceFilter(complianceFilter === "aso_vencido" ? "TODOS" : "aso_vencido")}
+          />
+          <ComplianceChip
+            label="ASO ≤ 30d"
+            count={complianceCounts.vencendo}
+            tone="amber"
+            active={complianceFilter === "aso_vencendo"}
+            onClick={() => setComplianceFilter(complianceFilter === "aso_vencendo" ? "TODOS" : "aso_vencendo")}
+          />
+          <ComplianceChip
+            label="Sem ASO"
+            count={complianceCounts.sem}
+            tone="slate"
+            active={complianceFilter === "sem_docs"}
+            onClick={() => setComplianceFilter(complianceFilter === "sem_docs" ? "TODOS" : "sem_docs")}
+          />
+          {complianceFilter !== "TODOS" && (
+            <button
+              type="button"
+              onClick={() => setComplianceFilter("TODOS")}
+              className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-rose-200/70 hover:text-white px-2 py-1"
+            >
+              <X className="h-3 w-3" /> Limpar
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Busca + filtros */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4">
@@ -319,6 +423,7 @@ function EmployeesPage() {
                 company={cMap.get(e.company_id) ?? undefined}
                 companyType={cTypeMap.get(e.company_id) ?? undefined}
                 role={rMap.get(e.role_id) ?? undefined}
+                asoStatus={asoStatusOf(e)}
               />
             ))}
           </div>
