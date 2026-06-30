@@ -151,30 +151,30 @@ export function TermoConsentimentoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl bg-[#1a0a0e] border-rose-900/40 text-rose-50">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileSignature className="h-5 w-5 text-emerald-500" />
+          <DialogTitle className="flex items-center gap-2 text-rose-50">
+            <FileSignature className="h-5 w-5 text-emerald-400" />
             Termo de Consentimento — Assinatura Eletrônica
           </DialogTitle>
         </DialogHeader>
 
         {isLoading || !emp ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">Carregando…</div>
+          <div className="py-8 text-center text-sm text-rose-200/60">Carregando…</div>
         ) : (
           <div className="space-y-4">
             {/* Status */}
             {status === "BLINDADO" && (
-              <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 flex items-start gap-3">
-                <ShieldCheck className="h-6 w-6 text-emerald-600 shrink-0" />
+              <div className="rounded-xl border border-emerald-400/40 bg-emerald-500/10 p-4 flex items-start gap-3">
+                <ShieldCheck className="h-6 w-6 text-emerald-300 shrink-0" />
                 <div className="text-sm">
-                  <div className="font-bold text-emerald-800">Funcionário BLINDADO</div>
-                  <div className="text-xs text-emerald-900 mt-1">
+                  <div className="font-black text-emerald-200">Funcionário BLINDADO</div>
+                  <div className="text-xs text-emerald-50/90 mt-1 leading-relaxed">
                     Termo assinado em <strong>{new Date(emp.termo_consentimento_data + "T00:00:00").toLocaleDateString("pt-BR")}</strong>.
                     Todas as assinaturas estampadas (passadas e futuras) estão validadas juridicamente pela Lei 14.063/2020.
                   </div>
                   {termoExistente?.hash_sha256 && (
-                    <div className="text-[10px] font-mono text-emerald-700 mt-1 break-all">
+                    <div className="text-[10px] font-mono text-emerald-300/80 mt-1 break-all">
                       Hash: {termoExistente.hash_sha256.slice(0, 32)}…
                     </div>
                   )}
@@ -183,11 +183,11 @@ export function TermoConsentimentoDialog({
             )}
 
             {status === "PENDENTE" && (
-              <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 flex items-start gap-3">
-                <ShieldAlert className="h-6 w-6 text-amber-600 shrink-0" />
+              <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 p-4 flex items-start gap-3">
+                <ShieldAlert className="h-6 w-6 text-amber-300 shrink-0" />
                 <div className="text-sm">
-                  <div className="font-bold text-amber-800">Pendente de blindagem</div>
-                  <div className="text-xs text-amber-900 mt-1">
+                  <div className="font-black text-amber-200">Pendente de blindagem</div>
+                  <div className="text-xs text-amber-50/90 mt-1 leading-relaxed">
                     Funcionário tem assinatura cadastrada, mas <strong>nunca assinou o Termo de Consentimento</strong>.
                     Ao registrar agora, todas as estampagens já realizadas serão ratificadas retroativamente.
                   </div>
@@ -196,11 +196,11 @@ export function TermoConsentimentoDialog({
             )}
 
             {status === "SEM_ASSINATURA" && (
-              <div className="rounded-xl border border-slate-300 bg-slate-50 p-4 flex items-start gap-3">
-                <ShieldAlert className="h-6 w-6 text-slate-500 shrink-0" />
+              <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-4 flex items-start gap-3">
+                <ShieldAlert className="h-6 w-6 text-rose-300 shrink-0" />
                 <div className="text-sm">
-                  <div className="font-bold text-slate-800">Sem assinatura cadastrada</div>
-                  <div className="text-xs text-slate-700 mt-1">
+                  <div className="font-black text-rose-100">Sem assinatura cadastrada</div>
+                  <div className="text-xs text-rose-50/85 mt-1 leading-relaxed">
                     Cadastre primeiro o PNG da assinatura na ficha do funcionário (campo "Assinatura"). Depois volte aqui pra gerar o termo.
                   </div>
                 </div>
@@ -208,39 +208,55 @@ export function TermoConsentimentoDialog({
             )}
 
             {/* Dados */}
-            <div className="rounded-lg border bg-slate-50 p-3 text-xs space-y-1">
-              <div><strong>Nome:</strong> {emp.nome}</div>
-              <div><strong>CPF:</strong> {emp.cpf ?? "—"} · <strong>RG:</strong> {emp.rg ?? "—"}</div>
-              <div><strong>Cargo:</strong> {emp.roles?.name ?? "—"}</div>
-              <div><strong>Empresa:</strong> {emp.companies?.name ?? "—"}</div>
+            <div className="rounded-lg border border-rose-900/40 bg-rose-950/40 p-3 text-sm space-y-1 text-rose-50">
+              <div><span className="text-rose-300/70 font-bold">Nome:</span> {emp.nome}</div>
+              <div><span className="text-rose-300/70 font-bold">CPF:</span> {emp.cpf ?? "—"} · <span className="text-rose-300/70 font-bold">RG:</span> {emp.rg ?? "—"}</div>
+              <div><span className="text-rose-300/70 font-bold">Cargo:</span> {emp.roles?.name ?? "—"}</div>
+              <div><span className="text-rose-300/70 font-bold">Empresa:</span> {emp.companies?.name ?? "—"}</div>
               {emp.assinatura_url && (
                 <div className="pt-2 flex items-center gap-2">
-                  <strong>Assinatura cadastrada:</strong>
+                  <span className="text-rose-300/70 font-bold">Assinatura:</span>
                   <img src={emp.assinatura_url} alt="Assinatura" className="h-9 bg-white border rounded px-1 object-contain" />
-                  <Badge variant="outline" className="text-[10px] border-emerald-300 text-emerald-700">OK</Badge>
+                  <Badge variant="outline" className="text-[10px] border-emerald-400/50 text-emerald-300 bg-emerald-500/10">OK</Badge>
                 </div>
               )}
             </div>
 
             {status === "PENDENTE" && (
               <div>
-                <Label className="text-[11px] font-bold uppercase tracking-wide">Observações (opcional)</Label>
-                <Textarea rows={2} value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex.: termo coletado durante DDS semanal." />
+                <Label className="text-[11px] font-black uppercase tracking-widest text-rose-200/80">Observações (opcional)</Label>
+                <Textarea
+                  rows={2}
+                  value={obs}
+                  onChange={(e) => setObs(e.target.value)}
+                  placeholder="Ex.: termo coletado durante DDS semanal."
+                  className="mt-1 bg-rose-950/40 border-rose-900/50 text-rose-50 placeholder:text-rose-300/40 focus-visible:ring-emerald-400/40"
+                />
               </div>
             )}
 
-            <div className="text-[11px] text-muted-foreground leading-snug border-l-2 border-emerald-300 pl-3 bg-emerald-50/40 p-2 rounded">
-              <strong>Base legal:</strong> Lei 14.063/2020 art. 4º I (assinatura eletrônica simples) · LGPD art. 7º II e V ·
-              Código Civil arts. 219 e 225. O PDF gerado inclui cláusula de <strong>ratificação retroativa</strong> de todas as
+            <div className="text-[11px] text-emerald-50/85 leading-relaxed border-l-2 border-emerald-400/60 pl-3 bg-emerald-500/[0.06] p-2 rounded">
+              <strong className="text-emerald-200">Base legal:</strong> Lei 14.063/2020 art. 4º I (assinatura eletrônica simples) · LGPD art. 7º II e V ·
+              Código Civil arts. 219 e 225. O PDF gerado inclui cláusula de <strong className="text-emerald-200">ratificação retroativa</strong> de todas as
               estampagens anteriores.
             </div>
           </div>
         )}
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+        <DialogFooter className="gap-2 border-t border-rose-900/30 pt-4">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="border-rose-900/50 bg-transparent text-rose-100 hover:bg-rose-900/30 hover:text-white"
+          >
+            Fechar
+          </Button>
           {status === "BLINDADO" && (
-            <Button variant="outline" onClick={reimprimir}>
+            <Button
+              variant="outline"
+              onClick={reimprimir}
+              className="border-emerald-400/50 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20 hover:text-white"
+            >
               <Printer className="h-4 w-4 mr-1" /> Reimprimir
             </Button>
           )}
@@ -248,7 +264,7 @@ export function TermoConsentimentoDialog({
             <Button
               onClick={() => salvar.mutate()}
               disabled={salvar.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-900/40"
             >
               <ShieldCheck className="h-4 w-4 mr-1" />
               {salvar.isPending ? "Registrando…" : "Registrar e gerar PDF"}
