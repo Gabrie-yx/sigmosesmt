@@ -1230,10 +1230,14 @@ function DocsTab({ empId }: any) {
   });
   const [extraTipo, setExtraTipo] = useState("CNH");
   const [extraFile, setExtraFile] = useState<File | null>(null);
+  const [extraDescricao, setExtraDescricao] = useState("");
+  const [extraValidade, setExtraValidade] = useState("");
+  const [extraSemValidade, setExtraSemValidade] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<any | null>(null);
 
   // Upload em background — não bloqueia a UI nem trava se o usuário sair da tela.
   // O queryClient é singleton, então o invalidate funciona mesmo depois do componente desmontar.
-  function uploadFor(tipo: string, file: File) {
+  function uploadFor(tipo: string, file: File, extras?: { descricao?: string; data_validade?: string | null; sem_validade?: boolean }) {
     const safe = file.name.replace(/[^\w.\-]+/g, "_");
     const path = `${empId}/${Date.now()}_${safe}`;
     const promise = (async () => {
@@ -1243,7 +1247,14 @@ function DocsTab({ empId }: any) {
       if (upErr) throw upErr;
       const { error } = await supabase
         .from("employee_docs")
-        .insert({ employee_id: empId, tipo, file_path: path });
+        .insert({
+          employee_id: empId,
+          tipo,
+          file_path: path,
+          descricao: extras?.descricao?.trim() || null,
+          data_validade: extras?.sem_validade ? null : (extras?.data_validade || null),
+          sem_validade: !!extras?.sem_validade,
+        } as any);
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["docs", empId] });
       qc.invalidateQueries({ queryKey: ["docs-summary", empId] });
@@ -1260,10 +1271,19 @@ function DocsTab({ empId }: any) {
   const uploadExtra = useMutation({
     mutationFn: async () => {
       if (!extraFile) throw new Error("Selecione um arquivo");
-      // dispara em background — não esperamos terminar pra liberar a UI
-      uploadFor(extraTipo, extraFile);
+      const nomeFinal = extraTipo === "Outro" && extraDescricao.trim() ? extraDescricao.trim() : extraTipo;
+      uploadFor(nomeFinal, extraFile, {
+        descricao: extraTipo === "Outro" ? extraDescricao : undefined,
+        data_validade: extraValidade || null,
+        sem_validade: extraSemValidade,
+      });
     },
-    onSuccess: () => setExtraFile(null),
+    onSuccess: () => {
+      setExtraFile(null);
+      setExtraDescricao("");
+      setExtraValidade("");
+      setExtraSemValidade(false);
+    },
   });
 
   const del = useMutation({
