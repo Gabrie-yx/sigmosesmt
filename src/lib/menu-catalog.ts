@@ -23,6 +23,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/ptes", label: "PTEs — Permissão de Trabalho", module: "sesmt" },
   { key: "/app/oss", label: "OSS — Ordens de Serviço (NR-01)", module: "sesmt" },
   { key: "/app/trainings", label: "Treinamentos & NRs", module: "sesmt" },
+  { key: "/app/sesmt/integracoes", label: "Integrações NR-01", module: "sesmt" },
   { key: "/app/sesmt/equipamentos-moveis", label: "Checklist de Equipamentos", module: "sesmt" },
   { key: "/app/sesmt/terceiros", label: "Painel de Terceiros", module: "sesmt" },
   { key: "/app/relatorios/reincidencia-epi", label: "Reincidência de EPI", module: "sesmt" },
