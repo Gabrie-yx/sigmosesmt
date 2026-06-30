@@ -108,6 +108,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
       { to: "/app/ptes", label: "Permissões de Trabalho", icon: FileCheck2 },
       { to: "/app/oss", label: "OSS — Ordens de Serviço (NR-01)", icon: FileSignature },
       { to: "/app/trainings", label: "Treinamentos & NRs", icon: HardHat },
+      { to: "/app/sesmt/integracoes", label: "Integrações NR-01", icon: GraduationCap },
       { to: "/app/sesmt/equipamentos-moveis", label: "Checklist de Equipamentos", icon: Wrench },
     ],
   },
