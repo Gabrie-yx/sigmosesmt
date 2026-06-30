@@ -23,6 +23,9 @@ export const TIPOS_EXAME = [
   "Acuidade Visual",
   "ECG",
   "EEG",
+  "Glicose",
+  "Hemograma",
+  "Laudo Psicossocial",
 ] as const;
 
 export const NATUREZAS_EXAME = [
