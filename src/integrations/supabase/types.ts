@@ -7967,7 +7967,7 @@ export type Database = {
         | "VENCIDO"
         | "SUBSTITUIDO"
         | "CANCELADO"
-      purchase_req_class: "MATERIAL" | "SERVICO"
+      purchase_req_class: "MATERIAL" | "SERVICO" | "MEDICAMENTOS"
       purchase_req_status: "PENDENTE" | "COTADA" | "APROVADA" | "INDEFERIDA"
       tipo_acidente: "COM_AFASTAMENTO" | "SEM_AFASTAMENTO" | "TRAJETO" | "FATAL"
       tipo_movimentacao_epi: "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO"
@@ -8133,7 +8133,7 @@ export const Constants = {
         "SUBSTITUIDO",
         "CANCELADO",
       ],
-      purchase_req_class: ["MATERIAL", "SERVICO"],
+      purchase_req_class: ["MATERIAL", "SERVICO", "MEDICAMENTOS"],
       purchase_req_status: ["PENDENTE", "COTADA", "APROVADA", "INDEFERIDA"],
       tipo_acidente: ["COM_AFASTAMENTO", "SEM_AFASTAMENTO", "TRAJETO", "FATAL"],
       tipo_movimentacao_epi: [

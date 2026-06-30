@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Plus, Pill, FileDown, Eye, Copy, Search } from "lucide-react";
+import { Trash2, Plus, Pill, FileDown, Eye, Copy, Search, Save } from "lucide-react";
 import { toast } from "sonner";
 import {
   MEDICAMENTOS_AMBULATORIO_PADRAO,
@@ -14,15 +14,39 @@ import {
   type MedItem,
 } from "@/lib/requisicao-medicamentos-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 import type jsPDF from "jspdf";
 
 type Props = {
   defaultSolicitante?: string;
   trigger?: React.ReactNode;
+  /** Quando passado, abre em modo edição e carrega os itens salvos. */
+  requisitionId?: string;
+  /** Controle externo de abertura (usado quando aberto a partir da lista). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-export function RequisicaoMedicamentosDialog({ defaultSolicitante = "", trigger }: Props) {
-  const [open, setOpen] = useState(false);
+export function RequisicaoMedicamentosDialog({
+  defaultSolicitante = "",
+  trigger,
+  requisitionId,
+  open: openProp,
+  onOpenChange,
+}: Props) {
+  const [openInternal, setOpenInternal] = useState(false);
+  const open = openProp ?? openInternal;
+  const setOpen = (v: boolean) => {
+    if (onOpenChange) onOpenChange(v);
+    else setOpenInternal(v);
+  };
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const [editId, setEditId] = useState<string | null>(requisitionId ?? null);
+  const [numero, setNumero] = useState<string>("");
+  const [saving, setSaving] = useState(false);
   const [solicitante, setSolicitante] = useState(defaultSolicitante);
   const [setor, setSetor] = useState("SESMT — Ambulatório");
   const [responsavelTST, setResponsavelTST] = useState("");
@@ -30,6 +54,45 @@ export function RequisicaoMedicamentosDialog({ defaultSolicitante = "", trigger 
   const [itens, setItens] = useState<MedItem[]>(() => MEDICAMENTOS_AMBULATORIO_PADRAO.map((i) => ({ ...i })));
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [busca, setBusca] = useState("");
+
+  // Carrega requisição existente quando passada (modo edição)
+  useEffect(() => {
+    if (!open) return;
+    if (!requisitionId) {
+      setEditId(null);
+      return;
+    }
+    setEditId(requisitionId);
+    (async () => {
+      const { data: req } = await supabase
+        .from("purchase_requisitions")
+        .select("*")
+        .eq("id", requisitionId)
+        .maybeSingle();
+      if (req) {
+        setNumero(req.numero ?? "");
+        setSolicitante(req.solicitante ?? "");
+        setSetor(req.setor ?? "SESMT — Ambulatório");
+        setObservacoes(req.observacoes ?? "");
+      }
+      const { data: rows } = await supabase
+        .from("purchase_requisition_items")
+        .select("*")
+        .eq("requisition_id", requisitionId)
+        .order("item_numero");
+      if (rows && rows.length > 0) {
+        setItens(
+          rows.map((r: any) => ({
+            descricao: r.descricao ?? "",
+            apresentacao: "", // não persistido — fica para edição
+            unidade: r.unidade ?? "UN",
+            quantidade: Number(r.quantidade ?? 0),
+            justificativa: r.observacao ?? "",
+          })),
+        );
+      }
+    })();
+  }, [open, requisitionId]);
 
   const updateItem = (idx: number, patch: Partial<MedItem>) => {
     setItens((arr) => arr.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
@@ -81,32 +144,117 @@ export function RequisicaoMedicamentosDialog({ defaultSolicitante = "", trigger 
 
   const baixar = () => {
     if (!validar()) return;
-    downloadRequisicaoMedicamentosPdf({ solicitante, setor, responsavelTST, observacoes, itens });
+    downloadRequisicaoMedicamentosPdf({ numero, solicitante, setor, responsavelTST, observacoes, itens });
     toast.success("PDF gerado");
   };
   const visualizar = () => {
     if (!validar()) return;
-    setPreviewDoc(buildRequisicaoMedicamentosPdf({ solicitante, setor, responsavelTST, observacoes, itens }));
+    setPreviewDoc(buildRequisicaoMedicamentosPdf({ numero, solicitante, setor, responsavelTST, observacoes, itens }));
   };
+
+  async function gerarNumero(): Promise<string> {
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const yyyy = String(now.getFullYear());
+    const start = `${yyyy}-${mm}-01`;
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const end = endDate.toISOString().slice(0, 10);
+    const { count } = await supabase
+      .from("purchase_requisitions")
+      .select("id", { count: "exact", head: true })
+      .gte("data_requisicao", start)
+      .lt("data_requisicao", end);
+    const seq = String((count ?? 0) + 1).padStart(3, "0");
+    return `${seq}/${mm}/${yyyy}`;
+  }
+
+  async function salvarNoSigmo() {
+    if (!validar()) return;
+    setSaving(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      let id = editId;
+      if (id) {
+        const { error } = await supabase
+          .from("purchase_requisitions")
+          .update({
+            solicitante,
+            setor,
+            observacoes,
+            titulo: "Medicamentos Ambulatório",
+          })
+          .eq("id", id);
+        if (error) throw error;
+        await supabase.from("purchase_requisition_items").delete().eq("requisition_id", id);
+      } else {
+        const novoNumero = numero || (await gerarNumero());
+        const { data, error } = await supabase
+          .from("purchase_requisitions")
+          .insert({
+            numero: novoNumero,
+            titulo: "Medicamentos Ambulatório",
+            data_requisicao: today,
+            classificacao: "MEDICAMENTOS" as any,
+            solicitante,
+            setor,
+            observacoes,
+            codigo_formulario: "FOR-COMP: 03",
+            revisao: "01",
+            data_revisao: today,
+            pagina: "01/01",
+            status: "PENDENTE",
+            created_by: user?.id ?? null,
+          })
+          .select("id, numero")
+          .single();
+        if (error) throw error;
+        id = data.id;
+        setEditId(id);
+        setNumero(data.numero);
+      }
+
+      const rows = itens.map((it, idx) => ({
+        requisition_id: id!,
+        item_numero: idx + 1,
+        descricao: `${it.descricao}${it.apresentacao ? ` — ${it.apresentacao}` : ""}`,
+        quantidade: Number(it.quantidade) || 0,
+        unidade: it.unidade || "UN",
+        observacao: it.justificativa ?? "",
+      }));
+      if (rows.length > 0) {
+        const { error: itErr } = await supabase.from("purchase_requisition_items").insert(rows);
+        if (itErr) throw itErr;
+      }
+      qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
+      toast.success(editId ? "Requisição atualizada" : "Requisição salva no SIGMO");
+      setOpen(false);
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          {trigger ?? (
-            <Button variant="outline" className="gap-2">
-              <Pill className="h-4 w-4 text-rose-600" /> Medicamentos Ambulatório
-            </Button>
-          )}
-        </DialogTrigger>
+        {openProp === undefined && (
+          <DialogTrigger asChild>
+            {trigger ?? (
+              <Button variant="outline" className="gap-2">
+                <Pill className="h-4 w-4 text-rose-600" /> Medicamentos Ambulatório
+              </Button>
+            )}
+          </DialogTrigger>
+        )}
         <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0">
           <DialogHeader className="px-5 pt-5 pb-3 border-b">
             <DialogTitle className="flex items-center gap-2">
               <Pill className="h-5 w-5 text-rose-600" />
-              Requisição de Medicamentos — Ambulatório SESMT
+              {editId ? `Requisição Nº ${numero} — Medicamentos` : "Requisição de Medicamentos — Ambulatório SESMT"}
             </DialogTitle>
             <p className="text-xs text-muted-foreground">
-              Itens de uso diário (sem medicação controlada). Edite quantidades, adicione ou remova itens e gere o PDF.
+              Itens de uso diário (sem medicação controlada). Edite quantidades, salve no SIGMO para ficar na lista de requisições, gere o PDF ou assine.
             </p>
           </DialogHeader>
 
@@ -232,8 +380,16 @@ export function RequisicaoMedicamentosDialog({ defaultSolicitante = "", trigger 
           <DialogFooter className="px-5 py-3 border-t gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
             <Button variant="outline" onClick={visualizar}><Eye className="h-4 w-4 mr-2" /> Visualizar</Button>
-            <Button className="bg-rose-700 hover:bg-rose-800" onClick={baixar}>
+            <Button variant="outline" onClick={baixar}>
               <FileDown className="h-4 w-4 mr-2" /> Baixar PDF
+            </Button>
+            <Button
+              className="bg-rose-700 hover:bg-rose-800 text-white"
+              onClick={salvarNoSigmo}
+              disabled={saving}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? "Salvando..." : editId ? "Salvar alterações" : "Salvar no SIGMO"}
             </Button>
           </DialogFooter>
         </DialogContent>
