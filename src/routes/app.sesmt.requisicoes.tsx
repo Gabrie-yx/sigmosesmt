@@ -46,7 +46,7 @@ export const Route = createFileRoute("/app/sesmt/requisicoes")({
 });
 
 type Status = "PENDENTE" | "COTADA" | "APROVADA" | "INDEFERIDA";
-type Classe = "MATERIAL" | "SERVICO";
+type Classe = "MATERIAL" | "SERVICO" | "MEDICAMENTOS";
 
 type Item = {
   item_numero: number;
@@ -524,7 +524,20 @@ function RequisicoesPage() {
                           <span className="font-bold text-slate-900">Nº {r.numero}</span>
                           {r.titulo && <span className="font-semibold text-red-800 ml-1">— {r.titulo}</span>}
                           <Badge variant="outline" className={STATUS_BADGE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
-                          <Badge variant="outline" className="text-[10px]">{r.classificacao === "MATERIAL" ? "Material" : "Serviço"}</Badge>
+                          <Badge
+                            variant="outline"
+                            className={
+                              r.classificacao === "MEDICAMENTOS"
+                                ? "text-[10px] bg-rose-50 text-rose-700 border-rose-300"
+                                : "text-[10px]"
+                            }
+                          >
+                            {r.classificacao === "MATERIAL"
+                              ? "Material"
+                              : r.classificacao === "SERVICO"
+                                ? "Serviço"
+                                : "💊 Medicamentos"}
+                          </Badge>
                         </div>
                         <div className="text-xs text-slate-700 mt-1">
                           {fmtBR(r.data_requisicao)} · <strong>{r.solicitante}</strong>
