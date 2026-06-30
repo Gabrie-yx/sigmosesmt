@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Plus, Pill, FileDown, Eye } from "lucide-react";
+import { Trash2, Plus, Pill, FileDown, Eye, Copy, Search } from "lucide-react";
 import { toast } from "sonner";
 import {
   MEDICAMENTOS_AMBULATORIO_PADRAO,
+  MEDICAMENTOS_SUGESTOES,
   buildRequisicaoMedicamentosPdf,
   downloadRequisicaoMedicamentosPdf,
   type MedItem,
@@ -28,13 +29,42 @@ export function RequisicaoMedicamentosDialog({ defaultSolicitante = "", trigger 
   const [observacoes, setObservacoes] = useState("");
   const [itens, setItens] = useState<MedItem[]>(() => MEDICAMENTOS_AMBULATORIO_PADRAO.map((i) => ({ ...i })));
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
+  const [busca, setBusca] = useState("");
 
   const updateItem = (idx: number, patch: Partial<MedItem>) => {
     setItens((arr) => arr.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   };
   const removeItem = (idx: number) => setItens((arr) => arr.filter((_, i) => i !== idx));
-  const addItem = () =>
+  const duplicateItem = (idx: number) =>
+    setItens((arr) => {
+      const novo = { ...arr[idx] };
+      const out = [...arr];
+      out.splice(idx + 1, 0, novo);
+      return out;
+    });
+  const addItemVazio = () =>
     setItens((arr) => [...arr, { descricao: "", apresentacao: "", unidade: "UN", quantidade: 1 }]);
+  const addItemSugestao = (sug: MedItem) => {
+    setItens((arr) => [...arr, { ...sug }]);
+    setBusca("");
+    toast.success(`${sug.descricao} adicionado`);
+  };
+
+  const sugestoesFiltradas = (() => {
+    const q = busca.trim().toLowerCase();
+    if (!q) return [];
+    const pool = [...MEDICAMENTOS_SUGESTOES, ...MEDICAMENTOS_AMBULATORIO_PADRAO];
+    const seen = new Set<string>();
+    return pool
+      .filter((i) => {
+        const k = i.descricao.toLowerCase();
+        if (seen.has(k)) return false;
+        if (!k.includes(q)) return false;
+        seen.add(k);
+        return true;
+      })
+      .slice(0, 8);
+  })();
 
   const resetPadrao = () => {
     setItens(MEDICAMENTOS_AMBULATORIO_PADRAO.map((i) => ({ ...i })));
@@ -102,9 +132,43 @@ export function RequisicaoMedicamentosDialog({ defaultSolicitante = "", trigger 
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={resetPadrao}>Restaurar padrão</Button>
-                <Button size="sm" variant="outline" onClick={addItem}><Plus className="h-3 w-3 mr-1" /> Adicionar</Button>
+                <Button size="sm" className="bg-rose-700 hover:bg-rose-800 text-white" onClick={addItemVazio}>
+                  <Plus className="h-3 w-3 mr-1" /> Item personalizado
+                </Button>
               </div>
             </div>
+
+            <div className="rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50/60 dark:bg-rose-950/20 p-3">
+              <Label className="text-xs flex items-center gap-1 mb-1">
+                <Search className="h-3 w-3" /> Buscar e adicionar medicamento (ex: dipirona 1g, buscopan, oxímetro…)
+              </Label>
+              <Input
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Digite o nome do medicamento ou insumo"
+                className="h-9 bg-white dark:bg-slate-900"
+              />
+              {sugestoesFiltradas.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {sugestoesFiltradas.map((s, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => addItemSugestao(s)}
+                      className="text-xs px-2 py-1 rounded border bg-white dark:bg-slate-900 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition"
+                    >
+                      <Plus className="h-3 w-3 inline mr-1 text-rose-600" />
+                      {s.descricao} <span className="text-muted-foreground">· {s.apresentacao}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {busca.trim() && sugestoesFiltradas.length === 0 && (
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Nada no catálogo. Use <b>+ Item personalizado</b> pra digitar do zero.
+                </div>
+              )}
+              </div>
 
             <div className="border rounded-lg overflow-hidden">
               <table className="w-full text-xs">
@@ -140,8 +204,11 @@ export function RequisicaoMedicamentosDialog({ defaultSolicitante = "", trigger 
                           onChange={(e) => updateItem(idx, { quantidade: Number(e.target.value) || 0 })}
                         />
                       </td>
-                      <td className="px-1 py-1 text-right">
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-rose-600" onClick={() => removeItem(idx)}>
+                     <td className="px-1 py-1 text-right whitespace-nowrap">
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-sky-600" title="Duplicar (criar variação)" onClick={() => duplicateItem(idx)}>
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-rose-600" title="Remover" onClick={() => removeItem(idx)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </td>
