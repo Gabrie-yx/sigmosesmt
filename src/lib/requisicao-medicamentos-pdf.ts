@@ -62,6 +62,40 @@ export const MEDICAMENTOS_AMBULATORIO_PADRAO: MedItem[] = [
   { descricao: "Compressa Fria Instantânea",            apresentacao: "Bolsa descart.", unidade: "UN",       quantidade: 6 },
 ];
 
+/**
+ * Catálogo de sugestões para a busca rápida (não entra na lista padrão).
+ * Permite adicionar variações de dose / itens comuns sem precisar digitar tudo.
+ */
+export const MEDICAMENTOS_SUGESTOES: MedItem[] = [
+  { descricao: "Dipirona Sódica 1g",                    apresentacao: "Comprimido",     unidade: "CX c/ 10", quantidade: 2 },
+  { descricao: "Dipirona Gotas 500mg/ml",               apresentacao: "Frasco 10ml",    unidade: "FRASCO",   quantidade: 4 },
+  { descricao: "Paracetamol 500mg",                     apresentacao: "Comprimido",     unidade: "CX c/ 20", quantidade: 2 },
+  { descricao: "Paracetamol Gotas 200mg/ml",            apresentacao: "Frasco 15ml",    unidade: "FRASCO",   quantidade: 2 },
+  { descricao: "Nimesulida 100mg",                      apresentacao: "Comprimido",     unidade: "CX c/ 12", quantidade: 2 },
+  { descricao: "Cetoprofeno 100mg",                     apresentacao: "Comprimido",     unidade: "CX c/ 10", quantidade: 2 },
+  { descricao: "Buscopan Simples 10mg",                 apresentacao: "Comprimido",     unidade: "CX c/ 20", quantidade: 2 },
+  { descricao: "Plasil (Metoclopramida 10mg)",          apresentacao: "Comprimido",     unidade: "CX c/ 20", quantidade: 2 },
+  { descricao: "Ranitidina 150mg",                      apresentacao: "Comprimido",     unidade: "CX c/ 20", quantidade: 2 },
+  { descricao: "Pantoprazol 40mg",                      apresentacao: "Comprimido",     unidade: "CX c/ 14", quantidade: 2 },
+  { descricao: "Loratadina Xarope",                     apresentacao: "Frasco 100ml",   unidade: "FRASCO",   quantidade: 2 },
+  { descricao: "Dexclorfeniramina 2mg",                 apresentacao: "Comprimido",     unidade: "CX c/ 20", quantidade: 2 },
+  { descricao: "Cetoconazol Creme 2%",                  apresentacao: "Bisnaga 30g",    unidade: "TUBO",     quantidade: 2 },
+  { descricao: "Hidrocortisona Creme 1%",               apresentacao: "Bisnaga 30g",    unidade: "TUBO",     quantidade: 2 },
+  { descricao: "Cânfora + Mentol (gelol)",              apresentacao: "Bisnaga 30g",    unidade: "TUBO",     quantidade: 2 },
+  { descricao: "Água Oxigenada 10vol",                  apresentacao: "Frasco 100ml",   unidade: "FRASCO",   quantidade: 4 },
+  { descricao: "Luva de Procedimento (Nitrílica) — P",  apresentacao: "Caixa c/ 100",   unidade: "CX",       quantidade: 1 },
+  { descricao: "Luva de Procedimento (Nitrílica) — G",  apresentacao: "Caixa c/ 100",   unidade: "CX",       quantidade: 1 },
+  { descricao: "Máscara Cirúrgica Tripla",              apresentacao: "Caixa c/ 50",    unidade: "CX",       quantidade: 4 },
+  { descricao: "Algodão Hidrófilo",                     apresentacao: "Pacote 500g",    unidade: "PCT",      quantidade: 2 },
+  { descricao: "Cotonete (Hastes Flexíveis)",           apresentacao: "Caixa c/ 75",    unidade: "CX",       quantidade: 2 },
+  { descricao: "Tesoura para Curativo",                 apresentacao: "Inox",           unidade: "UN",       quantidade: 1 },
+  { descricao: "Pinça Anatômica",                       apresentacao: "Inox",           unidade: "UN",       quantidade: 1 },
+  { descricao: "Esfigmomanômetro Aneróide",             apresentacao: "Adulto",         unidade: "UN",       quantidade: 1 },
+  { descricao: "Estetoscópio Duosson",                  apresentacao: "Adulto",         unidade: "UN",       quantidade: 1 },
+  { descricao: "Oxímetro de Pulso Portátil",            apresentacao: "Dedo",           unidade: "UN",       quantidade: 1 },
+  { descricao: "Soro Glicosado 5% — 500ml",             apresentacao: "Frasco",         unidade: "FRASCO",   quantidade: 4 },
+];
+
 export type RequisicaoMedicamentosOpts = {
   numero?: string;
   setor?: string;
