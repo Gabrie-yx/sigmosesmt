@@ -721,6 +721,28 @@ function EditReqBtn({ req, userId }: { req: Req; userId?: string }) {
   );
 }
 
+function MedEditBtn({ req }: { req: Req }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        className="bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100"
+        onClick={() => setOpen(true)}
+        title="Abrir requisição de medicamentos"
+      >
+        <Pencil className="h-3.5 w-3.5 mr-1" /> Abrir
+      </Button>
+      <RequisicaoMedicamentosDialog
+        requisitionId={req.id}
+        open={open}
+        onOpenChange={setOpen}
+      />
+    </>
+  );
+}
+
 function _IndeferBtnImpl({ onConfirm }: { onConfirm: (motivo: string) => void }) {
   const [open, setOpen] = useState(false);
   const [motivo, setMotivo] = useState("");
