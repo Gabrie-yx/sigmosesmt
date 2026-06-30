@@ -1402,7 +1402,7 @@ function DocsTab({ empId }: any) {
       <Card className="p-4 space-y-3">
         <div className="text-[11px] font-black uppercase tracking-widest text-slate-600">Outros documentos</div>
         {isEditor && (
-          <form onSubmit={(e) => { e.preventDefault(); uploadExtra.mutate(); }} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end border-b pb-4">
+          <form onSubmit={(e) => { e.preventDefault(); uploadExtra.mutate(); }} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end border-b pb-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Tipo</Label>
               <Select value={extraTipo} onValueChange={setExtraTipo}>
@@ -1410,11 +1410,25 @@ function DocsTab({ empId }: any) {
                 <SelectContent>{TIPOS_EXTRA.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5 md:col-span-2">
+            {extraTipo === "Outro" && (
+              <div className="space-y-1.5 md:col-span-2">
+                <Label className="text-xs">Nome do documento *</Label>
+                <Input value={extraDescricao} onChange={(e) => setExtraDescricao(e.target.value)} placeholder="Ex.: Certidão de casamento" />
+              </div>
+            )}
+            <div className={`space-y-1.5 ${extraTipo === "Outro" ? "md:col-span-3" : "md:col-span-3"}`}>
               <Label className="text-xs">Arquivo (PDF/Imagem)</Label>
               <Input type="file" accept="application/pdf,image/*" onChange={(e) => setExtraFile(e.target.files?.[0] ?? null)} />
             </div>
-            <Button type="submit" className="md:col-span-3" disabled={uploadExtra.isPending || !extraFile}>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label className="text-xs">Vencimento</Label>
+              <Input type="date" value={extraValidade} disabled={extraSemValidade} onChange={(e) => setExtraValidade(e.target.value)} />
+            </div>
+            <label className="flex items-center gap-2 text-xs font-bold cursor-pointer pb-2">
+              <input type="checkbox" checked={extraSemValidade} onChange={(e) => { setExtraSemValidade(e.target.checked); if (e.target.checked) setExtraValidade(""); }} />
+              N/A (sem vencimento)
+            </label>
+            <Button type="submit" className="md:col-span-6" disabled={uploadExtra.isPending || !extraFile || (extraTipo === "Outro" && !extraDescricao.trim())}>
               <Upload className="h-4 w-4 mr-2" /> Enviar documento
             </Button>
           </form>
@@ -1423,18 +1437,35 @@ function DocsTab({ empId }: any) {
           <div className="text-xs text-muted-foreground text-center py-3">Nenhum documento adicional</div>
         ) : (
           <Table>
-            <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Arquivo</TableHead><TableHead>Enviado em</TableHead><TableHead></TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Documento</TableHead><TableHead>Arquivo</TableHead><TableHead>Vencimento</TableHead><TableHead>Enviado em</TableHead><TableHead></TableHead></TableRow></TableHeader>
             <TableBody>
               {extraDocs.map((d: any) => (
                 <TableRow key={d.id}>
-                  <TableCell className="font-medium">{d.tipo}</TableCell>
+                  <TableCell className="font-medium">
+                    {d.descricao?.trim() ? d.descricao : d.tipo}
+                    {d.descricao?.trim() && d.tipo !== d.descricao && (
+                      <div className="text-[10px] text-muted-foreground uppercase">{d.tipo}</div>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Button size="sm" variant="ghost" onClick={() => openDoc(d.file_path)}>
                       <FileText className="h-4 w-4 mr-1" />Ver
                     </Button>
                   </TableCell>
+                  <TableCell className="text-xs">
+                    {d.sem_validade
+                      ? <Badge variant="outline" className="text-[10px]">N/A</Badge>
+                      : d.data_validade
+                        ? formatDateBR(d.data_validade)
+                        : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell>{formatDateBR(d.uploaded_at)}</TableCell>
                   <TableCell className="text-right">
+                    {isEditor && (
+                      <Button size="icon" variant="ghost" onClick={() => setEditingDoc(d)} title="Editar">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
                     {isAdmin && <Button size="icon" variant="ghost" onClick={() => del.mutate(d)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
                   </TableCell>
                 </TableRow>
@@ -1443,6 +1474,12 @@ function DocsTab({ empId }: any) {
           </Table>
         )}
       </Card>
+
+      <EditDocDialog
+        doc={editingDoc}
+        onClose={() => setEditingDoc(null)}
+        onSaved={() => { setEditingDoc(null); qc.invalidateQueries({ queryKey: ["docs", empId] }); }}
+      />
 
       <SignedDocsList employeeId={empId} />
     </div>
