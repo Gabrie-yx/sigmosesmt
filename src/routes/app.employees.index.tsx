@@ -479,6 +479,31 @@ function KpiCard({ icon: Icon, label, value, tone, active, onClick }: { icon: an
   );
 }
 
+function ComplianceChip({
+  label, count, tone, active, pulse, onClick,
+}: {
+  label: string; count: number; tone: "rose" | "amber" | "slate"; active?: boolean; pulse?: boolean; onClick: () => void;
+}) {
+  const palette = tone === "rose"
+    ? { base: "bg-rose-500/15 text-rose-100 ring-rose-400/30", on: "bg-rose-500/35 ring-rose-300/60", dot: "bg-rose-400" }
+    : tone === "amber"
+    ? { base: "bg-amber-500/15 text-amber-100 ring-amber-400/30", on: "bg-amber-500/35 ring-amber-300/60", dot: "bg-amber-400" }
+    : { base: "bg-slate-500/15 text-slate-100 ring-slate-400/30", on: "bg-slate-500/35 ring-slate-300/60", dot: "bg-slate-300" };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 ring-1 text-[10px] font-black uppercase tracking-widest transition ${active ? palette.on : palette.base} hover:scale-[1.02]`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${palette.dot} ${pulse && count > 0 ? "animate-pulse" : ""}`} />
+      {label}
+      <span className="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-black/30 text-white tabular-nums">
+        {count}
+      </span>
+    </button>
+  );
+}
+
 function avatarGradient(name: string) {
   const palettes = [
     "from-rose-500 to-pink-600",
@@ -518,7 +543,10 @@ function initials(name: string) {
   return (first + last).toUpperCase();
 }
 
-function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?: string; companyType?: string; role?: string }) {
+function EmployeeCard({ emp, company, companyType, role, asoStatus }: {
+  emp: any; company?: string; companyType?: string; role?: string;
+  asoStatus?: { status: "vencido" | "vencendo" | "ok" | "sem"; dias: number | null; venc: string | null };
+}) {
   const statusStyle =
     emp.status === "ATIVO"
       ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
@@ -529,6 +557,16 @@ function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?:
       : "bg-rose-100 text-rose-700 ring-rose-200";
   const isTerceiro = companyType === "TERCEIRIZADO" || emp.tipo_vinculo === "TERCEIRO";
   const isMei = emp.tipo_cadastro === "MEI";
+  const isActive = emp.status === "ATIVO";
+  const asoBadge = isActive && asoStatus
+    ? asoStatus.status === "vencido"
+      ? { text: `ASO ${asoStatus.dias}d`, cls: "bg-rose-600 text-white ring-rose-300 animate-pulse" }
+      : asoStatus.status === "vencendo"
+      ? { text: `ASO ${asoStatus.dias}d`, cls: "bg-amber-500 text-white ring-amber-300" }
+      : asoStatus.status === "sem"
+      ? { text: "SEM ASO", cls: "bg-slate-700 text-white ring-slate-400" }
+      : null
+    : null;
 
   return (
     <Link
@@ -536,6 +574,14 @@ function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?:
       params={{ id: emp.id }}
       className="glass-card glass-shine group relative block rounded-2xl p-4 hover:-translate-y-0.5 hover:shadow-2xl transition-all duration-200 overflow-hidden"
     >
+      {asoBadge && (
+        <span
+          className={`absolute top-2 right-2 z-10 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ring-1 shadow ${asoBadge.cls}`}
+          title={asoStatus?.venc ? `Validade ASO: ${asoStatus.venc}` : "Sem ASO registrado"}
+        >
+          {asoBadge.text}
+        </span>
+      )}
       {(() => {
         const accent = avatarAccent(emp.nome);
         return (
