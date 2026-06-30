@@ -161,7 +161,7 @@ export function buildRequisicaoMedicamentosPdf(opts: RequisicaoMedicamentosOpts)
   });
   doc.setFontSize(8);
   doc.text(`Solicitante\n${opts.solicitante}`, M, sy + 4);
-  doc.text(`TST Responsável\n${opts.responsavelTST ?? "Aline (TST)"}`, M + colW + 5, sy + 4);
+  doc.text(`TST Responsável\n${opts.responsavelTST ?? ""}`, M + colW + 5, sy + 4);
   doc.text(`Aprovação / Compras\n${opts.responsavelAprovador ?? ""}`, M + 2 * (colW + 5), sy + 4);
 
   return doc;
