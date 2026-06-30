@@ -4098,6 +4098,148 @@ export type Database = {
           },
         ]
       }
+      integracao_participantes: {
+        Row: {
+          assinatura_snapshot: string | null
+          cargo_snapshot: string | null
+          company_id: string | null
+          created_at: string
+          employee_id: string
+          empresa_snapshot: string | null
+          id: string
+          integracao_id: string
+          nome_snapshot: string
+          role_id: string | null
+        }
+        Insert: {
+          assinatura_snapshot?: string | null
+          cargo_snapshot?: string | null
+          company_id?: string | null
+          created_at?: string
+          employee_id: string
+          empresa_snapshot?: string | null
+          id?: string
+          integracao_id: string
+          nome_snapshot: string
+          role_id?: string | null
+        }
+        Update: {
+          assinatura_snapshot?: string | null
+          cargo_snapshot?: string | null
+          company_id?: string | null
+          created_at?: string
+          employee_id?: string
+          empresa_snapshot?: string | null
+          id?: string
+          integracao_id?: string
+          nome_snapshot?: string
+          role_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integracao_participantes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integracao_participantes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+          {
+            foreignKeyName: "integracao_participantes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integracao_participantes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "integracao_participantes_integracao_id_fkey"
+            columns: ["integracao_id"]
+            isOneToOne: false
+            referencedRelation: "integracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integracao_participantes_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integracoes: {
+        Row: {
+          carga_horaria_h: number
+          conteudo_programatico: string | null
+          created_at: string
+          created_by: string | null
+          data_integracao: string
+          id: string
+          instrutor_id: string | null
+          instrutor_nome: string
+          local: string | null
+          observacoes: string | null
+          pdf_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          carga_horaria_h?: number
+          conteudo_programatico?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_integracao?: string
+          id?: string
+          instrutor_id?: string | null
+          instrutor_nome: string
+          local?: string | null
+          observacoes?: string | null
+          pdf_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          carga_horaria_h?: number
+          conteudo_programatico?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_integracao?: string
+          id?: string
+          instrutor_id?: string | null
+          instrutor_nome?: string
+          local?: string | null
+          observacoes?: string | null
+          pdf_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integracoes_instrutor_id_fkey"
+            columns: ["instrutor_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integracoes_instrutor_id_fkey"
+            columns: ["instrutor_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       nao_conformidades: {
         Row: {
           abrangencia: string | null
