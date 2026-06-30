@@ -2527,23 +2527,32 @@ export type Database = {
       }
       employee_docs: {
         Row: {
+          data_validade: string | null
+          descricao: string | null
           employee_id: string
           file_path: string
           id: string
+          sem_validade: boolean
           tipo: string
           uploaded_at: string
         }
         Insert: {
+          data_validade?: string | null
+          descricao?: string | null
           employee_id: string
           file_path: string
           id?: string
+          sem_validade?: boolean
           tipo: string
           uploaded_at?: string
         }
         Update: {
+          data_validade?: string | null
+          descricao?: string | null
           employee_id?: string
           file_path?: string
           id?: string
+          sem_validade?: boolean
           tipo?: string
           uploaded_at?: string
         }

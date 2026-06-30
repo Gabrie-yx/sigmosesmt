@@ -1230,10 +1230,14 @@ function DocsTab({ empId }: any) {
   });
   const [extraTipo, setExtraTipo] = useState("CNH");
   const [extraFile, setExtraFile] = useState<File | null>(null);
+  const [extraDescricao, setExtraDescricao] = useState("");
+  const [extraValidade, setExtraValidade] = useState("");
+  const [extraSemValidade, setExtraSemValidade] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<any | null>(null);
 
   // Upload em background — não bloqueia a UI nem trava se o usuário sair da tela.
   // O queryClient é singleton, então o invalidate funciona mesmo depois do componente desmontar.
-  function uploadFor(tipo: string, file: File) {
+  function uploadFor(tipo: string, file: File, extras?: { descricao?: string; data_validade?: string | null; sem_validade?: boolean }) {
     const safe = file.name.replace(/[^\w.\-]+/g, "_");
     const path = `${empId}/${Date.now()}_${safe}`;
     const promise = (async () => {
@@ -1243,7 +1247,14 @@ function DocsTab({ empId }: any) {
       if (upErr) throw upErr;
       const { error } = await supabase
         .from("employee_docs")
-        .insert({ employee_id: empId, tipo, file_path: path });
+        .insert({
+          employee_id: empId,
+          tipo,
+          file_path: path,
+          descricao: extras?.descricao?.trim() || null,
+          data_validade: extras?.sem_validade ? null : (extras?.data_validade || null),
+          sem_validade: !!extras?.sem_validade,
+        } as any);
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["docs", empId] });
       qc.invalidateQueries({ queryKey: ["docs-summary", empId] });
@@ -1260,10 +1271,19 @@ function DocsTab({ empId }: any) {
   const uploadExtra = useMutation({
     mutationFn: async () => {
       if (!extraFile) throw new Error("Selecione um arquivo");
-      // dispara em background — não esperamos terminar pra liberar a UI
-      uploadFor(extraTipo, extraFile);
+      const nomeFinal = extraTipo === "Outro" && extraDescricao.trim() ? extraDescricao.trim() : extraTipo;
+      uploadFor(nomeFinal, extraFile, {
+        descricao: extraTipo === "Outro" ? extraDescricao : undefined,
+        data_validade: extraValidade || null,
+        sem_validade: extraSemValidade,
+      });
     },
-    onSuccess: () => setExtraFile(null),
+    onSuccess: () => {
+      setExtraFile(null);
+      setExtraDescricao("");
+      setExtraValidade("");
+      setExtraSemValidade(false);
+    },
   });
 
   const del = useMutation({
@@ -1382,7 +1402,7 @@ function DocsTab({ empId }: any) {
       <Card className="p-4 space-y-3">
         <div className="text-[11px] font-black uppercase tracking-widest text-slate-600">Outros documentos</div>
         {isEditor && (
-          <form onSubmit={(e) => { e.preventDefault(); uploadExtra.mutate(); }} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end border-b pb-4">
+          <form onSubmit={(e) => { e.preventDefault(); uploadExtra.mutate(); }} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end border-b pb-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Tipo</Label>
               <Select value={extraTipo} onValueChange={setExtraTipo}>
@@ -1390,11 +1410,25 @@ function DocsTab({ empId }: any) {
                 <SelectContent>{TIPOS_EXTRA.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5 md:col-span-2">
+            {extraTipo === "Outro" && (
+              <div className="space-y-1.5 md:col-span-2">
+                <Label className="text-xs">Nome do documento *</Label>
+                <Input value={extraDescricao} onChange={(e) => setExtraDescricao(e.target.value)} placeholder="Ex.: Certidão de casamento" />
+              </div>
+            )}
+            <div className={`space-y-1.5 ${extraTipo === "Outro" ? "md:col-span-3" : "md:col-span-3"}`}>
               <Label className="text-xs">Arquivo (PDF/Imagem)</Label>
               <Input type="file" accept="application/pdf,image/*" onChange={(e) => setExtraFile(e.target.files?.[0] ?? null)} />
             </div>
-            <Button type="submit" className="md:col-span-3" disabled={uploadExtra.isPending || !extraFile}>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label className="text-xs">Vencimento</Label>
+              <Input type="date" value={extraValidade} disabled={extraSemValidade} onChange={(e) => setExtraValidade(e.target.value)} />
+            </div>
+            <label className="flex items-center gap-2 text-xs font-bold cursor-pointer pb-2">
+              <input type="checkbox" checked={extraSemValidade} onChange={(e) => { setExtraSemValidade(e.target.checked); if (e.target.checked) setExtraValidade(""); }} />
+              N/A (sem vencimento)
+            </label>
+            <Button type="submit" className="md:col-span-6" disabled={uploadExtra.isPending || !extraFile || (extraTipo === "Outro" && !extraDescricao.trim())}>
               <Upload className="h-4 w-4 mr-2" /> Enviar documento
             </Button>
           </form>
@@ -1403,18 +1437,35 @@ function DocsTab({ empId }: any) {
           <div className="text-xs text-muted-foreground text-center py-3">Nenhum documento adicional</div>
         ) : (
           <Table>
-            <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Arquivo</TableHead><TableHead>Enviado em</TableHead><TableHead></TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Documento</TableHead><TableHead>Arquivo</TableHead><TableHead>Vencimento</TableHead><TableHead>Enviado em</TableHead><TableHead></TableHead></TableRow></TableHeader>
             <TableBody>
               {extraDocs.map((d: any) => (
                 <TableRow key={d.id}>
-                  <TableCell className="font-medium">{d.tipo}</TableCell>
+                  <TableCell className="font-medium">
+                    {d.descricao?.trim() ? d.descricao : d.tipo}
+                    {d.descricao?.trim() && d.tipo !== d.descricao && (
+                      <div className="text-[10px] text-muted-foreground uppercase">{d.tipo}</div>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Button size="sm" variant="ghost" onClick={() => openDoc(d.file_path)}>
                       <FileText className="h-4 w-4 mr-1" />Ver
                     </Button>
                   </TableCell>
+                  <TableCell className="text-xs">
+                    {d.sem_validade
+                      ? <Badge variant="outline" className="text-[10px]">N/A</Badge>
+                      : d.data_validade
+                        ? formatDateBR(d.data_validade)
+                        : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell>{formatDateBR(d.uploaded_at)}</TableCell>
                   <TableCell className="text-right">
+                    {isEditor && (
+                      <Button size="icon" variant="ghost" onClick={() => setEditingDoc(d)} title="Editar">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
                     {isAdmin && <Button size="icon" variant="ghost" onClick={() => del.mutate(d)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
                   </TableCell>
                 </TableRow>
@@ -1424,12 +1475,99 @@ function DocsTab({ empId }: any) {
         )}
       </Card>
 
+      <EditDocDialog
+        doc={editingDoc}
+        onClose={() => setEditingDoc(null)}
+        onSaved={() => { setEditingDoc(null); qc.invalidateQueries({ queryKey: ["docs", empId] }); }}
+      />
+
       <SignedDocsList employeeId={empId} />
     </div>
   );
 }
 
 function SignedDocsList({ employeeId }: { employeeId: string }) {
+  return <SignedDocsListInner employeeId={employeeId} />;
+}
+
+function EditDocDialog({ doc, onClose, onSaved }: { doc: any | null; onClose: () => void; onSaved: () => void }) {
+  const [tipo, setTipo] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [validade, setValidade] = useState("");
+  const [semValidade, setSemValidade] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const TIPOS = ["CNH", "CTPS", "Título de Eleitor", "Certificado Reservista", "Foto 3x4", "Contrato", "Outro"];
+
+  useEffect(() => {
+    if (!doc) return;
+    setTipo(TIPOS.includes(doc.tipo) ? doc.tipo : "Outro");
+    setDescricao(doc.descricao ?? (TIPOS.includes(doc.tipo) ? "" : doc.tipo));
+    setValidade(doc.data_validade ?? "");
+    setSemValidade(!!doc.sem_validade);
+  }, [doc]);
+
+  async function salvar() {
+    if (!doc) return;
+    setSaving(true);
+    try {
+      const nomeFinal = tipo === "Outro" && descricao.trim() ? descricao.trim() : tipo;
+      const { error } = await supabase
+        .from("employee_docs")
+        .update({
+          tipo: nomeFinal,
+          descricao: tipo === "Outro" ? descricao.trim() || null : null,
+          data_validade: semValidade ? null : (validade || null),
+          sem_validade: semValidade,
+        } as any)
+        .eq("id", doc.id);
+      if (error) throw error;
+      toast.success("Documento atualizado");
+      onSaved();
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!doc} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Editar documento</DialogTitle></DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Tipo</Label>
+            <Select value={tipo} onValueChange={setTipo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{TIPOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          {tipo === "Outro" && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Nome do documento</Label>
+              <Input value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Vencimento</Label>
+            <Input type="date" value={validade} disabled={semValidade} onChange={(e) => setValidade(e.target.value)} />
+          </div>
+          <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
+            <input type="checkbox" checked={semValidade} onChange={(e) => { setSemValidade(e.target.checked); if (e.target.checked) setValidade(""); }} />
+            N/A (sem vencimento)
+          </label>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button onClick={salvar} disabled={saving || (tipo === "Outro" && !descricao.trim())}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SignedDocsListInner({ employeeId }: { employeeId: string }) {
   const qc = useQueryClient();
   const { data: signedDocs } = useQuery({
     queryKey: ["signed-docs", employeeId],
