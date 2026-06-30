@@ -22,6 +22,7 @@ interface CardMeta {
   descricaoPend: (n: number) => React.ReactNode;
   descricaoOk: React.ReactNode;
   to: string;
+  search?: Record<string, unknown>;
   icon: React.ComponentType<{ className?: string }>;
   ctaPend: string;
   ctaOk?: string;
@@ -33,7 +34,8 @@ const META: Record<string, CardMeta> = {
     titulo: <><Sigla>ASO</Sigla>s vencidos</>,
     descricaoPend: (n) => `${n} colaborador(es) com ASO fora da validade — bloqueia acesso.`,
     descricaoOk: "Todos os ASOs em dia.",
-    to: "/app/employees", icon: Stethoscope, ctaPend: "Renovar urgente",
+    to: "/app/employees", search: { filter: "aso_vencido" },
+    icon: Stethoscope, ctaPend: "Renovar urgente",
   },
   "aprs-vencidas": {
     titulo: <><Sigla>APR</Sigla>s vencidas</>,
@@ -57,7 +59,8 @@ const META: Record<string, CardMeta> = {
     titulo: "Colaboradores sem documentação",
     descricaoPend: (n) => `${n} ativo(s) sem ASO ou integração registrados.`,
     descricaoOk: "Todos os colaboradores documentados.",
-    to: "/app/employees", icon: UserX, ctaPend: "Completar cadastro",
+    to: "/app/employees", search: { filter: "sem_docs" },
+    icon: UserX, ctaPend: "Completar cadastro",
   },
   "dds-hoje": {
     titulo: <><Sigla>DDS</Sigla> de hoje</>,
@@ -81,7 +84,8 @@ const META: Record<string, CardMeta> = {
     titulo: "Exames vencendo (30 dias)",
     descricaoPend: (n) => `${n} colaborador(es) com exames a vencer.`,
     descricaoOk: "Nenhum exame vencendo no próximo mês.",
-    to: "/app/employees", icon: Stethoscope, ctaPend: "Agendar exames",
+    to: "/app/employees", search: { filter: "aso_vencendo" },
+    icon: Stethoscope, ctaPend: "Agendar exames",
   },
   "trein-60": {
     titulo: "Treinamentos vencendo (60 dias)",
@@ -281,6 +285,7 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
       <div className="relative mt-auto pt-3 flex items-center justify-between gap-2 border-t border-white/[0.06]">
         <Link
           to={meta.to}
+          search={meta.search as any}
           className={cn("inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider transition-colors", c.cta)}
         >
           {item.ok ? (meta.ctaOk ?? "Ver detalhes") : meta.ctaPend}

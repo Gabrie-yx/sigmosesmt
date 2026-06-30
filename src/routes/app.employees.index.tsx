@@ -6,23 +6,27 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText, UserRoundX, Stethoscope } from "lucide-react";
+import { Plus, Search, ChevronRight, Users, UserCheck, UserX, UserMinus, Building2, Briefcase, CalendarClock, FileText, UserRoundX, Stethoscope, AlertTriangle, X } from "lucide-react";
 import { EmployeeListagemDialog } from "@/components/employees/employee-listagem-dialog";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { ConvocacaoExamesDialog } from "@/components/employees/convocacao-exames-dialog";
+import { daysUntil, addYearsToDate } from "@/lib/utils-date";
 
 export const Route = createFileRoute("/app/employees/")({
   component: EmployeesPage,
   validateSearch: (search: Record<string, unknown>) => ({
     new: search.new === 1 || search.new === "1" ? 1 : undefined,
     company: typeof search.company === "string" ? search.company : undefined,
+    filter: typeof search.filter === "string" ? search.filter : undefined,
   }),
 });
+
+type ComplianceFilter = "TODOS" | "aso_vencido" | "aso_vencendo" | "sem_docs";
 
 function EmployeesPage() {
   const { isEditor } = useAuth();
   const navigate = useNavigate();
-  const { new: openNew, company: openCompany } = Route.useSearch();
+  const { new: openNew, company: openCompany, filter: filterSearch } = Route.useSearch();
   const [open, setOpen] = useState(false);
   const [newEmployeeCompanyId, setNewEmployeeCompanyId] = useState<string | undefined>();
   useEffect(() => {
@@ -45,6 +49,15 @@ function EmployeesPage() {
   const [companyFilter, setCompanyFilter] = useState<string>(initialFilters?.companyFilter ?? "TODAS");
   const [roleFilter, setRoleFilter] = useState<string>(initialFilters?.roleFilter ?? "TODOS");
   const [vinculoFilter, setVinculoFilter] = useState<"TODOS" | "PROPRIO" | "TERCEIRO" | "MEI">(initialFilters?.vinculoFilter ?? "TODOS");
+  const [complianceFilter, setComplianceFilter] = useState<ComplianceFilter>("TODOS");
+  // Deep-link vindo do painel Hoje
+  useEffect(() => {
+    if (filterSearch === "aso_vencido" || filterSearch === "aso_vencendo" || filterSearch === "sem_docs") {
+      setComplianceFilter(filterSearch as ComplianceFilter);
+      setStatusFilter("ATIVO");
+      navigate({ to: "/app/employees", search: {}, replace: true });
+    }
+  }, [filterSearch, navigate]);
   const [visibleCount, setVisibleCount] = useState<number>(initialFilters?.visibleCount ?? 48);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -70,6 +83,49 @@ function EmployeesPage() {
     queryFn: async () => (await supabase.from("roles").select("id,name").order("name")).data ?? [],
   });
 
+  // Status de conformidade ASO por funcionário (latest exam ASO Clínico OU legado data_aso + 1 ano)
+  const { data: asoMap } = useQuery({
+    queryKey: ["employees-aso-vencimentos"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("employee_exams")
+        .select("employee_id, tipo_exame, data_vencimento")
+        .eq("tipo_exame", "ASO Clínico")
+        .order("data_vencimento", { ascending: false });
+      const m = new Map<string, string>();
+      (data ?? []).forEach((r: any) => {
+        if (r.data_vencimento && !m.has(r.employee_id)) m.set(r.employee_id, r.data_vencimento);
+      });
+      return m;
+    },
+  });
+
+  // Map: employee_id → status ASO ("vencido" | "vencendo" | "ok" | "sem")
+  type AsoStatus = "vencido" | "vencendo" | "ok" | "sem";
+  const asoStatusOf = (emp: any): { status: AsoStatus; dias: number | null; venc: string | null } => {
+    const venc = asoMap?.get(emp.id) ?? (emp.data_aso ? addYearsToDate(emp.data_aso, 1) : null);
+    if (!venc) return { status: "sem", dias: null, venc: null };
+    const d = daysUntil(venc);
+    if (d === null) return { status: "sem", dias: null, venc };
+    if (d < 0) return { status: "vencido", dias: d, venc };
+    if (d <= 30) return { status: "vencendo", dias: d, venc };
+    return { status: "ok", dias: d, venc };
+  };
+
+  // Contadores para os chips
+  const complianceCounts = useMemo(() => {
+    const list = (emps ?? []).filter((e: any) => e.status === "ATIVO");
+    let vencido = 0, vencendo = 0, sem = 0;
+    list.forEach((e: any) => {
+      const s = asoStatusOf(e).status;
+      if (s === "vencido") vencido++;
+      else if (s === "vencendo") vencendo++;
+      else if (s === "sem") sem++;
+    });
+    return { vencido, vencendo, sem };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emps, asoMap]);
+
   const filtered = useMemo(() => {
     const norm = (v: string) =>
       (v ?? "")
@@ -86,6 +142,12 @@ function EmployeesPage() {
       if (vinculoFilter === "PROPRIO" && e.tipo_vinculo !== "PROPRIO") return false;
       if (vinculoFilter === "TERCEIRO" && e.tipo_vinculo !== "TERCEIRO") return false;
       if (vinculoFilter === "MEI" && e.tipo_cadastro !== "MEI") return false;
+      if (complianceFilter !== "TODOS") {
+        const s2 = asoStatusOf(e).status;
+        if (complianceFilter === "aso_vencido" && s2 !== "vencido") return false;
+        if (complianceFilter === "aso_vencendo" && s2 !== "vencendo") return false;
+        if (complianceFilter === "sem_docs" && s2 !== "sem") return false;
+      }
       if (!s) return true;
       const cpfDigits = (e.cpf ?? "").replace(/\D/g, "");
       return (
@@ -95,7 +157,8 @@ function EmployeesPage() {
         (sDigits.length >= 3 && cpfDigits.includes(sDigits))
       );
     });
-  }, [emps, q, statusFilter, companyFilter, roleFilter, vinculoFilter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emps, q, statusFilter, companyFilter, roleFilter, vinculoFilter, complianceFilter, asoMap]);
 
   const cMap = new Map((companies ?? []).map((c: any) => [c.id, c.name]));
   const cTypeMap = new Map((companies ?? []).map((c: any) => [c.id, c.type]));
@@ -199,6 +262,47 @@ function EmployeesPage() {
         <KpiCard icon={UserRoundX} label="Desligados" value={stats.desligados} tone="rose"
           active={statusFilter === "DESLIGADO"} onClick={() => setStatusFilter("DESLIGADO")} />
       </div>
+
+      {/* Chips de conformidade — semáforo NR-07/NR-01 */}
+      {(complianceCounts.vencido + complianceCounts.vencendo + complianceCounts.sem > 0 || complianceFilter !== "TODOS") && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-rose-200/80 mr-1">
+            <AlertTriangle className="h-3 w-3 inline mr-1" />
+            Conformidade ASO:
+          </span>
+          <ComplianceChip
+            label="ASO vencido"
+            count={complianceCounts.vencido}
+            tone="rose"
+            pulse
+            active={complianceFilter === "aso_vencido"}
+            onClick={() => setComplianceFilter(complianceFilter === "aso_vencido" ? "TODOS" : "aso_vencido")}
+          />
+          <ComplianceChip
+            label="ASO ≤ 30d"
+            count={complianceCounts.vencendo}
+            tone="amber"
+            active={complianceFilter === "aso_vencendo"}
+            onClick={() => setComplianceFilter(complianceFilter === "aso_vencendo" ? "TODOS" : "aso_vencendo")}
+          />
+          <ComplianceChip
+            label="Sem ASO"
+            count={complianceCounts.sem}
+            tone="slate"
+            active={complianceFilter === "sem_docs"}
+            onClick={() => setComplianceFilter(complianceFilter === "sem_docs" ? "TODOS" : "sem_docs")}
+          />
+          {complianceFilter !== "TODOS" && (
+            <button
+              type="button"
+              onClick={() => setComplianceFilter("TODOS")}
+              className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-rose-200/70 hover:text-white px-2 py-1"
+            >
+              <X className="h-3 w-3" /> Limpar
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Busca + filtros */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4">
@@ -319,6 +423,7 @@ function EmployeesPage() {
                 company={cMap.get(e.company_id) ?? undefined}
                 companyType={cTypeMap.get(e.company_id) ?? undefined}
                 role={rMap.get(e.role_id) ?? undefined}
+                asoStatus={asoStatusOf(e)}
               />
             ))}
           </div>
@@ -374,6 +479,31 @@ function KpiCard({ icon: Icon, label, value, tone, active, onClick }: { icon: an
   );
 }
 
+function ComplianceChip({
+  label, count, tone, active, pulse, onClick,
+}: {
+  label: string; count: number; tone: "rose" | "amber" | "slate"; active?: boolean; pulse?: boolean; onClick: () => void;
+}) {
+  const palette = tone === "rose"
+    ? { base: "bg-rose-500/15 text-rose-100 ring-rose-400/30", on: "bg-rose-500/35 ring-rose-300/60", dot: "bg-rose-400" }
+    : tone === "amber"
+    ? { base: "bg-amber-500/15 text-amber-100 ring-amber-400/30", on: "bg-amber-500/35 ring-amber-300/60", dot: "bg-amber-400" }
+    : { base: "bg-slate-500/15 text-slate-100 ring-slate-400/30", on: "bg-slate-500/35 ring-slate-300/60", dot: "bg-slate-300" };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 ring-1 text-[10px] font-black uppercase tracking-widest transition ${active ? palette.on : palette.base} hover:scale-[1.02]`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${palette.dot} ${pulse && count > 0 ? "animate-pulse" : ""}`} />
+      {label}
+      <span className="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-black/30 text-white tabular-nums">
+        {count}
+      </span>
+    </button>
+  );
+}
+
 function avatarGradient(name: string) {
   const palettes = [
     "from-rose-500 to-pink-600",
@@ -413,7 +543,10 @@ function initials(name: string) {
   return (first + last).toUpperCase();
 }
 
-function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?: string; companyType?: string; role?: string }) {
+function EmployeeCard({ emp, company, companyType, role, asoStatus }: {
+  emp: any; company?: string; companyType?: string; role?: string;
+  asoStatus?: { status: "vencido" | "vencendo" | "ok" | "sem"; dias: number | null; venc: string | null };
+}) {
   const statusStyle =
     emp.status === "ATIVO"
       ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
@@ -424,6 +557,16 @@ function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?:
       : "bg-rose-100 text-rose-700 ring-rose-200";
   const isTerceiro = companyType === "TERCEIRIZADO" || emp.tipo_vinculo === "TERCEIRO";
   const isMei = emp.tipo_cadastro === "MEI";
+  const isActive = emp.status === "ATIVO";
+  const asoBadge = isActive && asoStatus
+    ? asoStatus.status === "vencido"
+      ? { text: `ASO ${asoStatus.dias}d`, cls: "bg-rose-600 text-white ring-rose-300 animate-pulse" }
+      : asoStatus.status === "vencendo"
+      ? { text: `ASO ${asoStatus.dias}d`, cls: "bg-amber-500 text-white ring-amber-300" }
+      : asoStatus.status === "sem"
+      ? { text: "SEM ASO", cls: "bg-slate-700 text-white ring-slate-400" }
+      : null
+    : null;
 
   return (
     <Link
@@ -431,6 +574,14 @@ function EmployeeCard({ emp, company, companyType, role }: { emp: any; company?:
       params={{ id: emp.id }}
       className="glass-card glass-shine group relative block rounded-2xl p-4 hover:-translate-y-0.5 hover:shadow-2xl transition-all duration-200 overflow-hidden"
     >
+      {asoBadge && (
+        <span
+          className={`absolute top-2 right-2 z-10 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ring-1 shadow ${asoBadge.cls}`}
+          title={asoStatus?.venc ? `Validade ASO: ${asoStatus.venc}` : "Sem ASO registrado"}
+        >
+          {asoBadge.text}
+        </span>
+      )}
       {(() => {
         const accent = avatarAccent(emp.nome);
         return (
