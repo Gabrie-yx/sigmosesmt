@@ -142,7 +142,10 @@ function EmployeesPage() {
       if (vinculoFilter === "PROPRIO" && e.tipo_vinculo !== "PROPRIO") return false;
       if (vinculoFilter === "TERCEIRO" && e.tipo_vinculo !== "TERCEIRO") return false;
       if (vinculoFilter === "MEI" && e.tipo_cadastro !== "MEI") return false;
-      if (complianceFilter !== "TODOS") {
+      // Busca textual tem prioridade: se o usuário digitou algo,
+      // ignoramos o chip de conformidade (senão "some" funcionário que
+      // não está no recorte do chip ativo).
+      if (complianceFilter !== "TODOS" && !q.trim()) {
         const s2 = asoStatusOf(e).status;
         if (complianceFilter === "aso_vencido" && s2 !== "vencido") return false;
         if (complianceFilter === "aso_vencendo" && s2 !== "vencendo") return false;
