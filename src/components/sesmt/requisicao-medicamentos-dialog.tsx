@@ -24,7 +24,7 @@ export function RequisicaoMedicamentosDialog({ defaultSolicitante = "", trigger 
   const [open, setOpen] = useState(false);
   const [solicitante, setSolicitante] = useState(defaultSolicitante);
   const [setor, setSetor] = useState("SESMT — Ambulatório");
-  const [responsavelTST, setResponsavelTST] = useState("Aline (TST)");
+  const [responsavelTST, setResponsavelTST] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [itens, setItens] = useState<MedItem[]>(() => MEDICAMENTOS_AMBULATORIO_PADRAO.map((i) => ({ ...i })));
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
