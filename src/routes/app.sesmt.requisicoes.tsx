@@ -34,6 +34,7 @@ async function loadPdfLibs() {
 }
 import dmnLogo from "@/assets/dmn-logo.png";
 import { EstoqueLookupSheet, type PickedItem } from "@/components/estoque-lookup-sheet";
+import { RequisicaoMedicamentosDialog } from "@/components/sesmt/requisicao-medicamentos-dialog";
 import { SignatureGallery } from "@/components/signature-gallery";
 import { Wizard, type WizardStep } from "@/components/wizard";
 import { useDraftAutosave } from "@/hooks/use-draft-autosave";
@@ -460,6 +461,7 @@ function RequisicoesPage() {
             <FileDown className="h-4 w-4 mr-2" /> Relatório PDF
           </Button>
           <EstoqueLookupSheet />
+          <RequisicaoMedicamentosDialog defaultSolicitante={user?.email ?? ""} />
           {isEditor && (
             <Dialog open={openNew} onOpenChange={setOpenNew}>
               <DialogTrigger asChild>
