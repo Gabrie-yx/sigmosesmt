@@ -1199,11 +1199,15 @@ function NrsTab({ emp, role, canEdit, qc }: any) {
       return data ?? [];
     },
   });
-  const docByNr = useMemo(() => {
-    const m: Record<string, any> = {};
-    for (const d of nrDocs as any[]) if (!m[d.tipo]) m[d.tipo] = d;
+  // Mantém histórico: todos os certificados por NR, mais recentes primeiro.
+  const docsByNr = useMemo(() => {
+    const m: Record<string, any[]> = {};
+    for (const d of nrDocs as any[]) {
+      (m[d.tipo] ||= []).push(d);
+    }
     return m;
   }, [nrDocs]);
+  const [openHist, setOpenHist] = useState<Record<string, boolean>>({});
 
   function statusOf(nr: string) {
     const date = nrs[nr];
@@ -1291,7 +1295,10 @@ function NrsTab({ emp, role, canEdit, qc }: any) {
         {allNrs.map((nr) => {
           const isReq = reqNrs.includes(nr);
           const st = statusOf(nr);
-          const doc = docByNr[nr];
+          const allDocs = docsByNr[nr] ?? [];
+          const doc = allDocs[0];
+          const histCount = Math.max(0, allDocs.length - 1);
+          const isHistOpen = !!openHist[nr];
           const inputId = `nr-cert-${nr}`;
           return (
             <div key={nr}
@@ -1329,24 +1336,77 @@ function NrsTab({ emp, role, canEdit, qc }: any) {
               {/* Certificado */}
               <div className="mt-3 pt-3 border-t border-white/10">
                 {doc ? (
-                  <div className="flex items-center gap-1.5">
-                    <div className="flex items-center gap-1.5 flex-1 min-w-0 text-[11px] text-slate-300">
-                      <FileText className="h-3.5 w-3.5 text-sky-400 shrink-0" />
-                      <span className="truncate">Certificado anexado</span>
-                    </div>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-sky-300 hover:text-sky-100 hover:bg-white/10"
-                      title="Visualizar" onClick={() => openStorageFile("employee-docs", doc.file_path, `${nr} - Certificado`)}>
-                      👁
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-300 hover:text-emerald-100 hover:bg-white/10"
-                      title="Download" asChild>
-                      <a href={supabase.storage.from("employee-docs").getPublicUrl(doc.file_path).data.publicUrl} download target="_blank" rel="noreferrer">⬇</a>
-                    </Button>
-                    {canEdit && (
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-rose-300 hover:text-rose-100 hover:bg-white/10"
-                        title="Remover" onClick={() => deleteCert(doc)}>
-                        <Trash2 className="h-3.5 w-3.5" />
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-1 min-w-0 text-[11px] text-slate-300">
+                        <FileText className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+                        <span className="truncate">
+                          Vigente · {new Date(doc.uploaded_at).toLocaleDateString("pt-BR")}
+                        </span>
+                      </div>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-sky-300 hover:text-sky-100 hover:bg-white/10"
+                        title="Visualizar" onClick={() => openStorageFile("employee-docs", doc.file_path, `${nr} - Certificado`)}>
+                        👁
                       </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-300 hover:text-emerald-100 hover:bg-white/10"
+                        title="Download" asChild>
+                        <a href={supabase.storage.from("employee-docs").getPublicUrl(doc.file_path).data.publicUrl} download target="_blank" rel="noreferrer">⬇</a>
+                      </Button>
+                      {canEdit && (
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-rose-300 hover:text-rose-100 hover:bg-white/10"
+                          title="Remover" onClick={() => deleteCert(doc)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Botão "adicionar reciclagem" — sempre disponível pra empilhar novo certificado */}
+                    {canEdit && (
+                      <>
+                        <input id={inputId} type="file" accept="application/pdf,image/*" className="hidden"
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCert(nr, f); e.currentTarget.value = ""; }} />
+                        <label htmlFor={inputId}
+                          className="flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md bg-white/5 border border-dashed border-white/15 text-slate-400 hover:bg-sky-500/10 hover:border-sky-400/40 hover:text-sky-200 cursor-pointer transition">
+                          <Upload className="h-3 w-3" /> Add reciclagem
+                        </label>
+                      </>
+                    )}
+
+                    {/* Histórico empilhado */}
+                    {histCount > 0 && (
+                      <div>
+                        <button type="button"
+                          onClick={() => setOpenHist((s) => ({ ...s, [nr]: !s[nr] }))}
+                          className="w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200 px-2 py-1 rounded-md hover:bg-white/5 transition">
+                          <span>📜 Histórico ({histCount} anterior{histCount > 1 ? "es" : ""})</span>
+                          <span className="text-[9px]">{isHistOpen ? "▲" : "▼"}</span>
+                        </button>
+                        {isHistOpen && (
+                          <ul className="mt-1 space-y-1 pl-1 border-l-2 border-white/10">
+                            {allDocs.slice(1).map((d: any) => (
+                              <li key={d.id} className="flex items-center gap-1.5 pl-2 text-[10px] text-slate-400">
+                                <FileText className="h-3 w-3 text-slate-500 shrink-0" />
+                                <span className="flex-1 truncate">{new Date(d.uploaded_at).toLocaleDateString("pt-BR")}</span>
+                                <button type="button" title="Visualizar"
+                                  className="text-sky-300 hover:text-sky-100 px-1"
+                                  onClick={() => openStorageFile("employee-docs", d.file_path, `${nr} - ${new Date(d.uploaded_at).toLocaleDateString("pt-BR")}`)}>
+                                  👁
+                                </button>
+                                <a title="Download" className="text-emerald-300 hover:text-emerald-100 px-1"
+                                  href={supabase.storage.from("employee-docs").getPublicUrl(d.file_path).data.publicUrl}
+                                  download target="_blank" rel="noreferrer">⬇</a>
+                                {canEdit && (
+                                  <button type="button" title="Remover"
+                                    className="text-rose-300 hover:text-rose-100 px-1"
+                                    onClick={() => deleteCert(d)}>
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
                     )}
                   </div>
                 ) : canEdit ? (
