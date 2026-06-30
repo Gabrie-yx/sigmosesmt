@@ -1487,6 +1487,87 @@ function DocsTab({ empId }: any) {
 }
 
 function SignedDocsList({ employeeId }: { employeeId: string }) {
+  return <SignedDocsListInner employeeId={employeeId} />;
+}
+
+function EditDocDialog({ doc, onClose, onSaved }: { doc: any | null; onClose: () => void; onSaved: () => void }) {
+  const [tipo, setTipo] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [validade, setValidade] = useState("");
+  const [semValidade, setSemValidade] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const TIPOS = ["CNH", "CTPS", "Título de Eleitor", "Certificado Reservista", "Foto 3x4", "Contrato", "Outro"];
+
+  useEffect(() => {
+    if (!doc) return;
+    setTipo(TIPOS.includes(doc.tipo) ? doc.tipo : "Outro");
+    setDescricao(doc.descricao ?? (TIPOS.includes(doc.tipo) ? "" : doc.tipo));
+    setValidade(doc.data_validade ?? "");
+    setSemValidade(!!doc.sem_validade);
+  }, [doc]);
+
+  async function salvar() {
+    if (!doc) return;
+    setSaving(true);
+    try {
+      const nomeFinal = tipo === "Outro" && descricao.trim() ? descricao.trim() : tipo;
+      const { error } = await supabase
+        .from("employee_docs")
+        .update({
+          tipo: nomeFinal,
+          descricao: tipo === "Outro" ? descricao.trim() || null : null,
+          data_validade: semValidade ? null : (validade || null),
+          sem_validade: semValidade,
+        } as any)
+        .eq("id", doc.id);
+      if (error) throw error;
+      toast.success("Documento atualizado");
+      onSaved();
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!doc} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Editar documento</DialogTitle></DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Tipo</Label>
+            <Select value={tipo} onValueChange={setTipo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{TIPOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          {tipo === "Outro" && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Nome do documento</Label>
+              <Input value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Vencimento</Label>
+            <Input type="date" value={validade} disabled={semValidade} onChange={(e) => setValidade(e.target.value)} />
+          </div>
+          <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
+            <input type="checkbox" checked={semValidade} onChange={(e) => { setSemValidade(e.target.checked); if (e.target.checked) setValidade(""); }} />
+            N/A (sem vencimento)
+          </label>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button onClick={salvar} disabled={saving || (tipo === "Outro" && !descricao.trim())}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SignedDocsListInner({ employeeId }: { employeeId: string }) {
   const qc = useQueryClient();
   const { data: signedDocs } = useQuery({
     queryKey: ["signed-docs", employeeId],
