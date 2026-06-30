@@ -41,6 +41,7 @@ const PDFPreviewDialog = lazy(() =>
   import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog }))
 );
 import { PPPEditorDialog } from "@/components/ppp/ppp-editor-dialog";
+import { IntegracaoDialog } from "@/components/employees/integracao-dialog";
 import type jsPDF from "jspdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban, ChevronDown } from "lucide-react";
 import { OssRowActions } from "@/components/oss/oss-row-actions";
