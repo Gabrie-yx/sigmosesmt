@@ -1,0 +1,1 @@
+ALTER TYPE public.purchase_req_class ADD VALUE IF NOT EXISTS 'MEDICAMENTOS';
