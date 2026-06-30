@@ -51,6 +51,7 @@ import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requ
 import { Route as AppSesmtProcedimentosRouteImport } from './routes/app.sesmt.procedimentos'
 import { Route as AppSesmtPrestadoresRouteImport } from './routes/app.sesmt.prestadores'
 import { Route as AppSesmtOrganogramaRouteImport } from './routes/app.sesmt.organograma'
+import { Route as AppSesmtIntegracoesRouteImport } from './routes/app.sesmt.integracoes'
 import { Route as AppSesmtGuiaDocumentosRouteImport } from './routes/app.sesmt.guia-documentos'
 import { Route as AppSesmtEquipamentosMoveisRouteImport } from './routes/app.sesmt.equipamentos-moveis'
 import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
@@ -296,6 +297,11 @@ const AppSesmtOrganogramaRoute = AppSesmtOrganogramaRouteImport.update({
   path: '/sesmt/organograma',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSesmtIntegracoesRoute = AppSesmtIntegracoesRouteImport.update({
+  id: '/sesmt/integracoes',
+  path: '/sesmt/integracoes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSesmtGuiaDocumentosRoute = AppSesmtGuiaDocumentosRouteImport.update({
   id: '/sesmt/guia-documentos',
   path: '/sesmt/guia-documentos',
@@ -528,6 +534,7 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/guia-documentos': typeof AppSesmtGuiaDocumentosRoute
+  '/app/sesmt/integracoes': typeof AppSesmtIntegracoesRoute
   '/app/sesmt/organograma': typeof AppSesmtOrganogramaRoute
   '/app/sesmt/prestadores': typeof AppSesmtPrestadoresRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
@@ -601,6 +608,7 @@ export interface FileRoutesByTo {
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/guia-documentos': typeof AppSesmtGuiaDocumentosRoute
+  '/app/sesmt/integracoes': typeof AppSesmtIntegracoesRoute
   '/app/sesmt/organograma': typeof AppSesmtOrganogramaRoute
   '/app/sesmt/prestadores': typeof AppSesmtPrestadoresRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
@@ -678,6 +686,7 @@ export interface FileRoutesById {
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/guia-documentos': typeof AppSesmtGuiaDocumentosRoute
+  '/app/sesmt/integracoes': typeof AppSesmtIntegracoesRoute
   '/app/sesmt/organograma': typeof AppSesmtOrganogramaRoute
   '/app/sesmt/prestadores': typeof AppSesmtPrestadoresRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
@@ -756,6 +765,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/docs'
     | '/app/sesmt/equipamentos-moveis'
     | '/app/sesmt/guia-documentos'
+    | '/app/sesmt/integracoes'
     | '/app/sesmt/organograma'
     | '/app/sesmt/prestadores'
     | '/app/sesmt/procedimentos'
@@ -829,6 +839,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/docs'
     | '/app/sesmt/equipamentos-moveis'
     | '/app/sesmt/guia-documentos'
+    | '/app/sesmt/integracoes'
     | '/app/sesmt/organograma'
     | '/app/sesmt/prestadores'
     | '/app/sesmt/procedimentos'
@@ -905,6 +916,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/docs'
     | '/app/sesmt/equipamentos-moveis'
     | '/app/sesmt/guia-documentos'
+    | '/app/sesmt/integracoes'
     | '/app/sesmt/organograma'
     | '/app/sesmt/prestadores'
     | '/app/sesmt/procedimentos'
@@ -1228,6 +1240,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtOrganogramaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/sesmt/integracoes': {
+      id: '/app/sesmt/integracoes'
+      path: '/sesmt/integracoes'
+      fullPath: '/app/sesmt/integracoes'
+      preLoaderRoute: typeof AppSesmtIntegracoesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/sesmt/guia-documentos': {
       id: '/app/sesmt/guia-documentos'
       path: '/sesmt/guia-documentos'
@@ -1549,6 +1568,7 @@ interface AppRouteChildren {
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
   AppSesmtEquipamentosMoveisRoute: typeof AppSesmtEquipamentosMoveisRoute
   AppSesmtGuiaDocumentosRoute: typeof AppSesmtGuiaDocumentosRoute
+  AppSesmtIntegracoesRoute: typeof AppSesmtIntegracoesRoute
   AppSesmtOrganogramaRoute: typeof AppSesmtOrganogramaRoute
   AppSesmtPrestadoresRoute: typeof AppSesmtPrestadoresRoute
   AppSesmtProcedimentosRoute: typeof AppSesmtProcedimentosRoute
@@ -1609,6 +1629,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtDocsRoute: AppSesmtDocsRoute,
   AppSesmtEquipamentosMoveisRoute: AppSesmtEquipamentosMoveisRoute,
   AppSesmtGuiaDocumentosRoute: AppSesmtGuiaDocumentosRoute,
+  AppSesmtIntegracoesRoute: AppSesmtIntegracoesRoute,
   AppSesmtOrganogramaRoute: AppSesmtOrganogramaRoute,
   AppSesmtPrestadoresRoute: AppSesmtPrestadoresRoute,
   AppSesmtProcedimentosRoute: AppSesmtProcedimentosRoute,

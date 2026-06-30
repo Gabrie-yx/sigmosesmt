@@ -41,6 +41,7 @@ const PDFPreviewDialog = lazy(() =>
   import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog }))
 );
 import { PPPEditorDialog } from "@/components/ppp/ppp-editor-dialog";
+import { IntegracaoDialog } from "@/components/employees/integracao-dialog";
 import type jsPDF from "jspdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban, ChevronDown } from "lucide-react";
 import { OssRowActions } from "@/components/oss/oss-row-actions";
@@ -176,6 +177,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [fichaDoc, setFichaDoc] = useState<jsPDF | null>(null);
   const [gerandoFicha, setGerandoFicha] = useState(false);
   const [pppOpen, setPppOpen] = useState(false);
+  const [integOpen, setIntegOpen] = useState(false);
   const [desligamentoOpen, setDesligamentoOpen] = useState(false);
 
   async function gerarFichaPdf() {
@@ -466,6 +468,15 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               >
                 <FileSignature className="h-4 w-4" /> PPP
               </button>
+              <span className="h-4 w-px bg-rose-200/20" />
+              <button
+                type="button"
+                onClick={() => setIntegOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-black uppercase tracking-widest text-emerald-50/95 hover:bg-emerald-400/15 hover:text-white transition-colors"
+                title="Registrar Integração NR-01"
+              >
+                <FileText className="h-4 w-4" /> Integração
+              </button>
             </div>
           </div>
         </div>
@@ -607,6 +618,11 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         employee={emp}
         company={(companies ?? []).find((c: any) => c.id === emp?.company_id) ?? null}
         role={role}
+      />
+      <IntegracaoDialog
+        open={integOpen}
+        onOpenChange={setIntegOpen}
+        preselectedEmployeeId={emp?.id}
       />
       <DesligamentoDialog
         emp={emp as any}
