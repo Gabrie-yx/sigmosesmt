@@ -1185,23 +1185,132 @@ function NrsTab({ emp, role, canEdit, qc }: any) {
   const reqNrs: string[] = role?.req_nrs ?? [];
   const allNrs = Array.from(new Set([...reqNrs, ...NRS_LIST])).sort();
 
+  // Certificados de NR são guardados em employee_docs com tipo = "NR-XX"
+  const { data: nrDocs = [] } = useQuery({
+    queryKey: ["nr-docs", emp.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employee_docs")
+        .select("*")
+        .eq("employee_id", emp.id)
+        .like("tipo", "NR-%")
+        .order("uploaded_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const docByNr = useMemo(() => {
+    const m: Record<string, any> = {};
+    for (const d of nrDocs as any[]) if (!m[d.tipo]) m[d.tipo] = d;
+    return m;
+  }, [nrDocs]);
+
+  function statusOf(nr: string) {
+    const date = nrs[nr];
+    if (!date) return { label: "PENDENTE", tone: "rose" as const, days: null as number | null };
+    const exp = new Date(date); exp.setFullYear(exp.getFullYear() + 2);
+    const days = Math.floor((exp.getTime() - Date.now()) / 86400000);
+    if (days < 0) return { label: "VENCIDO", tone: "rose" as const, days };
+    if (days <= 30) return { label: `${days}d`, tone: "amber" as const, days };
+    return { label: "VÁLIDO", tone: "emerald" as const, days };
+  }
+
+  async function uploadCert(nr: string, file: File) {
+    const safe = file.name.replace(/[^\w.\-]+/g, "_");
+    const path = `${emp.id}/${nr}_${Date.now()}_${safe}`;
+    const p = (async () => {
+      const { error: upErr } = await supabase.storage.from("employee-docs").upload(path, file, { upsert: false });
+      if (upErr) throw upErr;
+      const { error } = await supabase.from("employee_docs").insert({
+        employee_id: emp.id, tipo: nr, file_path: path, descricao: `Certificado ${nr}`,
+      } as any);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["nr-docs", emp.id] });
+    })();
+    toast.promise(p, { loading: `Enviando certificado ${nr}…`, success: `Certificado ${nr} enviado`, error: (e) => e?.message ?? "Erro" });
+  }
+
+  async function deleteCert(doc: any) {
+    if (!confirm(`Remover certificado ${doc.tipo}?`)) return;
+    await supabase.storage.from("employee-docs").remove([doc.file_path]);
+    await supabase.from("employee_docs").delete().eq("id", doc.id);
+    qc.invalidateQueries({ queryKey: ["nr-docs", emp.id] });
+    toast.success("Certificado removido");
+  }
+
+  const totalReq = reqNrs.length;
+  const okReq = reqNrs.filter((n) => statusOf(n).tone === "emerald").length;
+  const pendReq = reqNrs.filter((n) => statusOf(n).label === "PENDENTE" || statusOf(n).label === "VENCIDO").length;
+  const pct = totalReq ? Math.round((okReq / totalReq) * 100) : 0;
+
+  const toneRing: Record<string, string> = {
+    rose: "ring-rose-500/40 from-rose-500/20 to-rose-500/5",
+    amber: "ring-amber-500/40 from-amber-500/20 to-amber-500/5",
+    emerald: "ring-emerald-500/40 from-emerald-500/20 to-emerald-500/5",
+  };
+  const toneBadge: Record<string, string> = {
+    rose: "bg-rose-500/20 text-rose-200 border-rose-500/40",
+    amber: "bg-amber-500/20 text-amber-200 border-amber-500/40",
+    emerald: "bg-emerald-500/20 text-emerald-200 border-emerald-500/40",
+  };
+
   return (
-    <Card className="p-6 space-y-4">
-      <div className="space-y-1.5 max-w-xs">
-        <Label className="text-xs">Data da Integração</Label>
-        <Input type="date" value={intDate ?? ""} onChange={(e) => setIntDate(e.target.value)} disabled={!canEdit} />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div className="space-y-4">
+      {/* Cabeçalho — Integração + barra de conformidade */}
+      <Card className="p-5 bg-gradient-to-br from-slate-900/60 via-slate-900/40 to-slate-800/30 backdrop-blur-xl border border-white/10 shadow-2xl">
+        <div className="flex flex-wrap items-end gap-6">
+          <div className="space-y-1.5 min-w-[220px]">
+            <Label className="text-[11px] uppercase tracking-wider text-slate-300">📅 Data da Integração</Label>
+            <Input type="date" value={intDate ?? ""} onChange={(e) => setIntDate(e.target.value)} disabled={!canEdit}
+              className="bg-white/5 border-white/20 text-slate-100" />
+          </div>
+          <div className="flex-1 min-w-[260px]">
+            <div className="flex items-center justify-between mb-1.5">
+              <Label className="text-[11px] uppercase tracking-wider text-slate-300">Conformidade NRs requeridas</Label>
+              <span className="text-xs font-bold text-slate-100">{okReq}/{totalReq} • {pct}%</span>
+            </div>
+            <div className="h-2.5 rounded-full bg-slate-800/80 overflow-hidden ring-1 ring-white/10">
+              <div className={`h-full transition-all duration-700 ${pct === 100 ? "bg-gradient-to-r from-emerald-500 to-emerald-300" : pct >= 50 ? "bg-gradient-to-r from-amber-500 to-emerald-400" : "bg-gradient-to-r from-rose-500 to-amber-400"}`}
+                style={{ width: `${pct}%` }} />
+            </div>
+            <div className="flex gap-3 mt-2 text-[11px] text-slate-400">
+              <span>🟢 {okReq} válidas</span>
+              <span>🔴 {pendReq} pendentes/vencidas</span>
+            </div>
+          </div>
+          {canEdit && (
+            <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+              <Save className="h-4 w-4 mr-1.5" /> Salvar datas
+            </Button>
+          )}
+        </div>
+      </Card>
+
+      {/* Grid de NRs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {allNrs.map((nr) => {
           const isReq = reqNrs.includes(nr);
+          const st = statusOf(nr);
+          const doc = docByNr[nr];
+          const inputId = `nr-cert-${nr}`;
           return (
-            <div key={nr} className={`rounded-md border p-3 ${isReq ? "border-brand" : ""}`}>
+            <div key={nr}
+              className={`relative rounded-2xl p-4 bg-gradient-to-br ${toneRing[st.tone]} backdrop-blur-md border border-white/10 ring-1 ${isReq ? toneRing[st.tone] : "ring-white/5"} shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all`}>
+              {isReq && (
+                <span className="absolute -top-2 -right-2 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand text-brand-foreground shadow-md ring-2 ring-slate-900">
+                  Requerida
+                </span>
+              )}
               <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold text-sm">{nr}</span>
-                {isReq && <Badge className="bg-brand text-brand-foreground text-[10px]">Requerida</Badge>}
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className={`h-4 w-4 ${st.tone === "emerald" ? "text-emerald-400" : st.tone === "amber" ? "text-amber-400" : "text-rose-400"}`} />
+                  <span className="font-black text-base text-slate-100">{nr}</span>
+                </div>
+                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${toneBadge[st.tone]}`}>
+                  {st.label}
+                </span>
               </div>
-              <Input
-                type="date"
+              <Input type="date"
                 value={nrs[nr] ?? ""}
                 onChange={(e) => {
                   const v = e.target.value;
@@ -1210,13 +1319,54 @@ function NrsTab({ emp, role, canEdit, qc }: any) {
                   setNrs(copy);
                 }}
                 disabled={!canEdit}
-              />
+                className="bg-white/5 border-white/20 text-slate-100 h-8 text-xs" />
+              {nrs[nr] && (
+                <div className="text-[10px] text-slate-400 mt-1">
+                  Vence: {(() => { const d = new Date(nrs[nr]); d.setFullYear(d.getFullYear() + 2); return d.toLocaleDateString("pt-BR"); })()}
+                </div>
+              )}
+
+              {/* Certificado */}
+              <div className="mt-3 pt-3 border-t border-white/10">
+                {doc ? (
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0 text-[11px] text-slate-300">
+                      <FileText className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+                      <span className="truncate">Certificado anexado</span>
+                    </div>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-sky-300 hover:text-sky-100 hover:bg-white/10"
+                      title="Visualizar" onClick={() => openStorageFile("employee-docs", doc.file_path, `${nr} - Certificado`)}>
+                      👁
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-300 hover:text-emerald-100 hover:bg-white/10"
+                      title="Download" asChild>
+                      <a href={supabase.storage.from("employee-docs").getPublicUrl(doc.file_path).data.publicUrl} download target="_blank" rel="noreferrer">⬇</a>
+                    </Button>
+                    {canEdit && (
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-rose-300 hover:text-rose-100 hover:bg-white/10"
+                        title="Remover" onClick={() => deleteCert(doc)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                ) : canEdit ? (
+                  <>
+                    <input id={inputId} type="file" accept="application/pdf,image/*" className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCert(nr, f); e.currentTarget.value = ""; }} />
+                    <label htmlFor={inputId}
+                      className="flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-2 py-1.5 rounded-lg bg-white/5 border border-dashed border-white/20 text-slate-300 hover:bg-sky-500/10 hover:border-sky-400/50 hover:text-sky-200 cursor-pointer transition">
+                      <Upload className="h-3.5 w-3.5" /> Enviar certificado
+                    </label>
+                  </>
+                ) : (
+                  <span className="text-[10px] text-slate-500 italic">sem certificado</span>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
-      {canEdit && <div className="flex justify-end"><Button onClick={() => save.mutate()} disabled={save.isPending}>Salvar</Button></div>}
-    </Card>
+    </div>
   );
 }
 
