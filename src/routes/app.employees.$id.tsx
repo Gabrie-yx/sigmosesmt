@@ -1424,13 +1424,18 @@ function DocsTab({ empId }: any) {
               <Label className="text-xs">Vencimento</Label>
               <Input type="date" value={extraValidade} disabled={extraSemValidade} onChange={(e) => setExtraValidade(e.target.value)} />
             </div>
-            <label className="flex items-center gap-2 text-xs font-bold cursor-pointer pb-2">
-              <input type="checkbox" checked={extraSemValidade} onChange={(e) => { setExtraSemValidade(e.target.checked); if (e.target.checked) setExtraValidade(""); }} />
-              N/A (sem vencimento)
-            </label>
-            <Button type="submit" className="md:col-span-6" disabled={uploadExtra.isPending || !extraFile || (extraTipo === "Outro" && !extraDescricao.trim())}>
-              <Upload className="h-4 w-4 mr-2" /> Enviar documento
-            </Button>
+            <div className="md:col-span-2 flex items-center gap-3 pb-2 flex-wrap">
+              <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                <input type="checkbox" checked={extraSemValidade} onChange={(e) => { setExtraSemValidade(e.target.checked); if (e.target.checked) setExtraValidade(""); }} />
+                N/A (sem vencimento)
+              </label>
+              <Button type="submit" size="sm" disabled={uploadExtra.isPending || !extraFile || (extraTipo === "Outro" && !extraDescricao.trim())}>
+                <Upload className="h-4 w-4 mr-2" /> Enviar
+              </Button>
+              {extraTipo === "Outro" && !extraDescricao.trim() && extraFile && (
+                <span className="text-[10px] text-amber-300 font-bold">Informe o nome do documento</span>
+              )}
+            </div>
           </form>
         )}
         {extraDocs.length === 0 ? (
