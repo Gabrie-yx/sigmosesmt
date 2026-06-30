@@ -573,14 +573,20 @@ function RequisicoesPage() {
                             <Link2 className="h-3.5 w-3.5 mr-1" /> Link
                           </Button>
                         )}
-                        <Button size="sm" variant="outline" onClick={() => emitirPdf(r, "print")}>
-                          <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => emitirPdf(r, "preview")}>
-                          <Printer className="h-3.5 w-3.5 mr-1" /> PDF
-                        </Button>
-                        <ViewBtn req={r} />
-                        {isEditor && <EditReqBtn req={r} userId={user?.id} />}
+                        {r.classificacao === "MEDICAMENTOS" ? (
+                          <MedEditBtn req={r} />
+                        ) : (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => emitirPdf(r, "print")}>
+                              <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => emitirPdf(r, "preview")}>
+                              <Printer className="h-3.5 w-3.5 mr-1" /> PDF
+                            </Button>
+                            <ViewBtn req={r} />
+                            {isEditor && <EditReqBtn req={r} userId={user?.id} />}
+                          </>
+                        )}
                         {isEditor && (r.status === "PENDENTE" || r.status === "COTADA") && (
                           <>
                             <Button
