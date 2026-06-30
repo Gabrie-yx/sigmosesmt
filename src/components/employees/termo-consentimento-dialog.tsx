@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { ShieldCheck, ShieldAlert, Printer, FileSignature } from "lucide-react";
 import { gerarTermoConsentimentoPDF } from "@/lib/termo-consentimento-pdf";
 import { fetchSignatureAsCleanDataUrl } from "@/lib/signature-utils";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import type jsPDF from "jspdf";
 
 function dataExtensoBR(iso: string) {
   const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
@@ -40,6 +42,8 @@ export function TermoConsentimentoDialog({
   const qc = useQueryClient();
   const { user } = useAuth();
   const [obs, setObs] = useState("");
+  const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
+  const [previewName, setPreviewName] = useState<string>("termo-consentimento.pdf");
 
   const { data: emp, isLoading } = useQuery({
     queryKey: ["termo-emp", employeeId],
@@ -104,7 +108,7 @@ export function TermoConsentimentoDialog({
         .single();
       if (error) throw error;
 
-      // Gera o PDF e abre em nova aba
+      // Gera o PDF e abre no visualizador interno
       const pdf = gerarTermoConsentimentoPDF({
         funcionarioNome: emp.nome,
         cpf: emp.cpf, rg: emp.rg,
@@ -116,7 +120,8 @@ export function TermoConsentimentoDialog({
         assinaturaDataUrl: sigClean,
         coletadoPorNome: (user?.user_metadata as any)?.full_name ?? user?.email ?? null,
       });
-      pdf.output("dataurlnewwindow");
+      setPreviewName(`termo-consentimento-${(emp.nome || "func").replace(/\s+/g, "-").toLowerCase()}.pdf`);
+      setPreviewDoc(pdf);
       return row;
     },
     onSuccess: async () => {
@@ -126,7 +131,6 @@ export function TermoConsentimentoDialog({
         qc.invalidateQueries({ queryKey: ["termo-emp"] }),
         qc.invalidateQueries({ queryKey: ["termos-status"] }),
       ]);
-      onOpenChange(false);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao registrar termo"),
   });
@@ -146,7 +150,8 @@ export function TermoConsentimentoDialog({
       assinaturaDataUrl: sigClean,
       coletadoPorNome: termoExistente.coletado_por_nome,
     });
-    pdf.output("dataurlnewwindow");
+    setPreviewName(`termo-consentimento-${(emp.nome || "func").replace(/\s+/g, "-").toLowerCase()}.pdf`);
+    setPreviewDoc(pdf);
   };
 
   return (
@@ -273,5 +278,13 @@ export function TermoConsentimentoDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <PDFPreviewDialog
+      open={!!previewDoc}
+      onClose={() => setPreviewDoc(null)}
+      doc={previewDoc}
+      fileName={previewName}
+      title="Termo de Consentimento"
+    />
+    </>
   );
 }
