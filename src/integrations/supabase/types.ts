@@ -1509,45 +1509,102 @@ export type Database = {
       }
       companies: {
         Row: {
+          bairro: string | null
+          capital_social: number | null
+          cep: string | null
+          cidade: string | null
+          cnae_descricao: string | null
+          cnae_principal: string | null
           cnpj: string | null
+          cnpj_card_url: string | null
+          complemento: string | null
           created_at: string
           data_entrada: string | null
+          data_situacao: string | null
           email: string | null
           encarregado1: string | null
           encarregado2: string | null
+          grau_risco: number | null
           id: string
+          logradouro: string | null
           matriz_cnpj: string | null
           matriz_nome: string | null
           name: string
+          natureza_juridica: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          razao_social: string | null
+          receita_consultada_em: string | null
+          situacao_cadastral: string | null
+          telefone: string | null
           type: string
+          uf: string | null
           updated_at: string
         }
         Insert: {
+          bairro?: string | null
+          capital_social?: number | null
+          cep?: string | null
+          cidade?: string | null
+          cnae_descricao?: string | null
+          cnae_principal?: string | null
           cnpj?: string | null
+          cnpj_card_url?: string | null
+          complemento?: string | null
           created_at?: string
           data_entrada?: string | null
+          data_situacao?: string | null
           email?: string | null
           encarregado1?: string | null
           encarregado2?: string | null
+          grau_risco?: number | null
           id?: string
+          logradouro?: string | null
           matriz_cnpj?: string | null
           matriz_nome?: string | null
           name: string
+          natureza_juridica?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          razao_social?: string | null
+          receita_consultada_em?: string | null
+          situacao_cadastral?: string | null
+          telefone?: string | null
           type?: string
+          uf?: string | null
           updated_at?: string
         }
         Update: {
+          bairro?: string | null
+          capital_social?: number | null
+          cep?: string | null
+          cidade?: string | null
+          cnae_descricao?: string | null
+          cnae_principal?: string | null
           cnpj?: string | null
+          cnpj_card_url?: string | null
+          complemento?: string | null
           created_at?: string
           data_entrada?: string | null
+          data_situacao?: string | null
           email?: string | null
           encarregado1?: string | null
           encarregado2?: string | null
+          grau_risco?: number | null
           id?: string
+          logradouro?: string | null
           matriz_cnpj?: string | null
           matriz_nome?: string | null
           name?: string
+          natureza_juridica?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          razao_social?: string | null
+          receita_consultada_em?: string | null
+          situacao_cadastral?: string | null
+          telefone?: string | null
           type?: string
+          uf?: string | null
           updated_at?: string
         }
         Relationships: []
