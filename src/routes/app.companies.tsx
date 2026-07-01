@@ -11,6 +11,7 @@ import {
   UserPlus, Pencil, Plus, X, ChevronRight, HardHat,
   HeartPulse, Award, FolderOpen, CheckCircle2, AlertTriangle, Users, User, UserCog,
   Upload, Download, ArrowLeft, Building2, Briefcase, IdCard, Shield, Search,
+  Loader2, RefreshCw, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmployeeDetailContent } from "./app.employees.$id";
@@ -18,6 +19,7 @@ import { maskCNPJ } from "@/lib/masks";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { CompanyDossieDialog } from "@/components/companies/company-dossie-dialog";
 import { FileViewerHost } from "@/components/file-viewer";
+import { consultarCNPJ, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
 
 export const Route = createFileRoute("/app/companies")({
   component: CompaniesPage,
@@ -34,9 +36,36 @@ type Company = {
   data_entrada?: string | null;
   matriz_nome?: string | null;
   matriz_cnpj?: string | null;
+  razao_social?: string | null;
+  nome_fantasia?: string | null;
+  cnae_principal?: string | null;
+  cnae_descricao?: string | null;
+  grau_risco?: number | null;
+  logradouro?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  bairro?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  cep?: string | null;
+  telefone?: string | null;
+  situacao_cadastral?: string | null;
+  data_situacao?: string | null;
+  capital_social?: number | null;
+  natureza_juridica?: string | null;
+  cnpj_card_url?: string | null;
+  receita_consultada_em?: string | null;
 };
 
-const empty: Partial<Company> = { name: "", type: "CLT", cnpj: "", email: "", encarregado1: "", encarregado2: "", matriz_nome: "", matriz_cnpj: "" };
+const empty: Partial<Company> = {
+  name: "", type: "CLT", cnpj: "", email: "", encarregado1: "", encarregado2: "",
+  matriz_nome: "", matriz_cnpj: "",
+  razao_social: "", nome_fantasia: "",
+  cnae_principal: "", cnae_descricao: "", grau_risco: null,
+  logradouro: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "", cep: "",
+  telefone: "", situacao_cadastral: "", data_situacao: "", capital_social: null, natureza_juridica: "",
+  cnpj_card_url: "",
+};
 
 const typeStyle: Record<string, string> = {
   CLT: "bg-emerald-100 text-emerald-700",
@@ -107,6 +136,25 @@ function CompaniesPage() {
         data_entrada: (v as any).data_entrada || null,
         matriz_nome: v.matriz_nome || null,
         matriz_cnpj: v.matriz_cnpj || null,
+        razao_social: v.razao_social || null,
+        nome_fantasia: v.nome_fantasia || null,
+        cnae_principal: v.cnae_principal || null,
+        cnae_descricao: v.cnae_descricao || null,
+        grau_risco: v.grau_risco ?? null,
+        logradouro: v.logradouro || null,
+        numero: v.numero || null,
+        complemento: v.complemento || null,
+        bairro: v.bairro || null,
+        cidade: v.cidade || null,
+        uf: v.uf || null,
+        cep: v.cep || null,
+        telefone: v.telefone || null,
+        situacao_cadastral: v.situacao_cadastral || null,
+        data_situacao: v.data_situacao || null,
+        capital_social: v.capital_social ?? null,
+        natureza_juridica: v.natureza_juridica || null,
+        cnpj_card_url: v.cnpj_card_url || null,
+        receita_consultada_em: (v as any).receita_consultada_em || null,
       };
       if (v.id) {
         const { error } = await supabase.from("companies").update(payload).eq("id", v.id);
@@ -120,6 +168,39 @@ function CompaniesPage() {
       qc.invalidateQueries({ queryKey: ["companies"] });
       setEditing({ ...empty });
       toast.success("Empresa salva");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  // Atualização retroativa em lote via Receita Federal
+  const atualizarTodasReceita = useMutation({
+    mutationFn: async () => {
+      const alvos = companies.filter((c) => (c.cnpj || "").replace(/\D/g, "").length === 14);
+      let ok = 0, fail = 0;
+      for (const c of alvos) {
+        try {
+          const d = await consultarCNPJ(c.cnpj!);
+          const patch: any = {
+            razao_social: d.razao_social, nome_fantasia: d.nome_fantasia,
+            cnae_principal: d.cnae_principal, cnae_descricao: d.cnae_descricao,
+            grau_risco: d.grau_risco,
+            logradouro: d.logradouro, numero: d.numero, complemento: d.complemento,
+            bairro: d.bairro, cidade: d.cidade, uf: d.uf, cep: d.cep,
+            telefone: d.telefone, situacao_cadastral: d.situacao_cadastral,
+            data_situacao: d.data_situacao, capital_social: d.capital_social,
+            natureza_juridica: d.natureza_juridica,
+            receita_consultada_em: new Date().toISOString(),
+          };
+          await supabase.from("companies").update(patch).eq("id", c.id);
+          ok++;
+        } catch { fail++; }
+        await new Promise((r) => setTimeout(r, 300)); // rate-limit gentil
+      }
+      return { ok, fail, total: alvos.length };
+    },
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["companies"] });
+      toast.success(`Atualização Receita: ${r.ok}/${r.total} OK` + (r.fail ? ` · ${r.fail} falharam` : ""));
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -294,6 +375,20 @@ function CompaniesPage() {
             </Button>
           )}
         </div>
+        {isAdmin && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => atualizarTodasReceita.mutate()}
+            disabled={atualizarTodasReceita.isPending}
+            className="text-[10px] font-black uppercase tracking-widest border-slate-300 mb-1"
+            title="Consulta BrasilAPI e atualiza razão social, CNAE, GR e endereço de todas as empresas com CNPJ."
+          >
+            {atualizarTodasReceita.isPending
+              ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Atualizando…</>
+              : <><RefreshCw className="h-3.5 w-3.5 mr-1" /> Atualizar todas (Receita)</>}
+          </Button>
+        )}
         {companies.map((c) => {
           const isSel = selectedId === c.id;
           const empCount = employees.filter((e: any) => e.company_id === c.id).length;
@@ -584,6 +679,67 @@ function CompanyForm({
   onSubmit: () => void;
   saving: boolean;
 }) {
+  const [consultando, setConsultando] = useState(false);
+  const [uploadingCard, setUploadingCard] = useState(false);
+
+  async function handleConsultar() {
+    const digits = (editing.cnpj ?? "").replace(/\D/g, "");
+    if (digits.length !== 14) {
+      toast.error("Informe o CNPJ completo (14 dígitos)");
+      return;
+    }
+    setConsultando(true);
+    try {
+      const d: ReceitaCNPJData = await consultarCNPJ(digits);
+      setEditing({
+        ...editing,
+        cnpj: d.cnpj,
+        // preserva Nome Fantasia digitado pelo usuário se já houver
+        name: editing.name && editing.name.trim() ? editing.name : (d.nome_fantasia || d.razao_social),
+        razao_social: d.razao_social,
+        nome_fantasia: d.nome_fantasia ?? editing.nome_fantasia ?? "",
+        cnae_principal: d.cnae_principal ?? "",
+        cnae_descricao: d.cnae_descricao ?? "",
+        grau_risco: d.grau_risco,
+        logradouro: d.logradouro ?? "",
+        numero: d.numero ?? "",
+        complemento: d.complemento ?? "",
+        bairro: d.bairro ?? "",
+        cidade: d.cidade ?? "",
+        uf: d.uf ?? "",
+        cep: d.cep ?? "",
+        telefone: d.telefone ?? "",
+        situacao_cadastral: d.situacao_cadastral ?? "",
+        data_situacao: d.data_situacao ?? "",
+        capital_social: d.capital_social,
+        natureza_juridica: d.natureza_juridica ?? "",
+        receita_consultada_em: new Date().toISOString(),
+      } as any);
+      toast.success("Dados da Receita preenchidos. Ajuste o Nome Fantasia se necessário.");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha na consulta");
+    } finally {
+      setConsultando(false);
+    }
+  }
+
+  async function handleUploadCard(file: File) {
+    setUploadingCard(true);
+    try {
+      const ext = (file.name.split(".").pop() || "pdf").toLowerCase();
+      const key = `companies/${editing.id ?? "novo"}/cartao-cnpj-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("sesmt-docs").upload(key, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data: signed } = await supabase.storage.from("sesmt-docs").createSignedUrl(key, 60 * 60 * 24 * 365);
+      setEditing({ ...editing, cnpj_card_url: signed?.signedUrl ?? key } as any);
+      toast.success("Cartão CNPJ anexado");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha no upload");
+    } finally {
+      setUploadingCard(false);
+    }
+  }
+
   return (
     <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-8 overflow-y-auto custom-scrollbar animate-fadeIn relative">
       {onCancel && (
@@ -595,10 +751,33 @@ function CompanyForm({
         {editing?.id ? "Editar Empresa" : "Cadastrar Nova Empresa"}
       </h3>
       <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
+        {/* Bloco 1 — CNPJ + Consulta Receita */}
+        <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4">
+          <Label className="text-[10px] font-black text-slate-500 uppercase">CNPJ (consulta automática pela Receita)</Label>
+          <div className="flex gap-2 mt-1">
+            <Input
+              value={maskCNPJ(editing?.cnpj ?? "")}
+              onChange={(e) => setEditing({ ...editing, cnpj: maskCNPJ(e.target.value) })}
+              placeholder="00.000.000/0001-00"
+              maxLength={18}
+              inputMode="numeric"
+              className="bg-white flex-1"
+            />
+            <Button type="button" onClick={handleConsultar} disabled={consultando} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest">
+              {consultando ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Consultando…</> : <><Search className="h-3.5 w-3.5 mr-1" /> Consultar Receita</>}
+            </Button>
+          </div>
+          {editing?.receita_consultada_em && (
+            <p className="text-[9px] font-bold text-emerald-700 mt-1.5 uppercase">
+              ✓ Consultado em {new Date(editing.receita_consultada_em).toLocaleString("pt-BR")}
+            </p>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="text-[10px] font-black text-slate-500 uppercase">Razão Social / Nome da Empresa *</Label>
-            <Input required value={editing?.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className="bg-slate-50 mt-1" />
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Nome Fantasia (exibido no SIGMO) *</Label>
+            <Input required value={editing?.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="Ex.: DMN Estaleiro" className="bg-slate-50 mt-1" />
           </div>
           <div>
             <Label className="text-[10px] font-black text-slate-500 uppercase">Tipo de Vínculo</Label>
@@ -614,18 +793,107 @@ function CompanyForm({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="text-[10px] font-black text-slate-500 uppercase">CNPJ</Label>
-            <Input value={maskCNPJ(editing?.cnpj ?? "")} onChange={(e) => setEditing({ ...editing, cnpj: maskCNPJ(e.target.value) })} placeholder="00.000.000/0001-00" maxLength={18} inputMode="numeric" className="bg-slate-50 mt-1" />
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Razão Social (Receita)</Label>
+            <Input value={editing?.razao_social ?? ""} onChange={(e) => setEditing({ ...editing, razao_social: e.target.value })} className="bg-slate-50 mt-1" />
           </div>
           <div>
-            <Label className="text-[10px] font-black text-slate-500 uppercase">Data da Entrada</Label>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Data da Entrada no Contrato</Label>
             <Input type="date" value={(editing as any)?.data_entrada ?? ""} onChange={(e) => setEditing({ ...editing, data_entrada: e.target.value } as any)} className="bg-slate-50 mt-1" />
           </div>
         </div>
+
+        {/* Bloco CNAE + Grau de Risco */}
+        <div className="grid grid-cols-12 gap-4 pt-4 border-t border-slate-100">
+          <div className="col-span-3">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">CNAE Principal</Label>
+            <Input value={editing?.cnae_principal ?? ""} onChange={(e) => setEditing({ ...editing, cnae_principal: e.target.value })} placeholder="00.00-0/00" className="bg-slate-50 mt-1" />
+          </div>
+          <div className="col-span-7">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Descrição CNAE</Label>
+            <Input value={editing?.cnae_descricao ?? ""} onChange={(e) => setEditing({ ...editing, cnae_descricao: e.target.value })} className="bg-slate-50 mt-1" />
+          </div>
+          <div className="col-span-2">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">GR (NR-04)</Label>
+            <Select value={editing?.grau_risco != null ? String(editing.grau_risco) : ""} onValueChange={(v) => setEditing({ ...editing, grau_risco: v ? Number(v) : null })}>
+              <SelectTrigger className="bg-slate-50 mt-1"><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4">4</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Bloco Endereço */}
+        <div className="grid grid-cols-12 gap-4 pt-4 border-t border-slate-100">
+          <div className="col-span-8">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Logradouro</Label>
+            <Input value={editing?.logradouro ?? ""} onChange={(e) => setEditing({ ...editing, logradouro: e.target.value })} className="bg-slate-50 mt-1" />
+          </div>
+          <div className="col-span-2">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Nº</Label>
+            <Input value={editing?.numero ?? ""} onChange={(e) => setEditing({ ...editing, numero: e.target.value })} className="bg-slate-50 mt-1" />
+          </div>
+          <div className="col-span-2">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">CEP</Label>
+            <Input value={editing?.cep ?? ""} onChange={(e) => setEditing({ ...editing, cep: e.target.value })} className="bg-slate-50 mt-1" />
+          </div>
+          <div className="col-span-4">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Bairro</Label>
+            <Input value={editing?.bairro ?? ""} onChange={(e) => setEditing({ ...editing, bairro: e.target.value })} className="bg-slate-50 mt-1" />
+          </div>
+          <div className="col-span-4">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Complemento</Label>
+            <Input value={editing?.complemento ?? ""} onChange={(e) => setEditing({ ...editing, complemento: e.target.value })} className="bg-slate-50 mt-1" />
+          </div>
+          <div className="col-span-3">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Cidade</Label>
+            <Input value={editing?.cidade ?? ""} onChange={(e) => setEditing({ ...editing, cidade: e.target.value })} className="bg-slate-50 mt-1" />
+          </div>
+          <div className="col-span-1">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">UF</Label>
+            <Input value={editing?.uf ?? ""} onChange={(e) => setEditing({ ...editing, uf: e.target.value.toUpperCase().slice(0,2) })} className="bg-slate-50 mt-1" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Telefone</Label>
+            <Input value={editing?.telefone ?? ""} onChange={(e) => setEditing({ ...editing, telefone: e.target.value })} className="bg-slate-50 mt-1" />
+          </div>
+          <div>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Situação Cadastral</Label>
+            <Input value={editing?.situacao_cadastral ?? ""} onChange={(e) => setEditing({ ...editing, situacao_cadastral: e.target.value })} className="bg-slate-50 mt-1" />
+          </div>
+          <div>
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Natureza Jurídica</Label>
+            <Input value={editing?.natureza_juridica ?? ""} onChange={(e) => setEditing({ ...editing, natureza_juridica: e.target.value })} className="bg-slate-50 mt-1" />
+          </div>
+        </div>
+
         <div>
           <Label className="text-[10px] font-black text-slate-500 uppercase">E-mail Corporativo</Label>
           <Input type="email" placeholder="contato@empresa.com" value={editing?.email ?? ""} onChange={(e) => setEditing({ ...editing, email: e.target.value })} className="bg-slate-50 mt-1" />
         </div>
+
+        {/* Upload Cartão CNPJ */}
+        <div className="pt-4 border-t border-slate-100">
+          <Label className="text-[10px] font-black text-slate-500 uppercase">Cartão CNPJ (PDF — evidência documental)</Label>
+          <div className="flex items-center gap-2 mt-1">
+            <label className="inline-flex items-center gap-1.5 cursor-pointer bg-slate-700 hover:bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg">
+              {uploadingCard ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando…</> : <><Upload className="h-3.5 w-3.5" /> Anexar PDF</>}
+              <input type="file" accept="application/pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadCard(f); e.target.value = ""; }} />
+            </label>
+            {editing?.cnpj_card_url && (
+              <a href={editing.cnpj_card_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-emerald-700 hover:text-emerald-900">
+                <FileText className="h-3.5 w-3.5" /> Ver anexo
+              </a>
+            )}
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
           <div>
             <Label className="text-[10px] font-black text-slate-500 uppercase">Empreiteiro</Label>

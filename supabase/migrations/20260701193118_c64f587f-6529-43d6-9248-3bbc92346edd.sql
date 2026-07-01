@@ -1,0 +1,21 @@
+
+ALTER TABLE public.companies
+  ADD COLUMN IF NOT EXISTS razao_social text,
+  ADD COLUMN IF NOT EXISTS nome_fantasia text,
+  ADD COLUMN IF NOT EXISTS cnae_principal text,
+  ADD COLUMN IF NOT EXISTS cnae_descricao text,
+  ADD COLUMN IF NOT EXISTS grau_risco smallint,
+  ADD COLUMN IF NOT EXISTS logradouro text,
+  ADD COLUMN IF NOT EXISTS numero text,
+  ADD COLUMN IF NOT EXISTS complemento text,
+  ADD COLUMN IF NOT EXISTS bairro text,
+  ADD COLUMN IF NOT EXISTS cidade text,
+  ADD COLUMN IF NOT EXISTS uf text,
+  ADD COLUMN IF NOT EXISTS cep text,
+  ADD COLUMN IF NOT EXISTS telefone text,
+  ADD COLUMN IF NOT EXISTS situacao_cadastral text,
+  ADD COLUMN IF NOT EXISTS data_situacao date,
+  ADD COLUMN IF NOT EXISTS capital_social numeric,
+  ADD COLUMN IF NOT EXISTS natureza_juridica text,
+  ADD COLUMN IF NOT EXISTS cnpj_card_url text,
+  ADD COLUMN IF NOT EXISTS receita_consultada_em timestamptz;
