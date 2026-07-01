@@ -154,6 +154,7 @@ function CompaniesPage() {
         data_situacao: v.data_situacao || null,
         capital_social: v.capital_social ?? null,
         natureza_juridica: v.natureza_juridica || null,
+        cnaes_secundarias: v.cnaes_secundarias ?? null,
         cnpj_card_url: v.cnpj_card_url || null,
         receita_consultada_em: (v as any).receita_consultada_em || null,
       };
@@ -190,6 +191,7 @@ function CompaniesPage() {
             telefone: d.telefone, situacao_cadastral: d.situacao_cadastral,
             data_situacao: d.data_situacao, capital_social: d.capital_social,
             natureza_juridica: d.natureza_juridica,
+            cnaes_secundarias: d.cnaes_secundarias ?? [],
             receita_consultada_em: new Date().toISOString(),
           };
           await supabase.from("companies").update(patch).eq("id", c.id);
