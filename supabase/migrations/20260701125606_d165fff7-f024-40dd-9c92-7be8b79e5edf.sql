@@ -1,0 +1,1 @@
+UPDATE public.training_matrix_courses SET periodicidade = 'ANUAL' WHERE codigo = 'NR-35' AND periodicidade = 'BIENAL';
