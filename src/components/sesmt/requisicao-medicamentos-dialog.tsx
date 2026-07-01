@@ -60,11 +60,22 @@ export function RequisicaoMedicamentosDialog({
   const [assinaturaSolicitante, setAssinaturaSolicitante] = useState<string | null>(null);
   const [padOpen, setPadOpen] = useState(false);
 
+  const resetNovaRequisicao = () => {
+    setEditId(null);
+    setNumero("");
+    setSolicitante(defaultSolicitante);
+    setSetor("SESMT — Ambulatório");
+    setResponsavelTST("");
+    setObservacoes("");
+    setAssinaturaSolicitante(null);
+    setItens(MEDICAMENTOS_AMBULATORIO_PADRAO.map((i) => ({ ...i })));
+  };
+
   // Carrega requisição existente quando passada (modo edição)
   useEffect(() => {
     if (!open) return;
     if (!requisitionId) {
-      setEditId(null);
+      resetNovaRequisicao();
       return;
     }
     setEditId(requisitionId);
