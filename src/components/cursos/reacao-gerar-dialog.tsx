@@ -108,7 +108,7 @@ export function ReacaoGerarDialog({ open, onClose, turma, course, participantesC
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg text-foreground">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-amber-600" />
@@ -116,33 +116,33 @@ export function ReacaoGerarDialog({ open, onClose, turma, course, participantesC
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 text-sm">
-          <div className="bg-amber-50 border border-amber-200 rounded p-3 text-[11px] text-amber-900">
+        <div className="space-y-4 text-sm text-foreground">
+          <div className="bg-amber-500/10 border border-amber-400/40 rounded p-3 text-[11px] text-amber-200">
             <b>FORCP-GP-16</b> — Formulário individual e <b>anônimo</b> (Kirkpatrick Nível 1).
             Cabeçalho já pré-preenchido. Participantes marcam à caneta; depois você anexa os preenchidos.
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-[10px] font-black uppercase">Curso</Label>
-              <div className="text-xs font-bold mt-1">{course?.codigo}</div>
+              <Label className="text-[10px] font-black uppercase text-muted-foreground">Curso</Label>
+              <div className="text-xs font-bold mt-1 text-foreground">{course?.codigo}</div>
             </div>
             <div>
-              <Label className="text-[10px] font-black uppercase">Data</Label>
-              <div className="text-xs font-bold mt-1">{formatDateBR(turma.data_realizacao)}</div>
+              <Label className="text-[10px] font-black uppercase text-muted-foreground">Data</Label>
+              <div className="text-xs font-bold mt-1 text-foreground">{formatDateBR(turma.data_realizacao)}</div>
             </div>
             <div>
-              <Label className="text-[10px] font-black uppercase">Instrutor</Label>
-              <div className="text-xs font-bold mt-1 truncate">{turma.instrutor ?? "—"}</div>
+              <Label className="text-[10px] font-black uppercase text-muted-foreground">Instrutor</Label>
+              <div className="text-xs font-bold mt-1 truncate text-foreground">{turma.instrutor ?? "—"}</div>
             </div>
             <div>
-              <Label className="text-[10px] font-black uppercase">Participantes</Label>
-              <div className="text-xs font-bold mt-1">{participantesCount}</div>
+              <Label className="text-[10px] font-black uppercase text-muted-foreground">Participantes</Label>
+              <div className="text-xs font-bold mt-1 text-foreground">{participantesCount}</div>
             </div>
           </div>
 
           <div>
-            <Label className="text-[10px] font-black uppercase">Quantidade de PDFs a gerar</Label>
+            <Label className="text-[10px] font-black uppercase text-muted-foreground">Quantidade de PDFs a gerar</Label>
             <Input
               type="number"
               min={1}
@@ -151,13 +151,13 @@ export function ReacaoGerarDialog({ open, onClose, turma, course, participantesC
               onChange={(e) => setQtd(Math.max(1, Number(e.target.value) || 1))}
               className="mt-1"
             />
-            <p className="text-[10px] text-slate-500 mt-1">
+            <p className="text-[10px] text-muted-foreground mt-1">
               Sugerido: {participantesCount} (1 por participante). Ajuste se precisar de extras.
             </p>
           </div>
 
           <div>
-            <Label className="text-[10px] font-black uppercase">Nome do Técnico em Segurança</Label>
+            <Label className="text-[10px] font-black uppercase text-muted-foreground">Nome do Técnico em Segurança</Label>
             <Input
               value={tstNome}
               onChange={(e) => setTstNome(e.target.value)}
@@ -167,7 +167,7 @@ export function ReacaoGerarDialog({ open, onClose, turma, course, participantesC
           </div>
 
           <div>
-            <Label className="text-[10px] font-black uppercase">Assinatura do TST</Label>
+            <Label className="text-[10px] font-black uppercase text-muted-foreground">Assinatura do TST</Label>
             <div className="mt-1 flex items-center gap-2">
               {tstSig ? (
                 <>
@@ -182,7 +182,7 @@ export function ReacaoGerarDialog({ open, onClose, turma, course, participantesC
                 </Button>
               )}
             </div>
-            <p className="text-[10px] text-slate-500 mt-1">
+            <p className="text-[10px] text-muted-foreground mt-1">
               A mesma assinatura é aplicada em todos os PDFs do lote.
             </p>
           </div>
