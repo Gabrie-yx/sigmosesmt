@@ -19,7 +19,7 @@ import { maskCNPJ } from "@/lib/masks";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { CompanyDossieDialog } from "@/components/companies/company-dossie-dialog";
 import { FileViewerHost } from "@/components/file-viewer";
-import { consultarCNPJ, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
+import { consultarCNPJ, extrairCNPJdeTexto, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
 
 export const Route = createFileRoute("/app/companies")({
   component: CompaniesPage,
@@ -53,6 +53,7 @@ type Company = {
   data_situacao?: string | null;
   capital_social?: number | null;
   natureza_juridica?: string | null;
+  cnaes_secundarias?: Array<{ codigo: string; descricao: string }> | null;
   cnpj_card_url?: string | null;
   receita_consultada_em?: string | null;
 };
@@ -64,7 +65,7 @@ const empty: Partial<Company> = {
   cnae_principal: "", cnae_descricao: "", grau_risco: null,
   logradouro: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "", cep: "",
   telefone: "", situacao_cadastral: "", data_situacao: "", capital_social: null, natureza_juridica: "",
-  cnpj_card_url: "",
+  cnaes_secundarias: [], cnpj_card_url: "",
 };
 
 const typeStyle: Record<string, string> = {
