@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Plus, Pill, FileDown, Eye, Copy, Search, Save } from "lucide-react";
 import { toast } from "sonner";
-import { lazy, Suspense } from "react";
 import {
   MEDICAMENTOS_AMBULATORIO_PADRAO,
   MEDICAMENTOS_SUGESTOES,
