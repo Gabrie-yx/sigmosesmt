@@ -333,9 +333,10 @@ export function RequisicaoMedicamentosDialog({
                   <tr>
                     <th className="px-2 py-2 w-8">#</th>
                     <th className="px-2 py-2">Medicamento / Insumo</th>
-                    <th className="px-2 py-2 w-40">Apresentação</th>
-                    <th className="px-2 py-2 w-24">Unidade</th>
-                    <th className="px-2 py-2 w-28 text-center">Qtd</th>
+                    <th className="px-2 py-2 w-36">Apresentação</th>
+                    <th className="px-2 py-2 w-20">Unidade</th>
+                    <th className="px-2 py-2 w-24 text-center">Qtd</th>
+                    <th className="px-2 py-2 w-48">Justificativa</th>
                     <th className="px-2 py-2 w-10"></th>
                   </tr>
                 </thead>
@@ -360,6 +361,14 @@ export function RequisicaoMedicamentosDialog({
                           step={1}
                           value={String(it.quantidade)}
                           onChange={(e) => updateItem(idx, { quantidade: Number(e.target.value) || 0 })}
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          className="h-8"
+                          placeholder="Ex: reposição, urgência..."
+                          value={it.justificativa ?? ""}
+                          onChange={(e) => updateItem(idx, { justificativa: e.target.value })}
                         />
                       </td>
                      <td className="px-1 py-1 text-right whitespace-nowrap">
