@@ -104,6 +104,7 @@ export type RequisicaoMedicamentosOpts = {
   responsavelAprovador?: string;
   observacoes?: string;
   itens: MedItem[];
+  assinaturaSolicitanteDataUrl?: string;
 };
 
 function hoje(): string {
@@ -193,6 +194,12 @@ export function buildRequisicaoMedicamentosPdf(opts: RequisicaoMedicamentosOpts)
     const x = M + i * (colW + 5);
     doc.line(x, sy, x + colW, sy);
   });
+  // Estampa assinatura do solicitante (se houver) logo acima da linha
+  if (opts.assinaturaSolicitanteDataUrl) {
+    try {
+      doc.addImage(opts.assinaturaSolicitanteDataUrl, "PNG", M + 2, sy - 14, colW - 4, 13, undefined, "FAST");
+    } catch { /* ignora falha de imagem */ }
+  }
   doc.setFontSize(8);
   doc.text(`Solicitante\n${opts.solicitante}`, M, sy + 4);
   doc.text(`TST Responsável\n${opts.responsavelTST ?? ""}`, M + colW + 5, sy + 4);
