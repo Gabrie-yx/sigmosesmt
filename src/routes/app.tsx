@@ -62,8 +62,12 @@ function AppLayout() {
             </ModuleRouteGuard>
           </main>
           <footer className="border-t bg-white/60 backdrop-blur py-2 px-3 text-center text-[10px] sm:text-[11px] text-muted-foreground">
-            <span className="hidden sm:inline">Copyright© 2026. Todos os Direitos Reservados para Francisco Bandeira (fbandeira.br@gmail.com) — SIGMO - Sistema de Gerenciamento de SST.</span>
-            <span className="sm:hidden">© 2026 SIGMO · F. Bandeira</span>
+            <span className="hidden sm:inline">
+              Copyright© 2026. Todos os Direitos Reservados para{" "}
+              <span className="font-semibold text-foreground/80">Francisco Bandeira Almeida</span>{" "}
+              (fbandeira.br@gmail.com) e Anderson Soares — SIGMO - Sistema Integrado de Gestão Modular.
+            </span>
+            <span className="sm:hidden">© 2026 SIGMO · <span className="font-semibold">F. Bandeira Almeida</span> & A. Soares</span>
           </footer>
           <CommandPalette />
         </div>
