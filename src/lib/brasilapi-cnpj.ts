@@ -20,6 +20,7 @@ export type ReceitaCNPJData = {
   data_situacao: string | null;       // YYYY-MM-DD
   capital_social: number | null;
   natureza_juridica: string | null;
+  cnaes_secundarias: Array<{ codigo: string; descricao: string }>;
 };
 
 function onlyDigits(s: string) { return (s || "").replace(/\D/g, ""); }
@@ -75,6 +76,11 @@ export async function consultarCNPJ(cnpj: string): Promise<ReceitaCNPJData> {
   const j: any = await res.json();
 
   const cnaeCode = fmtCnaeCode(j.cnae_fiscal ?? null);
+  const secundarias: Array<{ codigo: string; descricao: string }> = Array.isArray(j.cnaes_secundarios)
+    ? j.cnaes_secundarios
+        .map((c: any) => ({ codigo: fmtCnaeCode(c.codigo) ?? "", descricao: c.descricao ?? "" }))
+        .filter((c: any) => c.codigo)
+    : [];
   return {
     cnpj: `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12,14)}`,
     razao_social: j.razao_social ?? "",
@@ -94,5 +100,15 @@ export async function consultarCNPJ(cnpj: string): Promise<ReceitaCNPJData> {
     data_situacao: j.data_situacao_cadastral || null,
     capital_social: typeof j.capital_social === "number" ? j.capital_social : (j.capital_social ? Number(j.capital_social) : null),
     natureza_juridica: j.natureza_juridica || null,
+    cnaes_secundarias: secundarias,
   };
+}
+
+/** Extrai o primeiro CNPJ (14 dígitos, com ou sem máscara) de um texto livre. */
+export function extrairCNPJdeTexto(txt: string): string | null {
+  if (!txt) return null;
+  const m = txt.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/);
+  if (!m) return null;
+  const digits = onlyDigits(m[0]);
+  return digits.length === 14 ? digits : null;
 }
