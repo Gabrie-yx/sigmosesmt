@@ -121,8 +121,8 @@ export function buildRequisicaoMedicamentosPdf(opts: RequisicaoMedicamentosOpts)
   const totalUnid = opts.itens.reduce((a, i) => a + Number(i.quantidade || 0), 0);
 
   const y = drawPdfHeader(doc, {
-    titulo: "Requisição de Medicamentos — Ambulatório SESMT",
-    subtitulo: "Reposição de itens de uso diário (NR-07 / PCMSO)",
+    titulo: "Requisição de Medicamentos",
+    subtitulo: "Ambulatório SESMT — Reposição de uso diário (NR-07 / PCMSO)",
     responsavel: opts.solicitante,
     filtros: [
       opts.numero ? `Nº ${opts.numero}` : "Nº ____/2026",
