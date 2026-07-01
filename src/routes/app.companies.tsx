@@ -927,10 +927,29 @@ function CompanyForm({
             <Input value={editing?.situacao_cadastral ?? ""} onChange={(e) => setEditing({ ...editing, situacao_cadastral: e.target.value })} className="bg-slate-50 mt-1" />
           </div>
           <div>
-            <Label className="text-[10px] font-black text-slate-500 uppercase">Natureza Jurídica</Label>
-            <Input value={editing?.natureza_juridica ?? ""} onChange={(e) => setEditing({ ...editing, natureza_juridica: e.target.value })} className="bg-slate-50 mt-1" />
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Data da Situação</Label>
+            <Input type="date" value={editing?.data_situacao ?? ""} onChange={(e) => setEditing({ ...editing, data_situacao: e.target.value })} className="bg-slate-50 mt-1" />
           </div>
         </div>
+
+        <div>
+          <Label className="text-[10px] font-black text-slate-500 uppercase">Natureza Jurídica</Label>
+          <Input value={editing?.natureza_juridica ?? ""} onChange={(e) => setEditing({ ...editing, natureza_juridica: e.target.value })} className="bg-slate-50 mt-1" />
+        </div>
+
+        {editing?.cnaes_secundarias && editing.cnaes_secundarias.length > 0 && (
+          <div className="pt-4 border-t border-slate-100">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">CNAEs Secundários ({editing.cnaes_secundarias.length})</Label>
+            <div className="mt-1 rounded-lg border border-slate-200 bg-slate-50 p-2 max-h-40 overflow-y-auto space-y-1">
+              {editing.cnaes_secundarias.map((c, i) => (
+                <div key={i} className="text-[11px] text-slate-700 flex gap-2">
+                  <span className="font-mono font-bold text-slate-900 shrink-0">{c.codigo}</span>
+                  <span className="text-slate-600">{c.descricao}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div>
           <Label className="text-[10px] font-black text-slate-500 uppercase">E-mail Corporativo</Label>
