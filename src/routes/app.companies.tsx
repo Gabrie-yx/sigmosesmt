@@ -714,6 +714,7 @@ function CompanyForm({
         telefone: d.telefone ?? "",
         situacao_cadastral: d.situacao_cadastral ?? "",
         data_situacao: d.data_situacao ?? "",
+        cnaes_secundarias: d.cnaes_secundarias ?? [],
         capital_social: d.capital_social,
         natureza_juridica: d.natureza_juridica ?? "",
         receita_consultada_em: new Date().toISOString(),
