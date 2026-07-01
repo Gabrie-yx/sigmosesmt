@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import type jsPDF from "jspdf";
+const SignaturePadDialog = lazy(() =>
+  import("@/components/signature-pad-dialog").then((m) => ({ default: m.SignaturePadDialog })),
+);
 
 type Props = {
   defaultSolicitante?: string;
@@ -54,6 +57,8 @@ export function RequisicaoMedicamentosDialog({
   const [itens, setItens] = useState<MedItem[]>(() => MEDICAMENTOS_AMBULATORIO_PADRAO.map((i) => ({ ...i })));
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [busca, setBusca] = useState("");
+  const [assinaturaSolicitante, setAssinaturaSolicitante] = useState<string | null>(null);
+  const [padOpen, setPadOpen] = useState(false);
 
   // Carrega requisição existente quando passada (modo edição)
   useEffect(() => {
@@ -82,13 +87,20 @@ export function RequisicaoMedicamentosDialog({
         .order("item_numero");
       if (rows && rows.length > 0) {
         setItens(
-          rows.map((r: any) => ({
-            descricao: r.descricao ?? "",
-            apresentacao: "", // não persistido — fica para edição
-            unidade: r.unidade ?? "UN",
-            quantidade: Number(r.quantidade ?? 0),
-            justificativa: r.observacao ?? "",
-          })),
+          rows.map((r: any) => {
+            // Recupera "apresentacao" que foi salva no formato "descricao — apresentacao"
+            const raw = String(r.descricao ?? "");
+            const sep = raw.lastIndexOf(" — ");
+            const descricao = sep > 0 ? raw.slice(0, sep) : raw;
+            const apresentacao = sep > 0 ? raw.slice(sep + 3) : "";
+            return {
+              descricao,
+              apresentacao,
+              unidade: r.unidade ?? "UN",
+              quantidade: Number(r.quantidade ?? 0),
+              justificativa: r.observacao ?? "",
+            };
+          }),
         );
       }
     })();
@@ -144,12 +156,12 @@ export function RequisicaoMedicamentosDialog({
 
   const baixar = () => {
     if (!validar()) return;
-    downloadRequisicaoMedicamentosPdf({ numero, solicitante, setor, responsavelTST, observacoes, itens });
+    downloadRequisicaoMedicamentosPdf({ numero, solicitante, setor, responsavelTST, observacoes, itens, assinaturaSolicitanteDataUrl: assinaturaSolicitante ?? undefined });
     toast.success("PDF gerado");
   };
   const visualizar = () => {
     if (!validar()) return;
-    setPreviewDoc(buildRequisicaoMedicamentosPdf({ numero, solicitante, setor, responsavelTST, observacoes, itens }));
+    setPreviewDoc(buildRequisicaoMedicamentosPdf({ numero, solicitante, setor, responsavelTST, observacoes, itens, assinaturaSolicitanteDataUrl: assinaturaSolicitante ?? undefined }));
   };
 
   async function gerarNumero(): Promise<string> {
@@ -280,9 +292,6 @@ export function RequisicaoMedicamentosDialog({
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={resetPadrao}>Restaurar padrão</Button>
-                <Button size="sm" className="bg-rose-700 hover:bg-rose-800 text-white" onClick={addItemVazio}>
-                  <Plus className="h-3 w-3 mr-1" /> Item personalizado
-                </Button>
               </div>
             </div>
 
@@ -326,7 +335,7 @@ export function RequisicaoMedicamentosDialog({
                     <th className="px-2 py-2">Medicamento / Insumo</th>
                     <th className="px-2 py-2 w-40">Apresentação</th>
                     <th className="px-2 py-2 w-24">Unidade</th>
-                    <th className="px-2 py-2 w-16 text-center">Qtd</th>
+                    <th className="px-2 py-2 w-28 text-center">Qtd</th>
                     <th className="px-2 py-2 w-10"></th>
                   </tr>
                 </thead>
@@ -345,9 +354,10 @@ export function RequisicaoMedicamentosDialog({
                       </td>
                       <td className="px-2 py-1">
                         <Input
-                          className="h-8 text-center font-bold"
+                          className="h-8 text-center font-bold w-24"
                           type="number"
                           min={0}
+                          step={1}
                           value={String(it.quantidade)}
                           onChange={(e) => updateItem(idx, { quantidade: Number(e.target.value) || 0 })}
                         />
@@ -364,6 +374,17 @@ export function RequisicaoMedicamentosDialog({
                   ))}
                 </tbody>
               </table>
+              <div className="p-2 border-t bg-slate-50 dark:bg-slate-900/40 flex justify-center">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={addItemVazio}
+                  className="gap-1 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-900/30"
+                  title="Adicionar novo item"
+                >
+                  <Plus className="h-4 w-4" /> Adicionar item
+                </Button>
+              </div>
             </div>
 
             <div>
@@ -374,6 +395,33 @@ export function RequisicaoMedicamentosDialog({
                 placeholder="Validade mínima 12 meses, entrega no ambulatório, etc."
                 rows={2}
               />
+            </div>
+
+            <div className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Assinatura do Solicitante
+                </Label>
+                <div className="flex gap-2">
+                  {assinaturaSolicitante && (
+                    <Button size="sm" variant="ghost" className="text-rose-600" onClick={() => setAssinaturaSolicitante(null)}>
+                      Limpar
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => setPadOpen(true)}>
+                    {assinaturaSolicitante ? "Substituir assinatura" : "Assinar requisição"}
+                  </Button>
+                </div>
+              </div>
+              {assinaturaSolicitante ? (
+                <div className="bg-white border rounded p-2 flex items-center justify-center">
+                  <img src={assinaturaSolicitante} alt="Assinatura do solicitante" className="max-h-24 object-contain" />
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground py-4 text-center border border-dashed rounded">
+                  Clique em <b>Assinar requisição</b> para desenhar, importar ou usar uma assinatura salva.
+                </div>
+              )}
             </div>
           </div>
 
@@ -403,6 +451,21 @@ export function RequisicaoMedicamentosDialog({
           fileName={`requisicao-medicamentos-${new Date().toISOString().slice(0, 10)}.pdf`}
           title="Pré-visualização — Requisição de Medicamentos"
         />
+      )}
+
+      {padOpen && (
+        <Suspense fallback={null}>
+          <SignaturePadDialog
+            open={padOpen}
+            onClose={() => setPadOpen(false)}
+            onConfirm={(r) => {
+              setAssinaturaSolicitante(r.dataUrl);
+              setPadOpen(false);
+              toast.success("Assinatura anexada à requisição");
+            }}
+            title="Assinar Requisição de Medicamentos"
+          />
+        </Suspense>
       )}
     </>
   );
