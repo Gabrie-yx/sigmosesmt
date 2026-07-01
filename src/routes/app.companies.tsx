@@ -11,6 +11,7 @@ import {
   UserPlus, Pencil, Plus, X, ChevronRight, HardHat,
   HeartPulse, Award, FolderOpen, CheckCircle2, AlertTriangle, Users, User, UserCog,
   Upload, Download, ArrowLeft, Building2, Briefcase, IdCard, Shield, Search,
+  Loader2, RefreshCw, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmployeeDetailContent } from "./app.employees.$id";
@@ -18,6 +19,7 @@ import { maskCNPJ } from "@/lib/masks";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { CompanyDossieDialog } from "@/components/companies/company-dossie-dialog";
 import { FileViewerHost } from "@/components/file-viewer";
+import { consultarCNPJ, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
 
 export const Route = createFileRoute("/app/companies")({
   component: CompaniesPage,
@@ -34,9 +36,36 @@ type Company = {
   data_entrada?: string | null;
   matriz_nome?: string | null;
   matriz_cnpj?: string | null;
+  razao_social?: string | null;
+  nome_fantasia?: string | null;
+  cnae_principal?: string | null;
+  cnae_descricao?: string | null;
+  grau_risco?: number | null;
+  logradouro?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  bairro?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  cep?: string | null;
+  telefone?: string | null;
+  situacao_cadastral?: string | null;
+  data_situacao?: string | null;
+  capital_social?: number | null;
+  natureza_juridica?: string | null;
+  cnpj_card_url?: string | null;
+  receita_consultada_em?: string | null;
 };
 
-const empty: Partial<Company> = { name: "", type: "CLT", cnpj: "", email: "", encarregado1: "", encarregado2: "", matriz_nome: "", matriz_cnpj: "" };
+const empty: Partial<Company> = {
+  name: "", type: "CLT", cnpj: "", email: "", encarregado1: "", encarregado2: "",
+  matriz_nome: "", matriz_cnpj: "",
+  razao_social: "", nome_fantasia: "",
+  cnae_principal: "", cnae_descricao: "", grau_risco: null,
+  logradouro: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "", cep: "",
+  telefone: "", situacao_cadastral: "", data_situacao: "", capital_social: null, natureza_juridica: "",
+  cnpj_card_url: "",
+};
 
 const typeStyle: Record<string, string> = {
   CLT: "bg-emerald-100 text-emerald-700",
@@ -107,6 +136,25 @@ function CompaniesPage() {
         data_entrada: (v as any).data_entrada || null,
         matriz_nome: v.matriz_nome || null,
         matriz_cnpj: v.matriz_cnpj || null,
+        razao_social: v.razao_social || null,
+        nome_fantasia: v.nome_fantasia || null,
+        cnae_principal: v.cnae_principal || null,
+        cnae_descricao: v.cnae_descricao || null,
+        grau_risco: v.grau_risco ?? null,
+        logradouro: v.logradouro || null,
+        numero: v.numero || null,
+        complemento: v.complemento || null,
+        bairro: v.bairro || null,
+        cidade: v.cidade || null,
+        uf: v.uf || null,
+        cep: v.cep || null,
+        telefone: v.telefone || null,
+        situacao_cadastral: v.situacao_cadastral || null,
+        data_situacao: v.data_situacao || null,
+        capital_social: v.capital_social ?? null,
+        natureza_juridica: v.natureza_juridica || null,
+        cnpj_card_url: v.cnpj_card_url || null,
+        receita_consultada_em: (v as any).receita_consultada_em || null,
       };
       if (v.id) {
         const { error } = await supabase.from("companies").update(payload).eq("id", v.id);
@@ -120,6 +168,39 @@ function CompaniesPage() {
       qc.invalidateQueries({ queryKey: ["companies"] });
       setEditing({ ...empty });
       toast.success("Empresa salva");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  // Atualização retroativa em lote via Receita Federal
+  const atualizarTodasReceita = useMutation({
+    mutationFn: async () => {
+      const alvos = companies.filter((c) => (c.cnpj || "").replace(/\D/g, "").length === 14);
+      let ok = 0, fail = 0;
+      for (const c of alvos) {
+        try {
+          const d = await consultarCNPJ(c.cnpj!);
+          const patch: any = {
+            razao_social: d.razao_social, nome_fantasia: d.nome_fantasia,
+            cnae_principal: d.cnae_principal, cnae_descricao: d.cnae_descricao,
+            grau_risco: d.grau_risco,
+            logradouro: d.logradouro, numero: d.numero, complemento: d.complemento,
+            bairro: d.bairro, cidade: d.cidade, uf: d.uf, cep: d.cep,
+            telefone: d.telefone, situacao_cadastral: d.situacao_cadastral,
+            data_situacao: d.data_situacao, capital_social: d.capital_social,
+            natureza_juridica: d.natureza_juridica,
+            receita_consultada_em: new Date().toISOString(),
+          };
+          await supabase.from("companies").update(patch).eq("id", c.id);
+          ok++;
+        } catch { fail++; }
+        await new Promise((r) => setTimeout(r, 300)); // rate-limit gentil
+      }
+      return { ok, fail, total: alvos.length };
+    },
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["companies"] });
+      toast.success(`Atualização Receita: ${r.ok}/${r.total} OK` + (r.fail ? ` · ${r.fail} falharam` : ""));
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -294,6 +375,20 @@ function CompaniesPage() {
             </Button>
           )}
         </div>
+        {isAdmin && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => atualizarTodasReceita.mutate()}
+            disabled={atualizarTodasReceita.isPending}
+            className="text-[10px] font-black uppercase tracking-widest border-slate-300 mb-1"
+            title="Consulta BrasilAPI e atualiza razão social, CNAE, GR e endereço de todas as empresas com CNPJ."
+          >
+            {atualizarTodasReceita.isPending
+              ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Atualizando…</>
+              : <><RefreshCw className="h-3.5 w-3.5 mr-1" /> Atualizar todas (Receita)</>}
+          </Button>
+        )}
         {companies.map((c) => {
           const isSel = selectedId === c.id;
           const empCount = employees.filter((e: any) => e.company_id === c.id).length;
