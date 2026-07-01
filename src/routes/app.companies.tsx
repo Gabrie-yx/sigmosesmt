@@ -735,8 +735,63 @@ function CompanyForm({
       const { error } = await supabase.storage.from("sesmt-docs").upload(key, file, { upsert: true, contentType: file.type });
       if (error) throw error;
       const { data: signed } = await supabase.storage.from("sesmt-docs").createSignedUrl(key, 60 * 60 * 24 * 365);
-      setEditing({ ...editing, cnpj_card_url: signed?.signedUrl ?? key } as any);
-      toast.success("Cartão CNPJ anexado");
+      const cardUrl = signed?.signedUrl ?? key;
+      let next: any = { ...editing, cnpj_card_url: cardUrl };
+
+      // Se for PDF, extrai o texto, procura o CNPJ e preenche via BrasilAPI.
+      if (file.type === "application/pdf" || ext === "pdf") {
+        try {
+          const buf = new Uint8Array(await file.arrayBuffer());
+          const pdfjs: any = await import("pdfjs-dist");
+          const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+          pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+          const pdf = await pdfjs.getDocument({ data: buf }).promise;
+          let fullText = "";
+          for (let i = 1; i <= Math.min(pdf.numPages, 3); i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            fullText += " " + content.items.map((it: any) => it.str ?? "").join(" ");
+          }
+          const digits = extrairCNPJdeTexto(fullText);
+          if (digits) {
+            const d = await consultarCNPJ(digits);
+            next = {
+              ...next,
+              cnpj: d.cnpj,
+              razao_social: d.razao_social,
+              nome_fantasia: next.nome_fantasia || d.nome_fantasia || "",
+              name: next.name && next.name.trim() ? next.name : (d.nome_fantasia || d.razao_social),
+              cnae_principal: d.cnae_principal ?? "",
+              cnae_descricao: d.cnae_descricao ?? "",
+              grau_risco: d.grau_risco,
+              logradouro: d.logradouro ?? "",
+              numero: d.numero ?? "",
+              complemento: d.complemento ?? "",
+              bairro: d.bairro ?? "",
+              cidade: d.cidade ?? "",
+              uf: d.uf ?? "",
+              cep: d.cep ?? "",
+              telefone: d.telefone ?? "",
+              situacao_cadastral: d.situacao_cadastral ?? "",
+              data_situacao: d.data_situacao ?? "",
+              capital_social: d.capital_social,
+              natureza_juridica: d.natureza_juridica ?? "",
+              cnaes_secundarias: d.cnaes_secundarias ?? [],
+              receita_consultada_em: new Date().toISOString(),
+            };
+            toast.success("Cartão CNPJ anexado e campos preenchidos pela Receita.");
+          } else {
+            toast.info("Cartão anexado, mas não achei o CNPJ no PDF. Use 'Consultar Receita'.");
+          }
+        } catch (parseErr: any) {
+          console.warn("[cartao-cnpj] parse falhou:", parseErr);
+          toast.info("Cartão anexado. Não consegui ler o PDF automaticamente — use 'Consultar Receita'.");
+        }
+      } else {
+        toast.success("Cartão anexado. Para imagem, use 'Consultar Receita' para preencher os campos.");
+      }
+
+      setEditing(next);
     } catch (e: any) {
       toast.error(e.message ?? "Falha no upload");
     } finally {
