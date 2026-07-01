@@ -754,7 +754,22 @@ function CompanyForm({
           }
           const digits = extrairCNPJdeTexto(fullText);
           if (digits) {
-            const d = await consultarCNPJ(digits);
+            const cnpjMasked = `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12,14)}`;
+            // Pré-preenche o CNPJ já — mesmo que a Receita falhe, o usuário só clica em "Consultar Receita".
+            next = { ...next, cnpj: cnpjMasked };
+            let d;
+            try {
+              d = await consultarCNPJ(digits);
+            } catch (apiErr: any) {
+              // Retry once (rede/preflight)
+              try { d = await consultarCNPJ(digits); }
+              catch {
+                console.warn("[cartao-cnpj] BrasilAPI falhou:", apiErr);
+                setEditing(next);
+                toast.info(`CNPJ ${cnpjMasked} lido do cartão. Clique em "Consultar Receita" para preencher o resto.`);
+                return;
+              }
+            }
             next = {
               ...next,
               cnpj: d.cnpj,
@@ -785,7 +800,7 @@ function CompanyForm({
           }
         } catch (parseErr: any) {
           console.warn("[cartao-cnpj] parse falhou:", parseErr);
-          toast.info("Cartão anexado. Não consegui ler o PDF automaticamente — use 'Consultar Receita'.");
+          toast.info("Cartão anexado. Não consegui ler o PDF — digite/consulte o CNPJ manualmente.");
         }
       } else {
         toast.success("Cartão anexado. Para imagem, use 'Consultar Receita' para preencher os campos.");
