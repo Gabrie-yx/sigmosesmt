@@ -81,6 +81,8 @@ type Req = {
   created_at: string;
   signature_solicitante: string | null;
   signature_solicitante_height: number | null;
+  responsavel_tst?: string | null;
+  responsavel_aprovador?: string | null;
   status_token?: string | null;
   cotacao_at?: string | null;
   cotador_nome?: string | null;

@@ -6778,6 +6778,8 @@ export type Database = {
           obra_manutencao: string | null
           observacoes: string | null
           pagina: string | null
+          responsavel_aprovador: string | null
+          responsavel_tst: string | null
           revisao: string | null
           setor: string | null
           signature_solicitante: string | null
@@ -6814,6 +6816,8 @@ export type Database = {
           obra_manutencao?: string | null
           observacoes?: string | null
           pagina?: string | null
+          responsavel_aprovador?: string | null
+          responsavel_tst?: string | null
           revisao?: string | null
           setor?: string | null
           signature_solicitante?: string | null
@@ -6850,6 +6854,8 @@ export type Database = {
           obra_manutencao?: string | null
           observacoes?: string | null
           pagina?: string | null
+          responsavel_aprovador?: string | null
+          responsavel_tst?: string | null
           revisao?: string | null
           setor?: string | null
           signature_solicitante?: string | null

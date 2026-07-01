@@ -60,11 +60,22 @@ export function RequisicaoMedicamentosDialog({
   const [assinaturaSolicitante, setAssinaturaSolicitante] = useState<string | null>(null);
   const [padOpen, setPadOpen] = useState(false);
 
+  const resetNovaRequisicao = () => {
+    setEditId(null);
+    setNumero("");
+    setSolicitante(defaultSolicitante);
+    setSetor("SESMT — Ambulatório");
+    setResponsavelTST("");
+    setObservacoes("");
+    setAssinaturaSolicitante(null);
+    setItens(MEDICAMENTOS_AMBULATORIO_PADRAO.map((i) => ({ ...i })));
+  };
+
   // Carrega requisição existente quando passada (modo edição)
   useEffect(() => {
     if (!open) return;
     if (!requisitionId) {
-      setEditId(null);
+      resetNovaRequisicao();
       return;
     }
     setEditId(requisitionId);
@@ -78,7 +89,9 @@ export function RequisicaoMedicamentosDialog({
         setNumero(req.numero ?? "");
         setSolicitante(req.solicitante ?? "");
         setSetor(req.setor ?? "SESMT — Ambulatório");
+        setResponsavelTST((req as any).responsavel_tst ?? "");
         setObservacoes(req.observacoes ?? "");
+        setAssinaturaSolicitante(req.signature_solicitante ?? null);
       }
       const { data: rows } = await supabase
         .from("purchase_requisition_items")
@@ -192,7 +205,10 @@ export function RequisicaoMedicamentosDialog({
           .update({
             solicitante,
             setor,
+            responsavel_tst: responsavelTST.trim() || null,
             observacoes,
+            signature_solicitante: assinaturaSolicitante,
+            signature_solicitante_height: assinaturaSolicitante ? 22 : null,
             titulo: "Medicamentos Ambulatório",
           })
           .eq("id", id);
@@ -209,7 +225,10 @@ export function RequisicaoMedicamentosDialog({
             classificacao: "MEDICAMENTOS" as any,
             solicitante,
             setor,
+            responsavel_tst: responsavelTST.trim() || null,
             observacoes,
+            signature_solicitante: assinaturaSolicitante,
+            signature_solicitante_height: assinaturaSolicitante ? 22 : null,
             codigo_formulario: "FOR-COMP: 03",
             revisao: "01",
             data_revisao: today,
