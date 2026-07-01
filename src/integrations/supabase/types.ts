@@ -1515,6 +1515,7 @@ export type Database = {
           cidade: string | null
           cnae_descricao: string | null
           cnae_principal: string | null
+          cnaes_secundarias: Json | null
           cnpj: string | null
           cnpj_card_url: string | null
           complemento: string | null
@@ -1548,6 +1549,7 @@ export type Database = {
           cidade?: string | null
           cnae_descricao?: string | null
           cnae_principal?: string | null
+          cnaes_secundarias?: Json | null
           cnpj?: string | null
           cnpj_card_url?: string | null
           complemento?: string | null
@@ -1581,6 +1583,7 @@ export type Database = {
           cidade?: string | null
           cnae_descricao?: string | null
           cnae_principal?: string | null
+          cnaes_secundarias?: Json | null
           cnpj?: string | null
           cnpj_card_url?: string | null
           complemento?: string | null

@@ -19,7 +19,7 @@ import { maskCNPJ } from "@/lib/masks";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { CompanyDossieDialog } from "@/components/companies/company-dossie-dialog";
 import { FileViewerHost } from "@/components/file-viewer";
-import { consultarCNPJ, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
+import { consultarCNPJ, extrairCNPJdeTexto, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
 
 export const Route = createFileRoute("/app/companies")({
   component: CompaniesPage,
@@ -53,6 +53,7 @@ type Company = {
   data_situacao?: string | null;
   capital_social?: number | null;
   natureza_juridica?: string | null;
+  cnaes_secundarias?: Array<{ codigo: string; descricao: string }> | null;
   cnpj_card_url?: string | null;
   receita_consultada_em?: string | null;
 };
@@ -64,7 +65,7 @@ const empty: Partial<Company> = {
   cnae_principal: "", cnae_descricao: "", grau_risco: null,
   logradouro: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "", cep: "",
   telefone: "", situacao_cadastral: "", data_situacao: "", capital_social: null, natureza_juridica: "",
-  cnpj_card_url: "",
+  cnaes_secundarias: [], cnpj_card_url: "",
 };
 
 const typeStyle: Record<string, string> = {
@@ -153,6 +154,7 @@ function CompaniesPage() {
         data_situacao: v.data_situacao || null,
         capital_social: v.capital_social ?? null,
         natureza_juridica: v.natureza_juridica || null,
+        cnaes_secundarias: v.cnaes_secundarias ?? null,
         cnpj_card_url: v.cnpj_card_url || null,
         receita_consultada_em: (v as any).receita_consultada_em || null,
       };
@@ -189,6 +191,7 @@ function CompaniesPage() {
             telefone: d.telefone, situacao_cadastral: d.situacao_cadastral,
             data_situacao: d.data_situacao, capital_social: d.capital_social,
             natureza_juridica: d.natureza_juridica,
+            cnaes_secundarias: d.cnaes_secundarias ?? [],
             receita_consultada_em: new Date().toISOString(),
           };
           await supabase.from("companies").update(patch).eq("id", c.id);
@@ -711,6 +714,7 @@ function CompanyForm({
         telefone: d.telefone ?? "",
         situacao_cadastral: d.situacao_cadastral ?? "",
         data_situacao: d.data_situacao ?? "",
+        cnaes_secundarias: d.cnaes_secundarias ?? [],
         capital_social: d.capital_social,
         natureza_juridica: d.natureza_juridica ?? "",
         receita_consultada_em: new Date().toISOString(),
@@ -731,8 +735,63 @@ function CompanyForm({
       const { error } = await supabase.storage.from("sesmt-docs").upload(key, file, { upsert: true, contentType: file.type });
       if (error) throw error;
       const { data: signed } = await supabase.storage.from("sesmt-docs").createSignedUrl(key, 60 * 60 * 24 * 365);
-      setEditing({ ...editing, cnpj_card_url: signed?.signedUrl ?? key } as any);
-      toast.success("Cartão CNPJ anexado");
+      const cardUrl = signed?.signedUrl ?? key;
+      let next: any = { ...editing, cnpj_card_url: cardUrl };
+
+      // Se for PDF, extrai o texto, procura o CNPJ e preenche via BrasilAPI.
+      if (file.type === "application/pdf" || ext === "pdf") {
+        try {
+          const buf = new Uint8Array(await file.arrayBuffer());
+          const pdfjs: any = await import("pdfjs-dist");
+          const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+          pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+          const pdf = await pdfjs.getDocument({ data: buf }).promise;
+          let fullText = "";
+          for (let i = 1; i <= Math.min(pdf.numPages, 3); i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            fullText += " " + content.items.map((it: any) => it.str ?? "").join(" ");
+          }
+          const digits = extrairCNPJdeTexto(fullText);
+          if (digits) {
+            const d = await consultarCNPJ(digits);
+            next = {
+              ...next,
+              cnpj: d.cnpj,
+              razao_social: d.razao_social,
+              nome_fantasia: next.nome_fantasia || d.nome_fantasia || "",
+              name: next.name && next.name.trim() ? next.name : (d.nome_fantasia || d.razao_social),
+              cnae_principal: d.cnae_principal ?? "",
+              cnae_descricao: d.cnae_descricao ?? "",
+              grau_risco: d.grau_risco,
+              logradouro: d.logradouro ?? "",
+              numero: d.numero ?? "",
+              complemento: d.complemento ?? "",
+              bairro: d.bairro ?? "",
+              cidade: d.cidade ?? "",
+              uf: d.uf ?? "",
+              cep: d.cep ?? "",
+              telefone: d.telefone ?? "",
+              situacao_cadastral: d.situacao_cadastral ?? "",
+              data_situacao: d.data_situacao ?? "",
+              capital_social: d.capital_social,
+              natureza_juridica: d.natureza_juridica ?? "",
+              cnaes_secundarias: d.cnaes_secundarias ?? [],
+              receita_consultada_em: new Date().toISOString(),
+            };
+            toast.success("Cartão CNPJ anexado e campos preenchidos pela Receita.");
+          } else {
+            toast.info("Cartão anexado, mas não achei o CNPJ no PDF. Use 'Consultar Receita'.");
+          }
+        } catch (parseErr: any) {
+          console.warn("[cartao-cnpj] parse falhou:", parseErr);
+          toast.info("Cartão anexado. Não consegui ler o PDF automaticamente — use 'Consultar Receita'.");
+        }
+      } else {
+        toast.success("Cartão anexado. Para imagem, use 'Consultar Receita' para preencher os campos.");
+      }
+
+      setEditing(next);
     } catch (e: any) {
       toast.error(e.message ?? "Falha no upload");
     } finally {
@@ -868,10 +927,29 @@ function CompanyForm({
             <Input value={editing?.situacao_cadastral ?? ""} onChange={(e) => setEditing({ ...editing, situacao_cadastral: e.target.value })} className="bg-slate-50 mt-1" />
           </div>
           <div>
-            <Label className="text-[10px] font-black text-slate-500 uppercase">Natureza Jurídica</Label>
-            <Input value={editing?.natureza_juridica ?? ""} onChange={(e) => setEditing({ ...editing, natureza_juridica: e.target.value })} className="bg-slate-50 mt-1" />
+            <Label className="text-[10px] font-black text-slate-500 uppercase">Data da Situação</Label>
+            <Input type="date" value={editing?.data_situacao ?? ""} onChange={(e) => setEditing({ ...editing, data_situacao: e.target.value })} className="bg-slate-50 mt-1" />
           </div>
         </div>
+
+        <div>
+          <Label className="text-[10px] font-black text-slate-500 uppercase">Natureza Jurídica</Label>
+          <Input value={editing?.natureza_juridica ?? ""} onChange={(e) => setEditing({ ...editing, natureza_juridica: e.target.value })} className="bg-slate-50 mt-1" />
+        </div>
+
+        {editing?.cnaes_secundarias && editing.cnaes_secundarias.length > 0 && (
+          <div className="pt-4 border-t border-slate-100">
+            <Label className="text-[10px] font-black text-slate-500 uppercase">CNAEs Secundários ({editing.cnaes_secundarias.length})</Label>
+            <div className="mt-1 rounded-lg border border-slate-200 bg-slate-50 p-2 max-h-40 overflow-y-auto space-y-1">
+              {editing.cnaes_secundarias.map((c, i) => (
+                <div key={i} className="text-[11px] text-slate-700 flex gap-2">
+                  <span className="font-mono font-bold text-slate-900 shrink-0">{c.codigo}</span>
+                  <span className="text-slate-600">{c.descricao}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div>
           <Label className="text-[10px] font-black text-slate-500 uppercase">E-mail Corporativo</Label>
