@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ShieldCheck, ShieldAlert, Printer, FileSignature, Eye } from "lucide-react";
+import { ShieldCheck, ShieldAlert, FileSignature, Eye } from "lucide-react";
 import { gerarTermoConsentimentoPDF } from "@/lib/termo-consentimento-pdf";
 import { fetchSignatureAsCleanDataUrl } from "@/lib/signature-utils";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
