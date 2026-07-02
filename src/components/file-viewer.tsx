@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { printImagePages, printPdf, renderPdfToImagePages } from "@/lib/pdf-print";
+import { printImagePages, printPdf, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
 
 type ViewerPayload = { url: string; name: string; mime?: string; downloadUrl?: string; objectUrl?: string };
 const listeners = new Set<(p: ViewerPayload | null) => void>();
@@ -69,7 +69,13 @@ export function FileViewerHost() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const buf = await res.arrayBuffer();
         if (cancelled) return;
-        const pages = await renderPdfToImagePages(buf, 2);
+        const pages = await renderPdfToImagePagesProgressive(
+          buf,
+          (page) => {
+            if (!cancelled) setPdfPages((current) => [...current, page]);
+          },
+          2,
+        );
         if (!cancelled) setPdfPages(pages);
       } catch (e: any) {
         if (!cancelled) {
@@ -178,6 +184,11 @@ export function FileViewerHost() {
                         className="block h-auto w-full rounded-sm border border-zinc-300 bg-white shadow-lg"
                       />
                     ))}
+                    {pdfLoading && pdfPages.length > 0 && (
+                      <div className="rounded-full bg-slate-900/80 px-4 py-2 text-xs font-semibold text-white shadow-lg">
+                        Carregando próximas páginas...
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
