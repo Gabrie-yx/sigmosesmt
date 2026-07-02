@@ -561,22 +561,6 @@ function RequisicoesPage() {
                         )}
                       </div>
                       <div className="flex gap-1">
-                        {r.status_token && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            title="Copiar link público de status"
-                            onClick={() => {
-                              const url = `${window.location.origin}/rc/${r.status_token}`;
-                              navigator.clipboard.writeText(url).then(
-                                () => toast.success("Link copiado! Cole no WhatsApp."),
-                                () => toast.error("Não foi possível copiar"),
-                              );
-                            }}
-                          >
-                            <Link2 className="h-3.5 w-3.5 mr-1" /> Link
-                          </Button>
-                        )}
                         {r.classificacao === "MEDICAMENTOS" ? (
                           <MedEditBtn req={r} />
                         ) : (
