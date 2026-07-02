@@ -59,7 +59,7 @@ export const pegarRcParaCotar = createServerFn({ method: "POST" })
       .maybeSingle();
     if (e1) throw new Error(e1.message);
     if (!rc) throw new Error("Requisição não encontrada");
-    if (rc.status === "EM_COTACAO") {
+    if ((rc.status as string) === "EM_COTACAO") {
       throw new Error(`Já está sendo cotada por ${rc.pego_por_compras_nome ?? "outro comprador"}.`);
     }
     if (rc.status !== "PENDENTE") {
@@ -140,7 +140,7 @@ export const marcarRcCotada = createServerFn({ method: "POST" })
       } as any)
       .eq("id", rc.id);
 
-    if (rc.status !== "PENDENTE" && rc.status !== "EM_COTACAO") {
+    if (rc.status !== "PENDENTE" && (rc.status as string) !== "EM_COTACAO") {
       throw new Error("Esta RC já saiu da etapa de cotação.");
     }
     const { error } = await supabaseAdmin
