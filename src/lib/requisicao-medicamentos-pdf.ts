@@ -147,19 +147,19 @@ export function buildRequisicaoMedicamentosPdf(opts: RequisicaoMedicamentosOpts)
 
   autoTable(doc, {
     startY: y + 1,
-    margin: { left: M, right: M, bottom: 16 },
+    margin: { left: M, right: M, bottom: 40 },
     head: [["#", "Medicamento / Insumo", "Apresentação", "Unidade", "Qtd", "Justificativa", "Recebido"]],
     body: rows,
-    styles: { font: "helvetica", fontSize: 8.5, cellPadding: 1.6, lineColor: [200, 200, 200], lineWidth: 0.1, valign: "middle" },
-    headStyles: { fillColor: [127, 29, 29], textColor: 255, fontStyle: "bold", halign: "center" },
+    styles: { font: "helvetica", fontSize: 7.5, cellPadding: 1.0, lineColor: [200, 200, 200], lineWidth: 0.1, valign: "middle", minCellHeight: 4.6 },
+    headStyles: { fillColor: [127, 29, 29], textColor: 255, fontStyle: "bold", halign: "center", fontSize: 7.5, cellPadding: 1.2 },
     columnStyles: {
       0: { halign: "center", cellWidth: 8 },
-      1: { cellWidth: 62, fontStyle: "bold" },
-      2: { cellWidth: 30 },
-      3: { cellWidth: 20, halign: "center" },
+      1: { cellWidth: 64, fontStyle: "bold" },
+      2: { cellWidth: 28 },
+      3: { cellWidth: 18, halign: "center" },
       4: { cellWidth: 12, halign: "center", fontStyle: "bold" },
-      5: { cellWidth: 35 },
-      6: { cellWidth: 18 },
+      5: { cellWidth: 37 },
+      6: { cellWidth: 19 },
     },
     didDrawPage: () => {
       const page = doc.getNumberOfPages();
@@ -171,25 +171,25 @@ export function buildRequisicaoMedicamentosPdf(opts: RequisicaoMedicamentosOpts)
   });
 
   let cy = (doc as any).lastAutoTable?.finalY ?? y;
-  cy += 8;
+  cy += 4;
 
   // Observações
-  if (cy > H - 60) { doc.addPage(); cy = M + 10; }
+  if (cy > H - 40) { doc.addPage(); cy = M + 10; }
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.text("Observações:", M, cy);
-  cy += 4;
+  cy += 3.2;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
+  doc.setFontSize(7.5);
   const obs = opts.observacoes?.trim() || "Itens de uso diário do ambulatório, sem medicação controlada (Portaria SVS/MS 344/98). Validade mínima exigida: 12 meses na entrega.";
   const lines = doc.splitTextToSize(obs, W - 2 * M);
   doc.text(lines, M, cy);
-  cy += lines.length * 4 + 6;
+  cy += lines.length * 3.2 + 3;
 
   // Assinaturas
-  if (cy > H - 35) { doc.addPage(); cy = M + 10; }
+  if (cy > H - 26) { doc.addPage(); cy = M + 10; }
   const colW = (W - 2 * M - 10) / 3;
-  const sy = cy + 14;
+  const sy = cy + 12;
   [0, 1, 2].forEach((i) => {
     const x = M + i * (colW + 5);
     doc.line(x, sy, x + colW, sy);
@@ -197,13 +197,13 @@ export function buildRequisicaoMedicamentosPdf(opts: RequisicaoMedicamentosOpts)
   // Estampa assinatura do solicitante (se houver) logo acima da linha
   if (opts.assinaturaSolicitanteDataUrl) {
     try {
-      doc.addImage(opts.assinaturaSolicitanteDataUrl, "PNG", M + 2, sy - 14, colW - 4, 13, undefined, "FAST");
+      doc.addImage(opts.assinaturaSolicitanteDataUrl, "PNG", M + 2, sy - 12, colW - 4, 11, undefined, "FAST");
     } catch { /* ignora falha de imagem */ }
   }
-  doc.setFontSize(8);
-  doc.text(`Solicitante\n${opts.solicitante}`, M, sy + 4);
-  doc.text(`TST Responsável\n${opts.responsavelTST ?? ""}`, M + colW + 5, sy + 4);
-  doc.text(`Aprovação / Compras\n${opts.responsavelAprovador ?? ""}`, M + 2 * (colW + 5), sy + 4);
+  doc.setFontSize(7.5);
+  doc.text(`Solicitante\n${opts.solicitante}`, M, sy + 3.2);
+  doc.text(`TST Responsável\n${opts.responsavelTST ?? ""}`, M + colW + 5, sy + 3.2);
+  doc.text(`Aprovação / Compras\n${opts.responsavelAprovador ?? ""}`, M + 2 * (colW + 5), sy + 3.2);
 
   return doc;
 }
