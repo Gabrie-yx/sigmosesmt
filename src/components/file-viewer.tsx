@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Download, Printer, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,10 +92,15 @@ export function FileViewerHost() {
   }
 
   return (
-    <Dialog open={!!payload} onOpenChange={(o) => { if (!o) setPayload(null); }}>
-      <DialogContent className="max-w-5xl w-[95vw] h-[90vh] p-0 flex flex-col gap-0">
-        <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0">
-          <DialogTitle className="text-sm truncate pr-4">{payload?.name}</DialogTitle>
+    <DialogPrimitive.Root open={!!payload} onOpenChange={(o) => { if (!o) setPayload(null); }}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Content
+          className="modal-glass-scope glass-card dialog-glass-shine fixed left-[50%] top-[50%] z-[121] grid w-[calc(100vw-2rem)] max-w-5xl h-[90vh] gap-0 overflow-hidden p-0 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:rounded-2xl flex flex-col"
+          style={{ position: "fixed", transform: "translate(-50%, -50%)" }}
+        >
+        <div className="px-4 py-3 border-b flex flex-row items-center justify-between space-y-0">
+          <DialogPrimitive.Title className="text-sm font-semibold truncate pr-4">{payload?.name}</DialogPrimitive.Title>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" onClick={handlePrint}>
               <Printer className="h-4 w-4 mr-1" /> Imprimir
@@ -105,8 +111,11 @@ export function FileViewerHost() {
             <Button size="sm" variant="ghost" onClick={() => payload && window.open(payload.url, "_blank")}>
               <ExternalLink className="h-4 w-4" />
             </Button>
+            <DialogPrimitive.Close className="rounded-sm opacity-70 hover:opacity-100 ml-1">
+              <X className="h-4 w-4" />
+            </DialogPrimitive.Close>
           </div>
-        </DialogHeader>
+        </div>
         <div className="flex-1 bg-slate-100 overflow-auto">
           {payload && (
             isImage ? (
@@ -122,7 +131,8 @@ export function FileViewerHost() {
             )
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
