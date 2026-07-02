@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 export function RcHeaderBadge() {
   const { user, isEditor } = useAuth();
   const fetchContagem = useServerFn(contarRcsPendentes);
+  const navigate = useNavigate();
 
   const { data } = useQuery({
     queryKey: ["rc-header-badge", user?.id],
@@ -28,7 +29,6 @@ export function RcHeaderBadge() {
     : `${count} requisição(ões) aguardando cotação`;
 
   const targetTab = data.isSupervisor ? "COTADA" : "PENDENTE";
-  const navigate = useNavigate();
 
   return (
     <button
