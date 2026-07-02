@@ -19,7 +19,7 @@ import {
   Tabs, TabsList, TabsTrigger, TabsContent,
 } from "@/components/ui/tabs";
 import {
-  ShoppingCart, Plus, FileDown, Printer, Check, X as XIcon, Trash2, Eye, Filter, Pencil, Link2,
+  ShoppingCart, Plus, FileDown, Printer, Check, X as XIcon, Trash2, Eye, Filter, Pencil, Link2, Pill,
 } from "lucide-react";
 import { toast } from "sonner";
 import type jsPDF from "jspdf";
@@ -352,6 +352,14 @@ function RequisicoesPage() {
     }
   }, [location.search.draft]);
   const [tab, setTab] = useState<"todas" | Status>("todas");
+
+  // Aceita ?tab=COTADA vindo do badge do header
+  useEffect(() => {
+    const t = (location.search as any).tab;
+    if (t && ["PENDENTE", "EM_COTACAO", "COTADA", "APROVADA", "INDEFERIDA", "todas"].includes(t)) {
+      setTab(t);
+    }
+  }, [(location.search as any).tab]);
   const [filtroPeriodo, setFiltroPeriodo] = useState<"all" | "week" | "month" | "year">("all");
   const [filtroSolic, setFiltroSolic] = useState("");
 
@@ -525,22 +533,31 @@ function RequisicoesPage() {
                     <div key={r.id} className="border rounded-lg p-3 hover:bg-slate-50 transition flex flex-wrap items-center gap-3">
                       <div className="flex-1 min-w-[220px]">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-slate-900">Nº {r.numero}</span>
-                          {r.titulo && <span className="font-semibold text-red-800 ml-1">— {r.titulo}</span>}
+                          <span className="font-bold text-slate-900 dark:text-white">Nº {r.numero}</span>
+                          {r.titulo && (
+                            <span className="font-semibold text-rose-700 dark:text-rose-200 ml-1">
+                              — {r.titulo}
+                            </span>
+                          )}
                           <Badge variant="outline" className={STATUS_BADGE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
                           <Badge
                             variant="outline"
                             className={
                               r.classificacao === "MEDICAMENTOS"
-                                ? "text-[10px] bg-rose-50 text-rose-700 border-rose-300"
+                                ? "text-[10px] bg-rose-50 text-rose-700 border-rose-300 inline-flex items-center gap-1"
                                 : "text-[10px]"
                             }
                           >
-                            {r.classificacao === "MATERIAL"
-                              ? "Material"
-                              : r.classificacao === "SERVICO"
-                                ? "Serviço"
-                                : "💊 Medicamentos"}
+                            {r.classificacao === "MATERIAL" ? (
+                              "Material"
+                            ) : r.classificacao === "SERVICO" ? (
+                              "Serviço"
+                            ) : (
+                              <>
+                                <Pill className="h-3 w-3" aria-hidden />
+                                Medicamentos
+                              </>
+                            )}
                           </Badge>
                         </div>
                         <div className="text-xs text-slate-700 mt-1">

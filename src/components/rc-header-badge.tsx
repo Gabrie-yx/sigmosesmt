@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { ShoppingCart } from "lucide-react";
 import { contarRcsPendentes } from "@/lib/rc-public.functions";
 import { useAuth } from "@/hooks/use-auth";
@@ -27,10 +27,18 @@ export function RcHeaderBadge() {
     ? `${count} requisição(ões) cotada(s) aguardando sua decisão`
     : `${count} requisição(ões) aguardando cotação`;
 
+  const targetTab = data.isSupervisor ? "COTADA" : "PENDENTE";
+  const navigate = useNavigate();
+
   return (
-    <Link
-      to="/app/sesmt/requisicoes"
+    <button
+      type="button"
       title={title}
+      onClick={() => {
+        navigate({ to: "/app/sesmt/requisicoes", search: { tab: targetTab } as any });
+        // garante scroll ao topo se já estiver na página
+        setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+      }}
       className="relative h-8 px-2 rounded-md text-white hover:bg-white/10 flex items-center gap-1.5"
     >
       <span className="relative">
@@ -43,6 +51,6 @@ export function RcHeaderBadge() {
       <span className="text-[11px] font-black leading-none px-1.5 py-0.5 rounded-full bg-amber-400 text-amber-950">
         {count}
       </span>
-    </Link>
+    </button>
   );
 }
