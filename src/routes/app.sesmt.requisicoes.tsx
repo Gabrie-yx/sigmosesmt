@@ -1258,7 +1258,7 @@ function ReqFormDialog({
 
           {/* Linha 3: Setor | Fornecedor */}
           <div className="grid grid-cols-2 border-b border-black">
-            <FieldRow label="SETOR:" value={form.setor} onChange={(v) => setForm({ ...form, setor: v })} />
+            <SetorField value={form.setor} onChange={(v) => setForm({ ...form, setor: v })} />
             <div className="border-l border-black">
               <FieldRow label="FORNECEDOR:" value={form.fornecedor} onChange={(v) => setForm({ ...form, fornecedor: v })} />
             </div>
@@ -1533,6 +1533,35 @@ function FieldRow({
         onChange={(e) => onChange(e.target.value)}
         className="flex-1 min-w-0 bg-transparent border-0 outline-none px-1 text-[12px] focus:bg-yellow-50"
       />
+    </div>
+  );
+}
+
+export const SETORES_RC = [
+  "Produção",
+  "Manutenção Elétrica",
+  "Manutenção Mecânica",
+  "Administrativo",
+  "Almoxarifado",
+  "SESMT",
+] as const;
+
+function SetorField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-stretch">
+      <span className="font-bold uppercase whitespace-nowrap p-1.5 pr-2">
+        SETOR:<span className="text-red-700 ml-0.5">*</span>
+      </span>
+      <select
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex-1 min-w-0 bg-transparent border-0 outline-none px-1 text-[12px] focus:bg-yellow-50"
+      >
+        <option value="">— selecione —</option>
+        {SETORES_RC.map((s) => (
+          <option key={s} value={s}>{s}</option>
+        ))}
+      </select>
     </div>
   );
 }

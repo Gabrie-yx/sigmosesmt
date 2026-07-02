@@ -3,8 +3,8 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { MENU_BY_KEY } from "@/lib/menu-catalog";
 
-export type AppRole = "admin" | "moderador" | "editor" | "viewer" | "tst";
-export type AppModule = "sesmt" | "estoque" | "producao" | "manutencao" | "portaria" | "usuarios";
+export type AppRole = "admin" | "moderador" | "editor" | "viewer" | "tst" | "compras";
+export type AppModule = "sesmt" | "estoque" | "producao" | "manutencao" | "portaria" | "usuarios" | "compras";
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);

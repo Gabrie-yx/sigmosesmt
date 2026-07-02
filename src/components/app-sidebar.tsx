@@ -163,6 +163,10 @@ const PRODUCAO_SUBMENU: LeafItem[] = [
   { to: "/app/producao/expedicao", label: "Expedição" },
 ];
 
+const COMPRAS_ITEMS: LeafItem[] = [
+  { to: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", icon: ShoppingCart },
+];
+
 const MANUTENCAO_LOCKED: LockedItem[] = [
   { key: "manut-eletrica", label: "Elétrica", icon: Zap },
   { key: "manut-mecanica", label: "Mecânica", icon: Hammer },
@@ -201,6 +205,7 @@ export function AppSidebar() {
   const canSesmt = isAdmin || hasModule("sesmt");
   const canEstoque = isAdmin || hasModule("estoque");
   const canProducao = isAdmin || hasModule("producao");
+  const canCompras = isAdmin || hasModule("compras" as any) || roles.includes("compras" as any);
   const canUsuarios = isAdmin || hasModule("usuarios");
 
   // Filtra grupos/itens pelo controle granular de menus
@@ -210,11 +215,13 @@ export function AppSidebar() {
   const visibleDDSSubmenu = DDS_SUBMENU.filter((i) => hasMenu(i.to) || i.to.startsWith("/app/dds"));
   const visibleEstoque = ESTOQUE_ITEMS.filter((i) => hasMenu(i.to));
   const visibleProducao = PRODUCAO_SUBMENU.filter((i) => hasMenu(i.to));
+  const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to));
 
   const sesmtAllItems = visibleSesmtGroups.flatMap((g) => g.items).concat(visibleDDSSubmenu);
   const sesmtOpen = anyActive(sesmtAllItems);
   const estoqueOpen = anyActive(visibleEstoque);
   const producaoOpen = anyActive(visibleProducao);
+  const comprasOpen = anyActive(visibleCompras);
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
@@ -379,6 +386,41 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </Body>
+            </SidebarGroup>
+          </Collapsible>
+        )}
+
+        {/* COMPRAS */}
+        {canCompras && visibleCompras.length > 0 && (
+          <Collapsible defaultOpen={comprasOpen} className="group/compras">
+            <SidebarGroup>
+              <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
+                <CollapsibleTrigger className="flex w-full items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <ShoppingCart className="h-5 w-5 text-red-700" /> Compras
+                  </span>
+                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/compras:rotate-90" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <Body>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {visibleCompras.map((s) => {
+                      const Icon = s.icon ?? ShoppingCart;
+                      return (
+                        <SidebarMenuItem key={s.to}>
+                          <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
+                            <Link to={s.to}>
+                              <Icon />
+                              <span>{s.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </Body>
