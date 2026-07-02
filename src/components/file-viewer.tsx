@@ -137,7 +137,7 @@ export function FileViewerHost() {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
-          className="modal-glass-scope glass-card dialog-glass-shine fixed left-[50%] top-[50%] z-[121] flex w-[calc(100vw-2rem)] max-w-5xl h-[90vh] flex-col gap-0 overflow-hidden p-0 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:rounded-2xl"
+          className="modal-glass-scope pdf-dialog glass-card fixed left-[50%] top-[50%] z-[121] flex h-[90vh] w-[calc(100vw-2rem)] max-w-5xl flex-col gap-0 overflow-hidden p-0 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:rounded-2xl"
           style={{ position: "fixed", transform: "translate(-50%, -50%)" }}
         >
         <div className="flex h-14 shrink-0 flex-row items-center justify-between gap-3 border-b border-white/10 px-4 py-2">
