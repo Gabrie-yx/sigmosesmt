@@ -117,13 +117,27 @@ export function SaidaExpedienteDialog({
           .eq("id", editId);
         if (error) throw error;
       } else {
+        // Em saídas coletivas, cada funcionário deve receber SUA PRÓPRIA assinatura digital
+        // cadastrada na ficha (employees.assinatura_url) — nunca a mesma para todos.
+        const { data: emps, error: empErr } = await supabase
+          .from("employees")
+          .select("id, assinatura_url")
+          .in("id", form.employee_ids);
+        if (empErr) throw empErr;
+        const sigMap = new Map<string, string | null>(
+          (emps ?? []).map((e: any) => [e.id, e.assinatura_url ?? null]),
+        );
+
+        const isSingle = form.employee_ids.length === 1;
         const inserts = form.employee_ids.map((empId: string) => ({
           ...basePayload,
           employee_id: empId,
           created_by: user?.id ?? null,
-          // Em saídas coletivas, a assinatura do funcionário geralmente é feita individualmente depois, 
-          // mas se houver uma no form (improvável em coletiva), aplicamos a todos.
-          assinatura_funcionario: form.assinatura_funcionario || null,
+          // Individual: usa a assinatura da ficha de CADA funcionário.
+          // Se for uma única seleção e houver assinatura manual no form, respeita o form.
+          assinatura_funcionario: isSingle
+            ? (form.assinatura_funcionario || sigMap.get(empId) || null)
+            : (sigMap.get(empId) || null),
         }));
         const { error } = await supabase.from("employee_saidas_expediente").insert(inserts);
         if (error) throw error;
