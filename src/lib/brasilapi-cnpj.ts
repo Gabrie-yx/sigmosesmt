@@ -107,8 +107,24 @@ export async function consultarCNPJ(cnpj: string): Promise<ReceitaCNPJData> {
 /** Extrai o primeiro CNPJ (14 dígitos, com ou sem máscara) de um texto livre. */
 export function extrairCNPJdeTexto(txt: string): string | null {
   if (!txt) return null;
-  const m = txt.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/);
-  if (!m) return null;
-  const digits = onlyDigits(m[0]);
-  return digits.length === 14 ? digits : null;
+  // 1) Regex tolerante a espaços entre grupos (pdfjs pode quebrar em spans).
+  const flex = txt.match(/\d{2}[.\s]{0,3}\d{3}[.\s]{0,3}\d{3}[\s/]{0,3}\d{4}[\s-]{0,3}\d{2}/);
+  if (flex) {
+    const d = onlyDigits(flex[0]);
+    if (d.length === 14) return d;
+  }
+  // 2) Fallback: colapsa TODOS os espaços e tenta de novo.
+  const collapsed = txt.replace(/\s+/g, "");
+  const m2 = collapsed.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/);
+  if (m2) {
+    const d = onlyDigits(m2[0]);
+    if (d.length === 14) return d;
+  }
+  // 3) Último recurso: procura ancorado em "INSCRIÇÃO" (cartão CNPJ tem esse rótulo).
+  const idx = txt.toUpperCase().indexOf("INSCRI");
+  if (idx >= 0) {
+    const janela = onlyDigits(txt.slice(idx, idx + 200));
+    if (janela.length >= 14) return janela.slice(0, 14);
+  }
+  return null;
 }
