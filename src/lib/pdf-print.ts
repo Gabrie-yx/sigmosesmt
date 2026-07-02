@@ -62,6 +62,35 @@ export async function renderPdfToImagePages(input: ArrayBuffer | Uint8Array | Bl
   return pages;
 }
 
+export async function renderPdfToImagePagesProgressive(
+  input: ArrayBuffer | Uint8Array | Blob,
+  onPage: (pageDataUrl: string, pageNumber: number, totalPages: number) => void,
+  scale = 2,
+): Promise<string[]> {
+  const buf = await toArrayBuffer(input);
+  const pdfjsLib = await loadPdfJs();
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+  const pages: string[] = [];
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext("2d", { alpha: false });
+    if (!ctx) throw new Error("Canvas indisponível para visualização");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: ctx, viewport, canvas, background: "#ffffff" }).promise;
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    pages.push(dataUrl);
+    onPage(dataUrl, i, pdf.numPages);
+  }
+
+  return pages;
+}
+
 async function measureFirstPage(src: string): Promise<{ orientation: "portrait" | "landscape" }> {
   return new Promise((resolve) => {
     const img = new Image();
