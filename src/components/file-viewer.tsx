@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { printPdf } from "@/lib/pdf-print";
+import { printImagePages, printPdf, renderPdfToImagePages } from "@/lib/pdf-print";
 
 type ViewerPayload = { url: string; name: string; mime?: string; downloadUrl?: string; objectUrl?: string };
 const listeners = new Set<(p: ViewerPayload | null) => void>();
@@ -34,6 +34,9 @@ export async function openStorageFile(bucket: string, path: string, name?: strin
 
 export function FileViewerHost() {
   const [payload, setPayload] = useState<ViewerPayload | null>(null);
+  const [pdfPages, setPdfPages] = useState<string[]>([]);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   useEffect(() => {
     listeners.add(setPayload);
@@ -49,10 +52,49 @@ export function FileViewerHost() {
   const isImage = payload?.mime?.startsWith("image/");
   const isPdf = payload?.mime === "application/pdf";
 
+  useEffect(() => {
+    let cancelled = false;
+    setPdfPages([]);
+    setPdfError(null);
+
+    if (!payload || payload.mime !== "application/pdf") {
+      setPdfLoading(false);
+      return;
+    }
+
+    const loadPdf = async () => {
+      setPdfLoading(true);
+      try {
+        const res = await fetch(payload.downloadUrl ?? payload.url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const buf = await res.arrayBuffer();
+        if (cancelled) return;
+        const pages = await renderPdfToImagePages(buf, 2);
+        if (!cancelled) setPdfPages(pages);
+      } catch (e: any) {
+        if (!cancelled) {
+          setPdfError(e?.message ?? "Falha ao renderizar PDF");
+          toast.error("Não foi possível visualizar o PDF dentro do SIGMO");
+        }
+      } finally {
+        if (!cancelled) setPdfLoading(false);
+      }
+    };
+
+    loadPdf();
+    return () => {
+      cancelled = true;
+    };
+  }, [payload]);
+
   async function handlePrint() {
     if (!payload) return;
     if (isPdf) {
       try {
+        if (pdfPages.length) {
+          await printImagePages(pdfPages, payload.name);
+          return;
+        }
         const res = await fetch(payload.downloadUrl ?? payload.url);
         const blob = await res.blob();
         await printPdf(blob, payload.name);
@@ -116,9 +158,29 @@ export function FileViewerHost() {
                 <img src={payload.url} alt={payload.name} className="max-w-full max-h-full object-contain" />
               </div>
             ) : isPdf ? (
-              <object data={payload.url} type="application/pdf" className="w-full h-full">
-                <iframe src={payload.url} title={payload.name} className="w-full h-full border-0" />
-              </object>
+              <div className="h-full overflow-y-auto bg-zinc-200 px-3 py-4 sm:px-6">
+                {pdfLoading && !pdfPages.length ? (
+                  <div className="flex h-full items-center justify-center text-sm font-medium text-slate-600">
+                    Renderizando PDF no SIGMO...
+                  </div>
+                ) : pdfError ? (
+                  <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-sm text-slate-600">
+                    <span>Não foi possível renderizar este PDF no modal.</span>
+                    <Button size="sm" variant="outline" onClick={() => window.open(payload.url, "_blank")}>Abrir em nova aba</Button>
+                  </div>
+                ) : (
+                  <div className="mx-auto flex w-full max-w-[980px] flex-col items-center gap-4">
+                    {pdfPages.map((page, index) => (
+                      <img
+                        key={`${payload.url}-${index}`}
+                        src={page}
+                        alt={`Página ${index + 1} de ${payload.name}`}
+                        className="block h-auto w-full rounded-sm border border-zinc-300 bg-white shadow-lg"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             ) : (
               <iframe src={payload.url} title={payload.name} className="w-full h-full border-0" />
             )
