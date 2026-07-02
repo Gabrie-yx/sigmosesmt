@@ -259,7 +259,7 @@ export const contarRcsPendentes = createServerFn({ method: "GET" })
       const { count } = await supabaseAdmin
         .from("purchase_requisitions")
         .select("id", { count: "exact", head: true })
-        .in("status", ["PENDENTE", "EM_COTACAO"]);
+        .in("status", ["PENDENTE", "EM_COTACAO"] as any);
       recebidas = count ?? 0;
     }
 
