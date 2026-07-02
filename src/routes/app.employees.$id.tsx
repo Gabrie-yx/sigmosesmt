@@ -588,16 +588,16 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         />
 
         <TabsContent value="profile" className="mt-4">
-          <ProfileTab key={emp.id} emp={emp} companies={companies ?? []} roles={roles ?? []} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+          <ProfileTab key={emp.id} emp={emp} companies={companies ?? []} roles={roles ?? []} canEdit={isEditor && !isDesligado} canDelete={isAdmin && !isDesligado} qc={qc} />
         </TabsContent>
         <TabsContent value="nrs" className="mt-4">
-          <NrsTab key={emp.id} emp={emp} role={role} canEdit={isEditor} qc={qc} />
+          <NrsTab key={emp.id} emp={emp} role={role} canEdit={isEditor && !isDesligado} qc={qc} />
         </TabsContent>
         <TabsContent value="docs" className="mt-4">
           <DocsTab empId={id} />
         </TabsContent>
         <TabsContent value="epi" className="mt-4">
-          <EpiTab empId={id} epis={epis ?? []} emp={emp} company={(companies ?? []).find((c: any) => c.id === emp.company_id) ?? null} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} docsOk={docsOk} missingDocs={missingDocs} />
+          <EpiTab empId={id} epis={epis ?? []} emp={emp} company={(companies ?? []).find((c: any) => c.id === emp.company_id) ?? null} role={role} canEdit={isEditor && !isDesligado} canDelete={isAdmin && !isDesligado} qc={qc} docsOk={docsOk} missingDocs={missingDocs} />
         </TabsContent>
         <TabsContent value="health" className="mt-4">
           <Tabs value={healthSub} onValueChange={setHealthSub}>
@@ -607,13 +607,13 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               <TabsTrigger value="atestados">Atestados</TabsTrigger>
             </TabsList>
             <TabsContent value="exams" className="mt-4">
-              <HealthTab empId={id} exams={exams ?? []} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+              <HealthTab empId={id} exams={exams ?? []} role={role} canEdit={isEditor && !isDesligado} canDelete={isAdmin && !isDesligado} qc={qc} />
             </TabsContent>
             <TabsContent value="vaccines" className="mt-4">
-              <VaccinesTab empId={id} vaccines={vaccines ?? []} role={role} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+              <VaccinesTab empId={id} vaccines={vaccines ?? []} role={role} canEdit={isEditor && !isDesligado} canDelete={isAdmin && !isDesligado} qc={qc} />
             </TabsContent>
             <TabsContent value="atestados" className="mt-4">
-              <AtestadosTab empId={id} canEdit={isEditor} canDelete={isAdmin} qc={qc} />
+              <AtestadosTab empId={id} canEdit={isEditor && !isDesligado} canDelete={isAdmin && !isDesligado} qc={qc} />
             </TabsContent>
           </Tabs>
         </TabsContent>
