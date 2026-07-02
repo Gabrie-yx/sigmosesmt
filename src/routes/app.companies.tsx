@@ -11,7 +11,7 @@ import {
   UserPlus, Pencil, Plus, X, ChevronRight, HardHat,
   HeartPulse, Award, FolderOpen, CheckCircle2, AlertTriangle, Users, User, UserCog,
   Upload, Download, ArrowLeft, Building2, Briefcase, IdCard, Shield, Search,
-  Loader2, RefreshCw, FileText,
+  Loader2, RefreshCw, FileText, MoreHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmployeeDetailContent } from "./app.employees.$id";
@@ -20,6 +20,10 @@ import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { CompanyDossieDialog } from "@/components/companies/company-dossie-dialog";
 import { FileViewerHost, openFileViewer } from "@/components/file-viewer";
 import { consultarCNPJ, extrairCNPJdeTexto, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/app/companies")({
   component: CompaniesPage,
