@@ -5,7 +5,7 @@ export const Route = createFileRoute("/termos")({
   head: () => ({
     meta: [
       { title: "Termos de Uso · Estaleiro DMN" },
-      { name: "description", content: "Termos de Uso do Sistema de Gestão Estaleiro DMN." },
+      { name: "description", content: "Termos de Uso do SIGMO — Sistema Integrado de Gestão Modular (Estaleiro DMN)." },
     ],
   }),
 });

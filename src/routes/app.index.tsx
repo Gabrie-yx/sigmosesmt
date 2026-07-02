@@ -232,7 +232,7 @@ function HomePage() {
         <div className="bg-gradient-to-r from-[#0b1220] via-[#7f1d1d] to-[#0b1220] rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
           <div>
             <div className="text-[10px] font-black uppercase tracking-[0.3em] text-red-200 mb-2">
-              Sistema Integrado de Gestão
+              Sistema Integrado de Gestão Modular
             </div>
             <h4 className="heading-display text-2xl md:text-3xl text-white tracking-tight">
               Acesse o Painel SESMT / SGI

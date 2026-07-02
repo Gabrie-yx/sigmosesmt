@@ -142,7 +142,7 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company }: Props) 
           </div>
 
           <div style={{ marginTop: 20, fontSize: 8, color: "#94a3b8", textAlign: "center" }}>
-            Documento gerado pelo SIGMO — Sistema de Gestão Integrada de SST.
+            Documento gerado pelo SIGMO — Sistema Integrado de Gestão Modular.
             Esta PT é válida apenas dentro da janela e local declarados. Qualquer alteração nas condições exige nova emissão.
           </div>
         </div>

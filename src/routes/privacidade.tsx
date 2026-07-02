@@ -5,7 +5,7 @@ export const Route = createFileRoute("/privacidade")({
   head: () => ({
     meta: [
       { title: "Política de Privacidade · Estaleiro DMN" },
-      { name: "description", content: "Política de Privacidade do Sistema de Gestão Estaleiro DMN, em conformidade com a LGPD." },
+      { name: "description", content: "Política de Privacidade do SIGMO — Sistema Integrado de Gestão Modular (Estaleiro DMN), em conformidade com a LGPD." },
     ],
   }),
 });
