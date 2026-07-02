@@ -1,63 +1,59 @@
-# Requisição de Medicamentos — Plano A + B
+## Fluxo final da RC
 
-Vamos fazer em 2 fases, entregando valor já na Fase A e evoluindo na Fase B sem retrabalho.
+```
+PENDENTE  →  EM_COTACAO  →  COTADA  →  APROVADA
+   │            │             │      ↘  INDEFERIDA (com motivo)
+   │            │             │
+solicitante   compras       cotador
+  emite       "pegou"       registra fornecedor+valor
+                                        ↓
+                              Supervisor Geral (Anderson) decide
+                              com assinatura já salva na base
+```
 
----
+## 1) Migração no banco
 
-## FASE A — Integrar ao módulo Requisições (entrega imediata)
+**`purchase_requisitions`** — novas colunas:
+- `pego_por_compras_id uuid`, `pego_por_compras_nome text`, `pego_em timestamptz` — rastreio de quem tirou da fila
+- `decidido_por_id uuid`, `decidido_por_nome text`, `decidido_assinatura_url text`, `decidido_em timestamptz` — carimbo do Anderson no PDF
+- Status agora aceita `EM_COTACAO` (texto livre, sem CHECK — segue padrão do projeto)
 
-**Objetivo:** salvar, listar, reabrir, editar, gerar PDF de novo e assinar — usando a infra que já existe.
+**`company_settings`** — nova coluna `supervisor_geral_user_id uuid` para eleger o Anderson como o único aprovador (fica configurável se um dia mudar). Se não estiver setado, cai no fallback: qualquer `admin` decide.
 
-### O que muda na UI
-- Botão **"💊 Medicamentos Ambulatório"** em `/app/sesmt/requisicoes` ganha 2 ações no modal:
-  - **Visualizar** (já existe) — só pré-visualiza
-  - **Baixar PDF** (já existe) — só baixa
-  - **➕ Salvar no SIGMO** (NOVO) — grava na tabela `purchase_requisitions` e fecha o modal
-- A requisição salva aparece na **lista de requisições** com um chip rosa **💊 MEDICAMENTOS** para diferenciar de MATERIAL/SERVIÇO.
-- Filtro de classificação ganha a opção **MEDICAMENTOS**.
-- Clicar numa requisição salva reabre o **mesmo modal** com os itens carregados → editar, salvar de novo, gerar PDF, assinar.
-- Assinatura usa o **`pdf-signer-dialog`** já existente (mesmo fluxo de ASO/OS).
+**Função `is_supervisor_geral(uid)`** — SECURITY DEFINER, retorna `true` se `uid = company_settings.supervisor_geral_user_id` OU se for `admin`.
 
-### Onde a requisição fica salva
-- Tabela: `purchase_requisitions` (a mesma das outras)
-- Classificação nova: `MEDICAMENTOS` (adicionada ao enum)
-- Itens em `purchase_requisition_items` (já existe)
-- Status: PENDENTE → COTADA → APROVADA → INDEFERIDA (igual às outras)
-- Aparece em **/app/sesmt/requisicoes** com chip rosa
+**Trigger em `audit_logs`** para toda mudança de status da RC (rastreabilidade ISO 9001).
 
-### Técnico (Fase A)
-1. Migration: `ALTER TYPE purchase_req_class ADD VALUE 'MEDICAMENTOS';`
-2. Refatorar `requisicao-medicamentos-dialog.tsx`:
-   - aceitar prop `requisitionId?` (modo edição)
-   - carregar itens existentes quando id é passado
-   - botão "Salvar no SIGMO" → INSERT/UPDATE em `purchase_requisitions` + `purchase_requisition_items` com `classificacao='MEDICAMENTOS'`
-3. Em `app.sesmt.requisicoes.tsx`:
-   - card de requisição com classificação MEDICAMENTOS abre o dialog de medicamentos (não o genérico)
-   - chip rosa visual, contador no header
-4. Reaproveitar `pdf-signer-dialog` no botão "Assinar"
+## 2) Backend — `src/lib/rc-public.functions.ts`
 
----
+- **`pegarRcParaCotar(token)`** — nova server fn com `requireSupabaseAuth`, muda PENDENTE→EM_COTACAO, grava quem pegou. Bloqueia se outro comprador já pegou.
+- **`marcarRcCotada`** — passa a aceitar tanto PENDENTE quanto EM_COTACAO (compat).
+- **`decidirRc`** — troca o gate de `admin/moderador` por `is_supervisor_geral(uid)`. Ao aprovar, busca a assinatura do Anderson em `user_signatures` (a mais recente) e grava em `decidido_assinatura_url`. Indeferimento continua exigindo motivo.
+- **`listarRcsPorStatus(status?)`** — para o badge do header/painel.
 
-## FASE B — Mini-módulo Ambulatório (evolução futura)
+## 3) UI
 
-**Quando:** depois que a Fase A estiver rodando 2-3 semanas e você decidir que vale a pena ter controle de estoque do ambulatório.
+- **`/rc/:token`** — badge de status ganha `EM_COTACAO` (roxo "Em cotação por Fulano"). Comprador logado vê botão **"Pegar para cotar"** quando PENDENTE. Só o supervisor vê Deferir/Indeferir.
+- **`/app/sesmt/requisicoes`** — coluna "Cotador" mostra quem pegou; filtro por status inclui EM_COTACAO.
+- **Badge no header** (`src/components/app-header.tsx`) — bolinha pulsante com contagem de RCs que precisam da atenção do usuário logado:
+  - Comprador → PENDENTE (fila livre)
+  - Supervisor → COTADA (aguardando decisão dele)
+  - Clica → vai pra `/app/sesmt/requisicoes` com filtro pré-aplicado
+- **PDF da RC** (`src/lib/requisicao-medicamentos-pdf.ts` e correlatos) — rodapé com **duas datas + duas assinaturas**: cotador (data cotação) e Supervisor Geral (data decisão, assinatura puxada de `decidido_assinatura_url`).
 
-**O que ganha:**
-- Tela própria `/app/sesmt/ambulatorio` no menu SESMT
-- Tabela `ambulatorio_estoque` com saldo atual de cada item (entrada via requisição aprovada, saída via atendimento)
-- Tabela `ambulatorio_atendimentos` — registro de "Funcionário X recebeu 2 dipironas em DD/MM"
-- Alerta de **estoque mínimo** (card no /app/hoje quando saldo < mínimo)
-- Controle de **validade por lote** (alerta 60 dias antes do vencimento)
-- Integração com PCMSO: histórico de atendimentos vai pra ficha do funcionário
-- Relatório mensal de consumo (PDF) — útil pro relatório NR-07
+## 4) Configuração inicial
 
-**O que NÃO muda da Fase A:** as requisições continuam na mesma tabela `purchase_requisitions`. A Fase B só consome o resultado (requisição APROVADA → entrada de estoque automática).
+Após a migração, uma linha de UPDATE em `company_settings` setando `supervisor_geral_user_id` = user_id do Anderson (te peço o UUID ou eu busco por `full_name ILIKE 'anderson%'` no profile).
 
----
+## Como fica visualmente
 
-## Entrega
+```text
+Header:  [🔴 3]  ← badge pulsando pro Anderson (3 RCs cotadas esperando)
+                  clica → painel filtrado em "COTADA"
 
-- **Hoje:** Fase A completa, testada, com migration. Você consegue salvar a requisição que já gerou hoje pra dentro do sistema.
-- **Quando você pedir:** Fase B.
+RC status: PENDENTE  →  EM_COTACAO (Juce)  →  COTADA (R$ 1.240)  →  APROVADA ✓
+                                                                     Anderson
+                                                                     02/07/2026 09:14
+```
 
-Confirma que mando bala na Fase A agora?
+Fora do escopo desta iteração: WhatsApp (deixamos os campos prontos, só não disparamos msg), sub-fluxo de "devolver ao requisitante" (compras só cota ou não pega).
