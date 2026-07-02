@@ -393,6 +393,41 @@ export function AppSidebar() {
           </Collapsible>
         )}
 
+        {/* COMPRAS */}
+        {canCompras && visibleCompras.length > 0 && (
+          <Collapsible defaultOpen={comprasOpen} className="group/compras">
+            <SidebarGroup>
+              <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
+                <CollapsibleTrigger className="flex w-full items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <ShoppingCart className="h-5 w-5 text-red-700" /> Compras
+                  </span>
+                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/compras:rotate-90" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <Body>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {visibleCompras.map((s) => {
+                      const Icon = s.icon ?? ShoppingCart;
+                      return (
+                        <SidebarMenuItem key={s.to}>
+                          <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
+                            <Link to={s.to}>
+                              <Icon />
+                              <span>{s.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </Body>
+            </SidebarGroup>
+          </Collapsible>
+        )}
+
         {/* MANUTENÇÃO (locked) */}
         <SidebarGroup>
           <SidebarGroupLabel className="flex items-center gap-2 h-9 text-sm font-bold text-slate-700">
