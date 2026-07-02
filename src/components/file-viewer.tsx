@@ -27,16 +27,9 @@ export async function openStorageFile(bucket: string, path: string, name?: strin
     ext === "png" ? "image/png" :
     ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
     ext === "webp" ? "image/webp" : undefined;
-  try {
-    const response = await fetch(data.signedUrl);
-    if (!response.ok) throw new Error("Não foi possível carregar o arquivo");
-    const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    openFileViewer({ url: objectUrl, name: fname, mime: blob.type || mime, downloadUrl: objectUrl, objectUrl });
-  } catch (e: any) {
-    toast.error(e.message ?? "Não foi possível visualizar o arquivo");
-      openFileViewer({ url: data.signedUrl, name: fname, mime, downloadUrl: data.signedUrl });
-  }
+  // Abrir direto via signed URL — evita blob:// (bloqueado pelo Chrome em <object>/<iframe> para PDF)
+  // e elimina o download pesado inicial que travava a abertura do modal.
+  openFileViewer({ url: data.signedUrl, name: fname, mime, downloadUrl: data.signedUrl });
 }
 
 export function FileViewerHost() {
