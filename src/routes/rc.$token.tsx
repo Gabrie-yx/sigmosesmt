@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, X as XIcon, FileText, Clock, DollarSign, Lock } from "lucide-react";
-import { getRcByToken, marcarRcCotada, decidirRc } from "@/lib/rc-public.functions";
+import { Check, X as XIcon, FileText, Clock, DollarSign, Lock, HandMetal } from "lucide-react";
+import { getRcByToken, marcarRcCotada, decidirRc, pegarRcParaCotar } from "@/lib/rc-public.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "@tanstack/react-router";
 
@@ -40,6 +40,7 @@ function fmtMoney(v: number | null) {
 
 const STATUS_INFO: Record<string, { label: string; cls: string }> = {
   PENDENTE: { label: "Aguardando cotação", cls: "bg-amber-100 text-amber-800 border-amber-300" },
+  EM_COTACAO: { label: "Em cotação", cls: "bg-violet-100 text-violet-800 border-violet-300" },
   COTADA: { label: "Cotada — aguardando aprovação", cls: "bg-blue-100 text-blue-800 border-blue-300" },
   APROVADA: { label: "Deferida", cls: "bg-emerald-100 text-emerald-800 border-emerald-300" },
   INDEFERIDA: { label: "Indeferida", cls: "bg-rose-100 text-rose-800 border-rose-300" },
@@ -49,9 +50,10 @@ function RcStatusPage() {
   const { token } = Route.useParams();
   const qc = useQueryClient();
   const fetchRc = useServerFn(getRcByToken);
+  const pegarParaCotar = useServerFn(pegarRcParaCotar);
   const marcarCotada = useServerFn(marcarRcCotada);
   const decidir = useServerFn(decidirRc);
-  const { isModerator, loading: authLoading } = useAuth();
+  const { user, isEditor, isAdmin, loading: authLoading } = useAuth();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["rc-public", token],
@@ -64,6 +66,15 @@ function RcStatusPage() {
       marcarCotada({ data: { token, ...p } }),
     onSuccess: () => {
       toast.success("Cotação registrada!");
+      qc.invalidateQueries({ queryKey: ["rc-public", token] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const pegarMut = useMutation({
+    mutationFn: () => pegarParaCotar({ data: { token } }),
+    onSuccess: () => {
+      toast.success("RC atribuída a você. Registre a cotação abaixo.");
       qc.invalidateQueries({ queryKey: ["rc-public", token] });
     },
     onError: (e: any) => toast.error(e.message),
@@ -105,6 +116,12 @@ function RcStatusPage() {
   const rc = data.rc as any;
   const itens = data.itens as any[];
   const info = STATUS_INFO[rc.status] ?? STATUS_INFO.PENDENTE;
+
+  const meuId = user?.id;
+  const souOCotador = meuId && rc.pego_por_compras_id === meuId;
+  // Supervisor Geral: por ora usamos admin como fallback client-side.
+  // A server fn valida is_supervisor_geral definitivamente.
+  const podeDecidir = isAdmin;
 
   return (
     <div className="min-h-screen bg-slate-50 p-3 md:p-6">
@@ -183,50 +200,85 @@ function RcStatusPage() {
           <CardContent className="space-y-2 text-xs">
             <TimelineStep done label="RC emitida" when={fmtDateTime(rc.created_at)} />
             <TimelineStep
-              done={rc.status !== "PENDENTE"}
+              done={rc.status !== "PENDENTE" && rc.status !== "EM_COTACAO"}
               label={
                 rc.status === "PENDENTE"
                   ? "Aguardando cotação"
+                  : rc.status === "EM_COTACAO"
+                  ? `Em cotação por ${rc.pego_por_compras_nome ?? "compras"}`
                   : `Cotada por ${rc.cotador_nome ?? "—"} · ${rc.cotacao_fornecedor ?? "—"} · ${fmtMoney(rc.cotacao_valor)}`
               }
-              when={fmtDateTime(rc.cotacao_at)}
+              when={fmtDateTime(rc.cotacao_at ?? rc.pego_em)}
             />
             <TimelineStep
               done={rc.status === "APROVADA" || rc.status === "INDEFERIDA"}
               label={
                 rc.status === "APROVADA"
-                  ? "Deferida pelo gerente"
+                  ? `Deferida por ${rc.decidido_por_nome ?? "Supervisor Geral"}`
                   : rc.status === "INDEFERIDA"
                   ? `Indeferida — ${rc.motivo_indeferimento ?? ""}`
-                  : "Aguardando aprovação do gerente"
+                  : "Aguardando aprovação do Supervisor Geral"
               }
-              when={fmtDateTime(rc.approved_at)}
+              when={fmtDateTime(rc.decidido_em ?? rc.approved_at)}
             />
           </CardContent>
         </Card>
 
-        {/* Ação: Cotar */}
-        {rc.status === "PENDENTE" && (
+        {/* Ação: Pegar para cotar (PENDENTE + logado com role de editor) */}
+        {rc.status === "PENDENTE" && user && isEditor && (
+          <Card className="border-violet-300 bg-violet-50/50">
+            <CardContent className="p-4 text-center space-y-3">
+              <HandMetal className="h-6 w-6 text-violet-600 mx-auto" />
+              <div className="text-sm text-slate-700">
+                Nenhum comprador pegou esta RC ainda. Pegue para cotar e travar a fila.
+              </div>
+              <Button
+                onClick={() => pegarMut.mutate()}
+                disabled={pegarMut.isPending}
+                className="bg-violet-600 hover:bg-violet-700"
+              >
+                {pegarMut.isPending ? "Atribuindo…" : "Pegar para cotar"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {rc.status === "PENDENTE" && !user && (
           <CotarForm onSubmit={(p) => cotarMut.mutate(p)} loading={cotarMut.isPending} />
         )}
 
+        {/* Ação: Registrar cotação (EM_COTACAO — dono ou admin) */}
+        {rc.status === "EM_COTACAO" && (souOCotador || isAdmin) && (
+          <CotarForm onSubmit={(p) => cotarMut.mutate(p)} loading={cotarMut.isPending} />
+        )}
+
+        {rc.status === "EM_COTACAO" && !souOCotador && !isAdmin && (
+          <Card className="border-violet-300 bg-violet-50/50">
+            <CardContent className="p-4 text-center text-sm text-slate-600">
+              Esta RC está sendo cotada por <strong>{rc.pego_por_compras_nome ?? "outro comprador"}</strong>.
+            </CardContent>
+          </Card>
+        )}
+
         {/* Ação: Decidir */}
-        {rc.status === "COTADA" && isModerator && (
+        {rc.status === "COTADA" && podeDecidir && (
           <DecidirForm onSubmit={(p) => decidirMut.mutate(p)} loading={decidirMut.isPending} />
         )}
 
-        {rc.status === "COTADA" && !isModerator && !authLoading && (
+        {rc.status === "COTADA" && !podeDecidir && !authLoading && (
           <Card className="border-amber-300 bg-amber-50/50">
             <CardContent className="p-4 text-center space-y-3">
               <Lock className="h-6 w-6 text-amber-600 mx-auto" />
               <div className="text-sm text-slate-700">
-                Aprovação ou indeferimento exige login do <strong>gerente</strong> (admin ou moderador).
+                Somente o <strong>Supervisor Geral</strong> pode deferir ou indeferir esta requisição.
               </div>
-              <Button asChild className="bg-amber-600 hover:bg-amber-700">
-                <Link to="/login" search={{ redirect: `/rc/${token}` } as any}>
-                  Fazer login para decidir
-                </Link>
-              </Button>
+              {!user && (
+                <Button asChild className="bg-amber-600 hover:bg-amber-700">
+                  <Link to="/login" search={{ redirect: `/rc/${token}` } as any}>
+                    Fazer login
+                  </Link>
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
