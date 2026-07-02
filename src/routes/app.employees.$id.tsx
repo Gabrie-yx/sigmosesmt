@@ -718,6 +718,7 @@ function EmployeeContextSidebar({ id }: { id: string }) {
         .select("id, nome, status, role_id, foto_url")
         .eq("company_id", companyId!)
         .neq("id", id)
+        .neq("status", "DESLIGADO")
         .order("nome");
       if (error) throw error;
       return data ?? [];

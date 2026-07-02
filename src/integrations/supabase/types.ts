@@ -3160,6 +3160,7 @@ export type Database = {
           data_desligamento: string | null
           data_integracao: string | null
           data_nascimento: string | null
+          data_reativacao: string | null
           desligado_por: string | null
           desligamento_checklist: Json
           desligamento_observacoes: string | null
@@ -3173,10 +3174,12 @@ export type Database = {
           mei_contrato_numero: string | null
           mei_contrato_validade: string | null
           motivo_desligamento: string | null
+          motivo_reativacao: string | null
           nome: string
           nome_contato: string | null
           nrs: Json
           pis: string | null
+          reativado_por: string | null
           rg: string | null
           rg_orgao: string | null
           role_id: string | null
@@ -3210,6 +3213,7 @@ export type Database = {
           data_desligamento?: string | null
           data_integracao?: string | null
           data_nascimento?: string | null
+          data_reativacao?: string | null
           desligado_por?: string | null
           desligamento_checklist?: Json
           desligamento_observacoes?: string | null
@@ -3223,10 +3227,12 @@ export type Database = {
           mei_contrato_numero?: string | null
           mei_contrato_validade?: string | null
           motivo_desligamento?: string | null
+          motivo_reativacao?: string | null
           nome: string
           nome_contato?: string | null
           nrs?: Json
           pis?: string | null
+          reativado_por?: string | null
           rg?: string | null
           rg_orgao?: string | null
           role_id?: string | null
@@ -3260,6 +3266,7 @@ export type Database = {
           data_desligamento?: string | null
           data_integracao?: string | null
           data_nascimento?: string | null
+          data_reativacao?: string | null
           desligado_por?: string | null
           desligamento_checklist?: Json
           desligamento_observacoes?: string | null
@@ -3273,10 +3280,12 @@ export type Database = {
           mei_contrato_numero?: string | null
           mei_contrato_validade?: string | null
           motivo_desligamento?: string | null
+          motivo_reativacao?: string | null
           nome?: string
           nome_contato?: string | null
           nrs?: Json
           pis?: string | null
+          reativado_por?: string | null
           rg?: string | null
           rg_orgao?: string | null
           role_id?: string | null
@@ -7955,10 +7964,12 @@ export type Database = {
       oss_marcar_vencidas: { Args: never; Returns: number }
       peek_proximo_numero_apr: { Args: never; Returns: string }
       pt_title_case: { Args: { s: string }; Returns: string }
-      reativar_funcionario: {
-        Args: { _employee_id: string }
-        Returns: undefined
-      }
+      reativar_funcionario:
+        | { Args: { _employee_id: string }; Returns: undefined }
+        | {
+            Args: { _employee_id: string; _motivo?: string }
+            Returns: undefined
+          }
       registrar_desligamento_funcionario: {
         Args: {
           _checklist?: Json
