@@ -48,6 +48,7 @@ export function DesligamentoDialog({ emp, open, onClose }: Props) {
   const [obs, setObs] = useState<string>("");
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [confirmacao, setConfirmacao] = useState(false);
+  const [motivoReativacao, setMotivoReativacao] = useState<string>("");
 
   const desligar = useMutation({
     mutationFn: async () => {
@@ -74,12 +75,17 @@ export function DesligamentoDialog({ emp, open, onClose }: Props) {
 
   const reativar = useMutation({
     mutationFn: async () => {
-      const { error } = await (supabase as any).rpc("reativar_funcionario", { _employee_id: emp.id });
+      const { error } = await (supabase as any).rpc("reativar_funcionario", {
+        _employee_id: emp.id,
+        _motivo: motivoReativacao.trim(),
+      });
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["employee", emp.id] });
       qc.invalidateQueries({ queryKey: ["employees"] });
+      qc.invalidateQueries({ queryKey: ["employees-desligados"] });
+      qc.invalidateQueries({ queryKey: ["safety-overrides", emp.id] });
       toast.success(`${emp.nome} reativado`);
       onClose();
     },
@@ -99,10 +105,26 @@ export function DesligamentoDialog({ emp, open, onClose }: Props) {
             <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
               Ao reativar, o bloqueio global de segurança será revogado e o funcionário poderá receber novas OSs, EPIs e treinamentos. O histórico será preservado.
             </div>
+            <div className="space-y-1.5">
+              <Label>Justificativa da reativação *</Label>
+              <Textarea
+                rows={4}
+                value={motivoReativacao}
+                onChange={(e) => setMotivoReativacao(e.target.value)}
+                placeholder="Ex.: Recontratação por retorno de obra; reintegração por decisão judicial; erro operacional no desligamento anterior…"
+              />
+              <p className="text-[10px] text-slate-500">
+                Mínimo 5 caracteres. Será registrada em auditoria (audit_logs) com data, hora e responsável.
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button onClick={() => reativar.mutate()} disabled={reativar.isPending} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button
+              onClick={() => reativar.mutate()}
+              disabled={reativar.isPending || motivoReativacao.trim().length < 5}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
               {reativar.isPending ? "Reativando…" : "Reativar funcionário"}
             </Button>
           </DialogFooter>
