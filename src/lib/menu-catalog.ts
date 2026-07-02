@@ -50,6 +50,9 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/producao/expedicao", label: "Expedição", module: "producao" },
   { key: "/app/producao/fatores-consumo", label: "Fatores de Consumo", module: "producao" },
 
+  // ----- COMPRAS -----
+  { key: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", module: "compras" as any },
+
   // ----- USUÁRIOS -----
   { key: "/app/users", label: "Usuários", module: "usuarios" },
   { key: "/app/audit", label: "Auditoria do Sistema", module: "usuarios" },
