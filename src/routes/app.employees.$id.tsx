@@ -368,7 +368,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
             <h1 className="heading-display text-lg sm:text-2xl lg:text-[28px] leading-tight text-slate-100/95 break-words min-w-0 tracking-tight drop-shadow-[0_1px_0_rgba(0,0,0,0.45)]">{emp.nome}</h1>
             <div className="shrink-0 flex flex-row flex-wrap sm:flex-col items-start sm:items-end gap-2">
               <div className="flex items-center gap-2 flex-wrap">
-                {isEditor && (tab === "profile" || tab === "nrs") && (
+                {isEditor && !isDesligado && (tab === "profile" || tab === "nrs") && (
                   <button
                     type="button"
                     onClick={() => window.dispatchEvent(new CustomEvent("employee:save-tab", { detail: { tab } }))}
@@ -378,7 +378,12 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                     <Save className="h-3.5 w-3.5" /> Salvar
                   </button>
                 )}
-                {status && (
+                {isDesligado ? (
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-200 ring-1 ring-slate-300 pl-2 pr-2.5 py-1 opacity-70">
+                    <span className="h-2 w-2 rounded-full bg-slate-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">DESLIGADO</span>
+                  </div>
+                ) : status && (
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 ring-1 ring-slate-200 pl-2 pr-2.5 py-1">
                     <span className={`h-2 w-2 rounded-full ${status.colorClass}`} />
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{status.label}</span>
@@ -503,13 +508,13 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
       )}
 
       {emp.status === "DESLIGADO" && (
-        <Card className="p-4 rounded-2xl border-2 border-rose-300 bg-rose-50 flex items-start gap-3">
-          <div className="h-9 w-9 shrink-0 rounded-full bg-rose-600 text-white flex items-center justify-center">
+        <Card className="p-4 rounded-2xl border-2 border-rose-400 bg-rose-50 flex items-start gap-3 animate-pulse shadow-[0_0_28px_rgba(244,63,94,0.55)] ring-2 ring-rose-500/50">
+          <div className="h-9 w-9 shrink-0 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-500/60">
             <UserMinus className="h-5 w-5" />
           </div>
           <div className="flex-1 text-sm">
-            <div className="text-sm font-black uppercase tracking-widest text-rose-700">Funcionário DESLIGADO</div>
-            <div className="text-xs text-rose-900 mt-0.5">
+            <div className="text-sm font-black uppercase tracking-widest text-rose-800">Funcionário DESLIGADO</div>
+            <div className="text-xs text-rose-950 mt-0.5 font-semibold">
               {(emp as any).data_desligamento && (
                 <>Desligado em <strong>{new Date((emp as any).data_desligamento + "T00:00:00").toLocaleDateString("pt-BR")}</strong>. </>
               )}
