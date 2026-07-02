@@ -1703,6 +1703,7 @@ export type Database = {
           meta_inspecoes_pct: number
           meta_treinamentos_pct: number
           pt_exige_apr_valida: boolean
+          supervisor_geral_user_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1716,6 +1717,7 @@ export type Database = {
           meta_inspecoes_pct?: number
           meta_treinamentos_pct?: number
           pt_exige_apr_valida?: boolean
+          supervisor_geral_user_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1729,6 +1731,7 @@ export type Database = {
           meta_inspecoes_pct?: number
           meta_treinamentos_pct?: number
           pt_exige_apr_valida?: boolean
+          supervisor_geral_user_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -6782,6 +6785,10 @@ export type Database = {
           created_by: string | null
           data_requisicao: string
           data_revisao: string | null
+          decidido_assinatura_url: string | null
+          decidido_em: string | null
+          decidido_por_id: string | null
+          decidido_por_nome: string | null
           fornecedor: string | null
           id: string
           motivo_indeferimento: string | null
@@ -6790,6 +6797,9 @@ export type Database = {
           obra_manutencao: string | null
           observacoes: string | null
           pagina: string | null
+          pego_em: string | null
+          pego_por_compras_id: string | null
+          pego_por_compras_nome: string | null
           responsavel_aprovador: string | null
           responsavel_tst: string | null
           revisao: string | null
@@ -6820,6 +6830,10 @@ export type Database = {
           created_by?: string | null
           data_requisicao?: string
           data_revisao?: string | null
+          decidido_assinatura_url?: string | null
+          decidido_em?: string | null
+          decidido_por_id?: string | null
+          decidido_por_nome?: string | null
           fornecedor?: string | null
           id?: string
           motivo_indeferimento?: string | null
@@ -6828,6 +6842,9 @@ export type Database = {
           obra_manutencao?: string | null
           observacoes?: string | null
           pagina?: string | null
+          pego_em?: string | null
+          pego_por_compras_id?: string | null
+          pego_por_compras_nome?: string | null
           responsavel_aprovador?: string | null
           responsavel_tst?: string | null
           revisao?: string | null
@@ -6858,6 +6875,10 @@ export type Database = {
           created_by?: string | null
           data_requisicao?: string
           data_revisao?: string | null
+          decidido_assinatura_url?: string | null
+          decidido_em?: string | null
+          decidido_por_id?: string | null
+          decidido_por_nome?: string | null
           fornecedor?: string | null
           id?: string
           motivo_indeferimento?: string | null
@@ -6866,6 +6887,9 @@ export type Database = {
           obra_manutencao?: string | null
           observacoes?: string | null
           pagina?: string | null
+          pego_em?: string | null
+          pego_por_compras_id?: string | null
+          pego_por_compras_nome?: string | null
           responsavel_aprovador?: string | null
           responsavel_tst?: string | null
           revisao?: string | null
@@ -7958,6 +7982,7 @@ export type Database = {
       }
       is_editor: { Args: { _user_id: string }; Returns: boolean }
       is_moderator: { Args: { _user_id: string }; Returns: boolean }
+      is_supervisor_geral: { Args: { _user_id: string }; Returns: boolean }
       is_viewer_or_above: { Args: { _user_id: string }; Returns: boolean }
       marcar_convocacoes_vencidas: { Args: never; Returns: number }
       mfa_ok: { Args: never; Returns: boolean }
