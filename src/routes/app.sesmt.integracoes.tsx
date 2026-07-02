@@ -113,40 +113,6 @@ function IntegracoesPage() {
   const totalSessoes = filtradas.length;
   const totalPart = filtradas.reduce((s: number, r: any) => s + r.integracao_participantes.length, 0);
 
-  async function exportarPdf(r: any) {
-    try {
-      const participantes = await Promise.all(
-        r.integracao_participantes.map(async (p: any) => ({
-          nome: p.nome_snapshot,
-          empresa: p.empresa_snapshot ?? "",
-          cargo: p.cargo_snapshot ?? "",
-          assinaturaDataUrl: await fetchSignatureAsCleanDataUrl(p.assinatura_snapshot),
-        })),
-      );
-      participantes.sort((a: any, b: any) => (a.empresa || "").localeCompare(b.empresa) || a.nome.localeCompare(b.nome));
-      const [y, m, d] = r.data_integracao.split("-");
-      const dataBR = `${d}/${m}/${y}`;
-      const pdf = gerarListaPresenca({
-        titulo: "INTEGRAÇÃO DE SEGURANÇA — NR-01",
-        instrutor: r.instrutor_nome,
-        assunto: "Integração de Segurança do Trabalho — conteúdo NR-01 item 1.5.7",
-        tipo: "IN COMPANY",
-        data: dataBR,
-        cargaHoraria: `${r.carga_horaria_h}h`,
-        instituicao: "DMN — SESMT",
-        local: r.local ?? "DMN — Manaus/AM",
-        participantes,
-        agruparPorEmpresa: true,
-        codigo: "FOR-SEG-INT-01",
-        revisao: "00",
-        dataDocumento: dataBR,
-      });
-      pdf.save(`integracao_${r.data_integracao}.pdf`);
-    } catch (e: any) {
-      toast.error(e.message ?? "Erro ao gerar PDF");
-    }
-  }
-
   async function exportarRelatorioPeriodo() {
     if (filtradas.length === 0) return toast.error("Sem integrações no período");
     const participantes: any[] = [];
@@ -305,33 +271,7 @@ function IntegracoesPage() {
           )}
         </div>
 
-        {/* Lista bruta por sessão (histórico) */}
-        <h2 className="text-[11px] font-black uppercase tracking-widest text-[rgba(245,225,225,0.65)] mb-2">Sessões no período</h2>
-        <div className="space-y-2">
-          {isLoading && <div className="text-center text-sm text-muted-foreground py-8">Carregando…</div>}
-          {filtradas.map((r: any) => (
-            <Card key={r.id} className="p-4 glass-card">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge className="bg-emerald-600 text-white">{r.data_integracao.split("-").reverse().join("/")}</Badge>
-                    <span className="text-sm font-bold text-rose-50">{r.instrutor_nome}</span>
-                    <Badge variant="outline">{r.carga_horaria_h}h</Badge>
-                    <Badge variant="outline">{r.integracao_participantes.length} pessoas</Badge>
-                    {r.local && <span className="text-xs text-muted-foreground">{r.local}</span>}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1 truncate">
-                    {r.integracao_participantes.slice(0, 5).map((p: any) => p.nome_snapshot).join(", ")}
-                    {r.integracao_participantes.length > 5 ? `, +${r.integracao_participantes.length - 5}…` : ""}
-                  </div>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => exportarPdf(r)}>
-                  <Printer className="h-4 w-4 mr-1" /> PDF
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+        {isLoading && <div className="text-center text-sm text-muted-foreground py-8">Carregando…</div>}
       </div>
       <IntegracaoDialog open={open} onOpenChange={setOpen} onSaved={() => refetch()} />
       <EmpresaIntegracoesDialog
