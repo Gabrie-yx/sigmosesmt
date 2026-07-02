@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useRef, useState } from "react";
 import dmnLogo from "@/assets/dmn-logo.png";
 import { PendenciasBadge } from "@/components/pendencias-badge";
+import { RcHeaderBadge } from "@/components/rc-header-badge";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -80,6 +81,7 @@ export function AppHeader() {
 
         <div className="flex items-center gap-1 md:gap-1.5 shrink-0 ml-auto">
           <PendenciasBadge />
+          <RcHeaderBadge />
           <div className="hidden md:flex items-center gap-0.5 border-l border-white/10 pl-2">
             <button
               title="Exportar backup"
