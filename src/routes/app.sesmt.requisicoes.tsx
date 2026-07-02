@@ -579,7 +579,10 @@ function RequisicoesPage() {
                       </div>
                       <div className="flex gap-1">
                         {r.classificacao === "MEDICAMENTOS" ? (
-                          <MedEditBtn req={r} />
+                          <>
+                            <MedPdfBtns req={r} />
+                            <MedEditBtn req={r} />
+                          </>
                         ) : (
                           <>
                             <Button size="sm" variant="outline" onClick={() => emitirPdf(r, "print")}>
@@ -791,6 +794,91 @@ function EditReqBtn({ req, userId }: { req: Req; userId?: string }) {
       </DialogTrigger>
       {open && <ReqFormDialog onClose={() => setOpen(false)} userId={userId} existing={req} />}
     </Dialog>
+  );
+}
+
+async function loadMedItemsForPdf(reqId: string) {
+  const { data } = await supabase
+    .from("purchase_requisition_items")
+    .select("*")
+    .eq("requisition_id", reqId)
+    .order("item_numero");
+  return (data ?? []).map((r: any) => {
+    const raw = String(r.descricao ?? "");
+    const sep = raw.lastIndexOf(" — ");
+    const descricao = sep > 0 ? raw.slice(0, sep) : raw;
+    const apresentacao = sep > 0 ? raw.slice(sep + 3) : "";
+    return {
+      descricao,
+      apresentacao,
+      unidade: r.unidade ?? "UN",
+      quantidade: Number(r.quantidade ?? 0),
+      justificativa: r.observacao ?? "",
+    };
+  });
+}
+
+function MedPdfBtns({ req }: { req: Req }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [busy, setBusy] = useState<null | "print" | "pdf">(null);
+
+  async function build() {
+    const [{ buildRequisicaoMedicamentosPdf }] = await Promise.all([
+      import("@/lib/requisicao-medicamentos-pdf"),
+    ]);
+    const itens = await loadMedItemsForPdf(req.id);
+    return buildRequisicaoMedicamentosPdf({
+      numero: req.numero,
+      solicitante: req.solicitante ?? "",
+      setor: req.setor ?? "SESMT — Ambulatório",
+      responsavelTST: (req as any).responsavel_tst ?? "",
+      observacoes: (req as any).observacoes ?? "",
+      itens,
+      assinaturaSolicitanteDataUrl: (req as any).signature_solicitante ?? undefined,
+    });
+  }
+
+  async function imprimir() {
+    try {
+      setBusy("print");
+      const doc = await build();
+      const url = doc.output("bloburl") as unknown as string;
+      const w = window.open(url, "_blank");
+      if (w) setTimeout(() => { try { w.print(); } catch {} }, 400);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao imprimir");
+    } finally { setBusy(null); }
+  }
+
+  async function visualizar() {
+    try {
+      setBusy("pdf");
+      const doc = await build();
+      setPreviewUrl(doc.output("bloburl") as unknown as string);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao gerar PDF");
+    } finally { setBusy(null); }
+  }
+
+  return (
+    <>
+      <Button size="sm" variant="outline" onClick={imprimir} disabled={busy !== null}>
+        <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
+      </Button>
+      <Button size="sm" variant="outline" onClick={visualizar} disabled={busy !== null}>
+        <Printer className="h-3.5 w-3.5 mr-1" /> PDF
+      </Button>
+      {previewUrl && (
+        <Dialog open={!!previewUrl} onOpenChange={(o) => !o && setPreviewUrl(null)}>
+          <DialogContent className="max-w-5xl h-[85vh] p-0 overflow-hidden">
+            <DialogHeader className="px-4 py-2 border-b">
+              <DialogTitle>Requisição de Medicamentos — Nº {req.numero}</DialogTitle>
+            </DialogHeader>
+            <iframe src={previewUrl} className="w-full h-full" title="PDF" />
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
 
