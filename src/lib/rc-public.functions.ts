@@ -235,6 +235,7 @@ export const contarRcsPendentes = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: isSup } = await supabase.rpc("is_supervisor_geral", { _user_id: userId });
+    const { data: podeCompras } = await supabase.rpc("pode_gerenciar_compras", { _user_id: userId });
 
     // Compras vê PENDENTE (fila livre)
     const { count: pendentes } = await supabaseAdmin
@@ -252,9 +253,21 @@ export const contarRcsPendentes = createServerFn({ method: "GET" })
       cotadas = count ?? 0;
     }
 
+    // Compras vê PENDENTE + EM_COTACAO em aberto na fila deles
+    let recebidas = 0;
+    if (podeCompras) {
+      const { count } = await supabaseAdmin
+        .from("purchase_requisitions")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["PENDENTE", "EM_COTACAO"]);
+      recebidas = count ?? 0;
+    }
+
     return {
       isSupervisor: !!isSup,
+      isCompras: !!podeCompras,
       pendentes: pendentes ?? 0,
       cotadas,
+      recebidas,
     };
   });
