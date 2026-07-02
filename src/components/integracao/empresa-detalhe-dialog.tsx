@@ -6,11 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Building2, Printer, Trash2, Pencil, Eye, Download, Search, PenLine } from "lucide-react";
+import { Building2, Printer, Eye, Download, Search, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
 import { fetchSignatureAsCleanDataUrl } from "@/lib/signature-utils";
-import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 
 type Participante = {
   id: string;
@@ -36,18 +35,16 @@ export function EmpresaIntegracoesDialog({
   empresa,
   periodoIni,
   periodoFim,
-  onEditSession,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   empresa: { nome: string } | null;
   periodoIni: string;
   periodoFim: string;
-  onEditSession?: (integracaoId: string) => void;
 }) {
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
-  const [padOpen, setPadOpen] = useState<string | null>(null); // participante id
+  const [preview, setPreview] = useState<string | null>(null);
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["integracao-empresa", empresa?.nome, periodoIni, periodoFim],
@@ -76,34 +73,29 @@ export function EmpresaIntegracoesDialog({
     );
   }, [rows, busca]);
 
-  const atualizarAssinatura = useMutation({
-    mutationFn: async (args: { id: string; dataUrl: string }) => {
+  // Restaura a assinatura oficial do funcionário (fonte da verdade = employees.assinatura_url)
+  const restaurarOficial = useMutation({
+    mutationFn: async (p: Participante) => {
+      if (!p.employee_id) throw new Error("Participante sem vínculo com funcionário");
+      const { data: emp, error: eErr } = await supabase
+        .from("employees")
+        .select("assinatura_url")
+        .eq("id", p.employee_id)
+        .maybeSingle();
+      if (eErr) throw eErr;
+      if (!emp?.assinatura_url) throw new Error("Funcionário não tem assinatura oficial cadastrada no perfil");
       const { error } = await supabase
         .from("integracao_participantes")
-        .update({ assinatura_snapshot: args.dataUrl })
-        .eq("id", args.id);
+        .update({ assinatura_snapshot: emp.assinatura_url })
+        .eq("id", p.id);
       if (error) throw error;
     },
     onSuccess: async () => {
-      toast.success("Assinatura atualizada");
-      await qc.invalidateQueries({ queryKey: ["integracao-empresa"] });
-      await qc.invalidateQueries({ queryKey: ["integracoes-agregado"] });
-      setPadOpen(null);
-    },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao atualizar"),
-  });
-
-  const removerParticipante = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("integracao_participantes").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: async () => {
-      toast.success("Participante removido");
+      toast.success("Assinatura oficial restaurada");
       await qc.invalidateQueries({ queryKey: ["integracao-empresa"] });
       await qc.invalidateQueries({ queryKey: ["integracoes-agregado"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao remover"),
+    onError: (e: any) => toast.error(e.message ?? "Erro ao restaurar"),
   });
 
   async function baixarPdfIndividual(p: Participante) {
@@ -133,6 +125,38 @@ export function EmpresaIntegracoesDialog({
       pdf.save(`integracao_${p.nome_snapshot.replace(/\s+/g, "_")}_${p.integracoes.data_integracao}.pdf`);
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao gerar PDF");
+    }
+  }
+
+  async function imprimirPdfIndividual(p: Participante) {
+    try {
+      const [y, m, d] = p.integracoes.data_integracao.split("-");
+      const dataBR = `${d}/${m}/${y}`;
+      const pdf = gerarListaPresenca({
+        titulo: "INTEGRAÇÃO DE SEGURANÇA — NR-01",
+        instrutor: p.integracoes.instrutor_nome,
+        assunto: "Integração de Segurança do Trabalho — conteúdo NR-01 item 1.5.7",
+        tipo: "IN COMPANY",
+        data: dataBR,
+        cargaHoraria: `${p.integracoes.carga_horaria_h}h`,
+        instituicao: "DMN — SESMT",
+        local: p.integracoes.local ?? "DMN — Manaus/AM",
+        participantes: [{
+          nome: p.nome_snapshot,
+          empresa: p.empresa_snapshot ?? "",
+          cargo: p.cargo_snapshot ?? "",
+          assinaturaDataUrl: await fetchSignatureAsCleanDataUrl(p.assinatura_snapshot),
+        }],
+        agruparPorEmpresa: true,
+        codigo: "FOR-SEG-INT-01",
+        revisao: "00",
+        dataDocumento: dataBR,
+      });
+      const url = pdf.output("bloburl");
+      const w = window.open(url as any, "_blank");
+      if (w) setTimeout(() => w.print(), 500);
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao imprimir");
     }
   }
 
@@ -211,35 +235,31 @@ export function EmpresaIntegracoesDialog({
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {p.assinatura_snapshot ? (
-                    <a href={p.assinatura_snapshot} target="_blank" rel="noreferrer" className="h-10 w-24 rounded bg-white/95 border border-white/20 flex items-center justify-center overflow-hidden" title="Ver assinatura">
+                    <button type="button" onClick={() => setPreview(p.assinatura_snapshot)} className="h-10 w-24 rounded bg-white/95 border border-white/20 flex items-center justify-center overflow-hidden" title="Ver assinatura">
                       <img src={p.assinatura_snapshot} alt="assinatura" className="max-h-9 max-w-[92px] object-contain" />
-                    </a>
+                    </button>
                   ) : (
                     <Badge variant="outline" className="border-amber-400 text-amber-300">S/ ASS</Badge>
                   )}
-                  <Button size="sm" variant="outline" onClick={() => setPadOpen(p.id)} title="Substituir assinatura">
-                    <PenLine className="h-3.5 w-3.5" />
+                  <Button size="sm" variant="outline" onClick={() => setPreview(p.assinatura_snapshot)} disabled={!p.assinatura_snapshot} title="Visualizar assinatura">
+                    <Eye className="h-3.5 w-3.5" />
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => baixarPdfIndividual(p)} title="Baixar PDF individual">
                     <Download className="h-3.5 w-3.5" />
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => onEditSession?.(p.integracao_id)} title="Editar sessão inteira">
-                    <Pencil className="h-3.5 w-3.5" />
+                  <Button size="sm" variant="outline" onClick={() => imprimirPdfIndividual(p)} title="Imprimir">
+                    <Printer className="h-3.5 w-3.5" />
                   </Button>
-                  <Button size="sm" variant="outline" className="text-amber-300 hover:text-amber-200"
-                    onClick={() => { if (confirm(`Remover ${p.nome_snapshot} desta integração?`)) removerParticipante.mutate(p.id); }}
-                    title="Remover participante">
-                    <Trash2 className="h-3.5 w-3.5" />
+                  <Button size="sm" variant="outline" className="text-emerald-300 hover:text-emerald-200"
+                    onClick={() => {
+                      if (confirm(`Restaurar a assinatura oficial de ${p.nome_snapshot} (a que está no perfil do funcionário)?`))
+                        restaurarOficial.mutate(p);
+                    }}
+                    title="Restaurar assinatura oficial do perfil">
+                    <RefreshCw className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>
-
-              <SignaturePadDialog
-                open={padOpen === p.id}
-                onClose={() => setPadOpen(null)}
-                onConfirm={(r) => atualizarAssinatura.mutate({ id: p.id, dataUrl: r.dataUrl })}
-                title={`Assinatura — ${p.nome_snapshot}`}
-              />
             </Card>
           ))}
         </div>
@@ -247,6 +267,17 @@ export function EmpresaIntegracoesDialog({
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
         </DialogFooter>
+
+        {preview && (
+          <Dialog open={!!preview} onOpenChange={(v) => !v && setPreview(null)}>
+            <DialogContent className="max-w-2xl bg-white">
+              <DialogHeader><DialogTitle>Assinatura</DialogTitle></DialogHeader>
+              <div className="flex items-center justify-center p-6">
+                <img src={preview} alt="assinatura" className="max-h-[60vh] max-w-full object-contain" />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </DialogContent>
     </Dialog>
   );
