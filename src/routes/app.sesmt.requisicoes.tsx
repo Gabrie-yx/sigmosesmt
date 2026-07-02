@@ -45,7 +45,7 @@ export const Route = createFileRoute("/app/sesmt/requisicoes")({
   component: RequisicoesPage,
 });
 
-type Status = "PENDENTE" | "COTADA" | "APROVADA" | "INDEFERIDA";
+type Status = "PENDENTE" | "EM_COTACAO" | "COTADA" | "APROVADA" | "INDEFERIDA";
 type Classe = "MATERIAL" | "SERVICO" | "MEDICAMENTOS";
 
 type Item = {
@@ -92,6 +92,7 @@ type Req = {
 
 const STATUS_BADGE: Record<Status, string> = {
   PENDENTE: "bg-amber-100 text-amber-800 border-amber-300",
+  EM_COTACAO: "bg-violet-100 text-violet-800 border-violet-300",
   COTADA: "bg-blue-100 text-blue-800 border-blue-300",
   APROVADA: "bg-emerald-100 text-emerald-800 border-emerald-300",
   INDEFERIDA: "bg-rose-100 text-rose-800 border-rose-300",
@@ -99,6 +100,7 @@ const STATUS_BADGE: Record<Status, string> = {
 
 const STATUS_LABEL: Record<Status, string> = {
   PENDENTE: "Em andamento",
+  EM_COTACAO: "Em cotação",
   COTADA: "Cotada",
   APROVADA: "Deferida",
   INDEFERIDA: "Indeferida",
@@ -395,7 +397,7 @@ function RequisicoesPage() {
       const { error } = await supabase
         .from("purchase_requisitions")
         .update({
-          status: p.status,
+          status: p.status as any,
           motivo_indeferimento: p.status === "INDEFERIDA" ? (p.motivo || "") : null,
           approved_by: user?.id ?? null,
           approved_at: new Date().toISOString(),
