@@ -587,10 +587,8 @@ function RequisicoesPage() {
                             <IndeferBtn onConfirm={(motivo) => updateStatus.mutate({ id: r.id, status: "INDEFERIDA", motivo })} />
                           </>
                         )}
-                        {isEditor && r.status !== "PENDENTE" && r.status !== "COTADA" && (
-                          <Button size="sm" variant="ghost" onClick={() => updateStatus.mutate({ id: r.id, status: "PENDENTE" })}>
-                            Reabrir
-                          </Button>
+                        {(r.status === "APROVADA" || r.status === "INDEFERIDA") && (
+                          <ReabrirRcBtn rcId={r.id} numero={r.numero} statusAtual={r.status} />
                         )}
                         {isEditor && (
                           <Button size="sm" variant="ghost" onClick={() => {
