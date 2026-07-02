@@ -747,12 +747,33 @@ function CompanyForm({
           pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
           const pdf = await pdfjs.getDocument({ data: buf }).promise;
           let fullText = "";
-          for (let i = 1; i <= Math.min(pdf.numPages, 3); i++) {
+          for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
             const page = await pdf.getPage(i);
             const content = await page.getTextContent();
             fullText += " " + content.items.map((it: any) => it.str ?? "").join(" ");
           }
-          const digits = extrairCNPJdeTexto(fullText);
+          let digits = extrairCNPJdeTexto(fullText);
+
+          // Fallback OCR: cartão CNPJ escaneado/gerado como imagem (comum em cópias
+          // vindas de scanner ou "Imprimir como PDF" de PDFs achatados).
+          if (!digits) {
+            try {
+              toast.info("PDF sem texto — tentando OCR (pode levar alguns segundos)…");
+              const page = await pdf.getPage(1);
+              const viewport = page.getViewport({ scale: 2 });
+              const canvas = document.createElement("canvas");
+              canvas.width = viewport.width;
+              canvas.height = viewport.height;
+              const ctx = canvas.getContext("2d")!;
+              await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+              const { recognize } = await import("tesseract.js");
+              const { data } = await recognize(canvas, "por");
+              digits = extrairCNPJdeTexto(data.text ?? "");
+            } catch (ocrErr) {
+              console.warn("[cartao-cnpj] OCR falhou:", ocrErr);
+            }
+          }
+
           if (digits) {
             const cnpjMasked = `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12,14)}`;
             // Pré-preenche o CNPJ já — mesmo que a Receita falhe, o usuário só clica em "Consultar Receita".
