@@ -1258,7 +1258,7 @@ function ReqFormDialog({
 
           {/* Linha 3: Setor | Fornecedor */}
           <div className="grid grid-cols-2 border-b border-black">
-            <FieldRow label="SETOR:" value={form.setor} onChange={(v) => setForm({ ...form, setor: v })} />
+            <SetorField value={form.setor} onChange={(v) => setForm({ ...form, setor: v })} />
             <div className="border-l border-black">
               <FieldRow label="FORNECEDOR:" value={form.fornecedor} onChange={(v) => setForm({ ...form, fornecedor: v })} />
             </div>
