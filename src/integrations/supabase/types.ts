@@ -6904,6 +6904,62 @@ export type Database = {
         }
         Relationships: []
       }
+      rc_cotacoes: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_tipo: string | null
+          arquivo_url: string
+          cnpj: string | null
+          created_at: string
+          created_by: string | null
+          fornecedor: string
+          id: string
+          is_vencedora: boolean
+          observacao: string | null
+          rc_id: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_tipo?: string | null
+          arquivo_url: string
+          cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          fornecedor: string
+          id?: string
+          is_vencedora?: boolean
+          observacao?: string | null
+          rc_id: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_tipo?: string | null
+          arquivo_url?: string
+          cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          fornecedor?: string
+          id?: string
+          is_vencedora?: boolean
+          observacao?: string | null
+          rc_id?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rc_cotacoes_rc_id_fkey"
+            columns: ["rc_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_requisitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       relatorios_investigacao_acidente: {
         Row: {
           acidente_id: string
@@ -7946,6 +8002,10 @@ export type Database = {
         Returns: undefined
       }
       current_aal: { Args: never; Returns: string }
+      enviar_rc_para_supervisor: {
+        Args: { _rc_id: string }
+        Returns: undefined
+      }
       expirar_acordos_vencidos: { Args: never; Returns: number }
       fn_dias_sem_acidente: {
         Args: { _company_id?: string }
@@ -7985,9 +8045,14 @@ export type Database = {
       is_supervisor_geral: { Args: { _user_id: string }; Returns: boolean }
       is_viewer_or_above: { Args: { _user_id: string }; Returns: boolean }
       marcar_convocacoes_vencidas: { Args: never; Returns: number }
+      marcar_cotacao_vencedora: {
+        Args: { _cotacao_id: string }
+        Returns: undefined
+      }
       mfa_ok: { Args: never; Returns: boolean }
       oss_marcar_vencidas: { Args: never; Returns: number }
       peek_proximo_numero_apr: { Args: never; Returns: string }
+      pode_gerenciar_compras: { Args: { _user_id: string }; Returns: boolean }
       pt_title_case: { Args: { s: string }; Returns: string }
       reabrir_rc: {
         Args: { _motivo: string; _rc_id: string }
