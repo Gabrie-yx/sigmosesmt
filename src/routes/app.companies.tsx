@@ -500,60 +500,70 @@ function CompaniesPage() {
         />
       ) : selected ? (
         <div className="flex-1 surface-elevated rounded-2xl border border-slate-200/70 p-8 flex flex-col overflow-hidden animate-fadeIn">
-          <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="floaty w-11 h-11 rounded-xl bg-gradient-to-br from-red-500 to-red-700 text-white flex items-center justify-center shadow-lg shadow-red-500/30">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 mb-6 border-b border-slate-100 pb-4 shrink-0">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="floaty w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-red-500 to-red-700 text-white flex items-center justify-center shadow-lg shadow-red-500/30">
                 <Building2 className="h-5 w-5" />
               </div>
-              <div>
-                <h3 className="text-2xl font-black uppercase text-[#991b1b] tracking-tighter">{selected.name}</h3>
+              <div className="min-w-0">
+                <h3 className="truncate text-xl md:text-2xl font-black uppercase text-[#991b1b] tracking-tighter">{selected.name}</h3>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1">
-                  <Shield className="h-3 w-3 text-[#991b1b]" /> Quadro de Colaboradores Catalogados: {compEmps.length}
+                  <Shield className="h-3 w-3 text-[#991b1b]" /> {compEmps.length} colaborador{compEmps.length === 1 ? "" : "es"}
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-1.5 shrink-0">
               {isEditor && (
-                <Button onClick={() => setNewEmpOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
-                  <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Novo Colaborador
+                <Button onClick={() => setNewEmpOpen(true)} size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-lg uppercase tracking-widest">
+                  <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Novo Func.
                 </Button>
               )}
               {isEditor && (
-                <label className="inline-flex items-center gap-1.5 cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
-                  <Upload className="h-3.5 w-3.5" /> Importar CSV
-                  <input
-                    type="file"
-                    accept=".csv,text/csv"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) importCSV(f);
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
+                <Button onClick={startEdit} size="sm" className="bg-[#0f172a] hover:bg-[#991b1b] text-white text-[10px] font-black rounded-lg uppercase tracking-widest">
+                  <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar
+                </Button>
               )}
-              <Button onClick={exportCSV} className="bg-slate-700 hover:bg-slate-800 text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
-                <Download className="h-3.5 w-3.5 mr-1.5" /> Exportar CSV
-              </Button>
               {!isContratante && (
                 <Button
                   onClick={() => setDossieOpen(true)}
-                  className="bg-gradient-to-br from-rose-600 to-rose-800 hover:from-rose-700 hover:to-rose-900 text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2 shadow-md shadow-rose-500/30"
+                  size="sm"
+                  className="bg-gradient-to-br from-rose-600 to-rose-800 hover:from-rose-700 hover:to-rose-900 text-white text-[10px] font-black rounded-lg uppercase tracking-widest shadow-md shadow-rose-500/30"
                 >
-                  <Shield className="h-3.5 w-3.5 mr-1.5" /> Dossiê NR-01
+                  <Shield className="h-3.5 w-3.5 mr-1.5" /> Dossiê
                 </Button>
               )}
-              {isEditor && (
-                <Button onClick={startEdit} className="bg-[#0f172a] hover:bg-[#991b1b] text-white text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
-                  <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar Empresa
-                </Button>
-              )}
-              {isAdmin && (
-                <Button onClick={startNew} variant="secondary" className="text-[10px] font-black rounded-lg uppercase tracking-widest h-auto px-4 py-2">
-                  <Plus className="h-3.5 w-3.5 mr-1.5" /> Nova Empresa
-                </Button>
-              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="h-8 w-8 p-0" title="Mais ações">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest">Dados</DropdownMenuLabel>
+                  {isEditor && (
+                    <DropdownMenuItem asChild>
+                      <label className="cursor-pointer">
+                        <Upload className="h-4 w-4 mr-2" /> Importar CSV
+                        <input
+                          type="file" accept=".csv,text/csv" className="hidden"
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) importCSV(f); e.target.value = ""; }}
+                        />
+                      </label>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={exportCSV}>
+                    <Download className="h-4 w-4 mr-2" /> Exportar CSV
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={startNew}>
+                        <Plus className="h-4 w-4 mr-2" /> Nova empresa
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -614,28 +624,30 @@ function CompaniesPage() {
                 : "bg-gradient-to-b from-red-400 to-red-600 text-white";
 
               const stop = (e: React.MouseEvent) => e.stopPropagation();
-              const tabBtn = "chip-3d px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5";
+              const tabBtn = "chip-3d px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1 shrink-0";
               return (
                 <div
                   key={emp.id}
                   onClick={() => { setSelectedTab("profile"); setSelectedEmpId(emp.id); }}
-                  className={`p-4 rounded-2xl border hover-lift cursor-pointer flex items-center justify-between group ${globalOK ? "border-slate-200/70 surface-elevated" : "border-red-200 bg-gradient-to-b from-red-50/60 to-white"}`}
+                  className={`p-4 rounded-2xl border hover-lift cursor-pointer grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 group ${globalOK ? "border-slate-200/70 surface-elevated" : "border-red-200 bg-gradient-to-b from-red-50/60 to-white"}`}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div className="avatar-ring shrink-0">
-                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg font-black text-slate-400 group-hover:text-[#991b1b] overflow-hidden">
-                        {emp.foto_url ? <img src={emp.foto_url} className="w-full h-full object-cover" alt="" /> : (emp.nome?.charAt(0) || "?")}
+                      <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center text-base font-black text-slate-400 group-hover:text-[#991b1b] overflow-hidden">
+                        {emp.foto_url
+                          ? <img src={emp.foto_url} className="w-full h-full object-cover object-[center_20%]" alt="" />
+                          : (emp.nome?.charAt(0) || "?")}
                       </div>
                     </div>
-                    <div>
-                      <h4 className="text-[11px] font-black uppercase text-slate-900">{emp.nome || "— sem nome —"}</h4>
-                      <div className="text-[9px] font-bold text-slate-500 uppercase mt-0.5 flex items-center gap-1">
-                        <IdCard className="h-3 w-3 text-slate-400" />
-                        MAT: {emp.matricula || "---"} | CPF: {emp.cpf || "---"}
+                    <div className="min-w-0">
+                      <h4 className="truncate text-[11px] font-black uppercase text-slate-900">{emp.nome || "— sem nome —"}</h4>
+                      <div className="truncate text-[9px] font-bold text-slate-500 uppercase mt-0.5 flex items-center gap-1">
+                        <IdCard className="h-3 w-3 text-slate-400 shrink-0" />
+                        <span className="truncate">MAT: {emp.matricula || "---"} · CPF: {emp.cpf || "---"}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0" onClick={stop}>
+                  <div className="flex items-center gap-1.5 shrink-0" onClick={stop}>
                     <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "health" }} onClick={stop} title="Abrir aba Saúde" className={`${tabBtn} ${badge(asoOK)}`}>
                       <HeartPulse className="h-3.5 w-3.5" /> ASO
                     </Link>
@@ -645,14 +657,14 @@ function CompaniesPage() {
                     <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "docs" }} onClick={stop} title="Abrir aba Documentos" className={`${tabBtn} ${badge(docsOK)}`}>
                       <FolderOpen className="h-3.5 w-3.5" /> DOCS
                     </Link>
-                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "epi" }} onClick={stop} title="Abrir aba EPI" className="chip-3d w-9 h-9 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center">
-                      <HardHat className="h-4 w-4" />
+                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "epi" }} onClick={stop} title="Abrir aba EPI" className={`${tabBtn} bg-gradient-to-b from-amber-400 to-amber-600 text-white`}>
+                      <HardHat className="h-3.5 w-3.5" /> EPI
                     </Link>
-                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "profile" }} onClick={stop} title="Abrir auditoria do colaborador" className={`chip-3d px-4 py-2 rounded-lg text-[10px] font-black uppercase ${globalOK ? "bg-gradient-to-b from-emerald-400 to-emerald-600" : "bg-gradient-to-b from-red-400 to-red-600"} text-white tracking-widest flex items-center gap-1.5`}>
+                    <Link to="/app/employees/$id" params={{ id: emp.id }} search={{ tab: "profile" }} onClick={stop} title="Abrir auditoria do colaborador" className={`${tabBtn} ${globalOK ? "bg-gradient-to-b from-emerald-400 to-emerald-600" : "bg-gradient-to-b from-red-400 to-red-600"} text-white`}>
                       {globalOK ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
                       {globalOK ? "APTO" : "AUDITAR"}
                     </Link>
-                    <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-[#991b1b]" />
+                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-[#991b1b] hidden xl:block" />
                   </div>
                 </div>
               );
