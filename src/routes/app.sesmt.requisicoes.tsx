@@ -579,7 +579,10 @@ function RequisicoesPage() {
                       </div>
                       <div className="flex gap-1">
                         {r.classificacao === "MEDICAMENTOS" ? (
-                          <MedEditBtn req={r} />
+                          <>
+                            <MedPdfBtns req={r} />
+                            <MedEditBtn req={r} />
+                          </>
                         ) : (
                           <>
                             <Button size="sm" variant="outline" onClick={() => emitirPdf(r, "print")}>
