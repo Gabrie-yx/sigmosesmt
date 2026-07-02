@@ -18,7 +18,7 @@ import { EmployeeDetailContent } from "./app.employees.$id";
 import { maskCNPJ } from "@/lib/masks";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { CompanyDossieDialog } from "@/components/companies/company-dossie-dialog";
-import { FileViewerHost } from "@/components/file-viewer";
+import { FileViewerHost, openFileViewer } from "@/components/file-viewer";
 import { consultarCNPJ, extrairCNPJdeTexto, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
 
 export const Route = createFileRoute("/app/companies")({
@@ -980,9 +980,32 @@ function CompanyForm({
               <input type="file" accept="application/pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadCard(f); e.target.value = ""; }} />
             </label>
             {editing?.cnpj_card_url && (
-              <a href={editing.cnpj_card_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-emerald-700 hover:text-emerald-900">
+              <button
+                type="button"
+                onClick={async () => {
+                  const url: string = editing.cnpj_card_url;
+                  const pathPart = url.split("?")[0];
+                  const name = pathPart.split("/").pop() || "cartao-cnpj";
+                  const ext = name.split(".").pop()?.toLowerCase();
+                  const mime =
+                    ext === "pdf" ? "application/pdf" :
+                    ext === "png" ? "image/png" :
+                    ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
+                    ext === "webp" ? "image/webp" : undefined;
+                  try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error("fetch");
+                    const blob = await res.blob();
+                    const objectUrl = URL.createObjectURL(blob);
+                    openFileViewer({ url: objectUrl, name, mime: blob.type || mime, downloadUrl: objectUrl, objectUrl });
+                  } catch {
+                    openFileViewer({ url, name, mime, downloadUrl: url });
+                  }
+                }}
+                className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-emerald-700 hover:text-emerald-900"
+              >
                 <FileText className="h-3.5 w-3.5" /> Ver anexo
-              </a>
+              </button>
             )}
           </div>
         </div>
