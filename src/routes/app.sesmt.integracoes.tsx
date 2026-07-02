@@ -113,40 +113,6 @@ function IntegracoesPage() {
   const totalSessoes = filtradas.length;
   const totalPart = filtradas.reduce((s: number, r: any) => s + r.integracao_participantes.length, 0);
 
-  async function exportarPdf(r: any) {
-    try {
-      const participantes = await Promise.all(
-        r.integracao_participantes.map(async (p: any) => ({
-          nome: p.nome_snapshot,
-          empresa: p.empresa_snapshot ?? "",
-          cargo: p.cargo_snapshot ?? "",
-          assinaturaDataUrl: await fetchSignatureAsCleanDataUrl(p.assinatura_snapshot),
-        })),
-      );
-      participantes.sort((a: any, b: any) => (a.empresa || "").localeCompare(b.empresa) || a.nome.localeCompare(b.nome));
-      const [y, m, d] = r.data_integracao.split("-");
-      const dataBR = `${d}/${m}/${y}`;
-      const pdf = gerarListaPresenca({
-        titulo: "INTEGRAÇÃO DE SEGURANÇA — NR-01",
-        instrutor: r.instrutor_nome,
-        assunto: "Integração de Segurança do Trabalho — conteúdo NR-01 item 1.5.7",
-        tipo: "IN COMPANY",
-        data: dataBR,
-        cargaHoraria: `${r.carga_horaria_h}h`,
-        instituicao: "DMN — SESMT",
-        local: r.local ?? "DMN — Manaus/AM",
-        participantes,
-        agruparPorEmpresa: true,
-        codigo: "FOR-SEG-INT-01",
-        revisao: "00",
-        dataDocumento: dataBR,
-      });
-      pdf.save(`integracao_${r.data_integracao}.pdf`);
-    } catch (e: any) {
-      toast.error(e.message ?? "Erro ao gerar PDF");
-    }
-  }
-
   async function exportarRelatorioPeriodo() {
     if (filtradas.length === 0) return toast.error("Sem integrações no período");
     const participantes: any[] = [];
