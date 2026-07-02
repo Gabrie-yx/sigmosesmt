@@ -397,7 +397,7 @@ function RequisicoesPage() {
       const { error } = await supabase
         .from("purchase_requisitions")
         .update({
-          status: p.status,
+          status: p.status as any,
           motivo_indeferimento: p.status === "INDEFERIDA" ? (p.motivo || "") : null,
           approved_by: user?.id ?? null,
           approved_at: new Date().toISOString(),
