@@ -163,6 +163,10 @@ const PRODUCAO_SUBMENU: LeafItem[] = [
   { to: "/app/producao/expedicao", label: "Expedição" },
 ];
 
+const COMPRAS_ITEMS: LeafItem[] = [
+  { to: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", icon: ShoppingCart },
+];
+
 const MANUTENCAO_LOCKED: LockedItem[] = [
   { key: "manut-eletrica", label: "Elétrica", icon: Zap },
   { key: "manut-mecanica", label: "Mecânica", icon: Hammer },
@@ -201,6 +205,7 @@ export function AppSidebar() {
   const canSesmt = isAdmin || hasModule("sesmt");
   const canEstoque = isAdmin || hasModule("estoque");
   const canProducao = isAdmin || hasModule("producao");
+  const canCompras = isAdmin || hasModule("compras" as any) || roles.includes("compras" as any);
   const canUsuarios = isAdmin || hasModule("usuarios");
 
   // Filtra grupos/itens pelo controle granular de menus
@@ -210,11 +215,13 @@ export function AppSidebar() {
   const visibleDDSSubmenu = DDS_SUBMENU.filter((i) => hasMenu(i.to) || i.to.startsWith("/app/dds"));
   const visibleEstoque = ESTOQUE_ITEMS.filter((i) => hasMenu(i.to));
   const visibleProducao = PRODUCAO_SUBMENU.filter((i) => hasMenu(i.to));
+  const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to));
 
   const sesmtAllItems = visibleSesmtGroups.flatMap((g) => g.items).concat(visibleDDSSubmenu);
   const sesmtOpen = anyActive(sesmtAllItems);
   const estoqueOpen = anyActive(visibleEstoque);
   const producaoOpen = anyActive(visibleProducao);
+  const comprasOpen = anyActive(visibleCompras);
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
