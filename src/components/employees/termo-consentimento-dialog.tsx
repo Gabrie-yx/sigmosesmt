@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ShieldCheck, ShieldAlert, Printer, FileSignature } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Printer, FileSignature, Eye } from "lucide-react";
 import { gerarTermoConsentimentoPDF } from "@/lib/termo-consentimento-pdf";
 import { fetchSignatureAsCleanDataUrl } from "@/lib/signature-utils";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
@@ -65,7 +65,7 @@ export function TermoConsentimentoDialog({
     queryFn: async () => {
       const { data } = await supabase
         .from("assinaturas_termos_consentimento")
-        .select("id, data_assinatura, coletado_por_nome, hash_sha256, observacoes")
+        .select("id, data_assinatura, coletado_por_nome, hash_sha256, observacoes, pdf_url, pdf_path")
         .eq("id", emp!.termo_consentimento_id!)
         .maybeSingle();
       return data as any;
@@ -120,7 +120,29 @@ export function TermoConsentimentoDialog({
         assinaturaDataUrl: sigClean,
         coletadoPorNome: (user?.user_metadata as any)?.full_name ?? user?.email ?? null,
       });
-      setPreviewName(`termo-consentimento-${(emp.nome || "func").replace(/\s+/g, "-").toLowerCase()}.pdf`);
+      const fileName = `termo-consentimento-${(emp.nome || "func").replace(/\s+/g, "-").toLowerCase()}.pdf`;
+
+      // Arquiva o PDF no Storage (bucket termos-consentimento)
+      try {
+        const blob = pdf.output("blob") as Blob;
+        const path = `${emp.id}/${row.id}.pdf`;
+        const up = await supabase.storage
+          .from("termos-consentimento")
+          .upload(path, blob, { contentType: "application/pdf", upsert: true });
+        if (!up.error) {
+          const { data: signed } = await supabase.storage
+            .from("termos-consentimento")
+            .createSignedUrl(path, 60 * 60 * 24 * 365 * 10); // 10 anos
+          await supabase
+            .from("assinaturas_termos_consentimento")
+            .update({ pdf_path: path, pdf_url: signed?.signedUrl ?? null })
+            .eq("id", row.id);
+        }
+      } catch (e) {
+        console.warn("Falha ao arquivar PDF no Storage:", e);
+      }
+
+      setPreviewName(fileName);
       setPreviewDoc(pdf);
       return row;
     },
@@ -135,8 +157,26 @@ export function TermoConsentimentoDialog({
     onError: (e: any) => toast.error(e.message ?? "Erro ao registrar termo"),
   });
 
-  const reimprimir = async () => {
+  const visualizar = async () => {
     if (!emp || !termoExistente) return;
+    const fileName = `termo-consentimento-${(emp.nome || "func").replace(/\s+/g, "-").toLowerCase()}.pdf`;
+
+    // 1) Se já existe PDF arquivado, tenta abrir o Storage (sempre gera signed URL fresca)
+    if (termoExistente.pdf_path) {
+      try {
+        const { data: signed, error } = await supabase.storage
+          .from("termos-consentimento")
+          .createSignedUrl(termoExistente.pdf_path, 60 * 60);
+        if (!error && signed?.signedUrl) {
+          window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
+          return;
+        }
+      } catch (e) {
+        console.warn("Falha ao abrir PDF arquivado, regenerando:", e);
+      }
+    }
+
+    // 2) Fallback: regenera em memória (mesmo hash/conteúdo)
     const sigClean = await fetchSignatureAsCleanDataUrl(emp.assinatura_url);
     const iso = termoExistente.data_assinatura as string;
     const pdf = gerarTermoConsentimentoPDF({
@@ -150,8 +190,29 @@ export function TermoConsentimentoDialog({
       assinaturaDataUrl: sigClean,
       coletadoPorNome: termoExistente.coletado_por_nome,
     });
-    setPreviewName(`termo-consentimento-${(emp.nome || "func").replace(/\s+/g, "-").toLowerCase()}.pdf`);
+    setPreviewName(fileName);
     setPreviewDoc(pdf);
+
+    // Arquivar retroativamente se ainda não estava salvo
+    if (!termoExistente.pdf_path) {
+      try {
+        const blob = pdf.output("blob") as Blob;
+        const path = `${emp.id}/${termoExistente.id}.pdf`;
+        const up = await supabase.storage
+          .from("termos-consentimento")
+          .upload(path, blob, { contentType: "application/pdf", upsert: true });
+        if (!up.error) {
+          const { data: signed } = await supabase.storage
+            .from("termos-consentimento")
+            .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+          await supabase
+            .from("assinaturas_termos_consentimento")
+            .update({ pdf_path: path, pdf_url: signed?.signedUrl ?? null })
+            .eq("id", termoExistente.id);
+          qc.invalidateQueries({ queryKey: ["termo-existente"] });
+        }
+      } catch {}
+    }
   };
 
   return (
@@ -260,10 +321,10 @@ export function TermoConsentimentoDialog({
           {status === "BLINDADO" && (
             <Button
               variant="outline"
-              onClick={reimprimir}
+              onClick={visualizar}
               className="border-emerald-400/50 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20 hover:text-white"
             >
-              <Printer className="h-4 w-4 mr-1" /> Reimprimir
+              <Eye className="h-4 w-4 mr-1" /> {termoExistente?.pdf_path ? "Visualizar / Baixar PDF" : "Visualizar e arquivar"}
             </Button>
           )}
           {status === "PENDENTE" && (
