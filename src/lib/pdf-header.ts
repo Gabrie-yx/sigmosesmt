@@ -108,26 +108,29 @@ export function drawPdfHeader(doc: jsPDF, opts: PdfHeaderOpts): number {
 
   // ============== Faixa de título do relatório ==============
   const titleY = instH + 1;
-  const titleH = 9;
+  const titleH = opts.subtitulo ? 12 : 9;
   doc.setFillColor(15, 23, 42);
   doc.rect(0, titleY, W, titleH, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text(opts.titulo.toUpperCase(), M, titleY + 6);
-  if (opts.subtitulo) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text(opts.subtitulo, W / 2, titleY + 6, { align: "center" });
-  }
+  const titleBaseline = opts.subtitulo ? titleY + 5 : titleY + 6;
+  doc.text(opts.titulo.toUpperCase(), M, titleBaseline);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.text(
     `Emitido em ${new Date().toLocaleString("pt-BR")}`,
     W - M,
-    titleY + 6,
+    titleBaseline,
     { align: "right" },
   );
+  if (opts.subtitulo) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(226, 232, 240);
+    doc.text(opts.subtitulo, M, titleY + 10);
+    doc.setTextColor(255, 255, 255);
+  }
 
   // ============== Metadados (linha única, fonte maior) ==============
   let y = titleY + titleH + 6;
