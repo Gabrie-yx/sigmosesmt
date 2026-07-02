@@ -89,27 +89,27 @@ export function FileViewerHost() {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
-          className="modal-glass-scope glass-card dialog-glass-shine fixed left-[50%] top-[50%] z-[121] grid w-[calc(100vw-2rem)] max-w-5xl h-[90vh] gap-0 overflow-hidden p-0 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:rounded-2xl flex flex-col"
+          className="modal-glass-scope glass-card dialog-glass-shine fixed left-[50%] top-[50%] z-[121] flex w-[calc(100vw-2rem)] max-w-5xl h-[90vh] flex-col gap-0 overflow-hidden p-0 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:rounded-2xl"
           style={{ position: "fixed", transform: "translate(-50%, -50%)" }}
         >
-        <div className="px-4 py-3 border-b flex flex-row items-center justify-between space-y-0">
-          <DialogPrimitive.Title className="text-sm font-semibold truncate pr-4">{payload?.name}</DialogPrimitive.Title>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={handlePrint}>
+        <div className="flex h-14 shrink-0 flex-row items-center justify-between gap-3 border-b border-white/10 px-4 py-2">
+          <DialogPrimitive.Title className="min-w-0 flex-1 truncate pr-2 text-sm font-semibold text-slate-100">{payload?.name}</DialogPrimitive.Title>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button size="sm" variant="outline" onClick={handlePrint} className="h-8 border-white/15 bg-white/10 text-slate-100 hover:bg-white/15 hover:text-white">
               <Printer className="h-4 w-4 mr-1" /> Imprimir
             </Button>
-            <Button size="sm" variant="outline" onClick={handleDownload}>
+            <Button size="sm" variant="outline" onClick={handleDownload} className="h-8 border-white/15 bg-white/10 text-slate-100 hover:bg-white/15 hover:text-white">
               <Download className="h-4 w-4 mr-1" /> Baixar
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => payload && window.open(payload.url, "_blank")}>
+            <Button size="icon" variant="ghost" onClick={() => payload && window.open(payload.url, "_blank")} className="h-8 w-8 text-slate-200 hover:bg-white/10 hover:text-white" title="Abrir em nova aba">
               <ExternalLink className="h-4 w-4" />
             </Button>
-            <DialogPrimitive.Close className="rounded-sm opacity-70 hover:opacity-100 ml-1">
+            <DialogPrimitive.Close className="ml-1 rounded-sm p-1 text-slate-300 opacity-80 hover:bg-white/10 hover:text-white hover:opacity-100" title="Fechar">
               <X className="h-4 w-4" />
             </DialogPrimitive.Close>
           </div>
         </div>
-        <div className="flex-1 bg-slate-100 overflow-auto">
+        <div className="min-h-0 flex-1 overflow-hidden bg-slate-100">
           {payload && (
             isImage ? (
               <div className="w-full h-full flex items-center justify-center p-4">
