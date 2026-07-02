@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, ExternalLink } from "lucide-react";
+import { Download, ExternalLink, Printer, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { printImagePages, printPdf, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
