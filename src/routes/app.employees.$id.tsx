@@ -171,7 +171,8 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
     keys.add("OS");
     return Array.from(keys);
   }, [role]);
-  const canEditHeader = isEditor || isAdmin;
+  const isDesligado = emp?.status === "DESLIGADO";
+  const canEditHeader = (isEditor || isAdmin) && !isDesligado;
   const [uploadingHeaderPhoto, setUploadingHeaderPhoto] = useState(false);
   const uploadEmployeePhotoFn = useServerFn(uploadEmployeePhoto);
   const removeEmployeePhotoFn = useServerFn(removeEmployeePhoto);
