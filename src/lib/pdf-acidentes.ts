@@ -34,7 +34,7 @@ type DiasRow = {
 function header(doc: jsPDF, titulo: string, codigo: string) {
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("SIGMO · Sistema de Gestão de SST", 14, 14);
+  doc.text("SIGMO · Sistema Integrado de Gestão Modular", 14, 14);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(`${codigo} — ${titulo}`, 14, 20);

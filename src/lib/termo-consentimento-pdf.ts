@@ -76,8 +76,8 @@ export function gerarTermoConsentimentoPDF(p: TermoConsentimentoPdfParams): jsPD
   doc.setFontSize(10);
   const body = [
     "Pelo presente instrumento, eu, identificado acima, DECLARO ter ciência de que a empresa DMN " +
-      "e suas contratadas utilizam o sistema SIGMO (Sistema Integrado de Gestão de Medicina e Segurança " +
-      "Ocupacional) para emissão de documentos internos de Saúde e Segurança do Trabalho (SST), " +
+      "e suas contratadas utilizam o sistema SIGMO (Sistema Integrado de Gestão Modular) " +
+      "para emissão de documentos internos de Saúde e Segurança do Trabalho (SST), " +
       "incluindo, sem se limitar a: Ordens de Serviço (OS/NR-01), Atestados de Saúde Ocupacional (ASO), " +
       "Fichas de Entrega de EPI, Termos de Responsabilidade, Listas de Presença de treinamentos, DDS, " +
       "Integração, APRs, PT/PTEs e demais registros do SGI.",
