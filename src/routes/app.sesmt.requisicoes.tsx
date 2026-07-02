@@ -530,7 +530,12 @@ function RequisicoesPage() {
               ) : (
                 <div className="space-y-2">
                   {filtered.map((r) => (
-                    <div key={r.id} className="border rounded-lg p-3 hover:bg-slate-50 transition flex flex-wrap items-center gap-3">
+                     <div
+                       key={r.id}
+                       className={`border rounded-lg p-3 hover:bg-slate-50 transition flex flex-wrap items-center gap-3 ${
+                         r.status === "PENDENTE" ? "animate-pulse-amber border-amber-300/70" : ""
+                       }`}
+                     >
                       <div className="flex-1 min-w-[220px]">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-slate-900 dark:text-white">Nº {r.numero}</span>
@@ -581,6 +586,7 @@ function RequisicoesPage() {
                         {r.classificacao === "MEDICAMENTOS" ? (
                           <>
                             <MedPdfBtns req={r} />
+                            <ViewBtn req={r} />
                             <MedEditBtn req={r} />
                           </>
                         ) : (
