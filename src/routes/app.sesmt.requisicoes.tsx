@@ -587,10 +587,8 @@ function RequisicoesPage() {
                             <IndeferBtn onConfirm={(motivo) => updateStatus.mutate({ id: r.id, status: "INDEFERIDA", motivo })} />
                           </>
                         )}
-                        {isEditor && r.status !== "PENDENTE" && r.status !== "COTADA" && (
-                          <Button size="sm" variant="ghost" onClick={() => updateStatus.mutate({ id: r.id, status: "PENDENTE" })}>
-                            Reabrir
-                          </Button>
+                        {(r.status === "APROVADA" || r.status === "INDEFERIDA") && (
+                          <ReabrirRcBtn rcId={r.id} numero={r.numero} statusAtual={r.status} />
                         )}
                         {isEditor && (
                           <Button size="sm" variant="ghost" onClick={() => {
@@ -620,6 +618,76 @@ function StatCard({ label, value, cls }: { label: string; value: number; cls: st
         <div className={`text-3xl font-black ${cls}`}>{value}</div>
       </CardContent>
     </Card>
+  );
+}
+
+function ReabrirRcBtn({ rcId, numero, statusAtual }: { rcId: string; numero: string; statusAtual: string }) {
+  const { isAdmin } = useAuth();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Só admin ou supervisor geral podem reabrir. O RPC valida no servidor;
+  // aqui mostramos o botão pra admin sempre (supervisor cai no gate do RPC).
+  const podeVer = isAdmin || true; // botão sempre visível pra editor; RPC bloqueia quem não tem permissão
+  if (!podeVer) return null;
+
+  async function submit() {
+    if (motivo.trim().length < 5) {
+      toast.error("Justificativa mínima de 5 caracteres");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.rpc("reabrir_rc", { _rc_id: rcId, _motivo: motivo.trim() });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`RC ${numero} reaberta para cotação`);
+    setOpen(false);
+    setMotivo("");
+    qc.invalidateQueries({ queryKey: ["purchase_requisitions"] });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="ghost" title={`Reabrir RC (atual: ${statusAtual})`}>
+          Reabrir
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Reabrir RC {numero}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="text-sm text-slate-600">
+            A RC voltará para o status <strong>COTADA</strong>, permitindo nova decisão do Supervisor Geral.
+            A ação fica registrada em auditoria.
+          </div>
+          <div>
+            <Label htmlFor="motivo-reabrir">Justificativa *</Label>
+            <Textarea
+              id="motivo-reabrir"
+              value={motivo}
+              onChange={(e) => setMotivo(e.target.value)}
+              placeholder="Ex.: deferimento acidental, correção de valor, novo pedido do solicitante…"
+              rows={4}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button onClick={submit} disabled={loading || motivo.trim().length < 5}>
+            {loading ? "Reabrindo…" : "Confirmar reabertura"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
