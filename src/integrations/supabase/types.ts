@@ -8053,7 +8053,8 @@ export type Database = {
         | "manutencao"
         | "portaria"
         | "usuarios"
-      app_role: "admin" | "tst" | "viewer" | "moderador" | "editor"
+        | "compras"
+      app_role: "admin" | "tst" | "viewer" | "moderador" | "editor" | "compras"
       extintor_status: "ATIVO" | "EM_MANUTENCAO" | "BAIXADO" | "VENCIDO"
       extintor_tipo_agente:
         | "ABC"
@@ -8215,8 +8216,9 @@ export const Constants = {
         "manutencao",
         "portaria",
         "usuarios",
+        "compras",
       ],
-      app_role: ["admin", "tst", "viewer", "moderador", "editor"],
+      app_role: ["admin", "tst", "viewer", "moderador", "editor", "compras"],
       extintor_status: ["ATIVO", "EM_MANUTENCAO", "BAIXADO", "VENCIDO"],
       extintor_tipo_agente: [
         "ABC",
