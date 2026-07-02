@@ -710,6 +710,7 @@ export type Database = {
           ip_origem: string | null
           motivo_revogacao: string | null
           observacoes: string | null
+          pdf_path: string | null
           pdf_url: string | null
           revogado_em: string | null
           revogado_por: string | null
@@ -728,6 +729,7 @@ export type Database = {
           ip_origem?: string | null
           motivo_revogacao?: string | null
           observacoes?: string | null
+          pdf_path?: string | null
           pdf_url?: string | null
           revogado_em?: string | null
           revogado_por?: string | null
@@ -746,6 +748,7 @@ export type Database = {
           ip_origem?: string | null
           motivo_revogacao?: string | null
           observacoes?: string | null
+          pdf_path?: string | null
           pdf_url?: string | null
           revogado_em?: string | null
           revogado_por?: string | null
