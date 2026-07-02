@@ -7989,6 +7989,10 @@ export type Database = {
       oss_marcar_vencidas: { Args: never; Returns: number }
       peek_proximo_numero_apr: { Args: never; Returns: string }
       pt_title_case: { Args: { s: string }; Returns: string }
+      reabrir_rc: {
+        Args: { _motivo: string; _rc_id: string }
+        Returns: undefined
+      }
       reativar_funcionario:
         | { Args: { _employee_id: string }; Returns: undefined }
         | {
