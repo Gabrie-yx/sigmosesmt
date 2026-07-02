@@ -983,7 +983,7 @@ function CompanyForm({
               <button
                 type="button"
                 onClick={async () => {
-                  const url: string = editing.cnpj_card_url;
+                  const url: string = editing.cnpj_card_url as string;
                   const pathPart = url.split("?")[0];
                   const name = pathPart.split("/").pop() || "cartao-cnpj";
                   const ext = name.split(".").pop()?.toLowerCase();
