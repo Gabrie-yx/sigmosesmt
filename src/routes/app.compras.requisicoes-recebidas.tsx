@@ -26,7 +26,7 @@ import {
   ShieldAlert, XCircle, Award, ChevronDown, ChevronUp, Truck, Clock, CreditCard, Sparkles,
   Archive, History,
 } from "lucide-react";
-import { Layers, PackageCheck, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Layers, PackageCheck, AlertTriangle, CheckCircle2, FileCheck2, Receipt } from "lucide-react";
 import {
   Building2, Wrench, Cog, Factory, Boxes, ShieldPlus, ChevronRight,
 } from "lucide-react";
@@ -76,7 +76,7 @@ type Req = {
   classificacao: "MATERIAL" | "SERVICO" | "MEDICAMENTOS";
   solicitante: string;
   setor: string | null;
-  status: "PENDENTE" | "EM_COTACAO" | "COTADA" | "APROVADA" | "INDEFERIDA";
+  status: "PENDENTE" | "EM_COTACAO" | "COTADA" | "APROVADA" | "INDEFERIDA" | "EM_RECEBIMENTO" | "CONCLUIDA";
   observacoes: string | null;
   created_at: string;
   titulo_display?: string | null;
@@ -91,6 +91,19 @@ type Req = {
   motivo_indeferimento?: string | null;
   cotacao_fornecedor?: string | null;
   cotacao_valor?: number | null;
+  pc_numero?: string | null;
+  pc_fornecedor?: string | null;
+  pc_valor?: number | null;
+  pc_prazo_entrega?: string | null;
+  pc_arquivo_url?: string | null;
+  pc_arquivo_nome?: string | null;
+  pc_emitido_por_nome?: string | null;
+  pc_emitido_em?: string | null;
+  nf_numero?: string | null;
+  nf_arquivo_url?: string | null;
+  nf_arquivo_nome?: string | null;
+  recebido_em?: string | null;
+  recebido_por_nome?: string | null;
 };
 
 type Cotacao = {
@@ -152,6 +165,8 @@ const STATUS_BADGE: Record<Req["status"], string> = {
   COTADA: "bg-blue-100 text-blue-800 border-blue-300",
   APROVADA: "bg-emerald-100 text-emerald-800 border-emerald-300",
   INDEFERIDA: "bg-rose-100 text-rose-800 border-rose-300",
+  EM_RECEBIMENTO: "bg-cyan-100 text-cyan-800 border-cyan-300",
+  CONCLUIDA: "bg-slate-200 text-slate-800 border-slate-400",
 };
 
 const STATUS_LABEL: Record<Req["status"], string> = {
@@ -160,6 +175,8 @@ const STATUS_LABEL: Record<Req["status"], string> = {
   COTADA: "Enviada ao supervisor",
   APROVADA: "Deferida",
   INDEFERIDA: "Indeferida",
+  EM_RECEBIMENTO: "PC emitido — aguardando NF",
+  CONCLUIDA: "Concluída",
 };
 
 const MOTIVOS_DISPENSA = [
@@ -190,7 +207,7 @@ function ComprasRecebidasPage() {
   const isAdmin = roles.includes("admin");
   const isCompras = isAdmin || roles.includes("compras" as any) || hasModule("compras" as any);
 
-  const [tab, setTab] = useState<"abertas" | "enviadas" | "aprovadas" | "indeferidas" | "todas">("abertas");
+  const [tab, setTab] = useState<"abertas" | "enviadas" | "aprovadas" | "recebimento" | "concluidas" | "indeferidas" | "todas">("abertas");
   const [q, setQ] = useState("");
   const [setorFilter, setSetorFilter] = useState<string>("__all");
   const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
@@ -208,12 +225,14 @@ function ComprasRecebidasPage() {
     queryFn: async () => {
       let query = supabase
         .from("purchase_requisitions")
-        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa,retroativa,retroativa_motivo,arquivada_em,decidido_em,decidido_por_nome,motivo_indeferimento,cotacao_fornecedor,cotacao_valor")
+        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa,retroativa,retroativa_motivo,arquivada_em,decidido_em,decidido_por_nome,motivo_indeferimento,cotacao_fornecedor,cotacao_valor,pc_numero,pc_fornecedor,pc_valor,pc_prazo_entrega,pc_arquivo_url,pc_arquivo_nome,pc_emitido_por_nome,pc_emitido_em,nf_numero,nf_arquivo_url,nf_arquivo_nome,recebido_em,recebido_por_nome")
         .order("created_at", { ascending: false })
         .limit(200);
       if (tab === "abertas") query = query.in("status", ["PENDENTE", "EM_COTACAO"] as any);
       if (tab === "enviadas") query = query.eq("status", "COTADA" as any);
       if (tab === "aprovadas") query = query.eq("status", "APROVADA" as any);
+      if (tab === "recebimento") query = query.eq("status", "EM_RECEBIMENTO" as any);
+      if (tab === "concluidas") query = query.eq("status", "CONCLUIDA" as any);
       if (tab === "indeferidas") query = query.eq("status", "INDEFERIDA" as any);
       if (mostrarArquivadas) {
         query = query.not("arquivada_em", "is", null);
@@ -259,6 +278,7 @@ function ComprasRecebidasPage() {
 
   const abertas = reqs.filter((r) => r.status === "PENDENTE" || r.status === "EM_COTACAO").length;
   const enviadas = reqs.filter((r) => r.status === "COTADA").length;
+  const emRecebimento = reqs.filter((r) => r.status === "EM_RECEBIMENTO").length;
 
   if (!user) return null;
   if (!isCompras) {
@@ -345,6 +365,10 @@ function ComprasRecebidasPage() {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="recebimento">
+            Em recebimento{emRecebimento > 0 ? ` (${emRecebimento})` : ""}
+          </TabsTrigger>
+          <TabsTrigger value="concluidas">Concluídas</TabsTrigger>
           <TabsTrigger value="indeferidas">Indeferidas</TabsTrigger>
           <TabsTrigger value="todas">Todas</TabsTrigger>
         </TabsList>
@@ -417,6 +441,8 @@ function SetorCard({
 function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
   const [openDetail, setOpenDetail] = useState(false);
   const [openArquivar, setOpenArquivar] = useState(false);
+  const [openEmitirPc, setOpenEmitirPc] = useState(false);
+  const [openReceber, setOpenReceber] = useState(false);
   const pulsing = req.status === "PENDENTE";
   const isRetroativa = !!req.retroativa;
   const isArquivada = !!req.arquivada_em;
@@ -458,6 +484,38 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
               <div className="mt-0.5 text-emerald-700">Próximo passo: emitir Pedido de Compra ao fornecedor.</div>
             </div>
           )}
+          {(req.status === "EM_RECEBIMENTO" || req.status === "CONCLUIDA") && req.pc_numero && (
+            <div className="text-[11px] text-cyan-900 mt-1 bg-cyan-50 border border-cyan-200 rounded px-2 py-1">
+              <div className="flex items-center gap-1"><FileCheck2 className="h-3 w-3" /> <strong>PC {req.pc_numero}</strong> · {req.pc_fornecedor ?? "—"} · {fmtMoney(req.pc_valor)}</div>
+              <div className="text-cyan-800">
+                Emitido por {req.pc_emitido_por_nome ?? "—"}{req.pc_emitido_em ? <> em {fmtBR(req.pc_emitido_em)}</> : null}
+                {req.pc_prazo_entrega ? <> · prazo {fmtBR(req.pc_prazo_entrega)}</> : null}
+              </div>
+              {req.pc_arquivo_url && (
+                <button
+                  type="button"
+                  className="mt-0.5 text-cyan-700 underline"
+                  onClick={() => openStorageFile("rc-cotacoes", req.pc_arquivo_url!)}
+                >
+                  Ver PC anexado
+                </button>
+              )}
+            </div>
+          )}
+          {req.status === "CONCLUIDA" && req.nf_numero && (
+            <div className="text-[11px] text-slate-800 mt-1 bg-slate-100 border border-slate-300 rounded px-2 py-1">
+              <div className="flex items-center gap-1"><Receipt className="h-3 w-3" /> <strong>NF {req.nf_numero}</strong> — recebida por {req.recebido_por_nome ?? "—"}{req.recebido_em ? <> em {fmtBR(req.recebido_em)}</> : null}</div>
+              {req.nf_arquivo_url && (
+                <button
+                  type="button"
+                  className="mt-0.5 text-slate-700 underline"
+                  onClick={() => openStorageFile("rc-cotacoes", req.nf_arquivo_url!)}
+                >
+                  Ver NF anexada
+                </button>
+              )}
+            </div>
+          )}
           {req.status === "INDEFERIDA" && (
             <div className="text-[11px] text-rose-800 mt-1 bg-rose-50 border border-rose-200 rounded px-2 py-1">
               <strong>✗ Indeferida</strong> por {req.decidido_por_nome ?? "supervisor"}
@@ -473,6 +531,26 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
         </Badge>
       </CardHeader>
       <CardContent className="p-3 pt-1 flex items-center justify-end gap-1">
+        {!isArquivada && req.status === "APROVADA" && (
+          <Button
+            size="sm"
+            className="bg-cyan-600 hover:bg-cyan-700 text-white"
+            onClick={() => setOpenEmitirPc(true)}
+            title="Emitir Pedido de Compra"
+          >
+            <FileCheck2 className="h-3.5 w-3.5 mr-1" /> Emitir PC
+          </Button>
+        )}
+        {!isArquivada && req.status === "EM_RECEBIMENTO" && (
+          <Button
+            size="sm"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            onClick={() => setOpenReceber(true)}
+            title="Registrar recebimento e NF"
+          >
+            <Receipt className="h-3.5 w-3.5 mr-1" /> Registrar NF
+          </Button>
+        )}
         {!isArquivada && (
           <Button
             size="sm"
@@ -495,6 +573,12 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
       )}
       {openArquivar && (
         <ArquivarDialog rcId={req.id} rcNumero={req.numero} onClose={(ok) => { setOpenArquivar(false); if (ok) onChanged(); }} />
+      )}
+      {openEmitirPc && (
+        <EmitirPcDialog req={req} onClose={(ok) => { setOpenEmitirPc(false); if (ok) onChanged(); }} />
+      )}
+      {openReceber && (
+        <RegistrarRecebimentoDialog req={req} onClose={(ok) => { setOpenReceber(false); if (ok) onChanged(); }} />
       )}
     </Card>
   );
@@ -561,6 +645,217 @@ function DesarquivarButton({ rcId, onDone }: { rcId: string; onDone: () => void 
     <Button size="sm" variant="outline" onClick={() => m.mutate()} disabled={m.isPending}>
       <Archive className="h-3.5 w-3.5 mr-1" /> {m.isPending ? "…" : "Desarquivar"}
     </Button>
+  );
+}
+
+function EmitirPcDialog({ req, onClose }: { req: Req; onClose: (ok: boolean) => void }) {
+  const { user } = useAuth();
+  const [pcNumero, setPcNumero] = useState("");
+  const [fornecedor, setFornecedor] = useState(req.cotacao_fornecedor ?? "");
+  const [valor, setValor] = useState<string>(req.cotacao_valor != null ? String(req.cotacao_valor) : "");
+  const [prazo, setPrazo] = useState<string>("");
+  const [obs, setObs] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+
+  const emitir = useMutation({
+    mutationFn: async () => {
+      if (!pcNumero.trim()) throw new Error("Informe o número do Pedido de Compra");
+      if (!fornecedor.trim()) throw new Error("Informe o fornecedor");
+      const valorNum = parseFloat((valor || "0").replace(",", "."));
+      if (!(valorNum > 0)) throw new Error("Informe o valor do PC");
+
+      let arquivo_url: string | null = null;
+      let arquivo_nome: string | null = null;
+      if (file) {
+        const safe = file.name.replace(/[^\w.\-]+/g, "_");
+        const path = `pedidos/${req.id}/${Date.now()}_${safe}`;
+        const up = await supabase.storage.from("rc-cotacoes").upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+        if (up.error) throw up.error;
+        arquivo_url = path;
+        arquivo_nome = file.name;
+      }
+
+      // Nome do responsável
+      let nome: string | null = null;
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+        nome = profile?.full_name ?? user.email ?? null;
+      }
+
+      const { error } = await supabase
+        .from("purchase_requisitions")
+        .update({
+          status: "EM_RECEBIMENTO" as any,
+          pc_numero: pcNumero.trim(),
+          pc_fornecedor: fornecedor.trim(),
+          pc_valor: valorNum,
+          pc_prazo_entrega: prazo || null,
+          pc_arquivo_url: arquivo_url,
+          pc_arquivo_nome: arquivo_nome,
+          pc_observacoes: obs.trim() || null,
+          pc_emitido_por_id: user?.id ?? null,
+          pc_emitido_por_nome: nome,
+          pc_emitido_em: new Date().toISOString(),
+        } as any)
+        .eq("id", req.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`PC emitido para RC ${req.numero}`);
+      onClose(true);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao emitir PC"),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(false); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileCheck2 className="h-5 w-5 text-cyan-700" /> Emitir Pedido de Compra — RC {req.numero}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="sm:col-span-2 text-xs bg-emerald-50 border border-emerald-200 rounded px-2 py-1 text-emerald-900">
+            Deferida pelo supervisor. Preencha os dados do PC para acompanhar o recebimento.
+          </div>
+          <div>
+            <Label htmlFor="pc-num">Nº do Pedido de Compra</Label>
+            <Input id="pc-num" value={pcNumero} onChange={(e) => setPcNumero(e.target.value)} placeholder="Ex.: PC-2026-0123" />
+          </div>
+          <div>
+            <Label htmlFor="pc-forn">Fornecedor</Label>
+            <Input id="pc-forn" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="pc-valor">Valor total (R$)</Label>
+            <Input id="pc-valor" inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" />
+          </div>
+          <div>
+            <Label htmlFor="pc-prazo">Prazo de entrega</Label>
+            <Input id="pc-prazo" type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} />
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="pc-file">Anexar PC (PDF/imagem) — opcional</Label>
+            <Input id="pc-file" type="file" accept="application/pdf,image/*"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="pc-obs">Observações</Label>
+            <Textarea id="pc-obs" rows={2} value={obs} onChange={(e) => setObs(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onClose(false)}>Cancelar</Button>
+          <Button
+            className="bg-cyan-600 hover:bg-cyan-700 text-white"
+            onClick={() => emitir.mutate()}
+            disabled={emitir.isPending}
+          >
+            {emitir.isPending ? "Emitindo…" : "Emitir e enviar para recebimento"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RegistrarRecebimentoDialog({ req, onClose }: { req: Req; onClose: (ok: boolean) => void }) {
+  const { user } = useAuth();
+  const [nfNumero, setNfNumero] = useState("");
+  const [obs, setObs] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+
+  const receber = useMutation({
+    mutationFn: async () => {
+      if (!nfNumero.trim()) throw new Error("Informe o número da Nota Fiscal");
+
+      let arquivo_url: string | null = null;
+      let arquivo_nome: string | null = null;
+      if (file) {
+        const safe = file.name.replace(/[^\w.\-]+/g, "_");
+        const path = `notas/${req.id}/${Date.now()}_${safe}`;
+        const up = await supabase.storage.from("rc-cotacoes").upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+        if (up.error) throw up.error;
+        arquivo_url = path;
+        arquivo_nome = file.name;
+      }
+
+      let nome: string | null = null;
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+        nome = profile?.full_name ?? user.email ?? null;
+      }
+
+      const { error } = await supabase
+        .from("purchase_requisitions")
+        .update({
+          status: "CONCLUIDA" as any,
+          nf_numero: nfNumero.trim(),
+          nf_arquivo_url: arquivo_url,
+          nf_arquivo_nome: arquivo_nome,
+          nf_observacoes: obs.trim() || null,
+          recebido_em: new Date().toISOString(),
+          recebido_por_id: user?.id ?? null,
+          recebido_por_nome: nome,
+        } as any)
+        .eq("id", req.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`RC ${req.numero} concluída — NF registrada`);
+      onClose(true);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao registrar recebimento"),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(false); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Receipt className="h-5 w-5 text-emerald-700" /> Registrar Recebimento — RC {req.numero}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 text-sm">
+          <div className="text-xs bg-cyan-50 border border-cyan-200 rounded px-2 py-1 text-cyan-900">
+            <strong>PC {req.pc_numero ?? "—"}</strong> · {req.pc_fornecedor ?? "—"} · {fmtMoney(req.pc_valor)}
+          </div>
+          <div>
+            <Label htmlFor="nf-num">Nº da Nota Fiscal</Label>
+            <Input id="nf-num" value={nfNumero} onChange={(e) => setNfNumero(e.target.value)} placeholder="Ex.: 123456" />
+          </div>
+          <div>
+            <Label htmlFor="nf-file">Anexar NF (PDF/XML/imagem) — opcional</Label>
+            <Input id="nf-file" type="file" accept="application/pdf,application/xml,text/xml,image/*"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          </div>
+          <div>
+            <Label htmlFor="nf-obs">Observações do recebimento</Label>
+            <Textarea id="nf-obs" rows={3} value={obs} onChange={(e) => setObs(e.target.value)}
+              placeholder="Divergência de quantidade, avaria, entrega parcial etc." />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onClose(false)}>Cancelar</Button>
+          <Button
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            onClick={() => receber.mutate()}
+            disabled={receber.isPending}
+          >
+            {receber.isPending ? "Registrando…" : "Concluir RC"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
