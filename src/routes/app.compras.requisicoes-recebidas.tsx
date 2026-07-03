@@ -278,6 +278,7 @@ function ComprasRecebidasPage() {
 
   const abertas = reqs.filter((r) => r.status === "PENDENTE" || r.status === "EM_COTACAO").length;
   const enviadas = reqs.filter((r) => r.status === "COTADA").length;
+  const emRecebimento = reqs.filter((r) => r.status === "EM_RECEBIMENTO").length;
 
   if (!user) return null;
   if (!isCompras) {
@@ -364,6 +365,10 @@ function ComprasRecebidasPage() {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="recebimento">
+            Em recebimento{emRecebimento > 0 ? ` (${emRecebimento})` : ""}
+          </TabsTrigger>
+          <TabsTrigger value="concluidas">Concluídas</TabsTrigger>
           <TabsTrigger value="indeferidas">Indeferidas</TabsTrigger>
           <TabsTrigger value="todas">Todas</TabsTrigger>
         </TabsList>
