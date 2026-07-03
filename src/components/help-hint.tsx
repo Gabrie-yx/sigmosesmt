@@ -83,7 +83,7 @@ export function HelpHint({
             </Link>
             {t.rota && (
               <Link
-                to={t.rota}
+                to={t.rota as any}
                 className="text-[11px] font-semibold text-muted-foreground hover:text-foreground"
               >
                 Ir para tela →
