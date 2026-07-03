@@ -36,6 +36,9 @@ import { SupplierPicker, type SupplierLite } from "@/components/compras/supplier
 import { StarRating } from "@/components/compras/star-rating";
 import { cn } from "@/lib/utils";
 import { useNovasDecisoesCompras } from "@/hooks/use-compras-novas-decisoes";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { gerarPdfRequisicaoDoc, rcPdfFileName, type RcPdfReq } from "@/lib/requisicao-compra-pdf";
+import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/compras/requisicoes-recebidas")({
   component: ComprasRecebidasPage,
@@ -452,6 +455,41 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
   const [openReceber, setOpenReceber] = useState(false);
   const [openRecotar, setOpenRecotar] = useState(false);
   const [openDevolver, setOpenDevolver] = useState(false);
+  const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
+  const [openPreview, setOpenPreview] = useState(false);
+  const [loadingPdf, setLoadingPdf] = useState(false);
+
+  async function handleVisualizar() {
+    if (loadingPdf) return;
+    setLoadingPdf(true);
+    try {
+      const [{ data: full, error: e1 }, { data: itens, error: e2 }] = await Promise.all([
+        supabase
+          .from("purchase_requisitions")
+          .select(
+            "id,numero,titulo,data_requisicao,classificacao,solicitante,setor,fornecedor,obra_construcao,obra_manutencao,codigo_formulario,revisao,data_revisao,pagina,status,motivo_indeferimento,signature_solicitante",
+          )
+          .eq("id", req.id)
+          .maybeSingle(),
+        supabase
+          .from("purchase_requisition_items")
+          .select("item_numero,descricao,quantidade,unidade,observacao")
+          .eq("requisition_id", req.id)
+          .order("item_numero"),
+      ]);
+      if (e1) throw e1;
+      if (e2) throw e2;
+      if (!full) throw new Error("RC não encontrada");
+      const doc = await gerarPdfRequisicaoDoc(full as unknown as RcPdfReq, itens ?? []);
+      setPdfDoc(doc);
+      setOpenPreview(true);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao gerar o PDF da RC");
+    } finally {
+      setLoadingPdf(false);
+    }
+  }
+
   const pulsing = req.status === "PENDENTE";
   const isRetroativa = !!req.retroativa;
   const isArquivada = !!req.arquivada_em;
@@ -609,6 +647,16 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
         {isArquivada && (
           <DesarquivarButton rcId={req.id} onDone={onChanged} />
         )}
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleVisualizar}
+          disabled={loadingPdf}
+          title="Visualizar / Imprimir / Baixar PDF da RC"
+        >
+          <FileText className="h-3.5 w-3.5 mr-1" />
+          {loadingPdf ? "Gerando…" : "Visualizar"}
+        </Button>
         <Button size="sm" variant="outline" onClick={() => setOpenDetail(true)}>
           <Eye className="h-3.5 w-3.5 mr-1" /> Abrir
         </Button>
@@ -631,6 +679,13 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
       {openDevolver && (
         <DevolverDialog req={req} onClose={(ok) => { setOpenDevolver(false); if (ok) onChanged(); }} />
       )}
+      <PDFPreviewDialog
+        open={openPreview}
+        onClose={() => { setOpenPreview(false); setPdfDoc(null); }}
+        doc={pdfDoc}
+        fileName={rcPdfFileName(req)}
+        title={`RC ${req.numero}`}
+      />
     </Card>
   );
 }
