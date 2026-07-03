@@ -225,6 +225,23 @@ function ComprasRecebidasPage() {
     });
   }, [reqs, q, setorFilter]);
 
+  const grupos = useMemo(() => {
+    const map = new Map<string, Req[]>();
+    for (const r of filtered) {
+      const key = r.setor?.trim() || "Sem setor";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(r);
+    }
+    return Array.from(map.entries()).sort(([a], [b]) => {
+      const ia = SETORES.indexOf(a as any);
+      const ib = SETORES.indexOf(b as any);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [filtered]);
+
   const abertas = reqs.filter((r) => r.status === "PENDENTE" || r.status === "EM_COTACAO").length;
   const enviadas = reqs.filter((r) => r.status === "COTADA").length;
 
