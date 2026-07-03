@@ -1,6 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useNovasDecisoesCompras } from "@/hooks/use-compras-novas-decisoes";
+import { useMinhasRcsDecididas } from "@/hooks/use-minhas-rcs-decididas";
 import {
   Sidebar,
   SidebarContent,
@@ -300,6 +301,9 @@ export function AppSidebar() {
                                 <Link to={item.to}>
                                   <Icon />
                                   <span>{item.label}</span>
+                                  {item.to === "/app/sesmt/requisicoes" && (
+                                    <MinhasRcsBadge />
+                                  )}
                                 </Link>
                               </SidebarMenuButton>
                               {group.title === "Executar" && item.to === "/app/dds" && (
@@ -599,6 +603,19 @@ function ComprasNovasBadge() {
     <span
       className="ml-auto inline-flex min-w-[1.25rem] h-5 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white shadow-sm"
       title={`${count} decisão(ões) nova(s) do supervisor`}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
+function MinhasRcsBadge() {
+  const { count } = useMinhasRcsDecididas();
+  if (!count) return null;
+  return (
+    <span
+      className="ml-auto inline-flex min-w-[1.25rem] h-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-sm"
+      title={`${count} atualização(ões) nas suas requisições`}
     >
       {count > 99 ? "99+" : count}
     </span>
