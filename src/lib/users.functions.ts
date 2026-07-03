@@ -2,9 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { appModuleSchema, managedAppRoleSchema } from "@/lib/access-control";
 
-const MODULES = ["sesmt", "estoque", "producao", "manutencao", "portaria", "usuarios"] as const;
-const ROLES = ["admin", "moderador", "editor", "viewer"] as const;
 const INVITE_REDIRECT_PATH = "/reset-password";
 
 function resolveInviteRedirect(redirectTo: string) {
@@ -59,8 +58,8 @@ export const inviteUser = createServerFn({ method: "POST" })
     z.object({
       email: z.string().email().max(254),
       full_name: z.string().min(2).max(120),
-      role: z.enum(ROLES),
-      modules: z.array(z.enum(MODULES)).default([]),
+      role: managedAppRoleSchema,
+      modules: z.array(appModuleSchema).default([]),
       redirect_to: z.string().url(),
     })
   )
@@ -132,7 +131,7 @@ export const cancelInvite = createServerFn({ method: "POST" })
 
 export const updateUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(z.object({ user_id: z.string().uuid(), role: z.enum(ROLES) }))
+  .inputValidator(z.object({ user_id: z.string().uuid(), role: managedAppRoleSchema }))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertAdmin(context.supabase, context.userId);
@@ -155,7 +154,7 @@ export const updateUserModules = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       user_id: z.string().uuid(),
-      modules: z.array(z.enum(MODULES)),
+      modules: z.array(appModuleSchema),
     })
   )
   .handler(async ({ data, context }) => {

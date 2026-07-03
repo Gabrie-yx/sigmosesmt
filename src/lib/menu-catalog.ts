@@ -1,4 +1,4 @@
-import type { AppModule } from "@/hooks/use-auth";
+import { APP_MODULES, moduleLabel, type AppModule } from "@/lib/access-control";
 
 export type MenuEntry = {
   key: string; // = rota base (ex.: "/app/aprs"). Funciona como identificador único.
@@ -6,16 +6,8 @@ export type MenuEntry = {
   module: AppModule;
 };
 
-// Labels amigáveis por módulo. Ao criar um módulo novo, adicione aqui.
-export const MODULE_LABELS: Record<AppModule, string> = {
-  sesmt: "SESMT",
-  estoque: "Estoque",
-  producao: "Produção",
-  manutencao: "Manutenção",
-  portaria: "Portaria",
-  usuarios: "Usuários",
-  compras: "Compras",
-};
+// Labels amigáveis por módulo. Fonte única: access-control.ts.
+export const MODULE_LABELS = APP_MODULES;
 
 // Fonte única de verdade dos menus controláveis por permissão granular.
 // Chave = rota base. Tem que bater com o que aparece na sidebar e no guard.
@@ -86,7 +78,7 @@ export const AVAILABLE_MODULES: { value: AppModule; label: string }[] = (() => {
   for (const m of MENU_CATALOG) {
     if (seen.has(m.module)) continue;
     seen.add(m.module);
-    out.push({ value: m.module, label: MODULE_LABELS[m.module] ?? m.module });
+    out.push({ value: m.module, label: moduleLabel(m.module) });
   }
   return out;
 })();

@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { MENU_BY_KEY } from "@/lib/menu-catalog";
+import type { AppModule, AppRole } from "@/lib/access-control";
 
-export type AppRole = "admin" | "moderador" | "editor" | "viewer" | "tst" | "compras";
-export type AppModule = "sesmt" | "estoque" | "producao" | "manutencao" | "portaria" | "usuarios" | "compras";
+export type { AppModule, AppRole };
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -95,7 +95,7 @@ export function useAuth() {
 
   const isAdmin = roles.includes("admin");
   const isModerator = isAdmin || roles.includes("moderador");
-  const isEditor = isModerator || roles.includes("editor") || roles.includes("tst");
+  const isEditor = isModerator || roles.includes("editor") || roles.includes("tst") || roles.includes("compras");
   // MFA obrigatório pra qualquer usuário com papel (regra de 03/07/2026).
   const requiresMfa = roles.length > 0;
   const graceActive = !!(mfaGraceUntil && mfaGraceUntil.getTime() > Date.now());

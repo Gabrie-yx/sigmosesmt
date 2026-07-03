@@ -40,17 +40,13 @@ import {
 } from "@/lib/users.functions";
 import { createInvestorAccess } from "@/lib/temp-investors.functions";
 import { MENU_CATALOG, MENU_BY_KEY, menusForModule, AVAILABLE_MODULES } from "@/lib/menu-catalog";
+import { APP_ROLES, moduleLabel } from "@/lib/access-control";
 
 export const Route = createFileRoute("/app/users")({
   component: UsersPage,
 });
 
-const ROLES = [
-  { value: "admin", label: "Administrador", desc: "Acesso total + gerencia usuários (MFA obrigatório)" },
-  { value: "moderador", label: "Moderador", desc: "Edita + aprova/revoga ações sensíveis (MFA obrigatório)" },
-  { value: "editor", label: "Editor", desc: "Cria e edita registros nos módulos liberados" },
-  { value: "viewer", label: "Visualizador", desc: "Somente leitura nos módulos liberados" },
-] as const;
+const ROLES = Object.entries(APP_ROLES).map(([value, meta]) => ({ value, ...meta }));
 
 // Derivado do catálogo de menus: módulos novos aparecem automaticamente.
 const MODULES = AVAILABLE_MODULES;
@@ -61,8 +57,14 @@ function roleLabel(r: string) {
 function roleVariant(r: string): "default" | "destructive" | "secondary" | "outline" {
   if (r === "admin") return "destructive";
   if (r === "moderador") return "default";
+  if (r === "compras") return "default";
   if (r === "editor") return "secondary";
   return "outline";
+}
+
+function normalizeModulesForRole(role: string, modules: string[]) {
+  if (role !== "compras" || modules.includes("compras")) return modules;
+  return [...modules, "compras"];
 }
 
 function UsersPage() {
@@ -154,13 +156,13 @@ function UsersPage() {
           email: fEmail,
           full_name: fName,
           role: fRole as any,
-          modules: fModules as any,
+          modules: normalizeModulesForRole(fRole, fModules) as any,
           redirect_to: `${window.location.origin}/reset-password`,
         },
       });
       toast.success("Convite enviado por e-mail");
       setInviteOpen(false);
-      setFName(""); setFEmail(""); setFRole("editor"); setFModules(["sesmt"]);
+      setFName(""); setFEmail(""); setFRole("editor"); setFModules(["sesmt"]); setFMenus([]);
       qc.invalidateQueries({ queryKey: ["users-admin"] });
     } catch (e: any) {
       toast.error(e.message ?? "Falha ao convidar");
@@ -171,8 +173,9 @@ function UsersPage() {
     if (!editing) return;
     setSubmitting(true);
     try {
+      const normalizedModules = normalizeModulesForRole(fRole, fModules);
       await updateRoleFn({ data: { user_id: editing.id, role: fRole as any } });
-      await updateModulesFn({ data: { user_id: editing.id, modules: fModules as any } });
+      await updateModulesFn({ data: { user_id: editing.id, modules: normalizedModules as any } });
       // Salva também os menus granulares (vazio = libera tudo dentro dos módulos)
       await updateMenusFn({ data: { user_id: editing.id, menus: fMenus } });
       toast.success("Usuário atualizado");
@@ -595,7 +598,7 @@ function UsersPage() {
                       <div key={mod} className="border rounded p-2">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                            {MODULES.find((x) => x.value === mod)?.label ?? mod}
+                            {moduleLabel(mod)}
                           </span>
                           <button type="button" className="text-[11px] underline text-blue-700"
                             onClick={() => toggleAllMenusOfModule(mod, !allOn)}>
