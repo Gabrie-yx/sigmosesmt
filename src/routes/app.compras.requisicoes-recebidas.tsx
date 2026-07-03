@@ -647,6 +647,16 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
         {isArquivada && (
           <DesarquivarButton rcId={req.id} onDone={onChanged} />
         )}
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleVisualizar}
+          disabled={loadingPdf}
+          title="Visualizar / Imprimir / Baixar PDF da RC"
+        >
+          <FileText className="h-3.5 w-3.5 mr-1" />
+          {loadingPdf ? "Gerando…" : "Visualizar"}
+        </Button>
         <Button size="sm" variant="outline" onClick={() => setOpenDetail(true)}>
           <Eye className="h-3.5 w-3.5 mr-1" /> Abrir
         </Button>
@@ -669,6 +679,13 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
       {openDevolver && (
         <DevolverDialog req={req} onClose={(ok) => { setOpenDevolver(false); if (ok) onChanged(); }} />
       )}
+      <PDFPreviewDialog
+        open={openPreview}
+        onClose={() => { setOpenPreview(false); setPdfDoc(null); }}
+        doc={pdfDoc}
+        fileName={rcPdfFileName(req)}
+        title={`RC ${req.numero}`}
+      />
     </Card>
   );
 }
