@@ -74,14 +74,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "SIGMO — Sistema Integrado de Gestão Modular | Estaleiro DMN" },
+      { name: "description", content: "SIGMO: plataforma de SST, produção e compras do Estaleiro DMN da Amazônia. Gestão integrada de NR-33/34/35, PGR, PCMSO, APRs, PETs e requisições de compra." },
+      { name: "author", content: "Estaleiro DMN" },
+      { property: "og:site_name", content: "SIGMO — Estaleiro DMN" },
+      { property: "og:title", content: "SIGMO — Sistema Integrado de Gestão Modular" },
+      { property: "og:description", content: "Plataforma de SST, produção e compras do Estaleiro DMN da Amazônia." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "SIGMO — Estaleiro DMN" },
+      { name: "twitter:description", content: "Plataforma de SST, produção e compras do Estaleiro DMN da Amazônia." },
     ],
     links: [
       {
