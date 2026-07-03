@@ -6,6 +6,17 @@ export type MenuEntry = {
   module: AppModule;
 };
 
+// Labels amigáveis por módulo. Ao criar um módulo novo, adicione aqui.
+export const MODULE_LABELS: Record<AppModule, string> = {
+  sesmt: "SESMT",
+  estoque: "Estoque",
+  producao: "Produção",
+  manutencao: "Manutenção",
+  portaria: "Portaria",
+  usuarios: "Usuários",
+  compras: "Compras",
+};
+
 // Fonte única de verdade dos menus controláveis por permissão granular.
 // Chave = rota base. Tem que bater com o que aparece na sidebar e no guard.
 export const MENU_CATALOG: MenuEntry[] = [
@@ -51,7 +62,8 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/producao/fatores-consumo", label: "Fatores de Consumo", module: "producao" },
 
   // ----- COMPRAS -----
-  { key: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", module: "compras" as any },
+  { key: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", module: "compras" },
+  { key: "/app/compras/fornecedores", label: "Fornecedores", module: "compras" },
 
   // ----- USUÁRIOS -----
   { key: "/app/users", label: "Usuários", module: "usuarios" },
@@ -65,6 +77,19 @@ export const MENU_BY_KEY: Record<string, MenuEntry> = Object.fromEntries(
 export function menusForModule(module: AppModule): MenuEntry[] {
   return MENU_CATALOG.filter((m) => m.module === module);
 }
+
+// Lista de módulos disponíveis derivada do catálogo — qualquer módulo novo
+// que tenha ao menos 1 menu aparece automaticamente no diálogo de convite.
+export const AVAILABLE_MODULES: { value: AppModule; label: string }[] = (() => {
+  const seen = new Set<AppModule>();
+  const out: { value: AppModule; label: string }[] = [];
+  for (const m of MENU_CATALOG) {
+    if (seen.has(m.module)) continue;
+    seen.add(m.module);
+    out.push({ value: m.module, label: MODULE_LABELS[m.module] ?? m.module });
+  }
+  return out;
+})();
 
 // Resolve qual menu_key corresponde a uma rota (faz prefix match com o key mais longo).
 export function menuKeyForPath(pathname: string): string | null {
