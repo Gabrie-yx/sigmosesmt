@@ -288,6 +288,11 @@ export const adminResetUserPassword = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
       password: data.new_password,
+      // Se o usuário foi criado por convite e ainda não clicou no link,
+      // email_confirmed_at está nulo — o login com senha falharia com
+      // "Invalid credentials". Confirmar aqui garante acesso imediato
+      // quando o admin define a senha manualmente.
+      email_confirm: true,
     });
     if (error) throw new Error(error.message);
     await logAdminEvent(supabaseAdmin, {
