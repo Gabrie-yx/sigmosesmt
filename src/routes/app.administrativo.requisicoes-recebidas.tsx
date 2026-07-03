@@ -131,6 +131,7 @@ function AdministrativoRecebidasPage() {
         .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,status_token,cotacao_fornecedor,cotacao_valor,cotador_nome,pego_por_compras_nome,motivo_indeferimento,decidido_por_nome,decidido_em,cotacao_at,dispensa_cotacao")
         .in("status", ["COTADA", "APROVADA", "INDEFERIDA"] as any)
         .or("cotacao_at.not.is.null,cotador_nome.not.is.null,pego_por_compras_nome.not.is.null,dispensa_cotacao.is.true")
+        .is("arquivada_em", null)
         .order("created_at", { ascending: false })
         .limit(300);
       if (error) throw error;

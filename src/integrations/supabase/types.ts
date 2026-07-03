@@ -6842,6 +6842,10 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          arquivada_em: string | null
+          arquivada_por: string | null
+          arquivada_por_nome: string | null
+          arquivamento_motivo: string | null
           classificacao: Database["public"]["Enums"]["purchase_req_class"]
           codigo_formulario: string | null
           cotacao_at: string | null
@@ -6879,6 +6883,8 @@ export type Database = {
           pego_por_compras_nome: string | null
           responsavel_aprovador: string | null
           responsavel_tst: string | null
+          retroativa: boolean
+          retroativa_motivo: string | null
           revisao: string | null
           setor: string | null
           signature_solicitante: string | null
@@ -6892,6 +6898,10 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          arquivada_em?: string | null
+          arquivada_por?: string | null
+          arquivada_por_nome?: string | null
+          arquivamento_motivo?: string | null
           classificacao?: Database["public"]["Enums"]["purchase_req_class"]
           codigo_formulario?: string | null
           cotacao_at?: string | null
@@ -6929,6 +6939,8 @@ export type Database = {
           pego_por_compras_nome?: string | null
           responsavel_aprovador?: string | null
           responsavel_tst?: string | null
+          retroativa?: boolean
+          retroativa_motivo?: string | null
           revisao?: string | null
           setor?: string | null
           signature_solicitante?: string | null
@@ -6942,6 +6954,10 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          arquivada_em?: string | null
+          arquivada_por?: string | null
+          arquivada_por_nome?: string | null
+          arquivamento_motivo?: string | null
           classificacao?: Database["public"]["Enums"]["purchase_req_class"]
           codigo_formulario?: string | null
           cotacao_at?: string | null
@@ -6979,6 +6995,8 @@ export type Database = {
           pego_por_compras_nome?: string | null
           responsavel_aprovador?: string | null
           responsavel_tst?: string | null
+          retroativa?: boolean
+          retroativa_motivo?: string | null
           revisao?: string | null
           setor?: string | null
           signature_solicitante?: string | null
@@ -8216,6 +8234,10 @@ export type Database = {
         Args: { _epi_id: string; _novo_saldo: number }
         Returns: undefined
       }
+      arquivar_rc: {
+        Args: { _motivo: string; _rc_id: string }
+        Returns: undefined
+      }
       calcular_scores_rc: { Args: { _rc_id: string }; Returns: undefined }
       can_approve_acordo: { Args: { _user_id: string }; Returns: boolean }
       cancelar_os: {
@@ -8223,6 +8245,7 @@ export type Database = {
         Returns: undefined
       }
       current_aal: { Args: never; Returns: string }
+      desarquivar_rc: { Args: { _rc_id: string }; Returns: undefined }
       devolver_rc_para_cotacao: {
         Args: { _motivo: string; _rc_id: string }
         Returns: undefined
