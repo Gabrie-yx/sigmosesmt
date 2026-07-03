@@ -138,33 +138,6 @@ function CentralAjuda() {
   );
 }
 
-function TabBtn({
-  active,
-  onClick,
-  icon: Icon,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: typeof BookOpen;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={
-        "px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors inline-flex items-center " +
-        (active
-          ? "border-rose-700 text-rose-800"
-          : "border-transparent text-muted-foreground hover:text-foreground")
-      }
-    >
-      <Icon className="h-4 w-4 mr-1.5" />
-      {children}
-    </button>
-  );
-}
-
 function TopicosView({
   query,
   setQuery,
