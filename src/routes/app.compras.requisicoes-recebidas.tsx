@@ -20,10 +20,12 @@ import {
 } from "@/components/ui/tabs";
 import {
   Package, ShoppingCart, Upload, Trash2, Eye, Trophy, Send, Filter, Search, FileText, DollarSign,
-  ShieldAlert, XCircle,
+  ShieldAlert, XCircle, Award, ChevronDown, ChevronUp, Truck, Clock, CreditCard, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { openStorageFile } from "@/components/file-viewer";
+import { SupplierPicker, type SupplierLite } from "@/components/compras/supplier-picker";
+import { StarRating } from "@/components/compras/star-rating";
 
 export const Route = createFileRoute("/app/compras/requisicoes-recebidas")({
   component: ComprasRecebidasPage,
@@ -59,6 +61,7 @@ type Cotacao = {
   id: string;
   rc_id: string;
   fornecedor: string;
+  fornecedor_id: string | null;
   cnpj: string | null;
   valor: number;
   arquivo_url: string;
@@ -67,6 +70,14 @@ type Cotacao = {
   is_vencedora: boolean;
   observacao: string | null;
   created_at: string;
+  prazo_entrega_dias: number | null;
+  condicao_pagamento: string | null;
+  frete: string | null;
+  validade: string | null;
+  score_total: number | null;
+  score_breakdown: any;
+  ranking: number | null;
+  is_melhor_oferta: boolean;
 };
 
 type Item = {
