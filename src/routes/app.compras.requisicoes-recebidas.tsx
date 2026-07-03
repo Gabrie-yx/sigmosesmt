@@ -903,7 +903,6 @@ function AddCotacaoDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [supplier, setSupplier] = useState<SupplierLite | null>(null);
-  const [valor, setValor] = useState("");
   const [prazo, setPrazo] = useState("");
   const [pgto, setPgto] = useState("");
   const [frete, setFrete] = useState<"CIF" | "FOB" | "">("");
@@ -911,11 +910,59 @@ function AddCotacaoDialog({
   const [obs, setObs] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const [itensCot, setItensCot] = useState<Record<string, {
+    valor_unitario: string;
+    conformidade: "CONFORME" | "SIMILAR" | "DIVERGENTE" | "NAO_COTADO";
+    descricao_ofertada: string;
+    marca: string;
+    justificativa: string;
+  }>>({});
+
+  // Carrega itens da RC ao abrir
+  const { data: itensRc = [] } = useQuery({
+    queryKey: ["rc-items-form", rcId, open],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("purchase_requisition_items")
+        .select("id,item_numero,descricao,quantidade,unidade")
+        .eq("requisition_id", rcId)
+        .order("item_numero");
+      if (error) throw error;
+      return (data ?? []) as { id: string; item_numero: number; descricao: string; quantidade: number | null; unidade: string | null }[];
+    },
+  });
+
+  // Inicializa mapa de itens quando carrega
+  useMemo(() => {
+    if (open && itensRc.length > 0 && Object.keys(itensCot).length === 0) {
+      const next: typeof itensCot = {};
+      for (const i of itensRc) {
+        next[i.id] = {
+          valor_unitario: "",
+          conformidade: "CONFORME",
+          descricao_ofertada: i.descricao,
+          marca: "",
+          justificativa: "",
+        };
+      }
+      setItensCot(next);
+    }
+  }, [open, itensRc]);
+
+  const totalCotacao = useMemo(() => {
+    return itensRc.reduce((sum, i) => {
+      const st = itensCot[i.id];
+      if (!st || st.conformidade === "NAO_COTADO") return sum;
+      const v = Number(String(st.valor_unitario).replace(",", "."));
+      const q = i.quantidade ?? 0;
+      return sum + (Number.isFinite(v) ? v * q : 0);
+    }, 0);
+  }, [itensRc, itensCot]);
 
   async function submit() {
-    const val = Number(String(valor).replace(",", "."));
     if (!supplier) return toast.error("Selecione um fornecedor");
-    if (!Number.isFinite(val) || val < 0) return toast.error("Valor inválido");
+    if (totalCotacao <= 0) return toast.error("Preencha o valor unitário de ao menos 1 item");
     if (!file) return toast.error("Anexe o arquivo da cotação (PDF ou JPG)");
     const allowed = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
     if (!allowed.includes(file.type)) return toast.error("Arquivo deve ser PDF ou imagem (JPG/PNG/WEBP)");
@@ -930,12 +977,12 @@ function AddCotacaoDialog({
       });
       if (up.error) throw up.error;
 
-      const ins = await supabase.from("rc_cotacoes").insert({
+      const { data: cotIns, error: insErr } = await supabase.from("rc_cotacoes").insert({
         rc_id: rcId,
         fornecedor_id: supplier.id,
         fornecedor: supplier.nome_fantasia,
         cnpj: supplier.cnpj,
-        valor: val,
+        valor: totalCotacao,
         prazo_entrega_dias: prazo ? Math.max(0, parseInt(prazo, 10)) : null,
         condicao_pagamento: pgto.trim() || null,
         frete: frete || null,
@@ -944,8 +991,32 @@ function AddCotacaoDialog({
         arquivo_nome: file.name,
         arquivo_tipo: file.type,
         observacao: obs.trim() || null,
-      } as any);
-      if (ins.error) throw ins.error;
+      } as any).select("id").single();
+      if (insErr) throw insErr;
+
+      // Insere itens da cotação
+      const itensPayload = itensRc.map((i) => {
+        const st = itensCot[i.id];
+        const vu = Number(String(st?.valor_unitario ?? "").replace(",", "."));
+        const q = i.quantidade ?? 0;
+        const cotado = st && st.conformidade !== "NAO_COTADO" && Number.isFinite(vu) && vu > 0;
+        return {
+          cotacao_id: cotIns!.id,
+          rc_item_id: i.id,
+          item_numero: i.item_numero,
+          descricao_ofertada: st?.descricao_ofertada || i.descricao,
+          quantidade: q,
+          unidade: i.unidade,
+          valor_unitario: cotado ? vu : 0,
+          valor_total: cotado ? vu * q : 0,
+          conformidade: cotado ? st!.conformidade : "NAO_COTADO",
+          marca: st?.marca || null,
+          justificativa_conformidade: (st?.conformidade === "DIVERGENTE" || st?.conformidade === "SIMILAR")
+            ? (st?.justificativa || null) : null,
+        };
+      });
+      const { error: itensErr } = await supabase.from("rc_cotacao_itens").insert(itensPayload as any);
+      if (itensErr) throw itensErr;
 
       // Move RC pro EM_COTACAO se ainda estiver PENDENTE
       await supabase
@@ -956,8 +1027,9 @@ function AddCotacaoDialog({
 
       toast.success("Cotação anexada — matriz recalculando…");
       setOpen(false);
-      setSupplier(null); setValor(""); setPrazo(""); setPgto("");
+      setSupplier(null); setPrazo(""); setPgto("");
       setFrete(""); setValidade(""); setObs(""); setFile(null);
+      setItensCot({});
       onAdded();
     } catch (e: any) {
       toast.error(e.message ?? "Falha ao anexar cotação");
@@ -975,7 +1047,7 @@ function AddCotacaoDialog({
           <Upload className="h-3.5 w-3.5 mr-1" /> Nova cotação
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-amber-500" /> Nova cotação para a matriz
@@ -986,15 +1058,6 @@ function AddCotacaoDialog({
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label>Valor total (R$) *</Label>
-              <Input
-                inputMode="decimal"
-                value={valor}
-                onChange={(e) => setValor(e.target.value)}
-                placeholder="0,00"
-              />
-            </div>
-            <div>
               <Label>Prazo entrega (dias)</Label>
               <Input
                 inputMode="numeric"
@@ -1002,6 +1065,10 @@ function AddCotacaoDialog({
                 onChange={(e) => setPrazo(e.target.value)}
                 placeholder="Ex: 7"
               />
+            </div>
+            <div>
+              <Label>Validade da proposta</Label>
+              <Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} />
             </div>
           </div>
 
@@ -1026,9 +1093,104 @@ function AddCotacaoDialog({
             </div>
           </div>
 
-          <div>
-            <Label>Validade da proposta</Label>
-            <Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} />
+          {/* Tabela item a item */}
+          <div className="border-2 border-amber-300 rounded-lg overflow-hidden">
+            <div className="bg-amber-50 p-2 border-b border-amber-300">
+              <div className="text-sm font-black text-amber-900 flex items-center gap-2">
+                <PackageCheck className="h-4 w-4" /> Preços item a item ({itensRc.length} itens da RC)
+              </div>
+              <div className="text-[11px] text-amber-800 mt-0.5">
+                Marque itens como <strong>Não cotado</strong> se o fornecedor não ofertou. Divergente/Similar exige justificativa.
+              </div>
+            </div>
+            <div className="max-h-80 overflow-y-auto">
+              <table className="w-full text-xs">
+                <thead className="bg-slate-100 sticky top-0">
+                  <tr>
+                    <th className="p-1.5 text-left w-8">#</th>
+                    <th className="p-1.5 text-left">Item RC</th>
+                    <th className="p-1.5 text-center w-14">Qtde</th>
+                    <th className="p-1.5 text-left w-28">Conform.</th>
+                    <th className="p-1.5 text-right w-24">Unit. R$</th>
+                    <th className="p-1.5 text-right w-24">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itensRc.map((i) => {
+                    const st = itensCot[i.id] ?? { valor_unitario: "", conformidade: "CONFORME" as const, descricao_ofertada: i.descricao, marca: "", justificativa: "" };
+                    const vu = Number(String(st.valor_unitario).replace(",", "."));
+                    const tot = Number.isFinite(vu) ? vu * (i.quantidade ?? 0) : 0;
+                    const isNaoCotado = st.conformidade === "NAO_COTADO";
+                    return (
+                      <>
+                        <tr key={i.id} className={cn("border-t", isNaoCotado && "bg-slate-100 opacity-60")}>
+                          <td className="p-1.5 text-center">{String(i.item_numero).padStart(2, "0")}</td>
+                          <td className="p-1.5">
+                            <div className="font-semibold">{i.descricao}</div>
+                            <div className="text-[10px] text-slate-500">{i.unidade ?? ""}</div>
+                          </td>
+                          <td className="p-1.5 text-center">{i.quantidade ?? "—"}</td>
+                          <td className="p-1.5">
+                            <Select
+                              value={st.conformidade}
+                              onValueChange={(v) => setItensCot((prev) => ({
+                                ...prev,
+                                [i.id]: { ...st, conformidade: v as any },
+                              }))}
+                            >
+                              <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="CONFORME">✅ Conforme</SelectItem>
+                                <SelectItem value="SIMILAR">🟡 Similar</SelectItem>
+                                <SelectItem value="DIVERGENTE">⚠️ Divergente</SelectItem>
+                                <SelectItem value="NAO_COTADO">❌ Não cotado</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="p-1.5">
+                            <Input
+                              disabled={isNaoCotado}
+                              inputMode="decimal"
+                              value={st.valor_unitario}
+                              onChange={(e) => setItensCot((prev) => ({
+                                ...prev,
+                                [i.id]: { ...st, valor_unitario: e.target.value },
+                              }))}
+                              className="h-7 text-right text-[11px]"
+                              placeholder="0,00"
+                            />
+                          </td>
+                          <td className="p-1.5 text-right font-mono font-bold">
+                            {isNaoCotado ? "—" : fmtMoney(tot)}
+                          </td>
+                        </tr>
+                        {(st.conformidade === "SIMILAR" || st.conformidade === "DIVERGENTE") && (
+                          <tr key={i.id + "-just"} className="border-t bg-amber-50/50">
+                            <td colSpan={6} className="p-1.5">
+                              <Input
+                                value={st.justificativa}
+                                onChange={(e) => setItensCot((prev) => ({
+                                  ...prev,
+                                  [i.id]: { ...st, justificativa: e.target.value },
+                                }))}
+                                className="h-7 text-[11px]"
+                                placeholder={`Justificar ${st.conformidade === "SIMILAR" ? "produto similar ofertado" : "divergência (ex: sem forro, marca alternativa…)"}`}
+                              />
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    );
+                  })}
+                </tbody>
+                <tfoot className="bg-slate-100 font-bold sticky bottom-0">
+                  <tr>
+                    <td colSpan={5} className="p-2 text-right">TOTAL DA COTAÇÃO</td>
+                    <td className="p-2 text-right font-mono text-red-800">{fmtMoney(totalCotacao)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
 
           <div>
@@ -1050,7 +1212,7 @@ function AddCotacaoDialog({
           </div>
 
           <div className="text-[11px] bg-amber-50 border border-amber-200 rounded p-2 text-amber-900">
-            💡 Quanto mais campos preenchidos, mais precisa fica a análise da matriz. Só preço e valor faz um score fraco — inclua prazo, pagamento e frete sempre que possível.
+            💡 A matriz agora leva em conta <strong>cobertura</strong> (25%): fornecedor que não cota todos os itens perde pontos. Marcar itens como <strong>Divergente</strong> aplica penalidade de 10% no score total.
           </div>
         </div>
         <DialogFooter>
