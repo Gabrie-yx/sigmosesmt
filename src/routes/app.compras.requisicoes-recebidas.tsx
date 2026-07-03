@@ -772,6 +772,128 @@ function ScoreLine({ label, val, max = 100 }: { label: string; val?: number; max
   );
 }
 
+function MelhorComboTab({ rcId }: { rcId: string }) {
+  const { data: combo = [], isLoading } = useQuery({
+    queryKey: ["rc-melhor-combo", rcId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("melhor_combo_por_item", { _rc_id: rcId });
+      if (error) throw error;
+      return (data ?? []) as ComboItem[];
+    },
+  });
+
+  const totalCombo = combo.reduce((s, i) => s + (i.valor_total ?? 0), 0);
+  const cobertos = combo.filter((i) => i.melhor_cotacao_id).length;
+  const naoCobertos = combo.length - cobertos;
+  const fornecedores = new Set(combo.filter((i) => i.melhor_fornecedor_id).map((i) => i.melhor_fornecedor_id));
+
+  if (isLoading) return <div className="p-4 text-center text-slate-500 text-xs">Analisando combinações…</div>;
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center">
+          <div className="text-lg font-black text-emerald-700">{fmtMoney(totalCombo)}</div>
+          <div className="text-[10px] text-emerald-700 font-semibold uppercase">Total combo ótimo</div>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
+          <div className="text-lg font-black text-blue-700">{fornecedores.size}</div>
+          <div className="text-[10px] text-blue-700 font-semibold uppercase">Fornecedores</div>
+        </div>
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center">
+          <div className="text-lg font-black text-slate-700">{cobertos}/{combo.length}</div>
+          <div className="text-[10px] text-slate-600 font-semibold uppercase">Itens cobertos</div>
+        </div>
+        <div className={cn(
+          "border rounded-lg p-2 text-center",
+          naoCobertos > 0 ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200",
+        )}>
+          <div className={cn("text-lg font-black", naoCobertos > 0 ? "text-rose-700" : "text-emerald-700")}>
+            {naoCobertos}
+          </div>
+          <div className={cn(
+            "text-[10px] font-semibold uppercase",
+            naoCobertos > 0 ? "text-rose-700" : "text-emerald-700",
+          )}>Sem cotação</div>
+        </div>
+      </div>
+
+      <div className="text-[11px] bg-amber-50 border border-amber-200 rounded p-2 text-amber-900">
+        💡 Este é o <strong>melhor combo por item</strong> — pode gerar múltiplas PCs (uma por fornecedor). A matriz prioriza CONFORME &gt; SIMILAR, depois menor preço, depois estrelas.
+      </div>
+
+      <div className="border rounded-lg overflow-hidden">
+        <table className="w-full text-xs">
+          <thead className="bg-slate-100">
+            <tr>
+              <th className="p-2 text-left w-10">#</th>
+              <th className="p-2 text-left">Item</th>
+              <th className="p-2 text-center w-14">Qtde</th>
+              <th className="p-2 text-left">Melhor fornecedor</th>
+              <th className="p-2 text-right w-24">Unitário</th>
+              <th className="p-2 text-right w-24">Total</th>
+              <th className="p-2 text-center w-14">Prazo</th>
+              <th className="p-2 text-center w-20">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {combo.map((i) => (
+              <tr key={i.rc_item_id} className={cn(
+                "border-t",
+                !i.melhor_cotacao_id && "bg-rose-50",
+              )}>
+                <td className="p-2 text-center">{String(i.item_numero ?? 0).padStart(2, "0")}</td>
+                <td className="p-2">{i.descricao}</td>
+                <td className="p-2 text-center">{i.quantidade ?? "—"}</td>
+                <td className="p-2">
+                  {i.fornecedor_nome ? (
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold">{i.fornecedor_nome}</span>
+                      {i.estrelas != null && (
+                        <StarRating value={i.estrelas} readOnly size="sm" />
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-rose-700 font-semibold text-[11px]">SEM COTAÇÃO</span>
+                  )}
+                  {i.total_ofertas != null && i.total_ofertas > 1 && (
+                    <div className="text-[10px] text-slate-500">{i.total_ofertas} ofertas</div>
+                  )}
+                </td>
+                <td className="p-2 text-right font-mono">{fmtMoney(i.valor_unitario ?? undefined)}</td>
+                <td className="p-2 text-right font-mono font-bold">{fmtMoney(i.valor_total ?? undefined)}</td>
+                <td className="p-2 text-center">{i.prazo_entrega_dias ? `${i.prazo_entrega_dias}d` : "—"}</td>
+                <td className="p-2 text-center">
+                  {i.conformidade === "CONFORME" && (
+                    <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[9px] gap-0.5">
+                      <CheckCircle2 className="h-2.5 w-2.5" /> Conforme
+                    </Badge>
+                  )}
+                  {i.conformidade === "SIMILAR" && (
+                    <Badge className="bg-amber-100 text-amber-800 border border-amber-300 text-[9px]">Similar</Badge>
+                  )}
+                  {i.conformidade === "DIVERGENTE" && (
+                    <Badge className="bg-orange-100 text-orange-800 border border-orange-300 text-[9px] gap-0.5">
+                      <AlertTriangle className="h-2.5 w-2.5" /> Divergente
+                    </Badge>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot className="bg-slate-100 font-bold">
+            <tr>
+              <td colSpan={5} className="p-2 text-right">TOTAL COMBO ÓTIMO</td>
+              <td className="p-2 text-right font-mono text-red-800">{fmtMoney(totalCombo)}</td>
+              <td colSpan={2}></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function AddCotacaoDialog({
   rcId, classificacao, onAdded,
 }: {
