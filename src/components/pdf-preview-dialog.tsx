@@ -107,7 +107,7 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="pdf-dialog light-paper z-[90] max-w-6xl w-[95vw] h-[90vh] flex flex-col bg-white text-slate-900 border-slate-200 shadow-2xl">
+      <DialogContent className="pdf-dialog light-paper max-w-6xl w-[95vw] h-[90vh] flex flex-col bg-white text-slate-900 border-slate-200 shadow-2xl">
         <DialogHeader>
           <DialogTitle>{title ?? "Visualizar PDF"} — {fileName}</DialogTitle>
         </DialogHeader>
