@@ -65,6 +65,7 @@ import {
   Wind,
   Target,
   Settings,
+  Warehouse,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -163,6 +164,7 @@ const PRODUCAO_SUBMENU: LeafItem[] = [
   { to: "/app/producao/lista-tecnica", label: "Lista Técnica" },
   { to: "/app/producao/fatores-consumo", label: "Fatores de Consumo" },
   { to: "/app/producao/expedicao", label: "Expedição" },
+  { to: "/app/producao/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
 const COMPRAS_ITEMS: LeafItem[] = [
@@ -172,6 +174,10 @@ const COMPRAS_ITEMS: LeafItem[] = [
 
 const ADMINISTRATIVO_ITEMS: LeafItem[] = [
   { to: "/app/administrativo/requisicoes-recebidas", label: "Requisições Recebidas", icon: ClipboardList },
+];
+
+const ALMOXARIFADO_ITEMS: LeafItem[] = [
+  { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
 const MANUTENCAO_LOCKED: LockedItem[] = [
