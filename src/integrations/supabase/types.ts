@@ -6865,6 +6865,10 @@ export type Database = {
           decidido_em: string | null
           decidido_por_id: string | null
           decidido_por_nome: string | null
+          devolucao_mensagem: string | null
+          devolvida_em: string | null
+          devolvida_por_id: string | null
+          devolvida_por_nome: string | null
           dispensa_at: string | null
           dispensa_by: string | null
           dispensa_cotacao: boolean
@@ -6873,6 +6877,7 @@ export type Database = {
           fornecedor: string | null
           id: string
           motivo_indeferimento: string | null
+          motivo_indeferimento_anterior: string | null
           nf_arquivo_nome: string | null
           nf_arquivo_url: string | null
           nf_numero: string | null
@@ -6898,6 +6903,9 @@ export type Database = {
           recebido_em: string | null
           recebido_por_id: string | null
           recebido_por_nome: string | null
+          recotacao_ciclos: number
+          recotacao_motivo: string | null
+          recotacao_solicitada_em: string | null
           responsavel_aprovador: string | null
           responsavel_tst: string | null
           retroativa: boolean
@@ -6938,6 +6946,10 @@ export type Database = {
           decidido_em?: string | null
           decidido_por_id?: string | null
           decidido_por_nome?: string | null
+          devolucao_mensagem?: string | null
+          devolvida_em?: string | null
+          devolvida_por_id?: string | null
+          devolvida_por_nome?: string | null
           dispensa_at?: string | null
           dispensa_by?: string | null
           dispensa_cotacao?: boolean
@@ -6946,6 +6958,7 @@ export type Database = {
           fornecedor?: string | null
           id?: string
           motivo_indeferimento?: string | null
+          motivo_indeferimento_anterior?: string | null
           nf_arquivo_nome?: string | null
           nf_arquivo_url?: string | null
           nf_numero?: string | null
@@ -6971,6 +6984,9 @@ export type Database = {
           recebido_em?: string | null
           recebido_por_id?: string | null
           recebido_por_nome?: string | null
+          recotacao_ciclos?: number
+          recotacao_motivo?: string | null
+          recotacao_solicitada_em?: string | null
           responsavel_aprovador?: string | null
           responsavel_tst?: string | null
           retroativa?: boolean
@@ -7011,6 +7027,10 @@ export type Database = {
           decidido_em?: string | null
           decidido_por_id?: string | null
           decidido_por_nome?: string | null
+          devolucao_mensagem?: string | null
+          devolvida_em?: string | null
+          devolvida_por_id?: string | null
+          devolvida_por_nome?: string | null
           dispensa_at?: string | null
           dispensa_by?: string | null
           dispensa_cotacao?: boolean
@@ -7019,6 +7039,7 @@ export type Database = {
           fornecedor?: string | null
           id?: string
           motivo_indeferimento?: string | null
+          motivo_indeferimento_anterior?: string | null
           nf_arquivo_nome?: string | null
           nf_arquivo_url?: string | null
           nf_numero?: string | null
@@ -7044,6 +7065,9 @@ export type Database = {
           recebido_em?: string | null
           recebido_por_id?: string | null
           recebido_por_nome?: string | null
+          recotacao_ciclos?: number
+          recotacao_motivo?: string | null
+          recotacao_solicitada_em?: string | null
           responsavel_aprovador?: string | null
           responsavel_tst?: string | null
           retroativa?: boolean
@@ -8485,6 +8509,7 @@ export type Database = {
         | "INDEFERIDA"
         | "EM_RECEBIMENTO"
         | "CONCLUIDA"
+        | "DEVOLVIDA"
       tipo_acidente: "COM_AFASTAMENTO" | "SEM_AFASTAMENTO" | "TRAJETO" | "FATAL"
       tipo_movimentacao_epi: "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO"
       turno_acidente: "MANHA" | "TARDE" | "NOITE" | "MADRUGADA"
@@ -8659,6 +8684,7 @@ export const Constants = {
         "INDEFERIDA",
         "EM_RECEBIMENTO",
         "CONCLUIDA",
+        "DEVOLVIDA",
       ],
       tipo_acidente: ["COM_AFASTAMENTO", "SEM_AFASTAMENTO", "TRAJETO", "FATAL"],
       tipo_movimentacao_epi: [
