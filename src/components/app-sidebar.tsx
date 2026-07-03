@@ -1,5 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useNovasDecisoesCompras } from "@/hooks/use-compras-novas-decisoes";
 import {
   Sidebar,
   SidebarContent,
@@ -423,7 +424,10 @@ export function AppSidebar() {
                           <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
                             <Link to={s.to}>
                               <Icon />
-                              <span>{s.label}</span>
+                              <span className="flex-1">{s.label}</span>
+                              {s.to === "/app/compras/requisicoes-recebidas" && (
+                                <ComprasNovasBadge />
+                              )}
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
