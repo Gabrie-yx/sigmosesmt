@@ -121,38 +121,38 @@ function HomePage() {
                 icon: Compass,
                 tag: "Missão",
                 text: "Construir embarcações com qualidade e tecnologia, buscando a melhoria contínua, prezando a Segurança e o Meio Ambiente.",
-                accent: "from-red-500 to-red-700",
+                border: "border-white/70",
+                tagColor: "text-white",
+                iconColor: "text-white/80",
               },
               {
                 icon: Anchor,
                 tag: "Visão",
                 text: "Ser reconhecida como uma empresa de referência no setor da construção naval e estar entre os melhores estaleiros da região norte, priorizando a confiabilidade e qualidade nos produtos e serviços, sempre almejando a satisfação do cliente.",
-                accent: "from-amber-500 to-orange-600",
+                border: "border-amber-400/80",
+                tagColor: "text-amber-300",
+                iconColor: "text-amber-300/90",
               },
               {
                 icon: Gem,
                 tag: "Valores",
                 text: "Comprometimento dos colaboradores, preservação do meio ambiente e segurança do trabalho, ética e transparência no relacionamento com clientes e acionistas.",
-                accent: "from-slate-300 to-slate-500",
+                border: "border-red-400/80",
+                tagColor: "text-red-300",
+                iconColor: "text-red-300/90",
               },
-            ].map(({ icon: Icon, tag, text, accent }) => (
+            ].map(({ icon: Icon, tag, text, border, tagColor, iconColor }) => (
               <article
                 key={tag}
-                className="group relative rounded-2xl p-8 bg-gradient-to-br from-[#1a0510]/80 to-[#2a0810]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:-translate-y-1 hover:border-white/25 transition-all duration-300 overflow-hidden"
+                className={`group relative rounded-2xl p-8 bg-black/80 border ${border} shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:-translate-y-1 hover:bg-black/90 transition-all duration-300 overflow-hidden`}
               >
-                {/* flares intensos nos cantos */}
-                <div className="pointer-events-none absolute -top-16 -left-16 w-48 h-48 rounded-full bg-red-500/50 blur-2xl" />
-                <div className="pointer-events-none absolute -top-12 -right-12 w-40 h-40 rounded-full bg-amber-400/45 blur-2xl" />
-                <div className="pointer-events-none absolute -bottom-16 -right-16 w-48 h-48 rounded-full bg-red-600/50 blur-2xl" />
-                <div className="pointer-events-none absolute -bottom-12 -left-12 w-40 h-40 rounded-full bg-orange-500/40 blur-2xl" />
-                <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${accent} rounded-t-2xl z-10`} />
-                <div className={`relative inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${accent} text-white shadow-lg mb-5`}>
-                  <Icon className="h-6 w-6" />
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`text-[11px] font-black uppercase tracking-[0.3em] ${tagColor}`}>
+                    {tag}
+                  </div>
+                  <Icon className={`h-5 w-5 shrink-0 ${iconColor}`} />
                 </div>
-                <div className="relative text-[10px] font-black uppercase tracking-[0.25em] text-amber-300/90 mb-2">
-                  {tag}
-                </div>
-                <p className="relative text-sm leading-relaxed text-white/90 font-medium">
+                <p className="text-sm leading-relaxed text-white/90 font-medium">
                   {text}
                 </p>
               </article>
