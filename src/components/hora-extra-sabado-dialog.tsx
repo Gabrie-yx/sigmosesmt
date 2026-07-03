@@ -151,9 +151,14 @@ export function HoraExtraSabadoDialog({
     })();
   }, [editId, open]);
 
+  // Ao fechar: zera estado em memória (o rascunho no localStorage já foi
+  // persistido pelo autosave e será restaurado no próximo open).
+  useEffect(() => {
+    if (!open) resetForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   // Ao abrir sem editId: restaura rascunho salvo (se existir).
-  // Ao fechar: NÃO zera estado — o rascunho fica preservado para reabrir.
-  // Só zeramos ao clicar Cancelar/Salvar via ações explícitas (ver save.onSuccess).
   useEffect(() => {
     if (!open || editId) return;
     const draft = loadDraft<typeof draftData>(DRAFT_KEY);
