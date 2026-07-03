@@ -6,7 +6,7 @@ import { MENU_CATALOG } from "@/lib/menu-catalog";
 import { SigmoChat } from "@/components/sigmo-chat";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Bot, BookOpen, Construction, HelpCircle, Search } from "lucide-react";
+import { ArrowRight, Bot, BookOpen, Construction, HelpCircle, Search, Sparkles } from "lucide-react";
 
 type Search = { q?: string };
 
