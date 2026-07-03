@@ -455,6 +455,41 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
   const [openReceber, setOpenReceber] = useState(false);
   const [openRecotar, setOpenRecotar] = useState(false);
   const [openDevolver, setOpenDevolver] = useState(false);
+  const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
+  const [openPreview, setOpenPreview] = useState(false);
+  const [loadingPdf, setLoadingPdf] = useState(false);
+
+  async function handleVisualizar() {
+    if (loadingPdf) return;
+    setLoadingPdf(true);
+    try {
+      const [{ data: full, error: e1 }, { data: itens, error: e2 }] = await Promise.all([
+        supabase
+          .from("purchase_requisitions")
+          .select(
+            "id,numero,titulo,data_requisicao,classificacao,solicitante,setor,fornecedor,obra_construcao,obra_manutencao,codigo_formulario,revisao,data_revisao,pagina,status,motivo_indeferimento,signature_solicitante",
+          )
+          .eq("id", req.id)
+          .maybeSingle(),
+        supabase
+          .from("purchase_requisition_items")
+          .select("item_numero,descricao,quantidade,unidade,observacao")
+          .eq("requisition_id", req.id)
+          .order("item_numero"),
+      ]);
+      if (e1) throw e1;
+      if (e2) throw e2;
+      if (!full) throw new Error("RC não encontrada");
+      const doc = await gerarPdfRequisicaoDoc(full as unknown as RcPdfReq, itens ?? []);
+      setPdfDoc(doc);
+      setOpenPreview(true);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao gerar o PDF da RC");
+    } finally {
+      setLoadingPdf(false);
+    }
+  }
+
   const pulsing = req.status === "PENDENTE";
   const isRetroativa = !!req.retroativa;
   const isArquivada = !!req.arquivada_em;
