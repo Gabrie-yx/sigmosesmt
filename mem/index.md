@@ -8,6 +8,7 @@ Padrão **Modal-First**: ações novas abrem como modal/sheet/drawer sobre a tel
 MB51: Base MP vence, mas OUTROS é residual saneado por descrição; classificacao_mb51 nunca reforça material cadastrado — ver mem://features/mb51-classificacao-base-mp.
 RBAC: módulo/papel/menu precisa bater em UI, validação server-side, enum/funções do Supabase e guards; nunca divergir.
 Overlays (popover/drawer/dropdown/lookup) no tema escuro SEMPRE em tokens semânticos (bg-popover, text-foreground, border-border, hover:bg-accent). PROIBIDO bg-white, text-slate-*, bg-red-50 sobre o tema escuro. Ver mem://constraints/nada-de-cores-hardcoded.
+Scrollbar SEMPRE glassmorph fina com flares (global em src/styles.css). PROIBIDO scrollbar padrão do SO/cinza, grossa ou hardcoded. Ver mem://constraints/scrollbar-glassmorph.
 
 ## Memories
 - [Pendências](mem://pendencias) — Tarefas pendentes acordadas com o usuário (geradores PDF Eficácia/Reação, etc.)
@@ -28,3 +29,4 @@ Overlays (popover/drawer/dropdown/lookup) no tema escuro SEMPRE em tokens semân
 - [Auditoria RBAC / usuários](mem://features/rbac-auditoria-usuarios.md) — Levantamento 03/07: 4 de 5 usuários são admin; sem segregação por empresa; proposta de roles finas + MFA obrigatório em debate. Não codar sem OK.
 - [RBAC com fonte única](mem://preferences/rbac-fonte-unica.md) — Nunca exibir módulo/papel na tela se backend/banco/guards não aceitarem; revisar tudo junto ao criar módulo.
 - [Nada de cores hardcoded em overlays](mem://constraints/nada-de-cores-hardcoded.md) — Regra dura contra bg-white/text-slate/bg-red-50 em popover/drawer/dropdown. Lista de proibidos + obrigatórios.
+- [Scrollbar glassmorph global](mem://constraints/scrollbar-glassmorph.md) — Regra global de scrollbar fina estilo vidro com flares aplicada em `*::-webkit-scrollbar*`. Proibido scrollbar padrão.
