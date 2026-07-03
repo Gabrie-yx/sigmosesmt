@@ -36,6 +36,9 @@ import { SupplierPicker, type SupplierLite } from "@/components/compras/supplier
 import { StarRating } from "@/components/compras/star-rating";
 import { cn } from "@/lib/utils";
 import { useNovasDecisoesCompras } from "@/hooks/use-compras-novas-decisoes";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { gerarPdfRequisicaoDoc, rcPdfFileName, type RcPdfReq } from "@/lib/requisicao-compra-pdf";
+import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/compras/requisicoes-recebidas")({
   component: ComprasRecebidasPage,
