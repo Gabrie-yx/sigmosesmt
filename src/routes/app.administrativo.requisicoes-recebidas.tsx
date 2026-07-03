@@ -8,18 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Tabs, TabsList, TabsTrigger, TabsContent,
-} from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
   Briefcase, Search, Filter, Eye, CheckCircle2, XCircle, ShieldAlert, FileText, BookOpen,
+  Building2, Wrench, Cog, Factory, Boxes, ShieldPlus, Package,
 } from "lucide-react";
 import { toast } from "sonner";
 import { decidirRc } from "@/lib/rc-public.functions";
@@ -67,12 +64,31 @@ type Item = {
   observacao: string | null;
 };
 
+// Pílulas glass — usam prism-pill + accent-* (definidos em src/styles.css)
 const STATUS_BADGE: Record<Req["status"], string> = {
-  PENDENTE: "bg-amber-100 text-amber-800 border-amber-300",
-  EM_COTACAO: "bg-violet-100 text-violet-800 border-violet-300",
-  COTADA: "bg-blue-100 text-blue-800 border-blue-300",
-  APROVADA: "bg-emerald-100 text-emerald-800 border-emerald-300",
-  INDEFERIDA: "bg-rose-100 text-rose-800 border-rose-300",
+  PENDENTE: "prism-pill accent-amber text-amber-100",
+  EM_COTACAO: "prism-pill accent-violet text-violet-100",
+  COTADA: "prism-pill accent-sky text-sky-100",
+  APROVADA: "prism-pill accent-emerald text-emerald-100",
+  INDEFERIDA: "prism-pill accent-rose text-rose-100",
+};
+
+const SETOR_ICON: Record<string, typeof Briefcase> = {
+  "Produção": Factory,
+  "Manutenção Elétrica": Wrench,
+  "Manutenção Mecânica": Cog,
+  "Administrativo": Building2,
+  "Almoxarifado": Boxes,
+  "SESMT": ShieldPlus,
+};
+
+const SETOR_ACCENT: Record<string, string> = {
+  "Produção": "accent-sky",
+  "Manutenção Elétrica": "accent-amber",
+  "Manutenção Mecânica": "accent-violet",
+  "Administrativo": "accent-emerald",
+  "Almoxarifado": "accent-wine",
+  "SESMT": "accent-rose",
 };
 
 const STATUS_LABEL: Record<Req["status"], string> = {
@@ -99,25 +115,20 @@ function AdministrativoRecebidasPage() {
   const isAdmin = roles.includes("admin");
   const canAcesso = isAdmin || hasModule("administrativo" as any);
 
-  const [tab, setTab] = useState<"parecer" | "decididas" | "todas">("parecer");
   const [q, setQ] = useState("");
   const [setorFilter, setSetorFilter] = useState<string>("__all");
 
   const { data: reqs = [], isLoading, refetch } = useQuery({
-    queryKey: ["admin-rcs", tab],
+    queryKey: ["admin-rcs"],
     enabled: !!user && canAcesso,
     queryFn: async () => {
       // Anderson só vê RCs que JÁ passaram pelo Compras (COTADA/APROVADA/INDEFERIDA).
-      // PENDENTE e EM_COTACAO ficam ocultas — ainda estão na mesa do Compras.
-      let query = supabase
+      const { data, error } = await supabase
         .from("purchase_requisitions")
         .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,status_token,cotacao_fornecedor,cotacao_valor,cotador_nome,pego_por_compras_nome,motivo_indeferimento,decidido_por_nome,decidido_em")
+        .in("status", ["COTADA", "APROVADA", "INDEFERIDA"] as any)
         .order("created_at", { ascending: false })
         .limit(300);
-      if (tab === "parecer") query = query.eq("status", "COTADA" as any);
-      if (tab === "decididas") query = query.in("status", ["APROVADA", "INDEFERIDA"] as any);
-      if (tab === "todas") query = query.in("status", ["COTADA", "APROVADA", "INDEFERIDA"] as any);
-      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as Req[];
     },
@@ -137,31 +148,34 @@ function AdministrativoRecebidasPage() {
     });
   }, [reqs, q, setorFilter]);
 
-  // Contadores globais (independem da tab atual)
-  const { data: counts } = useQuery({
-    queryKey: ["admin-rcs-counts"],
-    enabled: !!user && canAcesso,
-    queryFn: async () => {
-      const [parecer, decididas] = await Promise.all([
-        supabase.from("purchase_requisitions").select("id", { count: "exact", head: true }).eq("status", "COTADA" as any),
-        supabase.from("purchase_requisitions").select("id", { count: "exact", head: true }).in("status", ["APROVADA", "INDEFERIDA"] as any),
-      ]);
-      return {
-        parecer: parecer.count ?? 0,
-        decididas: decididas.count ?? 0,
-      };
-    },
-  });
+  // Agrupamento por setor (a partir das RCs já filtradas)
+  const grupos = useMemo(() => {
+    const map = new Map<string, Req[]>();
+    for (const r of filtered) {
+      const key = r.setor?.trim() || "Sem setor";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(r);
+    }
+    // Ordem: setores conhecidos primeiro, depois alfabético
+    return Array.from(map.entries()).sort(([a], [b]) => {
+      const ia = SETORES.indexOf(a as any);
+      const ib = SETORES.indexOf(b as any);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [filtered]);
 
   if (!user) return null;
   if (!canAcesso) {
     return (
       <div className="p-6">
-        <Card>
+        <Card className="glass-card">
           <CardHeader>
             <CardTitle>Acesso restrito</CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-slate-600">
+          <CardContent className="text-sm">
             Este painel é restrito ao módulo <strong>Administrativo</strong>. Fale com o admin para liberar seu acesso.
           </CardContent>
         </Card>
@@ -173,27 +187,28 @@ function AdministrativoRecebidasPage() {
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-red-100 text-red-800 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-xl prism-pill accent-rose flex items-center justify-center text-rose-100">
             <Briefcase className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">Administrativo · Requisições Recebidas</h1>
-            <p className="text-xs text-slate-500">
-              Fila do Supervisor Geral. Avalie a cotação enviada pelo Compras e dê o parecer (Deferido / Indeferido).
+            <h1 className="text-xl font-bold text-foreground">Administrativo · Requisições Recebidas</h1>
+            <p className="text-xs text-muted-foreground">
+              Requisições organizadas por setor. Todas já passaram pela cotação do Compras.
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className="bg-blue-100 text-blue-800 border-blue-300">Aguardando parecer: {counts?.parecer ?? 0}</Badge>
-          <Badge className="bg-slate-100 text-slate-800 border-slate-300">Decididas: {counts?.decididas ?? 0}</Badge>
+          <span className="prism-pill accent-sky px-3 py-1 text-xs text-sky-100">
+            Total: {filtered.length}
+          </span>
           <ManualSupervisorButton />
         </div>
       </div>
 
-      <Card>
+      <Card className="glass-card">
         <CardContent className="p-3 flex flex-wrap gap-2 items-center">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="h-4 w-4 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="h-4 w-4 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar por nº, título, solicitante, setor…"
               value={q}
@@ -202,7 +217,7 @@ function AdministrativoRecebidasPage() {
             />
           </div>
           <div className="flex items-center gap-1">
-            <Filter className="h-4 w-4 text-slate-400" />
+            <Filter className="h-4 w-4 text-muted-foreground" />
             <Select value={setorFilter} onValueChange={setSetorFilter}>
               <SelectTrigger className="w-[220px]">
                 <SelectValue placeholder="Filtrar setor" />
@@ -218,29 +233,58 @@ function AdministrativoRecebidasPage() {
         </CardContent>
       </Card>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-        <TabsList>
-          <TabsTrigger value="parecer">Aguardando meu parecer ({counts?.parecer ?? 0})</TabsTrigger>
-          <TabsTrigger value="decididas">Decididas</TabsTrigger>
-          <TabsTrigger value="todas">Todas</TabsTrigger>
-        </TabsList>
-        <TabsContent value={tab} className="mt-3">
-          {isLoading ? (
-            <div className="p-8 text-center text-slate-500">Carregando…</div>
-          ) : filtered.length === 0 ? (
-            <div className="p-10 text-center text-slate-500 border rounded-xl bg-white">
-              Nenhuma requisição encontrada.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {filtered.map((r) => (
-                <RcCard key={r.id} req={r} onChanged={() => refetch()} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+      {isLoading ? (
+        <div className="p-8 text-center text-muted-foreground">Carregando…</div>
+      ) : grupos.length === 0 ? (
+        <Card className="glass-card">
+          <CardContent className="p-10 text-center text-muted-foreground">
+            Nenhuma requisição encontrada.
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {grupos.map(([setor, lista]) => (
+            <SetorCard key={setor} setor={setor} lista={lista} onChanged={() => refetch()} />
+          ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+function SetorCard({
+  setor, lista, onChanged,
+}: { setor: string; lista: Req[]; onChanged: () => void }) {
+  const Icon = SETOR_ICON[setor] ?? Package;
+  const accent = SETOR_ACCENT[setor] ?? "accent-sky";
+  const aguardando = lista.filter((r) => r.status === "COTADA").length;
+  return (
+    <Card className="glass-card overflow-hidden">
+      <CardHeader className="p-4 pb-3 flex flex-row items-center justify-between gap-2 border-b border-white/10">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`h-10 w-10 rounded-xl prism-pill ${accent} flex items-center justify-center text-foreground shrink-0`}>
+            <Icon className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-base font-bold text-foreground truncate">{setor}</div>
+            <div className="text-[11px] text-muted-foreground">
+              {lista.length} requisição{lista.length === 1 ? "" : "ões"}
+              {aguardando > 0 ? ` · ${aguardando} aguardando parecer` : ""}
+            </div>
+          </div>
+        </div>
+        {aguardando > 0 && (
+          <span className="prism-pill accent-sky px-2.5 py-1 text-[11px] text-sky-100 shrink-0">
+            {aguardando} p/ decidir
+          </span>
+        )}
+      </CardHeader>
+      <CardContent className="p-3 space-y-2">
+        {lista.map((r) => (
+          <RcCard key={r.id} req={r} onChanged={onChanged} />
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -248,35 +292,35 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
   const [openDetail, setOpenDetail] = useState(false);
   const pulsing = req.status === "COTADA";
   return (
-    <Card className={`overflow-hidden ${pulsing ? "ring-2 ring-blue-300" : ""}`}>
+    <Card className={`glass-card overflow-hidden ${pulsing ? "ring-1 ring-sky-400/50" : ""}`}>
       <CardHeader className="p-3 pb-2 flex flex-row items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-bold text-slate-500">RC Nº</span>
-            <span className="text-sm font-bold">{req.numero}</span>
-            <Badge className={STATUS_BADGE[req.status] + " border"}>{STATUS_LABEL[req.status]}</Badge>
+            <span className="text-xs font-bold text-muted-foreground">RC Nº</span>
+            <span className="text-sm font-bold text-foreground">{req.numero}</span>
+            <span className={`${STATUS_BADGE[req.status]} px-2.5 py-0.5 text-[11px]`}>{STATUS_LABEL[req.status]}</span>
           </div>
-          <div className="text-sm font-semibold mt-1 line-clamp-1">
+          <div className="text-sm font-semibold mt-1 line-clamp-1 text-foreground">
             {req.titulo || "(sem título)"}
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">
+          <div className="text-[11px] text-muted-foreground mt-0.5">
             {req.solicitante} · {req.setor || "sem setor"} · {fmtBR(req.data_requisicao)}
           </div>
           {req.status === "COTADA" && (
-            <div className="text-[11px] text-blue-800 mt-1">
+            <div className="text-[11px] text-sky-200 mt-1">
               Cotação: <strong>{req.cotacao_fornecedor ?? "—"}</strong> — {fmtMoney(req.cotacao_valor)}
               {req.cotador_nome ? <> · por {req.cotador_nome}</> : null}
             </div>
           )}
           {req.status === "INDEFERIDA" && req.motivo_indeferimento && (
-            <div className="text-[11px] text-rose-700 mt-1 line-clamp-2">
+            <div className="text-[11px] text-rose-200 mt-1 line-clamp-2">
               Motivo: {req.motivo_indeferimento}
             </div>
           )}
         </div>
-        <Badge variant="outline" className="text-[10px] shrink-0">
+        <span className="prism-pill px-2 py-0.5 text-[10px] shrink-0 text-foreground/80">
           {req.classificacao === "MATERIAL" ? "Material" : req.classificacao === "SERVICO" ? "Serviço" : "Medicamentos"}
-        </Badge>
+        </span>
       </CardHeader>
       <CardContent className="p-3 pt-1 flex items-center justify-end gap-1">
         <Button size="sm" variant="outline" onClick={() => setOpenDetail(true)}>
@@ -349,23 +393,23 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Briefcase className="h-5 w-5 text-red-700" />
+            <Briefcase className="h-5 w-5" />
             RC Nº {req.numero} — {req.titulo || "sem título"}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs bg-slate-50 border rounded-lg p-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs prism-pill p-3">
           <div><strong>Solicitante:</strong><br />{req.solicitante}</div>
           <div><strong>Setor:</strong><br />{req.setor || "—"}</div>
           <div><strong>Data:</strong><br />{fmtBR(req.data_requisicao)}</div>
           <div><strong>Status:</strong><br />
-            <Badge className={STATUS_BADGE[req.status] + " border"}>{STATUS_LABEL[req.status]}</Badge>
+            <span className={`${STATUS_BADGE[req.status]} px-2.5 py-0.5 text-[11px] inline-block`}>{STATUS_LABEL[req.status]}</span>
           </div>
         </div>
 
         {(req.status === "COTADA" || req.status === "APROVADA" || req.status === "INDEFERIDA") && (
-          <div className="border rounded-lg p-3 bg-blue-50/50">
-            <div className="text-xs font-bold text-slate-700 mb-1">Resumo da cotação</div>
+          <div className="prism-pill accent-sky p-3">
+            <div className="text-xs font-bold mb-1">Resumo da cotação</div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
               <div><strong>Fornecedor vencedor:</strong><br />{req.cotacao_fornecedor ?? "—"}</div>
               <div><strong>Valor:</strong><br />{fmtMoney(req.cotacao_valor)}</div>
@@ -378,9 +422,9 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
           <div className="text-sm font-bold mb-1 flex items-center gap-2">
             <FileText className="h-4 w-4" /> Itens solicitados ({itens.length})
           </div>
-          <div className="border rounded-lg overflow-hidden">
+          <div className="prism-pill overflow-hidden">
             <table className="w-full text-xs">
-              <thead className="bg-slate-100">
+              <thead className="bg-white/5">
                 <tr>
                   <th className="p-2 text-left w-10">#</th>
                   <th className="p-2 text-left">Descrição</th>
@@ -390,13 +434,13 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
               </thead>
               <tbody>
                 {itens.length === 0 ? (
-                  <tr><td colSpan={4} className="p-3 text-center text-slate-500">Sem itens.</td></tr>
+                  <tr><td colSpan={4} className="p-3 text-center text-muted-foreground">Sem itens.</td></tr>
                 ) : itens.map((i) => (
-                  <tr key={i.id} className="border-t">
+                  <tr key={i.id} className="border-t border-white/10">
                     <td className="p-2">{i.item_numero}</td>
                     <td className="p-2">
                       {i.descricao}
-                      {i.observacao && <div className="text-[10px] text-slate-500">{i.observacao}</div>}
+                      {i.observacao && <div className="text-[10px] text-muted-foreground">{i.observacao}</div>}
                     </td>
                     <td className="p-2 text-right">{i.quantidade ?? "—"}</td>
                     <td className="p-2">{i.unidade ?? "—"}</td>
@@ -408,20 +452,20 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
         </div>
 
         {req.observacoes && (
-          <div className="text-xs bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <div className="text-xs prism-pill accent-amber p-3">
             <strong>Observações do solicitante:</strong>
             <div className="whitespace-pre-wrap mt-1">{req.observacoes}</div>
           </div>
         )}
 
         {req.status === "INDEFERIDA" && req.motivo_indeferimento && (
-          <div className="border-2 border-rose-300 bg-rose-50 rounded-lg p-3 flex items-start gap-2">
-            <ShieldAlert className="h-5 w-5 text-rose-700 shrink-0 mt-0.5" />
-            <div className="text-xs text-rose-900">
+          <div className="prism-pill accent-rose p-3 flex items-start gap-2">
+            <ShieldAlert className="h-5 w-5 text-rose-200 shrink-0 mt-0.5" />
+            <div className="text-xs">
               <div className="font-bold uppercase tracking-wide">Motivo do indeferimento</div>
               <div className="mt-1 whitespace-pre-wrap">{req.motivo_indeferimento}</div>
               {req.decidido_por_nome && (
-                <div className="text-[11px] text-rose-800 mt-1">
+                <div className="text-[11px] opacity-80 mt-1">
                   Decidido por {req.decidido_por_nome} · {fmtBR(req.decidido_em)}
                 </div>
               )}
@@ -434,14 +478,14 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
             <>
               <Button
                 variant="outline"
-                className="border-rose-400 text-rose-700 hover:bg-rose-50"
+                className="border-rose-400/40 text-rose-100 hover:bg-rose-500/15"
                 onClick={() => setShowIndeferir(true)}
                 disabled={deferir.isPending || indeferir.isPending}
               >
                 <XCircle className="h-4 w-4 mr-1" /> Indeferir
               </Button>
               <Button
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white"
                 onClick={() => deferir.mutate()}
                 disabled={deferir.isPending || indeferir.isPending}
               >
@@ -449,11 +493,11 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
               </Button>
             </>
           ) : req.status === "COTADA" ? (
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-muted-foreground">
               Somente o Supervisor Geral pode dar parecer nesta RC.
             </div>
           ) : (
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-muted-foreground">
               Esta RC não está aguardando parecer.
             </div>
           )}
@@ -466,7 +510,7 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
                 <DialogTitle>Indeferir RC {req.numero}</DialogTitle>
               </DialogHeader>
               <div className="space-y-2">
-                <div className="text-xs text-slate-600">
+                <div className="text-xs text-muted-foreground">
                   Informe o motivo. Ele será registrado e visível para o Compras e o solicitante.
                 </div>
                 <Textarea
@@ -482,7 +526,7 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
                   Cancelar
                 </Button>
                 <Button
-                  className="bg-rose-600 hover:bg-rose-700 text-white"
+                  className="bg-rose-600 hover:bg-rose-500 text-white"
                   onClick={() => indeferir.mutate()}
                   disabled={indeferir.isPending || !motivo.trim()}
                 >
@@ -504,7 +548,7 @@ function ManualSupervisorButton() {
       <Button
         variant="outline"
         size="sm"
-        className="gap-2 border-red-300 text-red-800 hover:bg-red-50"
+        className="gap-2 border-white/15 text-foreground hover:bg-white/5"
         onClick={() => setOpen(true)}
       >
         <BookOpen className="h-4 w-4" />
@@ -514,14 +558,14 @@ function ManualSupervisorButton() {
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-red-700" />
+              <BookOpen className="h-5 w-5" />
               Manual do Supervisor Geral — Requisições de Compra (RC)
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-5 text-sm leading-relaxed text-slate-700">
+          <div className="space-y-5 text-sm leading-relaxed">
             <section>
-              <h3 className="font-bold text-slate-900 text-base">1. Para que serve este painel</h3>
+              <h3 className="font-bold text-foreground text-base">1. Para que serve este painel</h3>
               <p className="mt-1">
                 Aqui você acompanha <strong>todas as Requisições de Compra (RC)</strong> abertas
                 pelos setores da empresa e dá o <strong>parecer final</strong> (Deferido ou
@@ -531,7 +575,7 @@ function ManualSupervisorButton() {
             </section>
 
             <section>
-              <h3 className="font-bold text-slate-900 text-base">2. O fluxo completo da RC</h3>
+              <h3 className="font-bold text-foreground text-base">2. O fluxo completo da RC</h3>
               <ol className="list-decimal pl-5 mt-1 space-y-1">
                 <li><strong>Solicitante abre a RC</strong> (SESMT, Produção, Manutenção etc.) descrevendo os itens.</li>
                 <li>A RC entra na fila do <strong>Compras</strong> como <em>Pendente</em>.</li>
@@ -543,55 +587,55 @@ function ManualSupervisorButton() {
             </section>
 
             <section>
-              <h3 className="font-bold text-slate-900 text-base">3. O que cada status significa</h3>
+              <h3 className="font-bold text-foreground text-base">3. O que cada status significa</h3>
               <ul className="mt-1 space-y-2">
                 <li>
-                  <Badge className="bg-amber-100 text-amber-800 border-amber-300 border mr-2">Aguardando cotação</Badge>
+                  <span className="prism-pill accent-amber px-2.5 py-0.5 text-[11px] text-amber-100 mr-2">Aguardando cotação</span>
                   RC recém-aberta pelo solicitante. Nenhum comprador pegou ainda.
-                  <span className="text-slate-500"> Você só acompanha, ainda não age.</span>
+                  <span className="text-muted-foreground"> Você só acompanha, ainda não age.</span>
                 </li>
                 <li>
-                  <Badge className="bg-violet-100 text-violet-800 border-violet-300 border mr-2">Em cotação</Badge>
+                  <span className="prism-pill accent-violet px-2.5 py-0.5 text-[11px] text-violet-100 mr-2">Em cotação</span>
                   Um comprador está cotando com fornecedores.
-                  <span className="text-slate-500"> Ainda não é o momento de decidir.</span>
+                  <span className="text-muted-foreground"> Ainda não é o momento de decidir.</span>
                 </li>
                 <li>
-                  <Badge className="bg-blue-100 text-blue-800 border-blue-300 border mr-2">Cotada</Badge>
+                  <span className="prism-pill accent-sky px-2.5 py-0.5 text-[11px] text-sky-100 mr-2">Cotada</span>
                   <strong>É a sua vez.</strong> O Compras fechou a melhor proposta e está aguardando seu parecer.
-                  Estas RCs aparecem com <strong>borda azul destacada</strong> na aba "Aguardando meu parecer".
+                  Estas RCs aparecem com <strong>borda azul destacada</strong> no card do setor.
                 </li>
                 <li>
-                  <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 border mr-2">Aprovada</Badge>
+                  <span className="prism-pill accent-emerald px-2.5 py-0.5 text-[11px] text-emerald-100 mr-2">Aprovada</span>
                   Você já deferiu. Compras pode efetivar a compra com o fornecedor escolhido.
                 </li>
                 <li>
-                  <Badge className="bg-rose-100 text-rose-800 border-rose-300 border mr-2">Indeferida</Badge>
+                  <span className="prism-pill accent-rose px-2.5 py-0.5 text-[11px] text-rose-100 mr-2">Indeferida</span>
                   Você bloqueou a compra com um motivo registrado. O Compras não pode dar prosseguimento.
                 </li>
               </ul>
             </section>
 
             <section>
-              <h3 className="font-bold text-slate-900 text-base">4. As abas do painel</h3>
+              <h3 className="font-bold text-foreground text-base">4. Como o painel se organiza</h3>
               <ul className="mt-1 space-y-1">
-                <li><strong>Aguardando meu parecer:</strong> só as <em>Cotadas</em>, esperando sua decisão. Comece por aqui.</li>
-                <li><strong>Em fluxo:</strong> RCs ainda em <em>Pendente</em> ou <em>Em cotação</em>. Serve para acompanhar o que o Compras está fazendo.</li>
-                <li><strong>Decididas:</strong> histórico do que você já deferiu ou indeferiu.</li>
-                <li><strong>Todas:</strong> visão completa da empresa.</li>
+                <li>Cada <strong>setor</strong> (SESMT, Produção, Manutenção, Administrativo, Almoxarifado) tem seu próprio card.</li>
+                <li>Dentro do card do setor ficam <em>todas as RCs daquele setor</em> que já passaram pelo Compras.</li>
+                <li>As RCs <strong>Cotadas</strong> (aguardando sua decisão) aparecem com borda azul e um contador no topo do card.</li>
+                <li>Use a busca ou o filtro de setor no topo para reduzir a visão quando houver muitos pedidos.</li>
               </ul>
             </section>
 
             <section>
-              <h3 className="font-bold text-slate-900 text-base">5. Passo a passo para dar o parecer</h3>
+              <h3 className="font-bold text-foreground text-base">5. Passo a passo para dar o parecer</h3>
               <ol className="list-decimal pl-5 mt-1 space-y-1">
-                <li>Abra a aba <strong>"Aguardando meu parecer"</strong>.</li>
+                <li>Localize o card do <strong>setor</strong> e as RCs marcadas como <em>Cotada</em>.</li>
                 <li>No card, confira: <em>solicitante</em>, <em>setor</em>, <em>fornecedor cotado</em>, <em>valor total</em> e <em>quem cotou</em>.</li>
-                <li>Clique em <strong>Ver detalhes</strong> para inspecionar os <em>itens</em> da RC (descrição, quantidade, unidade e observações).</li>
+                <li>Clique em <strong>Abrir</strong> para inspecionar os <em>itens</em> da RC (descrição, quantidade, unidade e observações).</li>
                 <li>Avalie se: a compra é realmente necessária, se o valor está compatível e se o fornecedor faz sentido.</li>
                 <li>Escolha:
                   <ul className="list-disc pl-5 mt-1">
-                    <li><strong className="text-emerald-700">Deferir</strong> — libera a compra. Não precisa justificar.</li>
-                    <li><strong className="text-rose-700">Indeferir</strong> — bloqueia. É <strong>obrigatório escrever o motivo</strong> (o solicitante e o Compras verão essa mensagem).</li>
+                    <li><strong className="text-emerald-300">Deferir</strong> — libera a compra. Não precisa justificar.</li>
+                    <li><strong className="text-rose-300">Indeferir</strong> — bloqueia. É <strong>obrigatório escrever o motivo</strong> (o solicitante e o Compras verão essa mensagem).</li>
                   </ul>
                 </li>
                 <li>Depois de confirmado, o parecer é registrado com <strong>seu nome e data/hora</strong> e não pode ser desfeito no painel.</li>
@@ -599,7 +643,7 @@ function ManualSupervisorButton() {
             </section>
 
             <section>
-              <h3 className="font-bold text-slate-900 text-base">6. Boas práticas ao indeferir</h3>
+              <h3 className="font-bold text-foreground text-base">6. Boas práticas ao indeferir</h3>
               <ul className="list-disc pl-5 mt-1 space-y-1">
                 <li>Seja <strong>claro e objetivo</strong> — o solicitante lerá o motivo.</li>
                 <li>Se for questão de <strong>valor</strong>, oriente a cotar outros fornecedores.</li>
@@ -609,7 +653,7 @@ function ManualSupervisorButton() {
             </section>
 
             <section>
-              <h3 className="font-bold text-slate-900 text-base">7. Filtros e busca</h3>
+              <h3 className="font-bold text-foreground text-base">7. Filtros e busca</h3>
               <p className="mt-1">
                 Use a <strong>busca</strong> para localizar por número da RC, título, solicitante ou setor.
                 Use o filtro de <strong>setor</strong> para ver só as RCs de uma área específica
@@ -618,7 +662,7 @@ function ManualSupervisorButton() {
             </section>
 
             <section>
-              <h3 className="font-bold text-slate-900 text-base">8. Dúvidas frequentes</h3>
+              <h3 className="font-bold text-foreground text-base">8. Dúvidas frequentes</h3>
               <div className="mt-1 space-y-2">
                 <p><strong>Posso deferir uma RC que ainda está "Em cotação"?</strong> Não. Só é possível decidir quando a RC estiver <em>Cotada</em>.</p>
                 <p><strong>E se eu indeferir por engano?</strong> Fale com o Compras — o solicitante pode abrir uma nova RC corrigida.</p>
