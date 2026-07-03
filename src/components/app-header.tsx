@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LogOut, Download, Upload, Menu, MoreVertical } from "lucide-react";
+import { LogOut, Download, Upload, Menu, MoreVertical, HelpCircle } from "lucide-react";
 import { ShieldCheck } from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
@@ -82,6 +82,13 @@ export function AppHeader() {
         <div className="flex items-center gap-1 md:gap-1.5 shrink-0 ml-auto">
           <PendenciasBadge />
           <RcHeaderBadge />
+          <Link
+            to="/app/ajuda"
+            title="Central de Ajuda"
+            className="hidden md:flex h-8 w-8 rounded-md text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground items-center justify-center"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </Link>
           <div className="hidden md:flex items-center gap-0.5 border-l border-white/10 pl-2">
             <button
               title="Exportar backup"
@@ -175,6 +182,9 @@ export function AppHeader() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate({ to: "/app/conta/seguranca" })}>
                 <ShieldCheck className="h-4 w-4 mr-2" /> Minha conta / Segurança
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: "/app/ajuda" })}>
+                <HelpCircle className="h-4 w-4 mr-2" /> Central de Ajuda
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => exportBackup()}>
                 <Download className="h-4 w-4 mr-2" /> Exportar backup

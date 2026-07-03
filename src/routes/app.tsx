@@ -8,42 +8,8 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { QuickActionsBar } from "@/components/quick-actions-bar";
 import { SmartBreadcrumb } from "@/components/smart-breadcrumb";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { ShieldAlert, HelpCircle } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-
-function MfaHelpPopover() {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label="O que é MFA?"
-          className="inline-flex items-center justify-center rounded-full hover:bg-black/5 p-0.5 shrink-0"
-        >
-          <HelpCircle className="h-4 w-4 opacity-70" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent side="bottom" align="start" className="w-80 text-xs leading-relaxed">
-        <p className="font-semibold text-sm mb-1">O que é MFA?</p>
-        <p className="mb-2">
-          MFA (Autenticação de Múltiplos Fatores) é uma segunda camada de segurança:
-          além da senha, você confirma o login com um <b>código de 6 dígitos</b> gerado
-          por um app no seu celular.
-        </p>
-        <p className="font-semibold mb-1">Como ativar (2 min):</p>
-        <ol className="list-decimal pl-4 space-y-0.5 mb-2">
-          <li>Instale um app autenticador: <b>Google Authenticator</b>, <b>Microsoft Authenticator</b> ou <b>Authy</b>.</li>
-          <li>Clique em <b>“Configurar MFA”</b> ao lado.</li>
-          <li>Escaneie o QR Code com o app.</li>
-          <li>Digite o código de 6 dígitos que aparecer.</li>
-        </ol>
-        <p className="text-muted-foreground">
-          Pronto. Nos próximos logins o SIGMO vai pedir esse código — só você, no seu celular, tem acesso.
-        </p>
-      </PopoverContent>
-    </Popover>
-  );
-}
+import { ShieldAlert } from "lucide-react";
+import { HelpHint } from "@/components/help-hint";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -89,7 +55,7 @@ function AppLayout() {
                 <span className="min-w-0">
                   MFA obrigatório para todos os usuários. Ative agora para acessar áreas sensíveis.
                 </span>
-                <MfaHelpPopover />
+                <HelpHint topic="mfa" />
               </div>
               <Link to="/app/conta/seguranca" className="font-bold underline whitespace-nowrap self-end sm:self-auto">Configurar MFA</Link>
             </div>
@@ -101,7 +67,7 @@ function AppLayout() {
                 <span className="min-w-0">
                   MFA obrigatório em <b>{graceDaysLeft} dia{graceDaysLeft === 1 ? "" : "s"}</b>. Ative agora e não seja pego de surpresa.
                 </span>
-                <MfaHelpPopover />
+                <HelpHint topic="mfa" />
               </div>
               <Link to="/app/conta/seguranca" className="font-bold underline whitespace-nowrap self-end sm:self-auto">Ativar MFA</Link>
             </div>
