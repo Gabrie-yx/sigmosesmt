@@ -26,7 +26,7 @@ import {
   ShieldAlert, XCircle, Award, ChevronDown, ChevronUp, Truck, Clock, CreditCard, Sparkles,
   Archive, History,
 } from "lucide-react";
-import { Layers, PackageCheck, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Layers, PackageCheck, AlertTriangle, CheckCircle2, FileCheck2, Receipt } from "lucide-react";
 import {
   Building2, Wrench, Cog, Factory, Boxes, ShieldPlus, ChevronRight,
 } from "lucide-react";
@@ -76,7 +76,7 @@ type Req = {
   classificacao: "MATERIAL" | "SERVICO" | "MEDICAMENTOS";
   solicitante: string;
   setor: string | null;
-  status: "PENDENTE" | "EM_COTACAO" | "COTADA" | "APROVADA" | "INDEFERIDA";
+  status: "PENDENTE" | "EM_COTACAO" | "COTADA" | "APROVADA" | "INDEFERIDA" | "EM_RECEBIMENTO" | "CONCLUIDA";
   observacoes: string | null;
   created_at: string;
   titulo_display?: string | null;
@@ -91,6 +91,19 @@ type Req = {
   motivo_indeferimento?: string | null;
   cotacao_fornecedor?: string | null;
   cotacao_valor?: number | null;
+  pc_numero?: string | null;
+  pc_fornecedor?: string | null;
+  pc_valor?: number | null;
+  pc_prazo_entrega?: string | null;
+  pc_arquivo_url?: string | null;
+  pc_arquivo_nome?: string | null;
+  pc_emitido_por_nome?: string | null;
+  pc_emitido_em?: string | null;
+  nf_numero?: string | null;
+  nf_arquivo_url?: string | null;
+  nf_arquivo_nome?: string | null;
+  recebido_em?: string | null;
+  recebido_por_nome?: string | null;
 };
 
 type Cotacao = {
@@ -152,6 +165,8 @@ const STATUS_BADGE: Record<Req["status"], string> = {
   COTADA: "bg-blue-100 text-blue-800 border-blue-300",
   APROVADA: "bg-emerald-100 text-emerald-800 border-emerald-300",
   INDEFERIDA: "bg-rose-100 text-rose-800 border-rose-300",
+  EM_RECEBIMENTO: "bg-cyan-100 text-cyan-800 border-cyan-300",
+  CONCLUIDA: "bg-slate-200 text-slate-800 border-slate-400",
 };
 
 const STATUS_LABEL: Record<Req["status"], string> = {
@@ -160,6 +175,8 @@ const STATUS_LABEL: Record<Req["status"], string> = {
   COTADA: "Enviada ao supervisor",
   APROVADA: "Deferida",
   INDEFERIDA: "Indeferida",
+  EM_RECEBIMENTO: "PC emitido — aguardando NF",
+  CONCLUIDA: "Concluída",
 };
 
 const MOTIVOS_DISPENSA = [
@@ -190,7 +207,7 @@ function ComprasRecebidasPage() {
   const isAdmin = roles.includes("admin");
   const isCompras = isAdmin || roles.includes("compras" as any) || hasModule("compras" as any);
 
-  const [tab, setTab] = useState<"abertas" | "enviadas" | "aprovadas" | "indeferidas" | "todas">("abertas");
+  const [tab, setTab] = useState<"abertas" | "enviadas" | "aprovadas" | "recebimento" | "concluidas" | "indeferidas" | "todas">("abertas");
   const [q, setQ] = useState("");
   const [setorFilter, setSetorFilter] = useState<string>("__all");
   const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
@@ -208,12 +225,14 @@ function ComprasRecebidasPage() {
     queryFn: async () => {
       let query = supabase
         .from("purchase_requisitions")
-        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa,retroativa,retroativa_motivo,arquivada_em,decidido_em,decidido_por_nome,motivo_indeferimento,cotacao_fornecedor,cotacao_valor")
+        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa,retroativa,retroativa_motivo,arquivada_em,decidido_em,decidido_por_nome,motivo_indeferimento,cotacao_fornecedor,cotacao_valor,pc_numero,pc_fornecedor,pc_valor,pc_prazo_entrega,pc_arquivo_url,pc_arquivo_nome,pc_emitido_por_nome,pc_emitido_em,nf_numero,nf_arquivo_url,nf_arquivo_nome,recebido_em,recebido_por_nome")
         .order("created_at", { ascending: false })
         .limit(200);
       if (tab === "abertas") query = query.in("status", ["PENDENTE", "EM_COTACAO"] as any);
       if (tab === "enviadas") query = query.eq("status", "COTADA" as any);
       if (tab === "aprovadas") query = query.eq("status", "APROVADA" as any);
+      if (tab === "recebimento") query = query.eq("status", "EM_RECEBIMENTO" as any);
+      if (tab === "concluidas") query = query.eq("status", "CONCLUIDA" as any);
       if (tab === "indeferidas") query = query.eq("status", "INDEFERIDA" as any);
       if (mostrarArquivadas) {
         query = query.not("arquivada_em", "is", null);
