@@ -84,7 +84,7 @@ export function SupplierPicker({
                   <StarRating value={value.estrelas} size="sm" readOnly />
                 </span>
               ) : (
-                <span className="text-slate-500">Selecione um fornecedor qualificado…</span>
+                <span className="text-muted-foreground">Selecione um fornecedor qualificado…</span>
               )}
               <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
             </Button>
@@ -273,7 +273,7 @@ function CreateSupplierDialog({
             <Label>Avaliação inicial</Label>
             <div className="flex items-center gap-2">
               <StarRating value={estrelas} onChange={setEstrelas} size="lg" />
-              <span className="text-xs text-slate-500">{estrelas}/5</span>
+              <span className="text-xs text-muted-foreground">{estrelas}/5</span>
             </div>
           </div>
         </div>
@@ -282,7 +282,7 @@ function CreateSupplierDialog({
           <Button
             onClick={() => create.mutate()}
             disabled={create.isPending || !nome.trim()}
-            className="bg-red-700 hover:bg-red-800 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             {create.isPending ? "Salvando…" : "Cadastrar"}
           </Button>

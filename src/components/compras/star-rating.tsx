@@ -47,8 +47,8 @@ export function StarRating({
               className={cn(
                 sz,
                 filled
-                  ? "fill-amber-400 text-amber-500 drop-shadow-[0_0_2px_rgba(251,191,36,0.6)]"
-                  : "text-slate-300",
+                  ? "fill-primary text-primary drop-shadow-[0_0_2px_hsl(var(--primary)/0.5)]"
+                  : "text-muted-foreground/60",
               )}
             />
           </button>
