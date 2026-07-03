@@ -590,6 +590,34 @@ function RequisicoesPage() {
                         {r.status === "INDEFERIDA" && r.motivo_indeferimento && (
                           <div className="text-xs text-rose-700 mt-1">Motivo: {r.motivo_indeferimento}</div>
                         )}
+                        {r.status === "DEVOLVIDA" && (
+                          <div className="mt-1 text-xs bg-orange-50 border border-orange-300 rounded px-2 py-1 text-orange-900">
+                            <strong>↩ Devolvida pelo Compras</strong>
+                            {r.devolvida_por_nome ? <> · {r.devolvida_por_nome}</> : null}
+                            {r.devolvida_em ? <> · {fmtBR(r.devolvida_em)}</> : null}
+                            {r.devolucao_mensagem && (
+                              <div className="text-[11px] text-orange-800 mt-0.5 whitespace-pre-wrap">
+                                {r.devolucao_mensagem}
+                              </div>
+                            )}
+                            {r.motivo_indeferimento && (
+                              <div className="text-[11px] text-orange-700 mt-0.5">
+                                Indeferimento anterior: {r.motivo_indeferimento}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {r.status === "EM_RECEBIMENTO" && r.pc_numero && (
+                          <div className="text-xs text-cyan-800 mt-1">
+                            PC {r.pc_numero} emitido{r.pc_fornecedor ? <> — {r.pc_fornecedor}</> : null}
+                            {r.pc_valor != null && <> · {Number(r.pc_valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</>}
+                          </div>
+                        )}
+                        {r.status === "CONCLUIDA" && r.nf_numero && (
+                          <div className="text-xs text-slate-700 mt-1">
+                            NF {r.nf_numero} recebida{r.recebido_em ? <> em {fmtBR(r.recebido_em)}</> : null}
+                          </div>
+                        )}
                         {(r.status === "COTADA" || r.status === "APROVADA") && r.cotacao_fornecedor && (
                           <div className="text-xs text-blue-700 mt-1">
                             Cotada por <strong>{r.cotador_nome ?? "—"}</strong> · {r.cotacao_fornecedor}
