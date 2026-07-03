@@ -26,7 +26,7 @@ import {
   ShieldAlert, XCircle, Award, ChevronDown, ChevronUp, Truck, Clock, CreditCard, Sparkles,
   Archive, History,
 } from "lucide-react";
-import { Layers, PackageCheck, AlertTriangle, CheckCircle2, FileCheck2, Receipt } from "lucide-react";
+import { Layers, PackageCheck, AlertTriangle, CheckCircle2, FileCheck2, Receipt, RotateCcw, Undo2 } from "lucide-react";
 import {
   Building2, Wrench, Cog, Factory, Boxes, ShieldPlus, ChevronRight,
 } from "lucide-react";
@@ -76,7 +76,7 @@ type Req = {
   classificacao: "MATERIAL" | "SERVICO" | "MEDICAMENTOS";
   solicitante: string;
   setor: string | null;
-  status: "PENDENTE" | "EM_COTACAO" | "COTADA" | "APROVADA" | "INDEFERIDA" | "EM_RECEBIMENTO" | "CONCLUIDA";
+  status: "PENDENTE" | "EM_COTACAO" | "COTADA" | "APROVADA" | "INDEFERIDA" | "EM_RECEBIMENTO" | "CONCLUIDA" | "DEVOLVIDA";
   observacoes: string | null;
   created_at: string;
   titulo_display?: string | null;
@@ -104,6 +104,11 @@ type Req = {
   nf_arquivo_nome?: string | null;
   recebido_em?: string | null;
   recebido_por_nome?: string | null;
+  devolvida_em?: string | null;
+  devolvida_por_nome?: string | null;
+  devolucao_mensagem?: string | null;
+  recotacao_ciclos?: number | null;
+  motivo_indeferimento_anterior?: string | null;
 };
 
 type Cotacao = {
@@ -167,6 +172,7 @@ const STATUS_BADGE: Record<Req["status"], string> = {
   INDEFERIDA: "bg-rose-100 text-rose-800 border-rose-300",
   EM_RECEBIMENTO: "bg-cyan-100 text-cyan-800 border-cyan-300",
   CONCLUIDA: "bg-slate-200 text-slate-800 border-slate-400",
+  DEVOLVIDA: "bg-orange-100 text-orange-800 border-orange-300",
 };
 
 const STATUS_LABEL: Record<Req["status"], string> = {
@@ -177,6 +183,7 @@ const STATUS_LABEL: Record<Req["status"], string> = {
   INDEFERIDA: "Indeferida",
   EM_RECEBIMENTO: "PC emitido — aguardando NF",
   CONCLUIDA: "Concluída",
+  DEVOLVIDA: "Devolvida ao solicitante",
 };
 
 const MOTIVOS_DISPENSA = [
