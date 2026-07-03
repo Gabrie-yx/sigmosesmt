@@ -136,7 +136,7 @@ function ArticleCard({ topic }: { topic: HelpTopic }) {
       )}
       {topic.rota && (
         <Link
-          to={topic.rota as string}
+          to={topic.rota as any}
           className="inline-flex items-center gap-1 text-xs font-semibold text-rose-700 hover:text-rose-800"
         >
           Ir para a tela <ArrowRight className="h-3 w-3" />
