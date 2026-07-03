@@ -9,6 +9,7 @@ export const APP_MODULES = {
   usuarios: "Usuários",
   compras: "Compras",
   administrativo: "Administrativo",
+  almoxarifado: "Almoxarifado",
 } as const;
 
 export type AppModule = keyof typeof APP_MODULES;
