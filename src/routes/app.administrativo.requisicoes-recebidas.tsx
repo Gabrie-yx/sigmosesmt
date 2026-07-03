@@ -19,7 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Briefcase, Search, Filter, Eye, CheckCircle2, XCircle, ShieldAlert, FileText,
+  Briefcase, Search, Filter, Eye, CheckCircle2, XCircle, ShieldAlert, FileText, BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { decidirRc } from "@/lib/rc-public.functions";
@@ -187,6 +187,7 @@ function AdministrativoRecebidasPage() {
           <Badge className="bg-blue-100 text-blue-800 border-blue-300">Aguardando parecer: {counts?.parecer ?? 0}</Badge>
           <Badge className="bg-amber-100 text-amber-800 border-amber-300">Em fluxo: {counts?.abertas ?? 0}</Badge>
           <Badge className="bg-slate-100 text-slate-800 border-slate-300">Decididas: {counts?.decididas ?? 0}</Badge>
+          <ManualSupervisorButton />
         </div>
       </div>
 
