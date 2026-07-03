@@ -22,6 +22,7 @@ import {
   Package, ShoppingCart, Upload, Trash2, Eye, Trophy, Send, Filter, Search, FileText, DollarSign,
   ShieldAlert, XCircle, Award, ChevronDown, ChevronUp, Truck, Clock, CreditCard, Sparkles,
 } from "lucide-react";
+import { Layers, PackageCheck, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { openStorageFile } from "@/components/file-viewer";
 import { SupplierPicker, type SupplierLite } from "@/components/compras/supplier-picker";
@@ -80,6 +81,26 @@ type Cotacao = {
   ranking: number | null;
   is_melhor_oferta: boolean;
   fornecedores?: { estrelas: number | null } | null;
+  cobertura_pct?: number | null;
+  itens_cotados?: number | null;
+  itens_totais_rc?: number | null;
+  tem_divergencias?: boolean | null;
+};
+
+type ComboItem = {
+  rc_item_id: string;
+  item_numero: number | null;
+  descricao: string;
+  quantidade: number | null;
+  melhor_cotacao_id: string | null;
+  melhor_fornecedor_id: string | null;
+  fornecedor_nome: string | null;
+  valor_unitario: number | null;
+  valor_total: number | null;
+  prazo_entrega_dias: number | null;
+  conformidade: string | null;
+  estrelas: number | null;
+  total_ofertas: number | null;
 };
 
 type Item = {
@@ -499,18 +520,33 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
               Nenhuma cotação anexada. Adicione pelo menos <strong>{minCot} cotação{minCot > 1 ? "ões" : ""}</strong> (PDF ou JPG) para a matriz analisar e liberar o envio.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              {[...cotacoes].sort((a, b) => (a.ranking ?? 99) - (b.ranking ?? 99)).map((c) => (
-                <CotacaoCard
-                  key={c.id}
-                  cot={c}
-                  onWin={() => marcarVenc.mutate(c.id)}
-                  onDelete={() => {
-                    if (confirm(`Excluir cotação de "${c.fornecedor}"?`)) excluir.mutate(c);
-                  }}
-                />
-              ))}
-            </div>
+            <Tabs defaultValue="fornecedor">
+              <TabsList className="grid grid-cols-2 w-full">
+                <TabsTrigger value="fornecedor" className="gap-1 text-xs">
+                  <Trophy className="h-3.5 w-3.5" /> Vencedor único
+                </TabsTrigger>
+                <TabsTrigger value="combo" className="gap-1 text-xs">
+                  <Layers className="h-3.5 w-3.5" /> Melhor combo (fatia PC)
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="fornecedor" className="mt-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  {[...cotacoes].sort((a, b) => (a.ranking ?? 99) - (b.ranking ?? 99)).map((c) => (
+                    <CotacaoCard
+                      key={c.id}
+                      cot={c}
+                      onWin={() => marcarVenc.mutate(c.id)}
+                      onDelete={() => {
+                        if (confirm(`Excluir cotação de "${c.fornecedor}"?`)) excluir.mutate(c);
+                      }}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+              <TabsContent value="combo" className="mt-2">
+                <MelhorComboTab rcId={req.id} />
+              </TabsContent>
+            </Tabs>
           )}
         </div>
 
@@ -545,8 +581,25 @@ function CotacaoCard({
   const rank = cot.ranking ?? null;
   const score = cot.score_total ?? null;
   const bd = (cot.score_breakdown ?? {}) as {
-    preco?: number; prazo?: number; qualidade?: number; pagamento?: number; frete?: number;
+    preco?: number; prazo_entrega?: number; estrelas?: number;
+    condicao_pagamento?: number; frete?: number; cobertura?: number;
+    cobertura_pct?: number;
   };
+  const cobertura = cot.cobertura_pct ?? 0;
+  const cotados = cot.itens_cotados ?? 0;
+  const totalItens = cot.itens_totais_rc ?? 0;
+  const coberturaBaixa = totalItens > 0 && cobertura < 100;
+  const divergente = !!cot.tem_divergencias;
+
+  // Alerta validade curta
+  let validadeCurta = false;
+  let diasValidade: number | null = null;
+  if (cot.validade) {
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const val = new Date(cot.validade + "T00:00:00");
+    diasValidade = Math.round((val.getTime() - hoje.getTime()) / 86400000);
+    validadeCurta = diasValidade >= 0 && diasValidade <= 5;
+  }
   return (
     <div
       className={cn(
@@ -595,6 +648,31 @@ function CotacaoCard({
       </div>
       <div className="text-lg font-black text-red-800">{fmtMoney(cot.valor)}</div>
 
+      {/* Alertas críticos */}
+      <div className="flex flex-wrap gap-1">
+        {totalItens > 0 && (
+          <Badge className={cn(
+            "text-[10px] border font-bold gap-0.5",
+            cobertura >= 100 ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+              : cobertura >= 80 ? "bg-amber-100 text-amber-800 border-amber-300"
+              : "bg-rose-100 text-rose-800 border-rose-300"
+          )}>
+            <PackageCheck className="h-2.5 w-2.5" />
+            Cobertura {cotados}/{totalItens} ({cobertura.toFixed(0)}%)
+          </Badge>
+        )}
+        {divergente && (
+          <Badge className="text-[10px] bg-orange-100 text-orange-800 border border-orange-300 gap-0.5">
+            <AlertTriangle className="h-2.5 w-2.5" /> Divergências
+          </Badge>
+        )}
+        {validadeCurta && (
+          <Badge className="text-[10px] bg-rose-100 text-rose-800 border border-rose-300 gap-0.5 animate-pulse">
+            <Clock className="h-2.5 w-2.5" /> Vence em {diasValidade}d
+          </Badge>
+        )}
+      </div>
+
       <div className="flex flex-wrap gap-1 text-[10px] text-slate-600">
         {cot.prazo_entrega_dias != null && (
           <span className="inline-flex items-center gap-0.5 bg-slate-100 px-1.5 py-0.5 rounded">
@@ -627,11 +705,17 @@ function CotacaoCard({
       )}
       {showScore && score != null && (
         <div className="text-[10px] bg-slate-50 border rounded p-1.5 space-y-0.5">
-          <ScoreLine label="Preço (35%)" val={bd.preco} />
-          <ScoreLine label="Prazo (20%)" val={bd.prazo} />
-          <ScoreLine label="Qualidade (25%)" val={bd.qualidade} />
-          <ScoreLine label="Pagamento (10%)" val={bd.pagamento} />
-          <ScoreLine label="Frete (10%)" val={bd.frete} />
+          <ScoreLine label="Preço (25%)" val={bd.preco} max={25} />
+          <ScoreLine label="Prazo (15%)" val={bd.prazo_entrega} max={15} />
+          <ScoreLine label="Estrelas (20%)" val={bd.estrelas} max={20} />
+          <ScoreLine label="Pagamento (10%)" val={bd.condicao_pagamento} max={10} />
+          <ScoreLine label="Frete (5%)" val={bd.frete} max={5} />
+          <ScoreLine label="Cobertura (25%)" val={bd.cobertura} max={25} />
+          {divergente && (
+            <div className="text-[10px] text-orange-700 pt-1 border-t border-orange-200">
+              ⚠️ Penalidade de 10% aplicada por itens divergentes
+            </div>
+          )}
         </div>
       )}
 
@@ -668,8 +752,9 @@ function CotacaoCard({
   );
 }
 
-function ScoreLine({ label, val }: { label: string; val?: number }) {
+function ScoreLine({ label, val, max = 100 }: { label: string; val?: number; max?: number }) {
   const v = Math.round(val ?? 0);
+  const pct = Math.min(100, (v / max) * 100);
   return (
     <div className="flex items-center gap-1.5">
       <span className="w-24 shrink-0 text-slate-600">{label}</span>
@@ -677,12 +762,134 @@ function ScoreLine({ label, val }: { label: string; val?: number }) {
         <div
           className={cn(
             "h-full transition-all",
-            v >= 80 ? "bg-emerald-500" : v >= 60 ? "bg-amber-500" : "bg-slate-400",
+            pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-slate-400",
           )}
-          style={{ width: `${v}%` }}
+          style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="w-8 text-right font-semibold text-slate-700">{v}</span>
+      <span className="w-10 text-right font-semibold text-slate-700">{v}/{max}</span>
+    </div>
+  );
+}
+
+function MelhorComboTab({ rcId }: { rcId: string }) {
+  const { data: combo = [], isLoading } = useQuery({
+    queryKey: ["rc-melhor-combo", rcId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("melhor_combo_por_item", { _rc_id: rcId });
+      if (error) throw error;
+      return (data ?? []) as ComboItem[];
+    },
+  });
+
+  const totalCombo = combo.reduce((s, i) => s + (i.valor_total ?? 0), 0);
+  const cobertos = combo.filter((i) => i.melhor_cotacao_id).length;
+  const naoCobertos = combo.length - cobertos;
+  const fornecedores = new Set(combo.filter((i) => i.melhor_fornecedor_id).map((i) => i.melhor_fornecedor_id));
+
+  if (isLoading) return <div className="p-4 text-center text-slate-500 text-xs">Analisando combinações…</div>;
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center">
+          <div className="text-lg font-black text-emerald-700">{fmtMoney(totalCombo)}</div>
+          <div className="text-[10px] text-emerald-700 font-semibold uppercase">Total combo ótimo</div>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
+          <div className="text-lg font-black text-blue-700">{fornecedores.size}</div>
+          <div className="text-[10px] text-blue-700 font-semibold uppercase">Fornecedores</div>
+        </div>
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center">
+          <div className="text-lg font-black text-slate-700">{cobertos}/{combo.length}</div>
+          <div className="text-[10px] text-slate-600 font-semibold uppercase">Itens cobertos</div>
+        </div>
+        <div className={cn(
+          "border rounded-lg p-2 text-center",
+          naoCobertos > 0 ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200",
+        )}>
+          <div className={cn("text-lg font-black", naoCobertos > 0 ? "text-rose-700" : "text-emerald-700")}>
+            {naoCobertos}
+          </div>
+          <div className={cn(
+            "text-[10px] font-semibold uppercase",
+            naoCobertos > 0 ? "text-rose-700" : "text-emerald-700",
+          )}>Sem cotação</div>
+        </div>
+      </div>
+
+      <div className="text-[11px] bg-amber-50 border border-amber-200 rounded p-2 text-amber-900">
+        💡 Este é o <strong>melhor combo por item</strong> — pode gerar múltiplas PCs (uma por fornecedor). A matriz prioriza CONFORME &gt; SIMILAR, depois menor preço, depois estrelas.
+      </div>
+
+      <div className="border rounded-lg overflow-hidden">
+        <table className="w-full text-xs">
+          <thead className="bg-slate-100">
+            <tr>
+              <th className="p-2 text-left w-10">#</th>
+              <th className="p-2 text-left">Item</th>
+              <th className="p-2 text-center w-14">Qtde</th>
+              <th className="p-2 text-left">Melhor fornecedor</th>
+              <th className="p-2 text-right w-24">Unitário</th>
+              <th className="p-2 text-right w-24">Total</th>
+              <th className="p-2 text-center w-14">Prazo</th>
+              <th className="p-2 text-center w-20">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {combo.map((i) => (
+              <tr key={i.rc_item_id} className={cn(
+                "border-t",
+                !i.melhor_cotacao_id && "bg-rose-50",
+              )}>
+                <td className="p-2 text-center">{String(i.item_numero ?? 0).padStart(2, "0")}</td>
+                <td className="p-2">{i.descricao}</td>
+                <td className="p-2 text-center">{i.quantidade ?? "—"}</td>
+                <td className="p-2">
+                  {i.fornecedor_nome ? (
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold">{i.fornecedor_nome}</span>
+                      {i.estrelas != null && (
+                        <StarRating value={i.estrelas} readOnly size="sm" />
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-rose-700 font-semibold text-[11px]">SEM COTAÇÃO</span>
+                  )}
+                  {i.total_ofertas != null && i.total_ofertas > 1 && (
+                    <div className="text-[10px] text-slate-500">{i.total_ofertas} ofertas</div>
+                  )}
+                </td>
+                <td className="p-2 text-right font-mono">{fmtMoney(i.valor_unitario ?? undefined)}</td>
+                <td className="p-2 text-right font-mono font-bold">{fmtMoney(i.valor_total ?? undefined)}</td>
+                <td className="p-2 text-center">{i.prazo_entrega_dias ? `${i.prazo_entrega_dias}d` : "—"}</td>
+                <td className="p-2 text-center">
+                  {i.conformidade === "CONFORME" && (
+                    <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[9px] gap-0.5">
+                      <CheckCircle2 className="h-2.5 w-2.5" /> Conforme
+                    </Badge>
+                  )}
+                  {i.conformidade === "SIMILAR" && (
+                    <Badge className="bg-amber-100 text-amber-800 border border-amber-300 text-[9px]">Similar</Badge>
+                  )}
+                  {i.conformidade === "DIVERGENTE" && (
+                    <Badge className="bg-orange-100 text-orange-800 border border-orange-300 text-[9px] gap-0.5">
+                      <AlertTriangle className="h-2.5 w-2.5" /> Divergente
+                    </Badge>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot className="bg-slate-100 font-bold">
+            <tr>
+              <td colSpan={5} className="p-2 text-right">TOTAL COMBO ÓTIMO</td>
+              <td className="p-2 text-right font-mono text-red-800">{fmtMoney(totalCombo)}</td>
+              <td colSpan={2}></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
 }
@@ -696,7 +903,6 @@ function AddCotacaoDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [supplier, setSupplier] = useState<SupplierLite | null>(null);
-  const [valor, setValor] = useState("");
   const [prazo, setPrazo] = useState("");
   const [pgto, setPgto] = useState("");
   const [frete, setFrete] = useState<"CIF" | "FOB" | "">("");
@@ -704,11 +910,59 @@ function AddCotacaoDialog({
   const [obs, setObs] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const [itensCot, setItensCot] = useState<Record<string, {
+    valor_unitario: string;
+    conformidade: "CONFORME" | "SIMILAR" | "DIVERGENTE" | "NAO_COTADO";
+    descricao_ofertada: string;
+    marca: string;
+    justificativa: string;
+  }>>({});
+
+  // Carrega itens da RC ao abrir
+  const { data: itensRc = [] } = useQuery({
+    queryKey: ["rc-items-form", rcId, open],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("purchase_requisition_items")
+        .select("id,item_numero,descricao,quantidade,unidade")
+        .eq("requisition_id", rcId)
+        .order("item_numero");
+      if (error) throw error;
+      return (data ?? []) as { id: string; item_numero: number; descricao: string; quantidade: number | null; unidade: string | null }[];
+    },
+  });
+
+  // Inicializa mapa de itens quando carrega
+  useMemo(() => {
+    if (open && itensRc.length > 0 && Object.keys(itensCot).length === 0) {
+      const next: typeof itensCot = {};
+      for (const i of itensRc) {
+        next[i.id] = {
+          valor_unitario: "",
+          conformidade: "CONFORME",
+          descricao_ofertada: i.descricao,
+          marca: "",
+          justificativa: "",
+        };
+      }
+      setItensCot(next);
+    }
+  }, [open, itensRc]);
+
+  const totalCotacao = useMemo(() => {
+    return itensRc.reduce((sum, i) => {
+      const st = itensCot[i.id];
+      if (!st || st.conformidade === "NAO_COTADO") return sum;
+      const v = Number(String(st.valor_unitario).replace(",", "."));
+      const q = i.quantidade ?? 0;
+      return sum + (Number.isFinite(v) ? v * q : 0);
+    }, 0);
+  }, [itensRc, itensCot]);
 
   async function submit() {
-    const val = Number(String(valor).replace(",", "."));
     if (!supplier) return toast.error("Selecione um fornecedor");
-    if (!Number.isFinite(val) || val < 0) return toast.error("Valor inválido");
+    if (totalCotacao <= 0) return toast.error("Preencha o valor unitário de ao menos 1 item");
     if (!file) return toast.error("Anexe o arquivo da cotação (PDF ou JPG)");
     const allowed = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
     if (!allowed.includes(file.type)) return toast.error("Arquivo deve ser PDF ou imagem (JPG/PNG/WEBP)");
@@ -723,12 +977,12 @@ function AddCotacaoDialog({
       });
       if (up.error) throw up.error;
 
-      const ins = await supabase.from("rc_cotacoes").insert({
+      const { data: cotIns, error: insErr } = await supabase.from("rc_cotacoes").insert({
         rc_id: rcId,
         fornecedor_id: supplier.id,
         fornecedor: supplier.nome_fantasia,
         cnpj: supplier.cnpj,
-        valor: val,
+        valor: totalCotacao,
         prazo_entrega_dias: prazo ? Math.max(0, parseInt(prazo, 10)) : null,
         condicao_pagamento: pgto.trim() || null,
         frete: frete || null,
@@ -737,8 +991,32 @@ function AddCotacaoDialog({
         arquivo_nome: file.name,
         arquivo_tipo: file.type,
         observacao: obs.trim() || null,
-      } as any);
-      if (ins.error) throw ins.error;
+      } as any).select("id").single();
+      if (insErr) throw insErr;
+
+      // Insere itens da cotação
+      const itensPayload = itensRc.map((i) => {
+        const st = itensCot[i.id];
+        const vu = Number(String(st?.valor_unitario ?? "").replace(",", "."));
+        const q = i.quantidade ?? 0;
+        const cotado = st && st.conformidade !== "NAO_COTADO" && Number.isFinite(vu) && vu > 0;
+        return {
+          cotacao_id: cotIns!.id,
+          rc_item_id: i.id,
+          item_numero: i.item_numero,
+          descricao_ofertada: st?.descricao_ofertada || i.descricao,
+          quantidade: q,
+          unidade: i.unidade,
+          valor_unitario: cotado ? vu : 0,
+          valor_total: cotado ? vu * q : 0,
+          conformidade: cotado ? st!.conformidade : "NAO_COTADO",
+          marca: st?.marca || null,
+          justificativa_conformidade: (st?.conformidade === "DIVERGENTE" || st?.conformidade === "SIMILAR")
+            ? (st?.justificativa || null) : null,
+        };
+      });
+      const { error: itensErr } = await supabase.from("rc_cotacao_itens").insert(itensPayload as any);
+      if (itensErr) throw itensErr;
 
       // Move RC pro EM_COTACAO se ainda estiver PENDENTE
       await supabase
@@ -749,8 +1027,9 @@ function AddCotacaoDialog({
 
       toast.success("Cotação anexada — matriz recalculando…");
       setOpen(false);
-      setSupplier(null); setValor(""); setPrazo(""); setPgto("");
+      setSupplier(null); setPrazo(""); setPgto("");
       setFrete(""); setValidade(""); setObs(""); setFile(null);
+      setItensCot({});
       onAdded();
     } catch (e: any) {
       toast.error(e.message ?? "Falha ao anexar cotação");
@@ -768,7 +1047,7 @@ function AddCotacaoDialog({
           <Upload className="h-3.5 w-3.5 mr-1" /> Nova cotação
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-amber-500" /> Nova cotação para a matriz
@@ -779,15 +1058,6 @@ function AddCotacaoDialog({
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label>Valor total (R$) *</Label>
-              <Input
-                inputMode="decimal"
-                value={valor}
-                onChange={(e) => setValor(e.target.value)}
-                placeholder="0,00"
-              />
-            </div>
-            <div>
               <Label>Prazo entrega (dias)</Label>
               <Input
                 inputMode="numeric"
@@ -795,6 +1065,10 @@ function AddCotacaoDialog({
                 onChange={(e) => setPrazo(e.target.value)}
                 placeholder="Ex: 7"
               />
+            </div>
+            <div>
+              <Label>Validade da proposta</Label>
+              <Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} />
             </div>
           </div>
 
@@ -819,9 +1093,104 @@ function AddCotacaoDialog({
             </div>
           </div>
 
-          <div>
-            <Label>Validade da proposta</Label>
-            <Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} />
+          {/* Tabela item a item */}
+          <div className="border-2 border-amber-300 rounded-lg overflow-hidden">
+            <div className="bg-amber-50 p-2 border-b border-amber-300">
+              <div className="text-sm font-black text-amber-900 flex items-center gap-2">
+                <PackageCheck className="h-4 w-4" /> Preços item a item ({itensRc.length} itens da RC)
+              </div>
+              <div className="text-[11px] text-amber-800 mt-0.5">
+                Marque itens como <strong>Não cotado</strong> se o fornecedor não ofertou. Divergente/Similar exige justificativa.
+              </div>
+            </div>
+            <div className="max-h-80 overflow-y-auto">
+              <table className="w-full text-xs">
+                <thead className="bg-slate-100 sticky top-0">
+                  <tr>
+                    <th className="p-1.5 text-left w-8">#</th>
+                    <th className="p-1.5 text-left">Item RC</th>
+                    <th className="p-1.5 text-center w-14">Qtde</th>
+                    <th className="p-1.5 text-left w-28">Conform.</th>
+                    <th className="p-1.5 text-right w-24">Unit. R$</th>
+                    <th className="p-1.5 text-right w-24">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itensRc.map((i) => {
+                    const st = itensCot[i.id] ?? { valor_unitario: "", conformidade: "CONFORME" as const, descricao_ofertada: i.descricao, marca: "", justificativa: "" };
+                    const vu = Number(String(st.valor_unitario).replace(",", "."));
+                    const tot = Number.isFinite(vu) ? vu * (i.quantidade ?? 0) : 0;
+                    const isNaoCotado = st.conformidade === "NAO_COTADO";
+                    return (
+                      <>
+                        <tr key={i.id} className={cn("border-t", isNaoCotado && "bg-slate-100 opacity-60")}>
+                          <td className="p-1.5 text-center">{String(i.item_numero).padStart(2, "0")}</td>
+                          <td className="p-1.5">
+                            <div className="font-semibold">{i.descricao}</div>
+                            <div className="text-[10px] text-slate-500">{i.unidade ?? ""}</div>
+                          </td>
+                          <td className="p-1.5 text-center">{i.quantidade ?? "—"}</td>
+                          <td className="p-1.5">
+                            <Select
+                              value={st.conformidade}
+                              onValueChange={(v) => setItensCot((prev) => ({
+                                ...prev,
+                                [i.id]: { ...st, conformidade: v as any },
+                              }))}
+                            >
+                              <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="CONFORME">✅ Conforme</SelectItem>
+                                <SelectItem value="SIMILAR">🟡 Similar</SelectItem>
+                                <SelectItem value="DIVERGENTE">⚠️ Divergente</SelectItem>
+                                <SelectItem value="NAO_COTADO">❌ Não cotado</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="p-1.5">
+                            <Input
+                              disabled={isNaoCotado}
+                              inputMode="decimal"
+                              value={st.valor_unitario}
+                              onChange={(e) => setItensCot((prev) => ({
+                                ...prev,
+                                [i.id]: { ...st, valor_unitario: e.target.value },
+                              }))}
+                              className="h-7 text-right text-[11px]"
+                              placeholder="0,00"
+                            />
+                          </td>
+                          <td className="p-1.5 text-right font-mono font-bold">
+                            {isNaoCotado ? "—" : fmtMoney(tot)}
+                          </td>
+                        </tr>
+                        {(st.conformidade === "SIMILAR" || st.conformidade === "DIVERGENTE") && (
+                          <tr key={i.id + "-just"} className="border-t bg-amber-50/50">
+                            <td colSpan={6} className="p-1.5">
+                              <Input
+                                value={st.justificativa}
+                                onChange={(e) => setItensCot((prev) => ({
+                                  ...prev,
+                                  [i.id]: { ...st, justificativa: e.target.value },
+                                }))}
+                                className="h-7 text-[11px]"
+                                placeholder={`Justificar ${st.conformidade === "SIMILAR" ? "produto similar ofertado" : "divergência (ex: sem forro, marca alternativa…)"}`}
+                              />
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    );
+                  })}
+                </tbody>
+                <tfoot className="bg-slate-100 font-bold sticky bottom-0">
+                  <tr>
+                    <td colSpan={5} className="p-2 text-right">TOTAL DA COTAÇÃO</td>
+                    <td className="p-2 text-right font-mono text-red-800">{fmtMoney(totalCotacao)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
 
           <div>
@@ -843,7 +1212,7 @@ function AddCotacaoDialog({
           </div>
 
           <div className="text-[11px] bg-amber-50 border border-amber-200 rounded p-2 text-amber-900">
-            💡 Quanto mais campos preenchidos, mais precisa fica a análise da matriz. Só preço e valor faz um score fraco — inclua prazo, pagamento e frete sempre que possível.
+            💡 A matriz agora leva em conta <strong>cobertura</strong> (25%): fornecedor que não cota todos os itens perde pontos. Marcar itens como <strong>Divergente</strong> aplica penalidade de 10% no score total.
           </div>
         </div>
         <DialogFooter>

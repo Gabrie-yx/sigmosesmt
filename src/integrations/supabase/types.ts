@@ -6993,6 +6993,7 @@ export type Database = {
       }
       rc_cotacao_itens: {
         Row: {
+          conformidade: string
           cotacao_id: string
           created_at: string
           descricao_ofertada: string
@@ -7000,6 +7001,7 @@ export type Database = {
           id: string
           ipi_pct: number | null
           item_numero: number | null
+          justificativa_conformidade: string | null
           marca: string | null
           observacao: string | null
           prazo_entrega_dias: number | null
@@ -7010,6 +7012,7 @@ export type Database = {
           valor_unitario: number
         }
         Insert: {
+          conformidade?: string
           cotacao_id: string
           created_at?: string
           descricao_ofertada: string
@@ -7017,6 +7020,7 @@ export type Database = {
           id?: string
           ipi_pct?: number | null
           item_numero?: number | null
+          justificativa_conformidade?: string | null
           marca?: string | null
           observacao?: string | null
           prazo_entrega_dias?: number | null
@@ -7027,6 +7031,7 @@ export type Database = {
           valor_unitario?: number
         }
         Update: {
+          conformidade?: string
           cotacao_id?: string
           created_at?: string
           descricao_ofertada?: string
@@ -7034,6 +7039,7 @@ export type Database = {
           id?: string
           ipi_pct?: number | null
           item_numero?: number | null
+          justificativa_conformidade?: string | null
           marca?: string | null
           observacao?: string | null
           prazo_entrega_dias?: number | null
@@ -7067,6 +7073,7 @@ export type Database = {
           arquivo_tipo: string | null
           arquivo_url: string
           cnpj: string | null
+          cobertura_pct: number | null
           condicao_pagamento: string | null
           created_at: string
           created_by: string | null
@@ -7077,6 +7084,8 @@ export type Database = {
           id: string
           is_melhor_oferta: boolean
           is_vencedora: boolean
+          itens_cotados: number | null
+          itens_totais_rc: number | null
           numero_orcamento: string | null
           observacao: string | null
           observacoes: string | null
@@ -7085,6 +7094,7 @@ export type Database = {
           rc_id: string
           score_breakdown: Json | null
           score_total: number | null
+          tem_divergencias: boolean | null
           updated_at: string
           validade: string | null
           valor: number
@@ -7095,6 +7105,7 @@ export type Database = {
           arquivo_tipo?: string | null
           arquivo_url: string
           cnpj?: string | null
+          cobertura_pct?: number | null
           condicao_pagamento?: string | null
           created_at?: string
           created_by?: string | null
@@ -7105,6 +7116,8 @@ export type Database = {
           id?: string
           is_melhor_oferta?: boolean
           is_vencedora?: boolean
+          itens_cotados?: number | null
+          itens_totais_rc?: number | null
           numero_orcamento?: string | null
           observacao?: string | null
           observacoes?: string | null
@@ -7113,6 +7126,7 @@ export type Database = {
           rc_id: string
           score_breakdown?: Json | null
           score_total?: number | null
+          tem_divergencias?: boolean | null
           updated_at?: string
           validade?: string | null
           valor: number
@@ -7123,6 +7137,7 @@ export type Database = {
           arquivo_tipo?: string | null
           arquivo_url?: string
           cnpj?: string | null
+          cobertura_pct?: number | null
           condicao_pagamento?: string | null
           created_at?: string
           created_by?: string | null
@@ -7133,6 +7148,8 @@ export type Database = {
           id?: string
           is_melhor_oferta?: boolean
           is_vencedora?: boolean
+          itens_cotados?: number | null
+          itens_totais_rc?: number | null
           numero_orcamento?: string | null
           observacao?: string | null
           observacoes?: string | null
@@ -7141,6 +7158,7 @@ export type Database = {
           rc_id?: string
           score_breakdown?: Json | null
           score_total?: number | null
+          tem_divergencias?: boolean | null
           updated_at?: string
           validade?: string | null
           valor?: number
@@ -8264,6 +8282,24 @@ export type Database = {
         Args: { _cotacao_id: string }
         Returns: undefined
       }
+      melhor_combo_por_item: {
+        Args: { _rc_id: string }
+        Returns: {
+          conformidade: string
+          descricao: string
+          estrelas: number
+          fornecedor_nome: string
+          item_numero: number
+          melhor_cotacao_id: string
+          melhor_fornecedor_id: string
+          prazo_entrega_dias: number
+          quantidade: number
+          rc_item_id: string
+          total_ofertas: number
+          valor_total: number
+          valor_unitario: number
+        }[]
+      }
       mfa_ok: { Args: never; Returns: boolean }
       oss_marcar_vencidas: { Args: never; Returns: number }
       peek_proximo_numero_apr: { Args: never; Returns: string }
@@ -8279,6 +8315,10 @@ export type Database = {
             Args: { _employee_id: string; _motivo?: string }
             Returns: undefined
           }
+      recalcular_cobertura_cotacao: {
+        Args: { _cotacao_id: string }
+        Returns: undefined
+      }
       recalcular_valor_cotacao: {
         Args: { _cotacao_id: string }
         Returns: undefined
