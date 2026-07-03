@@ -1,0 +1,1 @@
+UPDATE public.purchase_requisitions SET setor = 'SESMT' WHERE setor IN ('SEMT', 'SESMT — Ambulatório');
