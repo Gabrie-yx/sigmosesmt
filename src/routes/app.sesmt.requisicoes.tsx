@@ -1796,17 +1796,17 @@ function DescricaoAutocompleteCell({
         placeholder="Digite para buscar na Base MP..."
       />
       {open && (
-        <div className="absolute z-50 left-0 right-0 top-full mt-0.5 max-h-64 overflow-y-auto rounded-md border border-slate-300 bg-white shadow-lg text-[12px]">
-          {loading && <div className="px-2 py-1 text-slate-400">Buscando...</div>}
+        <div className="absolute z-50 left-0 right-0 top-full mt-0.5 max-h-64 overflow-y-auto rounded-md border border-border bg-popover text-popover-foreground shadow-lg text-[12px]">
+          {loading && <div className="px-2 py-1 text-muted-foreground">Buscando...</div>}
           {!loading && opts.map((o, i) => (
             <button
               key={i}
               type="button"
               onMouseDown={(e) => { e.preventDefault(); onPick(o); setOpen(false); }}
-              className="w-full text-left px-2 py-1.5 hover:bg-red-50 border-b last:border-b-0 border-slate-100"
+              className="w-full text-left px-2 py-1.5 border-b last:border-b-0 border-border/60 hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
             >
-              <div className="font-medium text-slate-800 truncate">{o.descricao}</div>
-              {o.unidade && <div className="text-[10px] text-slate-500">Unid.: {o.unidade}</div>}
+              <div className="font-medium truncate">{o.descricao}</div>
+              {o.unidade && <div className="text-[10px] text-muted-foreground">Unid.: {o.unidade}</div>}
             </button>
           ))}
         </div>
