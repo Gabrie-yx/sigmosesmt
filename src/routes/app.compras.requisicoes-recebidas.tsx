@@ -19,6 +19,9 @@ import {
   Tabs, TabsList, TabsTrigger, TabsContent,
 } from "@/components/ui/tabs";
 import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Package, ShoppingCart, Upload, Trash2, Eye, Trophy, Send, Filter, Search, FileText, DollarSign,
   ShieldAlert, XCircle, Award, ChevronDown, ChevronUp, Truck, Clock, CreditCard, Sparkles,
 } from "lucide-react";
@@ -781,6 +784,24 @@ function MelhorComboTab({ rcId }: { rcId: string }) {
       return (data ?? []) as ComboItem[];
     },
   });
+
+  // Detalhes de conformidade (marca ofertada + justificativa) por (cotacao_id, rc_item_id)
+  const cotacaoIds = combo.map((c) => c.melhor_cotacao_id).filter(Boolean) as string[];
+  const { data: detalhes = [] } = useQuery({
+    queryKey: ["rc-combo-detalhes", rcId, cotacaoIds.sort().join(",")],
+    enabled: cotacaoIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rc_cotacao_itens")
+        .select("cotacao_id, rc_item_id, marca, descricao_ofertada, justificativa_conformidade")
+        .in("cotacao_id", cotacaoIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const detalhePorItem = new Map(
+    detalhes.map((d: any) => [`${d.cotacao_id}::${d.rc_item_id}`, d]),
+  );
 
   const totalCombo = combo.reduce((s, i) => s + (i.valor_total ?? 0), 0);
   const cobertos = combo.filter((i) => i.melhor_cotacao_id).length;
