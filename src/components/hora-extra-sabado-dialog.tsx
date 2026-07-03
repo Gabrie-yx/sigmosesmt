@@ -13,6 +13,7 @@ import { Search, Plus, X, Users, CheckSquare, Square, Trash2 } from "lucide-reac
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { toTitleCasePT } from "@/lib/utils";
+import { logRead } from "@/lib/audit-read";
 
 type FuncRow = {
   key: string;
@@ -36,6 +37,10 @@ export function HoraExtraSabadoDialog({
 }) {
   const qc = useQueryClient();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (open && editId) logRead("hora_extra_sabado", editId, { via: "hora-extra-dialog" });
+  }, [open, editId]);
 
   // Próximo sábado por padrão
   const proximoSabado = useMemo(() => {
