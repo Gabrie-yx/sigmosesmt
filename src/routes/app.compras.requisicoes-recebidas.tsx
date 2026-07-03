@@ -2211,7 +2211,7 @@ function DispensarCotacoesBtn({ rcId, onDone }: { rcId: string; onDone: () => vo
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>Cancelar</Button>
           <Button
-            className="bg-primary hover:bg-amber-700 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
             onClick={submit}
             disabled={busy || !motivo || just.trim().length < 30}
           >
