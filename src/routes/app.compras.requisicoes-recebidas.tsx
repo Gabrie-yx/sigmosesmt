@@ -168,13 +168,13 @@ type Item = {
 };
 
 const STATUS_BADGE: Record<Req["status"], string> = {
-  PENDENTE: "bg-amber-100 text-amber-800 border-amber-300",
+  PENDENTE: "bg-primary/20 text-foreground border-primary/40",
   EM_COTACAO: "bg-violet-100 text-violet-800 border-violet-300",
   COTADA: "bg-blue-100 text-blue-800 border-blue-300",
-  APROVADA: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  APROVADA: "bg-primary/20 text-foreground border-primary/40",
   INDEFERIDA: "bg-rose-100 text-rose-800 border-rose-300",
   EM_RECEBIMENTO: "bg-cyan-100 text-cyan-800 border-cyan-300",
-  CONCLUIDA: "bg-slate-200 text-slate-800 border-slate-400",
+  CONCLUIDA: "bg-muted/70 text-foreground border-border",
   DEVOLVIDA: "bg-orange-100 text-orange-800 border-orange-300",
 };
 
@@ -298,7 +298,7 @@ function ComprasRecebidasPage() {
           <CardHeader>
             <CardTitle>Acesso restrito</CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-slate-600">
+          <CardContent className="text-sm text-muted-foreground">
             Este painel é restrito ao módulo <strong>Compras</strong>. Fale com o admin para liberar seu acesso.
           </CardContent>
         </Card>
@@ -310,18 +310,18 @@ function ComprasRecebidasPage() {
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-red-100 text-red-800 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-xl bg-primary/20 text-foreground flex items-center justify-center">
             <ShoppingCart className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-xl font-bold">Compras · RC Recebidas</h1>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Fila centralizada de requisições dos setores. Anexe 3 cotações e envie para o Supervisor Geral.
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className="bg-amber-100 text-amber-800 border-amber-300">Abertas: {abertas}</Badge>
+          <Badge className="bg-primary/20 text-foreground border-primary/40">Abertas: {abertas}</Badge>
           <Badge className="bg-blue-100 text-blue-800 border-blue-300">Enviadas: {enviadas}</Badge>
         </div>
       </div>
@@ -329,7 +329,7 @@ function ComprasRecebidasPage() {
       <Card>
         <CardContent className="p-3 flex flex-wrap gap-2 items-center">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="h-4 w-4 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="h-4 w-4 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar por nº, solicitante, setor…"
               value={q}
@@ -338,7 +338,7 @@ function ComprasRecebidasPage() {
             />
           </div>
           <div className="flex items-center gap-1">
-            <Filter className="h-4 w-4 text-slate-400" />
+            <Filter className="h-4 w-4 text-muted-foreground" />
             <Select value={setorFilter} onValueChange={setSetorFilter}>
               <SelectTrigger className="w-[220px]">
                 <SelectValue placeholder="Filtrar setor" />
@@ -370,7 +370,7 @@ function ComprasRecebidasPage() {
           <TabsTrigger value="aprovadas" className="relative">
             Deferidas
             {novasDecisoes > 0 && (
-              <span className="ml-2 inline-flex min-w-[1.25rem] h-5 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white">
+              <span className="ml-2 inline-flex min-w-[1.25rem] h-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-white">
                 {novasDecisoes > 99 ? "99+" : novasDecisoes}
               </span>
             )}
@@ -384,9 +384,9 @@ function ComprasRecebidasPage() {
         </TabsList>
         <TabsContent value={tab} className="mt-3">
           {isLoading ? (
-            <div className="p-8 text-center text-slate-500">Carregando…</div>
+            <div className="p-8 text-center text-muted-foreground">Carregando…</div>
           ) : grupos.length === 0 ? (
-            <div className="p-10 text-center text-slate-500 border rounded-xl bg-white">
+            <div className="p-10 text-center text-muted-foreground border rounded-xl bg-card">
               Nenhuma requisição encontrada.
             </div>
           ) : (
@@ -432,7 +432,7 @@ function SetorCard({
           </div>
         </div>
         {pendentes > 0 && (
-          <span className="prism-pill accent-amber px-2.5 py-1 text-[11px] text-amber-100 shrink-0">
+          <span className="prism-pill accent-amber px-2.5 py-1 text-[11px] text-primary-foreground shrink-0">
             {pendentes} p/ cotar
           </span>
         )}
@@ -498,7 +498,7 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
       <CardHeader className="p-3 pb-2 flex flex-row items-start justify-between gap-2">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-bold text-slate-500">RC Nº</span>
+            <span className="text-xs font-bold text-muted-foreground">RC Nº</span>
             <span className="text-sm font-bold">{req.numero}</span>
             <Badge className={STATUS_BADGE[req.status] + " border"}>{STATUS_LABEL[req.status]}</Badge>
             {isRetroativa && !isArquivada && (
@@ -507,7 +507,7 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
               </Badge>
             )}
             {isArquivada && (
-              <Badge className="bg-slate-200 text-slate-700 border border-slate-300">
+              <Badge className="bg-muted/70 text-foreground border border-border">
                 <Archive className="h-3 w-3 mr-1" /> Arquivada
               </Badge>
             )}
@@ -515,7 +515,7 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
           <div className="text-sm font-semibold mt-1 line-clamp-1">
             {req.titulo || "(sem título)"}
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">
+          <div className="text-[11px] text-muted-foreground mt-0.5">
             {req.solicitante} · {req.setor || "sem setor"} · {fmtBR(req.data_requisicao)}
           </div>
           {isRetroativa && req.retroativa_motivo && !isArquivada && (
@@ -524,11 +524,11 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
             </div>
           )}
           {req.status === "APROVADA" && (
-            <div className="text-[11px] text-emerald-800 mt-1 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
+            <div className="text-[11px] text-foreground mt-1 bg-primary/10 border border-primary/40 rounded px-2 py-1">
               <strong>✓ Deferida</strong> por {req.decidido_por_nome ?? "supervisor"}
               {req.decidido_em ? <> em {fmtBR(req.decidido_em)}</> : null}
               {req.cotacao_fornecedor ? <> · <strong>{req.cotacao_fornecedor}</strong> — {fmtMoney(req.cotacao_valor)}</> : null}
-              <div className="mt-0.5 text-emerald-700">Próximo passo: emitir Pedido de Compra ao fornecedor.</div>
+              <div className="mt-0.5 text-foreground">Próximo passo: emitir Pedido de Compra ao fornecedor.</div>
             </div>
           )}
           {(req.status === "EM_RECEBIMENTO" || req.status === "CONCLUIDA") && req.pc_numero && (
@@ -550,12 +550,12 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
             </div>
           )}
           {req.status === "CONCLUIDA" && req.nf_numero && (
-            <div className="text-[11px] text-slate-800 mt-1 bg-slate-100 border border-slate-300 rounded px-2 py-1">
+            <div className="text-[11px] text-foreground mt-1 bg-muted/50 border border-border rounded px-2 py-1">
               <div className="flex items-center gap-1"><Receipt className="h-3 w-3" /> <strong>NF {req.nf_numero}</strong> — recebida por {req.recebido_por_nome ?? "—"}{req.recebido_em ? <> em {fmtBR(req.recebido_em)}</> : null}</div>
               {req.nf_arquivo_url && (
                 <button
                   type="button"
-                  className="mt-0.5 text-slate-700 underline"
+                  className="mt-0.5 text-foreground underline"
                   onClick={() => openStorageFile("rc-cotacoes", req.nf_arquivo_url!)}
                 >
                   Ver NF anexada
@@ -607,7 +607,7 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
         {!isArquivada && req.status === "EM_RECEBIMENTO" && (
           <Button
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
             onClick={() => setOpenReceber(true)}
             title="Registrar recebimento e NF"
           >
@@ -713,7 +713,7 @@ function ArquivarDialog({ rcId, rcNumero, onClose }: { rcId: string; rcNumero: s
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-2 text-sm">
-          <p className="text-slate-600">
+          <p className="text-muted-foreground">
             Use para RCs <strong>retroativas</strong> (criadas antes do fluxo de Compras) ou
             que não precisam mais ser processadas. Fica registrado na auditoria e pode ser
             desarquivada depois.
@@ -826,7 +826,7 @@ function EmitirPcDialog({ req, onClose }: { req: Req; onClose: (ok: boolean) => 
           </DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <div className="sm:col-span-2 text-xs bg-emerald-50 border border-emerald-200 rounded px-2 py-1 text-emerald-900">
+          <div className="sm:col-span-2 text-xs bg-primary/10 border border-primary/40 rounded px-2 py-1 text-foreground">
             Deferida pelo supervisor. Preencha os dados do PC para acompanhar o recebimento.
           </div>
           <div>
@@ -928,7 +928,7 @@ function RegistrarRecebimentoDialog({ req, onClose }: { req: Req; onClose: (ok: 
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-emerald-700" /> Registrar Recebimento — RC {req.numero}
+            <Receipt className="h-5 w-5 text-foreground" /> Registrar Recebimento — RC {req.numero}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 text-sm">
@@ -953,7 +953,7 @@ function RegistrarRecebimentoDialog({ req, onClose }: { req: Req; onClose: (ok: 
         <DialogFooter>
           <Button variant="outline" onClick={() => onClose(false)}>Cancelar</Button>
           <Button
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
             onClick={() => receber.mutate()}
             disabled={receber.isPending}
           >
@@ -1018,7 +1018,7 @@ function RecotarDialog({ req, onClose }: { req: Req; onClose: (ok: boolean) => v
               <strong>Motivo do indeferimento anterior:</strong> {req.motivo_indeferimento}
             </div>
           )}
-          <p className="text-slate-600">
+          <p className="text-muted-foreground">
             A RC volta para <strong>Aguardando cotação</strong>. As cotações antigas ficam
             no histórico, mas o fornecedor vencedor e a decisão são limpos para nova rodada.
           </p>
@@ -1094,7 +1094,7 @@ function DevolverDialog({ req, onClose }: { req: Req; onClose: (ok: boolean) => 
               <strong>Motivo do indeferimento:</strong> {req.motivo_indeferimento}
             </div>
           )}
-          <p className="text-slate-600">
+          <p className="text-muted-foreground">
             O solicitante <strong>{req.solicitante}</strong> receberá aviso no menu de
             Requisições. Explique o que ele precisa ajustar antes de abrir uma nova RC.
           </p>
@@ -1216,12 +1216,12 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5 text-red-700" />
+            <ShoppingCart className="h-5 w-5 text-primary" />
             RC Nº {req.numero} — {req.titulo || "sem título"}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs bg-slate-50 border rounded-lg p-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs bg-muted/30 border rounded-lg p-3">
           <div><strong>Solicitante:</strong><br />{req.solicitante}</div>
           <div><strong>Setor:</strong><br />{req.setor || "—"}</div>
           <div><strong>Data:</strong><br />{fmtBR(req.data_requisicao)}</div>
@@ -1231,19 +1231,19 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
         </div>
 
         {dispensa && (
-          <div className="border-2 border-amber-400 bg-amber-50 rounded-lg p-3 flex items-start gap-3">
-            <ShieldAlert className="h-6 w-6 text-amber-700 shrink-0 mt-0.5" />
+          <div className="border-2 border-primary/40 bg-primary/10 rounded-lg p-3 flex items-start gap-3">
+            <ShieldAlert className="h-6 w-6 text-foreground shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-black text-amber-900 uppercase tracking-wide">
+              <div className="text-sm font-black text-foreground uppercase tracking-wide">
                 Dispensa de cotação ativa
               </div>
-              <div className="text-xs text-amber-900 mt-1">
+              <div className="text-xs text-foreground mt-1">
                 <strong>Motivo:</strong> {MOTIVO_LABEL[req.dispensa_motivo as keyof typeof MOTIVO_LABEL] ?? req.dispensa_motivo}
               </div>
-              <div className="text-xs text-amber-900 mt-1 whitespace-pre-wrap">
+              <div className="text-xs text-foreground mt-1 whitespace-pre-wrap">
                 <strong>Justificativa:</strong> {req.dispensa_justificativa}
               </div>
-              <div className="text-[11px] text-amber-800 mt-1">
+              <div className="text-[11px] text-foreground mt-1">
                 Regra reduzida: <strong>mínimo 1 cotação</strong> + vencedora marcada.
               </div>
             </div>
@@ -1252,7 +1252,7 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
               variant="outline"
               onClick={() => revogarDispensa.mutate()}
               disabled={revogarDispensa.isPending}
-              className="border-amber-400 text-amber-800 hover:bg-amber-100"
+              className="border-primary/40 text-foreground hover:bg-primary/20"
             >
               <XCircle className="h-3.5 w-3.5 mr-1" /> Revogar dispensa
             </Button>
@@ -1266,7 +1266,7 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
           </div>
           <div className="border rounded-lg overflow-hidden">
             <table className="w-full text-xs">
-              <thead className="bg-slate-100">
+              <thead className="bg-muted/50">
                 <tr>
                   <th className="p-2 text-left w-12">#</th>
                   <th className="p-2 text-left">Descrição</th>
@@ -1277,21 +1277,21 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
               </thead>
               <tbody>
                 {itens.length === 0 ? (
-                  <tr><td colSpan={5} className="p-3 text-center text-slate-500">Sem itens</td></tr>
+                  <tr><td colSpan={5} className="p-3 text-center text-muted-foreground">Sem itens</td></tr>
                 ) : itens.map((i) => (
                   <tr key={i.id} className="border-t">
                     <td className="p-2 text-center">{String(i.item_numero).padStart(2, "0")}</td>
                     <td className="p-2">{i.descricao}</td>
                     <td className="p-2 text-center">{i.quantidade ?? ""}</td>
                     <td className="p-2 text-center">{i.unidade ?? ""}</td>
-                    <td className="p-2 text-slate-600">{i.observacao ?? ""}</td>
+                    <td className="p-2 text-muted-foreground">{i.observacao ?? ""}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           {req.observacoes && (
-            <div className="mt-2 text-xs p-2 bg-amber-50 border border-amber-200 rounded">
+            <div className="mt-2 text-xs p-2 bg-primary/10 border border-primary/40 rounded">
               <strong>Observações:</strong> {req.observacoes}
             </div>
           )}
@@ -1301,11 +1301,11 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
         <div>
           <div className="flex items-center justify-between mb-2">
             <div className="text-sm font-bold flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-amber-500" /> Cotações & Matriz de Decisão ({totalCot}/{minCot} mínimo)
+              <Sparkles className="h-4 w-4 text-primary" /> Cotações & Matriz de Decisão ({totalCot}/{minCot} mínimo)
             </div>
             <div className="flex items-center gap-2">
               {missing > 0 && (
-                <Badge className="bg-amber-100 text-amber-800 border border-amber-300">
+                <Badge className="bg-primary/20 text-foreground border border-primary/40">
                   Faltam {missing} cotação{missing > 1 ? "ões" : ""}
                 </Badge>
               )}
@@ -1319,7 +1319,7 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
           </div>
 
           {cotacoes.length === 0 ? (
-            <div className="p-6 text-center text-slate-500 border rounded-lg bg-slate-50">
+            <div className="p-6 text-center text-muted-foreground border rounded-lg bg-muted/30">
               Nenhuma cotação anexada. Adicione pelo menos <strong>{minCot} cotação{minCot > 1 ? "ões" : ""}</strong> (PDF ou JPG) para a matriz analisar e liberar o envio.
             </div>
           ) : (
@@ -1408,15 +1408,15 @@ function CotacaoCard({
       className={cn(
         "border rounded-lg p-2 flex flex-col gap-1 relative",
         isBest
-          ? "border-2 border-amber-400 bg-gradient-to-br from-amber-50 to-yellow-50 ring-2 ring-amber-200 shadow-md"
+          ? "border-2 border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5 ring-2 ring-primary/30 shadow-md"
           : cot.is_vencedora
-            ? "border-emerald-400 bg-emerald-50 ring-2 ring-emerald-200"
-            : "bg-white",
+            ? "border-primary/40 bg-primary/10 ring-2 ring-emerald-200"
+            : "bg-card",
       )}
     >
       {isBest && (
         <div className="absolute -top-2 -right-2 z-10">
-          <Badge className="bg-amber-500 text-white border-2 border-white shadow-lg text-[10px] font-black px-2 py-0.5">
+          <Badge className="bg-primary text-white border-2 border-white shadow-lg text-[10px] font-black px-2 py-0.5">
             <Award className="h-3 w-3 mr-1" /> MELHOR OFERTA
           </Badge>
         </div>
@@ -1427,7 +1427,7 @@ function CotacaoCard({
             {rank && (
               <span className={cn(
                 "text-[10px] font-black px-1.5 py-0.5 rounded",
-                rank === 1 ? "bg-amber-500 text-white" : rank === 2 ? "bg-slate-400 text-white" : "bg-slate-200 text-slate-700",
+                rank === 1 ? "bg-primary text-white" : rank === 2 ? "bg-muted text-white" : "bg-muted/70 text-foreground",
               )}>
                 #{rank}
               </span>
@@ -1437,27 +1437,27 @@ function CotacaoCard({
           <div className="flex items-center gap-1 mt-0.5">
             <StarRating value={cot.fornecedores?.estrelas ?? 0} readOnly size="sm" />
           </div>
-          {cot.cnpj && <div className="text-[10px] text-slate-500 truncate">CNPJ: {cot.cnpj}</div>}
+          {cot.cnpj && <div className="text-[10px] text-muted-foreground truncate">CNPJ: {cot.cnpj}</div>}
         </div>
         {score != null && (
           <div className="text-right shrink-0">
             <div className={cn(
               "text-2xl font-black leading-none",
-              score >= 80 ? "text-emerald-600" : score >= 60 ? "text-amber-600" : "text-slate-500",
+              score >= 80 ? "text-foreground" : score >= 60 ? "text-foreground" : "text-muted-foreground",
             )}>{score}</div>
-            <div className="text-[9px] text-slate-500 font-semibold">SCORE</div>
+            <div className="text-[9px] text-muted-foreground font-semibold">SCORE</div>
           </div>
         )}
       </div>
-      <div className="text-lg font-black text-red-800">{fmtMoney(cot.valor)}</div>
+      <div className="text-lg font-black text-foreground">{fmtMoney(cot.valor)}</div>
 
       {/* Alertas críticos */}
       <div className="flex flex-wrap gap-1">
         {totalItens > 0 && (
           <Badge className={cn(
             "text-[10px] border font-bold gap-0.5",
-            cobertura >= 100 ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-              : cobertura >= 80 ? "bg-amber-100 text-amber-800 border-amber-300"
+            cobertura >= 100 ? "bg-primary/20 text-foreground border-primary/40"
+              : cobertura >= 80 ? "bg-primary/20 text-foreground border-primary/40"
               : "bg-rose-100 text-rose-800 border-rose-300"
           )}>
             <PackageCheck className="h-2.5 w-2.5" />
@@ -1476,38 +1476,38 @@ function CotacaoCard({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-1 text-[10px] text-slate-600">
+      <div className="flex flex-wrap gap-1 text-[10px] text-muted-foreground">
         {cot.prazo_entrega_dias != null && (
-          <span className="inline-flex items-center gap-0.5 bg-slate-100 px-1.5 py-0.5 rounded">
+          <span className="inline-flex items-center gap-0.5 bg-muted/50 px-1.5 py-0.5 rounded">
             <Clock className="h-2.5 w-2.5" />{cot.prazo_entrega_dias}d
           </span>
         )}
         {cot.condicao_pagamento && (
-          <span className="inline-flex items-center gap-0.5 bg-slate-100 px-1.5 py-0.5 rounded">
+          <span className="inline-flex items-center gap-0.5 bg-muted/50 px-1.5 py-0.5 rounded">
             <CreditCard className="h-2.5 w-2.5" />{cot.condicao_pagamento}
           </span>
         )}
         {cot.frete && (
-          <span className="inline-flex items-center gap-0.5 bg-slate-100 px-1.5 py-0.5 rounded">
+          <span className="inline-flex items-center gap-0.5 bg-muted/50 px-1.5 py-0.5 rounded">
             <Truck className="h-2.5 w-2.5" />{cot.frete}
           </span>
         )}
       </div>
 
-      {cot.observacao && <div className="text-[11px] text-slate-600 line-clamp-2">{cot.observacao}</div>}
+      {cot.observacao && <div className="text-[11px] text-muted-foreground line-clamp-2">{cot.observacao}</div>}
 
       {score != null && (
         <button
           type="button"
           onClick={() => setShowScore((s) => !s)}
-          className="text-[10px] text-slate-600 hover:text-slate-900 flex items-center gap-1 mt-1 font-semibold"
+          className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 mt-1 font-semibold"
         >
           {showScore ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
           Como a matriz calculou
         </button>
       )}
       {showScore && score != null && (
-        <div className="text-[10px] bg-slate-50 border rounded p-1.5 space-y-0.5">
+        <div className="text-[10px] bg-muted/30 border rounded p-1.5 space-y-0.5">
           <ScoreLine label="Preço (25%)" val={bd.preco} max={25} />
           <ScoreLine label="Prazo (15%)" val={bd.prazo_entrega} max={15} />
           <ScoreLine label="Estrelas (20%)" val={bd.estrelas} max={20} />
@@ -1536,14 +1536,14 @@ function CotacaoCard({
             variant={isBest ? "default" : "outline"}
             onClick={onWin}
             className={isBest
-              ? "bg-amber-500 hover:bg-amber-600 text-white"
-              : "border-emerald-400 text-emerald-800 hover:bg-emerald-50"}
+              ? "bg-primary hover:bg-primary text-white"
+              : "border-primary/40 text-foreground hover:bg-primary/10"}
           >
             <Trophy className="h-3 w-3 mr-1" /> {isBest ? "Confirmar" : "Escolher"}
           </Button>
         )}
         {cot.is_vencedora && (
-          <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300">
+          <Badge className="bg-primary/20 text-foreground border border-primary/40">
             <Trophy className="h-3 w-3 mr-1" /> Vencedora
           </Badge>
         )}
@@ -1560,17 +1560,17 @@ function ScoreLine({ label, val, max = 100 }: { label: string; val?: number; max
   const pct = Math.min(100, (v / max) * 100);
   return (
     <div className="flex items-center gap-1.5">
-      <span className="w-24 shrink-0 text-slate-600">{label}</span>
-      <div className="flex-1 h-1.5 bg-slate-200 rounded overflow-hidden">
+      <span className="w-24 shrink-0 text-muted-foreground">{label}</span>
+      <div className="flex-1 h-1.5 bg-muted/70 rounded overflow-hidden">
         <div
           className={cn(
             "h-full transition-all",
-            pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-slate-400",
+            pct >= 80 ? "bg-primary" : pct >= 50 ? "bg-primary" : "bg-muted",
           )}
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="w-10 text-right font-semibold text-slate-700">{v}/{max}</span>
+      <span className="w-10 text-right font-semibold text-foreground">{v}/{max}</span>
     </div>
   );
 }
@@ -1608,44 +1608,44 @@ function MelhorComboTab({ rcId }: { rcId: string }) {
   const naoCobertos = combo.length - cobertos;
   const fornecedores = new Set(combo.filter((i) => i.melhor_fornecedor_id).map((i) => i.melhor_fornecedor_id));
 
-  if (isLoading) return <div className="p-4 text-center text-slate-500 text-xs">Analisando combinações…</div>;
+  if (isLoading) return <div className="p-4 text-center text-muted-foreground text-xs">Analisando combinações…</div>;
 
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center">
-          <div className="text-lg font-black text-emerald-700">{fmtMoney(totalCombo)}</div>
-          <div className="text-[10px] text-emerald-700 font-semibold uppercase">Total combo ótimo</div>
+        <div className="bg-primary/10 border border-primary/40 rounded-lg p-2 text-center">
+          <div className="text-lg font-black text-foreground">{fmtMoney(totalCombo)}</div>
+          <div className="text-[10px] text-foreground font-semibold uppercase">Total combo ótimo</div>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
           <div className="text-lg font-black text-blue-700">{fornecedores.size}</div>
           <div className="text-[10px] text-blue-700 font-semibold uppercase">Fornecedores</div>
         </div>
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center">
-          <div className="text-lg font-black text-slate-700">{cobertos}/{combo.length}</div>
-          <div className="text-[10px] text-slate-600 font-semibold uppercase">Itens cobertos</div>
+        <div className="bg-muted/30 border border-slate-200 rounded-lg p-2 text-center">
+          <div className="text-lg font-black text-foreground">{cobertos}/{combo.length}</div>
+          <div className="text-[10px] text-muted-foreground font-semibold uppercase">Itens cobertos</div>
         </div>
         <div className={cn(
           "border rounded-lg p-2 text-center",
-          naoCobertos > 0 ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200",
+          naoCobertos > 0 ? "bg-rose-50 border-rose-200" : "bg-primary/10 border-primary/40",
         )}>
-          <div className={cn("text-lg font-black", naoCobertos > 0 ? "text-rose-700" : "text-emerald-700")}>
+          <div className={cn("text-lg font-black", naoCobertos > 0 ? "text-rose-700" : "text-foreground")}>
             {naoCobertos}
           </div>
           <div className={cn(
             "text-[10px] font-semibold uppercase",
-            naoCobertos > 0 ? "text-rose-700" : "text-emerald-700",
+            naoCobertos > 0 ? "text-rose-700" : "text-foreground",
           )}>Sem cotação</div>
         </div>
       </div>
 
-      <div className="text-[11px] bg-amber-50 border border-amber-200 rounded p-2 text-amber-900">
+      <div className="text-[11px] bg-primary/10 border border-primary/40 rounded p-2 text-foreground">
         💡 Este é o <strong>melhor combo por item</strong> — pode gerar múltiplas PCs (uma por fornecedor). A matriz prioriza CONFORME &gt; SIMILAR, depois menor preço, depois estrelas.
       </div>
 
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full text-xs">
-          <thead className="bg-slate-100">
+          <thead className="bg-muted/50">
             <tr>
               <th className="p-2 text-left w-10">#</th>
               <th className="p-2 text-left">Item</th>
@@ -1678,7 +1678,7 @@ function MelhorComboTab({ rcId }: { rcId: string }) {
                     <span className="text-rose-700 font-semibold text-[11px]">SEM COTAÇÃO</span>
                   )}
                   {i.total_ofertas != null && i.total_ofertas > 1 && (
-                    <div className="text-[10px] text-slate-500">{i.total_ofertas} ofertas</div>
+                    <div className="text-[10px] text-muted-foreground">{i.total_ofertas} ofertas</div>
                   )}
                 </td>
                 <td className="p-2 text-right font-mono">{fmtMoney(i.valor_unitario ?? undefined)}</td>
@@ -1693,10 +1693,10 @@ function MelhorComboTab({ rcId }: { rcId: string }) {
               </tr>
             ))}
           </tbody>
-          <tfoot className="bg-slate-100 font-bold">
+          <tfoot className="bg-muted/50 font-bold">
             <tr>
               <td colSpan={5} className="p-2 text-right">TOTAL COMBO ÓTIMO</td>
-              <td className="p-2 text-right font-mono text-red-800">{fmtMoney(totalCombo)}</td>
+              <td className="p-2 text-right font-mono text-foreground">{fmtMoney(totalCombo)}</td>
               <td colSpan={2}></td>
             </tr>
           </tfoot>
@@ -1728,14 +1728,14 @@ function ConformidadeBadge({
   if (!status) return null;
   const config = {
     CONFORME: {
-      cls: "bg-emerald-100 text-emerald-800 border-emerald-300",
+      cls: "bg-primary/20 text-foreground border-primary/40",
       icon: <CheckCircle2 className="h-2.5 w-2.5" />,
       label: "Conforme",
       title: "✅ CONFORME",
       desc: "Marca/modelo idênticos ao pedido da RC. Score cheio, sem penalidade.",
     },
     SIMILAR: {
-      cls: "bg-amber-100 text-amber-800 border-amber-300",
+      cls: "bg-primary/20 text-foreground border-primary/40",
       icon: null,
       label: "Similar",
       title: "🟡 SIMILAR",
@@ -1943,7 +1943,7 @@ function AddCotacaoDialogImpl({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-amber-500" /> Nova cotação para a matriz
+            <Sparkles className="h-5 w-5 text-primary" /> Nova cotação para a matriz
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
@@ -2124,7 +2124,7 @@ function AddCotacaoDialogImpl({
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
             {file && (
-              <div className="text-[11px] text-slate-500 mt-1">
+              <div className="text-[11px] text-muted-foreground mt-1">
                 {file.name} · {(file.size / 1024).toFixed(0)} KB
               </div>
             )}
@@ -2168,18 +2168,18 @@ function DispensarCotacoesBtn({ rcId, onDone }: { rcId: string; onDone: () => vo
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="border-amber-400 text-amber-800 hover:bg-amber-50">
+        <Button variant="outline" className="border-primary/40 text-foreground hover:bg-primary/10">
           <ShieldAlert className="h-4 w-4 mr-1" /> Dispensar cotações
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldAlert className="h-5 w-5 text-amber-700" /> Dispensa de cotação
+            <ShieldAlert className="h-5 w-5 text-foreground" /> Dispensa de cotação
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="text-xs bg-amber-50 border border-amber-200 rounded p-2 text-amber-900">
+          <div className="text-xs bg-primary/10 border border-primary/40 rounded p-2 text-foreground">
             Use apenas quando a regra das 3 cotações não se aplica (exclusividade, contrato,
             urgência, padronização). Toda dispensa fica registrada em auditoria e o Supervisor Geral
             pode devolver a RC pedindo as 3 cotações completas.
@@ -2196,7 +2196,7 @@ function DispensarCotacoesBtn({ rcId, onDone }: { rcId: string; onDone: () => vo
             </Select>
           </div>
           <div>
-            <Label>Justificativa detalhada * <span className="text-[10px] text-slate-500">(mín. 30 caracteres — {just.trim().length})</span></Label>
+            <Label>Justificativa detalhada * <span className="text-[10px] text-muted-foreground">(mín. 30 caracteres — {just.trim().length})</span></Label>
             <Textarea
               rows={4}
               value={just}
@@ -2204,14 +2204,14 @@ function DispensarCotacoesBtn({ rcId, onDone }: { rcId: string; onDone: () => vo
               placeholder="Explique por que 3 cotações não são viáveis (fornecedor único, número de contrato, natureza da urgência, etc.)"
             />
           </div>
-          <div className="text-[11px] text-slate-500">
+          <div className="text-[11px] text-muted-foreground">
             ⚠️ Antes de confirmar, anexe ao menos <strong>1 cotação</strong> do fornecedor escolhido.
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>Cancelar</Button>
           <Button
-            className="bg-amber-600 hover:bg-amber-700 text-white"
+            className="bg-primary hover:bg-amber-700 text-white"
             onClick={submit}
             disabled={busy || !motivo || just.trim().length < 30}
           >
