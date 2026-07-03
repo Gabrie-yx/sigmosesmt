@@ -388,7 +388,16 @@ function HoraExtraSabadoPage() {
         </SheetContent>
       </Sheet>
 
-      <HoraExtraSabadoDialog open={open} onOpenChange={setOpen} editId={editId} />
+      <HoraExtraSabadoDialog
+        open={open}
+        onOpenChange={(o) => {
+          // Ao fechar o modal de edição/criação, invalida o cache do PDF
+          // dessa ficha — os dados podem ter mudado (funcionários, horário).
+          if (!o && editId) pdfCacheRef.current.delete(editId);
+          setOpen(o);
+        }}
+        editId={editId}
+      />
       <PDFPreviewDialog
         open={!!previewDoc}
         onClose={() => { setPreviewDoc(null); setPreviewFichaId(null); setTstSig(null); setGestorSig(null); }}
