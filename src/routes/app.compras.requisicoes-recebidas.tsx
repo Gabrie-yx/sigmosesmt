@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/tabs";
 import {
   Package, ShoppingCart, Upload, Trash2, Eye, Trophy, Send, Filter, Search, FileText, DollarSign,
+  ShieldAlert, XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { openStorageFile } from "@/components/file-viewer";
@@ -49,6 +50,9 @@ type Req = {
   observacoes: string | null;
   created_at: string;
   titulo_display?: string | null;
+  dispensa_cotacao?: boolean | null;
+  dispensa_motivo?: string | null;
+  dispensa_justificativa?: string | null;
 };
 
 type Cotacao = {
@@ -90,6 +94,18 @@ const STATUS_LABEL: Record<Req["status"], string> = {
   INDEFERIDA: "Indeferida",
 };
 
+const MOTIVOS_DISPENSA = [
+  { value: "FORNECEDOR_EXCLUSIVO", label: "Fornecedor exclusivo / representante único" },
+  { value: "CONTRATO_GUARDA_CHUVA", label: "Contrato guarda-chuva vigente" },
+  { value: "URGENCIA_OPERACIONAL", label: "Urgência operacional (parada / emergência SST)" },
+  { value: "PADRONIZACAO_TECNICA", label: "Padronização técnica (peça OEM / reposição)" },
+  { value: "OUTRO", label: "Outro (detalhar na justificativa)" },
+] as const;
+
+const MOTIVO_LABEL: Record<string, string> = Object.fromEntries(
+  MOTIVOS_DISPENSA.map((m) => [m.value, m.label]),
+);
+
 function fmtBR(d?: string | null) {
   if (!d) return "—";
   const [y, m, day] = d.split("T")[0].split("-");
@@ -116,7 +132,7 @@ function ComprasRecebidasPage() {
     queryFn: async () => {
       let query = supabase
         .from("purchase_requisitions")
-        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at")
+        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa")
         .order("created_at", { ascending: false })
         .limit(200);
       if (tab === "abertas") query = query.in("status", ["PENDENTE", "EM_COTACAO"] as any);
@@ -300,8 +316,10 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
 
   const totalCot = cotacoes.length;
   const hasWinner = cotacoes.some((c) => c.is_vencedora);
-  const canSend = totalCot >= 3 && hasWinner && (req.status === "PENDENTE" || req.status === "EM_COTACAO");
-  const missing = Math.max(0, 3 - totalCot);
+  const dispensa = !!req.dispensa_cotacao;
+  const minCot = dispensa ? 1 : 3;
+  const canSend = totalCot >= minCot && hasWinner && (req.status === "PENDENTE" || req.status === "EM_COTACAO");
+  const missing = Math.max(0, minCot - totalCot);
 
   const marcarVenc = useMutation({
     mutationFn: async (cotId: string) => {
@@ -343,6 +361,19 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
     onError: (e: any) => toast.error(e.message ?? "Falha ao enviar"),
   });
 
+  const revogarDispensa = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("revogar_dispensa_rc", { _rc_id: req.id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Dispensa revogada — voltando à regra de 3 cotações");
+      qc.invalidateQueries({ queryKey: ["compras-rcs"] });
+      onClose();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao revogar dispensa"),
+  });
+
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -361,6 +392,35 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
             <Badge className={STATUS_BADGE[req.status] + " border"}>{STATUS_LABEL[req.status]}</Badge>
           </div>
         </div>
+
+        {dispensa && (
+          <div className="border-2 border-amber-400 bg-amber-50 rounded-lg p-3 flex items-start gap-3">
+            <ShieldAlert className="h-6 w-6 text-amber-700 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-black text-amber-900 uppercase tracking-wide">
+                Dispensa de cotação ativa
+              </div>
+              <div className="text-xs text-amber-900 mt-1">
+                <strong>Motivo:</strong> {MOTIVO_LABEL[req.dispensa_motivo as keyof typeof MOTIVO_LABEL] ?? req.dispensa_motivo}
+              </div>
+              <div className="text-xs text-amber-900 mt-1 whitespace-pre-wrap">
+                <strong>Justificativa:</strong> {req.dispensa_justificativa}
+              </div>
+              <div className="text-[11px] text-amber-800 mt-1">
+                Regra reduzida: <strong>mínimo 1 cotação</strong> + vencedora marcada.
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => revogarDispensa.mutate()}
+              disabled={revogarDispensa.isPending}
+              className="border-amber-400 text-amber-800 hover:bg-amber-100"
+            >
+              <XCircle className="h-3.5 w-3.5 mr-1" /> Revogar dispensa
+            </Button>
+          </div>
+        )}
 
         {/* Itens */}
         <div>
@@ -441,8 +501,11 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
           )}
         </div>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 flex-wrap">
           <Button variant="outline" onClick={onClose}>Fechar</Button>
+          {!dispensa && (req.status === "PENDENTE" || req.status === "EM_COTACAO") && (
+            <DispensarCotacoesBtn rcId={req.id} onDone={() => { qc.invalidateQueries({ queryKey: ["compras-rcs"] }); onClose(); }} />
+          )}
           <Button
             className="bg-red-700 hover:bg-red-800 text-white"
             disabled={!canSend || enviarSup.isPending}
@@ -610,6 +673,84 @@ function AddCotacaoDialog({ rcId, onAdded }: { rcId: string; onAdded: () => void
           <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>Cancelar</Button>
           <Button onClick={submit} disabled={busy} className="bg-red-700 hover:bg-red-800 text-white">
             {busy ? "Enviando…" : "Anexar cotação"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DispensarCotacoesBtn({ rcId, onDone }: { rcId: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [motivo, setMotivo] = useState<string>("");
+  const [just, setJust] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function submit() {
+    if (!motivo) return toast.error("Selecione o motivo");
+    if (just.trim().length < 30) return toast.error("Justificativa mínima de 30 caracteres");
+    setBusy(true);
+    const { error } = await supabase.rpc("dispensar_cotacoes_rc", {
+      _rc_id: rcId, _motivo: motivo, _justificativa: just.trim(),
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Dispensa registrada — a RC agora aceita ser enviada com 1 cotação");
+    setOpen(false);
+    onDone();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="border-amber-400 text-amber-800 hover:bg-amber-50">
+          <ShieldAlert className="h-4 w-4 mr-1" /> Dispensar cotações
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldAlert className="h-5 w-5 text-amber-700" /> Dispensa de cotação
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="text-xs bg-amber-50 border border-amber-200 rounded p-2 text-amber-900">
+            Use apenas quando a regra das 3 cotações não se aplica (exclusividade, contrato,
+            urgência, padronização). Toda dispensa fica registrada em auditoria e o Supervisor Geral
+            pode devolver a RC pedindo as 3 cotações completas.
+          </div>
+          <div>
+            <Label>Motivo *</Label>
+            <Select value={motivo} onValueChange={setMotivo}>
+              <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {MOTIVOS_DISPENSA.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Justificativa detalhada * <span className="text-[10px] text-slate-500">(mín. 30 caracteres — {just.trim().length})</span></Label>
+            <Textarea
+              rows={4}
+              value={just}
+              onChange={(e) => setJust(e.target.value)}
+              placeholder="Explique por que 3 cotações não são viáveis (fornecedor único, número de contrato, natureza da urgência, etc.)"
+            />
+          </div>
+          <div className="text-[11px] text-slate-500">
+            ⚠️ Antes de confirmar, anexe ao menos <strong>1 cotação</strong> do fornecedor escolhido.
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>Cancelar</Button>
+          <Button
+            className="bg-amber-600 hover:bg-amber-700 text-white"
+            onClick={submit}
+            disabled={busy || !motivo || just.trim().length < 30}
+          >
+            {busy ? "Registrando…" : "Confirmar dispensa"}
           </Button>
         </DialogFooter>
       </DialogContent>

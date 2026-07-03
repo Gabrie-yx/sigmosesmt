@@ -6789,6 +6789,11 @@ export type Database = {
           decidido_em: string | null
           decidido_por_id: string | null
           decidido_por_nome: string | null
+          dispensa_at: string | null
+          dispensa_by: string | null
+          dispensa_cotacao: boolean
+          dispensa_justificativa: string | null
+          dispensa_motivo: string | null
           fornecedor: string | null
           id: string
           motivo_indeferimento: string | null
@@ -6834,6 +6839,11 @@ export type Database = {
           decidido_em?: string | null
           decidido_por_id?: string | null
           decidido_por_nome?: string | null
+          dispensa_at?: string | null
+          dispensa_by?: string | null
+          dispensa_cotacao?: boolean
+          dispensa_justificativa?: string | null
+          dispensa_motivo?: string | null
           fornecedor?: string | null
           id?: string
           motivo_indeferimento?: string | null
@@ -6879,6 +6889,11 @@ export type Database = {
           decidido_em?: string | null
           decidido_por_id?: string | null
           decidido_por_nome?: string | null
+          dispensa_at?: string | null
+          dispensa_by?: string | null
+          dispensa_cotacao?: boolean
+          dispensa_justificativa?: string | null
+          dispensa_motivo?: string | null
           fornecedor?: string | null
           id?: string
           motivo_indeferimento?: string | null
@@ -8002,6 +8017,14 @@ export type Database = {
         Returns: undefined
       }
       current_aal: { Args: never; Returns: string }
+      devolver_rc_para_cotacao: {
+        Args: { _motivo: string; _rc_id: string }
+        Returns: undefined
+      }
+      dispensar_cotacoes_rc: {
+        Args: { _justificativa: string; _motivo: string; _rc_id: string }
+        Returns: undefined
+      }
       enviar_rc_para_supervisor: {
         Args: { _rc_id: string }
         Returns: undefined
@@ -8101,6 +8124,7 @@ export type Database = {
           procedimento: string
         }[]
       }
+      revogar_dispensa_rc: { Args: { _rc_id: string }; Returns: undefined }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       snapshot_estoque_epi_monthly: { Args: never; Returns: undefined }

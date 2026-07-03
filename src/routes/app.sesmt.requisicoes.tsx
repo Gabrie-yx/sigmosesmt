@@ -88,6 +88,9 @@ type Req = {
   cotador_nome?: string | null;
   cotacao_fornecedor?: string | null;
   cotacao_valor?: number | null;
+  dispensa_cotacao?: boolean | null;
+  dispensa_motivo?: string | null;
+  dispensa_justificativa?: string | null;
 };
 
 const STATUS_BADGE: Record<Status, string> = {
@@ -581,6 +584,26 @@ function RequisicoesPage() {
                             )}
                           </div>
                         )}
+                        {r.dispensa_cotacao && (
+                          <div className="mt-1 text-xs bg-amber-50 border border-amber-300 rounded px-2 py-1 text-amber-900">
+                            <strong>⚠️ Dispensa de cotação:</strong>{" "}
+                            {(() => {
+                              const map: Record<string, string> = {
+                                FORNECEDOR_EXCLUSIVO: "Fornecedor exclusivo",
+                                CONTRATO_GUARDA_CHUVA: "Contrato guarda-chuva",
+                                URGENCIA_OPERACIONAL: "Urgência operacional",
+                                PADRONIZACAO_TECNICA: "Padronização técnica",
+                                OUTRO: "Outro",
+                              };
+                              return map[r.dispensa_motivo ?? ""] ?? r.dispensa_motivo;
+                            })()}
+                            {r.dispensa_justificativa && (
+                              <div className="text-[11px] text-amber-800 mt-0.5 whitespace-pre-wrap">
+                                {r.dispensa_justificativa}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-1">
                         {r.classificacao === "MEDICAMENTOS" ? (
@@ -611,6 +634,9 @@ function RequisicoesPage() {
                               <Check className="h-3.5 w-3.5 mr-1" /> Deferir
                             </Button>
                             <IndeferBtn onConfirm={(motivo) => updateStatus.mutate({ id: r.id, status: "INDEFERIDA", motivo })} />
+                            {r.status === "COTADA" && (
+                              <DevolverRcBtn rcId={r.id} numero={r.numero} dispensa={!!r.dispensa_cotacao} />
+                            )}
                           </>
                         )}
                         {(r.status === "APROVADA" || r.status === "INDEFERIDA") && (
@@ -710,6 +736,70 @@ function ReabrirRcBtn({ rcId, numero, statusAtual }: { rcId: string; numero: str
           </Button>
           <Button onClick={submit} disabled={loading || motivo.trim().length < 5}>
             {loading ? "Reabrindo…" : "Confirmar reabertura"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DevolverRcBtn({ rcId, numero, dispensa }: { rcId: string; numero: string; dispensa: boolean }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function submit() {
+    if (motivo.trim().length < 10) {
+      toast.error("Justificativa mínima de 10 caracteres");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.rpc("devolver_rc_para_cotacao", { _rc_id: rcId, _motivo: motivo.trim() });
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    toast.success(`RC ${numero} devolvida para Compras`);
+    setOpen(false); setMotivo("");
+    qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
+    qc.invalidateQueries({ queryKey: ["rc-header-badge"] });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="border-amber-400 text-amber-800 hover:bg-amber-50">
+          Devolver
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Devolver RC {numero} para Compras</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="text-sm text-slate-600">
+            A RC voltará para <strong>EM_COTACAO</strong>.
+            {dispensa ? " A dispensa de cotação será revogada e Compras precisará anexar as 3 cotações." : " Compras poderá revisar/complementar as cotações."}
+            {" "}A ação fica registrada em auditoria.
+          </div>
+          <div>
+            <Label htmlFor="motivo-devolver">Motivo da devolução *</Label>
+            <Textarea
+              id="motivo-devolver"
+              value={motivo}
+              onChange={(e) => setMotivo(e.target.value)}
+              placeholder="Ex.: justificativa de dispensa insuficiente, preço fora da média, exigir 3 cotações…"
+              rows={4}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>Cancelar</Button>
+          <Button
+            onClick={submit}
+            disabled={loading || motivo.trim().length < 10}
+            className="bg-amber-600 hover:bg-amber-700 text-white"
+          >
+            {loading ? "Devolvendo…" : "Confirmar devolução"}
           </Button>
         </DialogFooter>
       </DialogContent>
