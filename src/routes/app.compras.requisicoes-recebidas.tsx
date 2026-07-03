@@ -20,10 +20,13 @@ import {
 } from "@/components/ui/tabs";
 import {
   Package, ShoppingCart, Upload, Trash2, Eye, Trophy, Send, Filter, Search, FileText, DollarSign,
-  ShieldAlert, XCircle,
+  ShieldAlert, XCircle, Award, ChevronDown, ChevronUp, Truck, Clock, CreditCard, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { openStorageFile } from "@/components/file-viewer";
+import { SupplierPicker, type SupplierLite } from "@/components/compras/supplier-picker";
+import { StarRating } from "@/components/compras/star-rating";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/compras/requisicoes-recebidas")({
   component: ComprasRecebidasPage,
@@ -59,6 +62,7 @@ type Cotacao = {
   id: string;
   rc_id: string;
   fornecedor: string;
+  fornecedor_id: string | null;
   cnpj: string | null;
   valor: number;
   arquivo_url: string;
@@ -67,6 +71,15 @@ type Cotacao = {
   is_vencedora: boolean;
   observacao: string | null;
   created_at: string;
+  prazo_entrega_dias: number | null;
+  condicao_pagamento: string | null;
+  frete: string | null;
+  validade: string | null;
+  score_total: number | null;
+  score_breakdown: any;
+  ranking: number | null;
+  is_melhor_oferta: boolean;
+  fornecedores?: { estrelas: number | null } | null;
 };
 
 type Item = {
@@ -306,7 +319,7 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("rc_cotacoes")
-        .select("*")
+        .select("*, fornecedores(estrelas)")
         .eq("rc_id", req.id)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -464,7 +477,7 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
         <div>
           <div className="flex items-center justify-between mb-2">
             <div className="text-sm font-bold flex items-center gap-2">
-              <DollarSign className="h-4 w-4" /> Cotações ({totalCot}/3 mínimo)
+              <Sparkles className="h-4 w-4 text-amber-500" /> Cotações & Matriz de Decisão ({totalCot}/{minCot} mínimo)
             </div>
             <div className="flex items-center gap-2">
               {missing > 0 && (
@@ -474,20 +487,20 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
               )}
               {totalCot >= 3 && !hasWinner && (
                 <Badge className="bg-orange-100 text-orange-800 border border-orange-300">
-                  Marque a vencedora
+                  Matriz sugerindo — confirme
                 </Badge>
               )}
-              <AddCotacaoDialog rcId={req.id} onAdded={refetchCot} />
+              <AddCotacaoDialog rcId={req.id} classificacao={req.classificacao} onAdded={refetchCot} />
             </div>
           </div>
 
           {cotacoes.length === 0 ? (
             <div className="p-6 text-center text-slate-500 border rounded-lg bg-slate-50">
-              Nenhuma cotação anexada. Adicione pelo menos <strong>3 cotações</strong> (PDF ou JPG) para liberar o envio ao Supervisor.
+              Nenhuma cotação anexada. Adicione pelo menos <strong>{minCot} cotação{minCot > 1 ? "ões" : ""}</strong> (PDF ou JPG) para a matriz analisar e liberar o envio.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              {cotacoes.map((c) => (
+              {[...cotacoes].sort((a, b) => (a.ranking ?? 99) - (b.ranking ?? 99)).map((c) => (
                 <CotacaoCard
                   key={c.id}
                   cot={c}
@@ -527,21 +540,101 @@ function CotacaoCard({
   onWin: () => void;
   onDelete: () => void;
 }) {
+  const [showScore, setShowScore] = useState(false);
+  const isBest = cot.is_melhor_oferta;
+  const rank = cot.ranking ?? null;
+  const score = cot.score_total ?? null;
+  const bd = (cot.score_breakdown ?? {}) as {
+    preco?: number; prazo?: number; qualidade?: number; pagamento?: number; frete?: number;
+  };
   return (
-    <div className={`border rounded-lg p-2 flex flex-col gap-1 ${cot.is_vencedora ? "border-emerald-400 bg-emerald-50 ring-2 ring-emerald-200" : "bg-white"}`}>
-      <div className="flex items-start justify-between gap-1">
-        <div className="min-w-0">
-          <div className="text-sm font-bold truncate">{cot.fornecedor}</div>
-          {cot.cnpj && <div className="text-[10px] text-slate-500">CNPJ: {cot.cnpj}</div>}
-        </div>
-        {cot.is_vencedora && (
-          <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0">
-            <Trophy className="h-3 w-3 mr-1" /> Vencedora
+    <div
+      className={cn(
+        "border rounded-lg p-2 flex flex-col gap-1 relative",
+        isBest
+          ? "border-2 border-amber-400 bg-gradient-to-br from-amber-50 to-yellow-50 ring-2 ring-amber-200 shadow-md"
+          : cot.is_vencedora
+            ? "border-emerald-400 bg-emerald-50 ring-2 ring-emerald-200"
+            : "bg-white",
+      )}
+    >
+      {isBest && (
+        <div className="absolute -top-2 -right-2 z-10">
+          <Badge className="bg-amber-500 text-white border-2 border-white shadow-lg text-[10px] font-black px-2 py-0.5">
+            <Award className="h-3 w-3 mr-1" /> MELHOR OFERTA
           </Badge>
+        </div>
+      )}
+      <div className="flex items-start justify-between gap-1">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1">
+            {rank && (
+              <span className={cn(
+                "text-[10px] font-black px-1.5 py-0.5 rounded",
+                rank === 1 ? "bg-amber-500 text-white" : rank === 2 ? "bg-slate-400 text-white" : "bg-slate-200 text-slate-700",
+              )}>
+                #{rank}
+              </span>
+            )}
+            <span className="text-sm font-bold truncate">{cot.fornecedor}</span>
+          </div>
+          <div className="flex items-center gap-1 mt-0.5">
+            <StarRating value={cot.fornecedores?.estrelas ?? 0} readOnly size="sm" />
+          </div>
+          {cot.cnpj && <div className="text-[10px] text-slate-500 truncate">CNPJ: {cot.cnpj}</div>}
+        </div>
+        {score != null && (
+          <div className="text-right shrink-0">
+            <div className={cn(
+              "text-2xl font-black leading-none",
+              score >= 80 ? "text-emerald-600" : score >= 60 ? "text-amber-600" : "text-slate-500",
+            )}>{score}</div>
+            <div className="text-[9px] text-slate-500 font-semibold">SCORE</div>
+          </div>
         )}
       </div>
       <div className="text-lg font-black text-red-800">{fmtMoney(cot.valor)}</div>
+
+      <div className="flex flex-wrap gap-1 text-[10px] text-slate-600">
+        {cot.prazo_entrega_dias != null && (
+          <span className="inline-flex items-center gap-0.5 bg-slate-100 px-1.5 py-0.5 rounded">
+            <Clock className="h-2.5 w-2.5" />{cot.prazo_entrega_dias}d
+          </span>
+        )}
+        {cot.condicao_pagamento && (
+          <span className="inline-flex items-center gap-0.5 bg-slate-100 px-1.5 py-0.5 rounded">
+            <CreditCard className="h-2.5 w-2.5" />{cot.condicao_pagamento}
+          </span>
+        )}
+        {cot.frete && (
+          <span className="inline-flex items-center gap-0.5 bg-slate-100 px-1.5 py-0.5 rounded">
+            <Truck className="h-2.5 w-2.5" />{cot.frete}
+          </span>
+        )}
+      </div>
+
       {cot.observacao && <div className="text-[11px] text-slate-600 line-clamp-2">{cot.observacao}</div>}
+
+      {score != null && (
+        <button
+          type="button"
+          onClick={() => setShowScore((s) => !s)}
+          className="text-[10px] text-slate-600 hover:text-slate-900 flex items-center gap-1 mt-1 font-semibold"
+        >
+          {showScore ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          Como a matriz calculou
+        </button>
+      )}
+      {showScore && score != null && (
+        <div className="text-[10px] bg-slate-50 border rounded p-1.5 space-y-0.5">
+          <ScoreLine label="Preço (35%)" val={bd.preco} />
+          <ScoreLine label="Prazo (20%)" val={bd.prazo} />
+          <ScoreLine label="Qualidade (25%)" val={bd.qualidade} />
+          <ScoreLine label="Pagamento (10%)" val={bd.pagamento} />
+          <ScoreLine label="Frete (10%)" val={bd.frete} />
+        </div>
+      )}
+
       <div className="flex items-center gap-1 mt-1 flex-wrap">
         <Button
           size="sm"
@@ -551,9 +644,21 @@ function CotacaoCard({
           <Eye className="h-3 w-3 mr-1" /> Ver PDF
         </Button>
         {!cot.is_vencedora && (
-          <Button size="sm" variant="outline" onClick={onWin} className="border-emerald-400 text-emerald-800 hover:bg-emerald-50">
-            <Trophy className="h-3 w-3 mr-1" /> Marcar vencedora
+          <Button
+            size="sm"
+            variant={isBest ? "default" : "outline"}
+            onClick={onWin}
+            className={isBest
+              ? "bg-amber-500 hover:bg-amber-600 text-white"
+              : "border-emerald-400 text-emerald-800 hover:bg-emerald-50"}
+          >
+            <Trophy className="h-3 w-3 mr-1" /> {isBest ? "Confirmar" : "Escolher"}
           </Button>
+        )}
+        {cot.is_vencedora && (
+          <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300">
+            <Trophy className="h-3 w-3 mr-1" /> Vencedora
+          </Badge>
         )}
         <Button size="sm" variant="ghost" onClick={onDelete} className="text-rose-700 hover:bg-rose-50 ml-auto">
           <Trash2 className="h-3 w-3" />
@@ -563,18 +668,46 @@ function CotacaoCard({
   );
 }
 
-function AddCotacaoDialog({ rcId, onAdded }: { rcId: string; onAdded: () => void }) {
+function ScoreLine({ label, val }: { label: string; val?: number }) {
+  const v = Math.round(val ?? 0);
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="w-24 shrink-0 text-slate-600">{label}</span>
+      <div className="flex-1 h-1.5 bg-slate-200 rounded overflow-hidden">
+        <div
+          className={cn(
+            "h-full transition-all",
+            v >= 80 ? "bg-emerald-500" : v >= 60 ? "bg-amber-500" : "bg-slate-400",
+          )}
+          style={{ width: `${v}%` }}
+        />
+      </div>
+      <span className="w-8 text-right font-semibold text-slate-700">{v}</span>
+    </div>
+  );
+}
+
+function AddCotacaoDialog({
+  rcId, classificacao, onAdded,
+}: {
+  rcId: string;
+  classificacao: Req["classificacao"];
+  onAdded: () => void;
+}) {
   const [open, setOpen] = useState(false);
-  const [fornecedor, setFornecedor] = useState("");
-  const [cnpj, setCnpj] = useState("");
+  const [supplier, setSupplier] = useState<SupplierLite | null>(null);
   const [valor, setValor] = useState("");
+  const [prazo, setPrazo] = useState("");
+  const [pgto, setPgto] = useState("");
+  const [frete, setFrete] = useState<"CIF" | "FOB" | "">("");
+  const [validade, setValidade] = useState("");
   const [obs, setObs] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function submit() {
     const val = Number(String(valor).replace(",", "."));
-    if (!fornecedor.trim()) return toast.error("Informe o fornecedor");
+    if (!supplier) return toast.error("Selecione um fornecedor");
     if (!Number.isFinite(val) || val < 0) return toast.error("Valor inválido");
     if (!file) return toast.error("Anexe o arquivo da cotação (PDF ou JPG)");
     const allowed = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
@@ -592,9 +725,14 @@ function AddCotacaoDialog({ rcId, onAdded }: { rcId: string; onAdded: () => void
 
       const ins = await supabase.from("rc_cotacoes").insert({
         rc_id: rcId,
-        fornecedor: fornecedor.trim(),
-        cnpj: cnpj.trim() || null,
+        fornecedor_id: supplier.id,
+        fornecedor: supplier.nome_fantasia,
+        cnpj: supplier.cnpj,
         valor: val,
+        prazo_entrega_dias: prazo ? Math.max(0, parseInt(prazo, 10)) : null,
+        condicao_pagamento: pgto.trim() || null,
+        frete: frete || null,
+        validade: validade || null,
         arquivo_url: path,
         arquivo_nome: file.name,
         arquivo_tipo: file.type,
@@ -609,9 +747,10 @@ function AddCotacaoDialog({ rcId, onAdded }: { rcId: string; onAdded: () => void
         .eq("id", rcId)
         .eq("status", "PENDENTE" as any);
 
-      toast.success("Cotação anexada");
+      toast.success("Cotação anexada — matriz recalculando…");
       setOpen(false);
-      setFornecedor(""); setCnpj(""); setValor(""); setObs(""); setFile(null);
+      setSupplier(null); setValor(""); setPrazo(""); setPgto("");
+      setFrete(""); setValidade(""); setObs(""); setFile(null);
       onAdded();
     } catch (e: any) {
       toast.error(e.message ?? "Falha ao anexar cotação");
@@ -620,6 +759,8 @@ function AddCotacaoDialog({ rcId, onAdded }: { rcId: string; onAdded: () => void
     }
   }
 
+  const tipo = classificacao === "SERVICO" ? "SERVICO" : "MATERIAL";
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -627,20 +768,16 @@ function AddCotacaoDialog({ rcId, onAdded }: { rcId: string; onAdded: () => void
           <Upload className="h-3.5 w-3.5 mr-1" /> Nova cotação
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Anexar cotação</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-amber-500" /> Nova cotação para a matriz
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <div>
-            <Label>Fornecedor *</Label>
-            <Input value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} placeholder="Razão social" />
-          </div>
+          <SupplierPicker value={supplier} onChange={setSupplier} tipo={tipo} />
+
           <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label>CNPJ</Label>
-              <Input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
-            </div>
             <div>
               <Label>Valor total (R$) *</Label>
               <Input
@@ -650,7 +787,43 @@ function AddCotacaoDialog({ rcId, onAdded }: { rcId: string; onAdded: () => void
                 placeholder="0,00"
               />
             </div>
+            <div>
+              <Label>Prazo entrega (dias)</Label>
+              <Input
+                inputMode="numeric"
+                value={prazo}
+                onChange={(e) => setPrazo(e.target.value)}
+                placeholder="Ex: 7"
+              />
+            </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Condição pagamento</Label>
+              <Input
+                value={pgto}
+                onChange={(e) => setPgto(e.target.value)}
+                placeholder="Ex: 30/60/90 dias"
+              />
+            </div>
+            <div>
+              <Label>Frete</Label>
+              <Select value={frete} onValueChange={(v) => setFrete(v as any)}>
+                <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CIF">CIF (por conta do fornecedor)</SelectItem>
+                  <SelectItem value="FOB">FOB (por nossa conta)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label>Validade da proposta</Label>
+            <Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} />
+          </div>
+
           <div>
             <Label>Observações</Label>
             <Textarea rows={2} value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Prazo de entrega, condições…" />
@@ -667,6 +840,10 @@ function AddCotacaoDialog({ rcId, onAdded }: { rcId: string; onAdded: () => void
                 {file.name} · {(file.size / 1024).toFixed(0)} KB
               </div>
             )}
+          </div>
+
+          <div className="text-[11px] bg-amber-50 border border-amber-200 rounded p-2 text-amber-900">
+            💡 Quanto mais campos preenchidos, mais precisa fica a análise da matriz. Só preço e valor faz um score fraco — inclua prazo, pagamento e frete sempre que possível.
           </div>
         </div>
         <DialogFooter>

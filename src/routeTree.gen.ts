@@ -82,6 +82,7 @@ import { Route as AppDdsHistoricoRouteImport } from './routes/app.dds.historico'
 import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
 import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
 import { Route as AppComprasRequisicoesRecebidasRouteImport } from './routes/app.compras.requisicoes-recebidas'
+import { Route as AppComprasFornecedoresRouteImport } from './routes/app.compras.fornecedores'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
 import { Route as AppEstoqueEpiFichasMensaisRouteImport } from './routes/app.estoque.epi.fichas-mensais'
@@ -462,6 +463,11 @@ const AppComprasRequisicoesRecebidasRoute =
     path: '/compras/requisicoes-recebidas',
     getParentRoute: () => AppRoute,
   } as any)
+const AppComprasFornecedoresRoute = AppComprasFornecedoresRouteImport.update({
+  id: '/compras/fornecedores',
+  path: '/compras/fornecedores',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSesmtEquipamentosMoveisArquivosMensaisRoute =
   AppSesmtEquipamentosMoveisArquivosMensaisRouteImport.update({
     id: '/sesmt/equipamentos-moveis_/arquivos-mensais',
@@ -528,6 +534,7 @@ export interface FileRoutesByFullPath {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
+  '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
@@ -605,6 +612,7 @@ export interface FileRoutesByTo {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app': typeof AppIndexRoute
+  '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
@@ -686,6 +694,7 @@ export interface FileRoutesById {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
+  '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
@@ -768,6 +777,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app/'
+    | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
     | '/app/conta/seguranca'
     | '/app/dds/gestores'
@@ -845,6 +855,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app'
+    | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
     | '/app/conta/seguranca'
     | '/app/dds/gestores'
@@ -925,6 +936,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app/'
+    | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
     | '/app/conta/seguranca'
     | '/app/dds/gestores'
@@ -1495,6 +1507,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppComprasRequisicoesRecebidasRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/compras/fornecedores': {
+      id: '/app/compras/fornecedores'
+      path: '/compras/fornecedores'
+      fullPath: '/app/compras/fornecedores'
+      preLoaderRoute: typeof AppComprasFornecedoresRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/sesmt/equipamentos-moveis_/arquivos-mensais': {
       id: '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
       path: '/sesmt/equipamentos-moveis/arquivos-mensais'
@@ -1607,6 +1626,7 @@ interface AppRouteChildren {
   AppTrainingsRoute: typeof AppTrainingsRoute
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppComprasFornecedoresRoute: typeof AppComprasFornecedoresRoute
   AppComprasRequisicoesRecebidasRoute: typeof AppComprasRequisicoesRecebidasRoute
   AppContaSegurancaRoute: typeof AppContaSegurancaRoute
   AppDdsGestoresRoute: typeof AppDdsGestoresRoute
@@ -1670,6 +1690,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTrainingsRoute: AppTrainingsRoute,
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
+  AppComprasFornecedoresRoute: AppComprasFornecedoresRoute,
   AppComprasRequisicoesRecebidasRoute: AppComprasRequisicoesRecebidasRoute,
   AppContaSegurancaRoute: AppContaSegurancaRoute,
   AppDdsGestoresRoute: AppDdsGestoresRoute,
