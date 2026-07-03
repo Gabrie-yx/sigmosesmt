@@ -15,6 +15,9 @@ export type HelpTopic = {
     | "Funcionários"
     | "Produção"
     | "Compras"
+    | "Estoque"
+    | "Usuários"
+    | "Conceitos"
     | "Geral";
   /** Palavras-chave para busca (minúsculo). Ex.: ["2fa","autenticador","otp"] */
   keywords?: string[];
@@ -22,6 +25,8 @@ export type HelpTopic = {
   oQueE: string;
   /** Passos práticos "como usar / como configurar". */
   comoUsar?: string[];
+  /** Dicas / pegadinhas / boas práticas. Opcional. */
+  dicas?: string[];
   /** Base normativa (NR, ISO, LGPD). Opcional. */
   base?: string;
   /** Rota interna relacionada — usada pelo botão "Ir para". */
