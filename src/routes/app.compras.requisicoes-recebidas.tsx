@@ -79,6 +79,7 @@ type Cotacao = {
   score_breakdown: any;
   ranking: number | null;
   is_melhor_oferta: boolean;
+  fornecedores?: { estrelas: number | null } | null;
 };
 
 type Item = {
@@ -318,7 +319,7 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("rc_cotacoes")
-        .select("*")
+        .select("*, fornecedores(estrelas)")
         .eq("rc_id", req.id)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -578,7 +579,7 @@ function CotacaoCard({
             <span className="text-sm font-bold truncate">{cot.fornecedor}</span>
           </div>
           <div className="flex items-center gap-1 mt-0.5">
-            <StarRating value={0} readOnly size="sm" />
+            <StarRating value={cot.fornecedores?.estrelas ?? 0} readOnly size="sm" />
           </div>
           {cot.cnpj && <div className="text-[10px] text-slate-500 truncate">CNPJ: {cot.cnpj}</div>}
         </div>
