@@ -1793,6 +1793,9 @@ function AddCotacaoDialogImpl({
 }) {
   const [open, setOpen] = useState(false);
   const [supplier, setSupplier] = useState<SupplierLite | null>(null);
+  const [tipoOverride, setTipoOverride] = useState<"MATERIAL" | "SERVICO">(
+    classificacao === "SERVICO" ? "SERVICO" : "MATERIAL",
+  );
   const [prazo, setPrazo] = useState("");
   const [pgto, setPgto] = useState("");
   const [frete, setFrete] = useState<"CIF" | "FOB" | "">("");
@@ -1928,7 +1931,7 @@ function AddCotacaoDialogImpl({
     }
   }
 
-  const tipo = classificacao === "SERVICO" ? "SERVICO" : "MATERIAL";
+  const tipo = tipoOverride;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -1944,6 +1947,32 @@ function AddCotacaoDialogImpl({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          <div className="flex items-center gap-2 p-1 rounded-lg bg-muted/40 border border-border">
+            <button
+              type="button"
+              onClick={() => { setTipoOverride("MATERIAL"); if (supplier?.tipo !== "MATERIAL") setSupplier(null); }}
+              className={cn(
+                "flex-1 h-9 rounded-md text-sm font-semibold transition-colors",
+                tipo === "MATERIAL"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              📦 Produtos
+            </button>
+            <button
+              type="button"
+              onClick={() => { setTipoOverride("SERVICO"); if (supplier?.tipo !== "SERVICO") setSupplier(null); }}
+              className={cn(
+                "flex-1 h-9 rounded-md text-sm font-semibold transition-colors",
+                tipo === "SERVICO"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              🛠️ Serviços
+            </button>
+          </div>
           <SupplierPicker value={supplier} onChange={setSupplier} tipo={tipo} />
 
           <div className="grid grid-cols-2 gap-2">
