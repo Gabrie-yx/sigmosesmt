@@ -23,3 +23,4 @@ MB51: Base MP vence, mas OUTROS é residual saneado por descrição; classificac
 - [MB51 classificação — Base MP vence](mem://features/mb51-classificacao-base-mp.md) — Regra inviolável do resolveTipo: Base MP é fonte da verdade absoluta; classificacao_mb51 só como último recurso para material sem cadastro. Caso real CORRENTE SOLD ZINC vazando p/ GÁS.
 - [Israel - Almoxarifado](mem://team/israel-almoxarifado.md) — Responsável pelo almox no pátio; valida fatores de consumo (SOLDA/GÁS/TINTA) em /app/producao/fatores-consumo.
 - [RC Auto-scoring + 5 estrelas](mem://features/rc-auto-scoring-estrelas.md) — Fila pra depois: varredura de 2-3 cotações, "MELHOR OFERTA" automática e rating 1-5 do fornecedor; iniciar quando chegar a planilha SAP de fornecedores.
+- [Auditoria RBAC / usuários](mem://features/rbac-auditoria-usuarios.md) — Levantamento 03/07: 4 de 5 usuários são admin; sem segregação por empresa; proposta de roles finas + MFA obrigatório em debate. Não codar sem OK.
