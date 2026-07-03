@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Download, Printer, X, PenLine, ImagePlus } from "lucide-react";
 import type jsPDF from "jspdf";
-import { printPdf, renderPdfToImagePages } from "@/lib/pdf-print";
+import { printPdf, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 
 export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, encSig, sesmtSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature, signatureLabels, useSignatureGallery }: {
@@ -41,9 +41,16 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
     setPages([]);
     (async () => {
       try {
-        const imgs = await renderPdfToImagePages(doc.output("arraybuffer") as ArrayBuffer);
-        if (renderTokenRef.current !== token) return;
-        setPages(imgs);
+        // Renderiza página a página em JPEG (scale 2) — a 1ª página aparece
+        // rápido em vez de esperar todas em PNG scale 3.
+        await renderPdfToImagePagesProgressive(
+          doc.output("arraybuffer") as ArrayBuffer,
+          (pageDataUrl) => {
+            if (renderTokenRef.current !== token) return;
+            setPages((prev) => [...prev, pageDataUrl]);
+          },
+          2,
+        );
       } catch (e: any) {
         console.error("[PDFPreview] render error", e);
         if (renderTokenRef.current === token) setLoadError(e?.message ?? "Falha ao renderizar PDF");
