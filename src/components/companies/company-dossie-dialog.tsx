@@ -92,6 +92,10 @@ export function CompanyDossieDialog({
   const [newAcordo, setNewAcordo] = useState<any>(null);
   const [historicoOf, setHistoricoOf] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (open && companyId) logRead("companies", companyId, { via: "dossie-contratada", nome: companyName });
+  }, [open, companyId, companyName]);
+
   const { data: docs = [] } = useQuery({
     queryKey: ["contratada-docs", companyId],
     queryFn: async () => {
