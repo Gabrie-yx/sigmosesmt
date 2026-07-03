@@ -1,0 +1,1 @@
+ALTER TYPE public.purchase_req_status ADD VALUE IF NOT EXISTS 'EM_COTACAO';

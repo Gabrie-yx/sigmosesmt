@@ -8510,6 +8510,7 @@ export type Database = {
         | "EM_RECEBIMENTO"
         | "CONCLUIDA"
         | "DEVOLVIDA"
+        | "EM_COTACAO"
       tipo_acidente: "COM_AFASTAMENTO" | "SEM_AFASTAMENTO" | "TRAJETO" | "FATAL"
       tipo_movimentacao_epi: "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO"
       turno_acidente: "MANHA" | "TARDE" | "NOITE" | "MADRUGADA"
@@ -8685,6 +8686,7 @@ export const Constants = {
         "EM_RECEBIMENTO",
         "CONCLUIDA",
         "DEVOLVIDA",
+        "EM_COTACAO",
       ],
       tipo_acidente: ["COM_AFASTAMENTO", "SEM_AFASTAMENTO", "TRAJETO", "FATAL"],
       tipo_movimentacao_epi: [
