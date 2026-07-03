@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { appModuleSchema, managedAppRoleSchema } from "@/lib/access-control";
@@ -7,12 +6,23 @@ import { appModuleSchema, managedAppRoleSchema } from "@/lib/access-control";
 const INVITE_REDIRECT_PATH = "/reset-password";
 
 function resolveInviteRedirect(redirectTo: string) {
-  const request = getRequest();
-  const appOrigin = new URL(request.url).origin;
-  const redirectUrl = new URL(redirectTo);
+  // Valida apenas o path e o protocolo. Não comparamos com o origin do request
+  // porque em preview/SSR o server function é chamado internamente
+  // (ex: https://localhost:8080/_serverFn/...) enquanto o browser está no
+  // domínio do preview/publicado — os origins nunca batem e o convite falhava.
+  // O Supabase Auth já valida o redirect contra a allow list configurada.
+  let redirectUrl: URL;
+  try {
+    redirectUrl = new URL(redirectTo);
+  } catch {
+    throw new Error("Link de convite inválido");
+  }
 
-  if (redirectUrl.origin !== appOrigin || redirectUrl.pathname !== INVITE_REDIRECT_PATH) {
-    throw new Error("Link de convite inválido para este ambiente");
+  if (redirectUrl.protocol !== "https:" && redirectUrl.hostname !== "localhost") {
+    throw new Error("Link de convite deve usar HTTPS");
+  }
+  if (redirectUrl.pathname !== INVITE_REDIRECT_PATH) {
+    throw new Error("Link de convite deve apontar para /reset-password");
   }
 
   redirectUrl.search = "";
