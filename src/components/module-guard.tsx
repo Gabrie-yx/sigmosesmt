@@ -1,5 +1,5 @@
 import { useLocation, Link } from "@tanstack/react-router";
-import { useAuth, type AppModule } from "@/hooks/use-auth";
+import { useAuth, type AppModule, type AppRole } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
 import { menuKeyForPath, MENU_BY_KEY } from "@/lib/menu-catalog";
 
@@ -17,12 +17,17 @@ const PATH_TO_MODULE: { prefix: string; module: AppModule }[] = [
   { prefix: "/app/relatorios", module: "sesmt" },
   { prefix: "/app/estoque", module: "estoque" },
   { prefix: "/app/producao", module: "producao" },
+  { prefix: "/app/compras", module: "compras" },
   { prefix: "/app/users", module: "usuarios" },
   { prefix: "/app/audit", module: "usuarios" },
 ];
 
+const MODULE_ROLE_BYPASS: Partial<Record<AppModule, AppRole[]>> = {
+  compras: ["compras"],
+};
+
 export function ModuleRouteGuard({ children }: { children: React.ReactNode }) {
-  const { hasModule, hasMenu, isAdmin, loading } = useAuth();
+  const { hasModule, hasMenu, isAdmin, roles, loading } = useAuth();
   const location = useLocation();
 
   // Always allow account/security and dashboard root
@@ -35,7 +40,9 @@ export function ModuleRouteGuard({ children }: { children: React.ReactNode }) {
   const match = PATH_TO_MODULE.find((m) => location.pathname.startsWith(m.prefix));
   if (!match) return <>{children}</>;
 
-  if (!hasModule(match.module)) {
+  const hasRoleBypass = (MODULE_ROLE_BYPASS[match.module] ?? []).some((role) => roles.includes(role));
+
+  if (!hasModule(match.module) && !hasRoleBypass) {
     return (
       <div className="max-w-xl mx-auto mt-16 rounded-lg border bg-white p-8 text-center shadow-sm">
         <Lock className="h-10 w-10 mx-auto text-amber-600 mb-3" />
