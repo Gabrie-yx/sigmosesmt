@@ -39,7 +39,7 @@ import {
   adminForceSignOutUser,
 } from "@/lib/users.functions";
 import { createInvestorAccess } from "@/lib/temp-investors.functions";
-import { MENU_CATALOG, MENU_BY_KEY, menusForModule } from "@/lib/menu-catalog";
+import { MENU_CATALOG, MENU_BY_KEY, menusForModule, AVAILABLE_MODULES } from "@/lib/menu-catalog";
 
 export const Route = createFileRoute("/app/users")({
   component: UsersPage,
@@ -52,14 +52,8 @@ const ROLES = [
   { value: "viewer", label: "Visualizador", desc: "Somente leitura nos módulos liberados" },
 ] as const;
 
-const MODULES = [
-  { value: "sesmt", label: "SESMT" },
-  { value: "estoque", label: "Estoque" },
-  { value: "producao", label: "Produção" },
-  { value: "manutencao", label: "Manutenção" },
-  { value: "portaria", label: "Portaria" },
-  { value: "usuarios", label: "Usuários" },
-] as const;
+// Derivado do catálogo de menus: módulos novos aparecem automaticamente.
+const MODULES = AVAILABLE_MODULES;
 
 function roleLabel(r: string) {
   return ROLES.find((x) => x.value === r)?.label ?? r;
