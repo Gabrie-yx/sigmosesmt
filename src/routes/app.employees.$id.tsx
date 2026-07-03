@@ -57,6 +57,7 @@ const SignaturePadDialog = lazy(() =>
 import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { UserMinus, RotateCcw } from "lucide-react";
+import { logRead } from "@/lib/audit-read";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -68,6 +69,9 @@ function EmployeeDetail() {
   const { id } = Route.useParams();
   const { tab } = Route.useSearch();
   const router = useRouter();
+  useEffect(() => {
+    if (id) logRead("employees", id, { via: "ficha-funcionario" });
+  }, [id]);
   const canGoBack = typeof window !== "undefined" && window.history.length > 1;
   return (
     <div className="p-6 md:p-8 space-y-6 animate-fadeIn">

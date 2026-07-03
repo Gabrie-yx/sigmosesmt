@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, X, Plus } from "lucide-react";
+import { logRead } from "@/lib/audit-read";
 
 export type Prestador = {
   id?: string;
@@ -66,6 +67,9 @@ function maskCep(v: string) {
 export function PrestadorDialog({
   open, onOpenChange, prestador,
 }: { open: boolean; onOpenChange: (b: boolean) => void; prestador?: Prestador | null }) {
+  useEffect(() => {
+    if (open && prestador?.id) logRead("prestadores_saude", prestador.id, { via: "prestador-dialog" });
+  }, [open, prestador?.id]);
   const qc = useQueryClient();
   const [form, setForm] = useState<Prestador>(emptyPrestador());
   const [cepLoading, setCepLoading] = useState(false);

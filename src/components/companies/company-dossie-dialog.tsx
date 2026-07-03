@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { logRead } from "@/lib/audit-read";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -90,6 +91,10 @@ export function CompanyDossieDialog({
   const [editDoc, setEditDoc] = useState<any>(null);
   const [newAcordo, setNewAcordo] = useState<any>(null);
   const [historicoOf, setHistoricoOf] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open && companyId) logRead("companies", companyId, { via: "dossie-contratada", nome: companyName });
+  }, [open, companyId, companyName]);
 
   const { data: docs = [] } = useQuery({
     queryKey: ["contratada-docs", companyId],
