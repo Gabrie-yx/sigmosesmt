@@ -520,18 +520,33 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
               Nenhuma cotação anexada. Adicione pelo menos <strong>{minCot} cotação{minCot > 1 ? "ões" : ""}</strong> (PDF ou JPG) para a matriz analisar e liberar o envio.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              {[...cotacoes].sort((a, b) => (a.ranking ?? 99) - (b.ranking ?? 99)).map((c) => (
-                <CotacaoCard
-                  key={c.id}
-                  cot={c}
-                  onWin={() => marcarVenc.mutate(c.id)}
-                  onDelete={() => {
-                    if (confirm(`Excluir cotação de "${c.fornecedor}"?`)) excluir.mutate(c);
-                  }}
-                />
-              ))}
-            </div>
+            <Tabs defaultValue="fornecedor">
+              <TabsList className="grid grid-cols-2 w-full">
+                <TabsTrigger value="fornecedor" className="gap-1 text-xs">
+                  <Trophy className="h-3.5 w-3.5" /> Vencedor único
+                </TabsTrigger>
+                <TabsTrigger value="combo" className="gap-1 text-xs">
+                  <Layers className="h-3.5 w-3.5" /> Melhor combo (fatia PC)
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="fornecedor" className="mt-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  {[...cotacoes].sort((a, b) => (a.ranking ?? 99) - (b.ranking ?? 99)).map((c) => (
+                    <CotacaoCard
+                      key={c.id}
+                      cot={c}
+                      onWin={() => marcarVenc.mutate(c.id)}
+                      onDelete={() => {
+                        if (confirm(`Excluir cotação de "${c.fornecedor}"?`)) excluir.mutate(c);
+                      }}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+              <TabsContent value="combo" className="mt-2">
+                <MelhorComboTab rcId={req.id} />
+              </TabsContent>
+            </Tabs>
           )}
         </div>
 
