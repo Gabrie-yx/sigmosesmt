@@ -10,6 +10,7 @@ import { gerarPPPPdf, emptyPPPDados, type PPPDados, type PPPRisco } from "@/lib/
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
 import { logRead } from "@/lib/audit-read";
+import { HelpHint } from "@/components/help-hint";
 
 /** Formata YYYY-MM-DD -> DD/MM/YYYY */
 function fmtBR(d?: string | null) {
@@ -191,7 +192,10 @@ export function PPPEditorDialog({
             <div className="flex items-center gap-3">
               <FileSignature className="h-5 w-5 text-violet-700" />
               <div>
-                <div className="text-sm font-bold">PPP — Perfil Profissiográfico Previdenciário</div>
+                <div className="text-sm font-bold flex items-center gap-1.5">
+                  PPP — Perfil Profissiográfico Previdenciário
+                  <HelpHint topic="ppp" />
+                </div>
                 <div className="text-[11px] text-slate-500">
                   {isFinal && numero ? (
                     <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200" variant="outline">
