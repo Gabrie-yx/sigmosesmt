@@ -268,6 +268,15 @@ function ComprasRecebidasPage() {
               </SelectContent>
             </Select>
           </div>
+          <Button
+            size="sm"
+            variant={mostrarArquivadas ? "default" : "outline"}
+            onClick={() => setMostrarArquivadas((v) => !v)}
+            title="Alternar exibição das RCs arquivadas"
+          >
+            <Archive className="h-3.5 w-3.5 mr-1" />
+            {mostrarArquivadas ? "Vendo arquivadas" : "Ver arquivadas"}
+          </Button>
         </CardContent>
       </Card>
 
