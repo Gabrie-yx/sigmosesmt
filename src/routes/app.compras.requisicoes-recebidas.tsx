@@ -910,6 +910,163 @@ function RegistrarRecebimentoDialog({ req, onClose }: { req: Req; onClose: (ok: 
   );
 }
 
+function RecotarDialog({ req, onClose }: { req: Req; onClose: (ok: boolean) => void }) {
+  const [motivo, setMotivo] = useState("");
+
+  const recotar = useMutation({
+    mutationFn: async () => {
+      if (motivo.trim().length < 5) throw new Error("Explique brevemente o que vai mudar na nova cotação (mín. 5 caracteres)");
+      const { error } = await supabase
+        .from("purchase_requisitions")
+        .update({
+          status: "PENDENTE" as any,
+          motivo_indeferimento_anterior: req.motivo_indeferimento ?? null,
+          motivo_indeferimento: null,
+          decidido_em: null,
+          decidido_por_id: null,
+          decidido_por_nome: null,
+          decidido_assinatura_url: null,
+          approved_at: null,
+          approved_by: null,
+          cotacao_fornecedor: null,
+          cotacao_valor: null,
+          cotacao_at: null,
+          cotador_nome: null,
+          pego_por_compras_id: null,
+          pego_por_compras_nome: null,
+          pego_em: null,
+          recotacao_ciclos: (req.recotacao_ciclos ?? 0) + 1,
+          recotacao_solicitada_em: new Date().toISOString(),
+          recotacao_motivo: motivo.trim(),
+        } as any)
+        .eq("id", req.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`RC ${req.numero} voltou para cotação`);
+      onClose(true);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao recotar"),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(false); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <RotateCcw className="h-5 w-5 text-blue-700" /> Recotar RC {req.numero}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 text-sm">
+          {req.motivo_indeferimento && (
+            <div className="text-xs bg-rose-50 border border-rose-200 rounded px-2 py-1 text-rose-900">
+              <strong>Motivo do indeferimento anterior:</strong> {req.motivo_indeferimento}
+            </div>
+          )}
+          <p className="text-slate-600">
+            A RC volta para <strong>Aguardando cotação</strong>. As cotações antigas ficam
+            no histórico, mas o fornecedor vencedor e a decisão são limpos para nova rodada.
+          </p>
+          <Label htmlFor="recot-motivo">O que vai mudar nesta nova cotação?</Label>
+          <Textarea
+            id="recot-motivo"
+            rows={3}
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            placeholder="Ex.: Buscar mais 2 fornecedores; renegociar frete; trocar especificação técnica…"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onClose(false)}>Cancelar</Button>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => recotar.mutate()}
+            disabled={recotar.isPending}
+          >
+            {recotar.isPending ? "Reabrindo…" : "Reabrir para nova cotação"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DevolverDialog({ req, onClose }: { req: Req; onClose: (ok: boolean) => void }) {
+  const { user } = useAuth();
+  const [mensagem, setMensagem] = useState("");
+
+  const devolver = useMutation({
+    mutationFn: async () => {
+      if (mensagem.trim().length < 10) throw new Error("Escreva uma mensagem clara para o solicitante (mín. 10 caracteres)");
+
+      let nome: string | null = null;
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+        nome = profile?.full_name ?? user.email ?? null;
+      }
+
+      const { error } = await supabase
+        .from("purchase_requisitions")
+        .update({
+          status: "DEVOLVIDA" as any,
+          devolvida_em: new Date().toISOString(),
+          devolvida_por_id: user?.id ?? null,
+          devolvida_por_nome: nome,
+          devolucao_mensagem: mensagem.trim(),
+        } as any)
+        .eq("id", req.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`RC ${req.numero} devolvida ao solicitante`);
+      onClose(true);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao devolver"),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(false); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Undo2 className="h-5 w-5 text-orange-700" /> Devolver RC {req.numero} ao solicitante
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 text-sm">
+          {req.motivo_indeferimento && (
+            <div className="text-xs bg-rose-50 border border-rose-200 rounded px-2 py-1 text-rose-900">
+              <strong>Motivo do indeferimento:</strong> {req.motivo_indeferimento}
+            </div>
+          )}
+          <p className="text-slate-600">
+            O solicitante <strong>{req.solicitante}</strong> receberá aviso no menu de
+            Requisições. Explique o que ele precisa ajustar antes de abrir uma nova RC.
+          </p>
+          <Label htmlFor="dev-mensagem">Mensagem ao solicitante</Label>
+          <Textarea
+            id="dev-mensagem"
+            rows={4}
+            value={mensagem}
+            onChange={(e) => setMensagem(e.target.value)}
+            placeholder="Ex.: O item pedido não tem cobertura orçamentária este mês. Reabra a RC no próximo ciclo ou substitua pela referência X."
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onClose(false)}>Cancelar</Button>
+          <Button
+            className="bg-orange-600 hover:bg-orange-700 text-white"
+            onClick={() => devolver.mutate()}
+            disabled={devolver.isPending}
+          >
+            {devolver.isPending ? "Devolvendo…" : "Devolver ao solicitante"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
   const qc = useQueryClient();
 
