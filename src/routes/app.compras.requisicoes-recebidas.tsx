@@ -334,9 +334,18 @@ function ComprasRecebidasPage() {
       </Card>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="abertas">Abertas ({abertas})</TabsTrigger>
           <TabsTrigger value="enviadas">Enviadas ao supervisor</TabsTrigger>
+          <TabsTrigger value="aprovadas" className="relative">
+            Deferidas
+            {novasDecisoes > 0 && (
+              <span className="ml-2 inline-flex min-w-[1.25rem] h-5 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white">
+                {novasDecisoes > 99 ? "99+" : novasDecisoes}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="indeferidas">Indeferidas</TabsTrigger>
           <TabsTrigger value="todas">Todas</TabsTrigger>
         </TabsList>
         <TabsContent value={tab} className="mt-3">
