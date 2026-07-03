@@ -92,16 +92,33 @@ export function BaseMpLookupSheet({ triggerLabel = "Consultar Base de Matéria-P
             <div className="text-sm text-muted-foreground p-6 text-center">Nenhum item encontrado.</div>
           )}
           {filtered.map((i) => (
-            <div key={i.id} className="border border-slate-200 rounded-lg p-2.5 flex gap-3 hover:bg-red-50/60 hover:border-red-300 transition-colors">
+            <div
+              key={i.id}
+              className="rounded-lg border border-border bg-card text-card-foreground p-2.5 flex gap-3 transition-colors hover:border-red-400/60 hover:bg-red-500/10"
+            >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-sm text-slate-800 truncate">{i.descricao ?? i.codigo}</span>
-                  <Badge variant="outline" className="text-[10px]">Cód. {i.codigo}</Badge>
-                  <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200">{i.tipo}</Badge>
+                  <span className="font-semibold text-sm text-foreground truncate">
+                    {i.descricao ?? i.codigo}
+                  </span>
+                  <Badge variant="outline" className="text-[10px] border-border text-foreground/80">
+                    Cód. {i.codigo}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] border-red-500/40 bg-red-500/15 text-red-200"
+                  >
+                    {i.tipo}
+                  </Badge>
                 </div>
                 {onPick && (
                   <div className="mt-2">
-                    <Button size="sm" variant="default" className="h-7 px-2 bg-red-700 hover:bg-red-800" onClick={() => usar(i)}>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="h-7 px-2 bg-red-700 hover:bg-red-800 text-white"
+                      onClick={() => usar(i)}
+                    >
                       <ArrowDownToLine className="h-3 w-3 mr-1" /> Usar na requisição
                     </Button>
                   </div>
