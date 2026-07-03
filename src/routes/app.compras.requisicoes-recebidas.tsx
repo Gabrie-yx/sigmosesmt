@@ -566,8 +566,25 @@ function CotacaoCard({
   const rank = cot.ranking ?? null;
   const score = cot.score_total ?? null;
   const bd = (cot.score_breakdown ?? {}) as {
-    preco?: number; prazo?: number; qualidade?: number; pagamento?: number; frete?: number;
+    preco?: number; prazo_entrega?: number; estrelas?: number;
+    condicao_pagamento?: number; frete?: number; cobertura?: number;
+    cobertura_pct?: number;
   };
+  const cobertura = cot.cobertura_pct ?? 0;
+  const cotados = cot.itens_cotados ?? 0;
+  const totalItens = cot.itens_totais_rc ?? 0;
+  const coberturaBaixa = totalItens > 0 && cobertura < 100;
+  const divergente = !!cot.tem_divergencias;
+
+  // Alerta validade curta
+  let validadeCurta = false;
+  let diasValidade: number | null = null;
+  if (cot.validade) {
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const val = new Date(cot.validade + "T00:00:00");
+    diasValidade = Math.round((val.getTime() - hoje.getTime()) / 86400000);
+    validadeCurta = diasValidade >= 0 && diasValidade <= 5;
+  }
   return (
     <div
       className={cn(
@@ -616,6 +633,31 @@ function CotacaoCard({
       </div>
       <div className="text-lg font-black text-red-800">{fmtMoney(cot.valor)}</div>
 
+      {/* Alertas críticos */}
+      <div className="flex flex-wrap gap-1">
+        {totalItens > 0 && (
+          <Badge className={cn(
+            "text-[10px] border font-bold gap-0.5",
+            cobertura >= 100 ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+              : cobertura >= 80 ? "bg-amber-100 text-amber-800 border-amber-300"
+              : "bg-rose-100 text-rose-800 border-rose-300"
+          )}>
+            <PackageCheck className="h-2.5 w-2.5" />
+            Cobertura {cotados}/{totalItens} ({cobertura.toFixed(0)}%)
+          </Badge>
+        )}
+        {divergente && (
+          <Badge className="text-[10px] bg-orange-100 text-orange-800 border border-orange-300 gap-0.5">
+            <AlertTriangle className="h-2.5 w-2.5" /> Divergências
+          </Badge>
+        )}
+        {validadeCurta && (
+          <Badge className="text-[10px] bg-rose-100 text-rose-800 border border-rose-300 gap-0.5 animate-pulse">
+            <Clock className="h-2.5 w-2.5" /> Vence em {diasValidade}d
+          </Badge>
+        )}
+      </div>
+
       <div className="flex flex-wrap gap-1 text-[10px] text-slate-600">
         {cot.prazo_entrega_dias != null && (
           <span className="inline-flex items-center gap-0.5 bg-slate-100 px-1.5 py-0.5 rounded">
@@ -648,11 +690,17 @@ function CotacaoCard({
       )}
       {showScore && score != null && (
         <div className="text-[10px] bg-slate-50 border rounded p-1.5 space-y-0.5">
-          <ScoreLine label="Preço (35%)" val={bd.preco} />
-          <ScoreLine label="Prazo (20%)" val={bd.prazo} />
-          <ScoreLine label="Qualidade (25%)" val={bd.qualidade} />
-          <ScoreLine label="Pagamento (10%)" val={bd.pagamento} />
-          <ScoreLine label="Frete (10%)" val={bd.frete} />
+          <ScoreLine label="Preço (25%)" val={bd.preco} max={25} />
+          <ScoreLine label="Prazo (15%)" val={bd.prazo_entrega} max={15} />
+          <ScoreLine label="Estrelas (20%)" val={bd.estrelas} max={20} />
+          <ScoreLine label="Pagamento (10%)" val={bd.condicao_pagamento} max={10} />
+          <ScoreLine label="Frete (5%)" val={bd.frete} max={5} />
+          <ScoreLine label="Cobertura (25%)" val={bd.cobertura} max={25} />
+          {divergente && (
+            <div className="text-[10px] text-orange-700 pt-1 border-t border-orange-200">
+              ⚠️ Penalidade de 10% aplicada por itens divergentes
+            </div>
+          )}
         </div>
       )}
 
@@ -689,8 +737,9 @@ function CotacaoCard({
   );
 }
 
-function ScoreLine({ label, val }: { label: string; val?: number }) {
+function ScoreLine({ label, val, max = 100 }: { label: string; val?: number; max?: number }) {
   const v = Math.round(val ?? 0);
+  const pct = Math.min(100, (v / max) * 100);
   return (
     <div className="flex items-center gap-1.5">
       <span className="w-24 shrink-0 text-slate-600">{label}</span>
@@ -698,12 +747,12 @@ function ScoreLine({ label, val }: { label: string; val?: number }) {
         <div
           className={cn(
             "h-full transition-all",
-            v >= 80 ? "bg-emerald-500" : v >= 60 ? "bg-amber-500" : "bg-slate-400",
+            pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-slate-400",
           )}
-          style={{ width: `${v}%` }}
+          style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="w-8 text-right font-semibold text-slate-700">{v}</span>
+      <span className="w-10 text-right font-semibold text-slate-700">{v}/{max}</span>
     </div>
   );
 }
