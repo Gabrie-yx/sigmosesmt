@@ -232,7 +232,7 @@ function ComprasRecebidasPage() {
     queryFn: async () => {
       let query = supabase
         .from("purchase_requisitions")
-        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa,retroativa,retroativa_motivo,arquivada_em,decidido_em,decidido_por_nome,motivo_indeferimento,cotacao_fornecedor,cotacao_valor,pc_numero,pc_fornecedor,pc_valor,pc_prazo_entrega,pc_arquivo_url,pc_arquivo_nome,pc_emitido_por_nome,pc_emitido_em,nf_numero,nf_arquivo_url,nf_arquivo_nome,recebido_em,recebido_por_nome")
+        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa,retroativa,retroativa_motivo,arquivada_em,decidido_em,decidido_por_nome,motivo_indeferimento,cotacao_fornecedor,cotacao_valor,pc_numero,pc_fornecedor,pc_valor,pc_prazo_entrega,pc_arquivo_url,pc_arquivo_nome,pc_emitido_por_nome,pc_emitido_em,nf_numero,nf_arquivo_url,nf_arquivo_nome,recebido_em,recebido_por_nome,devolvida_em,devolvida_por_nome,devolucao_mensagem,recotacao_ciclos,motivo_indeferimento_anterior")
         .order("created_at", { ascending: false })
         .limit(200);
       if (tab === "abertas") query = query.in("status", ["PENDENTE", "EM_COTACAO"] as any);
