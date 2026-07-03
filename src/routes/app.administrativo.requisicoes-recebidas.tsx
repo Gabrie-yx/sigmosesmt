@@ -19,7 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Briefcase, Search, Filter, Eye, CheckCircle2, XCircle, ShieldAlert, FileText,
+  Briefcase, Search, Filter, Eye, CheckCircle2, XCircle, ShieldAlert, FileText, BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { decidirRc } from "@/lib/rc-public.functions";
@@ -187,6 +187,7 @@ function AdministrativoRecebidasPage() {
           <Badge className="bg-blue-100 text-blue-800 border-blue-300">Aguardando parecer: {counts?.parecer ?? 0}</Badge>
           <Badge className="bg-amber-100 text-amber-800 border-amber-300">Em fluxo: {counts?.abertas ?? 0}</Badge>
           <Badge className="bg-slate-100 text-slate-800 border-slate-300">Decididas: {counts?.decididas ?? 0}</Badge>
+          <ManualSupervisorButton />
         </div>
       </div>
 
@@ -495,5 +496,145 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ManualSupervisorButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-2 border-red-300 text-red-800 hover:bg-red-50"
+        onClick={() => setOpen(true)}
+      >
+        <BookOpen className="h-4 w-4" />
+        Manual do Supervisor
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-red-700" />
+              Manual do Supervisor Geral — Requisições de Compra (RC)
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-5 text-sm leading-relaxed text-slate-700">
+            <section>
+              <h3 className="font-bold text-slate-900 text-base">1. Para que serve este painel</h3>
+              <p className="mt-1">
+                Aqui você acompanha <strong>todas as Requisições de Compra (RC)</strong> abertas
+                pelos setores da empresa e dá o <strong>parecer final</strong> (Deferido ou
+                Indeferido) sobre as cotações fechadas pelo Compras. Você é o último passo
+                antes da compra ser efetivada.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-bold text-slate-900 text-base">2. O fluxo completo da RC</h3>
+              <ol className="list-decimal pl-5 mt-1 space-y-1">
+                <li><strong>Solicitante abre a RC</strong> (SESMT, Produção, Manutenção etc.) descrevendo os itens.</li>
+                <li>A RC entra na fila do <strong>Compras</strong> como <em>Pendente</em>.</li>
+                <li>Um comprador <strong>"pega"</strong> a RC — ela passa a <em>Em cotação</em>.</li>
+                <li>O comprador cota com fornecedores e fecha a melhor proposta — a RC vira <em>Cotada</em>.</li>
+                <li>A RC aparece <strong>aqui na sua fila</strong> aguardando seu parecer.</li>
+                <li>Você <strong>Defere</strong> (autoriza a compra) ou <strong>Indefere</strong> (bloqueia com motivo).</li>
+              </ol>
+            </section>
+
+            <section>
+              <h3 className="font-bold text-slate-900 text-base">3. O que cada status significa</h3>
+              <ul className="mt-1 space-y-2">
+                <li>
+                  <Badge className="bg-amber-100 text-amber-800 border-amber-300 border mr-2">Aguardando cotação</Badge>
+                  RC recém-aberta pelo solicitante. Nenhum comprador pegou ainda.
+                  <span className="text-slate-500"> Você só acompanha, ainda não age.</span>
+                </li>
+                <li>
+                  <Badge className="bg-violet-100 text-violet-800 border-violet-300 border mr-2">Em cotação</Badge>
+                  Um comprador está cotando com fornecedores.
+                  <span className="text-slate-500"> Ainda não é o momento de decidir.</span>
+                </li>
+                <li>
+                  <Badge className="bg-blue-100 text-blue-800 border-blue-300 border mr-2">Cotada</Badge>
+                  <strong>É a sua vez.</strong> O Compras fechou a melhor proposta e está aguardando seu parecer.
+                  Estas RCs aparecem com <strong>borda azul destacada</strong> na aba "Aguardando meu parecer".
+                </li>
+                <li>
+                  <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 border mr-2">Aprovada</Badge>
+                  Você já deferiu. Compras pode efetivar a compra com o fornecedor escolhido.
+                </li>
+                <li>
+                  <Badge className="bg-rose-100 text-rose-800 border-rose-300 border mr-2">Indeferida</Badge>
+                  Você bloqueou a compra com um motivo registrado. O Compras não pode dar prosseguimento.
+                </li>
+              </ul>
+            </section>
+
+            <section>
+              <h3 className="font-bold text-slate-900 text-base">4. As abas do painel</h3>
+              <ul className="mt-1 space-y-1">
+                <li><strong>Aguardando meu parecer:</strong> só as <em>Cotadas</em>, esperando sua decisão. Comece por aqui.</li>
+                <li><strong>Em fluxo:</strong> RCs ainda em <em>Pendente</em> ou <em>Em cotação</em>. Serve para acompanhar o que o Compras está fazendo.</li>
+                <li><strong>Decididas:</strong> histórico do que você já deferiu ou indeferiu.</li>
+                <li><strong>Todas:</strong> visão completa da empresa.</li>
+              </ul>
+            </section>
+
+            <section>
+              <h3 className="font-bold text-slate-900 text-base">5. Passo a passo para dar o parecer</h3>
+              <ol className="list-decimal pl-5 mt-1 space-y-1">
+                <li>Abra a aba <strong>"Aguardando meu parecer"</strong>.</li>
+                <li>No card, confira: <em>solicitante</em>, <em>setor</em>, <em>fornecedor cotado</em>, <em>valor total</em> e <em>quem cotou</em>.</li>
+                <li>Clique em <strong>Ver detalhes</strong> para inspecionar os <em>itens</em> da RC (descrição, quantidade, unidade e observações).</li>
+                <li>Avalie se: a compra é realmente necessária, se o valor está compatível e se o fornecedor faz sentido.</li>
+                <li>Escolha:
+                  <ul className="list-disc pl-5 mt-1">
+                    <li><strong className="text-emerald-700">Deferir</strong> — libera a compra. Não precisa justificar.</li>
+                    <li><strong className="text-rose-700">Indeferir</strong> — bloqueia. É <strong>obrigatório escrever o motivo</strong> (o solicitante e o Compras verão essa mensagem).</li>
+                  </ul>
+                </li>
+                <li>Depois de confirmado, o parecer é registrado com <strong>seu nome e data/hora</strong> e não pode ser desfeito no painel.</li>
+              </ol>
+            </section>
+
+            <section>
+              <h3 className="font-bold text-slate-900 text-base">6. Boas práticas ao indeferir</h3>
+              <ul className="list-disc pl-5 mt-1 space-y-1">
+                <li>Seja <strong>claro e objetivo</strong> — o solicitante lerá o motivo.</li>
+                <li>Se for questão de <strong>valor</strong>, oriente a cotar outros fornecedores.</li>
+                <li>Se for questão de <strong>necessidade</strong>, explique o critério (ex.: "Aguardar próximo orçamento", "Item já disponível no almoxarifado").</li>
+                <li>Evite motivos vagos como "não autorizado" — dificulta a correção pelo Compras.</li>
+              </ul>
+            </section>
+
+            <section>
+              <h3 className="font-bold text-slate-900 text-base">7. Filtros e busca</h3>
+              <p className="mt-1">
+                Use a <strong>busca</strong> para localizar por número da RC, título, solicitante ou setor.
+                Use o filtro de <strong>setor</strong> para ver só as RCs de uma área específica
+                (útil quando há muitos pedidos ao mesmo tempo).
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-bold text-slate-900 text-base">8. Dúvidas frequentes</h3>
+              <div className="mt-1 space-y-2">
+                <p><strong>Posso deferir uma RC que ainda está "Em cotação"?</strong> Não. Só é possível decidir quando a RC estiver <em>Cotada</em>.</p>
+                <p><strong>E se eu indeferir por engano?</strong> Fale com o Compras — o solicitante pode abrir uma nova RC corrigida.</p>
+                <p><strong>Vejo RCs de todos os setores?</strong> Sim. Como Supervisor Geral, você tem visão total da empresa.</p>
+                <p><strong>Quem mais vê minhas decisões?</strong> O solicitante da RC, o Compras e ficam registradas no histórico com seu nome.</p>
+              </div>
+            </section>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setOpen(false)}>Entendi, fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
