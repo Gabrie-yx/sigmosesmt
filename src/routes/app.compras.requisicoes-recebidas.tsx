@@ -648,6 +648,217 @@ function DesarquivarButton({ rcId, onDone }: { rcId: string; onDone: () => void 
   );
 }
 
+function EmitirPcDialog({ req, onClose }: { req: Req; onClose: (ok: boolean) => void }) {
+  const { user } = useAuth();
+  const [pcNumero, setPcNumero] = useState("");
+  const [fornecedor, setFornecedor] = useState(req.cotacao_fornecedor ?? "");
+  const [valor, setValor] = useState<string>(req.cotacao_valor != null ? String(req.cotacao_valor) : "");
+  const [prazo, setPrazo] = useState<string>("");
+  const [obs, setObs] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+
+  const emitir = useMutation({
+    mutationFn: async () => {
+      if (!pcNumero.trim()) throw new Error("Informe o número do Pedido de Compra");
+      if (!fornecedor.trim()) throw new Error("Informe o fornecedor");
+      const valorNum = parseFloat((valor || "0").replace(",", "."));
+      if (!(valorNum > 0)) throw new Error("Informe o valor do PC");
+
+      let arquivo_url: string | null = null;
+      let arquivo_nome: string | null = null;
+      if (file) {
+        const safe = file.name.replace(/[^\w.\-]+/g, "_");
+        const path = `pedidos/${req.id}/${Date.now()}_${safe}`;
+        const up = await supabase.storage.from("rc-cotacoes").upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+        if (up.error) throw up.error;
+        arquivo_url = path;
+        arquivo_nome = file.name;
+      }
+
+      // Nome do responsável
+      let nome: string | null = null;
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+        nome = profile?.full_name ?? user.email ?? null;
+      }
+
+      const { error } = await supabase
+        .from("purchase_requisitions")
+        .update({
+          status: "EM_RECEBIMENTO" as any,
+          pc_numero: pcNumero.trim(),
+          pc_fornecedor: fornecedor.trim(),
+          pc_valor: valorNum,
+          pc_prazo_entrega: prazo || null,
+          pc_arquivo_url: arquivo_url,
+          pc_arquivo_nome: arquivo_nome,
+          pc_observacoes: obs.trim() || null,
+          pc_emitido_por_id: user?.id ?? null,
+          pc_emitido_por_nome: nome,
+          pc_emitido_em: new Date().toISOString(),
+        } as any)
+        .eq("id", req.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`PC emitido para RC ${req.numero}`);
+      onClose(true);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao emitir PC"),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(false); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileCheck2 className="h-5 w-5 text-cyan-700" /> Emitir Pedido de Compra — RC {req.numero}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="sm:col-span-2 text-xs bg-emerald-50 border border-emerald-200 rounded px-2 py-1 text-emerald-900">
+            Deferida pelo supervisor. Preencha os dados do PC para acompanhar o recebimento.
+          </div>
+          <div>
+            <Label htmlFor="pc-num">Nº do Pedido de Compra</Label>
+            <Input id="pc-num" value={pcNumero} onChange={(e) => setPcNumero(e.target.value)} placeholder="Ex.: PC-2026-0123" />
+          </div>
+          <div>
+            <Label htmlFor="pc-forn">Fornecedor</Label>
+            <Input id="pc-forn" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="pc-valor">Valor total (R$)</Label>
+            <Input id="pc-valor" inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" />
+          </div>
+          <div>
+            <Label htmlFor="pc-prazo">Prazo de entrega</Label>
+            <Input id="pc-prazo" type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} />
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="pc-file">Anexar PC (PDF/imagem) — opcional</Label>
+            <Input id="pc-file" type="file" accept="application/pdf,image/*"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="pc-obs">Observações</Label>
+            <Textarea id="pc-obs" rows={2} value={obs} onChange={(e) => setObs(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onClose(false)}>Cancelar</Button>
+          <Button
+            className="bg-cyan-600 hover:bg-cyan-700 text-white"
+            onClick={() => emitir.mutate()}
+            disabled={emitir.isPending}
+          >
+            {emitir.isPending ? "Emitindo…" : "Emitir e enviar para recebimento"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RegistrarRecebimentoDialog({ req, onClose }: { req: Req; onClose: (ok: boolean) => void }) {
+  const { user } = useAuth();
+  const [nfNumero, setNfNumero] = useState("");
+  const [obs, setObs] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+
+  const receber = useMutation({
+    mutationFn: async () => {
+      if (!nfNumero.trim()) throw new Error("Informe o número da Nota Fiscal");
+
+      let arquivo_url: string | null = null;
+      let arquivo_nome: string | null = null;
+      if (file) {
+        const safe = file.name.replace(/[^\w.\-]+/g, "_");
+        const path = `notas/${req.id}/${Date.now()}_${safe}`;
+        const up = await supabase.storage.from("rc-cotacoes").upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+        if (up.error) throw up.error;
+        arquivo_url = path;
+        arquivo_nome = file.name;
+      }
+
+      let nome: string | null = null;
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+        nome = profile?.full_name ?? user.email ?? null;
+      }
+
+      const { error } = await supabase
+        .from("purchase_requisitions")
+        .update({
+          status: "CONCLUIDA" as any,
+          nf_numero: nfNumero.trim(),
+          nf_arquivo_url: arquivo_url,
+          nf_arquivo_nome: arquivo_nome,
+          nf_observacoes: obs.trim() || null,
+          recebido_em: new Date().toISOString(),
+          recebido_por_id: user?.id ?? null,
+          recebido_por_nome: nome,
+        } as any)
+        .eq("id", req.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`RC ${req.numero} concluída — NF registrada`);
+      onClose(true);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao registrar recebimento"),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(false); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Receipt className="h-5 w-5 text-emerald-700" /> Registrar Recebimento — RC {req.numero}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 text-sm">
+          <div className="text-xs bg-cyan-50 border border-cyan-200 rounded px-2 py-1 text-cyan-900">
+            <strong>PC {req.pc_numero ?? "—"}</strong> · {req.pc_fornecedor ?? "—"} · {fmtMoney(req.pc_valor)}
+          </div>
+          <div>
+            <Label htmlFor="nf-num">Nº da Nota Fiscal</Label>
+            <Input id="nf-num" value={nfNumero} onChange={(e) => setNfNumero(e.target.value)} placeholder="Ex.: 123456" />
+          </div>
+          <div>
+            <Label htmlFor="nf-file">Anexar NF (PDF/XML/imagem) — opcional</Label>
+            <Input id="nf-file" type="file" accept="application/pdf,application/xml,text/xml,image/*"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          </div>
+          <div>
+            <Label htmlFor="nf-obs">Observações do recebimento</Label>
+            <Textarea id="nf-obs" rows={3} value={obs} onChange={(e) => setObs(e.target.value)}
+              placeholder="Divergência de quantidade, avaria, entrega parcial etc." />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onClose(false)}>Cancelar</Button>
+          <Button
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            onClick={() => receber.mutate()}
+            disabled={receber.isPending}
+          >
+            {receber.isPending ? "Registrando…" : "Concluir RC"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
   const qc = useQueryClient();
 
