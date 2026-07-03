@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useMinhasRcsDecididas } from "@/hooks/use-minhas-rcs-decididas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,7 +46,7 @@ export const Route = createFileRoute("/app/sesmt/requisicoes")({
   component: RequisicoesPage,
 });
 
-type Status = "PENDENTE" | "EM_COTACAO" | "COTADA" | "APROVADA" | "INDEFERIDA";
+type Status = "PENDENTE" | "EM_COTACAO" | "COTADA" | "APROVADA" | "INDEFERIDA" | "EM_RECEBIMENTO" | "CONCLUIDA" | "DEVOLVIDA";
 type Classe = "MATERIAL" | "SERVICO" | "MEDICAMENTOS";
 
 type Item = {
@@ -91,6 +92,14 @@ type Req = {
   dispensa_cotacao?: boolean | null;
   dispensa_motivo?: string | null;
   dispensa_justificativa?: string | null;
+  devolvida_em?: string | null;
+  devolvida_por_nome?: string | null;
+  devolucao_mensagem?: string | null;
+  pc_numero?: string | null;
+  pc_fornecedor?: string | null;
+  pc_valor?: number | null;
+  nf_numero?: string | null;
+  recebido_em?: string | null;
 };
 
 const STATUS_BADGE: Record<Status, string> = {
@@ -99,6 +108,9 @@ const STATUS_BADGE: Record<Status, string> = {
   COTADA: "bg-blue-100 text-blue-800 border-blue-300",
   APROVADA: "bg-emerald-100 text-emerald-800 border-emerald-300",
   INDEFERIDA: "bg-rose-100 text-rose-800 border-rose-300",
+  EM_RECEBIMENTO: "bg-cyan-100 text-cyan-800 border-cyan-300",
+  CONCLUIDA: "bg-slate-200 text-slate-800 border-slate-400",
+  DEVOLVIDA: "bg-orange-100 text-orange-800 border-orange-300",
 };
 
 const STATUS_LABEL: Record<Status, string> = {
@@ -107,6 +119,9 @@ const STATUS_LABEL: Record<Status, string> = {
   COTADA: "Cotada",
   APROVADA: "Deferida",
   INDEFERIDA: "Indeferida",
+  EM_RECEBIMENTO: "PC emitido — aguardando NF",
+  CONCLUIDA: "Concluída",
+  DEVOLVIDA: "Devolvida — precisa ajuste",
 };
 
 function fmtBR(d?: string | null) {
@@ -345,6 +360,12 @@ function RequisicoesPage() {
   const qc = useQueryClient();
   const [openNew, setOpenNew] = useState(false);
   const location = useLocation();
+  const { count: novasAtualizacoes, markAllSeen } = useMinhasRcsDecididas();
+
+  // Marca como visto ao entrar na página (badge do menu some)
+  useEffect(() => {
+    if (novasAtualizacoes > 0) markAllSeen();
+  }, [novasAtualizacoes, markAllSeen]);
 
   // Se houver rascunho na URL (?draft=true), abre o modal automaticamente
   useEffect(() => {
@@ -575,6 +596,34 @@ function RequisicoesPage() {
                         </div>
                         {r.status === "INDEFERIDA" && r.motivo_indeferimento && (
                           <div className="text-xs text-rose-700 mt-1">Motivo: {r.motivo_indeferimento}</div>
+                        )}
+                        {r.status === "DEVOLVIDA" && (
+                          <div className="mt-1 text-xs bg-orange-50 border border-orange-300 rounded px-2 py-1 text-orange-900">
+                            <strong>↩ Devolvida pelo Compras</strong>
+                            {r.devolvida_por_nome ? <> · {r.devolvida_por_nome}</> : null}
+                            {r.devolvida_em ? <> · {fmtBR(r.devolvida_em)}</> : null}
+                            {r.devolucao_mensagem && (
+                              <div className="text-[11px] text-orange-800 mt-0.5 whitespace-pre-wrap">
+                                {r.devolucao_mensagem}
+                              </div>
+                            )}
+                            {r.motivo_indeferimento && (
+                              <div className="text-[11px] text-orange-700 mt-0.5">
+                                Indeferimento anterior: {r.motivo_indeferimento}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {r.status === "EM_RECEBIMENTO" && r.pc_numero && (
+                          <div className="text-xs text-cyan-800 mt-1">
+                            PC {r.pc_numero} emitido{r.pc_fornecedor ? <> — {r.pc_fornecedor}</> : null}
+                            {r.pc_valor != null && <> · {Number(r.pc_valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</>}
+                          </div>
+                        )}
+                        {r.status === "CONCLUIDA" && r.nf_numero && (
+                          <div className="text-xs text-slate-700 mt-1">
+                            NF {r.nf_numero} recebida{r.recebido_em ? <> em {fmtBR(r.recebido_em)}</> : null}
+                          </div>
                         )}
                         {(r.status === "COTADA" || r.status === "APROVADA") && r.cotacao_fornecedor && (
                           <div className="text-xs text-blue-700 mt-1">
