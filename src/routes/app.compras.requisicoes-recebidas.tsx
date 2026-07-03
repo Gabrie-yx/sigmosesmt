@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { openStorageFile } from "@/components/file-viewer";
 import { SupplierPicker, type SupplierLite } from "@/components/compras/supplier-picker";
 import { StarRating } from "@/components/compras/star-rating";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/compras/requisicoes-recebidas")({
   component: ComprasRecebidasPage,
