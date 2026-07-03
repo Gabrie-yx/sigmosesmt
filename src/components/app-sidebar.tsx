@@ -591,3 +591,19 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
+function ComprasNovasBadge() {
+  const { count } = useNovasDecisoesCompras();
+  if (!count) return null;
+  return (
+    <span
+      className="ml-auto inline-flex min-w-[1.25rem] h-5 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white shadow-sm"
+      title={`${count} decisão(ões) nova(s) do supervisor`}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+    </Sidebar>
+  );
+}
