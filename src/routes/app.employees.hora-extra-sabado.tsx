@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -55,6 +55,9 @@ function HoraExtraSabadoPage() {
   const [turnoFiltro, setTurnoFiltro] = useState<string>("todos");
   const [detalheId, setDetalheId] = useState<string | null>(null);
   const [cursorMes, setCursorMes] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
+  // Cache pesado por ficha: evita re-baixar lista + recomprimir todas as
+  // assinaturas dos funcionários toda vez que o TST/Gestor assina no preview.
+  const pdfCacheRef = useRef<Map<string, { rec: any; paginas: any[]; empresasEnvolvidas: string[]; logo: string | null }>>(new Map());
 
   const { data: fichas, isLoading } = useQuery({
     queryKey: ["hora-extra-sabado"],
@@ -82,6 +85,7 @@ function HoraExtraSabadoPage() {
 
   async function gerarPdf(id: string) {
     setDetalheId(null);
+    const cached = pdfCacheRef.current.get(id);
     const { data: rec } = await supabase
       .from("hora_extra_sabado")
       .select("*, companies(name)")
@@ -97,51 +101,58 @@ function HoraExtraSabadoPage() {
     ]);
     setTstSig(tst);
     setGestorSig(gestor);
-    const { data: list, error: listError } = await supabase
-      .from("hora_extra_sabado_funcionarios")
-      .select("*, employees(id, company_id, assinatura_url, companies(name))")
-      .eq("hora_extra_id", id)
-      .order("ordem");
-    if (listError) return toast.error(listError.message);
+    let paginas: any[];
+    let empresasEnvolvidas: string[];
+    let logo: string | null;
+    if (cached) {
+      paginas = cached.paginas;
+      empresasEnvolvidas = cached.empresasEnvolvidas;
+      logo = cached.logo;
+    } else {
+      const { data: list, error: listError } = await supabase
+        .from("hora_extra_sabado_funcionarios")
+        .select("*, employees(id, company_id, assinatura_url, companies(name))")
+        .eq("hora_extra_id", id)
+        .order("ordem");
+      if (listError) return toast.error(listError.message);
+
+      logo = await imageToDataUrl(dmnLogo);
+
+      const sigsCompactas = await compressSignaturesBatch(
+        (list ?? []).map((f: any) => f.employees?.assinatura_url ?? null),
+      );
+      const empresaPadrao = (rec as any).companies?.name ?? "EXTERNOS";
+      const grupos = new Map<string, any[]>();
+      (list ?? []).forEach((f: any, idx: number) => {
+        const empNome =
+          f.employees?.companies?.name ??
+          (f.externo ? "EXTERNOS" : empresaPadrao);
+        if (!grupos.has(empNome)) grupos.set(empNome, []);
+        grupos.get(empNome)!.push({ ...f, _sigCompacta: sigsCompactas[idx] });
+      });
+      const ordenadas = Array.from(grupos.entries()).sort(([a], [b]) => {
+        if (a === "EXTERNOS") return 1;
+        if (b === "EXTERNOS") return -1;
+        return a.localeCompare(b, "pt-BR");
+      });
+      empresasEnvolvidas = ordenadas.map(([e]) => e);
+      paginas = ordenadas.map(([empresaNome, fs]) => ({
+        empresaNome,
+        funcionarios: fs.map((f: any) => ({
+          nome: f.nome,
+          transporte: f.transporte,
+          alimentacao: f.alimentacao,
+          presenca: f.presenca,
+          assinaturaDataUrl: f._sigCompacta ?? f.employees?.assinatura_url ?? null,
+        })),
+      }));
+      pdfCacheRef.current.set(id, { rec, paginas, empresasEnvolvidas, logo });
+    }
 
     const d = new Date(rec.data + "T12:00:00");
     const ddmmyyyy = d.toLocaleDateString("pt-BR");
     const dia = DIAS[d.getDay()];
     const horario = rec.horario_inicio && rec.horario_fim ? `${rec.horario_inicio} às ${rec.horario_fim}` : rec.horario_inicio || "—";
-
-    const logo = await imageToDataUrl(dmnLogo);
-
-    // Comprime TODAS as assinaturas dos funcionários em paralelo ANTES de
-    // montar o PDF. Antes: cada addImage parseava um PNG ~17KB; agora ~3KB.
-    const sigsCompactas = await compressSignaturesBatch(
-      (list ?? []).map((f: any) => f.employees?.assinatura_url ?? null),
-    );
-    const empresaPadrao = (rec as any).companies?.name ?? "EXTERNOS";
-    const grupos = new Map<string, any[]>();
-    (list ?? []).forEach((f: any, idx: number) => {
-      const empNome =
-        f.employees?.companies?.name ??
-        (f.externo ? "EXTERNOS" : empresaPadrao);
-      if (!grupos.has(empNome)) grupos.set(empNome, []);
-      grupos.get(empNome)!.push({ ...f, _sigCompacta: sigsCompactas[idx] });
-    });
-    // Sempre 1 página por empresa, ordem alfabética (EXTERNOS por último).
-    const ordenadas = Array.from(grupos.entries()).sort(([a], [b]) => {
-      if (a === "EXTERNOS") return 1;
-      if (b === "EXTERNOS") return -1;
-      return a.localeCompare(b, "pt-BR");
-    });
-    const empresasEnvolvidas = ordenadas.map(([e]) => e);
-    const paginas = ordenadas.map(([empresaNome, fs]) => ({
-      empresaNome,
-      funcionarios: fs.map((f: any) => ({
-        nome: f.nome,
-        transporte: f.transporte,
-        alimentacao: f.alimentacao,
-        presenca: f.presenca,
-        assinaturaDataUrl: f._sigCompacta ?? f.employees?.assinatura_url ?? null,
-      })),
-    }));
 
     const doc = gerarHoraExtraSabadoPDF({
       data: ddmmyyyy,
