@@ -24,6 +24,7 @@ import {
 import {
   Package, ShoppingCart, Upload, Trash2, Eye, Trophy, Send, Filter, Search, FileText, DollarSign,
   ShieldAlert, XCircle, Award, ChevronDown, ChevronUp, Truck, Clock, CreditCard, Sparkles,
+  Archive, History,
 } from "lucide-react";
 import { Layers, PackageCheck, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -60,6 +61,9 @@ type Req = {
   dispensa_cotacao?: boolean | null;
   dispensa_motivo?: string | null;
   dispensa_justificativa?: string | null;
+  retroativa?: boolean | null;
+  retroativa_motivo?: string | null;
+  arquivada_em?: string | null;
 };
 
 type Cotacao = {
@@ -162,18 +166,24 @@ function ComprasRecebidasPage() {
   const [tab, setTab] = useState<"abertas" | "todas" | "enviadas">("abertas");
   const [q, setQ] = useState("");
   const [setorFilter, setSetorFilter] = useState<string>("__all");
+  const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
 
   const { data: reqs = [], isLoading, refetch } = useQuery({
-    queryKey: ["compras-rcs", tab],
+    queryKey: ["compras-rcs", tab, mostrarArquivadas],
     enabled: !!user && isCompras,
     queryFn: async () => {
       let query = supabase
         .from("purchase_requisitions")
-        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa")
+        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa,retroativa,retroativa_motivo,arquivada_em")
         .order("created_at", { ascending: false })
         .limit(200);
       if (tab === "abertas") query = query.in("status", ["PENDENTE", "EM_COTACAO"] as any);
       if (tab === "enviadas") query = query.eq("status", "COTADA" as any);
+      if (mostrarArquivadas) {
+        query = query.not("arquivada_em", "is", null);
+      } else {
+        query = query.is("arquivada_em", null);
+      }
       const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as Req[];
