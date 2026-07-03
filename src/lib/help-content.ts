@@ -80,6 +80,25 @@ export const HELP_TOPICS: HelpTopic[] = [
     rota: "/app/sesmt/convocacoes-aso",
   },
   {
+    id: "atestado",
+    title: "Atestado médico",
+    categoria: "SESMT",
+    keywords: ["atestado", "cid", "afastamento", "inss", "b31", "b91"],
+    oQueE:
+      "Documento emitido por médico ou dentista comprovando afastamento do trabalho por motivo de saúde. Registrar CID, dias de afastamento, se é acidente de trabalho (CAT) e o médico emissor. Base para pagamento pela empresa (até 15 dias) e envio ao INSS (a partir do 16º).",
+    base: "CLT art. 473 · Lei 8.213/91 art. 60",
+  },
+  {
+    id: "prestador-saude",
+    title: "Prestador de saúde",
+    categoria: "SESMT",
+    keywords: ["prestador", "clinica", "laboratorio", "medico", "credenciado"],
+    oQueE:
+      "Clínica, laboratório ou médico credenciado usado pela empresa para realizar exames ocupacionais (ASO) e emitir guias de encaminhamento. Precisa ter CRM/CNES válido e dados de contato atualizados.",
+    base: "NR-07 (PCMSO)",
+    rota: "/app/sesmt/prestadores",
+  },
+  {
     id: "ppp",
     title: "PPP (Perfil Profissiográfico Previdenciário)",
     categoria: "SESMT",

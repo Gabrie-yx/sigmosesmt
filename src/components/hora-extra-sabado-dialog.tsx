@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { HelpHint } from "@/components/help-hint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -250,7 +251,10 @@ export function HoraExtraSabadoDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto !p-5 !gap-3">
         <DialogHeader>
-          <DialogTitle className="text-base">{editId ? "Editar" : "Nova"} ficha de hora extra (sábado)</DialogTitle>
+          <DialogTitle className="text-base flex items-center gap-2">
+            {editId ? "Editar" : "Nova"} ficha de hora extra (sábado)
+            <HelpHint topic="hora-extra-sabado" />
+          </DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">

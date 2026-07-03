@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logRead } from "@/lib/audit-read";
+import { HelpHint } from "@/components/help-hint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -228,6 +229,7 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
         <div>
           <h3 className="text-base font-bold flex items-center gap-2">
             <FileText className="h-4 w-4" /> Atestados Médicos
+            <HelpHint topic="atestado" />
           </h3>
           <p className="text-xs text-muted-foreground">
             Recebimento, homologação e arquivamento dos atestados digitalizados.
