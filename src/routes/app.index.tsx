@@ -109,7 +109,7 @@ function HomePage() {
                 Nosso DNA
               </span>
             </div>
-            <h2 className="heading-display text-3xl md:text-5xl text-white tracking-tight drop-shadow-lg">
+            <h2 className="heading-display text-3xl md:text-5xl font-light text-white tracking-tight drop-shadow-lg">
               Missão · Visão · Valores
             </h2>
             <div className="h-1 w-20 bg-gradient-to-r from-amber-400 to-red-300 rounded-full mx-auto mt-4" />
@@ -153,15 +153,15 @@ function HomePage() {
                 className={`group relative rounded-2xl p-8 bg-black/80 border ${border} shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:-translate-y-1 hover:bg-black/90 transition-all duration-300 overflow-hidden`}
               >
                 {/* glows assimétricos nos cantos */}
-                <div className={`pointer-events-none absolute -top-16 -left-16 h-40 w-40 rounded-full blur-3xl ${glowA}`} />
-                <div className={`pointer-events-none absolute -bottom-20 -right-10 h-28 w-28 rounded-full blur-2xl ${glowB}`} />
+                <div className={`pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full blur-3xl ${glowA}`} />
+                <div className={`pointer-events-none absolute -bottom-28 -right-16 h-48 w-48 rounded-full blur-3xl ${glowB}`} />
                 <div className="flex items-start justify-between mb-4">
-                  <div className={`relative text-[10px] font-light uppercase tracking-[0.4em] ${tagColor}`}>
+                  <div className={`relative text-[11px] font-black uppercase tracking-[0.3em] ${tagColor}`}>
                     {tag}
                   </div>
-                  <Icon className={`relative h-4 w-4 shrink-0 ${iconColor}`} strokeWidth={1.25} />
+                  <Icon className={`relative h-5 w-5 shrink-0 ${iconColor}`} />
                 </div>
-                <p className="relative text-sm leading-relaxed text-white/85 font-light">
+                <p className="relative text-sm leading-relaxed text-white/90 font-medium">
                   {text}
                 </p>
               </article>
