@@ -122,11 +122,15 @@ function AdministrativoRecebidasPage() {
     queryKey: ["admin-rcs"],
     enabled: !!user && canAcesso,
     queryFn: async () => {
-      // Anderson só vê RCs que JÁ passaram pelo Compras (COTADA/APROVADA/INDEFERIDA).
+      // Anderson só vê RCs que JÁ passaram pelo Compras.
+      // Regra: status finalizado (COTADA/APROVADA/INDEFERIDA) + evidência de passagem
+      // pelo Compras (cotação submetida, cotador, "pego por compras" ou dispensa formal).
+      // Isso exclui RCs antigas marcadas antes do fluxo de Compras existir.
       const { data, error } = await supabase
         .from("purchase_requisitions")
-        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,status_token,cotacao_fornecedor,cotacao_valor,cotador_nome,pego_por_compras_nome,motivo_indeferimento,decidido_por_nome,decidido_em")
+        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,status_token,cotacao_fornecedor,cotacao_valor,cotador_nome,pego_por_compras_nome,motivo_indeferimento,decidido_por_nome,decidido_em,cotacao_at,dispensa_cotacao")
         .in("status", ["COTADA", "APROVADA", "INDEFERIDA"] as any)
+        .or("cotacao_at.not.is.null,cotador_nome.not.is.null,pego_por_compras_nome.not.is.null,dispensa_cotacao.is.true")
         .order("created_at", { ascending: false })
         .limit(300);
       if (error) throw error;
