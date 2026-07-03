@@ -52,6 +52,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/producao/lista-tecnica", label: "Lista Técnica", module: "producao" },
   { key: "/app/producao/expedicao", label: "Expedição", module: "producao" },
   { key: "/app/producao/fatores-consumo", label: "Fatores de Consumo", module: "producao" },
+  { key: "/app/producao/requisicao-compras", label: "Requisição de Compras", module: "producao" },
 
   // ----- COMPRAS -----
   { key: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", module: "compras" },
@@ -59,6 +60,9 @@ export const MENU_CATALOG: MenuEntry[] = [
 
   // ----- ADMINISTRATIVO -----
   { key: "/app/administrativo/requisicoes-recebidas", label: "Requisições Recebidas", module: "administrativo" },
+
+  // ----- ALMOXARIFADO -----
+  { key: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", module: "almoxarifado" },
 
   // ----- USUÁRIOS -----
   { key: "/app/users", label: "Usuários", module: "usuarios" },

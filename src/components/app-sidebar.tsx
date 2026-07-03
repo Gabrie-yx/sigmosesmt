@@ -65,6 +65,7 @@ import {
   Wind,
   Target,
   Settings,
+  Warehouse,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -163,6 +164,7 @@ const PRODUCAO_SUBMENU: LeafItem[] = [
   { to: "/app/producao/lista-tecnica", label: "Lista Técnica" },
   { to: "/app/producao/fatores-consumo", label: "Fatores de Consumo" },
   { to: "/app/producao/expedicao", label: "Expedição" },
+  { to: "/app/producao/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
 const COMPRAS_ITEMS: LeafItem[] = [
@@ -172,6 +174,10 @@ const COMPRAS_ITEMS: LeafItem[] = [
 
 const ADMINISTRATIVO_ITEMS: LeafItem[] = [
   { to: "/app/administrativo/requisicoes-recebidas", label: "Requisições Recebidas", icon: ClipboardList },
+];
+
+const ALMOXARIFADO_ITEMS: LeafItem[] = [
+  { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
 const MANUTENCAO_LOCKED: LockedItem[] = [
@@ -215,6 +221,7 @@ export function AppSidebar() {
   const canCompras = isAdmin || hasModule("compras") || roles.includes("compras");
   const canUsuarios = isAdmin || hasModule("usuarios");
   const canAdministrativo = isAdmin || hasModule("administrativo" as any);
+  const canAlmoxarifado = isAdmin || hasModule("almoxarifado" as any);
 
   // Filtra grupos/itens pelo controle granular de menus
   const visibleSesmtGroups = SESMT_GROUPS
@@ -225,6 +232,7 @@ export function AppSidebar() {
   const visibleProducao = PRODUCAO_SUBMENU.filter((i) => hasMenu(i.to));
   const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to));
   const visibleAdministrativo = ADMINISTRATIVO_ITEMS.filter((i) => hasMenu(i.to));
+  const visibleAlmoxarifado = ALMOXARIFADO_ITEMS.filter((i) => hasMenu(i.to));
 
   const sesmtAllItems = visibleSesmtGroups.flatMap((g) => g.items).concat(visibleDDSSubmenu);
   const sesmtOpen = anyActive(sesmtAllItems);
@@ -232,6 +240,7 @@ export function AppSidebar() {
   const producaoOpen = anyActive(visibleProducao);
   const comprasOpen = anyActive(visibleCompras);
   const administrativoOpen = anyActive(visibleAdministrativo);
+  const almoxarifadoOpen = anyActive(visibleAlmoxarifado);
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
@@ -480,6 +489,40 @@ export function AppSidebar() {
         )}
 
         {/* MANUTENÇÃO (locked) */}
+        {canAlmoxarifado && visibleAlmoxarifado.length > 0 && (
+          <Collapsible defaultOpen={almoxarifadoOpen} className="group/almoxarifado">
+            <SidebarGroup>
+              <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
+                <CollapsibleTrigger className="flex w-full items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Warehouse className="h-5 w-5 text-red-700" /> Almoxarifado
+                  </span>
+                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/almoxarifado:rotate-90" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <Body>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {visibleAlmoxarifado.map((s) => {
+                      const Icon = s.icon ?? Warehouse;
+                      return (
+                        <SidebarMenuItem key={s.to}>
+                          <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
+                            <Link to={s.to}>
+                              <Icon />
+                              <span>{s.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </Body>
+            </SidebarGroup>
+          </Collapsible>
+        )}
+
         <SidebarGroup>
           <SidebarGroupLabel className="flex items-center gap-2 h-9 text-sm font-bold text-slate-700">
             <Wrench className="h-5 w-5 text-red-700" /> Manutenção

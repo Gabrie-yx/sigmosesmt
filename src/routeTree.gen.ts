@@ -62,6 +62,7 @@ import { Route as AppSesmtConvocacoesAsoRouteImport } from './routes/app.sesmt.c
 import { Route as AppSesmtAgendaRouteImport } from './routes/app.sesmt.agenda'
 import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.relatorios.reincidencia-epi'
 import { Route as AppProducaoTiposProdutoRouteImport } from './routes/app.producao.tipos-produto'
+import { Route as AppProducaoRequisicaoComprasRouteImport } from './routes/app.producao.requisicao-compras'
 import { Route as AppProducaoPainelListaTecnicaRouteImport } from './routes/app.producao.painel-lista-tecnica'
 import { Route as AppProducaoOrdensRouteImport } from './routes/app.producao.ordens'
 import { Route as AppProducaoListaTecnicaRouteImport } from './routes/app.producao.lista-tecnica'
@@ -84,6 +85,7 @@ import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
 import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
 import { Route as AppComprasRequisicoesRecebidasRouteImport } from './routes/app.compras.requisicoes-recebidas'
 import { Route as AppComprasFornecedoresRouteImport } from './routes/app.compras.fornecedores'
+import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/app.almoxarifado.requisicao-compras'
 import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
@@ -360,6 +362,12 @@ const AppProducaoTiposProdutoRoute = AppProducaoTiposProdutoRouteImport.update({
   path: '/producao/tipos-produto',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProducaoRequisicaoComprasRoute =
+  AppProducaoRequisicaoComprasRouteImport.update({
+    id: '/producao/requisicao-compras',
+    path: '/producao/requisicao-compras',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppProducaoPainelListaTecnicaRoute =
   AppProducaoPainelListaTecnicaRouteImport.update({
     id: '/producao/painel-lista-tecnica',
@@ -475,6 +483,12 @@ const AppComprasFornecedoresRoute = AppComprasFornecedoresRouteImport.update({
   path: '/compras/fornecedores',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAlmoxarifadoRequisicaoComprasRoute =
+  AppAlmoxarifadoRequisicaoComprasRouteImport.update({
+    id: '/almoxarifado/requisicao-compras',
+    path: '/almoxarifado/requisicao-compras',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppAdministrativoRequisicoesRecebidasRoute =
   AppAdministrativoRequisicoesRecebidasRouteImport.update({
     id: '/requisicoes-recebidas',
@@ -549,6 +563,7 @@ export interface FileRoutesByFullPath {
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
+  '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
@@ -571,6 +586,7 @@ export interface FileRoutesByFullPath {
   '/app/producao/lista-tecnica': typeof AppProducaoListaTecnicaRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
   '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
+  '/app/producao/requisicao-compras': typeof AppProducaoRequisicaoComprasRoute
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/agenda': typeof AppSesmtAgendaRoute
@@ -629,6 +645,7 @@ export interface FileRoutesByTo {
   '/rc/$token': typeof RcTokenRoute
   '/app': typeof AppIndexRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
+  '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
@@ -651,6 +668,7 @@ export interface FileRoutesByTo {
   '/app/producao/lista-tecnica': typeof AppProducaoListaTecnicaRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
   '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
+  '/app/producao/requisicao-compras': typeof AppProducaoRequisicaoComprasRoute
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/agenda': typeof AppSesmtAgendaRoute
@@ -713,6 +731,7 @@ export interface FileRoutesById {
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
+  '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
@@ -735,6 +754,7 @@ export interface FileRoutesById {
   '/app/producao/lista-tecnica': typeof AppProducaoListaTecnicaRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
   '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
+  '/app/producao/requisicao-compras': typeof AppProducaoRequisicaoComprasRoute
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/agenda': typeof AppSesmtAgendaRoute
@@ -798,6 +818,7 @@ export interface FileRouteTypes {
     | '/rc/$token'
     | '/app/'
     | '/app/administrativo/requisicoes-recebidas'
+    | '/app/almoxarifado/requisicao-compras'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
     | '/app/conta/seguranca'
@@ -820,6 +841,7 @@ export interface FileRouteTypes {
     | '/app/producao/lista-tecnica'
     | '/app/producao/ordens'
     | '/app/producao/painel-lista-tecnica'
+    | '/app/producao/requisicao-compras'
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/agenda'
@@ -878,6 +900,7 @@ export interface FileRouteTypes {
     | '/rc/$token'
     | '/app'
     | '/app/administrativo/requisicoes-recebidas'
+    | '/app/almoxarifado/requisicao-compras'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
     | '/app/conta/seguranca'
@@ -900,6 +923,7 @@ export interface FileRouteTypes {
     | '/app/producao/lista-tecnica'
     | '/app/producao/ordens'
     | '/app/producao/painel-lista-tecnica'
+    | '/app/producao/requisicao-compras'
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/agenda'
@@ -961,6 +985,7 @@ export interface FileRouteTypes {
     | '/rc/$token'
     | '/app/'
     | '/app/administrativo/requisicoes-recebidas'
+    | '/app/almoxarifado/requisicao-compras'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
     | '/app/conta/seguranca'
@@ -983,6 +1008,7 @@ export interface FileRouteTypes {
     | '/app/producao/lista-tecnica'
     | '/app/producao/ordens'
     | '/app/producao/painel-lista-tecnica'
+    | '/app/producao/requisicao-compras'
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/agenda'
@@ -1392,6 +1418,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoTiposProdutoRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/producao/requisicao-compras': {
+      id: '/app/producao/requisicao-compras'
+      path: '/producao/requisicao-compras'
+      fullPath: '/app/producao/requisicao-compras'
+      preLoaderRoute: typeof AppProducaoRequisicaoComprasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/producao/painel-lista-tecnica': {
       id: '/app/producao/painel-lista-tecnica'
       path: '/producao/painel-lista-tecnica'
@@ -1546,6 +1579,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppComprasFornecedoresRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/almoxarifado/requisicao-compras': {
+      id: '/app/almoxarifado/requisicao-compras'
+      path: '/almoxarifado/requisicao-compras'
+      fullPath: '/app/almoxarifado/requisicao-compras'
+      preLoaderRoute: typeof AppAlmoxarifadoRequisicaoComprasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/administrativo/requisicoes-recebidas': {
       id: '/app/administrativo/requisicoes-recebidas'
       path: '/requisicoes-recebidas'
@@ -1678,6 +1718,7 @@ interface AppRouteChildren {
   AppTrainingsRoute: typeof AppTrainingsRoute
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppAlmoxarifadoRequisicaoComprasRoute: typeof AppAlmoxarifadoRequisicaoComprasRoute
   AppComprasFornecedoresRoute: typeof AppComprasFornecedoresRoute
   AppComprasRequisicoesRecebidasRoute: typeof AppComprasRequisicoesRecebidasRoute
   AppContaSegurancaRoute: typeof AppContaSegurancaRoute
@@ -1694,6 +1735,7 @@ interface AppRouteChildren {
   AppProducaoListaTecnicaRoute: typeof AppProducaoListaTecnicaRoute
   AppProducaoOrdensRoute: typeof AppProducaoOrdensRoute
   AppProducaoPainelListaTecnicaRoute: typeof AppProducaoPainelListaTecnicaRoute
+  AppProducaoRequisicaoComprasRoute: typeof AppProducaoRequisicaoComprasRoute
   AppProducaoTiposProdutoRoute: typeof AppProducaoTiposProdutoRoute
   AppRelatoriosReincidenciaEpiRoute: typeof AppRelatoriosReincidenciaEpiRoute
   AppSesmtAgendaRoute: typeof AppSesmtAgendaRoute
@@ -1743,6 +1785,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTrainingsRoute: AppTrainingsRoute,
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
+  AppAlmoxarifadoRequisicaoComprasRoute: AppAlmoxarifadoRequisicaoComprasRoute,
   AppComprasFornecedoresRoute: AppComprasFornecedoresRoute,
   AppComprasRequisicoesRecebidasRoute: AppComprasRequisicoesRecebidasRoute,
   AppContaSegurancaRoute: AppContaSegurancaRoute,
@@ -1759,6 +1802,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProducaoListaTecnicaRoute: AppProducaoListaTecnicaRoute,
   AppProducaoOrdensRoute: AppProducaoOrdensRoute,
   AppProducaoPainelListaTecnicaRoute: AppProducaoPainelListaTecnicaRoute,
+  AppProducaoRequisicaoComprasRoute: AppProducaoRequisicaoComprasRoute,
   AppProducaoTiposProdutoRoute: AppProducaoTiposProdutoRoute,
   AppRelatoriosReincidenciaEpiRoute: AppRelatoriosReincidenciaEpiRoute,
   AppSesmtAgendaRoute: AppSesmtAgendaRoute,
