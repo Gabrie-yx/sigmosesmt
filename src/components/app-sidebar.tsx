@@ -165,6 +165,7 @@ const PRODUCAO_SUBMENU: LeafItem[] = [
 
 const COMPRAS_ITEMS: LeafItem[] = [
   { to: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", icon: ShoppingCart },
+  { to: "/app/compras/fornecedores", label: "Fornecedores", icon: UsersIcon },
 ];
 
 const MANUTENCAO_LOCKED: LockedItem[] = [
