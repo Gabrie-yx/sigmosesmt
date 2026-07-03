@@ -2179,7 +2179,7 @@ function DispensarCotacoesBtn({ rcId, onDone }: { rcId: string; onDone: () => vo
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="text-xs bg-primary/10 border border-primary/40 rounded p-2 text-foreground">
+          <div className="text-xs bg-card/70 border border-border rounded-md p-3 text-foreground leading-relaxed">
             Use apenas quando a regra das 3 cotações não se aplica (exclusividade, contrato,
             urgência, padronização). Toda dispensa fica registrada em auditoria e o Supervisor Geral
             pode devolver a RC pedindo as 3 cotações completas.
@@ -2204,7 +2204,7 @@ function DispensarCotacoesBtn({ rcId, onDone }: { rcId: string; onDone: () => vo
               placeholder="Explique por que 3 cotações não são viáveis (fornecedor único, número de contrato, natureza da urgência, etc.)"
             />
           </div>
-          <div className="text-[11px] text-muted-foreground">
+          <div className="text-[11px] text-foreground/80">
             ⚠️ Antes de confirmar, anexe ao menos <strong>1 cotação</strong> do fornecedor escolhido.
           </div>
         </div>
