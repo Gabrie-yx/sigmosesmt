@@ -15,7 +15,7 @@ export const Route = createFileRoute("/app")({
 });
 
 function AppLayout() {
-  const { session, loading, requiresMfa, mfaSatisfied } = useAuth();
+  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -51,9 +51,22 @@ function AppLayout() {
             <div className="bg-amber-100 border-b border-amber-300 text-amber-900 px-3 py-2 text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-start sm:items-center gap-2 min-w-0">
                 <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5 sm:mt-0" />
-                <span className="min-w-0">Seu papel exige MFA. Ative agora para acessar áreas sensíveis.</span>
+                <span className="min-w-0">
+                  MFA obrigatório para todos os usuários. Ative agora para acessar áreas sensíveis.
+                </span>
               </div>
               <Link to="/app/conta/seguranca" className="font-bold underline whitespace-nowrap self-end sm:self-auto">Configurar MFA</Link>
+            </div>
+          )}
+          {requiresMfa && graceActive && aal !== "aal2" && !location.pathname.startsWith("/app/conta/seguranca") && (
+            <div className="bg-blue-50 border-b border-blue-300 text-blue-900 px-3 py-2 text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex items-start sm:items-center gap-2 min-w-0">
+                <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5 sm:mt-0" />
+                <span className="min-w-0">
+                  MFA obrigatório em <b>{graceDaysLeft} dia{graceDaysLeft === 1 ? "" : "s"}</b>. Ative agora e não seja pego de surpresa.
+                </span>
+              </div>
+              <Link to="/app/conta/seguranca" className="font-bold underline whitespace-nowrap self-end sm:self-auto">Ativar MFA</Link>
             </div>
           )}
           <main className="flex-1">

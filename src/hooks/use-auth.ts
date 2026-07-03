@@ -15,6 +15,7 @@ export function useAuth() {
   const [modulesWithMenuConfig, setModulesWithMenuConfig] = useState<Set<AppModule>>(new Set());
   const [aal, setAal] = useState<"aal1" | "aal2">("aal1");
   const [mfaActive, setMfaActive] = useState(false);
+  const [mfaGraceUntil, setMfaGraceUntil] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,6 +36,7 @@ export function useAuth() {
         setModulesWithMenuConfig(new Set());
         setAal("aal1");
         setMfaActive(false);
+        setMfaGraceUntil(null);
         setLoading(false);
       }
     });
@@ -57,12 +59,13 @@ export function useAuth() {
 
   async function loadAll(uid: string) {
     try {
-      const [rolesRes, modsRes, menusRes, aalRes, factorsRes] = await Promise.all([
+      const [rolesRes, modsRes, menusRes, aalRes, factorsRes, profileRes] = await Promise.all([
         supabase.from("user_roles").select("role").eq("user_id", uid),
         supabase.from("user_module_access").select("module, enabled").eq("user_id", uid).eq("enabled", true),
         (supabase as any).from("user_menu_access").select("menu_key, enabled").eq("user_id", uid),
         supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
         supabase.auth.mfa.listFactors(),
+        (supabase as any).from("profiles").select("mfa_grace_until").eq("id", uid).maybeSingle(),
       ]);
       setRoles((rolesRes.data ?? []).map((r) => r.role as AppRole));
       setModules((modsRes.data ?? []).map((m) => m.module as AppModule));
@@ -78,20 +81,29 @@ export function useAuth() {
       setAal(((aalRes.data?.currentLevel ?? "aal1") as "aal1" | "aal2"));
       const totps = (factorsRes.data?.totp ?? []).filter((f) => f.status === "verified");
       setMfaActive(totps.length > 0);
+      const g = (profileRes as any)?.data?.mfa_grace_until as string | null | undefined;
+      setMfaGraceUntil(g ? new Date(g) : null);
     } catch (e) {
       console.warn("[useAuth] loadAll exception:", e);
       setRoles([]);
       setModules([]);
       setMenuKeys(new Set());
       setModulesWithMenuConfig(new Set());
+      setMfaGraceUntil(null);
     }
   }
 
   const isAdmin = roles.includes("admin");
   const isModerator = isAdmin || roles.includes("moderador");
   const isEditor = isModerator || roles.includes("editor") || roles.includes("tst");
-  const requiresMfa = isModerator; // admin + moderador
-  const mfaSatisfied = !requiresMfa || aal === "aal2";
+  // MFA obrigatório pra qualquer usuário com papel (regra de 03/07/2026).
+  const requiresMfa = roles.length > 0;
+  const graceActive = !!(mfaGraceUntil && mfaGraceUntil.getTime() > Date.now());
+  const graceDaysLeft = mfaGraceUntil
+    ? Math.max(0, Math.ceil((mfaGraceUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0;
+  // Satisfeito se não exige, ou já autenticou 2FA, ou ainda está dentro do grace de 7 dias.
+  const mfaSatisfied = !requiresMfa || aal === "aal2" || graceActive;
 
   function hasModule(m: AppModule): boolean {
     if (isAdmin) return true;
@@ -119,5 +131,6 @@ export function useAuth() {
     isAdmin, isModerator, isEditor, requiresMfa, mfaSatisfied,
     hasModule, hasMenu,
     menuKeys, modulesWithMenuConfig,
+    mfaGraceUntil, graceActive, graceDaysLeft,
   };
 }
