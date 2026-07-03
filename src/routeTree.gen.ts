@@ -42,6 +42,7 @@ import { Route as AppAprsRouteImport } from './routes/app.aprs'
 import { Route as AppAjudaRouteImport } from './routes/app.ajuda'
 import { Route as AppAcoesRouteImport } from './routes/app.acoes'
 import { Route as AppAcidentesRouteImport } from './routes/app.acidentes'
+import { Route as ApiSigmoChatRouteImport } from './routes/api/sigmo-chat'
 import { Route as ApiPgrChatRouteImport } from './routes/api/pgr-chat'
 import { Route as AppOssIndexRouteImport } from './routes/app.oss.index'
 import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
@@ -253,6 +254,11 @@ const AppAcidentesRoute = AppAcidentesRouteImport.update({
   id: '/acidentes',
   path: '/acidentes',
   getParentRoute: () => AppRoute,
+} as any)
+const ApiSigmoChatRoute = ApiSigmoChatRouteImport.update({
+  id: '/api/sigmo-chat',
+  path: '/api/sigmo-chat',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPgrChatRoute = ApiPgrChatRouteImport.update({
   id: '/api/pgr-chat',
@@ -494,6 +500,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/api/pgr-chat': typeof ApiPgrChatRoute
+  '/api/sigmo-chat': typeof ApiSigmoChatRoute
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
   '/app/ajuda': typeof AppAjudaRoute
@@ -572,6 +579,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/api/pgr-chat': typeof ApiPgrChatRoute
+  '/api/sigmo-chat': typeof ApiSigmoChatRoute
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
   '/app/ajuda': typeof AppAjudaRoute
@@ -650,6 +658,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/api/pgr-chat': typeof ApiPgrChatRoute
+  '/api/sigmo-chat': typeof ApiSigmoChatRoute
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
   '/app/ajuda': typeof AppAjudaRoute
@@ -731,6 +740,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/termos'
     | '/api/pgr-chat'
+    | '/api/sigmo-chat'
     | '/app/acidentes'
     | '/app/acoes'
     | '/app/ajuda'
@@ -809,6 +819,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/termos'
     | '/api/pgr-chat'
+    | '/api/sigmo-chat'
     | '/app/acidentes'
     | '/app/acoes'
     | '/app/ajuda'
@@ -886,6 +897,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/termos'
     | '/api/pgr-chat'
+    | '/api/sigmo-chat'
     | '/app/acidentes'
     | '/app/acoes'
     | '/app/ajuda'
@@ -966,6 +978,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
   ApiPgrChatRoute: typeof ApiPgrChatRoute
+  ApiSigmoChatRoute: typeof ApiSigmoChatRoute
   RcTokenRoute: typeof RcTokenRoute
 }
 
@@ -1201,6 +1214,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/acidentes'
       preLoaderRoute: typeof AppAcidentesRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/api/sigmo-chat': {
+      id: '/api/sigmo-chat'
+      path: '/api/sigmo-chat'
+      fullPath: '/api/sigmo-chat'
+      preLoaderRoute: typeof ApiSigmoChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/pgr-chat': {
       id: '/api/pgr-chat'
@@ -1699,6 +1719,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
   ApiPgrChatRoute: ApiPgrChatRoute,
+  ApiSigmoChatRoute: ApiSigmoChatRoute,
   RcTokenRoute: RcTokenRoute,
 }
 export const routeTree = rootRouteImport
