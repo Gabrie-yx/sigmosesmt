@@ -22,6 +22,7 @@ import {
   Package, ShoppingCart, Upload, Trash2, Eye, Trophy, Send, Filter, Search, FileText, DollarSign,
   ShieldAlert, XCircle, Award, ChevronDown, ChevronUp, Truck, Clock, CreditCard, Sparkles,
 } from "lucide-react";
+import { Layers, PackageCheck, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { openStorageFile } from "@/components/file-viewer";
 import { SupplierPicker, type SupplierLite } from "@/components/compras/supplier-picker";
@@ -80,6 +81,26 @@ type Cotacao = {
   ranking: number | null;
   is_melhor_oferta: boolean;
   fornecedores?: { estrelas: number | null } | null;
+  cobertura_pct?: number | null;
+  itens_cotados?: number | null;
+  itens_totais_rc?: number | null;
+  tem_divergencias?: boolean | null;
+};
+
+type ComboItem = {
+  rc_item_id: string;
+  item_numero: number | null;
+  descricao: string;
+  quantidade: number | null;
+  melhor_cotacao_id: string | null;
+  melhor_fornecedor_id: string | null;
+  fornecedor_nome: string | null;
+  valor_unitario: number | null;
+  valor_total: number | null;
+  prazo_entrega_dias: number | null;
+  conformidade: string | null;
+  estrelas: number | null;
+  total_ofertas: number | null;
 };
 
 type Item = {
