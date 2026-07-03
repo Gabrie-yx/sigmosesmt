@@ -292,8 +292,16 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
 }
 
 function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
-  const { roles } = useAuth();
-  const isSupervisor = roles.includes("supervisor_geral" as any) || roles.includes("admin");
+  const { user, roles } = useAuth();
+  const { data: isSupervisor = false } = useQuery({
+    queryKey: ["is-supervisor-geral", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      if (roles.includes("admin")) return true;
+      const { data } = await supabase.rpc("is_supervisor_geral", { _user_id: user!.id });
+      return !!data;
+    },
+  });
   const podeDecidir = isSupervisor && req.status === "COTADA";
 
   const [showIndeferir, setShowIndeferir] = useState(false);
