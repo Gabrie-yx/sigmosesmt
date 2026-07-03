@@ -308,15 +308,28 @@ function ComprasRecebidasPage() {
 
 function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
   const [openDetail, setOpenDetail] = useState(false);
+  const [openArquivar, setOpenArquivar] = useState(false);
   const pulsing = req.status === "PENDENTE";
+  const isRetroativa = !!req.retroativa;
+  const isArquivada = !!req.arquivada_em;
   return (
-    <Card className={`overflow-hidden ${pulsing ? "animate-pulse-amber" : ""}`}>
+    <Card className={`overflow-hidden ${pulsing && !isArquivada ? "animate-pulse-amber" : ""} ${isArquivada ? "opacity-70" : ""} ${isRetroativa && !isArquivada ? "ring-2 ring-orange-400" : ""}`}>
       <CardHeader className="p-3 pb-2 flex flex-row items-start justify-between gap-2">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-bold text-slate-500">RC Nº</span>
             <span className="text-sm font-bold">{req.numero}</span>
             <Badge className={STATUS_BADGE[req.status] + " border"}>{STATUS_LABEL[req.status]}</Badge>
+            {isRetroativa && !isArquivada && (
+              <Badge className="bg-orange-100 text-orange-800 border border-orange-300">
+                <History className="h-3 w-3 mr-1" /> RETROATIVA
+              </Badge>
+            )}
+            {isArquivada && (
+              <Badge className="bg-slate-200 text-slate-700 border border-slate-300">
+                <Archive className="h-3 w-3 mr-1" /> Arquivada
+              </Badge>
+            )}
           </div>
           <div className="text-sm font-semibold mt-1 line-clamp-1">
             {req.titulo || "(sem título)"}
@@ -324,12 +337,30 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
           <div className="text-[11px] text-slate-500 mt-0.5">
             {req.solicitante} · {req.setor || "sem setor"} · {fmtBR(req.data_requisicao)}
           </div>
+          {isRetroativa && req.retroativa_motivo && !isArquivada && (
+            <div className="text-[11px] text-orange-700 mt-1 bg-orange-50 border border-orange-200 rounded px-2 py-1">
+              <strong>Aviso ao Compras:</strong> {req.retroativa_motivo} — cote retroativamente ou arquive.
+            </div>
+          )}
         </div>
         <Badge variant="outline" className="text-[10px]">
           {req.classificacao === "MATERIAL" ? "Material" : req.classificacao === "SERVICO" ? "Serviço" : "Medicamentos"}
         </Badge>
       </CardHeader>
       <CardContent className="p-3 pt-1 flex items-center justify-end gap-1">
+        {!isArquivada && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setOpenArquivar(true)}
+            title="Arquivar (RCs retroativas ou obsoletas)"
+          >
+            <Archive className="h-3.5 w-3.5 mr-1" /> Arquivar
+          </Button>
+        )}
+        {isArquivada && (
+          <DesarquivarButton rcId={req.id} onDone={onChanged} />
+        )}
         <Button size="sm" variant="outline" onClick={() => setOpenDetail(true)}>
           <Eye className="h-3.5 w-3.5 mr-1" /> Abrir
         </Button>
@@ -337,7 +368,74 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
       {openDetail && (
         <RcDetailDialog req={req} onClose={() => { setOpenDetail(false); onChanged(); }} />
       )}
+      {openArquivar && (
+        <ArquivarDialog rcId={req.id} rcNumero={req.numero} onClose={(ok) => { setOpenArquivar(false); if (ok) onChanged(); }} />
+      )}
     </Card>
+  );
+}
+
+function ArquivarDialog({ rcId, rcNumero, onClose }: { rcId: string; rcNumero: string; onClose: (ok: boolean) => void }) {
+  const [motivo, setMotivo] = useState("");
+  const arquivar = useMutation({
+    mutationFn: async () => {
+      if (motivo.trim().length < 5) throw new Error("Informe um motivo (mínimo 5 caracteres)");
+      const { error } = await supabase.rpc("arquivar_rc", { _rc_id: rcId, _motivo: motivo.trim() });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`RC ${rcNumero} arquivada`);
+      onClose(true);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao arquivar"),
+  });
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(false); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Archive className="h-5 w-5" /> Arquivar RC {rcNumero}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 text-sm">
+          <p className="text-slate-600">
+            Use para RCs <strong>retroativas</strong> (criadas antes do fluxo de Compras) ou
+            que não precisam mais ser processadas. Fica registrado na auditoria e pode ser
+            desarquivada depois.
+          </p>
+          <Label htmlFor="motivo-arq">Motivo do arquivamento</Label>
+          <Textarea
+            id="motivo-arq"
+            rows={4}
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            placeholder="Ex.: Compra já realizada fora do fluxo; RC apenas para registro histórico."
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onClose(false)}>Cancelar</Button>
+          <Button onClick={() => arquivar.mutate()} disabled={arquivar.isPending}>
+            {arquivar.isPending ? "Arquivando…" : "Arquivar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DesarquivarButton({ rcId, onDone }: { rcId: string; onDone: () => void }) {
+  const m = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("desarquivar_rc", { _rc_id: rcId });
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("RC desarquivada"); onDone(); },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao desarquivar"),
+  });
+  return (
+    <Button size="sm" variant="outline" onClick={() => m.mutate()} disabled={m.isPending}>
+      <Archive className="h-3.5 w-3.5 mr-1" /> {m.isPending ? "…" : "Desarquivar"}
+    </Button>
   );
 }
 
