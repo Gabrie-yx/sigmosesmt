@@ -40,6 +40,7 @@ import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppAssinadorRouteImport } from './routes/app.assinador'
 import { Route as AppAprsRouteImport } from './routes/app.aprs'
 import { Route as AppAjudaRouteImport } from './routes/app.ajuda'
+import { Route as AppAdministrativoRouteImport } from './routes/app.administrativo'
 import { Route as AppAcoesRouteImport } from './routes/app.acoes'
 import { Route as AppAcidentesRouteImport } from './routes/app.acidentes'
 import { Route as ApiSigmoChatRouteImport } from './routes/api/sigmo-chat'
@@ -244,6 +245,11 @@ const AppAprsRoute = AppAprsRouteImport.update({
 const AppAjudaRoute = AppAjudaRouteImport.update({
   id: '/ajuda',
   path: '/ajuda',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdministrativoRoute = AppAdministrativoRouteImport.update({
+  id: '/administrativo',
+  path: '/administrativo',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAcoesRoute = AppAcoesRouteImport.update({
@@ -509,6 +515,7 @@ export interface FileRoutesByFullPath {
   '/api/sigmo-chat': typeof ApiSigmoChatRoute
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
+  '/app/administrativo': typeof AppAdministrativoRoute
   '/app/ajuda': typeof AppAjudaRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/assinador': typeof AppAssinadorRoute
@@ -589,6 +596,7 @@ export interface FileRoutesByTo {
   '/api/sigmo-chat': typeof ApiSigmoChatRoute
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
+  '/app/administrativo': typeof AppAdministrativoRoute
   '/app/ajuda': typeof AppAjudaRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/assinador': typeof AppAssinadorRoute
@@ -669,6 +677,7 @@ export interface FileRoutesById {
   '/api/sigmo-chat': typeof ApiSigmoChatRoute
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
+  '/app/administrativo': typeof AppAdministrativoRoute
   '/app/ajuda': typeof AppAjudaRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/assinador': typeof AppAssinadorRoute
@@ -752,6 +761,7 @@ export interface FileRouteTypes {
     | '/api/sigmo-chat'
     | '/app/acidentes'
     | '/app/acoes'
+    | '/app/administrativo'
     | '/app/ajuda'
     | '/app/aprs'
     | '/app/assinador'
@@ -832,6 +842,7 @@ export interface FileRouteTypes {
     | '/api/sigmo-chat'
     | '/app/acidentes'
     | '/app/acoes'
+    | '/app/administrativo'
     | '/app/ajuda'
     | '/app/aprs'
     | '/app/assinador'
@@ -911,6 +922,7 @@ export interface FileRouteTypes {
     | '/api/sigmo-chat'
     | '/app/acidentes'
     | '/app/acoes'
+    | '/app/administrativo'
     | '/app/ajuda'
     | '/app/aprs'
     | '/app/assinador'
@@ -1211,6 +1223,13 @@ declare module '@tanstack/react-router' {
       path: '/ajuda'
       fullPath: '/app/ajuda'
       preLoaderRoute: typeof AppAjudaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/administrativo': {
+      id: '/app/administrativo'
+      path: '/administrativo'
+      fullPath: '/app/administrativo'
+      preLoaderRoute: typeof AppAdministrativoRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/acoes': {
@@ -1602,6 +1621,7 @@ const AppEstoqueEpiRouteWithChildren = AppEstoqueEpiRoute._addFileChildren(
 interface AppRouteChildren {
   AppAcidentesRoute: typeof AppAcidentesRoute
   AppAcoesRoute: typeof AppAcoesRoute
+  AppAdministrativoRoute: typeof AppAdministrativoRoute
   AppAjudaRoute: typeof AppAjudaRoute
   AppAprsRoute: typeof AppAprsRoute
   AppAssinadorRoute: typeof AppAssinadorRoute
@@ -1666,6 +1686,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAcidentesRoute: AppAcidentesRoute,
   AppAcoesRoute: AppAcoesRoute,
+  AppAdministrativoRoute: AppAdministrativoRoute,
   AppAjudaRoute: AppAjudaRoute,
   AppAprsRoute: AppAprsRoute,
   AppAssinadorRoute: AppAssinadorRoute,
