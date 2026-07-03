@@ -6873,14 +6873,31 @@ export type Database = {
           fornecedor: string | null
           id: string
           motivo_indeferimento: string | null
+          nf_arquivo_nome: string | null
+          nf_arquivo_url: string | null
+          nf_numero: string | null
+          nf_observacoes: string | null
           numero: string
           obra_construcao: string | null
           obra_manutencao: string | null
           observacoes: string | null
           pagina: string | null
+          pc_arquivo_nome: string | null
+          pc_arquivo_url: string | null
+          pc_emitido_em: string | null
+          pc_emitido_por_id: string | null
+          pc_emitido_por_nome: string | null
+          pc_fornecedor: string | null
+          pc_numero: string | null
+          pc_observacoes: string | null
+          pc_prazo_entrega: string | null
+          pc_valor: number | null
           pego_em: string | null
           pego_por_compras_id: string | null
           pego_por_compras_nome: string | null
+          recebido_em: string | null
+          recebido_por_id: string | null
+          recebido_por_nome: string | null
           responsavel_aprovador: string | null
           responsavel_tst: string | null
           retroativa: boolean
@@ -6929,14 +6946,31 @@ export type Database = {
           fornecedor?: string | null
           id?: string
           motivo_indeferimento?: string | null
+          nf_arquivo_nome?: string | null
+          nf_arquivo_url?: string | null
+          nf_numero?: string | null
+          nf_observacoes?: string | null
           numero: string
           obra_construcao?: string | null
           obra_manutencao?: string | null
           observacoes?: string | null
           pagina?: string | null
+          pc_arquivo_nome?: string | null
+          pc_arquivo_url?: string | null
+          pc_emitido_em?: string | null
+          pc_emitido_por_id?: string | null
+          pc_emitido_por_nome?: string | null
+          pc_fornecedor?: string | null
+          pc_numero?: string | null
+          pc_observacoes?: string | null
+          pc_prazo_entrega?: string | null
+          pc_valor?: number | null
           pego_em?: string | null
           pego_por_compras_id?: string | null
           pego_por_compras_nome?: string | null
+          recebido_em?: string | null
+          recebido_por_id?: string | null
+          recebido_por_nome?: string | null
           responsavel_aprovador?: string | null
           responsavel_tst?: string | null
           retroativa?: boolean
@@ -6985,14 +7019,31 @@ export type Database = {
           fornecedor?: string | null
           id?: string
           motivo_indeferimento?: string | null
+          nf_arquivo_nome?: string | null
+          nf_arquivo_url?: string | null
+          nf_numero?: string | null
+          nf_observacoes?: string | null
           numero?: string
           obra_construcao?: string | null
           obra_manutencao?: string | null
           observacoes?: string | null
           pagina?: string | null
+          pc_arquivo_nome?: string | null
+          pc_arquivo_url?: string | null
+          pc_emitido_em?: string | null
+          pc_emitido_por_id?: string | null
+          pc_emitido_por_nome?: string | null
+          pc_fornecedor?: string | null
+          pc_numero?: string | null
+          pc_observacoes?: string | null
+          pc_prazo_entrega?: string | null
+          pc_valor?: number | null
           pego_em?: string | null
           pego_por_compras_id?: string | null
           pego_por_compras_nome?: string | null
+          recebido_em?: string | null
+          recebido_por_id?: string | null
+          recebido_por_nome?: string | null
           responsavel_aprovador?: string | null
           responsavel_tst?: string | null
           retroativa?: boolean
@@ -8427,7 +8478,13 @@ export type Database = {
         | "SUBSTITUIDO"
         | "CANCELADO"
       purchase_req_class: "MATERIAL" | "SERVICO" | "MEDICAMENTOS"
-      purchase_req_status: "PENDENTE" | "COTADA" | "APROVADA" | "INDEFERIDA"
+      purchase_req_status:
+        | "PENDENTE"
+        | "COTADA"
+        | "APROVADA"
+        | "INDEFERIDA"
+        | "EM_RECEBIMENTO"
+        | "CONCLUIDA"
       tipo_acidente: "COM_AFASTAMENTO" | "SEM_AFASTAMENTO" | "TRAJETO" | "FATAL"
       tipo_movimentacao_epi: "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO"
       turno_acidente: "MANHA" | "TARDE" | "NOITE" | "MADRUGADA"
@@ -8595,7 +8652,14 @@ export const Constants = {
         "CANCELADO",
       ],
       purchase_req_class: ["MATERIAL", "SERVICO", "MEDICAMENTOS"],
-      purchase_req_status: ["PENDENTE", "COTADA", "APROVADA", "INDEFERIDA"],
+      purchase_req_status: [
+        "PENDENTE",
+        "COTADA",
+        "APROVADA",
+        "INDEFERIDA",
+        "EM_RECEBIMENTO",
+        "CONCLUIDA",
+      ],
       tipo_acidente: ["COM_AFASTAMENTO", "SEM_AFASTAMENTO", "TRAJETO", "FATAL"],
       tipo_movimentacao_epi: [
         "SAIDA_ENTREGA",
