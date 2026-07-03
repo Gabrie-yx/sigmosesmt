@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import {
   Briefcase, Search, Filter, Eye, CheckCircle2, XCircle, ShieldAlert, FileText, BookOpen,
-  Building2, Wrench, Cog, Factory, Boxes, ShieldPlus, Package,
+  Building2, Wrench, Cog, Factory, Boxes, ShieldPlus, Package, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { decidirRc } from "@/lib/rc-public.functions";
@@ -258,10 +258,19 @@ function SetorCard({
   const Icon = SETOR_ICON[setor] ?? Package;
   const accent = SETOR_ACCENT[setor] ?? "accent-sky";
   const aguardando = lista.filter((r) => r.status === "COTADA").length;
+  // SESMT começa fechado (lista costuma ser grande); demais abertos por padrão.
+  const [open, setOpen] = useState(setor !== "SESMT");
   return (
     <Card className="glass-card overflow-hidden">
-      <CardHeader className="p-4 pb-3 flex flex-row items-center justify-between gap-2 border-b border-white/10">
+      <CardHeader
+        role="button"
+        tabIndex={0}
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen((v) => !v); } }}
+        className={`p-4 pb-3 flex flex-row items-center justify-between gap-2 cursor-pointer select-none ${open ? "border-b border-white/10" : ""}`}
+      >
         <div className="flex items-center gap-3 min-w-0">
+          {open ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
           <div className={`h-10 w-10 rounded-xl prism-pill ${accent} flex items-center justify-center text-foreground shrink-0`}>
             <Icon className="h-5 w-5" />
           </div>
@@ -279,11 +288,13 @@ function SetorCard({
           </span>
         )}
       </CardHeader>
-      <CardContent className="p-3 space-y-2">
-        {lista.map((r) => (
-          <RcCard key={r.id} req={r} onChanged={onChanged} />
-        ))}
-      </CardContent>
+      {open && (
+        <CardContent className="p-3 space-y-2">
+          {lista.map((r) => (
+            <RcCard key={r.id} req={r} onChanged={onChanged} />
+          ))}
+        </CardContent>
+      )}
     </Card>
   );
 }
