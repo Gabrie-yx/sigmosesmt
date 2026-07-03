@@ -4020,6 +4020,75 @@ export type Database = {
           },
         ]
       }
+      fornecedores: {
+        Row: {
+          ativo: boolean
+          bp: string | null
+          centro_custo: string | null
+          cnpj: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          endereco: string | null
+          estrelas: number
+          estrelas_atualizado_em: string | null
+          estrelas_atualizado_por: string | null
+          id: string
+          nome_fantasia: string
+          observacoes_avaliacao: string | null
+          produto: string | null
+          razao_social: string | null
+          responsavel: string | null
+          telefone: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          bp?: string | null
+          centro_custo?: string | null
+          cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          endereco?: string | null
+          estrelas?: number
+          estrelas_atualizado_em?: string | null
+          estrelas_atualizado_por?: string | null
+          id?: string
+          nome_fantasia: string
+          observacoes_avaliacao?: string | null
+          produto?: string | null
+          razao_social?: string | null
+          responsavel?: string | null
+          telefone?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          bp?: string | null
+          centro_custo?: string | null
+          cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          endereco?: string | null
+          estrelas?: number
+          estrelas_atualizado_em?: string | null
+          estrelas_atualizado_por?: string | null
+          id?: string
+          nome_fantasia?: string
+          observacoes_avaliacao?: string | null
+          produto?: string | null
+          razao_social?: string | null
+          responsavel?: string | null
+          telefone?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hht_mensal: {
         Row: {
           ano: number
@@ -6922,53 +6991,168 @@ export type Database = {
         }
         Relationships: []
       }
+      rc_cotacao_itens: {
+        Row: {
+          cotacao_id: string
+          created_at: string
+          descricao_ofertada: string
+          icms_pct: number | null
+          id: string
+          ipi_pct: number | null
+          item_numero: number | null
+          marca: string | null
+          observacao: string | null
+          prazo_entrega_dias: number | null
+          quantidade: number
+          rc_item_id: string | null
+          unidade: string | null
+          valor_total: number | null
+          valor_unitario: number
+        }
+        Insert: {
+          cotacao_id: string
+          created_at?: string
+          descricao_ofertada: string
+          icms_pct?: number | null
+          id?: string
+          ipi_pct?: number | null
+          item_numero?: number | null
+          marca?: string | null
+          observacao?: string | null
+          prazo_entrega_dias?: number | null
+          quantidade?: number
+          rc_item_id?: string | null
+          unidade?: string | null
+          valor_total?: number | null
+          valor_unitario?: number
+        }
+        Update: {
+          cotacao_id?: string
+          created_at?: string
+          descricao_ofertada?: string
+          icms_pct?: number | null
+          id?: string
+          ipi_pct?: number | null
+          item_numero?: number | null
+          marca?: string | null
+          observacao?: string | null
+          prazo_entrega_dias?: number | null
+          quantidade?: number
+          rc_item_id?: string | null
+          unidade?: string | null
+          valor_total?: number | null
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rc_cotacao_itens_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "rc_cotacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rc_cotacao_itens_rc_item_id_fkey"
+            columns: ["rc_item_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_requisition_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rc_cotacoes: {
         Row: {
+          analisado_em: string | null
           arquivo_nome: string | null
           arquivo_tipo: string | null
           arquivo_url: string
           cnpj: string | null
+          condicao_pagamento: string | null
           created_at: string
           created_by: string | null
+          data_orcamento: string | null
           fornecedor: string
+          fornecedor_id: string | null
+          frete: string | null
           id: string
+          is_melhor_oferta: boolean
           is_vencedora: boolean
+          numero_orcamento: string | null
           observacao: string | null
+          observacoes: string | null
+          prazo_entrega_dias: number | null
+          ranking: number | null
           rc_id: string
+          score_breakdown: Json | null
+          score_total: number | null
           updated_at: string
+          validade: string | null
           valor: number
         }
         Insert: {
+          analisado_em?: string | null
           arquivo_nome?: string | null
           arquivo_tipo?: string | null
           arquivo_url: string
           cnpj?: string | null
+          condicao_pagamento?: string | null
           created_at?: string
           created_by?: string | null
+          data_orcamento?: string | null
           fornecedor: string
+          fornecedor_id?: string | null
+          frete?: string | null
           id?: string
+          is_melhor_oferta?: boolean
           is_vencedora?: boolean
+          numero_orcamento?: string | null
           observacao?: string | null
+          observacoes?: string | null
+          prazo_entrega_dias?: number | null
+          ranking?: number | null
           rc_id: string
+          score_breakdown?: Json | null
+          score_total?: number | null
           updated_at?: string
+          validade?: string | null
           valor: number
         }
         Update: {
+          analisado_em?: string | null
           arquivo_nome?: string | null
           arquivo_tipo?: string | null
           arquivo_url?: string
           cnpj?: string | null
+          condicao_pagamento?: string | null
           created_at?: string
           created_by?: string | null
+          data_orcamento?: string | null
           fornecedor?: string
+          fornecedor_id?: string | null
+          frete?: string | null
           id?: string
+          is_melhor_oferta?: boolean
           is_vencedora?: boolean
+          numero_orcamento?: string | null
           observacao?: string | null
+          observacoes?: string | null
+          prazo_entrega_dias?: number | null
+          ranking?: number | null
           rc_id?: string
+          score_breakdown?: Json | null
+          score_total?: number | null
           updated_at?: string
+          validade?: string | null
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "rc_cotacoes_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "rc_cotacoes_rc_id_fkey"
             columns: ["rc_id"]
@@ -8014,6 +8198,7 @@ export type Database = {
         Args: { _epi_id: string; _novo_saldo: number }
         Returns: undefined
       }
+      calcular_scores_rc: { Args: { _rc_id: string }; Returns: undefined }
       can_approve_acordo: { Args: { _user_id: string }; Returns: boolean }
       cancelar_os: {
         Args: { _motivo: string; _os_id: string }
@@ -8094,6 +8279,10 @@ export type Database = {
             Args: { _employee_id: string; _motivo?: string }
             Returns: undefined
           }
+      recalcular_valor_cotacao: {
+        Args: { _cotacao_id: string }
+        Returns: undefined
+      }
       registrar_desligamento_funcionario: {
         Args: {
           _checklist?: Json
