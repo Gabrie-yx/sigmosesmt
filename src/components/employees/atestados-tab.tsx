@@ -71,6 +71,9 @@ function fmt(d: string | null | undefined) {
 }
 
 export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
+  useEffect(() => {
+    if (empId) logRead("employee_atestados", empId, { via: "aba-atestados" });
+  }, [empId]);
   const [openNew, setOpenNew] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [viewing, setViewing] = useState<{ url: string; name: string; isPdf: boolean } | null>(null);
