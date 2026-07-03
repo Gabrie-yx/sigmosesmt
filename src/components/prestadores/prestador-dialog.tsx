@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { HelpHint } from "@/components/help-hint";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -140,7 +141,10 @@ export function PrestadorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-950/95 backdrop-blur-xl border-white/10 text-white">
         <DialogHeader>
-          <DialogTitle className="text-white">{form.id ? "Editar prestador" : "Novo prestador de saúde"}</DialogTitle>
+          <DialogTitle className="text-white flex items-center gap-2">
+            {form.id ? "Editar prestador" : "Novo prestador de saúde"}
+            <HelpHint topic="prestador-saude" />
+          </DialogTitle>
           <DialogDescription className="text-slate-400">
             Clínica ou laboratório usado em convocações de ASO e guias de encaminhamento.
           </DialogDescription>
