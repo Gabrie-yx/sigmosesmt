@@ -679,3 +679,81 @@ function AddCotacaoDialog({ rcId, onAdded }: { rcId: string; onAdded: () => void
     </Dialog>
   );
 }
+
+function DispensarCotacoesBtn({ rcId, onDone }: { rcId: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [motivo, setMotivo] = useState<string>("");
+  const [just, setJust] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function submit() {
+    if (!motivo) return toast.error("Selecione o motivo");
+    if (just.trim().length < 30) return toast.error("Justificativa mínima de 30 caracteres");
+    setBusy(true);
+    const { error } = await supabase.rpc("dispensar_cotacoes_rc", {
+      _rc_id: rcId, _motivo: motivo, _justificativa: just.trim(),
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Dispensa registrada — a RC agora aceita ser enviada com 1 cotação");
+    setOpen(false);
+    onDone();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="border-amber-400 text-amber-800 hover:bg-amber-50">
+          <ShieldAlert className="h-4 w-4 mr-1" /> Dispensar cotações
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldAlert className="h-5 w-5 text-amber-700" /> Dispensa de cotação
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="text-xs bg-amber-50 border border-amber-200 rounded p-2 text-amber-900">
+            Use apenas quando a regra das 3 cotações não se aplica (exclusividade, contrato,
+            urgência, padronização). Toda dispensa fica registrada em auditoria e o Supervisor Geral
+            pode devolver a RC pedindo as 3 cotações completas.
+          </div>
+          <div>
+            <Label>Motivo *</Label>
+            <Select value={motivo} onValueChange={setMotivo}>
+              <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {MOTIVOS_DISPENSA.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Justificativa detalhada * <span className="text-[10px] text-slate-500">(mín. 30 caracteres — {just.trim().length})</span></Label>
+            <Textarea
+              rows={4}
+              value={just}
+              onChange={(e) => setJust(e.target.value)}
+              placeholder="Explique por que 3 cotações não são viáveis (fornecedor único, número de contrato, natureza da urgência, etc.)"
+            />
+          </div>
+          <div className="text-[11px] text-slate-500">
+            ⚠️ Antes de confirmar, anexe ao menos <strong>1 cotação</strong> do fornecedor escolhido.
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>Cancelar</Button>
+          <Button
+            className="bg-amber-600 hover:bg-amber-700 text-white"
+            onClick={submit}
+            disabled={busy || !motivo || just.trim().length < 30}
+          >
+            {busy ? "Registrando…" : "Confirmar dispensa"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
