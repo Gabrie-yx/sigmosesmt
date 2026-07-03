@@ -450,6 +450,23 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
               <strong>Aviso ao Compras:</strong> {req.retroativa_motivo} — cote retroativamente ou arquive.
             </div>
           )}
+          {req.status === "APROVADA" && (
+            <div className="text-[11px] text-emerald-800 mt-1 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
+              <strong>✓ Deferida</strong> por {req.decidido_por_nome ?? "supervisor"}
+              {req.decidido_em ? <> em {fmtBR(req.decidido_em)}</> : null}
+              {req.cotacao_fornecedor ? <> · <strong>{req.cotacao_fornecedor}</strong> — {fmtMoney(req.cotacao_valor)}</> : null}
+              <div className="mt-0.5 text-emerald-700">Próximo passo: emitir Pedido de Compra ao fornecedor.</div>
+            </div>
+          )}
+          {req.status === "INDEFERIDA" && (
+            <div className="text-[11px] text-rose-800 mt-1 bg-rose-50 border border-rose-200 rounded px-2 py-1">
+              <strong>✗ Indeferida</strong> por {req.decidido_por_nome ?? "supervisor"}
+              {req.decidido_em ? <> em {fmtBR(req.decidido_em)}</> : null}
+              {req.motivo_indeferimento && (
+                <div className="mt-0.5"><strong>Motivo:</strong> {req.motivo_indeferimento}</div>
+              )}
+            </div>
+          )}
         </div>
         <Badge variant="outline" className="text-[10px]">
           {req.classificacao === "MATERIAL" ? "Material" : req.classificacao === "SERVICO" ? "Serviço" : "Medicamentos"}
