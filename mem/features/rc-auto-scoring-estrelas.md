@@ -17,3 +17,6 @@ type: feature
 
 ## Ativar quando
 O usuário mandar a planilha de fornecedores exportada do SAP OU pedir explicitamente para iniciar essa fase.
+
+## Status (03/07/2026)
+AGUARDANDO planilha de fornecedores do SAP. Usuário confirmou que vai enviar. Não iniciar antes disso.
