@@ -8478,6 +8478,7 @@ export type Database = {
         | "usuarios"
         | "compras"
         | "administrativo"
+        | "almoxarifado"
       app_role: "admin" | "tst" | "viewer" | "moderador" | "editor" | "compras"
       extintor_status: "ATIVO" | "EM_MANUTENCAO" | "BAIXADO" | "VENCIDO"
       extintor_tipo_agente:
@@ -8650,6 +8651,7 @@ export const Constants = {
         "usuarios",
         "compras",
         "administrativo",
+        "almoxarifado",
       ],
       app_role: ["admin", "tst", "viewer", "moderador", "editor", "compras"],
       extintor_status: ["ATIVO", "EM_MANUTENCAO", "BAIXADO", "VENCIDO"],
