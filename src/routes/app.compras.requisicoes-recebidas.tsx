@@ -475,7 +475,7 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
         <div>
           <div className="flex items-center justify-between mb-2">
             <div className="text-sm font-bold flex items-center gap-2">
-              <DollarSign className="h-4 w-4" /> Cotações ({totalCot}/3 mínimo)
+              <Sparkles className="h-4 w-4 text-amber-500" /> Cotações & Matriz de Decisão ({totalCot}/{minCot} mínimo)
             </div>
             <div className="flex items-center gap-2">
               {missing > 0 && (
@@ -485,20 +485,20 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
               )}
               {totalCot >= 3 && !hasWinner && (
                 <Badge className="bg-orange-100 text-orange-800 border border-orange-300">
-                  Marque a vencedora
+                  Matriz sugerindo — confirme
                 </Badge>
               )}
-              <AddCotacaoDialog rcId={req.id} onAdded={refetchCot} />
+              <AddCotacaoDialog rcId={req.id} classificacao={req.classificacao} onAdded={refetchCot} />
             </div>
           </div>
 
           {cotacoes.length === 0 ? (
             <div className="p-6 text-center text-slate-500 border rounded-lg bg-slate-50">
-              Nenhuma cotação anexada. Adicione pelo menos <strong>3 cotações</strong> (PDF ou JPG) para liberar o envio ao Supervisor.
+              Nenhuma cotação anexada. Adicione pelo menos <strong>{minCot} cotação{minCot > 1 ? "ões" : ""}</strong> (PDF ou JPG) para a matriz analisar e liberar o envio.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              {cotacoes.map((c) => (
+              {[...cotacoes].sort((a, b) => (a.ranking ?? 99) - (b.ranking ?? 99)).map((c) => (
                 <CotacaoCard
                   key={c.id}
                   cot={c}
