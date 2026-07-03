@@ -88,6 +88,9 @@ type Req = {
   cotador_nome?: string | null;
   cotacao_fornecedor?: string | null;
   cotacao_valor?: number | null;
+  dispensa_cotacao?: boolean | null;
+  dispensa_motivo?: string | null;
+  dispensa_justificativa?: string | null;
 };
 
 const STATUS_BADGE: Record<Status, string> = {
