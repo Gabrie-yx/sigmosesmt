@@ -19,6 +19,9 @@ import {
   Tabs, TabsList, TabsTrigger, TabsContent,
 } from "@/components/ui/tabs";
 import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Package, ShoppingCart, Upload, Trash2, Eye, Trophy, Send, Filter, Search, FileText, DollarSign,
   ShieldAlert, XCircle, Award, ChevronDown, ChevronUp, Truck, Clock, CreditCard, Sparkles,
 } from "lucide-react";
@@ -782,6 +785,24 @@ function MelhorComboTab({ rcId }: { rcId: string }) {
     },
   });
 
+  // Detalhes de conformidade (marca ofertada + justificativa) por (cotacao_id, rc_item_id)
+  const cotacaoIds = combo.map((c) => c.melhor_cotacao_id).filter(Boolean) as string[];
+  const { data: detalhes = [] } = useQuery({
+    queryKey: ["rc-combo-detalhes", rcId, cotacaoIds.sort().join(",")],
+    enabled: cotacaoIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rc_cotacao_itens")
+        .select("cotacao_id, rc_item_id, marca, descricao_ofertada, justificativa_conformidade")
+        .in("cotacao_id", cotacaoIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const detalhePorItem = new Map(
+    detalhes.map((d: any) => [`${d.cotacao_id}::${d.rc_item_id}`, d]),
+  );
+
   const totalCombo = combo.reduce((s, i) => s + (i.valor_total ?? 0), 0);
   const cobertos = combo.filter((i) => i.melhor_cotacao_id).length;
   const naoCobertos = combo.length - cobertos;
@@ -864,19 +885,10 @@ function MelhorComboTab({ rcId }: { rcId: string }) {
                 <td className="p-2 text-right font-mono font-bold">{fmtMoney(i.valor_total ?? undefined)}</td>
                 <td className="p-2 text-center">{i.prazo_entrega_dias ? `${i.prazo_entrega_dias}d` : "—"}</td>
                 <td className="p-2 text-center">
-                  {i.conformidade === "CONFORME" && (
-                    <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[9px] gap-0.5">
-                      <CheckCircle2 className="h-2.5 w-2.5" /> Conforme
-                    </Badge>
-                  )}
-                  {i.conformidade === "SIMILAR" && (
-                    <Badge className="bg-amber-100 text-amber-800 border border-amber-300 text-[9px]">Similar</Badge>
-                  )}
-                  {i.conformidade === "DIVERGENTE" && (
-                    <Badge className="bg-orange-100 text-orange-800 border border-orange-300 text-[9px] gap-0.5">
-                      <AlertTriangle className="h-2.5 w-2.5" /> Divergente
-                    </Badge>
-                  )}
+                  <ConformidadeBadge
+                    status={i.conformidade}
+                    detalhe={detalhePorItem.get(`${i.melhor_cotacao_id}::${i.rc_item_id}`)}
+                  />
                 </td>
               </tr>
             ))}
@@ -895,6 +907,84 @@ function MelhorComboTab({ rcId }: { rcId: string }) {
 }
 
 function AddCotacaoDialog({
+  rcId, classificacao, onAdded,
+}: {
+  rcId: string;
+  classificacao: Req["classificacao"];
+  onAdded: () => void;
+}) {
+  return <AddCotacaoDialogImpl rcId={rcId} classificacao={classificacao} onAdded={onAdded} />;
+}
+
+type ConformidadeDetalhe = {
+  marca: string | null;
+  descricao_ofertada: string | null;
+  justificativa_conformidade: string | null;
+};
+
+function ConformidadeBadge({
+  status, detalhe,
+}: { status: string | null; detalhe?: ConformidadeDetalhe }) {
+  if (!status) return null;
+  const config = {
+    CONFORME: {
+      cls: "bg-emerald-100 text-emerald-800 border-emerald-300",
+      icon: <CheckCircle2 className="h-2.5 w-2.5" />,
+      label: "Conforme",
+      title: "✅ CONFORME",
+      desc: "Marca/modelo idênticos ao pedido da RC. Score cheio, sem penalidade.",
+    },
+    SIMILAR: {
+      cls: "bg-amber-100 text-amber-800 border-amber-300",
+      icon: null,
+      label: "Similar",
+      title: "🟡 SIMILAR",
+      desc: "Marca alternativa que atende a especificação técnica (norma/CA/classe equivalentes). Aceito com justificativa registrada.",
+    },
+    DIVERGENTE: {
+      cls: "bg-orange-100 text-orange-800 border-orange-300",
+      icon: <AlertTriangle className="h-2.5 w-2.5" />,
+      label: "Divergente",
+      title: "⚠️ DIVERGENTE",
+      desc: "Não atende plenamente a especificação. Cotação leva penalidade de 10% no score final.",
+    },
+  } as const;
+  const c = (config as any)[status];
+  if (!c) return null;
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge className={cn("text-[9px] gap-0.5 border cursor-help", c.cls)}>
+            {c.icon} {c.label}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent side="left" className="max-w-xs text-xs space-y-1.5 p-3">
+          <div className="font-bold">{c.title}</div>
+          <div className="text-[11px] opacity-90">{c.desc}</div>
+          {detalhe?.marca && (
+            <div className="pt-1.5 border-t border-white/20">
+              <span className="font-semibold">Marca ofertada:</span> {detalhe.marca}
+            </div>
+          )}
+          {detalhe?.descricao_ofertada && (
+            <div>
+              <span className="font-semibold">Descrição:</span> {detalhe.descricao_ofertada}
+            </div>
+          )}
+          {detalhe?.justificativa_conformidade && (
+            <div className="pt-1.5 border-t border-white/20">
+              <span className="font-semibold">Justificativa do comprador:</span><br />
+              <span className="italic">"{detalhe.justificativa_conformidade}"</span>
+            </div>
+          )}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function AddCotacaoDialogImpl({
   rcId, classificacao, onAdded,
 }: {
   rcId: string;
