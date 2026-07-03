@@ -2013,18 +2013,18 @@ function AddCotacaoDialogImpl({
           </div>
 
           {/* Tabela item a item */}
-          <div className="border-2 border-amber-300 rounded-lg overflow-hidden">
-            <div className="bg-amber-50 p-2 border-b border-amber-300">
-              <div className="text-sm font-black text-amber-900 flex items-center gap-2">
+          <div className="border border-primary/40 rounded-lg overflow-hidden bg-card/40">
+            <div className="bg-primary/15 p-2 border-b border-primary/30">
+              <div className="text-sm font-black text-foreground flex items-center gap-2">
                 <PackageCheck className="h-4 w-4" /> Preços item a item ({itensRc.length} itens da RC)
               </div>
-              <div className="text-[11px] text-amber-800 mt-0.5">
+              <div className="text-[11px] text-muted-foreground mt-0.5">
                 Marque itens como <strong>Não cotado</strong> se o fornecedor não ofertou. Divergente/Similar exige justificativa.
               </div>
             </div>
             <div className="max-h-80 overflow-y-auto">
               <table className="w-full text-xs">
-                <thead className="bg-slate-100 sticky top-0">
+                <thead className="bg-muted/70 backdrop-blur sticky top-0 text-foreground">
                   <tr>
                     <th className="p-1.5 text-left w-8">#</th>
                     <th className="p-1.5 text-left">Item RC</th>
@@ -2042,11 +2042,11 @@ function AddCotacaoDialogImpl({
                     const isNaoCotado = st.conformidade === "NAO_COTADO";
                     return (
                       <>
-                        <tr key={i.id} className={cn("border-t", isNaoCotado && "bg-slate-100 opacity-60")}>
+                        <tr key={i.id} className={cn("border-t border-border", isNaoCotado && "bg-muted/40 opacity-60")}>
                           <td className="p-1.5 text-center">{String(i.item_numero).padStart(2, "0")}</td>
                           <td className="p-1.5">
                             <div className="font-semibold">{i.descricao}</div>
-                            <div className="text-[10px] text-slate-500">{i.unidade ?? ""}</div>
+                            <div className="text-[10px] text-muted-foreground">{i.unidade ?? ""}</div>
                           </td>
                           <td className="p-1.5 text-center">{i.quantidade ?? "—"}</td>
                           <td className="p-1.5">
@@ -2084,7 +2084,7 @@ function AddCotacaoDialogImpl({
                           </td>
                         </tr>
                         {(st.conformidade === "SIMILAR" || st.conformidade === "DIVERGENTE") && (
-                          <tr key={i.id + "-just"} className="border-t bg-amber-50/50">
+                          <tr key={i.id + "-just"} className="border-t border-border bg-primary/10">
                             <td colSpan={6} className="p-1.5">
                               <Input
                                 value={st.justificativa}
@@ -2102,10 +2102,10 @@ function AddCotacaoDialogImpl({
                     );
                   })}
                 </tbody>
-                <tfoot className="bg-slate-100 font-bold sticky bottom-0">
+                <tfoot className="bg-muted/70 backdrop-blur font-bold sticky bottom-0 text-foreground">
                   <tr>
                     <td colSpan={5} className="p-2 text-right">TOTAL DA COTAÇÃO</td>
-                    <td className="p-2 text-right font-mono text-red-800">{fmtMoney(totalCotacao)}</td>
+                    <td className="p-2 text-right font-mono text-primary">{fmtMoney(totalCotacao)}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -2130,7 +2130,7 @@ function AddCotacaoDialogImpl({
             )}
           </div>
 
-          <div className="text-[11px] bg-amber-50 border border-amber-200 rounded p-2 text-amber-900">
+          <div className="text-[11px] bg-primary/10 border border-primary/30 rounded p-2 text-foreground">
             💡 A matriz agora leva em conta <strong>cobertura</strong> (25%): fornecedor que não cota todos os itens perde pontos. Marcar itens como <strong>Divergente</strong> aplica penalidade de 10% no score total.
           </div>
         </div>
