@@ -1078,14 +1078,26 @@ function _IndeferBtnImpl({ onConfirm }: { onConfirm: (motivo: string) => void })
   );
 }
 
-function ReqFormDialog({
+export type DescricaoSuggestion = { descricao: string; unidade?: string | null };
+
+export function ReqFormDialog({
   onClose,
   userId,
   existing,
+  setorFixo,
+  consultaSlot,
+  descricaoSuggest,
+  draftKey,
+  dialogTitle,
 }: {
   onClose: () => void;
   userId?: string;
   existing?: Req;
+  setorFixo?: string;
+  consultaSlot?: (pick: (i: PickedItem) => void) => React.ReactNode;
+  descricaoSuggest?: (q: string) => Promise<DescricaoSuggestion[]>;
+  draftKey?: string;
+  dialogTitle?: string;
 }) {
   const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
@@ -1119,7 +1131,7 @@ function ReqFormDialog({
     data_requisicao: existing?.data_requisicao ?? today,
     classificacao: (existing?.classificacao ?? "MATERIAL") as Classe,
     solicitante: existing?.solicitante ?? "",
-    setor: existing?.setor ?? "",
+    setor: existing?.setor ?? setorFixo ?? "",
     fornecedor: existing?.fornecedor ?? "",
     obra_construcao: existing?.obra_construcao ?? "",
     obra_manutencao: existing?.obra_manutencao ?? "",
@@ -1136,7 +1148,7 @@ function ReqFormDialog({
   const [signatureHeight, setSignatureHeight] = useState<number>(existing?.signature_solicitante_height ?? 80);
 
   // === Autosave de rascunho (somente em modo de criação) ===
-  const DRAFT_KEY = "requisicao-nova";
+  const DRAFT_KEY = draftKey ?? "requisicao-nova";
   const DRAFT_ROUTE = "/app/sesmt/requisicoes";
 
   // Restaura rascunho ao abrir, se existir
@@ -1397,7 +1409,16 @@ function ReqFormDialog({
 
           {/* Linha 3: Setor | Fornecedor */}
           <div className="grid grid-cols-2 border-b border-black">
-            <SetorField value={form.setor} onChange={(v) => setForm({ ...form, setor: v })} />
+            {setorFixo ? (
+              <div className="flex items-stretch">
+                <span className="font-bold uppercase whitespace-nowrap p-1.5 pr-2">SETOR:</span>
+                <span className="flex-1 min-w-0 px-1 py-1.5 text-[12px] font-semibold text-red-800">
+                  {setorFixo} <span className="text-[10px] font-normal text-slate-500">(travado)</span>
+                </span>
+              </div>
+            ) : (
+              <SetorField value={form.setor} onChange={(v) => setForm({ ...form, setor: v })} />
+            )}
             <div className="border-l border-black">
               <FieldRow label="FORNECEDOR:" value={form.fornecedor} onChange={(v) => setForm({ ...form, fornecedor: v })} />
             </div>
@@ -1431,7 +1452,19 @@ function ReqFormDialog({
                 {String(it.item_numero).padStart(2, "0")}
               </div>
               <div className="border-r border-black">
-                <CellInput value={it.descricao} onChange={(v) => setItem(idx, "descricao", v)} />
+                {descricaoSuggest ? (
+                  <DescricaoAutocompleteCell
+                    value={it.descricao}
+                    onChange={(v) => setItem(idx, "descricao", v)}
+                    onPick={(s) => {
+                      setItem(idx, "descricao", s.descricao);
+                      if (s.unidade && !it.unidade) setItem(idx, "unidade", s.unidade);
+                    }}
+                    suggest={descricaoSuggest}
+                  />
+                ) : (
+                  <CellInput value={it.descricao} onChange={(v) => setItem(idx, "descricao", v)} />
+                )}
               </div>
               <div className="border-r border-black">
                 <CellInput value={it.quantidade} onChange={(v) => setItem(idx, "quantidade", v)} className="text-center" />
@@ -1448,7 +1481,9 @@ function ReqFormDialog({
       <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground">Total de linhas: {itens.length}</span>
-            <EstoqueLookupSheet onPick={pickFromEstoque} triggerLabel="Consultar Estoque / CA" />
+            {consultaSlot
+              ? consultaSlot(pickFromEstoque)
+              : <EstoqueLookupSheet onPick={pickFromEstoque} triggerLabel="Consultar Estoque / CA" />}
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" size="sm" onClick={removeLastItem} disabled={itens.length <= 10}>
@@ -1624,8 +1659,10 @@ function ReqFormDialog({
     <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-0">
       <DialogHeader className="px-4 pt-4 pb-2 border-b">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <DialogTitle>{isEdit ? `Editar Requisição Nº ${existing?.numero}` : "Nova Requisição de Compra"}</DialogTitle>
-          <EstoqueLookupSheet onPick={pickFromEstoque} triggerLabel="Consultar Estoque / CA" />
+          <DialogTitle>{isEdit ? `Editar Requisição Nº ${existing?.numero}` : (dialogTitle ?? "Nova Requisição de Compra")}</DialogTitle>
+          {consultaSlot
+            ? consultaSlot(pickFromEstoque)
+            : <EstoqueLookupSheet onPick={pickFromEstoque} triggerLabel="Consultar Estoque / CA" />}
         </div>
       </DialogHeader>
       <div className="px-4 pb-4 pt-3">
@@ -1714,5 +1751,66 @@ function CellInput({
       onChange={(e) => onChange(e.target.value)}
       className={`w-full h-8 bg-transparent border-0 outline-none px-1.5 text-[12px] focus:bg-yellow-50 ${className}`}
     />
+  );
+}
+
+function DescricaoAutocompleteCell({
+  value,
+  onChange,
+  onPick,
+  suggest,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onPick: (s: DescricaoSuggestion) => void;
+  suggest: (q: string) => Promise<DescricaoSuggestion[]>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [opts, setOpts] = useState<DescricaoSuggestion[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const q = value.trim();
+    if (!q) { setOpts([]); setOpen(false); return; }
+    let cancelled = false;
+    setLoading(true);
+    const t = setTimeout(async () => {
+      try {
+        const r = await suggest(q);
+        if (!cancelled) { setOpts(r.slice(0, 12)); setOpen(r.length > 0); }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 180);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [value, suggest]);
+
+  return (
+    <div className="relative">
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => { if (opts.length > 0) setOpen(true); }}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        className="w-full h-8 bg-transparent border-0 outline-none px-1.5 text-[12px] focus:bg-yellow-50"
+        placeholder="Digite para buscar na Base MP..."
+      />
+      {open && (
+        <div className="absolute z-50 left-0 right-0 top-full mt-0.5 max-h-64 overflow-y-auto rounded-md border border-slate-300 bg-white shadow-lg text-[12px]">
+          {loading && <div className="px-2 py-1 text-slate-400">Buscando...</div>}
+          {!loading && opts.map((o, i) => (
+            <button
+              key={i}
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); onPick(o); setOpen(false); }}
+              className="w-full text-left px-2 py-1.5 hover:bg-red-50 border-b last:border-b-0 border-slate-100"
+            >
+              <div className="font-medium text-slate-800 truncate">{o.descricao}</div>
+              {o.unidade && <div className="text-[10px] text-slate-500">Unid.: {o.unidade}</div>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
