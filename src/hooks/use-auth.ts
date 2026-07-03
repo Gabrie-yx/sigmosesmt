@@ -107,6 +107,7 @@ export function useAuth() {
 
   function hasModule(m: AppModule): boolean {
     if (isAdmin) return true;
+    if (m === "compras" && roles.includes("compras")) return true;
     return modules.includes(m);
   }
 

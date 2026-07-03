@@ -206,7 +206,7 @@ export function AppSidebar() {
   const canSesmt = isAdmin || hasModule("sesmt");
   const canEstoque = isAdmin || hasModule("estoque");
   const canProducao = isAdmin || hasModule("producao");
-  const canCompras = isAdmin || hasModule("compras" as any) || roles.includes("compras" as any);
+  const canCompras = isAdmin || hasModule("compras") || roles.includes("compras");
   const canUsuarios = isAdmin || hasModule("usuarios");
 
   // Filtra grupos/itens pelo controle granular de menus
