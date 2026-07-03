@@ -436,7 +436,7 @@ export function AppSidebar() {
           </Collapsible>
         )}
 
-        {/* MANUTENÇÃO (locked) */}
+        {/* ADMINISTRATIVO */}
         {canAdministrativo && visibleAdministrativo.length > 0 && (
           <Collapsible defaultOpen={administrativoOpen} className="group/administrativo">
             <SidebarGroup>
