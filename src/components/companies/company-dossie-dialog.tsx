@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { logRead } from "@/lib/audit-read";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { HelpHint } from "@/components/help-hint";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -293,6 +294,7 @@ export function CompanyDossieDialog({
           <DialogTitle className="flex items-center gap-2 text-lg">
             <ShieldCheck className="h-5 w-5 text-[#991b1b]" />
             Dossiê da Contratada — {companyName}
+            <HelpHint topic="dossie-contratada" />
           </DialogTitle>
           <p className="text-xs text-slate-500 mt-1">
             NR-01 1.5.5 — Responsabilidade solidária. Linha vermelha: ASO, integração e NR críticas individuais
