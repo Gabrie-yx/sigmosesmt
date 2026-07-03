@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { toTitleCasePT } from "@/lib/utils";
 import { logRead } from "@/lib/audit-read";
+import { useDraftAutosave } from "@/hooks/use-draft-autosave";
+import { loadDraft, deleteDraft } from "@/lib/draft-store";
 
 type FuncRow = {
   key: string;
@@ -66,6 +68,22 @@ export function HoraExtraSabadoDialog({
   const [funcs, setFuncs] = useState<FuncRow[]>([]);
   const [novoExternoNome, setNovoExternoNome] = useState("");
   const [novoExternoFuncao, setNovoExternoFuncao] = useState("");
+
+  // Rascunho: só para ficha nova (sem editId). Ao editar registro existente,
+  // não faz sentido autosave em localStorage — a fonte da verdade é o DB.
+  const DRAFT_KEY = "hora-extra-sabado-nova";
+  const draftEnabled = open && !editId;
+  const draftData = useMemo(
+    () => ({
+      data, turno, horaIni, horaFim, setoresSel, setorNovo, centroCusto,
+      tipoEfetivo, companyId, observacao, funcs,
+    }),
+    [data, turno, horaIni, horaFim, setoresSel, setorNovo, centroCusto, tipoEfetivo, companyId, observacao, funcs],
+  );
+  useDraftAutosave(DRAFT_KEY, "Ficha de hora extra (sábado)", "/app/employees/hora-extra-sabado", draftData, {
+    enabled: draftEnabled,
+    delayMs: 800,
+  });
 
   const { data: companies } = useQuery({
     queryKey: ["companies"],
@@ -133,16 +151,35 @@ export function HoraExtraSabadoDialog({
     })();
   }, [editId, open]);
 
-  // Reset ao fechar
+  // Ao abrir sem editId: restaura rascunho salvo (se existir).
+  // Ao fechar: NÃO zera estado — o rascunho fica preservado para reabrir.
+  // Só zeramos ao clicar Cancelar/Salvar via ações explícitas (ver save.onSuccess).
   useEffect(() => {
-    if (!open) {
-      setData(proximoSabado);
-      setTurno("1º"); setHoraIni("07:30"); setHoraFim("15:00");
-      setSetoresSel([]); setSetorNovo(""); setCentroCusto(""); setTipoEfetivo("DMN");
-      setCompanyId(""); setObservacao(""); setBusca(""); setFuncs([]);
-      setNovoExternoNome(""); setNovoExternoFuncao("");
-    }
-  }, [open, proximoSabado]);
+    if (!open || editId) return;
+    const draft = loadDraft<typeof draftData>(DRAFT_KEY);
+    if (!draft) return;
+    const d = draft.data;
+    if (d.data) setData(d.data);
+    if (d.turno != null) setTurno(d.turno);
+    if (d.horaIni != null) setHoraIni(d.horaIni);
+    if (d.horaFim != null) setHoraFim(d.horaFim);
+    if (Array.isArray(d.setoresSel)) setSetoresSel(d.setoresSel);
+    if (d.setorNovo != null) setSetorNovo(d.setorNovo);
+    if (d.centroCusto != null) setCentroCusto(d.centroCusto);
+    if (d.tipoEfetivo) setTipoEfetivo(d.tipoEfetivo);
+    if (d.companyId != null) setCompanyId(d.companyId);
+    if (d.observacao != null) setObservacao(d.observacao);
+    if (Array.isArray(d.funcs)) setFuncs(d.funcs);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editId]);
+
+  function resetForm() {
+    setData(proximoSabado);
+    setTurno("1º"); setHoraIni("07:30"); setHoraFim("15:00");
+    setSetoresSel([]); setSetorNovo(""); setCentroCusto(""); setTipoEfetivo("DMN");
+    setCompanyId(""); setObservacao(""); setBusca(""); setFuncs([]);
+    setNovoExternoNome(""); setNovoExternoFuncao("");
+  }
 
   const empsDisponiveis = useMemo(() => {
     const ids = new Set(funcs.filter((f) => f.employee_id).map((f) => f.employee_id));
@@ -242,6 +279,8 @@ export function HoraExtraSabadoDialog({
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["hora-extra-sabado"] });
       toast.success(editId ? "Hora extra atualizada" : "Hora extra registrada");
+      if (!editId) deleteDraft(DRAFT_KEY);
+      resetForm();
       onOpenChange(false);
     },
     onError: (e: any) => toast.error(e.message),
