@@ -20,7 +20,18 @@ export const Route = createFileRoute("/app/ajuda")({
   component: CentralAjuda,
 });
 
-const CATEGORIAS = ["Todos", "Segurança", "SESMT", "Funcionários", "Produção", "Compras", "Geral"] as const;
+const CATEGORIAS = [
+  "Todos",
+  "Segurança",
+  "SESMT",
+  "Funcionários",
+  "Produção",
+  "Estoque",
+  "Compras",
+  "Usuários",
+  "Conceitos",
+  "Geral",
+] as const;
 
 function CentralAjuda() {
   const { q } = Route.useSearch();
@@ -57,6 +68,9 @@ function CentralAjuda() {
           <h1 className="text-xl sm:text-2xl font-black tracking-tight">Central de Ajuda</h1>
           <p className="text-sm text-muted-foreground">
             Explicações rápidas dos conceitos e telas do SIGMO. Digite o que procura ou navegue por categoria.
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            {HELP_TOPICS.length} tópicos catalogados · atualizado continuamente
           </p>
         </div>
       </header>
@@ -97,16 +111,19 @@ function CentralAjuda() {
           <p className="text-xs mt-1">Estamos adicionando conteúdo aos poucos. Pergunta o que faltar.</p>
         </div>
       ) : (
+        <>
+        <p className="text-xs text-muted-foreground">
+          {results.length} {results.length === 1 ? "tópico encontrado" : "tópicos encontrados"}
+        </p>
         <div className="grid gap-3 sm:grid-cols-2">
           {results.map((t) => (
             <ArticleCard key={t.id} topic={t} />
           ))}
         </div>
+        </>
       )}
 
-      <p className="text-[11px] text-muted-foreground text-center pt-4">
-        Sentiu falta de algum tópico? Fala com o admin — o SIGMO tá em construção contínua.
-      </p>
+      <FooterAviso />
     </div>
   );
 }
@@ -129,6 +146,16 @@ function ArticleCard({ topic }: { topic: HelpTopic }) {
           </ol>
         </details>
       )}
+      {topic.dicas && topic.dicas.length > 0 && (
+        <details className="text-xs">
+          <summary className="cursor-pointer font-semibold text-amber-700">Dicas / pegadinhas</summary>
+          <ul className="list-disc pl-4 mt-1 space-y-0.5 text-foreground/85">
+            {topic.dicas.map((s, i) => (
+              <li key={i}>{s}</li>
+            ))}
+          </ul>
+        </details>
+      )}
       {topic.base && (
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
           Base: {topic.base}
@@ -143,5 +170,39 @@ function ArticleCard({ topic }: { topic: HelpTopic }) {
         </Link>
       )}
     </article>
+  );
+}
+
+function FooterAviso() {
+  return (
+    <aside
+      className="mt-8 rounded-2xl border border-rose-200/70 bg-gradient-to-br from-rose-50 via-white to-rose-50/40 p-5 sm:p-6 shadow-sm"
+      aria-label="Aviso sobre a Central de Ajuda"
+    >
+      <div className="flex items-start gap-3">
+        <div className="rounded-full bg-rose-100 text-rose-800 p-2 shrink-0">
+          <HelpCircle className="h-5 w-5" />
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-sm sm:text-base font-bold text-rose-900">
+            Sentiu falta de algum tópico?
+          </h3>
+          <p className="text-sm text-foreground/85 leading-relaxed">
+            Fala com o admin — o SIGMO tá em construção contínua. A cada tela nova,
+            a cada dúvida repetida no chão de fábrica, esta Central cresce junto.
+            Se você abriu uma tela, leu tudo e continuou sem entender, é sinal de
+            que <b>a explicação aqui precisa melhorar</b> — não que você errou.
+          </p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Manda print, manda áudio, manda um "isso aqui tá confuso" — a gente
+            atualiza o texto e todo mundo passa a ver a versão melhor. A ideia é
+            que ninguém precise sair do SIGMO pra tirar dúvida do SIGMO.
+          </p>
+          <p className="text-[11px] uppercase tracking-wider text-rose-800/70 font-semibold pt-1">
+            SIGMO — Sistema Integrado de Gestão Modular · v1
+          </p>
+        </div>
+      </div>
+    </aside>
   );
 }
