@@ -604,6 +604,3 @@ function ComprasNovasBadge() {
     </span>
   );
 }
-    </Sidebar>
-  );
-}
