@@ -35,6 +35,7 @@ import { openStorageFile } from "@/components/file-viewer";
 import { SupplierPicker, type SupplierLite } from "@/components/compras/supplier-picker";
 import { StarRating } from "@/components/compras/star-rating";
 import { cn } from "@/lib/utils";
+import { useNovasDecisoesCompras } from "@/hooks/use-compras-novas-decisoes";
 
 export const Route = createFileRoute("/app/compras/requisicoes-recebidas")({
   component: ComprasRecebidasPage,
@@ -85,6 +86,11 @@ type Req = {
   retroativa?: boolean | null;
   retroativa_motivo?: string | null;
   arquivada_em?: string | null;
+  decidido_em?: string | null;
+  decidido_por_nome?: string | null;
+  motivo_indeferimento?: string | null;
+  cotacao_fornecedor?: string | null;
+  cotacao_valor?: number | null;
 };
 
 type Cotacao = {
