@@ -450,6 +450,8 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
   const [openArquivar, setOpenArquivar] = useState(false);
   const [openEmitirPc, setOpenEmitirPc] = useState(false);
   const [openReceber, setOpenReceber] = useState(false);
+  const [openRecotar, setOpenRecotar] = useState(false);
+  const [openDevolver, setOpenDevolver] = useState(false);
   const pulsing = req.status === "PENDENTE";
   const isRetroativa = !!req.retroativa;
   const isArquivada = !!req.arquivada_em;
@@ -530,6 +532,22 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
               {req.motivo_indeferimento && (
                 <div className="mt-0.5"><strong>Motivo:</strong> {req.motivo_indeferimento}</div>
               )}
+              {(req.recotacao_ciclos ?? 0) > 0 && (
+                <div className="mt-0.5 text-rose-700">
+                  <RotateCcw className="inline h-3 w-3 mr-0.5" />
+                  {req.recotacao_ciclos}º ciclo de recotação
+                </div>
+              )}
+            </div>
+          )}
+          {req.status === "DEVOLVIDA" && (
+            <div className="text-[11px] text-orange-900 mt-1 bg-orange-50 border border-orange-200 rounded px-2 py-1">
+              <strong>↩ Devolvida ao solicitante</strong>
+              {req.devolvida_por_nome ? <> por {req.devolvida_por_nome}</> : null}
+              {req.devolvida_em ? <> em {fmtBR(req.devolvida_em)}</> : null}
+              {req.devolucao_mensagem && (
+                <div className="mt-0.5"><strong>Mensagem:</strong> {req.devolucao_mensagem}</div>
+              )}
             </div>
           )}
         </div>
@@ -557,6 +575,26 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
           >
             <Receipt className="h-3.5 w-3.5 mr-1" /> Registrar NF
           </Button>
+        )}
+        {!isArquivada && req.status === "INDEFERIDA" && (
+          <>
+            <Button
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setOpenRecotar(true)}
+              title="Reabrir para nova cotação"
+            >
+              <RotateCcw className="h-3.5 w-3.5 mr-1" /> Recotar
+            </Button>
+            <Button
+              size="sm"
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+              onClick={() => setOpenDevolver(true)}
+              title="Devolver ao solicitante com mensagem"
+            >
+              <Undo2 className="h-3.5 w-3.5 mr-1" /> Devolver
+            </Button>
+          </>
         )}
         {!isArquivada && (
           <Button
@@ -586,6 +624,12 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
       )}
       {openReceber && (
         <RegistrarRecebimentoDialog req={req} onClose={(ok) => { setOpenReceber(false); if (ok) onChanged(); }} />
+      )}
+      {openRecotar && (
+        <RecotarDialog req={req} onClose={(ok) => { setOpenRecotar(false); if (ok) onChanged(); }} />
+      )}
+      {openDevolver && (
+        <DevolverDialog req={req} onClose={(ok) => { setOpenDevolver(false); if (ok) onChanged(); }} />
       )}
     </Card>
   );
