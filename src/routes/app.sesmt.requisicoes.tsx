@@ -584,6 +584,26 @@ function RequisicoesPage() {
                             )}
                           </div>
                         )}
+                        {r.dispensa_cotacao && (
+                          <div className="mt-1 text-xs bg-amber-50 border border-amber-300 rounded px-2 py-1 text-amber-900">
+                            <strong>⚠️ Dispensa de cotação:</strong>{" "}
+                            {(() => {
+                              const map: Record<string, string> = {
+                                FORNECEDOR_EXCLUSIVO: "Fornecedor exclusivo",
+                                CONTRATO_GUARDA_CHUVA: "Contrato guarda-chuva",
+                                URGENCIA_OPERACIONAL: "Urgência operacional",
+                                PADRONIZACAO_TECNICA: "Padronização técnica",
+                                OUTRO: "Outro",
+                              };
+                              return map[r.dispensa_motivo ?? ""] ?? r.dispensa_motivo;
+                            })()}
+                            {r.dispensa_justificativa && (
+                              <div className="text-[11px] text-amber-800 mt-0.5 whitespace-pre-wrap">
+                                {r.dispensa_justificativa}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-1">
                         {r.classificacao === "MEDICAMENTOS" ? (
@@ -614,6 +634,9 @@ function RequisicoesPage() {
                               <Check className="h-3.5 w-3.5 mr-1" /> Deferir
                             </Button>
                             <IndeferBtn onConfirm={(motivo) => updateStatus.mutate({ id: r.id, status: "INDEFERIDA", motivo })} />
+                            {r.status === "COTADA" && (
+                              <DevolverRcBtn rcId={r.id} numero={r.numero} dispensa={!!r.dispensa_cotacao} />
+                            )}
                           </>
                         )}
                         {(r.status === "APROVADA" || r.status === "INDEFERIDA") && (
