@@ -45,7 +45,7 @@ export const Route = createFileRoute("/app/sesmt/requisicoes")({
   component: RequisicoesPage,
 });
 
-type Status = "PENDENTE" | "EM_COTACAO" | "COTADA" | "APROVADA" | "INDEFERIDA";
+type Status = "PENDENTE" | "EM_COTACAO" | "COTADA" | "APROVADA" | "INDEFERIDA" | "EM_RECEBIMENTO" | "CONCLUIDA" | "DEVOLVIDA";
 type Classe = "MATERIAL" | "SERVICO" | "MEDICAMENTOS";
 
 type Item = {
@@ -91,6 +91,14 @@ type Req = {
   dispensa_cotacao?: boolean | null;
   dispensa_motivo?: string | null;
   dispensa_justificativa?: string | null;
+  devolvida_em?: string | null;
+  devolvida_por_nome?: string | null;
+  devolucao_mensagem?: string | null;
+  pc_numero?: string | null;
+  pc_fornecedor?: string | null;
+  pc_valor?: number | null;
+  nf_numero?: string | null;
+  recebido_em?: string | null;
 };
 
 const STATUS_BADGE: Record<Status, string> = {
@@ -99,6 +107,9 @@ const STATUS_BADGE: Record<Status, string> = {
   COTADA: "bg-blue-100 text-blue-800 border-blue-300",
   APROVADA: "bg-emerald-100 text-emerald-800 border-emerald-300",
   INDEFERIDA: "bg-rose-100 text-rose-800 border-rose-300",
+  EM_RECEBIMENTO: "bg-cyan-100 text-cyan-800 border-cyan-300",
+  CONCLUIDA: "bg-slate-200 text-slate-800 border-slate-400",
+  DEVOLVIDA: "bg-orange-100 text-orange-800 border-orange-300",
 };
 
 const STATUS_LABEL: Record<Status, string> = {
@@ -107,6 +118,9 @@ const STATUS_LABEL: Record<Status, string> = {
   COTADA: "Cotada",
   APROVADA: "Deferida",
   INDEFERIDA: "Indeferida",
+  EM_RECEBIMENTO: "PC emitido — aguardando NF",
+  CONCLUIDA: "Concluída",
+  DEVOLVIDA: "Devolvida — precisa ajuste",
 };
 
 function fmtBR(d?: string | null) {
