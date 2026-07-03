@@ -190,10 +190,17 @@ function ComprasRecebidasPage() {
   const isAdmin = roles.includes("admin");
   const isCompras = isAdmin || roles.includes("compras" as any) || hasModule("compras" as any);
 
-  const [tab, setTab] = useState<"abertas" | "todas" | "enviadas">("abertas");
+  const [tab, setTab] = useState<"abertas" | "enviadas" | "aprovadas" | "indeferidas" | "todas">("abertas");
   const [q, setQ] = useState("");
   const [setorFilter, setSetorFilter] = useState<string>("__all");
   const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
+  const { count: novasDecisoes, markAllSeen } = useNovasDecisoesCompras();
+
+  useEffect(() => {
+    if ((tab === "aprovadas" || tab === "indeferidas") && novasDecisoes > 0) {
+      markAllSeen();
+    }
+  }, [tab, novasDecisoes, markAllSeen]);
 
   const { data: reqs = [], isLoading, refetch } = useQuery({
     queryKey: ["compras-rcs", tab, mostrarArquivadas],
@@ -201,11 +208,13 @@ function ComprasRecebidasPage() {
     queryFn: async () => {
       let query = supabase
         .from("purchase_requisitions")
-        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa,retroativa,retroativa_motivo,arquivada_em")
+        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa,retroativa,retroativa_motivo,arquivada_em,decidido_em,decidido_por_nome,motivo_indeferimento,cotacao_fornecedor,cotacao_valor")
         .order("created_at", { ascending: false })
         .limit(200);
       if (tab === "abertas") query = query.in("status", ["PENDENTE", "EM_COTACAO"] as any);
       if (tab === "enviadas") query = query.eq("status", "COTADA" as any);
+      if (tab === "aprovadas") query = query.eq("status", "APROVADA" as any);
+      if (tab === "indeferidas") query = query.eq("status", "INDEFERIDA" as any);
       if (mostrarArquivadas) {
         query = query.not("arquivada_em", "is", null);
       } else {
