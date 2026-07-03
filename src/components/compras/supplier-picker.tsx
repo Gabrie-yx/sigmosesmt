@@ -89,20 +89,23 @@ export function SupplierPicker({
               <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="p-0 w-[420px] max-w-[95vw]" align="start">
-            <div className="p-2 border-b flex gap-2 items-center">
-              <Search className="h-4 w-4 text-slate-400 shrink-0" />
+          <PopoverContent
+            className="p-0 w-[420px] max-w-[95vw] bg-popover text-popover-foreground border-border shadow-xl backdrop-blur-md"
+            align="start"
+          >
+            <div className="p-2 border-b border-border flex gap-2 items-center bg-popover/60">
+              <Search className="h-4 w-4 text-muted-foreground shrink-0" />
               <Input
                 autoFocus
                 placeholder="Buscar por nome, CNPJ, produto…"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                className="h-8"
+                className="h-8 bg-transparent border-border"
               />
             </div>
             <div className="max-h-[320px] overflow-y-auto">
               {filtered.length === 0 ? (
-                <div className="p-4 text-center text-xs text-slate-500">
+                <div className="p-4 text-center text-xs text-muted-foreground">
                   Nenhum fornecedor encontrado.
                 </div>
               ) : (
@@ -118,17 +121,17 @@ export function SupplierPicker({
                         setQ("");
                       }}
                       className={cn(
-                        "w-full text-left px-3 py-2 hover:bg-slate-100 border-b last:border-b-0 flex items-start gap-2",
-                        active && "bg-amber-50",
+                        "w-full text-left px-3 py-2 hover:bg-accent hover:text-accent-foreground border-b border-border last:border-b-0 flex items-start gap-2 transition-colors",
+                        active && "bg-primary/15",
                       )}
                     >
-                      <Check className={cn("h-4 w-4 mt-0.5 shrink-0", active ? "text-emerald-600" : "text-transparent")} />
+                      <Check className={cn("h-4 w-4 mt-0.5 shrink-0", active ? "text-primary" : "text-transparent")} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm truncate">{f.nome_fantasia}</span>
                           <StarRating value={f.estrelas} size="sm" readOnly />
                         </div>
-                        <div className="text-[11px] text-slate-500 truncate">
+                        <div className="text-[11px] text-muted-foreground truncate">
                           {f.cnpj ?? "sem CNPJ"} · {f.produto ?? f.tipo}
                         </div>
                       </div>
@@ -137,7 +140,7 @@ export function SupplierPicker({
                 })
               )}
             </div>
-            <div className="p-2 border-t bg-slate-50">
+            <div className="p-2 border-t border-border bg-muted/40">
               <Button
                 type="button"
                 size="sm"
@@ -151,7 +154,7 @@ export function SupplierPicker({
           </PopoverContent>
         </Popover>
         {value && (
-          <div className="text-[11px] text-slate-500 mt-1">
+          <div className="text-[11px] text-muted-foreground mt-1">
             {value.razao_social ?? "—"} · CNPJ {value.cnpj ?? "—"}
           </div>
         )}
