@@ -67,6 +67,16 @@ export function HelpHint({
             </ol>
           </>
         )}
+        {t.dicas && t.dicas.length > 0 && (
+          <>
+            <p className="font-semibold mb-1">Dicas:</p>
+            <ul className="list-disc pl-4 space-y-0.5 mb-2 text-foreground/85">
+              {t.dicas.map((s, i) => (
+                <li key={i}>{s}</li>
+              ))}
+            </ul>
+          </>
+        )}
         {t.base && (
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
             Base: {t.base}
