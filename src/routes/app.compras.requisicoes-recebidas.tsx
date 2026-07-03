@@ -304,8 +304,10 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
 
   const totalCot = cotacoes.length;
   const hasWinner = cotacoes.some((c) => c.is_vencedora);
-  const canSend = totalCot >= 3 && hasWinner && (req.status === "PENDENTE" || req.status === "EM_COTACAO");
-  const missing = Math.max(0, 3 - totalCot);
+  const dispensa = !!req.dispensa_cotacao;
+  const minCot = dispensa ? 1 : 3;
+  const canSend = totalCot >= minCot && hasWinner && (req.status === "PENDENTE" || req.status === "EM_COTACAO");
+  const missing = Math.max(0, minCot - totalCot);
 
   const marcarVenc = useMutation({
     mutationFn: async (cotId: string) => {
@@ -347,6 +349,19 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
     onError: (e: any) => toast.error(e.message ?? "Falha ao enviar"),
   });
 
+  const revogarDispensa = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("revogar_dispensa_rc", { _rc_id: req.id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Dispensa revogada — voltando à regra de 3 cotações");
+      qc.invalidateQueries({ queryKey: ["compras-rcs"] });
+      onClose();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao revogar dispensa"),
+  });
+
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -365,6 +380,35 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
             <Badge className={STATUS_BADGE[req.status] + " border"}>{STATUS_LABEL[req.status]}</Badge>
           </div>
         </div>
+
+        {dispensa && (
+          <div className="border-2 border-amber-400 bg-amber-50 rounded-lg p-3 flex items-start gap-3">
+            <ShieldAlert className="h-6 w-6 text-amber-700 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-black text-amber-900 uppercase tracking-wide">
+                Dispensa de cotação ativa
+              </div>
+              <div className="text-xs text-amber-900 mt-1">
+                <strong>Motivo:</strong> {MOTIVO_LABEL[req.dispensa_motivo as keyof typeof MOTIVO_LABEL] ?? req.dispensa_motivo}
+              </div>
+              <div className="text-xs text-amber-900 mt-1 whitespace-pre-wrap">
+                <strong>Justificativa:</strong> {req.dispensa_justificativa}
+              </div>
+              <div className="text-[11px] text-amber-800 mt-1">
+                Regra reduzida: <strong>mínimo 1 cotação</strong> + vencedora marcada.
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => revogarDispensa.mutate()}
+              disabled={revogarDispensa.isPending}
+              className="border-amber-400 text-amber-800 hover:bg-amber-100"
+            >
+              <XCircle className="h-3.5 w-3.5 mr-1" /> Revogar dispensa
+            </Button>
+          </div>
+        )}
 
         {/* Itens */}
         <div>
@@ -445,8 +489,11 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
           )}
         </div>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 flex-wrap">
           <Button variant="outline" onClick={onClose}>Fechar</Button>
+          {!dispensa && (req.status === "PENDENTE" || req.status === "EM_COTACAO") && (
+            <DispensarCotacoesBtn rcId={req.id} onDone={() => { qc.invalidateQueries({ queryKey: ["compras-rcs"] }); onClose(); }} />
+          )}
           <Button
             className="bg-red-700 hover:bg-red-800 text-white"
             disabled={!canSend || enviarSup.isPending}
