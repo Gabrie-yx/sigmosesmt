@@ -441,6 +441,8 @@ function SetorCard({
 function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
   const [openDetail, setOpenDetail] = useState(false);
   const [openArquivar, setOpenArquivar] = useState(false);
+  const [openEmitirPc, setOpenEmitirPc] = useState(false);
+  const [openReceber, setOpenReceber] = useState(false);
   const pulsing = req.status === "PENDENTE";
   const isRetroativa = !!req.retroativa;
   const isArquivada = !!req.arquivada_em;
@@ -482,6 +484,38 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
               <div className="mt-0.5 text-emerald-700">Próximo passo: emitir Pedido de Compra ao fornecedor.</div>
             </div>
           )}
+          {(req.status === "EM_RECEBIMENTO" || req.status === "CONCLUIDA") && req.pc_numero && (
+            <div className="text-[11px] text-cyan-900 mt-1 bg-cyan-50 border border-cyan-200 rounded px-2 py-1">
+              <div className="flex items-center gap-1"><FileCheck2 className="h-3 w-3" /> <strong>PC {req.pc_numero}</strong> · {req.pc_fornecedor ?? "—"} · {fmtMoney(req.pc_valor)}</div>
+              <div className="text-cyan-800">
+                Emitido por {req.pc_emitido_por_nome ?? "—"}{req.pc_emitido_em ? <> em {fmtBR(req.pc_emitido_em)}</> : null}
+                {req.pc_prazo_entrega ? <> · prazo {fmtBR(req.pc_prazo_entrega)}</> : null}
+              </div>
+              {req.pc_arquivo_url && (
+                <button
+                  type="button"
+                  className="mt-0.5 text-cyan-700 underline"
+                  onClick={() => openStorageFile("rc-cotacoes", req.pc_arquivo_url!)}
+                >
+                  Ver PC anexado
+                </button>
+              )}
+            </div>
+          )}
+          {req.status === "CONCLUIDA" && req.nf_numero && (
+            <div className="text-[11px] text-slate-800 mt-1 bg-slate-100 border border-slate-300 rounded px-2 py-1">
+              <div className="flex items-center gap-1"><Receipt className="h-3 w-3" /> <strong>NF {req.nf_numero}</strong> — recebida por {req.recebido_por_nome ?? "—"}{req.recebido_em ? <> em {fmtBR(req.recebido_em)}</> : null}</div>
+              {req.nf_arquivo_url && (
+                <button
+                  type="button"
+                  className="mt-0.5 text-slate-700 underline"
+                  onClick={() => openStorageFile("rc-cotacoes", req.nf_arquivo_url!)}
+                >
+                  Ver NF anexada
+                </button>
+              )}
+            </div>
+          )}
           {req.status === "INDEFERIDA" && (
             <div className="text-[11px] text-rose-800 mt-1 bg-rose-50 border border-rose-200 rounded px-2 py-1">
               <strong>✗ Indeferida</strong> por {req.decidido_por_nome ?? "supervisor"}
@@ -497,6 +531,26 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
         </Badge>
       </CardHeader>
       <CardContent className="p-3 pt-1 flex items-center justify-end gap-1">
+        {!isArquivada && req.status === "APROVADA" && (
+          <Button
+            size="sm"
+            className="bg-cyan-600 hover:bg-cyan-700 text-white"
+            onClick={() => setOpenEmitirPc(true)}
+            title="Emitir Pedido de Compra"
+          >
+            <FileCheck2 className="h-3.5 w-3.5 mr-1" /> Emitir PC
+          </Button>
+        )}
+        {!isArquivada && req.status === "EM_RECEBIMENTO" && (
+          <Button
+            size="sm"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            onClick={() => setOpenReceber(true)}
+            title="Registrar recebimento e NF"
+          >
+            <Receipt className="h-3.5 w-3.5 mr-1" /> Registrar NF
+          </Button>
+        )}
         {!isArquivada && (
           <Button
             size="sm"
@@ -519,6 +573,12 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
       )}
       {openArquivar && (
         <ArquivarDialog rcId={req.id} rcNumero={req.numero} onClose={(ok) => { setOpenArquivar(false); if (ok) onChanged(); }} />
+      )}
+      {openEmitirPc && (
+        <EmitirPcDialog req={req} onClose={(ok) => { setOpenEmitirPc(false); if (ok) onChanged(); }} />
+      )}
+      {openReceber && (
+        <RegistrarRecebimentoDialog req={req} onClose={(ok) => { setOpenReceber(false); if (ok) onChanged(); }} />
       )}
     </Card>
   );
