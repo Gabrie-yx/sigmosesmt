@@ -168,6 +168,10 @@ const COMPRAS_ITEMS: LeafItem[] = [
   { to: "/app/compras/fornecedores", label: "Fornecedores", icon: UsersIcon },
 ];
 
+const ADMINISTRATIVO_ITEMS: LeafItem[] = [
+  { to: "/app/administrativo/requisicoes-recebidas", label: "Requisições Recebidas", icon: ClipboardList },
+];
+
 const MANUTENCAO_LOCKED: LockedItem[] = [
   { key: "manut-eletrica", label: "Elétrica", icon: Zap },
   { key: "manut-mecanica", label: "Mecânica", icon: Hammer },
@@ -208,6 +212,7 @@ export function AppSidebar() {
   const canProducao = isAdmin || hasModule("producao");
   const canCompras = isAdmin || hasModule("compras") || roles.includes("compras");
   const canUsuarios = isAdmin || hasModule("usuarios");
+  const canAdministrativo = isAdmin || hasModule("administrativo" as any);
 
   // Filtra grupos/itens pelo controle granular de menus
   const visibleSesmtGroups = SESMT_GROUPS
@@ -217,12 +222,14 @@ export function AppSidebar() {
   const visibleEstoque = ESTOQUE_ITEMS.filter((i) => hasMenu(i.to));
   const visibleProducao = PRODUCAO_SUBMENU.filter((i) => hasMenu(i.to));
   const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to));
+  const visibleAdministrativo = ADMINISTRATIVO_ITEMS.filter((i) => hasMenu(i.to));
 
   const sesmtAllItems = visibleSesmtGroups.flatMap((g) => g.items).concat(visibleDDSSubmenu);
   const sesmtOpen = anyActive(sesmtAllItems);
   const estoqueOpen = anyActive(visibleEstoque);
   const producaoOpen = anyActive(visibleProducao);
   const comprasOpen = anyActive(visibleCompras);
+  const administrativoOpen = anyActive(visibleAdministrativo);
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
