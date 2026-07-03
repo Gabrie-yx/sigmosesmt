@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { gerarPPPPdf, emptyPPPDados, type PPPDados, type PPPRisco } from "@/lib/ppp-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
+import { logRead } from "@/lib/audit-read";
 
 /** Formata YYYY-MM-DD -> DD/MM/YYYY */
 function fmtBR(d?: string | null) {
@@ -42,6 +43,11 @@ export function PPPEditorDialog({
 }) {
   const qc = useQueryClient();
   const empId = employee?.id;
+
+  useEffect(() => {
+    if (open && empId) logRead("ppp_emissoes", empId, { via: "ppp-editor", employee_id: empId });
+  }, [open, empId]);
+
   const [pppId, setPppId] = useState<string | null>(null);
   const [status, setStatus] = useState<"RASCUNHO" | "EMITIDO" | "CANCELADO">("RASCUNHO");
   const [numero, setNumero] = useState<string | null>(null);
