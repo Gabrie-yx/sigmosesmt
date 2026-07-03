@@ -68,16 +68,56 @@ function CentralAjuda() {
         </div>
       </header>
 
-      <div className="flex gap-1 border-b border-black/10">
-        <TabBtn active={tab === "topicos"} onClick={() => setTab("topicos")} icon={BookOpen}>
-          Tópicos
-        </TabBtn>
-        <TabBtn active={tab === "chat"} onClick={() => setTab("chat")} icon={Bot}>
-          Pergunte ao SIGMO
-          <Badge variant="secondary" className="ml-2 text-[9px] bg-rose-100 text-rose-800 border-rose-200">
-            IA
-          </Badge>
-        </TabBtn>
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-stretch">
+        <button
+          onClick={() => setTab("chat")}
+          className={
+            "group relative flex-1 text-left rounded-2xl p-4 border transition-all overflow-hidden " +
+            (tab === "chat"
+              ? "bg-gradient-to-br from-rose-700 via-rose-600 to-rose-800 text-white border-rose-700 shadow-lg shadow-rose-900/20"
+              : "bg-gradient-to-br from-rose-700/95 via-rose-600/95 to-rose-800/95 text-white border-rose-700/70 shadow-md hover:shadow-xl hover:-translate-y-0.5")
+          }
+        >
+          <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+          <div className="flex items-center gap-3 relative">
+            <div className="rounded-xl bg-white/15 backdrop-blur p-2 border border-white/20">
+              <Bot className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-black text-base tracking-tight">Pergunte ao SIGMO</span>
+                <Badge className="bg-white text-rose-800 border-0 text-[9px] font-bold gap-1">
+                  <Sparkles className="h-2.5 w-2.5" /> IA
+                </Badge>
+              </div>
+              <p className="text-[11px] text-white/85 mt-0.5 leading-snug">
+                Assistente que conhece {HELP_TOPICS.length} tópicos + o mapa completo do sistema. Resposta na hora.
+              </p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-white/70 group-hover:translate-x-0.5 transition-transform shrink-0" />
+          </div>
+        </button>
+        <button
+          onClick={() => setTab("topicos")}
+          className={
+            "sm:w-56 text-left rounded-2xl p-4 border transition-all " +
+            (tab === "topicos"
+              ? "bg-white border-rose-300 shadow-md ring-2 ring-rose-200"
+              : "bg-white/70 border-black/10 hover:bg-white hover:shadow-sm")
+          }
+        >
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-rose-100 text-rose-800 p-2 border border-rose-200">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-sm text-foreground">Navegar tópicos</div>
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                Lista com busca e filtros por categoria.
+              </p>
+            </div>
+          </div>
+        </button>
       </div>
 
       {tab === "chat" ? (
