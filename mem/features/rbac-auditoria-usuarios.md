@@ -38,7 +38,12 @@ type: feature
 - Botão "Revogar acesso" com invalidação imediata da sessão.
 
 ## Aguardando decisão
-- Frank e Gabriel continuam admin ou viram viewer?
-- Anderson vira `supervisor_geral` puro (sem admin)?
-- Segregar por empresa é prioridade agora ou fase 2?
-- MFA obrigatório para quais roles exatas?
+- Frank e Gabriel continuam admin ou viram viewer? (ainda em aberto)
+
+## Decidido e aplicado em 03/07/2026
+- **Anderson**: perdeu admin, virou `moderador` + `supervisor_geral` em `company_settings`. Módulos: sesmt, producao, manutencao, compras, estoque, portaria. Módulo `usuarios` **bloqueado**. Sessões encerradas — precisa relogar.
+- **MFA obrigatório pra todos** com role. Grace period de 7 dias em `profiles.mfa_grace_until` (default `now() + 7d` via `handle_new_user`). Client (`useAuth`) libera enquanto grace estiver ativo; banner azul avisa "MFA obrigatório em N dias".
+- **Convites pendentes**: todos os `user_invites.accepted_at IS NULL` deletados (faxina total).
+- **Trilha de leitura**: check de `audit_logs.action` ampliado pra aceitar `READ`. Função `log_read(entity, entity_id, contexto)` grava acesso. Helper client `src/lib/audit-read.ts` chama via RPC. Falta ligar nas telas sensíveis: employees/$id (ficha), atestados-tab, employee_exams (ASO), companies (dossiê), hora_extra_sabado, ppp_emissoes, prestadores_saude.
+- **Segregação por empresa**: fase 2 (não iniciada). Plano: coluna `allowed_company_ids uuid[]` em `profiles` + revisar RLS de tabelas com `company_id`.
+- **Botão revogar acesso**: já existia (`admin_force_signout_user`). Nada a fazer.
