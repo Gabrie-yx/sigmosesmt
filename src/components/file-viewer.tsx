@@ -139,19 +139,19 @@ export function FileViewerHost() {
           className="pdf-dialog fixed left-[50%] top-[50%] z-[121] flex h-[90vh] w-[calc(100vw-2rem)] max-w-5xl flex-col gap-0 overflow-hidden border border-white/15 bg-white p-0 shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:rounded-2xl"
           style={{ position: "fixed", transform: "translate(-50%, -50%)" }}
         >
-        <div className="flex h-14 shrink-0 flex-row items-center justify-between gap-3 border-b border-white/10 px-4 py-2">
+        <div className="flex h-14 shrink-0 flex-row items-center justify-between gap-3 border-b border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 px-4 py-2">
           <DialogPrimitive.Title className="min-w-0 flex-1 truncate pr-2 text-sm font-semibold text-slate-100">{payload?.name}</DialogPrimitive.Title>
           <div className="flex shrink-0 items-center gap-2">
-            <Button size="sm" variant="outline" onClick={handlePrint} className="h-8 border-white/15 bg-white/10 text-slate-100 hover:bg-white/15 hover:text-white">
+            <Button size="sm" variant="outline" onClick={handlePrint} className="h-8 border-white/20 bg-white/10 text-slate-100 hover:bg-red-700 hover:border-red-700 hover:text-white">
               <Printer className="h-4 w-4 mr-1" /> Imprimir
             </Button>
-            <Button size="sm" variant="outline" onClick={handleDownload} className="h-8 border-white/15 bg-white/10 text-slate-100 hover:bg-white/15 hover:text-white">
+            <Button size="sm" variant="outline" onClick={handleDownload} className="h-8 border-white/20 bg-white/10 text-slate-100 hover:bg-red-700 hover:border-red-700 hover:text-white">
               <Download className="h-4 w-4 mr-1" /> Baixar
             </Button>
-            <Button size="icon" variant="ghost" onClick={() => payload && window.open(payload.url, "_blank")} className="h-8 w-8 text-slate-200 hover:bg-white/10 hover:text-white" title="Abrir em nova aba">
+            <Button size="icon" variant="ghost" onClick={() => payload && window.open(payload.url, "_blank")} className="h-8 w-8 text-slate-200 hover:bg-white/15 hover:text-white" title="Abrir em nova aba">
               <ExternalLink className="h-4 w-4" />
             </Button>
-            <DialogPrimitive.Close className="ml-1 rounded-sm p-1 text-slate-300 opacity-80 hover:bg-white/10 hover:text-white hover:opacity-100" title="Fechar">
+            <DialogPrimitive.Close className="ml-1 rounded-sm p-1 text-slate-300 opacity-80 hover:bg-white/15 hover:text-white hover:opacity-100" title="Fechar">
               <X className="h-4 w-4" />
             </DialogPrimitive.Close>
           </div>
