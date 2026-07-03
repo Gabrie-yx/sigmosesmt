@@ -6,6 +6,7 @@ Quando o usuário falar em "outras empresas", "multi-empresa", "white-label", "S
 Arquivar TUDO que o usuário disser na memória (pendência/decisão/contexto) para tratamento posterior — ver mem://preferences/arquivar-tudo.
 Padrão **Modal-First**: ações novas abrem como modal/sheet/drawer sobre a tela contextual. Rota nova só com justificativa (ver mem://preferences/modal-first).
 MB51: Base MP vence, mas OUTROS é residual saneado por descrição; classificacao_mb51 nunca reforça material cadastrado — ver mem://features/mb51-classificacao-base-mp.
+RBAC: módulo/papel/menu precisa bater em UI, validação server-side, enum/funções do Supabase e guards; nunca divergir.
 
 ## Memories
 - [Pendências](mem://pendencias) — Tarefas pendentes acordadas com o usuário (geradores PDF Eficácia/Reação, etc.)
@@ -24,3 +25,4 @@ MB51: Base MP vence, mas OUTROS é residual saneado por descrição; classificac
 - [Israel - Almoxarifado](mem://team/israel-almoxarifado.md) — Responsável pelo almox no pátio; valida fatores de consumo (SOLDA/GÁS/TINTA) em /app/producao/fatores-consumo.
 - [RC Auto-scoring + 5 estrelas](mem://features/rc-auto-scoring-estrelas.md) — Fila pra depois: varredura de 2-3 cotações, "MELHOR OFERTA" automática e rating 1-5 do fornecedor; iniciar quando chegar a planilha SAP de fornecedores.
 - [Auditoria RBAC / usuários](mem://features/rbac-auditoria-usuarios.md) — Levantamento 03/07: 4 de 5 usuários são admin; sem segregação por empresa; proposta de roles finas + MFA obrigatório em debate. Não codar sem OK.
+- [RBAC com fonte única](mem://preferences/rbac-fonte-unica.md) — Nunca exibir módulo/papel na tela se backend/banco/guards não aceitarem; revisar tudo junto ao criar módulo.
