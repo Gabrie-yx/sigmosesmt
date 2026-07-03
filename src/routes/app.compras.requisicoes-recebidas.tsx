@@ -327,20 +327,66 @@ function ComprasRecebidasPage() {
         <TabsContent value={tab} className="mt-3">
           {isLoading ? (
             <div className="p-8 text-center text-slate-500">Carregando…</div>
-          ) : filtered.length === 0 ? (
+          ) : grupos.length === 0 ? (
             <div className="p-10 text-center text-slate-500 border rounded-xl bg-white">
               Nenhuma requisição encontrada.
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {filtered.map((r) => (
-                <RcCard key={r.id} req={r} onChanged={() => refetch()} />
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              {grupos.map(([setor, lista]) => (
+                <SetorCard key={setor} setor={setor} lista={lista} onChanged={() => refetch()} />
               ))}
             </div>
           )}
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function SetorCard({
+  setor, lista, onChanged,
+}: { setor: string; lista: Req[]; onChanged: () => void }) {
+  const Icon = SETOR_ICON[setor] ?? Package;
+  const accent = SETOR_ACCENT[setor] ?? "accent-sky";
+  const pendentes = lista.filter((r) => r.status === "PENDENTE").length;
+  const [open, setOpen] = useState(setor !== "SESMT");
+  return (
+    <Card className="glass-card overflow-hidden">
+      <CardHeader
+        role="button"
+        tabIndex={0}
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen((v) => !v); } }}
+        className={`p-4 pb-3 flex flex-row items-center justify-between gap-2 cursor-pointer select-none ${open ? "border-b border-white/10" : ""}`}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          {open ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
+          <div className={`h-10 w-10 rounded-xl prism-pill ${accent} flex items-center justify-center text-foreground shrink-0`}>
+            <Icon className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-base font-bold text-foreground truncate">{setor}</div>
+            <div className="text-[11px] text-muted-foreground">
+              {lista.length} requisição{lista.length === 1 ? "" : "ões"}
+              {pendentes > 0 ? ` · ${pendentes} aguardando cotação` : ""}
+            </div>
+          </div>
+        </div>
+        {pendentes > 0 && (
+          <span className="prism-pill accent-amber px-2.5 py-1 text-[11px] text-amber-100 shrink-0">
+            {pendentes} p/ cotar
+          </span>
+        )}
+      </CardHeader>
+      {open && (
+        <CardContent className="p-3 space-y-2">
+          {lista.map((r) => (
+            <RcCard key={r.id} req={r} onChanged={onChanged} />
+          ))}
+        </CardContent>
+      )}
+    </Card>
   );
 }
 
