@@ -99,7 +99,7 @@ function AdministrativoRecebidasPage() {
   const isAdmin = roles.includes("admin");
   const canAcesso = isAdmin || hasModule("administrativo" as any);
 
-  const [tab, setTab] = useState<"parecer" | "abertas" | "decididas" | "todas">("parecer");
+  const [tab, setTab] = useState<"parecer" | "decididas" | "todas">("parecer");
   const [q, setQ] = useState("");
   const [setorFilter, setSetorFilter] = useState<string>("__all");
 
@@ -107,14 +107,16 @@ function AdministrativoRecebidasPage() {
     queryKey: ["admin-rcs", tab],
     enabled: !!user && canAcesso,
     queryFn: async () => {
+      // Anderson só vê RCs que JÁ passaram pelo Compras (COTADA/APROVADA/INDEFERIDA).
+      // PENDENTE e EM_COTACAO ficam ocultas — ainda estão na mesa do Compras.
       let query = supabase
         .from("purchase_requisitions")
         .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,status_token,cotacao_fornecedor,cotacao_valor,cotador_nome,pego_por_compras_nome,motivo_indeferimento,decidido_por_nome,decidido_em")
         .order("created_at", { ascending: false })
         .limit(300);
       if (tab === "parecer") query = query.eq("status", "COTADA" as any);
-      if (tab === "abertas") query = query.in("status", ["PENDENTE", "EM_COTACAO"] as any);
       if (tab === "decididas") query = query.in("status", ["APROVADA", "INDEFERIDA"] as any);
+      if (tab === "todas") query = query.in("status", ["COTADA", "APROVADA", "INDEFERIDA"] as any);
       const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as Req[];
@@ -140,14 +142,12 @@ function AdministrativoRecebidasPage() {
     queryKey: ["admin-rcs-counts"],
     enabled: !!user && canAcesso,
     queryFn: async () => {
-      const [parecer, abertas, decididas] = await Promise.all([
+      const [parecer, decididas] = await Promise.all([
         supabase.from("purchase_requisitions").select("id", { count: "exact", head: true }).eq("status", "COTADA" as any),
-        supabase.from("purchase_requisitions").select("id", { count: "exact", head: true }).in("status", ["PENDENTE", "EM_COTACAO"] as any),
         supabase.from("purchase_requisitions").select("id", { count: "exact", head: true }).in("status", ["APROVADA", "INDEFERIDA"] as any),
       ]);
       return {
         parecer: parecer.count ?? 0,
-        abertas: abertas.count ?? 0,
         decididas: decididas.count ?? 0,
       };
     },
@@ -185,7 +185,6 @@ function AdministrativoRecebidasPage() {
         </div>
         <div className="flex items-center gap-2">
           <Badge className="bg-blue-100 text-blue-800 border-blue-300">Aguardando parecer: {counts?.parecer ?? 0}</Badge>
-          <Badge className="bg-amber-100 text-amber-800 border-amber-300">Em fluxo: {counts?.abertas ?? 0}</Badge>
           <Badge className="bg-slate-100 text-slate-800 border-slate-300">Decididas: {counts?.decididas ?? 0}</Badge>
           <ManualSupervisorButton />
         </div>
@@ -222,7 +221,6 @@ function AdministrativoRecebidasPage() {
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
         <TabsList>
           <TabsTrigger value="parecer">Aguardando meu parecer ({counts?.parecer ?? 0})</TabsTrigger>
-          <TabsTrigger value="abertas">Em fluxo</TabsTrigger>
           <TabsTrigger value="decididas">Decididas</TabsTrigger>
           <TabsTrigger value="todas">Todas</TabsTrigger>
         </TabsList>
