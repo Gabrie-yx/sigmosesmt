@@ -94,6 +94,18 @@ const STATUS_LABEL: Record<Req["status"], string> = {
   INDEFERIDA: "Indeferida",
 };
 
+const MOTIVOS_DISPENSA = [
+  { value: "FORNECEDOR_EXCLUSIVO", label: "Fornecedor exclusivo / representante único" },
+  { value: "CONTRATO_GUARDA_CHUVA", label: "Contrato guarda-chuva vigente" },
+  { value: "URGENCIA_OPERACIONAL", label: "Urgência operacional (parada / emergência SST)" },
+  { value: "PADRONIZACAO_TECNICA", label: "Padronização técnica (peça OEM / reposição)" },
+  { value: "OUTRO", label: "Outro (detalhar na justificativa)" },
+] as const;
+
+const MOTIVO_LABEL: Record<string, string> = Object.fromEntries(
+  MOTIVOS_DISPENSA.map((m) => [m.value, m.label]),
+);
+
 function fmtBR(d?: string | null) {
   if (!d) return "—";
   const [y, m, day] = d.split("T")[0].split("-");
