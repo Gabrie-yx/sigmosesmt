@@ -27,6 +27,9 @@ import {
   Archive, History,
 } from "lucide-react";
 import { Layers, PackageCheck, AlertTriangle, CheckCircle2 } from "lucide-react";
+import {
+  Building2, Wrench, Cog, Factory, Boxes, ShieldPlus, ChevronRight,
+} from "lucide-react";
 import { toast } from "sonner";
 import { openStorageFile } from "@/components/file-viewer";
 import { SupplierPicker, type SupplierLite } from "@/components/compras/supplier-picker";
@@ -45,6 +48,24 @@ const SETORES = [
   "Almoxarifado",
   "SESMT",
 ] as const;
+
+const SETOR_ICON: Record<string, typeof Package> = {
+  "Produção": Factory,
+  "Manutenção Elétrica": Wrench,
+  "Manutenção Mecânica": Cog,
+  "Administrativo": Building2,
+  "Almoxarifado": Boxes,
+  "SESMT": ShieldPlus,
+};
+
+const SETOR_ACCENT: Record<string, string> = {
+  "Produção": "accent-sky",
+  "Manutenção Elétrica": "accent-amber",
+  "Manutenção Mecânica": "accent-violet",
+  "Administrativo": "accent-emerald",
+  "Almoxarifado": "accent-wine",
+  "SESMT": "accent-rose",
+};
 
 type Req = {
   id: string;
