@@ -246,7 +246,7 @@ export function SignaturePadDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl z-[110]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
