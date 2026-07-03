@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useMinhasRcsDecididas } from "@/hooks/use-minhas-rcs-decididas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -359,6 +360,12 @@ function RequisicoesPage() {
   const qc = useQueryClient();
   const [openNew, setOpenNew] = useState(false);
   const location = useLocation();
+  const { count: novasAtualizacoes, markAllSeen } = useMinhasRcsDecididas();
+
+  // Marca como visto ao entrar na página (badge do menu some)
+  useEffect(() => {
+    if (novasAtualizacoes > 0) markAllSeen();
+  }, [novasAtualizacoes, markAllSeen]);
 
   // Se houver rascunho na URL (?draft=true), abre o modal automaticamente
   useEffect(() => {
