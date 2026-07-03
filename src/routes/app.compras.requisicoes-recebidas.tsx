@@ -913,6 +913,84 @@ function AddCotacaoDialog({
   classificacao: Req["classificacao"];
   onAdded: () => void;
 }) {
+  return <AddCotacaoDialogImpl rcId={rcId} classificacao={classificacao} onAdded={onAdded} />;
+}
+
+type ConformidadeDetalhe = {
+  marca: string | null;
+  descricao_ofertada: string | null;
+  justificativa_conformidade: string | null;
+};
+
+function ConformidadeBadge({
+  status, detalhe,
+}: { status: string | null; detalhe?: ConformidadeDetalhe }) {
+  if (!status) return null;
+  const config = {
+    CONFORME: {
+      cls: "bg-emerald-100 text-emerald-800 border-emerald-300",
+      icon: <CheckCircle2 className="h-2.5 w-2.5" />,
+      label: "Conforme",
+      title: "✅ CONFORME",
+      desc: "Marca/modelo idênticos ao pedido da RC. Score cheio, sem penalidade.",
+    },
+    SIMILAR: {
+      cls: "bg-amber-100 text-amber-800 border-amber-300",
+      icon: null,
+      label: "Similar",
+      title: "🟡 SIMILAR",
+      desc: "Marca alternativa que atende a especificação técnica (norma/CA/classe equivalentes). Aceito com justificativa registrada.",
+    },
+    DIVERGENTE: {
+      cls: "bg-orange-100 text-orange-800 border-orange-300",
+      icon: <AlertTriangle className="h-2.5 w-2.5" />,
+      label: "Divergente",
+      title: "⚠️ DIVERGENTE",
+      desc: "Não atende plenamente a especificação. Cotação leva penalidade de 10% no score final.",
+    },
+  } as const;
+  const c = (config as any)[status];
+  if (!c) return null;
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge className={cn("text-[9px] gap-0.5 border cursor-help", c.cls)}>
+            {c.icon} {c.label}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent side="left" className="max-w-xs text-xs space-y-1.5 p-3">
+          <div className="font-bold">{c.title}</div>
+          <div className="text-[11px] opacity-90">{c.desc}</div>
+          {detalhe?.marca && (
+            <div className="pt-1.5 border-t border-white/20">
+              <span className="font-semibold">Marca ofertada:</span> {detalhe.marca}
+            </div>
+          )}
+          {detalhe?.descricao_ofertada && (
+            <div>
+              <span className="font-semibold">Descrição:</span> {detalhe.descricao_ofertada}
+            </div>
+          )}
+          {detalhe?.justificativa_conformidade && (
+            <div className="pt-1.5 border-t border-white/20">
+              <span className="font-semibold">Justificativa do comprador:</span><br />
+              <span className="italic">"{detalhe.justificativa_conformidade}"</span>
+            </div>
+          )}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function AddCotacaoDialogImpl({
+  rcId, classificacao, onAdded,
+}: {
+  rcId: string;
+  classificacao: Req["classificacao"];
+  onAdded: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [supplier, setSupplier] = useState<SupplierLite | null>(null);
   const [prazo, setPrazo] = useState("");
