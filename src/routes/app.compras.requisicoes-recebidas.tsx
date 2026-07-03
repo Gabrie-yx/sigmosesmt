@@ -885,19 +885,10 @@ function MelhorComboTab({ rcId }: { rcId: string }) {
                 <td className="p-2 text-right font-mono font-bold">{fmtMoney(i.valor_total ?? undefined)}</td>
                 <td className="p-2 text-center">{i.prazo_entrega_dias ? `${i.prazo_entrega_dias}d` : "—"}</td>
                 <td className="p-2 text-center">
-                  {i.conformidade === "CONFORME" && (
-                    <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[9px] gap-0.5">
-                      <CheckCircle2 className="h-2.5 w-2.5" /> Conforme
-                    </Badge>
-                  )}
-                  {i.conformidade === "SIMILAR" && (
-                    <Badge className="bg-amber-100 text-amber-800 border border-amber-300 text-[9px]">Similar</Badge>
-                  )}
-                  {i.conformidade === "DIVERGENTE" && (
-                    <Badge className="bg-orange-100 text-orange-800 border border-orange-300 text-[9px] gap-0.5">
-                      <AlertTriangle className="h-2.5 w-2.5" /> Divergente
-                    </Badge>
-                  )}
+                  <ConformidadeBadge
+                    status={i.conformidade}
+                    detalhe={detalhePorItem.get(`${i.melhor_cotacao_id}::${i.rc_item_id}`)}
+                  />
                 </td>
               </tr>
             ))}
