@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { useRef, useState } from "react";
 import dmnLogo from "@/assets/dmn-logo.png";
 import { PendenciasBadge } from "@/components/pendencias-badge";
-import { RcHeaderBadge } from "@/components/rc-header-badge";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -81,7 +80,6 @@ export function AppHeader() {
 
         <div className="flex items-center gap-1 md:gap-1.5 shrink-0 ml-auto">
           <PendenciasBadge />
-          <RcHeaderBadge />
           <Link
             to="/app/ajuda"
             title="Central de Ajuda"
