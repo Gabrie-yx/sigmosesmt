@@ -57,6 +57,9 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", module: "compras" },
   { key: "/app/compras/fornecedores", label: "Fornecedores", module: "compras" },
 
+  // ----- ADMINISTRATIVO -----
+  { key: "/app/administrativo/requisicoes-recebidas", label: "Requisições Recebidas", module: "administrativo" },
+
   // ----- USUÁRIOS -----
   { key: "/app/users", label: "Usuários", module: "usuarios" },
   { key: "/app/audit", label: "Auditoria do Sistema", module: "usuarios" },

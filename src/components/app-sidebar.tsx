@@ -168,6 +168,10 @@ const COMPRAS_ITEMS: LeafItem[] = [
   { to: "/app/compras/fornecedores", label: "Fornecedores", icon: UsersIcon },
 ];
 
+const ADMINISTRATIVO_ITEMS: LeafItem[] = [
+  { to: "/app/administrativo/requisicoes-recebidas", label: "Requisições Recebidas", icon: ClipboardList },
+];
+
 const MANUTENCAO_LOCKED: LockedItem[] = [
   { key: "manut-eletrica", label: "Elétrica", icon: Zap },
   { key: "manut-mecanica", label: "Mecânica", icon: Hammer },
@@ -208,6 +212,7 @@ export function AppSidebar() {
   const canProducao = isAdmin || hasModule("producao");
   const canCompras = isAdmin || hasModule("compras") || roles.includes("compras");
   const canUsuarios = isAdmin || hasModule("usuarios");
+  const canAdministrativo = isAdmin || hasModule("administrativo" as any);
 
   // Filtra grupos/itens pelo controle granular de menus
   const visibleSesmtGroups = SESMT_GROUPS
@@ -217,12 +222,14 @@ export function AppSidebar() {
   const visibleEstoque = ESTOQUE_ITEMS.filter((i) => hasMenu(i.to));
   const visibleProducao = PRODUCAO_SUBMENU.filter((i) => hasMenu(i.to));
   const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to));
+  const visibleAdministrativo = ADMINISTRATIVO_ITEMS.filter((i) => hasMenu(i.to));
 
   const sesmtAllItems = visibleSesmtGroups.flatMap((g) => g.items).concat(visibleDDSSubmenu);
   const sesmtOpen = anyActive(sesmtAllItems);
   const estoqueOpen = anyActive(visibleEstoque);
   const producaoOpen = anyActive(visibleProducao);
   const comprasOpen = anyActive(visibleCompras);
+  const administrativoOpen = anyActive(visibleAdministrativo);
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
@@ -411,6 +418,41 @@ export function AppSidebar() {
                   <SidebarMenu>
                     {visibleCompras.map((s) => {
                       const Icon = s.icon ?? ShoppingCart;
+                      return (
+                        <SidebarMenuItem key={s.to}>
+                          <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
+                            <Link to={s.to}>
+                              <Icon />
+                              <span>{s.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </Body>
+            </SidebarGroup>
+          </Collapsible>
+        )}
+
+        {/* ADMINISTRATIVO */}
+        {canAdministrativo && visibleAdministrativo.length > 0 && (
+          <Collapsible defaultOpen={administrativoOpen} className="group/administrativo">
+            <SidebarGroup>
+              <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
+                <CollapsibleTrigger className="flex w-full items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Briefcase className="h-5 w-5 text-red-700" /> Administrativo
+                  </span>
+                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/administrativo:rotate-90" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <Body>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {visibleAdministrativo.map((s) => {
+                      const Icon = s.icon ?? Briefcase;
                       return (
                         <SidebarMenuItem key={s.to}>
                           <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>

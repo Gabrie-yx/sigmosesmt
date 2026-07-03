@@ -40,6 +40,7 @@ import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppAssinadorRouteImport } from './routes/app.assinador'
 import { Route as AppAprsRouteImport } from './routes/app.aprs'
 import { Route as AppAjudaRouteImport } from './routes/app.ajuda'
+import { Route as AppAdministrativoRouteImport } from './routes/app.administrativo'
 import { Route as AppAcoesRouteImport } from './routes/app.acoes'
 import { Route as AppAcidentesRouteImport } from './routes/app.acidentes'
 import { Route as ApiSigmoChatRouteImport } from './routes/api/sigmo-chat'
@@ -83,6 +84,7 @@ import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
 import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
 import { Route as AppComprasRequisicoesRecebidasRouteImport } from './routes/app.compras.requisicoes-recebidas'
 import { Route as AppComprasFornecedoresRouteImport } from './routes/app.compras.fornecedores'
+import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
 import { Route as AppEstoqueEpiFichasMensaisRouteImport } from './routes/app.estoque.epi.fichas-mensais'
@@ -244,6 +246,11 @@ const AppAprsRoute = AppAprsRouteImport.update({
 const AppAjudaRoute = AppAjudaRouteImport.update({
   id: '/ajuda',
   path: '/ajuda',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdministrativoRoute = AppAdministrativoRouteImport.update({
+  id: '/administrativo',
+  path: '/administrativo',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAcoesRoute = AppAcoesRouteImport.update({
@@ -468,6 +475,12 @@ const AppComprasFornecedoresRoute = AppComprasFornecedoresRouteImport.update({
   path: '/compras/fornecedores',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdministrativoRequisicoesRecebidasRoute =
+  AppAdministrativoRequisicoesRecebidasRouteImport.update({
+    id: '/requisicoes-recebidas',
+    path: '/requisicoes-recebidas',
+    getParentRoute: () => AppAdministrativoRoute,
+  } as any)
 const AppSesmtEquipamentosMoveisArquivosMensaisRoute =
   AppSesmtEquipamentosMoveisArquivosMensaisRouteImport.update({
     id: '/sesmt/equipamentos-moveis_/arquivos-mensais',
@@ -509,6 +522,7 @@ export interface FileRoutesByFullPath {
   '/api/sigmo-chat': typeof ApiSigmoChatRoute
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
+  '/app/administrativo': typeof AppAdministrativoRouteWithChildren
   '/app/ajuda': typeof AppAjudaRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/assinador': typeof AppAssinadorRoute
@@ -534,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
+  '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
@@ -589,6 +604,7 @@ export interface FileRoutesByTo {
   '/api/sigmo-chat': typeof ApiSigmoChatRoute
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
+  '/app/administrativo': typeof AppAdministrativoRouteWithChildren
   '/app/ajuda': typeof AppAjudaRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/assinador': typeof AppAssinadorRoute
@@ -612,6 +628,7 @@ export interface FileRoutesByTo {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app': typeof AppIndexRoute
+  '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
@@ -669,6 +686,7 @@ export interface FileRoutesById {
   '/api/sigmo-chat': typeof ApiSigmoChatRoute
   '/app/acidentes': typeof AppAcidentesRoute
   '/app/acoes': typeof AppAcoesRoute
+  '/app/administrativo': typeof AppAdministrativoRouteWithChildren
   '/app/ajuda': typeof AppAjudaRoute
   '/app/aprs': typeof AppAprsRoute
   '/app/assinador': typeof AppAssinadorRoute
@@ -694,6 +712,7 @@ export interface FileRoutesById {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
+  '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
@@ -752,6 +771,7 @@ export interface FileRouteTypes {
     | '/api/sigmo-chat'
     | '/app/acidentes'
     | '/app/acoes'
+    | '/app/administrativo'
     | '/app/ajuda'
     | '/app/aprs'
     | '/app/assinador'
@@ -777,6 +797,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app/'
+    | '/app/administrativo/requisicoes-recebidas'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
     | '/app/conta/seguranca'
@@ -832,6 +853,7 @@ export interface FileRouteTypes {
     | '/api/sigmo-chat'
     | '/app/acidentes'
     | '/app/acoes'
+    | '/app/administrativo'
     | '/app/ajuda'
     | '/app/aprs'
     | '/app/assinador'
@@ -855,6 +877,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app'
+    | '/app/administrativo/requisicoes-recebidas'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
     | '/app/conta/seguranca'
@@ -911,6 +934,7 @@ export interface FileRouteTypes {
     | '/api/sigmo-chat'
     | '/app/acidentes'
     | '/app/acoes'
+    | '/app/administrativo'
     | '/app/ajuda'
     | '/app/aprs'
     | '/app/assinador'
@@ -936,6 +960,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app/'
+    | '/app/administrativo/requisicoes-recebidas'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
     | '/app/conta/seguranca'
@@ -1211,6 +1236,13 @@ declare module '@tanstack/react-router' {
       path: '/ajuda'
       fullPath: '/app/ajuda'
       preLoaderRoute: typeof AppAjudaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/administrativo': {
+      id: '/app/administrativo'
+      path: '/administrativo'
+      fullPath: '/app/administrativo'
+      preLoaderRoute: typeof AppAdministrativoRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/acoes': {
@@ -1514,6 +1546,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppComprasFornecedoresRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/administrativo/requisicoes-recebidas': {
+      id: '/app/administrativo/requisicoes-recebidas'
+      path: '/requisicoes-recebidas'
+      fullPath: '/app/administrativo/requisicoes-recebidas'
+      preLoaderRoute: typeof AppAdministrativoRequisicoesRecebidasRouteImport
+      parentRoute: typeof AppAdministrativoRoute
+    }
     '/app/sesmt/equipamentos-moveis_/arquivos-mensais': {
       id: '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
       path: '/sesmt/equipamentos-moveis/arquivos-mensais'
@@ -1551,6 +1590,18 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AppAdministrativoRouteChildren {
+  AppAdministrativoRequisicoesRecebidasRoute: typeof AppAdministrativoRequisicoesRecebidasRoute
+}
+
+const AppAdministrativoRouteChildren: AppAdministrativoRouteChildren = {
+  AppAdministrativoRequisicoesRecebidasRoute:
+    AppAdministrativoRequisicoesRecebidasRoute,
+}
+
+const AppAdministrativoRouteWithChildren =
+  AppAdministrativoRoute._addFileChildren(AppAdministrativoRouteChildren)
 
 interface AppEmployeesRouteChildren {
   AppEmployeesIdRoute: typeof AppEmployeesIdRoute
@@ -1602,6 +1653,7 @@ const AppEstoqueEpiRouteWithChildren = AppEstoqueEpiRoute._addFileChildren(
 interface AppRouteChildren {
   AppAcidentesRoute: typeof AppAcidentesRoute
   AppAcoesRoute: typeof AppAcoesRoute
+  AppAdministrativoRoute: typeof AppAdministrativoRouteWithChildren
   AppAjudaRoute: typeof AppAjudaRoute
   AppAprsRoute: typeof AppAprsRoute
   AppAssinadorRoute: typeof AppAssinadorRoute
@@ -1666,6 +1718,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAcidentesRoute: AppAcidentesRoute,
   AppAcoesRoute: AppAcoesRoute,
+  AppAdministrativoRoute: AppAdministrativoRouteWithChildren,
   AppAjudaRoute: AppAjudaRoute,
   AppAprsRoute: AppAprsRoute,
   AppAssinadorRoute: AppAssinadorRoute,

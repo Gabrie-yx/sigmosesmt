@@ -8,6 +8,7 @@ export const APP_MODULES = {
   portaria: "Portaria",
   usuarios: "Usuários",
   compras: "Compras",
+  administrativo: "Administrativo",
 } as const;
 
 export type AppModule = keyof typeof APP_MODULES;

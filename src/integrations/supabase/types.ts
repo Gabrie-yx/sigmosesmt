@@ -8379,6 +8379,7 @@ export type Database = {
         | "portaria"
         | "usuarios"
         | "compras"
+        | "administrativo"
       app_role: "admin" | "tst" | "viewer" | "moderador" | "editor" | "compras"
       extintor_status: "ATIVO" | "EM_MANUTENCAO" | "BAIXADO" | "VENCIDO"
       extintor_tipo_agente:
@@ -8542,6 +8543,7 @@ export const Constants = {
         "portaria",
         "usuarios",
         "compras",
+        "administrativo",
       ],
       app_role: ["admin", "tst", "viewer", "moderador", "editor", "compras"],
       extintor_status: ["ATIVO", "EM_MANUTENCAO", "BAIXADO", "VENCIDO"],
