@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import {
   Briefcase, Search, Filter, Eye, CheckCircle2, XCircle, ShieldAlert, FileText, BookOpen,
+  Building2, Wrench, Cog, Factory, Boxes, ShieldPlus, Package,
 } from "lucide-react";
 import { toast } from "sonner";
 import { decidirRc } from "@/lib/rc-public.functions";
@@ -67,12 +68,31 @@ type Item = {
   observacao: string | null;
 };
 
+// Pílulas glass — usam prism-pill + accent-* (definidos em src/styles.css)
 const STATUS_BADGE: Record<Req["status"], string> = {
-  PENDENTE: "bg-amber-100 text-amber-800 border-amber-300",
-  EM_COTACAO: "bg-violet-100 text-violet-800 border-violet-300",
-  COTADA: "bg-blue-100 text-blue-800 border-blue-300",
-  APROVADA: "bg-emerald-100 text-emerald-800 border-emerald-300",
-  INDEFERIDA: "bg-rose-100 text-rose-800 border-rose-300",
+  PENDENTE: "prism-pill accent-amber text-amber-100",
+  EM_COTACAO: "prism-pill accent-violet text-violet-100",
+  COTADA: "prism-pill accent-sky text-sky-100",
+  APROVADA: "prism-pill accent-emerald text-emerald-100",
+  INDEFERIDA: "prism-pill accent-rose text-rose-100",
+};
+
+const SETOR_ICON: Record<string, typeof Briefcase> = {
+  "Produção": Factory,
+  "Manutenção Elétrica": Wrench,
+  "Manutenção Mecânica": Cog,
+  "Administrativo": Building2,
+  "Almoxarifado": Boxes,
+  "SESMT": ShieldPlus,
+};
+
+const SETOR_ACCENT: Record<string, string> = {
+  "Produção": "accent-sky",
+  "Manutenção Elétrica": "accent-amber",
+  "Manutenção Mecânica": "accent-violet",
+  "Administrativo": "accent-emerald",
+  "Almoxarifado": "accent-wine",
+  "SESMT": "accent-rose",
 };
 
 const STATUS_LABEL: Record<Req["status"], string> = {
@@ -99,25 +119,20 @@ function AdministrativoRecebidasPage() {
   const isAdmin = roles.includes("admin");
   const canAcesso = isAdmin || hasModule("administrativo" as any);
 
-  const [tab, setTab] = useState<"parecer" | "decididas" | "todas">("parecer");
   const [q, setQ] = useState("");
   const [setorFilter, setSetorFilter] = useState<string>("__all");
 
   const { data: reqs = [], isLoading, refetch } = useQuery({
-    queryKey: ["admin-rcs", tab],
+    queryKey: ["admin-rcs"],
     enabled: !!user && canAcesso,
     queryFn: async () => {
       // Anderson só vê RCs que JÁ passaram pelo Compras (COTADA/APROVADA/INDEFERIDA).
-      // PENDENTE e EM_COTACAO ficam ocultas — ainda estão na mesa do Compras.
-      let query = supabase
+      const { data, error } = await supabase
         .from("purchase_requisitions")
         .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,status_token,cotacao_fornecedor,cotacao_valor,cotador_nome,pego_por_compras_nome,motivo_indeferimento,decidido_por_nome,decidido_em")
+        .in("status", ["COTADA", "APROVADA", "INDEFERIDA"] as any)
         .order("created_at", { ascending: false })
         .limit(300);
-      if (tab === "parecer") query = query.eq("status", "COTADA" as any);
-      if (tab === "decididas") query = query.in("status", ["APROVADA", "INDEFERIDA"] as any);
-      if (tab === "todas") query = query.in("status", ["COTADA", "APROVADA", "INDEFERIDA"] as any);
-      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as Req[];
     },
@@ -137,31 +152,34 @@ function AdministrativoRecebidasPage() {
     });
   }, [reqs, q, setorFilter]);
 
-  // Contadores globais (independem da tab atual)
-  const { data: counts } = useQuery({
-    queryKey: ["admin-rcs-counts"],
-    enabled: !!user && canAcesso,
-    queryFn: async () => {
-      const [parecer, decididas] = await Promise.all([
-        supabase.from("purchase_requisitions").select("id", { count: "exact", head: true }).eq("status", "COTADA" as any),
-        supabase.from("purchase_requisitions").select("id", { count: "exact", head: true }).in("status", ["APROVADA", "INDEFERIDA"] as any),
-      ]);
-      return {
-        parecer: parecer.count ?? 0,
-        decididas: decididas.count ?? 0,
-      };
-    },
-  });
+  // Agrupamento por setor (a partir das RCs já filtradas)
+  const grupos = useMemo(() => {
+    const map = new Map<string, Req[]>();
+    for (const r of filtered) {
+      const key = r.setor?.trim() || "Sem setor";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(r);
+    }
+    // Ordem: setores conhecidos primeiro, depois alfabético
+    return Array.from(map.entries()).sort(([a], [b]) => {
+      const ia = SETORES.indexOf(a as any);
+      const ib = SETORES.indexOf(b as any);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [filtered]);
 
   if (!user) return null;
   if (!canAcesso) {
     return (
       <div className="p-6">
-        <Card>
+        <Card className="glass-card">
           <CardHeader>
             <CardTitle>Acesso restrito</CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-slate-600">
+          <CardContent className="text-sm">
             Este painel é restrito ao módulo <strong>Administrativo</strong>. Fale com o admin para liberar seu acesso.
           </CardContent>
         </Card>
@@ -173,27 +191,28 @@ function AdministrativoRecebidasPage() {
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-red-100 text-red-800 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-xl prism-pill accent-rose flex items-center justify-center text-rose-100">
             <Briefcase className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">Administrativo · Requisições Recebidas</h1>
-            <p className="text-xs text-slate-500">
-              Fila do Supervisor Geral. Avalie a cotação enviada pelo Compras e dê o parecer (Deferido / Indeferido).
+            <h1 className="text-xl font-bold text-foreground">Administrativo · Requisições Recebidas</h1>
+            <p className="text-xs text-muted-foreground">
+              Requisições organizadas por setor. Todas já passaram pela cotação do Compras.
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className="bg-blue-100 text-blue-800 border-blue-300">Aguardando parecer: {counts?.parecer ?? 0}</Badge>
-          <Badge className="bg-slate-100 text-slate-800 border-slate-300">Decididas: {counts?.decididas ?? 0}</Badge>
+          <span className="prism-pill accent-sky px-3 py-1 text-xs text-sky-100">
+            Total: {filtered.length}
+          </span>
           <ManualSupervisorButton />
         </div>
       </div>
 
-      <Card>
+      <Card className="glass-card">
         <CardContent className="p-3 flex flex-wrap gap-2 items-center">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="h-4 w-4 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="h-4 w-4 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar por nº, título, solicitante, setor…"
               value={q}
@@ -202,7 +221,7 @@ function AdministrativoRecebidasPage() {
             />
           </div>
           <div className="flex items-center gap-1">
-            <Filter className="h-4 w-4 text-slate-400" />
+            <Filter className="h-4 w-4 text-muted-foreground" />
             <Select value={setorFilter} onValueChange={setSetorFilter}>
               <SelectTrigger className="w-[220px]">
                 <SelectValue placeholder="Filtrar setor" />
@@ -218,29 +237,58 @@ function AdministrativoRecebidasPage() {
         </CardContent>
       </Card>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-        <TabsList>
-          <TabsTrigger value="parecer">Aguardando meu parecer ({counts?.parecer ?? 0})</TabsTrigger>
-          <TabsTrigger value="decididas">Decididas</TabsTrigger>
-          <TabsTrigger value="todas">Todas</TabsTrigger>
-        </TabsList>
-        <TabsContent value={tab} className="mt-3">
-          {isLoading ? (
-            <div className="p-8 text-center text-slate-500">Carregando…</div>
-          ) : filtered.length === 0 ? (
-            <div className="p-10 text-center text-slate-500 border rounded-xl bg-white">
-              Nenhuma requisição encontrada.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {filtered.map((r) => (
-                <RcCard key={r.id} req={r} onChanged={() => refetch()} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+      {isLoading ? (
+        <div className="p-8 text-center text-muted-foreground">Carregando…</div>
+      ) : grupos.length === 0 ? (
+        <Card className="glass-card">
+          <CardContent className="p-10 text-center text-muted-foreground">
+            Nenhuma requisição encontrada.
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {grupos.map(([setor, lista]) => (
+            <SetorCard key={setor} setor={setor} lista={lista} onChanged={() => refetch()} />
+          ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+function SetorCard({
+  setor, lista, onChanged,
+}: { setor: string; lista: Req[]; onChanged: () => void }) {
+  const Icon = SETOR_ICON[setor] ?? Package;
+  const accent = SETOR_ACCENT[setor] ?? "accent-sky";
+  const aguardando = lista.filter((r) => r.status === "COTADA").length;
+  return (
+    <Card className="glass-card overflow-hidden">
+      <CardHeader className="p-4 pb-3 flex flex-row items-center justify-between gap-2 border-b border-white/10">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`h-10 w-10 rounded-xl prism-pill ${accent} flex items-center justify-center text-foreground shrink-0`}>
+            <Icon className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-base font-bold text-foreground truncate">{setor}</div>
+            <div className="text-[11px] text-muted-foreground">
+              {lista.length} requisição{lista.length === 1 ? "" : "ões"}
+              {aguardando > 0 ? ` · ${aguardando} aguardando parecer` : ""}
+            </div>
+          </div>
+        </div>
+        {aguardando > 0 && (
+          <span className="prism-pill accent-sky px-2.5 py-1 text-[11px] text-sky-100 shrink-0">
+            {aguardando} p/ decidir
+          </span>
+        )}
+      </CardHeader>
+      <CardContent className="p-3 space-y-2">
+        {lista.map((r) => (
+          <RcCard key={r.id} req={r} onChanged={onChanged} />
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 
