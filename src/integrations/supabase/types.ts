@@ -6500,6 +6500,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          mfa_grace_until: string | null
           updated_at: string
         }
         Insert: {
@@ -6507,6 +6508,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          mfa_grace_until?: string | null
           updated_at?: string
         }
         Update: {
@@ -6514,6 +6516,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          mfa_grace_until?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -8067,6 +8070,10 @@ export type Database = {
       is_moderator: { Args: { _user_id: string }; Returns: boolean }
       is_supervisor_geral: { Args: { _user_id: string }; Returns: boolean }
       is_viewer_or_above: { Args: { _user_id: string }; Returns: boolean }
+      log_read: {
+        Args: { _contexto?: Json; _entity: string; _entity_id: string }
+        Returns: undefined
+      }
       marcar_convocacoes_vencidas: { Args: never; Returns: number }
       marcar_cotacao_vencedora: {
         Args: { _cotacao_id: string }
