@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -35,6 +35,7 @@ import { openStorageFile } from "@/components/file-viewer";
 import { SupplierPicker, type SupplierLite } from "@/components/compras/supplier-picker";
 import { StarRating } from "@/components/compras/star-rating";
 import { cn } from "@/lib/utils";
+import { useNovasDecisoesCompras } from "@/hooks/use-compras-novas-decisoes";
 
 export const Route = createFileRoute("/app/compras/requisicoes-recebidas")({
   component: ComprasRecebidasPage,
@@ -85,6 +86,11 @@ type Req = {
   retroativa?: boolean | null;
   retroativa_motivo?: string | null;
   arquivada_em?: string | null;
+  decidido_em?: string | null;
+  decidido_por_nome?: string | null;
+  motivo_indeferimento?: string | null;
+  cotacao_fornecedor?: string | null;
+  cotacao_valor?: number | null;
 };
 
 type Cotacao = {
@@ -184,10 +190,17 @@ function ComprasRecebidasPage() {
   const isAdmin = roles.includes("admin");
   const isCompras = isAdmin || roles.includes("compras" as any) || hasModule("compras" as any);
 
-  const [tab, setTab] = useState<"abertas" | "todas" | "enviadas">("abertas");
+  const [tab, setTab] = useState<"abertas" | "enviadas" | "aprovadas" | "indeferidas" | "todas">("abertas");
   const [q, setQ] = useState("");
   const [setorFilter, setSetorFilter] = useState<string>("__all");
   const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
+  const { count: novasDecisoes, markAllSeen } = useNovasDecisoesCompras();
+
+  useEffect(() => {
+    if ((tab === "aprovadas" || tab === "indeferidas") && novasDecisoes > 0) {
+      markAllSeen();
+    }
+  }, [tab, novasDecisoes, markAllSeen]);
 
   const { data: reqs = [], isLoading, refetch } = useQuery({
     queryKey: ["compras-rcs", tab, mostrarArquivadas],
@@ -195,11 +208,13 @@ function ComprasRecebidasPage() {
     queryFn: async () => {
       let query = supabase
         .from("purchase_requisitions")
-        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa,retroativa,retroativa_motivo,arquivada_em")
+        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa,retroativa,retroativa_motivo,arquivada_em,decidido_em,decidido_por_nome,motivo_indeferimento,cotacao_fornecedor,cotacao_valor")
         .order("created_at", { ascending: false })
         .limit(200);
       if (tab === "abertas") query = query.in("status", ["PENDENTE", "EM_COTACAO"] as any);
       if (tab === "enviadas") query = query.eq("status", "COTADA" as any);
+      if (tab === "aprovadas") query = query.eq("status", "APROVADA" as any);
+      if (tab === "indeferidas") query = query.eq("status", "INDEFERIDA" as any);
       if (mostrarArquivadas) {
         query = query.not("arquivada_em", "is", null);
       } else {
@@ -319,9 +334,18 @@ function ComprasRecebidasPage() {
       </Card>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="abertas">Abertas ({abertas})</TabsTrigger>
           <TabsTrigger value="enviadas">Enviadas ao supervisor</TabsTrigger>
+          <TabsTrigger value="aprovadas" className="relative">
+            Deferidas
+            {novasDecisoes > 0 && (
+              <span className="ml-2 inline-flex min-w-[1.25rem] h-5 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white">
+                {novasDecisoes > 99 ? "99+" : novasDecisoes}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="indeferidas">Indeferidas</TabsTrigger>
           <TabsTrigger value="todas">Todas</TabsTrigger>
         </TabsList>
         <TabsContent value={tab} className="mt-3">
@@ -424,6 +448,23 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
           {isRetroativa && req.retroativa_motivo && !isArquivada && (
             <div className="text-[11px] text-orange-700 mt-1 bg-orange-50 border border-orange-200 rounded px-2 py-1">
               <strong>Aviso ao Compras:</strong> {req.retroativa_motivo} — cote retroativamente ou arquive.
+            </div>
+          )}
+          {req.status === "APROVADA" && (
+            <div className="text-[11px] text-emerald-800 mt-1 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
+              <strong>✓ Deferida</strong> por {req.decidido_por_nome ?? "supervisor"}
+              {req.decidido_em ? <> em {fmtBR(req.decidido_em)}</> : null}
+              {req.cotacao_fornecedor ? <> · <strong>{req.cotacao_fornecedor}</strong> — {fmtMoney(req.cotacao_valor)}</> : null}
+              <div className="mt-0.5 text-emerald-700">Próximo passo: emitir Pedido de Compra ao fornecedor.</div>
+            </div>
+          )}
+          {req.status === "INDEFERIDA" && (
+            <div className="text-[11px] text-rose-800 mt-1 bg-rose-50 border border-rose-200 rounded px-2 py-1">
+              <strong>✗ Indeferida</strong> por {req.decidido_por_nome ?? "supervisor"}
+              {req.decidido_em ? <> em {fmtBR(req.decidido_em)}</> : null}
+              {req.motivo_indeferimento && (
+                <div className="mt-0.5"><strong>Motivo:</strong> {req.motivo_indeferimento}</div>
+              )}
             </div>
           )}
         </div>

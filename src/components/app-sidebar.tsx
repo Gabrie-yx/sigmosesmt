@@ -1,5 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useNovasDecisoesCompras } from "@/hooks/use-compras-novas-decisoes";
 import {
   Sidebar,
   SidebarContent,
@@ -423,7 +424,10 @@ export function AppSidebar() {
                           <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
                             <Link to={s.to}>
                               <Icon />
-                              <span>{s.label}</span>
+                              <span className="flex-1">{s.label}</span>
+                              {s.to === "/app/compras/requisicoes-recebidas" && (
+                                <ComprasNovasBadge />
+                              )}
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -585,5 +589,18 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function ComprasNovasBadge() {
+  const { count } = useNovasDecisoesCompras();
+  if (!count) return null;
+  return (
+    <span
+      className="ml-auto inline-flex min-w-[1.25rem] h-5 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white shadow-sm"
+      title={`${count} decisão(ões) nova(s) do supervisor`}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
   );
 }
