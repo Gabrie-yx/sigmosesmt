@@ -124,6 +124,8 @@ function HomePage() {
                 border: "border-white/70",
                 tagColor: "text-white",
                 iconColor: "text-white/80",
+                glowA: "bg-white/25",
+                glowB: "bg-white/10",
               },
               {
                 icon: Anchor,
@@ -132,6 +134,8 @@ function HomePage() {
                 border: "border-amber-400/80",
                 tagColor: "text-amber-300",
                 iconColor: "text-amber-300/90",
+                glowA: "bg-amber-400/40",
+                glowB: "bg-amber-500/15",
               },
               {
                 icon: Gem,
@@ -140,19 +144,24 @@ function HomePage() {
                 border: "border-red-400/80",
                 tagColor: "text-red-300",
                 iconColor: "text-red-300/90",
+                glowA: "bg-red-500/40",
+                glowB: "bg-red-400/15",
               },
-            ].map(({ icon: Icon, tag, text, border, tagColor, iconColor }) => (
+            ].map(({ icon: Icon, tag, text, border, tagColor, iconColor, glowA, glowB }) => (
               <article
                 key={tag}
                 className={`group relative rounded-2xl p-8 bg-black/80 border ${border} shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:-translate-y-1 hover:bg-black/90 transition-all duration-300 overflow-hidden`}
               >
+                {/* glows assimétricos nos cantos */}
+                <div className={`pointer-events-none absolute -top-16 -left-16 h-40 w-40 rounded-full blur-3xl ${glowA}`} />
+                <div className={`pointer-events-none absolute -bottom-20 -right-10 h-28 w-28 rounded-full blur-2xl ${glowB}`} />
                 <div className="flex items-start justify-between mb-4">
-                  <div className={`text-[11px] font-black uppercase tracking-[0.3em] ${tagColor}`}>
+                  <div className={`relative text-[10px] font-light uppercase tracking-[0.4em] ${tagColor}`}>
                     {tag}
                   </div>
-                  <Icon className={`h-5 w-5 shrink-0 ${iconColor}`} />
+                  <Icon className={`relative h-4 w-4 shrink-0 ${iconColor}`} strokeWidth={1.25} />
                 </div>
-                <p className="text-sm leading-relaxed text-white/90 font-medium">
+                <p className="relative text-sm leading-relaxed text-white/85 font-light">
                   {text}
                 </p>
               </article>
