@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/tabs";
 import {
   Package, ShoppingCart, Upload, Trash2, Eye, Trophy, Send, Filter, Search, FileText, DollarSign,
+  ShieldAlert, XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { openStorageFile } from "@/components/file-viewer";
@@ -49,6 +50,9 @@ type Req = {
   observacoes: string | null;
   created_at: string;
   titulo_display?: string | null;
+  dispensa_cotacao?: boolean | null;
+  dispensa_motivo?: string | null;
+  dispensa_justificativa?: string | null;
 };
 
 type Cotacao = {
@@ -116,7 +120,7 @@ function ComprasRecebidasPage() {
     queryFn: async () => {
       let query = supabase
         .from("purchase_requisitions")
-        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at")
+        .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa")
         .order("created_at", { ascending: false })
         .limit(200);
       if (tab === "abertas") query = query.in("status", ["PENDENTE", "EM_COTACAO"] as any);
