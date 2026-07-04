@@ -168,6 +168,7 @@ const PRODUCAO_SUBMENU: LeafItem[] = [
 ];
 
 const COMPRAS_ITEMS: LeafItem[] = [
+  { to: "/app/compras/dashboard", label: "Dashboard", icon: BarChart3 },
   { to: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", icon: ShoppingCart },
   { to: "/app/compras/fornecedores", label: "Fornecedores", icon: UsersIcon },
 ];
