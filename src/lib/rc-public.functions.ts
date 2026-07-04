@@ -144,55 +144,22 @@ export const decidirRc = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    // Sprint 1: RPC decidir_rc valida Supervisor + carimba assinatura no servidor.
+    const { supabase } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { supabase, userId } = context;
-
-    // Apenas Supervisor Geral (ou admin como fallback)
-    const { data: isSup } = await supabase.rpc("is_supervisor_geral", { _user_id: userId });
-    if (!isSup) {
-      throw new Error("Apenas o Supervisor Geral pode deferir ou indeferir requisições.");
-    }
-
+    // A RPC recebe rc_id; resolver token → id.
     const { data: rc, error: e1 } = await supabaseAdmin
       .from("purchase_requisitions")
-      .select("id, status")
+      .select("id")
       .eq("status_token", data.token)
       .maybeSingle();
     if (e1) throw new Error(e1.message);
     if (!rc) throw new Error("Requisição não encontrada");
-    if (rc.status === "APROVADA" || rc.status === "INDEFERIDA") {
-      throw new Error("Esta RC já foi decidida.");
-    }
-    if (data.decisao === "INDEFERIDA" && !data.motivo?.trim()) {
-      throw new Error("Informe o motivo do indeferimento.");
-    }
-
-    // Carimbo: nome + assinatura padrão do supervisor (se houver)
-    const [{ data: profile }, { data: sig }] = await Promise.all([
-      supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
-      supabaseAdmin
-        .from("user_signatures")
-        .select("signature_data")
-        .eq("user_id", userId)
-        .order("is_default", { ascending: false })
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-    ]);
-
-    const { error } = await supabaseAdmin
-      .from("purchase_requisitions")
-      .update({
-        status: data.decisao,
-        motivo_indeferimento: data.decisao === "INDEFERIDA" ? data.motivo : null,
-        approved_at: new Date().toISOString(),
-        approved_by: userId,
-        decidido_por_id: userId,
-        decidido_por_nome: profile?.full_name ?? null,
-        decidido_assinatura_url: sig?.signature_data ?? null,
-        decidido_em: new Date().toISOString(),
-      } as any)
-      .eq("id", rc.id);
+    const { error } = await supabase.rpc("decidir_rc" as any, {
+      _rc_id: rc.id,
+      _decisao: data.decisao,
+      _motivo: data.motivo ?? null,
+    } as any);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
