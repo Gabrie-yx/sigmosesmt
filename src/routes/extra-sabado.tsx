@@ -401,7 +401,7 @@ function AdicionarExternoDialog({ open, onOpenChange, convId, onSaved }: {
       _hora_extra_id: convId,
       _nome: nome.trim(),
       _empresa: empresa.trim(),
-      _funcao: funcao.trim() || null,
+      _funcao: funcao.trim() || undefined,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
