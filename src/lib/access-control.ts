@@ -6,6 +6,7 @@ export const APP_MODULES = {
   producao: "Produção",
   manutencao: "Manutenção",
   portaria: "Portaria",
+  eletrica: "Elétrica",
   usuarios: "Usuários",
   compras: "Compras",
   administrativo: "Administrativo",
