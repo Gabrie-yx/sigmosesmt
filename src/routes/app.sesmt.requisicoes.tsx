@@ -1279,6 +1279,17 @@ export function ReqFormDialog({
               <FieldRow label="OBRA EM MANUTENÇÃO:" value={form.obra_manutencao} onChange={(v) => setForm({ ...form, obra_manutencao: v })} />
             </div>
           </div>
+
+          {/* Linha 5: Urgência (Sprint 3 — SLA) */}
+          <div className="p-3 bg-slate-50 border-b-2 border-black">
+            <UrgenciaSelect
+              value={form.urgencia}
+              onChange={(v) => setForm({ ...form, urgencia: v })}
+            />
+            <p className="text-[11px] text-slate-600 mt-1">
+              Emergência = 24h · Urgente = 48h · Normal = 7 dias. O prazo é cronometrado a partir da criação.
+            </p>
+          </div>
     </div>
   );
 
