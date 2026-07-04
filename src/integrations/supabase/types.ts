@@ -4184,6 +4184,116 @@ export type Database = {
           },
         ]
       }
+      hora_extra_lider_escopo: {
+        Row: {
+          company_id: string | null
+          company_ids: string[] | null
+          created_at: string
+          employee_ids: string[] | null
+          id: string
+          lider_id: string
+          rotulo: string | null
+          setores: string[] | null
+          tipo: string
+        }
+        Insert: {
+          company_id?: string | null
+          company_ids?: string[] | null
+          created_at?: string
+          employee_ids?: string[] | null
+          id?: string
+          lider_id: string
+          rotulo?: string | null
+          setores?: string[] | null
+          tipo: string
+        }
+        Update: {
+          company_id?: string | null
+          company_ids?: string[] | null
+          created_at?: string
+          employee_ids?: string[] | null
+          id?: string
+          lider_id?: string
+          rotulo?: string | null
+          setores?: string[] | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hora_extra_lider_escopo_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hora_extra_lider_escopo_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+          {
+            foreignKeyName: "hora_extra_lider_escopo_lider_id_fkey"
+            columns: ["lider_id"]
+            isOneToOne: false
+            referencedRelation: "hora_extra_lideres"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hora_extra_lideres: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          employee_id: string
+          id: string
+          observacao: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          employee_id: string
+          id?: string
+          observacao?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          employee_id?: string
+          id?: string
+          observacao?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hora_extra_lideres_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hora_extra_lideres_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "hora_extra_lideres_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       hora_extra_marcadores: {
         Row: {
           ativo: boolean
@@ -4256,10 +4366,17 @@ export type Database = {
           horario_fim: string | null
           horario_inicio: string | null
           id: string
+          justificativa: string | null
+          lider_id: string | null
           marcadores_edit_ate: string | null
           marcadores_expira_em: string | null
+          motivo_indeferimento: string | null
           observacao: string | null
           setor: string | null
+          status: string
+          supervisor_decisao_em: string | null
+          supervisor_id: string | null
+          tipo_convocacao: string
           tipo_efetivo: string
           turno: string | null
           updated_at: string
@@ -4280,10 +4397,17 @@ export type Database = {
           horario_fim?: string | null
           horario_inicio?: string | null
           id?: string
+          justificativa?: string | null
+          lider_id?: string | null
           marcadores_edit_ate?: string | null
           marcadores_expira_em?: string | null
+          motivo_indeferimento?: string | null
           observacao?: string | null
           setor?: string | null
+          status?: string
+          supervisor_decisao_em?: string | null
+          supervisor_id?: string | null
+          tipo_convocacao?: string
           tipo_efetivo?: string
           turno?: string | null
           updated_at?: string
@@ -4304,10 +4428,17 @@ export type Database = {
           horario_fim?: string | null
           horario_inicio?: string | null
           id?: string
+          justificativa?: string | null
+          lider_id?: string | null
           marcadores_edit_ate?: string | null
           marcadores_expira_em?: string | null
+          motivo_indeferimento?: string | null
           observacao?: string | null
           setor?: string | null
+          status?: string
+          supervisor_decisao_em?: string | null
+          supervisor_id?: string | null
+          tipo_convocacao?: string
           tipo_efetivo?: string
           turno?: string | null
           updated_at?: string
@@ -4326,6 +4457,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contratada_dossie_status"
             referencedColumns: ["company_id"]
+          },
+          {
+            foreignKeyName: "hora_extra_sabado_lider_id_fkey"
+            columns: ["lider_id"]
+            isOneToOne: false
+            referencedRelation: "hora_extra_lideres"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -8515,6 +8653,7 @@ export type Database = {
         Returns: boolean
       }
       is_editor: { Args: { _user_id: string }; Returns: boolean }
+      is_lider_extra: { Args: { _user_id: string }; Returns: boolean }
       is_moderator: { Args: { _user_id: string }; Returns: boolean }
       is_supervisor_geral: { Args: { _user_id: string }; Returns: boolean }
       is_viewer_or_above: { Args: { _user_id: string }; Returns: boolean }
