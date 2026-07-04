@@ -498,52 +498,59 @@ function UsersPage() {
 
       {/* Modal Convidar */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <DialogTitle>Convidar usuário</DialogTitle>
             <DialogDescription>Um e-mail será enviado com link para definir senha.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Nome completo *</Label>
-              <Input value={fName} onChange={(e) => setFName(e.target.value)} />
-            </div>
-            <div>
-              <Label>E-mail *</Label>
-              <Input type="email" value={fEmail} onChange={(e) => setFEmail(e.target.value)} />
-            </div>
-            <div>
-              <Label>Papel *</Label>
-              <div className="space-y-2 mt-2">
-                {ROLES.map((r) => (
-                  <label key={r.value} className="flex items-start gap-2 p-2 rounded border hover:bg-muted/40 cursor-pointer">
-                    <input type="radio" name="role" checked={fRole === r.value} onChange={() => setFRole(r.value)} className="mt-1" />
-                    <div>
-                      <div className="text-sm font-medium">{r.label}</div>
-                      <div className="text-xs text-muted-foreground">{r.desc}</div>
-                    </div>
-                  </label>
-                ))}
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] max-h-[70vh]">
+            {/* Coluna esquerda: identidade + papel */}
+            <div className="p-6 space-y-5 md:border-r overflow-y-auto">
+              <div className="space-y-1.5">
+                <Label>Nome completo *</Label>
+                <Input value={fName} onChange={(e) => setFName(e.target.value)} />
               </div>
-            </div>
-            <div>
-              <Label>Módulos liberados</Label>
-              {fRole === "admin" ? (
-                <p className="text-xs text-muted-foreground mt-1">Administradores acessam todos os módulos automaticamente.</p>
-              ) : (
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {MODULES.map((m) => (
-                    <label key={m.value} className="flex items-center gap-2 p-2 rounded border hover:bg-muted/40 cursor-pointer">
-                      <Checkbox checked={fModules.includes(m.value)}
-                        onCheckedChange={() => toggleModule(setFModules, fModules, m.value)} />
-                      <span className="text-sm">{m.label}</span>
+              <div className="space-y-1.5">
+                <Label>E-mail *</Label>
+                <Input type="email" value={fEmail} onChange={(e) => setFEmail(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Papel *</Label>
+                <div className="space-y-2">
+                  {ROLES.map((r) => (
+                    <label key={r.value} className={`flex items-start gap-2 p-2.5 rounded-md border transition-colors cursor-pointer ${fRole === r.value ? "border-primary bg-primary/5" : "hover:bg-muted/40"}`}>
+                      <input type="radio" name="role" checked={fRole === r.value} onChange={() => setFRole(r.value)} className="mt-1" />
+                      <div>
+                        <div className="text-sm font-medium">{r.label}</div>
+                        <div className="text-xs text-muted-foreground">{r.desc}</div>
+                      </div>
                     </label>
                   ))}
+                </div>
+              </div>
+            </div>
+            {/* Coluna direita: módulos */}
+            <div className="p-6 space-y-3 overflow-y-auto bg-muted/20">
+              <Label className="text-sm font-semibold">Módulos liberados</Label>
+              {fRole === "admin" ? (
+                <p className="text-xs text-muted-foreground">Administradores acessam todos os módulos automaticamente.</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {MODULES.map((m) => {
+                    const on = fModules.includes(m.value);
+                    return (
+                      <label key={m.value} className={`flex items-center gap-2 p-2.5 rounded-md border transition-colors cursor-pointer ${on ? "border-primary bg-primary/5" : "bg-background hover:bg-muted/40"}`}>
+                        <Checkbox checked={on}
+                          onCheckedChange={() => toggleModule(setFModules, fModules, m.value)} />
+                        <span className="text-sm">{m.label}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="px-6 py-4 border-t bg-background">
             <Button variant="ghost" onClick={() => setInviteOpen(false)}>Cancelar</Button>
             <Button onClick={handleInvite} disabled={submitting}>{submitting ? "Enviando..." : "Enviar convite"}</Button>
           </DialogFooter>
@@ -552,75 +559,96 @@ function UsersPage() {
 
       {/* Modal Editar permissões */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
+        <DialogContent className="max-w-5xl p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <DialogTitle>Editar permissões</DialogTitle>
             <DialogDescription>{editing?.email}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Papel</Label>
-              <Select value={fRole} onValueChange={setFRole}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {ROLES.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.6fr)] max-h-[72vh]">
+            {/* Esquerda: papel + módulos */}
+            <div className="p-6 space-y-5 md:border-r overflow-y-auto">
+              <div className="space-y-1.5">
+                <Label>Papel</Label>
+                <Select value={fRole} onValueChange={setFRole}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ROLES.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Módulos liberados</Label>
+                {fRole === "admin" ? (
+                  <p className="text-xs text-muted-foreground">Administradores acessam todos os módulos automaticamente.</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {MODULES.map((m) => {
+                      const on = fModules.includes(m.value);
+                      return (
+                        <label key={m.value} className={`flex items-center gap-2 p-2.5 rounded-md border transition-colors cursor-pointer ${on ? "border-primary bg-primary/5" : "bg-background hover:bg-muted/40"}`}>
+                          <Checkbox checked={on}
+                            onCheckedChange={() => toggleModule(setFModules, fModules, m.value)} />
+                          <span className="text-sm">{m.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <Label>Módulos liberados</Label>
+            {/* Direita: menus granulares */}
+            <div className="p-6 space-y-3 overflow-y-auto bg-muted/20">
               {fRole === "admin" ? (
-                <p className="text-xs text-muted-foreground mt-1">Administradores acessam todos os módulos automaticamente.</p>
-              ) : (
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {MODULES.map((m) => (
-                    <label key={m.value} className="flex items-center gap-2 p-2 rounded border hover:bg-muted/40 cursor-pointer">
-                      <Checkbox checked={fModules.includes(m.value)}
-                        onCheckedChange={() => toggleModule(setFModules, fModules, m.value)} />
-                      <span className="text-sm">{m.label}</span>
-                    </label>
-                  ))}
+                <div className="text-sm text-muted-foreground">
+                  Sem restrição granular — administrador vê todos os menus.
                 </div>
+              ) : (
+                <>
+                  <div>
+                    <Label className="text-sm font-semibold">Menus específicos (granular)</Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Deixe tudo em branco em um módulo para liberar TODOS os menus daquele módulo. Marque itens específicos para restringir.
+                    </p>
+                  </div>
+                  {fModules.length === 0 ? (
+                    <div className="text-xs text-muted-foreground italic p-4 rounded-md border border-dashed text-center">
+                      Selecione um módulo à esquerda para configurar os menus.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {fModules.map((mod) => {
+                        const menus = menusForModule(mod as any);
+                        if (menus.length === 0) return null;
+                        const allOn = menus.every((m) => fMenus.includes(m.key));
+                        return (
+                          <div key={mod} className="border rounded-md bg-background p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                {moduleLabel(mod)}
+                              </span>
+                              <button type="button" className="text-[11px] underline text-primary hover:text-primary/80"
+                                onClick={() => toggleAllMenusOfModule(mod, !allOn)}>
+                                {allOn ? "Limpar (libera todos)" : "Marcar todos"}
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                              {menus.map((m) => (
+                                <label key={m.key} className="flex items-center gap-2 text-sm p-1.5 rounded hover:bg-muted/40 cursor-pointer">
+                                  <Checkbox checked={fMenus.includes(m.key)} onCheckedChange={() => toggleMenu(m.key)} />
+                                  <span className="truncate">{m.label}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
               )}
             </div>
-            {fRole !== "admin" && (
-              <div>
-                <Label>Menus específicos (granular)</Label>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Deixe tudo em branco em um módulo para liberar TODOS os menus daquele módulo. Marque itens específicos para restringir.
-                </p>
-                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                  {fModules.map((mod) => {
-                    const menus = menusForModule(mod as any);
-                    if (menus.length === 0) return null;
-                    const allOn = menus.every((m) => fMenus.includes(m.key));
-                    return (
-                      <div key={mod} className="border rounded p-2">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                            {moduleLabel(mod)}
-                          </span>
-                          <button type="button" className="text-[11px] underline text-blue-700"
-                            onClick={() => toggleAllMenusOfModule(mod, !allOn)}>
-                            {allOn ? "Limpar (libera todos)" : "Marcar todos"}
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-1 gap-1">
-                          {menus.map((m) => (
-                            <label key={m.key} className="flex items-center gap-2 text-sm p-1 rounded hover:bg-muted/40 cursor-pointer">
-                              <Checkbox checked={fMenus.includes(m.key)} onCheckedChange={() => toggleMenu(m.key)} />
-                              <span>{m.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="px-6 py-4 border-t bg-background">
             <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancelar</Button>
             <Button onClick={handleSaveEdit} disabled={submitting}>{submitting ? "Salvando..." : "Salvar"}</Button>
           </DialogFooter>
