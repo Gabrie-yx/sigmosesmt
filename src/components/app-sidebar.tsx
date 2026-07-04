@@ -181,11 +181,11 @@ const ALMOXARIFADO_ITEMS: LeafItem[] = [
   { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
-const MANUTENCAO_LOCKED: LockedItem[] = [
-  { key: "manut-mecanica", label: "Mecânica", icon: Hammer },
+const MANUTENCAO_ITEMS: LeafItem[] = [
+  { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
 ];
 
-const MANUTENCAO_ITEMS: LeafItem[] = [
+const MECANICA_ITEMS: LeafItem[] = [
   { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
 ];
 
