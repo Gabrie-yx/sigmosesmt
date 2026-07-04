@@ -182,8 +182,19 @@ const ALMOXARIFADO_ITEMS: LeafItem[] = [
 ];
 
 const MANUTENCAO_LOCKED: LockedItem[] = [
-  { key: "manut-eletrica", label: "Elétrica", icon: Zap },
   { key: "manut-mecanica", label: "Mecânica", icon: Hammer },
+];
+
+const MANUTENCAO_ITEMS: LeafItem[] = [
+  { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
+];
+
+const ELETRICA_ITEMS: LeafItem[] = [
+  { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
+];
+
+const PORTARIA_ITEMS: LeafItem[] = [
+  { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
 ];
 
 export function AppSidebar() {
@@ -530,6 +541,19 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              {MANUTENCAO_ITEMS.map((s) => {
+                const Icon = s.icon ?? Wrench;
+                return (
+                  <SidebarMenuItem key={s.to}>
+                    <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
+                      <Link to={s.to}>
+                        <Icon />
+                        <span>{s.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
               {MANUTENCAO_LOCKED.map((s) => {
                 const Icon = s.icon ?? Wrench;
                 return (
@@ -550,21 +574,50 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* PORTARIA (locked) */}
+        {/* ELÉTRICA */}
         <SidebarGroup>
+          <SidebarGroupLabel className="flex items-center gap-2 h-9 text-sm font-bold text-slate-700">
+            <Zap className="h-5 w-5 text-red-700" /> Elétrica
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip="Portaria (em desenvolvimento)"
-                  onClick={() => toast.info("Portaria: módulo em desenvolvimento")}
-                  className="opacity-60"
-                >
-                  <DoorOpen />
-                  <span>Portaria</span>
-                  <Lock className="ml-auto h-3 w-3" />
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {ELETRICA_ITEMS.map((s) => {
+                const Icon = s.icon ?? Zap;
+                return (
+                  <SidebarMenuItem key={s.to}>
+                    <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
+                      <Link to={s.to}>
+                        <Icon />
+                        <span>{s.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* PORTARIA */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="flex items-center gap-2 h-9 text-sm font-bold text-slate-700">
+            <DoorOpen className="h-5 w-5 text-red-700" /> Portaria
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {PORTARIA_ITEMS.map((s) => {
+                const Icon = s.icon ?? DoorOpen;
+                return (
+                  <SidebarMenuItem key={s.to}>
+                    <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
+                      <Link to={s.to}>
+                        <Icon />
+                        <span>{s.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
