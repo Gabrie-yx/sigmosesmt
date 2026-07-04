@@ -8320,6 +8320,10 @@ export type Database = {
         Returns: undefined
       }
       current_aal: { Args: never; Returns: string }
+      decidir_rc: {
+        Args: { _decisao: string; _motivo?: string; _rc_id: string }
+        Returns: undefined
+      }
       desarquivar_rc: { Args: { _rc_id: string }; Returns: undefined }
       devolver_rc_para_cotacao: {
         Args: { _motivo: string; _rc_id: string }
@@ -8327,6 +8331,19 @@ export type Database = {
       }
       dispensar_cotacoes_rc: {
         Args: { _justificativa: string; _motivo: string; _rc_id: string }
+        Returns: undefined
+      }
+      emitir_pc_rc: {
+        Args: {
+          _arquivo_nome?: string
+          _arquivo_url?: string
+          _fornecedor: string
+          _observacoes?: string
+          _pc_numero: string
+          _prazo?: string
+          _rc_id: string
+          _valor: number
+        }
         Returns: undefined
       }
       enviar_rc_para_supervisor: {
@@ -8351,6 +8368,7 @@ export type Database = {
       gerar_numero_extintor: { Args: never; Returns: string }
       gerar_numero_ordem_producao: { Args: never; Returns: string }
       gerar_numero_ppp: { Args: never; Returns: string }
+      gerar_numero_rc: { Args: { _data?: string }; Returns: string }
       gerar_numero_ria: { Args: never; Returns: string }
       gerar_numero_tnc: { Args: never; Returns: string }
       has_module_access: {
@@ -8401,6 +8419,7 @@ export type Database = {
       mfa_ok: { Args: never; Returns: boolean }
       oss_marcar_vencidas: { Args: never; Returns: number }
       peek_proximo_numero_apr: { Args: never; Returns: string }
+      pegar_rc_para_cotar: { Args: { _token: string }; Returns: undefined }
       pode_gerenciar_compras: { Args: { _user_id: string }; Returns: boolean }
       pt_title_case: { Args: { s: string }; Returns: string }
       reabrir_rc: {
@@ -8445,6 +8464,16 @@ export type Database = {
           _tipo: Database["public"]["Enums"]["tipo_movimentacao_epi"]
         }
         Returns: string
+      }
+      registrar_recebimento_rc: {
+        Args: {
+          _arquivo_nome?: string
+          _arquivo_url?: string
+          _nf_numero: string
+          _observacoes?: string
+          _rc_id: string
+        }
+        Returns: undefined
       }
       requires_mfa: { Args: { _user_id: string }; Returns: boolean }
       resolver_exames_funcionario: {

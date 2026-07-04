@@ -426,15 +426,12 @@ function RequisicoesPage() {
 
   const updateStatus = useMutation({
     mutationFn: async (p: { id: string; status: Status; motivo?: string }) => {
-      const { error } = await supabase
-        .from("purchase_requisitions")
-        .update({
-          status: p.status as any,
-          motivo_indeferimento: p.status === "INDEFERIDA" ? (p.motivo || "") : null,
-          approved_by: user?.id ?? null,
-          approved_at: new Date().toISOString(),
-        })
-        .eq("id", p.id);
+      // Sprint 1: usa RPC decidir_rc — só Supervisor Geral passa; bypass eliminado.
+      const { error } = await supabase.rpc("decidir_rc" as any, {
+        _rc_id: p.id,
+        _decisao: p.status,
+        _motivo: p.status === "INDEFERIDA" ? (p.motivo || "") : null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -1107,20 +1104,12 @@ export function ReqFormDialog({
   useEffect(() => {
     if (isEdit) return;
     (async () => {
-      const now = new Date();
-      const mm = String(now.getMonth() + 1).padStart(2, "0");
-      const yyyy = String(now.getFullYear());
-      const start = `${yyyy}-${mm}-01`;
-      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-      const end = endDate.toISOString().slice(0, 10);
-      const { count } = await supabase
-        .from("purchase_requisitions")
-        .select("id", { count: "exact", head: true })
-        .gte("data_requisicao", start)
-        .lt("data_requisicao", end);
-      const seq = String((count ?? 0) + 1).padStart(3, "0");
-      const novo = `${seq}/${mm}/${yyyy}`;
-      setForm((f) => ({ ...f, numero: novo }));
+      // Sprint 1: número de RC gerado pela RPC atômica (advisory lock + UNIQUE).
+      const today = new Date().toISOString().slice(0, 10);
+      const { data, error } = await supabase.rpc("gerar_numero_rc" as any, { _data: today } as any);
+      if (!error && data) {
+        setForm((f) => ({ ...f, numero: String(data) }));
+      }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
