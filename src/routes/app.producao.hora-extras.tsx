@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,16 +11,16 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
-  LogOut, Search, Check, UserPlus, AlertTriangle, Users, Loader2, Clock, ShieldAlert,
-  Plus, CalendarDays, ClipboardList, ChevronLeft, CheckCircle2, XCircle, HourglassIcon, Trash2,
+  Search, Check, UserPlus, Users, Loader2, Clock, ShieldAlert,
+  Plus, ClipboardList, ChevronLeft, CheckCircle2, XCircle, HourglassIcon, Trash2,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-export const Route = createFileRoute("/extra-sabado")({
-  component: ExtraSabadoMobilePage,
+export const Route = createFileRoute("/app/producao/hora-extras")({
+  component: HoraExtrasProducaoPage,
 });
 
 type LiderInfo = { id: string; employee_id: string; user_id: string; nome: string; observacao: string | null };
@@ -31,23 +31,14 @@ type Convocacao = {
   motivo_indeferimento: string | null; qtd_marcados: number; criado_em: string;
 };
 
-function ExtraSabadoMobilePage() {
-  const { session, loading, user, isExtraSabadoMarcador, isAdmin, isModerator } = useAuth();
-  const navigate = useNavigate();
+function HoraExtrasProducaoPage() {
+  const { user, isExtraSabadoMarcador, isAdmin, isModerator } = useAuth();
   const qc = useQueryClient();
   const [convocacaoAtivaId, setConvocacaoAtivaId] = useState<string | null>(null);
   const [novaOpen, setNovaOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [externoOpen, setExternoOpen] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !session) {
-      try { sessionStorage.setItem("post_login_redirect", "/extra-sabado"); } catch {}
-      navigate({ to: "/login", search: { redirect: "/extra-sabado" } as any });
-    }
-  }, [loading, session, navigate]);
-
-  // Detecta se é líder (via RPC)
   const { data: lider, isLoading: loadingLider } = useQuery({
     queryKey: ["meu-lider-extra", user?.id],
     enabled: !!user?.id,
@@ -62,7 +53,6 @@ function ExtraSabadoMobilePage() {
   const isLider = !!lider;
   const isMarcador = isLider || isExtraSabadoMarcador || isAdmin || isModerator;
 
-  // Convocações criadas por este líder
   const { data: minhasConvocacoes, isLoading: loadingConvs } = useQuery({
     queryKey: ["convocacoes-do-lider", user?.id],
     enabled: !!user?.id && isLider,
@@ -73,7 +63,6 @@ function ExtraSabadoMobilePage() {
     },
   });
 
-  // Convocação selecionada (default = mais recente pendente/aprovada)
   useEffect(() => {
     if (!convocacaoAtivaId && minhasConvocacoes && minhasConvocacoes.length > 0) {
       const editavel = minhasConvocacoes.find(c => c.status !== "INDEFERIDA");
@@ -111,7 +100,6 @@ function ExtraSabadoMobilePage() {
     },
   });
 
-  // Realtime: sincroniza marcações entre marcadores
   useEffect(() => {
     if (!convId) return;
     const ch = supabase
@@ -127,7 +115,6 @@ function ExtraSabadoMobilePage() {
     return () => { supabase.removeChannel(ch); };
   }, [convId, qc]);
 
-  // Employees convocáveis pelo líder
   const { data: employees, isLoading: loadingEmployees } = useQuery({
     queryKey: ["convocaveis-lider", lider?.id],
     enabled: !!lider?.id,
@@ -172,9 +159,7 @@ function ExtraSabadoMobilePage() {
   const totalConfirmados = (marcados ?? []).length;
   const meusMarcados = (marcados ?? []).filter((r: any) => r.marcado_por === user?.id).length;
   const status = conv?.status as "PENDENTE"|"APROVADA"|"INDEFERIDA" | undefined;
-  // Bloqueia edição se INDEFERIDA (líder pode editar até Anderson decidir)
   const readOnly = !isAdmin && status === "INDEFERIDA";
-  const expirado = false;
 
   const filtrados = useMemo(() => {
     const s = busca.trim().toLowerCase();
@@ -186,7 +171,6 @@ function ExtraSabadoMobilePage() {
     );
   }, [employees, busca]);
 
-  // Agrupa por empresa / setor
   const grupos = useMemo(() => {
     const g = new Map<string, any[]>();
     filtrados.forEach((e: any) => {
@@ -198,28 +182,16 @@ function ExtraSabadoMobilePage() {
     return Array.from(g.entries()).sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
   }, [filtrados]);
 
-  async function signOut() {
-    await supabase.auth.signOut();
-    navigate({ to: "/login", replace: true });
-  }
-
-  if (loading || !session) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-300 text-sm">Carregando…</div>;
-  }
-
   if (loadingLider) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-300 text-sm"><Loader2 className="h-5 w-5 animate-spin" /></div>;
+    return <div className="p-8 text-center text-sm text-slate-400"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></div>;
   }
 
   if (!isMarcador) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-6">
-        <div className="max-w-sm text-center space-y-4">
-          <ShieldAlert className="h-12 w-12 text-amber-400 mx-auto" />
-          <h1 className="text-xl font-black">Sem acesso</h1>
-          <p className="text-sm text-slate-400">Este painel é exclusivo dos marcadores de Extra de Sábado. Fale com o SESMT se acha que deveria ter acesso.</p>
-          <Button variant="secondary" onClick={signOut}>Sair</Button>
-        </div>
+      <div className="p-8 text-center space-y-3">
+        <ShieldAlert className="h-10 w-10 text-amber-400 mx-auto" />
+        <h1 className="text-lg font-black">Sem acesso a Hora Extras</h1>
+        <p className="text-sm text-slate-400">Este módulo é dos líderes convocantes. Fale com o SESMT se você deveria ter acesso.</p>
       </div>
     );
   }
@@ -228,24 +200,25 @@ function ExtraSabadoMobilePage() {
   const tipoLabel = conv?.tipo_convocacao === "DIAS_UTEIS" ? "Extra Dia Útil" : "Extra de Sábado";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-20">
-      {/* Header sticky */}
-      <header className="sticky top-0 z-20 bg-gradient-to-b from-[#7f1212] to-[#5a0f22] px-4 py-3 shadow-lg">
-        <div className="flex items-center justify-between gap-3">
+    <div className="pb-20">
+      <header className="px-4 py-4 border-b border-white/10 bg-white/[0.02]">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="min-w-0">
-            <div className="text-[10px] font-black uppercase tracking-widest text-rose-200/80">{tipoLabel}</div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-rose-300/80">Hora Extras — {tipoLabel}</div>
             <div className="text-base font-black leading-tight truncate">
-              {conv ? `${dataConv} · ${conv.horario_inicio}–${conv.horario_fim}` : (lider ? `Líder: ${lider.nome.split(" ").slice(0,2).join(" ")}` : "…")}
+              {conv ? `${dataConv} · ${conv.horario_inicio}–${conv.horario_fim}` : (lider ? `Líder: ${lider.nome.split(" ").slice(0,2).join(" ")}` : "Nenhuma convocação selecionada")}
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {isLider && (
-              <button onClick={() => setNovaOpen(true)} className="p-2 rounded-full bg-emerald-500/90 hover:bg-emerald-500 transition text-white" aria-label="Nova convocação">
-                <Plus className="h-4 w-4" />
-              </button>
+              <Button size="sm" onClick={() => setNovaOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
+                <Plus className="h-4 w-4 mr-1" /> Nova convocação
+              </Button>
             )}
             {convId && (isLider || isAdmin) && conv && conv.status !== "APROVADA" && (
-              <button
+              <Button
+                size="sm"
+                variant="destructive"
                 onClick={async () => {
                   if (!confirm("Excluir esta convocação? Essa ação não pode ser desfeita.")) return;
                   const { error } = await supabase.rpc("excluir_convocacao_extra_lider", { _hora_extra_id: convId });
@@ -254,15 +227,10 @@ function ExtraSabadoMobilePage() {
                   setConvocacaoAtivaId(null);
                   qc.invalidateQueries({ queryKey: ["convocacoes-do-lider"] });
                 }}
-                className="p-2 rounded-full bg-rose-500/90 hover:bg-rose-500 transition text-white"
-                aria-label="Excluir convocação"
               >
-                <Trash2 className="h-4 w-4" />
-              </button>
+                <Trash2 className="h-4 w-4 mr-1" /> Excluir
+              </Button>
             )}
-            <button onClick={signOut} className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition text-white" aria-label="Sair">
-              <LogOut className="h-4 w-4" />
-            </button>
           </div>
         </div>
         {status && (
@@ -287,7 +255,7 @@ function ExtraSabadoMobilePage() {
                : "Selecione uma convocação abaixo ou crie uma nova."}
           </div>
           {(minhasConvocacoes ?? []).length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2 max-w-xl mx-auto">
               {minhasConvocacoes!.map(c => (
                 <button key={c.id} onClick={() => setConvocacaoAtivaId(c.id)}
                   className="w-full text-left rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 p-3">
@@ -300,30 +268,26 @@ function ExtraSabadoMobilePage() {
               ))}
             </div>
           )}
-          <Button onClick={() => setNovaOpen(true)} className="w-full h-11 bg-emerald-600 hover:bg-emerald-700">
-            <Plus className="h-4 w-4 mr-2" /> Nova convocação
-          </Button>
         </div>
       )}
 
       {convId && (
         <>
           {isLider && minhasConvocacoes && minhasConvocacoes.length > 1 && (
-            <div className="px-4 py-2 border-b border-white/10 bg-slate-900">
+            <div className="px-4 py-2 border-b border-white/10 bg-white/[0.02]">
               <button onClick={() => setConvocacaoAtivaId(null)} className="text-xs text-rose-300 hover:text-rose-200 font-bold flex items-center gap-1">
                 <ChevronLeft className="h-3 w-3" /> Voltar às convocações
               </button>
             </div>
           )}
           {conv?.justificativa && (
-            <div className="px-4 py-3 border-b border-white/10 bg-slate-900">
+            <div className="px-4 py-3 border-b border-white/10">
               <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Justificativa</div>
               <div className="text-sm text-slate-200 whitespace-pre-wrap">{conv.justificativa}</div>
             </div>
           )}
-          {/* Status */}
-          <div className="px-4 py-3 border-b border-white/10 bg-slate-900">
-            <div className="grid grid-cols-2 gap-3">
+          <div className="px-4 py-3 border-b border-white/10">
+            <div className="grid grid-cols-2 gap-3 max-w-md">
               <div className="rounded-xl bg-white/5 border border-white/10 p-3">
                 <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Você marcou</div>
                 <div className="text-2xl font-black text-rose-300 tabular-nums">{meusMarcados}</div>
@@ -334,15 +298,14 @@ function ExtraSabadoMobilePage() {
                 {totalConfirmados >= 20 && <div className="text-[10px] font-bold text-amber-200 mt-0.5">🚨 rota + refeitório ON</div>}
               </div>
             </div>
-            {(readOnly || expirado) && (
-              <div className={`mt-3 rounded-lg px-3 py-2 text-xs font-bold flex items-center gap-2 ${expirado ? "bg-red-500/20 text-red-200 border border-red-400/40" : "bg-slate-500/20 text-slate-200 border border-slate-400/30"}`}>
+            {readOnly && (
+              <div className="mt-3 rounded-lg px-3 py-2 text-xs font-bold flex items-center gap-2 bg-slate-500/20 text-slate-200 border border-slate-400/30">
                 <Clock className="h-4 w-4" />
-                {expirado ? "Convocação encerrada" : "Somente leitura — convocação indeferida"}
+                Somente leitura — convocação indeferida
               </div>
             )}
           </div>
 
-          {/* Externos já marcados */}
           {externosMarcados.length > 0 && (
             <div className="px-4 py-3 border-b border-white/10">
               <div className="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-2">Externos ({externosMarcados.length})</div>
@@ -353,7 +316,7 @@ function ExtraSabadoMobilePage() {
                       <div className="text-sm font-bold truncate">{r.nome}</div>
                       <div className="text-[10px] text-slate-400 truncate">{r.externo_empresa}{r.funcao ? ` · ${r.funcao}` : ""} · marcado por {r.marcado_por_nome ?? "—"}</div>
                     </div>
-                    {!readOnly && !expirado && (isAdmin || r.marcado_por === user?.id) && (
+                    {!readOnly && (isAdmin || r.marcado_por === user?.id) && (
                       <button onClick={() => desmarcar.mutate(r.id)} className="text-xs text-red-300 hover:text-red-200 font-bold shrink-0 px-2">Remover</button>
                     )}
                   </div>
@@ -362,20 +325,18 @@ function ExtraSabadoMobilePage() {
             </div>
           )}
 
-          {/* Busca + adicionar externo */}
-          <div className="sticky top-[68px] z-10 bg-slate-950/95 backdrop-blur px-4 py-3 border-b border-white/10 flex gap-2">
-            <div className="relative flex-1">
+          <div className="px-4 py-3 border-b border-white/10 flex gap-2">
+            <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-              <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar nome, setor…" className="pl-9 h-11 bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500" />
+              <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar nome, setor…" className="pl-9" />
             </div>
-            {!readOnly && !expirado && (
-              <Button size="sm" variant="secondary" onClick={() => setExternoOpen(true)} className="h-11 px-3 shrink-0">
-                <UserPlus className="h-4 w-4" />
+            {!readOnly && (
+              <Button size="sm" variant="secondary" onClick={() => setExternoOpen(true)}>
+                <UserPlus className="h-4 w-4 mr-1" /> Externo
               </Button>
             )}
           </div>
 
-          {/* Lista agrupada */}
           <div className="px-4 py-4 space-y-5">
             {loadingEmployees ? (
               <div className="text-center text-slate-500 text-sm py-8"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></div>
@@ -387,10 +348,10 @@ function ExtraSabadoMobilePage() {
             ) : grupos.map(([grupoNome, funcs]) => (
               <div key={grupoNome}>
                 <div className="text-[10px] font-black uppercase tracking-widest text-rose-300 mb-2 px-1">{grupoNome} · {funcs.length}</div>
-                <div className="space-y-1.5">
+                <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
                   {funcs.map((e: any) => {
                     const marcado = marcadosMap.get(e.id);
-                    const podeToggle = !readOnly && !expirado
+                    const podeToggle = !readOnly
                       && (isAdmin || !marcado || marcado.marcado_por === user?.id);
                     return (
                       <button
@@ -404,7 +365,7 @@ function ExtraSabadoMobilePage() {
                           else marcar.mutate(e.id);
                         }}
                         disabled={marcar.isPending || desmarcar.isPending}
-                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition ${marcado ? "bg-emerald-500/15 border border-emerald-400/40" : "bg-white/5 border border-white/10 hover:bg-white/10"} ${!podeToggle && !marcado ? "opacity-50" : ""}`}
+                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${marcado ? "bg-emerald-500/15 border border-emerald-400/40" : "bg-white/5 border border-white/10 hover:bg-white/10"} ${!podeToggle && !marcado ? "opacity-50" : ""}`}
                       >
                         <div className={`h-6 w-6 rounded-md shrink-0 flex items-center justify-center border-2 ${marcado ? "bg-emerald-500 border-emerald-500" : "border-slate-500"}`}>
                           {marcado && <Check className="h-4 w-4 text-white" strokeWidth={3} />}
@@ -436,7 +397,6 @@ function ExtraSabadoMobilePage() {
         }}
       />
 
-      {/* Adicionar externo */}
       <AdicionarExternoDialog
         open={externoOpen}
         onOpenChange={setExternoOpen}
@@ -480,7 +440,6 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated, liderId }: {
     setData(sab.toISOString().slice(0, 10));
   }, [open]);
 
-  // Ao trocar tipo, ajusta defaults de horário
   useEffect(() => {
     if (tipo === "SABADO") { setHi("07:30"); setHf("15:00"); }
     else { setHi("17:00"); setHf("19:00"); }

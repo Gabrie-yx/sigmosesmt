@@ -54,6 +54,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/producao/expedicao", label: "Expedição", module: "producao" },
   { key: "/app/producao/fatores-consumo", label: "Fatores de Consumo", module: "producao" },
   { key: "/app/producao/requisicao-compras", label: "Requisição de Compras", module: "producao" },
+  { key: "/app/producao/hora-extras", label: "Hora Extras", module: "producao" },
 
   // ----- COMPRAS -----
   { key: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", module: "compras" },

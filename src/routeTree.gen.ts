@@ -13,7 +13,6 @@ import { Route as TermosRouteImport } from './routes/termos'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as ExtraSabadoRouteImport } from './routes/extra-sabado'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
@@ -68,6 +67,7 @@ import { Route as AppProducaoRequisicaoComprasRouteImport } from './routes/app.p
 import { Route as AppProducaoPainelListaTecnicaRouteImport } from './routes/app.producao.painel-lista-tecnica'
 import { Route as AppProducaoOrdensRouteImport } from './routes/app.producao.ordens'
 import { Route as AppProducaoListaTecnicaRouteImport } from './routes/app.producao.lista-tecnica'
+import { Route as AppProducaoHoraExtrasRouteImport } from './routes/app.producao.hora-extras'
 import { Route as AppProducaoFatoresConsumoRouteImport } from './routes/app.producao.fatores-consumo'
 import { Route as AppProducaoExpedicaoRouteImport } from './routes/app.producao.expedicao'
 import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
@@ -77,7 +77,6 @@ import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesSaidasRouteImport } from './routes/app.employees.saidas'
 import { Route as AppEmployeesListagemRouteImport } from './routes/app.employees.listagem'
-import { Route as AppEmployeesHoraExtraSabadoRouteImport } from './routes/app.employees.hora-extra-sabado'
 import { Route as AppEmployeesDesligadosRouteImport } from './routes/app.employees.desligados'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 import { Route as AppDdsTemasRouteImport } from './routes/app.dds.temas'
@@ -114,11 +113,6 @@ const PrivacidadeRoute = PrivacidadeRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExtraSabadoRoute = ExtraSabadoRouteImport.update({
-  id: '/extra-sabado',
-  path: '/extra-sabado',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -398,6 +392,11 @@ const AppProducaoListaTecnicaRoute = AppProducaoListaTecnicaRouteImport.update({
   path: '/producao/lista-tecnica',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProducaoHoraExtrasRoute = AppProducaoHoraExtrasRouteImport.update({
+  id: '/producao/hora-extras',
+  path: '/producao/hora-extras',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProducaoFatoresConsumoRoute =
   AppProducaoFatoresConsumoRouteImport.update({
     id: '/producao/fatores-consumo',
@@ -445,12 +444,6 @@ const AppEmployeesListagemRoute = AppEmployeesListagemRouteImport.update({
   path: '/listagem',
   getParentRoute: () => AppEmployeesRoute,
 } as any)
-const AppEmployeesHoraExtraSabadoRoute =
-  AppEmployeesHoraExtraSabadoRouteImport.update({
-    id: '/hora-extra-sabado',
-    path: '/hora-extra-sabado',
-    getParentRoute: () => AppEmployeesRoute,
-  } as any)
 const AppEmployeesDesligadosRoute = AppEmployeesDesligadosRouteImport.update({
   id: '/desligados',
   path: '/desligados',
@@ -547,7 +540,6 @@ const AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/extra-sabado': typeof ExtraSabadoRoute
   '/login': typeof LoginRoute
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -595,7 +587,6 @@ export interface FileRoutesByFullPath {
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/employees/desligados': typeof AppEmployeesDesligadosRoute
-  '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
@@ -605,6 +596,7 @@ export interface FileRoutesByFullPath {
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
   '/app/producao/fatores-consumo': typeof AppProducaoFatoresConsumoRoute
+  '/app/producao/hora-extras': typeof AppProducaoHoraExtrasRoute
   '/app/producao/lista-tecnica': typeof AppProducaoListaTecnicaRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
   '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
@@ -634,7 +626,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/extra-sabado': typeof ExtraSabadoRoute
   '/login': typeof LoginRoute
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -680,7 +671,6 @@ export interface FileRoutesByTo {
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/employees/desligados': typeof AppEmployeesDesligadosRoute
-  '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
@@ -690,6 +680,7 @@ export interface FileRoutesByTo {
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
   '/app/producao/fatores-consumo': typeof AppProducaoFatoresConsumoRoute
+  '/app/producao/hora-extras': typeof AppProducaoHoraExtrasRoute
   '/app/producao/lista-tecnica': typeof AppProducaoListaTecnicaRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
   '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
@@ -721,7 +712,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/extra-sabado': typeof ExtraSabadoRoute
   '/login': typeof LoginRoute
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -769,7 +759,6 @@ export interface FileRoutesById {
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/employees/desligados': typeof AppEmployeesDesligadosRoute
-  '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
@@ -779,6 +768,7 @@ export interface FileRoutesById {
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
   '/app/producao/fatores-consumo': typeof AppProducaoFatoresConsumoRoute
+  '/app/producao/hora-extras': typeof AppProducaoHoraExtrasRoute
   '/app/producao/lista-tecnica': typeof AppProducaoListaTecnicaRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
   '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
@@ -811,7 +801,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
-    | '/extra-sabado'
     | '/login'
     | '/privacidade'
     | '/reset-password'
@@ -859,7 +848,6 @@ export interface FileRouteTypes {
     | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/employees/desligados'
-    | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
     | '/app/employees/saidas'
     | '/app/estoque/epi'
@@ -869,6 +857,7 @@ export interface FileRouteTypes {
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
     | '/app/producao/fatores-consumo'
+    | '/app/producao/hora-extras'
     | '/app/producao/lista-tecnica'
     | '/app/producao/ordens'
     | '/app/producao/painel-lista-tecnica'
@@ -898,7 +887,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/extra-sabado'
     | '/login'
     | '/privacidade'
     | '/reset-password'
@@ -944,7 +932,6 @@ export interface FileRouteTypes {
     | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/employees/desligados'
-    | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
     | '/app/employees/saidas'
     | '/app/estoque/epi'
@@ -954,6 +941,7 @@ export interface FileRouteTypes {
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
     | '/app/producao/fatores-consumo'
+    | '/app/producao/hora-extras'
     | '/app/producao/lista-tecnica'
     | '/app/producao/ordens'
     | '/app/producao/painel-lista-tecnica'
@@ -984,7 +972,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
-    | '/extra-sabado'
     | '/login'
     | '/privacidade'
     | '/reset-password'
@@ -1032,7 +1019,6 @@ export interface FileRouteTypes {
     | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/employees/desligados'
-    | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
     | '/app/employees/saidas'
     | '/app/estoque/epi'
@@ -1042,6 +1028,7 @@ export interface FileRouteTypes {
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
     | '/app/producao/fatores-consumo'
+    | '/app/producao/hora-extras'
     | '/app/producao/lista-tecnica'
     | '/app/producao/ordens'
     | '/app/producao/painel-lista-tecnica'
@@ -1073,7 +1060,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  ExtraSabadoRoute: typeof ExtraSabadoRoute
   LoginRoute: typeof LoginRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -1111,13 +1097,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/extra-sabado': {
-      id: '/extra-sabado'
-      path: '/extra-sabado'
-      fullPath: '/extra-sabado'
-      preLoaderRoute: typeof ExtraSabadoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -1498,6 +1477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoListaTecnicaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/producao/hora-extras': {
+      id: '/app/producao/hora-extras'
+      path: '/producao/hora-extras'
+      fullPath: '/app/producao/hora-extras'
+      preLoaderRoute: typeof AppProducaoHoraExtrasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/producao/fatores-consumo': {
       id: '/app/producao/fatores-consumo'
       path: '/producao/fatores-consumo'
@@ -1559,13 +1545,6 @@ declare module '@tanstack/react-router' {
       path: '/listagem'
       fullPath: '/app/employees/listagem'
       preLoaderRoute: typeof AppEmployeesListagemRouteImport
-      parentRoute: typeof AppEmployeesRoute
-    }
-    '/app/employees/hora-extra-sabado': {
-      id: '/app/employees/hora-extra-sabado'
-      path: '/hora-extra-sabado'
-      fullPath: '/app/employees/hora-extra-sabado'
-      preLoaderRoute: typeof AppEmployeesHoraExtraSabadoRouteImport
       parentRoute: typeof AppEmployeesRoute
     }
     '/app/employees/desligados': {
@@ -1705,7 +1684,6 @@ const AppAdministrativoRouteWithChildren =
 interface AppEmployeesRouteChildren {
   AppEmployeesIdRoute: typeof AppEmployeesIdRoute
   AppEmployeesDesligadosRoute: typeof AppEmployeesDesligadosRoute
-  AppEmployeesHoraExtraSabadoRoute: typeof AppEmployeesHoraExtraSabadoRoute
   AppEmployeesListagemRoute: typeof AppEmployeesListagemRoute
   AppEmployeesSaidasRoute: typeof AppEmployeesSaidasRoute
   AppEmployeesIndexRoute: typeof AppEmployeesIndexRoute
@@ -1714,7 +1692,6 @@ interface AppEmployeesRouteChildren {
 const AppEmployeesRouteChildren: AppEmployeesRouteChildren = {
   AppEmployeesIdRoute: AppEmployeesIdRoute,
   AppEmployeesDesligadosRoute: AppEmployeesDesligadosRoute,
-  AppEmployeesHoraExtraSabadoRoute: AppEmployeesHoraExtraSabadoRoute,
   AppEmployeesListagemRoute: AppEmployeesListagemRoute,
   AppEmployeesSaidasRoute: AppEmployeesSaidasRoute,
   AppEmployeesIndexRoute: AppEmployeesIndexRoute,
@@ -1793,6 +1770,7 @@ interface AppRouteChildren {
   AppProducaoCriarOrdemRoute: typeof AppProducaoCriarOrdemRoute
   AppProducaoExpedicaoRoute: typeof AppProducaoExpedicaoRoute
   AppProducaoFatoresConsumoRoute: typeof AppProducaoFatoresConsumoRoute
+  AppProducaoHoraExtrasRoute: typeof AppProducaoHoraExtrasRoute
   AppProducaoListaTecnicaRoute: typeof AppProducaoListaTecnicaRoute
   AppProducaoOrdensRoute: typeof AppProducaoOrdensRoute
   AppProducaoPainelListaTecnicaRoute: typeof AppProducaoPainelListaTecnicaRoute
@@ -1862,6 +1840,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProducaoCriarOrdemRoute: AppProducaoCriarOrdemRoute,
   AppProducaoExpedicaoRoute: AppProducaoExpedicaoRoute,
   AppProducaoFatoresConsumoRoute: AppProducaoFatoresConsumoRoute,
+  AppProducaoHoraExtrasRoute: AppProducaoHoraExtrasRoute,
   AppProducaoListaTecnicaRoute: AppProducaoListaTecnicaRoute,
   AppProducaoOrdensRoute: AppProducaoOrdensRoute,
   AppProducaoPainelListaTecnicaRoute: AppProducaoPainelListaTecnicaRoute,
@@ -1895,7 +1874,6 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  ExtraSabadoRoute: ExtraSabadoRoute,
   LoginRoute: LoginRoute,
   PrivacidadeRoute: PrivacidadeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
