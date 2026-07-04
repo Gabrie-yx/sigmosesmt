@@ -5,16 +5,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowLeft, Calendar, Clock, Building2, MapPin, X, ChevronLeft, ChevronRight, Users, Eye, Pencil, Trash2, Smartphone } from "lucide-react";
+import { Plus, ArrowLeft, Calendar, Clock, Building2, MapPin, X, Users, Eye, Pencil, Trash2 } from "lucide-react";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from "@/components/ui/sheet";
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
-import { MarcadoresManagerDialog } from "@/components/hora-extra/marcadores-manager-dialog";
 import { gerarHoraExtraSabadoPDF } from "@/lib/hora-extra-sabado-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { compressSignatureForPdf, compressSignaturesBatch } from "@/lib/signature-utils";
@@ -45,7 +44,6 @@ function HoraExtraSabadoPage() {
   const qc = useQueryClient();
   const { user, isEditor, isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
-  const [marcOpen, setMarcOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
@@ -56,7 +54,6 @@ function HoraExtraSabadoPage() {
   const [empresaFiltro, setEmpresaFiltro] = useState<string>("todas");
   const [turnoFiltro, setTurnoFiltro] = useState<string>("todos");
   const [detalheId, setDetalheId] = useState<string | null>(null);
-  const [cursorMes, setCursorMes] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   // Cache pesado por ficha: evita re-baixar lista + recomprimir todas as
   // assinaturas dos funcionários toda vez que o TST/Gestor assina no preview.
   const pdfCacheRef = useRef<Map<string, { rec: any; paginas: any[]; empresasEnvolvidas: string[]; logo: string | null }>>(new Map());
