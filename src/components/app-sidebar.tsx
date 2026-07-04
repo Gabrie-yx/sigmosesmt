@@ -182,8 +182,19 @@ const ALMOXARIFADO_ITEMS: LeafItem[] = [
 ];
 
 const MANUTENCAO_LOCKED: LockedItem[] = [
-  { key: "manut-eletrica", label: "Elétrica", icon: Zap },
   { key: "manut-mecanica", label: "Mecânica", icon: Hammer },
+];
+
+const MANUTENCAO_ITEMS: LeafItem[] = [
+  { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
+];
+
+const ELETRICA_ITEMS: LeafItem[] = [
+  { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
+];
+
+const PORTARIA_ITEMS: LeafItem[] = [
+  { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
 ];
 
 export function AppSidebar() {
