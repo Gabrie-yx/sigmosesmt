@@ -30,6 +30,7 @@ import { Route as AppMatrizTreinamentoRouteImport } from './routes/app.matriz-tr
 import { Route as AppMatrizRiscosRouteImport } from './routes/app.matriz-riscos'
 import { Route as AppIncidentesRouteImport } from './routes/app.incidentes'
 import { Route as AppHojeRouteImport } from './routes/app.hoje'
+import { Route as AppExtraSabadoAprovacoesRouteImport } from './routes/app.extra-sabado-aprovacoes'
 import { Route as AppExtintoresInspecaoFotoRouteImport } from './routes/app.extintores-inspecao-foto'
 import { Route as AppExtintoresRouteImport } from './routes/app.extintores'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
@@ -200,6 +201,12 @@ const AppHojeRoute = AppHojeRouteImport.update({
   path: '/hoje',
   getParentRoute: () => AppRoute,
 } as any)
+const AppExtraSabadoAprovacoesRoute =
+  AppExtraSabadoAprovacoesRouteImport.update({
+    id: '/extra-sabado-aprovacoes',
+    path: '/extra-sabado-aprovacoes',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppExtintoresInspecaoFotoRoute =
   AppExtintoresInspecaoFotoRouteImport.update({
     id: '/extintores-inspecao-foto',
@@ -561,6 +568,7 @@ export interface FileRoutesByFullPath {
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/extintores': typeof AppExtintoresRoute
   '/app/extintores-inspecao-foto': typeof AppExtintoresInspecaoFotoRoute
+  '/app/extra-sabado-aprovacoes': typeof AppExtraSabadoAprovacoesRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
@@ -646,6 +654,7 @@ export interface FileRoutesByTo {
   '/app/controle-documentos': typeof AppControleDocumentosRoute
   '/app/extintores': typeof AppExtintoresRoute
   '/app/extintores-inspecao-foto': typeof AppExtintoresInspecaoFotoRoute
+  '/app/extra-sabado-aprovacoes': typeof AppExtraSabadoAprovacoesRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
@@ -733,6 +742,7 @@ export interface FileRoutesById {
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/extintores': typeof AppExtintoresRoute
   '/app/extintores-inspecao-foto': typeof AppExtintoresInspecaoFotoRoute
+  '/app/extra-sabado-aprovacoes': typeof AppExtraSabadoAprovacoesRoute
   '/app/hoje': typeof AppHojeRoute
   '/app/incidentes': typeof AppIncidentesRoute
   '/app/matriz-riscos': typeof AppMatrizRiscosRoute
@@ -822,6 +832,7 @@ export interface FileRouteTypes {
     | '/app/employees'
     | '/app/extintores'
     | '/app/extintores-inspecao-foto'
+    | '/app/extra-sabado-aprovacoes'
     | '/app/hoje'
     | '/app/incidentes'
     | '/app/matriz-riscos'
@@ -907,6 +918,7 @@ export interface FileRouteTypes {
     | '/app/controle-documentos'
     | '/app/extintores'
     | '/app/extintores-inspecao-foto'
+    | '/app/extra-sabado-aprovacoes'
     | '/app/hoje'
     | '/app/incidentes'
     | '/app/matriz-riscos'
@@ -993,6 +1005,7 @@ export interface FileRouteTypes {
     | '/app/employees'
     | '/app/extintores'
     | '/app/extintores-inspecao-foto'
+    | '/app/extra-sabado-aprovacoes'
     | '/app/hoje'
     | '/app/incidentes'
     | '/app/matriz-riscos'
@@ -1217,6 +1230,13 @@ declare module '@tanstack/react-router' {
       path: '/hoje'
       fullPath: '/app/hoje'
       preLoaderRoute: typeof AppHojeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/extra-sabado-aprovacoes': {
+      id: '/app/extra-sabado-aprovacoes'
+      path: '/extra-sabado-aprovacoes'
+      fullPath: '/app/extra-sabado-aprovacoes'
+      preLoaderRoute: typeof AppExtraSabadoAprovacoesRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/extintores-inspecao-foto': {
@@ -1744,6 +1764,7 @@ interface AppRouteChildren {
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppExtintoresRoute: typeof AppExtintoresRoute
   AppExtintoresInspecaoFotoRoute: typeof AppExtintoresInspecaoFotoRoute
+  AppExtraSabadoAprovacoesRoute: typeof AppExtraSabadoAprovacoesRoute
   AppHojeRoute: typeof AppHojeRoute
   AppIncidentesRoute: typeof AppIncidentesRoute
   AppMatrizRiscosRoute: typeof AppMatrizRiscosRoute
@@ -1812,6 +1833,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppExtintoresRoute: AppExtintoresRoute,
   AppExtintoresInspecaoFotoRoute: AppExtintoresInspecaoFotoRoute,
+  AppExtraSabadoAprovacoesRoute: AppExtraSabadoAprovacoesRoute,
   AppHojeRoute: AppHojeRoute,
   AppIncidentesRoute: AppIncidentesRoute,
   AppMatrizRiscosRoute: AppMatrizRiscosRoute,
