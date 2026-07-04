@@ -71,6 +71,13 @@ export type RcPdfReq = {
   status: RcPdfStatus;
   motivo_indeferimento?: string | null;
   signature_solicitante?: string | null;
+  // Decisão do Supervisor Geral (Sprint 2)
+  decidido_por_nome?: string | null;
+  decidido_assinatura_url?: string | null;
+  decidido_em?: string | null;
+  // Compras
+  cotador_nome?: string | null;
+  cotacao_at?: string | null;
 };
 
 export type RcPdfItem = {
@@ -81,6 +88,28 @@ export type RcPdfItem = {
   observacao?: string | null;
 };
 
+export type RcPdfCotacao = {
+  fornecedor: string;
+  valor?: number | null;
+  prazo_entrega_dias?: number | null;
+  condicao_pagamento?: string | null;
+  frete?: string | null;
+  is_vencedora?: boolean | null;
+};
+
+async function loadImageDims(src: string): Promise<{ w: number; h: number } | null> {
+  try {
+    return await new Promise<{ w: number; h: number }>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = reject;
+      img.src = src;
+    });
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Gera a `jsPDF` da Requisição de Compra usando o mesmo layout FOR-COMP-03
  * que o setor solicitante emite. Devolve o `doc` sem baixar/imprimir —
@@ -89,6 +118,7 @@ export type RcPdfItem = {
 export async function gerarPdfRequisicaoDoc(
   req: RcPdfReq,
   itens: RcPdfItem[],
+  cotacoes: RcPdfCotacao[] = [],
 ): Promise<jsPDF> {
   const { JsPDF, autoTable } = await loadPdfLibs();
   const doc = new JsPDF({ unit: "mm", format: "a4" });
