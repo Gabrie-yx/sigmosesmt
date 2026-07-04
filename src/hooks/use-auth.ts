@@ -96,6 +96,12 @@ export function useAuth() {
   const isAdmin = roles.includes("admin");
   const isModerator = isAdmin || roles.includes("moderador");
   const isEditor = isModerator || roles.includes("editor") || roles.includes("tst") || roles.includes("compras");
+  const isExtraSabadoMarcador = roles.includes("extra_sabado_marcador" as AppRole);
+  // Marcador PURO: só tem esse papel, nada mais. Precisa ser redirecionado pro painel mobile.
+  const isMarcadorPuro = isExtraSabadoMarcador
+    && !isAdmin && !isModerator
+    && !roles.includes("editor") && !roles.includes("tst")
+    && !roles.includes("compras") && !roles.includes("viewer");
   // MFA obrigatório pra qualquer usuário com papel (regra de 03/07/2026).
   const requiresMfa = roles.length > 0;
   const graceActive = !!(mfaGraceUntil && mfaGraceUntil.getTime() > Date.now());
@@ -130,6 +136,7 @@ export function useAuth() {
   return {
     session, user, roles, modules, aal, mfaActive, loading,
     isAdmin, isModerator, isEditor, requiresMfa, mfaSatisfied,
+    isExtraSabadoMarcador, isMarcadorPuro,
     hasModule, hasMenu,
     menuKeys, modulesWithMenuConfig,
     mfaGraceUntil, graceActive, graceDaysLeft,
