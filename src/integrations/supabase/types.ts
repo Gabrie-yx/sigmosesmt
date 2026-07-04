@@ -8262,6 +8262,7 @@ export type Database = {
           full_name: string
           id: string
           invited_by: string | null
+          menus: string[]
           modules: Database["public"]["Enums"]["app_module"][]
           role: Database["public"]["Enums"]["app_role"]
         }
@@ -8273,6 +8274,7 @@ export type Database = {
           full_name: string
           id?: string
           invited_by?: string | null
+          menus?: string[]
           modules?: Database["public"]["Enums"]["app_module"][]
           role?: Database["public"]["Enums"]["app_role"]
         }
@@ -8284,6 +8286,7 @@ export type Database = {
           full_name?: string
           id?: string
           invited_by?: string | null
+          menus?: string[]
           modules?: Database["public"]["Enums"]["app_module"][]
           role?: Database["public"]["Enums"]["app_role"]
         }
