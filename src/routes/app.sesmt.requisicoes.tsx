@@ -426,15 +426,12 @@ function RequisicoesPage() {
 
   const updateStatus = useMutation({
     mutationFn: async (p: { id: string; status: Status; motivo?: string }) => {
-      const { error } = await supabase
-        .from("purchase_requisitions")
-        .update({
-          status: p.status as any,
-          motivo_indeferimento: p.status === "INDEFERIDA" ? (p.motivo || "") : null,
-          approved_by: user?.id ?? null,
-          approved_at: new Date().toISOString(),
-        })
-        .eq("id", p.id);
+      // Sprint 1: usa RPC decidir_rc — só Supervisor Geral passa; bypass eliminado.
+      const { error } = await supabase.rpc("decidir_rc" as any, {
+        _rc_id: p.id,
+        _decisao: p.status,
+        _motivo: p.status === "INDEFERIDA" ? (p.motivo || "") : null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
