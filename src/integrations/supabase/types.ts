@@ -8595,6 +8595,18 @@ export type Database = {
             }
             Returns: string
           }
+        | {
+            Args: {
+              _data: string
+              _employee_ids?: string[]
+              _horario_fim: string
+              _horario_inicio: string
+              _justificativa: string
+              _tipo: string
+              _turno?: string
+            }
+            Returns: string
+          }
       current_aal: { Args: never; Returns: string }
       decidir_convocacao_extra: {
         Args: { _aprovar: boolean; _hora_extra_id: string; _motivo?: string }
