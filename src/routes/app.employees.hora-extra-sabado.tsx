@@ -441,6 +441,7 @@ function HoraExtraSabadoPage() {
         onChangeEncSig={(v) => saveSig("assinatura_tst_data", v)}
         onChangeSesmtSig={(v) => saveSig("assinatura_gestor_data", v)}
       />
+      <MarcadoresManagerDialog open={marcOpen} onOpenChange={setMarcOpen} />
     </div>
   );
 }
