@@ -14,6 +14,22 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const nav = useNavigate();
+  function postLoginTarget(): string {
+    try {
+      const url = new URL(window.location.href);
+      const q = url.searchParams.get("redirect");
+      if (q && q.startsWith("/") && !q.startsWith("//")) return q;
+      const ss = sessionStorage.getItem("post_login_redirect");
+      if (ss && ss.startsWith("/") && !ss.startsWith("//")) return ss;
+    } catch {}
+    return "/app";
+  }
+  function goPostLogin() {
+    const to = postLoginTarget();
+    try { sessionStorage.removeItem("post_login_redirect"); } catch {}
+    if (to !== "/app") window.location.assign(to);
+    else nav({ to: "/app" });
+  }
   // Signup público desabilitado por motivos de segurança (LGPD / sistema interno).
   // Novos usuários só podem ser criados via convite por um admin (inviteUser).
   const mode: "signin" = "signin";
@@ -55,7 +71,7 @@ function LoginPage() {
       });
       if (error) throw error;
       toast.success("Bem-vindo!");
-      nav({ to: "/app" });
+      goPostLogin();
     } catch (e: any) {
       toast.error(e.message ?? "Código inválido");
     } finally { setLoading(false); }
@@ -63,7 +79,7 @@ function LoginPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) nav({ to: "/app" });
+      if (data.session) goPostLogin();
     });
   }, [nav]);
 
@@ -96,7 +112,7 @@ function LoginPage() {
         }
         toast.success("Bem-vindo!");
       }
-      nav({ to: "/app" });
+      goPostLogin();
     } catch (err: any) {
       toast.error(err.message ?? "Erro");
     } finally {
