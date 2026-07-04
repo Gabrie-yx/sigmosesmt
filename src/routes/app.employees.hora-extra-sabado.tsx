@@ -255,11 +255,6 @@ function HoraExtraSabadoPage() {
         </div>
         {isEditor && (
           <div className="flex items-center gap-2">
-            {isAdmin && (
-              <Button variant="outline" onClick={() => setMarcOpen(true)} className="text-[11px] font-black uppercase tracking-widest rounded-xl px-4 py-3 h-auto">
-                <Users className="h-4 w-4 mr-2" />Gerir marcadores
-              </Button>
-            )}
             <Button onClick={() => { setEditId(null); setOpen(true); }} className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
               <Plus className="h-4 w-4 mr-2" />Nova ficha
             </Button>
@@ -267,17 +262,8 @@ function HoraExtraSabadoPage() {
         )}
       </div>
 
-      {/* Calendário + filtros */}
+      {/* Filtros */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-1">
-          <button onClick={() => setCursorMes(new Date(cursorMes.getFullYear(), cursorMes.getMonth() - 1, 1))} className="p-1 rounded-full hover:bg-white/[0.06] text-slate-300"><ChevronLeft className="h-3.5 w-3.5" /></button>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-100 px-2 min-w-[120px] text-center">
-            {cursorMes.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
-          </span>
-          <button onClick={() => setCursorMes(new Date(cursorMes.getFullYear(), cursorMes.getMonth() + 1, 1))} className="p-1 rounded-full hover:bg-white/[0.06] text-slate-300"><ChevronRight className="h-3.5 w-3.5" /></button>
-          <button onClick={() => { const d = new Date(); setCursorMes(new Date(d.getFullYear(), d.getMonth(), 1)); }} className="text-[9px] font-black uppercase tracking-widest text-rose-200 hover:text-rose-100 px-2">Hoje</button>
-        </div>
-        <div className="h-5 w-px bg-white/10 mx-1" />
         <Select value={empresaFiltro} onValueChange={setEmpresaFiltro}>
           <SelectTrigger className="h-8 w-[180px] text-xs bg-white/[0.03] border-white/10 text-slate-200">
             <SelectValue placeholder="Empresa" />
