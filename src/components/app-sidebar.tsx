@@ -181,9 +181,9 @@ const ALMOXARIFADO_ITEMS: LeafItem[] = [
   { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
-const MANUTENCAO_LOCKED: LockedItem[] = [
-  { key: "manut-eletrica", label: "Elétrica", icon: Zap },
-  { key: "manut-mecanica", label: "Mecânica", icon: Hammer },
+const MANUTENCAO_ITEMS: LeafItem[] = [
+  { to: "/app/manutencao/eletrica/requisicao-compras", label: "Elétrica", icon: Zap },
+  { to: "/app/manutencao/mecanica/requisicao-compras", label: "Mecânica", icon: Hammer },
 ];
 
 export function AppSidebar() {
@@ -223,6 +223,7 @@ export function AppSidebar() {
   const canUsuarios = isAdmin || hasModule("usuarios");
   const canAdministrativo = isAdmin || hasModule("administrativo" as any);
   const canAlmoxarifado = isAdmin || hasModule("almoxarifado" as any);
+  const canManutencao = isAdmin || hasModule("manutencao" as any);
 
   // Filtra grupos/itens pelo controle granular de menus
   const visibleSesmtGroups = SESMT_GROUPS
@@ -234,6 +235,7 @@ export function AppSidebar() {
   const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to));
   const visibleAdministrativo = ADMINISTRATIVO_ITEMS.filter((i) => hasMenu(i.to));
   const visibleAlmoxarifado = ALMOXARIFADO_ITEMS.filter((i) => hasMenu(i.to));
+  const visibleManutencao = MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to));
 
   const sesmtAllItems = visibleSesmtGroups.flatMap((g) => g.items).concat(visibleDDSSubmenu);
   const sesmtOpen = anyActive(sesmtAllItems);
@@ -242,6 +244,7 @@ export function AppSidebar() {
   const comprasOpen = anyActive(visibleCompras);
   const administrativoOpen = anyActive(visibleAdministrativo);
   const almoxarifadoOpen = anyActive(visibleAlmoxarifado);
+  const manutencaoOpen = anyActive(visibleManutencao);
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
@@ -489,7 +492,7 @@ export function AppSidebar() {
           </Collapsible>
         )}
 
-        {/* MANUTENÇÃO (locked) */}
+        {/* ALMOXARIFADO */}
         {canAlmoxarifado && visibleAlmoxarifado.length > 0 && (
           <Collapsible defaultOpen={almoxarifadoOpen} className="group/almoxarifado">
             <SidebarGroup>
@@ -524,31 +527,40 @@ export function AppSidebar() {
           </Collapsible>
         )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2 h-9 text-sm font-bold text-slate-700">
-            <Wrench className="h-5 w-5 text-red-700" /> Manutenção
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {MANUTENCAO_LOCKED.map((s) => {
-                const Icon = s.icon ?? Wrench;
-                return (
-                  <SidebarMenuItem key={s.key}>
-                    <SidebarMenuButton
-                      tooltip={`Manutenção · ${s.label} (em desenvolvimento)`}
-                      onClick={() => toast.info(`Manutenção · ${s.label}: módulo em desenvolvimento`)}
-                      className="opacity-60"
-                    >
-                      <Icon />
-                      <span>{s.label}</span>
-                      <Lock className="ml-auto h-3 w-3" />
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* MANUTENÇÃO */}
+        {canManutencao && visibleManutencao.length > 0 && (
+          <Collapsible defaultOpen={manutencaoOpen} className="group/manutencao">
+            <SidebarGroup>
+              <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
+                <CollapsibleTrigger className="flex w-full items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Wrench className="h-5 w-5 text-red-700" /> Manutenção
+                  </span>
+                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/manutencao:rotate-90" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <Body>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {visibleManutencao.map((s) => {
+                      const Icon = s.icon ?? Wrench;
+                      return (
+                        <SidebarMenuItem key={s.to}>
+                          <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={`Manutenção · ${s.label}`}>
+                            <Link to={s.to}>
+                              <Icon />
+                              <span>{s.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </Body>
+            </SidebarGroup>
+          </Collapsible>
+        )}
 
         {/* PORTARIA (locked) */}
         <SidebarGroup>
