@@ -34,6 +34,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/incidentes", label: "Incidentes / Investigação", module: "sesmt" },
   { key: "/app/acoes", label: "Plano de Ações (5W2H)", module: "sesmt" },
   { key: "/app/employees", label: "Funcionários", module: "sesmt" },
+  { key: "/app/extra-sabado-aprovacoes", label: "Aprovações — Extra (Sábado/Dia Útil)", module: "sesmt" },
   { key: "/app/cascos", label: "Cascos / Embarcações", module: "sesmt" },
   { key: "/app/companies", label: "Empresas / Contratadas", module: "sesmt" },
   { key: "/app/roles", label: "Cargos & Matriz de Riscos", module: "sesmt" },
