@@ -784,30 +784,17 @@ function EmitirPcDialog({ req, onClose }: { req: Req; onClose: (ok: boolean) => 
         arquivo_nome = file.name;
       }
 
-      // Nome do responsável
-      let nome: string | null = null;
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles").select("full_name").eq("id", user.id).maybeSingle();
-        nome = profile?.full_name ?? user.email ?? null;
-      }
-
-      const { error } = await supabase
-        .from("purchase_requisitions")
-        .update({
-          status: "EM_RECEBIMENTO" as any,
-          pc_numero: pcNumero.trim(),
-          pc_fornecedor: fornecedor.trim(),
-          pc_valor: valorNum,
-          pc_prazo_entrega: prazo || null,
-          pc_arquivo_url: arquivo_url,
-          pc_arquivo_nome: arquivo_nome,
-          pc_observacoes: obs.trim() || null,
-          pc_emitido_por_id: user?.id ?? null,
-          pc_emitido_por_nome: nome,
-          pc_emitido_em: new Date().toISOString(),
-        } as any)
-        .eq("id", req.id);
+      // Sprint 1: RPC autoriza (Compras) + carimba autor no servidor.
+      const { error } = await supabase.rpc("emitir_pc_rc" as any, {
+        _rc_id: req.id,
+        _pc_numero: pcNumero.trim(),
+        _fornecedor: fornecedor.trim(),
+        _valor: valorNum,
+        _prazo: prazo || null,
+        _arquivo_url: arquivo_url,
+        _arquivo_nome: arquivo_nome,
+        _observacoes: obs.trim() || null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
