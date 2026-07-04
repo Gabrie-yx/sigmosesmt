@@ -91,6 +91,7 @@ import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/a
 import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
+import { Route as AppManutencaoMecanicaRequisicaoComprasRouteImport } from './routes/app.manutencao.mecanica.requisicao-compras'
 import { Route as AppManutencaoEletricaRequisicaoComprasRouteImport } from './routes/app.manutencao.eletrica.requisicao-compras'
 import { Route as AppEstoqueEpiFichasMensaisRouteImport } from './routes/app.estoque.epi.fichas-mensais'
 import { Route as AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.historico.$equipamentoId'
@@ -519,6 +520,12 @@ const AppSesmtCatalogosGasesRoute = AppSesmtCatalogosGasesRouteImport.update({
   path: '/sesmt/catalogos/gases',
   getParentRoute: () => AppRoute,
 } as any)
+const AppManutencaoMecanicaRequisicaoComprasRoute =
+  AppManutencaoMecanicaRequisicaoComprasRouteImport.update({
+    id: '/manutencao/mecanica/requisicao-compras',
+    path: '/manutencao/mecanica/requisicao-compras',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppManutencaoEletricaRequisicaoComprasRoute =
   AppManutencaoEletricaRequisicaoComprasRouteImport.update({
     id: '/manutencao/eletrica/requisicao-compras',
@@ -627,6 +634,7 @@ export interface FileRoutesByFullPath {
   '/app/oss/': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/manutencao/eletrica/requisicao-compras': typeof AppManutencaoEletricaRequisicaoComprasRoute
+  '/app/manutencao/mecanica/requisicao-compras': typeof AppManutencaoMecanicaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -712,6 +720,7 @@ export interface FileRoutesByTo {
   '/app/oss': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/manutencao/eletrica/requisicao-compras': typeof AppManutencaoEletricaRequisicaoComprasRoute
+  '/app/manutencao/mecanica/requisicao-compras': typeof AppManutencaoMecanicaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -801,6 +810,7 @@ export interface FileRoutesById {
   '/app/oss/': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/manutencao/eletrica/requisicao-compras': typeof AppManutencaoEletricaRequisicaoComprasRoute
+  '/app/manutencao/mecanica/requisicao-compras': typeof AppManutencaoMecanicaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -891,6 +901,7 @@ export interface FileRouteTypes {
     | '/app/oss/'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/manutencao/eletrica/requisicao-compras'
+    | '/app/manutencao/mecanica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
@@ -976,6 +987,7 @@ export interface FileRouteTypes {
     | '/app/oss'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/manutencao/eletrica/requisicao-compras'
+    | '/app/manutencao/mecanica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
@@ -1064,6 +1076,7 @@ export interface FileRouteTypes {
     | '/app/oss/'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/manutencao/eletrica/requisicao-compras'
+    | '/app/manutencao/mecanica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
@@ -1658,6 +1671,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtCatalogosGasesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/manutencao/mecanica/requisicao-compras': {
+      id: '/app/manutencao/mecanica/requisicao-compras'
+      path: '/manutencao/mecanica/requisicao-compras'
+      fullPath: '/app/manutencao/mecanica/requisicao-compras'
+      preLoaderRoute: typeof AppManutencaoMecanicaRequisicaoComprasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/manutencao/eletrica/requisicao-compras': {
       id: '/app/manutencao/eletrica/requisicao-compras'
       path: '/manutencao/eletrica/requisicao-compras'
@@ -1811,6 +1831,7 @@ interface AppRouteChildren {
   AppDdsIndexRoute: typeof AppDdsIndexRoute
   AppEstoqueIndexRoute: typeof AppEstoqueIndexRoute
   AppManutencaoEletricaRequisicaoComprasRoute: typeof AppManutencaoEletricaRequisicaoComprasRoute
+  AppManutencaoMecanicaRequisicaoComprasRoute: typeof AppManutencaoMecanicaRequisicaoComprasRoute
   AppSesmtCatalogosGasesRoute: typeof AppSesmtCatalogosGasesRoute
   AppSesmtEquipamentosMoveisArquivosMensaisRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -1883,6 +1904,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppEstoqueIndexRoute: AppEstoqueIndexRoute,
   AppManutencaoEletricaRequisicaoComprasRoute:
     AppManutencaoEletricaRequisicaoComprasRoute,
+  AppManutencaoMecanicaRequisicaoComprasRoute:
+    AppManutencaoMecanicaRequisicaoComprasRoute,
   AppSesmtCatalogosGasesRoute: AppSesmtCatalogosGasesRoute,
   AppSesmtEquipamentosMoveisArquivosMensaisRoute:
     AppSesmtEquipamentosMoveisArquivosMensaisRoute,
