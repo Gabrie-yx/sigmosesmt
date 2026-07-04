@@ -10,13 +10,15 @@ import { SmartBreadcrumb } from "@/components/smart-breadcrumb";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ShieldAlert } from "lucide-react";
 import { HelpHint } from "@/components/help-hint";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
 });
 
 function AppLayout() {
-  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal, isMarcadorPuro } = useAuth();
+  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal, isMarcadorPuro, roles, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -43,6 +45,34 @@ function AppLayout() {
         }}
       >
         Carregando…
+      </div>
+    );
+  }
+
+  // Usuário logado sem NENHUM papel: não é da empresa, não vê nada.
+  if (roles.length === 0) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-6 text-slate-100"
+        style={{ background: "linear-gradient(180deg, #5a0f22 0%, #3a0a18 45%, #1f0610 100%)" }}
+      >
+        <div className="max-w-sm text-center space-y-4">
+          <ShieldAlert className="h-12 w-12 text-amber-400 mx-auto" />
+          <h1 className="text-xl font-black">Sem acesso ao SIGMO</h1>
+          <p className="text-sm text-rose-100/80">
+            Sua conta ({user?.email}) está autenticada mas não tem nenhum perfil liberado
+            neste sistema. Se você deveria ter acesso, fale com o SESMT ou com um administrador.
+          </p>
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              navigate({ to: "/login", replace: true });
+            }}
+          >
+            Sair
+          </Button>
+        </div>
       </div>
     );
   }
