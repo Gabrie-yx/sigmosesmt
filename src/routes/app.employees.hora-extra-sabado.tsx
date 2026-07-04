@@ -193,8 +193,6 @@ function HoraExtraSabadoPage() {
   }
 
   const filtradas = (fichas ?? []).filter((f: any) => {
-    const d = new Date(f.data + "T12:00:00");
-    if (d.getMonth() !== cursorMes.getMonth() || d.getFullYear() !== cursorMes.getFullYear()) return false;
     if (empresaFiltro !== "todas" && (f.companies?.name ?? "") !== empresaFiltro) return false;
     if (turnoFiltro !== "todos" && String(f.turno ?? "") !== turnoFiltro) return false;
     if (!busca.trim()) return true;
@@ -206,6 +204,23 @@ function HoraExtraSabadoPage() {
       f.data.includes(s)
     );
   });
+
+  // Agrupa fichas filtradas por mês (YYYY-MM), ordenado desc.
+  const gruposPorMes = useMemo(() => {
+    const map = new Map<string, any[]>();
+    filtradas.forEach((f: any) => {
+      const key = f.data.slice(0, 7); // YYYY-MM
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(f);
+    });
+    return Array.from(map.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([key, itens]) => {
+        const [y, m] = key.split("-").map(Number);
+        const label = new Date(y, m - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+        return { key, label, itens };
+      });
+  }, [filtradas]);
 
   const empresasUnicas = useMemo(() => {
     const s = new Set<string>();
