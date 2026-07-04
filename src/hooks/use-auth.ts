@@ -97,11 +97,11 @@ export function useAuth() {
   const isModerator = isAdmin || roles.includes("moderador");
   const isEditor = isModerator || roles.includes("editor") || roles.includes("tst") || roles.includes("compras");
   const isExtraSabadoMarcador = roles.includes("extra_sabado_marcador" as AppRole);
-  // Marcador PURO: só tem esse papel, nada mais. Precisa ser redirecionado pro painel mobile.
+  // Marcador operacional: pode ter viewer base do convite, mas deve cair no painel mobile.
   const isMarcadorPuro = isExtraSabadoMarcador
     && !isAdmin && !isModerator
     && !roles.includes("editor") && !roles.includes("tst")
-    && !roles.includes("compras") && !roles.includes("viewer");
+    && !roles.includes("compras");
   // MFA obrigatório pra qualquer usuário com papel (regra de 03/07/2026).
   const requiresMfa = roles.length > 0;
   const graceActive = !!(mfaGraceUntil && mfaGraceUntil.getTime() > Date.now());
