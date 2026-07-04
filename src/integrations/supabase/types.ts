@@ -8726,15 +8726,20 @@ export type Database = {
         Args: { _cotacao_id: string }
         Returns: undefined
       }
-      marcar_funcionario_sabado: {
-        Args: {
-          _alimentacao?: boolean
-          _employee_id: string
-          _hora_extra_id: string
-          _transporte?: boolean
-        }
-        Returns: string
-      }
+      marcar_funcionario_sabado:
+        | {
+            Args: { _employee_id: string; _hora_extra_id: string }
+            Returns: string
+          }
+        | {
+            Args: {
+              _alimentacao?: boolean
+              _employee_id: string
+              _hora_extra_id: string
+              _transporte?: boolean
+            }
+            Returns: string
+          }
       melhor_combo_por_item: {
         Args: { _rc_id: string }
         Returns: {
