@@ -423,6 +423,7 @@ function RequisicoesPage() {
                             </span>
                           )}
                           <Badge variant="outline" className={STATUS_BADGE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+                          <UrgenciaBadge urgencia={r.urgencia ?? "NORMAL"} slaDeadline={r.sla_deadline} status={r.status} />
                           <Badge
                             variant="outline"
                             className={
