@@ -253,7 +253,10 @@ export function AppSidebar() {
   const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to));
   const visibleAdministrativo = ADMINISTRATIVO_ITEMS.filter((i) => hasMenu(i.to));
   const visibleAlmoxarifado = ALMOXARIFADO_ITEMS.filter((i) => hasMenu(i.to));
-  const visibleManutencao = MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to));
+  const visibleManutencaoGroups = MANUTENCAO_GROUPS
+    .map((g) => ({ ...g, items: g.items.filter((i) => hasMenu(i.to)) }))
+    .filter((g) => g.items.length > 0);
+  const visibleManutencaoAll = visibleManutencaoGroups.flatMap((g) => g.items);
 
   const sesmtAllItems = visibleSesmtGroups.flatMap((g) => g.items).concat(visibleDDSSubmenu);
   const sesmtOpen = anyActive(sesmtAllItems);
@@ -262,7 +265,7 @@ export function AppSidebar() {
   const comprasOpen = anyActive(visibleCompras);
   const administrativoOpen = anyActive(visibleAdministrativo);
   const almoxarifadoOpen = anyActive(visibleAlmoxarifado);
-  const manutencaoOpen = anyActive(visibleManutencao);
+  const manutencaoOpen = anyActive(visibleManutencaoAll);
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
