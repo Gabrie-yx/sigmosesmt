@@ -91,6 +91,7 @@ import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/a
 import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
+import { Route as AppManutencaoEletricaRequisicaoComprasRouteImport } from './routes/app.manutencao.eletrica.requisicao-compras'
 import { Route as AppEstoqueEpiFichasMensaisRouteImport } from './routes/app.estoque.epi.fichas-mensais'
 import { Route as AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.historico.$equipamentoId'
 import { Route as AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.checklist.$equipamentoId'
@@ -518,6 +519,12 @@ const AppSesmtCatalogosGasesRoute = AppSesmtCatalogosGasesRouteImport.update({
   path: '/sesmt/catalogos/gases',
   getParentRoute: () => AppRoute,
 } as any)
+const AppManutencaoEletricaRequisicaoComprasRoute =
+  AppManutencaoEletricaRequisicaoComprasRouteImport.update({
+    id: '/manutencao/eletrica/requisicao-compras',
+    path: '/manutencao/eletrica/requisicao-compras',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppEstoqueEpiFichasMensaisRoute =
   AppEstoqueEpiFichasMensaisRouteImport.update({
     id: '/fichas-mensais',
@@ -619,6 +626,7 @@ export interface FileRoutesByFullPath {
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
+  '/app/manutencao/eletrica/requisicao-compras': typeof AppManutencaoEletricaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -703,6 +711,7 @@ export interface FileRoutesByTo {
   '/app/estoque': typeof AppEstoqueIndexRoute
   '/app/oss': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
+  '/app/manutencao/eletrica/requisicao-compras': typeof AppManutencaoEletricaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -791,6 +800,7 @@ export interface FileRoutesById {
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
+  '/app/manutencao/eletrica/requisicao-compras': typeof AppManutencaoEletricaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -880,6 +890,7 @@ export interface FileRouteTypes {
     | '/app/estoque/'
     | '/app/oss/'
     | '/app/estoque/epi/fichas-mensais'
+    | '/app/manutencao/eletrica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
@@ -964,6 +975,7 @@ export interface FileRouteTypes {
     | '/app/estoque'
     | '/app/oss'
     | '/app/estoque/epi/fichas-mensais'
+    | '/app/manutencao/eletrica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
@@ -1051,6 +1063,7 @@ export interface FileRouteTypes {
     | '/app/estoque/'
     | '/app/oss/'
     | '/app/estoque/epi/fichas-mensais'
+    | '/app/manutencao/eletrica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
@@ -1645,6 +1658,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtCatalogosGasesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/manutencao/eletrica/requisicao-compras': {
+      id: '/app/manutencao/eletrica/requisicao-compras'
+      path: '/manutencao/eletrica/requisicao-compras'
+      fullPath: '/app/manutencao/eletrica/requisicao-compras'
+      preLoaderRoute: typeof AppManutencaoEletricaRequisicaoComprasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/estoque/epi/fichas-mensais': {
       id: '/app/estoque/epi/fichas-mensais'
       path: '/fichas-mensais'
@@ -1790,6 +1810,7 @@ interface AppRouteChildren {
   AppSesmtTerceirosRoute: typeof AppSesmtTerceirosRoute
   AppDdsIndexRoute: typeof AppDdsIndexRoute
   AppEstoqueIndexRoute: typeof AppEstoqueIndexRoute
+  AppManutencaoEletricaRequisicaoComprasRoute: typeof AppManutencaoEletricaRequisicaoComprasRoute
   AppSesmtCatalogosGasesRoute: typeof AppSesmtCatalogosGasesRoute
   AppSesmtEquipamentosMoveisArquivosMensaisRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -1860,6 +1881,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtTerceirosRoute: AppSesmtTerceirosRoute,
   AppDdsIndexRoute: AppDdsIndexRoute,
   AppEstoqueIndexRoute: AppEstoqueIndexRoute,
+  AppManutencaoEletricaRequisicaoComprasRoute:
+    AppManutencaoEletricaRequisicaoComprasRoute,
   AppSesmtCatalogosGasesRoute: AppSesmtCatalogosGasesRoute,
   AppSesmtEquipamentosMoveisArquivosMensaisRoute:
     AppSesmtEquipamentosMoveisArquivosMensaisRoute,
