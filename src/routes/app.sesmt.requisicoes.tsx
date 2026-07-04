@@ -986,6 +986,7 @@ export function ReqFormDialog({
     data_revisao: existing?.data_revisao ?? today,
     pagina: existing?.pagina ?? "01/01",
     observacoes: existing?.observacoes ?? "",
+    urgencia: (existing?.urgencia ?? "NORMAL") as Urgencia,
   });
   const [itens, setItens] = useState<Item[]>(emptyItems());
   const [signature, setSignature] = useState<string | null>(() => {
