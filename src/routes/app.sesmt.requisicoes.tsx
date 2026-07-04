@@ -42,6 +42,7 @@ import { useDraftAutosave } from "@/hooks/use-draft-autosave";
 import { deleteDraft, loadDraft } from "@/lib/draft-store";
 import { printPdf } from "@/lib/pdf-print";
 import { gerarPdfRequisicaoDoc, rcPdfFileName, type RcPdfReq, type RcPdfCotacao } from "@/lib/requisicao-compra-pdf";
+import { UrgenciaBadge, UrgenciaSelect, type Urgencia } from "@/components/compras/urgencia";
 
 export const Route = createFileRoute("/app/sesmt/requisicoes")({
   component: RequisicoesPage,
@@ -101,6 +102,8 @@ type Req = {
   pc_valor?: number | null;
   nf_numero?: string | null;
   recebido_em?: string | null;
+  urgencia?: Urgencia | null;
+  sla_deadline?: string | null;
 };
 
 const STATUS_BADGE: Record<Status, string> = {
