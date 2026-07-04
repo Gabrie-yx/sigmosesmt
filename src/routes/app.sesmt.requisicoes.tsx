@@ -150,7 +150,6 @@ async function logoDataUrl(): Promise<string | null> {
   } catch { return null; }
 }
 
-async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "download") {
 async function gerarPdfRequisicao(req: Req, itens: Item[], mode: PrintMode = "download", cotacoes: RcPdfCotacao[] = []) {
   // Sprint 2: PDF único — usa o gerador compartilhado (mesmo layout FOR-COMP-03).
   const doc = await gerarPdfRequisicaoDoc(req as unknown as RcPdfReq, itens, cotacoes);
