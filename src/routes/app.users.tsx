@@ -499,12 +499,12 @@ function UsersPage() {
 
       {/* Modal Convidar */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden">
+        <DialogContent className="max-w-6xl p-0 gap-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <DialogTitle>Convidar usuário</DialogTitle>
             <DialogDescription>Um e-mail será enviado com link para definir senha.</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] max-h-[70vh]">
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.3fr)] max-h-[72vh]">
             {/* Coluna esquerda: identidade + papel */}
             <div className="p-6 space-y-5 md:border-r overflow-y-auto">
               <div className="space-y-1.5">
@@ -530,13 +530,13 @@ function UsersPage() {
                 </div>
               </div>
             </div>
-            {/* Coluna direita: módulos */}
-            <div className="p-6 space-y-3 overflow-y-auto bg-muted/20">
+            {/* Coluna do meio: módulos */}
+            <div className="p-6 space-y-3 overflow-y-auto md:border-r">
               <Label className="text-sm font-semibold">Módulos liberados</Label>
               {fRole === "admin" ? (
                 <p className="text-xs text-muted-foreground">Administradores acessam todos os módulos automaticamente.</p>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   {MODULES.map((m) => {
                     const on = fModules.includes(m.value);
                     return (
@@ -548,6 +548,57 @@ function UsersPage() {
                     );
                   })}
                 </div>
+              )}
+            </div>
+            {/* Coluna direita: menus granulares */}
+            <div className="p-6 space-y-3 overflow-y-auto bg-muted/20">
+              {fRole === "admin" ? (
+                <div className="text-sm text-muted-foreground">
+                  Sem restrição granular — administrador vê todos os menus.
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <Label className="text-sm font-semibold">Menus específicos (granular)</Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Deixe em branco para liberar TODOS os menus do módulo. Marque itens específicos para restringir.
+                    </p>
+                  </div>
+                  {fModules.length === 0 ? (
+                    <div className="text-xs text-muted-foreground italic p-4 rounded-md border border-dashed text-center">
+                      Selecione um módulo ao lado para configurar os menus.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {fModules.map((mod) => {
+                        const menus = menusForModule(mod as any);
+                        if (menus.length === 0) return null;
+                        const allOn = menus.every((m) => fMenus.includes(m.key));
+                        return (
+                          <div key={mod} className="border rounded-md bg-background p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                {moduleLabel(mod)}
+                              </span>
+                              <button type="button" className="text-[11px] underline text-primary hover:text-primary/80"
+                                onClick={() => toggleAllMenusOfModule(mod, !allOn)}>
+                                {allOn ? "Limpar (libera todos)" : "Marcar todos"}
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-1 gap-1">
+                              {menus.map((m) => (
+                                <label key={m.key} className="flex items-center gap-2 text-sm p-1.5 rounded hover:bg-muted/40 cursor-pointer">
+                                  <Checkbox checked={fMenus.includes(m.key)} onCheckedChange={() => toggleMenu(m.key)} />
+                                  <span className="truncate">{m.label}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
