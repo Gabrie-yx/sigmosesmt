@@ -549,7 +549,7 @@ export function AppSidebar() {
         )}
 
         {/* MANUTENÇÃO */}
-        {canManutencao && visibleManutencao.length > 0 && (
+        {canManutencao && visibleManutencaoGroups.length > 0 && (
           <Collapsible defaultOpen={manutencaoOpen} className="group/manutencao">
             <SidebarGroup>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
@@ -563,17 +563,38 @@ export function AppSidebar() {
               <Body>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {visibleManutencao.map((s) => {
-                      const Icon = s.icon ?? Wrench;
+                    {visibleManutencaoGroups.map((g) => {
+                      const GIcon = g.icon ?? Wrench;
+                      const groupOpen = anyActive(g.items);
                       return (
-                        <SidebarMenuItem key={s.to}>
-                          <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={`Manutenção · ${s.label}`}>
-                            <Link to={s.to}>
-                              <Icon />
-                              <span>{s.label}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
+                        <Collapsible key={g.key} defaultOpen={groupOpen} className={`group/man-${g.key}`}>
+                          <SidebarMenuItem>
+                            <CollapsibleTrigger asChild>
+                              <SidebarMenuButton tooltip={`Manutenção · ${g.label}`}>
+                                <GIcon />
+                                <span>{g.label}</span>
+                                <ChevronRight className={`ml-auto h-4 w-4 transition-transform group-data-[state=open]/man-${g.key}:rotate-90`} />
+                              </SidebarMenuButton>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <SidebarMenu className="ml-4 border-l border-sidebar-border pl-2">
+                                {g.items.map((s) => {
+                                  const SIcon = s.icon ?? Wrench;
+                                  return (
+                                    <SidebarMenuItem key={s.to}>
+                                      <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={`${g.label} · ${s.label}`}>
+                                        <Link to={s.to}>
+                                          <SIcon />
+                                          <span>{s.label}</span>
+                                        </Link>
+                                      </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                  );
+                                })}
+                              </SidebarMenu>
+                            </CollapsibleContent>
+                          </SidebarMenuItem>
+                        </Collapsible>
                       );
                     })}
                   </SidebarMenu>
