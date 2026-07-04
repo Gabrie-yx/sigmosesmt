@@ -27,7 +27,7 @@ type MarcadorConfig = {
 };
 
 function ExtraSabadoMobilePage() {
-  const { session, loading, user, isMarcadorPuro, isAdmin, isModerator } = useAuth();
+  const { session, loading, user, isExtraSabadoMarcador, isAdmin, isModerator } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
@@ -47,7 +47,7 @@ function ExtraSabadoMobilePage() {
     }
   }, [loading, session, navigate]);
 
-  const isMarcador = isMarcadorPuro || isAdmin || isModerator;
+  const isMarcador = isExtraSabadoMarcador || isAdmin || isModerator;
 
   // Config do marcador logado (define escopo)
   const { data: minhaConfig } = useQuery({
@@ -66,7 +66,7 @@ function ExtraSabadoMobilePage() {
   // Get-or-create convocação do próximo sábado
   const { data: convId, isLoading: loadingConv, error: convError } = useQuery({
     queryKey: ["extra-sabado-conv-atual"],
-    enabled: !!session && (isMarcadorPuro || !!minhaConfig || isAdmin),
+    enabled: !!session && (isExtraSabadoMarcador || !!minhaConfig || isAdmin),
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_or_create_convocacao_sabado_atual");
       if (error) throw error;
