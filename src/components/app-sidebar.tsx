@@ -187,14 +187,17 @@ const MANUTENCAO_ITEMS: LeafItem[] = [
 
 const MECANICA_ITEMS: LeafItem[] = [
   { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
+  { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
 const ELETRICA_ITEMS: LeafItem[] = [
   { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
+  { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
 const PORTARIA_ITEMS: LeafItem[] = [
   { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
+  { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
 export function AppSidebar() {
