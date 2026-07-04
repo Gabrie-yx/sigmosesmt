@@ -463,11 +463,11 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
     if (loadingPdf) return;
     setLoadingPdf(true);
     try {
-      const [{ data: full, error: e1 }, { data: itens, error: e2 }] = await Promise.all([
+      const [{ data: full, error: e1 }, { data: itens, error: e2 }, { data: cots, error: e3 }] = await Promise.all([
         supabase
           .from("purchase_requisitions")
           .select(
-            "id,numero,titulo,data_requisicao,classificacao,solicitante,setor,fornecedor,obra_construcao,obra_manutencao,codigo_formulario,revisao,data_revisao,pagina,status,motivo_indeferimento,signature_solicitante",
+            "id,numero,titulo,data_requisicao,classificacao,solicitante,setor,fornecedor,obra_construcao,obra_manutencao,codigo_formulario,revisao,data_revisao,pagina,status,motivo_indeferimento,signature_solicitante,decidido_por_nome,decidido_assinatura_url,decidido_em,cotador_nome,cotacao_at",
           )
           .eq("id", req.id)
           .maybeSingle(),
@@ -476,11 +476,22 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
           .select("item_numero,descricao,quantidade,unidade,observacao")
           .eq("requisition_id", req.id)
           .order("item_numero"),
+        supabase
+          .from("rc_cotacoes")
+          .select("fornecedor,valor,prazo_entrega_dias,condicao_pagamento,frete,is_vencedora")
+          .eq("rc_id", req.id)
+          .order("is_vencedora", { ascending: false })
+          .order("valor", { ascending: true }),
       ]);
       if (e1) throw e1;
       if (e2) throw e2;
+      if (e3) throw e3;
       if (!full) throw new Error("RC não encontrada");
-      const doc = await gerarPdfRequisicaoDoc(full as unknown as RcPdfReq, itens ?? []);
+      const doc = await gerarPdfRequisicaoDoc(
+        full as unknown as RcPdfReq,
+        itens ?? [],
+        (cots ?? []) as any,
+      );
       setPdfDoc(doc);
       setOpenPreview(true);
     } catch (err: any) {
