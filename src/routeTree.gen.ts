@@ -85,6 +85,7 @@ import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
 import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
 import { Route as AppComprasRequisicoesRecebidasRouteImport } from './routes/app.compras.requisicoes-recebidas'
 import { Route as AppComprasFornecedoresRouteImport } from './routes/app.compras.fornecedores'
+import { Route as AppComprasDashboardRouteImport } from './routes/app.compras.dashboard'
 import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/app.almoxarifado.requisicao-compras'
 import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
@@ -483,6 +484,11 @@ const AppComprasFornecedoresRoute = AppComprasFornecedoresRouteImport.update({
   path: '/compras/fornecedores',
   getParentRoute: () => AppRoute,
 } as any)
+const AppComprasDashboardRoute = AppComprasDashboardRouteImport.update({
+  id: '/compras/dashboard',
+  path: '/compras/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAlmoxarifadoRequisicaoComprasRoute =
   AppAlmoxarifadoRequisicaoComprasRouteImport.update({
     id: '/almoxarifado/requisicao-compras',
@@ -564,6 +570,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
+  '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
@@ -646,6 +653,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppIndexRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
+  '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
@@ -732,6 +740,7 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
+  '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
@@ -819,6 +828,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
+    | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
     | '/app/conta/seguranca'
@@ -901,6 +911,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
+    | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
     | '/app/conta/seguranca'
@@ -986,6 +997,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
+    | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
     | '/app/conta/seguranca'
@@ -1579,6 +1591,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppComprasFornecedoresRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/compras/dashboard': {
+      id: '/app/compras/dashboard'
+      path: '/compras/dashboard'
+      fullPath: '/app/compras/dashboard'
+      preLoaderRoute: typeof AppComprasDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/almoxarifado/requisicao-compras': {
       id: '/app/almoxarifado/requisicao-compras'
       path: '/almoxarifado/requisicao-compras'
@@ -1719,6 +1738,7 @@ interface AppRouteChildren {
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAlmoxarifadoRequisicaoComprasRoute: typeof AppAlmoxarifadoRequisicaoComprasRoute
+  AppComprasDashboardRoute: typeof AppComprasDashboardRoute
   AppComprasFornecedoresRoute: typeof AppComprasFornecedoresRoute
   AppComprasRequisicoesRecebidasRoute: typeof AppComprasRequisicoesRecebidasRoute
   AppContaSegurancaRoute: typeof AppContaSegurancaRoute
@@ -1786,6 +1806,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
   AppAlmoxarifadoRequisicaoComprasRoute: AppAlmoxarifadoRequisicaoComprasRoute,
+  AppComprasDashboardRoute: AppComprasDashboardRoute,
   AppComprasFornecedoresRoute: AppComprasFornecedoresRoute,
   AppComprasRequisicoesRecebidasRoute: AppComprasRequisicoesRecebidasRoute,
   AppContaSegurancaRoute: AppContaSegurancaRoute,
