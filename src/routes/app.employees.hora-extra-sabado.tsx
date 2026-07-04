@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowLeft, Calendar, Clock, Building2, MapPin, X, ChevronLeft, ChevronRight, Users, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, ArrowLeft, Calendar, Clock, Building2, MapPin, X, ChevronLeft, ChevronRight, Users, Eye, Pencil, Trash2, Smartphone } from "lucide-react";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
@@ -374,6 +374,26 @@ function HoraExtraSabadoPage() {
                   {isEditor && (
                     <Button variant="outline" className="border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.08]" onClick={() => { setEditId(fichaDetalhe.id); setDetalheId(null); setOpen(true); }}>
                       <Pencil className="h-4 w-4 mr-1.5" />Editar
+                    </Button>
+                  )}
+                  {isEditor && (
+                    <Button
+                      variant="outline"
+                      className={`border-emerald-400/30 ${fichaDetalhe.aberto_marcadores_em ? "text-emerald-300 bg-emerald-500/10" : "text-emerald-300 hover:bg-emerald-500/10"}`}
+                      onClick={async () => {
+                        if (fichaDetalhe.aberto_marcadores_em) {
+                          if (!confirm("Já está aberta para os marcadores. Reabrir/prorrogar até sexta 19h?")) return;
+                        }
+                        const { error } = await supabase.rpc("abrir_convocacao_marcadores", {
+                          _hora_extra_id: fichaDetalhe.id,
+                        });
+                        if (error) return toast.error(error.message);
+                        toast.success(fichaDetalhe.aberto_marcadores_em ? "Convocação reaberta" : "Aberta pros marcadores");
+                        qc.invalidateQueries({ queryKey: ["hora-extra-sabado"] });
+                      }}
+                    >
+                      <Smartphone className="h-4 w-4 mr-1.5" />
+                      {fichaDetalhe.aberto_marcadores_em ? "Aberta p/ marcadores" : "Abrir p/ marcadores"}
                     </Button>
                   )}
                   {isAdmin && (

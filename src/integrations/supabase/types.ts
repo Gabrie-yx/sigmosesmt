@@ -4184,18 +4184,80 @@ export type Database = {
           },
         ]
       }
+      hora_extra_marcadores: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          criado_por: string | null
+          escopo: Json
+          nome: string
+          self_employee_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          criado_por?: string | null
+          escopo?: Json
+          nome: string
+          self_employee_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          criado_por?: string | null
+          escopo?: Json
+          nome?: string
+          self_employee_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hora_extra_marcadores_self_employee_id_fkey"
+            columns: ["self_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hora_extra_marcadores_self_employee_id_fkey"
+            columns: ["self_employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "hora_extra_marcadores_self_employee_id_fkey"
+            columns: ["self_employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       hora_extra_sabado: {
         Row: {
+          aberto_marcadores_em: string | null
+          aberto_por: string | null
+          aberto_por_nome: string | null
           assinatura_gestor_data: string | null
           assinatura_tst_data: string | null
           centro_custo: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
+          criado_automatico: boolean
+          criado_automatico_por_nome: string | null
           data: string
           horario_fim: string | null
           horario_inicio: string | null
           id: string
+          marcadores_edit_ate: string | null
+          marcadores_expira_em: string | null
           observacao: string | null
           setor: string | null
           tipo_efetivo: string
@@ -4203,16 +4265,23 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          aberto_marcadores_em?: string | null
+          aberto_por?: string | null
+          aberto_por_nome?: string | null
           assinatura_gestor_data?: string | null
           assinatura_tst_data?: string | null
           centro_custo?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
+          criado_automatico?: boolean
+          criado_automatico_por_nome?: string | null
           data: string
           horario_fim?: string | null
           horario_inicio?: string | null
           id?: string
+          marcadores_edit_ate?: string | null
+          marcadores_expira_em?: string | null
           observacao?: string | null
           setor?: string | null
           tipo_efetivo?: string
@@ -4220,16 +4289,23 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          aberto_marcadores_em?: string | null
+          aberto_por?: string | null
+          aberto_por_nome?: string | null
           assinatura_gestor_data?: string | null
           assinatura_tst_data?: string | null
           centro_custo?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
+          criado_automatico?: boolean
+          criado_automatico_por_nome?: string | null
           data?: string
           horario_fim?: string | null
           horario_inicio?: string | null
           id?: string
+          marcadores_edit_ate?: string | null
+          marcadores_expira_em?: string | null
           observacao?: string | null
           setor?: string | null
           tipo_efetivo?: string
@@ -4259,9 +4335,13 @@ export type Database = {
           created_at: string
           employee_id: string | null
           externo: boolean
+          externo_empresa: string | null
           funcao: string | null
           hora_extra_id: string
           id: string
+          marcado_em: string
+          marcado_por: string | null
+          marcado_por_nome: string | null
           nome: string
           ordem: number
           presenca: string | null
@@ -4272,9 +4352,13 @@ export type Database = {
           created_at?: string
           employee_id?: string | null
           externo?: boolean
+          externo_empresa?: string | null
           funcao?: string | null
           hora_extra_id: string
           id?: string
+          marcado_em?: string
+          marcado_por?: string | null
+          marcado_por_nome?: string | null
           nome: string
           ordem?: number
           presenca?: string | null
@@ -4285,9 +4369,13 @@ export type Database = {
           created_at?: string
           employee_id?: string | null
           externo?: boolean
+          externo_empresa?: string | null
           funcao?: string | null
           hora_extra_id?: string
           id?: string
+          marcado_em?: string
+          marcado_por?: string | null
+          marcado_por_nome?: string | null
           nome?: string
           ordem?: number
           presenca?: string | null
@@ -8312,6 +8400,25 @@ export type Database = {
       }
     }
     Functions: {
+      abrir_convocacao_marcadores: {
+        Args: {
+          _edit_ate?: string
+          _expira_em?: string
+          _hora_extra_id: string
+        }
+        Returns: undefined
+      }
+      adicionar_externo_sabado: {
+        Args: {
+          _alimentacao?: boolean
+          _empresa: string
+          _funcao?: string
+          _hora_extra_id: string
+          _nome: string
+          _transporte?: boolean
+        }
+        Returns: string
+      }
       admin_count_user_sessions: { Args: { _user_id: string }; Returns: number }
       admin_force_signout_user: { Args: { _user_id: string }; Returns: number }
       ajustar_saldo_epi: {
@@ -8334,6 +8441,10 @@ export type Database = {
         Returns: undefined
       }
       desarquivar_rc: { Args: { _rc_id: string }; Returns: undefined }
+      desmarcar_funcionario_sabado: {
+        Args: { _row_id: string }
+        Returns: undefined
+      }
       devolver_rc_para_cotacao: {
         Args: { _motivo: string; _rc_id: string }
         Returns: undefined
@@ -8360,6 +8471,10 @@ export type Database = {
         Returns: undefined
       }
       expirar_acordos_vencidos: { Args: never; Returns: number }
+      fechar_convocacao_marcadores: {
+        Args: { _hora_extra_id: string }
+        Returns: undefined
+      }
       fn_dias_sem_acidente: {
         Args: { _company_id?: string }
         Returns: {
@@ -8380,6 +8495,7 @@ export type Database = {
       gerar_numero_rc: { Args: { _data?: string }; Returns: string }
       gerar_numero_ria: { Args: never; Returns: string }
       gerar_numero_tnc: { Args: never; Returns: string }
+      get_or_create_convocacao_sabado_atual: { Args: never; Returns: string }
       has_module_access: {
         Args: {
           _module: Database["public"]["Enums"]["app_module"]
@@ -8394,6 +8510,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      hora_extra_marcador_visivel: {
+        Args: { _conv_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_editor: { Args: { _user_id: string }; Returns: boolean }
       is_moderator: { Args: { _user_id: string }; Returns: boolean }
       is_supervisor_geral: { Args: { _user_id: string }; Returns: boolean }
@@ -8402,10 +8522,23 @@ export type Database = {
         Args: { _contexto?: Json; _entity: string; _entity_id: string }
         Returns: undefined
       }
+      marcador_pode_marcar_employee: {
+        Args: { _employee_id: string; _marcador_user_id: string }
+        Returns: boolean
+      }
       marcar_convocacoes_vencidas: { Args: never; Returns: number }
       marcar_cotacao_vencedora: {
         Args: { _cotacao_id: string }
         Returns: undefined
+      }
+      marcar_funcionario_sabado: {
+        Args: {
+          _alimentacao?: boolean
+          _employee_id: string
+          _hora_extra_id: string
+          _transporte?: boolean
+        }
+        Returns: string
       }
       melhor_combo_por_item: {
         Args: { _rc_id: string }
@@ -8430,6 +8563,7 @@ export type Database = {
       peek_proximo_numero_apr: { Args: never; Returns: string }
       pegar_rc_para_cotar: { Args: { _token: string }; Returns: undefined }
       pode_gerenciar_compras: { Args: { _user_id: string }; Returns: boolean }
+      pode_gerir_extra_sabado: { Args: { _user_id: string }; Returns: boolean }
       pt_title_case: { Args: { s: string }; Returns: string }
       rc_sla_horas: {
         Args: { _urg: Database["public"]["Enums"]["rc_urgencia"] }
@@ -8521,7 +8655,14 @@ export type Database = {
         | "compras"
         | "administrativo"
         | "almoxarifado"
-      app_role: "admin" | "tst" | "viewer" | "moderador" | "editor" | "compras"
+      app_role:
+        | "admin"
+        | "tst"
+        | "viewer"
+        | "moderador"
+        | "editor"
+        | "compras"
+        | "extra_sabado_marcador"
       extintor_status: "ATIVO" | "EM_MANUTENCAO" | "BAIXADO" | "VENCIDO"
       extintor_tipo_agente:
         | "ABC"
@@ -8696,7 +8837,15 @@ export const Constants = {
         "administrativo",
         "almoxarifado",
       ],
-      app_role: ["admin", "tst", "viewer", "moderador", "editor", "compras"],
+      app_role: [
+        "admin",
+        "tst",
+        "viewer",
+        "moderador",
+        "editor",
+        "compras",
+        "extra_sabado_marcador",
+      ],
       extintor_status: ["ATIVO", "EM_MANUTENCAO", "BAIXADO", "VENCIDO"],
       extintor_tipo_agente: [
         "ABC",
