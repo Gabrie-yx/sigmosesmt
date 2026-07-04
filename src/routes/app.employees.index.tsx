@@ -217,6 +217,14 @@ function EmployeesPage() {
               </Link>
               <span className="h-6 w-px bg-white/15" />
               <Link
+                to="/app/employees/hora-extra-sabado"
+                className="nav-pill group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-white/95 hover:text-white"
+              >
+                <CalendarClock className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3" />
+                <span>Hora extra</span>
+              </Link>
+              <span className="h-6 w-px bg-white/15" />
+              <Link
                 to="/app/employees/desligados"
                 className="nav-pill group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-white/95 hover:text-white"
               >

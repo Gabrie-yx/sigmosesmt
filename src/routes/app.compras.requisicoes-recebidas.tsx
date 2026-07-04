@@ -42,9 +42,6 @@ import { gerarPdfRequisicaoDoc, rcPdfFileName, type RcPdfReq } from "@/lib/requi
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/compras/requisicoes-recebidas")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    setor: typeof search.setor === "string" ? search.setor : undefined,
-  }),
   component: ComprasRecebidasPage,
 });
 
@@ -220,16 +217,10 @@ function ComprasRecebidasPage() {
   const { user, roles, hasModule } = useAuth();
   const isAdmin = roles.includes("admin");
   const isCompras = isAdmin || roles.includes("compras" as any) || hasModule("compras" as any);
-  const { setor: lockedSetor } = Route.useSearch();
-  const scopedView = !!lockedSetor && !isCompras;
-  const canView = isCompras || !!lockedSetor;
 
   const [tab, setTab] = useState<"abertas" | "enviadas" | "aprovadas" | "recebimento" | "concluidas" | "indeferidas" | "todas">("abertas");
   const [q, setQ] = useState("");
-  const [setorFilter, setSetorFilter] = useState<string>(lockedSetor ?? "__all");
-  useEffect(() => {
-    if (lockedSetor) setSetorFilter(lockedSetor);
-  }, [lockedSetor]);
+  const [setorFilter, setSetorFilter] = useState<string>("__all");
   const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
   const { count: novasDecisoes, markAllSeen } = useNovasDecisoesCompras();
 
@@ -240,15 +231,14 @@ function ComprasRecebidasPage() {
   }, [tab, novasDecisoes, markAllSeen]);
 
   const { data: reqs = [], isLoading, refetch } = useQuery({
-    queryKey: ["compras-rcs", tab, mostrarArquivadas, lockedSetor ?? "__all"],
-    enabled: !!user && canView,
+    queryKey: ["compras-rcs", tab, mostrarArquivadas],
+    enabled: !!user && isCompras,
     queryFn: async () => {
       let query = supabase
         .from("purchase_requisitions")
         .select("id,numero,titulo,data_requisicao,classificacao,solicitante,setor,status,observacoes,created_at,dispensa_cotacao,dispensa_motivo,dispensa_justificativa,retroativa,retroativa_motivo,arquivada_em,decidido_em,decidido_por_nome,motivo_indeferimento,cotacao_fornecedor,cotacao_valor,pc_numero,pc_fornecedor,pc_valor,pc_prazo_entrega,pc_arquivo_url,pc_arquivo_nome,pc_emitido_por_nome,pc_emitido_em,nf_numero,nf_arquivo_url,nf_arquivo_nome,recebido_em,recebido_por_nome,devolvida_em,devolvida_por_nome,devolucao_mensagem,recotacao_ciclos,motivo_indeferimento_anterior")
         .order("created_at", { ascending: false })
         .limit(200);
-      if (lockedSetor) query = query.eq("setor", lockedSetor);
       if (tab === "abertas") query = query.in("status", ["PENDENTE", "EM_COTACAO"] as any);
       if (tab === "enviadas") query = query.eq("status", "COTADA" as any);
       if (tab === "aprovadas") query = query.eq("status", "APROVADA" as any);
@@ -302,7 +292,7 @@ function ComprasRecebidasPage() {
   const emRecebimento = reqs.filter((r) => r.status === "EM_RECEBIMENTO").length;
 
   if (!user) return null;
-  if (!canView) {
+  if (!isCompras) {
     return (
       <div className="p-6">
         <Card>
@@ -325,13 +315,9 @@ function ComprasRecebidasPage() {
             <ShoppingCart className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">
-              {scopedView ? `RCs enviadas ao Compras — ${lockedSetor}` : "Compras · RC Recebidas"}
-            </h1>
+            <h1 className="text-xl font-bold">Compras · RC Recebidas</h1>
             <p className="text-xs text-muted-foreground">
-              {scopedView
-                ? `Você está vendo apenas as RCs do setor ${lockedSetor}.`
-                : "Fila centralizada de requisições dos setores. Anexe 3 cotações e envie para o Supervisor Geral."}
+              Fila centralizada de requisições dos setores. Anexe 3 cotações e envie para o Supervisor Geral.
             </p>
           </div>
         </div>
@@ -354,21 +340,15 @@ function ComprasRecebidasPage() {
           </div>
           <div className="flex items-center gap-1">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select value={setorFilter} onValueChange={setSetorFilter} disabled={!!lockedSetor}>
+            <Select value={setorFilter} onValueChange={setSetorFilter}>
               <SelectTrigger className="w-[220px]">
                 <SelectValue placeholder="Filtrar setor" />
               </SelectTrigger>
               <SelectContent>
-                {lockedSetor ? (
-                  <SelectItem value={lockedSetor}>{lockedSetor}</SelectItem>
-                ) : (
-                  <>
-                    <SelectItem value="__all">Todos os setores</SelectItem>
-                    {SETORES.map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </>
-                )}
+                <SelectItem value="__all">Todos os setores</SelectItem>
+                {SETORES.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
