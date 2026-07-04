@@ -56,6 +56,10 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/producao/requisicao-compras", label: "Requisição de Compras", module: "producao" },
   { key: "/app/producao/hora-extras", label: "Hora Extras", module: "producao" },
 
+  // ----- MANUTENÇÃO -----
+  { key: "/app/manutencao/eletrica/requisicao-compras", label: "Elétrica — Requisição de Compra", module: "manutencao" },
+  { key: "/app/manutencao/mecanica/requisicao-compras", label: "Mecânica — Requisição de Compra", module: "manutencao" },
+
   // ----- COMPRAS -----
   { key: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", module: "compras" },
   { key: "/app/compras/fornecedores", label: "Fornecedores", module: "compras" },
