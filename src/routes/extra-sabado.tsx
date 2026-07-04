@@ -41,7 +41,10 @@ function ExtraSabadoMobilePage() {
   }, []);
 
   useEffect(() => {
-    if (!loading && !session) navigate({ to: "/login" });
+    if (!loading && !session) {
+      try { sessionStorage.setItem("post_login_redirect", "/extra-sabado"); } catch {}
+      navigate({ to: "/login", search: { redirect: "/extra-sabado" } as any });
+    }
   }, [loading, session, navigate]);
 
   const isMarcador = isMarcadorPuro || isAdmin || isModerator;
