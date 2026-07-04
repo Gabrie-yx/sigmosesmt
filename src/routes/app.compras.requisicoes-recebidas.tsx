@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { openStorageFile } from "@/components/file-viewer";
+import { UrgenciaBadge } from "@/components/compras/urgencia";
 import { SupplierPicker, type SupplierLite } from "@/components/compras/supplier-picker";
 import { StarRating } from "@/components/compras/star-rating";
 import { cn } from "@/lib/utils";
