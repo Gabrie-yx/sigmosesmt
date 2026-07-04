@@ -39,7 +39,7 @@ export const APP_ROLES = {
   },
 } as const;
 
-export type AppRole = keyof typeof APP_ROLES | "tst";
+export type AppRole = keyof typeof APP_ROLES | "tst" | "extra_sabado_marcador";
 
 export const MANAGED_APP_ROLE_VALUES = Object.keys(APP_ROLES) as [Exclude<AppRole, "tst">, ...Exclude<AppRole, "tst">[]];
 
