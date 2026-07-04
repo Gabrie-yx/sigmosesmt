@@ -97,6 +97,7 @@ export function useAuth() {
   const isModerator = isAdmin || roles.includes("moderador");
   const isEditor = isModerator || roles.includes("editor") || roles.includes("tst") || roles.includes("compras");
   const isExtraSabadoMarcador = roles.includes("extra_sabado_marcador" as AppRole);
+  const isSupervisorExtraGeral = roles.includes("supervisor_extra_geral" as AppRole);
   // Marcador operacional: pode ter viewer base do convite, mas deve cair no painel mobile.
   const isMarcadorPuro = isExtraSabadoMarcador
     && !isAdmin && !isModerator
@@ -136,7 +137,7 @@ export function useAuth() {
   return {
     session, user, roles, modules, aal, mfaActive, loading,
     isAdmin, isModerator, isEditor, requiresMfa, mfaSatisfied,
-    isExtraSabadoMarcador, isMarcadorPuro,
+    isExtraSabadoMarcador, isMarcadorPuro, isSupervisorExtraGeral,
     hasModule, hasMenu,
     menuKeys, modulesWithMenuConfig,
     mfaGraceUntil, graceActive, graceDaysLeft,
