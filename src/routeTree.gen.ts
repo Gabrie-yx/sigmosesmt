@@ -67,6 +67,7 @@ import { Route as AppProducaoRequisicaoComprasRouteImport } from './routes/app.p
 import { Route as AppProducaoPainelListaTecnicaRouteImport } from './routes/app.producao.painel-lista-tecnica'
 import { Route as AppProducaoOrdensRouteImport } from './routes/app.producao.ordens'
 import { Route as AppProducaoListaTecnicaRouteImport } from './routes/app.producao.lista-tecnica'
+import { Route as AppProducaoHoraExtrasRouteImport } from './routes/app.producao.hora-extras'
 import { Route as AppProducaoFatoresConsumoRouteImport } from './routes/app.producao.fatores-consumo'
 import { Route as AppProducaoExpedicaoRouteImport } from './routes/app.producao.expedicao'
 import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
@@ -391,6 +392,11 @@ const AppProducaoListaTecnicaRoute = AppProducaoListaTecnicaRouteImport.update({
   path: '/producao/lista-tecnica',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProducaoHoraExtrasRoute = AppProducaoHoraExtrasRouteImport.update({
+  id: '/producao/hora-extras',
+  path: '/producao/hora-extras',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProducaoFatoresConsumoRoute =
   AppProducaoFatoresConsumoRouteImport.update({
     id: '/producao/fatores-consumo',
@@ -590,6 +596,7 @@ export interface FileRoutesByFullPath {
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
   '/app/producao/fatores-consumo': typeof AppProducaoFatoresConsumoRoute
+  '/app/producao/hora-extras': typeof AppProducaoHoraExtrasRoute
   '/app/producao/lista-tecnica': typeof AppProducaoListaTecnicaRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
   '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
@@ -673,6 +680,7 @@ export interface FileRoutesByTo {
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
   '/app/producao/fatores-consumo': typeof AppProducaoFatoresConsumoRoute
+  '/app/producao/hora-extras': typeof AppProducaoHoraExtrasRoute
   '/app/producao/lista-tecnica': typeof AppProducaoListaTecnicaRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
   '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
@@ -760,6 +768,7 @@ export interface FileRoutesById {
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
   '/app/producao/fatores-consumo': typeof AppProducaoFatoresConsumoRoute
+  '/app/producao/hora-extras': typeof AppProducaoHoraExtrasRoute
   '/app/producao/lista-tecnica': typeof AppProducaoListaTecnicaRoute
   '/app/producao/ordens': typeof AppProducaoOrdensRoute
   '/app/producao/painel-lista-tecnica': typeof AppProducaoPainelListaTecnicaRoute
@@ -848,6 +857,7 @@ export interface FileRouteTypes {
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
     | '/app/producao/fatores-consumo'
+    | '/app/producao/hora-extras'
     | '/app/producao/lista-tecnica'
     | '/app/producao/ordens'
     | '/app/producao/painel-lista-tecnica'
@@ -931,6 +941,7 @@ export interface FileRouteTypes {
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
     | '/app/producao/fatores-consumo'
+    | '/app/producao/hora-extras'
     | '/app/producao/lista-tecnica'
     | '/app/producao/ordens'
     | '/app/producao/painel-lista-tecnica'
@@ -1017,6 +1028,7 @@ export interface FileRouteTypes {
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
     | '/app/producao/fatores-consumo'
+    | '/app/producao/hora-extras'
     | '/app/producao/lista-tecnica'
     | '/app/producao/ordens'
     | '/app/producao/painel-lista-tecnica'
@@ -1465,6 +1477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoListaTecnicaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/producao/hora-extras': {
+      id: '/app/producao/hora-extras'
+      path: '/producao/hora-extras'
+      fullPath: '/app/producao/hora-extras'
+      preLoaderRoute: typeof AppProducaoHoraExtrasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/producao/fatores-consumo': {
       id: '/app/producao/fatores-consumo'
       path: '/producao/fatores-consumo'
@@ -1751,6 +1770,7 @@ interface AppRouteChildren {
   AppProducaoCriarOrdemRoute: typeof AppProducaoCriarOrdemRoute
   AppProducaoExpedicaoRoute: typeof AppProducaoExpedicaoRoute
   AppProducaoFatoresConsumoRoute: typeof AppProducaoFatoresConsumoRoute
+  AppProducaoHoraExtrasRoute: typeof AppProducaoHoraExtrasRoute
   AppProducaoListaTecnicaRoute: typeof AppProducaoListaTecnicaRoute
   AppProducaoOrdensRoute: typeof AppProducaoOrdensRoute
   AppProducaoPainelListaTecnicaRoute: typeof AppProducaoPainelListaTecnicaRoute
@@ -1820,6 +1840,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProducaoCriarOrdemRoute: AppProducaoCriarOrdemRoute,
   AppProducaoExpedicaoRoute: AppProducaoExpedicaoRoute,
   AppProducaoFatoresConsumoRoute: AppProducaoFatoresConsumoRoute,
+  AppProducaoHoraExtrasRoute: AppProducaoHoraExtrasRoute,
   AppProducaoListaTecnicaRoute: AppProducaoListaTecnicaRoute,
   AppProducaoOrdensRoute: AppProducaoOrdensRoute,
   AppProducaoPainelListaTecnicaRoute: AppProducaoPainelListaTecnicaRoute,
