@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   LogOut, Search, Check, UserPlus, AlertTriangle, Users, Loader2, Clock, ShieldAlert,
-  Plus, CalendarDays, ClipboardList, ChevronLeft, CheckCircle2, XCircle, HourglassIcon,
+  Plus, CalendarDays, ClipboardList, ChevronLeft, CheckCircle2, XCircle, HourglassIcon, Trash2,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -244,6 +244,22 @@ function ExtraSabadoMobilePage() {
                 <Plus className="h-4 w-4" />
               </button>
             )}
+            {convId && (isLider || isAdmin) && conv && conv.status !== "APROVADA" && (
+              <button
+                onClick={async () => {
+                  if (!confirm("Excluir esta convocação? Essa ação não pode ser desfeita.")) return;
+                  const { error } = await supabase.rpc("excluir_convocacao_extra_lider", { _hora_extra_id: convId });
+                  if (error) return toast.error(error.message);
+                  toast.success("Convocação excluída");
+                  setConvocacaoAtivaId(null);
+                  qc.invalidateQueries({ queryKey: ["convocacoes-do-lider"] });
+                }}
+                className="p-2 rounded-full bg-rose-500/90 hover:bg-rose-500 transition text-white"
+                aria-label="Excluir convocação"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
             <button onClick={signOut} className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition text-white" aria-label="Sair">
               <LogOut className="h-4 w-4" />
             </button>
@@ -413,6 +429,7 @@ function ExtraSabadoMobilePage() {
       <NovaConvocacaoDialog
         open={novaOpen}
         onOpenChange={setNovaOpen}
+        liderId={lider?.id ?? null}
         onCreated={(id) => {
           setConvocacaoAtivaId(id);
           qc.invalidateQueries({ queryKey: ["convocacoes-do-lider"] });
@@ -430,33 +447,74 @@ function ExtraSabadoMobilePage() {
   );
 }
 
-function NovaConvocacaoDialog({ open, onOpenChange, onCreated }: {
-  open: boolean; onOpenChange: (o: boolean) => void; onCreated: (id: string) => void;
+function NovaConvocacaoDialog({ open, onOpenChange, onCreated, liderId }: {
+  open: boolean; onOpenChange: (o: boolean) => void; onCreated: (id: string) => void; liderId: string | null;
 }) {
   const [tipo, setTipo] = useState<"SABADO"|"DIAS_UTEIS">("SABADO");
   const [data, setData] = useState("");
-  const [hi, setHi] = useState("07:00");
-  const [hf, setHf] = useState("12:00");
+  const [hi, setHi] = useState("07:30");
+  const [hf, setHf] = useState("15:00");
   const [just, setJust] = useState("");
+  const [busca, setBusca] = useState("");
+  const [sel, setSel] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
 
-  // Preenche próximo sábado quando abre
+  const { data: employees } = useQuery({
+    queryKey: ["convocaveis-lider-dialog", liderId],
+    enabled: !!liderId && open,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("listar_convocaveis_lider", { _lider_id: liderId! });
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; nome: string; setor: string | null; funcao: string | null }>;
+    },
+  });
+
   useEffect(() => {
     if (!open) return;
-    setJust(""); setHi("07:00"); setHf("12:00"); setTipo("SABADO");
+    setJust(""); setBusca(""); setSel(new Set()); setTipo("SABADO");
+    setHi("07:30"); setHf("15:00");
     const hoje = new Date();
     const dow = hoje.getDay();
-    const diasParaSabado = (6 - dow + 7) % 7 || 7;
-    const sab = new Date(hoje); sab.setDate(hoje.getDate() + diasParaSabado);
+    const dias = (6 - dow + 7) % 7 || 7;
+    const sab = new Date(hoje); sab.setDate(hoje.getDate() + dias);
     setData(sab.toISOString().slice(0, 10));
   }, [open]);
+
+  // Ao trocar tipo, ajusta defaults de horário
+  useEffect(() => {
+    if (tipo === "SABADO") { setHi("07:30"); setHf("15:00"); }
+    else { setHi("17:00"); setHf("19:00"); }
+  }, [tipo]);
+
+  const filtrados = useMemo(() => {
+    const s = busca.trim().toLowerCase();
+    const list = employees ?? [];
+    if (!s) return list;
+    return list.filter((e) =>
+      e.nome.toLowerCase().includes(s) || (e.setor ?? "").toLowerCase().includes(s)
+    );
+  }, [employees, busca]);
+
+  function toggle(id: string) {
+    setSel((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  }
+  function toggleTodos() {
+    if (sel.size === filtrados.length) setSel(new Set());
+    else setSel(new Set(filtrados.map((e) => e.id)));
+  }
 
   async function salvar() {
     if (just.trim().length < 5) return toast.error("Justificativa muito curta (mín. 5 caracteres)");
     if (!data || !hi || !hf) return toast.error("Preencha data, hora início e hora fim");
+    if (sel.size === 0) return toast.error("Selecione pelo menos 1 funcionário");
     setSaving(true);
     const { data: id, error } = await supabase.rpc("criar_convocacao_extra_lider", {
-      _tipo: tipo, _data: data, _horario_inicio: hi, _horario_fim: hf, _justificativa: just,
+      _tipo: tipo, _data: data, _horario_inicio: hi, _horario_fim: hf,
+      _justificativa: just, _employee_ids: Array.from(sel),
     });
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -467,25 +525,27 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated }: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nova convocação</DialogTitle>
-          <DialogDescription>Após criar, o Anderson vai aprovar ou indeferir com base na justificativa.</DialogDescription>
+          <DialogDescription>Escolha o tipo, horário, quem vai e a justificativa. Anderson vai aprovar ou indeferir.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
-          <div>
-            <Label>Tipo</Label>
-            <Select value={tipo} onValueChange={(v) => setTipo(v as any)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="SABADO">Extra de Sábado</SelectItem>
-                <SelectItem value="DIAS_UTEIS">Dias Úteis (segunda a sexta)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Data</Label>
-            <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Tipo</Label>
+              <Select value={tipo} onValueChange={(v) => setTipo(v as any)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SABADO">Extra de Sábado</SelectItem>
+                  <SelectItem value="DIAS_UTEIS">Extra Dia Útil</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Data</Label>
+              <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -497,10 +557,48 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated }: {
               <Input type="time" value={hf} onChange={(e) => setHf(e.target.value)} />
             </div>
           </div>
+
           <div>
-            <Label>Justificativa (obrigatória)</Label>
-            <Textarea value={just} onChange={(e) => setJust(e.target.value)} rows={4}
-              placeholder="Ex: reparo urgente na embarcação X, prazo de entrega antecipado, etc." />
+            <div className="flex items-center justify-between mb-1">
+              <Label>Funcionários ({sel.size} selecionado{sel.size===1?"":"s"})</Label>
+              <button type="button" onClick={toggleTodos} className="text-[11px] font-bold text-rose-300 hover:text-rose-200">
+                {sel.size === filtrados.length && filtrados.length > 0 ? "Desmarcar todos" : `Marcar todos (${filtrados.length})`}
+              </button>
+            </div>
+            <div className="relative mb-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-60" />
+              <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar nome, setor…" className="pl-9 h-9" />
+            </div>
+            <div className="max-h-64 overflow-y-auto rounded-md border border-white/10 divide-y divide-white/10">
+              {(!employees || employees.length === 0) && (
+                <p className="px-3 py-3 text-xs opacity-60 italic">Nenhum funcionário no seu escopo.</p>
+              )}
+              {filtrados.map((e) => {
+                const checked = sel.has(e.id);
+                return (
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => toggle(e.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 text-left transition ${checked ? "bg-emerald-500/15" : "hover:bg-white/[0.05]"}`}
+                  >
+                    <div className={`h-5 w-5 rounded shrink-0 flex items-center justify-center border-2 ${checked ? "bg-emerald-500 border-emerald-500" : "border-slate-500"}`}>
+                      {checked && <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold truncate">{e.nome}</div>
+                      <div className="text-[10px] text-slate-400 truncate">{[e.setor, e.funcao].filter(Boolean).join(" · ") || "—"}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <Label>Justificativa da hora extra (obrigatória)</Label>
+            <Textarea value={just} onChange={(e) => setJust(e.target.value)} rows={3}
+              placeholder="Ex: reparo das bóias e pintura dos cascos 131 e 133" />
           </div>
         </div>
         <DialogFooter>
