@@ -67,7 +67,9 @@ function ManutencaoEletricaRequisicaoComprasPage() {
               )}
             </Dialog>
             <Button asChild variant="outline">
-              <Link to="/app/compras/requisicoes-recebidas">Ver RCs recebidas pelo Compras</Link>
+              <Link to="/app/compras/requisicoes-recebidas" search={{ setor: "Manutenção Elétrica" }}>
+                Ver RCs recebidas pelo Compras
+              </Link>
             </Button>
           </div>
         </CardContent>
