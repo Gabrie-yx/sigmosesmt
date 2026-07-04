@@ -881,26 +881,14 @@ function RegistrarRecebimentoDialog({ req, onClose }: { req: Req; onClose: (ok: 
         arquivo_nome = file.name;
       }
 
-      let nome: string | null = null;
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles").select("full_name").eq("id", user.id).maybeSingle();
-        nome = profile?.full_name ?? user.email ?? null;
-      }
-
-      const { error } = await supabase
-        .from("purchase_requisitions")
-        .update({
-          status: "CONCLUIDA" as any,
-          nf_numero: nfNumero.trim(),
-          nf_arquivo_url: arquivo_url,
-          nf_arquivo_nome: arquivo_nome,
-          nf_observacoes: obs.trim() || null,
-          recebido_em: new Date().toISOString(),
-          recebido_por_id: user?.id ?? null,
-          recebido_por_nome: nome,
-        } as any)
-        .eq("id", req.id);
+      // Sprint 1: RPC autoriza (Compras) + carimba receptor no servidor.
+      const { error } = await supabase.rpc("registrar_recebimento_rc" as any, {
+        _rc_id: req.id,
+        _nf_numero: nfNumero.trim(),
+        _arquivo_url: arquivo_url,
+        _arquivo_nome: arquivo_nome,
+        _observacoes: obs.trim() || null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
