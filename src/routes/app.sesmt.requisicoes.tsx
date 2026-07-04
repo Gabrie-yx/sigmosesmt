@@ -1143,6 +1143,7 @@ export function ReqFormDialog({
         observacoes: form.observacoes.trim() || null,
         signature_solicitante: signature,
         signature_solicitante_height: signature ? signatureHeight : null,
+        urgencia: form.urgencia,
       };
 
       let reqId: string;
