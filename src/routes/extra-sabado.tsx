@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   LogOut, Search, Check, UserPlus, AlertTriangle, Users, Loader2, Clock, ShieldAlert,
-  Plus, CalendarDays, ClipboardList, ChevronLeft, CheckCircle2, XCircle, HourglassIcon,
+  Plus, CalendarDays, ClipboardList, ChevronLeft, CheckCircle2, XCircle, HourglassIcon, Trash2,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -242,6 +242,22 @@ function ExtraSabadoMobilePage() {
             {isLider && (
               <button onClick={() => setNovaOpen(true)} className="p-2 rounded-full bg-emerald-500/90 hover:bg-emerald-500 transition text-white" aria-label="Nova convocação">
                 <Plus className="h-4 w-4" />
+              </button>
+            )}
+            {convId && (isLider || isAdmin) && conv && conv.status !== "APROVADA" && (
+              <button
+                onClick={async () => {
+                  if (!confirm("Excluir esta convocação? Essa ação não pode ser desfeita.")) return;
+                  const { error } = await supabase.rpc("excluir_convocacao_extra_lider", { _hora_extra_id: convId });
+                  if (error) return toast.error(error.message);
+                  toast.success("Convocação excluída");
+                  setConvocacaoAtivaId(null);
+                  qc.invalidateQueries({ queryKey: ["convocacoes-do-lider"] });
+                }}
+                className="p-2 rounded-full bg-rose-500/90 hover:bg-rose-500 transition text-white"
+                aria-label="Excluir convocação"
+              >
+                <Trash2 className="h-4 w-4" />
               </button>
             )}
             <button onClick={signOut} className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition text-white" aria-label="Sair">
