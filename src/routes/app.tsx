@@ -16,7 +16,7 @@ export const Route = createFileRoute("/app")({
 });
 
 function AppLayout() {
-  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal } = useAuth();
+  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal, isMarcadorPuro } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,6 +25,13 @@ function AppLayout() {
       navigate({ to: "/login" });
     }
   }, [loading, session, navigate]);
+
+  // Marcador puro (Extra de Sábado) só pode ver o painel mobile — nunca /app/*
+  useEffect(() => {
+    if (!loading && session && isMarcadorPuro) {
+      navigate({ to: "/extra-sabado", replace: true });
+    }
+  }, [loading, session, isMarcadorPuro, navigate]);
 
   if (loading || !session) {
     return (
