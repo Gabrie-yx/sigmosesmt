@@ -157,6 +157,7 @@ function UsersPage() {
           full_name: fName,
           role: fRole as any,
           modules: normalizeModulesForRole(fRole, fModules) as any,
+          menus: fMenus,
           redirect_to: `${window.location.origin}/reset-password`,
         },
       });
