@@ -166,6 +166,7 @@ const PRODUCAO_SUBMENU: LeafItem[] = [
   { to: "/app/producao/fatores-consumo", label: "Fatores de Consumo" },
   { to: "/app/producao/expedicao", label: "Expedição" },
   { to: "/app/producao/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
+  { to: "/app/producao/hora-extras", label: "Hora Extra", icon: Clock },
 ];
 
 const COMPRAS_ITEMS: LeafItem[] = [
@@ -180,11 +181,13 @@ const ADMINISTRATIVO_ITEMS: LeafItem[] = [
 
 const ALMOXARIFADO_ITEMS: LeafItem[] = [
   { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
+  { to: "/app/producao/hora-extras", label: "Hora Extra", icon: Clock },
 ];
 
 const MANUTENCAO_ITEMS: LeafItem[] = [
   { to: "/app/manutencao/eletrica/requisicao-compras", label: "Elétrica", icon: Zap },
   { to: "/app/manutencao/mecanica/requisicao-compras", label: "Mecânica", icon: Hammer },
+  { to: "/app/producao/hora-extras", label: "Hora Extra", icon: Clock },
 ];
 
 export function AppSidebar() {
