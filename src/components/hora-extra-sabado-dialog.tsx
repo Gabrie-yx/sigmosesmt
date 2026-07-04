@@ -60,7 +60,6 @@ export function HoraExtraSabadoDialog({
   const [horaFim, setHoraFim] = useState("15:00");
   const [setoresSel, setSetoresSel] = useState<string[]>([]);
   const [setorNovo, setSetorNovo] = useState("");
-  const [centroCusto, setCentroCusto] = useState("");
   const [tipoEfetivo, setTipoEfetivo] = useState<"DMN" | "MEI" | "TERCEIRIZADO">("DMN");
   const [companyId, setCompanyId] = useState<string>("");
   const [observacao, setObservacao] = useState("");
@@ -75,10 +74,10 @@ export function HoraExtraSabadoDialog({
   const draftEnabled = open && !editId;
   const draftData = useMemo(
     () => ({
-      data, turno, horaIni, horaFim, setoresSel, setorNovo, centroCusto,
+      data, turno, horaIni, horaFim, setoresSel, setorNovo,
       tipoEfetivo, companyId, observacao, funcs,
     }),
-    [data, turno, horaIni, horaFim, setoresSel, setorNovo, centroCusto, tipoEfetivo, companyId, observacao, funcs],
+    [data, turno, horaIni, horaFim, setoresSel, setorNovo, tipoEfetivo, companyId, observacao, funcs],
   );
   useDraftAutosave(DRAFT_KEY, "Ficha de hora extra (sábado)", "/app/employees/hora-extra-sabado", draftData, {
     enabled: draftEnabled,
@@ -127,7 +126,6 @@ export function HoraExtraSabadoDialog({
       setHoraIni(rec.horario_inicio ?? "07:30");
       setHoraFim(rec.horario_fim ?? "15:00");
       setSetoresSel(rec.setor ? String(rec.setor).split(",").map((s: string) => s.trim()).filter(Boolean) : []);
-      setCentroCusto(rec.centro_custo ?? "");
       setTipoEfetivo((rec.tipo_efetivo as any) ?? "DMN");
       setCompanyId(rec.company_id ?? "");
       setObservacao(rec.observacao ?? "");
@@ -170,7 +168,6 @@ export function HoraExtraSabadoDialog({
     if (d.horaFim != null) setHoraFim(d.horaFim);
     if (Array.isArray(d.setoresSel)) setSetoresSel(d.setoresSel);
     if (d.setorNovo != null) setSetorNovo(d.setorNovo);
-    if (d.centroCusto != null) setCentroCusto(d.centroCusto);
     if (d.tipoEfetivo) setTipoEfetivo(d.tipoEfetivo);
     if (d.companyId != null) setCompanyId(d.companyId);
     if (d.observacao != null) setObservacao(d.observacao);
@@ -181,7 +178,7 @@ export function HoraExtraSabadoDialog({
   function resetForm() {
     setData(proximoSabado);
     setTurno("1º"); setHoraIni("07:30"); setHoraFim("15:00");
-    setSetoresSel([]); setSetorNovo(""); setCentroCusto(""); setTipoEfetivo("DMN");
+    setSetoresSel([]); setSetorNovo(""); setTipoEfetivo("DMN");
     setCompanyId(""); setObservacao(""); setBusca(""); setFuncs([]);
     setNovoExternoNome(""); setNovoExternoFuncao("");
   }
@@ -250,7 +247,7 @@ export function HoraExtraSabadoDialog({
         horario_inicio: horaIni || null,
         horario_fim: horaFim || null,
         setor: setorFinal,
-        centro_custo: centroCusto || null,
+        centro_custo: null,
         tipo_efetivo: tipoEfetivo,
         company_id: companyId || null,
         observacao: observacao || null,
@@ -371,7 +368,6 @@ export function HoraExtraSabadoDialog({
               </div>
             )}
           </div>
-          <div className="space-y-1"><Label>C.C.</Label><Input value={centroCusto} onChange={(e) => setCentroCusto(e.target.value)} /></div>
           <div className="space-y-1">
             <Label>Efetivo</Label>
             <Select value={tipoEfetivo} onValueChange={(v: any) => setTipoEfetivo(v)}>

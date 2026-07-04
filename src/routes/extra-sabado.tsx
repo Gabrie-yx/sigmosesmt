@@ -452,6 +452,7 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated, liderId }: {
 }) {
   const [tipo, setTipo] = useState<"SABADO"|"DIAS_UTEIS">("SABADO");
   const [data, setData] = useState("");
+  const [turno, setTurno] = useState("1º");
   const [hi, setHi] = useState("07:30");
   const [hf, setHf] = useState("15:00");
   const [just, setJust] = useState("");
@@ -465,13 +466,25 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated, liderId }: {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("listar_convocaveis_lider", { _lider_id: liderId! });
       if (error) throw error;
-      return (data ?? []) as Array<{ id: string; nome: string; setor: string | null; funcao: string | null }>;
+      return (data ?? []) as Array<{ id: string; nome: string; setor: string | null; funcao: string | null; empresa_nome?: string | null; tipo_vinculo?: string | null }>;
     },
   });
 
+  // Cabeçalho fixo com Setor · Empresa (deriva do escopo do líder = 1ª pessoa da lista)
+  const escopoLabel = useMemo(() => {
+    const list = employees ?? [];
+    if (list.length === 0) return null;
+    const setores = Array.from(new Set(list.map((e: any) => e.setor).filter(Boolean)));
+    const empresas = Array.from(new Set(list.map((e: any) => e.empresa_nome).filter(Boolean)));
+    return {
+      setor: setores.join(" · ") || "—",
+      empresa: empresas.join(" · ") || "—",
+    };
+  }, [employees]);
+
   useEffect(() => {
     if (!open) return;
-    setJust(""); setBusca(""); setSel(new Set()); setTipo("SABADO");
+    setJust(""); setBusca(""); setSel(new Set()); setTipo("SABADO"); setTurno("1º");
     setHi("07:30"); setHf("15:00");
     const hoje = new Date();
     const dow = hoje.getDay();
@@ -508,13 +521,13 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated, liderId }: {
   }
 
   async function salvar() {
-    if (just.trim().length < 5) return toast.error("Justificativa muito curta (mín. 5 caracteres)");
+    if (just.trim().length < 5) return toast.error("Motivo da extra muito curto (mín. 5 caracteres)");
     if (!data || !hi || !hf) return toast.error("Preencha data, hora início e hora fim");
     if (sel.size === 0) return toast.error("Selecione pelo menos 1 funcionário");
     setSaving(true);
     const { data: id, error } = await supabase.rpc("criar_convocacao_extra_lider", {
       _tipo: tipo, _data: data, _horario_inicio: hi, _horario_fim: hf,
-      _justificativa: just, _employee_ids: Array.from(sel),
+      _justificativa: just, _employee_ids: Array.from(sel), _turno: turno,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -527,17 +540,23 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated, liderId }: {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-1.5rem)] max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova convocação</DialogTitle>
-          <DialogDescription>Escolha o tipo, horário, quem vai e a justificativa. Anderson vai aprovar ou indeferir.</DialogDescription>
+          <DialogTitle>Nova convocação de extra</DialogTitle>
+          <DialogDescription>Escolha o tipo, turno, horário, quem vai e o motivo. Anderson vai aprovar ou indeferir.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
+          {escopoLabel && (
+            <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-[11px] flex flex-wrap gap-x-4 gap-y-1">
+              <span><span className="font-black text-rose-300 uppercase tracking-widest text-[10px] mr-1">Setor:</span>{escopoLabel.setor}</span>
+              <span><span className="font-black text-rose-300 uppercase tracking-widest text-[10px] mr-1">Empresa:</span>{escopoLabel.empresa}</span>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Tipo</Label>
               <Select value={tipo} onValueChange={(v) => setTipo(v as any)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SABADO">Extra de Sábado</SelectItem>
+                  <SelectItem value="SABADO">Extra Sábado</SelectItem>
                   <SelectItem value="DIAS_UTEIS">Extra Dia Útil</SelectItem>
                 </SelectContent>
               </Select>
@@ -547,7 +566,18 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated, liderId }: {
               <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <Label>Turno</Label>
+              <Select value={turno} onValueChange={setTurno}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1º">1º</SelectItem>
+                  <SelectItem value="2º">2º</SelectItem>
+                  <SelectItem value="3º">3º</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>Hora início</Label>
               <Input type="time" value={hi} onChange={(e) => setHi(e.target.value)} />
@@ -596,7 +626,7 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated, liderId }: {
           </div>
 
           <div>
-            <Label>Justificativa da hora extra (obrigatória)</Label>
+            <Label>DIGITE AQUI O MOTIVO DA EXTRA</Label>
             <Textarea value={just} onChange={(e) => setJust(e.target.value)} rows={3}
               placeholder="Ex: reparo das bóias e pintura dos cascos 131 e 133" />
           </div>
