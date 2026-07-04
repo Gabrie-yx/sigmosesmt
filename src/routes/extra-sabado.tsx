@@ -12,33 +12,33 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   LogOut, Search, Check, UserPlus, AlertTriangle, Users, Loader2, Clock, ShieldAlert,
+  Plus, CalendarDays, ClipboardList, ChevronLeft, CheckCircle2, XCircle, HourglassIcon,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/extra-sabado")({
   component: ExtraSabadoMobilePage,
 });
 
-type MarcadorConfig = {
-  user_id: string;
-  nome: string;
-  ativo: boolean;
-  escopo: any;
-  self_employee_id: string | null;
+type LiderInfo = { id: string; employee_id: string; user_id: string; nome: string; observacao: string | null };
+type Convocacao = {
+  id: string; data: string; tipo_convocacao: "SABADO" | "DIAS_UTEIS";
+  horario_inicio: string; horario_fim: string;
+  justificativa: string; status: "PENDENTE"|"APROVADA"|"INDEFERIDA";
+  motivo_indeferimento: string | null; qtd_marcados: number; criado_em: string;
 };
 
 function ExtraSabadoMobilePage() {
   const { session, loading, user, isExtraSabadoMarcador, isAdmin, isModerator } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [convocacaoAtivaId, setConvocacaoAtivaId] = useState<string | null>(null);
+  const [novaOpen, setNovaOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [externoOpen, setExternoOpen] = useState(false);
-  const [now, setNow] = useState(() => Date.now());
-
-  // Relógio pra reagir ao corte 18:29/19h sem F5
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(t);
-  }, []);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -47,32 +47,41 @@ function ExtraSabadoMobilePage() {
     }
   }, [loading, session, navigate]);
 
-  const isMarcador = isExtraSabadoMarcador || isAdmin || isModerator;
-
-  // Config do marcador logado (define escopo)
-  const { data: minhaConfig } = useQuery({
-    queryKey: ["marcador-config", user?.id],
+  // Detecta se é líder (via RPC)
+  const { data: lider, isLoading: loadingLider } = useQuery({
+    queryKey: ["meu-lider-extra", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("hora_extra_marcadores")
-        .select("*")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return (data ?? null) as MarcadorConfig | null;
+      const { data, error } = await supabase.rpc("meu_lider_extra");
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      return (row ?? null) as LiderInfo | null;
     },
   });
 
-  // Get-or-create convocação do próximo sábado
-  const { data: convId, isLoading: loadingConv, error: convError } = useQuery({
-    queryKey: ["extra-sabado-conv-atual"],
-    enabled: !!session && (isExtraSabadoMarcador || !!minhaConfig || isAdmin),
+  const isLider = !!lider;
+  const isMarcador = isLider || isExtraSabadoMarcador || isAdmin || isModerator;
+
+  // Convocações criadas por este líder
+  const { data: minhasConvocacoes, isLoading: loadingConvs } = useQuery({
+    queryKey: ["convocacoes-do-lider", user?.id],
+    enabled: !!user?.id && isLider,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_or_create_convocacao_sabado_atual");
+      const { data, error } = await supabase.rpc("listar_convocacoes_extra_lider");
       if (error) throw error;
-      return data as string;
+      return (data ?? []) as Convocacao[];
     },
   });
+
+  // Convocação selecionada (default = mais recente pendente/aprovada)
+  useEffect(() => {
+    if (!convocacaoAtivaId && minhasConvocacoes && minhasConvocacoes.length > 0) {
+      const editavel = minhasConvocacoes.find(c => c.status !== "INDEFERIDA");
+      setConvocacaoAtivaId((editavel ?? minhasConvocacoes[0]).id);
+    }
+  }, [minhasConvocacoes, convocacaoAtivaId]);
+
+  const convId = convocacaoAtivaId;
 
   const { data: conv } = useQuery({
     queryKey: ["extra-sabado-conv", convId],
@@ -110,44 +119,22 @@ function ExtraSabadoMobilePage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "hora_extra_sabado_funcionarios", filter: `hora_extra_id=eq.${convId}` },
         () => qc.invalidateQueries({ queryKey: ["extra-sabado-marcados", convId] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "hora_extra_sabado", filter: `id=eq.${convId}` },
-        () => qc.invalidateQueries({ queryKey: ["extra-sabado-conv", convId] }))
+        () => {
+          qc.invalidateQueries({ queryKey: ["extra-sabado-conv", convId] });
+          qc.invalidateQueries({ queryKey: ["convocacoes-do-lider"] });
+        })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [convId, qc]);
 
-  // Employees que caem no escopo do marcador (query construída no client)
+  // Employees convocáveis pelo líder
   const { data: employees, isLoading: loadingEmployees } = useQuery({
-    queryKey: ["extra-sabado-employees", minhaConfig?.user_id, isAdmin],
-    enabled: !!user?.id && (isAdmin || !!minhaConfig),
+    queryKey: ["convocaveis-lider", lider?.id],
+    enabled: !!lider?.id,
     queryFn: async () => {
-      // Admin vê todos ativos
-      if (isAdmin && !minhaConfig) {
-        const { data } = await supabase
-          .from("employees")
-          .select("id, nome, setor, tipo_vinculo, empresa_terceira_id, empresas_terceiras(nome_fantasia, razao_social)")
-          .eq("status", "ATIVO")
-          .order("nome");
-        return data ?? [];
-      }
-      const escopo = minhaConfig!.escopo as any;
-      const tipo = escopo?.tipo as string;
-      let q = supabase
-        .from("employees")
-        .select("id, nome, setor, tipo_vinculo, empresa_terceira_id, empresas_terceiras(nome_fantasia, razao_social)")
-        .eq("status", "ATIVO");
-
-      if (tipo === "SELF") {
-        q = q.eq("id", minhaConfig!.self_employee_id ?? "00000000-0000-0000-0000-000000000000");
-      } else if (tipo === "SETOR") {
-        q = q.in("setor", (escopo.valores ?? []) as string[]);
-      } else if (tipo === "EMPRESA_TERCEIRA") {
-        q = q.in("empresa_terceira_id", (escopo.ids ?? []) as string[]);
-      } else if (tipo === "DMN_APOIO") {
-        q = q.is("empresa_terceira_id", null).in("setor", (escopo.setores ?? []) as string[]);
-      }
-      // TUDO = sem filtro adicional
-      const { data } = await q.order("nome");
-      return data ?? [];
+      const { data, error } = await supabase.rpc("listar_convocaveis_lider", { _lider_id: lider!.id });
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; nome: string; setor: string | null; funcao: string | null; tipo_vinculo: string; empresa_id: string | null; empresa_nome: string | null }>;
     },
   });
 
@@ -184,10 +171,10 @@ function ExtraSabadoMobilePage() {
 
   const totalConfirmados = (marcados ?? []).length;
   const meusMarcados = (marcados ?? []).filter((r: any) => r.marcado_por === user?.id).length;
-  const editAte = conv?.marcadores_edit_ate ? new Date(conv.marcadores_edit_ate).getTime() : null;
-  const expiraEm = conv?.marcadores_expira_em ? new Date(conv.marcadores_expira_em).getTime() : null;
-  const readOnly = !isAdmin && editAte !== null && now > editAte;
-  const expirado = !isAdmin && expiraEm !== null && now > expiraEm;
+  const status = conv?.status as "PENDENTE"|"APROVADA"|"INDEFERIDA" | undefined;
+  // Bloqueia edição se INDEFERIDA (líder pode editar até Anderson decidir)
+  const readOnly = !isAdmin && status === "INDEFERIDA";
+  const expirado = false;
 
   const filtrados = useMemo(() => {
     const s = busca.trim().toLowerCase();
@@ -195,17 +182,16 @@ function ExtraSabadoMobilePage() {
     return (employees ?? []).filter((e: any) =>
       e.nome.toLowerCase().includes(s) ||
       (e.setor ?? "").toLowerCase().includes(s) ||
-      (e.empresas_terceiras?.nome_fantasia ?? "").toLowerCase().includes(s)
+      (e.empresa_nome ?? "").toLowerCase().includes(s)
     );
   }, [employees, busca]);
 
-  // Agrupa por empresa (terceirizada) / setor
+  // Agrupa por empresa / setor
   const grupos = useMemo(() => {
     const g = new Map<string, any[]>();
     filtrados.forEach((e: any) => {
-      const key = e.empresas_terceiras?.nome_fantasia
-        ?? e.empresas_terceiras?.razao_social
-        ?? (e.tipo_vinculo === "MEI" ? "MEIs" : (e.setor || "DMN"));
+      const key = e.empresa_nome
+        ?? (e.tipo_vinculo === "MEI" ? "MEIs" : (e.setor || "Sem empresa"));
       if (!g.has(key)) g.set(key, []);
       g.get(key)!.push(e);
     });
@@ -221,6 +207,10 @@ function ExtraSabadoMobilePage() {
     return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-300 text-sm">Carregando…</div>;
   }
 
+  if (loadingLider) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-300 text-sm"><Loader2 className="h-5 w-5 animate-spin" /></div>;
+  }
+
   if (!isMarcador) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-6">
@@ -234,7 +224,8 @@ function ExtraSabadoMobilePage() {
     );
   }
 
-  const dataSabado = conv?.data ? new Date(conv.data + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }) : "…";
+  const dataConv = conv?.data ? new Date(conv.data + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }) : "…";
+  const tipoLabel = conv?.tipo_convocacao === "DIAS_UTEIS" ? "Extra Dia Útil" : "Extra de Sábado";
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-20">
@@ -242,32 +233,78 @@ function ExtraSabadoMobilePage() {
       <header className="sticky top-0 z-20 bg-gradient-to-b from-[#7f1212] to-[#5a0f22] px-4 py-3 shadow-lg">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[10px] font-black uppercase tracking-widest text-rose-200/80">Extra de Sábado</div>
-            <div className="text-base font-black leading-tight truncate">{dataSabado}</div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-rose-200/80">{tipoLabel}</div>
+            <div className="text-base font-black leading-tight truncate">
+              {conv ? `${dataConv} · ${conv.horario_inicio}–${conv.horario_fim}` : (lider ? `Líder: ${lider.nome.split(" ").slice(0,2).join(" ")}` : "…")}
+            </div>
           </div>
-          <button onClick={signOut} className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition text-white shrink-0" aria-label="Sair">
-            <LogOut className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {isLider && (
+              <button onClick={() => setNovaOpen(true)} className="p-2 rounded-full bg-emerald-500/90 hover:bg-emerald-500 transition text-white" aria-label="Nova convocação">
+                <Plus className="h-4 w-4" />
+              </button>
+            )}
+            <button onClick={signOut} className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition text-white" aria-label="Sair">
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-        {conv?.criado_automatico && (
-          <div className="mt-2 text-[10px] text-rose-100/90 bg-white/10 rounded px-2 py-1">
-            Convocação criada automaticamente por <b>{conv.criado_automatico_por_nome ?? "marcador"}</b>
+        {status && (
+          <div className={`mt-2 text-[10px] font-bold rounded px-2 py-1 inline-flex items-center gap-1
+            ${status === "PENDENTE" ? "bg-amber-500/20 text-amber-200" :
+              status === "APROVADA" ? "bg-emerald-500/20 text-emerald-200" :
+              "bg-red-500/20 text-red-200"}`}>
+            {status === "PENDENTE" && <><HourglassIcon className="h-3 w-3" /> Aguardando aprovação do Anderson</>}
+            {status === "APROVADA" && <><CheckCircle2 className="h-3 w-3" /> Aprovada</>}
+            {status === "INDEFERIDA" && <><XCircle className="h-3 w-3" /> Indeferida — {conv?.motivo_indeferimento}</>}
           </div>
         )}
       </header>
 
-      {loadingConv ? (
-        <div className="p-8 text-center text-slate-400 text-sm">
-          <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-          Abrindo convocação…
+      {isLider && !convId && (
+        <div className="p-6 text-center space-y-4">
+          <ClipboardList className="h-12 w-12 text-slate-500 mx-auto" />
+          <div className="text-slate-300">
+            {loadingConvs ? "Carregando…" :
+             (minhasConvocacoes ?? []).length === 0
+               ? "Nenhuma convocação criada ainda."
+               : "Selecione uma convocação abaixo ou crie uma nova."}
+          </div>
+          {(minhasConvocacoes ?? []).length > 0 && (
+            <div className="space-y-2">
+              {minhasConvocacoes!.map(c => (
+                <button key={c.id} onClick={() => setConvocacaoAtivaId(c.id)}
+                  className="w-full text-left rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-bold">{new Date(c.data + "T12:00").toLocaleDateString("pt-BR")} · {c.horario_inicio}–{c.horario_fim}</div>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded ${c.status === "APROVADA" ? "bg-emerald-500/30 text-emerald-200" : c.status === "INDEFERIDA" ? "bg-red-500/30 text-red-200" : "bg-amber-500/30 text-amber-200"}`}>{c.status}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-400">{c.tipo_convocacao === "DIAS_UTEIS" ? "Dia útil" : "Sábado"} · {c.qtd_marcados} convocado{c.qtd_marcados===1?"":"s"}</div>
+                </button>
+              ))}
+            </div>
+          )}
+          <Button onClick={() => setNovaOpen(true)} className="w-full h-11 bg-emerald-600 hover:bg-emerald-700">
+            <Plus className="h-4 w-4 mr-2" /> Nova convocação
+          </Button>
         </div>
-      ) : convError ? (
-        <div className="p-6 rounded-2xl m-4 border border-amber-400/30 bg-amber-500/10 text-amber-200 text-sm">
-          <AlertTriangle className="h-5 w-5 mb-2" />
-          {(convError as any).message}
-        </div>
-      ) : (
+      )}
+
+      {convId && (
         <>
+          {isLider && minhasConvocacoes && minhasConvocacoes.length > 1 && (
+            <div className="px-4 py-2 border-b border-white/10 bg-slate-900">
+              <button onClick={() => setConvocacaoAtivaId(null)} className="text-xs text-rose-300 hover:text-rose-200 font-bold flex items-center gap-1">
+                <ChevronLeft className="h-3 w-3" /> Voltar às convocações
+              </button>
+            </div>
+          )}
+          {conv?.justificativa && (
+            <div className="px-4 py-3 border-b border-white/10 bg-slate-900">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Justificativa</div>
+              <div className="text-sm text-slate-200 whitespace-pre-wrap">{conv.justificativa}</div>
+            </div>
+          )}
           {/* Status */}
           <div className="px-4 py-3 border-b border-white/10 bg-slate-900">
             <div className="grid grid-cols-2 gap-3">
@@ -284,7 +321,7 @@ function ExtraSabadoMobilePage() {
             {(readOnly || expirado) && (
               <div className={`mt-3 rounded-lg px-3 py-2 text-xs font-bold flex items-center gap-2 ${expirado ? "bg-red-500/20 text-red-200 border border-red-400/40" : "bg-slate-500/20 text-slate-200 border border-slate-400/30"}`}>
                 <Clock className="h-4 w-4" />
-                {expirado ? "Convocação encerrada (após sexta 19h)" : "Somente leitura — edição encerra às 18:30 de sexta"}
+                {expirado ? "Convocação encerrada" : "Somente leitura — convocação indeferida"}
               </div>
             )}
           </div>
@@ -329,7 +366,7 @@ function ExtraSabadoMobilePage() {
             ) : grupos.length === 0 ? (
               <div className="text-center text-slate-500 text-sm py-8">
                 <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                {minhaConfig ? "Nenhum funcionário no seu escopo." : "Seu perfil de marcador ainda não foi configurado. Fale com o SESMT."}
+                {lider ? "Nenhum funcionário no seu escopo. Fale com o SESMT." : "Perfil sem escopo configurado. Fale com o SESMT."}
               </div>
             ) : grupos.map(([grupoNome, funcs]) => (
               <div key={grupoNome}>
@@ -359,7 +396,7 @@ function ExtraSabadoMobilePage() {
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-bold truncate">{e.nome}</div>
                           <div className="text-[10px] text-slate-400 truncate">
-                            {e.setor ?? "—"}
+                            {[e.setor, e.funcao].filter(Boolean).join(" · ") || "—"}
                             {marcado?.marcado_por === user?.id ? " · você marcou" : marcado ? ` · por ${marcado.marcado_por_nome ?? "—"}` : ""}
                           </div>
                         </div>
@@ -373,6 +410,15 @@ function ExtraSabadoMobilePage() {
         </>
       )}
 
+      <NovaConvocacaoDialog
+        open={novaOpen}
+        onOpenChange={setNovaOpen}
+        onCreated={(id) => {
+          setConvocacaoAtivaId(id);
+          qc.invalidateQueries({ queryKey: ["convocacoes-do-lider"] });
+        }}
+      />
+
       {/* Adicionar externo */}
       <AdicionarExternoDialog
         open={externoOpen}
@@ -381,6 +427,88 @@ function ExtraSabadoMobilePage() {
         onSaved={() => qc.invalidateQueries({ queryKey: ["extra-sabado-marcados", convId] })}
       />
     </div>
+  );
+}
+
+function NovaConvocacaoDialog({ open, onOpenChange, onCreated }: {
+  open: boolean; onOpenChange: (o: boolean) => void; onCreated: (id: string) => void;
+}) {
+  const [tipo, setTipo] = useState<"SABADO"|"DIAS_UTEIS">("SABADO");
+  const [data, setData] = useState("");
+  const [hi, setHi] = useState("07:00");
+  const [hf, setHf] = useState("12:00");
+  const [just, setJust] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Preenche próximo sábado quando abre
+  useEffect(() => {
+    if (!open) return;
+    setJust(""); setHi("07:00"); setHf("12:00"); setTipo("SABADO");
+    const hoje = new Date();
+    const dow = hoje.getDay();
+    const diasParaSabado = (6 - dow + 7) % 7 || 7;
+    const sab = new Date(hoje); sab.setDate(hoje.getDate() + diasParaSabado);
+    setData(sab.toISOString().slice(0, 10));
+  }, [open]);
+
+  async function salvar() {
+    if (just.trim().length < 5) return toast.error("Justificativa muito curta (mín. 5 caracteres)");
+    if (!data || !hi || !hf) return toast.error("Preencha data, hora início e hora fim");
+    setSaving(true);
+    const { data: id, error } = await supabase.rpc("criar_convocacao_extra_lider", {
+      _tipo: tipo, _data: data, _horario_inicio: hi, _horario_fim: hf, _justificativa: just,
+    });
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Convocação criada — aguardando Anderson aprovar");
+    onCreated(id as string);
+    onOpenChange(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Nova convocação</DialogTitle>
+          <DialogDescription>Após criar, o Anderson vai aprovar ou indeferir com base na justificativa.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Tipo</Label>
+            <Select value={tipo} onValueChange={(v) => setTipo(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="SABADO">Extra de Sábado</SelectItem>
+                <SelectItem value="DIAS_UTEIS">Dias Úteis (segunda a sexta)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Data</Label>
+            <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Hora início</Label>
+              <Input type="time" value={hi} onChange={(e) => setHi(e.target.value)} />
+            </div>
+            <div>
+              <Label>Hora fim</Label>
+              <Input type="time" value={hf} onChange={(e) => setHf(e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <Label>Justificativa (obrigatória)</Label>
+            <Textarea value={just} onChange={(e) => setJust(e.target.value)} rows={4}
+              placeholder="Ex: reparo urgente na embarcação X, prazo de entrega antecipado, etc." />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={salvar} disabled={saving}>{saving ? "Enviando…" : "Criar e enviar"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

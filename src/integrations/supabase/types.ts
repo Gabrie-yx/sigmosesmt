@@ -8573,7 +8573,21 @@ export type Database = {
         Args: { _motivo: string; _os_id: string }
         Returns: undefined
       }
+      criar_convocacao_extra_lider: {
+        Args: {
+          _data: string
+          _horario_fim: string
+          _horario_inicio: string
+          _justificativa: string
+          _tipo: string
+        }
+        Returns: string
+      }
       current_aal: { Args: never; Returns: string }
+      decidir_convocacao_extra: {
+        Args: { _aprovar: boolean; _hora_extra_id: string; _motivo?: string }
+        Returns: undefined
+      }
       decidir_rc: {
         Args: { _decisao: string; _motivo?: string; _rc_id: string }
         Returns: undefined
@@ -8657,6 +8671,48 @@ export type Database = {
       is_moderator: { Args: { _user_id: string }; Returns: boolean }
       is_supervisor_geral: { Args: { _user_id: string }; Returns: boolean }
       is_viewer_or_above: { Args: { _user_id: string }; Returns: boolean }
+      listar_convocacoes_extra_lider: {
+        Args: never
+        Returns: {
+          criado_em: string
+          data: string
+          horario_fim: string
+          horario_inicio: string
+          id: string
+          justificativa: string
+          motivo_indeferimento: string
+          qtd_marcados: number
+          status: string
+          tipo_convocacao: string
+        }[]
+      }
+      listar_convocacoes_pendentes_supervisor: {
+        Args: never
+        Returns: {
+          criado_em: string
+          data: string
+          horario_fim: string
+          horario_inicio: string
+          id: string
+          justificativa: string
+          lider_nome: string
+          qtd_marcados: number
+          status: string
+          tipo_convocacao: string
+        }[]
+      }
+      listar_convocaveis_lider: {
+        Args: { _lider_id: string }
+        Returns: {
+          empresa_id: string
+          empresa_nome: string
+          funcao: string
+          id: string
+          nome: string
+          setor: string
+          tipo_vinculo: string
+        }[]
+      }
       log_read: {
         Args: { _contexto?: Json; _entity: string; _entity_id: string }
         Returns: undefined
@@ -8695,6 +8751,16 @@ export type Database = {
           total_ofertas: number
           valor_total: number
           valor_unitario: number
+        }[]
+      }
+      meu_lider_extra: {
+        Args: never
+        Returns: {
+          employee_id: string
+          id: string
+          nome: string
+          observacao: string
+          user_id: string
         }[]
       }
       mfa_ok: { Args: never; Returns: boolean }
