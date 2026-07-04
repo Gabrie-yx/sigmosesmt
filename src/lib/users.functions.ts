@@ -70,6 +70,7 @@ export const inviteUser = createServerFn({ method: "POST" })
       full_name: z.string().min(2).max(120),
       role: managedAppRoleSchema,
       modules: z.array(appModuleSchema).default([]),
+      menus: z.array(z.string().min(1).max(200)).default([]),
       redirect_to: z.string().url(),
     })
   )
@@ -84,6 +85,7 @@ export const inviteUser = createServerFn({ method: "POST" })
       full_name: data.full_name,
       role: data.role,
       modules: data.modules,
+      menus: data.menus,
       invited_by: context.userId,
     });
     if (invErr) throw new Error(invErr.message);
