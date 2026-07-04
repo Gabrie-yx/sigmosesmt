@@ -13,7 +13,6 @@ import { Route as TermosRouteImport } from './routes/termos'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as ExtraSabadoRouteImport } from './routes/extra-sabado'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
@@ -77,7 +76,6 @@ import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesSaidasRouteImport } from './routes/app.employees.saidas'
 import { Route as AppEmployeesListagemRouteImport } from './routes/app.employees.listagem'
-import { Route as AppEmployeesHoraExtraSabadoRouteImport } from './routes/app.employees.hora-extra-sabado'
 import { Route as AppEmployeesDesligadosRouteImport } from './routes/app.employees.desligados'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 import { Route as AppDdsTemasRouteImport } from './routes/app.dds.temas'
@@ -114,11 +112,6 @@ const PrivacidadeRoute = PrivacidadeRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExtraSabadoRoute = ExtraSabadoRouteImport.update({
-  id: '/extra-sabado',
-  path: '/extra-sabado',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -445,12 +438,6 @@ const AppEmployeesListagemRoute = AppEmployeesListagemRouteImport.update({
   path: '/listagem',
   getParentRoute: () => AppEmployeesRoute,
 } as any)
-const AppEmployeesHoraExtraSabadoRoute =
-  AppEmployeesHoraExtraSabadoRouteImport.update({
-    id: '/hora-extra-sabado',
-    path: '/hora-extra-sabado',
-    getParentRoute: () => AppEmployeesRoute,
-  } as any)
 const AppEmployeesDesligadosRoute = AppEmployeesDesligadosRouteImport.update({
   id: '/desligados',
   path: '/desligados',
@@ -547,7 +534,6 @@ const AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/extra-sabado': typeof ExtraSabadoRoute
   '/login': typeof LoginRoute
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -595,7 +581,6 @@ export interface FileRoutesByFullPath {
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/employees/desligados': typeof AppEmployeesDesligadosRoute
-  '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
@@ -634,7 +619,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/extra-sabado': typeof ExtraSabadoRoute
   '/login': typeof LoginRoute
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -680,7 +664,6 @@ export interface FileRoutesByTo {
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/employees/desligados': typeof AppEmployeesDesligadosRoute
-  '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
@@ -721,7 +704,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/extra-sabado': typeof ExtraSabadoRoute
   '/login': typeof LoginRoute
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -769,7 +751,6 @@ export interface FileRoutesById {
   '/app/dds/temas': typeof AppDdsTemasRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/app/employees/desligados': typeof AppEmployeesDesligadosRoute
-  '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
@@ -811,7 +792,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
-    | '/extra-sabado'
     | '/login'
     | '/privacidade'
     | '/reset-password'
@@ -859,7 +839,6 @@ export interface FileRouteTypes {
     | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/employees/desligados'
-    | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
     | '/app/employees/saidas'
     | '/app/estoque/epi'
@@ -898,7 +877,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/extra-sabado'
     | '/login'
     | '/privacidade'
     | '/reset-password'
@@ -944,7 +922,6 @@ export interface FileRouteTypes {
     | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/employees/desligados'
-    | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
     | '/app/employees/saidas'
     | '/app/estoque/epi'
@@ -984,7 +961,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
-    | '/extra-sabado'
     | '/login'
     | '/privacidade'
     | '/reset-password'
@@ -1032,7 +1008,6 @@ export interface FileRouteTypes {
     | '/app/dds/temas'
     | '/app/employees/$id'
     | '/app/employees/desligados'
-    | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
     | '/app/employees/saidas'
     | '/app/estoque/epi'
@@ -1073,7 +1048,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  ExtraSabadoRoute: typeof ExtraSabadoRoute
   LoginRoute: typeof LoginRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -1111,13 +1085,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/extra-sabado': {
-      id: '/extra-sabado'
-      path: '/extra-sabado'
-      fullPath: '/extra-sabado'
-      preLoaderRoute: typeof ExtraSabadoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -1561,13 +1528,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmployeesListagemRouteImport
       parentRoute: typeof AppEmployeesRoute
     }
-    '/app/employees/hora-extra-sabado': {
-      id: '/app/employees/hora-extra-sabado'
-      path: '/hora-extra-sabado'
-      fullPath: '/app/employees/hora-extra-sabado'
-      preLoaderRoute: typeof AppEmployeesHoraExtraSabadoRouteImport
-      parentRoute: typeof AppEmployeesRoute
-    }
     '/app/employees/desligados': {
       id: '/app/employees/desligados'
       path: '/desligados'
@@ -1705,7 +1665,6 @@ const AppAdministrativoRouteWithChildren =
 interface AppEmployeesRouteChildren {
   AppEmployeesIdRoute: typeof AppEmployeesIdRoute
   AppEmployeesDesligadosRoute: typeof AppEmployeesDesligadosRoute
-  AppEmployeesHoraExtraSabadoRoute: typeof AppEmployeesHoraExtraSabadoRoute
   AppEmployeesListagemRoute: typeof AppEmployeesListagemRoute
   AppEmployeesSaidasRoute: typeof AppEmployeesSaidasRoute
   AppEmployeesIndexRoute: typeof AppEmployeesIndexRoute
@@ -1714,7 +1673,6 @@ interface AppEmployeesRouteChildren {
 const AppEmployeesRouteChildren: AppEmployeesRouteChildren = {
   AppEmployeesIdRoute: AppEmployeesIdRoute,
   AppEmployeesDesligadosRoute: AppEmployeesDesligadosRoute,
-  AppEmployeesHoraExtraSabadoRoute: AppEmployeesHoraExtraSabadoRoute,
   AppEmployeesListagemRoute: AppEmployeesListagemRoute,
   AppEmployeesSaidasRoute: AppEmployeesSaidasRoute,
   AppEmployeesIndexRoute: AppEmployeesIndexRoute,
@@ -1895,7 +1853,6 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  ExtraSabadoRoute: ExtraSabadoRoute,
   LoginRoute: LoginRoute,
   PrivacidadeRoute: PrivacidadeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
