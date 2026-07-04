@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
+import { MarcadoresManagerDialog } from "@/components/hora-extra/marcadores-manager-dialog";
 import { gerarHoraExtraSabadoPDF } from "@/lib/hora-extra-sabado-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { compressSignatureForPdf, compressSignaturesBatch } from "@/lib/signature-utils";
@@ -44,6 +45,7 @@ function HoraExtraSabadoPage() {
   const qc = useQueryClient();
   const { user, isEditor, isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
+  const [marcOpen, setMarcOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
@@ -240,9 +242,16 @@ function HoraExtraSabadoPage() {
           </div>
         </div>
         {isEditor && (
-          <Button onClick={() => { setEditId(null); setOpen(true); }} className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
-            <Plus className="h-4 w-4 mr-2" />Nova ficha
-          </Button>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Button variant="outline" onClick={() => setMarcOpen(true)} className="text-[11px] font-black uppercase tracking-widest rounded-xl px-4 py-3 h-auto">
+                <Users className="h-4 w-4 mr-2" />Gerir marcadores
+              </Button>
+            )}
+            <Button onClick={() => { setEditId(null); setOpen(true); }} className="bg-[#0f172a] hover:bg-brand text-white text-[11px] font-black uppercase tracking-widest rounded-xl px-5 py-3 h-auto shadow-lg">
+              <Plus className="h-4 w-4 mr-2" />Nova ficha
+            </Button>
+          </div>
         )}
       </div>
 
@@ -432,6 +441,7 @@ function HoraExtraSabadoPage() {
         onChangeEncSig={(v) => saveSig("assinatura_tst_data", v)}
         onChangeSesmtSig={(v) => saveSig("assinatura_gestor_data", v)}
       />
+      <MarcadoresManagerDialog open={marcOpen} onOpenChange={setMarcOpen} />
     </div>
   );
 }
