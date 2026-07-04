@@ -309,51 +309,60 @@ function HoraExtraSabadoPage() {
           <p className="text-xs text-slate-400 mt-1">Crie a primeira clicando em "Nova ficha".</p>
         </div>
       ) : (
-        <div className="grid gap-2">
-          {filtradas.map((f: any) => {
-            const d = new Date(f.data + "T12:00:00");
-            const dia = DIAS[d.getDay()];
-            const qtd = f.hora_extra_sabado_funcionarios?.length ?? 0;
-            return (
-              <button
-                key={f.id}
-                onClick={() => setDetalheId(f.id)}
-                className="w-full text-left rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-rose-400/40 transition-all px-4 py-3 flex items-center gap-4"
-              >
-                <div className="flex flex-col items-center justify-center w-14 shrink-0">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-rose-300">{dia.slice(0,3)}</span>
-                  <span className="text-xl font-black tabular-nums text-slate-100 leading-none">{d.getDate().toString().padStart(2,"0")}</span>
-                  <span className="text-[9px] font-bold tabular-nums text-slate-400">{d.toLocaleDateString("pt-BR",{month:"short"})}</span>
-                </div>
-                <div className="h-10 w-px bg-white/10" />
-                <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-4 gap-2 items-center">
-                  <span className="text-xs font-bold text-slate-100 truncate inline-flex items-center gap-1.5"><Building2 className="h-3 w-3 text-rose-300" />{f.companies?.name ?? "—"}</span>
-                  <span className="text-xs text-slate-300 truncate inline-flex items-center gap-1.5"><Clock className="h-3 w-3 text-rose-300" />{f.horario_inicio ?? "—"}{f.horario_fim ? ` – ${f.horario_fim}` : ""} · {f.turno ?? "—"}º</span>
-                  <span className="text-xs text-slate-300 truncate inline-flex items-center gap-1.5"><MapPin className="h-3 w-3 text-rose-300" />{f.setor ?? "—"}</span>
-                  <span className="text-xs text-rose-200 font-bold inline-flex items-center gap-1.5"><Users className="h-3 w-3" />{qtd} func.</span>
-                </div>
-              </button>
-            );
-          })}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {gruposPorMes.map((grupo) => (
+            <div key={grupo.key} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-black uppercase tracking-widest text-rose-200">{grupo.label}</h3>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  {grupo.itens.length} ficha{grupo.itens.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              <div className="grid gap-2">
+                {grupo.itens.map((f: any) => {
+                  const d = new Date(f.data + "T12:00:00");
+                  const dia = DIAS[d.getDay()];
+                  const qtd = f.hora_extra_sabado_funcionarios?.length ?? 0;
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => setDetalheId(f.id)}
+                      className="w-full text-left rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] hover:border-rose-400/40 transition-all px-3 py-2 flex items-center gap-3"
+                    >
+                      <div className="flex flex-col items-center justify-center w-12 shrink-0">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-rose-300">{dia.slice(0,3)}</span>
+                        <span className="text-lg font-black tabular-nums text-slate-100 leading-none">{d.getDate().toString().padStart(2,"0")}</span>
+                      </div>
+                      <div className="h-9 w-px bg-white/10" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-slate-100 truncate inline-flex items-center gap-1.5"><Building2 className="h-3 w-3 text-rose-300" />{f.companies?.name ?? "—"}</div>
+                        <div className="text-[11px] text-slate-300 truncate inline-flex items-center gap-1.5 mt-0.5"><Clock className="h-3 w-3 text-rose-300" />{f.horario_inicio ?? "—"}{f.horario_fim ? ` – ${f.horario_fim}` : ""} · {f.turno ?? "—"}º · <Users className="h-3 w-3" />{qtd}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Drawer de detalhes */}
-      <Sheet open={!!detalheId} onOpenChange={(o) => !o && setDetalheId(null)}>
-        <SheetContent side="right" className="w-full sm:max-w-md bg-[#1a0608]/95 backdrop-blur-sm border-l border-white/10 text-slate-100">
+      {/* Modal de detalhes */}
+      <Dialog open={!!detalheId} onOpenChange={(o) => !o && setDetalheId(null)}>
+        <DialogContent className="w-full sm:max-w-lg bg-[#1a0608]/95 backdrop-blur-sm border-white/10 text-slate-100">
           {fichaDetalhe && (() => {
             const d = new Date(fichaDetalhe.data + "T12:00:00");
             const dia = DIAS[d.getDay()];
             return (
               <>
-                <SheetHeader>
-                  <SheetTitle className="text-2xl font-black text-rose-200">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-black text-rose-200">
                     {d.toLocaleDateString("pt-BR")}
-                  </SheetTitle>
-                  <SheetDescription className="text-slate-400">
+                  </DialogTitle>
+                  <DialogDescription className="text-slate-400">
                     {dia} · {fichaDetalhe.tipo_efetivo} · {fichaDetalhe.hora_extra_sabado_funcionarios?.length ?? 0} funcionários
-                  </SheetDescription>
-                </SheetHeader>
+                  </DialogDescription>
+                </DialogHeader>
                 <div className="mt-6 space-y-4 text-sm">
                   {fichaDetalhe.companies?.name && (
                     <div className="flex items-start gap-2"><Building2 className="h-4 w-4 text-rose-300 mt-0.5" /><div><div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Empresa</div><div>{fichaDetalhe.companies.name}</div></div></div>
@@ -383,26 +392,6 @@ function HoraExtraSabadoPage() {
                       <Pencil className="h-4 w-4 mr-1.5" />Editar
                     </Button>
                   )}
-                  {isEditor && (
-                    <Button
-                      variant="outline"
-                      className={`border-emerald-400/30 ${fichaDetalhe.aberto_marcadores_em ? "text-emerald-300 bg-emerald-500/10" : "text-emerald-300 hover:bg-emerald-500/10"}`}
-                      onClick={async () => {
-                        if (fichaDetalhe.aberto_marcadores_em) {
-                          if (!confirm("Já está aberta para os marcadores. Reabrir/prorrogar até sexta 19h?")) return;
-                        }
-                        const { error } = await supabase.rpc("abrir_convocacao_marcadores", {
-                          _hora_extra_id: fichaDetalhe.id,
-                        });
-                        if (error) return toast.error(error.message);
-                        toast.success(fichaDetalhe.aberto_marcadores_em ? "Convocação reaberta" : "Aberta pros marcadores");
-                        qc.invalidateQueries({ queryKey: ["hora-extra-sabado"] });
-                      }}
-                    >
-                      <Smartphone className="h-4 w-4 mr-1.5" />
-                      {fichaDetalhe.aberto_marcadores_em ? "Aberta p/ marcadores" : "Abrir p/ marcadores"}
-                    </Button>
-                  )}
                   {isAdmin && (
                     <Button variant="outline" className="border-rose-400/30 text-rose-300 hover:bg-rose-500/10 ml-auto" onClick={() => { if (confirm("Excluir esta ficha?")) { del.mutate(fichaDetalhe.id); setDetalheId(null); } }}>
                       <Trash2 className="h-4 w-4 mr-1.5" />Excluir
@@ -412,8 +401,8 @@ function HoraExtraSabadoPage() {
               </>
             );
           })()}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       <HoraExtraSabadoDialog
         open={open}
@@ -439,7 +428,6 @@ function HoraExtraSabadoPage() {
         onChangeEncSig={(v) => saveSig("assinatura_tst_data", v)}
         onChangeSesmtSig={(v) => saveSig("assinatura_gestor_data", v)}
       />
-      <MarcadoresManagerDialog open={marcOpen} onOpenChange={setMarcOpen} />
     </div>
   );
 }
