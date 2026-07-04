@@ -8573,16 +8573,28 @@ export type Database = {
         Args: { _motivo: string; _os_id: string }
         Returns: undefined
       }
-      criar_convocacao_extra_lider: {
-        Args: {
-          _data: string
-          _horario_fim: string
-          _horario_inicio: string
-          _justificativa: string
-          _tipo: string
-        }
-        Returns: string
-      }
+      criar_convocacao_extra_lider:
+        | {
+            Args: {
+              _data: string
+              _horario_fim: string
+              _horario_inicio: string
+              _justificativa: string
+              _tipo: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _data: string
+              _employee_ids?: string[]
+              _horario_fim: string
+              _horario_inicio: string
+              _justificativa: string
+              _tipo: string
+            }
+            Returns: string
+          }
       current_aal: { Args: never; Returns: string }
       decidir_convocacao_extra: {
         Args: { _aprovar: boolean; _hora_extra_id: string; _motivo?: string }
@@ -8620,6 +8632,10 @@ export type Database = {
       }
       enviar_rc_para_supervisor: {
         Args: { _rc_id: string }
+        Returns: undefined
+      }
+      excluir_convocacao_extra_lider: {
+        Args: { _hora_extra_id: string }
         Returns: undefined
       }
       expirar_acordos_vencidos: { Args: never; Returns: number }
