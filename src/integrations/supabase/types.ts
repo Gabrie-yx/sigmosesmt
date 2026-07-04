@@ -6914,12 +6914,14 @@ export type Database = {
           setor: string | null
           signature_solicitante: string | null
           signature_solicitante_height: number | null
+          sla_deadline: string | null
           solicitante: string
           status: Database["public"]["Enums"]["purchase_req_status"]
           status_token: string
           status_token_expires_at: string
           titulo: string | null
           updated_at: string
+          urgencia: Database["public"]["Enums"]["rc_urgencia"]
         }
         Insert: {
           approved_at?: string | null
@@ -6996,12 +6998,14 @@ export type Database = {
           setor?: string | null
           signature_solicitante?: string | null
           signature_solicitante_height?: number | null
+          sla_deadline?: string | null
           solicitante: string
           status?: Database["public"]["Enums"]["purchase_req_status"]
           status_token?: string
           status_token_expires_at?: string
           titulo?: string | null
           updated_at?: string
+          urgencia?: Database["public"]["Enums"]["rc_urgencia"]
         }
         Update: {
           approved_at?: string | null
@@ -7078,12 +7082,14 @@ export type Database = {
           setor?: string | null
           signature_solicitante?: string | null
           signature_solicitante_height?: number | null
+          sla_deadline?: string | null
           solicitante?: string
           status?: Database["public"]["Enums"]["purchase_req_status"]
           status_token?: string
           status_token_expires_at?: string
           titulo?: string | null
           updated_at?: string
+          urgencia?: Database["public"]["Enums"]["rc_urgencia"]
         }
         Relationships: []
       }
@@ -8425,6 +8431,10 @@ export type Database = {
       pegar_rc_para_cotar: { Args: { _token: string }; Returns: undefined }
       pode_gerenciar_compras: { Args: { _user_id: string }; Returns: boolean }
       pt_title_case: { Args: { s: string }; Returns: string }
+      rc_sla_horas: {
+        Args: { _urg: Database["public"]["Enums"]["rc_urgencia"] }
+        Returns: number
+      }
       reabrir_rc: {
         Args: { _motivo: string; _rc_id: string }
         Returns: undefined
@@ -8544,6 +8554,7 @@ export type Database = {
         | "CONCLUIDA"
         | "DEVOLVIDA"
         | "EM_COTACAO"
+      rc_urgencia: "NORMAL" | "URGENTE" | "EMERGENCIA"
       tipo_acidente: "COM_AFASTAMENTO" | "SEM_AFASTAMENTO" | "TRAJETO" | "FATAL"
       tipo_movimentacao_epi: "SAIDA_ENTREGA" | "ENTRADA_REPOSICAO" | "DEVOLUCAO"
       turno_acidente: "MANHA" | "TARDE" | "NOITE" | "MADRUGADA"
@@ -8722,6 +8733,7 @@ export const Constants = {
         "DEVOLVIDA",
         "EM_COTACAO",
       ],
+      rc_urgencia: ["NORMAL", "URGENTE", "EMERGENCIA"],
       tipo_acidente: ["COM_AFASTAMENTO", "SEM_AFASTAMENTO", "TRAJETO", "FATAL"],
       tipo_movimentacao_epi: [
         "SAIDA_ENTREGA",

@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { openStorageFile } from "@/components/file-viewer";
+import { UrgenciaBadge } from "@/components/compras/urgencia";
 import { SupplierPicker, type SupplierLite } from "@/components/compras/supplier-picker";
 import { StarRating } from "@/components/compras/star-rating";
 import { cn } from "@/lib/utils";
@@ -512,6 +513,7 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
             <span className="text-xs font-bold text-muted-foreground">RC Nº</span>
             <span className="text-sm font-bold">{req.numero}</span>
             <Badge className={STATUS_BADGE[req.status] + " border"}>{STATUS_LABEL[req.status]}</Badge>
+            <UrgenciaBadge urgencia={(req as any).urgencia} slaDeadline={(req as any).sla_deadline} status={req.status} />
             {isRetroativa && !isArquivada && (
               <Badge className="bg-orange-100 text-orange-800 border border-orange-300">
                 <History className="h-3 w-3 mr-1" /> RETROATIVA

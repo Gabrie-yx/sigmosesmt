@@ -42,6 +42,7 @@ import { useDraftAutosave } from "@/hooks/use-draft-autosave";
 import { deleteDraft, loadDraft } from "@/lib/draft-store";
 import { printPdf } from "@/lib/pdf-print";
 import { gerarPdfRequisicaoDoc, rcPdfFileName, type RcPdfReq, type RcPdfCotacao } from "@/lib/requisicao-compra-pdf";
+import { UrgenciaBadge, UrgenciaSelect, type Urgencia } from "@/components/compras/urgencia";
 
 export const Route = createFileRoute("/app/sesmt/requisicoes")({
   component: RequisicoesPage,
@@ -101,6 +102,8 @@ type Req = {
   pc_valor?: number | null;
   nf_numero?: string | null;
   recebido_em?: string | null;
+  urgencia?: Urgencia | null;
+  sla_deadline?: string | null;
 };
 
 const STATUS_BADGE: Record<Status, string> = {
@@ -420,6 +423,7 @@ function RequisicoesPage() {
                             </span>
                           )}
                           <Badge variant="outline" className={STATUS_BADGE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+                          <UrgenciaBadge urgencia={r.urgencia ?? "NORMAL"} slaDeadline={r.sla_deadline} status={r.status} />
                           <Badge
                             variant="outline"
                             className={
@@ -983,6 +987,7 @@ export function ReqFormDialog({
     data_revisao: existing?.data_revisao ?? today,
     pagina: existing?.pagina ?? "01/01",
     observacoes: existing?.observacoes ?? "",
+    urgencia: (existing?.urgencia ?? "NORMAL") as Urgencia,
   });
   const [itens, setItens] = useState<Item[]>(emptyItems());
   const [signature, setSignature] = useState<string | null>(() => {
@@ -1139,6 +1144,7 @@ export function ReqFormDialog({
         observacoes: form.observacoes.trim() || null,
         signature_solicitante: signature,
         signature_solicitante_height: signature ? signatureHeight : null,
+        urgencia: form.urgencia,
       };
 
       let reqId: string;
@@ -1273,6 +1279,17 @@ export function ReqFormDialog({
             <div className="border-l border-black">
               <FieldRow label="OBRA EM MANUTENÇÃO:" value={form.obra_manutencao} onChange={(v) => setForm({ ...form, obra_manutencao: v })} />
             </div>
+          </div>
+
+          {/* Linha 5: Urgência (Sprint 3 — SLA) */}
+          <div className="p-3 bg-slate-50 border-b-2 border-black">
+            <UrgenciaSelect
+              value={form.urgencia}
+              onChange={(v) => setForm({ ...form, urgencia: v })}
+            />
+            <p className="text-[11px] text-slate-600 mt-1">
+              Emergência = 24h · Urgente = 48h · Normal = 7 dias. O prazo é cronometrado a partir da criação.
+            </p>
           </div>
     </div>
   );
