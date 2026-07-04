@@ -28,12 +28,18 @@ export const getRcByToken = createServerFn({ method: "GET" })
     const { data: rc, error } = await supabaseAdmin
       .from("purchase_requisitions")
       .select(
-        "id, numero, data_requisicao, classificacao, solicitante, setor, fornecedor, obra_construcao, obra_manutencao, observacoes, status, motivo_indeferimento, approved_at, cotacao_at, cotador_nome, cotacao_fornecedor, cotacao_valor, created_at, pego_por_compras_id, pego_por_compras_nome, pego_em, decidido_por_id, decidido_por_nome, decidido_assinatura_url, decidido_em"
+        "id, numero, data_requisicao, classificacao, solicitante, setor, fornecedor, obra_construcao, obra_manutencao, observacoes, status, motivo_indeferimento, approved_at, cotacao_at, cotador_nome, cotacao_fornecedor, cotacao_valor, created_at, pego_por_compras_id, pego_por_compras_nome, pego_em, decidido_por_id, decidido_por_nome, decidido_assinatura_url, decidido_em, status_token_expires_at"
       )
       .eq("status_token", data.token)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!rc) throw new Error("Requisição não encontrada");
+
+    // Sprint 2: TTL do link público (30 dias). Após decidida, o link é fechado na hora.
+    const exp = (rc as any).status_token_expires_at as string | null;
+    if (exp && new Date(exp).getTime() < Date.now()) {
+      throw new Error("Este link de cotação expirou. Solicite um novo à equipe de Compras.");
+    }
 
     const { data: itens } = await supabaseAdmin
       .from("purchase_requisition_items")

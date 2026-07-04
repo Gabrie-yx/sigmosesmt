@@ -6917,6 +6917,7 @@ export type Database = {
           solicitante: string
           status: Database["public"]["Enums"]["purchase_req_status"]
           status_token: string
+          status_token_expires_at: string
           titulo: string | null
           updated_at: string
         }
@@ -6998,6 +6999,7 @@ export type Database = {
           solicitante: string
           status?: Database["public"]["Enums"]["purchase_req_status"]
           status_token?: string
+          status_token_expires_at?: string
           titulo?: string | null
           updated_at?: string
         }
@@ -7079,6 +7081,7 @@ export type Database = {
           solicitante?: string
           status?: Database["public"]["Enums"]["purchase_req_status"]
           status_token?: string
+          status_token_expires_at?: string
           titulo?: string | null
           updated_at?: string
         }

@@ -71,6 +71,13 @@ export type RcPdfReq = {
   status: RcPdfStatus;
   motivo_indeferimento?: string | null;
   signature_solicitante?: string | null;
+  // Decisão do Supervisor Geral (Sprint 2)
+  decidido_por_nome?: string | null;
+  decidido_assinatura_url?: string | null;
+  decidido_em?: string | null;
+  // Compras
+  cotador_nome?: string | null;
+  cotacao_at?: string | null;
 };
 
 export type RcPdfItem = {
@@ -81,6 +88,28 @@ export type RcPdfItem = {
   observacao?: string | null;
 };
 
+export type RcPdfCotacao = {
+  fornecedor: string;
+  valor?: number | null;
+  prazo_entrega_dias?: number | null;
+  condicao_pagamento?: string | null;
+  frete?: string | null;
+  is_vencedora?: boolean | null;
+};
+
+async function loadImageDims(src: string): Promise<{ w: number; h: number } | null> {
+  try {
+    return await new Promise<{ w: number; h: number }>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = reject;
+      img.src = src;
+    });
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Gera a `jsPDF` da Requisição de Compra usando o mesmo layout FOR-COMP-03
  * que o setor solicitante emite. Devolve o `doc` sem baixar/imprimir —
@@ -89,6 +118,7 @@ export type RcPdfItem = {
 export async function gerarPdfRequisicaoDoc(
   req: RcPdfReq,
   itens: RcPdfItem[],
+  cotacoes: RcPdfCotacao[] = [],
 ): Promise<jsPDF> {
   const { JsPDF, autoTable } = await loadPdfLibs();
   const doc = new JsPDF({ unit: "mm", format: "a4" });
@@ -239,19 +269,11 @@ export async function gerarPdfRequisicaoDoc(
 
   let sigDims: { w: number; h: number } | null = null;
   if (req.signature_solicitante) {
-    try {
-      sigDims = await new Promise<{ w: number; h: number }>(
-        (resolve, reject) => {
-          const img = new Image();
-          img.onload = () =>
-            resolve({ w: img.naturalWidth, h: img.naturalHeight });
-          img.onerror = reject;
-          img.src = req.signature_solicitante as string;
-        },
-      );
-    } catch (e) {
-      console.warn("Falha ao carregar assinatura:", e);
-    }
+    sigDims = await loadImageDims(req.signature_solicitante);
+  }
+  let supSigDims: { w: number; h: number } | null = null;
+  if (req.decidido_assinatura_url) {
+    supSigDims = await loadImageDims(req.decidido_assinatura_url);
   }
 
   [
@@ -266,42 +288,54 @@ export async function gerarPdfRequisicaoDoc(
     doc.text(label, x + colW / 2, finalY + 4, { align: "center" });
     doc.line(x, finalY + sigH - 6, x + colW, finalY + sigH - 6);
     doc.text("DATA:", x + 1.5, finalY + sigH - 1);
-    if (idx === 0) {
+    const drawSig = (sigUrl: string, dims: { w: number; h: number } | null, dataStr: string, nome?: string | null) => {
       doc.setFont("helvetica", "normal");
-      doc.text(fmtBR(req.data_requisicao), x + 13, finalY + sigH - 1);
-      if (req.signature_solicitante) {
-        try {
-          const areaX = x + 2;
-          const areaY = finalY + 5;
-          const areaW = colW - 4;
-          const areaH = sigH - 11;
-          let drawW = areaW;
-          let drawH = areaH;
-          if (sigDims && sigDims.w > 0 && sigDims.h > 0) {
-            const ratio = sigDims.w / sigDims.h;
-            drawH = areaH;
-            drawW = drawH * ratio;
-            if (drawW > areaW) {
-              drawW = areaW;
-              drawH = drawW / ratio;
-            }
+      doc.text(dataStr, x + 13, finalY + sigH - 1);
+      try {
+        const areaX = x + 2;
+        const areaY = finalY + 5;
+        const areaW = colW - 4;
+        const areaH = sigH - 11;
+        let drawW = areaW;
+        let drawH = areaH;
+        if (dims && dims.w > 0 && dims.h > 0) {
+          const ratio = dims.w / dims.h;
+          drawH = areaH;
+          drawW = drawH * ratio;
+          if (drawW > areaW) {
+            drawW = areaW;
+            drawH = drawW / ratio;
           }
-          const drawX = areaX + (areaW - drawW) / 2;
-          const drawY = areaY + (areaH - drawH) / 2;
-          doc.addImage(
-            req.signature_solicitante,
-            "PNG",
-            drawX,
-            drawY,
-            drawW,
-            drawH,
-            undefined,
-            "FAST",
-          );
-        } catch (e) {
-          console.warn("Falha ao desenhar assinatura no PDF:", e);
         }
+        const drawX = areaX + (areaW - drawW) / 2;
+        const drawY = areaY + (areaH - drawH) / 2;
+        doc.addImage(sigUrl, "PNG", drawX, drawY, drawW, drawH, undefined, "FAST");
+      } catch (e) {
+        console.warn("Falha ao desenhar assinatura no PDF:", e);
       }
+      if (nome) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7);
+        doc.text(nome, x + colW / 2, finalY + sigH - 7.5, { align: "center", maxWidth: colW - 4 });
+        doc.setFontSize(8);
+      }
+    };
+
+    if (idx === 0 && req.signature_solicitante) {
+      drawSig(req.signature_solicitante, sigDims, fmtBR(req.data_requisicao), req.solicitante);
+    } else if (idx === 1 && req.decidido_assinatura_url) {
+      drawSig(
+        req.decidido_assinatura_url,
+        supSigDims,
+        fmtBR(req.decidido_em ?? null),
+        req.decidido_por_nome ?? null,
+      );
+    } else if (idx === 2 && req.cotador_nome) {
+      doc.setFont("helvetica", "normal");
+      doc.text(fmtBR(req.cotacao_at ?? null), x + 13, finalY + sigH - 1);
+      doc.setFontSize(7);
+      doc.text(req.cotador_nome, x + colW / 2, finalY + sigH - 7.5, { align: "center", maxWidth: colW - 4 });
+      doc.setFontSize(8);
     }
   });
 
@@ -317,6 +351,41 @@ export async function gerarPdfRequisicaoDoc(
     doc.setFont("helvetica", "normal");
     doc.text(`Motivo: ${req.motivo_indeferimento}`, M, finalY + sigH + 12, {
       maxWidth: W - 2 * M,
+    });
+  }
+
+  // Cotações recebidas (Sprint 2) — só imprime se houver
+  if (cotacoes.length > 0) {
+    let cotY = finalY + sigH + (req.status === "INDEFERIDA" && req.motivo_indeferimento ? 18 : 12);
+    if (cotY > 250) {
+      doc.addPage();
+      cotY = M;
+    }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("COTAÇÕES RECEBIDAS", M, cotY);
+    autoTable(doc, {
+      startY: cotY + 2,
+      margin: { left: M, right: M },
+      theme: "grid",
+      styles: { fontSize: 8, cellPadding: 1.5, lineColor: [0, 0, 0], lineWidth: 0.3 },
+      headStyles: { fillColor: [235, 235, 235], textColor: [0, 0, 0], fontStyle: "bold" },
+      head: [["#", "Fornecedor", "Valor (R$)", "Prazo", "Cond. Pgto", "Frete", "Vencedora"]],
+      body: cotacoes.map((c, i) => [
+        String(i + 1),
+        c.fornecedor,
+        c.valor != null ? c.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "—",
+        c.prazo_entrega_dias != null ? `${c.prazo_entrega_dias} dias` : "—",
+        c.condicao_pagamento || "—",
+        c.frete || "—",
+        c.is_vencedora ? "SIM" : "",
+      ]),
+      didParseCell: (data) => {
+        if (data.section === "body" && cotacoes[data.row.index]?.is_vencedora) {
+          data.cell.styles.fillColor = [220, 252, 231];
+          data.cell.styles.fontStyle = "bold";
+        }
+      },
     });
   }
 
