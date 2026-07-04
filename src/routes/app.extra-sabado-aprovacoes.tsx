@@ -193,7 +193,7 @@ function IndeferirDialog({ convId, onClose, onDone }: {
     if (motivo.trim().length < 5) return toast.error("Motivo muito curto");
     setSaving(true);
     const { error } = await supabase.rpc("decidir_convocacao_extra", {
-      _hora_extra_id: convId, _aprovar: false, _motivo: motivo,
+      _hora_extra_id: convId!, _aprovar: false, _motivo: motivo,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
