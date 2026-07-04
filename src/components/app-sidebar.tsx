@@ -554,22 +554,6 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
-              {MANUTENCAO_LOCKED.map((s) => {
-                const Icon = s.icon ?? Wrench;
-                return (
-                  <SidebarMenuItem key={s.key}>
-                    <SidebarMenuButton
-                      tooltip={`Manutenção · ${s.label} (em desenvolvimento)`}
-                      onClick={() => toast.info(`Manutenção · ${s.label}: módulo em desenvolvimento`)}
-                      className="opacity-60"
-                    >
-                      <Icon />
-                      <span>{s.label}</span>
-                      <Lock className="ml-auto h-3 w-3" />
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -583,6 +567,30 @@ export function AppSidebar() {
             <SidebarMenu>
               {ELETRICA_ITEMS.map((s) => {
                 const Icon = s.icon ?? Zap;
+                return (
+                  <SidebarMenuItem key={s.to}>
+                    <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
+                      <Link to={s.to}>
+                        <Icon />
+                        <span>{s.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* MECÂNICA */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="flex items-center gap-2 h-9 text-sm font-bold text-slate-700">
+            <Hammer className="h-5 w-5 text-red-700" /> Mecânica
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {MECANICA_ITEMS.map((s) => {
+                const Icon = s.icon ?? Hammer;
                 return (
                   <SidebarMenuItem key={s.to}>
                     <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
