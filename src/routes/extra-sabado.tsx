@@ -429,6 +429,7 @@ function ExtraSabadoMobilePage() {
       <NovaConvocacaoDialog
         open={novaOpen}
         onOpenChange={setNovaOpen}
+        liderId={lider?.id ?? null}
         onCreated={(id) => {
           setConvocacaoAtivaId(id);
           qc.invalidateQueries({ queryKey: ["convocacoes-do-lider"] });
