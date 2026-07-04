@@ -41,6 +41,7 @@ import { Wizard, type WizardStep } from "@/components/wizard";
 import { useDraftAutosave } from "@/hooks/use-draft-autosave";
 import { deleteDraft, loadDraft } from "@/lib/draft-store";
 import { printPdf } from "@/lib/pdf-print";
+import { gerarPdfRequisicaoDoc, rcPdfFileName, type RcPdfReq, type RcPdfCotacao } from "@/lib/requisicao-compra-pdf";
 
 export const Route = createFileRoute("/app/sesmt/requisicoes")({
   component: RequisicoesPage,
