@@ -166,7 +166,6 @@ const PRODUCAO_SUBMENU: LeafItem[] = [
   { to: "/app/producao/fatores-consumo", label: "Fatores de Consumo" },
   { to: "/app/producao/expedicao", label: "Expedição" },
   { to: "/app/producao/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
-  { to: "/app/producao/hora-extras", label: "Hora Extra", icon: Clock },
 ];
 
 const COMPRAS_ITEMS: LeafItem[] = [
@@ -181,13 +180,28 @@ const ADMINISTRATIVO_ITEMS: LeafItem[] = [
 
 const ALMOXARIFADO_ITEMS: LeafItem[] = [
   { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
-  { to: "/app/producao/hora-extras", label: "Hora Extra", icon: Clock },
 ];
 
-const MANUTENCAO_ITEMS: LeafItem[] = [
-  { to: "/app/manutencao/eletrica/requisicao-compras", label: "Elétrica", icon: Zap },
-  { to: "/app/manutencao/mecanica/requisicao-compras", label: "Mecânica", icon: Hammer },
-  { to: "/app/producao/hora-extras", label: "Hora Extra", icon: Clock },
+type ManutencaoGroup = { key: string; label: string; icon: any; items: LeafItem[] };
+const MANUTENCAO_GROUPS: ManutencaoGroup[] = [
+  {
+    key: "eletrica",
+    label: "Elétrica",
+    icon: Zap,
+    items: [
+      { to: "/app/manutencao/eletrica/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
+      { to: "/app/producao/hora-extras", label: "Hora Extra", icon: Clock },
+    ],
+  },
+  {
+    key: "mecanica",
+    label: "Mecânica",
+    icon: Hammer,
+    items: [
+      { to: "/app/manutencao/mecanica/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
+      { to: "/app/producao/hora-extras", label: "Hora Extra", icon: Clock },
+    ],
+  },
 ];
 
 export function AppSidebar() {
@@ -239,7 +253,10 @@ export function AppSidebar() {
   const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to));
   const visibleAdministrativo = ADMINISTRATIVO_ITEMS.filter((i) => hasMenu(i.to));
   const visibleAlmoxarifado = ALMOXARIFADO_ITEMS.filter((i) => hasMenu(i.to));
-  const visibleManutencao = MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to));
+  const visibleManutencaoGroups = MANUTENCAO_GROUPS
+    .map((g) => ({ ...g, items: g.items.filter((i) => hasMenu(i.to)) }))
+    .filter((g) => g.items.length > 0);
+  const visibleManutencaoAll = visibleManutencaoGroups.flatMap((g) => g.items);
 
   const sesmtAllItems = visibleSesmtGroups.flatMap((g) => g.items).concat(visibleDDSSubmenu);
   const sesmtOpen = anyActive(sesmtAllItems);
@@ -248,7 +265,7 @@ export function AppSidebar() {
   const comprasOpen = anyActive(visibleCompras);
   const administrativoOpen = anyActive(visibleAdministrativo);
   const almoxarifadoOpen = anyActive(visibleAlmoxarifado);
-  const manutencaoOpen = anyActive(visibleManutencao);
+  const manutencaoOpen = anyActive(visibleManutencaoAll);
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
@@ -532,7 +549,7 @@ export function AppSidebar() {
         )}
 
         {/* MANUTENÇÃO */}
-        {canManutencao && visibleManutencao.length > 0 && (
+        {canManutencao && visibleManutencaoGroups.length > 0 && (
           <Collapsible defaultOpen={manutencaoOpen} className="group/manutencao">
             <SidebarGroup>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
@@ -546,17 +563,38 @@ export function AppSidebar() {
               <Body>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {visibleManutencao.map((s) => {
-                      const Icon = s.icon ?? Wrench;
+                    {visibleManutencaoGroups.map((g) => {
+                      const GIcon = g.icon ?? Wrench;
+                      const groupOpen = anyActive(g.items);
                       return (
-                        <SidebarMenuItem key={s.to}>
-                          <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={`Manutenção · ${s.label}`}>
-                            <Link to={s.to}>
-                              <Icon />
-                              <span>{s.label}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
+                        <Collapsible key={g.key} defaultOpen={groupOpen} className={`group/man-${g.key}`}>
+                          <SidebarMenuItem>
+                            <CollapsibleTrigger asChild>
+                              <SidebarMenuButton tooltip={`Manutenção · ${g.label}`}>
+                                <GIcon />
+                                <span>{g.label}</span>
+                                <ChevronRight className={`ml-auto h-4 w-4 transition-transform group-data-[state=open]/man-${g.key}:rotate-90`} />
+                              </SidebarMenuButton>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <SidebarMenu className="ml-4 border-l border-sidebar-border pl-2">
+                                {g.items.map((s) => {
+                                  const SIcon = s.icon ?? Wrench;
+                                  return (
+                                    <SidebarMenuItem key={s.to}>
+                                      <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={`${g.label} · ${s.label}`}>
+                                        <Link to={s.to}>
+                                          <SIcon />
+                                          <span>{s.label}</span>
+                                        </Link>
+                                      </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                  );
+                                })}
+                              </SidebarMenu>
+                            </CollapsibleContent>
+                          </SidebarMenuItem>
+                        </Collapsible>
                       );
                     })}
                   </SidebarMenu>
