@@ -49,39 +49,9 @@ export const pegarRcParaCotar = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { token: string }) => ({ token: tokenSchema.parse(input.token) }))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { supabase, userId } = context;
-
-    const { data: rc, error: e1 } = await supabaseAdmin
-      .from("purchase_requisitions")
-      .select("id, status, pego_por_compras_nome")
-      .eq("status_token", data.token)
-      .maybeSingle();
-    if (e1) throw new Error(e1.message);
-    if (!rc) throw new Error("Requisição não encontrada");
-    if ((rc.status as string) === "EM_COTACAO") {
-      throw new Error(`Já está sendo cotada por ${rc.pego_por_compras_nome ?? "outro comprador"}.`);
-    }
-    if (rc.status !== "PENDENTE") {
-      throw new Error("Esta RC já saiu da fila.");
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("id", userId)
-      .maybeSingle();
-    const nome = profile?.full_name ?? "Compras";
-
-    const { error } = await supabaseAdmin
-      .from("purchase_requisitions")
-      .update({
-        status: "EM_COTACAO",
-        pego_por_compras_id: userId,
-        pego_por_compras_nome: nome,
-        pego_em: new Date().toISOString(),
-      } as any)
-      .eq("id", rc.id);
+    // Sprint 1: RPC atômica (FOR UPDATE) — evita dois compradores pegarem a mesma RC.
+    const { supabase } = context;
+    const { error } = await supabase.rpc("pegar_rc_para_cotar" as any, { _token: data.token } as any);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
