@@ -219,10 +219,16 @@ export function HoraExtraSabadoDialog({
   const empsDisponiveis = useMemo(() => {
     const ids = new Set(funcs.filter((f) => f.employee_id).map((f) => f.employee_id));
     const s = busca.trim().toLowerCase();
+    const setorAlvo = setorFixo ? setorFixo.trim().toLowerCase() : null;
     return (employees ?? [])
       .filter((e: any) => !ids.has(e.id))
+      .filter((e: any) => {
+        if (!setorAlvo) return true;
+        const setores = String(e.setor ?? "").toLowerCase();
+        return setores.split(",").map((x) => x.trim()).some((x) => x === setorAlvo);
+      })
       .filter((e: any) => !s || e.nome.toLowerCase().includes(s));
-  }, [employees, funcs, busca]);
+  }, [employees, funcs, busca, setorFixo]);
 
   function addEmp(e: any) {
     setFuncs((prev) => [
