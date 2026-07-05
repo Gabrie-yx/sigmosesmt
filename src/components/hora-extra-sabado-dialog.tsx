@@ -352,6 +352,35 @@ export function HoraExtraSabadoDialog({
         </DialogHeader>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+          <div className="space-y-1">
+            <Label>Tipo de dia</Label>
+            <Select
+              value={tipoDia}
+              onValueChange={(v: "SABADO" | "DIA_UTIL") => {
+                setTipoDia(v);
+                if (v === "SABADO") {
+                  setHoraIni("07:30"); setHoraFim("15:00");
+                  // próximo sábado
+                  const d = new Date();
+                  const diff = (6 - d.getDay() + 7) % 7 || 7;
+                  d.setDate(d.getDate() + diff);
+                  setData(d.toISOString().slice(0, 10));
+                } else {
+                  setHoraIni("17:00"); setHoraFim("20:00");
+                  // próximo dia útil (seg–sex)
+                  const d = new Date();
+                  do { d.setDate(d.getDate() + 1); } while (d.getDay() === 0 || d.getDay() === 6);
+                  setData(d.toISOString().slice(0, 10));
+                }
+              }}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="SABADO">Sábado (07:30–15:00)</SelectItem>
+                <SelectItem value="DIA_UTIL">Dia útil (a partir das 17:00)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-1"><Label>Data</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
           <div className="space-y-1"><Label>Turno</Label><Input value={turno} onChange={(e) => setTurno(e.target.value)} placeholder="1º" /></div>
           <div className="space-y-1"><Label>Horário início</Label><Input value={horaIni} onChange={(e) => setHoraIni(e.target.value)} placeholder="07:30" /></div>
