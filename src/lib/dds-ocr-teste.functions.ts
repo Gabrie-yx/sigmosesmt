@@ -117,7 +117,8 @@ Exatamente ${rows} objetos em "linhas", na ordem de cima para baixo. diasMarcado
           { role: "user", content: contentBlocks },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.1,
+        // gpt-5 e afins só aceitam temperature default (1). Só mandamos 0.1 pros modelos que suportam.
+        ...(modelId.startsWith("openai/") ? {} : { temperature: 0.1 }),
       }),
     });
 
