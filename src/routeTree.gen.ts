@@ -90,6 +90,7 @@ import { Route as AppComprasFornecedoresRouteImport } from './routes/app.compras
 import { Route as AppComprasDashboardRouteImport } from './routes/app.compras.dashboard'
 import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/app.almoxarifado.requisicao-compras'
 import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
+import { Route as AppAdministrativoHoraExtraRecebidaRouteImport } from './routes/app.administrativo.hora-extra-recebida'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
 import { Route as AppModuloModuloHoraExtraRouteImport } from './routes/app.modulo.$modulo.hora-extra'
@@ -515,6 +516,12 @@ const AppAdministrativoRequisicoesRecebidasRoute =
     path: '/requisicoes-recebidas',
     getParentRoute: () => AppAdministrativoRoute,
   } as any)
+const AppAdministrativoHoraExtraRecebidaRoute =
+  AppAdministrativoHoraExtraRecebidaRouteImport.update({
+    id: '/hora-extra-recebida',
+    path: '/hora-extra-recebida',
+    getParentRoute: () => AppAdministrativoRoute,
+  } as any)
 const AppSesmtEquipamentosMoveisArquivosMensaisRoute =
   AppSesmtEquipamentosMoveisArquivosMensaisRouteImport.update({
     id: '/sesmt/equipamentos-moveis_/arquivos-mensais',
@@ -590,6 +597,7 @@ export interface FileRoutesByFullPath {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
+  '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
@@ -676,6 +684,7 @@ export interface FileRoutesByTo {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app': typeof AppIndexRoute
+  '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
@@ -766,6 +775,7 @@ export interface FileRoutesById {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
+  '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
@@ -857,6 +867,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app/'
+    | '/app/administrativo/hora-extra-recebida'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
     | '/app/compras/dashboard'
@@ -943,6 +954,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app'
+    | '/app/administrativo/hora-extra-recebida'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
     | '/app/compras/dashboard'
@@ -1032,6 +1044,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app/'
+    | '/app/administrativo/hora-extra-recebida'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
     | '/app/compras/dashboard'
@@ -1665,6 +1678,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdministrativoRequisicoesRecebidasRouteImport
       parentRoute: typeof AppAdministrativoRoute
     }
+    '/app/administrativo/hora-extra-recebida': {
+      id: '/app/administrativo/hora-extra-recebida'
+      path: '/hora-extra-recebida'
+      fullPath: '/app/administrativo/hora-extra-recebida'
+      preLoaderRoute: typeof AppAdministrativoHoraExtraRecebidaRouteImport
+      parentRoute: typeof AppAdministrativoRoute
+    }
     '/app/sesmt/equipamentos-moveis_/arquivos-mensais': {
       id: '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
       path: '/sesmt/equipamentos-moveis/arquivos-mensais'
@@ -1711,10 +1731,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppAdministrativoRouteChildren {
+  AppAdministrativoHoraExtraRecebidaRoute: typeof AppAdministrativoHoraExtraRecebidaRoute
   AppAdministrativoRequisicoesRecebidasRoute: typeof AppAdministrativoRequisicoesRecebidasRoute
 }
 
 const AppAdministrativoRouteChildren: AppAdministrativoRouteChildren = {
+  AppAdministrativoHoraExtraRecebidaRoute:
+    AppAdministrativoHoraExtraRecebidaRoute,
   AppAdministrativoRequisicoesRecebidasRoute:
     AppAdministrativoRequisicoesRecebidasRoute,
 }
