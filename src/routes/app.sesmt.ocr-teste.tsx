@@ -237,15 +237,24 @@ function OCRTestePage() {
                   <tr key={l.linha} className={`border-t ${l.assinou ? "" : "bg-amber-50/60"}`}>
                     <td className="p-2 font-mono text-xs">{String(l.linha).padStart(2, "0")}</td>
                     <td className="p-2">
-                      {l.assinou ? (
-                        <span className="font-semibold text-slate-800">
-                          {l.nome ?? <em className="text-slate-500 font-normal">assinatura ilegível</em>}
-                        </span>
-                      ) : (
-                        <span className="text-amber-700 italic text-xs font-semibold">
-                          {l.nome ?? "sem assinatura"} · marcou sem assinar
-                        </span>
-                      )}
+                      <div className="flex flex-col">
+                        {l.assinou ? (
+                          <span className="font-semibold text-slate-800">
+                            {l.nomeCorrigido ?? l.nome ?? (
+                              <em className="text-slate-500 font-normal">assinatura ilegível</em>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-amber-700 italic text-xs font-semibold">
+                            {l.nomeCorrigido ?? l.nome ?? "sem assinatura"} · marcou sem assinar
+                          </span>
+                        )}
+                        {l.nomeCorrigido && l.nome && l.nomeCorrigido !== l.nome && (
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            OCR: "{l.nome}" · match {Math.round((l.matchScore ?? 0) * 100)}%
+                          </span>
+                        )}
+                      </div>
                     </td>
                     {DIAS.map((d) => {
                       const on = l.diasMarcados.includes(d);
