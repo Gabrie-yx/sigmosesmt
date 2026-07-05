@@ -85,8 +85,8 @@ function OCRTestePage() {
     }
   }
 
-  const totalMarcacoes = useMemo(
-    () => linhas.reduce((s, l) => s + l.diasMarcados.length, 0),
+  const totalAssinaturas = useMemo(
+    () => linhas.filter((l) => l.assinou).length,
     [linhas],
   );
 
@@ -198,7 +198,7 @@ function OCRTestePage() {
               <div className="text-3xl font-black text-emerald-900 leading-tight">
                 {totalParticipantes}
                 <span className="text-sm font-bold text-emerald-700 ml-2">
-                  · {totalMarcacoes} presenças marcadas
+                  · {totalAssinaturas} assinatura{totalAssinaturas === 1 ? "" : "s"} encontrada{totalAssinaturas === 1 ? "" : "s"}
                 </span>
               </div>
             </div>
