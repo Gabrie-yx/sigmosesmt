@@ -61,10 +61,10 @@ MARCADO (true) quando o interior tem: "X" desenhado, "✓", ou o quadrado pintad
 NÃO MARCADO quando: interior branco/limpo; assinatura passa pela faixa da esquerda mas NÃO invade o interior do quadradinho; sombra, ruído, ponto isolado, borda impressa mais grossa.
 Se hesitar → NÃO MARCADO.
 
-Importante: a assinatura na faixa esquerda e a marca no quadradinho são INDEPENDENTES.
-- Pode haver assinatura sem quadrado marcado (funcionário participou mas não marcou o quadrado).
-- Pode haver quadrado marcado sem assinatura naquele dia específico (mas nesse caso costuma haver assinatura em OUTRO dia da mesma linha).
-- Se a linha inteira não tem NENHUMA assinatura (assinou=false), então diasMarcados DEVE ser [].
+Importante: a assinatura na faixa esquerda e a marca no quadradinho são TOTALMENTE INDEPENDENTES.
+- Pode haver assinatura sem nenhum quadrado marcado (funcionário assinou mas esqueceu de marcar).
+- Pode haver quadrados marcados SEM NENHUMA assinatura na linha inteira (funcionário só marcou os quadradinhos, não assinou). Isso é VÁLIDO — reporte diasMarcados normalmente e assinou=false. NÃO zere diasMarcados.
+- Só zere diasMarcados quando a linha inteira está impressa/em branco (sem assinatura E sem marca em nenhum quadradinho).
 
 ═══ REGRA 3 — "nome" ═══
 Transcreva o nome IMPRESSO da coluna "NOME DO FUNCIONÁRIO" (não a assinatura manuscrita). Se a linha está totalmente vazia (sem nome impresso e sem assinatura), nome=null.
@@ -72,11 +72,11 @@ Transcreva o nome IMPRESSO da coluna "NOME DO FUNCIONÁRIO" (não a assinatura m
 ═══ PROCEDIMENTO (siga na ordem, uma linha por vez) ═══
 Para linha i = 1..${rows}:
   1. Leia o nome impresso na coluna NOME. Guarde.
-  2. Percorra as 6 células de dia. Em cada uma, verifique separadamente:
-       - há traço a caneta na faixa esquerda? (contribui para assinou=true)
-       - o quadradinho da direita está marcado por dentro? (contribui para diasMarcados)
-  3. assinou = (existe traço a caneta em qualquer faixa OU rabisco no campo nome).
-  4. Se assinou=false → diasMarcados=[].
+  2. Percorra as 6 células de dia. Em cada uma, verifique SEPARADAMENTE:
+       - há traço a caneta na faixa esquerda (assinatura do dia)? → contribui para assinou=true
+       - o quadradinho da direita está marcado por dentro? → entra em diasMarcados
+  3. assinou = existe traço a caneta em QUALQUER faixa de assinatura OU rabisco no campo nome.
+  4. diasMarcados = lista dos dias cujo quadradinho está marcado — INDEPENDENTE de assinou.
   5. Emita o objeto da linha.
 
 ═══ SAÍDA (JSON puro, sem markdown, sem comentários) ═══
@@ -153,15 +153,15 @@ Exatamente ${rows} objetos em "linhas", na ordem de cima para baixo. diasMarcado
             .filter((d: string) => (DIAS as readonly string[]).includes(d))
         : [];
       const nomeVal = typeof item?.nome === "string" && item.nome.trim() ? item.nome.trim() : null;
-      // Confia no julgamento do modelo sobre "assinou"; só considera true se ele afirmou.
-      // Nome legível reforça, mas dias marcados NÃO implicam assinatura (defesa contra falso positivo).
-      const assinou = !!item?.assinou || !!nomeVal;
+      // "assinou" vem do modelo. Dias marcados NÃO implicam assinatura — é comum
+      // um funcionário marcar quadradinhos sem assinar (e vice-versa). Mantemos
+      // as duas dimensões independentes; o consumidor decide como contar.
+      const assinou = !!item?.assinou;
       porLinha.set(n, {
         linha: n,
         assinou,
         nome: nomeVal,
-        // Se não assinou, zera dias (linha vazia não pode ter marcação).
-        diasMarcados: assinou ? Array.from(new Set(dias)) : [],
+        diasMarcados: Array.from(new Set(dias)),
       });
     }
 
@@ -171,7 +171,11 @@ Exatamente ${rows} objetos em "linhas", na ordem de cima para baixo. diasMarcado
         porLinha.get(i) ?? { linha: i, assinou: false, nome: null, diasMarcados: [] },
       );
     }
-    const totalParticipantes = linhas.filter((l) => l.assinou).length;
+    // Participante = quem interagiu com a linha (assinou OU marcou algum dia).
+    // Linha totalmente vazia não conta.
+    const totalParticipantes = linhas.filter(
+      (l) => l.assinou || l.diasMarcados.length > 0,
+    ).length;
 
     return { linhas, totalParticipantes, modelUsed: modelId };
   });
