@@ -535,76 +535,40 @@ export function AppSidebar() {
           </Collapsible>
         )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2 h-9 text-sm font-bold text-slate-700">
-            <Wrench className="h-5 w-5 text-red-700" /> Manutenção
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {MANUTENCAO_ITEMS.map((s) => {
-                const Icon = s.icon ?? Wrench;
-                return (
-                  <SidebarMenuItem key={s.to}>
-                    <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
-                      <Link to={s.to}>
-                        <Icon />
-                        <span>{s.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* ELÉTRICA */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2 h-9 text-sm font-bold text-slate-700">
-            <Zap className="h-5 w-5 text-red-700" /> Elétrica
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {ELETRICA_ITEMS.map((s) => {
-                const Icon = s.icon ?? Zap;
-                return (
-                  <SidebarMenuItem key={s.to}>
-                    <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
-                      <Link to={s.to}>
-                        <Icon />
-                        <span>{s.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* MECÂNICA */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2 h-9 text-sm font-bold text-slate-700">
-            <Hammer className="h-5 w-5 text-red-700" /> Mecânica
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {MECANICA_ITEMS.map((s) => {
-                const Icon = s.icon ?? Hammer;
-                return (
-                  <SidebarMenuItem key={s.to}>
-                    <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
-                      <Link to={s.to}>
-                        <Icon />
-                        <span>{s.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* MANUTENÇÃO (agrupa Elétrica + Mecânica) */}
+        {visibleManutencao.length > 0 && (
+          <Collapsible defaultOpen={manutencaoOpen} className="group/manutencao">
+            <SidebarGroup>
+              <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
+                <CollapsibleTrigger className="flex w-full items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Wrench className="h-5 w-5 text-red-700" /> Manutenção
+                  </span>
+                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/manutencao:rotate-90" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <Body>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {visibleManutencao.map((s) => {
+                      const Icon = s.icon ?? Wrench;
+                      return (
+                        <SidebarMenuItem key={s.to}>
+                          <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
+                            <Link to={s.to}>
+                              <Icon />
+                              <span>{s.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </Body>
+            </SidebarGroup>
+          </Collapsible>
+        )}
 
         {/* PORTARIA */}
         <SidebarGroup>
