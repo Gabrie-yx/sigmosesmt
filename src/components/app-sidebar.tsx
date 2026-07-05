@@ -181,6 +181,7 @@ const ADMINISTRATIVO_ITEMS: LeafItem[] = [
 
 const ALMOXARIFADO_ITEMS: LeafItem[] = [
   { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
+  { to: "/app/modulo/almoxarifado/hora-extra", label: "Hora Extra", icon: CalendarCheck2 },
 ];
 
 const MANUTENCAO_ITEMS: LeafItem[] = [
