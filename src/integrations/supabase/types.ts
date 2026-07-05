@@ -4370,6 +4370,7 @@ export type Database = {
           lider_id: string | null
           marcadores_edit_ate: string | null
           marcadores_expira_em: string | null
+          modulo_origem: string | null
           motivo_indeferimento: string | null
           observacao: string | null
           setor: string | null
@@ -4401,6 +4402,7 @@ export type Database = {
           lider_id?: string | null
           marcadores_edit_ate?: string | null
           marcadores_expira_em?: string | null
+          modulo_origem?: string | null
           motivo_indeferimento?: string | null
           observacao?: string | null
           setor?: string | null
@@ -4432,6 +4434,7 @@ export type Database = {
           lider_id?: string | null
           marcadores_edit_ate?: string | null
           marcadores_expira_em?: string | null
+          modulo_origem?: string | null
           motivo_indeferimento?: string | null
           observacao?: string | null
           setor?: string | null
@@ -8576,40 +8579,19 @@ export type Database = {
         Args: { _motivo: string; _os_id: string }
         Returns: undefined
       }
-      criar_convocacao_extra_lider:
-        | {
-            Args: {
-              _data: string
-              _horario_fim: string
-              _horario_inicio: string
-              _justificativa: string
-              _tipo: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              _data: string
-              _employee_ids?: string[]
-              _horario_fim: string
-              _horario_inicio: string
-              _justificativa: string
-              _tipo: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              _data: string
-              _employee_ids?: string[]
-              _horario_fim: string
-              _horario_inicio: string
-              _justificativa: string
-              _tipo: string
-              _turno?: string
-            }
-            Returns: string
-          }
+      criar_convocacao_extra_lider: {
+        Args: {
+          _data: string
+          _employee_ids?: string[]
+          _horario_fim: string
+          _horario_inicio: string
+          _justificativa: string
+          _modulo_origem?: string
+          _tipo: string
+          _turno?: string
+        }
+        Returns: string
+      }
       current_aal: { Args: never; Returns: string }
       decidir_convocacao_extra: {
         Args: { _aprovar: boolean; _hora_extra_id: string; _motivo?: string }
@@ -8800,6 +8782,10 @@ export type Database = {
         }[]
       }
       mfa_ok: { Args: never; Returns: boolean }
+      normalizar_modulo_hora_extra: {
+        Args: { _raw: string; _setor?: string }
+        Returns: string
+      }
       oss_marcar_vencidas: { Args: never; Returns: number }
       peek_proximo_numero_apr: { Args: never; Returns: string }
       pegar_rc_para_cotar: { Args: { _token: string }; Returns: undefined }
@@ -8826,6 +8812,10 @@ export type Database = {
       }
       recalcular_valor_cotacao: {
         Args: { _cotacao_id: string }
+        Returns: undefined
+      }
+      reenviar_hora_extra_modulo: {
+        Args: { _hora_extra_id: string }
         Returns: undefined
       }
       registrar_desligamento_funcionario: {
@@ -8876,6 +8866,7 @@ export type Database = {
         }[]
       }
       revogar_dispensa_rc: { Args: { _rc_id: string }; Returns: undefined }
+      rotulo_modulo_hora_extra: { Args: { _modulo: string }; Returns: string }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       snapshot_estoque_epi_monthly: { Args: never; Returns: undefined }

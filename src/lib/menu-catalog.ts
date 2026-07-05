@@ -34,7 +34,6 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/incidentes", label: "Incidentes / Investigação", module: "sesmt" },
   { key: "/app/acoes", label: "Plano de Ações (5W2H)", module: "sesmt" },
   { key: "/app/employees", label: "Funcionários", module: "sesmt" },
-  { key: "/app/extra-sabado-aprovacoes", label: "Aprovações — Extra (Sábado/Dia Útil)", module: "sesmt" },
   { key: "/app/cascos", label: "Cascos / Embarcações", module: "sesmt" },
   { key: "/app/companies", label: "Empresas / Contratadas", module: "sesmt" },
   { key: "/app/roles", label: "Cargos & Matriz de Riscos", module: "sesmt" },
@@ -65,6 +64,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   // ----- ADMINISTRATIVO -----
   { key: "/app/administrativo/requisicoes-recebidas", label: "Requisições Recebidas", module: "administrativo" },
   { key: "/app/administrativo/hora-extra-recebida", label: "H. Extra Recebida", module: "administrativo" },
+  { key: "/app/extra-sabado-aprovacoes", label: "Aprovações — Extra (Sábado/Dia Útil)", module: "administrativo" },
 
   // ----- ALMOXARIFADO -----
   { key: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", module: "almoxarifado" },

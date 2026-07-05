@@ -35,6 +35,7 @@ export function HoraExtraSabadoDialog({
   editId,
   setorFixo,
   empresaFixaNome,
+  moduloOrigem,
   moduloLabel,
   observacaoLabel,
   observacaoPlaceholder,
@@ -47,6 +48,8 @@ export function HoraExtraSabadoDialog({
   setorFixo?: string;
   /** Trava a Empresa listando apenas a companhia com este nome (ex.: "DMN"). */
   empresaFixaNome?: string;
+  /** Módulo de origem da ficha, usado para devolver indeferidas ao módulo correto. */
+  moduloOrigem?: string;
   /** Rótulo do módulo (exibido no título quando escopado). */
   moduloLabel?: string;
   /** Rótulo do campo Observação. */
@@ -162,6 +165,7 @@ export function HoraExtraSabadoDialog({
       setTurno(rec.turno ?? "1º");
       setHoraIni(rec.horario_inicio ?? "07:30");
       setHoraFim(rec.horario_fim ?? "15:00");
+      setTipoDia(rec.tipo_convocacao === "DIAS_UTEIS" ? "DIA_UTIL" : "SABADO");
       setSetoresSel(rec.setor ? String(rec.setor).split(",").map((s: string) => s.trim()).filter(Boolean) : []);
       setTipoEfetivo((rec.tipo_efetivo as any) ?? "DMN");
       setCompanyId(rec.company_id ?? "");
@@ -214,7 +218,7 @@ export function HoraExtraSabadoDialog({
 
   function resetForm() {
     setData(proximoSabado);
-    setTurno("1º"); setHoraIni("07:30"); setHoraFim("15:00");
+    setTurno("1º"); setHoraIni("07:30"); setHoraFim("15:00"); setTipoDia("SABADO");
     setSetoresSel([]); setSetorNovo(""); setTipoEfetivo("DMN");
     setCompanyId(""); setObservacao(""); setBusca(""); setFuncs([]);
     setNovoExternoNome(""); setNovoExternoFuncao("");
@@ -295,10 +299,13 @@ export function HoraExtraSabadoDialog({
         horario_inicio: horaIni || null,
         horario_fim: horaFim || null,
         setor: setorFinal,
+        modulo_origem: moduloOrigem ?? null,
         centro_custo: null,
         tipo_efetivo: tipoEfetivo,
         company_id: companyId || null,
         observacao: observacao || null,
+        justificativa: observacao || null,
+        tipo_convocacao: tipoDia === "SABADO" ? "SABADO" : "DIAS_UTEIS",
       };
       let id: string = editId ?? "";
       if (editId) {
@@ -328,6 +335,7 @@ export function HoraExtraSabadoDialog({
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["hora-extra-sabado"] });
+      if (moduloOrigem) qc.invalidateQueries({ queryKey: ["hora-extra-modulo", moduloOrigem] });
       toast.success(editId ? "Hora extra atualizada" : "Hora extra registrada");
       if (!editId) deleteDraft(DRAFT_KEY);
       resetForm();
