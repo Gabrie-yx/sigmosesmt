@@ -1,16 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
   CalendarCheck2, Search, Filter, Building2, Wrench, Cog, Factory, Boxes,
-  ShieldPlus, Package, ChevronDown, ChevronRight, Users, Zap,
+  ShieldPlus, Package, ChevronDown, ChevronRight, Users, Zap, CheckCircle2, XCircle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/app/administrativo/hora-extra-recebida")({
