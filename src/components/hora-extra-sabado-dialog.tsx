@@ -38,6 +38,7 @@ export function HoraExtraSabadoDialog({
   moduloLabel,
   observacaoLabel,
   observacaoPlaceholder,
+  funcionariosPermitidos,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -52,6 +53,8 @@ export function HoraExtraSabadoDialog({
   observacaoLabel?: string;
   /** Placeholder do campo Observação. */
   observacaoPlaceholder?: string;
+  /** Restringe a lista de funcionários disponíveis a estes nomes (match por substring, case-insensitive). */
+  funcionariosPermitidos?: string[];
 }) {
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -73,6 +76,7 @@ export function HoraExtraSabadoDialog({
   const [turno, setTurno] = useState("1º");
   const [horaIni, setHoraIni] = useState("07:30");
   const [horaFim, setHoraFim] = useState("15:00");
+  const [tipoDia, setTipoDia] = useState<"SABADO" | "DIA_UTIL">("SABADO");
   const [setoresSel, setSetoresSel] = useState<string[]>([]);
   const [setorNovo, setSetorNovo] = useState("");
   const [tipoEfetivo, setTipoEfetivo] = useState<"DMN" | "MEI" | "TERCEIRIZADO">("DMN");
@@ -108,7 +112,7 @@ export function HoraExtraSabadoDialog({
     const list = (companies ?? []) as { id: string; name: string }[];
     if (!empresaFixaNome) return list;
     const alvo = empresaFixaNome.trim().toLowerCase();
-    return list.filter((c) => String(c.name ?? "").trim().toLowerCase() === alvo);
+    return list.filter((c) => String(c.name ?? "").trim().toLowerCase().includes(alvo));
   }, [companies, empresaFixaNome]);
 
   // Ao abrir escopado, trava setor + empresa automaticamente.
@@ -220,15 +224,20 @@ export function HoraExtraSabadoDialog({
     const ids = new Set(funcs.filter((f) => f.employee_id).map((f) => f.employee_id));
     const s = busca.trim().toLowerCase();
     const setorAlvo = setorFixo ? setorFixo.trim().toLowerCase() : null;
+    const permitidos = (funcionariosPermitidos ?? []).map((n) => n.trim().toLowerCase()).filter(Boolean);
     return (employees ?? [])
       .filter((e: any) => !ids.has(e.id))
       .filter((e: any) => {
+        if (permitidos.length > 0) {
+          const nome = String(e.nome ?? "").toLowerCase();
+          return permitidos.some((p) => nome.includes(p));
+        }
         if (!setorAlvo) return true;
         const setores = String(e.setor ?? "").toLowerCase();
         return setores.split(",").map((x) => x.trim()).some((x) => x === setorAlvo);
       })
       .filter((e: any) => !s || e.nome.toLowerCase().includes(s));
-  }, [employees, funcs, busca, setorFixo]);
+  }, [employees, funcs, busca, setorFixo, funcionariosPermitidos]);
 
   function addEmp(e: any) {
     setFuncs((prev) => [
