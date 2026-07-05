@@ -405,7 +405,7 @@ export function HoraExtraSabadoDialog({
               </PopoverContent>
             </Popover>
             )}
-            {setoresSel.length > 0 && (
+            {!setorFixo && setoresSel.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {setoresSel.map((s) => (
                   <span key={s} className="text-[10px] font-medium bg-white/[0.06] text-current/80 ring-1 ring-white/10 px-1.5 py-0.5 rounded inline-flex items-center gap-1">
