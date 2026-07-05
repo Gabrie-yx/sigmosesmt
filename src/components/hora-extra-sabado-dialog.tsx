@@ -33,10 +33,25 @@ export function HoraExtraSabadoDialog({
   open,
   onOpenChange,
   editId,
+  setorFixo,
+  empresaFixaNome,
+  moduloLabel,
+  observacaoLabel,
+  observacaoPlaceholder,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   editId?: string | null;
+  /** Trava o campo Setor com este valor e filtra funcionários por este setor. */
+  setorFixo?: string;
+  /** Trava a Empresa listando apenas a companhia com este nome (ex.: "DMN"). */
+  empresaFixaNome?: string;
+  /** Rótulo do módulo (exibido no título quando escopado). */
+  moduloLabel?: string;
+  /** Rótulo do campo Observação. */
+  observacaoLabel?: string;
+  /** Placeholder do campo Observação. */
+  observacaoPlaceholder?: string;
 }) {
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -88,6 +103,24 @@ export function HoraExtraSabadoDialog({
     queryKey: ["companies"],
     queryFn: async () => (await supabase.from("companies").select("id,name").order("name")).data ?? [],
   });
+  // Empresas exibidas no dropdown — quando escopado, só a empresa fixa.
+  const companiesFiltradas = useMemo(() => {
+    const list = (companies ?? []) as { id: string; name: string }[];
+    if (!empresaFixaNome) return list;
+    const alvo = empresaFixaNome.trim().toLowerCase();
+    return list.filter((c) => String(c.name ?? "").trim().toLowerCase() === alvo);
+  }, [companies, empresaFixaNome]);
+
+  // Ao abrir escopado, trava setor + empresa automaticamente.
+  useEffect(() => {
+    if (!open || editId) return;
+    if (setorFixo) setSetoresSel([setorFixo]);
+    if (empresaFixaNome && companiesFiltradas.length > 0) {
+      setCompanyId(String(companiesFiltradas[0].id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, setorFixo, empresaFixaNome, companiesFiltradas.length]);
+
   const { data: setores } = useQuery({
     queryKey: ["he-setores"],
     queryFn: async () => {
@@ -186,10 +219,16 @@ export function HoraExtraSabadoDialog({
   const empsDisponiveis = useMemo(() => {
     const ids = new Set(funcs.filter((f) => f.employee_id).map((f) => f.employee_id));
     const s = busca.trim().toLowerCase();
+    const setorAlvo = setorFixo ? setorFixo.trim().toLowerCase() : null;
     return (employees ?? [])
       .filter((e: any) => !ids.has(e.id))
+      .filter((e: any) => {
+        if (!setorAlvo) return true;
+        const setores = String(e.setor ?? "").toLowerCase();
+        return setores.split(",").map((x) => x.trim()).some((x) => x === setorAlvo);
+      })
       .filter((e: any) => !s || e.nome.toLowerCase().includes(s));
-  }, [employees, funcs, busca]);
+  }, [employees, funcs, busca, setorFixo]);
 
   function addEmp(e: any) {
     setFuncs((prev) => [
@@ -294,6 +333,11 @@ export function HoraExtraSabadoDialog({
         <DialogHeader>
           <DialogTitle className="text-base flex items-center gap-2">
             {editId ? "Editar" : "Nova"} ficha de hora extra (sábado)
+            {moduloLabel && !editId && (
+              <span className="text-xs font-semibold text-red-300 bg-red-500/10 ring-1 ring-red-400/30 rounded px-1.5 py-0.5">
+                {moduloLabel}
+              </span>
+            )}
             <HelpHint topic="hora-extra-sabado" />
           </DialogTitle>
         </DialogHeader>
@@ -306,6 +350,11 @@ export function HoraExtraSabadoDialog({
 
           <div className="space-y-1">
             <Label>Setor</Label>
+            {setorFixo ? (
+              <div className="flex h-9 w-full items-center rounded-md border border-input bg-muted/40 px-3 text-sm font-medium">
+                {setorFixo}
+              </div>
+            ) : (
             <Popover>
               <PopoverTrigger asChild>
                 <button
@@ -355,7 +404,8 @@ export function HoraExtraSabadoDialog({
                 </div>
               </PopoverContent>
             </Popover>
-            {setoresSel.length > 0 && (
+            )}
+            {!setorFixo && setoresSel.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {setoresSel.map((s) => (
                   <span key={s} className="text-[10px] font-medium bg-white/[0.06] text-current/80 ring-1 ring-white/10 px-1.5 py-0.5 rounded inline-flex items-center gap-1">
@@ -381,11 +431,11 @@ export function HoraExtraSabadoDialog({
           </div>
           <div className="space-y-1">
             <Label>Empresa</Label>
-            <Select value={companyId || "_all"} onValueChange={(v) => setCompanyId(v === "_all" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+            <Select value={companyId || "_all"} onValueChange={(v) => setCompanyId(v === "_all" ? "" : v)} disabled={!!empresaFixaNome}>
+              <SelectTrigger><SelectValue placeholder={empresaFixaNome ?? "Todas"} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="_all">Todas</SelectItem>
-                {(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                {!empresaFixaNome && <SelectItem value="_all">Todas</SelectItem>}
+                {companiesFiltradas.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -483,8 +533,13 @@ export function HoraExtraSabadoDialog({
         </div>
 
         <div className="mt-3 space-y-1">
-          <Label>Observação</Label>
-          <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={2} />
+          <Label>{observacaoLabel ?? "Observação"}</Label>
+          <Textarea
+            value={observacao}
+            onChange={(e) => setObservacao(e.target.value)}
+            rows={2}
+            placeholder={observacaoPlaceholder}
+          />
         </div>
 
         <div className="mt-4 flex justify-end gap-2">

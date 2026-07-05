@@ -54,11 +54,13 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/producao/expedicao", label: "Expedição", module: "producao" },
   { key: "/app/producao/fatores-consumo", label: "Fatores de Consumo", module: "producao" },
   { key: "/app/producao/requisicao-compras", label: "Requisição de Compras", module: "producao" },
+  { key: "/app/modulo/producao/hora-extra", label: "Hora Extra", module: "producao" },
 
   // ----- COMPRAS -----
   { key: "/app/compras/dashboard", label: "Dashboard de Compras", module: "compras" },
   { key: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", module: "compras" },
   { key: "/app/compras/fornecedores", label: "Fornecedores", module: "compras" },
+  { key: "/app/modulo/compras/hora-extra", label: "Hora Extra", module: "compras" },
 
   // ----- ADMINISTRATIVO -----
   { key: "/app/administrativo/requisicoes-recebidas", label: "Requisições Recebidas", module: "administrativo" },
@@ -67,15 +69,18 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", module: "almoxarifado" },
 
   // ----- MANUTENÇÃO -----
-  { key: "/extra-sabado", label: "Hora Extra", module: "manutencao" },
+  { key: "/app/modulo/manutencao/hora-extra", label: "Hora Extra", module: "manutencao" },
   { key: "/modulo/manutencao/requisicao-compras", label: "Requisição de Compras", module: "manutencao" },
 
   // ----- ELÉTRICA -----
-  { key: "/modulo/eletrica/hora-extra", label: "Hora Extra", module: "eletrica" },
+  { key: "/app/modulo/eletrica/hora-extra", label: "Hora Extra", module: "eletrica" },
   { key: "/modulo/eletrica/requisicao-compras", label: "Requisição de Compras", module: "eletrica" },
 
+  // ----- MECÂNICA -----
+  { key: "/app/modulo/mecanica/hora-extra", label: "Hora Extra", module: "mecanica" },
+
   // ----- PORTARIA -----
-  { key: "/modulo/portaria/hora-extra", label: "Hora Extra", module: "portaria" },
+  { key: "/app/modulo/portaria/hora-extra", label: "Hora Extra", module: "portaria" },
   { key: "/modulo/portaria/requisicao-compras", label: "Requisição de Compras", module: "portaria" },
 
   // ----- USUÁRIOS -----

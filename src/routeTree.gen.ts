@@ -92,6 +92,7 @@ import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/a
 import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
+import { Route as AppModuloModuloHoraExtraRouteImport } from './routes/app.modulo.$modulo.hora-extra'
 import { Route as AppEstoqueEpiFichasMensaisRouteImport } from './routes/app.estoque.epi.fichas-mensais'
 import { Route as AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.historico.$equipamentoId'
 import { Route as AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.checklist.$equipamentoId'
@@ -525,6 +526,12 @@ const AppSesmtCatalogosGasesRoute = AppSesmtCatalogosGasesRouteImport.update({
   path: '/sesmt/catalogos/gases',
   getParentRoute: () => AppRoute,
 } as any)
+const AppModuloModuloHoraExtraRoute =
+  AppModuloModuloHoraExtraRouteImport.update({
+    id: '/modulo/$modulo/hora-extra',
+    path: '/modulo/$modulo/hora-extra',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppEstoqueEpiFichasMensaisRoute =
   AppEstoqueEpiFichasMensaisRouteImport.update({
     id: '/fichas-mensais',
@@ -627,6 +634,7 @@ export interface FileRoutesByFullPath {
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
+  '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -712,6 +720,7 @@ export interface FileRoutesByTo {
   '/app/estoque': typeof AppEstoqueIndexRoute
   '/app/oss': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
+  '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -801,6 +810,7 @@ export interface FileRoutesById {
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
+  '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -891,6 +901,7 @@ export interface FileRouteTypes {
     | '/app/estoque/'
     | '/app/oss/'
     | '/app/estoque/epi/fichas-mensais'
+    | '/app/modulo/$modulo/hora-extra'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
@@ -976,6 +987,7 @@ export interface FileRouteTypes {
     | '/app/estoque'
     | '/app/oss'
     | '/app/estoque/epi/fichas-mensais'
+    | '/app/modulo/$modulo/hora-extra'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
@@ -1064,6 +1076,7 @@ export interface FileRouteTypes {
     | '/app/estoque/'
     | '/app/oss/'
     | '/app/estoque/epi/fichas-mensais'
+    | '/app/modulo/$modulo/hora-extra'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
@@ -1666,6 +1679,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtCatalogosGasesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/modulo/$modulo/hora-extra': {
+      id: '/app/modulo/$modulo/hora-extra'
+      path: '/modulo/$modulo/hora-extra'
+      fullPath: '/app/modulo/$modulo/hora-extra'
+      preLoaderRoute: typeof AppModuloModuloHoraExtraRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/estoque/epi/fichas-mensais': {
       id: '/app/estoque/epi/fichas-mensais'
       path: '/fichas-mensais'
@@ -1812,6 +1832,7 @@ interface AppRouteChildren {
   AppSesmtTerceirosRoute: typeof AppSesmtTerceirosRoute
   AppDdsIndexRoute: typeof AppDdsIndexRoute
   AppEstoqueIndexRoute: typeof AppEstoqueIndexRoute
+  AppModuloModuloHoraExtraRoute: typeof AppModuloModuloHoraExtraRoute
   AppSesmtCatalogosGasesRoute: typeof AppSesmtCatalogosGasesRoute
   AppSesmtEquipamentosMoveisArquivosMensaisRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -1881,6 +1902,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtTerceirosRoute: AppSesmtTerceirosRoute,
   AppDdsIndexRoute: AppDdsIndexRoute,
   AppEstoqueIndexRoute: AppEstoqueIndexRoute,
+  AppModuloModuloHoraExtraRoute: AppModuloModuloHoraExtraRoute,
   AppSesmtCatalogosGasesRoute: AppSesmtCatalogosGasesRoute,
   AppSesmtEquipamentosMoveisArquivosMensaisRoute:
     AppSesmtEquipamentosMoveisArquivosMensaisRoute,
