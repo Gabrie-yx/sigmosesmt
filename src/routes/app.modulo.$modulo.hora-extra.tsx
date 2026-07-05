@@ -15,7 +15,7 @@ type ModuloScope = {
 
 const MODULO_MAP: Record<string, ModuloScope> = {
   eletrica:   { slug: "eletrica",   moduloLabel: "Elétrica",   empresaFixaNome: "DMN", funcionariosPermitidos: ["Natanael", "Leonardo"] },
-  mecanica:   { slug: "mecanica",   moduloLabel: "Mecânica",   setor: "Mecânica",   empresaFixaNome: "DMN" },
+  mecanica:   { slug: "mecanica",   moduloLabel: "Mecânica",   empresaFixaNome: "LF SERVIÇOS" },
   producao:   { slug: "producao",   moduloLabel: "Produção",   setor: "Produção",   empresaFixaNome: "DMN" },
   compras:    { slug: "compras",    moduloLabel: "Compras",    setor: "Compras",    empresaFixaNome: "DMN" },
   manutencao: { slug: "manutencao", moduloLabel: "Manutenção", empresaFixaNome: "DMN", funcionariosPermitidos: ["Natanael", "Leonardo"] },
