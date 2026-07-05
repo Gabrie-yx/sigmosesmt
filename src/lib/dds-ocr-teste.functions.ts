@@ -134,11 +134,15 @@ Regras finais:
             .filter((d: string) => (DIAS as readonly string[]).includes(d))
         : [];
       const nomeVal = typeof item?.nome === "string" && item.nome.trim() ? item.nome.trim() : null;
+      // Confia no julgamento do modelo sobre "assinou"; só considera true se ele afirmou.
+      // Nome legível reforça, mas dias marcados NÃO implicam assinatura (defesa contra falso positivo).
+      const assinou = !!item?.assinou || !!nomeVal;
       porLinha.set(n, {
         linha: n,
-        assinou: !!item?.assinou || !!nomeVal || dias.length > 0,
+        assinou,
         nome: nomeVal,
-        diasMarcados: Array.from(new Set(dias)),
+        // Se não assinou, zera dias (linha vazia não pode ter marcação).
+        diasMarcados: assinou ? Array.from(new Set(dias)) : [],
       });
     }
 
