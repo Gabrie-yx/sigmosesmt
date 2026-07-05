@@ -165,12 +165,14 @@ const PRODUCAO_SUBMENU: LeafItem[] = [
   { to: "/app/producao/fatores-consumo", label: "Fatores de Consumo" },
   { to: "/app/producao/expedicao", label: "Expedição" },
   { to: "/app/producao/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
+  { to: "/app/modulo/producao/hora-extra", label: "Hora Extra", icon: CalendarCheck2 },
 ];
 
 const COMPRAS_ITEMS: LeafItem[] = [
   { to: "/app/compras/dashboard", label: "Dashboard", icon: BarChart3 },
   { to: "/app/compras/requisicoes-recebidas", label: "RC Recebidas", icon: ShoppingCart },
   { to: "/app/compras/fornecedores", label: "Fornecedores", icon: UsersIcon },
+  { to: "/app/modulo/compras/hora-extra", label: "Hora Extra", icon: CalendarCheck2 },
 ];
 
 const ADMINISTRATIVO_ITEMS: LeafItem[] = [
