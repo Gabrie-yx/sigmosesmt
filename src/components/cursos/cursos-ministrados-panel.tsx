@@ -202,19 +202,19 @@ export function CursosMinistradosPanel() {
                 </div>
                 {ad && ad.precisam > 0 && pct !== null && (
                   <div className="mt-3 pt-3 border-t border-white/10">
-                    <div className="flex items-center justify-between text-[10px] font-black uppercase mb-1">
+                    <div className="flex items-center justify-between text-xs font-black uppercase mb-1.5">
                       <span className="text-rose-200/60">Aderência</span>
                       <span className={pct === 100 ? "text-emerald-300" : pct >= 70 ? "text-amber-300" : "text-rose-300"}>
                         {pct}%
                       </span>
                     </div>
-                    <div className="h-1.5 bg-black/40 rounded-full overflow-hidden ring-1 ring-white/5">
+                    <div className="h-2 bg-black/40 rounded-full overflow-hidden ring-1 ring-white/5">
                       <div
                         className={`h-full ${pct === 100 ? "bg-gradient-to-r from-emerald-400 to-emerald-500 shadow-[0_0_10px_rgba(52,211,153,0.6)]" : pct >= 70 ? "bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(251,191,36,0.6)]" : "bg-gradient-to-r from-rose-400 to-rose-600 shadow-[0_0_10px_rgba(244,63,94,0.6)]"}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <div className="flex items-center justify-between text-[10px] mt-1.5 font-bold text-rose-200/60">
+                    <div className="flex items-center justify-between text-xs mt-2 font-bold text-rose-200/70">
                       <span>{ad.treinados}/{ad.precisam} treinados</span>
                       {ad.faltam > 0 && <span className="text-rose-300">{ad.faltam} faltam</span>}
                     </div>
