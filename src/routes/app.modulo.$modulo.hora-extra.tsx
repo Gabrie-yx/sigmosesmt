@@ -8,16 +8,18 @@ import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
 type ModuloScope = {
   slug: string;
   moduloLabel: string;
-  setor: string;
+  setor?: string;
   empresaFixaNome: string;
+  funcionariosPermitidos?: string[];
 };
 
 const MODULO_MAP: Record<string, ModuloScope> = {
-  eletrica:   { slug: "eletrica",   moduloLabel: "Elétrica",   setor: "Elétrica",   empresaFixaNome: "DMN" },
+  eletrica:   { slug: "eletrica",   moduloLabel: "Elétrica",   empresaFixaNome: "DMN", funcionariosPermitidos: ["Natanael", "Leonardo"] },
   mecanica:   { slug: "mecanica",   moduloLabel: "Mecânica",   setor: "Mecânica",   empresaFixaNome: "DMN" },
   producao:   { slug: "producao",   moduloLabel: "Produção",   setor: "Produção",   empresaFixaNome: "DMN" },
   compras:    { slug: "compras",    moduloLabel: "Compras",    setor: "Compras",    empresaFixaNome: "DMN" },
-  manutencao: { slug: "manutencao", moduloLabel: "Manutenção", setor: "Manutenção", empresaFixaNome: "DMN" },
+  manutencao: { slug: "manutencao", moduloLabel: "Manutenção", empresaFixaNome: "LF SERVIÇOS" },
+  almoxarifado: { slug: "almoxarifado", moduloLabel: "Almoxarifado", empresaFixaNome: "DMN", funcionariosPermitidos: ["Israel Uchoa"] },
   portaria:   { slug: "portaria",   moduloLabel: "Portaria",   setor: "Portaria",   empresaFixaNome: "DMN" },
 };
 
@@ -84,6 +86,7 @@ function HoraExtraModuloPage() {
         setorFixo={scope.setor}
         empresaFixaNome={scope.empresaFixaNome}
         moduloLabel={scope.moduloLabel}
+        funcionariosPermitidos={scope.funcionariosPermitidos}
         observacaoLabel="DIGITE AQUI A JUSTIFICATIVA DA EXTRA"
         observacaoPlaceholder="Descreva a justificativa da hora extra…"
       />
