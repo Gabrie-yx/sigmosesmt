@@ -70,45 +70,22 @@ export function CursosMinistradosPanel() {
     },
   });
 
-  const { data: aderencia = {} } = useQuery({
-    queryKey: ["cursos-aderencia"],
+  // Soma de participantes (APROVADO/PRESENTE) de todas as turmas realizadas de cada curso.
+  // É a soma direta das listas de presença — sem cruzar com matriz.
+  const { data: treinadosPorCurso = {} } = useQuery({
+    queryKey: ["cursos-treinados-por-curso"],
     queryFn: async () => {
-      const [empRes, rcRes, scRes, entRes] = await Promise.all([
-        supabase.from("employees").select("id,role_id,setor,status").eq("status", "ATIVO"),
-        supabase.from("training_matrix_role_courses").select("role_id,course_id"),
-        supabase.from("training_matrix_sector_courses").select("setor,course_id"),
-        supabase.from("training_matrix_entries").select("employee_id,course_id,data_realizacao,status_override"),
-      ]);
-      const employees = empRes.data ?? [];
-      const rcByCourse: Record<string, Set<string>> = {};
-      (rcRes.data ?? []).forEach((r: any) => { (rcByCourse[r.course_id] ??= new Set()).add(r.role_id); });
-      const scByCourse: Record<string, Set<string>> = {};
-      (scRes.data ?? []).forEach((s: any) => { (scByCourse[s.course_id] ??= new Set()).add(s.setor); });
-      const allCourseIds = new Set<string>([...Object.keys(rcByCourse), ...Object.keys(scByCourse)]);
-      const required: Record<string, Set<string>> = {};
-      allCourseIds.forEach((cid) => {
-        const set = (required[cid] = new Set<string>());
-        const roles = rcByCourse[cid];
-        const setores = scByCourse[cid];
-        employees.forEach((e: any) => {
-          if ((roles && e.role_id && roles.has(e.role_id)) || (setores && e.setor && setores.has(e.setor))) {
-            set.add(e.id);
-          }
-        });
-      });
-      const trained: Record<string, Set<string>> = {};
-      (entRes.data ?? []).forEach((e: any) => {
-        const ok = e.data_realizacao || e.status_override === "REALIZADO";
-        if (!ok) return;
-        (trained[e.course_id] ??= new Set()).add(e.employee_id);
-      });
-      const result: Record<string, { precisam: number; treinados: number; faltam: number }> = {};
-      allCourseIds.forEach((cid) => {
-        const req = required[cid] ?? new Set();
-        const tr = trained[cid] ?? new Set();
-        let count = 0;
-        req.forEach((empId) => { if (tr.has(empId)) count++; });
-        result[cid] = { precisam: req.size, treinados: count, faltam: Math.max(0, req.size - count) };
+      const { data: atts, error } = await supabase
+        .from("training_attendees")
+        .select("training_id, situacao, trainings!inner(course_id)")
+        .in("situacao", ["APROVADO", "PRESENTE"])
+        .limit(50000);
+      if (error) throw error;
+      const result: Record<string, number> = {};
+      (atts ?? []).forEach((a: any) => {
+        const cid = a.trainings?.course_id;
+        if (!cid) return;
+        result[cid] = (result[cid] ?? 0) + 1;
       });
       return result;
     },
@@ -175,8 +152,7 @@ export function CursosMinistradosPanel() {
             const turmas = turmasPorCurso[c.id] ?? [];
             const ultima = turmas[0];
             const catColor = CATEGORIA_COLOR[c.categoria] ?? CATEGORIA_COLOR.OUTRO;
-            const ad = (aderencia as any)[c.id];
-            const pct = ad && ad.precisam > 0 ? Math.round((ad.treinados / ad.precisam) * 100) : null;
+            const treinados = (treinadosPorCurso as any)[c.id] ?? 0;
             return (
               <button
                 key={c.id}
@@ -200,17 +176,14 @@ export function CursosMinistradosPanel() {
                     {ultima ? formatDateBR(ultima.data_realizacao) : "—"}
                   </div>
                 </div>
-                {ad && ad.precisam > 0 && pct !== null && (
+                {treinados > 0 && (
                   <div className="mt-3 pt-3 border-t border-white/10">
                     <div className="flex items-center justify-between text-xs font-black uppercase mb-1.5">
                       <span className="text-amber-200/70">Treinados</span>
-                      <span className="text-amber-300">{ad.treinados}</span>
+                      <span className="text-amber-300">{treinados}</span>
                     </div>
-                    <div className="h-2 bg-black/40 rounded-full overflow-hidden ring-1 ring-white/5">
-                      <div
-                        className="h-full bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 shadow-[0_0_12px_rgba(251,191,36,0.75)]"
-                        style={{ width: `${pct}%` }}
-                      />
+                    <div className="h-1.5 bg-black/40 rounded-full overflow-hidden ring-1 ring-white/5">
+                      <div className="h-full w-full bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 shadow-[0_0_12px_rgba(251,191,36,0.75)]" />
                     </div>
                   </div>
                 )}
