@@ -431,11 +431,11 @@ export function HoraExtraSabadoDialog({
           </div>
           <div className="space-y-1">
             <Label>Empresa</Label>
-            <Select value={companyId || "_all"} onValueChange={(v) => setCompanyId(v === "_all" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+            <Select value={companyId || "_all"} onValueChange={(v) => setCompanyId(v === "_all" ? "" : v)} disabled={!!empresaFixaNome}>
+              <SelectTrigger><SelectValue placeholder={empresaFixaNome ?? "Todas"} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="_all">Todas</SelectItem>
-                {(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                {!empresaFixaNome && <SelectItem value="_all">Todas</SelectItem>}
+                {companiesFiltradas.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -533,8 +533,13 @@ export function HoraExtraSabadoDialog({
         </div>
 
         <div className="mt-3 space-y-1">
-          <Label>Observação</Label>
-          <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={2} />
+          <Label>{observacaoLabel ?? "Observação"}</Label>
+          <Textarea
+            value={observacao}
+            onChange={(e) => setObservacao(e.target.value)}
+            rows={2}
+            placeholder={observacaoPlaceholder}
+          />
         </div>
 
         <div className="mt-4 flex justify-end gap-2">
