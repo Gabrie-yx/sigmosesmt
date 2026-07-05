@@ -315,7 +315,7 @@ function SetorCard({
 }
 
 function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
-  const [expand, setExpand] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [indeferirOpen, setIndeferirOpen] = useState(false);
   const qc = useQueryClient();
   const aprovar = useMutation({
@@ -328,6 +328,7 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
     onSuccess: () => {
       toast.success("Hora extra aprovada");
       qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida"] });
+      setDetailOpen(false);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao aprovar"),
   });
@@ -335,7 +336,14 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
   const solicitante = he.aberto_por_nome ?? he.criado_automatico_por_nome ?? "—";
   const statusKey = he.status in STATUS_BADGE ? he.status : "PENDENTE";
   return (
-    <Card className="glass-card overflow-hidden">
+    <>
+    <Card
+      className="glass-card overflow-hidden cursor-pointer hover:bg-white/5 transition-colors"
+      role="button"
+      tabIndex={0}
+      onClick={() => setDetailOpen(true)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDetailOpen(true); } }}
+    >
       <CardHeader className="p-3 pb-2 flex flex-row items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
@@ -348,57 +356,79 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
             {solicitante} · {he.horario_inicio ?? "--:--"}–{he.horario_fim ?? "--:--"} ·
             <Users className="inline h-3 w-3 ml-1 mr-0.5" /> {funcs.length}
           </div>
-          {he.justificativa && (
-            <div className="text-[11px] text-foreground/80 mt-1 line-clamp-2">
-              <strong>Justificativa:</strong> {he.justificativa}
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
+      </CardHeader>
+    </Card>
+
+    <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 flex-wrap">
+            Ficha de {fmtBR(he.data)}
+            <span className={`${STATUS_BADGE[statusKey]} px-2.5 py-0.5 text-[11px]`}>{STATUS_LABEL[statusKey] ?? he.status}</span>
+            <span className="prism-pill px-2 py-0.5 text-[10px] text-foreground/80">{tipo}</span>
+          </DialogTitle>
+          <DialogDescription>
+            Solicitante: <strong className="text-foreground">{solicitante}</strong> ·
+            Setor: <strong className="text-foreground">{he.setor ?? "—"}</strong> ·
+            Horário: <strong className="text-foreground">{he.horario_inicio ?? "--:--"}–{he.horario_fim ?? "--:--"}</strong>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div>
+            <div className="text-xs font-bold text-muted-foreground mb-1 flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" /> Funcionários ({funcs.length})
             </div>
-          )}
+            {funcs.length === 0 ? (
+              <div className="text-[11px] text-muted-foreground">Nenhum funcionário marcado.</div>
+            ) : (
+              <ul className="text-[12px] space-y-1 max-h-48 overflow-y-auto">
+                {funcs.map((f) => (
+                  <li key={f.id} className="flex items-center justify-between gap-2 border-b border-white/5 pb-1">
+                    <span className="truncate">
+                      {f.nome}
+                      {f.externo ? <span className="ml-1 text-[10px] text-amber-300">(externo)</span> : null}
+                      {f.funcao ? <span className="text-muted-foreground"> · {f.funcao}</span> : null}
+                    </span>
+                    {f.presenca && (
+                      <span className="prism-pill px-1.5 py-0.5 text-[10px] text-foreground/80">{f.presenca}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div>
+            <div className="text-xs font-bold text-muted-foreground mb-1">Motivo / Justificativa</div>
+            <div className="text-[12px] text-foreground/90 whitespace-pre-wrap rounded-md bg-white/5 p-2 border border-white/10">
+              {he.justificativa?.trim() || he.observacao?.trim() || "Sem justificativa informada."}
+            </div>
+          </div>
+
           {he.status === "INDEFERIDA" && he.motivo_indeferimento && (
-            <div className="text-[11px] text-rose-200 mt-1 line-clamp-2">
-              Motivo: {he.motivo_indeferimento}
+            <div>
+              <div className="text-xs font-bold text-rose-300 mb-1">Motivo do indeferimento</div>
+              <div className="text-[12px] text-rose-100 whitespace-pre-wrap rounded-md bg-rose-950/30 p-2 border border-rose-500/30">
+                {he.motivo_indeferimento}
+              </div>
             </div>
           )}
         </div>
-        <button
-          onClick={() => setExpand((v) => !v)}
-          className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0"
-        >
-          {expand ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-          {expand ? "Ocultar" : "Ver funcionários"}
-        </button>
-      </CardHeader>
-      {expand && (
-        <CardContent className="p-3 pt-1">
-          {funcs.length === 0 ? (
-            <div className="text-[11px] text-muted-foreground">Nenhum funcionário marcado.</div>
-          ) : (
-            <ul className="text-[12px] space-y-1">
-              {funcs.map((f) => (
-                <li key={f.id} className="flex items-center justify-between gap-2 border-b border-white/5 pb-1">
-                  <span className="truncate">
-                    {f.nome}
-                    {f.externo ? <span className="ml-1 text-[10px] text-amber-300">(externo)</span> : null}
-                    {f.funcao ? <span className="text-muted-foreground"> · {f.funcao}</span> : null}
-                  </span>
-                  {f.presenca && (
-                    <span className="prism-pill px-1.5 py-0.5 text-[10px] text-foreground/80">{f.presenca}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          {he.status === "PENDENTE" && (
-            <div className="flex gap-2 mt-3 pt-3 border-t border-white/10">
+
+        <DialogFooter>
+          {he.status === "PENDENTE" ? (
+            <div className="flex gap-2 w-full">
               <Button
-                size="sm"
                 className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                 onClick={() => aprovar.mutate()}
                 disabled={aprovar.isPending}
               >
-                <CheckCircle2 className="h-4 w-4 mr-1" /> Aprovar
+                <CheckCircle2 className="h-4 w-4 mr-1" /> Deferir
               </Button>
               <Button
-                size="sm"
                 variant="destructive"
                 className="flex-1"
                 onClick={() => setIndeferirOpen(true)}
@@ -407,16 +437,20 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
                 <XCircle className="h-4 w-4 mr-1" /> Indeferir
               </Button>
             </div>
+          ) : (
+            <Button variant="ghost" onClick={() => setDetailOpen(false)}>Fechar</Button>
           )}
-        </CardContent>
-      )}
-      <IndeferirDialog
-        open={indeferirOpen}
-        onClose={() => setIndeferirOpen(false)}
-        horaExtraId={he.id}
-        onDone={() => qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida"] })}
-      />
-    </Card>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <IndeferirDialog
+      open={indeferirOpen}
+      onClose={() => setIndeferirOpen(false)}
+      horaExtraId={he.id}
+      onDone={() => { qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida"] }); setDetailOpen(false); }}
+    />
+    </>
   );
 }
 
