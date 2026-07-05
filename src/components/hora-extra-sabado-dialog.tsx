@@ -350,6 +350,11 @@ export function HoraExtraSabadoDialog({
 
           <div className="space-y-1">
             <Label>Setor</Label>
+            {setorFixo ? (
+              <div className="flex h-9 w-full items-center rounded-md border border-input bg-muted/40 px-3 text-sm font-medium">
+                {setorFixo}
+              </div>
+            ) : (
             <Popover>
               <PopoverTrigger asChild>
                 <button
@@ -399,6 +404,7 @@ export function HoraExtraSabadoDialog({
                 </div>
               </PopoverContent>
             </Popover>
+            )}
             {setoresSel.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {setoresSel.map((s) => (
