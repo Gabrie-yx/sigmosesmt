@@ -268,6 +268,36 @@ Exatamente ${rows} objetos em "linhas", ordenados 1..${rows}. diasMarcados só a
         porLinha.get(i) ?? { linha: i, assinou: false, nome: null, diasMarcados: [] },
       );
     }
+
+    // ─── Fuzzy match contra employees ATIVOS ───────────────────────────────
+    try {
+      const { data: emps } = await context.supabase
+        .from("employees")
+        .select("id, nome")
+        .eq("status", "ATIVO");
+      const funcionarios = (emps ?? []).filter(
+        (e): e is { id: string; nome: string } =>
+          !!e && typeof e.nome === "string" && e.nome.trim().length > 0,
+      );
+      if (funcionarios.length) {
+        for (const l of linhas) {
+          if (!l.nome) continue;
+          let best: { id: string; nome: string; score: number } | null = null;
+          for (const f of funcionarios) {
+            const s = scoreNome(l.nome, f.nome);
+            if (!best || s > best.score) best = { id: f.id, nome: f.nome, score: s };
+          }
+          if (best && best.score >= 0.55) {
+            l.matchedEmployeeId = best.id;
+            l.nomeCorrigido = best.nome;
+            l.matchScore = Math.round(best.score * 100) / 100;
+          }
+        }
+      }
+    } catch {
+      // fuzzy é bônus — se falhar, segue com nomes crus do OCR.
+    }
+
     // Participante = quem interagiu com a linha (assinou OU marcou algum dia).
     // Linha totalmente vazia não conta.
     const totalParticipantes = linhas.filter(
