@@ -8652,6 +8652,7 @@ export type Database = {
           ultimo_acidente_registravel: string
         }[]
       }
+      fn_install_audit: { Args: { _table: string }; Returns: undefined }
       gerar_numero_apr: { Args: never; Returns: string }
       gerar_numero_controle_doc: { Args: never; Returns: string }
       gerar_numero_extintor: { Args: never; Returns: string }
