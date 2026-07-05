@@ -182,22 +182,22 @@ const ALMOXARIFADO_ITEMS: LeafItem[] = [
 ];
 
 const MANUTENCAO_ITEMS: LeafItem[] = [
-  { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
+  { to: "/app/employees/hora-extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
   { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
 const MECANICA_ITEMS: LeafItem[] = [
-  { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
+  { to: "/app/employees/hora-extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
   { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
 const ELETRICA_ITEMS: LeafItem[] = [
-  { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
+  { to: "/app/employees/hora-extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
   { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
 const PORTARIA_ITEMS: LeafItem[] = [
-  { to: "/extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
+  { to: "/app/employees/hora-extra-sabado", label: "Hora Extra", icon: CalendarCheck2 },
   { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
