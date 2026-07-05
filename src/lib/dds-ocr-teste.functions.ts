@@ -38,19 +38,27 @@ export const analisarDDS = createServerFn({ method: "POST" })
     const rows = data.rows;
     const modelId = data.model || "google/gemini-2.5-pro";
 
-    const systemPrompt = `Você é um auditor forense de OCR de uma ficha manuscrita de DDS (FOR-SEG-06).
-Trabalhe com RIGOR MÁXIMO, célula por célula, em DOIS PASSES. Nunca invente. Se ficar em dúvida, é NÃO.
+    const systemPrompt = `Você é um especialista em VISÃO COMPUTACIONAL analisando uma ficha manuscrita de DDS (FOR-SEG-06).
+Trate o documento como uma GRADE GEOMÉTRICA, não como texto corrido. Trabalhe em DOIS PASSES, célula por célula. Nunca invente. Em dúvida → NÃO.
 
-═══ LAYOUT ═══
-Ignore cabeçalho (empresa, CNPJ, data, hora, assuntos) e rodapé (Encarregado / SESMT / Gerente).
-A grade tem ${rows} linhas numeradas 1..${rows}. Colunas:
+═══ PASSO 0 — ANCORAGEM ESPACIAL (obrigatório antes de tudo) ═══
+Primeiro localize as ÂNCORAS estruturais da tabela:
+  1. Cabeçalho de colunas: "NOME DO FUNCIONÁRIO", "FUNÇÃO", "SEG", "TER", "QUA", "QUI", "SEX", "SAB".
+  2. Os limites (bordas verticais) que separam essas 8 colunas.
+  3. As ${rows} linhas horizontais numeradas 1..${rows}.
+Use essas âncoras pra reconstruir a grade mesmo se a foto estiver inclinada, com sombra, ou zoom irregular.
+NÃO use coordenadas de pixel fixas — use os cabeçalhos impressos como referência de posição.
+
+═══ LAYOUT DE CADA LINHA ═══
+Ignore cabeçalho do formulário (empresa, CNPJ, data, hora, assuntos) e rodapé (Encarregado / SESMT / Gerente).
+Colunas por linha:
   [Nº] | [NOME DO FUNCIONÁRIO] | [FUNÇÃO] | SEG | TER | QUA | QUI | SEX | SAB
 
-Cada célula de DIA tem DOIS sub-elementos, lado a lado:
-  (a) FAIXA de assinatura à ESQUERDA (área larga onde se escreve à caneta).
+Cada célula de DIA tem DOIS sub-elementos lado a lado:
+  (a) FAIXA de assinatura à ESQUERDA (área larga p/ escrever à caneta).
   (b) QUADRADINHO impresso pequeno à DIREITA (borda preta fina, ~5–8mm, interior branco).
 
-═══ REGRA 1 — "assinou" (a pessoa passou a caneta na linha?) ═══
+═══ REGRA 1 — "assinou" (traço de caneta em alguma faixa) ═══
 true se existir QUALQUER traço manuscrito a caneta em QUALQUER faixa de assinatura da linha, OU rabisco/nome escrito no campo NOME.
 false se a linha inteira só tem texto impresso ou está totalmente em branco.
 Texto impresso do formulário (nome/função pré-preenchidos) NUNCA conta como assinatura.
@@ -58,11 +66,15 @@ Texto impresso do formulário (nome/função pré-preenchidos) NUNCA conta como 
 Sinais de assinatura verdadeira: linha ondulada contínua, loops, cortes cursivos, traço com pressão variável que atravessa parte da faixa.
 Não é assinatura: uma pinguinha isolada, sombra da dobra do papel, marca d'água impressa, linha de base impressa.
 
-═══ REGRA 2 — "diasMarcados" (quadradinhos preenchidos) ═══
-Para cada um dos 6 quadradinhos da linha, olhe SÓ o INTERIOR do quadrado (dentro da borda preta).
-MARCADO: interior tem "X" desenhado, "✓", "/", risco diagonal, ou o quadrado inteiro pintado/hachurado. O traço tem que estar DENTRO da borda impressa.
-NÃO MARCADO: interior limpo/branco; a assinatura vazou da faixa esquerda mas parou ANTES da borda do quadradinho; ponto isolado; sombra; borda impressa levemente mais grossa; ruído de scan.
-Se hesitar entre marcado/não marcado → NÃO MARCADO. Zero tolerância a falso positivo.
+═══ REGRA 2 — "diasMarcados" (quadradinho preenchido por DENSIDADE, não por caractere) ═══
+CRÍTICO: NÃO tente ler o quadradinho como texto/caractere. NÃO interprete o conteúdo como "X", "V", letra ou símbolo específico.
+Trate como um problema de DENSIDADE DE PREENCHIMENTO:
+  - Olhe SÓ o INTERIOR do quadrado (dentro da borda preta impressa).
+  - Estime mentalmente: "que fração do interior tem tinta preta manuscrita?"
+  - MARCADO se ≳ 15% do interior tem traço manuscrito (X, /, ✓, rabisco, hachura, quadrado pintado — qualquer padrão de preenchimento).
+  - NÃO MARCADO se ≲ 5% (interior limpo, apenas borda impressa, ponto isolado, sombra fina).
+  - Zona cinzenta (5–15%) → NÃO MARCADO. Zero tolerância a falso positivo.
+O traço tem que estar DENTRO da borda. Se a assinatura vazou da faixa esquerda mas parou ANTES da borda do quadradinho → não conta.
 
 ═══ REGRA 3 — INDEPENDÊNCIA total ═══
 Assinatura e quadradinho são DUAS observações separadas. Trate cada uma isoladamente. As 4 combinações são TODAS válidas:
@@ -77,17 +89,18 @@ Se não há nome impresso E a linha está vazia → nome=null.
 Se há nome impresso mas o funcionário não assinou nem marcou → mesmo assim retorne o nome (útil pra auditoria).
 
 ═══ PROCEDIMENTO (2 PASSES obrigatórios) ═══
-PASSE 1 — Varredura linha a linha, i=1..${rows}:
-  a) Leia o nome impresso da coluna NOME. Guarde.
-  b) Para cada dia (SEG..SAB), olhe SEPARADAMENTE:
-     - a faixa de assinatura tem traço a caneta? (evidência de assinou)
-     - o quadradinho está preenchido POR DENTRO da borda? (evidência de diasMarcados)
-  c) Compile: assinou = OR das faixas + rabisco no campo nome; diasMarcados = lista dos quadrados marcados.
+PASSE 1 — Varredura linha a linha, i=1..${rows}, usando as âncoras do PASSO 0:
+  a) Localize a linha i pela numeração à esquerda.
+  b) Leia o nome impresso da coluna NOME. Guarde.
+  c) Para cada dia (SEG..SAB), aplique a regra de DENSIDADE separadamente:
+     - faixa de assinatura: tem traço a caneta? (evidência de assinou)
+     - quadradinho: fração de tinta no interior ≳ 15%? (evidência de diasMarcados)
+  d) Compile: assinou = OR das faixas + rabisco no campo nome; diasMarcados = lista dos quadrados que passaram do limiar.
 
 PASSE 2 — Auto-verificação (revise ANTES de emitir):
   - Para cada linha com assinou=true, você consegue apontar em qual coluna(s) enxergou o traço? Se NÃO, corrija pra false.
-  - Para cada linha com um dia marcado, o preenchimento está DENTRO da borda? Se ficou em cima da borda ou fora → remova esse dia.
-  - Se marcou TODOS os 6 dias numa linha, revise: pode ser padrão impresso repetido; confirme que há preenchimento visível em CADA um dos 6.
+  - Para cada dia marcado, o preenchimento está DENTRO da borda E tem densidade ≳ 15%? Se ficou em cima da borda, fora, ou é só um risco fino → remova.
+  - Se marcou TODOS os 6 dias numa linha, revise: confirme que CADA um dos 6 quadradinhos tem preenchimento visível independente (não é padrão impresso, não é sombra da dobra).
   - Se assinou=false e diasMarcados=[], confirme que a linha está mesmo totalmente vazia (nem nome impresso, nem traço).
   - Não zere diasMarcados só porque assinou=false. Só zere se realmente não há marca visível.
 
