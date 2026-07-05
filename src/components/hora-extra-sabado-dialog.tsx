@@ -33,10 +33,25 @@ export function HoraExtraSabadoDialog({
   open,
   onOpenChange,
   editId,
+  setorFixo,
+  empresaFixaNome,
+  moduloLabel,
+  observacaoLabel,
+  observacaoPlaceholder,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   editId?: string | null;
+  /** Trava o campo Setor com este valor e filtra funcionários por este setor. */
+  setorFixo?: string;
+  /** Trava a Empresa listando apenas a companhia com este nome (ex.: "DMN"). */
+  empresaFixaNome?: string;
+  /** Rótulo do módulo (exibido no título quando escopado). */
+  moduloLabel?: string;
+  /** Rótulo do campo Observação. */
+  observacaoLabel?: string;
+  /** Placeholder do campo Observação. */
+  observacaoPlaceholder?: string;
 }) {
   const qc = useQueryClient();
   const { user } = useAuth();
