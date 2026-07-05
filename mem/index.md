@@ -9,6 +9,7 @@ MB51: Base MP vence, mas OUTROS é residual saneado por descrição; classificac
 RBAC: módulo/papel/menu precisa bater em UI, validação server-side, enum/funções do Supabase e guards; nunca divergir.
 Overlays (popover/drawer/dropdown/lookup) no tema escuro SEMPRE em tokens semânticos (bg-popover, text-foreground, border-border, hover:bg-accent). PROIBIDO bg-white, text-slate-*, bg-red-50 sobre o tema escuro. Ver mem://constraints/nada-de-cores-hardcoded.
 Scrollbar SEMPRE glassmorph fina com flares (global em src/styles.css). PROIBIDO scrollbar padrão do SO/cinza, grossa ou hardcoded. Ver mem://constraints/scrollbar-glassmorph.
+Horas extras pertencem ao módulo de origem; não usar SESMT como caixa geral nem mexer no painel SESMT para esse fluxo.
 
 ## Memories
 - [Pendências](mem://pendencias) — Tarefas pendentes acordadas com o usuário (geradores PDF Eficácia/Reação, etc.)

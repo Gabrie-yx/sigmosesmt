@@ -76,8 +76,9 @@ function ExtraSabadoMobilePage() {
   // Convocação selecionada (default = mais recente pendente/aprovada)
   useEffect(() => {
     if (!convocacaoAtivaId && minhasConvocacoes && minhasConvocacoes.length > 0) {
+      const devolvida = minhasConvocacoes.find(c => c.status === "INDEFERIDA");
       const editavel = minhasConvocacoes.find(c => c.status !== "INDEFERIDA");
-      setConvocacaoAtivaId((editavel ?? minhasConvocacoes[0]).id);
+      setConvocacaoAtivaId((devolvida ?? editavel ?? minhasConvocacoes[0]).id);
     }
   }, [minhasConvocacoes, convocacaoAtivaId]);
 
@@ -172,9 +173,22 @@ function ExtraSabadoMobilePage() {
   const totalConfirmados = (marcados ?? []).length;
   const meusMarcados = (marcados ?? []).filter((r: any) => r.marcado_por === user?.id).length;
   const status = conv?.status as "PENDENTE"|"APROVADA"|"INDEFERIDA" | undefined;
-  // Bloqueia edição se INDEFERIDA (líder pode editar até Anderson decidir)
-  const readOnly = !isAdmin && status === "INDEFERIDA";
+  // Indeferida volta para o solicitante: ele vê o motivo e pode ajustar antes de reenviar.
+  const readOnly = false;
   const expirado = false;
+
+  const reenviar = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("reenviar_hora_extra_modulo", { _hora_extra_id: convId! });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Convocação reenviada para aprovação");
+      qc.invalidateQueries({ queryKey: ["extra-sabado-conv", convId] });
+      qc.invalidateQueries({ queryKey: ["convocacoes-do-lider"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const filtrados = useMemo(() => {
     const s = busca.trim().toLowerCase();
@@ -276,6 +290,18 @@ function ExtraSabadoMobilePage() {
           </div>
         )}
       </header>
+
+      {status === "INDEFERIDA" && (
+        <div className="mx-4 mt-4 rounded-xl border border-red-400/30 bg-red-500/10 p-3 space-y-2">
+          <div className="text-xs font-black uppercase tracking-widest text-red-200 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" /> Convocação devolvida
+          </div>
+          <p className="text-sm text-red-50 whitespace-pre-wrap">{conv?.motivo_indeferimento ?? "Sem motivo informado."}</p>
+          <Button className="w-full bg-red-700 hover:bg-red-800" onClick={() => reenviar.mutate()} disabled={reenviar.isPending}>
+            {reenviar.isPending ? "Reenviando…" : "Reenviar para aprovação"}
+          </Button>
+        </div>
+      )}
 
       {isLider && !convId && (
         <div className="p-6 text-center space-y-4">
@@ -528,6 +554,7 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated, liderId }: {
     const { data: id, error } = await supabase.rpc("criar_convocacao_extra_lider", {
       _tipo: tipo, _data: data, _horario_inicio: hi, _horario_fim: hf,
       _justificativa: just, _employee_ids: Array.from(sel), _turno: turno,
+      _modulo_origem: escopoLabel?.setor ?? undefined,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
