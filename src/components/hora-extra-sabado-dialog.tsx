@@ -92,7 +92,9 @@ export function HoraExtraSabadoDialog({
 
   // Rascunho: só para ficha nova (sem editId). Ao editar registro existente,
   // não faz sentido autosave em localStorage — a fonte da verdade é o DB.
-  const DRAFT_KEY = "hora-extra-sabado-nova";
+  // IMPORTANTE: a chave é POR MÓDULO. Sem isso, um rascunho de outro módulo
+  // sobrescreve companyId/setor fixo ao abrir e o dropdown de Empresa fica vazio.
+  const DRAFT_KEY = `hora-extra-sabado-nova:${moduloOrigem ?? "global"}`;
   const draftEnabled = open && !editId;
   const draftData = useMemo(
     () => ({
@@ -119,14 +121,22 @@ export function HoraExtraSabadoDialog({
   }, [companies, empresaFixaNome]);
 
   // Ao abrir escopado, trava setor + empresa automaticamente.
+  // Roda também quando companiesFiltradas muda (ex.: query resolve depois do open)
+  // e SEMPRE reforça sobre o que o draft possa ter restaurado.
   useEffect(() => {
     if (!open || editId) return;
     if (setorFixo) setSetoresSel([setorFixo]);
     if (empresaFixaNome && companiesFiltradas.length > 0) {
-      setCompanyId(String(companiesFiltradas[0].id));
+      const alvoId = String(companiesFiltradas[0].id);
+      setCompanyId((prev) => {
+        // Se o draft restaurou uma empresa que não está na lista filtrada
+        // (ex.: rascunho de outro módulo), força a empresa correta do escopo.
+        const valido = companiesFiltradas.some((c) => String(c.id) === prev);
+        return valido ? prev : alvoId;
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, setorFixo, empresaFixaNome, companiesFiltradas.length]);
+  }, [open, setorFixo, empresaFixaNome, companiesFiltradas, editId]);
 
   const { data: setores } = useQuery({
     queryKey: ["he-setores"],
