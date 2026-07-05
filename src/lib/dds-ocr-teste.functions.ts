@@ -124,6 +124,13 @@ Exatamente ${rows} objetos em "linhas", na ordem de cima para baixo. diasMarcado
 
     if (!resp.ok) {
       const t = await resp.text();
+      if (resp.status === 524 || resp.status === 504) {
+        return {
+          error: `Timeout do gateway (${resp.status}) — o modelo ${modelId} demorou demais lendo esse arquivo. Tenta com gemini-2.5-pro, ou converta o PDF pra imagem antes.`,
+          linhas: [],
+          totalParticipantes: 0,
+        };
+      }
       return { error: `Gateway ${resp.status}: ${t.slice(0, 400)}`, linhas: [], totalParticipantes: 0 };
     }
     const json = await resp.json();

@@ -158,6 +158,13 @@ function OCRTestePage() {
             </div>
           </div>
 
+          {model.startsWith("openai/") && file?.type === "application/pdf" && (
+            <div className="text-[11px] bg-amber-50 border border-amber-300 text-amber-800 rounded p-2 leading-snug">
+              ⚠️ GPT-5 costuma estourar timeout (524) lendo PDF. Pra esse modelo, envia
+              o formulário como <b>imagem (PNG/JPG)</b>. Pra PDF, use gemini-2.5-pro.
+            </div>
+          )}
+
           <Button onClick={rodar} disabled={loading || !file} className="w-full">
             {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ScanLine className="h-4 w-4 mr-2" />}
             {loading ? "Analisando..." : "Rodar OCR"}
