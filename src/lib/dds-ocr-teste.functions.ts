@@ -38,40 +38,51 @@ export const analisarDDS = createServerFn({ method: "POST" })
     const rows = data.rows;
     const modelId = data.model || "google/gemini-2.5-pro";
 
-    const systemPrompt = `Você audita uma ficha manuscrita de DDS (FOR-SEG-06). Rigor máximo, viés CONSERVADOR: NA DÚVIDA = NÃO MARCADO / NÃO ASSINOU.
+    const systemPrompt = `Você é um auditor de OCR de uma ficha manuscrita de DDS (FOR-SEG-06). Faça uma análise PROFUNDA, célula por célula. Rigor máximo. Não invente.
 
-LAYOUT (ignore totalmente o cabeçalho e o rodapé de assinaturas):
-- Tabela com ${rows} linhas numeradas de 1 a ${rows}, de cima para baixo.
-- Colunas: [#] [NOME] [FUNÇÃO] [SEG] [TER] [QUA] [QUI] [SEX] [SAB]
-- Os 6 quadradinhos à direita são PEQUENOS e IMPRESSOS (linha preta fina). Interior BRANCO por padrão.
+═══ LAYOUT ═══
+Ignore por completo: cabeçalho (empresa, CNPJ, data, hora, assuntos) e rodapé (Encarregado / SESMT / Gerente).
 
-DEFINIÇÃO ESTRITA — "assinou":
-- true SOMENTE quando existe TRAÇO MANUSCRITO A CANETA na área de nome/assinatura da linha (rabisco, assinatura, nome à mão). Texto impresso não conta. Linha totalmente em branco = false.
+A grade tem ${rows} linhas numeradas de 1 a ${rows}. Colunas, da esquerda para a direita:
+  [Nº] | [NOME DO FUNCIONÁRIO] | [FUNÇÃO] | SEG | TER | QUA | QUI | SEX | SAB
 
-DEFINIÇÃO ESTRITA — "dia marcado":
-- true SOMENTE quando o INTERIOR do quadradinho daquele dia contém uma marca clara e inequívoca: um "X" desenhado, um "✓", ou o quadrado pintado/hachurado por dentro.
-- NÃO conta: quadrado com interior branco/limpo; rabisco que passa POR CIMA da borda mas não invade o interior; sombra do papel; ruído de digitalização; ponto pequeno; borda impressa mais grossa.
-- Se você hesitar entre "marcado" e "não marcado" → é NÃO MARCADO.
+Cada célula de DIA (SEG..SAB) contém DOIS elementos lado a lado dentro da mesma coluna:
+  (a) uma faixa larga à ESQUERDA, onde o funcionário escreve a assinatura/nome; e
+  (b) um QUADRADINHO impresso pequeno à DIREITA (borda preta fina, interior branco).
 
-PADRÃO REAL DA FICHA (use como sanity check):
-- A grande maioria das linhas assinadas marca APENAS 1 dia (o dia da participação). Marcar 2+ dias na mesma linha é RARO.
-- Se você achou 3, 4, 5 ou 6 dias marcados numa mesma linha, RECONFERE: quase certeza que a maioria é falso positivo. Reduza para apenas os que você tem certeza absoluta.
-- Linha sem assinatura NUNCA tem dias marcados. Se "assinou"=false, "diasMarcados" DEVE ser [].
+═══ REGRA 1 — "assinou" (participação do funcionário) ═══
+true SOMENTE se existir traço MANUSCRITO A CANETA em QUALQUER célula de dia daquela linha (na faixa à esquerda do quadradinho) OU um rabisco/nome escrito na área do nome. Uma única assinatura na linha já basta.
+false se a linha inteira está impressa/vazia, sem nenhum traço a mão.
+Texto impresso (nome/função já vindos do formulário) NUNCA conta como assinatura.
 
-PROCEDIMENTO OBRIGATÓRIO:
-1) Localize a tabela. Numere as linhas de 1 a ${rows}.
-2) Para cada linha, olhe primeiro a área de nome/assinatura. Decida "assinou" (true/false).
-3) Se assinou=false → pule os quadrados, devolva diasMarcados=[].
-4) Se assinou=true → examine UM POR UM os 6 quadrados. Só liste os que têm marca CLARA no interior.
-5) Nome: transcreva só se conseguir ler com confiança. Caso contrário, null.
+═══ REGRA 2 — "diasMarcados" (quadradinhos) ═══
+Para cada um dos 6 quadradinhos da linha, olhe SÓ o INTERIOR do quadrado (a caixa impressa pequena à direita da faixa de assinatura).
+MARCADO (true) quando o interior tem: "X" desenhado, "✓", ou o quadrado pintado/hachurado/preenchido.
+NÃO MARCADO quando: interior branco/limpo; assinatura passa pela faixa da esquerda mas NÃO invade o interior do quadradinho; sombra, ruído, ponto isolado, borda impressa mais grossa.
+Se hesitar → NÃO MARCADO.
 
-SAÍDA JSON (sem markdown, sem comentários):
-{"linhas":[{"linha":1,"assinou":true,"nome":"Fulano","diasMarcados":["SEG"]}, ...]}
+Importante: a assinatura na faixa esquerda e a marca no quadradinho são INDEPENDENTES.
+- Pode haver assinatura sem quadrado marcado (funcionário participou mas não marcou o quadrado).
+- Pode haver quadrado marcado sem assinatura naquele dia específico (mas nesse caso costuma haver assinatura em OUTRO dia da mesma linha).
+- Se a linha inteira não tem NENHUMA assinatura (assinou=false), então diasMarcados DEVE ser [].
 
-Regras finais:
-- Exatamente ${rows} objetos em "linhas", na ordem de cima para baixo.
-- diasMarcados só aceita: "SEG","TER","QUA","QUI","SEX","SAB".
-- Não invente. Prefira sempre subestimar a superestimar.`;
+═══ REGRA 3 — "nome" ═══
+Transcreva o nome IMPRESSO da coluna "NOME DO FUNCIONÁRIO" (não a assinatura manuscrita). Se a linha está totalmente vazia (sem nome impresso e sem assinatura), nome=null.
+
+═══ PROCEDIMENTO (siga na ordem, uma linha por vez) ═══
+Para linha i = 1..${rows}:
+  1. Leia o nome impresso na coluna NOME. Guarde.
+  2. Percorra as 6 células de dia. Em cada uma, verifique separadamente:
+       - há traço a caneta na faixa esquerda? (contribui para assinou=true)
+       - o quadradinho da direita está marcado por dentro? (contribui para diasMarcados)
+  3. assinou = (existe traço a caneta em qualquer faixa OU rabisco no campo nome).
+  4. Se assinou=false → diasMarcados=[].
+  5. Emita o objeto da linha.
+
+═══ SAÍDA (JSON puro, sem markdown, sem comentários) ═══
+{"linhas":[{"linha":1,"assinou":true,"nome":"Fulano","diasMarcados":["SEG","TER"]}, ...]}
+
+Exatamente ${rows} objetos em "linhas", na ordem de cima para baixo. diasMarcados só aceita "SEG","TER","QUA","QUI","SEX","SAB".`;
 
     const userText = `Analise a ficha DDS anexada e devolva o JSON com as ${rows} linhas.`;
 
