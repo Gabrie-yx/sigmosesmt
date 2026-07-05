@@ -64,6 +64,7 @@ export const MENU_CATALOG: MenuEntry[] = [
 
   // ----- ADMINISTRATIVO -----
   { key: "/app/administrativo/requisicoes-recebidas", label: "Requisições Recebidas", module: "administrativo" },
+  { key: "/app/administrativo/hora-extra-recebida", label: "H. Extra Recebida", module: "administrativo" },
 
   // ----- ALMOXARIFADO -----
   { key: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", module: "almoxarifado" },
