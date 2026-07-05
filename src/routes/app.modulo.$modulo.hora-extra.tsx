@@ -40,7 +40,7 @@ const MODULO_MAP: Record<string, ModuloScope> = {
   mecanica:   { slug: "mecanica",   moduloLabel: "Mecânica",   setor: "Mecânica",   empresaFixaNome: "LF SERVIÇOS" },
   producao:   { slug: "producao",   moduloLabel: "Produção",   setor: "Produção",   empresaFixaNome: "DMN" },
   compras:    { slug: "compras",    moduloLabel: "Compras",    setor: "Compras",    empresaFixaNome: "DMN" },
-  manutencao: { slug: "manutencao", moduloLabel: "Manutenção", setor: "Manutenção", empresaFixaNome: "LF SERVIÇOS DE  MANUTENÇÃO", funcionariosPermitidos: ["José Carlos Batalha", "Kleber Lucas Lima Firmino"] },
+  manutencao: { slug: "manutencao", moduloLabel: "Manutenção", empresaFixaNome: "LF SERVIÇOS", funcionariosPermitidos: ["José Carlos Batalha", "Kleber Lucas Lima Firmino"] },
   almoxarifado: { slug: "almoxarifado", moduloLabel: "Almoxarifado", setor: "Almoxarifado", empresaFixaNome: "DMN", funcionariosPermitidos: ["Israel Uchoa"] },
   portaria:   { slug: "portaria",   moduloLabel: "Portaria",   setor: "Portaria",   empresaFixaNome: "DMN" },
 };
