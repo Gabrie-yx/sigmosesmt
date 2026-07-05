@@ -35,6 +35,7 @@ function OCRTestePage() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<MarkerResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [model, setModel] = useState("google/gemini-2.5-pro");
 
   const expectedIds = useMemo(() => {
     const trimmed = customIds.trim();
@@ -79,7 +80,13 @@ function OCRTestePage() {
     try {
       const b64 = await fileToBase64(file);
       const resp = await analisar({
-        data: { fileBase64: b64, mime: file.type || "image/jpeg", expectedMarkers: expectedIds },
+        data: {
+          fileBase64: b64,
+          mime: file.type || "image/jpeg",
+          expectedMarkers: expectedIds,
+          rows,
+          model,
+        },
       });
       if (resp.error) {
         setError(resp.error);
@@ -161,6 +168,20 @@ function OCRTestePage() {
                 {expectedIds.length} marcadores
               </Badge>
             </div>
+          </div>
+
+          <div>
+            <Label className="text-xs uppercase font-bold text-slate-500">Modelo</Label>
+            <select
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              className="mt-1 w-full text-xs border rounded p-2 bg-white"
+            >
+              <option value="google/gemini-2.5-pro">gemini-2.5-pro (recomendado)</option>
+              <option value="google/gemini-3-flash-preview">gemini-3-flash-preview</option>
+              <option value="google/gemini-2.5-flash">gemini-2.5-flash (rápido)</option>
+              <option value="openai/gpt-5">gpt-5</option>
+            </select>
           </div>
 
           <div>
