@@ -89,6 +89,11 @@ function OCRTestePage() {
     () => linhas.filter((l) => l.assinou).length,
     [linhas],
   );
+  // Só mostra linhas com alguma interação (assinou OU marcou algum dia).
+  const linhasVisiveis = useMemo(
+    () => linhas.filter((l) => l.assinou || l.diasMarcados.length > 0),
+    [linhas],
+  );
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-4">
@@ -205,7 +210,7 @@ function OCRTestePage() {
               <div className="text-3xl font-black text-emerald-900 leading-tight">
                 {totalParticipantes}
                 <span className="text-sm font-bold text-emerald-700 ml-2">
-                  · {totalAssinaturas} assinatura{totalAssinaturas === 1 ? "" : "s"} encontrada{totalAssinaturas === 1 ? "" : "s"}
+                  · {totalAssinaturas} assinatura{totalAssinaturas === 1 ? "" : "s"} · {totalParticipantes - totalAssinaturas} só marcaram
                 </span>
               </div>
             </div>
@@ -228,8 +233,8 @@ function OCRTestePage() {
                 </tr>
               </thead>
               <tbody>
-                {linhas.map((l) => (
-                  <tr key={l.linha} className={`border-t ${l.assinou ? "" : "bg-slate-50/60 text-slate-400"}`}>
+                {linhasVisiveis.map((l) => (
+                  <tr key={l.linha} className={`border-t ${l.assinou ? "" : "bg-amber-50/60"}`}>
                     <td className="p-2 font-mono text-xs">{String(l.linha).padStart(2, "0")}</td>
                     <td className="p-2">
                       {l.assinou ? (
@@ -237,7 +242,9 @@ function OCRTestePage() {
                           {l.nome ?? <em className="text-slate-500 font-normal">assinatura ilegível</em>}
                         </span>
                       ) : (
-                        <span className="text-slate-400 italic text-xs">linha em branco</span>
+                        <span className="text-amber-700 italic text-xs font-semibold">
+                          {l.nome ?? "sem assinatura"} · marcou sem assinar
+                        </span>
                       )}
                     </td>
                     {DIAS.map((d) => {
