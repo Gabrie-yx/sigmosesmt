@@ -38,30 +38,40 @@ export const analisarDDS = createServerFn({ method: "POST" })
     const rows = data.rows;
     const modelId = data.model || "google/gemini-2.5-pro";
 
-    const systemPrompt = `Você analisa uma ficha semanal de DDS (Diálogo Diário de Segurança), modelo FOR-SEG-06.
+    const systemPrompt = `Você audita uma ficha manuscrita de DDS (FOR-SEG-06). Rigor máximo, viés CONSERVADOR: NA DÚVIDA = NÃO MARCADO / NÃO ASSINOU.
 
-LAYOUT:
-- Ignore o cabeçalho.
-- A tabela tem ${rows} linhas de funcionários (linha 1 até linha ${rows}), de cima para baixo.
-- Cada linha contém: nome/assinatura manuscrita do funcionário à esquerda e, à direita, 6 quadradinhos correspondentes aos dias da semana na ordem SEG, TER, QUA, QUI, SEX, SAB.
-- Um funcionário "assinou" a ficha quando existe qualquer nome escrito ou assinatura manuscrita na parte esquerda da linha (não importa se legível ou não).
-- Um dia está "marcado" quando o quadradinho daquele dia tem qualquer marca visível dentro (X, traço, pintura, tinta, rabisco, escurecimento). Quadrado branco por dentro = NÃO marcado.
+LAYOUT (ignore totalmente o cabeçalho e o rodapé de assinaturas):
+- Tabela com ${rows} linhas numeradas de 1 a ${rows}, de cima para baixo.
+- Colunas: [#] [NOME] [FUNÇÃO] [SEG] [TER] [QUA] [QUI] [SEX] [SAB]
+- Os 6 quadradinhos à direita são PEQUENOS e IMPRESSOS (linha preta fina). Interior BRANCO por padrão.
 
-SUA TAREFA (só isso, nada mais):
-Para cada uma das ${rows} linhas, devolva:
-  - "linha": número da linha (1..${rows})
-  - "assinou": true se há assinatura/nome escrito na linha, false se a linha está totalmente em branco
-  - "nome": o nome legível (string) ou null se não houver ou for ilegível
-  - "diasMarcados": array com os dias marcados, ex: ["SEG","TER"]. Array vazio se nenhum quadrado dessa linha estiver marcado.
+DEFINIÇÃO ESTRITA — "assinou":
+- true SOMENTE quando existe TRAÇO MANUSCRITO A CANETA na área de nome/assinatura da linha (rabisco, assinatura, nome à mão). Texto impresso não conta. Linha totalmente em branco = false.
 
-SAÍDA (JSON exato, sem comentários, sem markdown):
-{"linhas":[{"linha":1,"assinou":true,"nome":"João Silva","diasMarcados":["SEG","TER"]}, ...]}
+DEFINIÇÃO ESTRITA — "dia marcado":
+- true SOMENTE quando o INTERIOR do quadradinho daquele dia contém uma marca clara e inequívoca: um "X" desenhado, um "✓", ou o quadrado pintado/hachurado por dentro.
+- NÃO conta: quadrado com interior branco/limpo; rabisco que passa POR CIMA da borda mas não invade o interior; sombra do papel; ruído de digitalização; ponto pequeno; borda impressa mais grossa.
+- Se você hesitar entre "marcado" e "não marcado" → é NÃO MARCADO.
 
-Regras:
-- Devolva exatamente ${rows} objetos em "linhas", na ordem de cima para baixo.
-- Se a linha está vazia: {"linha":N,"assinou":false,"nome":null,"diasMarcados":[]}.
-- Não invente nomes. Se não conseguir ler, use null.
-- Só use os valores "SEG","TER","QUA","QUI","SEX","SAB" em diasMarcados.`;
+PADRÃO REAL DA FICHA (use como sanity check):
+- A grande maioria das linhas assinadas marca APENAS 1 dia (o dia da participação). Marcar 2+ dias na mesma linha é RARO.
+- Se você achou 3, 4, 5 ou 6 dias marcados numa mesma linha, RECONFERE: quase certeza que a maioria é falso positivo. Reduza para apenas os que você tem certeza absoluta.
+- Linha sem assinatura NUNCA tem dias marcados. Se "assinou"=false, "diasMarcados" DEVE ser [].
+
+PROCEDIMENTO OBRIGATÓRIO:
+1) Localize a tabela. Numere as linhas de 1 a ${rows}.
+2) Para cada linha, olhe primeiro a área de nome/assinatura. Decida "assinou" (true/false).
+3) Se assinou=false → pule os quadrados, devolva diasMarcados=[].
+4) Se assinou=true → examine UM POR UM os 6 quadrados. Só liste os que têm marca CLARA no interior.
+5) Nome: transcreva só se conseguir ler com confiança. Caso contrário, null.
+
+SAÍDA JSON (sem markdown, sem comentários):
+{"linhas":[{"linha":1,"assinou":true,"nome":"Fulano","diasMarcados":["SEG"]}, ...]}
+
+Regras finais:
+- Exatamente ${rows} objetos em "linhas", na ordem de cima para baixo.
+- diasMarcados só aceita: "SEG","TER","QUA","QUI","SEX","SAB".
+- Não invente. Prefira sempre subestimar a superestimar.`;
 
     const userText = `Analise a ficha DDS anexada e devolva o JSON com as ${rows} linhas.`;
 
