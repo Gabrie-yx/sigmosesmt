@@ -165,6 +165,7 @@ export function HoraExtraSabadoDialog({
       setTurno(rec.turno ?? "1º");
       setHoraIni(rec.horario_inicio ?? "07:30");
       setHoraFim(rec.horario_fim ?? "15:00");
+      setTipoDia(rec.tipo_convocacao === "DIAS_UTEIS" ? "DIA_UTIL" : "SABADO");
       setSetoresSel(rec.setor ? String(rec.setor).split(",").map((s: string) => s.trim()).filter(Boolean) : []);
       setTipoEfetivo((rec.tipo_efetivo as any) ?? "DMN");
       setCompanyId(rec.company_id ?? "");
@@ -217,7 +218,7 @@ export function HoraExtraSabadoDialog({
 
   function resetForm() {
     setData(proximoSabado);
-    setTurno("1º"); setHoraIni("07:30"); setHoraFim("15:00");
+    setTurno("1º"); setHoraIni("07:30"); setHoraFim("15:00"); setTipoDia("SABADO");
     setSetoresSel([]); setSetorNovo(""); setTipoEfetivo("DMN");
     setCompanyId(""); setObservacao(""); setBusca(""); setFuncs([]);
     setNovoExternoNome(""); setNovoExternoFuncao("");

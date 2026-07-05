@@ -36,12 +36,12 @@ type HoraExtraModulo = {
 };
 
 const MODULO_MAP: Record<string, ModuloScope> = {
-  eletrica:   { slug: "eletrica",   moduloLabel: "Elétrica",   empresaFixaNome: "DMN", funcionariosPermitidos: ["Natanael", "Leonardo"] },
-  mecanica:   { slug: "mecanica",   moduloLabel: "Mecânica",   empresaFixaNome: "LF SERVIÇOS" },
+  eletrica:   { slug: "eletrica",   moduloLabel: "Elétrica",   setor: "Elétrica",   empresaFixaNome: "DMN", funcionariosPermitidos: ["Natanael", "Leonardo"] },
+  mecanica:   { slug: "mecanica",   moduloLabel: "Mecânica",   setor: "Mecânica",   empresaFixaNome: "LF SERVIÇOS" },
   producao:   { slug: "producao",   moduloLabel: "Produção",   setor: "Produção",   empresaFixaNome: "DMN" },
   compras:    { slug: "compras",    moduloLabel: "Compras",    setor: "Compras",    empresaFixaNome: "DMN" },
-  manutencao: { slug: "manutencao", moduloLabel: "Manutenção", empresaFixaNome: "DMN", funcionariosPermitidos: ["Natanael", "Leonardo"] },
-  almoxarifado: { slug: "almoxarifado", moduloLabel: "Almoxarifado", empresaFixaNome: "DMN", funcionariosPermitidos: ["Israel Uchoa"] },
+  manutencao: { slug: "manutencao", moduloLabel: "Manutenção", setor: "Manutenção", empresaFixaNome: "DMN", funcionariosPermitidos: ["Natanael", "Leonardo"] },
+  almoxarifado: { slug: "almoxarifado", moduloLabel: "Almoxarifado", setor: "Almoxarifado", empresaFixaNome: "DMN", funcionariosPermitidos: ["Israel Uchoa"] },
   portaria:   { slug: "portaria",   moduloLabel: "Portaria",   setor: "Portaria",   empresaFixaNome: "DMN" },
 };
 
