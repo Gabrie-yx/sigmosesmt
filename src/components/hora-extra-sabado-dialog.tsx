@@ -103,6 +103,24 @@ export function HoraExtraSabadoDialog({
     queryKey: ["companies"],
     queryFn: async () => (await supabase.from("companies").select("id,name").order("name")).data ?? [],
   });
+  // Empresas exibidas no dropdown — quando escopado, só a empresa fixa.
+  const companiesFiltradas = useMemo(() => {
+    const list = (companies ?? []) as { id: string; name: string }[];
+    if (!empresaFixaNome) return list;
+    const alvo = empresaFixaNome.trim().toLowerCase();
+    return list.filter((c) => String(c.name ?? "").trim().toLowerCase() === alvo);
+  }, [companies, empresaFixaNome]);
+
+  // Ao abrir escopado, trava setor + empresa automaticamente.
+  useEffect(() => {
+    if (!open || editId) return;
+    if (setorFixo) setSetoresSel([setorFixo]);
+    if (empresaFixaNome && companiesFiltradas.length > 0) {
+      setCompanyId(String(companiesFiltradas[0].id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, setorFixo, empresaFixaNome, companiesFiltradas.length]);
+
   const { data: setores } = useQuery({
     queryKey: ["he-setores"],
     queryFn: async () => {
