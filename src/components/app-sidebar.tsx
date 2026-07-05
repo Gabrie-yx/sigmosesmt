@@ -186,18 +186,8 @@ const ALMOXARIFADO_ITEMS: LeafItem[] = [
 ];
 
 const MANUTENCAO_ITEMS: LeafItem[] = [
-  { to: "/app/modulo/manutencao/hora-extra", label: "Hora Extra", icon: CalendarCheck2 },
-  { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
-];
-
-const MECANICA_ITEMS: LeafItem[] = [
-  { to: "/app/modulo/mecanica/hora-extra", label: "Hora Extra", icon: CalendarCheck2 },
-  { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
-];
-
-const ELETRICA_ITEMS: LeafItem[] = [
-  { to: "/app/modulo/eletrica/hora-extra", label: "Hora Extra", icon: CalendarCheck2 },
-  { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
+  { to: "/app/modulo/eletrica/hora-extra", label: "Elétrica — Hora Extra", icon: Zap },
+  { to: "/app/modulo/mecanica/hora-extra", label: "Mecânica — Hora Extra", icon: Hammer },
 ];
 
 const PORTARIA_ITEMS: LeafItem[] = [
