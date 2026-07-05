@@ -91,6 +91,26 @@ export function CursosMinistradosPanel() {
     },
   });
 
+  // Aderência à matriz — usada APENAS para preencher a barra proporcional (meta X de Y).
+  const { data: aderenciaPorCurso = {} } = useQuery({
+    queryKey: ["cursos-aderencia"],
+    queryFn: async () => {
+      const { data: entries, error } = await supabase
+        .from("training_matrix_entries")
+        .select("course_id, employee_id, data_realizacao")
+        .limit(100000);
+      if (error) throw error;
+      const map: Record<string, { total: number; ok: number }> = {};
+      (entries ?? []).forEach((e: any) => {
+        if (!e.course_id) return;
+        const m = (map[e.course_id] ??= { total: 0, ok: 0 });
+        m.total += 1;
+        if (e.data_realizacao) m.ok += 1;
+      });
+      return map;
+    },
+  });
+
   const turmasPorCurso = useMemo(() => {
     const m: Record<string, any[]> = {};
     trainings.forEach((t: any) => {
@@ -153,6 +173,8 @@ export function CursosMinistradosPanel() {
             const ultima = turmas[0];
             const catColor = CATEGORIA_COLOR[c.categoria] ?? CATEGORIA_COLOR.OUTRO;
             const treinados = (treinadosPorCurso as any)[c.id] ?? 0;
+            const ad = (aderenciaPorCurso as any)[c.id] as { total: number; ok: number } | undefined;
+            const pct = ad && ad.total > 0 ? Math.round((ad.ok / ad.total) * 100) : 0;
             return (
               <button
                 key={c.id}
@@ -183,8 +205,16 @@ export function CursosMinistradosPanel() {
                       <span className="text-amber-300">{treinados}</span>
                     </div>
                     <div className="h-1.5 bg-black/40 rounded-full overflow-hidden ring-1 ring-white/5">
-                      <div className="h-full w-full bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 shadow-[0_0_12px_rgba(251,191,36,0.75)]" />
+                      <div
+                        className="h-full bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 shadow-[0_0_12px_rgba(251,191,36,0.75)] transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
+                    {ad && ad.total > 0 && (
+                      <div className="mt-1 text-[9px] font-black uppercase tracking-wider text-amber-200/60 text-right">
+                        Meta {ad.ok}/{ad.total}
+                      </div>
+                    )}
                   </div>
                 )}
               </button>
