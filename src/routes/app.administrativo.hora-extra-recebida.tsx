@@ -316,6 +316,21 @@ function SetorCard({
 
 function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
   const [expand, setExpand] = useState(false);
+  const [indeferirOpen, setIndeferirOpen] = useState(false);
+  const qc = useQueryClient();
+  const aprovar = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("decidir_convocacao_extra", {
+        _hora_extra_id: he.id, _aprovar: true,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Hora extra aprovada");
+      qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao aprovar"),
+  });
   const tipo = he.tipo_convocacao === "DIAS_UTEIS" ? "Dia útil" : he.tipo_convocacao === "SABADO" ? "Sábado" : "—";
   const solicitante = he.aberto_por_nome ?? he.criado_automatico_por_nome ?? "—";
   const statusKey = he.status in STATUS_BADGE ? he.status : "PENDENTE";
@@ -372,8 +387,84 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
               ))}
             </ul>
           )}
+          {he.status === "PENDENTE" && (
+            <div className="flex gap-2 mt-3 pt-3 border-t border-white/10">
+              <Button
+                size="sm"
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={() => aprovar.mutate()}
+                disabled={aprovar.isPending}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-1" /> Aprovar
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="flex-1"
+                onClick={() => setIndeferirOpen(true)}
+                disabled={aprovar.isPending}
+              >
+                <XCircle className="h-4 w-4 mr-1" /> Indeferir
+              </Button>
+            </div>
+          )}
         </CardContent>
       )}
+      <IndeferirDialog
+        open={indeferirOpen}
+        onClose={() => setIndeferirOpen(false)}
+        horaExtraId={he.id}
+        onDone={() => qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida"] })}
+      />
     </Card>
+  );
+}
+
+function IndeferirDialog({ open, onClose, horaExtraId, onDone }: {
+  open: boolean; onClose: () => void; horaExtraId: string; onDone: () => void;
+}) {
+  const [motivo, setMotivo] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function confirmar() {
+    if (motivo.trim().length < 5) {
+      toast.error("Motivo muito curto (mín. 5 caracteres)");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.rpc("decidir_convocacao_extra", {
+      _hora_extra_id: horaExtraId, _aprovar: false, _motivo: motivo,
+    });
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Hora extra indeferida — retornou ao solicitante");
+    setMotivo("");
+    onDone();
+    onClose();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) { onClose(); setMotivo(""); } }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Indeferir hora extra</DialogTitle>
+          <DialogDescription>
+            O solicitante verá o motivo e a ficha retornará a ele para correção.
+          </DialogDescription>
+        </DialogHeader>
+        <Textarea
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value)}
+          rows={4}
+          placeholder="Ex.: escopo já coberto pela equipe de dia, sem urgência para justificar hora extra…"
+        />
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => { onClose(); setMotivo(""); }}>Cancelar</Button>
+          <Button variant="destructive" onClick={confirmar} disabled={saving}>
+            {saving ? "Enviando…" : "Confirmar indeferimento"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
