@@ -339,16 +339,25 @@ export function HoraExtraSabadoDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto !p-5 !gap-3">
-        <DialogHeader>
-          <DialogTitle className="text-base flex items-center gap-2">
-            {editId ? "Editar" : "Nova"} ficha de hora extra (sábado)
+        <DialogHeader className="pr-8">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <DialogTitle className="text-lg font-semibold leading-tight">
+              {editId ? "Editar ficha" : "Nova ficha"} de hora extra
+            </DialogTitle>
+            <span className={`text-[11px] font-semibold rounded px-1.5 py-0.5 ring-1 ${
+              tipoDia === "SABADO"
+                ? "text-amber-200 bg-amber-500/10 ring-amber-400/30"
+                : "text-sky-200 bg-sky-500/10 ring-sky-400/30"
+            }`}>
+              {tipoDia === "SABADO" ? "Sábado" : "Dia útil"}
+            </span>
             {moduloLabel && !editId && (
-              <span className="text-xs font-semibold text-red-300 bg-red-500/10 ring-1 ring-red-400/30 rounded px-1.5 py-0.5">
+              <span className="text-[11px] font-semibold text-red-200 bg-red-500/10 ring-1 ring-red-400/30 rounded px-1.5 py-0.5">
                 {moduloLabel}
               </span>
             )}
             <HelpHint topic="hora-extra-sabado" />
-          </DialogTitle>
+          </div>
         </DialogHeader>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
