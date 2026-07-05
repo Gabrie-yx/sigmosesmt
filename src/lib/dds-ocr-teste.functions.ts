@@ -153,15 +153,15 @@ Exatamente ${rows} objetos em "linhas", na ordem de cima para baixo. diasMarcado
             .filter((d: string) => (DIAS as readonly string[]).includes(d))
         : [];
       const nomeVal = typeof item?.nome === "string" && item.nome.trim() ? item.nome.trim() : null;
-      // Confia no julgamento do modelo sobre "assinou"; só considera true se ele afirmou.
-      // Nome legível reforça, mas dias marcados NÃO implicam assinatura (defesa contra falso positivo).
-      const assinou = !!item?.assinou || !!nomeVal;
+      // "assinou" vem do modelo. Dias marcados NÃO implicam assinatura — é comum
+      // um funcionário marcar quadradinhos sem assinar (e vice-versa). Mantemos
+      // as duas dimensões independentes; o consumidor decide como contar.
+      const assinou = !!item?.assinou;
       porLinha.set(n, {
         linha: n,
         assinou,
         nome: nomeVal,
-        // Se não assinou, zera dias (linha vazia não pode ter marcação).
-        diasMarcados: assinou ? Array.from(new Set(dias)) : [],
+        diasMarcados: Array.from(new Set(dias)),
       });
     }
 
@@ -171,7 +171,11 @@ Exatamente ${rows} objetos em "linhas", na ordem de cima para baixo. diasMarcado
         porLinha.get(i) ?? { linha: i, assinou: false, nome: null, diasMarcados: [] },
       );
     }
-    const totalParticipantes = linhas.filter((l) => l.assinou).length;
+    // Participante = quem interagiu com a linha (assinou OU marcou algum dia).
+    // Linha totalmente vazia não conta.
+    const totalParticipantes = linhas.filter(
+      (l) => l.assinou || l.diasMarcados.length > 0,
+    ).length;
 
     return { linhas, totalParticipantes, modelUsed: modelId };
   });
