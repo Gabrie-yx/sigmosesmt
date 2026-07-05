@@ -30,10 +30,62 @@ export type OCRResultado = {
 
 const DIAS = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB"] as const;
 
+// ─── Fuzzy match helpers ─────────────────────────────────────────────────────
+function normalizar(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function tokens(s: string): string[] {
+  return normalizar(s).split(" ").filter((t) => t.length >= 2);
+}
+function similaridadeToken(a: string, b: string): number {
+  if (a === b) return 1;
+  const m = a.length, n = b.length;
+  if (!m || !n) return 0;
+  const dp: number[] = new Array(n + 1);
+  for (let j = 0; j <= n; j++) dp[j] = j;
+  for (let i = 1; i <= m; i++) {
+    let prev = dp[0];
+    dp[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const tmp = dp[j];
+      dp[j] = a[i - 1] === b[j - 1]
+        ? prev
+        : 1 + Math.min(prev, dp[j], dp[j - 1]);
+      prev = tmp;
+    }
+  }
+  return 1 - dp[n] / Math.max(m, n);
+}
+function scoreNome(ocr: string, funcionario: string): number {
+  const ta = tokens(ocr);
+  const tb = tokens(funcionario);
+  if (!ta.length || !tb.length) return 0;
+  let soma = 0;
+  let matched = 0;
+  for (const x of ta) {
+    let best = 0;
+    for (const y of tb) {
+      const s = similaridadeToken(x, y);
+      if (s > best) best = s;
+    }
+    if (best >= 0.75) matched++;
+    soma += best;
+  }
+  const media = soma / ta.length;
+  const bonus = matched / ta.length;
+  return Math.min(1, media * 0.6 + bonus * 0.4);
+}
+
 export const analisarDDS = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => InputSchema.parse(d))
-  .handler(async ({ data }): Promise<OCRResultado> => {
+  .handler(async ({ data, context }): Promise<OCRResultado> => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return { error: "LOVABLE_API_KEY não configurada", linhas: [], totalParticipantes: 0 };
