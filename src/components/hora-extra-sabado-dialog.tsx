@@ -333,6 +333,11 @@ export function HoraExtraSabadoDialog({
         <DialogHeader>
           <DialogTitle className="text-base flex items-center gap-2">
             {editId ? "Editar" : "Nova"} ficha de hora extra (sábado)
+            {moduloLabel && !editId && (
+              <span className="text-xs font-semibold text-red-300 bg-red-500/10 ring-1 ring-red-400/30 rounded px-1.5 py-0.5">
+                {moduloLabel}
+              </span>
+            )}
             <HelpHint topic="hora-extra-sabado" />
           </DialogTitle>
         </DialogHeader>
