@@ -14,6 +14,10 @@ export type LinhaResultado = {
   assinou: boolean;
   nome: string | null;
   diasMarcados: string[]; // subset de ["SEG","TER","QUA","QUI","SEX","SAB"]
+  // Fuzzy match contra tabela employees (ATIVO). Presente só quando bateu.
+  nomeCorrigido?: string | null;
+  matchedEmployeeId?: string | null;
+  matchScore?: number; // 0..1
 };
 
 export type OCRResultado = {
