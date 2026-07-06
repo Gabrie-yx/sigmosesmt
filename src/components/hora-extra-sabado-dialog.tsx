@@ -631,11 +631,11 @@ export function HoraExtraSabadoDialog({
           <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
             <p className="text-[10px] font-black uppercase tracking-widest">Selecionados ({funcs.length})</p>
             {funcs.length > 0 && (
-              <div className="flex gap-1 flex-wrap">
-                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => marcarTodos("transporte", true)}><CheckSquare className="h-3.5 w-3.5 mr-1" />Todos transp.</Button>
-                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => marcarTodos("transporte", false)}><Square className="h-3.5 w-3.5 mr-1" />Nenhum transp.</Button>
-                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => marcarTodos("alimentacao", true)}><CheckSquare className="h-3.5 w-3.5 mr-1" />Todos alim.</Button>
-                <Button size="sm" variant="ghost" className="h-7 text-xs text-rose-300 hover:text-rose-200 hover:bg-rose-500/10" onClick={removerTodos}><Trash2 className="h-3.5 w-3.5 mr-1" />Remover todos</Button>
+              <div className="flex flex-wrap gap-1 w-full sm:w-auto">
+                <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => marcarTodos("transporte", true)}><CheckSquare className="h-3.5 w-3.5 mr-1" />Todos transp.</Button>
+                <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => marcarTodos("transporte", false)}><Square className="h-3.5 w-3.5 mr-1" />Nenhum transp.</Button>
+                <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => marcarTodos("alimentacao", true)}><CheckSquare className="h-3.5 w-3.5 mr-1" />Todos alim.</Button>
+                <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px] text-rose-300 hover:text-rose-200 hover:bg-rose-500/10" onClick={removerTodos}><Trash2 className="h-3.5 w-3.5 mr-1" />Remover todos</Button>
               </div>
             )}
           </div>
@@ -646,28 +646,28 @@ export function HoraExtraSabadoDialog({
               <table className="w-full text-sm">
                 <thead className="bg-white/[0.05] text-[10px] uppercase tracking-widest">
                   <tr>
-                    <th className="px-2 py-2 text-left w-10">#</th>
-                    <th className="px-2 py-2 text-left">Nome</th>
-                    <th className="px-2 py-2 text-center">Transp.</th>
-                    <th className="px-2 py-2 text-center">Alim.</th>
-                    <th className="px-2 py-2 text-center">Presença</th>
-                    <th className="px-2 py-2 w-10"></th>
+                    <th className="px-1 sm:px-2 py-2 text-left w-6 sm:w-10">#</th>
+                    <th className="px-1 sm:px-2 py-2 text-left">Nome</th>
+                    <th className="px-1 sm:px-2 py-2 text-center">Transp.</th>
+                    <th className="px-1 sm:px-2 py-2 text-center">Alim.</th>
+                    <th className="px-1 sm:px-2 py-2 text-center">Presença</th>
+                    <th className="px-1 sm:px-2 py-2 w-8 sm:w-10"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {funcs.map((f, i) => (
                     <tr key={f.key} className="border-t border-white/10">
-                      <td className="px-2 py-1.5 opacity-60">{i + 1}</td>
-                      <td className="px-2 py-1.5">
+                      <td className="px-1 sm:px-2 py-1.5 opacity-60 text-xs">{i + 1}</td>
+                      <td className="px-1 sm:px-2 py-1.5">
                         <span className="font-medium">{f.nome}</span>
                         {f.externo && <span className="ml-2 text-[10px] uppercase font-bold text-amber-200 bg-amber-400/12 ring-1 ring-amber-300/25 px-1.5 py-0.5 rounded">Externo</span>}
                         {f.funcao && <span className="ml-2 text-xs opacity-70">— {f.funcao}</span>}
                       </td>
-                      <td className="px-2 py-1.5 text-center"><Checkbox checked={f.transporte} onCheckedChange={() => toggle(f.key, "transporte")} /></td>
-                      <td className="px-2 py-1.5 text-center"><Checkbox checked={f.alimentacao} onCheckedChange={() => toggle(f.key, "alimentacao")} /></td>
-                      <td className="px-2 py-1.5 text-center">
+                      <td className="px-1 sm:px-2 py-1.5 text-center"><Checkbox checked={f.transporte} onCheckedChange={() => toggle(f.key, "transporte")} /></td>
+                      <td className="px-1 sm:px-2 py-1.5 text-center"><Checkbox checked={f.alimentacao} onCheckedChange={() => toggle(f.key, "alimentacao")} /></td>
+                      <td className="px-1 sm:px-2 py-1.5 text-center">
                         <Select value={f.presenca ?? "_"} onValueChange={(v) => setPresenca(f.key, v === "_" ? null : v)}>
-                          <SelectTrigger className="h-8 w-24 mx-auto"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 w-16 sm:w-24 px-2 mx-auto"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="_">—</SelectItem>
                             <SelectItem value="P">Presente</SelectItem>
@@ -675,7 +675,7 @@ export function HoraExtraSabadoDialog({
                           </SelectContent>
                         </Select>
                       </td>
-                      <td className="px-2 py-1.5 text-center">
+                      <td className="px-1 sm:px-2 py-1.5 text-center">
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(f.key)}><X className="h-4 w-4 text-rose-300" /></Button>
                       </td>
                     </tr>
@@ -696,9 +696,9 @@ export function HoraExtraSabadoDialog({
           />
         </div>
 
-        <div className="mt-4 flex justify-end gap-2">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={() => save.mutate()} disabled={save.isPending || funcs.length === 0}>
+        <div className="mt-4 flex flex-col-reverse sm:flex-row sm:justify-center gap-2">
+          <Button variant="ghost" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button className="w-full sm:w-auto bg-red-700 hover:bg-red-800" onClick={() => save.mutate()} disabled={save.isPending || funcs.length === 0}>
             {save.isPending ? "Salvando…" : editId ? "Salvar alterações" : "Criar ficha"}
           </Button>
         </div>
