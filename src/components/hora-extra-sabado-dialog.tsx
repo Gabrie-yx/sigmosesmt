@@ -527,7 +527,16 @@ export function HoraExtraSabadoDialog({
               <SelectTrigger><SelectValue placeholder={empresaFixaNome ?? "Todas"} /></SelectTrigger>
               <SelectContent>
                 {!empresaFixaNome && <SelectItem value="_all">Todas</SelectItem>}
-                {companiesFiltradas.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                {companiesFiltradas.map((c) => (
+                  <SelectItem
+                    key={c.id}
+                    value={c.id}
+                    disabled={c._disabled}
+                    className={c._disabled ? "opacity-40 pointer-events-none" : ""}
+                  >
+                    {c.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
