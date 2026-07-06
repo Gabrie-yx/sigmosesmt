@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Plus, X, Users, CheckSquare, Square, Trash2 } from "lucide-react";
+import { Search, Plus, X, Users, CheckSquare, Square, Trash2, Lock as LockIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { toTitleCasePT } from "@/lib/utils";
@@ -245,19 +245,25 @@ export function HoraExtraSabadoDialog({
     const idsPermitidos = employeeIdsPermitidos && employeeIdsPermitidos.length > 0
       ? new Set(employeeIdsPermitidos)
       : null;
+    const temRestricao = !!idsPermitidos || permitidos.length > 0;
     return (employees ?? [])
       .filter((e: any) => !ids.has(e.id))
       .filter((e: any) => {
-        if (idsPermitidos) return idsPermitidos.has(e.id);
-        if (permitidos.length > 0) {
-          const nome = String(e.nome ?? "").toLowerCase();
-          return permitidos.some((p) => nome.includes(p));
-        }
         if (!setorAlvo) return true;
         const setores = String(e.setor ?? "").toLowerCase();
         return setores.split(",").map((x) => x.trim()).some((x) => x === setorAlvo);
       })
-      .filter((e: any) => !s || e.nome.toLowerCase().includes(s));
+      .filter((e: any) => !s || e.nome.toLowerCase().includes(s))
+      .map((e: any) => {
+        let permitido = true;
+        if (idsPermitidos) {
+          permitido = idsPermitidos.has(e.id);
+        } else if (permitidos.length > 0) {
+          const nome = String(e.nome ?? "").toLowerCase();
+          permitido = permitidos.some((p) => nome.includes(p));
+        }
+        return { ...e, _permitido: permitido, _temRestricao: temRestricao };
+      });
   }, [employees, funcs, busca, setorFixo, funcionariosPermitidos, employeeIdsPermitidos]);
 
   function addEmp(e: any) {
@@ -267,7 +273,7 @@ export function HoraExtraSabadoDialog({
     ]);
   }
   function addTodos() {
-    const novos = empsDisponiveis.map((e: any) => ({
+    const novos = empsDisponiveis.filter((e: any) => e._permitido).map((e: any) => ({
       key: crypto.randomUUID(),
       employee_id: e.id,
       nome: e.nome,
@@ -517,8 +523,8 @@ export function HoraExtraSabadoDialog({
         <div className="mt-3 rounded-xl border border-white/10 p-2.5 bg-white/[0.03]">
           <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
             <p className="text-[10px] font-black uppercase tracking-widest">Adicionar funcionários</p>
-            <Button size="sm" variant="outline" onClick={addTodos} disabled={empsDisponiveis.length === 0} className="h-7 text-xs">
-              <Users className="h-3.5 w-3.5 mr-1.5" />Adicionar todos ({empsDisponiveis.length})
+            <Button size="sm" variant="outline" onClick={addTodos} disabled={empsDisponiveis.filter((e:any)=>e._permitido).length === 0} className="h-7 text-xs">
+              <Users className="h-3.5 w-3.5 mr-1.5" />Adicionar todos ({empsDisponiveis.filter((e:any)=>e._permitido).length})
             </Button>
           </div>
           <div className="relative mb-2">
@@ -526,12 +532,22 @@ export function HoraExtraSabadoDialog({
             <Input className="pl-9 h-8" placeholder="Buscar funcionário…" value={busca} onChange={(e) => setBusca(e.target.value)} />
           </div>
           <div className="max-h-40 overflow-y-auto rounded-md border border-white/10 bg-white/[0.03] divide-y divide-white/10">
-            {empsDisponiveis.slice(0, 50).map((e: any) => (
-              <button key={e.id} type="button" onClick={() => addEmp(e)} className="w-full text-left px-3 py-1.5 text-sm hover:bg-white/[0.06] flex items-center justify-between">
-                <span>{e.nome}</span>
-                <Plus className="h-3.5 w-3.5 opacity-60" />
-              </button>
-            ))}
+            {empsDisponiveis.slice(0, 50).map((e: any) => {
+              const bloqueado = e._temRestricao && !e._permitido;
+              return (
+                <button
+                  key={e.id}
+                  type="button"
+                  onClick={() => !bloqueado && addEmp(e)}
+                  disabled={bloqueado}
+                  title={bloqueado ? "Você não tem permissão para marcar este funcionário" : undefined}
+                  className={`w-full text-left px-3 py-1.5 text-sm flex items-center justify-between ${bloqueado ? "opacity-40 cursor-not-allowed" : "hover:bg-white/[0.06]"}`}
+                >
+                  <span>{e.nome}</span>
+                  {bloqueado ? <LockIcon className="h-3.5 w-3.5 opacity-60" /> : <Plus className="h-3.5 w-3.5 opacity-60" />}
+                </button>
+              );
+            })}
             {empsDisponiveis.length === 0 && <p className="px-3 py-3 text-xs opacity-60 italic">Nenhum funcionário disponível.</p>}
           </div>
           {/* Externo */}
