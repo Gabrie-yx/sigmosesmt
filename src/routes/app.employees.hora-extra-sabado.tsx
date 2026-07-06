@@ -325,7 +325,7 @@ function HoraExtraSabadoPage() {
           <p className="text-xs text-slate-400 mt-1">Crie a primeira clicando em "Nova ficha".</p>
         </div>
       ) : (
-        <div className="space-y-2 max-w-2xl mx-auto">
+        <div className="space-y-3 max-w-6xl mx-auto">
           {gruposPorMes.map((grupo) => {
             const aberto = mesAtivo === grupo.key;
             return (
@@ -354,7 +354,7 @@ function HoraExtraSabadoPage() {
                 <ChevronDown className={`h-3.5 w-3.5 text-slate-500 group-hover:text-slate-300 transition-all ${aberto ? "rotate-180" : ""}`} />
               </button>
               {aberto && (
-              <div className="grid gap-1 px-2 pb-2 pt-1 border-t border-white/[0.04]">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 px-3 pb-3 pt-2 border-t border-white/[0.04]">
                 {grupo.itens.map((f: any) => {
                   const d = new Date(f.data + "T12:00:00");
                   const dia = DIAS[d.getDay()];
@@ -365,7 +365,7 @@ function HoraExtraSabadoPage() {
                     <button
                       key={f.id}
                       onClick={() => setDetalheId(f.id)}
-                      className={`w-full text-left rounded-xl border bg-white/[0.02] hover:bg-white/[0.06] transition-all px-3 py-2 flex items-center gap-3 ${
+                      className={`w-full text-left rounded-xl border bg-white/[0.02] hover:bg-white/[0.06] hover:-translate-y-0.5 transition-all px-3 py-2.5 flex items-center gap-3 ${
                         indeferida
                           ? "animate-indeferida"
                           : "border-white/10 hover:border-rose-400/40"
