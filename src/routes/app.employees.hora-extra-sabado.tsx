@@ -398,120 +398,125 @@ function HoraExtraSabadoPage() {
 
       {/* Modal de detalhes */}
       <Dialog open={!!detalheId} onOpenChange={(o) => !o && setDetalheId(null)}>
-        <DialogContent className="w-full sm:max-w-lg bg-[#1a0608]/95 backdrop-blur-sm border-white/10 text-slate-100">
+        <DialogContent className="w-full sm:max-w-3xl bg-[#1a0608]/95 backdrop-blur-sm border-white/10 text-slate-100 p-0 overflow-hidden">
           {fichaDetalhe && (() => {
             const d = new Date(fichaDetalhe.data + "T12:00:00");
             const dia = DIAS[d.getDay()];
+            const funcs = fichaDetalhe.hora_extra_sabado_funcionarios ?? [];
+            const tipo = fichaDetalhe.tipo_convocacao === "DIAS_UTEIS" ? "Dia útil" : "Sábado";
             return (
               <>
-                <DialogHeader>
-                  <DialogTitle className="text-2xl font-black text-rose-200">
-                    {d.toLocaleDateString("pt-BR")}
-                  </DialogTitle>
-                  <DialogDescription className="text-slate-400">
-                    {dia} · {fichaDetalhe.tipo_efetivo} · {fichaDetalhe.hora_extra_sabado_funcionarios?.length ?? 0} funcionários
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="mt-6 space-y-4 text-sm">
-                  {fichaDetalhe.companies?.name && (
-                    <div className="flex items-start gap-2"><Building2 className="h-4 w-4 text-rose-300 mt-0.5" /><div><div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Empresa</div><div>{fichaDetalhe.companies.name}</div></div></div>
-                  )}
-                  {fichaDetalhe.turno && (
-                    <div className="flex items-start gap-2"><Clock className="h-4 w-4 text-rose-300 mt-0.5" /><div><div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Turno / Horário</div><div>{fichaDetalhe.turno}º — {fichaDetalhe.horario_inicio} às {fichaDetalhe.horario_fim ?? "—"}</div></div></div>
-                  )}
-                  {fichaDetalhe.setor && (
-                    <div className="flex items-start gap-2"><MapPin className="h-4 w-4 text-rose-300 mt-0.5" /><div><div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Setor</div><div>{fichaDetalhe.setor}</div></div></div>
-                  )}
-                  {fichaDetalhe.centro_custo && (
-                    <div className="flex items-start gap-2"><MapPin className="h-4 w-4 text-rose-300 mt-0.5" /><div><div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Centro de custo</div><div>{fichaDetalhe.centro_custo}</div></div></div>
-                  )}
-                  {fichaDetalhe.observacao && (
-                    <div className="rounded-lg bg-white/[0.03] border border-white/10 p-3 text-xs text-slate-300">
-                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Observação</div>
-                      {fichaDetalhe.observacao}
+                {/* Cabeçalho horizontal com data em destaque + pills */}
+                <DialogHeader className="px-6 pt-6 pb-4 border-b border-white/[0.06] bg-gradient-to-r from-rose-500/[0.08] to-transparent">
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-center justify-center min-w-[64px] rounded-xl bg-rose-500/10 ring-1 ring-rose-400/30 px-3 py-2 shrink-0">
+                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-300">{dia.slice(0,3)}</span>
+                      <span className="text-2xl font-black tabular-nums text-rose-100 leading-none">{d.getDate().toString().padStart(2,"0")}</span>
+                      <span className="text-[8px] font-bold uppercase tracking-widest text-rose-300/70 mt-0.5">{d.toLocaleDateString("pt-BR",{month:"short"}).replace(".","")}</span>
                     </div>
-                  )}
-                  {(() => {
-                    const tipo = fichaDetalhe.tipo_convocacao === "DIAS_UTEIS" ? "Dia útil" : "Sábado";
-                    const funcs = fichaDetalhe.hora_extra_sabado_funcionarios ?? [];
-                    return (
-                      <>
-                        <div className="flex items-start gap-2">
-                          <Calendar className="h-4 w-4 text-rose-300 mt-0.5" />
-                          <div>
-                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo</div>
-                            <div>
-                              <span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest bg-rose-500/20 text-rose-200 border border-rose-400/40">
-                                {tipo}
-                              </span>
+                    <div className="flex-1 min-w-0">
+                      <DialogTitle className="text-lg font-black text-slate-100 truncate">
+                        {fichaDetalhe.companies?.name ?? "—"}
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3 text-rose-300" />{fichaDetalhe.turno ? `${fichaDetalhe.turno}º · ` : ""}{fichaDetalhe.horario_inicio ?? "—"}{fichaDetalhe.horario_fim ? ` – ${fichaDetalhe.horario_fim}` : ""}</span>
+                        <span className="inline-flex items-center gap-1"><Users className="h-3 w-3 text-rose-300" />{funcs.length} colaboradores</span>
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest bg-rose-500/20 text-rose-200 border border-rose-400/40">{tipo}</span>
+                      </DialogDescription>
+                    </div>
+                  </div>
+                </DialogHeader>
+
+                {/* Corpo em 2 colunas: info à esquerda, funcionários à direita */}
+                <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-0 max-h-[60vh]">
+                  {/* Coluna esquerda: metadados */}
+                  <div className="p-5 space-y-3 border-b md:border-b-0 md:border-r border-white/[0.06] overflow-y-auto">
+                    {fichaDetalhe.setor && (
+                      <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Setor" value={fichaDetalhe.setor} />
+                    )}
+                    {fichaDetalhe.centro_custo && (
+                      <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Centro de custo" value={fichaDetalhe.centro_custo} />
+                    )}
+                    {fichaDetalhe.tipo_efetivo && (
+                      <InfoRow icon={<Users className="h-3.5 w-3.5" />} label="Efetivo" value={fichaDetalhe.tipo_efetivo} />
+                    )}
+                    {fichaDetalhe.observacao && (
+                      <div className="rounded-lg bg-white/[0.03] border border-white/10 p-3">
+                        <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Observação</div>
+                        <div className="text-xs text-slate-200 leading-relaxed">{fichaDetalhe.observacao}</div>
+                      </div>
+                    )}
+                    {fichaDetalhe.motivo_indeferimento && (
+                      <div className="rounded-lg bg-amber-500/[0.06] border border-amber-400/30 p-3">
+                        <div className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-300 mb-1">Motivo do indeferimento</div>
+                        <div className="text-xs text-amber-100 leading-relaxed">{fichaDetalhe.motivo_indeferimento}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Coluna direita: funcionários */}
+                  <div className="p-5 overflow-hidden flex flex-col">
+                    <div className="flex items-center gap-2 mb-2 shrink-0">
+                      <Users className="h-3.5 w-3.5 text-rose-300" />
+                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
+                        Funcionários <span className="text-slate-500">({funcs.length})</span>
+                      </div>
+                    </div>
+                    {funcs.length === 0 ? (
+                      <div className="text-xs text-slate-500 italic px-1">Nenhum funcionário marcado.</div>
+                    ) : (() => {
+                      const empresaFicha = fichaDetalhe.companies?.name ?? "Sem empresa";
+                      const grupos = new Map<string, any[]>();
+                      for (const f of funcs) {
+                        const emp = f.employees?.companies?.name
+                          ?? (f.externo ? "Sem empresa" : empresaFicha);
+                        if (!grupos.has(emp)) grupos.set(emp, []);
+                        grupos.get(emp)!.push(f);
+                      }
+                      const ordenadas = Array.from(grupos.entries())
+                        .sort(([a], [b]) => a.localeCompare(b, "pt-BR"));
+                      return (
+                        <div className="flex-1 overflow-y-auto rounded-lg border border-white/[0.08] bg-black/30">
+                          {ordenadas.map(([empresa, lista]) => (
+                            <div key={empresa}>
+                              <div className="sticky top-0 z-10 flex items-center justify-between px-3 py-1.5 bg-rose-500/[0.08] backdrop-blur border-b border-rose-400/20">
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-200 truncate">{empresa}</span>
+                                <span className="text-[9px] font-bold text-rose-100/60 tabular-nums shrink-0 ml-2">{lista.length}</span>
+                              </div>
+                              <ul className="divide-y divide-white/[0.04]">
+                                {lista.map((f: any) => (
+                                  <li key={f.id} className="px-3 py-1.5 flex items-center justify-between gap-2 text-xs hover:bg-white/[0.02]">
+                                    <span className="truncate text-slate-100">
+                                      {f.nome}
+                                      {f.externo ? <span className="ml-1 text-[9px] text-amber-300">(ext)</span> : null}
+                                      {f.funcao ? <span className="text-slate-500"> · {f.funcao}</span> : null}
+                                    </span>
+                                    {f.presenca && (
+                                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 shrink-0">{f.presenca}</span>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
-                          </div>
+                          ))}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <Users className="h-4 w-4 text-rose-300" />
-                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                              Funcionários ({funcs.length})
-                            </div>
-                          </div>
-                          {funcs.length === 0 ? (
-                            <div className="text-xs text-slate-500 italic px-1">Nenhum funcionário marcado.</div>
-                          ) : (
-                            (() => {
-                              const empresaFicha = fichaDetalhe.companies?.name ?? "Sem empresa";
-                              const grupos = new Map<string, any[]>();
-                              for (const f of funcs) {
-                                const emp = f.employees?.companies?.name
-                                  ?? (f.externo ? "Sem empresa" : empresaFicha);
-                                if (!grupos.has(emp)) grupos.set(emp, []);
-                                grupos.get(emp)!.push(f);
-                              }
-                              const ordenadas = Array.from(grupos.entries())
-                                .sort(([a], [b]) => a.localeCompare(b, "pt-BR"));
-                              return (
-                                <div className="max-h-64 overflow-y-auto rounded-lg border border-white/10 bg-white/[0.02] divide-y divide-white/10">
-                                  {ordenadas.map(([empresa, lista]) => (
-                                    <div key={empresa}>
-                                      <div className="sticky top-0 z-10 flex items-center justify-between px-3 py-1.5 bg-rose-500/10 border-b border-rose-400/30">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-rose-200">{empresa}</span>
-                                        <span className="text-[10px] font-bold text-rose-100/70">{lista.length}</span>
-                                      </div>
-                                      <ul className="divide-y divide-white/5">
-                                        {lista.map((f: any) => (
-                                          <li key={f.id} className="px-3 py-2 flex items-center justify-between gap-2 text-xs">
-                                            <span className="truncate text-slate-100">
-                                              {f.nome}
-                                              {f.externo ? <span className="ml-1 text-[10px] text-amber-300">(externo)</span> : null}
-                                              {f.funcao ? <span className="text-slate-400"> · {f.funcao}</span> : null}
-                                            </span>
-                                            {f.presenca && (
-                                              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">{f.presenca}</span>
-                                            )}
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  ))}
-                                </div>
-                              );
-                            })()
-                          )}
-                        </div>
-                      </>
-                    );
-                  })()}
+                      );
+                    })()}
+                  </div>
                 </div>
-                <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-white/10">
-                  <Button onClick={() => gerarPdf(fichaDetalhe.id)} className="bg-rose-500 hover:bg-rose-600 text-white">
+
+                {/* Rodapé de ações */}
+                <div className="flex flex-wrap gap-2 px-6 py-4 border-t border-white/[0.06] bg-black/30">
+                  <Button onClick={() => gerarPdf(fichaDetalhe.id)} className="bg-rose-500 hover:bg-rose-600 text-white h-9">
                     <Eye className="h-4 w-4 mr-1.5" />Prévia PDF
                   </Button>
                   {isEditor && (
-                    <Button variant="outline" className="border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.08]" onClick={() => { setEditId(fichaDetalhe.id); setDetalheId(null); setOpen(true); }}>
+                    <Button variant="outline" className="border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.08] h-9" onClick={() => { setEditId(fichaDetalhe.id); setDetalheId(null); setOpen(true); }}>
                       <Pencil className="h-4 w-4 mr-1.5" />Editar
                     </Button>
                   )}
                   {isAdmin && (
-                    <Button variant="outline" className="border-rose-400/30 text-rose-300 hover:bg-rose-500/10 ml-auto" onClick={() => { if (confirm("Excluir esta ficha?")) { del.mutate(fichaDetalhe.id); setDetalheId(null); } }}>
+                    <Button variant="outline" className="border-rose-400/30 text-rose-300 hover:bg-rose-500/10 ml-auto h-9" onClick={() => { if (confirm("Excluir esta ficha?")) { del.mutate(fichaDetalhe.id); setDetalheId(null); } }}>
                       <Trash2 className="h-4 w-4 mr-1.5" />Excluir
                     </Button>
                   )}
