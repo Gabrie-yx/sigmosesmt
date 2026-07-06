@@ -245,19 +245,25 @@ export function HoraExtraSabadoDialog({
     const idsPermitidos = employeeIdsPermitidos && employeeIdsPermitidos.length > 0
       ? new Set(employeeIdsPermitidos)
       : null;
+    const temRestricao = !!idsPermitidos || permitidos.length > 0;
     return (employees ?? [])
       .filter((e: any) => !ids.has(e.id))
       .filter((e: any) => {
-        if (idsPermitidos) return idsPermitidos.has(e.id);
-        if (permitidos.length > 0) {
-          const nome = String(e.nome ?? "").toLowerCase();
-          return permitidos.some((p) => nome.includes(p));
-        }
         if (!setorAlvo) return true;
         const setores = String(e.setor ?? "").toLowerCase();
         return setores.split(",").map((x) => x.trim()).some((x) => x === setorAlvo);
       })
-      .filter((e: any) => !s || e.nome.toLowerCase().includes(s));
+      .filter((e: any) => !s || e.nome.toLowerCase().includes(s))
+      .map((e: any) => {
+        let permitido = true;
+        if (idsPermitidos) {
+          permitido = idsPermitidos.has(e.id);
+        } else if (permitidos.length > 0) {
+          const nome = String(e.nome ?? "").toLowerCase();
+          permitido = permitidos.some((p) => nome.includes(p));
+        }
+        return { ...e, _permitido: permitido, _temRestricao: temRestricao };
+      });
   }, [employees, funcs, busca, setorFixo, funcionariosPermitidos, employeeIdsPermitidos]);
 
   function addEmp(e: any) {
@@ -267,7 +273,7 @@ export function HoraExtraSabadoDialog({
     ]);
   }
   function addTodos() {
-    const novos = empsDisponiveis.map((e: any) => ({
+    const novos = empsDisponiveis.filter((e: any) => e._permitido).map((e: any) => ({
       key: crypto.randomUUID(),
       employee_id: e.id,
       nome: e.nome,
