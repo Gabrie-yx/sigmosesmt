@@ -544,7 +544,7 @@ export function HoraExtraSabadoDialog({
                   className={`w-full text-left px-3 py-1.5 text-sm flex items-center justify-between ${bloqueado ? "opacity-40 cursor-not-allowed" : "hover:bg-white/[0.06]"}`}
                 >
                   <span>{e.nome}</span>
-                  {bloqueado ? <Lock className="h-3.5 w-3.5 opacity-60" /> : <Plus className="h-3.5 w-3.5 opacity-60" />}
+                  {bloqueado ? <LockIcon className="h-3.5 w-3.5 opacity-60" /> : <Plus className="h-3.5 w-3.5 opacity-60" />}
                 </button>
               );
             })}
