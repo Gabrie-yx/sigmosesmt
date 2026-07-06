@@ -1,0 +1,1 @@
+ALTER TABLE public.ponto_ciclos DROP CONSTRAINT IF EXISTS ponto_ciclos_competencia_key;
