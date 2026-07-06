@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Upload, FileText, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Upload, FileText, Loader2, AlertTriangle, CheckCircle2, User, Paperclip, X } from "lucide-react";
 import { ocrFolhaDePonto, type OcrFolha, type OcrDia } from "@/lib/ponto-ocr.functions";
 
 export const Route = createFileRoute("/app/administrativo/gestao-ponto/$cicloId")({
@@ -39,6 +39,7 @@ type Folha = {
   local_trabalho: string | null;
   status: string;
   employee_id: string | null;
+  totais_json: any;
 };
 
 type Dia = {
@@ -49,6 +50,8 @@ type Dia = {
   status_sistema: string | null;
   motivo_flag: string | null;
   precisa_tratativa: boolean;
+  dia_semana: string | null;
+  raw_json: any;
 };
 
 function CicloDetalhePage() {
