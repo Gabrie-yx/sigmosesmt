@@ -55,8 +55,9 @@ const SignaturePadDialog = lazy(() =>
   import("@/components/signature-pad-dialog").then((m) => ({ default: m.SignaturePadDialog }))
 );
 import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
+import { ExcluirPermanenteDialog } from "@/components/employees/excluir-permanente-dialog";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
-import { UserMinus, RotateCcw } from "lucide-react";
+import { UserMinus, RotateCcw, Trash } from "lucide-react";
 import { logRead } from "@/lib/audit-read";
 
 export const Route = createFileRoute("/app/employees/$id")({
