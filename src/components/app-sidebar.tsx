@@ -181,6 +181,7 @@ const ADMINISTRATIVO_ITEMS: LeafItem[] = [
   { to: "/app/administrativo/hora-extra-recebida", label: "H. Extra Recebida", icon: CalendarCheck2 },
   { to: "/app/administrativo/gestao-ponto", label: "Gestão de Ponto", icon: Clock },
   { to: "/app/extra-sabado-aprovacoes", label: "Aprovações — Extra (Sábado/Dia Útil)", icon: CalendarCheck2 },
+  { to: "/app/administrativo/marcadores-hora-extra", label: "Marcadores H. Extra — Escopo", icon: UsersIcon },
 ];
 
 const ALMOXARIFADO_ITEMS: LeafItem[] = [

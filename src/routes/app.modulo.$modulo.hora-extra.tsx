@@ -105,21 +105,16 @@ function HoraExtraModuloPage() {
   });
 
   // Escopo de EMPRESAS do marcador (terceirizadas): lê hora_extra_marcadores
-  // direto para saber quais empresas exibir no dropdown do dialog.
+  // via RPC — resolve TERCEIRIZADAS_AUTO dinamicamente (empresas novas entram
+  // sozinhas) e aplica exclude_company_ids configurado pelo admin.
   const { data: companyIdsEscopo } = useQuery({
     queryKey: ["hora-extra-marcador-empresas", user?.id],
     enabled: !!user?.id && !isAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("hora_extra_marcadores")
-        .select("escopo")
-        .eq("user_id", user!.id)
-        .eq("ativo", true)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("get_hora_extra_allowed_company_ids", { _uid: user!.id });
       if (error) return null;
-      const esc = (data?.escopo ?? {}) as { company_ids?: string[] };
-      const ids = Array.isArray(esc.company_ids) ? esc.company_ids.map(String) : [];
-      return ids.length > 0 ? ids : null;
+      const ids = (data ?? []) as string[] | null;
+      return ids && ids.length > 0 ? ids.map(String) : null;
     },
   });
 
