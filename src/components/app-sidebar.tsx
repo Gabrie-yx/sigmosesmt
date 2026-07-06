@@ -65,6 +65,7 @@ import {
   Target,
   Settings,
   Warehouse,
+  DoorOpen,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -191,6 +192,10 @@ const MANUTENCAO_ITEMS: LeafItem[] = [
   { to: "/app/modulo/mecanica/requisicao-compras", label: "Mecânica — Requisição de Compras", icon: ShoppingCart },
 ];
 
+const PORTARIA_ITEMS: LeafItem[] = [
+  { to: "/app/portaria/controle-entrada", label: "Controle de Entrada", icon: DoorOpen },
+];
+
 export function AppSidebar() {
   const location = useLocation();
   const { roles, hasModule, hasMenu } = useAuth();
@@ -228,6 +233,7 @@ export function AppSidebar() {
   const canUsuarios = isAdmin || hasModule("usuarios");
   const canAdministrativo = isAdmin || hasModule("administrativo" as any);
   const canAlmoxarifado = isAdmin || hasModule("almoxarifado" as any);
+  const canPortaria = isAdmin || hasModule("portaria" as any);
 
   // Filtra grupos/itens pelo controle granular de menus
   const visibleSesmtGroups = SESMT_GROUPS
@@ -240,6 +246,7 @@ export function AppSidebar() {
   const visibleAdministrativo = ADMINISTRATIVO_ITEMS.filter((i) => hasMenu(i.to));
   const visibleAlmoxarifado = ALMOXARIFADO_ITEMS.filter((i) => hasMenu(i.to));
   const visibleManutencao = MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to));
+  const visiblePortaria = PORTARIA_ITEMS.filter((i) => hasMenu(i.to));
 
   const sesmtAllItems = visibleSesmtGroups.flatMap((g) => g.items).concat(visibleDDSSubmenu);
   const sesmtOpen = anyActive(sesmtAllItems);
@@ -249,6 +256,7 @@ export function AppSidebar() {
   const administrativoOpen = anyActive(visibleAdministrativo);
   const almoxarifadoOpen = anyActive(visibleAlmoxarifado);
   const manutencaoOpen = anyActive(visibleManutencao);
+  const portariaOpen = anyActive(visiblePortaria);
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
