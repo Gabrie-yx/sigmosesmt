@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Upload, FileText, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Upload, FileText, Loader2, AlertTriangle, CheckCircle2, User, Paperclip, X } from "lucide-react";
 import { ocrFolhaDePonto, type OcrFolha, type OcrDia } from "@/lib/ponto-ocr.functions";
 
 export const Route = createFileRoute("/app/administrativo/gestao-ponto/$cicloId")({
@@ -39,6 +39,7 @@ type Folha = {
   local_trabalho: string | null;
   status: string;
   employee_id: string | null;
+  totais_json: any;
 };
 
 type Dia = {
@@ -49,6 +50,8 @@ type Dia = {
   status_sistema: string | null;
   motivo_flag: string | null;
   precisa_tratativa: boolean;
+  dia_semana: string | null;
+  raw_json: any;
 };
 
 function CicloDetalhePage() {
@@ -131,6 +134,20 @@ function CicloDetalhePage() {
   const totalTratativas = dias.length;
   const conformesEstim = folhas.length * 30 - totalTratativas;
 
+  // agrupa dias por folha (funcionário)
+  const agrupado = useMemo(() => {
+    const map = new Map<string, { folha: Folha; dias: Dia[] }>();
+    for (const d of dias) {
+      const f = folhas.find(x => x.id === d.folha_id);
+      if (!f) continue;
+      if (!map.has(f.id)) map.set(f.id, { folha: f, dias: [] });
+      map.get(f.id)!.dias.push(d);
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      (a.folha.nome ?? "").localeCompare(b.folha.nome ?? "")
+    );
+  }, [dias, folhas]);
+
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center gap-3">
@@ -177,39 +194,65 @@ function CicloDetalhePage() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Dias pra tratar</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">Pendências por funcionário</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Só aparece o que precisa de tratativa: <b>FALTA</b>, <b>ATRASO</b>, <b>HE não autorizada</b>, marcação incompleta ou compensação. Dias em conformidade ficam ocultos.
+          </p>
+        </CardHeader>
         <CardContent>
-          {dias.length === 0 ? (
+          {agrupado.length === 0 ? (
             <div className="text-sm text-muted-foreground py-6 text-center">
               {folhas.length === 0 ? "Envie o PDF pra iniciar." : "Nada pendente. Tudo em conformidade 🎯"}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-muted-foreground text-xs">
-                  <tr className="border-b">
-                    <th className="text-left py-2 pr-2">Data</th>
-                    <th className="text-left py-2 pr-2">Funcionário</th>
-                    <th className="text-left py-2 pr-2">Marcações</th>
-                    <th className="text-left py-2 pr-2">Motivo</th>
-                    <th className="text-right py-2">Ação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dias.map(d => {
-                    const f = folhas.find(x => x.id === d.folha_id);
-                    return (
-                      <tr key={d.id} className="border-b hover:bg-muted/20">
-                        <td className="py-2 pr-2 font-mono">{formatDate(d.data)}</td>
-                        <td className="py-2 pr-2">{f?.nome ?? f?.matricula ?? "—"}</td>
-                        <td className="py-2 pr-2 font-mono text-xs">{(d.marcacoes ?? []).join("  ") || "—"}</td>
-                        <td className="py-2 pr-2"><Badge variant="outline">{d.motivo_flag ?? "REVISAR"}</Badge></td>
-                        <td className="py-2 text-right"><Button size="sm" variant="outline" onClick={() => setTratarDia(d)}>Tratar</Button></td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="space-y-4">
+              {agrupado.map(({ folha, dias: fdias }) => (
+                <div key={folha.id} className="rounded-lg border overflow-hidden">
+                  <div className="bg-muted/30 px-4 py-3 flex items-start justify-between gap-3 flex-wrap">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <User className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{folha.nome ?? "—"}</div>
+                        <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+                          {folha.matricula && <span>Matrícula: <b>{folha.matricula}</b></span>}
+                          {folha.cargo && <span>Cargo: <b>{folha.cargo}</b></span>}
+                          {folha.local_trabalho && <span>Local: <b>{folha.local_trabalho}</b></span>}
+                          {folha.pagina_pdf && <span>Página {folha.pagina_pdf}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10">
+                      {fdias.length} pendência{fdias.length > 1 ? "s" : ""}
+                    </Badge>
+                  </div>
+                  <table className="w-full text-sm">
+                    <tbody>
+                      {fdias.map(d => (
+                        <tr key={d.id} className="border-t hover:bg-muted/20">
+                          <td className="py-2 pl-4 pr-2 font-mono whitespace-nowrap">
+                            {formatDate(d.data)}
+                            {d.dia_semana && <span className="text-muted-foreground ml-2">{d.dia_semana}</span>}
+                          </td>
+                          <td className="py-2 pr-2 font-mono text-xs text-muted-foreground">
+                            {(d.marcacoes ?? []).join("  ") || "sem marcação"}
+                          </td>
+                          <td className="py-2 pr-2">
+                            <Badge variant="outline" className={motivoClasse(d.motivo_flag)}>
+                              {motivoLabel(d.motivo_flag)}
+                            </Badge>
+                          </td>
+                          <td className="py-2 pr-4 text-right">
+                            <Button size="sm" onClick={() => setTratarDia(d)}>Tratar</Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
@@ -233,6 +276,28 @@ function CicloDetalhePage() {
 function formatDate(iso: string) {
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
+}
+
+function motivoLabel(m: string | null): string {
+  switch (m) {
+    case "FALTA": return "Falta";
+    case "ATRASO": return "Atraso";
+    case "HE_A_VALIDAR": return "HE a validar";
+    case "AD_NOTURNO_A_VALIDAR": return "Ad. Noturno";
+    case "MARCACOES_INCOMPLETAS": return "Marcações incompletas";
+    case "SEM_MARCACAO": return "Sem marcação";
+    case "REVISAR": return "Revisar";
+    default: return m ?? "Revisar";
+  }
+}
+function motivoClasse(m: string | null): string {
+  switch (m) {
+    case "FALTA": return "border-red-500/40 text-red-300 bg-red-500/10";
+    case "ATRASO": return "border-orange-500/40 text-orange-300 bg-orange-500/10";
+    case "HE_A_VALIDAR":
+    case "AD_NOTURNO_A_VALIDAR": return "border-blue-500/40 text-blue-300 bg-blue-500/10";
+    default: return "border-amber-500/40 text-amber-300 bg-amber-500/10";
+  }
 }
 
 async function limparCiclo(cicloId: string) {
@@ -357,12 +422,14 @@ async function insertParsed(cicloId: string, parsed: OcrFolha[]) {
 }
 
 function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Folha | null; onClose: () => void; onSaved: () => void }) {
-  const [tipo, setTipo] = useState<string>("ATESTADO");
+  const tipoSugerido = sugerirTipo(dia.motivo_flag);
+  const [tipo, setTipo] = useState<string>(tipoSugerido);
   const [descricao, setDescricao] = useState("");
   const [cid, setCid] = useState("");
   const [dataInicio, setDataInicio] = useState(dia.data);
   const [dataFim, setDataFim] = useState(dia.data);
   const [autorizadoPor, setAutorizadoPor] = useState("");
+  const [anexoFile, setAnexoFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
 
   const tipos = useMemo(() => [
@@ -370,11 +437,23 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
     "AJUSTE_MARCACAO", "FOLGA_COMPENSADA", "OUTRO",
   ], []);
 
+  const anexoObrigatorio = tipo === "ATESTADO" || tipo === "FALTA_JUSTIFICADA";
+
   async function salvar() {
     if (descricao.trim().length < 5) { toast.error("Descreva a tratativa (≥ 5 caracteres)."); return; }
+    if (anexoObrigatorio && !anexoFile) { toast.error("Anexe o comprovante (atestado/documento)."); return; }
     setSaving(true);
     try {
       const { data: userRes } = await supabase.auth.getUser();
+      let anexo_url: string | null = null;
+      let anexo_nome: string | null = null;
+      if (anexoFile) {
+        const path = `atestados/${dia.folha_id}/${dia.id}-${Date.now()}-${anexoFile.name}`;
+        const up = await supabase.storage.from("ponto-pdfs").upload(path, anexoFile, { upsert: false });
+        if (up.error) throw up.error;
+        anexo_url = path;
+        anexo_nome = anexoFile.name;
+      }
       const { error } = await supabase.from("ponto_tratativas" as any).insert({
         dia_id: dia.id,
         folha_id: dia.folha_id,
@@ -384,6 +463,8 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
         data_inicio: dataInicio,
         data_fim: dataFim,
         autorizado_por: autorizadoPor || null,
+        anexo_url,
+        anexo_nome,
         criado_por: userRes.user?.id,
       } as any);
       if (error) throw error;
@@ -402,13 +483,29 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
 
   return (
     <Dialog open onOpenChange={o => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Tratar dia · {formatDate(dia.data)}</DialogTitle>
+          <DialogTitle>Tratar dia · {formatDate(dia.data)}{dia.dia_semana ? ` (${dia.dia_semana})` : ""}</DialogTitle>
           <DialogDescription>
-            {folha?.nome ?? folha?.matricula ?? "Funcionário"} · marcações: {(dia.marcacoes ?? []).join(" ") || "sem marcação"}
+            Preencha só a tratativa — os dados do funcionário e do dia vieram do PDF.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Cabeçalho do funcionário (vindo do PDF) */}
+        <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-primary" />
+            <span className="font-medium">{folha?.nome ?? "—"}</span>
+            {folha?.matricula && <Badge variant="outline" className="font-mono">{folha.matricula}</Badge>}
+          </div>
+          <div className="text-xs text-muted-foreground grid grid-cols-2 gap-y-1">
+            {folha?.cargo && <div>Cargo: <b className="text-foreground">{folha.cargo}</b></div>}
+            {folha?.local_trabalho && <div>Local: <b className="text-foreground">{folha.local_trabalho}</b></div>}
+            <div>Motivo detectado: <Badge variant="outline" className={motivoClasse(dia.motivo_flag)}>{motivoLabel(dia.motivo_flag)}</Badge></div>
+            <div className="col-span-2">Marcações: <span className="font-mono text-foreground">{(dia.marcacoes ?? []).join("  ") || "sem marcação"}</span></div>
+          </div>
+        </div>
+
         <div className="space-y-3">
           <div>
             <label className="text-xs text-muted-foreground">Tipo</label>
@@ -425,6 +522,36 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
           )}
           <div><label className="text-xs text-muted-foreground">Autorizado por</label><Input value={autorizadoPor} onChange={e => setAutorizadoPor(e.target.value)} placeholder="Nome do líder/gestor" /></div>
           <div><label className="text-xs text-muted-foreground">Descrição *</label><Textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={3} placeholder="O que aconteceu / providência tomada" /></div>
+
+          <div>
+            <label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Paperclip className="h-3 w-3" />
+              Anexo (atestado/comprovante) {anexoObrigatorio && <span className="text-red-400">*</span>}
+            </label>
+            {anexoFile ? (
+              <div className="flex items-center justify-between gap-2 mt-1 rounded-md border px-2 py-1.5 text-sm bg-muted/20">
+                <span className="truncate">{anexoFile.name}</span>
+                <Button size="sm" variant="ghost" onClick={() => setAnexoFile(null)}><X className="h-4 w-4" /></Button>
+              </div>
+            ) : (
+              <label className="inline-flex mt-1">
+                <input
+                  type="file"
+                  accept="application/pdf,image/*"
+                  className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) setAnexoFile(f); e.currentTarget.value = ""; }}
+                />
+                <span className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm cursor-pointer hover:bg-muted/50">
+                  <Upload className="h-4 w-4" /> Selecionar arquivo (PDF ou foto)
+                </span>
+              </label>
+            )}
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {anexoObrigatorio
+                ? "Obrigatório: envie o atestado/comprovante que justifica a tratativa."
+                : "Opcional — anexe se houver documento de suporte."}
+            </p>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
@@ -433,4 +560,15 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
       </DialogContent>
     </Dialog>
   );
+}
+
+function sugerirTipo(motivo: string | null): string {
+  switch (motivo) {
+    case "FALTA": return "ATESTADO";
+    case "ATRASO": return "ATESTADO";
+    case "HE_A_VALIDAR": return "HE_AUTORIZADA";
+    case "MARCACOES_INCOMPLETAS":
+    case "SEM_MARCACAO": return "AJUSTE_MARCACAO";
+    default: return "OUTRO";
+  }
 }
