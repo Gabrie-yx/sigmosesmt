@@ -2,6 +2,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { CalendarCheck2, LayoutDashboard, Zap, Menu, User } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 
 /**
  * Barra de ações fixa no rodapé — só aparece no mobile (< md).
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 export function MobileBottomNav() {
   const { pathname } = useLocation();
   const { toggleSidebar } = useSidebar();
+  const { isModerator } = useAuth();
 
   const isActive = (to: string) =>
     pathname === to || pathname.startsWith(to + "/");
@@ -44,13 +46,15 @@ export function MobileBottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div className="flex items-stretch">
-        <Link
-          to="/app/hoje"
-          className={cn(itemBase, isActive("/app/hoje") ? active : idle)}
-        >
-          <CalendarCheck2 className={cn("h-5 w-5", isActive("/app/hoje") && "scale-110")} />
-          <span className="truncate">Hoje</span>
-        </Link>
+        {isModerator && (
+          <Link
+            to="/app/hoje"
+            className={cn(itemBase, isActive("/app/hoje") ? active : idle)}
+          >
+            <CalendarCheck2 className={cn("h-5 w-5", isActive("/app/hoje") && "scale-110")} />
+            <span className="truncate">Hoje</span>
+          </Link>
+        )}
         <Link
           to="/app/painel"
           className={cn(itemBase, isActive("/app/painel") ? active : idle)}
