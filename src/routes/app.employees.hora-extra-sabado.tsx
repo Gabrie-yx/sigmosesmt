@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowLeft, Calendar, Clock, Building2, MapPin, X, Users, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, ArrowLeft, Calendar, Clock, Building2, MapPin, X, Users, Eye, Pencil, Trash2, ChevronDown } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -54,6 +54,7 @@ function HoraExtraSabadoPage() {
   const [empresaFiltro, setEmpresaFiltro] = useState<string>("todas");
   const [turnoFiltro, setTurnoFiltro] = useState<string>("todos");
   const [detalheId, setDetalheId] = useState<string | null>(null);
+  const [mesAberto, setMesAberto] = useState<string | null>(null);
   // Cache pesado por ficha: evita re-baixar lista + recomprimir todas as
   // assinaturas dos funcionários toda vez que o TST/Gestor assina no preview.
   const pdfCacheRef = useRef<Map<string, { rec: any; paginas: any[]; empresasEnvolvidas: string[]; logo: string | null }>>(new Map());
@@ -221,6 +222,9 @@ function HoraExtraSabadoPage() {
         return { key, label, itens };
       });
   }, [filtradas]);
+
+  // Mês aberto por padrão: o mais recente com fichas.
+  const mesAtivo = mesAberto ?? gruposPorMes[0]?.key ?? null;
 
   const empresasUnicas = useMemo(() => {
     const s = new Set<string>();
