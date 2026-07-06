@@ -63,7 +63,7 @@ function HoraExtraSabadoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_sabado")
-        .select("*, companies(name), hora_extra_sabado_funcionarios(id, nome, funcao, externo, presenca)")
+        .select("*, companies(name), hora_extra_sabado_funcionarios(id, nome, funcao, externo, presenca, employee_id, employees(companies(name)))")
         .order("data", { ascending: false });
       if (error) throw error;
       return data ?? [];
