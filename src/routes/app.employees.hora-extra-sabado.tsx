@@ -325,36 +325,38 @@ function HoraExtraSabadoPage() {
           <p className="text-xs text-slate-400 mt-1">Crie a primeira clicando em "Nova ficha".</p>
         </div>
       ) : (
-        <div className="space-y-3 max-w-6xl mx-auto">
-          {gruposPorMes.map((grupo) => {
-            const aberto = mesAtivo === grupo.key;
-            return (
-            <div
-              key={grupo.key}
-              className="rounded-lg border border-white/[0.06] bg-black/40 backdrop-blur-sm overflow-hidden shadow-[0_1px_0_rgba(255,255,255,0.03)_inset,0_8px_24px_-12px_rgba(0,0,0,0.6)]"
-            >
-              <button
-                onClick={() => setMesAberto(aberto ? "" : grupo.key)}
-                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.02] transition-colors group"
-              >
-                <div className="grid place-items-center h-6 w-6 rounded-md bg-rose-400/10 ring-1 ring-rose-400/20 text-rose-200/90 shrink-0">
-                  <Calendar className="h-3 w-3" />
-                </div>
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="text-[11px] font-semibold text-slate-100 capitalize leading-tight truncate">
-                    {grupo.label}
-                  </div>
-                  <div className="text-[9px] font-medium uppercase tracking-[0.15em] text-slate-500 leading-tight mt-0.5">
-                    {grupo.itens.length} ficha{grupo.itens.length === 1 ? "" : "s"}
-                  </div>
-                </div>
-                <span className="text-sm font-bold tabular-nums text-slate-300 tabular-nums px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06]">
-                  {grupo.itens.length}
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Grade de cards mensais no estilo Saídas — glow âmbar por trás e flares nas bordas */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {gruposPorMes.map((grupo) => {
+              const aberto = mesAtivo === grupo.key;
+              const empresasCount = new Set(
+                grupo.itens.map((f: any) => f.companies?.name).filter(Boolean),
+              ).size;
+              return (
+                <MesHoraExtraCard
+                  key={grupo.key}
+                  label={grupo.label}
+                  total={grupo.itens.length}
+                  empresasCount={empresasCount}
+                  ativo={aberto}
+                  onClick={() => setMesAberto(aberto ? "" : grupo.key)}
+                />
+              );
+            })}
+          </div>
+
+          {/* Fichas do mês ativo, logo abaixo da grade */}
+          {gruposPorMes.filter((g) => g.key === mesAtivo).map((grupo) => (
+            <section key={grupo.key} className="space-y-3">
+              <div className="flex items-center gap-2 px-1">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-200/90 capitalize">
+                  {grupo.label} · {grupo.itens.length} ficha{grupo.itens.length === 1 ? "" : "s"}
                 </span>
-                <ChevronDown className={`h-3.5 w-3.5 text-slate-500 group-hover:text-slate-300 transition-all ${aberto ? "rotate-180" : ""}`} />
-              </button>
-              {aberto && (
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 px-3 pb-3 pt-2 border-t border-white/[0.04]">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {grupo.itens.map((f: any) => {
                   const d = new Date(f.data + "T12:00:00");
                   const dia = DIAS[d.getDay()];
@@ -401,10 +403,8 @@ function HoraExtraSabadoPage() {
                   );
                 })}
               </div>
-              )}
-            </div>
-            );
-          })}
+            </section>
+          ))}
         </div>
       )}
 
