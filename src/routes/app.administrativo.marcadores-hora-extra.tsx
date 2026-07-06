@@ -17,7 +17,6 @@ export const Route = createFileRoute("/app/administrativo/marcadores-hora-extra"
 });
 
 type Marcador = {
-  id: string;
   user_id: string;
   nome: string;
   ativo: boolean;
@@ -41,11 +40,11 @@ function MarcadoresHoraExtraPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_marcadores")
-        .select("id,user_id,nome,ativo,escopo")
+        .select("user_id,nome,ativo,escopo")
         .eq("ativo", true)
         .order("nome");
       if (error) throw error;
-      return (data ?? []) as Marcador[];
+      return (data ?? []) as unknown as Marcador[];
     },
   });
 
@@ -72,7 +71,7 @@ function MarcadoresHoraExtraPage() {
         .eq("status", "ATIVO")
         .order("nome");
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).filter((e: any) => !!e.company_id) as { id: string; nome: string; company_id: string; companies: any }[];
     },
     enabled: companies.length > 0,
   });
@@ -99,7 +98,7 @@ function MarcadoresHoraExtraPage() {
         <Card className="glass-card"><CardContent className="p-6 text-sm text-muted-foreground">Nenhum marcador ativo cadastrado.</CardContent></Card>
       ) : marcadores.map((m) => (
         <MarcadorCard
-          key={m.id}
+          key={m.user_id}
           marcador={m}
           companies={companies}
           employees={employees}
@@ -150,7 +149,7 @@ function MarcadorCard({ marcador, companies, employees, busca, setBusca, onSaved
       const { error } = await supabase
         .from("hora_extra_marcadores")
         .update({ escopo: novoEscopo })
-        .eq("id", marcador.id);
+        .eq("user_id", marcador.user_id);
       if (error) throw error;
     },
     onSuccess: () => {
