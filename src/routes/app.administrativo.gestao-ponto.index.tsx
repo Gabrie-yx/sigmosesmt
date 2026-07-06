@@ -35,7 +35,7 @@ type Ciclo = {
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
   aberto:              { label: "Aberto",               className: "bg-slate-500/20 text-slate-200 border-slate-500/40" },
   em_tratamento:       { label: "Em tratamento",        className: "bg-amber-500/20 text-amber-200 border-amber-500/40" },
-  aguardando_anderson: { label: "Aguardando Anderson",  className: "bg-blue-500/20 text-blue-200 border-blue-500/40" },
+  aguardando_anderson: { label: "Aguardando Anderson",  className: "bg-blue-500/30 text-blue-100 border-blue-400/60 shadow-[0_0_18px_-4px_rgba(59,130,246,0.6)] font-semibold px-2.5 py-0.5" },
   aprovado:            { label: "Aprovado",             className: "bg-emerald-500/20 text-emerald-200 border-emerald-500/40" },
   enviado_rh:          { label: "Enviado ao RH",        className: "bg-violet-500/20 text-violet-200 border-violet-500/40" },
   encerrado:           { label: "Encerrado",            className: "bg-neutral-500/20 text-neutral-200 border-neutral-500/40" },
@@ -45,6 +45,13 @@ function competenciaLabel(iso: string) {
   const [y, m, d] = iso.split("-");
   if (!y || !m) return iso;
   return d ? `${d}/${m}/${y}` : `${m}/${y}`;
+}
+
+function periodoLabel(iso: string) {
+  const [y, m] = iso.split("-");
+  if (!y || !m) return iso;
+  const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  return `${meses[Number(m) - 1] ?? m}/${y}`;
 }
 
 function GestaoPontoPage() {
