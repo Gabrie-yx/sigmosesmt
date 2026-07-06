@@ -170,7 +170,7 @@ function AdministrativoHoraExtraRecebidaPage() {
 
   const filtered = useMemo(() => {
     return registros.filter((r) => {
-      const setores = splitSetores(r.setor);
+      const setores = splitSetores(r);
       if (setorFilter !== "__all" && !setores.includes(setorFilter)) return false;
       if (!q) return true;
       const s = q.toLowerCase();
@@ -188,7 +188,7 @@ function AdministrativoHoraExtraRecebidaPage() {
   const grupos = useMemo(() => {
     const map = new Map<string, HoraExtra[]>();
     for (const r of filtered) {
-      for (const setor of splitSetores(r.setor)) {
+      for (const setor of splitSetores(r)) {
         if (!map.has(setor)) map.set(setor, []);
         map.get(setor)!.push(r);
       }
