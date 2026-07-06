@@ -104,12 +104,32 @@ function HoraExtraModuloPage() {
     },
   });
 
+  // Escopo de EMPRESAS do marcador (terceirizadas): lê hora_extra_marcadores
+  // direto para saber quais empresas exibir no dropdown do dialog.
+  const { data: companyIdsEscopo } = useQuery({
+    queryKey: ["hora-extra-marcador-empresas", user?.id],
+    enabled: !!user?.id && !isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("hora_extra_marcadores")
+        .select("escopo")
+        .eq("user_id", user!.id)
+        .eq("ativo", true)
+        .maybeSingle();
+      if (error) return null;
+      const esc = (data?.escopo ?? {}) as { company_ids?: string[] };
+      const ids = Array.isArray(esc.company_ids) ? esc.company_ids.map(String) : [];
+      return ids.length > 0 ? ids : null;
+    },
+  });
+
   // Admin ignora qualquer restrição hardcoded do MODULO_MAP.
   // Marcador com escopo sobrescreve via IDs (mais confiável que match por nome).
   const employeeIdsPermitidos = isAdmin ? null : (escopoIds ?? null);
   const funcionariosPermitidos = isAdmin
     ? undefined
     : (escopoIds ? undefined : scope.funcionariosPermitidos);
+  const companyIdsPermitidos = isAdmin ? null : (companyIdsEscopo ?? null);
 
   const { data: fichas = [], isLoading } = useQuery({
     queryKey: ["hora-extra-modulo", scope.slug],
@@ -211,6 +231,7 @@ function HoraExtraModuloPage() {
         moduloLabel={scope.moduloLabel}
         funcionariosPermitidos={funcionariosPermitidos}
         employeeIdsPermitidos={employeeIdsPermitidos}
+        companyIdsPermitidos={companyIdsPermitidos}
         ocultarEfetivo={scope.camposSimplificados}
         ocultarSetor={scope.camposSimplificados}
         observacaoLabel="DIGITE AQUI A JUSTIFICATIVA DA EXTRA"
