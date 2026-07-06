@@ -4363,6 +4363,9 @@ export type Database = {
           criado_automatico: boolean
           criado_automatico_por_nome: string | null
           data: string
+          delete_reason: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           horario_fim: string | null
           horario_inicio: string | null
           id: string
@@ -4395,6 +4398,9 @@ export type Database = {
           criado_automatico?: boolean
           criado_automatico_por_nome?: string | null
           data: string
+          delete_reason?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           horario_fim?: string | null
           horario_inicio?: string | null
           id?: string
@@ -4427,6 +4433,9 @@ export type Database = {
           criado_automatico?: boolean
           criado_automatico_por_nome?: string | null
           data?: string
+          delete_reason?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           horario_fim?: string | null
           horario_inicio?: string | null
           id?: string
@@ -4474,6 +4483,9 @@ export type Database = {
         Row: {
           alimentacao: boolean
           created_at: string
+          delete_reason: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           employee_id: string | null
           externo: boolean
           externo_empresa: string | null
@@ -4491,6 +4503,9 @@ export type Database = {
         Insert: {
           alimentacao?: boolean
           created_at?: string
+          delete_reason?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           employee_id?: string | null
           externo?: boolean
           externo_empresa?: string | null
@@ -4508,6 +4523,9 @@ export type Database = {
         Update: {
           alimentacao?: boolean
           created_at?: string
+          delete_reason?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           employee_id?: string | null
           externo?: boolean
           externo_empresa?: string | null
