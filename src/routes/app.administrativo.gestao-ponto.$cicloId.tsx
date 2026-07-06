@@ -743,15 +743,22 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
         <div className="space-y-3">
           <div>
             <label className="text-xs text-muted-foreground">Tipo</label>
-            <select className="w-full h-9 rounded-md border bg-background px-2 text-sm" value={tipo} onChange={e => setTipo(e.target.value)}>
-              {tipos.map(t => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
-            </select>
+            <Select value={tipo} onValueChange={setTipo}>
+              <SelectTrigger className="w-full h-9">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {tipos.map(t => (
+                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className="text-xs text-muted-foreground">Início</label><Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} /></div>
             <div><label className="text-xs text-muted-foreground">Fim</label><Input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} /></div>
           </div>
-          {tipo === "ATESTADO" && (
+          {tipo === "falta_atestado" && (
             <div><label className="text-xs text-muted-foreground">CID</label><Input value={cid} onChange={e => setCid(e.target.value)} placeholder="Ex.: J06.9" /></div>
           )}
           <div><label className="text-xs text-muted-foreground">Autorizado por</label><Input value={autorizadoPor} onChange={e => setAutorizadoPor(e.target.value)} placeholder="Nome do líder/gestor" /></div>
@@ -798,11 +805,8 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
 
 function sugerirTipo(motivo: string | null): string {
   switch (motivo) {
-    case "FALTA": return "ATESTADO";
-    case "ATRASO": return "ATESTADO";
-    case "HE_A_VALIDAR": return "HE_AUTORIZADA";
-    case "MARCACOES_INCOMPLETAS":
-    case "SEM_MARCACAO": return "AJUSTE_MARCACAO";
-    default: return "OUTRO";
+    case "FALTA":  return "falta_atestado";
+    case "ATRASO": return "atraso_justificado";
+    default:       return "outros";
   }
 }
