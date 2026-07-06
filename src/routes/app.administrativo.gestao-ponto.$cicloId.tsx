@@ -512,11 +512,6 @@ function motivoLabel(m: string | null): string {
   switch (m) {
     case "FALTA": return "Falta";
     case "ATRASO": return "Atraso";
-    case "HE_A_VALIDAR": return "HE a validar";
-    case "AD_NOTURNO_A_VALIDAR": return "Ad. Noturno";
-    case "MARCACOES_INCOMPLETAS": return "Marcações incompletas";
-    case "SEM_MARCACAO": return "Sem marcação";
-    case "REVISAR": return "Revisar";
     default: return m ?? "Revisar";
   }
 }
@@ -524,8 +519,6 @@ function motivoClasse(m: string | null): string {
   switch (m) {
     case "FALTA": return "border-red-500/40 text-red-300 bg-red-500/10";
     case "ATRASO": return "border-orange-500/40 text-orange-300 bg-orange-500/10";
-    case "HE_A_VALIDAR":
-    case "AD_NOTURNO_A_VALIDAR": return "border-blue-500/40 text-blue-300 bg-blue-500/10";
     default: return "border-amber-500/40 text-amber-300 bg-amber-500/10";
   }
 }
