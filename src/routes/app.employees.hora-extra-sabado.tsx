@@ -344,11 +344,17 @@ function HoraExtraSabadoPage() {
                   const d = new Date(f.data + "T12:00:00");
                   const dia = DIAS[d.getDay()];
                   const qtd = f.hora_extra_sabado_funcionarios?.length ?? 0;
+                  const indeferida = f.status === "INDEFERIDA";
+                  const aprovada = f.status === "APROVADA";
                   return (
                     <button
                       key={f.id}
                       onClick={() => setDetalheId(f.id)}
-                      className="w-full text-left rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] hover:border-rose-400/40 transition-all px-3 py-2 flex items-center gap-3"
+                      className={`w-full text-left rounded-xl border bg-white/[0.02] hover:bg-white/[0.06] transition-all px-3 py-2 flex items-center gap-3 ${
+                        indeferida
+                          ? "animate-indeferida"
+                          : "border-white/10 hover:border-rose-400/40"
+                      }`}
                     >
                       <div className="flex flex-col items-center justify-center w-12 shrink-0">
                         <span className="text-[9px] font-black uppercase tracking-widest text-rose-300">{dia.slice(0,3)}</span>
@@ -356,8 +362,25 @@ function HoraExtraSabadoPage() {
                       </div>
                       <div className="h-9 w-px bg-white/10" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-slate-100 truncate inline-flex items-center gap-1.5"><Building2 className="h-3 w-3 text-rose-300" />{f.companies?.name ?? "—"}</div>
+                        <div className="text-xs font-bold text-slate-100 truncate inline-flex items-center gap-1.5">
+                          <Building2 className="h-3 w-3 text-rose-300" />{f.companies?.name ?? "—"}
+                          {indeferida && (
+                            <span className="ml-1 inline-flex items-center rounded border border-amber-400/60 bg-destructive/25 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-200">
+                              Indeferida
+                            </span>
+                          )}
+                          {aprovada && (
+                            <span className="ml-1 inline-flex items-center rounded border border-emerald-400/50 bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-200">
+                              Aprovada
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[11px] text-slate-300 truncate inline-flex items-center gap-1.5 mt-0.5"><Clock className="h-3 w-3 text-rose-300" />{f.horario_inicio ?? "—"}{f.horario_fim ? ` – ${f.horario_fim}` : ""} · {f.turno ?? "—"}º · <Users className="h-3 w-3" />{qtd}</div>
+                        {indeferida && f.motivo_indeferimento && (
+                          <div className="mt-1 text-[10px] text-rose-100/90 line-clamp-1">
+                            <span className="font-black text-amber-300">Motivo:</span> {f.motivo_indeferimento}
+                          </div>
+                        )}
                       </div>
                     </button>
                   );
