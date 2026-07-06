@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNovasDecisoesCompras } from "@/hooks/use-compras-novas-decisoes";
 import { useMinhasRcsDecididas } from "@/hooks/use-minhas-rcs-decididas";
 import {
@@ -251,15 +251,16 @@ export function AppSidebar() {
   const visibleManutencao = MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to));
   const visiblePortaria = PORTARIA_ITEMS.filter((i) => hasMenu(i.to));
 
-  const sesmtAllItems = visibleSesmtGroups.flatMap((g) => g.items).concat(visibleDDSSubmenu);
-  const sesmtOpen = anyActive(sesmtAllItems);
-  const estoqueOpen = anyActive(visibleEstoque);
-  const producaoOpen = anyActive(visibleProducao);
-  const comprasOpen = anyActive(visibleCompras);
-  const administrativoOpen = anyActive(visibleAdministrativo);
-  const almoxarifadoOpen = anyActive(visibleAlmoxarifado);
-  const manutencaoOpen = anyActive(visibleManutencao);
-  const portariaOpen = anyActive(visiblePortaria);
+  // Todos os grupos iniciam RECOLHIDOS e abrem apenas ao passar o mouse
+  // (ou clique no cabeçalho). Ao sair, fecham automaticamente.
+  const sesmtHover = useHoverOpen();
+  const estoqueHover = useHoverOpen();
+  const producaoHover = useHoverOpen();
+  const comprasHover = useHoverOpen();
+  const administrativoHover = useHoverOpen();
+  const almoxarifadoHover = useHoverOpen();
+  const manutencaoHover = useHoverOpen();
+  const portariaHover = useHoverOpen();
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
