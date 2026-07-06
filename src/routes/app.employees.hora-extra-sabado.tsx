@@ -73,17 +73,18 @@ function MesHoraExtraCard({
               "linear-gradient(160deg, #0d0a10 0%, #0a070c 55%, #08060a 100%)",
           }}
         >
-          {/* Flares nas bordas (cantos) — sem invadir o miolo */}
-          <div aria-hidden className="pointer-events-none absolute -top-8 -left-8 h-24 w-24 rounded-full"
-            style={{ background: "radial-gradient(circle, rgba(245,158,11,0.55) 0%, rgba(245,158,11,0) 70%)", filter: "blur(10px)" }} />
-          <div aria-hidden className="pointer-events-none absolute -bottom-8 -right-8 h-28 w-28 rounded-full"
-            style={{ background: "radial-gradient(circle, rgba(245,158,11,0.45) 0%, rgba(245,158,11,0) 70%)", filter: "blur(12px)" }} />
-          {/* Brilho fino no topo (flare de borda) */}
-          <div aria-hidden className="pointer-events-none absolute -top-[1px] left-6 right-6 h-px"
-            style={{ background: "linear-gradient(90deg, rgba(245,158,11,0) 0%, rgba(253,224,71,0.9) 50%, rgba(245,158,11,0) 100%)" }} />
+          {/* Flares apenas nas bordas — linhas finas âmbar (topo, base, laterais) */}
+          <div aria-hidden className="pointer-events-none absolute top-0 left-6 right-6 h-px"
+            style={{ background: "linear-gradient(90deg, rgba(245,158,11,0) 0%, rgba(253,224,71,0.85) 50%, rgba(245,158,11,0) 100%)" }} />
+          <div aria-hidden className="pointer-events-none absolute bottom-0 left-10 right-10 h-px"
+            style={{ background: "linear-gradient(90deg, rgba(245,158,11,0) 0%, rgba(245,158,11,0.55) 50%, rgba(245,158,11,0) 100%)" }} />
+          <div aria-hidden className="pointer-events-none absolute left-0 top-8 bottom-8 w-px"
+            style={{ background: "linear-gradient(180deg, rgba(245,158,11,0) 0%, rgba(245,158,11,0.45) 50%, rgba(245,158,11,0) 100%)" }} />
+          <div aria-hidden className="pointer-events-none absolute right-0 top-8 bottom-8 w-px"
+            style={{ background: "linear-gradient(180deg, rgba(245,158,11,0) 0%, rgba(245,158,11,0.45) 50%, rgba(245,158,11,0) 100%)" }} />
           {/* Ring interno sutil, sem glow no miolo */}
           <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl"
-            style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 0 1px rgba(148,163,184,0.05)" }} />
+            style={{ boxShadow: "inset 0 0 0 1px rgba(148,163,184,0.05)" }} />
 
           <div className="relative flex items-center justify-between mb-3">
             <span className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300/90 flex items-center gap-1.5">
@@ -97,8 +98,7 @@ function MesHoraExtraCard({
               {label}
             </h3>
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-5xl font-black text-amber-300"
-                style={{ textShadow: "0 0 18px rgba(245,158,11,0.35)" }}>
+              <span className="text-5xl font-black text-amber-300">
                 {total}
               </span>
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
