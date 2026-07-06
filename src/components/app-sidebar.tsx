@@ -180,8 +180,6 @@ const ADMINISTRATIVO_ITEMS: LeafItem[] = [
   { to: "/app/administrativo/requisicoes-recebidas", label: "Requisições Recebidas", icon: ClipboardList },
   { to: "/app/administrativo/hora-extra-recebida", label: "H. Extra Recebida", icon: CalendarCheck2 },
   { to: "/app/administrativo/gestao-ponto", label: "Gestão de Ponto", icon: Clock },
-  { to: "/app/extra-sabado-aprovacoes", label: "Aprovações — Extra (Sábado/Dia Útil)", icon: CalendarCheck2 },
-  { to: "/app/administrativo/marcadores-hora-extra", label: "Marcadores H. Extra — Escopo", icon: UsersIcon },
 ];
 
 const ALMOXARIFADO_ITEMS: LeafItem[] = [
@@ -655,7 +653,9 @@ export function AppSidebar() {
                   isActive={
                     isActive("/app/users") ||
                     isActive("/app/audit") ||
-                    isActive("/app/configuracoes-indicadores")
+                    isActive("/app/configuracoes-indicadores") ||
+                    isActive("/app/extra-sabado-aprovacoes") ||
+                    isActive("/app/administrativo/marcadores-hora-extra")
                   }
                   className="font-bold"
                 >
@@ -702,6 +702,26 @@ export function AppSidebar() {
                     >
                       <Target className="h-4 w-4 text-red-700" />
                       <span>Metas dos Indicadores</span>
+                    </Link>
+                  )}
+                  {hasMenu("/app/extra-sabado-aprovacoes") && (
+                    <Link
+                      to="/app/extra-sabado-aprovacoes"
+                      className="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted data-[active=true]:bg-amber-100 data-[active=true]:text-red-900"
+                      data-active={isActive("/app/extra-sabado-aprovacoes") || undefined}
+                    >
+                      <CalendarCheck2 className="h-4 w-4 text-red-700" />
+                      <span>Aprovações — Extra (Sáb/Dia Útil)</span>
+                    </Link>
+                  )}
+                  {hasMenu("/app/administrativo/marcadores-hora-extra") && (
+                    <Link
+                      to="/app/administrativo/marcadores-hora-extra"
+                      className="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted data-[active=true]:bg-amber-100 data-[active=true]:text-red-900"
+                      data-active={isActive("/app/administrativo/marcadores-hora-extra") || undefined}
+                    >
+                      <UsersIcon className="h-4 w-4 text-red-700" />
+                      <span>Marcadores H. Extra — Escopo</span>
                     </Link>
                   )}
                 </nav>
