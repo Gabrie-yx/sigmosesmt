@@ -125,6 +125,19 @@ function splitSetores(r: { setor: string | null; modulo_origem?: string | null }
   return ["Sem setor"];
 }
 
+/**
+ * Rótulo de origem que aparece no card e no dialog. Para fichas de
+ * terceirizadas (modulo_origem = "terceirizadas") preferimos o nome da
+ * empresa (ex.: "JC Galvão", "NB Construção") em vez do genérico
+ * "TERCEIRIZADAS", que não ajuda o Administrativo a distinguir.
+ */
+function origemLabel(r: HoraExtra): string {
+  if (r.modulo_origem === "terceirizadas" && r.companies?.name) {
+    return r.companies.name;
+  }
+  return splitSetores(r)[0];
+}
+
 function AdministrativoHoraExtraRecebidaPage() {
   const { user, roles, hasModule } = useAuth();
   const isAdmin = roles.includes("admin");
