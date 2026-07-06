@@ -201,7 +201,7 @@ const PORTARIA_ITEMS: LeafItem[] = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { roles, hasModule, hasMenu } = useAuth();
+  const { roles, hasModule, hasMenu, isExtraSabadoMarcador } = useAuth();
   const { state, setOpen, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
 
