@@ -136,6 +136,7 @@ function AdministrativoHoraExtraRecebidaPage() {
     queryKey: ["admin-hora-extra-recebida"],
     enabled: !!user && canAcesso,
     refetchOnWindowFocus: true,
+    refetchInterval: 15000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_sabado")
@@ -150,8 +151,9 @@ function AdministrativoHoraExtraRecebidaPage() {
   // Realtime: quando o SESMT/Admin apaga ou o módulo cria/edita, o painel
   // do Anderson precisa atualizar sozinho (nada de card fantasma pós-exclusão).
   useEffect(() => {
+    if (!user || !canAcesso) return;
     const ch = supabase
-      .channel("admin-hora-extra-recebida-rt")
+      .channel(`admin-hora-extra-recebida-rt-${user.id}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "hora_extra_sabado" },
@@ -160,9 +162,17 @@ function AdministrativoHoraExtraRecebidaPage() {
           qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida-funcs"] });
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hora_extra_sabado_funcionarios" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida"] });
+          qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida-funcs"] });
+        },
+      )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [qc]);
+  }, [qc, user?.id, canAcesso]);
 
   const ids = registros.map((r) => r.id);
   const { data: funcs = [] } = useQuery({
