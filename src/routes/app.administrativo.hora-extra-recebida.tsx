@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -127,6 +127,7 @@ function AdministrativoHoraExtraRecebidaPage() {
   const { user, roles, hasModule } = useAuth();
   const isAdmin = roles.includes("admin");
   const canAcesso = isAdmin || hasModule("administrativo" as any);
+  const qc = useQueryClient();
 
   const [q, setQ] = useState("");
   const [setorFilter, setSetorFilter] = useState<string>("__all");
@@ -134,6 +135,7 @@ function AdministrativoHoraExtraRecebidaPage() {
   const { data: registros = [], isLoading } = useQuery({
     queryKey: ["admin-hora-extra-recebida"],
     enabled: !!user && canAcesso,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_sabado")
@@ -144,6 +146,23 @@ function AdministrativoHoraExtraRecebidaPage() {
       return (data ?? []) as HoraExtra[];
     },
   });
+
+  // Realtime: quando o SESMT/Admin apaga ou o módulo cria/edita, o painel
+  // do Anderson precisa atualizar sozinho (nada de card fantasma pós-exclusão).
+  useEffect(() => {
+    const ch = supabase
+      .channel("admin-hora-extra-recebida-rt")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hora_extra_sabado" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida"] });
+          qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida-funcs"] });
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
 
   const ids = registros.map((r) => r.id);
   const { data: funcs = [] } = useQuery({
