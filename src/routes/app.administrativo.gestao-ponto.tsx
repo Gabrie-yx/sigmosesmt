@@ -10,7 +10,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Clock, Upload, FileText, Users, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Clock, Upload, FileText, Users, CheckCircle2, AlertTriangle, CalendarDays, Info } from "lucide-react";
 
 export const Route = createFileRoute("/app/administrativo/gestao-ponto")({
   component: GestaoPontoPage,
@@ -176,30 +176,51 @@ function GestaoPontoPage() {
       </Card>
 
       <Dialog open={novoOpen} onOpenChange={setNovoOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Novo ciclo mensal</DialogTitle>
-            <DialogDescription>
-              Cria a competência (mês/ano) do fechamento. O upload do PDF entra na próxima etapa.
-            </DialogDescription>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-primary/15 flex items-center justify-center">
+                <CalendarDays className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle>Novo ciclo mensal</DialogTitle>
+                <DialogDescription>
+                  Só o mês/ano — o resto (nomes, matrículas, período, marcações) vem do PDF na próxima etapa.
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs text-muted-foreground">Competência (mês)</label>
-              <Input type="month" value={competencia.slice(0,7)} onChange={e => setCompetencia(`${e.target.value}-01`)} />
+          <div className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Competência *</label>
+                <Input type="month" value={competencia.slice(0,7)} onChange={e => setCompetencia(`${e.target.value}-01`)} />
+                <p className="text-[11px] text-muted-foreground mt-1">Mês de referência da folha.</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Prazo p/ envio ao RH</label>
+                <Input type="date" value={prazo} onChange={e => setPrazo(e.target.value)} />
+                <p className="text-[11px] text-muted-foreground mt-1">Opcional — usado só pra alerta.</p>
+              </div>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Prazo pra envio ao RH</label>
-              <Input type="date" value={prazo} onChange={e => setPrazo(e.target.value)} />
+              <label className="text-xs font-medium text-muted-foreground">Observações</label>
+              <Input value={obs} onChange={e => setObs(e.target.value)} placeholder="Ex.: fechamento antecipado por feriado" />
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Observações</label>
-              <Input value={obs} onChange={e => setObs(e.target.value)} placeholder="Opcional" />
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex gap-2 text-xs text-muted-foreground">
+              <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div>
+                Depois de criado, você entra no ciclo e envia o PDF completo do mês.
+                O sistema lê <b>página por página</b> (1 folha = 1 funcionário), puxa cabeçalho, período,
+                marcações e destaca <b>atrasos, faltas, HE e compensações</b> pra tratar.
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNovoOpen(false)}>Cancelar</Button>
-            <Button onClick={() => criar.mutate()} disabled={criar.isPending || !competencia}>Criar ciclo</Button>
+            <Button onClick={() => criar.mutate()} disabled={criar.isPending || !competencia}>
+              {criar.isPending ? "Criando…" : "Criar ciclo"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
