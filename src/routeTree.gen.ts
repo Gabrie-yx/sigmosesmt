@@ -94,6 +94,8 @@ import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './rou
 import { Route as AppAdministrativoHoraExtraRecebidaRouteImport } from './routes/app.administrativo.hora-extra-recebida'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
+import { Route as AppModuloMecanicaRequisicaoComprasRouteImport } from './routes/app.modulo.mecanica.requisicao-compras'
+import { Route as AppModuloEletricaRequisicaoComprasRouteImport } from './routes/app.modulo.eletrica.requisicao-compras'
 import { Route as AppModuloModuloHoraExtraRouteImport } from './routes/app.modulo.$modulo.hora-extra'
 import { Route as AppEstoqueEpiFichasMensaisRouteImport } from './routes/app.estoque.epi.fichas-mensais'
 import { Route as AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.historico.$equipamentoId'
@@ -539,6 +541,18 @@ const AppSesmtCatalogosGasesRoute = AppSesmtCatalogosGasesRouteImport.update({
   path: '/sesmt/catalogos/gases',
   getParentRoute: () => AppRoute,
 } as any)
+const AppModuloMecanicaRequisicaoComprasRoute =
+  AppModuloMecanicaRequisicaoComprasRouteImport.update({
+    id: '/modulo/mecanica/requisicao-compras',
+    path: '/modulo/mecanica/requisicao-compras',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppModuloEletricaRequisicaoComprasRoute =
+  AppModuloEletricaRequisicaoComprasRouteImport.update({
+    id: '/modulo/eletrica/requisicao-compras',
+    path: '/modulo/eletrica/requisicao-compras',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppModuloModuloHoraExtraRoute =
   AppModuloModuloHoraExtraRouteImport.update({
     id: '/modulo/$modulo/hora-extra',
@@ -650,6 +664,8 @@ export interface FileRoutesByFullPath {
   '/app/oss/': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
+  '/app/modulo/eletrica/requisicao-compras': typeof AppModuloEletricaRequisicaoComprasRoute
+  '/app/modulo/mecanica/requisicao-compras': typeof AppModuloMecanicaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -738,6 +754,8 @@ export interface FileRoutesByTo {
   '/app/oss': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
+  '/app/modulo/eletrica/requisicao-compras': typeof AppModuloEletricaRequisicaoComprasRoute
+  '/app/modulo/mecanica/requisicao-compras': typeof AppModuloMecanicaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -830,6 +848,8 @@ export interface FileRoutesById {
   '/app/oss/': typeof AppOssIndexRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
+  '/app/modulo/eletrica/requisicao-compras': typeof AppModuloEletricaRequisicaoComprasRoute
+  '/app/modulo/mecanica/requisicao-compras': typeof AppModuloMecanicaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -923,6 +943,8 @@ export interface FileRouteTypes {
     | '/app/oss/'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/modulo/$modulo/hora-extra'
+    | '/app/modulo/eletrica/requisicao-compras'
+    | '/app/modulo/mecanica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
@@ -1011,6 +1033,8 @@ export interface FileRouteTypes {
     | '/app/oss'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/modulo/$modulo/hora-extra'
+    | '/app/modulo/eletrica/requisicao-compras'
+    | '/app/modulo/mecanica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
@@ -1102,6 +1126,8 @@ export interface FileRouteTypes {
     | '/app/oss/'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/modulo/$modulo/hora-extra'
+    | '/app/modulo/eletrica/requisicao-compras'
+    | '/app/modulo/mecanica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
     | '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
@@ -1718,6 +1744,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtCatalogosGasesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/modulo/mecanica/requisicao-compras': {
+      id: '/app/modulo/mecanica/requisicao-compras'
+      path: '/modulo/mecanica/requisicao-compras'
+      fullPath: '/app/modulo/mecanica/requisicao-compras'
+      preLoaderRoute: typeof AppModuloMecanicaRequisicaoComprasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/modulo/eletrica/requisicao-compras': {
+      id: '/app/modulo/eletrica/requisicao-compras'
+      path: '/modulo/eletrica/requisicao-compras'
+      fullPath: '/app/modulo/eletrica/requisicao-compras'
+      preLoaderRoute: typeof AppModuloEletricaRequisicaoComprasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/modulo/$modulo/hora-extra': {
       id: '/app/modulo/$modulo/hora-extra'
       path: '/modulo/$modulo/hora-extra'
@@ -1876,6 +1916,8 @@ interface AppRouteChildren {
   AppDdsIndexRoute: typeof AppDdsIndexRoute
   AppEstoqueIndexRoute: typeof AppEstoqueIndexRoute
   AppModuloModuloHoraExtraRoute: typeof AppModuloModuloHoraExtraRoute
+  AppModuloEletricaRequisicaoComprasRoute: typeof AppModuloEletricaRequisicaoComprasRoute
+  AppModuloMecanicaRequisicaoComprasRoute: typeof AppModuloMecanicaRequisicaoComprasRoute
   AppSesmtCatalogosGasesRoute: typeof AppSesmtCatalogosGasesRoute
   AppSesmtEquipamentosMoveisArquivosMensaisRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -1947,6 +1989,10 @@ const AppRouteChildren: AppRouteChildren = {
   AppDdsIndexRoute: AppDdsIndexRoute,
   AppEstoqueIndexRoute: AppEstoqueIndexRoute,
   AppModuloModuloHoraExtraRoute: AppModuloModuloHoraExtraRoute,
+  AppModuloEletricaRequisicaoComprasRoute:
+    AppModuloEletricaRequisicaoComprasRoute,
+  AppModuloMecanicaRequisicaoComprasRoute:
+    AppModuloMecanicaRequisicaoComprasRoute,
   AppSesmtCatalogosGasesRoute: AppSesmtCatalogosGasesRoute,
   AppSesmtEquipamentosMoveisArquivosMensaisRoute:
     AppSesmtEquipamentosMoveisArquivosMensaisRoute,
