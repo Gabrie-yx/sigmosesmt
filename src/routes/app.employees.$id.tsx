@@ -187,6 +187,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [integOpen, setIntegOpen] = useState(false);
   const [termoOpen, setTermoOpen] = useState(false);
   const [desligamentoOpen, setDesligamentoOpen] = useState(false);
+  const [excluirOpen, setExcluirOpen] = useState(false);
 
   async function gerarFichaPdf() {
     if (!emp) return;
