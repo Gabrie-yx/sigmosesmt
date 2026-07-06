@@ -529,8 +529,11 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated, liderId }: {
     const s = busca.trim().toLowerCase();
     const list = employees ?? [];
     if (!s) return list;
-    return list.filter((e) =>
-      e.nome.toLowerCase().includes(s) || (e.setor ?? "").toLowerCase().includes(s)
+    return list.filter(
+      (e) =>
+        e.nome.toLowerCase().includes(s) ||
+        (e.setor ?? "").toLowerCase().includes(s) ||
+        (e.empresa_nome ?? "").toLowerCase().includes(s),
     );
   }, [employees, busca]);
 
