@@ -281,16 +281,19 @@ function AdministrativoHoraExtraRecebidaPage() {
           <span className="prism-pill accent-sky px-3 py-1 text-xs text-sky-100">
             {filtered.length} ficha{filtered.length === 1 ? "" : "s"}
           </span>
-          <span
-            className="prism-pill accent-amber px-3 py-1 text-xs font-black text-amber-100 shadow-[0_0_14px_rgba(251,191,36,0.55)] flex items-center gap-1.5"
-            title="Total de pessoas convocadas nas fichas filtradas"
-          >
-            <Users className="h-3.5 w-3.5" />
-            {(() => {
-              const ids = new Set(filtered.map((r) => r.id));
-              return funcs.filter((f) => ids.has(f.hora_extra_id)).length;
-            })()} pessoa{funcs.length === 1 ? "" : "s"} na hora extra
-          </span>
+          {(() => {
+            const idSet = new Set(filtered.map((r) => r.id));
+            const total = funcs.filter((f) => idSet.has(f.hora_extra_id)).length;
+            return (
+              <span
+                className="prism-pill accent-amber px-3 py-1 text-xs font-black text-amber-100 shadow-[0_0_14px_rgba(251,191,36,0.55)] flex items-center gap-1.5"
+                title="Total de pessoas convocadas nas fichas filtradas"
+              >
+                <Users className="h-3.5 w-3.5" />
+                {total} pessoa{total === 1 ? "" : "s"} na hora extra
+              </span>
+            );
+          })()}
         </div>
       </div>
 
