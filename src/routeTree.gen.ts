@@ -92,6 +92,7 @@ import { Route as AppComprasFornecedoresRouteImport } from './routes/app.compras
 import { Route as AppComprasDashboardRouteImport } from './routes/app.compras.dashboard'
 import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/app.almoxarifado.requisicao-compras'
 import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
+import { Route as AppAdministrativoMarcadoresHoraExtraRouteImport } from './routes/app.administrativo.marcadores-hora-extra'
 import { Route as AppAdministrativoHoraExtraRecebidaRouteImport } from './routes/app.administrativo.hora-extra-recebida'
 import { Route as AppAdministrativoGestaoPontoRouteImport } from './routes/app.administrativo.gestao-ponto'
 import { Route as AppAdministrativoGestaoPontoIndexRouteImport } from './routes/app.administrativo.gestao-ponto.index'
@@ -534,6 +535,12 @@ const AppAdministrativoRequisicoesRecebidasRoute =
     path: '/requisicoes-recebidas',
     getParentRoute: () => AppAdministrativoRoute,
   } as any)
+const AppAdministrativoMarcadoresHoraExtraRoute =
+  AppAdministrativoMarcadoresHoraExtraRouteImport.update({
+    id: '/marcadores-hora-extra',
+    path: '/marcadores-hora-extra',
+    getParentRoute: () => AppAdministrativoRoute,
+  } as any)
 const AppAdministrativoHoraExtraRecebidaRoute =
   AppAdministrativoHoraExtraRecebidaRouteImport.update({
     id: '/hora-extra-recebida',
@@ -647,6 +654,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
+  '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
@@ -740,6 +748,7 @@ export interface FileRoutesByTo {
   '/rc/$token': typeof RcTokenRoute
   '/app': typeof AppIndexRoute
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
+  '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
@@ -838,6 +847,7 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
+  '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
@@ -937,6 +947,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/administrativo/gestao-ponto'
     | '/app/administrativo/hora-extra-recebida'
+    | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
     | '/app/compras/dashboard'
@@ -1030,6 +1041,7 @@ export interface FileRouteTypes {
     | '/rc/$token'
     | '/app'
     | '/app/administrativo/hora-extra-recebida'
+    | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
     | '/app/compras/dashboard'
@@ -1127,6 +1139,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/administrativo/gestao-ponto'
     | '/app/administrativo/hora-extra-recebida'
+    | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
     | '/app/compras/dashboard'
@@ -1780,6 +1793,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdministrativoRequisicoesRecebidasRouteImport
       parentRoute: typeof AppAdministrativoRoute
     }
+    '/app/administrativo/marcadores-hora-extra': {
+      id: '/app/administrativo/marcadores-hora-extra'
+      path: '/marcadores-hora-extra'
+      fullPath: '/app/administrativo/marcadores-hora-extra'
+      preLoaderRoute: typeof AppAdministrativoMarcadoresHoraExtraRouteImport
+      parentRoute: typeof AppAdministrativoRoute
+    }
     '/app/administrativo/hora-extra-recebida': {
       id: '/app/administrativo/hora-extra-recebida'
       path: '/hora-extra-recebida'
@@ -1888,6 +1908,7 @@ const AppAdministrativoGestaoPontoRouteWithChildren =
 interface AppAdministrativoRouteChildren {
   AppAdministrativoGestaoPontoRoute: typeof AppAdministrativoGestaoPontoRouteWithChildren
   AppAdministrativoHoraExtraRecebidaRoute: typeof AppAdministrativoHoraExtraRecebidaRoute
+  AppAdministrativoMarcadoresHoraExtraRoute: typeof AppAdministrativoMarcadoresHoraExtraRoute
   AppAdministrativoRequisicoesRecebidasRoute: typeof AppAdministrativoRequisicoesRecebidasRoute
 }
 
@@ -1896,6 +1917,8 @@ const AppAdministrativoRouteChildren: AppAdministrativoRouteChildren = {
     AppAdministrativoGestaoPontoRouteWithChildren,
   AppAdministrativoHoraExtraRecebidaRoute:
     AppAdministrativoHoraExtraRecebidaRoute,
+  AppAdministrativoMarcadoresHoraExtraRoute:
+    AppAdministrativoMarcadoresHoraExtraRoute,
   AppAdministrativoRequisicoesRecebidasRoute:
     AppAdministrativoRequisicoesRecebidasRoute,
 }
