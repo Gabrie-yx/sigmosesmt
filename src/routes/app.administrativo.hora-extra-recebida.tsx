@@ -136,6 +136,7 @@ function AdministrativoHoraExtraRecebidaPage() {
     queryKey: ["admin-hora-extra-recebida"],
     enabled: !!user && canAcesso,
     refetchOnWindowFocus: true,
+    refetchInterval: 15000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_sabado")
