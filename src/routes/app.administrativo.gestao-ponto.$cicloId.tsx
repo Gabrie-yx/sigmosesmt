@@ -658,11 +658,20 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
   const [saving, setSaving] = useState(false);
 
   const tipos = useMemo(() => [
-    "ATESTADO", "FALTA_JUSTIFICADA", "FALTA_INJUSTIFICADA", "HE_AUTORIZADA",
-    "AJUSTE_MARCACAO", "FOLGA_COMPENSADA", "OUTRO",
+    { value: "falta_atestado",        label: "Falta com atestado" },
+    { value: "falta_justificada",     label: "Falta justificada" },
+    { value: "atraso_justificado",    label: "Atraso justificado" },
+    { value: "saida_antecipada",      label: "Saída antecipada" },
+    { value: "esquecimento_marcacao", label: "Esquecimento de marcação" },
+    { value: "he_100_autorizada",     label: "HE 100% autorizada" },
+    { value: "he_domingo",            label: "HE domingo" },
+    { value: "he_feriado",            label: "HE feriado" },
+    { value: "abono",                 label: "Abono" },
+    { value: "outros",                label: "Outros" },
   ], []);
 
-  const anexoObrigatorio = tipo === "ATESTADO" || tipo === "FALTA_JUSTIFICADA";
+  // Atestado é obrigatório APENAS quando a tratativa é "falta com atestado".
+  const anexoObrigatorio = tipo === "falta_atestado";
 
   async function salvar() {
     if (descricao.trim().length < 5) { toast.error("Descreva a tratativa (≥ 5 caracteres)."); return; }
