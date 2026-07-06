@@ -41,6 +41,7 @@ export function HoraExtraSabadoDialog({
   observacaoPlaceholder,
   funcionariosPermitidos,
   employeeIdsPermitidos,
+  companyIdsPermitidos,
   ocultarEfetivo,
   ocultarSetor,
 }: {
@@ -63,6 +64,8 @@ export function HoraExtraSabadoDialog({
   funcionariosPermitidos?: string[];
   /** Restringe a lista de funcionários por IDs (usado pelo escopo de marcador). Se definido, tem precedência sobre nomes/setor. */
   employeeIdsPermitidos?: string[] | null;
+  /** Restringe as empresas exibidas no dropdown a estes IDs (marcador de terceirizadas). */
+  companyIdsPermitidos?: string[] | null;
   /** Oculta o campo Efetivo (DMN/MEI/Terceirizado). */
   ocultarEfetivo?: boolean;
   /** Oculta o campo Setor. */
@@ -126,12 +129,19 @@ export function HoraExtraSabadoDialog({
   // esmaecidas para deixar claro que existem mas o usuário não pode escolher.
   const companiesFiltradas = useMemo(() => {
     const list = (companies ?? []) as { id: string; name: string }[];
+    // Escopo por IDs (marcador de terceirizadas): mostra apenas as empresas do escopo.
+    if (companyIdsPermitidos && companyIdsPermitidos.length > 0) {
+      const permitidas = new Set(companyIdsPermitidos.map(String));
+      return list
+        .filter((c) => permitidas.has(String(c.id)))
+        .map((c) => ({ ...c, _disabled: false }));
+    }
     if (!empresaFixaNome) return list.map((c) => ({ ...c, _disabled: false }));
     const alvo = empresaFixaNome.trim().toLowerCase();
     return list
       .map((c) => ({ ...c, _disabled: !String(c.name ?? "").trim().toLowerCase().includes(alvo) }))
       .sort((a, b) => Number(a._disabled) - Number(b._disabled));
-  }, [companies, empresaFixaNome]);
+  }, [companies, empresaFixaNome, companyIdsPermitidos]);
 
   // Ao abrir escopado, trava setor + empresa automaticamente.
   // Roda também quando companiesFiltradas muda (ex.: query resolve depois do open)
@@ -148,8 +158,14 @@ export function HoraExtraSabadoDialog({
         return valido ? prev : alvoId;
       });
     }
+    // Escopo por IDs (terceirizadas): se o draft restaurou uma empresa
+    // que não faz parte do escopo do marcador, limpa para forçar nova escolha.
+    if (companyIdsPermitidos && companyIdsPermitidos.length > 0) {
+      const permitidas = new Set(companyIdsPermitidos.map(String));
+      setCompanyId((prev) => (prev && permitidas.has(prev) ? prev : ""));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, setorFixo, empresaFixaNome, companiesFiltradas, editId]);
+  }, [open, setorFixo, empresaFixaNome, companiesFiltradas, editId, companyIdsPermitidos]);
 
   const { data: setores } = useQuery({
     queryKey: ["he-setores"],
