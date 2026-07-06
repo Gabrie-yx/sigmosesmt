@@ -40,6 +40,7 @@ export function HoraExtraSabadoDialog({
   observacaoLabel,
   observacaoPlaceholder,
   funcionariosPermitidos,
+  employeeIdsPermitidos,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -58,6 +59,8 @@ export function HoraExtraSabadoDialog({
   observacaoPlaceholder?: string;
   /** Restringe a lista de funcionários disponíveis a estes nomes (match por substring, case-insensitive). */
   funcionariosPermitidos?: string[];
+  /** Restringe a lista de funcionários por IDs (usado pelo escopo de marcador). Se definido, tem precedência sobre nomes/setor. */
+  employeeIdsPermitidos?: string[] | null;
 }) {
   const qc = useQueryClient();
   const { user } = useAuth();
