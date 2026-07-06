@@ -674,6 +674,13 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         open={desligamentoOpen}
         onClose={() => setDesligamentoOpen(false)}
       />
+      {emp && (
+        <ExcluirPermanenteDialog
+          emp={{ id: emp.id, nome: emp.nome }}
+          open={excluirOpen}
+          onClose={() => setExcluirOpen(false)}
+        />
+      )}
     </div>
   );
 }
