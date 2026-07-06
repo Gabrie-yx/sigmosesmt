@@ -14,8 +14,10 @@ type ModuloScope = {
   slug: string;
   moduloLabel: string;
   setor?: string;
-  empresaFixaNome: string;
+  empresaFixaNome?: string;
   funcionariosPermitidos?: string[];
+  /** Oculta os campos Efetivo/Setor no dialog (fluxo simplificado). */
+  camposSimplificados?: boolean;
 };
 
 type HoraExtraModulo = {
@@ -42,7 +44,7 @@ export const MODULO_MAP: Record<string, ModuloScope> = {
   producao:   { slug: "producao",   moduloLabel: "Produção",   setor: "Produção",   empresaFixaNome: "DMN" },
   compras:    { slug: "compras",    moduloLabel: "Compras",    setor: "Compras",    empresaFixaNome: "DMN" },
   manutencao: { slug: "manutencao", moduloLabel: "Manutenção", empresaFixaNome: "LF SERVIÇOS", funcionariosPermitidos: ["José Carlos Batalha", "Kleber Lucas Lima Firmino"] },
-  almoxarifado: { slug: "almoxarifado", moduloLabel: "Almoxarifado", empresaFixaNome: "DMN", funcionariosPermitidos: ["Israel Uchoa Rengifo", "Daniel Dantas"] },
+  almoxarifado: { slug: "almoxarifado", moduloLabel: "Almoxarifado", funcionariosPermitidos: ["Israel Uchoa Rengifo", "Daniel Dantas"], camposSimplificados: true },
   portaria:   { slug: "portaria",   moduloLabel: "Portaria",   setor: "Portaria",   empresaFixaNome: "DMN" },
 };
 
@@ -131,7 +133,9 @@ function HoraExtraModuloPage() {
           <h1 className="text-2xl font-bold">Hora Extra — {scope.moduloLabel}</h1>
           <p className="text-sm text-muted-foreground">
             Registro de horas extras vinculado ao setor <span className="font-semibold">{scope.moduloLabel}</span>.
-            Empresa travada em <span className="font-semibold">{scope.empresaFixaNome}</span>.
+            {scope.empresaFixaNome && (
+              <> Empresa travada em <span className="font-semibold">{scope.empresaFixaNome}</span>.</>
+            )}
           </p>
         </div>
         <Button variant="outline" size="sm" asChild>
@@ -173,6 +177,8 @@ function HoraExtraModuloPage() {
         moduloLabel={scope.moduloLabel}
         funcionariosPermitidos={funcionariosPermitidos}
         employeeIdsPermitidos={employeeIdsPermitidos}
+        ocultarEfetivo={scope.camposSimplificados}
+        ocultarSetor={scope.camposSimplificados}
         observacaoLabel="DIGITE AQUI A JUSTIFICATIVA DA EXTRA"
         observacaoPlaceholder="Descreva a justificativa da hora extra…"
       />
