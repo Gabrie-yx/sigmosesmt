@@ -734,3 +734,14 @@ function MinhasRcsBadge() {
     </span>
   );
 }
+
+function useHoverOpen() {
+  const [open, setOpen] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clear = () => { if (timer.current) { clearTimeout(timer.current); timer.current = null; } };
+  const bind = {
+    onMouseEnter: () => { clear(); setOpen(true); },
+    onMouseLeave: () => { clear(); timer.current = setTimeout(() => setOpen(false), 180); },
+  };
+  return { open, setOpen, bind };
+}
