@@ -560,21 +560,36 @@ function hhmmToMin(s?: string): number | null {
   return Number(m[1]) * 60 + Number(m[2]);
 }
 
-// Regra de negócio: SÓ precisa de tratativa o que o RH exige abonar/justificar.
-// Isso significa exclusivamente: FALTA (coluna "Faltas" > 0) e ATRASO (coluna
-// "Atraso" > 0). HE, adicional noturno, marcações extras, DSR, folga, feriado
-// e compensação NÃO são pendências — vão pra folha normalmente.
+// Regras de negócio (jornada padrão):
+// - Entrada: janela de tolerância 07:25–07:30. Antes de 07:25 = HORA EXTRA
+//   (não é pendência). Após 07:30 = ATRASO (pendência).
+// - Saída: janela 17:25–17:30. Antes de 17:25 = ATRASO (saída antecipada,
+//   pendência). Após 17:30 = HORA EXTRA (não é pendência).
+// - FALTA (coluna "Faltas" > 0 ou observação FALTA) sempre é pendência.
+// - DSR, FOLGA, FERIADO, COMPENSAÇÃO nunca são pendência.
+const ENTRADA_LIMITE = 7 * 60 + 30;   // 07:30
+const SAIDA_MIN      = 17 * 60 + 25;  // 17:25
 function classificarDia(d: OcrDia): { conforme: boolean; motivo: string } {
   const obs = (d.observacao ?? "").toUpperCase();
   const faltas = hhmmToMin(d.faltas) ?? 0;
-  const atraso = hhmmToMin(d.atraso) ?? 0;
-
-  // Observação textual do OCR pode dizer FALTA/ATRASO mesmo sem número na coluna
   const obsFalta = /\bFALTA\b/.test(obs) && !/JUSTIFICAD/.test(obs);
-  const obsAtraso = /\bATRASO\b/.test(obs);
-
   if (faltas > 0 || obsFalta) return { conforme: false, motivo: "FALTA" };
-  if (atraso > 0 || obsAtraso) return { conforme: false, motivo: "ATRASO" };
+
+  if (/DSR|FOLGA|FERIADO|COMPENS/.test(obs)) return { conforme: true, motivo: "" };
+
+  const marks = (d.marcacoes ?? []).filter(Boolean);
+  if (marks.length >= 2) {
+    const entrada = hhmmToMin(marks[0]);
+    const saida = hhmmToMin(marks[marks.length - 1]);
+    let atrasoMin = 0;
+    if (entrada != null && entrada > ENTRADA_LIMITE) atrasoMin += entrada - ENTRADA_LIMITE;
+    if (saida != null && saida < SAIDA_MIN)          atrasoMin += SAIDA_MIN - saida;
+    if (atrasoMin > 0) return { conforme: false, motivo: "ATRASO" };
+    return { conforme: true, motivo: "" };
+  }
+
+  const atrasoPdf = hhmmToMin(d.atraso) ?? 0;
+  if (atrasoPdf > 0 || /ATRASO/.test(obs)) return { conforme: false, motivo: "ATRASO" };
   return { conforme: true, motivo: "" };
 }
 
