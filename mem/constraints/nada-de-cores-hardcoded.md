@@ -5,9 +5,10 @@ type: constraint
 ---
 
 ## Proibido em overlays sobre tema escuro
-- `bg-white`, `bg-slate-*`, `bg-red-50`, `bg-amber-50`, `bg-emerald-50`
-- `text-slate-800/700/600/500/400`, `text-black`
-- `border-slate-*`, `border-red-200/300`
+- `bg-white`, `bg-slate-*`, `bg-red-50`, `bg-rose-50`, `bg-amber-50`, `bg-emerald-50`
+- `text-slate-800/700/600/500/400`, `text-rose-*`, `text-black`
+- `border-slate-*`, `border-red-200/300`, `border-rose-*`
+- Botões/modal de exclusão com rosa/rose hardcoded ou contraste baixo
 
 ## Obrigatório
 - Fundo: `bg-popover`, `bg-card`, `bg-background`, `bg-muted`

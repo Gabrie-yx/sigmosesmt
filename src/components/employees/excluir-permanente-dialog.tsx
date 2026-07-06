@@ -49,15 +49,15 @@ export function ExcluirPermanenteDialog({ emp, open, onClose, onDeleted }: Props
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !excluir.isPending && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg border-border bg-popover text-popover-foreground">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-rose-700">
+          <DialogTitle className="flex items-center gap-2 text-popover-foreground">
             <Trash2 className="h-5 w-5" /> Excluir funcionário permanentemente
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-900 space-y-1.5">
-            <div className="flex items-center gap-1.5 font-black uppercase tracking-widest">
+          <div className="rounded-lg bg-muted/70 border border-border p-3 text-xs text-popover-foreground space-y-1.5">
+            <div className="flex items-center gap-1.5 font-black uppercase tracking-widest text-destructive">
               <AlertTriangle className="h-3.5 w-3.5" /> Ação irreversível
             </div>
             <ul className="list-disc ml-5 space-y-0.5">
@@ -69,32 +69,34 @@ export function ExcluirPermanenteDialog({ emp, open, onClose, onDeleted }: Props
           </div>
 
           <div className="space-y-1.5">
-            <Label>Justificativa *</Label>
+            <Label className="text-foreground">Justificativa *</Label>
             <Textarea
               rows={3}
               value={justificativa}
               onChange={(e) => setJustificativa(e.target.value)}
               placeholder="Ex.: cadastro duplicado do CPF xxx.xxx.xxx-xx; registro criado por engano na importação de dd/mm; ..."
+              className="bg-background/50 text-foreground placeholder:text-muted-foreground border-input"
             />
-            <p className="text-[10px] text-slate-500">Mínimo 10 caracteres.</p>
+            <p className="text-[10px] text-muted-foreground">Mínimo 10 caracteres.</p>
           </div>
 
           <div className="space-y-1.5">
-            <Label>Digite o nome completo do funcionário para confirmar *</Label>
+            <Label className="text-foreground">Digite o nome completo do funcionário para confirmar *</Label>
             <Input
               value={confirmNome}
               onChange={(e) => setConfirmNome(e.target.value)}
               placeholder={emp.nome}
+              className="bg-background/50 text-foreground placeholder:text-muted-foreground border-input"
             />
-            <p className="text-[10px] text-slate-500">Esperado: <span className="font-mono">{emp.nome}</span></p>
+            <p className="text-[10px] text-muted-foreground">Esperado: <span className="font-mono text-foreground">{emp.nome}</span></p>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={excluir.isPending}>Cancelar</Button>
           <Button
+            variant="destructive"
             onClick={() => excluir.mutate()}
             disabled={!justOk || !nomeOk || excluir.isPending}
-            className="bg-rose-700 hover:bg-rose-800 text-white"
           >
             {excluir.isPending ? "Excluindo…" : "Excluir definitivamente"}
           </Button>
