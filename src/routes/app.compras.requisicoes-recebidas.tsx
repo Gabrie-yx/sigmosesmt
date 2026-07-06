@@ -1252,8 +1252,8 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
           <div className="text-sm font-bold mb-1 flex items-center gap-2">
             <FileText className="h-4 w-4" /> Itens solicitados ({itens.length})
           </div>
-          <div className="border rounded-lg overflow-hidden">
-            <table className="w-full text-xs">
+          <div className="border rounded-lg overflow-x-auto">
+            <table className="w-full min-w-[760px] text-xs">
               <thead className="bg-muted/50">
                 <tr>
                   <th className="p-2 text-left w-12">#</th>
@@ -1631,8 +1631,8 @@ function MelhorComboTab({ rcId }: { rcId: string }) {
         💡 Este é o <strong>melhor combo por item</strong> — pode gerar múltiplas PCs (uma por fornecedor). A matriz prioriza CONFORME &gt; SIMILAR, depois menor preço, depois estrelas.
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full text-xs">
+      <div className="border rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[720px] text-xs">
           <thead className="bg-muted/50">
             <tr>
               <th className="p-2 text-left w-10">#</th>

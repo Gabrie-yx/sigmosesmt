@@ -155,8 +155,8 @@ function FornecedoresPage() {
           Nenhum fornecedor encontrado.
         </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden bg-white">
-          <table className="w-full text-sm">
+        <div className="border rounded-lg overflow-x-auto bg-white">
+          <table className="w-full min-w-[720px] text-sm">
             <thead className="bg-slate-100 text-xs">
               <tr>
                 <th className="p-2 text-left">Fornecedor</th>

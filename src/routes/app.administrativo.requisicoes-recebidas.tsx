@@ -438,8 +438,8 @@ function RcDetailDialog({ req, onClose }: { req: Req; onClose: () => void }) {
           <div className="text-sm font-bold mb-1 flex items-center gap-2">
             <FileText className="h-4 w-4" /> Itens solicitados ({itens.length})
           </div>
-          <div className="prism-pill overflow-hidden">
-            <table className="w-full text-xs">
+          <div className="prism-pill overflow-x-auto">
+            <table className="w-full min-w-[720px] text-xs">
               <thead className="bg-white/5">
                 <tr>
                   <th className="p-2 text-left w-10">#</th>
