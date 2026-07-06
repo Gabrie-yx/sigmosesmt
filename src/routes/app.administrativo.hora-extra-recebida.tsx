@@ -51,6 +51,8 @@ type HoraExtra = {
   observacao: string | null;
   motivo_indeferimento: string | null;
   created_at: string;
+  company_id?: string | null;
+  companies?: { name: string | null } | null;
 };
 
 type Funcionario = {
@@ -123,6 +125,19 @@ function splitSetores(r: { setor: string | null; modulo_origem?: string | null }
   return ["Sem setor"];
 }
 
+/**
+ * Rótulo de origem que aparece no card e no dialog. Para fichas de
+ * terceirizadas (modulo_origem = "terceirizadas") preferimos o nome da
+ * empresa (ex.: "JC Galvão", "NB Construção") em vez do genérico
+ * "TERCEIRIZADAS", que não ajuda o Administrativo a distinguir.
+ */
+function origemLabel(r: HoraExtra): string {
+  if (r.modulo_origem === "terceirizadas" && r.companies?.name) {
+    return r.companies.name;
+  }
+  return splitSetores(r)[0];
+}
+
 function AdministrativoHoraExtraRecebidaPage() {
   const { user, roles, hasModule } = useAuth();
   const isAdmin = roles.includes("admin");
@@ -140,7 +155,7 @@ function AdministrativoHoraExtraRecebidaPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_sabado")
-        .select("id,data,turno,horario_inicio,horario_fim,setor,modulo_origem,tipo_convocacao,status,justificativa,aberto_por_nome,criado_automatico_por_nome,observacao,motivo_indeferimento,created_at")
+        .select("id,data,turno,horario_inicio,horario_fim,setor,modulo_origem,tipo_convocacao,status,justificativa,aberto_por_nome,criado_automatico_por_nome,observacao,motivo_indeferimento,created_at,company_id,companies(name)")
         .order("data", { ascending: false })
         .limit(400);
       if (error) throw error;
@@ -379,8 +394,11 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
   const tipo = he.tipo_convocacao === "DIAS_UTEIS" ? "Dia útil" : he.tipo_convocacao === "SABADO" ? "Sábado" : "—";
   const solicitante = he.aberto_por_nome ?? he.criado_automatico_por_nome ?? "—";
   const statusKey = he.status in STATUS_BADGE ? he.status : "PENDENTE";
-  const origem = splitSetores(he)[0];
-  const origemAccent = SETOR_ACCENT[origem] ?? "accent-amber";
+  const origem = origemLabel(he);
+  const origemAccent = SETOR_ACCENT[splitSetores(he)[0]] ?? "accent-amber";
+  const setorDialog = he.modulo_origem === "terceirizadas"
+    ? (he.companies?.name ?? he.setor ?? "—")
+    : (he.setor ?? "—");
   return (
     <>
     <Card
@@ -423,7 +441,8 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
           </DialogTitle>
           <DialogDescription>
             Solicitante: <strong className="text-foreground">{solicitante}</strong> ·
-            Setor: <strong className="text-foreground">{he.setor ?? "—"}</strong> ·
+            {he.modulo_origem === "terceirizadas" ? "Empresa: " : "Setor: "}
+            <strong className="text-foreground">{setorDialog}</strong> ·
             Horário: <strong className="text-foreground">{he.horario_inicio ?? "--:--"}–{he.horario_fim ?? "--:--"}</strong>
           </DialogDescription>
         </DialogHeader>

@@ -350,6 +350,17 @@ export function HoraExtraSabadoDialog({
       const extras = setorNovo.split(",").map((s) => s.trim()).filter(Boolean);
       for (const e of extras) if (!todosSetores.includes(e)) todosSetores.push(e);
       const setorFinal = todosSetores.length ? todosSetores.join(", ") : null;
+      // Nome do solicitante: pega do profile do usuário logado. Sem isso,
+      // a tela do Administrativo mostra "Solicitante: —".
+      let nomeSolicitante: string | null = null;
+      if (user?.id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", user.id)
+          .maybeSingle();
+        nomeSolicitante = (prof?.full_name ?? user.email ?? null) as string | null;
+      }
       const payload = {
         data,
         turno: turno || null,
@@ -370,7 +381,16 @@ export function HoraExtraSabadoDialog({
         if (error) throw error;
         await supabase.from("hora_extra_sabado_funcionarios").delete().eq("hora_extra_id", editId);
       } else {
-        const { data: ins, error } = await supabase.from("hora_extra_sabado").insert({ ...payload, created_by: user?.id }).select("id").single();
+        const { data: ins, error } = await supabase
+          .from("hora_extra_sabado")
+          .insert({
+            ...payload,
+            created_by: user?.id,
+            aberto_por: user?.id ?? null,
+            aberto_por_nome: nomeSolicitante,
+          })
+          .select("id")
+          .single();
         if (error) throw error;
         id = ins.id;
       }
