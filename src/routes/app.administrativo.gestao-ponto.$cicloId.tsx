@@ -12,8 +12,11 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Upload, FileText, Loader2, AlertTriangle, CheckCircle2, User, Paperclip, X } from "lucide-react";
+import { ArrowLeft, Upload, FileText, Loader2, AlertTriangle, CheckCircle2, User, Paperclip, X, PenLine, Send, Download, Mail, ShieldCheck } from "lucide-react";
 import { ocrFolhaDePonto, type OcrFolha, type OcrDia } from "@/lib/ponto-ocr.functions";
+import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { gerarPdfConsolidado, type PontoPdfFolha } from "@/lib/ponto-consolidado-pdf";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/app/administrativo/gestao-ponto/$cicloId")({
   component: CicloDetalhePage,
@@ -27,6 +30,9 @@ type Ciclo = {
   pdf_original_nome: string | null;
   total_paginas: number | null;
   total_funcionarios: number | null;
+  pdf_consolidado_url: string | null;
+  enviado_rh_em: string | null;
+  enviado_rh_por: string | null;
 };
 
 type Folha = {
@@ -60,6 +66,11 @@ function CicloDetalhePage() {
   const [uploading, setUploading] = useState(false);
   const [tratarDia, setTratarDia] = useState<Dia | null>(null);
   const runOcr = useServerFn(ocrFolhaDePonto);
+  const { isAdmin, user } = useAuth();
+  const [assinaturaOpen, setAssinaturaOpen] = useState(false);
+  const [aprovando, setAprovando] = useState(false);
+  const [gerandoPdf, setGerandoPdf] = useState(false);
+  const [enviandoRh, setEnviandoRh] = useState(false);
 
   const { data: ciclo } = useQuery({
     queryKey: ["ponto_ciclo", cicloId],
@@ -89,6 +100,153 @@ function CicloDetalhePage() {
       return (data ?? []) as unknown as Dia[];
     },
   });
+
+  const status = ciclo?.status ?? "aberto";
+  const pendencias = dias.length;
+  const podeEnviarAprovacao = folhas.length > 0 && pendencias === 0 && (status === "em_tratamento" || status === "aberto");
+  const aguardandoAnderson = status === "aguardando_anderson";
+  const aprovado = status === "aprovado" || status === "enviado_rh" || status === "encerrado";
+  const enviadoRh = status === "enviado_rh" || status === "encerrado";
+
+  async function enviarParaAprovacao() {
+    const { error } = await supabase.from("ponto_ciclos" as any)
+      .update({ status: "aguardando_anderson" }).eq("id", cicloId);
+    if (error) return toast.error(error.message);
+    toast.success("Ciclo enviado para aprovação do Anderson");
+    qc.invalidateQueries({ queryKey: ["ponto_ciclo", cicloId] });
+    qc.invalidateQueries({ queryKey: ["ponto_ciclos"] });
+  }
+
+  async function aprovarComAssinatura(dataUrl: string) {
+    setAprovando(true);
+    try {
+      // Sobe a assinatura pro storage
+      const blob = await (await fetch(dataUrl)).blob();
+      const path = `${cicloId}/assinatura-${Date.now()}.png`;
+      const up = await supabase.storage.from("ponto-pdfs").upload(path, blob, { upsert: false, contentType: "image/png" });
+      if (up.error) throw up.error;
+
+      // Carimba TODAS as folhas do ciclo com a assinatura + aprovador
+      const { error: e1 } = await supabase.from("ponto_folhas" as any).update({
+        status: "aprovada",
+        aprovada_por: user?.id ?? null,
+        aprovada_em: new Date().toISOString(),
+        assinatura_url: path,
+      }).eq("ciclo_id", cicloId);
+      if (e1) throw e1;
+
+      // Muda status do ciclo
+      const { error: e2 } = await supabase.from("ponto_ciclos" as any)
+        .update({ status: "aprovado" }).eq("id", cicloId);
+      if (e2) throw e2;
+
+      toast.success("Ciclo aprovado e assinado");
+      setAssinaturaOpen(false);
+      qc.invalidateQueries({ queryKey: ["ponto_ciclo", cicloId] });
+      qc.invalidateQueries({ queryKey: ["ponto_folhas", cicloId] });
+      qc.invalidateQueries({ queryKey: ["ponto_ciclos"] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao aprovar");
+    } finally {
+      setAprovando(false);
+    }
+  }
+
+  async function gerarPdfConsolidadoUpload() {
+    if (!ciclo) return;
+    setGerandoPdf(true);
+    try {
+      // Puxa tudo
+      const folhaIds = folhas.map(f => f.id);
+      const [diasResp, tratsResp, assinaturaUrl] = await Promise.all([
+        supabase.from("ponto_dias" as any).select("*").in("folha_id", folhaIds).order("data"),
+        supabase.from("ponto_tratativas" as any).select("*").in("folha_id", folhaIds),
+        (async () => {
+          const primeira = folhas.find(x => (x as any).assinatura_url) as any;
+          if (!primeira?.assinatura_url) return null;
+          const { data } = await supabase.storage.from("ponto-pdfs").createSignedUrl(primeira.assinatura_url, 300);
+          if (!data?.signedUrl) return null;
+          const resp = await fetch(data.signedUrl);
+          const b = await resp.blob();
+          return await new Promise<string>((res) => {
+            const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.readAsDataURL(b);
+          });
+        })(),
+      ]);
+      if (diasResp.error) throw diasResp.error;
+      if (tratsResp.error) throw tratsResp.error;
+
+      const diasByFolha = new Map<string, any[]>();
+      for (const d of (diasResp.data ?? []) as any[]) {
+        if (!diasByFolha.has(d.folha_id)) diasByFolha.set(d.folha_id, []);
+        diasByFolha.get(d.folha_id)!.push(d);
+      }
+      const tratsByFolha = new Map<string, any[]>();
+      for (const t of (tratsResp.data ?? []) as any[]) {
+        if (!tratsByFolha.has(t.folha_id)) tratsByFolha.set(t.folha_id, []);
+        tratsByFolha.get(t.folha_id)!.push(t);
+      }
+
+      const folhasPdf: PontoPdfFolha[] = folhas.map(f => ({
+        nome: f.nome,
+        matricula: f.matricula,
+        cargo: f.cargo,
+        local_trabalho: f.local_trabalho,
+        pagina_pdf: f.pagina_pdf,
+        totais_json: f.totais_json,
+        dias: diasByFolha.get(f.id) ?? [],
+        tratativas: tratsByFolha.get(f.id) ?? [],
+      }));
+
+      const blob = gerarPdfConsolidado({
+        competencia: ciclo.competencia,
+        folhas: folhasPdf,
+        aprovador: { nome: user?.email ?? "Aprovador", cargo: "Supervisor Geral", assinaturaDataUrl: assinaturaUrl },
+      });
+
+      const pdfPath = `${cicloId}/consolidado-${Date.now()}.pdf`;
+      const up = await supabase.storage.from("ponto-pdfs").upload(pdfPath, blob, { upsert: true, contentType: "application/pdf" });
+      if (up.error) throw up.error;
+      await supabase.from("ponto_ciclos" as any).update({ pdf_consolidado_url: pdfPath }).eq("id", cicloId);
+
+      // Baixa localmente também
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = `ponto-consolidado-${ciclo.competencia}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+      toast.success("PDF consolidado gerado");
+      qc.invalidateQueries({ queryKey: ["ponto_ciclo", cicloId] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao gerar PDF");
+    } finally {
+      setGerandoPdf(false);
+    }
+  }
+
+  async function baixarPdfConsolidado() {
+    if (!ciclo?.pdf_consolidado_url) return;
+    const { data, error } = await supabase.storage.from("ponto-pdfs").createSignedUrl(ciclo.pdf_consolidado_url, 300);
+    if (error || !data?.signedUrl) return toast.error("Não foi possível baixar o PDF.");
+    window.open(data.signedUrl, "_blank");
+  }
+
+  async function marcarEnviadoRh() {
+    setEnviandoRh(true);
+    try {
+      const { error } = await supabase.from("ponto_ciclos" as any).update({
+        status: "enviado_rh",
+        enviado_rh_em: new Date().toISOString(),
+        enviado_rh_por: user?.id ?? null,
+      }).eq("id", cicloId);
+      if (error) throw error;
+      toast.success("Ciclo marcado como enviado ao RH");
+      qc.invalidateQueries({ queryKey: ["ponto_ciclo", cicloId] });
+      qc.invalidateQueries({ queryKey: ["ponto_ciclos"] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao marcar");
+    } finally {
+      setEnviandoRh(false);
+    }
+  }
 
   async function handleUpload(file: File) {
     if (!ciclo) return;
@@ -269,8 +427,79 @@ function CicloDetalhePage() {
           }}
         />
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4" /> Fechamento e envio ao RH
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Status atual: <b className="text-foreground">{statusLabel(status)}</b>
+            {enviadoRh && ciclo?.enviado_rh_em && <> · enviado em {new Date(ciclo.enviado_rh_em).toLocaleString("pt-BR")}</>}
+          </p>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          {podeEnviarAprovacao && (
+            <Button onClick={enviarParaAprovacao} className="gap-2">
+              <Send className="h-4 w-4" /> Enviar para aprovação (Anderson)
+            </Button>
+          )}
+          {!podeEnviarAprovacao && pendencias > 0 && status !== "aprovado" && !aguardandoAnderson && !enviadoRh && (
+            <div className="text-xs text-amber-300 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Ainda há {pendencias} pendência(s) — resolva tudo antes de enviar pra aprovação.
+            </div>
+          )}
+          {aguardandoAnderson && (
+            isAdmin ? (
+              <Button onClick={() => setAssinaturaOpen(true)} disabled={aprovando} className="gap-2">
+                <PenLine className="h-4 w-4" /> {aprovando ? "Aprovando…" : "Aprovar e assinar"}
+              </Button>
+            ) : (
+              <div className="text-xs text-muted-foreground">Aguardando o Anderson (Supervisor Geral) aprovar.</div>
+            )
+          )}
+          {aprovado && (
+            <>
+              <Button onClick={gerarPdfConsolidadoUpload} disabled={gerandoPdf} className="gap-2" variant="outline">
+                {gerandoPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                {ciclo?.pdf_consolidado_url ? "Regerar PDF consolidado" : "Gerar PDF consolidado"}
+              </Button>
+              {ciclo?.pdf_consolidado_url && (
+                <Button onClick={baixarPdfConsolidado} variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" /> Baixar PDF
+                </Button>
+              )}
+              {!enviadoRh && (
+                <Button onClick={marcarEnviadoRh} disabled={enviandoRh || !ciclo?.pdf_consolidado_url} className="gap-2">
+                  <Mail className="h-4 w-4" /> {enviandoRh ? "Marcando…" : "Marcar enviado ao RH"}
+                </Button>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <SignaturePadDialog
+        open={assinaturaOpen}
+        onClose={() => setAssinaturaOpen(false)}
+        onConfirm={(r) => aprovarComAssinatura(r.dataUrl)}
+        title="Assinatura do Supervisor Geral (Anderson)"
+      />
     </div>
   );
+}
+
+function statusLabel(s: string) {
+  const map: Record<string, string> = {
+    aberto: "Aberto",
+    em_tratamento: "Em tratamento",
+    aguardando_anderson: "Aguardando Anderson",
+    aprovado: "Aprovado",
+    enviado_rh: "Enviado ao RH",
+    encerrado: "Encerrado",
+  };
+  return map[s] ?? s;
 }
 
 function formatDate(iso: string) {
