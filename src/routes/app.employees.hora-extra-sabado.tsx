@@ -24,6 +24,18 @@ export const Route = createFileRoute("/app/employees/hora-extra-sabado")({
   component: HoraExtraSabadoPage,
 });
 
+function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <div className="grid place-items-center h-6 w-6 rounded-md bg-rose-500/10 text-rose-300 shrink-0 mt-0.5">{icon}</div>
+      <div className="min-w-0">
+        <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 leading-tight">{label}</div>
+        <div className="text-sm text-slate-100 font-medium leading-snug mt-0.5 break-words">{value}</div>
+      </div>
+    </div>
+  );
+}
+
 const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 async function imageToDataUrl(src: string): Promise<string | null> {
