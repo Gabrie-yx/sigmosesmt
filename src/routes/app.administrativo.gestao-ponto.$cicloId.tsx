@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Upload, FileText, Loader2, AlertTriangle, CheckCircle2, User, Paperclip, X, PenLine, Send, Download, Mail, ShieldCheck } from "lucide-react";
@@ -511,11 +512,6 @@ function motivoLabel(m: string | null): string {
   switch (m) {
     case "FALTA": return "Falta";
     case "ATRASO": return "Atraso";
-    case "HE_A_VALIDAR": return "HE a validar";
-    case "AD_NOTURNO_A_VALIDAR": return "Ad. Noturno";
-    case "MARCACOES_INCOMPLETAS": return "Marcações incompletas";
-    case "SEM_MARCACAO": return "Sem marcação";
-    case "REVISAR": return "Revisar";
     default: return m ?? "Revisar";
   }
 }
@@ -523,8 +519,6 @@ function motivoClasse(m: string | null): string {
   switch (m) {
     case "FALTA": return "border-red-500/40 text-red-300 bg-red-500/10";
     case "ATRASO": return "border-orange-500/40 text-orange-300 bg-orange-500/10";
-    case "HE_A_VALIDAR":
-    case "AD_NOTURNO_A_VALIDAR": return "border-blue-500/40 text-blue-300 bg-blue-500/10";
     default: return "border-amber-500/40 text-amber-300 bg-amber-500/10";
   }
 }
@@ -566,21 +560,36 @@ function hhmmToMin(s?: string): number | null {
   return Number(m[1]) * 60 + Number(m[2]);
 }
 
-// Regra de negócio: SÓ precisa de tratativa o que o RH exige abonar/justificar.
-// Isso significa exclusivamente: FALTA (coluna "Faltas" > 0) e ATRASO (coluna
-// "Atraso" > 0). HE, adicional noturno, marcações extras, DSR, folga, feriado
-// e compensação NÃO são pendências — vão pra folha normalmente.
+// Regras de negócio (jornada padrão):
+// - Entrada: janela de tolerância 07:25–07:30. Antes de 07:25 = HORA EXTRA
+//   (não é pendência). Após 07:30 = ATRASO (pendência).
+// - Saída: janela 17:25–17:30. Antes de 17:25 = ATRASO (saída antecipada,
+//   pendência). Após 17:30 = HORA EXTRA (não é pendência).
+// - FALTA (coluna "Faltas" > 0 ou observação FALTA) sempre é pendência.
+// - DSR, FOLGA, FERIADO, COMPENSAÇÃO nunca são pendência.
+const ENTRADA_LIMITE = 7 * 60 + 30;   // 07:30
+const SAIDA_MIN      = 17 * 60 + 25;  // 17:25
 function classificarDia(d: OcrDia): { conforme: boolean; motivo: string } {
   const obs = (d.observacao ?? "").toUpperCase();
   const faltas = hhmmToMin(d.faltas) ?? 0;
-  const atraso = hhmmToMin(d.atraso) ?? 0;
-
-  // Observação textual do OCR pode dizer FALTA/ATRASO mesmo sem número na coluna
   const obsFalta = /\bFALTA\b/.test(obs) && !/JUSTIFICAD/.test(obs);
-  const obsAtraso = /\bATRASO\b/.test(obs);
-
   if (faltas > 0 || obsFalta) return { conforme: false, motivo: "FALTA" };
-  if (atraso > 0 || obsAtraso) return { conforme: false, motivo: "ATRASO" };
+
+  if (/DSR|FOLGA|FERIADO|COMPENS/.test(obs)) return { conforme: true, motivo: "" };
+
+  const marks = (d.marcacoes ?? []).filter(Boolean);
+  if (marks.length >= 2) {
+    const entrada = hhmmToMin(marks[0]);
+    const saida = hhmmToMin(marks[marks.length - 1]);
+    let atrasoMin = 0;
+    if (entrada != null && entrada > ENTRADA_LIMITE) atrasoMin += entrada - ENTRADA_LIMITE;
+    if (saida != null && saida < SAIDA_MIN)          atrasoMin += SAIDA_MIN - saida;
+    if (atrasoMin > 0) return { conforme: false, motivo: "ATRASO" };
+    return { conforme: true, motivo: "" };
+  }
+
+  const atrasoPdf = hhmmToMin(d.atraso) ?? 0;
+  if (atrasoPdf > 0 || /ATRASO/.test(obs)) return { conforme: false, motivo: "ATRASO" };
   return { conforme: true, motivo: "" };
 }
 
@@ -649,11 +658,20 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
   const [saving, setSaving] = useState(false);
 
   const tipos = useMemo(() => [
-    "ATESTADO", "FALTA_JUSTIFICADA", "FALTA_INJUSTIFICADA", "HE_AUTORIZADA",
-    "AJUSTE_MARCACAO", "FOLGA_COMPENSADA", "OUTRO",
+    { value: "falta_atestado",        label: "Falta com atestado" },
+    { value: "falta_justificada",     label: "Falta justificada" },
+    { value: "atraso_justificado",    label: "Atraso justificado" },
+    { value: "saida_antecipada",      label: "Saída antecipada" },
+    { value: "esquecimento_marcacao", label: "Esquecimento de marcação" },
+    { value: "he_100_autorizada",     label: "HE 100% autorizada" },
+    { value: "he_domingo",            label: "HE domingo" },
+    { value: "he_feriado",            label: "HE feriado" },
+    { value: "abono",                 label: "Abono" },
+    { value: "outros",                label: "Outros" },
   ], []);
 
-  const anexoObrigatorio = tipo === "ATESTADO" || tipo === "FALTA_JUSTIFICADA";
+  // Atestado é obrigatório APENAS quando a tratativa é "falta com atestado".
+  const anexoObrigatorio = tipo === "falta_atestado";
 
   async function salvar() {
     if (descricao.trim().length < 5) { toast.error("Descreva a tratativa (≥ 5 caracteres)."); return; }
@@ -725,15 +743,22 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
         <div className="space-y-3">
           <div>
             <label className="text-xs text-muted-foreground">Tipo</label>
-            <select className="w-full h-9 rounded-md border bg-background px-2 text-sm" value={tipo} onChange={e => setTipo(e.target.value)}>
-              {tipos.map(t => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
-            </select>
+            <Select value={tipo} onValueChange={setTipo}>
+              <SelectTrigger className="w-full h-9">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {tipos.map(t => (
+                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className="text-xs text-muted-foreground">Início</label><Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} /></div>
             <div><label className="text-xs text-muted-foreground">Fim</label><Input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} /></div>
           </div>
-          {tipo === "ATESTADO" && (
+          {tipo === "falta_atestado" && (
             <div><label className="text-xs text-muted-foreground">CID</label><Input value={cid} onChange={e => setCid(e.target.value)} placeholder="Ex.: J06.9" /></div>
           )}
           <div><label className="text-xs text-muted-foreground">Autorizado por</label><Input value={autorizadoPor} onChange={e => setAutorizadoPor(e.target.value)} placeholder="Nome do líder/gestor" /></div>
@@ -780,11 +805,8 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
 
 function sugerirTipo(motivo: string | null): string {
   switch (motivo) {
-    case "FALTA": return "ATESTADO";
-    case "ATRASO": return "ATESTADO";
-    case "HE_A_VALIDAR": return "HE_AUTORIZADA";
-    case "MARCACOES_INCOMPLETAS":
-    case "SEM_MARCACAO": return "AJUSTE_MARCACAO";
-    default: return "OUTRO";
+    case "FALTA":  return "falta_atestado";
+    case "ATRASO": return "atraso_justificado";
+    default:       return "outros";
   }
 }
