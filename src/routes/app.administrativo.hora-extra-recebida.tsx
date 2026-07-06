@@ -43,6 +43,7 @@ type HoraExtra = {
   horario_fim: string | null;
   setor: string | null;
   tipo_convocacao: "SABADO" | "DIAS_UTEIS" | null;
+  modulo_origem?: string | null;
   status: "PENDENTE" | "APROVADA" | "INDEFERIDA" | string;
   justificativa: string | null;
   aberto_por_nome: string | null;
@@ -103,9 +104,23 @@ function fmtBR(d?: string | null) {
   return `${day}/${m}/${y}`;
 }
 
-function splitSetores(raw: string | null): string[] {
-  if (!raw) return ["Sem setor"];
-  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+const MODULO_LABEL: Record<string, string> = {
+  eletrica: "Elétrica",
+  mecanica: "Mecânica",
+  producao: "Produção",
+  compras: "Compras",
+  manutencao: "Manutenção",
+  almoxarifado: "Almoxarifado",
+  portaria: "Portaria",
+  administrativo: "Administrativo",
+  sesmt: "SESMT",
+};
+
+function splitSetores(r: { setor: string | null; modulo_origem?: string | null }): string[] {
+  const raw = (r.setor ?? "").trim();
+  if (raw) return raw.split(",").map((s) => s.trim()).filter(Boolean);
+  if (r.modulo_origem) return [MODULO_LABEL[r.modulo_origem] ?? r.modulo_origem];
+  return ["Sem setor"];
 }
 
 function AdministrativoHoraExtraRecebidaPage() {
@@ -122,7 +137,7 @@ function AdministrativoHoraExtraRecebidaPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_sabado")
-        .select("id,data,turno,horario_inicio,horario_fim,setor,tipo_convocacao,status,justificativa,aberto_por_nome,criado_automatico_por_nome,observacao,motivo_indeferimento,created_at")
+        .select("id,data,turno,horario_inicio,horario_fim,setor,modulo_origem,tipo_convocacao,status,justificativa,aberto_por_nome,criado_automatico_por_nome,observacao,motivo_indeferimento,created_at")
         .order("data", { ascending: false })
         .limit(400);
       if (error) throw error;
@@ -155,7 +170,7 @@ function AdministrativoHoraExtraRecebidaPage() {
 
   const filtered = useMemo(() => {
     return registros.filter((r) => {
-      const setores = splitSetores(r.setor);
+      const setores = splitSetores(r);
       if (setorFilter !== "__all" && !setores.includes(setorFilter)) return false;
       if (!q) return true;
       const s = q.toLowerCase();
@@ -173,7 +188,7 @@ function AdministrativoHoraExtraRecebidaPage() {
   const grupos = useMemo(() => {
     const map = new Map<string, HoraExtra[]>();
     for (const r of filtered) {
-      for (const setor of splitSetores(r.setor)) {
+      for (const setor of splitSetores(r)) {
         if (!map.has(setor)) map.set(setor, []);
         map.get(setor)!.push(r);
       }
@@ -335,6 +350,8 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
   const tipo = he.tipo_convocacao === "DIAS_UTEIS" ? "Dia útil" : he.tipo_convocacao === "SABADO" ? "Sábado" : "—";
   const solicitante = he.aberto_por_nome ?? he.criado_automatico_por_nome ?? "—";
   const statusKey = he.status in STATUS_BADGE ? he.status : "PENDENTE";
+  const origem = splitSetores(he)[0];
+  const origemAccent = SETOR_ACCENT[origem] ?? "accent-amber";
   return (
     <>
     <Card
@@ -351,6 +368,12 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
             <span className="text-sm font-bold text-foreground">{fmtBR(he.data)}</span>
             <span className={`${STATUS_BADGE[statusKey]} px-2.5 py-0.5 text-[11px]`}>{STATUS_LABEL[statusKey] ?? he.status}</span>
             <span className="prism-pill px-2 py-0.5 text-[10px] text-foreground/80">{tipo}</span>
+            <span
+              className={`prism-pill ${origemAccent} px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-foreground animate-pulse shadow-[0_0_12px_rgba(251,191,36,0.55)]`}
+              title="Setor de origem"
+            >
+              {origem}
+            </span>
           </div>
           <div className="text-[11px] text-muted-foreground mt-1">
             {solicitante} · {he.horario_inicio ?? "--:--"}–{he.horario_fim ?? "--:--"} ·
