@@ -339,17 +339,17 @@ function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar
 
   const excluir = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("hora_extra_sabado").delete().eq("id", ficha.id);
+      const { error } = await supabase.rpc("excluir_convocacao_extra_lider", { _hora_extra_id: ficha.id });
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["hora-extra-modulo", ficha.modulo_origem] });
       qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida"] });
-      toast.success("Solicitação excluída");
+      toast.success("Solicitação arquivada com histórico preservado");
       setConfirmDel(false);
       setOpen(false);
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao excluir"),
+    onError: (e: any) => toast.error(e.message ?? "Erro ao arquivar"),
   });
 
   return (
@@ -429,7 +429,7 @@ function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar
                   <Send className="h-4 w-4 mr-1" /> Reenviar
                 </Button>
                 <Button variant="ghost" className="flex-1 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
-                  <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                  <Trash2 className="h-4 w-4 mr-1" /> Arquivar
                 </Button>
               </div>
             ) : (
@@ -439,7 +439,7 @@ function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar
                 </Button>
                 {podeExcluir && (
                   <Button variant="ghost" className="flex-1 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
-                    <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                    <Trash2 className="h-4 w-4 mr-1" /> Arquivar
                   </Button>
                 )}
                 <Button variant="ghost" className="flex-1" onClick={() => setOpen(false)}>Fechar</Button>
@@ -452,9 +452,9 @@ function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar
       <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir esta solicitação?</AlertDialogTitle>
+            <AlertDialogTitle>Arquivar esta solicitação?</AlertDialogTitle>
             <AlertDialogDescription>
-              A ficha de {fmtDate(ficha.data)} e todos os funcionários marcados serão removidos. Essa ação não pode ser desfeita.
+              A ficha de {fmtDate(ficha.data)} sairá da tela normal, mas continuará preservada no banco para recuperação e auditoria.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -464,7 +464,7 @@ function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar
               onClick={(e) => { e.preventDefault(); excluir.mutate(); }}
               disabled={excluir.isPending}
             >
-              {excluir.isPending ? "Excluindo…" : "Excluir"}
+              {excluir.isPending ? "Arquivando…" : "Arquivar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

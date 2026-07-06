@@ -261,10 +261,10 @@ function ExtraSabadoMobilePage() {
             {convId && (isLider || isAdmin) && conv && conv.status !== "APROVADA" && (
               <button
                 onClick={async () => {
-                  if (!confirm("Excluir esta convocação? Essa ação não pode ser desfeita.")) return;
+                  if (!confirm("Arquivar esta convocação? Ela sai da tela normal, mas o histórico fica preservado no banco.")) return;
                   const { error } = await supabase.rpc("excluir_convocacao_extra_lider", { _hora_extra_id: convId });
                   if (error) return toast.error(error.message);
-                  toast.success("Convocação excluída");
+                  toast.success("Convocação arquivada com histórico preservado");
                   setConvocacaoAtivaId(null);
                   qc.invalidateQueries({ queryKey: ["convocacoes-do-lider"] });
                 }}
