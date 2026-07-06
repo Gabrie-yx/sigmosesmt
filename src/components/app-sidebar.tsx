@@ -201,7 +201,7 @@ const PORTARIA_ITEMS: LeafItem[] = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { roles, hasModule, hasMenu } = useAuth();
+  const { roles, hasModule, hasMenu, isExtraSabadoMarcador } = useAuth();
   const { state, setOpen, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
 
@@ -298,6 +298,32 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
+
+        {/* NOVA HORA EXTRA — marcador de terceirizadas/MEI (ex.: Manoel) */}
+        {(isAdmin || isExtraSabadoMarcador) && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive("/app/modulo/terceirizadas/hora-extra")}
+                    tooltip="Nova Hora Extra"
+                    className="data-[active=true]:bg-red-100 data-[active=true]:text-red-900 font-semibold"
+                  >
+                    <Link
+                      to="/app/modulo/$modulo/hora-extra"
+                      params={{ modulo: "terceirizadas" }}
+                    >
+                      <CalendarCheck2 />
+                      <span>Nova Hora Extra</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         )}
 
         {/* SESMT */}
