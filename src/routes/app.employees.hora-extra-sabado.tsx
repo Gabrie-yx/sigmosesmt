@@ -313,32 +313,36 @@ function HoraExtraSabadoPage() {
           <p className="text-xs text-slate-400 mt-1">Crie a primeira clicando em "Nova ficha".</p>
         </div>
       ) : (
-        <div className="space-y-3 max-w-4xl mx-auto">
+        <div className="space-y-2 max-w-2xl mx-auto">
           {gruposPorMes.map((grupo) => {
             const aberto = mesAtivo === grupo.key;
             return (
             <div
               key={grupo.key}
-              className="rounded-xl border border-white/10 bg-gradient-to-br from-[#1a0608] via-[#12040a] to-black overflow-hidden"
+              className="rounded-lg border border-white/[0.06] bg-black/40 backdrop-blur-sm overflow-hidden shadow-[0_1px_0_rgba(255,255,255,0.03)_inset,0_8px_24px_-12px_rgba(0,0,0,0.6)]"
             >
               <button
                 onClick={() => setMesAberto(aberto ? "" : grupo.key)}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors"
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.02] transition-colors group"
               >
-                <div className="grid place-items-center h-8 w-8 rounded-full ring-1 ring-rose-400/40 text-rose-200 shrink-0">
-                  <Calendar className="h-4 w-4" />
+                <div className="grid place-items-center h-6 w-6 rounded-md bg-rose-400/10 ring-1 ring-rose-400/20 text-rose-200/90 shrink-0">
+                  <Calendar className="h-3 w-3" />
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-200 truncate">{grupo.label}</div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                  <div className="text-[11px] font-semibold text-slate-100 capitalize leading-tight truncate">
+                    {grupo.label}
+                  </div>
+                  <div className="text-[9px] font-medium uppercase tracking-[0.15em] text-slate-500 leading-tight mt-0.5">
                     {grupo.itens.length} ficha{grupo.itens.length === 1 ? "" : "s"}
                   </div>
                 </div>
-                <span className="text-2xl font-black tabular-nums text-slate-100 mr-2">{grupo.itens.length}</span>
-                <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${aberto ? "rotate-180" : ""}`} />
+                <span className="text-sm font-bold tabular-nums text-slate-300 tabular-nums px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06]">
+                  {grupo.itens.length}
+                </span>
+                <ChevronDown className={`h-3.5 w-3.5 text-slate-500 group-hover:text-slate-300 transition-all ${aberto ? "rotate-180" : ""}`} />
               </button>
               {aberto && (
-              <div className="grid gap-1.5 px-3 pb-3 pt-1 border-t border-white/5">
+              <div className="grid gap-1 px-2 pb-2 pt-1 border-t border-white/[0.04]">
                 {grupo.itens.map((f: any) => {
                   const d = new Date(f.data + "T12:00:00");
                   const dia = DIAS[d.getDay()];
