@@ -249,7 +249,7 @@ function GestaoPontoPage() {
               <div>
                 <DialogTitle>{viewOnly ? "Visualizar ciclo" : editando ? "Editar ciclo" : "Novo ciclo mensal"}</DialogTitle>
                 <DialogDescription>
-                  Só o mês/ano — o resto (nomes, matrículas, período, marcações) vem do PDF na próxima etapa.
+                  Informe dia, mês e ano — o resto (nomes, matrículas, período, marcações) vem do PDF na próxima etapa.
                 </DialogDescription>
               </div>
             </div>
