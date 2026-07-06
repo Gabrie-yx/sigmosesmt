@@ -41,7 +41,7 @@ type HoraExtraModulo = {
 export const MODULO_MAP: Record<string, ModuloScope> = {
   eletrica:   { slug: "eletrica",   moduloLabel: "Elétrica",   empresaFixaNome: "DMN", funcionariosPermitidos: ["Natanael Marins de Lira", "Leonardo Carmo dos Santos", "Paulo Sergio de Souza Silva", "Renato Oliveira Barbosa"], camposSimplificados: true },
   mecanica:   { slug: "mecanica",   moduloLabel: "Mecânica",   empresaFixaNome: "LF SERVIÇOS" },
-  producao:   { slug: "producao",   moduloLabel: "Produção",   setor: "Produção",   empresaFixaNome: "DMN" },
+  producao:   { slug: "producao",   moduloLabel: "Produção",   empresaFixaNome: "DMN", funcionariosPermitidos: ["Natanael Marins de Lira", "Leonardo Carmo dos Santos", "Paulo Sergio de Souza Silva", "Renato Oliveira Barbosa"], camposSimplificados: true },
   compras:    { slug: "compras",    moduloLabel: "Compras",    setor: "Compras",    empresaFixaNome: "DMN" },
   manutencao: { slug: "manutencao", moduloLabel: "Manutenção", empresaFixaNome: "LF SERVIÇOS", funcionariosPermitidos: ["José Carlos Batalha", "Kleber Lucas Lima Firmino"] },
   almoxarifado: { slug: "almoxarifado", moduloLabel: "Almoxarifado", funcionariosPermitidos: ["Israel Uchoa Rengifo", "Daniel Dantas"], camposSimplificados: true },
