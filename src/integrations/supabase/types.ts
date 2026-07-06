@@ -5624,6 +5624,310 @@ export type Database = {
           },
         ]
       }
+      ponto_ciclos: {
+        Row: {
+          competencia: string
+          created_at: string
+          criado_por: string | null
+          enviado_rh_em: string | null
+          enviado_rh_por: string | null
+          id: string
+          observacoes: string | null
+          pdf_consolidado_url: string | null
+          pdf_original_nome: string | null
+          pdf_original_url: string | null
+          prazo_envio_rh: string | null
+          status: string
+          total_funcionarios: number | null
+          total_paginas: number | null
+          updated_at: string
+        }
+        Insert: {
+          competencia: string
+          created_at?: string
+          criado_por?: string | null
+          enviado_rh_em?: string | null
+          enviado_rh_por?: string | null
+          id?: string
+          observacoes?: string | null
+          pdf_consolidado_url?: string | null
+          pdf_original_nome?: string | null
+          pdf_original_url?: string | null
+          prazo_envio_rh?: string | null
+          status?: string
+          total_funcionarios?: number | null
+          total_paginas?: number | null
+          updated_at?: string
+        }
+        Update: {
+          competencia?: string
+          created_at?: string
+          criado_por?: string | null
+          enviado_rh_em?: string | null
+          enviado_rh_por?: string | null
+          id?: string
+          observacoes?: string | null
+          pdf_consolidado_url?: string | null
+          pdf_original_nome?: string | null
+          pdf_original_url?: string | null
+          prazo_envio_rh?: string | null
+          status?: string
+          total_funcionarios?: number | null
+          total_paginas?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ponto_dias: {
+        Row: {
+          created_at: string
+          data: string
+          dia_semana: string | null
+          escala_codigo: string | null
+          folha_id: string
+          id: string
+          marcacoes: string[] | null
+          minutos_atraso: number | null
+          minutos_he_100: number | null
+          minutos_he_50: number | null
+          minutos_trabalhados: number | null
+          motivo_flag: string | null
+          precisa_tratativa: boolean | null
+          raw_json: Json | null
+          status_sistema: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          dia_semana?: string | null
+          escala_codigo?: string | null
+          folha_id: string
+          id?: string
+          marcacoes?: string[] | null
+          minutos_atraso?: number | null
+          minutos_he_100?: number | null
+          minutos_he_50?: number | null
+          minutos_trabalhados?: number | null
+          motivo_flag?: string | null
+          precisa_tratativa?: boolean | null
+          raw_json?: Json | null
+          status_sistema?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          dia_semana?: string | null
+          escala_codigo?: string | null
+          folha_id?: string
+          id?: string
+          marcacoes?: string[] | null
+          minutos_atraso?: number | null
+          minutos_he_100?: number | null
+          minutos_he_50?: number | null
+          minutos_trabalhados?: number | null
+          motivo_flag?: string | null
+          precisa_tratativa?: boolean | null
+          raw_json?: Json | null
+          status_sistema?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ponto_dias_folha_id_fkey"
+            columns: ["folha_id"]
+            isOneToOne: false
+            referencedRelation: "ponto_folhas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ponto_folhas: {
+        Row: {
+          aprovada_em: string | null
+          aprovada_por: string | null
+          assinatura_url: string | null
+          cargo: string | null
+          carimbo_url: string | null
+          ciclo_id: string
+          created_at: string
+          employee_id: string | null
+          id: string
+          local_trabalho: string | null
+          matricula: string
+          nome: string
+          observacoes_aprovador: string | null
+          pagina_pdf: number | null
+          pdf_final_url: string | null
+          pdf_individual_url: string | null
+          programacao: string | null
+          status: string
+          totais_json: Json | null
+          total_atrasos_min: number | null
+          total_faltas_min: number | null
+          total_he_100_min: number | null
+          total_he_50_min: number | null
+          total_trabalhado_min: number | null
+          tratada_em: string | null
+          tratada_por: string | null
+          updated_at: string
+        }
+        Insert: {
+          aprovada_em?: string | null
+          aprovada_por?: string | null
+          assinatura_url?: string | null
+          cargo?: string | null
+          carimbo_url?: string | null
+          ciclo_id: string
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          local_trabalho?: string | null
+          matricula: string
+          nome: string
+          observacoes_aprovador?: string | null
+          pagina_pdf?: number | null
+          pdf_final_url?: string | null
+          pdf_individual_url?: string | null
+          programacao?: string | null
+          status?: string
+          totais_json?: Json | null
+          total_atrasos_min?: number | null
+          total_faltas_min?: number | null
+          total_he_100_min?: number | null
+          total_he_50_min?: number | null
+          total_trabalhado_min?: number | null
+          tratada_em?: string | null
+          tratada_por?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aprovada_em?: string | null
+          aprovada_por?: string | null
+          assinatura_url?: string | null
+          cargo?: string | null
+          carimbo_url?: string | null
+          ciclo_id?: string
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          local_trabalho?: string | null
+          matricula?: string
+          nome?: string
+          observacoes_aprovador?: string | null
+          pagina_pdf?: number | null
+          pdf_final_url?: string | null
+          pdf_individual_url?: string | null
+          programacao?: string | null
+          status?: string
+          totais_json?: Json | null
+          total_atrasos_min?: number | null
+          total_faltas_min?: number | null
+          total_he_100_min?: number | null
+          total_he_50_min?: number | null
+          total_trabalhado_min?: number | null
+          tratada_em?: string | null
+          tratada_por?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ponto_folhas_ciclo_id_fkey"
+            columns: ["ciclo_id"]
+            isOneToOne: false
+            referencedRelation: "ponto_ciclos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ponto_folhas_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ponto_folhas_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "ponto_folhas_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
+      ponto_tratativas: {
+        Row: {
+          anexo_nome: string | null
+          anexo_url: string | null
+          autorizado_por: string | null
+          cid: string | null
+          created_at: string
+          criado_por: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          descricao: string
+          dia_id: string
+          folha_id: string
+          id: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          anexo_nome?: string | null
+          anexo_url?: string | null
+          autorizado_por?: string | null
+          cid?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          descricao: string
+          dia_id: string
+          folha_id: string
+          id?: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          anexo_nome?: string | null
+          anexo_url?: string | null
+          autorizado_por?: string | null
+          cid?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          descricao?: string
+          dia_id?: string
+          folha_id?: string
+          id?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ponto_tratativas_dia_id_fkey"
+            columns: ["dia_id"]
+            isOneToOne: false
+            referencedRelation: "ponto_dias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ponto_tratativas_folha_id_fkey"
+            columns: ["folha_id"]
+            isOneToOne: false
+            referencedRelation: "ponto_folhas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ppp_emissoes: {
         Row: {
           cancelado_em: string | null
