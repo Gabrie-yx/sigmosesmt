@@ -384,12 +384,11 @@ export function HoraExtraSabadoDialog({
           .select("status")
           .eq("id", editId)
           .maybeSingle();
-        const patch: Record<string, unknown> = { ...payload };
-        if (atual?.status && atual.status !== "PENDENTE") {
-          patch.status = "PENDENTE";
-          patch.motivo_indeferimento = null;
-        }
-        const { error } = await supabase.from("hora_extra_sabado").update(patch).eq("id", editId);
+        const reabrir = atual?.status && atual.status !== "PENDENTE";
+        const updatePayload = reabrir
+          ? { ...payload, status: "PENDENTE" as const, motivo_indeferimento: null }
+          : payload;
+        const { error } = await supabase.from("hora_extra_sabado").update(updatePayload).eq("id", editId);
         if (error) throw error;
         await supabase.from("hora_extra_sabado_funcionarios").delete().eq("hora_extra_id", editId);
       } else {
