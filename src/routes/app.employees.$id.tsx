@@ -417,6 +417,16 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                   </button>
                 )
               )}
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setExcluirOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 hover:bg-black px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
+                  title="Excluir permanentemente (apenas duplicidade / cadastro errado)"
+                >
+                  <Trash className="h-3.5 w-3.5" /> Excluir
+                </button>
+              )}
             </div>
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-600">
