@@ -104,9 +104,23 @@ function fmtBR(d?: string | null) {
   return `${day}/${m}/${y}`;
 }
 
-function splitSetores(raw: string | null): string[] {
-  if (!raw) return ["Sem setor"];
-  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+const MODULO_LABEL: Record<string, string> = {
+  eletrica: "Elétrica",
+  mecanica: "Mecânica",
+  producao: "Produção",
+  compras: "Compras",
+  manutencao: "Manutenção",
+  almoxarifado: "Almoxarifado",
+  portaria: "Portaria",
+  administrativo: "Administrativo",
+  sesmt: "SESMT",
+};
+
+function splitSetores(r: { setor: string | null; modulo_origem?: string | null }): string[] {
+  const raw = (r.setor ?? "").trim();
+  if (raw) return raw.split(",").map((s) => s.trim()).filter(Boolean);
+  if (r.modulo_origem) return [MODULO_LABEL[r.modulo_origem] ?? r.modulo_origem];
+  return ["Sem setor"];
 }
 
 function AdministrativoHoraExtraRecebidaPage() {
