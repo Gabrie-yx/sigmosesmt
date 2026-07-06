@@ -121,12 +121,16 @@ export function HoraExtraSabadoDialog({
     queryKey: ["companies"],
     queryFn: async () => (await supabase.from("companies").select("id,name").order("name")).data ?? [],
   });
-  // Empresas exibidas no dropdown — quando escopado, só a empresa fixa.
+  // Empresas exibidas no dropdown — quando escopado, mostra TODAS mas
+  // apenas a empresa fixa (ex.: DMN) fica habilitada; as demais aparecem
+  // esmaecidas para deixar claro que existem mas o usuário não pode escolher.
   const companiesFiltradas = useMemo(() => {
     const list = (companies ?? []) as { id: string; name: string }[];
-    if (!empresaFixaNome) return list;
+    if (!empresaFixaNome) return list.map((c) => ({ ...c, _disabled: false }));
     const alvo = empresaFixaNome.trim().toLowerCase();
-    return list.filter((c) => String(c.name ?? "").trim().toLowerCase().includes(alvo));
+    return list
+      .map((c) => ({ ...c, _disabled: !String(c.name ?? "").trim().toLowerCase().includes(alvo) }))
+      .sort((a, b) => Number(a._disabled) - Number(b._disabled));
   }, [companies, empresaFixaNome]);
 
   // Ao abrir escopado, trava setor + empresa automaticamente.
