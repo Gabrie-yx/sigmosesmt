@@ -422,12 +422,14 @@ async function insertParsed(cicloId: string, parsed: OcrFolha[]) {
 }
 
 function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Folha | null; onClose: () => void; onSaved: () => void }) {
-  const [tipo, setTipo] = useState<string>("ATESTADO");
+  const tipoSugerido = sugerirTipo(dia.motivo_flag);
+  const [tipo, setTipo] = useState<string>(tipoSugerido);
   const [descricao, setDescricao] = useState("");
   const [cid, setCid] = useState("");
   const [dataInicio, setDataInicio] = useState(dia.data);
   const [dataFim, setDataFim] = useState(dia.data);
   const [autorizadoPor, setAutorizadoPor] = useState("");
+  const [anexoFile, setAnexoFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
 
   const tipos = useMemo(() => [
@@ -435,11 +437,23 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
     "AJUSTE_MARCACAO", "FOLGA_COMPENSADA", "OUTRO",
   ], []);
 
+  const anexoObrigatorio = tipo === "ATESTADO" || tipo === "FALTA_JUSTIFICADA";
+
   async function salvar() {
     if (descricao.trim().length < 5) { toast.error("Descreva a tratativa (≥ 5 caracteres)."); return; }
+    if (anexoObrigatorio && !anexoFile) { toast.error("Anexe o comprovante (atestado/documento)."); return; }
     setSaving(true);
     try {
       const { data: userRes } = await supabase.auth.getUser();
+      let anexo_url: string | null = null;
+      let anexo_nome: string | null = null;
+      if (anexoFile) {
+        const path = `atestados/${dia.folha_id}/${dia.id}-${Date.now()}-${anexoFile.name}`;
+        const up = await supabase.storage.from("ponto-pdfs").upload(path, anexoFile, { upsert: false });
+        if (up.error) throw up.error;
+        anexo_url = path;
+        anexo_nome = anexoFile.name;
+      }
       const { error } = await supabase.from("ponto_tratativas" as any).insert({
         dia_id: dia.id,
         folha_id: dia.folha_id,
@@ -449,6 +463,8 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
         data_inicio: dataInicio,
         data_fim: dataFim,
         autorizado_por: autorizadoPor || null,
+        anexo_url,
+        anexo_nome,
         criado_por: userRes.user?.id,
       } as any);
       if (error) throw error;
@@ -467,13 +483,29 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
 
   return (
     <Dialog open onOpenChange={o => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Tratar dia · {formatDate(dia.data)}</DialogTitle>
+          <DialogTitle>Tratar dia · {formatDate(dia.data)}{dia.dia_semana ? ` (${dia.dia_semana})` : ""}</DialogTitle>
           <DialogDescription>
-            {folha?.nome ?? folha?.matricula ?? "Funcionário"} · marcações: {(dia.marcacoes ?? []).join(" ") || "sem marcação"}
+            Preencha só a tratativa — os dados do funcionário e do dia vieram do PDF.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Cabeçalho do funcionário (vindo do PDF) */}
+        <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-primary" />
+            <span className="font-medium">{folha?.nome ?? "—"}</span>
+            {folha?.matricula && <Badge variant="outline" className="font-mono">{folha.matricula}</Badge>}
+          </div>
+          <div className="text-xs text-muted-foreground grid grid-cols-2 gap-y-1">
+            {folha?.cargo && <div>Cargo: <b className="text-foreground">{folha.cargo}</b></div>}
+            {folha?.local_trabalho && <div>Local: <b className="text-foreground">{folha.local_trabalho}</b></div>}
+            <div>Motivo detectado: <Badge variant="outline" className={motivoClasse(dia.motivo_flag)}>{motivoLabel(dia.motivo_flag)}</Badge></div>
+            <div className="col-span-2">Marcações: <span className="font-mono text-foreground">{(dia.marcacoes ?? []).join("  ") || "sem marcação"}</span></div>
+          </div>
+        </div>
+
         <div className="space-y-3">
           <div>
             <label className="text-xs text-muted-foreground">Tipo</label>
@@ -490,6 +522,36 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
           )}
           <div><label className="text-xs text-muted-foreground">Autorizado por</label><Input value={autorizadoPor} onChange={e => setAutorizadoPor(e.target.value)} placeholder="Nome do líder/gestor" /></div>
           <div><label className="text-xs text-muted-foreground">Descrição *</label><Textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={3} placeholder="O que aconteceu / providência tomada" /></div>
+
+          <div>
+            <label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Paperclip className="h-3 w-3" />
+              Anexo (atestado/comprovante) {anexoObrigatorio && <span className="text-red-400">*</span>}
+            </label>
+            {anexoFile ? (
+              <div className="flex items-center justify-between gap-2 mt-1 rounded-md border px-2 py-1.5 text-sm bg-muted/20">
+                <span className="truncate">{anexoFile.name}</span>
+                <Button size="sm" variant="ghost" onClick={() => setAnexoFile(null)}><X className="h-4 w-4" /></Button>
+              </div>
+            ) : (
+              <label className="inline-flex mt-1">
+                <input
+                  type="file"
+                  accept="application/pdf,image/*"
+                  className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) setAnexoFile(f); e.currentTarget.value = ""; }}
+                />
+                <span className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm cursor-pointer hover:bg-muted/50">
+                  <Upload className="h-4 w-4" /> Selecionar arquivo (PDF ou foto)
+                </span>
+              </label>
+            )}
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {anexoObrigatorio
+                ? "Obrigatório: envie o atestado/comprovante que justifica a tratativa."
+                : "Opcional — anexe se houver documento de suporte."}
+            </p>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
@@ -498,4 +560,15 @@ function TratativaDialog({ dia, folha, onClose, onSaved }: { dia: Dia; folha: Fo
       </DialogContent>
     </Dialog>
   );
+}
+
+function sugerirTipo(motivo: string | null): string {
+  switch (motivo) {
+    case "FALTA": return "ATESTADO";
+    case "ATRASO": return "ATESTADO";
+    case "HE_A_VALIDAR": return "HE_AUTORIZADA";
+    case "MARCACOES_INCOMPLETAS":
+    case "SEM_MARCACAO": return "AJUSTE_MARCACAO";
+    default: return "OUTRO";
+  }
 }
