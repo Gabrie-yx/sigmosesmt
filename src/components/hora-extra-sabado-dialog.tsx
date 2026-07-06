@@ -41,6 +41,8 @@ export function HoraExtraSabadoDialog({
   observacaoPlaceholder,
   funcionariosPermitidos,
   employeeIdsPermitidos,
+  ocultarEfetivo,
+  ocultarSetor,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -61,6 +63,10 @@ export function HoraExtraSabadoDialog({
   funcionariosPermitidos?: string[];
   /** Restringe a lista de funcionários por IDs (usado pelo escopo de marcador). Se definido, tem precedência sobre nomes/setor. */
   employeeIdsPermitidos?: string[] | null;
+  /** Oculta o campo Efetivo (DMN/MEI/Terceirizado). */
+  ocultarEfetivo?: boolean;
+  /** Oculta o campo Setor. */
+  ocultarSetor?: boolean;
 }) {
   const qc = useQueryClient();
   const { user } = useAuth();
