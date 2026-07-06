@@ -46,6 +46,9 @@ export const MODULO_MAP: Record<string, ModuloScope> = {
   manutencao: { slug: "manutencao", moduloLabel: "Manutenção", empresaFixaNome: "LF SERVIÇOS", funcionariosPermitidos: ["José Carlos Batalha", "Kleber Lucas Lima Firmino"] },
   almoxarifado: { slug: "almoxarifado", moduloLabel: "Almoxarifado", funcionariosPermitidos: ["Israel Uchoa Rengifo", "Daniel Dantas"], camposSimplificados: true },
   portaria:   { slug: "portaria",   moduloLabel: "Portaria",   setor: "Portaria",   empresaFixaNome: "DMN" },
+  // Escopo dinâmico via hora_extra_marcadores (RPC decide os funcionários).
+  // Sem empresaFixa: o marcador escolhe entre as empresas do escopo dele.
+  terceirizadas: { slug: "terceirizadas", moduloLabel: "Nova Hora Extra", camposSimplificados: true },
 };
 
 export const Route = createFileRoute("/app/modulo/$modulo/hora-extra")({
