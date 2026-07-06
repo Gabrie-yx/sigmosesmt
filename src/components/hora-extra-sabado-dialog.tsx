@@ -377,7 +377,18 @@ export function HoraExtraSabadoDialog({
       };
       let id: string = editId ?? "";
       if (editId) {
-        const { error } = await supabase.from("hora_extra_sabado").update(payload).eq("id", editId);
+        // Ao editar uma ficha já APROVADA/INDEFERIDA, volta para PENDENTE
+        // para o Administrativo revisar as alterações (horário/funcionários).
+        const { data: atual } = await supabase
+          .from("hora_extra_sabado")
+          .select("status")
+          .eq("id", editId)
+          .maybeSingle();
+        const reabrir = atual?.status && atual.status !== "PENDENTE";
+        const updatePayload = reabrir
+          ? { ...payload, status: "PENDENTE" as const, motivo_indeferimento: null }
+          : payload;
+        const { error } = await supabase.from("hora_extra_sabado").update(updatePayload).eq("id", editId);
         if (error) throw error;
         await supabase.from("hora_extra_sabado_funcionarios").delete().eq("hora_extra_id", editId);
       } else {

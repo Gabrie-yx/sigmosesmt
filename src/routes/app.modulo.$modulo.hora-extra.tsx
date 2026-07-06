@@ -370,7 +370,12 @@ function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar
                 </Button>
               </div>
             ) : (
-              <Button variant="ghost" onClick={() => setOpen(false)}>Fechar</Button>
+              <div className="flex gap-2 w-full">
+                <Button variant="outline" className="flex-1" onClick={() => { setOpen(false); onEditar(ficha.id); }}>
+                  <Pencil className="h-4 w-4 mr-1" /> Editar ficha
+                </Button>
+                <Button variant="ghost" className="flex-1" onClick={() => setOpen(false)}>Fechar</Button>
+              </div>
             )}
           </DialogFooter>
         </DialogContent>
