@@ -76,10 +76,11 @@ export const MENU_CATALOG: MenuEntry[] = [
 
   // ----- ELÉTRICA -----
   { key: "/app/modulo/eletrica/hora-extra", label: "Hora Extra", module: "eletrica" },
-  { key: "/modulo/eletrica/requisicao-compras", label: "Requisição de Compras", module: "eletrica" },
+  { key: "/app/modulo/eletrica/requisicao-compras", label: "Requisição de Compras", module: "eletrica" },
 
   // ----- MECÂNICA -----
   { key: "/app/modulo/mecanica/hora-extra", label: "Hora Extra", module: "mecanica" },
+  { key: "/app/modulo/mecanica/requisicao-compras", label: "Requisição de Compras", module: "mecanica" },
 
   // ----- USUÁRIOS -----
   { key: "/app/users", label: "Usuários", module: "usuarios" },
