@@ -43,6 +43,7 @@ type HoraExtra = {
   horario_fim: string | null;
   setor: string | null;
   tipo_convocacao: "SABADO" | "DIAS_UTEIS" | null;
+  modulo_origem?: string | null;
   status: "PENDENTE" | "APROVADA" | "INDEFERIDA" | string;
   justificativa: string | null;
   aberto_por_nome: string | null;
