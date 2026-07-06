@@ -125,23 +125,31 @@ function HoraExtraModuloPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="rounded-lg bg-primary/10 border border-primary/20 p-2 text-primary">
-          <CalendarCheck2 className="h-6 w-6" />
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:gap-4">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="shrink-0 rounded-lg bg-primary/20 border border-primary/40 p-2 text-primary">
+            <CalendarCheck2 className="h-6 w-6" />
+          </div>
+          <div className="min-w-0 space-y-1">
+            <h1 className="text-xl sm:text-2xl font-bold leading-tight text-foreground truncate">
+              Hora Extra — {scope.moduloLabel}
+            </h1>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-foreground/90">
+                Setor: {scope.moduloLabel}
+              </span>
+              {scope.empresaFixaNome && (
+                <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-100">
+                  Empresa: {scope.empresaFixaNome}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold">Hora Extra — {scope.moduloLabel}</h1>
-          <p className="text-sm text-muted-foreground">
-            Registro de horas extras vinculado ao setor <span className="font-semibold">{scope.moduloLabel}</span>.
-            {scope.empresaFixaNome && (
-              <> Empresa travada em <span className="font-semibold">{scope.empresaFixaNome}</span>.</>
-            )}
-          </p>
-        </div>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="sm" asChild className="shrink-0">
           <Link to="/app/hoje"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Link>
         </Button>
-      </div>
+      </header>
 
       <Card className="glass-card">
         <CardHeader>
