@@ -78,19 +78,25 @@ function HoraExtraModuloPage() {
   const qc = useQueryClient();
   const usaEscopoMarcador = !isAdmin && isExtraSabadoMarcador;
 
+  // Marcadores dinâmicos (terceirizadas) SEMPRE salvam com
+  // modulo_origem="terceirizadas", independente da URL de entrada
+  // (ex.: /app/modulo/producao/hora-extra). O painel precisa filtrar pelo
+  // mesmo slug efetivo — senão a ficha some depois de criada.
+  const slugEfetivo = usaEscopoMarcador ? "terceirizadas" : scope.slug;
+
   // Realtime: quando o Administrativo aprova/indefere, o card do módulo
   // solicitante precisa atualizar sozinho (status + motivo).
   useEffect(() => {
     const ch = supabase
-      .channel(`hora-extra-modulo-${scope.slug}`)
+      .channel(`hora-extra-modulo-${slugEfetivo}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "hora_extra_sabado", filter: `modulo_origem=eq.${scope.slug}` },
-        () => qc.invalidateQueries({ queryKey: ["hora-extra-modulo", scope.slug] }),
+        { event: "*", schema: "public", table: "hora_extra_sabado", filter: `modulo_origem=eq.${slugEfetivo}` },
+        () => qc.invalidateQueries({ queryKey: ["hora-extra-modulo", slugEfetivo] }),
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [scope.slug, qc]);
+  }, [slugEfetivo, qc]);
 
   // Escopo dinâmico: se o usuário logado é um marcador cadastrado em
   // hora_extra_marcadores, o RPC devolve a lista de employee_ids que ele
@@ -132,12 +138,12 @@ function HoraExtraModuloPage() {
   const aguardandoEscopoMarcador = usaEscopoMarcador && (loadingEscopoIds || loadingCompanyIdsEscopo);
 
   const { data: fichas = [], isLoading } = useQuery({
-    queryKey: ["hora-extra-modulo", scope.slug],
+    queryKey: ["hora-extra-modulo", slugEfetivo],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_sabado")
         .select("id,data,turno,horario_inicio,horario_fim,setor,modulo_origem,status,observacao,justificativa,motivo_indeferimento,tipo_convocacao,created_at,companies(name),hora_extra_sabado_funcionarios(id,nome,funcao,externo)")
-        .eq("modulo_origem", scope.slug)
+        .eq("modulo_origem", slugEfetivo)
         .order("data", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
