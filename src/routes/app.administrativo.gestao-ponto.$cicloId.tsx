@@ -134,6 +134,20 @@ function CicloDetalhePage() {
   const totalTratativas = dias.length;
   const conformesEstim = folhas.length * 30 - totalTratativas;
 
+  // agrupa dias por folha (funcionário)
+  const agrupado = useMemo(() => {
+    const map = new Map<string, { folha: Folha; dias: Dia[] }>();
+    for (const d of dias) {
+      const f = folhas.find(x => x.id === d.folha_id);
+      if (!f) continue;
+      if (!map.has(f.id)) map.set(f.id, { folha: f, dias: [] });
+      map.get(f.id)!.dias.push(d);
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      (a.folha.nome ?? "").localeCompare(b.folha.nome ?? "")
+    );
+  }, [dias, folhas]);
+
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center gap-3">
@@ -180,39 +194,65 @@ function CicloDetalhePage() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Dias pra tratar</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">Pendências por funcionário</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Só aparece o que precisa de tratativa: <b>FALTA</b>, <b>ATRASO</b>, <b>HE não autorizada</b>, marcação incompleta ou compensação. Dias em conformidade ficam ocultos.
+          </p>
+        </CardHeader>
         <CardContent>
-          {dias.length === 0 ? (
+          {agrupado.length === 0 ? (
             <div className="text-sm text-muted-foreground py-6 text-center">
               {folhas.length === 0 ? "Envie o PDF pra iniciar." : "Nada pendente. Tudo em conformidade 🎯"}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-muted-foreground text-xs">
-                  <tr className="border-b">
-                    <th className="text-left py-2 pr-2">Data</th>
-                    <th className="text-left py-2 pr-2">Funcionário</th>
-                    <th className="text-left py-2 pr-2">Marcações</th>
-                    <th className="text-left py-2 pr-2">Motivo</th>
-                    <th className="text-right py-2">Ação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dias.map(d => {
-                    const f = folhas.find(x => x.id === d.folha_id);
-                    return (
-                      <tr key={d.id} className="border-b hover:bg-muted/20">
-                        <td className="py-2 pr-2 font-mono">{formatDate(d.data)}</td>
-                        <td className="py-2 pr-2">{f?.nome ?? f?.matricula ?? "—"}</td>
-                        <td className="py-2 pr-2 font-mono text-xs">{(d.marcacoes ?? []).join("  ") || "—"}</td>
-                        <td className="py-2 pr-2"><Badge variant="outline">{d.motivo_flag ?? "REVISAR"}</Badge></td>
-                        <td className="py-2 text-right"><Button size="sm" variant="outline" onClick={() => setTratarDia(d)}>Tratar</Button></td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="space-y-4">
+              {agrupado.map(({ folha, dias: fdias }) => (
+                <div key={folha.id} className="rounded-lg border overflow-hidden">
+                  <div className="bg-muted/30 px-4 py-3 flex items-start justify-between gap-3 flex-wrap">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <User className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{folha.nome ?? "—"}</div>
+                        <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+                          {folha.matricula && <span>Matrícula: <b>{folha.matricula}</b></span>}
+                          {folha.cargo && <span>Cargo: <b>{folha.cargo}</b></span>}
+                          {folha.local_trabalho && <span>Local: <b>{folha.local_trabalho}</b></span>}
+                          {folha.pagina_pdf && <span>Página {folha.pagina_pdf}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10">
+                      {fdias.length} pendência{fdias.length > 1 ? "s" : ""}
+                    </Badge>
+                  </div>
+                  <table className="w-full text-sm">
+                    <tbody>
+                      {fdias.map(d => (
+                        <tr key={d.id} className="border-t hover:bg-muted/20">
+                          <td className="py-2 pl-4 pr-2 font-mono whitespace-nowrap">
+                            {formatDate(d.data)}
+                            {d.dia_semana && <span className="text-muted-foreground ml-2">{d.dia_semana}</span>}
+                          </td>
+                          <td className="py-2 pr-2 font-mono text-xs text-muted-foreground">
+                            {(d.marcacoes ?? []).join("  ") || "sem marcação"}
+                          </td>
+                          <td className="py-2 pr-2">
+                            <Badge variant="outline" className={motivoClasse(d.motivo_flag)}>
+                              {motivoLabel(d.motivo_flag)}
+                            </Badge>
+                          </td>
+                          <td className="py-2 pr-4 text-right">
+                            <Button size="sm" onClick={() => setTratarDia(d)}>Tratar</Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
@@ -236,6 +276,28 @@ function CicloDetalhePage() {
 function formatDate(iso: string) {
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
+}
+
+function motivoLabel(m: string | null): string {
+  switch (m) {
+    case "FALTA": return "Falta";
+    case "ATRASO": return "Atraso";
+    case "HE_A_VALIDAR": return "HE a validar";
+    case "AD_NOTURNO_A_VALIDAR": return "Ad. Noturno";
+    case "MARCACOES_INCOMPLETAS": return "Marcações incompletas";
+    case "SEM_MARCACAO": return "Sem marcação";
+    case "REVISAR": return "Revisar";
+    default: return m ?? "Revisar";
+  }
+}
+function motivoClasse(m: string | null): string {
+  switch (m) {
+    case "FALTA": return "border-red-500/40 text-red-300 bg-red-500/10";
+    case "ATRASO": return "border-orange-500/40 text-orange-300 bg-orange-500/10";
+    case "HE_A_VALIDAR":
+    case "AD_NOTURNO_A_VALIDAR": return "border-blue-500/40 text-blue-300 bg-blue-500/10";
+    default: return "border-amber-500/40 text-amber-300 bg-amber-500/10";
+  }
 }
 
 async function limparCiclo(cicloId: string) {
