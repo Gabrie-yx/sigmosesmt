@@ -7,6 +7,7 @@ import { CommandPalette } from "@/components/command-palette";
 import { AppSidebar } from "@/components/app-sidebar";
 import { QuickActionsBar } from "@/components/quick-actions-bar";
 import { SmartBreadcrumb } from "@/components/smart-breadcrumb";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ShieldAlert } from "lucide-react";
 import { HelpHint } from "@/components/help-hint";
@@ -109,12 +110,12 @@ function AppLayout() {
               <Link to="/app/conta/seguranca" className="font-bold underline whitespace-nowrap self-end sm:self-auto">Ativar MFA</Link>
             </div>
           )}
-          <main className="flex-1">
+          <main className="flex-1 pb-20 md:pb-0">
             <ModuleRouteGuard>
               <Outlet />
             </ModuleRouteGuard>
           </main>
-          <footer className="border-t bg-white/60 backdrop-blur py-2 px-3 text-center text-[10px] sm:text-[11px] text-muted-foreground">
+          <footer className="border-t bg-white/60 backdrop-blur py-2 px-3 text-center text-[10px] sm:text-[11px] text-muted-foreground hidden md:block">
             <span className="hidden sm:inline">
               Copyright© 2026. Todos os Direitos Reservados para{" "}
               <span className="font-semibold text-foreground/80">Francisco Bandeira Almeida</span>{" "}
@@ -123,6 +124,7 @@ function AppLayout() {
             <span className="sm:hidden">© 2026 SIGMO · <span className="font-semibold">F. Bandeira Almeida</span> & A. Soares</span>
           </footer>
           <CommandPalette />
+          <MobileBottomNav />
         </div>
       </div>
     </SidebarProvider>
