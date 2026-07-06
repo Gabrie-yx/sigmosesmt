@@ -55,8 +55,9 @@ const SignaturePadDialog = lazy(() =>
   import("@/components/signature-pad-dialog").then((m) => ({ default: m.SignaturePadDialog }))
 );
 import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
+import { ExcluirPermanenteDialog } from "@/components/employees/excluir-permanente-dialog";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
-import { UserMinus, RotateCcw } from "lucide-react";
+import { UserMinus, RotateCcw, Trash } from "lucide-react";
 import { logRead } from "@/lib/audit-read";
 
 export const Route = createFileRoute("/app/employees/$id")({
@@ -186,6 +187,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [integOpen, setIntegOpen] = useState(false);
   const [termoOpen, setTermoOpen] = useState(false);
   const [desligamentoOpen, setDesligamentoOpen] = useState(false);
+  const [excluirOpen, setExcluirOpen] = useState(false);
 
   async function gerarFichaPdf() {
     if (!emp) return;
@@ -414,6 +416,16 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                     <UserMinus className="h-3.5 w-3.5" /> Desligamento
                   </button>
                 )
+              )}
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setExcluirOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 hover:bg-black px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
+                  title="Excluir permanentemente (apenas duplicidade / cadastro errado)"
+                >
+                  <Trash className="h-3.5 w-3.5" /> Excluir
+                </button>
               )}
             </div>
           </div>
@@ -662,6 +674,13 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         open={desligamentoOpen}
         onClose={() => setDesligamentoOpen(false)}
       />
+      {emp && (
+        <ExcluirPermanenteDialog
+          emp={{ id: emp.id, nome: emp.nome }}
+          open={excluirOpen}
+          onClose={() => setExcluirOpen(false)}
+        />
+      )}
     </div>
   );
 }

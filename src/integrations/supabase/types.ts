@@ -8939,6 +8939,10 @@ export type Database = {
         Args: { _hora_extra_id: string }
         Returns: undefined
       }
+      excluir_funcionario_permanente: {
+        Args: { _employee_id: string; _justificativa: string }
+        Returns: undefined
+      }
       expirar_acordos_vencidos: { Args: never; Returns: number }
       fechar_convocacao_marcadores: {
         Args: { _hora_extra_id: string }
