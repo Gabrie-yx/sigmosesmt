@@ -130,7 +130,7 @@ export function HoraExtraSabadoDialog({
   const companiesFiltradas = useMemo(() => {
     const list = (companies ?? []) as { id: string; name: string }[];
     // Escopo por IDs (marcador de terceirizadas): mostra apenas as empresas do escopo.
-    if (companyIdsPermitidos && companyIdsPermitidos.length > 0) {
+    if (Array.isArray(companyIdsPermitidos)) {
       const permitidas = new Set(companyIdsPermitidos.map(String));
       return list
         .filter((c) => permitidas.has(String(c.id)))
@@ -160,7 +160,7 @@ export function HoraExtraSabadoDialog({
     }
     // Escopo por IDs (terceirizadas): se o draft restaurou uma empresa
     // que não faz parte do escopo do marcador, limpa para forçar nova escolha.
-    if (companyIdsPermitidos && companyIdsPermitidos.length > 0) {
+    if (Array.isArray(companyIdsPermitidos)) {
       const permitidas = new Set(companyIdsPermitidos.map(String));
       setCompanyId((prev) => (prev && permitidas.has(prev) ? prev : ""));
     }
@@ -276,7 +276,7 @@ export function HoraExtraSabadoDialog({
     const s = norm(busca);
     const setorAlvo = setorFixo ? norm(setorFixo) : null;
     const permitidos = (funcionariosPermitidos ?? []).map(norm).filter(Boolean);
-    const idsPermitidos = employeeIdsPermitidos && employeeIdsPermitidos.length > 0
+    const idsPermitidos = Array.isArray(employeeIdsPermitidos)
       ? new Set(employeeIdsPermitidos)
       : null;
     const temRestricao = !!idsPermitidos || permitidos.length > 0;
@@ -547,7 +547,7 @@ export function HoraExtraSabadoDialog({
           )}
           <div className="space-y-1">
             <Label>Empresa</Label>
-            <Select value={companyId || "_all"} onValueChange={(v) => setCompanyId(v === "_all" ? "" : v)} disabled={!!empresaFixaNome}>
+            <Select value={companyId || "_all"} onValueChange={(v) => setCompanyId(v === "_all" ? "" : v)} disabled={!!empresaFixaNome && !Array.isArray(companyIdsPermitidos)}>
               <SelectTrigger><SelectValue placeholder={empresaFixaNome ?? "Todas"} /></SelectTrigger>
               <SelectContent>
                 {!empresaFixaNome && <SelectItem value="_all">Todas</SelectItem>}
