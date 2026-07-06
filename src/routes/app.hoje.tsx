@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { ArrowLeft, CalendarClock } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import { MinhasPendencias } from "@/components/minhas-pendencias";
 import { DossieContratadasCard } from "@/components/dossie-contratadas-card";
 import { IntegracaoSemanalCard } from "@/components/hoje/integracao-semanal-card";
@@ -10,6 +11,9 @@ export const Route = createFileRoute("/app/hoje")({
 });
 
 function HojePage() {
+  const { isModerator, loading } = useAuth();
+  if (loading) return null;
+  if (!isModerator) return <Navigate to="/app" replace />;
   return (
     <div className="h-full overflow-y-auto custom-scrollbar">
       <div className="max-w-7xl mx-auto px-6 md:px-14 pt-8">
