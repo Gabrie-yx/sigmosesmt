@@ -432,6 +432,7 @@ export function HoraExtraSabadoDialog({
           <div className="space-y-1"><Label>Horário início</Label><Input value={horaIni} onChange={(e) => setHoraIni(e.target.value)} placeholder="07:30" /></div>
           <div className="space-y-1"><Label>Horário fim</Label><Input value={horaFim} onChange={(e) => setHoraFim(e.target.value)} placeholder="15:00" /></div>
 
+          {!ocultarSetor && (
           <div className="space-y-1">
             <Label>Setor</Label>
             {setorFixo ? (
@@ -502,6 +503,8 @@ export function HoraExtraSabadoDialog({
               </div>
             )}
           </div>
+          )}
+          {!ocultarEfetivo && (
           <div className="space-y-1">
             <Label>Efetivo</Label>
             <Select value={tipoEfetivo} onValueChange={(v: any) => setTipoEfetivo(v)}>
@@ -513,6 +516,7 @@ export function HoraExtraSabadoDialog({
               </SelectContent>
             </Select>
           </div>
+          )}
           <div className="space-y-1">
             <Label>Empresa</Label>
             <Select value={companyId || "_all"} onValueChange={(v) => setCompanyId(v === "_all" ? "" : v)} disabled={!!empresaFixaNome}>
