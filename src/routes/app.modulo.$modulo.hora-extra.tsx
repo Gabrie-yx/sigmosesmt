@@ -74,8 +74,9 @@ function HoraExtraModuloPage() {
   const scope = MODULO_MAP[modulo]!;
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isExtraSabadoMarcador } = useAuth();
   const qc = useQueryClient();
+  const usaEscopoMarcador = !isAdmin && isExtraSabadoMarcador;
 
   // Realtime: quando o Administrativo aprova/indefere, o card do módulo
   // solicitante precisa atualizar sozinho (status + motivo).
@@ -94,9 +95,9 @@ function HoraExtraModuloPage() {
   // Escopo dinâmico: se o usuário logado é um marcador cadastrado em
   // hora_extra_marcadores, o RPC devolve a lista de employee_ids que ele
   // pode lançar. Admin recebe NULL (vê tudo). Quem não é marcador também.
-  const { data: escopoIds } = useQuery({
+  const { data: escopoIds, isLoading: loadingEscopoIds } = useQuery({
     queryKey: ["hora-extra-scope", user?.id],
-    enabled: !!user?.id,
+    enabled: !!user?.id && !isAdmin,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_hora_extra_allowed_employee_ids", { _uid: user!.id });
       if (error) throw error;
@@ -107,24 +108,28 @@ function HoraExtraModuloPage() {
   // Escopo de EMPRESAS do marcador (terceirizadas): lê hora_extra_marcadores
   // via RPC — resolve TERCEIRIZADAS_AUTO dinamicamente (empresas novas entram
   // sozinhas) e aplica exclude_company_ids configurado pelo admin.
-  const { data: companyIdsEscopo } = useQuery({
+  const { data: companyIdsEscopo, isLoading: loadingCompanyIdsEscopo } = useQuery({
     queryKey: ["hora-extra-marcador-empresas", user?.id],
     enabled: !!user?.id && !isAdmin,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_hora_extra_allowed_company_ids", { _uid: user!.id });
       if (error) return null;
       const ids = (data ?? []) as string[] | null;
-      return ids && ids.length > 0 ? ids.map(String) : null;
+      return ids ? ids.map(String) : null;
     },
   });
 
   // Admin ignora qualquer restrição hardcoded do MODULO_MAP.
   // Marcador com escopo sobrescreve via IDs (mais confiável que match por nome).
-  const employeeIdsPermitidos = isAdmin ? null : (escopoIds ?? null);
-  const funcionariosPermitidos = isAdmin
+  const employeeIdsPermitidos = isAdmin ? null : (usaEscopoMarcador ? (escopoIds ?? []) : (escopoIds ?? null));
+  const funcionariosPermitidos = isAdmin || usaEscopoMarcador
     ? undefined
     : (escopoIds ? undefined : scope.funcionariosPermitidos);
-  const companyIdsPermitidos = isAdmin ? null : (companyIdsEscopo ?? null);
+  const companyIdsPermitidos = isAdmin ? null : (usaEscopoMarcador ? (companyIdsEscopo ?? []) : (companyIdsEscopo ?? null));
+  const empresaFixaDialog = usaEscopoMarcador ? undefined : scope.empresaFixaNome;
+  const setorFixoDialog = usaEscopoMarcador ? undefined : scope.setor;
+  const moduloLabelDialog = usaEscopoMarcador ? "Nova Hora Extra" : scope.moduloLabel;
+  const aguardandoEscopoMarcador = usaEscopoMarcador && (loadingEscopoIds || loadingCompanyIdsEscopo);
 
   const { data: fichas = [], isLoading } = useQuery({
     queryKey: ["hora-extra-modulo", scope.slug],
@@ -196,7 +201,7 @@ function HoraExtraModuloPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span>Controle do módulo</span>
-            <Button onClick={abrirNova} className="w-full sm:w-auto bg-red-700 hover:bg-red-800">
+            <Button onClick={abrirNova} disabled={aguardandoEscopoMarcador} className="w-full sm:w-auto bg-red-700 hover:bg-red-800">
               <Plus className="h-4 w-4 mr-2" /> Nova ficha
             </Button>
           </CardTitle>
@@ -220,10 +225,10 @@ function HoraExtraModuloPage() {
         open={open}
         onOpenChange={(v) => { setOpen(v); if (!v) setEditId(null); }}
         editId={editId}
-        setorFixo={scope.setor}
-        empresaFixaNome={scope.empresaFixaNome}
-        moduloOrigem={scope.slug}
-        moduloLabel={scope.moduloLabel}
+        setorFixo={setorFixoDialog}
+        empresaFixaNome={empresaFixaDialog}
+        moduloOrigem={usaEscopoMarcador ? "terceirizadas" : scope.slug}
+        moduloLabel={moduloLabelDialog}
         funcionariosPermitidos={funcionariosPermitidos}
         employeeIdsPermitidos={employeeIdsPermitidos}
         companyIdsPermitidos={companyIdsPermitidos}
