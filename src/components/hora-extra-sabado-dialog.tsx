@@ -390,7 +390,21 @@ export function HoraExtraSabadoDialog({
           : payload;
         const { error } = await supabase.from("hora_extra_sabado").update(updatePayload).eq("id", editId);
         if (error) throw error;
-        await supabase.from("hora_extra_sabado_funcionarios").delete().eq("hora_extra_id", editId);
+        const rows = funcs.map((f, i) => ({
+          employee_id: f.employee_id,
+          nome: f.nome,
+          externo: f.externo,
+          funcao: f.funcao ? f.funcao : null,
+          transporte: f.transporte,
+          alimentacao: f.alimentacao,
+          presenca: f.presenca,
+          ordem: i,
+        }));
+        const { error: funcsError } = await supabase.rpc("substituir_funcionarios_hora_extra", {
+          _hora_extra_id: editId,
+          _funcionarios: rows,
+        });
+        if (funcsError) throw funcsError;
       } else {
         const { data: ins, error } = await supabase
           .from("hora_extra_sabado")
@@ -416,7 +430,7 @@ export function HoraExtraSabadoDialog({
         presenca: f.presenca,
         ordem: i,
       }));
-      if (rows.length > 0) {
+      if (!editId && rows.length > 0) {
         const { error } = await supabase.from("hora_extra_sabado_funcionarios").insert(rows);
         if (error) throw error;
       }

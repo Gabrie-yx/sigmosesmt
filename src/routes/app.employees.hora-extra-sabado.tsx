@@ -72,12 +72,12 @@ function HoraExtraSabadoPage() {
 
   const del = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("hora_extra_sabado").delete().eq("id", id);
+      const { error } = await supabase.rpc("excluir_convocacao_extra_lider", { _hora_extra_id: id });
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["hora-extra-sabado"] });
-      toast.success("Ficha excluída");
+      toast.success("Ficha arquivada com histórico preservado");
     },
     onError: (e: any) => toast.error(e.message),
   });
