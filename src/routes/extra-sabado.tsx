@@ -596,18 +596,7 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated, liderId }: {
               <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <Label>Turno</Label>
-              <Select value={turno} onValueChange={setTurno}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1º">1º</SelectItem>
-                  <SelectItem value="2º">2º</SelectItem>
-                  <SelectItem value="3º">3º</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Hora início</Label>
               <Input type="time" value={hi} onChange={(e) => setHi(e.target.value)} />
