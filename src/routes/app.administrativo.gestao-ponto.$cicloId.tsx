@@ -11,8 +11,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Upload, FileText, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
-import { parsePontoPdf, diaEmConformidade, motivoFlag, type ParsedFolha } from "@/lib/ponto-parser";
+import { ocrFolhaDePonto, type OcrFolha, type OcrDia } from "@/lib/ponto-ocr.functions";
 
 export const Route = createFileRoute("/app/administrativo/gestao-ponto/$cicloId")({
   component: CicloDetalhePage,
@@ -55,6 +56,7 @@ function CicloDetalhePage() {
   const qc = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [tratarDia, setTratarDia] = useState<Dia | null>(null);
+  const runOcr = useServerFn(ocrFolhaDePonto);
 
   const { data: ciclo } = useQuery({
     queryKey: ["ponto_ciclo", cicloId],
@@ -94,11 +96,15 @@ function CicloDetalhePage() {
       const up = await supabase.storage.from("ponto-pdfs").upload(path, file, { upsert: false });
       if (up.error) throw up.error;
 
-      // 2) parseia no browser
-      toast.info("Extraindo dados do PDF…");
-      const parsed = await parsePontoPdf(file);
+      // 2) OCR no server (Gemini via Lovable AI Gateway — aceita PDF escaneado)
+      toast.info("Lendo o PDF com IA… pode levar 20-40s");
+      const res = await runOcr({ data: { pdfPath: path } });
+      if (res.error) throw new Error(res.error);
+      const parsed = res.folhas;
+      if (!parsed.length) throw new Error("Nada extraído do PDF.");
 
-      // 3) atualiza ciclo
+      // 3) limpa folhas anteriores desse ciclo e insere as novas
+      await limparCiclo(cicloId);
       await supabase.from("ponto_ciclos" as any).update({
         pdf_original_url: path,
         pdf_original_nome: file.name,
@@ -107,10 +113,10 @@ function CicloDetalhePage() {
         status: "em_tratamento",
       }).eq("id", cicloId);
 
-      // 4) insere folhas + dias (só flagged)
+      // 4) insere folhas + dias (só os que precisam tratativa)
       await insertParsed(cicloId, parsed);
 
-      toast.success(`PDF processado: ${parsed.length} páginas`);
+      toast.success(`PDF processado: ${parsed.length} funcionário(s)`);
       qc.invalidateQueries({ queryKey: ["ponto_ciclo", cicloId] });
       qc.invalidateQueries({ queryKey: ["ponto_folhas", cicloId] });
       qc.invalidateQueries({ queryKey: ["ponto_dias", cicloId] });
@@ -229,32 +235,122 @@ function formatDate(iso: string) {
   return `${d}/${m}/${y}`;
 }
 
-async function insertParsed(cicloId: string, parsed: ParsedFolha[]) {
+async function limparCiclo(cicloId: string) {
+  const { data: fs } = await supabase.from("ponto_folhas" as any).select("id").eq("ciclo_id", cicloId);
+  const ids = (fs ?? []).map((f: any) => f.id);
+  if (ids.length > 0) {
+    await supabase.from("ponto_dias" as any).delete().in("folha_id", ids);
+    await supabase.from("ponto_folhas" as any).delete().in("id", ids);
+  }
+}
+
+function anoDoPeriodo(p: OcrFolha): { ini?: string; fim?: string } {
+  const parse = (s?: string) => {
+    if (!s) return undefined;
+    const m = s.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    return m ? `${m[3]}-${m[2]}-${m[1]}` : undefined;
+  };
+  return { ini: parse(p.periodo_inicio), fim: parse(p.periodo_fim) };
+}
+
+function diaParaIso(diaDdMm: string, periodoIni?: string, periodoFim?: string): string | null {
+  const m = diaDdMm.match(/(\d{2})\/(\d{2})/);
+  if (!m) return null;
+  const [_, dd, mm] = m;
+  // Usa o ano do período que contém o mês; assume período dentro do mesmo ano ou virada.
+  const iniY = periodoIni?.slice(0, 4);
+  const fimY = periodoFim?.slice(0, 4);
+  const iniM = periodoIni?.slice(5, 7);
+  const ano = iniY && iniM === mm ? iniY : (fimY ?? iniY ?? String(new Date().getFullYear()));
+  return `${ano}-${mm}-${dd}`;
+}
+
+function hhmmToMin(s?: string): number | null {
+  if (!s) return null;
+  const m = s.match(/(\d{1,3}):(\d{2})/);
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+// Regras de conformidade sobre o dado do OCR:
+//  - DSR/FOLGA/FERIADO/COMPENSAÇÃO sem marcação → OK
+//  - 4 marcações + Trab preenchido + sem HE/faltas/atraso → OK
+// Qualquer outra coisa → tratativa (motivo detalhado).
+function classificarDia(d: OcrDia): { conforme: boolean; motivo: string } {
+  const obs = (d.observacao ?? "").toUpperCase();
+  const marcs = d.marcacoes ?? [];
+  const trab = hhmmToMin(d.trab);
+  const he50 = hhmmToMin(d.h50) ?? 0;
+  const he55 = hhmmToMin(d.h55) ?? 0;
+  const he60 = hhmmToMin(d.h60) ?? 0;
+  const he80 = hhmmToMin(d.h80) ?? 0;
+  const he100 = hhmmToMin(d.h100) ?? 0;
+  const he110 = hhmmToMin(d.h110) ?? 0;
+  const noturno = hhmmToMin(d.noturno) ?? 0;
+  const faltas = hhmmToMin(d.faltas) ?? 0;
+  const atraso = hhmmToMin(d.atraso) ?? 0;
+  const heTotal = he50 + he55 + he60 + he80 + he100 + he110;
+
+  if (marcs.length === 0 && /DSR|FOLGA|FERIADO|COMPENSA/.test(obs)) return { conforme: true, motivo: "" };
+
+  if (faltas > 0) return { conforme: false, motivo: "FALTA" };
+  if (atraso > 0) return { conforme: false, motivo: "ATRASO" };
+  if (heTotal > 0) return { conforme: false, motivo: "HE_A_VALIDAR" };
+  if (noturno > 0) return { conforme: false, motivo: "AD_NOTURNO_A_VALIDAR" };
+  if (marcs.length > 0 && marcs.length < 4) return { conforme: false, motivo: "MARCACOES_INCOMPLETAS" };
+  if (marcs.length === 0) return { conforme: false, motivo: "SEM_MARCACAO" };
+  if (marcs.length >= 4 && trab != null && trab > 0) return { conforme: true, motivo: "" };
+  return { conforme: false, motivo: "REVISAR" };
+}
+
+async function insertParsed(cicloId: string, parsed: OcrFolha[]) {
   for (const p of parsed) {
-    if (!p.matricula && !p.nome) continue; // pula páginas sem cabeçalho identificável
+    if (!p.matricula && !p.nome) continue;
+    const { ini, fim } = anoDoPeriodo(p);
+    const totais = p.totais ?? {};
     const { data: folha, error } = await supabase.from("ponto_folhas" as any).insert({
       ciclo_id: cicloId,
       matricula: p.matricula ?? null,
       nome: p.nome ?? null,
       cargo: p.cargo ?? null,
-      local_trabalho: p.local ?? null,
+      local_trabalho: p.localizacao ?? null,
       pagina_pdf: p.pagina,
       status: "pendente",
+      total_trabalhado_min: hhmmToMin(totais.trabalho),
+      total_faltas_min: hhmmToMin(totais.faltas),
+      total_he_50_min: hhmmToMin(totais.extras_50),
+      total_he_100_min: hhmmToMin(totais.extras_100),
+      total_atrasos_min: hhmmToMin(totais.atrasos),
+      totais_json: totais as any,
     }).select("id").single();
     if (error) throw error;
 
-    const diasParaInserir = p.dias
-      .filter(d => !diaEmConformidade(d))
-      .map(d => ({
-        folha_id: (folha as any).id,
-        data: d.data,
-        marcacoes: d.marcacoes,
-        motivo_flag: motivoFlag(d),
-        precisa_tratativa: true,
-        raw_json: d as any,
-      }));
+    const diasParaInserir = p.dias.map(d => {
+      const iso = diaParaIso(d.data, ini, fim);
+      const cls = classificarDia(d);
+      return iso
+        ? {
+            folha_id: (folha as any).id,
+            data: iso,
+            dia_semana: d.dia_semana ?? null,
+            escala_codigo: d.hor ?? null,
+            marcacoes: d.marcacoes ?? [],
+            motivo_flag: cls.motivo || null,
+            precisa_tratativa: !cls.conforme,
+            status_sistema: cls.conforme ? "conforme" : "pendente",
+            minutos_trabalhados: hhmmToMin(d.trab),
+            minutos_he_50: hhmmToMin(d.h50),
+            minutos_he_100: hhmmToMin(d.h100),
+            minutos_atraso: hhmmToMin(d.atraso),
+            raw_json: d as any,
+          }
+        : null;
+    }).filter(Boolean);
+
+    // Insere TODOS os dias (conformes ficam registrados como histórico com precisa_tratativa=false),
+    // pra fechamento completo do mês.
     if (diasParaInserir.length > 0) {
-      const { error: e2 } = await supabase.from("ponto_dias" as any).insert(diasParaInserir);
+      const { error: e2 } = await supabase.from("ponto_dias" as any).insert(diasParaInserir as any);
       if (e2) throw e2;
     }
   }
