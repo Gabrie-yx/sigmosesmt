@@ -93,7 +93,7 @@ import { Route as AppComprasDashboardRouteImport } from './routes/app.compras.da
 import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/app.almoxarifado.requisicao-compras'
 import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
 import { Route as AppAdministrativoHoraExtraRecebidaRouteImport } from './routes/app.administrativo.hora-extra-recebida'
-import { Route as AppAdministrativoGestaoPontoRouteImport } from './routes/app.administrativo.gestao-ponto'
+import { Route as AppAdministrativoGestaoPontoIndexRouteImport } from './routes/app.administrativo.gestao-ponto.index'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
 import { Route as AppModuloMecanicaRequisicaoComprasRouteImport } from './routes/app.modulo.mecanica.requisicao-compras'
@@ -539,10 +539,10 @@ const AppAdministrativoHoraExtraRecebidaRoute =
     path: '/hora-extra-recebida',
     getParentRoute: () => AppAdministrativoRoute,
   } as any)
-const AppAdministrativoGestaoPontoRoute =
-  AppAdministrativoGestaoPontoRouteImport.update({
-    id: '/gestao-ponto',
-    path: '/gestao-ponto',
+const AppAdministrativoGestaoPontoIndexRoute =
+  AppAdministrativoGestaoPontoIndexRouteImport.update({
+    id: '/gestao-ponto/',
+    path: '/gestao-ponto/',
     getParentRoute: () => AppAdministrativoRoute,
   } as any)
 const AppSesmtEquipamentosMoveisArquivosMensaisRoute =
@@ -582,9 +582,9 @@ const AppEstoqueEpiFichasMensaisRoute =
   } as any)
 const AppAdministrativoGestaoPontoCicloIdRoute =
   AppAdministrativoGestaoPontoCicloIdRouteImport.update({
-    id: '/$cicloId',
-    path: '/$cicloId',
-    getParentRoute: () => AppAdministrativoGestaoPontoRoute,
+    id: '/gestao-ponto/$cicloId',
+    path: '/gestao-ponto/$cicloId',
+    getParentRoute: () => AppAdministrativoRoute,
   } as any)
 const AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute =
   AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport.update({
@@ -638,7 +638,6 @@ export interface FileRoutesByFullPath {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
-  '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
@@ -692,6 +691,7 @@ export interface FileRoutesByFullPath {
   '/app/modulo/mecanica/requisicao-compras': typeof AppModuloMecanicaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
+  '/app/administrativo/gestao-ponto/': typeof AppAdministrativoGestaoPontoIndexRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
 }
@@ -731,7 +731,6 @@ export interface FileRoutesByTo {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app': typeof AppIndexRoute
-  '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
@@ -785,6 +784,7 @@ export interface FileRoutesByTo {
   '/app/modulo/mecanica/requisicao-compras': typeof AppModuloMecanicaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
+  '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoIndexRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
 }
@@ -828,7 +828,6 @@ export interface FileRoutesById {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
-  '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
@@ -882,6 +881,7 @@ export interface FileRoutesById {
   '/app/modulo/mecanica/requisicao-compras': typeof AppModuloMecanicaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
+  '/app/administrativo/gestao-ponto/': typeof AppAdministrativoGestaoPontoIndexRoute
   '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
 }
@@ -926,7 +926,6 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app/'
-    | '/app/administrativo/gestao-ponto'
     | '/app/administrativo/hora-extra-recebida'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
@@ -980,6 +979,7 @@ export interface FileRouteTypes {
     | '/app/modulo/mecanica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
+    | '/app/administrativo/gestao-ponto/'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
   fileRoutesByTo: FileRoutesByTo
@@ -1019,7 +1019,6 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app'
-    | '/app/administrativo/gestao-ponto'
     | '/app/administrativo/hora-extra-recebida'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
@@ -1073,6 +1072,7 @@ export interface FileRouteTypes {
     | '/app/modulo/mecanica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
+    | '/app/administrativo/gestao-ponto'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
   id:
@@ -1115,7 +1115,6 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app/'
-    | '/app/administrativo/gestao-ponto'
     | '/app/administrativo/hora-extra-recebida'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
@@ -1169,6 +1168,7 @@ export interface FileRouteTypes {
     | '/app/modulo/mecanica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
+    | '/app/administrativo/gestao-ponto/'
     | '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
   fileRoutesById: FileRoutesById
@@ -1776,11 +1776,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdministrativoHoraExtraRecebidaRouteImport
       parentRoute: typeof AppAdministrativoRoute
     }
-    '/app/administrativo/gestao-ponto': {
-      id: '/app/administrativo/gestao-ponto'
+    '/app/administrativo/gestao-ponto/': {
+      id: '/app/administrativo/gestao-ponto/'
       path: '/gestao-ponto'
-      fullPath: '/app/administrativo/gestao-ponto'
-      preLoaderRoute: typeof AppAdministrativoGestaoPontoRouteImport
+      fullPath: '/app/administrativo/gestao-ponto/'
+      preLoaderRoute: typeof AppAdministrativoGestaoPontoIndexRouteImport
       parentRoute: typeof AppAdministrativoRoute
     }
     '/app/sesmt/equipamentos-moveis_/arquivos-mensais': {
@@ -1827,10 +1827,10 @@ declare module '@tanstack/react-router' {
     }
     '/app/administrativo/gestao-ponto/$cicloId': {
       id: '/app/administrativo/gestao-ponto/$cicloId'
-      path: '/$cicloId'
+      path: '/gestao-ponto/$cicloId'
       fullPath: '/app/administrativo/gestao-ponto/$cicloId'
       preLoaderRoute: typeof AppAdministrativoGestaoPontoCicloIdRouteImport
-      parentRoute: typeof AppAdministrativoGestaoPontoRoute
+      parentRoute: typeof AppAdministrativoRoute
     }
     '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': {
       id: '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
@@ -1849,34 +1849,22 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AppAdministrativoGestaoPontoRouteChildren {
-  AppAdministrativoGestaoPontoCicloIdRoute: typeof AppAdministrativoGestaoPontoCicloIdRoute
-}
-
-const AppAdministrativoGestaoPontoRouteChildren: AppAdministrativoGestaoPontoRouteChildren =
-  {
-    AppAdministrativoGestaoPontoCicloIdRoute:
-      AppAdministrativoGestaoPontoCicloIdRoute,
-  }
-
-const AppAdministrativoGestaoPontoRouteWithChildren =
-  AppAdministrativoGestaoPontoRoute._addFileChildren(
-    AppAdministrativoGestaoPontoRouteChildren,
-  )
-
 interface AppAdministrativoRouteChildren {
-  AppAdministrativoGestaoPontoRoute: typeof AppAdministrativoGestaoPontoRouteWithChildren
   AppAdministrativoHoraExtraRecebidaRoute: typeof AppAdministrativoHoraExtraRecebidaRoute
   AppAdministrativoRequisicoesRecebidasRoute: typeof AppAdministrativoRequisicoesRecebidasRoute
+  AppAdministrativoGestaoPontoCicloIdRoute: typeof AppAdministrativoGestaoPontoCicloIdRoute
+  AppAdministrativoGestaoPontoIndexRoute: typeof AppAdministrativoGestaoPontoIndexRoute
 }
 
 const AppAdministrativoRouteChildren: AppAdministrativoRouteChildren = {
-  AppAdministrativoGestaoPontoRoute:
-    AppAdministrativoGestaoPontoRouteWithChildren,
   AppAdministrativoHoraExtraRecebidaRoute:
     AppAdministrativoHoraExtraRecebidaRoute,
   AppAdministrativoRequisicoesRecebidasRoute:
     AppAdministrativoRequisicoesRecebidasRoute,
+  AppAdministrativoGestaoPontoCicloIdRoute:
+    AppAdministrativoGestaoPontoCicloIdRoute,
+  AppAdministrativoGestaoPontoIndexRoute:
+    AppAdministrativoGestaoPontoIndexRoute,
 }
 
 const AppAdministrativoRouteWithChildren =
@@ -2099,13 +2087,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -16,7 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export const Route = createFileRoute("/app/administrativo/gestao-ponto")({
+export const Route = createFileRoute("/app/administrativo/gestao-ponto/")({
   component: GestaoPontoPage,
 });
 
