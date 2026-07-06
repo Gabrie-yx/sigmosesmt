@@ -35,7 +35,6 @@ import {
   Factory,
   Wrench,
   Zap,
-  DoorOpen,
   Lock,
   Users as UsersIcon,
   ChevronRight,
@@ -188,11 +187,6 @@ const ALMOXARIFADO_ITEMS: LeafItem[] = [
 const MANUTENCAO_ITEMS: LeafItem[] = [
   { to: "/app/modulo/eletrica/hora-extra", label: "Elétrica — Hora Extra", icon: Zap },
   { to: "/app/modulo/mecanica/hora-extra", label: "Mecânica — Hora Extra", icon: Hammer },
-];
-
-const PORTARIA_ITEMS: LeafItem[] = [
-  { to: "/app/modulo/portaria/hora-extra", label: "Hora Extra", icon: CalendarCheck2 },
-  { to: "/app/almoxarifado/requisicao-compras", label: "Requisição de Compras", icon: ShoppingCart },
 ];
 
 export function AppSidebar() {
@@ -570,29 +564,6 @@ export function AppSidebar() {
           </Collapsible>
         )}
 
-        {/* PORTARIA */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2 h-9 text-sm font-bold text-slate-700">
-            <DoorOpen className="h-5 w-5 text-red-700" /> Portaria
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {PORTARIA_ITEMS.map((s) => {
-                const Icon = s.icon ?? DoorOpen;
-                return (
-                  <SidebarMenuItem key={s.to}>
-                    <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
-                      <Link to={s.to}>
-                        <Icon />
-                        <span>{s.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
       {/* CONFIGURAÇÕES (hover no rodapé) */}

@@ -100,7 +100,7 @@ function HoraExtraModuloPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-6">
+    <div className="max-w-5xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
       <div className="flex items-center gap-3">
         <div className="rounded-lg bg-primary/10 border border-primary/20 p-2 text-primary">
           <CalendarCheck2 className="h-6 w-6" />
