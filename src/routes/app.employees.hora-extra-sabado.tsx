@@ -63,7 +63,7 @@ function HoraExtraSabadoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_sabado")
-        .select("*, companies(name), hora_extra_sabado_funcionarios(id, nome, funcao, externo, presenca)")
+        .select("*, companies(name), hora_extra_sabado_funcionarios(id, nome, funcao, externo, presenca, employee_id, employees(companies(name)))")
         .order("data", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -453,20 +453,44 @@ function HoraExtraSabadoPage() {
                           {funcs.length === 0 ? (
                             <div className="text-xs text-slate-500 italic px-1">Nenhum funcionário marcado.</div>
                           ) : (
-                            <ul className="max-h-56 overflow-y-auto rounded-lg border border-white/10 divide-y divide-white/5 bg-white/[0.02]">
-                              {funcs.map((f: any) => (
-                                <li key={f.id} className="px-3 py-2 flex items-center justify-between gap-2 text-xs">
-                                  <span className="truncate text-slate-100">
-                                    {f.nome}
-                                    {f.externo ? <span className="ml-1 text-[10px] text-amber-300">(externo)</span> : null}
-                                    {f.funcao ? <span className="text-slate-400"> · {f.funcao}</span> : null}
-                                  </span>
-                                  {f.presenca && (
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">{f.presenca}</span>
-                                  )}
-                                </li>
-                              ))}
-                            </ul>
+                            (() => {
+                              const empresaFicha = fichaDetalhe.companies?.name ?? "Sem empresa";
+                              const grupos = new Map<string, any[]>();
+                              for (const f of funcs) {
+                                const emp = f.employees?.companies?.name
+                                  ?? (f.externo ? "Sem empresa" : empresaFicha);
+                                if (!grupos.has(emp)) grupos.set(emp, []);
+                                grupos.get(emp)!.push(f);
+                              }
+                              const ordenadas = Array.from(grupos.entries())
+                                .sort(([a], [b]) => a.localeCompare(b, "pt-BR"));
+                              return (
+                                <div className="max-h-64 overflow-y-auto rounded-lg border border-white/10 bg-white/[0.02] divide-y divide-white/10">
+                                  {ordenadas.map(([empresa, lista]) => (
+                                    <div key={empresa}>
+                                      <div className="sticky top-0 z-10 flex items-center justify-between px-3 py-1.5 bg-rose-500/10 border-b border-rose-400/30">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-rose-200">{empresa}</span>
+                                        <span className="text-[10px] font-bold text-rose-100/70">{lista.length}</span>
+                                      </div>
+                                      <ul className="divide-y divide-white/5">
+                                        {lista.map((f: any) => (
+                                          <li key={f.id} className="px-3 py-2 flex items-center justify-between gap-2 text-xs">
+                                            <span className="truncate text-slate-100">
+                                              {f.nome}
+                                              {f.externo ? <span className="ml-1 text-[10px] text-amber-300">(externo)</span> : null}
+                                              {f.funcao ? <span className="text-slate-400"> · {f.funcao}</span> : null}
+                                            </span>
+                                            {f.presenca && (
+                                              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">{f.presenca}</span>
+                                            )}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })()
                           )}
                         </div>
                       </>
