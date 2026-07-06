@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ShieldCheck, ShieldAlert, Trash2, KeyRound, LogOut, PenTool, Image as ImageIcon, Check, LayoutGrid } from "lucide-react";
@@ -294,11 +295,11 @@ function SecurityPage() {
             <form onSubmit={changePassword} className="space-y-3">
               <div className="space-y-1">
                 <Label htmlFor="new-pwd">Nova senha</Label>
-                <Input id="new-pwd" type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} minLength={8} required />
+                <PasswordInput id="new-pwd" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} minLength={8} required />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="confirm-pwd">Confirme a nova senha</Label>
-                <Input id="confirm-pwd" type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} minLength={8} required />
+                <PasswordInput id="confirm-pwd" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} minLength={8} required />
               </div>
               <Button type="submit" disabled={pwdBusy} className="bg-red-700 hover:bg-red-800">
                 {pwdBusy ? "Salvando..." : "Alterar senha"}

@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { applyMyPendingInvite } from "@/lib/users.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -143,11 +144,11 @@ function ResetPasswordPage() {
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-slate-200">Nova senha</Label>
-                <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} minLength={8} required className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60" />
+                <PasswordInput value={pwd} onChange={(e) => setPwd(e.target.value)} minLength={8} required className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60" />
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-200">Confirmar senha</Label>
-                <Input type="password" value={pwd2} onChange={(e) => setPwd2(e.target.value)} minLength={8} required className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60" />
+                <PasswordInput value={pwd2} onChange={(e) => setPwd2(e.target.value)} minLength={8} required className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60" />
               </div>
               <Button type="submit" className="w-full bg-red-600 text-white shadow-lg shadow-red-900/50 hover:bg-red-500" disabled={busy}>
                 {busy ? "Salvando..." : "Definir senha e entrar"}
