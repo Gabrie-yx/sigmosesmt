@@ -653,7 +653,9 @@ export function AppSidebar() {
                   isActive={
                     isActive("/app/users") ||
                     isActive("/app/audit") ||
-                    isActive("/app/configuracoes-indicadores")
+                    isActive("/app/configuracoes-indicadores") ||
+                    isActive("/app/extra-sabado-aprovacoes") ||
+                    isActive("/app/administrativo/marcadores-hora-extra")
                   }
                   className="font-bold"
                 >
