@@ -208,7 +208,13 @@ function GestaoPontoPage() {
                     </div>
                     <div className="flex gap-2">
                       <Button asChild variant="outline" size="sm">
-                        <Link to="/app/administrativo/gestao-ponto/$cicloId" params={{ cicloId: c.id }}>Abrir</Link>
+                        <Link
+                          to="/app/administrativo/gestao-ponto/$cicloId"
+                          params={{ cicloId: c.id }}
+                          preload={false}
+                        >
+                          Abrir
+                        </Link>
                       </Button>
                       <Button variant="ghost" size="icon" title="Visualizar" onClick={() => abrirEditar(c, true)}>
                         <Eye className="h-4 w-4" />
