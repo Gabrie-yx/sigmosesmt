@@ -355,7 +355,7 @@ function CicloDetalhePage() {
         <CardHeader>
           <CardTitle className="text-base">Pendências por funcionário</CardTitle>
           <p className="text-xs text-muted-foreground">
-            Só aparece o que precisa de tratativa: <b>FALTA</b>, <b>ATRASO</b>, <b>HE não autorizada</b>, marcação incompleta ou compensação. Dias em conformidade ficam ocultos.
+            Só aparece o que precisa de abono: <b>FALTA</b> e <b>ATRASO</b>. HE, adicional noturno, DSR, folga, feriado e compensações vão pra folha normalmente e ficam ocultos aqui.
           </p>
         </CardHeader>
         <CardContent>
