@@ -1,5 +1,5 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,21 @@ function HoraExtraModuloPage() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const { user, isAdmin } = useAuth();
+  const qc = useQueryClient();
+
+  // Realtime: quando o Administrativo aprova/indefere, o card do módulo
+  // solicitante precisa atualizar sozinho (status + motivo).
+  useEffect(() => {
+    const ch = supabase
+      .channel(`hora-extra-modulo-${scope.slug}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hora_extra_sabado", filter: `modulo_origem=eq.${scope.slug}` },
+        () => qc.invalidateQueries({ queryKey: ["hora-extra-modulo", scope.slug] }),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [scope.slug, qc]);
 
   // Escopo dinâmico: se o usuário logado é um marcador cadastrado em
   // hora_extra_marcadores, o RPC devolve a lista de employee_ids que ele
@@ -244,7 +259,9 @@ function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-left rounded-lg border border-border bg-card/60 hover:bg-accent/40 transition p-3 space-y-2"
+        className={`text-left rounded-lg border bg-card/60 hover:bg-accent/40 transition p-3 space-y-2 ${
+          ficha.status === "INDEFERIDA" ? "animate-indeferida" : "border-border"
+        }`}
       >
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -257,7 +274,12 @@ function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar
           <span className={`text-[10px] font-black uppercase rounded border px-2 py-0.5 ${statusClass}`}>{ficha.status}</span>
         </div>
         {ficha.status === "INDEFERIDA" && ficha.motivo_indeferimento && (
-          <p className="text-xs text-destructive line-clamp-2">{ficha.motivo_indeferimento}</p>
+          <div className="rounded-md border border-amber-400/40 bg-destructive/15 p-2">
+            <div className="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-0.5">
+              Motivo do indeferimento
+            </div>
+            <p className="text-xs text-rose-100 whitespace-pre-wrap">{ficha.motivo_indeferimento}</p>
+          </div>
         )}
       </button>
 
