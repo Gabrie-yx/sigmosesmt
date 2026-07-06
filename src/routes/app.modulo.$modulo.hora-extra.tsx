@@ -35,7 +35,7 @@ type HoraExtraModulo = {
   hora_extra_sabado_funcionarios?: { id: string; nome: string | null; funcao: string | null; externo: boolean | null }[];
 };
 
-const MODULO_MAP: Record<string, ModuloScope> = {
+export const MODULO_MAP: Record<string, ModuloScope> = {
   eletrica:   { slug: "eletrica",   moduloLabel: "Elétrica",   empresaFixaNome: "DMN", funcionariosPermitidos: ["Natanael Marins de Lira", "Leonardo Carmo dos Santos"] },
   mecanica:   { slug: "mecanica",   moduloLabel: "Mecânica",   empresaFixaNome: "LF SERVIÇOS" },
   producao:   { slug: "producao",   moduloLabel: "Produção",   setor: "Produção",   empresaFixaNome: "DMN" },
