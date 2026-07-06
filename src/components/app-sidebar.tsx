@@ -65,6 +65,7 @@ import {
   Target,
   Settings,
   Warehouse,
+  DoorOpen,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -191,6 +192,10 @@ const MANUTENCAO_ITEMS: LeafItem[] = [
   { to: "/app/modulo/mecanica/requisicao-compras", label: "Mecânica — Requisição de Compras", icon: ShoppingCart },
 ];
 
+const PORTARIA_ITEMS: LeafItem[] = [
+  { to: "/app/portaria/controle-entrada", label: "Controle de Entrada", icon: DoorOpen },
+];
+
 export function AppSidebar() {
   const location = useLocation();
   const { roles, hasModule, hasMenu } = useAuth();
@@ -228,6 +233,7 @@ export function AppSidebar() {
   const canUsuarios = isAdmin || hasModule("usuarios");
   const canAdministrativo = isAdmin || hasModule("administrativo" as any);
   const canAlmoxarifado = isAdmin || hasModule("almoxarifado" as any);
+  const canPortaria = isAdmin || hasModule("portaria" as any);
 
   // Filtra grupos/itens pelo controle granular de menus
   const visibleSesmtGroups = SESMT_GROUPS
@@ -240,6 +246,7 @@ export function AppSidebar() {
   const visibleAdministrativo = ADMINISTRATIVO_ITEMS.filter((i) => hasMenu(i.to));
   const visibleAlmoxarifado = ALMOXARIFADO_ITEMS.filter((i) => hasMenu(i.to));
   const visibleManutencao = MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to));
+  const visiblePortaria = PORTARIA_ITEMS.filter((i) => hasMenu(i.to));
 
   const sesmtAllItems = visibleSesmtGroups.flatMap((g) => g.items).concat(visibleDDSSubmenu);
   const sesmtOpen = anyActive(sesmtAllItems);
@@ -249,6 +256,7 @@ export function AppSidebar() {
   const administrativoOpen = anyActive(visibleAdministrativo);
   const almoxarifadoOpen = anyActive(visibleAlmoxarifado);
   const manutencaoOpen = anyActive(visibleManutencao);
+  const portariaOpen = anyActive(visiblePortaria);
 
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
@@ -548,6 +556,41 @@ export function AppSidebar() {
                   <SidebarMenu>
                     {visibleManutencao.map((s) => {
                       const Icon = s.icon ?? Wrench;
+                      return (
+                        <SidebarMenuItem key={s.to}>
+                          <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>
+                            <Link to={s.to}>
+                              <Icon />
+                              <span>{s.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </Body>
+            </SidebarGroup>
+          </Collapsible>
+        )}
+
+        {/* PORTARIA */}
+        {canPortaria && visiblePortaria.length > 0 && (
+          <Collapsible defaultOpen={portariaOpen} className="group/portaria">
+            <SidebarGroup>
+              <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
+                <CollapsibleTrigger className="flex w-full items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <DoorOpen className="h-5 w-5 text-red-700" /> Portaria
+                  </span>
+                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/portaria:rotate-90" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <Body>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {visiblePortaria.map((s) => {
+                      const Icon = s.icon ?? DoorOpen;
                       return (
                         <SidebarMenuItem key={s.to}>
                           <SidebarMenuButton asChild isActive={isActive(s.to)} tooltip={s.label}>

@@ -73,6 +73,7 @@ import { Route as AppProducaoFatoresConsumoRouteImport } from './routes/app.prod
 import { Route as AppProducaoExpedicaoRouteImport } from './routes/app.producao.expedicao'
 import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
 import { Route as AppProducaoBaseMateriaPrimaRouteImport } from './routes/app.producao.base-materia-prima'
+import { Route as AppPortariaControleEntradaRouteImport } from './routes/app.portaria.controle-entrada'
 import { Route as AppOssTemplatesRouteImport } from './routes/app.oss.templates'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
@@ -430,6 +431,12 @@ const AppProducaoBaseMateriaPrimaRoute =
     path: '/producao/base-materia-prima',
     getParentRoute: () => AppRoute,
   } as any)
+const AppPortariaControleEntradaRoute =
+  AppPortariaControleEntradaRouteImport.update({
+    id: '/portaria/controle-entrada',
+    path: '/portaria/controle-entrada',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOssTemplatesRoute = AppOssTemplatesRouteImport.update({
   id: '/templates',
   path: '/templates',
@@ -636,6 +643,7 @@ export interface FileRoutesByFullPath {
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/oss/templates': typeof AppOssTemplatesRoute
+  '/app/portaria/controle-entrada': typeof AppPortariaControleEntradaRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -726,6 +734,7 @@ export interface FileRoutesByTo {
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/oss/templates': typeof AppOssTemplatesRoute
+  '/app/portaria/controle-entrada': typeof AppPortariaControleEntradaRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -820,6 +829,7 @@ export interface FileRoutesById {
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
   '/app/oss/templates': typeof AppOssTemplatesRoute
+  '/app/portaria/controle-entrada': typeof AppPortariaControleEntradaRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -915,6 +925,7 @@ export interface FileRouteTypes {
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
     | '/app/oss/templates'
+    | '/app/portaria/controle-entrada'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -1005,6 +1016,7 @@ export interface FileRouteTypes {
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
     | '/app/oss/templates'
+    | '/app/portaria/controle-entrada'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -1098,6 +1110,7 @@ export interface FileRouteTypes {
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
     | '/app/oss/templates'
+    | '/app/portaria/controle-entrada'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -1597,6 +1610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoBaseMateriaPrimaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/portaria/controle-entrada': {
+      id: '/app/portaria/controle-entrada'
+      path: '/portaria/controle-entrada'
+      fullPath: '/app/portaria/controle-entrada'
+      preLoaderRoute: typeof AppPortariaControleEntradaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/oss/templates': {
       id: '/app/oss/templates'
       path: '/templates'
@@ -1891,6 +1911,7 @@ interface AppRouteChildren {
   AppDdsTemasRoute: typeof AppDdsTemasRoute
   AppEstoqueEpiRoute: typeof AppEstoqueEpiRouteWithChildren
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
+  AppPortariaControleEntradaRoute: typeof AppPortariaControleEntradaRoute
   AppProducaoBaseMateriaPrimaRoute: typeof AppProducaoBaseMateriaPrimaRoute
   AppProducaoCriarOrdemRoute: typeof AppProducaoCriarOrdemRoute
   AppProducaoExpedicaoRoute: typeof AppProducaoExpedicaoRoute
@@ -1964,6 +1985,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDdsTemasRoute: AppDdsTemasRoute,
   AppEstoqueEpiRoute: AppEstoqueEpiRouteWithChildren,
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
+  AppPortariaControleEntradaRoute: AppPortariaControleEntradaRoute,
   AppProducaoBaseMateriaPrimaRoute: AppProducaoBaseMateriaPrimaRoute,
   AppProducaoCriarOrdemRoute: AppProducaoCriarOrdemRoute,
   AppProducaoExpedicaoRoute: AppProducaoExpedicaoRoute,
