@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -158,7 +158,9 @@ function GestaoPontoPage() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" disabled>Abrir</Button>
+                      <Button asChild variant="outline" size="sm">
+                        <Link to="/app/administrativo/gestao-ponto/$cicloId" params={{ cicloId: c.id }}>Abrir</Link>
+                      </Button>
                     </div>
                   </div>
                 );
