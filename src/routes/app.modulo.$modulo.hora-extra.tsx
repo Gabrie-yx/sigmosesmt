@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CalendarCheck2, Plus, ArrowLeft, Clock, Users, Pencil, Send, AlertTriangle, CheckCircle2, HourglassIcon } from "lucide-react";
 import { toast } from "sonner";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
+import { useAuth } from "@/hooks/use-auth";
 
 type ModuloScope = {
   slug: string;
@@ -68,6 +69,27 @@ function HoraExtraModuloPage() {
   const scope = MODULO_MAP[modulo]!;
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const { user, isAdmin } = useAuth();
+
+  // Escopo dinâmico: se o usuário logado é um marcador cadastrado em
+  // hora_extra_marcadores, o RPC devolve a lista de employee_ids que ele
+  // pode lançar. Admin recebe NULL (vê tudo). Quem não é marcador também.
+  const { data: escopoIds } = useQuery({
+    queryKey: ["hora-extra-scope", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_hora_extra_allowed_employee_ids", { _uid: user!.id });
+      if (error) throw error;
+      return (data ?? null) as string[] | null;
+    },
+  });
+
+  // Admin ignora qualquer restrição hardcoded do MODULO_MAP.
+  // Marcador com escopo sobrescreve via IDs (mais confiável que match por nome).
+  const employeeIdsPermitidos = isAdmin ? null : (escopoIds ?? null);
+  const funcionariosPermitidos = isAdmin
+    ? undefined
+    : (escopoIds ? undefined : scope.funcionariosPermitidos);
 
   const { data: fichas = [], isLoading } = useQuery({
     queryKey: ["hora-extra-modulo", scope.slug],
@@ -149,7 +171,8 @@ function HoraExtraModuloPage() {
         empresaFixaNome={scope.empresaFixaNome}
         moduloOrigem={scope.slug}
         moduloLabel={scope.moduloLabel}
-        funcionariosPermitidos={scope.funcionariosPermitidos}
+        funcionariosPermitidos={funcionariosPermitidos}
+        employeeIdsPermitidos={employeeIdsPermitidos}
         observacaoLabel="DIGITE AQUI A JUSTIFICATIVA DA EXTRA"
         observacaoPlaceholder="Descreva a justificativa da hora extra…"
       />

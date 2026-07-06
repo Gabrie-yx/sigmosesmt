@@ -8969,6 +8969,10 @@ export type Database = {
       gerar_numero_rc: { Args: { _data?: string }; Returns: string }
       gerar_numero_ria: { Args: never; Returns: string }
       gerar_numero_tnc: { Args: never; Returns: string }
+      get_hora_extra_allowed_employee_ids: {
+        Args: { _uid: string }
+        Returns: string[]
+      }
       get_or_create_convocacao_sabado_atual: { Args: never; Returns: string }
       has_module_access: {
         Args: {
@@ -9207,6 +9211,7 @@ export type Database = {
         | "compras"
         | "extra_sabado_marcador"
         | "supervisor_extra_geral"
+        | "hora_extra_marcador"
       extintor_status: "ATIVO" | "EM_MANUTENCAO" | "BAIXADO" | "VENCIDO"
       extintor_tipo_agente:
         | "ABC"
@@ -9392,6 +9397,7 @@ export const Constants = {
         "compras",
         "extra_sabado_marcador",
         "supervisor_extra_geral",
+        "hora_extra_marcador",
       ],
       extintor_status: ["ATIVO", "EM_MANUTENCAO", "BAIXADO", "VENCIDO"],
       extintor_tipo_agente: [
