@@ -66,6 +66,7 @@ import {
   Settings,
   Warehouse,
   DoorOpen,
+  Clock,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -178,6 +179,7 @@ const COMPRAS_ITEMS: LeafItem[] = [
 const ADMINISTRATIVO_ITEMS: LeafItem[] = [
   { to: "/app/administrativo/requisicoes-recebidas", label: "Requisições Recebidas", icon: ClipboardList },
   { to: "/app/administrativo/hora-extra-recebida", label: "H. Extra Recebida", icon: CalendarCheck2 },
+  { to: "/app/administrativo/gestao-ponto", label: "Gestão de Ponto", icon: Clock },
 ];
 
 const ALMOXARIFADO_ITEMS: LeafItem[] = [
