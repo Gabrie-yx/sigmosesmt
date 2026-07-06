@@ -456,7 +456,6 @@ export function HoraExtraSabadoDialog({
             </Select>
           </div>
           <div className="space-y-1"><Label>Data</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
-          <div className="space-y-1"><Label>Turno</Label><Input value={turno} onChange={(e) => setTurno(e.target.value)} placeholder="1º" /></div>
           <div className="space-y-1"><Label>Horário início</Label><Input value={horaIni} onChange={(e) => setHoraIni(e.target.value)} placeholder="07:30" /></div>
           <div className="space-y-1"><Label>Horário fim</Label><Input value={horaFim} onChange={(e) => setHoraFim(e.target.value)} placeholder="15:00" /></div>
 
