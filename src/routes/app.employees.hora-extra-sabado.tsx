@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowLeft, Calendar, Clock, Building2, MapPin, X, Users, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, ArrowLeft, Calendar, Clock, Building2, MapPin, X, Users, Eye, Pencil, Trash2, ChevronDown } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -54,6 +54,7 @@ function HoraExtraSabadoPage() {
   const [empresaFiltro, setEmpresaFiltro] = useState<string>("todas");
   const [turnoFiltro, setTurnoFiltro] = useState<string>("todos");
   const [detalheId, setDetalheId] = useState<string | null>(null);
+  const [mesAberto, setMesAberto] = useState<string | null>(null);
   // Cache pesado por ficha: evita re-baixar lista + recomprimir todas as
   // assinaturas dos funcionários toda vez que o TST/Gestor assina no preview.
   const pdfCacheRef = useRef<Map<string, { rec: any; paginas: any[]; empresasEnvolvidas: string[]; logo: string | null }>>(new Map());
@@ -222,6 +223,9 @@ function HoraExtraSabadoPage() {
       });
   }, [filtradas]);
 
+  // Mês aberto por padrão: o mais recente com fichas.
+  const mesAtivo = mesAberto ?? gruposPorMes[0]?.key ?? null;
+
   const empresasUnicas = useMemo(() => {
     const s = new Set<string>();
     (fichas ?? []).forEach((f: any) => { if (f.companies?.name) s.add(f.companies.name); });
@@ -309,37 +313,32 @@ function HoraExtraSabadoPage() {
           <p className="text-xs text-slate-400 mt-1">Crie a primeira clicando em "Nova ficha".</p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {gruposPorMes.map((grupo, idx) => {
-            const accents = [
-              { border: "border-white/20",       glow: "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_40px_-15px_rgba(255,255,255,0.15)]", text: "text-slate-100",   ring: "ring-white/20"   },
-              { border: "border-amber-400/60",   glow: "shadow-[0_0_0_1px_rgba(251,191,36,0.25),0_10px_40px_-15px_rgba(251,191,36,0.35)]",   text: "text-amber-200",    ring: "ring-amber-400/40" },
-              { border: "border-rose-500/60",    glow: "shadow-[0_0_0_1px_rgba(244,63,94,0.25),0_10px_40px_-15px_rgba(244,63,94,0.4)]",     text: "text-rose-200",     ring: "ring-rose-400/40"  },
-              { border: "border-yellow-400/60",  glow: "shadow-[0_0_0_1px_rgba(250,204,21,0.25),0_10px_40px_-15px_rgba(250,204,21,0.35)]",  text: "text-yellow-200",   ring: "ring-yellow-400/40"},
-              { border: "border-emerald-400/60", glow: "shadow-[0_0_0_1px_rgba(52,211,153,0.25),0_10px_40px_-15px_rgba(52,211,153,0.35)]",  text: "text-emerald-200",  ring: "ring-emerald-400/40"},
-              { border: "border-sky-400/60",     glow: "shadow-[0_0_0_1px_rgba(56,189,248,0.25),0_10px_40px_-15px_rgba(56,189,248,0.35)]",  text: "text-sky-200",      ring: "ring-sky-400/40"   },
-            ];
-            const a = accents[idx % accents.length];
+        <div className="space-y-3 max-w-4xl mx-auto">
+          {gruposPorMes.map((grupo) => {
+            const aberto = mesAtivo === grupo.key;
             return (
             <div
               key={grupo.key}
-              className={`relative rounded-2xl border ${a.border} ${a.glow} bg-gradient-to-br from-[#1a0608] via-[#12040a] to-black p-5 transition-all hover:-translate-y-0.5`}
+              className="rounded-xl border border-white/10 bg-gradient-to-br from-[#1a0608] via-[#12040a] to-black overflow-hidden"
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="min-w-0">
-                  <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${a.text} truncate`}>{grupo.label}</h3>
-                  <div className={`text-4xl font-black tabular-nums leading-none mt-2 ${a.text}`}>
-                    {grupo.itens.length}
-                  </div>
-                  <div className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mt-1">
-                    ficha{grupo.itens.length === 1 ? "" : "s"} no mês
-                  </div>
-                </div>
-                <div className={`shrink-0 grid place-items-center h-9 w-9 rounded-full ring-1 ${a.ring} ${a.text}`}>
+              <button
+                onClick={() => setMesAberto(aberto ? "" : grupo.key)}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors"
+              >
+                <div className="grid place-items-center h-8 w-8 rounded-full ring-1 ring-rose-400/40 text-rose-200 shrink-0">
                   <Calendar className="h-4 w-4" />
                 </div>
-              </div>
-              <div className="grid gap-2 pt-3 border-t border-white/5">
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-200 truncate">{grupo.label}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                    {grupo.itens.length} ficha{grupo.itens.length === 1 ? "" : "s"}
+                  </div>
+                </div>
+                <span className="text-2xl font-black tabular-nums text-slate-100 mr-2">{grupo.itens.length}</span>
+                <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${aberto ? "rotate-180" : ""}`} />
+              </button>
+              {aberto && (
+              <div className="grid gap-1.5 px-3 pb-3 pt-1 border-t border-white/5">
                 {grupo.itens.map((f: any) => {
                   const d = new Date(f.data + "T12:00:00");
                   const dia = DIAS[d.getDay()];
@@ -386,6 +385,7 @@ function HoraExtraSabadoPage() {
                   );
                 })}
               </div>
+              )}
             </div>
             );
           })}
