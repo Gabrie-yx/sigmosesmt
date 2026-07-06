@@ -89,7 +89,7 @@ function GestaoPontoPage() {
         .in("ciclo_id", ciclos.map(c => c.id));
       if (error) throw error;
       const map: Record<string, string[]> = {};
-      for (const r of (data ?? []) as { ciclo_id: string; nome: string }[]) {
+      for (const r of ((data ?? []) as unknown) as { ciclo_id: string; nome: string }[]) {
         (map[r.ciclo_id] ||= []).push(r.nome);
       }
       return map;
