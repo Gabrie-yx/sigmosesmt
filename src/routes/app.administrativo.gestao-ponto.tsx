@@ -10,7 +10,11 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Clock, Upload, FileText, Users, CheckCircle2, AlertTriangle, CalendarDays, Info } from "lucide-react";
+import { Clock, Upload, FileText, Users, CheckCircle2, AlertTriangle, CalendarDays, Info, Eye, Pencil, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/app/administrativo/gestao-ponto")({
   component: GestaoPontoPage,
@@ -38,9 +42,9 @@ const STATUS_LABEL: Record<string, { label: string; className: string }> = {
 };
 
 function competenciaLabel(iso: string) {
-  const [y, m] = iso.split("-");
-  const meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-  return `${meses[Number(m)-1]}/${y}`;
+  const [y, m, d] = iso.split("-");
+  if (!y || !m) return iso;
+  return d ? `${d}/${m}/${y}` : `${m}/${y}`;
 }
 
 function GestaoPontoPage() {
@@ -48,11 +52,13 @@ function GestaoPontoPage() {
   const [novoOpen, setNovoOpen] = useState(false);
   const [competencia, setCompetencia] = useState<string>(() => {
     const d = new Date();
-    d.setDate(1);
     return d.toISOString().slice(0, 10);
   });
   const [prazo, setPrazo] = useState<string>("");
   const [obs, setObs] = useState("");
+  const [editando, setEditando] = useState<Ciclo | null>(null);
+  const [excluindo, setExcluindo] = useState<Ciclo | null>(null);
+  const [viewOnly, setViewOnly] = useState(false);
 
   const { data: ciclos = [], isLoading } = useQuery({
     queryKey: ["ponto_ciclos"],
@@ -70,23 +76,66 @@ function GestaoPontoPage() {
     mutationFn: async () => {
       const { data: userRes } = await supabase.auth.getUser();
       const uid = userRes.user?.id;
-      const { error } = await supabase.from("ponto_ciclos" as any).insert({
-        competencia,
-        prazo_envio_rh: prazo || null,
-        observacoes: obs || null,
-        criado_por: uid,
-      });
-      if (error) throw error;
+      if (editando) {
+        const { error } = await supabase.from("ponto_ciclos" as any).update({
+          competencia,
+          prazo_envio_rh: prazo || null,
+          observacoes: obs || null,
+        }).eq("id", editando.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("ponto_ciclos" as any).insert({
+          competencia,
+          prazo_envio_rh: prazo || null,
+          observacoes: obs || null,
+          criado_por: uid,
+        });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Ciclo criado");
+      toast.success(editando ? "Ciclo atualizado" : "Ciclo criado");
       setNovoOpen(false);
+      setEditando(null);
+      setViewOnly(false);
       setObs("");
       setPrazo("");
       qc.invalidateQueries({ queryKey: ["ponto_ciclos"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao criar ciclo"),
+    onError: (e: any) => toast.error(e.message ?? "Erro ao salvar ciclo"),
   });
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("ponto_ciclos" as any).delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Ciclo excluído");
+      setExcluindo(null);
+      qc.invalidateQueries({ queryKey: ["ponto_ciclos"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao excluir"),
+  });
+
+  function abrirNovo() {
+    setEditando(null);
+    setViewOnly(false);
+    const d = new Date();
+    setCompetencia(d.toISOString().slice(0, 10));
+    setPrazo("");
+    setObs("");
+    setNovoOpen(true);
+  }
+
+  function abrirEditar(c: Ciclo, somenteLeitura: boolean) {
+    setEditando(c);
+    setViewOnly(somenteLeitura);
+    setCompetencia(c.competencia.slice(0, 10));
+    setPrazo(c.prazo_envio_rh ?? "");
+    setObs(c.observacoes ?? "");
+    setNovoOpen(true);
+  }
 
   const abertos = useMemo(
     () => ciclos.filter(c => c.status !== "encerrado" && c.status !== "enviado_rh").length,
@@ -111,7 +160,7 @@ function GestaoPontoPage() {
             </p>
           </div>
         </div>
-        <Button onClick={() => setNovoOpen(true)} className="gap-2">
+        <Button onClick={abrirNovo} className="gap-2">
           <Upload className="h-4 w-4" /> Novo ciclo mensal
         </Button>
       </header>
@@ -161,6 +210,15 @@ function GestaoPontoPage() {
                       <Button asChild variant="outline" size="sm">
                         <Link to="/app/administrativo/gestao-ponto/$cicloId" params={{ cicloId: c.id }}>Abrir</Link>
                       </Button>
+                      <Button variant="ghost" size="icon" title="Visualizar" onClick={() => abrirEditar(c, true)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Editar" onClick={() => abrirEditar(c, false)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Excluir" onClick={() => setExcluindo(c)} className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 );
@@ -175,7 +233,7 @@ function GestaoPontoPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={novoOpen} onOpenChange={setNovoOpen}>
+      <Dialog open={novoOpen} onOpenChange={(o) => { setNovoOpen(o); if (!o) { setEditando(null); setViewOnly(false); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <div className="flex items-center gap-3">
@@ -183,7 +241,7 @@ function GestaoPontoPage() {
                 <CalendarDays className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <DialogTitle>Novo ciclo mensal</DialogTitle>
+                <DialogTitle>{viewOnly ? "Visualizar ciclo" : editando ? "Editar ciclo" : "Novo ciclo mensal"}</DialogTitle>
                 <DialogDescription>
                   Só o mês/ano — o resto (nomes, matrículas, período, marcações) vem do PDF na próxima etapa.
                 </DialogDescription>
@@ -194,18 +252,18 @@ function GestaoPontoPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium text-muted-foreground">Competência *</label>
-                <Input type="month" value={competencia.slice(0,7)} onChange={e => setCompetencia(`${e.target.value}-01`)} />
-                <p className="text-[11px] text-muted-foreground mt-1">Mês de referência da folha.</p>
+                <Input type="date" value={competencia.slice(0,10)} onChange={e => setCompetencia(e.target.value)} disabled={viewOnly} />
+                <p className="text-[11px] text-muted-foreground mt-1">Dia/mês/ano de referência da folha.</p>
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground">Prazo p/ envio ao RH</label>
-                <Input type="date" value={prazo} onChange={e => setPrazo(e.target.value)} />
+                <Input type="date" value={prazo} onChange={e => setPrazo(e.target.value)} disabled={viewOnly} />
                 <p className="text-[11px] text-muted-foreground mt-1">Opcional — usado só pra alerta.</p>
               </div>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">Observações</label>
-              <Input value={obs} onChange={e => setObs(e.target.value)} placeholder="Ex.: fechamento antecipado por feriado" />
+              <Input value={obs} onChange={e => setObs(e.target.value)} placeholder="Ex.: fechamento antecipado por feriado" disabled={viewOnly} />
             </div>
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex gap-2 text-xs text-muted-foreground">
               <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
@@ -217,13 +275,35 @@ function GestaoPontoPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setNovoOpen(false)}>Cancelar</Button>
-            <Button onClick={() => criar.mutate()} disabled={criar.isPending || !competencia}>
-              {criar.isPending ? "Criando…" : "Criar ciclo"}
-            </Button>
+            <Button variant="outline" onClick={() => setNovoOpen(false)}>{viewOnly ? "Fechar" : "Cancelar"}</Button>
+            {!viewOnly && (
+              <Button onClick={() => criar.mutate()} disabled={criar.isPending || !competencia}>
+                {criar.isPending ? "Salvando…" : editando ? "Salvar alterações" : "Criar ciclo"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!excluindo} onOpenChange={(o) => !o && setExcluindo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir ciclo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {excluindo && <>Ciclo <b>{competenciaLabel(excluindo.competencia)}</b> será removido permanentemente, junto com folhas e tratativas vinculadas. Ação irreversível.</>}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => excluindo && excluir.mutate(excluindo.id)}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
