@@ -9205,6 +9205,10 @@ export type Database = {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       snapshot_estoque_epi_monthly: { Args: never; Returns: undefined }
+      substituir_funcionarios_hora_extra: {
+        Args: { _funcionarios: Json; _hora_extra_id: string }
+        Returns: undefined
+      }
       unaccent: { Args: { "": string }; Returns: string }
       validar_eficacia_acao: {
         Args: { _eficaz: boolean; _id: string; _obs?: string }
