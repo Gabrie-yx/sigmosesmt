@@ -36,6 +36,91 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   );
 }
 
+function MesHoraExtraCard({
+  label, total, empresasCount, ativo, onClick,
+}: {
+  label: string;
+  total: number;
+  empresasCount: number;
+  ativo: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <div className="relative">
+      {/* Glow âmbar suave atrás do card */}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute -inset-4 rounded-[28px] transition-opacity duration-300 ${ativo ? "opacity-100" : "opacity-60 group-hover/mescard:opacity-90"}`}
+        style={{
+          background:
+            "radial-gradient(60% 55% at 50% 50%, rgba(245,158,11,0.28) 0%, rgba(245,158,11,0.10) 45%, rgba(245,158,11,0) 75%)",
+          filter: "blur(18px)",
+        }}
+      />
+      <button
+        type="button"
+        onClick={onClick}
+        className="group/mescard relative w-full rounded-2xl p-[1px] overflow-hidden text-left transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(245,158,11,0.55) 0%, rgba(255,255,255,0.06) 22%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.06) 78%, rgba(245,158,11,0.55) 100%)",
+        }}
+      >
+        <div
+          className="relative rounded-2xl overflow-hidden flex flex-col w-full p-5 min-h-[168px]"
+          style={{
+            background:
+              "linear-gradient(160deg, #0d0a10 0%, #0a070c 55%, #08060a 100%)",
+          }}
+        >
+          {/* Flares nas bordas (cantos) — sem invadir o miolo */}
+          <div aria-hidden className="pointer-events-none absolute -top-8 -left-8 h-24 w-24 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(245,158,11,0.55) 0%, rgba(245,158,11,0) 70%)", filter: "blur(10px)" }} />
+          <div aria-hidden className="pointer-events-none absolute -bottom-8 -right-8 h-28 w-28 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(245,158,11,0.45) 0%, rgba(245,158,11,0) 70%)", filter: "blur(12px)" }} />
+          {/* Brilho fino no topo (flare de borda) */}
+          <div aria-hidden className="pointer-events-none absolute -top-[1px] left-6 right-6 h-px"
+            style={{ background: "linear-gradient(90deg, rgba(245,158,11,0) 0%, rgba(253,224,71,0.9) 50%, rgba(245,158,11,0) 100%)" }} />
+          {/* Ring interno sutil, sem glow no miolo */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl"
+            style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 0 1px rgba(148,163,184,0.05)" }} />
+
+          <div className="relative flex items-center justify-between mb-3">
+            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300/90 flex items-center gap-1.5">
+              <Calendar className="h-3 w-3" /> Mensal
+            </span>
+            <ChevronRight className={`h-4 w-4 text-amber-300/60 transition-transform ${ativo ? "translate-x-0.5 text-amber-200" : "group-hover/mescard:translate-x-0.5 group-hover/mescard:text-amber-200"}`} />
+          </div>
+
+          <div className="relative flex-1 flex flex-col justify-center">
+            <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight text-white leading-tight capitalize">
+              {label}
+            </h3>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-5xl font-black text-amber-300"
+                style={{ textShadow: "0 0 18px rgba(245,158,11,0.35)" }}>
+                {total}
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+                ficha{total === 1 ? "" : "s"}
+              </span>
+            </div>
+          </div>
+
+          <div className="relative flex items-center justify-between pt-3 mt-3 border-t border-white/10">
+            <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400">
+              {empresasCount} empresa{empresasCount === 1 ? "" : "s"}
+            </span>
+            <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-300/85">
+              {ativo ? "Fechar" : "Ver fichas"}
+            </span>
+          </div>
+        </div>
+      </button>
+    </div>
+  );
+}
+
 const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 async function imageToDataUrl(src: string): Promise<string | null> {
