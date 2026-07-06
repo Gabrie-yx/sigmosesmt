@@ -67,7 +67,8 @@ function CicloDetalhePage() {
   const [uploading, setUploading] = useState(false);
   const [tratarDia, setTratarDia] = useState<Dia | null>(null);
   const runOcr = useServerFn(ocrFolhaDePonto);
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, isSupervisorExtraGeral, user } = useAuth();
+  const podeAprovar = isAdmin || isSupervisorExtraGeral;
   const [assinaturaOpen, setAssinaturaOpen] = useState(false);
   const [aprovando, setAprovando] = useState(false);
   const [gerandoPdf, setGerandoPdf] = useState(false);
@@ -452,7 +453,7 @@ function CicloDetalhePage() {
             </div>
           )}
           {aguardandoAnderson && (
-            isAdmin ? (
+            podeAprovar ? (
               <Button onClick={() => setAssinaturaOpen(true)} disabled={aprovando} className="gap-2">
                 <PenLine className="h-4 w-4" /> {aprovando ? "Aprovando…" : "Aprovar e assinar"}
               </Button>
