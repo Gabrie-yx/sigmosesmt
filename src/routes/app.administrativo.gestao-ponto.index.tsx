@@ -217,14 +217,28 @@ function GestaoPontoPage() {
             <div className="space-y-2">
               {ciclos.map(c => {
                 const st = STATUS_LABEL[c.status] ?? { label: c.status, className: "" };
+                const nomes = folhasPorCiclo[c.id] ?? [];
+                const nomeLabel = nomes.length === 0
+                  ? null
+                  : nomes.length === 1
+                    ? nomes[0]
+                    : `${nomes[0]} +${nomes.length - 1}`;
                 return (
                   <div key={c.id} className="flex flex-col md:flex-row md:items-center gap-3 border rounded-lg p-3 hover:bg-muted/30">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium">{competenciaLabel(c.competencia)}</span>
+                        {nomeLabel && (
+                          <span className="text-base font-semibold text-foreground truncate max-w-[280px]" title={nomes.join(", ")}>
+                            {nomeLabel}
+                          </span>
+                        )}
+                        <Badge variant="outline" className="bg-primary/15 text-primary border-primary/40 font-semibold uppercase tracking-wide text-[11px]">
+                          {periodoLabel(c.competencia)}
+                        </Badge>
                         <Badge variant="outline" className={st.className}>{st.label}</Badge>
                       </div>
                       <div className="text-xs text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
+                        <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" /> Criado em {competenciaLabel(c.competencia)}</span>
                         <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {c.total_funcionarios ?? 0} funcionários</span>
                         <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {c.total_paginas ?? 0} páginas</span>
                         {c.prazo_envio_rh && <span>Prazo RH: {c.prazo_envio_rh}</span>}
