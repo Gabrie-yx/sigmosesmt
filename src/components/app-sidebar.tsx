@@ -302,8 +302,8 @@ export function AppSidebar() {
 
         {/* SESMT */}
         {canSesmt && visibleSesmtGroups.length > 0 && (
-          <Collapsible defaultOpen={sesmtOpen} className="group/sesmt">
-            <SidebarGroup>
+          <Collapsible open={sesmtHover.open} onOpenChange={sesmtHover.setOpen} className="group/sesmt">
+            <SidebarGroup {...sesmtHover.bind}>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
                   <span className="flex items-center gap-2">
@@ -362,8 +362,8 @@ export function AppSidebar() {
 
         {/* ESTOQUE */}
         {canEstoque && visibleEstoque.length > 0 && (
-          <Collapsible defaultOpen={estoqueOpen} className="group/estoque">
-            <SidebarGroup>
+          <Collapsible open={estoqueHover.open} onOpenChange={estoqueHover.setOpen} className="group/estoque">
+            <SidebarGroup {...estoqueHover.bind}>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
                   <span className="flex items-center gap-2">
@@ -407,8 +407,8 @@ export function AppSidebar() {
 
         {/* PRODUÇÃO */}
         {canProducao && visibleProducao.length > 0 && (
-          <Collapsible defaultOpen={producaoOpen} className="group/producao">
-            <SidebarGroup>
+          <Collapsible open={producaoHover.open} onOpenChange={producaoHover.setOpen} className="group/producao">
+            <SidebarGroup {...producaoHover.bind}>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
                   <span className="flex items-center gap-2">
@@ -439,8 +439,8 @@ export function AppSidebar() {
 
         {/* COMPRAS */}
         {canCompras && visibleCompras.length > 0 && (
-          <Collapsible defaultOpen={comprasOpen} className="group/compras">
-            <SidebarGroup>
+          <Collapsible open={comprasHover.open} onOpenChange={comprasHover.setOpen} className="group/compras">
+            <SidebarGroup {...comprasHover.bind}>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
                   <span className="flex items-center gap-2">
@@ -477,8 +477,8 @@ export function AppSidebar() {
 
         {/* ADMINISTRATIVO */}
         {canAdministrativo && visibleAdministrativo.length > 0 && (
-          <Collapsible defaultOpen={administrativoOpen} className="group/administrativo">
-            <SidebarGroup>
+          <Collapsible open={administrativoHover.open} onOpenChange={administrativoHover.setOpen} className="group/administrativo">
+            <SidebarGroup {...administrativoHover.bind}>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
                   <span className="flex items-center gap-2">
@@ -512,8 +512,8 @@ export function AppSidebar() {
 
         {/* MANUTENÇÃO (locked) */}
         {canAlmoxarifado && visibleAlmoxarifado.length > 0 && (
-          <Collapsible defaultOpen={almoxarifadoOpen} className="group/almoxarifado">
-            <SidebarGroup>
+          <Collapsible open={almoxarifadoHover.open} onOpenChange={almoxarifadoHover.setOpen} className="group/almoxarifado">
+            <SidebarGroup {...almoxarifadoHover.bind}>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
                   <span className="flex items-center gap-2">
@@ -547,8 +547,8 @@ export function AppSidebar() {
 
         {/* MANUTENÇÃO (agrupa Elétrica + Mecânica) */}
         {visibleManutencao.length > 0 && (
-          <Collapsible defaultOpen={manutencaoOpen} className="group/manutencao">
-            <SidebarGroup>
+          <Collapsible open={manutencaoHover.open} onOpenChange={manutencaoHover.setOpen} className="group/manutencao">
+            <SidebarGroup {...manutencaoHover.bind}>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
                   <span className="flex items-center gap-2">
@@ -582,8 +582,8 @@ export function AppSidebar() {
 
         {/* PORTARIA */}
         {canPortaria && visiblePortaria.length > 0 && (
-          <Collapsible defaultOpen={portariaOpen} className="group/portaria">
-            <SidebarGroup>
+          <Collapsible open={portariaHover.open} onOpenChange={portariaHover.setOpen} className="group/portaria">
+            <SidebarGroup {...portariaHover.bind}>
               <SidebarGroupLabel asChild className="h-9 text-sm font-bold text-slate-700">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
                   <span className="flex items-center gap-2">
