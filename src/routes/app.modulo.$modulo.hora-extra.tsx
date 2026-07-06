@@ -4,8 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarCheck2, Plus, ArrowLeft, Clock, Users, Pencil, Send, AlertTriangle, CheckCircle2, HourglassIcon } from "lucide-react";
+import { CalendarCheck2, Plus, ArrowLeft, Clock, Users, Pencil, Send, AlertTriangle, CheckCircle2, HourglassIcon, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
 import { useAuth } from "@/hooks/use-auth";
@@ -255,21 +256,64 @@ function FichasSection({ title, icon, fichas, onEditar }: {
 }) {
   const Icon = icon === "indeferida" ? AlertTriangle : icon === "aprovada" ? CheckCircle2 : HourglassIcon;
   if (fichas.length === 0) return null;
+  // Agrupa por mês (YYYY-MM), mês mais recente primeiro.
+  const porMes = useMemo(() => {
+    const map = new Map<string, HoraExtraModulo[]>();
+    for (const f of fichas) {
+      const key = (f.data ?? "").slice(0, 7); // YYYY-MM
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(f);
+    }
+    return Array.from(map.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [fichas]);
   return (
     <section className="space-y-2">
       <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
         <Icon className="h-4 w-4" /> {title} ({fichas.length})
       </h2>
-      <div className="grid gap-2 md:grid-cols-2">
-        {fichas.map((f) => <FichaModuloCard key={f.id} ficha={f} onEditar={onEditar} />)}
+      <div className="space-y-3">
+        {porMes.map(([mes, arr], idx) => (
+          <MesGroup key={mes} mes={mes} fichas={arr} onEditar={onEditar} defaultOpen={idx === 0} />
+        ))}
       </div>
     </section>
+  );
+}
+
+function MesGroup({ mes, fichas, onEditar, defaultOpen }: {
+  mes: string;
+  fichas: HoraExtraModulo[];
+  onEditar: (id: string) => void;
+  defaultOpen: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const label = mes ? fmtMes(mes) : "Sem data";
+  return (
+    <div className="rounded-md border border-border/60 bg-card/30">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm font-bold hover:bg-accent/30 transition"
+      >
+        <span className="flex items-center gap-2">
+          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          <span className="capitalize">{label}</span>
+        </span>
+        <span className="text-[11px] font-black uppercase text-muted-foreground">{fichas.length} ficha{fichas.length === 1 ? "" : "s"}</span>
+      </button>
+      {open && (
+        <div className="grid gap-2 md:grid-cols-2 p-2 pt-0">
+          {fichas.map((f) => <FichaModuloCard key={f.id} ficha={f} onEditar={onEditar} />)}
+        </div>
+      )}
+    </div>
   );
 }
 
 function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar: (id: string) => void }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
   const funcs = ficha.hora_extra_sabado_funcionarios ?? [];
   const motivo = ficha.justificativa?.trim() || ficha.observacao?.trim() || "Sem justificativa informada.";
   const statusClass = ficha.status === "INDEFERIDA"
@@ -277,6 +321,7 @@ function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar
     : ficha.status === "APROVADA"
       ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10"
       : "border-amber-500/30 text-amber-300 bg-amber-500/10";
+  const podeExcluir = ficha.status === "PENDENTE" || ficha.status === "INDEFERIDA";
 
   const reenviar = useMutation({
     mutationFn: async () => {
@@ -290,6 +335,21 @@ function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar
       setOpen(false);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao reenviar"),
+  });
+
+  const excluir = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("hora_extra_sabado").delete().eq("id", ficha.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["hora-extra-modulo", ficha.modulo_origem] });
+      qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida"] });
+      toast.success("Solicitação excluída");
+      setConfirmDel(false);
+      setOpen(false);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao excluir"),
   });
 
   return (
@@ -361,29 +421,64 @@ function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar
 
           <DialogFooter>
             {ficha.status === "INDEFERIDA" ? (
-              <div className="flex gap-2 w-full">
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
                 <Button variant="outline" className="flex-1" onClick={() => { setOpen(false); onEditar(ficha.id); }}>
-                  <Pencil className="h-4 w-4 mr-1" /> Corrigir ficha
+                  <Pencil className="h-4 w-4 mr-1" /> Corrigir
                 </Button>
                 <Button className="flex-1 bg-red-700 hover:bg-red-800" onClick={() => reenviar.mutate()} disabled={reenviar.isPending}>
                   <Send className="h-4 w-4 mr-1" /> Reenviar
                 </Button>
+                <Button variant="ghost" className="flex-1 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
+                  <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                </Button>
               </div>
             ) : (
-              <div className="flex gap-2 w-full">
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
                 <Button variant="outline" className="flex-1" onClick={() => { setOpen(false); onEditar(ficha.id); }}>
-                  <Pencil className="h-4 w-4 mr-1" /> Editar ficha
+                  <Pencil className="h-4 w-4 mr-1" /> Editar
                 </Button>
+                {podeExcluir && (
+                  <Button variant="ghost" className="flex-1 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
+                    <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                  </Button>
+                )}
                 <Button variant="ghost" className="flex-1" onClick={() => setOpen(false)}>Fechar</Button>
               </div>
             )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir esta solicitação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A ficha de {fmtDate(ficha.data)} e todos os funcionários marcados serão removidos. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => { e.preventDefault(); excluir.mutate(); }}
+              disabled={excluir.isPending}
+            >
+              {excluir.isPending ? "Excluindo…" : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
 
 function fmtDate(value: string) {
   return new Date(`${value}T12:00:00`).toLocaleDateString("pt-BR");
+}
+
+function fmtMes(yyyymm: string) {
+  const [y, m] = yyyymm.split("-").map(Number);
+  if (!y || !m) return yyyymm;
+  return new Date(y, m - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 }
