@@ -51,6 +51,8 @@ type HoraExtra = {
   observacao: string | null;
   motivo_indeferimento: string | null;
   created_at: string;
+  company_id?: string | null;
+  companies?: { name: string | null } | null;
 };
 
 type Funcionario = {
@@ -140,7 +142,7 @@ function AdministrativoHoraExtraRecebidaPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_sabado")
-        .select("id,data,turno,horario_inicio,horario_fim,setor,modulo_origem,tipo_convocacao,status,justificativa,aberto_por_nome,criado_automatico_por_nome,observacao,motivo_indeferimento,created_at")
+        .select("id,data,turno,horario_inicio,horario_fim,setor,modulo_origem,tipo_convocacao,status,justificativa,aberto_por_nome,criado_automatico_por_nome,observacao,motivo_indeferimento,created_at,company_id,companies(name)")
         .order("data", { ascending: false })
         .limit(400);
       if (error) throw error;
