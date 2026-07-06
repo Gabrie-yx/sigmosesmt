@@ -185,8 +185,10 @@ const ALMOXARIFADO_ITEMS: LeafItem[] = [
 ];
 
 const MANUTENCAO_ITEMS: LeafItem[] = [
+  { to: "/app/modulo/eletrica/requisicao-compras", label: "Elétrica — Requisição de Compras", icon: ShoppingCart },
   { to: "/app/modulo/eletrica/hora-extra", label: "Elétrica — Hora Extra", icon: Zap },
   { to: "/app/modulo/mecanica/hora-extra", label: "Mecânica — Hora Extra", icon: Hammer },
+  { to: "/app/modulo/mecanica/requisicao-compras", label: "Mecânica — Requisição de Compras", icon: ShoppingCart },
 ];
 
 export function AppSidebar() {
