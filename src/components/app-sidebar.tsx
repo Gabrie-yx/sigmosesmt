@@ -228,6 +228,7 @@ export function AppSidebar() {
   const anyActive = (items: LeafItem[]) => items.some((i) => isActive(i.to));
 
   const isAdmin = roles.includes("admin");
+  const isModerator = isAdmin || roles.includes("moderador");
   const canSesmt = isAdmin || hasModule("sesmt");
   const canEstoque = isAdmin || hasModule("estoque");
   const canProducao = isAdmin || hasModule("producao");
@@ -275,7 +276,8 @@ export function AppSidebar() {
       onMouseLeave={handleMouseLeave}
     >
       <SidebarContent className="scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {/* HOJE */}
+        {/* HOJE — visível apenas para admin/moderador */}
+        {isModerator && (
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -295,6 +297,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
 
         {/* SESMT */}
         {canSesmt && visibleSesmtGroups.length > 0 && (
