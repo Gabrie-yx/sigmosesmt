@@ -249,9 +249,17 @@ export function HoraExtraSabadoDialog({
 
   const empsDisponiveis = useMemo(() => {
     const ids = new Set(funcs.filter((f) => f.employee_id).map((f) => f.employee_id));
-    const s = busca.trim().toLowerCase();
-    const setorAlvo = setorFixo ? setorFixo.trim().toLowerCase() : null;
-    const permitidos = (funcionariosPermitidos ?? []).map((n) => n.trim().toLowerCase()).filter(Boolean);
+    // Normaliza removendo acentos e caixa — o setor no DB pode estar
+    // "PRODUCAO" enquanto o código passa "Produção".
+    const norm = (v: string) =>
+      String(v ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toLowerCase();
+    const s = norm(busca);
+    const setorAlvo = setorFixo ? norm(setorFixo) : null;
+    const permitidos = (funcionariosPermitidos ?? []).map(norm).filter(Boolean);
     const idsPermitidos = employeeIdsPermitidos && employeeIdsPermitidos.length > 0
       ? new Set(employeeIdsPermitidos)
       : null;
@@ -260,16 +268,16 @@ export function HoraExtraSabadoDialog({
       .filter((e: any) => !ids.has(e.id))
       .filter((e: any) => {
         if (!setorAlvo) return true;
-        const setores = String(e.setor ?? "").toLowerCase();
+        const setores = norm(e.setor);
         return setores.split(",").map((x) => x.trim()).some((x) => x === setorAlvo);
       })
-      .filter((e: any) => !s || e.nome.toLowerCase().includes(s))
+      .filter((e: any) => !s || norm(e.nome).includes(s))
       .map((e: any) => {
         let permitido = true;
         if (idsPermitidos) {
           permitido = idsPermitidos.has(e.id);
         } else if (permitidos.length > 0) {
-          const nome = String(e.nome ?? "").toLowerCase();
+          const nome = norm(e.nome);
           permitido = permitidos.some((p) => nome.includes(p));
         }
         return { ...e, _permitido: permitido, _temRestricao: temRestricao };
