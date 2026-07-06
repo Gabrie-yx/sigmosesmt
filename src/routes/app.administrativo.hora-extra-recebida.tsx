@@ -123,7 +123,7 @@ function AdministrativoHoraExtraRecebidaPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_sabado")
-        .select("id,data,turno,horario_inicio,horario_fim,setor,tipo_convocacao,status,justificativa,aberto_por_nome,criado_automatico_por_nome,observacao,motivo_indeferimento,created_at")
+        .select("id,data,turno,horario_inicio,horario_fim,setor,modulo_origem,tipo_convocacao,status,justificativa,aberto_por_nome,criado_automatico_por_nome,observacao,motivo_indeferimento,created_at")
         .order("data", { ascending: false })
         .limit(400);
       if (error) throw error;
