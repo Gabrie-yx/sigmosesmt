@@ -394,8 +394,11 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
   const tipo = he.tipo_convocacao === "DIAS_UTEIS" ? "Dia útil" : he.tipo_convocacao === "SABADO" ? "Sábado" : "—";
   const solicitante = he.aberto_por_nome ?? he.criado_automatico_por_nome ?? "—";
   const statusKey = he.status in STATUS_BADGE ? he.status : "PENDENTE";
-  const origem = splitSetores(he)[0];
-  const origemAccent = SETOR_ACCENT[origem] ?? "accent-amber";
+  const origem = origemLabel(he);
+  const origemAccent = SETOR_ACCENT[splitSetores(he)[0]] ?? "accent-amber";
+  const setorDialog = he.modulo_origem === "terceirizadas"
+    ? (he.companies?.name ?? he.setor ?? "—")
+    : (he.setor ?? "—");
   return (
     <>
     <Card
@@ -438,7 +441,8 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
           </DialogTitle>
           <DialogDescription>
             Solicitante: <strong className="text-foreground">{solicitante}</strong> ·
-            Setor: <strong className="text-foreground">{he.setor ?? "—"}</strong> ·
+            {he.modulo_origem === "terceirizadas" ? "Empresa: " : "Setor: "}
+            <strong className="text-foreground">{setorDialog}</strong> ·
             Horário: <strong className="text-foreground">{he.horario_inicio ?? "--:--"}–{he.horario_fim ?? "--:--"}</strong>
           </DialogDescription>
         </DialogHeader>
