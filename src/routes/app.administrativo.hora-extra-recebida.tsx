@@ -457,20 +457,44 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
             {funcs.length === 0 ? (
               <div className="text-[11px] text-muted-foreground">Nenhum funcionário marcado.</div>
             ) : (
-              <ul className="text-[12px] space-y-1 max-h-48 overflow-y-auto">
-                {funcs.map((f) => (
-                  <li key={f.id} className="flex items-center justify-between gap-2 border-b border-white/5 pb-1">
-                    <span className="truncate">
-                      {f.nome}
-                      {f.externo ? <span className="ml-1 text-[10px] text-amber-300">(externo)</span> : null}
-                      {f.funcao ? <span className="text-muted-foreground"> · {f.funcao}</span> : null}
-                    </span>
-                    {f.presenca && (
-                      <span className="prism-pill px-1.5 py-0.5 text-[10px] text-foreground/80">{f.presenca}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
+              (() => {
+                const empresaFicha = he.companies?.name ?? "Sem empresa";
+                const grupos = new Map<string, Funcionario[]>();
+                for (const f of funcs) {
+                  const emp = f.employees?.companies?.name
+                    ?? (f.externo ? "Sem empresa" : empresaFicha);
+                  if (!grupos.has(emp)) grupos.set(emp, []);
+                  grupos.get(emp)!.push(f);
+                }
+                const ordenadas = Array.from(grupos.entries())
+                  .sort(([a], [b]) => a.localeCompare(b, "pt-BR"));
+                return (
+                  <div className="max-h-56 overflow-y-auto rounded-md border border-white/10 divide-y divide-white/10">
+                    {ordenadas.map(([empresa, lista]) => (
+                      <div key={empresa}>
+                        <div className="sticky top-0 z-10 flex items-center justify-between px-2 py-1 bg-amber-500/10 border-b border-amber-400/30">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-amber-100">{empresa}</span>
+                          <span className="text-[10px] font-bold text-amber-100/70">{lista.length}</span>
+                        </div>
+                        <ul className="text-[12px] divide-y divide-white/5">
+                          {lista.map((f) => (
+                            <li key={f.id} className="flex items-center justify-between gap-2 px-2 py-1">
+                              <span className="truncate">
+                                {f.nome}
+                                {f.externo ? <span className="ml-1 text-[10px] text-amber-300">(externo)</span> : null}
+                                {f.funcao ? <span className="text-muted-foreground"> · {f.funcao}</span> : null}
+                              </span>
+                              {f.presenca && (
+                                <span className="prism-pill px-1.5 py-0.5 text-[10px] text-foreground/80">{f.presenca}</span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()
             )}
           </div>
 
