@@ -404,6 +404,51 @@ function HoraExtraSabadoPage() {
                       {fichaDetalhe.observacao}
                     </div>
                   )}
+                  {(() => {
+                    const tipo = fichaDetalhe.tipo_convocacao === "DIAS_UTEIS" ? "Dia útil" : "Sábado";
+                    const funcs = fichaDetalhe.hora_extra_sabado_funcionarios ?? [];
+                    return (
+                      <>
+                        <div className="flex items-start gap-2">
+                          <Calendar className="h-4 w-4 text-rose-300 mt-0.5" />
+                          <div>
+                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo</div>
+                            <div>
+                              <span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest bg-rose-500/20 text-rose-200 border border-rose-400/40">
+                                {tipo}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Users className="h-4 w-4 text-rose-300" />
+                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                              Funcionários ({funcs.length})
+                            </div>
+                          </div>
+                          {funcs.length === 0 ? (
+                            <div className="text-xs text-slate-500 italic px-1">Nenhum funcionário marcado.</div>
+                          ) : (
+                            <ul className="max-h-56 overflow-y-auto rounded-lg border border-white/10 divide-y divide-white/5 bg-white/[0.02]">
+                              {funcs.map((f: any) => (
+                                <li key={f.id} className="px-3 py-2 flex items-center justify-between gap-2 text-xs">
+                                  <span className="truncate text-slate-100">
+                                    {f.nome}
+                                    {f.externo ? <span className="ml-1 text-[10px] text-amber-300">(externo)</span> : null}
+                                    {f.funcao ? <span className="text-slate-400"> · {f.funcao}</span> : null}
+                                  </span>
+                                  {f.presenca && (
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">{f.presenca}</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
                 <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-white/10">
                   <Button onClick={() => gerarPdf(fichaDetalhe.id)} className="bg-rose-500 hover:bg-rose-600 text-white">
