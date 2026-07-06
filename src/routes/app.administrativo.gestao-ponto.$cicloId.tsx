@@ -355,7 +355,7 @@ function CicloDetalhePage() {
         <CardHeader>
           <CardTitle className="text-base">Pendências por funcionário</CardTitle>
           <p className="text-xs text-muted-foreground">
-            Só aparece o que precisa de tratativa: <b>FALTA</b>, <b>ATRASO</b>, <b>HE não autorizada</b>, marcação incompleta ou compensação. Dias em conformidade ficam ocultos.
+            Só aparece o que precisa de abono: <b>FALTA</b> e <b>ATRASO</b>. HE, adicional noturno, DSR, folga, feriado e compensações vão pra folha normalmente e ficam ocultos aqui.
           </p>
         </CardHeader>
         <CardContent>
@@ -566,35 +566,22 @@ function hhmmToMin(s?: string): number | null {
   return Number(m[1]) * 60 + Number(m[2]);
 }
 
-// Regras de conformidade sobre o dado do OCR:
-//  - DSR/FOLGA/FERIADO/COMPENSAÇÃO sem marcação → OK
-//  - 4 marcações + Trab preenchido + sem HE/faltas/atraso → OK
-// Qualquer outra coisa → tratativa (motivo detalhado).
+// Regra de negócio: SÓ precisa de tratativa o que o RH exige abonar/justificar.
+// Isso significa exclusivamente: FALTA (coluna "Faltas" > 0) e ATRASO (coluna
+// "Atraso" > 0). HE, adicional noturno, marcações extras, DSR, folga, feriado
+// e compensação NÃO são pendências — vão pra folha normalmente.
 function classificarDia(d: OcrDia): { conforme: boolean; motivo: string } {
   const obs = (d.observacao ?? "").toUpperCase();
-  const marcs = d.marcacoes ?? [];
-  const trab = hhmmToMin(d.trab);
-  const he50 = hhmmToMin(d.h50) ?? 0;
-  const he55 = hhmmToMin(d.h55) ?? 0;
-  const he60 = hhmmToMin(d.h60) ?? 0;
-  const he80 = hhmmToMin(d.h80) ?? 0;
-  const he100 = hhmmToMin(d.h100) ?? 0;
-  const he110 = hhmmToMin(d.h110) ?? 0;
-  const noturno = hhmmToMin(d.noturno) ?? 0;
   const faltas = hhmmToMin(d.faltas) ?? 0;
   const atraso = hhmmToMin(d.atraso) ?? 0;
-  const heTotal = he50 + he55 + he60 + he80 + he100 + he110;
 
-  if (marcs.length === 0 && /DSR|FOLGA|FERIADO|COMPENSA/.test(obs)) return { conforme: true, motivo: "" };
+  // Observação textual do OCR pode dizer FALTA/ATRASO mesmo sem número na coluna
+  const obsFalta = /\bFALTA\b/.test(obs) && !/JUSTIFICAD/.test(obs);
+  const obsAtraso = /\bATRASO\b/.test(obs);
 
-  if (faltas > 0) return { conforme: false, motivo: "FALTA" };
-  if (atraso > 0) return { conforme: false, motivo: "ATRASO" };
-  if (heTotal > 0) return { conforme: false, motivo: "HE_A_VALIDAR" };
-  if (noturno > 0) return { conforme: false, motivo: "AD_NOTURNO_A_VALIDAR" };
-  if (marcs.length > 0 && marcs.length < 4) return { conforme: false, motivo: "MARCACOES_INCOMPLETAS" };
-  if (marcs.length === 0) return { conforme: false, motivo: "SEM_MARCACAO" };
-  if (marcs.length >= 4 && trab != null && trab > 0) return { conforme: true, motivo: "" };
-  return { conforme: false, motivo: "REVISAR" };
+  if (faltas > 0 || obsFalta) return { conforme: false, motivo: "FALTA" };
+  if (atraso > 0 || obsAtraso) return { conforme: false, motivo: "ATRASO" };
+  return { conforme: true, motivo: "" };
 }
 
 async function insertParsed(cicloId: string, parsed: OcrFolha[]) {
