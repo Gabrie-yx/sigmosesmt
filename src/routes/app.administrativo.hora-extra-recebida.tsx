@@ -350,6 +350,8 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
   const tipo = he.tipo_convocacao === "DIAS_UTEIS" ? "Dia útil" : he.tipo_convocacao === "SABADO" ? "Sábado" : "—";
   const solicitante = he.aberto_por_nome ?? he.criado_automatico_por_nome ?? "—";
   const statusKey = he.status in STATUS_BADGE ? he.status : "PENDENTE";
+  const origem = splitSetores(he)[0];
+  const origemAccent = SETOR_ACCENT[origem] ?? "accent-amber";
   return (
     <>
     <Card
@@ -366,6 +368,12 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
             <span className="text-sm font-bold text-foreground">{fmtBR(he.data)}</span>
             <span className={`${STATUS_BADGE[statusKey]} px-2.5 py-0.5 text-[11px]`}>{STATUS_LABEL[statusKey] ?? he.status}</span>
             <span className="prism-pill px-2 py-0.5 text-[10px] text-foreground/80">{tipo}</span>
+            <span
+              className={`prism-pill ${origemAccent} px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-foreground animate-pulse shadow-[0_0_12px_rgba(251,191,36,0.55)]`}
+              title="Setor de origem"
+            >
+              {origem}
+            </span>
           </div>
           <div className="text-[11px] text-muted-foreground mt-1">
             {solicitante} · {he.horario_inicio ?? "--:--"}–{he.horario_fim ?? "--:--"} ·
