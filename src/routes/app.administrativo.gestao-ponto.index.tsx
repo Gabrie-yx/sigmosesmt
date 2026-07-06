@@ -35,7 +35,7 @@ type Ciclo = {
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
   aberto:              { label: "Aberto",               className: "bg-slate-500/20 text-slate-200 border-slate-500/40" },
   em_tratamento:       { label: "Em tratamento",        className: "bg-amber-500/20 text-amber-200 border-amber-500/40" },
-  aguardando_anderson: { label: "Aguardando Anderson",  className: "bg-blue-500/20 text-blue-200 border-blue-500/40" },
+  aguardando_anderson: { label: "Aguardando Anderson",  className: "bg-blue-500/30 text-blue-100 border-blue-400/60 shadow-[0_0_18px_-4px_rgba(59,130,246,0.6)] font-semibold px-2.5 py-0.5" },
   aprovado:            { label: "Aprovado",             className: "bg-emerald-500/20 text-emerald-200 border-emerald-500/40" },
   enviado_rh:          { label: "Enviado ao RH",        className: "bg-violet-500/20 text-violet-200 border-violet-500/40" },
   encerrado:           { label: "Encerrado",            className: "bg-neutral-500/20 text-neutral-200 border-neutral-500/40" },
@@ -45,6 +45,13 @@ function competenciaLabel(iso: string) {
   const [y, m, d] = iso.split("-");
   if (!y || !m) return iso;
   return d ? `${d}/${m}/${y}` : `${m}/${y}`;
+}
+
+function periodoLabel(iso: string) {
+  const [y, m] = iso.split("-");
+  if (!y || !m) return iso;
+  const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  return `${meses[Number(m) - 1] ?? m}/${y}`;
 }
 
 function GestaoPontoPage() {
@@ -69,6 +76,23 @@ function GestaoPontoPage() {
         .order("competencia", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as Ciclo[];
+    },
+  });
+
+  const { data: folhasPorCiclo = {} } = useQuery({
+    queryKey: ["ponto_folhas_nomes", ciclos.map(c => c.id).join(",")],
+    enabled: ciclos.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ponto_folhas" as any)
+        .select("ciclo_id, nome")
+        .in("ciclo_id", ciclos.map(c => c.id));
+      if (error) throw error;
+      const map: Record<string, string[]> = {};
+      for (const r of ((data ?? []) as unknown) as { ciclo_id: string; nome: string }[]) {
+        (map[r.ciclo_id] ||= []).push(r.nome);
+      }
+      return map;
     },
   });
 
@@ -193,14 +217,28 @@ function GestaoPontoPage() {
             <div className="space-y-2">
               {ciclos.map(c => {
                 const st = STATUS_LABEL[c.status] ?? { label: c.status, className: "" };
+                const nomes = folhasPorCiclo[c.id] ?? [];
+                const nomeLabel = nomes.length === 0
+                  ? null
+                  : nomes.length === 1
+                    ? nomes[0]
+                    : `${nomes[0]} +${nomes.length - 1}`;
                 return (
                   <div key={c.id} className="flex flex-col md:flex-row md:items-center gap-3 border rounded-lg p-3 hover:bg-muted/30">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium">{competenciaLabel(c.competencia)}</span>
+                        {nomeLabel && (
+                          <span className="text-base font-semibold text-foreground truncate max-w-[280px]" title={nomes.join(", ")}>
+                            {nomeLabel}
+                          </span>
+                        )}
+                        <Badge variant="outline" className="bg-primary/15 text-primary border-primary/40 font-semibold uppercase tracking-wide text-[11px]">
+                          {periodoLabel(c.competencia)}
+                        </Badge>
                         <Badge variant="outline" className={st.className}>{st.label}</Badge>
                       </div>
                       <div className="text-xs text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
+                        <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" /> Criado em {competenciaLabel(c.competencia)}</span>
                         <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {c.total_funcionarios ?? 0} funcionários</span>
                         <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {c.total_paginas ?? 0} páginas</span>
                         {c.prazo_envio_rh && <span>Prazo RH: {c.prazo_envio_rh}</span>}
