@@ -79,6 +79,23 @@ function GestaoPontoPage() {
     },
   });
 
+  const { data: folhasPorCiclo = {} } = useQuery({
+    queryKey: ["ponto_folhas_nomes", ciclos.map(c => c.id).join(",")],
+    enabled: ciclos.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ponto_folhas" as any)
+        .select("ciclo_id, nome")
+        .in("ciclo_id", ciclos.map(c => c.id));
+      if (error) throw error;
+      const map: Record<string, string[]> = {};
+      for (const r of (data ?? []) as { ciclo_id: string; nome: string }[]) {
+        (map[r.ciclo_id] ||= []).push(r.nome);
+      }
+      return map;
+    },
+  });
+
   const criar = useMutation({
     mutationFn: async () => {
       const { data: userRes } = await supabase.auth.getUser();
