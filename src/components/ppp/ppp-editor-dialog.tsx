@@ -11,6 +11,7 @@ import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
 import { logRead } from "@/lib/audit-read";
 import { HelpHint } from "@/components/help-hint";
+import { fetchSignatureAsCleanDataUrl } from "@/lib/signature-utils";
 
 /** Formata YYYY-MM-DD -> DD/MM/YYYY */
 function fmtBR(d?: string | null) {
@@ -116,9 +117,10 @@ export function PPPEditorDialog({
     }
   }
 
-  function handleDownloadPdf() {
+  async function handleDownloadPdf() {
     try {
-      const doc = gerarPPPPdf(dados, { numero });
+      const sig = await fetchSignatureAsCleanDataUrl(employee?.assinatura_url ?? null);
+      const doc = gerarPPPPdf(dados, { numero, assinaturaDataUrl: sig });
       setPreviewDoc(doc);
     } catch (e: any) {
       console.error("[ppp-pdf]", e);
@@ -159,30 +161,35 @@ export function PPPEditorDialog({
           .no-print, [data-no-print="true"] { display: none !important; }
           .ppp-input { border: 0 !important; padding: 0 !important; box-shadow: none !important; background: transparent !important; }
         }
-        .ppp-form { font-family: Arial, Helvetica, sans-serif; color: #000; background: white; }
-        .ppp-form .cell { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
-        .ppp-form .label { font-size: 8.5px; font-weight: 700; color: #000; line-height: 1.15; display: block; }
+        .ppp-print-area { color: #000 !important; background: #fff !important; }
+        .ppp-form, .ppp-form * { color: #000 !important; }
+        .ppp-form { font-family: Arial, Helvetica, sans-serif; background: #fff !important; }
+        .ppp-form .cell { border: 1px solid #000 !important; padding: 4px 6px; vertical-align: top; background: #fff !important; }
+        .ppp-form .label { font-size: 8.5px; font-weight: 700; line-height: 1.15; display: block; }
         .ppp-form .val { font-size: 10px; min-height: 14px; padding: 1px 0; }
         .ppp-form .ppp-input {
           width: 100%; border: 0; outline: 0; font-family: inherit;
-          font-size: 10px; padding: 1px 2px; background: transparent; color: #000;
+          font-size: 10px; padding: 1px 2px; background: transparent;
         }
-        .ppp-form .ppp-input:focus { background: #fffbe6; outline: 1px dashed #c084fc; }
+        .ppp-form .ppp-input::placeholder { color: #64748b !important; opacity: 1; }
+        .ppp-form .ppp-input:focus { background: #fffbe6 !important; outline: 1px dashed #c084fc; }
         .ppp-form .ppp-textarea {
           width: 100%; border: 0; outline: 0; font-family: inherit;
-          font-size: 10px; padding: 2px; background: transparent; color: #000; resize: vertical;
+          font-size: 10px; padding: 2px; background: transparent; resize: vertical;
         }
-        .ppp-form .ppp-textarea:focus { background: #fffbe6; outline: 1px dashed #c084fc; }
+        .ppp-form .ppp-textarea::placeholder { color: #64748b !important; opacity: 1; }
+        .ppp-form .ppp-textarea:focus { background: #fffbe6 !important; outline: 1px dashed #c084fc; }
         .ppp-form .section-band {
-          background: #000; color: #fff; font-weight: 700; text-align: center;
+          background: #000 !important; font-weight: 700; text-align: center;
           padding: 3px 0; font-size: 10.5px; letter-spacing: 0.5px; text-transform: uppercase;
         }
+        .ppp-form .section-band, .ppp-form .section-band * { color: #fff !important; }
         .ppp-form .block-title {
-          background: #e6e6e6; font-weight: 700; padding: 3px 6px; font-size: 10px;
-          border: 1px solid #000; border-bottom: 0;
+          background: #e6e6e6 !important; font-weight: 700; padding: 3px 6px; font-size: 10px;
+          border: 1px solid #000 !important; border-bottom: 0;
         }
         .ppp-form table { width: 100%; border-collapse: collapse; }
-        .ppp-form .head-th { background: #eee; font-size: 8.5px; font-weight: 700; text-align: center; }
+        .ppp-form .head-th { background: #eee !important; font-size: 8.5px; font-weight: 700; text-align: center; }
       `}</style>
 
       <Dialog open={open} onOpenChange={(v) => { if (!saving) onOpenChange(v); }}>
