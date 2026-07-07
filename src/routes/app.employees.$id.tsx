@@ -431,6 +431,16 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                   <Trash className="h-3.5 w-3.5" /> Excluir
                 </button>
               )}
+              {(isAdmin || isModerator) && !isDesligado && (
+                <button
+                  type="button"
+                  onClick={() => setTransferOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
+                  title="Transferir para outra empresa"
+                >
+                  <ArrowRightLeft className="h-3.5 w-3.5" /> Transferir
+                </button>
+              )}
             </div>
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-600">
