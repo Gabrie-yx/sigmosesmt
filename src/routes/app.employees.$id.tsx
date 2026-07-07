@@ -59,7 +59,8 @@ import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
 import { DesligamentoWizard } from "@/components/employees/desligamento-wizard";
 import { ExcluirPermanenteDialog } from "@/components/employees/excluir-permanente-dialog";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
-import { UserMinus, RotateCcw, Trash } from "lucide-react";
+import { UserMinus, RotateCcw, Trash, ArrowRightLeft } from "lucide-react";
+import { TransferirEmpresaDialog } from "@/components/employees/transferir-empresa-dialog";
 import { logRead } from "@/lib/audit-read";
 
 export const Route = createFileRoute("/app/employees/$id")({
