@@ -204,6 +204,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
           role: role ? { name: role.name } : null,
           data_desligamento: data,
           motivo: motivoFinal,
+          regularizacao: modo === "regularizacao",
           aso: asoDispensado
             ? { dispensado: true, dispensa_justificativa: asoJustif }
             : { data: asoRow?.data_realizacao, aptidao: asoRow?.aptidao },
