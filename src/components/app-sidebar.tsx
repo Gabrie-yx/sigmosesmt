@@ -621,7 +621,16 @@ export function AppSidebar() {
 
       </SidebarContent>
 
-      {/* CONFIGURAÇÕES (hover no rodapé) */}
+      {/* CONFIGURAÇÕES (hover no rodapé) — só aparece se há pelo menos 1 item acessível */}
+      {(() => {
+        const showUsers = isAdmin || canUsuarios;
+        const showAudit = hasMenu("/app/audit");
+        const showIndic = hasMenu("/app/configuracoes-indicadores");
+        const showExtra = hasMenu("/app/extra-sabado-aprovacoes");
+        const showMarc  = hasMenu("/app/administrativo/marcadores-hora-extra");
+        const anyConfig = showUsers || showAudit || showIndic || showExtra || showMarc;
+        if (!anyConfig) return null;
+        return (
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -653,7 +662,7 @@ export function AppSidebar() {
                   Configurações
                 </div>
                 <nav className="flex flex-col gap-0.5">
-                  {(isAdmin || canUsuarios) && (
+                  {showUsers && (
                     <Link
                       to="/app/users"
                       className="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted data-[active=true]:bg-amber-100 data-[active=true]:text-red-900"
@@ -663,7 +672,7 @@ export function AppSidebar() {
                       <span>Usuários</span>
                     </Link>
                   )}
-                  {hasMenu("/app/audit") && (
+                  {showAudit && (
                     <Link
                       to="/app/audit"
                       className="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted data-[active=true]:bg-amber-100 data-[active=true]:text-red-900"
@@ -673,7 +682,7 @@ export function AppSidebar() {
                       <span>Log de Auditoria</span>
                     </Link>
                   )}
-                  {hasMenu("/app/configuracoes-indicadores") && (
+                  {showIndic && (
                     <Link
                       to="/app/configuracoes-indicadores"
                       className="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted data-[active=true]:bg-amber-100 data-[active=true]:text-red-900"
@@ -683,7 +692,7 @@ export function AppSidebar() {
                       <span>Metas dos Indicadores</span>
                     </Link>
                   )}
-                  {hasMenu("/app/extra-sabado-aprovacoes") && (
+                  {showExtra && (
                     <Link
                       to="/app/extra-sabado-aprovacoes"
                       className="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted data-[active=true]:bg-amber-100 data-[active=true]:text-red-900"
@@ -693,7 +702,7 @@ export function AppSidebar() {
                       <span>Aprovações — Extra (Sáb/Dia Útil)</span>
                     </Link>
                   )}
-                  {hasMenu("/app/administrativo/marcadores-hora-extra") && (
+                  {showMarc && (
                     <Link
                       to="/app/administrativo/marcadores-hora-extra"
                       className="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted data-[active=true]:bg-amber-100 data-[active=true]:text-red-900"
@@ -709,6 +718,8 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+        );
+      })()}
     </Sidebar>
   );
 }
