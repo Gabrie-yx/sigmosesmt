@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, ArrowLeft, ArrowRight, Check, Search, AlertTriangle, X, Loader2, UserPlus, Car } from "lucide-react";
+import { Camera, ArrowLeft, ArrowRight, Check, Search, AlertTriangle, X, Loader2, UserPlus, Car, Briefcase, UserX } from "lucide-react";
 import { isValidCPF, maskCPF, onlyDigits, formatCPFFromDigits } from "@/lib/validators/cpf";
 import { isValidPlaca, normalizePlaca, maskPlaca } from "@/lib/validators/placa";
 import { uploadFotoPortaria, type FotoTipo } from "@/lib/portaria/foto-upload";
@@ -25,6 +25,21 @@ type Tipo = "VISITANTE" | "FORNECEDOR" | "PRESTADOR";
 type PessoaExistente = {
   id: string; nome: string; cpf: string; rg: string | null; cnpj: string | null;
   foto_documento_url: string | null; bloqueado: boolean; motivo_bloqueio: string | null;
+};
+type EmployeeMatch = {
+  id: string;
+  nome: string;
+  cpf: string;
+  rg: string | null;
+  foto_url: string | null;
+  status: "ATIVO" | "DESLIGADO" | string;
+  setor: string | null;
+  matricula: string | null;
+  admissao: string | null;
+  data_desligamento: string | null;
+  motivo_desligamento: string | null;
+  company: string | null;
+  role: string | null;
 };
 type VeiculoExistente = { id: string; placa: string; modelo: string | null; tipo: string | null };
 
@@ -46,6 +61,10 @@ export function NovaEntradaWizard({
   const [tipo, setTipo] = useState<Tipo>("VISITANTE");
   const [cpfInput, setCpfInput] = useState("");
   const [pessoaExistente, setPessoaExistente] = useState<PessoaExistente | null>(null);
+  const [employeeMatch, setEmployeeMatch] = useState<EmployeeMatch | null>(null);
+  // Porteiro precisa confirmar override quando funcionário ATIVO tenta entrar como visita
+  const [ativoOverride, setAtivoOverride] = useState(false);
+  const [ativoJustificativa, setAtivoJustificativa] = useState("");
   const [buscando, setBuscando] = useState(false);
 
   // Passo 2 — dados novos
@@ -78,6 +97,7 @@ export function NovaEntradaWizard({
   useEffect(() => {
     if (!open) return;
     setStep(1); setTipo("VISITANTE"); setCpfInput(""); setPessoaExistente(null);
+    setEmployeeMatch(null); setAtivoOverride(false); setAtivoJustificativa("");
     setNome(""); setRg(""); setCnpj(""); setFotoDocumento(null);
     setFotoRosto(null); setMotivo(""); setEmpresaVisitadaId(""); setFuncionarioRecebedorId("");
     setFuncQuery(""); setFuncResults([]);
@@ -94,22 +114,70 @@ export function NovaEntradaWizard({
       return;
     }
     setBuscando(true);
-    const { data, error } = await supabase
-      .from("portaria_pessoas")
-      .select("id,nome,cpf,rg,cnpj,foto_documento_url,bloqueado,motivo_bloqueio")
-      .eq("cpf", cpfLimpo)
-      .maybeSingle();
+    // Consulta portaria_pessoas + employees em paralelo — ex/atual funcionário deve ser reconhecido.
+    const [pessoaRes, empRes] = await Promise.all([
+      supabase
+        .from("portaria_pessoas")
+        .select("id,nome,cpf,rg,cnpj,foto_documento_url,bloqueado,motivo_bloqueio")
+        .eq("cpf", cpfLimpo)
+        .maybeSingle(),
+      supabase
+        .from("employees")
+        .select("id,nome,cpf,rg,foto_url,status,setor,matricula,admissao,data_desligamento,motivo_desligamento,companies(name),roles(name)")
+        .eq("cpf", cpfLimpo)
+        .order("status", { ascending: true }) // ATIVO vem antes de DESLIGADO no alfabético
+        .limit(1)
+        .maybeSingle(),
+    ]);
     setBuscando(false);
-    if (error) { toast.error("Erro: " + error.message); return; }
-    if (data) {
-      setPessoaExistente(data as PessoaExistente);
-      if ((data as any).bloqueado) {
-        toast.error(`Pessoa BLOQUEADA: ${(data as any).motivo_bloqueio ?? "sem motivo registrado"}`);
+    if (pessoaRes.error) { toast.error("Erro: " + pessoaRes.error.message); return; }
+
+    const pessoa = (pessoaRes.data ?? null) as PessoaExistente | null;
+    const emp = (empRes.data ?? null) as any;
+
+    setPessoaExistente(pessoa);
+    setAtivoOverride(false);
+    setAtivoJustificativa("");
+
+    if (emp) {
+      const match: EmployeeMatch = {
+        id: emp.id,
+        nome: emp.nome,
+        cpf: emp.cpf,
+        rg: emp.rg ?? null,
+        foto_url: emp.foto_url ?? null,
+        status: emp.status,
+        setor: emp.setor ?? null,
+        matricula: emp.matricula ?? null,
+        admissao: emp.admissao ?? null,
+        data_desligamento: emp.data_desligamento ?? null,
+        motivo_desligamento: emp.motivo_desligamento ?? null,
+        company: emp.companies?.name ?? null,
+        role: emp.roles?.name ?? null,
+      };
+      setEmployeeMatch(match);
+      // Pré-preenche dados do passo 2 (nome/rg) puxados da ficha,
+      // mesmo que pessoa da portaria também exista — ficha vence porque é dado RH validado.
+      setNome(match.nome);
+      if (match.rg) setRg(match.rg);
+      if (match.status === "ATIVO") {
+        toast.error("⚠️ Funcionário ATIVO — confirme se realmente é uma visita");
       } else {
-        toast.success(`Cadastro encontrado: ${(data as any).nome}`);
+        toast.warning(`Ex-funcionário identificado (desligado em ${
+          match.data_desligamento ? new Date(match.data_desligamento).toLocaleDateString("pt-BR") : "data ?"
+        })`);
       }
     } else {
-      setPessoaExistente(null);
+      setEmployeeMatch(null);
+    }
+
+    if (pessoa) {
+      if (pessoa.bloqueado) {
+        toast.error(`Pessoa BLOQUEADA: ${pessoa.motivo_bloqueio ?? "sem motivo registrado"}`);
+      } else if (!emp) {
+        toast.success(`Cadastro encontrado: ${pessoa.nome}`);
+      }
+    } else if (!emp) {
       toast.info("Novo cadastro — preencha os dados no próximo passo");
     }
   };
@@ -152,8 +220,15 @@ export function NovaEntradaWizard({
   const irParaProximo = () => {
     if (step === 1) {
       if (!isValidCPF(cpfInput)) return toast.error("CPF inválido");
-      // Se pessoa existe, pula passo 2
-      if (pessoaExistente) { setStep(3); return; }
+      // Trava funcionário ATIVO — só passa com override + justificativa
+      if (employeeMatch?.status === "ATIVO" && !ativoOverride) {
+        return toast.error("Marque a confirmação de override para funcionário ativo");
+      }
+      if (employeeMatch?.status === "ATIVO" && ativoOverride && ativoJustificativa.trim().length < 5) {
+        return toast.error("Justifique a entrada do funcionário ativo (mínimo 5 caracteres)");
+      }
+      // Se pessoa OU ex-funcionário existe, pula passo 2 (já temos nome/rg/foto)
+      if (pessoaExistente || employeeMatch) { setStep(3); return; }
       setStep(2); return;
     }
     if (step === 2) {
@@ -162,7 +237,8 @@ export function NovaEntradaWizard({
       setStep(3); return;
     }
     if (step === 3) {
-      if (!fotoRosto && !pessoaExistente?.foto_documento_url) return toast.error("Foto do rosto obrigatória");
+      const temFotoPrevia = pessoaExistente?.foto_documento_url || employeeMatch?.foto_url;
+      if (!fotoRosto && !temFotoPrevia) return toast.error("Foto do rosto obrigatória");
       if (!motivo.trim()) return toast.error("Motivo obrigatório");
       if (!empresaVisitadaId) return toast.error("Selecione a empresa visitada");
       setStep(4); return;
@@ -170,7 +246,7 @@ export function NovaEntradaWizard({
   };
 
   const voltar = () => {
-    if (step === 3 && pessoaExistente) { setStep(1); return; }
+    if (step === 3 && (pessoaExistente || employeeMatch)) { setStep(1); return; }
     setStep((s) => Math.max(1, s - 1));
   };
 
@@ -271,6 +347,27 @@ export function NovaEntradaWizard({
       });
       if (errV) throw errV;
 
+      // 5.1) Auditoria — registra vínculo com funcionário (ativo ou desligado) para rastreabilidade
+      if (employeeMatch) {
+        await supabase.from("portaria_auditoria").insert({
+          entidade: "portaria_visitas",
+          entidade_id: visitaId,
+          acao: employeeMatch.status === "ATIVO" ? "FUNCIONARIO_ATIVO_OVERRIDE" : "EX_FUNCIONARIO_ENTRADA",
+          origem_modulo: "portaria",
+          user_id: user?.id ?? null,
+          snapshot_json: {
+            employee_id: employeeMatch.id,
+            employee_nome: employeeMatch.nome,
+            employee_status: employeeMatch.status,
+            employee_matricula: employeeMatch.matricula,
+            employee_setor: employeeMatch.setor,
+            employee_data_desligamento: employeeMatch.data_desligamento,
+            employee_motivo_desligamento: employeeMatch.motivo_desligamento,
+            override_justificativa: employeeMatch.status === "ATIVO" ? ativoJustificativa.trim() : null,
+          },
+        });
+      }
+
       // 6) Acompanhantes
       for (let i = 0; i < acompanhantes.length; i++) {
         const c = acompanhantes[i];
@@ -364,6 +461,82 @@ export function NovaEntradaWizard({
                   </div>
                 </div>
               )}
+              {employeeMatch && (
+                <div className={`rounded-xl p-3 border-2 ${
+                  employeeMatch.status === "ATIVO" ? "bg-red-50 border-red-400" : "bg-amber-50 border-amber-400"
+                }`}>
+                  <div className="flex gap-3">
+                    {employeeMatch.foto_url ? (
+                      <img src={employeeMatch.foto_url} alt={employeeMatch.nome}
+                        className="h-16 w-16 rounded-lg object-cover border-2 border-white shadow-sm flex-none" />
+                    ) : (
+                      <div className="h-16 w-16 rounded-lg bg-slate-200 flex items-center justify-center flex-none">
+                        {employeeMatch.status === "ATIVO"
+                          ? <Briefcase className="h-6 w-6 text-red-600" />
+                          : <UserX className="h-6 w-6 text-amber-600" />}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                          employeeMatch.status === "ATIVO" ? "bg-red-600 text-white" : "bg-amber-600 text-white"
+                        }`}>
+                          {employeeMatch.status === "ATIVO" ? "Funcionário ATIVO" : "Ex-funcionário"}
+                        </span>
+                        {employeeMatch.matricula && (
+                          <span className="text-[9px] font-bold text-slate-500 uppercase">Mat. {employeeMatch.matricula}</span>
+                        )}
+                      </div>
+                      <p className="font-black text-sm mt-1 truncate">{employeeMatch.nome}</p>
+                      <p className="text-[11px] text-slate-600 truncate">
+                        {employeeMatch.role ?? "—"} · {employeeMatch.setor ?? "sem setor"}
+                      </p>
+                      {employeeMatch.company && (
+                        <p className="text-[10px] text-slate-500 truncate">{employeeMatch.company}</p>
+                      )}
+                      {employeeMatch.status === "DESLIGADO" && (
+                        <div className="mt-1.5 text-[11px] text-amber-800">
+                          <p><strong>Desligado em:</strong> {employeeMatch.data_desligamento
+                            ? new Date(employeeMatch.data_desligamento).toLocaleDateString("pt-BR")
+                            : "—"}</p>
+                          {employeeMatch.motivo_desligamento && (
+                            <p><strong>Motivo:</strong> {employeeMatch.motivo_desligamento}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {employeeMatch.status === "ATIVO" && (
+                    <div className="mt-3 space-y-2 border-t border-red-200 pt-2">
+                      <p className="text-[11px] text-red-800 font-bold">
+                        Este CPF é de funcionário ATIVO. Se for entrada normal, use catraca/ponto. Só prossiga como visita se houver motivo excepcional (buscar documento fora do horário, reunião fora do turno, etc.).
+                      </p>
+                      <label className="flex items-start gap-2 cursor-pointer">
+                        <input type="checkbox" checked={ativoOverride}
+                          onChange={(e) => setAtivoOverride(e.target.checked)}
+                          className="mt-0.5 h-4 w-4" />
+                        <span className="text-[11px] font-bold text-red-900">
+                          Confirmo entrada como visita mesmo sendo funcionário ativo (será auditado)
+                        </span>
+                      </label>
+                      {ativoOverride && (
+                        <Textarea
+                          value={ativoJustificativa}
+                          onChange={(e) => setAtivoJustificativa(e.target.value)}
+                          placeholder="Justificativa obrigatória (ex: veio buscar documento fora do horário)"
+                          rows={2}
+                          className="text-xs"
+                        />
+                      )}
+                    </div>
+                  )}
+                  {employeeMatch.status === "DESLIGADO" && (
+                    <p className="mt-2 text-[11px] text-amber-800 border-t border-amber-200 pt-2">
+                      Nome, RG e foto já pré-carregados da ficha. Prossiga normalmente — a entrada ficará registrada no histórico como ex-funcionário.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -389,11 +562,34 @@ export function NovaEntradaWizard({
 
           {step === 3 && (
             <div className="space-y-3">
+              {(pessoaExistente?.foto_documento_url || employeeMatch?.foto_url) && (
+                <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50/50 p-3 flex items-center gap-3">
+                  <img
+                    src={(pessoaExistente?.foto_documento_url ?? employeeMatch?.foto_url) as string}
+                    alt="Foto do cadastro"
+                    className="h-16 w-16 rounded-lg object-cover border-2 border-white shadow-sm"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">
+                      Foto do cadastro {employeeMatch ? "(ficha RH)" : "(portaria)"}
+                    </p>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Já existe foto — a foto do rosto abaixo é opcional. Capture nova se estiver muito diferente.
+                    </p>
+                  </div>
+                </div>
+              )}
               <FotoField
                 label="Foto do rosto *"
                 value={fotoRosto}
                 onChange={setFotoRosto}
-                fallbackHint={pessoaExistente?.foto_documento_url ? "Já existe foto no cadastro — nova é opcional" : undefined}
+                fallbackHint={
+                  employeeMatch?.foto_url
+                    ? "Ficha RH tem foto — nova é opcional"
+                    : pessoaExistente?.foto_documento_url
+                    ? "Já existe foto no cadastro — nova é opcional"
+                    : undefined
+                }
               />
               <div>
                 <Label className="text-xs font-black uppercase tracking-widest">Empresa visitada *</Label>
