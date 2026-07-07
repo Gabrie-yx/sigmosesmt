@@ -32,10 +32,18 @@ Migração 20260707_175331:
 - Grava audit_logs action='mudanca_cargo' com metadata: employee_nome, role_anterior/novo (id+nome), ghe_anterior/novo (id+nome), cursos_delta (jsonb), qtd_cursos_pendentes.
 - Matriz continua computada em tempo real (join role_courses × entries). Nenhuma linha "pendente" é criada — a tela já mostra o gap.
 
+### ✅ Item 4 — C-01 Portaria bloqueia ex-funcionário (CONCLUÍDO)
+Migração 20260707_183018:
+- Estende `fechar_pendencias_ao_desligar()` pra também `UPDATE portaria_pessoas SET bloqueado=true, motivo_bloqueio='Desligado em DD/MM/YYYY — Nome'` matchando por CPF normalizado (só dígitos, len=11).
+- Idempotente: só toca em registros com bloqueado=false.
+- audit_logs action='desligamento_cascata' agora inclui `portaria_bloqueadas` no metadata.
+- portaria_pessoas não tem FK pra employees (é cadastro genérico por CPF), por isso o match é por CPF.
+
 ## Onda 2 concluída ✅
-Todos os 3 itens implementados. Aguardando testes do Francisco.
+Itens 1-3 + C-01 implementados. Próximo: C-04.b (convocar exame MUDANCA_FUNCAO), C-10 (ASO DEMISSIONAL wizard), C-08 (ASO RETORNO_TRABALHO ao fechar acidente c/ afastamento).
 
 ## ⚠️ Pendente de teste pelo Francisco (avisar no próximo pedido de teste)
 - Item 1 (Onda 2): desligar um funcionário e conferir se convocações PENDENTES viram CANCELADA + safety_overrides revogados. Ver audit_logs action='desligamento_cascata'.
 - Item 2 (Onda 2): rodar manualmente `SELECT public.gerar_convocacoes_aso_automaticas();` no SQL Editor pra ver quantas criou hoje. Ou esperar 06h UTC (03h Brasília).
 - Item 3 (Onda 2): trocar cargo (ou GHE) de um funcionário e conferir: linha nova em employee_role_history + audit_logs action='mudanca_cargo' com cursos_delta preenchido.
+- C-01: desligar funcionário com CPF cadastrado em portaria_pessoas e conferir que a pessoa fica bloqueada + motivo preenchido. Ver `portaria_bloqueadas` no metadata do audit_logs.
