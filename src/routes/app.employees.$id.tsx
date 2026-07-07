@@ -59,7 +59,8 @@ import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
 import { DesligamentoWizard } from "@/components/employees/desligamento-wizard";
 import { ExcluirPermanenteDialog } from "@/components/employees/excluir-permanente-dialog";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
-import { UserMinus, RotateCcw, Trash } from "lucide-react";
+import { UserMinus, RotateCcw, Trash, ArrowRightLeft } from "lucide-react";
+import { TransferirEmpresaDialog } from "@/components/employees/transferir-empresa-dialog";
 import { logRead } from "@/lib/audit-read";
 
 export const Route = createFileRoute("/app/employees/$id")({
@@ -106,7 +107,7 @@ function EmployeeDetail() {
 
 export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { id: string; showHeader?: boolean; initialTab?: string }) {
   const qc = useQueryClient();
-  const { isEditor, isAdmin } = useAuth();
+  const { isEditor, isAdmin, isModerator } = useAuth();
   const VALID_TABS = ["profile","nrs","docs","epi","health"];
   const [tab, setTab] = useState<string>(VALID_TABS.includes(initialTab ?? "") ? (initialTab as string) : "profile");
   const [healthSub, setHealthSub] = useState<string>(initialTab === "vaccines" ? "vaccines" : "exams");
@@ -189,6 +190,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [integOpen, setIntegOpen] = useState(false);
   const [termoOpen, setTermoOpen] = useState(false);
   const [desligamentoOpen, setDesligamentoOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
   const [excluirOpen, setExcluirOpen] = useState(false);
 
   async function gerarFichaPdf() {
@@ -427,6 +429,16 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                   title="Excluir permanentemente (apenas duplicidade / cadastro errado)"
                 >
                   <Trash className="h-3.5 w-3.5" /> Excluir
+                </button>
+              )}
+              {(isAdmin || isModerator) && !isDesligado && (
+                <button
+                  type="button"
+                  onClick={() => setTransferOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
+                  title="Transferir para outra empresa"
+                >
+                  <ArrowRightLeft className="h-3.5 w-3.5" /> Transferir
                 </button>
               )}
             </div>
@@ -691,6 +703,13 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           emp={{ id: emp.id, nome: emp.nome }}
           open={excluirOpen}
           onClose={() => setExcluirOpen(false)}
+        />
+      )}
+      {emp && (
+        <TransferirEmpresaDialog
+          open={transferOpen}
+          onClose={() => setTransferOpen(false)}
+          employee={{ id: emp.id, nome: emp.nome, company_id: emp.company_id ?? null }}
         />
       )}
     </div>
@@ -1161,7 +1180,7 @@ function ProfileTab({ emp, companies, roles, canEdit, canDelete, qc }: any) {
           <Select value={f.tipo_cadastro} onValueChange={(v) => setF({ ...f, tipo_cadastro: v })} disabled={!canEdit}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="NAO_MEI">CLT</SelectItem>
+              <SelectItem value="CLT">CLT</SelectItem>
               <SelectItem value="MEI">MEI</SelectItem>
               <SelectItem value="AVULSO">AVULSO</SelectItem>
             </SelectContent>

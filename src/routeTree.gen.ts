@@ -79,6 +79,7 @@ import { Route as AppOssTemplatesRouteImport } from './routes/app.oss.templates'
 import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
 import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
 import { Route as AppEmployeesSaidasRouteImport } from './routes/app.employees.saidas'
+import { Route as AppEmployeesRelatorioAdmissoesRouteImport } from './routes/app.employees.relatorio-admissoes'
 import { Route as AppEmployeesListagemRouteImport } from './routes/app.employees.listagem'
 import { Route as AppEmployeesHoraExtraSabadoRouteImport } from './routes/app.employees.hora-extra-sabado'
 import { Route as AppEmployeesDesligadosRouteImport } from './routes/app.employees.desligados'
@@ -467,6 +468,12 @@ const AppEmployeesSaidasRoute = AppEmployeesSaidasRouteImport.update({
   path: '/saidas',
   getParentRoute: () => AppEmployeesRoute,
 } as any)
+const AppEmployeesRelatorioAdmissoesRoute =
+  AppEmployeesRelatorioAdmissoesRouteImport.update({
+    id: '/relatorio-admissoes',
+    path: '/relatorio-admissoes',
+    getParentRoute: () => AppEmployeesRoute,
+  } as any)
 const AppEmployeesListagemRoute = AppEmployeesListagemRouteImport.update({
   id: '/listagem',
   path: '/listagem',
@@ -675,6 +682,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/desligados': typeof AppEmployeesDesligadosRoute
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
+  '/app/employees/relatorio-admissoes': typeof AppEmployeesRelatorioAdmissoesRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
@@ -770,6 +778,7 @@ export interface FileRoutesByTo {
   '/app/employees/desligados': typeof AppEmployeesDesligadosRoute
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
+  '/app/employees/relatorio-admissoes': typeof AppEmployeesRelatorioAdmissoesRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
@@ -870,6 +879,7 @@ export interface FileRoutesById {
   '/app/employees/desligados': typeof AppEmployeesDesligadosRoute
   '/app/employees/hora-extra-sabado': typeof AppEmployeesHoraExtraSabadoRoute
   '/app/employees/listagem': typeof AppEmployeesListagemRoute
+  '/app/employees/relatorio-admissoes': typeof AppEmployeesRelatorioAdmissoesRoute
   '/app/employees/saidas': typeof AppEmployeesSaidasRoute
   '/app/estoque/epi': typeof AppEstoqueEpiRouteWithChildren
   '/app/estoque/sesmt': typeof AppEstoqueSesmtRoute
@@ -971,6 +981,7 @@ export interface FileRouteTypes {
     | '/app/employees/desligados'
     | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
+    | '/app/employees/relatorio-admissoes'
     | '/app/employees/saidas'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
@@ -1066,6 +1077,7 @@ export interface FileRouteTypes {
     | '/app/employees/desligados'
     | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
+    | '/app/employees/relatorio-admissoes'
     | '/app/employees/saidas'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
@@ -1165,6 +1177,7 @@ export interface FileRouteTypes {
     | '/app/employees/desligados'
     | '/app/employees/hora-extra-sabado'
     | '/app/employees/listagem'
+    | '/app/employees/relatorio-admissoes'
     | '/app/employees/saidas'
     | '/app/estoque/epi'
     | '/app/estoque/sesmt'
@@ -1714,6 +1727,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmployeesSaidasRouteImport
       parentRoute: typeof AppEmployeesRoute
     }
+    '/app/employees/relatorio-admissoes': {
+      id: '/app/employees/relatorio-admissoes'
+      path: '/relatorio-admissoes'
+      fullPath: '/app/employees/relatorio-admissoes'
+      preLoaderRoute: typeof AppEmployeesRelatorioAdmissoesRouteImport
+      parentRoute: typeof AppEmployeesRoute
+    }
     '/app/employees/listagem': {
       id: '/app/employees/listagem'
       path: '/listagem'
@@ -1950,6 +1970,7 @@ interface AppEmployeesRouteChildren {
   AppEmployeesDesligadosRoute: typeof AppEmployeesDesligadosRoute
   AppEmployeesHoraExtraSabadoRoute: typeof AppEmployeesHoraExtraSabadoRoute
   AppEmployeesListagemRoute: typeof AppEmployeesListagemRoute
+  AppEmployeesRelatorioAdmissoesRoute: typeof AppEmployeesRelatorioAdmissoesRoute
   AppEmployeesSaidasRoute: typeof AppEmployeesSaidasRoute
   AppEmployeesIndexRoute: typeof AppEmployeesIndexRoute
 }
@@ -1959,6 +1980,7 @@ const AppEmployeesRouteChildren: AppEmployeesRouteChildren = {
   AppEmployeesDesligadosRoute: AppEmployeesDesligadosRoute,
   AppEmployeesHoraExtraSabadoRoute: AppEmployeesHoraExtraSabadoRoute,
   AppEmployeesListagemRoute: AppEmployeesListagemRoute,
+  AppEmployeesRelatorioAdmissoesRoute: AppEmployeesRelatorioAdmissoesRoute,
   AppEmployeesSaidasRoute: AppEmployeesSaidasRoute,
   AppEmployeesIndexRoute: AppEmployeesIndexRoute,
 }

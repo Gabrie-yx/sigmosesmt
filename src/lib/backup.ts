@@ -113,7 +113,7 @@ async function importLegacy(d: any) {
         whatsapp_emergencia: e.whatsappEmergencia ?? null,
         nome_contato: e.nomeContato ?? null,
         email: e.email ?? null,
-        tipo_cadastro: e.tipoCadastro ?? "NAO_MEI",
+        tipo_cadastro: e.tipoCadastro ?? "AVULSO",
         matricula: e.matricula ?? null,
         admissao: e.dataAdmissao || e.admissao || null,
         status: e.status ?? "ATIVO",

@@ -161,7 +161,7 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
     tipoRaw === "MEI" ? "MEI"
     : tipoRaw === "AVULSO" ? "AVULSO"
     : tipoRaw === "TERCEIRIZADO" ? "AVULSO"
-    : tipoRaw === "NAO_MEI" || tipoRaw === "CLT" ? "CLT"
+    : tipoRaw === "CLT" ? "CLT"
     : "—";
   const isMei = tipoLabel === "MEI";
 
