@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { ShieldCheck, ShieldAlert, Trash2, Plus, Mail, RotateCcw, X, Settings2, Ban, Play, History as HistoryIcon, KeyRound, LogOut, MoreVertical, MonitorSmartphone } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Trash2, Plus, Mail, RotateCcw, X, Settings2, Ban, Play, History as HistoryIcon, KeyRound, LogOut, MoreVertical, MonitorSmartphone, UserCog } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -37,6 +37,7 @@ import {
   adminResetUserPassword,
   adminCountUserSessions,
   adminForceSignOutUser,
+  updateUserProfile,
 } from "@/lib/users.functions";
 import { createInvestorAccess } from "@/lib/temp-investors.functions";
 import { MENU_CATALOG, MENU_BY_KEY, menusForModule, AVAILABLE_MODULES } from "@/lib/menu-catalog";
@@ -86,6 +87,7 @@ function UsersPage() {
   const resetPwdFn = useServerFn(adminResetUserPassword);
   const countSessionsFn = useServerFn(adminCountUserSessions);
   const signOutUserFn = useServerFn(adminForceSignOutUser);
+  const updateProfileFn = useServerFn(updateUserProfile);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -104,6 +106,13 @@ function UsersPage() {
   const [resetTarget, setResetTarget] = useState<any>(null);
   const [resetPwd, setResetPwd] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
+
+  // Editar dados (nome/e-mail)
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileTarget, setProfileTarget] = useState<any>(null);
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profileBusy, setProfileBusy] = useState(false);
 
   // form state
   const [fName, setFName] = useState("");
