@@ -266,6 +266,15 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
           <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1 py-3">
             {step === 1 && (
               <div className="space-y-4">
+                {modo === "regularizacao" && (
+                  <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-3 text-xs text-amber-900">
+                    <div className="font-black uppercase tracking-widest text-[10px] mb-1">📋 Modo Regularização Retroativa</div>
+                    O funcionário já consta como <b>DESLIGADO</b> desde{" "}
+                    <b>{emp?.data_desligamento ? new Date(emp.data_desligamento + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</b>.
+                    Esse pacote reconstitui a documentação de SST (ASO, EPIs, OSs, PPP) com base nos registros existentes.
+                    Ficará marcado como <b>REGULARIZAÇÃO</b> no PDF, no audit_log e no hash SHA-256.
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>Data do desligamento *</Label>
@@ -409,8 +418,17 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                 <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-800 space-y-1.5">
                   <div className="flex items-center gap-1.5 font-black"><AlertTriangle className="h-3.5 w-3.5" />Ao emitir:</div>
                   <ul className="list-disc ml-5 space-y-0.5">
-                    <li>Status passa a DESLIGADO e some das listagens ativas</li>
-                    <li>OSs viram SUBSTITUIDO · bloqueio global ativado</li>
+                    {modo === "novo" ? (
+                      <>
+                        <li>Status passa a DESLIGADO e some das listagens ativas</li>
+                        <li>OSs viram SUBSTITUIDO · bloqueio global ativado</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>Status permanece DESLIGADO (já estava)</li>
+                        <li>Pacote fica marcado como <b>REGULARIZAÇÃO retroativa</b></li>
+                      </>
+                    )}
                     <li>Pacote fica <b>imutável</b> (hash SHA-256 + audit_logs)</li>
                     <li>PDF do pacote é baixado automaticamente</li>
                   </ul>
