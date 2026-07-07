@@ -116,7 +116,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose }: Props)
       const { data } = await supabase.from("oss_emissoes")
         .select("id, cargo_snapshot, status, oss_templates(codigo, procedimento)")
         .eq("employee_id", emp.id)
-        .in("status", ["ASSINADO", "EMITIDO", "PENDENTE_ASSINATURA"])
+        .in("status", ["ASSINADO", "PENDENTE_ASSINATURA"])
         .order("emitido_em", { ascending: false });
       return data ?? [];
     },
