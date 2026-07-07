@@ -196,6 +196,7 @@ const MANUTENCAO_ITEMS: LeafItem[] = [
 
 const PORTARIA_ITEMS: LeafItem[] = [
   { to: "/app/portaria/controle-entrada", label: "Controle de Entrada", icon: DoorOpen },
+  { to: "/app/portaria/controle", label: "Painel SESMT", icon: BarChart3 },
 ];
 
 export function AppSidebar() {
