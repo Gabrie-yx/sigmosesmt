@@ -32,13 +32,17 @@ Estratégia em 4 fases executadas:
 - Bucket `avatars` flipado pra `public: false` via `supabase--storage_update_bucket`.
 - URLs públicas antigas (`/object/public/avatars/...`) agora dão 400. Todo consumo passa por `signAvatarUrl` (TTL 1h, cache in-memory).
 
-### 🟡 Item 3 — Checagem de permissão em RPCs "públicos" (PENDENTE)
-- `marcarRcCotada` (`src/lib/rc-public.functions.ts`) é público POR DESIGN — fornecedor cota via link do e-mail sem login. Já tem: rate limit 5/1h por token, TTL 30 dias no `status_token`, guarda IP+UA. **Ação:** documentar essa exceção no código (comentário grande) e revisar se dá pra adicionar Turnstile/reCaptcha; sem risco imediato.
-- `getRcByToken` — idem, público por design.
-- Auditar todas as `.rpc()` chamadas do front que não passam por `requireSupabaseAuth` (rodar `rg "supabase.rpc\("` e checar cada uma).
+### ✅ Item 3 — Checagem de permissão em RPCs "públicos" (CONCLUÍDO)
+Migração 20260707_172429:
+- `listar_convocacoes_pendentes_supervisor` agora exige `is_supervisor_geral(auth.uid())`. Antes vazava líderes/convocações pra qualquer chamada com anon key.
+- `REVOKE EXECUTE ... FROM anon` em: `listar_convocacoes_pendentes_supervisor`, `is_lider_extra`, `hora_extra_marcador_visivel`, `amarrar_lider_novo_user`, `prevent_hora_extra_physical_delete`.
+- `gerar_numero_apr` exige `auth.uid() IS NOT NULL` (defesa em profundidade).
+
+**Exceções públicas por design (documentadas, não são bug):**
+- `pegar_rc_para_cotar` / `getRcByToken` (`src/lib/rc-public.functions.ts`) — fornecedor cota via link do e-mail sem login. Proteção: `status_token` (30d), rate limit 5/1h, IP+UA. Melhoria futura opcional: Turnstile.
 
 ## Comunicação eSocial
 Registrado pelo Francisco: SIGMO hoje NÃO conversa com eSocial nem outros sistemas do governo. Tudo offline (import/export). Não é escopo desta onda — só nota histórica.
 
 ## Retomada
-Próximo turno: Fase 2B + 2C + 2D + Item 3. Depois seguir pra Onda 2 (gatilhos de demissão/ASO/mudança de cargo — Bloco 2 do parecer).
+Onda 1 (Bloco 1) FECHADA. Próximo turno: Onda 2 — gatilhos automáticos (demissão fecha pendências; ASO vencido bloqueia acesso; mudança de cargo recalcula matriz de treinamento). Bloco 2 do parecer.
