@@ -3,6 +3,25 @@ import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { HELP_TOPICS } from "@/lib/help-content";
 import { MENU_CATALOG } from "@/lib/menu-catalog";
+import { createClient } from "@supabase/supabase-js";
+
+// Bloco 1 (Onda 1) — endpoint de IA fechado com auth. Antes qualquer pessoa
+// com a URL podia queimar crédito do LOVABLE_API_KEY. Agora exige bearer
+// token válido do Supabase (usuário logado no SIGMO).
+async function requireUser(request: Request) {
+  const auth = request.headers.get("authorization") ?? "";
+  if (!auth.startsWith("Bearer ")) return null;
+  const token = auth.slice(7);
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key || !token) return null;
+  const sb = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
+  });
+  const { data, error } = await sb.auth.getClaims(token);
+  if (error || !data?.claims?.sub) return null;
+  return data.claims.sub as string;
+}
 
 // Base de conhecimento compacta injetada no system prompt.
 // Reaproveita tudo que já foi escrito na Central de Ajuda — assim, quando
@@ -66,6 +85,9 @@ export const Route = createFileRoute("/api/sigmo-chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const userId = await requireUser(request);
+        if (!userId) return new Response("Unauthorized", { status: 401 });
+
         const body = (await request.json()) as { messages?: UIMessage[] };
         if (!Array.isArray(body.messages)) {
           return new Response("messages required", { status: 400 });
