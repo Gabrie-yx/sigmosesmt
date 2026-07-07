@@ -55,6 +55,7 @@ const SignaturePadDialog = lazy(() =>
   import("@/components/signature-pad-dialog").then((m) => ({ default: m.SignaturePadDialog }))
 );
 import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
+import { DesligamentoWizard } from "@/components/employees/desligamento-wizard";
 import { ExcluirPermanenteDialog } from "@/components/employees/excluir-permanente-dialog";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { UserMinus, RotateCcw, Trash } from "lucide-react";
@@ -669,11 +670,21 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         onOpenChange={setTermoOpen}
         employeeId={emp?.id}
       />
-      <DesligamentoDialog
-        emp={emp as any}
-        open={desligamentoOpen}
-        onClose={() => setDesligamentoOpen(false)}
-      />
+      {emp?.status === "DESLIGADO" ? (
+        <DesligamentoDialog
+          emp={emp as any}
+          open={desligamentoOpen}
+          onClose={() => setDesligamentoOpen(false)}
+        />
+      ) : (
+        <DesligamentoWizard
+          emp={emp as any}
+          company={(companies ?? []).find((c: any) => c.id === emp?.company_id) ?? null}
+          role={role}
+          open={desligamentoOpen}
+          onClose={() => setDesligamentoOpen(false)}
+        />
+      )}
       {emp && (
         <ExcluirPermanenteDialog
           emp={{ id: emp.id, nome: emp.nome }}

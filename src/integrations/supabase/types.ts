@@ -266,6 +266,13 @@ export type Database = {
             foreignKeyName: "acidentes_trabalho_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "acidentes_trabalho_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -335,6 +342,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apr_assinaturas_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "apr_assinaturas_employee_id_fkey"
@@ -620,6 +634,13 @@ export type Database = {
             foreignKeyName: "aprs_encarregado_id_fkey"
             columns: ["encarregado_id"]
             isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "aprs_encarregado_id_fkey"
+            columns: ["encarregado_id"]
+            isOneToOne: false
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -650,6 +671,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprs_tst_id_fkey"
+            columns: ["tst_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "aprs_tst_id_fkey"
@@ -762,6 +790,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_termos_consentimento_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "assinaturas_termos_consentimento_employee_id_fkey"
@@ -1052,6 +1087,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cascos_encarregado_id_fkey"
+            columns: ["encarregado_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "cascos_encarregado_id_fkey"
@@ -2105,6 +2147,13 @@ export type Database = {
             foreignKeyName: "controle_doc_recorrentes_responsavel_id_fkey"
             columns: ["responsavel_id"]
             isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "controle_doc_recorrentes_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -2219,6 +2268,13 @@ export type Database = {
             foreignKeyName: "controle_documentos_responsavel_id_fkey"
             columns: ["responsavel_id"]
             isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "controle_documentos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -2291,6 +2347,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convocacoes_exames_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "convocacoes_exames_employee_id_fkey"
@@ -2540,6 +2603,127 @@ export type Database = {
         }
         Relationships: []
       }
+      desligamento_pacotes: {
+        Row: {
+          aso_dispensa_justificativa: string | null
+          aso_dispensado: boolean
+          aso_exam_id: string | null
+          checklist: Json
+          criado_em: string
+          criado_por: string
+          data_desligamento: string
+          emitido_em: string | null
+          emitido_por: string | null
+          employee_id: string
+          epis_devolvidos: Json
+          epis_pendentes: Json
+          id: string
+          motivo: string
+          motivo_detalhe: string | null
+          observacoes: string | null
+          oss_afetadas: Json
+          ppp_emissao_id: string | null
+          sha256_snapshot: string | null
+          status: string
+          termo_encerramento_url: string | null
+          termo_epi_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          aso_dispensa_justificativa?: string | null
+          aso_dispensado?: boolean
+          aso_exam_id?: string | null
+          checklist?: Json
+          criado_em?: string
+          criado_por?: string
+          data_desligamento: string
+          emitido_em?: string | null
+          emitido_por?: string | null
+          employee_id: string
+          epis_devolvidos?: Json
+          epis_pendentes?: Json
+          id?: string
+          motivo: string
+          motivo_detalhe?: string | null
+          observacoes?: string | null
+          oss_afetadas?: Json
+          ppp_emissao_id?: string | null
+          sha256_snapshot?: string | null
+          status?: string
+          termo_encerramento_url?: string | null
+          termo_epi_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aso_dispensa_justificativa?: string | null
+          aso_dispensado?: boolean
+          aso_exam_id?: string | null
+          checklist?: Json
+          criado_em?: string
+          criado_por?: string
+          data_desligamento?: string
+          emitido_em?: string | null
+          emitido_por?: string | null
+          employee_id?: string
+          epis_devolvidos?: Json
+          epis_pendentes?: Json
+          id?: string
+          motivo?: string
+          motivo_detalhe?: string | null
+          observacoes?: string | null
+          oss_afetadas?: Json
+          ppp_emissao_id?: string | null
+          sha256_snapshot?: string | null
+          status?: string
+          termo_encerramento_url?: string | null
+          termo_epi_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "desligamento_pacotes_aso_exam_id_fkey"
+            columns: ["aso_exam_id"]
+            isOneToOne: false
+            referencedRelation: "employee_exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "desligamento_pacotes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "desligamento_pacotes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "desligamento_pacotes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "desligamento_pacotes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "desligamento_pacotes_ppp_emissao_id_fkey"
+            columns: ["ppp_emissao_id"]
+            isOneToOne: false
+            referencedRelation: "ppp_emissoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dias_sem_acidente_recordes: {
         Row: {
           company_id: string | null
@@ -2721,6 +2905,13 @@ export type Database = {
             foreignKeyName: "employee_atestados_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "employee_atestados_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -2771,6 +2962,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_docs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "employee_docs_employee_id_fkey"
@@ -2841,6 +3039,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_exams_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "employee_exams_employee_id_fkey"
@@ -2930,6 +3135,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_role_history_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "employee_role_history_employee_id_fkey"
@@ -3086,6 +3298,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_saidas_expediente_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "employee_saidas_expediente_employee_id_fkey"
@@ -3469,6 +3688,13 @@ export type Database = {
             foreignKeyName: "epi_deliveries_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "epi_deliveries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -3531,6 +3757,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_fichas_mensais_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "epi_fichas_mensais_employee_id_fkey"
@@ -4282,6 +4515,13 @@ export type Database = {
             foreignKeyName: "hora_extra_lideres_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: true
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "hora_extra_lideres_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -4332,6 +4572,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hora_extra_marcadores_self_employee_id_fkey"
+            columns: ["self_employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "hora_extra_marcadores_self_employee_id_fkey"
@@ -4552,6 +4799,13 @@ export type Database = {
             foreignKeyName: "hora_extra_sabado_funcionarios_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "hora_extra_sabado_funcionarios_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -4756,6 +5010,13 @@ export type Database = {
             foreignKeyName: "integracao_participantes_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "integracao_participantes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -4832,6 +5093,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integracoes_instrutor_id_fkey"
+            columns: ["instrutor_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "integracoes_instrutor_id_fkey"
@@ -5072,6 +5340,13 @@ export type Database = {
             foreignKeyName: "oss_emissoes_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "oss_emissoes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -5258,6 +5533,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pgr_ghe_membros_override_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "pgr_ghe_membros_override_employee_id_fkey"
@@ -5868,6 +6150,13 @@ export type Database = {
             foreignKeyName: "ponto_folhas_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "ponto_folhas_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -6034,6 +6323,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ppp_emissoes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "ppp_emissoes_employee_id_fkey"
@@ -7211,6 +7507,13 @@ export type Database = {
             foreignKeyName: "pte_medicoes_atmosfericas_executor_id_fkey"
             columns: ["executor_id"]
             isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "pte_medicoes_atmosfericas_executor_id_fkey"
+            columns: ["executor_id"]
+            isOneToOne: false
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -8323,6 +8626,13 @@ export type Database = {
             foreignKeyName: "training_attendees_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "training_attendees_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "v_termos_consentimento_status"
             referencedColumns: ["employee_id"]
           },
@@ -8435,6 +8745,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_matrix_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "training_matrix_entries_employee_id_fkey"
@@ -8743,6 +9060,51 @@ export type Database = {
         }
         Relationships: []
       }
+      v_desligamento_pendencias: {
+        Row: {
+          company_id: string | null
+          data_desligamento: string | null
+          employee_id: string | null
+          motivo_desligamento: string | null
+          nome: string | null
+          pacotes_emitidos: number | null
+          pacotes_rascunho: number | null
+        }
+        Insert: {
+          company_id?: string | null
+          data_desligamento?: string | null
+          employee_id?: string | null
+          motivo_desligamento?: string | null
+          nome?: string | null
+          pacotes_emitidos?: never
+          pacotes_rascunho?: never
+        }
+        Update: {
+          company_id?: string | null
+          data_desligamento?: string | null
+          employee_id?: string | null
+          motivo_desligamento?: string | null
+          nome?: string | null
+          pacotes_emitidos?: never
+          pacotes_rascunho?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+        ]
+      }
       v_termos_consentimento_status: {
         Row: {
           assinatura_url: string | null
@@ -8964,6 +9326,10 @@ export type Database = {
       expirar_acordos_vencidos: { Args: never; Returns: number }
       fechar_convocacao_marcadores: {
         Args: { _hora_extra_id: string }
+        Returns: undefined
+      }
+      finalizar_desligamento_pacote: {
+        Args: { _pacote_id: string }
         Returns: undefined
       }
       fn_dias_sem_acidente: {
