@@ -2,13 +2,18 @@
 // Abas: KPIs · Visitantes · Saídas Funcionários · Auditoria · Cadastros.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, BarChart3, Users, UserCheck, ShieldAlert, Building2, Clock, Search, LogOut, DoorOpen } from "lucide-react";
+import { ArrowLeft, BarChart3, Users, UserCheck, ShieldAlert, Building2, Clock, Search, LogOut, DoorOpen, Trash2, Loader2 } from "lucide-react";
 import { formatCPFFromDigits } from "@/lib/validators/cpf";
+import { useAuth } from "@/hooks/use-auth";
+import { deletePortariaVisita } from "@/lib/portaria/foto-ocr.functions";
+import { toast } from "sonner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/app/portaria/controle")({
   component: ControleSesmtPage,
@@ -107,6 +112,18 @@ function KpisSection() {
 }
 
 function VisitasTab() {
+  const { isAdmin } = useAuth();
+  const qc = useQueryClient();
+  const deleteFn = useServerFn(deletePortariaVisita);
+  const del = useMutation({
+    mutationFn: (visitaId: string) => deleteFn({ data: { visitaId } }),
+    onSuccess: () => {
+      toast.success("Visita excluída");
+      qc.invalidateQueries({ queryKey: ["portaria-visitas-admin"] });
+      qc.invalidateQueries({ queryKey: ["portaria-kpis-sesmt"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao excluir"),
+  });
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"" | "DENTRO" | "SAIDA_VALIDADA" | "CANCELADA">("");
   const [inicio, setInicio] = useState<string>(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0,10); });
@@ -177,11 +194,12 @@ function VisitasTab() {
               <th className="text-left px-3 py-2">Entrada</th>
               <th className="text-left px-3 py-2">Saída</th>
               <th className="text-left px-3 py-2">Status</th>
+              {isAdmin && <th className="text-right px-3 py-2 w-16">Ações</th>}
             </tr>
           </thead>
           <tbody className="divide-y">
-            {isLoading && <tr><td colSpan={6} className="p-6 text-center text-slate-400">Carregando…</td></tr>}
-            {!isLoading && filtradas.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-slate-400">Nada por aqui</td></tr>}
+            {isLoading && <tr><td colSpan={isAdmin ? 7 : 6} className="p-6 text-center text-slate-400">Carregando…</td></tr>}
+            {!isLoading && filtradas.length === 0 && <tr><td colSpan={isAdmin ? 7 : 6} className="p-6 text-center text-slate-400">Nada por aqui</td></tr>}
             {filtradas.map((v: any) => (
               <tr key={v.id} className={v.status === "DENTRO" ? "bg-red-50/40" : ""}>
                 <td className="px-3 py-2">
@@ -193,6 +211,29 @@ function VisitasTab() {
                 <td className="px-3 py-2 text-xs">{new Date(v.entrada_at).toLocaleString("pt-BR")}</td>
                 <td className="px-3 py-2 text-xs">{v.saida_at ? new Date(v.saida_at).toLocaleString("pt-BR") : <span className="text-red-600 font-black">— Pendente</span>}</td>
                 <td className="px-3 py-2"><StatusBadge status={v.status} /></td>
+                {isAdmin && (
+                  <td className="px-3 py-2 text-right">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700" title="Excluir visita (admin)">
+                          {del.isPending && del.variables === v.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir visita de teste?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Vai apagar a visita de <b>{v.pessoa?.nome}</b> ({new Date(v.entrada_at).toLocaleString("pt-BR")}) e seus acompanhantes. A pessoa e o veículo cadastrados <b>ficam</b> no cadastro. Ação irreversível.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => del.mutate(v.id)} className="bg-red-600 hover:bg-red-700">Excluir</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
