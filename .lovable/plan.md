@@ -1,136 +1,63 @@
-# Extra de Sábado — Painel Mobile dos Marcadores
+## Objetivo
 
-Sistema mobile-first para os 5 encarregados confirmarem quem vem no sábado, direto do celular. Os dados caem no **mesmo painel Hora Extra** que você usa hoje — quando abrir o SIGMO no laptop, a lista já está lá pronta pra imprimir/baixar PDF, como se você tivesse digitado.
+Implementar o **Pacote de Rescisão SST** — fluxo estruturado, auditável e conforme NR-01 / NR-07 / NR-06 / ISO 9001 (evidência objetiva) e ISO 45001 (gestão da mudança), disparado no momento do desligamento, com preservação legal de todos os documentos.
 
----
+## Base legal / referências
 
-## 1. Quem marca quem (fechado com base nas suas respostas)
+- **NR-01 (1.4.1 "c" / 1.5.4)**: rastreabilidade das ações de SST e evidência da comunicação de riscos até o encerramento do vínculo.
+- **NR-07 (7.5.15.4)**: ASO Demissional obrigatório (exceto se último ASO ≤ 135 dias em grau de risco 1/2, ou ≤ 90 dias em 3/4).
+- **NR-06 (6.6.1)**: devolução dos EPIs e evidência formal.
+- **CLT art. 168 §2º + Portaria 1.999/2011**: PPP entregue ao trabalhador no ato do desligamento.
+- **ISO 9001 §7.5 / 8.5.3** e **ISO 45001 §7.5 / 8.1.3**: informação documentada preservada + controle de mudança (saída de pessoa = mudança planejada).
+- **Retenção**: ASO 20 anos · PPP permanente · EPI 5 anos · Treinamentos NR-33/34/35 5 anos · OS 5 anos pós-contrato.
 
-| Marcador | Empresa/Setor | Marca |
-|---|---|---|
-| **Manoel Silva** (Manuelzinho) | DMN — Encarregado de Produção | Toda produção DMN + **todas terceirizadas** (JC, NB, M2, etc) + **MEIs** + encarregados de outras terceirizadas |
-| **Natanael** | DMN — Elétrica | Ele + Leonardo + qualquer substituto da elétrica |
-| **Paulo Sérgio** | DMN — Líder Produção | Só ele mesmo |
-| **Renato Oliveira** | LF Serviços — Mecânica (máq. pesadas) | Time LF + ele mesmo |
-| **Daniel Dantas** | DMN | Almox + Serviços Gerais + Administrativo + Portaria + DMN direto + ele mesmo |
+## O que muda no fluxo
 
-Regra de ouro: **só quem marcou pode desmarcar** (a menos que seja você ou Anderson — vocês têm full).
+Hoje o `DesligamentoDialog` apenas marca `status=DESLIGADO`, grava checklist livre e a RPC substitui OSs. **Não há evidência agregada, não gera pacote, não bloqueia se falta ASO, e o PPP fica solto.**
 
----
+O novo fluxo transforma o desligamento num **wizard de 4 passos** que produz um **Pacote de Rescisão** (registro único imutável com evidências vinculadas), impossível de fechar sem os itens obrigatórios da NR.
 
-## 2. Acesso — travado no osso
-
-Os 5 marcadores **não são usuários normais do SIGMO**. Eles têm apenas:
-
-- Login por e-mail/senha (cadastro seu, uma vez)
-- Acesso a **UMA única rota**: `/extra-sabado` (o painel mobile)
-- **Zero acesso** a menu, sidebar, funcionários, PDFs, dashboards, nada
-- Se tentarem entrar em qualquer outra URL → redirect pro painel deles
-
-Você e Anderson: acesso full normal + acesso ao mesmo painel se quiser testar.
-
----
-
-## 3. Fluxo semanal
+## Wizard (4 passos)
 
 ```text
-SEXTA-FEIRA
-  Você (ou Anderson) cria a convocação no painel Hora Extra normal
-    ↓ (novo botão: "Abrir para marcadores")
-  Sistema notifica os 5 (badge/e-mail curto: "convocação aberta pro sábado XX/XX")
-    ↓
-SEXTA 08:00 → 18:29
-  Marcadores abrem no celular, marcam quem vem
-  Cada marca é INSTANTÂNEA (grava no banco na hora)
-  Transporte + alimentação → automáticos (mesma lógica do painel atual)
-  Ao passar de 20 confirmados → card amarelo no /app/hoje: "🚨 rota + refeitório acionados — 23 confirmados"
-
-SEXTA 18:30 → 18:59
-  Painel entra em READ-ONLY (marcadores só visualizam, não editam)
-
-SEXTA 19:00
-  Painel EXPIRA — tela "convocação encerrada"
-  Você/Anderson continuam podendo editar no painel Hora Extra normal
+[1] Motivo + Data           →  valida data ≤ hoje e ≥ admissão
+[2] ASO Demissional         →  detecta grau de risco (via cargo/PGR)
+                               • se exigido: exige upload ASO OU nº de dispensa
+                               • bloqueia avanço se pendente
+[3] EPIs · Documentos       →  lista EPIs em posse (epi_deliveries)
+                               marca devolvidos + gera Termo de Devolução PDF
+                               lista OSs ativas do funcionário (viram SUBSTITUIDO)
+[4] PPP + Confirmação       →  gera rascunho PPP pré-preenchido (usa ppp_emissoes)
+                               resume tudo, exige checkbox "informações verídicas"
+                               → cria registro em desligamento_pacotes
+                               → chama RPC estendida
+                               → oferece download do dossiê ZIP-like (PDFs)
 ```
 
----
+## Alterações técnicas
 
-## 4. O que o marcador vê no celular (mobile-first, zero fricção)
+### Banco (uma migration)
 
-```text
-┌─────────────────────────────┐
-│  Extra de Sábado — 12/07    │
-│  Sair                       │
-├─────────────────────────────┤
-│  ✓ Você já marcou 8 pessoas │
-│  Total geral: 23 ✅ rota ON │
-├─────────────────────────────┤
-│  Buscar: [_______________]  │
-│                             │
-│  DMN — Produção             │
-│  ☑ Manoel Silva  (você)     │
-│  ☐ João da Silva            │
-│  ☑ Pedro Souza              │
-│                             │
-│  NB Serviços                │
-│  ☑ Carlos Nunes             │
-│  ...                        │
-│                             │
-│  [+ Adicionar externo]      │
-└─────────────────────────────┘
-```
+- Tabela nova `desligamento_pacotes` (id, employee_id, data_desligamento, motivo, aso_id?, aso_dispensado boolean + justificativa, ppp_emissao_id?, epis_devolvidos jsonb, termo_epi_url?, oss_afetadas jsonb, checklist jsonb, sha256_snapshot text, criado_por, criado_em). RLS + GRANT padrão.
+- Estender RPC `registrar_desligamento_funcionario` para receber `_pacote_id`, gravar snapshot em `audit_logs` (action `RESCISAO_PACOTE_EMITIDO`).
+- View `v_desligamento_pendencias` (funcionários DESLIGADO sem pacote fechado) → alimenta card no `/app/hoje`.
 
-- Lista **apenas os funcionários do escopo dele** (Manoel vê todo mundo, Natanael só a elétrica, etc)
-- Toque no nome → marca/desmarca (com feedback visual imediato)
-- Botão "adicionar externo" pra quem não está na base (ex: 3º mecânico do Renato) → nome + empresa livre
-- Ao passar de 20 → card grande amarelo no topo: "🚨 Rota e refeitório acionados"
+### Frontend
 
----
+- `src/components/employees/desligamento-wizard.tsx` (novo, substitui a chamada do dialog atual — mantém o botão).
+- `src/lib/rescisao-pacote-pdf.ts` (novo) — gera **Termo de Encerramento SST** (capa) + Termo de Devolução EPI + lista de OSs preservadas.
+- Ajuste em `DesligadosPage` (card) para mostrar badge "Pacote OK" ou "Pacote pendente" e link para reabrir o wizard e concluir.
+- Reuso: `PPPEditorDialog` (rascunho pré-preenchido), `epi-termo-perda-pdf.ts` como base do Termo de Devolução.
 
-## 5. Integração com o painel Hora Extra atual
+## O que **NÃO** entra agora
 
-**Nada de sistema paralelo.** Os dados vão direto pras tabelas `hora_extra_sabado` + `hora_extra_sabado_funcionarios` que já existem. Ao abrir o painel no laptop:
+- eSocial S-2299 (fora do escopo do TST — deixamos slot para futuro).
+- Emissão automática de ASO Demissional (é ato médico) — o wizard só **exige o upload/registro**.
+- Geração final do PPP assinado (permanece com o RH; o wizard entrega o rascunho pronto).
 
-- A convocação aparece lá igualzinha às que você digita
-- Lista de nomes marcada
-- Transporte/alimentação já preenchidos
-- Botão "Gerar PDF" funciona normal (usa o `hora-extra-sabado-pdf.ts` atual)
-- Você edita, adiciona, remove, imprime — como sempre
+## Ordem de entrega
 
----
-
-## 6. Alerta 20+ (você escolheu opção A)
-
-Card amarelo destacado no `/app/hoje`:
-> **🚨 Sábado 12/07 — rota e refeitório acionados**
-> 23 colaboradores confirmados até agora.
-> [Ver painel Hora Extra →]
-
-Aparece pra você, Anderson, e todo mundo do SESMT que tem acesso ao Hoje. Não sai e-mail nem WhatsApp por enquanto (fica pra depois quando você me passar os e-mails da cozinha).
-
----
-
-## 7. Detalhes técnicos (pra registro)
-
-- **DB**: nova coluna `hora_extra_sabado.aberto_marcadores_ate` (timestamp = sexta 19h automático) + tabela `hora_extra_sabado_marcadores` (quem pode marcar qual escopo por convocação)
-- **Novo role**: `extra_sabado_marcador` (via `user_roles` + `has_role`) — sem acesso a nenhum outro módulo
-- **Rota**: `/extra-sabado` pública dentro de `_authenticated`, mas com guard próprio que só deixa passar admin/anderson OU quem tem o role de marcador
-- **Realtime**: subscription na tabela pra 2 marcadores no mesmo escopo verem update um do outro na hora
-- **Corte automático**: cliente checa `now() > aberto_marcadores_ate` a cada render + servidor rejeita mutations após 19h
-- **Auditoria**: cada marca grava `marcado_por = user.id` e `marcado_em = now()` (você vê quem marcou cada um no painel do laptop)
-
----
-
-## 8. Coisas que EU ainda quero confirmar antes de codar
-
-Só 3 pontinhas, rapidinho:
-
-1. **Cadastro dos 5**: você me passa os **e-mails deles** quando eu terminar o painel, ou já quer que eu deixe um seed pronto com placeholders (`manoel@dmn.com`, `natanael@dmn.com`...) pra você trocar depois em Users?
-
-2. **"Adicionar externo"**: quando um marcador adiciona alguém que não está na base (ex: mecânico novo do Renato), ele vira apenas nome+empresa naquela convocação, OU você quer que crie automaticamente um cadastro de funcionário terceirizado na base? *(sugiro: só na convocação, sem poluir a base — se ficar recorrente você cadastra depois pelo painel normal)*
-
-3. **Sábado sem convocação**: se numa sexta você/Anderson esquecer de "abrir para marcadores", os 5 abrem o app e veem o quê? *(sugiro: tela "nenhuma convocação aberta pra este sábado — fale com o SESMT")*
-
----
-
-Me responde essas 3 e eu meto a mão na massa. Já vou deixar a arquitetura toda desenhada pra ser rápido.
+1. Migration (tabela + RPC + view + GRANT + RLS).
+2. Gerador do Termo de Encerramento SST + Termo Devolução EPI.
+3. Wizard de 4 passos + integração no botão atual "Registrar desligamento".
+4. Card de pendências em `/app/hoje` + badge no painel Desligados.
