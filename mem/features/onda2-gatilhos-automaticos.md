@@ -48,8 +48,17 @@ Migração 20260707_183613:
 - Metadata do audit_log 'mudanca_cargo' ganha `convocacao_mudanca_funcao_id`.
 - Aparece automaticamente no painel /app/sesmt/convocacoes-aso e no card Hoje.
 
+### ✅ Item 6 — C-10 Desligamento convoca ASO DEMISSIONAL (CONCLUÍDO)
+Migração 20260707_184822:
+- Estende `fechar_pendencias_ao_desligar()` pra também INSERT em `convocacoes_exames` (janela='DEMISSIONAL', tipos_exame=['Exame Médico Demissional'], status=PENDENTE, data_limite=data_desligamento, convocado_por=desligado_por).
+- Idempotente: pula se já existe PENDENTE com janela=DEMISSIONAL pro funcionário.
+- Cancelamento em cascata do próprio trigger agora **exclui** janela=DEMISSIONAL, senão a convocação recém-criada seria cancelada no mesmo trigger.
+- Observações citam NR-07 7.5.1.V (exame demissional em até 10 dias contados do término do contrato).
+- Metadata do audit_log 'desligamento_cascata' ganha `convocacao_demissional_id`.
+- Aparece automaticamente no painel /app/sesmt/convocacoes-aso e no card Hoje do TST.
+
 ## Onda 2 concluída ✅
-Itens 1-3 + C-01 + C-04.b implementados. Próximo: C-10 (ASO DEMISSIONAL wizard), C-08 (ASO RETORNO_TRABALHO ao fechar acidente c/ afastamento).
+Itens 1-3 + C-01 + C-04.b + C-10 implementados. Próximo: **C-08 (ASO RETORNO_TRABALHO ao fechar acidente c/ afastamento)**.
 
 ## ⚠️ Pendente de teste pelo Francisco (avisar no próximo pedido de teste)
 - Item 1 (Onda 2): desligar um funcionário e conferir se convocações PENDENTES viram CANCELADA + safety_overrides revogados. Ver audit_logs action='desligamento_cascata'.
@@ -57,3 +66,4 @@ Itens 1-3 + C-01 + C-04.b implementados. Próximo: C-10 (ASO DEMISSIONAL wizard)
 - Item 3 (Onda 2): trocar cargo (ou GHE) de um funcionário e conferir: linha nova em employee_role_history + audit_logs action='mudanca_cargo' com cursos_delta preenchido.
 - C-01: desligar funcionário com CPF cadastrado em portaria_pessoas e conferir que a pessoa fica bloqueada + motivo preenchido. Ver `portaria_bloqueadas` no metadata do audit_logs.
 - C-04.b: trocar o CARGO de um funcionário e conferir se aparece nova convocação PENDENTE janela=MUDANCA_FUNCAO em /app/sesmt/convocacoes-aso.
+- C-10: desligar um funcionário e conferir se aparece nova convocação PENDENTE janela=DEMISSIONAL com data_limite=data do desligamento. Ver `convocacao_demissional_id` no metadata do audit_logs 'desligamento_cascata'.
