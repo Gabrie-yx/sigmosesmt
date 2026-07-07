@@ -38,6 +38,8 @@ type Props = {
   role?: any;
   open: boolean;
   onClose: () => void;
+  /** "novo" (padrão) desliga agora · "regularizacao" reconstitui pacote para quem já está DESLIGADO */
+  modo?: "novo" | "regularizacao";
 };
 
 const STEPS = [
@@ -47,15 +49,24 @@ const STEPS = [
   { n: 4, label: "PPP & Confirmar", icon: ClipboardCheck },
 ];
 
-export function DesligamentoWizard({ emp, company, role, open, onClose }: Props) {
+export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "novo" }: Props) {
   const qc = useQueryClient();
   const [step, setStep] = useState(1);
   const [pacoteId, setPacoteId] = useState<string | null>(null);
   const [pppOpen, setPppOpen] = useState(false);
 
   // Passo 1
-  const [data, setData] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [motivo, setMotivo] = useState<string>(MOTIVOS[0]);
+  const [data, setData] = useState<string>(() =>
+    modo === "regularizacao" && emp?.data_desligamento
+      ? String(emp.data_desligamento).slice(0, 10)
+      : new Date().toISOString().slice(0, 10),
+  );
+  const [motivo, setMotivo] = useState<string>(() => {
+    if (modo === "regularizacao" && emp?.motivo_desligamento) {
+      return MOTIVOS.includes(emp.motivo_desligamento) ? emp.motivo_desligamento : "Outro";
+    }
+    return MOTIVOS[0];
+  });
   const [motivoOutro, setMotivoOutro] = useState("");
   const [obs, setObs] = useState("");
 
@@ -147,6 +158,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose }: Props)
         employee_id: emp.id,
         data_desligamento: data,
         motivo: motivoFinal,
+        regularizacao: modo === "regularizacao",
         aso_exam_id: asoExamId,
         aso_dispensado: asoDispensado,
         aso_dispensa_justificativa: asoDispensado ? asoJustif : null,
@@ -192,6 +204,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose }: Props)
           role: role ? { name: role.name } : null,
           data_desligamento: data,
           motivo: motivoFinal,
+          regularizacao: modo === "regularizacao",
           aso: asoDispensado
             ? { dispensado: true, dispensa_justificativa: asoJustif }
             : { data: asoRow?.data_realizacao, aptidao: asoRow?.aptidao },
@@ -254,6 +267,15 @@ export function DesligamentoWizard({ emp, company, role, open, onClose }: Props)
           <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1 py-3">
             {step === 1 && (
               <div className="space-y-4">
+                {modo === "regularizacao" && (
+                  <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-3 text-xs text-amber-900">
+                    <div className="font-black uppercase tracking-widest text-[10px] mb-1">📋 Modo Regularização Retroativa</div>
+                    O funcionário já consta como <b>DESLIGADO</b> desde{" "}
+                    <b>{emp?.data_desligamento ? new Date(emp.data_desligamento + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</b>.
+                    Esse pacote reconstitui a documentação de SST (ASO, EPIs, OSs, PPP) com base nos registros existentes.
+                    Ficará marcado como <b>REGULARIZAÇÃO</b> no PDF, no audit_log e no hash SHA-256.
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>Data do desligamento *</Label>
@@ -397,8 +419,17 @@ export function DesligamentoWizard({ emp, company, role, open, onClose }: Props)
                 <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-800 space-y-1.5">
                   <div className="flex items-center gap-1.5 font-black"><AlertTriangle className="h-3.5 w-3.5" />Ao emitir:</div>
                   <ul className="list-disc ml-5 space-y-0.5">
-                    <li>Status passa a DESLIGADO e some das listagens ativas</li>
-                    <li>OSs viram SUBSTITUIDO · bloqueio global ativado</li>
+                    {modo === "novo" ? (
+                      <>
+                        <li>Status passa a DESLIGADO e some das listagens ativas</li>
+                        <li>OSs viram SUBSTITUIDO · bloqueio global ativado</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>Status permanece DESLIGADO (já estava)</li>
+                        <li>Pacote fica marcado como <b>REGULARIZAÇÃO retroativa</b></li>
+                      </>
+                    )}
                     <li>Pacote fica <b>imutável</b> (hash SHA-256 + audit_logs)</li>
                     <li>PDF do pacote é baixado automaticamente</li>
                   </ul>

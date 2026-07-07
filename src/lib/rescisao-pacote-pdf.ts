@@ -9,6 +9,7 @@ export type PacoteRescisaoDados = {
   data_desligamento: string; // YYYY-MM-DD
   motivo: string;
   motivo_detalhe?: string | null;
+  regularizacao?: boolean;
   aso: { data?: string | null; aptidao?: string | null; dispensado?: boolean; dispensa_justificativa?: string | null };
   ppp_numero?: string | null;
   epis_devolvidos: Array<{ item: string; ca?: string | null; qtd: number; data_entrega?: string | null }>;
@@ -67,6 +68,21 @@ export function gerarPacoteRescisaoPdf(d: PacoteRescisaoDados): jsPDF {
   doc.setFont("helvetica", "normal");
   doc.text("NR-01 · NR-07 · NR-06 · ISO 9001 §7.5 · ISO 45001 §8.1.3", M + logoW + (innerW - logoW) / 2, y + 15, { align: "center" });
   y += hdrH + 6;
+
+  if (d.regularizacao) {
+    doc.setFillColor(255, 235, 190);
+    doc.setDrawColor(200, 140, 20);
+    doc.rect(M, y, innerW, 10, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(120, 70, 0);
+    doc.text(
+      `REGULARIZAÇÃO RETROATIVA — dados reconstituídos em ${new Date().toLocaleDateString("pt-BR")}`,
+      W / 2, y + 6.5, { align: "center" },
+    );
+    doc.setTextColor(0);
+    y += 14;
+  }
 
   // Identificação
   autoTable(doc, {

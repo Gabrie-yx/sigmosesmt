@@ -4,8 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ArrowLeft, UserRoundX, RotateCcw, Building2, Briefcase, CalendarClock } from "lucide-react";
+import { Search, ArrowLeft, UserRoundX, RotateCcw, Building2, Briefcase, CalendarClock, ShieldAlert, FileCheck2 } from "lucide-react";
 import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
+import { DesligamentoWizard } from "@/components/employees/desligamento-wizard";
 
 export const Route = createFileRoute("/app/employees/desligados")({
   component: DesligadosPage,
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/app/employees/desligados")({
 function DesligadosPage() {
   const [q, setQ] = useState("");
   const [target, setTarget] = useState<any | null>(null);
+  const [regularizarTarget, setRegularizarTarget] = useState<any | null>(null);
 
   const { data: emps, isLoading } = useQuery({
     queryKey: ["employees-desligados"],
@@ -25,6 +27,18 @@ function DesligadosPage() {
         .order("data_desligamento", { ascending: false });
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  // Quais desligados já têm pacote SST emitido?
+  const { data: pacotesEmitidos } = useQuery({
+    queryKey: ["desligados-pacotes-emitidos"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("desligamento_pacotes" as any)
+        .select("employee_id")
+        .eq("status", "EMITIDO");
+      return new Set((data ?? []).map((p: any) => p.employee_id));
     },
   });
 
@@ -119,9 +133,20 @@ function DesligadosPage() {
                   <Link to="/app/employees/$id" params={{ id: e.id }} className="block">
                     <h3 className="font-black text-sm text-slate-900 uppercase leading-tight truncate hover:text-[#7B1E2B]">{e.nome}</h3>
                   </Link>
-                  <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-slate-200 text-slate-700 ring-1 ring-slate-300 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
-                    DESLIGADO
-                  </span>
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 text-slate-700 ring-1 ring-slate-300 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+                      DESLIGADO
+                    </span>
+                    {pacotesEmitidos?.has(e.id) ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+                        <FileCheck2 className="h-2.5 w-2.5" /> Pacote SST
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 ring-1 ring-amber-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest" title="Sem pacote de rescisão SST — regularize para fechar a lacuna de auditoria">
+                        <ShieldAlert className="h-2.5 w-2.5" /> Sem pacote
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="mt-3 space-y-1.5 text-xs text-slate-600">
@@ -136,12 +161,23 @@ function DesligadosPage() {
                   </div>
                 )}
               </div>
-              <Button
-                onClick={() => setTarget(e)}
-                className="mt-3 w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black uppercase tracking-widest rounded-xl"
-              >
-                <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reativar
-              </Button>
+              <div className="mt-3 grid grid-cols-1 gap-2">
+                {!pacotesEmitidos?.has(e.id) && (
+                  <Button
+                    onClick={() => setRegularizarTarget(e)}
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-black uppercase tracking-widest rounded-xl"
+                  >
+                    <ShieldAlert className="h-3.5 w-3.5 mr-1.5" /> Regularizar Pacote SST
+                  </Button>
+                )}
+                <Button
+                  onClick={() => setTarget(e)}
+                  variant="outline"
+                  className="w-full text-[11px] font-black uppercase tracking-widest rounded-xl border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                >
+                  <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reativar
+                </Button>
+              </div>
             </div>
           ))}
         </div>
@@ -152,6 +188,17 @@ function DesligadosPage() {
           emp={target}
           open={!!target}
           onClose={() => setTarget(null)}
+        />
+      )}
+
+      {regularizarTarget && (
+        <DesligamentoWizard
+          emp={regularizarTarget}
+          company={{ name: cMap.get(regularizarTarget.company_id) }}
+          role={{ name: rMap.get(regularizarTarget.role_id) }}
+          open={!!regularizarTarget}
+          onClose={() => setRegularizarTarget(null)}
+          modo="regularizacao"
         />
       )}
     </div>
