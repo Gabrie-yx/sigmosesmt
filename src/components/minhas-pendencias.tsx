@@ -274,7 +274,7 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
         <div className="mt-1 text-xs leading-relaxed text-[rgba(245,225,225,0.7)]">
           {isNeutral
             ? "Ainda não há dados cadastrados para avaliar este item."
-            : item.ok ? meta.descricaoOk : meta.descricaoPend(item.count)}
+            : item.ok ? meta.descricaoOk : meta.descricaoPend(item.count, item.detail)}
         </div>
         {snoozed && (
           <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[rgba(245,225,225,0.55)]">
