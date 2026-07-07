@@ -20,6 +20,8 @@ import { Camera, ArrowLeft, ArrowRight, Check, Search, AlertTriangle, X, Loader2
 import { isValidCPF, maskCPF, onlyDigits, formatCPFFromDigits } from "@/lib/validators/cpf";
 import { isValidPlaca, normalizePlaca, maskPlaca } from "@/lib/validators/placa";
 import { uploadFotoPortaria, type FotoTipo } from "@/lib/portaria/foto-upload";
+import { validatePortariaFoto } from "@/lib/portaria/foto-ocr.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 type Tipo = "VISITANTE" | "FORNECEDOR" | "PRESTADOR";
 
@@ -557,7 +559,7 @@ export function NovaEntradaWizard({
                   <Input value={cnpj} onChange={(e) => setCnpj(e.target.value)} className="h-11 mt-1" inputMode="numeric" />
                 </div>
               </div>
-              <FotoField label="Foto do documento *" value={fotoDocumento} onChange={setFotoDocumento} />
+              <FotoField label="Foto do documento *" value={fotoDocumento} onChange={setFotoDocumento} validar="documento" />
             </div>
           )}
 
@@ -583,6 +585,7 @@ export function NovaEntradaWizard({
               <FotoField
                 label="Foto do rosto *"
                 value={fotoRosto}
+                validar="rosto"
                 onChange={setFotoRosto}
                 fallbackHint={
                   employeeMatch?.foto_url
@@ -675,7 +678,7 @@ export function NovaEntradaWizard({
                       <Button onClick={() => buscarAcompanhante(i)} className="h-11 px-3 bg-slate-800 hover:bg-slate-900"><Search className="h-4 w-4" /></Button>
                     </div>
                     <Input value={c.nome} onChange={(e) => updAcompanhante(i, { nome: e.target.value })} placeholder="Nome" className="h-11" disabled={!!c.pessoaId} />
-                    <FotoField label="Foto do rosto" value={c.foto ?? null} onChange={(f) => updAcompanhante(i, { foto: f })} />
+                    <FotoField label="Foto do rosto" value={c.foto ?? null} onChange={(f) => updAcompanhante(i, { foto: f })} validar="rosto" />
                   </div>
                 ))}
               </div>
