@@ -9,6 +9,7 @@ export type PacoteRescisaoDados = {
   data_desligamento: string; // YYYY-MM-DD
   motivo: string;
   motivo_detalhe?: string | null;
+  regularizacao?: boolean;
   aso: { data?: string | null; aptidao?: string | null; dispensado?: boolean; dispensa_justificativa?: string | null };
   ppp_numero?: string | null;
   epis_devolvidos: Array<{ item: string; ca?: string | null; qtd: number; data_entrega?: string | null }>;
