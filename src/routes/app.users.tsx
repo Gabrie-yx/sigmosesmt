@@ -726,6 +726,68 @@ function UsersPage() {
 
       {/* Modal Suspender */}
       <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
+
+      </Dialog>
+
+      {/* Modal Editar dados básicos (nome/e-mail) */}
+      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar dados do usuário</DialogTitle>
+            <DialogDescription>
+              Atualiza nome exibido e e-mail de login. A troca de e-mail é confirmada automaticamente — o usuário passará a fazer login com o novo endereço.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Nome completo</Label>
+              <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>E-mail</Label>
+              <Input type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} />
+              {profileTarget && profileEmail.trim().toLowerCase() !== (profileTarget.email ?? "").toLowerCase() && (
+                <p className="text-xs text-amber-700">
+                  ⚠️ Trocar o e-mail invalida o link atual e o usuário passa a logar com o novo endereço.
+                </p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setProfileOpen(false)}>Cancelar</Button>
+            <Button
+              disabled={profileBusy}
+              onClick={async () => {
+                if (!profileTarget) return;
+                const name = profileName.trim();
+                const email = profileEmail.trim();
+                if (!name && !email) { toast.error("Informe pelo menos um campo"); return; }
+                const payload: { user_id: string; full_name?: string; email?: string } = { user_id: profileTarget.id };
+                if (name && name !== (profileTarget.full_name ?? "")) payload.full_name = name;
+                if (email && email.toLowerCase() !== (profileTarget.email ?? "").toLowerCase()) payload.email = email;
+                if (!payload.full_name && !payload.email) { toast.info("Nada mudou"); setProfileOpen(false); return; }
+                setProfileBusy(true);
+                try {
+                  await updateProfileFn({ data: payload });
+                  toast.success("Dados atualizados");
+                  setProfileOpen(false);
+                  qc.invalidateQueries({ queryKey: ["users-admin"] });
+                  qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+                } catch (e: any) {
+                  toast.error(e.message ?? "Falha ao atualizar");
+                } finally {
+                  setProfileBusy(false);
+                }
+              }}
+            >
+              {profileBusy ? "Salvando..." : "Salvar alterações"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* placeholder para manter estrutura anterior */}
+      <Dialog open={false} onOpenChange={() => {}}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Suspender usuário</DialogTitle>
