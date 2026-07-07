@@ -27,6 +27,8 @@ export interface PendenciaItem {
   blocking?: boolean;
   /** Sem dados-base para avaliar (ex.: sistema novo, tabela vazia). Não renderiza verde. */
   noData?: boolean;
+  /** Detalhe opcional (breakdown, metadados) para descrições ricas na UI. */
+  detail?: any;
 }
 
 const ORDER: PendenciaSeverity[] = ["critico", "alto", "medio", "ok"];
@@ -251,10 +253,16 @@ export function usePendencias() {
   const ossPendentes = useQuery({
     queryKey: ["pend-oss"],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("oss_emissoes").select("id", { count: "exact", head: true })
-        .in("status", ["PENDENTE_ASSINATURA", "SUBSTITUIDO", "VENCIDO", "CANCELADO"]);
-      return count ?? 0;
+      // Cancelada não demanda ação — fica fora do count.
+      const { data } = await supabase
+        .from("oss_emissoes")
+        .select("id,status")
+        .in("status", ["PENDENTE_ASSINATURA", "SUBSTITUIDO", "VENCIDO"]);
+      const rows = data ?? [];
+      const pendentes = rows.filter((r) => r.status === "PENDENTE_ASSINATURA").length;
+      const vencidas = rows.filter((r) => r.status === "VENCIDO").length;
+      const substituidas = rows.filter((r) => r.status === "SUBSTITUIDO").length;
+      return { pendentes, vencidas, substituidas, total: rows.length };
     },
   });
 
@@ -453,10 +461,13 @@ export function usePendencias() {
     },
     {
       key: "oss-pendentes",
-      count: ossPendentes.data ?? 0,
-      severity: (ossPendentes.data ?? 0) > 0 ? "alto" : "ok",
-      ok: (ossPendentes.data ?? 0) === 0,
+      count: ossPendentes.data?.total ?? 0,
+      severity: (ossPendentes.data?.vencidas ?? 0) > 0
+        ? "critico"
+        : (ossPendentes.data?.total ?? 0) > 0 ? "alto" : "ok",
+      ok: (ossPendentes.data?.total ?? 0) === 0,
       loading: ossPendentes.isLoading,
+      detail: ossPendentes.data,
     },
     {
       key: "convocacoes-pendentes",
