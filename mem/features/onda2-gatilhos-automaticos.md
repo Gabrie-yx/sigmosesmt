@@ -39,11 +39,21 @@ Migração 20260707_183018:
 - audit_logs action='desligamento_cascata' agora inclui `portaria_bloqueadas` no metadata.
 - portaria_pessoas não tem FK pra employees (é cadastro genérico por CPF), por isso o match é por CPF.
 
+### ✅ Item 5 — C-04.b Convocar exame MUDANCA_FUNCAO (CONCLUÍDO)
+Migração 20260707_183613:
+- Estende `tg_employee_role_change()` pra também INSERT em `convocacoes_exames` (janela='MUDANCA_FUNCAO', tipos_exame=['Exame Médico de Mudança de Função'], status=PENDENTE, data_limite=CURRENT_DATE).
+- Só dispara quando role_id realmente muda (só GHE não gera exame). Ignora desligados.
+- Idempotente: pula se já existe PENDENTE com janela=MUDANCA_FUNCAO pro funcionário.
+- Observações da convocação explicam cargo anterior→novo + cita NR-07 7.5.1.II.
+- Metadata do audit_log 'mudanca_cargo' ganha `convocacao_mudanca_funcao_id`.
+- Aparece automaticamente no painel /app/sesmt/convocacoes-aso e no card Hoje.
+
 ## Onda 2 concluída ✅
-Itens 1-3 + C-01 implementados. Próximo: C-04.b (convocar exame MUDANCA_FUNCAO), C-10 (ASO DEMISSIONAL wizard), C-08 (ASO RETORNO_TRABALHO ao fechar acidente c/ afastamento).
+Itens 1-3 + C-01 + C-04.b implementados. Próximo: C-10 (ASO DEMISSIONAL wizard), C-08 (ASO RETORNO_TRABALHO ao fechar acidente c/ afastamento).
 
 ## ⚠️ Pendente de teste pelo Francisco (avisar no próximo pedido de teste)
 - Item 1 (Onda 2): desligar um funcionário e conferir se convocações PENDENTES viram CANCELADA + safety_overrides revogados. Ver audit_logs action='desligamento_cascata'.
 - Item 2 (Onda 2): rodar manualmente `SELECT public.gerar_convocacoes_aso_automaticas();` no SQL Editor pra ver quantas criou hoje. Ou esperar 06h UTC (03h Brasília).
 - Item 3 (Onda 2): trocar cargo (ou GHE) de um funcionário e conferir: linha nova em employee_role_history + audit_logs action='mudanca_cargo' com cursos_delta preenchido.
 - C-01: desligar funcionário com CPF cadastrado em portaria_pessoas e conferir que a pessoa fica bloqueada + motivo preenchido. Ver `portaria_bloqueadas` no metadata do audit_logs.
+- C-04.b: trocar o CARGO de um funcionário e conferir se aparece nova convocação PENDENTE janela=MUDANCA_FUNCAO em /app/sesmt/convocacoes-aso.
