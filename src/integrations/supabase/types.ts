@@ -10042,6 +10042,7 @@ export type Database = {
         }[]
       }
       fn_install_audit: { Args: { _table: string }; Returns: undefined }
+      gerar_convocacoes_aso_automaticas: { Args: never; Returns: number }
       gerar_numero_apr: { Args: never; Returns: string }
       gerar_numero_controle_doc: { Args: never; Returns: string }
       gerar_numero_extintor: { Args: never; Returns: string }
