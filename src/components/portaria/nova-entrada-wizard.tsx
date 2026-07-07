@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, ArrowLeft, ArrowRight, Check, Search, AlertTriangle, X, Loader2, UserPlus, Car } from "lucide-react";
+import { Camera, ArrowLeft, ArrowRight, Check, Search, AlertTriangle, X, Loader2, UserPlus, Car, Briefcase, UserX } from "lucide-react";
 import { isValidCPF, maskCPF, onlyDigits, formatCPFFromDigits } from "@/lib/validators/cpf";
 import { isValidPlaca, normalizePlaca, maskPlaca } from "@/lib/validators/placa";
 import { uploadFotoPortaria, type FotoTipo } from "@/lib/portaria/foto-upload";
@@ -25,6 +25,21 @@ type Tipo = "VISITANTE" | "FORNECEDOR" | "PRESTADOR";
 type PessoaExistente = {
   id: string; nome: string; cpf: string; rg: string | null; cnpj: string | null;
   foto_documento_url: string | null; bloqueado: boolean; motivo_bloqueio: string | null;
+};
+type EmployeeMatch = {
+  id: string;
+  nome: string;
+  cpf: string;
+  rg: string | null;
+  foto_url: string | null;
+  status: "ATIVO" | "DESLIGADO" | string;
+  setor: string | null;
+  matricula: string | null;
+  admissao: string | null;
+  data_desligamento: string | null;
+  motivo_desligamento: string | null;
+  company: string | null;
+  role: string | null;
 };
 type VeiculoExistente = { id: string; placa: string; modelo: string | null; tipo: string | null };
 
@@ -46,6 +61,10 @@ export function NovaEntradaWizard({
   const [tipo, setTipo] = useState<Tipo>("VISITANTE");
   const [cpfInput, setCpfInput] = useState("");
   const [pessoaExistente, setPessoaExistente] = useState<PessoaExistente | null>(null);
+  const [employeeMatch, setEmployeeMatch] = useState<EmployeeMatch | null>(null);
+  // Porteiro precisa confirmar override quando funcionário ATIVO tenta entrar como visita
+  const [ativoOverride, setAtivoOverride] = useState(false);
+  const [ativoJustificativa, setAtivoJustificativa] = useState("");
   const [buscando, setBuscando] = useState(false);
 
   // Passo 2 — dados novos
@@ -78,6 +97,7 @@ export function NovaEntradaWizard({
   useEffect(() => {
     if (!open) return;
     setStep(1); setTipo("VISITANTE"); setCpfInput(""); setPessoaExistente(null);
+    setEmployeeMatch(null); setAtivoOverride(false); setAtivoJustificativa("");
     setNome(""); setRg(""); setCnpj(""); setFotoDocumento(null);
     setFotoRosto(null); setMotivo(""); setEmpresaVisitadaId(""); setFuncionarioRecebedorId("");
     setFuncQuery(""); setFuncResults([]);
@@ -94,22 +114,70 @@ export function NovaEntradaWizard({
       return;
     }
     setBuscando(true);
-    const { data, error } = await supabase
-      .from("portaria_pessoas")
-      .select("id,nome,cpf,rg,cnpj,foto_documento_url,bloqueado,motivo_bloqueio")
-      .eq("cpf", cpfLimpo)
-      .maybeSingle();
+    // Consulta portaria_pessoas + employees em paralelo — ex/atual funcionário deve ser reconhecido.
+    const [pessoaRes, empRes] = await Promise.all([
+      supabase
+        .from("portaria_pessoas")
+        .select("id,nome,cpf,rg,cnpj,foto_documento_url,bloqueado,motivo_bloqueio")
+        .eq("cpf", cpfLimpo)
+        .maybeSingle(),
+      supabase
+        .from("employees")
+        .select("id,nome,cpf,rg,foto_url,status,setor,matricula,admissao,data_desligamento,motivo_desligamento,companies(name),roles(name)")
+        .eq("cpf", cpfLimpo)
+        .order("status", { ascending: true }) // ATIVO vem antes de DESLIGADO no alfabético
+        .limit(1)
+        .maybeSingle(),
+    ]);
     setBuscando(false);
-    if (error) { toast.error("Erro: " + error.message); return; }
-    if (data) {
-      setPessoaExistente(data as PessoaExistente);
-      if ((data as any).bloqueado) {
-        toast.error(`Pessoa BLOQUEADA: ${(data as any).motivo_bloqueio ?? "sem motivo registrado"}`);
+    if (pessoaRes.error) { toast.error("Erro: " + pessoaRes.error.message); return; }
+
+    const pessoa = (pessoaRes.data ?? null) as PessoaExistente | null;
+    const emp = (empRes.data ?? null) as any;
+
+    setPessoaExistente(pessoa);
+    setAtivoOverride(false);
+    setAtivoJustificativa("");
+
+    if (emp) {
+      const match: EmployeeMatch = {
+        id: emp.id,
+        nome: emp.nome,
+        cpf: emp.cpf,
+        rg: emp.rg ?? null,
+        foto_url: emp.foto_url ?? null,
+        status: emp.status,
+        setor: emp.setor ?? null,
+        matricula: emp.matricula ?? null,
+        admissao: emp.admissao ?? null,
+        data_desligamento: emp.data_desligamento ?? null,
+        motivo_desligamento: emp.motivo_desligamento ?? null,
+        company: emp.companies?.name ?? null,
+        role: emp.roles?.name ?? null,
+      };
+      setEmployeeMatch(match);
+      // Pré-preenche dados do passo 2 (nome/rg) puxados da ficha,
+      // mesmo que pessoa da portaria também exista — ficha vence porque é dado RH validado.
+      setNome(match.nome);
+      if (match.rg) setRg(match.rg);
+      if (match.status === "ATIVO") {
+        toast.error("⚠️ Funcionário ATIVO — confirme se realmente é uma visita");
       } else {
-        toast.success(`Cadastro encontrado: ${(data as any).nome}`);
+        toast.warning(`Ex-funcionário identificado (desligado em ${
+          match.data_desligamento ? new Date(match.data_desligamento).toLocaleDateString("pt-BR") : "data ?"
+        })`);
       }
     } else {
-      setPessoaExistente(null);
+      setEmployeeMatch(null);
+    }
+
+    if (pessoa) {
+      if (pessoa.bloqueado) {
+        toast.error(`Pessoa BLOQUEADA: ${pessoa.motivo_bloqueio ?? "sem motivo registrado"}`);
+      } else if (!emp) {
+        toast.success(`Cadastro encontrado: ${pessoa.nome}`);
+      }
+    } else if (!emp) {
       toast.info("Novo cadastro — preencha os dados no próximo passo");
     }
   };
@@ -152,8 +220,15 @@ export function NovaEntradaWizard({
   const irParaProximo = () => {
     if (step === 1) {
       if (!isValidCPF(cpfInput)) return toast.error("CPF inválido");
-      // Se pessoa existe, pula passo 2
-      if (pessoaExistente) { setStep(3); return; }
+      // Trava funcionário ATIVO — só passa com override + justificativa
+      if (employeeMatch?.status === "ATIVO" && !ativoOverride) {
+        return toast.error("Marque a confirmação de override para funcionário ativo");
+      }
+      if (employeeMatch?.status === "ATIVO" && ativoOverride && ativoJustificativa.trim().length < 5) {
+        return toast.error("Justifique a entrada do funcionário ativo (mínimo 5 caracteres)");
+      }
+      // Se pessoa OU ex-funcionário existe, pula passo 2 (já temos nome/rg/foto)
+      if (pessoaExistente || employeeMatch) { setStep(3); return; }
       setStep(2); return;
     }
     if (step === 2) {
@@ -162,7 +237,8 @@ export function NovaEntradaWizard({
       setStep(3); return;
     }
     if (step === 3) {
-      if (!fotoRosto && !pessoaExistente?.foto_documento_url) return toast.error("Foto do rosto obrigatória");
+      const temFotoPrevia = pessoaExistente?.foto_documento_url || employeeMatch?.foto_url;
+      if (!fotoRosto && !temFotoPrevia) return toast.error("Foto do rosto obrigatória");
       if (!motivo.trim()) return toast.error("Motivo obrigatório");
       if (!empresaVisitadaId) return toast.error("Selecione a empresa visitada");
       setStep(4); return;
@@ -170,7 +246,7 @@ export function NovaEntradaWizard({
   };
 
   const voltar = () => {
-    if (step === 3 && pessoaExistente) { setStep(1); return; }
+    if (step === 3 && (pessoaExistente || employeeMatch)) { setStep(1); return; }
     setStep((s) => Math.max(1, s - 1));
   };
 
