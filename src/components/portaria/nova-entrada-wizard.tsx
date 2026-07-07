@@ -347,6 +347,27 @@ export function NovaEntradaWizard({
       });
       if (errV) throw errV;
 
+      // 5.1) Auditoria — registra vínculo com funcionário (ativo ou desligado) para rastreabilidade
+      if (employeeMatch) {
+        await supabase.from("portaria_auditoria").insert({
+          entidade: "portaria_visitas",
+          entidade_id: visitaId,
+          acao: employeeMatch.status === "ATIVO" ? "FUNCIONARIO_ATIVO_OVERRIDE" : "EX_FUNCIONARIO_ENTRADA",
+          origem_modulo: "portaria",
+          user_id: user?.id ?? null,
+          snapshot_json: {
+            employee_id: employeeMatch.id,
+            employee_nome: employeeMatch.nome,
+            employee_status: employeeMatch.status,
+            employee_matricula: employeeMatch.matricula,
+            employee_setor: employeeMatch.setor,
+            employee_data_desligamento: employeeMatch.data_desligamento,
+            employee_motivo_desligamento: employeeMatch.motivo_desligamento,
+            override_justificativa: employeeMatch.status === "ATIVO" ? ativoJustificativa.trim() : null,
+          },
+        });
+      }
+
       // 6) Acompanhantes
       for (let i = 0; i < acompanhantes.length; i++) {
         const c = acompanhantes[i];
@@ -440,6 +461,82 @@ export function NovaEntradaWizard({
                   </div>
                 </div>
               )}
+              {employeeMatch && (
+                <div className={`rounded-xl p-3 border-2 ${
+                  employeeMatch.status === "ATIVO" ? "bg-red-50 border-red-400" : "bg-amber-50 border-amber-400"
+                }`}>
+                  <div className="flex gap-3">
+                    {employeeMatch.foto_url ? (
+                      <img src={employeeMatch.foto_url} alt={employeeMatch.nome}
+                        className="h-16 w-16 rounded-lg object-cover border-2 border-white shadow-sm flex-none" />
+                    ) : (
+                      <div className="h-16 w-16 rounded-lg bg-slate-200 flex items-center justify-center flex-none">
+                        {employeeMatch.status === "ATIVO"
+                          ? <Briefcase className="h-6 w-6 text-red-600" />
+                          : <UserX className="h-6 w-6 text-amber-600" />}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                          employeeMatch.status === "ATIVO" ? "bg-red-600 text-white" : "bg-amber-600 text-white"
+                        }`}>
+                          {employeeMatch.status === "ATIVO" ? "Funcionário ATIVO" : "Ex-funcionário"}
+                        </span>
+                        {employeeMatch.matricula && (
+                          <span className="text-[9px] font-bold text-slate-500 uppercase">Mat. {employeeMatch.matricula}</span>
+                        )}
+                      </div>
+                      <p className="font-black text-sm mt-1 truncate">{employeeMatch.nome}</p>
+                      <p className="text-[11px] text-slate-600 truncate">
+                        {employeeMatch.role ?? "—"} · {employeeMatch.setor ?? "sem setor"}
+                      </p>
+                      {employeeMatch.company && (
+                        <p className="text-[10px] text-slate-500 truncate">{employeeMatch.company}</p>
+                      )}
+                      {employeeMatch.status === "DESLIGADO" && (
+                        <div className="mt-1.5 text-[11px] text-amber-800">
+                          <p><strong>Desligado em:</strong> {employeeMatch.data_desligamento
+                            ? new Date(employeeMatch.data_desligamento).toLocaleDateString("pt-BR")
+                            : "—"}</p>
+                          {employeeMatch.motivo_desligamento && (
+                            <p><strong>Motivo:</strong> {employeeMatch.motivo_desligamento}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {employeeMatch.status === "ATIVO" && (
+                    <div className="mt-3 space-y-2 border-t border-red-200 pt-2">
+                      <p className="text-[11px] text-red-800 font-bold">
+                        Este CPF é de funcionário ATIVO. Se for entrada normal, use catraca/ponto. Só prossiga como visita se houver motivo excepcional (buscar documento fora do horário, reunião fora do turno, etc.).
+                      </p>
+                      <label className="flex items-start gap-2 cursor-pointer">
+                        <input type="checkbox" checked={ativoOverride}
+                          onChange={(e) => setAtivoOverride(e.target.checked)}
+                          className="mt-0.5 h-4 w-4" />
+                        <span className="text-[11px] font-bold text-red-900">
+                          Confirmo entrada como visita mesmo sendo funcionário ativo (será auditado)
+                        </span>
+                      </label>
+                      {ativoOverride && (
+                        <Textarea
+                          value={ativoJustificativa}
+                          onChange={(e) => setAtivoJustificativa(e.target.value)}
+                          placeholder="Justificativa obrigatória (ex: veio buscar documento fora do horário)"
+                          rows={2}
+                          className="text-xs"
+                        />
+                      )}
+                    </div>
+                  )}
+                  {employeeMatch.status === "DESLIGADO" && (
+                    <p className="mt-2 text-[11px] text-amber-800 border-t border-amber-200 pt-2">
+                      Nome, RG e foto já pré-carregados da ficha. Prossiga normalmente — a entrada ficará registrada no histórico como ex-funcionário.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -465,11 +562,34 @@ export function NovaEntradaWizard({
 
           {step === 3 && (
             <div className="space-y-3">
+              {(pessoaExistente?.foto_documento_url || employeeMatch?.foto_url) && (
+                <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50/50 p-3 flex items-center gap-3">
+                  <img
+                    src={(pessoaExistente?.foto_documento_url ?? employeeMatch?.foto_url) as string}
+                    alt="Foto do cadastro"
+                    className="h-16 w-16 rounded-lg object-cover border-2 border-white shadow-sm"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">
+                      Foto do cadastro {employeeMatch ? "(ficha RH)" : "(portaria)"}
+                    </p>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Já existe foto — a foto do rosto abaixo é opcional. Capture nova se estiver muito diferente.
+                    </p>
+                  </div>
+                </div>
+              )}
               <FotoField
                 label="Foto do rosto *"
                 value={fotoRosto}
                 onChange={setFotoRosto}
-                fallbackHint={pessoaExistente?.foto_documento_url ? "Já existe foto no cadastro — nova é opcional" : undefined}
+                fallbackHint={
+                  employeeMatch?.foto_url
+                    ? "Ficha RH tem foto — nova é opcional"
+                    : pessoaExistente?.foto_documento_url
+                    ? "Já existe foto no cadastro — nova é opcional"
+                    : undefined
+                }
               />
               <div>
                 <Label className="text-xs font-black uppercase tracking-widest">Empresa visitada *</Label>
