@@ -43,7 +43,11 @@ async function fetchAsDataUrl(url: string): Promise<string | null> {
 
 export async function loadEmployeePhotoDataUrl(url?: string | null): Promise<string | null> {
   if (!url) return null;
-  const raw = await fetchAsDataUrl(url);
+  // Bloco 1 / Onda 1: fotos vêm do bucket `avatars` que vai virar privado.
+  // Assina a URL antes do fetch (fallback pro valor original em URLs externas).
+  const { signAvatarUrl } = await import("@/lib/signed-avatar-url");
+  const signed = (await signAvatarUrl(url)) ?? url;
+  const raw = await fetchAsDataUrl(signed);
   if (!raw) return null;
   // Recorta em "cover" no aspecto 3x4 (foto tipo 3x4) pra não distorcer no PDF.
   try {
