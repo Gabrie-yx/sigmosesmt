@@ -18,8 +18,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { formatDateBR } from "@/lib/utils-date";
 import { maskCPF } from "@/lib/masks";
 import { toast } from "sonner";
-import { openPdf } from "@/lib/pdf-print";
-import { drawHeader } from "@/lib/pdf-header";
+import { printPdf } from "@/lib/pdf-print";
+import { drawPdfHeader } from "@/lib/pdf-header";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -110,20 +110,22 @@ function RelatorioAdmissoes() {
   async function exportPdf() {
     if (linhas.length === 0) { toast.error("Nada para exportar"); return; }
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    await drawHeader(doc, {
+    const startY = drawPdfHeader(doc, {
       titulo: "Relatório de Admissões de Funcionários",
       subtitulo: `Período: ${formatDateBR(de)} a ${formatDateBR(ate)}${
         companyId !== "__all__" ? ` · Empresa: ${empresaNome(companyId)}` : ""
       }${tipo !== "__all__" ? ` · Tipo: ${tipo}` : ""}`,
+      destaque: `${linhas.length} funcionário(s)`,
     });
     autoTable(doc, {
-      startY: 40,
+      startY: startY + 2,
       head: [["Nome", "CPF", "Função", "Empresa", "Tipo", "Admissão"]],
       body: linhas.map((l) => [l.nome, l.cpf, l.funcao, l.empresa, l.tipo, l.admissao ? formatDateBR(l.admissao) : ""]),
       styles: { fontSize: 8 },
       headStyles: { fillColor: [153, 27, 27] },
     });
-    await openPdf(doc, `Relatorio-Admissoes-${de}-a-${ate}.pdf`);
+    const blob = doc.output("blob");
+    await printPdf(await blob.arrayBuffer(), `Relatorio-Admissoes-${de}-a-${ate}.pdf`);
   }
 
   if (!canView) {
