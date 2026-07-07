@@ -327,6 +327,53 @@ export const adminCountUserSessions = createServerFn({ method: "POST" })
     return { count: (n as number) ?? 0 };
   });
 
+// Atualiza dados básicos do usuário (nome no profiles + e-mail no auth).
+// E-mail é opcional; quando enviado, marca como confirmado para não travar login.
+export const updateUserProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      user_id: z.string().uuid(),
+      full_name: z.string().min(2).max(120).optional(),
+      email: z.string().email().max(254).optional(),
+    })
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertAdmin(context.supabase, context.userId);
+
+    const changes: Record<string, unknown> = {};
+
+    if (data.full_name != null) {
+      const { error: pErr } = await supabaseAdmin
+        .from("profiles")
+        .upsert({ id: data.user_id, full_name: data.full_name }, { onConflict: "id" });
+      if (pErr) throw new Error(pErr.message);
+      changes.full_name = data.full_name;
+    }
+
+    if (data.email) {
+      const { error: eErr } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+        email: data.email,
+        email_confirm: true,
+      } as any);
+      if (eErr) throw new Error(eErr.message);
+      changes.email = data.email;
+    }
+
+    if (Object.keys(changes).length === 0) {
+      return { ok: true, noop: true };
+    }
+
+    await logAdminEvent(supabaseAdmin, {
+      action: "PROFILE_UPDATED",
+      target_user_id: data.user_id,
+      actor_user_id: context.userId,
+      payload: changes,
+    });
+    return { ok: true };
+  });
+
 export const adminForceSignOutUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ user_id: z.string().uuid() }))
