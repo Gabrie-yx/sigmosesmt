@@ -109,67 +109,67 @@ function ControleEntradaPage() {
   const gruposOutros = grupos.filter(([d]) => d !== hojeIso);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
-      {/* Header fixo */}
-      <div className="sticky top-0 z-30 bg-white border-b shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 lg:px-6 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-9 w-9 lg:h-11 lg:w-11 rounded-xl bg-slate-900 text-white grid place-items-center shrink-0">
-              <DoorOpen className="h-4 w-4 lg:h-5 lg:w-5" />
+    <div className="min-h-screen bg-background pb-16">
+      {/* Header */}
+      <div className="sticky top-0 z-30 bg-background/80 backdrop-blur border-b border-border">
+        <div className="mx-auto max-w-6xl px-4 lg:px-6 py-2.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="h-9 w-9 rounded-lg bg-primary/15 text-primary grid place-items-center shrink-0">
+              <DoorOpen className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-black text-sm lg:text-xl truncate">Portaria</h1>
-              <p className="text-[9px] lg:text-[10px] uppercase tracking-widest text-slate-500">{DIAS[hoje.getDay()]} · {hoje.toLocaleDateString("pt-BR")}</p>
+              <h1 className="font-bold text-base leading-tight truncate">Portaria</h1>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{DIAS[hoje.getDay()]} · {hoje.toLocaleDateString("pt-BR")}</p>
             </div>
           </div>
           <Link to="/app/portaria/controle"
-            className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-emerald-600 inline-flex items-center gap-1">
+            className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-primary transition inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 hover:bg-muted">
             <BarChart3 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Painel SESMT</span>
           </Link>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-3 lg:px-6 pt-3 lg:pt-6 space-y-3 lg:space-y-6">
-        {/* KPIs + ações — desktop em 4 colunas, mobile em 2 */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
-          <div className="rounded-2xl bg-white border-2 border-slate-200 p-3 lg:p-4">
-            <p className="text-[9px] lg:text-[10px] uppercase tracking-widest font-black text-slate-500">Dentro agora</p>
-            <p className="font-black text-2xl lg:text-3xl text-emerald-600 mt-0.5">{kpis?.dentro ?? 0}</p>
+      <div className="mx-auto max-w-6xl px-3 lg:px-6 pt-4 lg:pt-5 space-y-4">
+        {/* KPIs + ações — linha compacta */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+          <div className="rounded-xl bg-card border border-border p-3">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Dentro agora</p>
+            <p className="font-bold text-2xl text-primary mt-0.5">{kpis?.dentro ?? 0}</p>
           </div>
-          <div className="rounded-2xl bg-white border-2 border-slate-200 p-3 lg:p-4">
-            <p className="text-[9px] lg:text-[10px] uppercase tracking-widest font-black text-slate-500">Entradas hoje</p>
-            <p className="font-black text-2xl lg:text-3xl text-slate-800 mt-0.5">{kpis?.entradasHoje ?? 0}</p>
+          <div className="rounded-xl bg-card border border-border p-3">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Entradas hoje</p>
+            <p className="font-bold text-2xl text-foreground mt-0.5">{kpis?.entradasHoje ?? 0}</p>
           </div>
-          <Button onClick={() => setWizOpen(true)} className="h-auto min-h-16 lg:min-h-[88px] bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase text-xs lg:text-sm tracking-widest rounded-2xl shadow-lg">
-            <Plus className="h-5 w-5 mr-1" /> Nova entrada
+          <Button onClick={() => setWizOpen(true)} size="lg" className="h-auto py-3 rounded-xl font-semibold text-sm shadow-sm">
+            <Plus className="h-4 w-4 mr-1.5" /> Nova entrada
           </Button>
-          <Button onClick={() => setSaidaFuncOpen(true)} className="h-auto min-h-16 lg:min-h-[88px] bg-amber-500 hover:bg-amber-600 text-white font-black uppercase text-xs lg:text-sm tracking-widest rounded-2xl shadow-lg">
-            <LogOut className="h-5 w-5 mr-1" /> Saída funcionário
+          <Button onClick={() => setSaidaFuncOpen(true)} size="lg" variant="secondary" className="h-auto py-3 rounded-xl font-semibold text-sm">
+            <LogOut className="h-4 w-4 mr-1.5" /> Saída funcionário
           </Button>
         </div>
 
         {/* Grid principal: HOJE dominante + lateral (semana + mês) no desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Card do DIA */}
           <div className="lg:col-span-2">
-            <div className="rounded-3xl bg-white border-2 border-slate-200 shadow-sm overflow-hidden">
-              <div className="px-4 lg:px-6 py-3 lg:py-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex items-center justify-between">
+            <div className="rounded-2xl bg-card border border-border overflow-hidden">
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-muted/30">
                 <div>
-                  <p className="text-[9px] lg:text-[10px] uppercase tracking-widest font-bold text-white/60">Hoje</p>
-                  <h2 className="font-black text-lg lg:text-2xl">{DIAS[hoje.getDay()]} · {hoje.toLocaleDateString("pt-BR")}</h2>
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Hoje</p>
+                  <h2 className="font-bold text-base">{DIAS[hoje.getDay()]} · {hoje.toLocaleDateString("pt-BR")}</h2>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] lg:text-[10px] uppercase tracking-widest font-bold text-white/60">Visitas</p>
-                  <p className="font-black text-2xl lg:text-3xl">{gruposHoje.length}</p>
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Visitas</p>
+                  <p className="font-bold text-xl text-foreground">{gruposHoje.length}</p>
                 </div>
               </div>
-              <div className="divide-y">
-                {isLoading && <div className="p-6 text-center text-slate-400 text-sm">Carregando…</div>}
+              <div className="divide-y divide-border">
+                {isLoading && <div className="p-6 text-center text-muted-foreground text-sm">Carregando…</div>}
                 {!isLoading && gruposHoje.length === 0 && (
-                  <div className="p-8 text-center text-slate-500">
-                    <Users className="h-8 w-8 mx-auto text-slate-300 mb-2" />
-                    <p className="text-sm font-bold uppercase tracking-widest">Nenhuma visita hoje</p>
-                    <p className="text-xs text-slate-400 mt-1">Toque em "Nova entrada" para começar</p>
+                  <div className="p-8 text-center text-muted-foreground">
+                    <Users className="h-7 w-7 mx-auto opacity-40 mb-2" />
+                    <p className="text-sm font-semibold">Nenhuma visita hoje</p>
+                    <p className="text-xs mt-1 opacity-70">Toque em "Nova entrada" para começar</p>
                   </div>
                 )}
                 {gruposHoje.map((v: any) => (
@@ -180,7 +180,7 @@ function ControleEntradaPage() {
           </div>
 
           {/* Coluna lateral: Semana + Mês */}
-          <div className="space-y-3 lg:space-y-6">
+          <div className="space-y-4">
             <SemanaCard grupos={gruposOutros} onRegistrarSaida={setSaidaVisita} onDelete={onDelete} deletingId={deletingId} />
             <MesCard grupos={grupos} />
           </div>
@@ -199,7 +199,7 @@ function ControleEntradaPage() {
 function VisitaRow({ visita, onRegistrarSaida, onDelete, deleting }: { visita: any; onRegistrarSaida: () => void; onDelete?: (id: string) => void; deleting?: boolean }) {
   const pendente = visita.status === "DENTRO";
   return (
-    <div className={`w-full flex items-center gap-3 px-3 lg:px-4 py-3 hover:bg-slate-50 transition ${pendente ? "border-l-4 border-red-500 bg-red-50/40" : ""}`}>
+    <div className={`w-full flex items-center gap-3 px-3 lg:px-4 py-2.5 hover:bg-muted/40 transition ${pendente ? "border-l-2 border-destructive bg-destructive/5" : ""}`}>
       <button
         onClick={() => pendente && onRegistrarSaida()}
         disabled={!pendente}
@@ -207,42 +207,42 @@ function VisitaRow({ visita, onRegistrarSaida, onDelete, deleting }: { visita: a
       >
       <div className="relative shrink-0">
         {visita.foto_rosto_url ? (
-          <img src={visita.foto_rosto_url} className="h-12 w-12 rounded-full object-cover ring-2 ring-white shadow" alt="" />
+          <img src={visita.foto_rosto_url} className="h-10 w-10 rounded-full object-cover object-center border border-border bg-muted" alt="" loading="lazy" />
         ) : (
-          <div className="h-12 w-12 rounded-full bg-slate-300 text-white font-black text-xs flex items-center justify-center shadow">
+          <div className="h-10 w-10 rounded-full bg-muted text-muted-foreground font-bold text-xs flex items-center justify-center border border-border">
             {visita.pessoa?.nome?.split(/\s+/).map((p: string) => p[0]).slice(0,2).join("").toUpperCase()}
           </div>
         )}
-        {pendente && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse ring-2 ring-white" />}
+        {pendente && <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-destructive animate-pulse ring-2 ring-card" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-black text-sm truncate">{visita.pessoa?.nome}</p>
+        <p className="font-semibold text-sm truncate text-foreground">{visita.pessoa?.nome}</p>
         <div className="flex flex-wrap items-center gap-1 mt-0.5">
-          <span className="text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-700 rounded-full px-2 py-0.5">{visita.tipo}</span>
+          <span className="text-[9px] font-semibold uppercase tracking-wider bg-muted text-muted-foreground rounded px-1.5 py-0.5">{visita.tipo}</span>
           {visita.veiculo?.placa && (
-            <span className="text-[9px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 inline-flex items-center gap-0.5">
+            <span className="text-[9px] font-semibold uppercase tracking-wider bg-primary/10 text-primary rounded px-1.5 py-0.5 inline-flex items-center gap-0.5">
               <Car className="h-2.5 w-2.5" /> {visita.veiculo.placa}
             </span>
           )}
           {visita.empresa?.name && (
-            <span className="text-[9px] text-slate-500 inline-flex items-center gap-0.5">
+            <span className="text-[9px] text-muted-foreground inline-flex items-center gap-0.5">
               <Building2 className="h-2.5 w-2.5" /> {visita.empresa.name}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-500">
+        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
           <Clock className="h-2.5 w-2.5" />
           <span>Entrada {fmtHora(visita.entrada_at)}</span>
           {visita.saida_at && <span>· Saída {fmtHora(visita.saida_at)}</span>}
-          {pendente && <span className="text-red-600 font-black uppercase tracking-widest">· Pendente</span>}
+          {pendente && <span className="text-destructive font-semibold uppercase tracking-wider">· Pendente</span>}
         </div>
       </div>
-      {pendente && <ChevronRight className="h-5 w-5 text-slate-400 shrink-0" />}
+      {pendente && <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
       </button>
       {onDelete && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button size="icon" variant="ghost" className="h-9 w-9 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700" title="Excluir visita (admin)">
+            <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" title="Excluir visita (admin)">
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
             </Button>
           </AlertDialogTrigger>
@@ -255,7 +255,7 @@ function VisitaRow({ visita, onRegistrarSaida, onDelete, deleting }: { visita: a
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onDelete(visita.id)} className="bg-red-600 hover:bg-red-700">Excluir</AlertDialogAction>
+              <AlertDialogAction onClick={() => onDelete(visita.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Excluir</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -270,19 +270,19 @@ function SemanaCard({ grupos, onRegistrarSaida, onDelete, deletingId }: { grupos
   const total = gruposSemana.reduce((s, [,arr]) => s + arr.length, 0);
   return (
     <Collapsible defaultOpen={false}>
-      <div className="rounded-3xl bg-white border-2 border-slate-200 shadow-sm overflow-hidden">
-        <CollapsibleTrigger className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50">
+      <div className="rounded-2xl bg-card border border-border overflow-hidden">
+        <CollapsibleTrigger className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted/40">
           <div className="text-left">
-            <p className="text-[9px] uppercase tracking-widest font-bold text-slate-500">Esta semana</p>
-            <h3 className="font-black text-sm">{total} visitas</h3>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Esta semana</p>
+            <h3 className="font-bold text-sm">{total} visitas</h3>
           </div>
-          <ChevronRight className="h-4 w-4 text-slate-400" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </CollapsibleTrigger>
-        <CollapsibleContent className="divide-y">
-          {gruposSemana.length === 0 && <p className="p-4 text-xs text-slate-400 text-center">Sem visitas nos outros dias da semana</p>}
+        <CollapsibleContent className="divide-y divide-border border-t border-border">
+          {gruposSemana.length === 0 && <p className="p-4 text-xs text-muted-foreground text-center">Sem visitas nos outros dias da semana</p>}
           {gruposSemana.map(([d, arr]) => (
             <div key={d}>
-              <div className="px-4 py-2 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500">
+              <div className="px-4 py-2 bg-muted/40 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {new Date(d + "T00:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "short" })} · {arr.length}
               </div>
               {arr.map((v) => <VisitaRow key={v.id} visita={v} onRegistrarSaida={() => onRegistrarSaida(v)} onDelete={onDelete} deleting={deletingId === v.id} />)}
@@ -299,19 +299,19 @@ function MesCard({ grupos }: { grupos: [string, any[]][] }) {
   const pend = grupos.reduce((s, [,arr]) => s + arr.filter((v: any) => v.status === "DENTRO").length, 0);
   const hoje = new Date();
   return (
-    <div className="rounded-3xl bg-white border-2 border-slate-200 shadow-sm overflow-hidden">
+    <div className="rounded-2xl bg-card border border-border overflow-hidden">
       <div className="px-4 py-3">
-        <p className="text-[9px] uppercase tracking-widest font-bold text-slate-500">{MESES[hoje.getMonth()]} · {hoje.getFullYear()}</p>
+        <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{MESES[hoje.getMonth()]} · {hoje.getFullYear()}</p>
         <div className="grid grid-cols-2 gap-3 mt-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Total</p>
-            <p className="font-black text-2xl">{total}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Total</p>
+            <p className="font-bold text-2xl text-foreground">{total}</p>
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 inline-flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3 text-red-500" /> Pendentes
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground inline-flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3 text-destructive" /> Pendentes
             </p>
-            <p className={`font-black text-2xl ${pend > 0 ? "text-red-600" : "text-slate-400"}`}>{pend}</p>
+            <p className={`font-bold text-2xl ${pend > 0 ? "text-destructive" : "text-muted-foreground"}`}>{pend}</p>
           </div>
         </div>
       </div>
