@@ -32,3 +32,4 @@ Horas extras pertencem ao módulo de origem; não usar SESMT como caixa geral ne
 - [Nada de cores hardcoded em overlays](mem://constraints/nada-de-cores-hardcoded.md) — Regra dura contra bg-white/text-slate/bg-red-50 em popover/drawer/dropdown. Lista de proibidos + obrigatórios.
 - [Scrollbar glassmorph global](mem://constraints/scrollbar-glassmorph.md) — Regra global de scrollbar fina estilo vidro com flares aplicada em `*::-webkit-scrollbar*`. Proibido scrollbar padrão.
 - [Onda 1 - Blindagem](mem://features/onda1-blindagem-seguranca.md) — Bloco 1 do parecer: endpoints IA fechados ✅; bucket `avatars` privado + URLs assinadas ✅ (2B UI + 2C PDFs + 2D flip concluídos). Pendente: item 3 (auditar RPCs públicos).
+- [Onda 2 - Gatilhos automáticos](mem://features/onda2-gatilhos-automaticos.md) — Bloco 2 do parecer: Item 1 ✅ (trigger de demissão fecha convocações+overrides). Itens 2 (ASO vencido cronjob) e 3 (mudança cargo recalcula matriz) pendentes.
