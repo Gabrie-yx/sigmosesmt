@@ -382,7 +382,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                   <button
                     type="button"
                     onClick={() => window.dispatchEvent(new CustomEvent("employee:save-tab", { detail: { tab } }))}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-700 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-primary hover:bg-primary/90 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-primary-foreground shadow-sm hover:shadow-md transition-all"
                     title="Salvar alterações desta aba"
                   >
                     <Save className="h-3.5 w-3.5" /> Salvar
